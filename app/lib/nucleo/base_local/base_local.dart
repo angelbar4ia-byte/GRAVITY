@@ -18,8 +18,14 @@ enum EstadoPendiente {
   /// El servidor lo recibió.
   enviado,
 
-  /// El servidor lo rechazó (p. ej. por permisos); necesita atención.
+  /// **Requiere atención**: el servidor no lo aceptó (p. ej. sin permiso,
+  /// 42501, o datos inválidos) o falló demasiadas veces con un error que no es
+  /// de red. No se pierde ni se reintenta solo: la app lo muestra y la persona
+  /// decide (reintentar o descartar).
   rechazado,
+
+  /// La persona decidió no subirlo (tras revisarlo).
+  descartado,
 }
 
 /// Registros hechos en el dispositivo que faltan por subir al servidor.
@@ -46,6 +52,10 @@ class Pendientes extends Table {
 
   TextColumn get ultimoError => text().nullable()();
 
+  /// Persona que lo registró (id de `personas`). Solo se envía con la sesión
+  /// del servidor de esa misma persona (revisión de la Fase 0, I4).
+  TextColumn get personaId => text().nullable()();
+
   @override
   Set<Column<Object>> get primaryKey => {id};
 }
@@ -62,5 +72,12 @@ class BaseLocal extends _$BaseLocal {
   factory BaseLocal.enMemoria() => BaseLocal(NativeDatabase.memory());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onUpgrade: (migrador, desde, hasta) async {
+      if (desde < 2) await migrador.addColumn(pendientes, pendientes.personaId);
+    },
+  );
 }

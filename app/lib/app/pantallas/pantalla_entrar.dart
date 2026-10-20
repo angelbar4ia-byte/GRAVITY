@@ -5,10 +5,13 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../nucleo/contratos/dispositivo.dart';
 import '../../nucleo/contratos/roles.dart';
 import '../../nucleo/permisos/permisos.dart';
 import '../../nucleo/sesion/proveedores_sesion.dart';
 import '../../nucleo/sesion/sesion.dart';
+import '../dispositivo.dart';
+import '../sesion_efectiva.dart';
 
 class PantallaEntrar extends ConsumerStatefulWidget {
   const PantallaEntrar({super.key});
@@ -64,6 +67,13 @@ class _PantallaEntrarState extends ConsumerState<PantallaEntrar> {
     final demostracion = servicio is EntradaDeDemostracion
         ? servicio as EntradaDeDemostracion
         : null;
+    final esTablet =
+        ref.watch(tipoDispositivoProvider) == TipoDispositivo.tablet;
+    // D14 (revisión de la Fase 0, I6): la tablet de la casa trabaja con la
+    // cuenta de rol Casa. Con otra cuenta, se pide la de la casa.
+    final cuentaAjena = ref.watch(tabletSinCuentaCasaProvider)
+        ? ref.watch(sesionActualProvider)
+        : null;
     final tema = Theme.of(context);
     return Scaffold(
       body: SafeArea(
@@ -90,10 +100,21 @@ class _PantallaEntrarState extends ConsumerState<PantallaEntrar> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Entra con tu cuenta',
+                      esTablet
+                          ? 'Entra con la cuenta Casa'
+                          : 'Entra con tu cuenta',
                       textAlign: TextAlign.center,
                       style: tema.textTheme.bodyLarge,
                     ),
+                    if (cuentaAjena != null) ...[
+                      const SizedBox(height: 16),
+                      _AvisoCuentaCasa(
+                        sesion: cuentaAjena,
+                        alCerrar: _cargando
+                            ? null
+                            : () => ref.read(servicioSesionProvider).salir(),
+                      ),
+                    ],
                     const SizedBox(height: 24),
                     TextFormField(
                       controller: _correo,
@@ -158,7 +179,9 @@ class _PantallaEntrarState extends ConsumerState<PantallaEntrar> {
                     if (demostracion != null) ...[
                       const SizedBox(height: 32),
                       _ModoDemostracion(
-                        roles: demostracion.rolesDisponibles,
+                        roles: esTablet
+                            ? const [Rol.casa]
+                            : demostracion.rolesDisponibles,
                         habilitado: !_cargando,
                         alElegir: (rol) =>
                             _intentar(() => demostracion.entrarComo(rol)),
@@ -169,6 +192,50 @@ class _PantallaEntrarState extends ConsumerState<PantallaEntrar> {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// La tablet tiene abierta la cuenta de una persona: se explica que en la
+/// tablet de la casa cada quien entra con su PIN desde el modo Casa.
+class _AvisoCuentaCasa extends StatelessWidget {
+  const _AvisoCuentaCasa({required this.sesion, required this.alCerrar});
+
+  final Sesion sesion;
+  final VoidCallback? alCerrar;
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    return Card(
+      key: const ValueKey('aviso-cuenta-casa'),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Esta es la tablet de la casa',
+              style: tema.textTheme.titleMedium,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Está abierta la cuenta de ${sesion.persona.nombre} '
+              '(${nombreRol(sesion.rol)}). La tablet trabaja con la cuenta '
+              'Casa; cada persona entra después con su PIN desde el modo Casa.',
+            ),
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton.icon(
+                onPressed: alCerrar,
+                icon: const Icon(Icons.logout),
+                label: Text('Cerrar la cuenta de ${sesion.persona.nombre}'),
+              ),
+            ),
+          ],
         ),
       ),
     );

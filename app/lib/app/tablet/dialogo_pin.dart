@@ -1,4 +1,7 @@
-/// Entrar como una persona en la tablet: PIN de 4 a 6 dígitos o huella.
+/// Entrar como una persona en la tablet: solo con su PIN de 4 a 6 dígitos.
+///
+/// La huella no abre la tablet compartida (revisión de la Fase 0, B3): Android
+/// acepta cualquier dedo registrado en el equipo y no dice de quién es.
 library;
 
 import 'package:flutter/material.dart';
@@ -6,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../nucleo/permisos/permisos.dart';
+import '../../nucleo/seguridad/intentos.dart';
 import '../../nucleo/tablet/controlador_tablet.dart';
 import '../../nucleo/tablet/usuarios_tablet.dart';
 
@@ -16,6 +20,27 @@ Future<bool> mostrarDialogoPin(BuildContext context, UsuarioTablet usuario) asyn
       builder: (contexto) => DialogoPin(usuario: usuario),
     ) ??
     false;
+
+/// Mensaje para la persona según el resultado de entrar.
+String? mensajeDesbloqueo(ResultadoDesbloqueo resultado, {Duration? espera}) =>
+    switch (resultado) {
+      ResultadoDesbloqueo.abierto || ResultadoDesbloqueo.cancelado => null,
+      ResultadoDesbloqueo.pinIncorrecto => 'PIN incorrecto.',
+      ResultadoDesbloqueo.bloqueado =>
+        'Demasiados intentos. Espera ${textoEspera(espera ?? ControladorTablet.duracionBloqueo)}.',
+      ResultadoDesbloqueo.huellaNoDisponible =>
+        'En la tablet de la casa se entra con el PIN.',
+      ResultadoDesbloqueo.faltaCuenta =>
+        'Falta tu cuenta en esta tablet: pide que te agreguen de nuevo con tu '
+            'correo y contraseña.',
+      ResultadoDesbloqueo.sinAcceso =>
+        'Tu cuenta ya no tiene acceso a esta casa. Se quitó de la tablet.',
+      ResultadoDesbloqueo.requiereCuentaCasa =>
+        'La tablet debe tener abierta la cuenta Casa.',
+      ResultadoDesbloqueo.error =>
+        'No se pudo comprobar tu cuenta. Intenta de nuevo.',
+      ResultadoDesbloqueo.noExiste => 'Esta persona ya no está en la tablet.',
+    };
 
 class DialogoPin extends ConsumerStatefulWidget {
   const DialogoPin({super.key, required this.usuario});
@@ -29,6 +54,7 @@ class DialogoPin extends ConsumerStatefulWidget {
 class _DialogoPinState extends ConsumerState<DialogoPin> {
   final _pin = TextEditingController();
   String? _error;
+  bool _entrando = false;
 
   @override
   void dispose() {
@@ -36,37 +62,29 @@ class _DialogoPinState extends ConsumerState<DialogoPin> {
     super.dispose();
   }
 
-  void _mostrar(ResultadoDesbloqueo resultado) {
+  Future<void> _entrarConPin() async {
+    if (_entrando) return;
+    final controlador = ref.read(controladorTabletProvider.notifier);
+    final personaId = widget.usuario.personaId;
+    setState(() {
+      _entrando = true;
+      _error = null;
+    });
+    final resultado = await controlador.entrarConPin(personaId, _pin.text);
+    // Al entrar, el cascarón cierra este diálogo (B2).
+    if (!mounted) return;
     if (resultado == ResultadoDesbloqueo.abierto) {
       Navigator.of(context).pop(true);
       return;
     }
     _pin.clear();
-    setState(
-      () => _error = switch (resultado) {
-        ResultadoDesbloqueo.pinIncorrecto => 'PIN incorrecto.',
-        ResultadoDesbloqueo.bloqueado =>
-          'Demasiados intentos. Espera 30 segundos.',
-        ResultadoDesbloqueo.huellaNoDisponible =>
-          'La huella no está disponible. Usa tu PIN.',
-        ResultadoDesbloqueo.huellaFallida => 'No se reconoció la huella.',
-        ResultadoDesbloqueo.noExiste => 'Esta persona ya no está en la tablet.',
-        ResultadoDesbloqueo.abierto => null,
-      },
-    );
-  }
-
-  void _entrarConPin() => _mostrar(
-    ref
-        .read(controladorTabletProvider.notifier)
-        .desbloquearConPin(widget.usuario.personaId, _pin.text),
-  );
-
-  Future<void> _entrarConHuella() async {
-    final resultado = await ref
-        .read(controladorTabletProvider.notifier)
-        .desbloquearConHuella(widget.usuario.personaId);
-    if (mounted) _mostrar(resultado);
+    setState(() {
+      _entrando = false;
+      _error = mensajeDesbloqueo(
+        resultado,
+        espera: controlador.esperaRestante(personaId),
+      );
+    });
   }
 
   @override
@@ -82,6 +100,7 @@ class _DialogoPinState extends ConsumerState<DialogoPin> {
           key: const Key('campo-pin'),
           controller: _pin,
           autofocus: true,
+          enabled: !_entrando,
           obscureText: true,
           keyboardType: TextInputType.number,
           maxLength: 6,
@@ -91,23 +110,26 @@ class _DialogoPinState extends ConsumerState<DialogoPin> {
           decoration: InputDecoration(
             labelText: 'PIN',
             errorText: _error,
+            errorMaxLines: 3,
             border: const OutlineInputBorder(),
           ),
         ),
       ],
     ),
     actions: [
-      if (widget.usuario.huella)
-        TextButton.icon(
-          onPressed: _entrarConHuella,
-          icon: const Icon(Icons.fingerprint),
-          label: const Text('Usar huella'),
-        ),
       TextButton(
         onPressed: () => Navigator.of(context).pop(false),
         child: const Text('Cancelar'),
       ),
-      FilledButton(onPressed: _entrarConPin, child: const Text('Entrar')),
+      FilledButton(
+        onPressed: _entrando ? null : _entrarConPin,
+        child: _entrando
+            ? const SizedBox.square(
+                dimension: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : const Text('Entrar'),
+      ),
     ],
   );
 }

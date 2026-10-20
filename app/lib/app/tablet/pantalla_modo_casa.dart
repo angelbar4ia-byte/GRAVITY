@@ -1,6 +1,6 @@
-/// Modo Casa de la tablet (D14, `DISENO_UX_UI.md` sección 11): rol Casa, sin
-/// dinero ni datos clínicos. Arriba se elige el contexto; a un lado, quién
-/// usa la tablet (PIN o huella).
+/// Modo Casa de la tablet (D14, `DISENO_UX_UI.md` sección 11): cuenta de rol
+/// Casa, sin dinero ni datos clínicos. Arriba se elige el contexto; a un lado,
+/// quién usa la tablet (entra con su PIN).
 library;
 
 import 'package:flutter/material.dart';
@@ -222,9 +222,6 @@ class _SelectorPersona extends ConsumerWidget {
                             ),
                             title: Text(usuario.nombre),
                             subtitle: Text(nombreRol(usuario.rol)),
-                            trailing: usuario.huella
-                                ? const Icon(Icons.fingerprint)
-                                : null,
                             minTileHeight: 56,
                             onTap: () => mostrarDialogoPin(context, usuario),
                           ),

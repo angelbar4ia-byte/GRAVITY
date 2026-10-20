@@ -1,5 +1,7 @@
 /// Agregar a una persona a la tablet: su correo y contraseña (se comprueban
-/// en el servidor, así el rol es el real) y un PIN nuevo de 4 a 6 dígitos.
+/// en el servidor, así el rol es el real) y un PIN nuevo de 4 a 6 dígitos. Su
+/// sesión del servidor queda guardada, cifrada con ese PIN, para que al entrar
+/// las peticiones salgan con su identidad (revisión de la Fase 0, I6).
 library;
 
 import 'package:flutter/material.dart';
@@ -7,7 +9,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../nucleo/seguridad/pin.dart';
-import '../../nucleo/seguridad/proveedores_seguridad.dart';
 import '../../nucleo/sesion/proveedores_sesion.dart';
 import '../../nucleo/sesion/sesion.dart';
 import '../../nucleo/tablet/controlador_tablet.dart';
@@ -34,18 +35,8 @@ class _DialogoAgregarPersonaState extends ConsumerState<DialogoAgregarPersona> {
   final _contrasena = TextEditingController();
   final _pin = TextEditingController();
   final _confirmacion = TextEditingController();
-  bool _huella = false;
-  bool _hayHuella = false;
   bool _guardando = false;
   String? _error;
-
-  @override
-  void initState() {
-    super.initState();
-    ref.read(biometriaProvider).disponible().then((hay) {
-      if (mounted) setState(() => _hayHuella = hay);
-    });
-  }
 
   @override
   void dispose() {
@@ -69,7 +60,6 @@ class _DialogoAgregarPersonaState extends ConsumerState<DialogoAgregarPersona> {
             correo: _correo.text,
             contrasena: _contrasena.text,
             pin: _pin.text,
-            huella: _huella,
           );
       if (mounted) Navigator.of(context).pop(true);
     } on ErrorSesion catch (error) {
@@ -100,7 +90,8 @@ class _DialogoAgregarPersonaState extends ConsumerState<DialogoAgregarPersona> {
                             '(pareja@, familiar@, cuidador@; cualquier otro '
                             'es Dueño). Cualquier contraseña sirve.'
                       : 'La persona escribe su correo y contraseña una sola '
-                            'vez y elige su PIN.',
+                            'vez y elige su PIN. En la tablet de la casa se '
+                            'entra solo con el PIN.',
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
@@ -143,16 +134,6 @@ class _DialogoAgregarPersonaState extends ConsumerState<DialogoAgregarPersona> {
                   validator: (v) =>
                       v == _pin.text ? null : 'Los PIN no coinciden.',
                 ),
-                if (_hayHuella)
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    value: _huella,
-                    onChanged: (v) => setState(() => _huella = v),
-                    title: const Text('Entrar también con huella'),
-                    subtitle: const Text(
-                      'Cualquier huella registrada en la tablet la abre.',
-                    ),
-                  ),
                 if (_error != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 8),

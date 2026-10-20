@@ -1,6 +1,10 @@
 /// Cascarón de la tablet de la casa (D14): modo Casa por omisión; quien entra
-/// con PIN o huella ve sus pantallas con riel lateral, y tras el tiempo sin
-/// uso (2 min por omisión) la tablet regresa sola al modo Casa.
+/// con su PIN ve sus pantallas con riel lateral, y tras el tiempo sin uso
+/// (2 min por omisión) la tablet regresa sola al modo Casa.
+///
+/// Al cambiar de persona (entrar, salir o vencer el tiempo) se cierran todas
+/// las hojas, diálogos y menús que quedaron abiertos (revisión de la Fase 0,
+/// B2): nada de una persona queda al alcance de la siguiente.
 library;
 
 import 'package:flutter/material.dart';
@@ -12,6 +16,7 @@ import '../../nucleo/tablet/controlador_tablet.dart';
 import '../../nucleo/tablet/usuarios_tablet.dart';
 import '../navegacion.dart';
 import '../pantallas/hoja_registrar.dart';
+import '../router.dart';
 import '../sesion_efectiva.dart';
 import '../tablet/detector_inactividad.dart';
 
@@ -32,6 +37,7 @@ class CascaronTablet extends ConsumerWidget {
       controladorTabletProvider.select((estado) => estado.usuarioActivo),
       (anterior, actual) {
         if (anterior?.personaId == actual?.personaId) return;
+        cerrarLoQueEstaEncima(context);
         context.go(actual == null ? Rutas.inicio : inicioDe(actual.rol));
       },
     );

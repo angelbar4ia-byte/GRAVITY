@@ -1,6 +1,6 @@
 /// Quién está usando la app **ahora**: en el teléfono y la laptop, la persona
-/// de la sesión; en la tablet, la persona que entró con PIN o, si nadie, el
-/// modo Casa (D14).
+/// de la sesión; en la tablet, la persona que entró con su PIN o, si nadie,
+/// la cuenta Casa (modo Casa, D14).
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,8 +12,16 @@ import '../nucleo/sesion/sesion.dart';
 import '../nucleo/tablet/controlador_tablet.dart';
 import 'dispositivo.dart';
 
-/// Persona que representa al modo Casa en la tablet.
-const personaModoCasa = Persona(id: 'modo-casa', nombre: 'Casa');
+/// `true` si la tablet de la casa tiene abierta una cuenta que no es la de
+/// rol Casa (D14; revisión de la Fase 0, I6). Entonces no se arma ninguna
+/// interfaz: la pantalla de entrar pide la cuenta de la casa.
+final tabletSinCuentaCasaProvider = Provider<bool>((ref) {
+  if (ref.watch(tipoDispositivoProvider) != TipoDispositivo.tablet) {
+    return false;
+  }
+  final sesion = ref.watch(sesionActualProvider);
+  return sesion != null && sesion.rol != Rol.casa;
+});
 
 /// Sesión con la que se arma la interfaz (o `null` si nadie ha entrado).
 final sesionEfectivaProvider = Provider<Sesion?>((ref) {
@@ -22,11 +30,12 @@ final sesionEfectivaProvider = Provider<Sesion?>((ref) {
   if (ref.watch(tipoDispositivoProvider) != TipoDispositivo.tablet) {
     return sesion;
   }
+  // D14: el modo Casa usa la cuenta de rol Casa. Con otra cuenta, nada.
+  if (ref.watch(tabletSinCuentaCasaProvider)) return null;
   final activo = ref.watch(
     controladorTabletProvider.select((estado) => estado.usuarioActivo),
   );
-  return activo?.sesion ??
-      Sesion(persona: personaModoCasa, rol: Rol.casa, hogarId: sesion.hogarId);
+  return activo?.sesion ?? sesion;
 });
 
 /// Rol con el que se arma la interfaz (o `null` si nadie ha entrado).

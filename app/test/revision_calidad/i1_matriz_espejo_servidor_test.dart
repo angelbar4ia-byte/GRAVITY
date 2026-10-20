@@ -52,9 +52,12 @@ Map<(Rol, Modulo), Set<Accion>> matrizDelServidor() {
 void main() {
   final servidor = matrizDelServidor();
 
-  test('se leyó la matriz del servidor (57 filas)', () {
+  // Ajuste de plataforma (revisión de la Fase 0, I1): la alineación acordada
+  // quita las 2 filas de cuidador × gravity (la cuidadora no usa GRAVITY), así
+  // que el servidor queda con 55 filas, no 57.
+  test('se leyó la matriz del servidor (55 filas)', () {
     final filas = servidor.values.fold<int>(0, (n, s) => n + s.length);
-    expect(filas, 57);
+    expect(filas, 55);
   });
 
   test('el espejo de la app da las mismas acciones que el servidor', () {

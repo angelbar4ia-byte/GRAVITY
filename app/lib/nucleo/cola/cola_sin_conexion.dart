@@ -6,6 +6,13 @@
 ///   se vuelve a enviar (idempotencia). El servidor también usa el id como
 ///   llave, así que un reenvío tras una respuesta perdida no duplica.
 /// - Si un envío falla por red, se reintenta con espera creciente.
+/// - Cada registro guarda **quién** lo hizo y solo se envía con la sesión del
+///   servidor de esa persona; sin sesión no se envía nada (revisión de la
+///   Fase 0, I4).
+/// - Lo que el servidor no acepta (sin permiso, datos inválidos) o lo que
+///   falla demasiadas veces queda en "requiere atención"
+///   ([EstadoPendiente.rechazado]): no se pierde, no se reintenta solo y la
+///   app lo muestra para que la persona decida.
 library;
 
 import 'dart:async';
@@ -25,8 +32,12 @@ enum ResultadoEnvio {
   /// Falla pasajera (sin señal, servidor ocupado): se reintenta después.
   reintentar,
 
-  /// El servidor no lo acepta (permisos, datos inválidos): no se reintenta.
+  /// El servidor no lo acepta (permisos, datos inválidos): requiere atención.
   rechazado,
+
+  /// No hay sesión con el servidor: no se intentó; espera a que la haya (no
+  /// cuenta como intento).
+  sinSesion,
 }
 
 /// Un registro listo para enviarse.
@@ -49,7 +60,8 @@ class PeticionEnvio {
 }
 
 /// Envía registros al servidor. Debe ser idempotente por [PeticionEnvio.id].
-/// Una excepción cuenta como [ResultadoEnvio.reintentar].
+/// Una excepción cuenta como [ResultadoEnvio.reintentar] (hasta
+/// [ColaSinConexion.intentosMaximos]).
 abstract interface class Enviador {
   Future<ResultadoEnvio> enviar(PeticionEnvio peticion);
 }
@@ -101,6 +113,9 @@ class ColaSinConexion {
     required this._base,
     required this._enviador,
     this.politica = const PoliticaReintentos(),
+    this.intentosMaximos = 20,
+    this.personaQueRegistra,
+    this.personaConSesion,
     DateTime Function()? reloj,
     String Function()? generarId,
   }) : _reloj = reloj ?? DateTime.now,
@@ -109,6 +124,20 @@ class ColaSinConexion {
   final BaseLocal _base;
   final Enviador _enviador;
   final PoliticaReintentos politica;
+
+  /// Tras estos intentos fallidos sin respuesta clara, el registro pasa a
+  /// "requiere atención" en lugar de reintentarse para siempre (M16).
+  final int intentosMaximos;
+
+  /// Persona que registra ahora (se guarda en cada registro). En la tablet,
+  /// la que entró con su PIN.
+  final String? Function()? personaQueRegistra;
+
+  /// Persona con cuya sesión salen ahora las peticiones al servidor. Si se da
+  /// y devuelve `null` (nadie ha entrado), la cola no envía nada; si devuelve
+  /// una persona, solo se envía lo que ella registró.
+  final String? Function()? personaConSesion;
+
   final DateTime Function() _reloj;
   final String Function() _generarId;
 
@@ -119,10 +148,12 @@ class ColaSinConexion {
 
   /// Guarda un registro para subirlo. Devuelve su id (UUID). Si ya existe un
   /// registro con [id], no se duplica.
+  /// [personaId] es quien lo registra; por omisión, [personaQueRegistra].
   Future<String> encolar({
     required String tipo,
     required Map<String, Object?> carga,
     String? id,
+    String? personaId,
   }) async {
     final idFinal = id ?? _generarId();
     await _base
@@ -134,6 +165,7 @@ class ColaSinConexion {
             carga: jsonEncode(carga),
             creadoEn: _reloj(),
             estado: EstadoPendiente.pendiente,
+            personaId: Value(personaId ?? personaQueRegistra?.call()),
           ),
           mode: InsertMode.insertOrIgnore,
         );
@@ -148,13 +180,27 @@ class ColaSinConexion {
 
   Future<ResumenProceso> _procesar() async {
     final ahora = _reloj();
+    // Sin sesión no se envía nada; con sesión, solo lo de esa persona.
+    final conSesion = personaConSesion;
+    final persona = conSesion?.call();
+    if (conSesion != null && persona == null) {
+      return ResumenProceso(
+        enviados: 0,
+        reintentos: 0,
+        rechazados: 0,
+        restantes: await contarPendientes(),
+      );
+    }
     final listos =
         await (_base.select(_tabla)
               ..where(
                 (t) =>
                     t.estado.equalsValue(EstadoPendiente.pendiente) &
                     (t.siguienteIntento.isNull() |
-                        t.siguienteIntento.isSmallerOrEqualValue(ahora)),
+                        t.siguienteIntento.isSmallerOrEqualValue(ahora)) &
+                    (persona == null
+                        ? const Constant(true)
+                        : t.personaId.equals(persona)),
               )
               ..orderBy([
                 (t) => OrderingTerm.asc(t.creadoEn),
@@ -183,6 +229,12 @@ class ColaSinConexion {
         resultado = ResultadoEnvio.reintentar;
         error = '$e';
       }
+      if (resultado == ResultadoEnvio.sinSesion) break;
+      if (resultado == ResultadoEnvio.reintentar && intento >= intentosMaximos) {
+        // Demasiados intentos sin una respuesta clara: que lo vea la persona.
+        resultado = ResultadoEnvio.rechazado;
+        error = 'Falló $intento veces: ${error ?? 'sin respuesta clara del servidor'}';
+      }
 
       final actualizar = _base.update(_tabla)
         ..where(
@@ -208,7 +260,9 @@ class ColaSinConexion {
               estado: const Value(EstadoPendiente.rechazado),
               intentos: Value(intento),
               siguienteIntento: const Value(null),
-              ultimoError: Value(error ?? 'Rechazado por el servidor'),
+              ultimoError: Value(
+                error ?? _enviador.ultimoMotivo ?? 'El servidor no lo aceptó',
+              ),
             ),
           );
         case ResultadoEnvio.reintentar:
@@ -220,6 +274,8 @@ class ColaSinConexion {
               ultimoError: Value(error ?? 'Sin respuesta del servidor'),
             ),
           );
+        case ResultadoEnvio.sinSesion:
+          break;
       }
       if (resultado == ResultadoEnvio.reintentar) break;
     }

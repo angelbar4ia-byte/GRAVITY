@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/dispositivo.dart';
 import '../../../app/tablet/dialogo_agregar_persona.dart';
+import '../../../app/tablet/dialogo_pin.dart' show mensajeDesbloqueo;
 import '../../../nucleo/contratos/dispositivo.dart';
 import '../../../nucleo/contratos/roles.dart';
 import '../../../nucleo/permisos/permisos.dart';
@@ -96,37 +97,29 @@ class _PersonasTablet extends ConsumerWidget {
           Card(
             child: ListTile(
               title: Text(usuario.nombre),
-              subtitle: Text(
-                '${nombreRol(usuario.rol)}'
-                '${usuario.huella ? ' · con huella' : ''}',
-              ),
+              subtitle: Text('${nombreRol(usuario.rol)} · entra con PIN'),
               trailing: PopupMenuButton<String>(
                 tooltip: 'Opciones',
                 onSelected: (opcion) async {
                   switch (opcion) {
                     case 'pin':
-                      final pin = await _pedirPinNuevo(context, usuario);
-                      if (pin != null) {
-                        await controlador.cambiarPin(usuario.personaId, pin);
-                      }
-                    case 'huella':
-                      await controlador.cambiarHuella(
-                        usuario.personaId,
-                        activa: !usuario.huella,
+                      final mensaje = await _cambiarPin(
+                        context,
+                        controlador,
+                        usuario,
                       );
+                      if (mensaje != null && context.mounted) {
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text(mensaje)));
+                      }
                     case 'quitar':
                       await controlador.quitarUsuario(usuario.personaId);
                   }
                 },
-                itemBuilder: (context) => [
-                  const PopupMenuItem(value: 'pin', child: Text('Cambiar PIN')),
+                itemBuilder: (context) => const [
+                  PopupMenuItem(value: 'pin', child: Text('Cambiar PIN')),
                   PopupMenuItem(
-                    value: 'huella',
-                    child: Text(
-                      usuario.huella ? 'Quitar huella' : 'Permitir huella',
-                    ),
-                  ),
-                  const PopupMenuItem(
                     value: 'quitar',
                     child: Text('Quitar de la tablet'),
                   ),
@@ -165,11 +158,30 @@ class _PersonasTablet extends ConsumerWidget {
     );
   }
 
-  Future<String?> _pedirPinNuevo(BuildContext context, UsuarioTablet usuario) =>
-      showDialog<String>(
-        context: context,
-        builder: (contexto) => _DialogoPinNuevo(nombre: usuario.nombre),
-      );
+  /// Pide el PIN actual y el nuevo (la persona lo cambia ella misma: con el
+  /// actual se vuelve a cifrar su credencial). Devuelve el mensaje a mostrar.
+  Future<String?> _cambiarPin(
+    BuildContext context,
+    ControladorTablet controlador,
+    UsuarioTablet usuario,
+  ) async {
+    final pines = await showDialog<(String, String)>(
+      context: context,
+      builder: (contexto) => _DialogoPinNuevo(nombre: usuario.nombre),
+    );
+    if (pines == null) return null;
+    final resultado = await controlador.cambiarPin(
+      usuario.personaId,
+      pinActual: pines.$1,
+      pinNuevo: pines.$2,
+    );
+    return resultado == ResultadoDesbloqueo.abierto
+        ? 'PIN cambiado.'
+        : mensajeDesbloqueo(
+            resultado,
+            espera: controlador.esperaRestante(usuario.personaId),
+          );
+  }
 }
 
 class _DialogoPinNuevo extends StatefulWidget {
@@ -182,25 +194,40 @@ class _DialogoPinNuevo extends StatefulWidget {
 }
 
 class _DialogoPinNuevoState extends State<_DialogoPinNuevo> {
-  final _texto = TextEditingController();
+  final _actual = TextEditingController();
+  final _nuevo = TextEditingController();
 
   @override
   void dispose() {
-    _texto.dispose();
+    _actual.dispose();
+    _nuevo.dispose();
     super.dispose();
   }
 
+  Widget _campo(TextEditingController control, String etiqueta, Key llave) =>
+      TextField(
+        key: llave,
+        controller: control,
+        obscureText: true,
+        keyboardType: TextInputType.number,
+        maxLength: 6,
+        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+        decoration: InputDecoration(labelText: etiqueta),
+      );
+
   @override
   Widget build(BuildContext context) => AlertDialog(
-    title: Text('PIN nuevo de ${widget.nombre}'),
-    content: TextField(
-      controller: _texto,
-      autofocus: true,
-      obscureText: true,
-      keyboardType: TextInputType.number,
-      maxLength: 6,
-      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-      decoration: const InputDecoration(labelText: 'De 4 a 6 dígitos'),
+    title: Text('Cambiar el PIN de ${widget.nombre}'),
+    content: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _campo(_actual, 'PIN actual', const Key('pin-actual')),
+        _campo(_nuevo, 'PIN nuevo (4 a 6 dígitos)', const Key('pin-nuevo')),
+        const Text(
+          'Si olvidaste tu PIN, quítate de la tablet y vuelve a agregarte con '
+          'tu correo y contraseña.',
+        ),
+      ],
     ),
     actions: [
       TextButton(
@@ -209,7 +236,9 @@ class _DialogoPinNuevoState extends State<_DialogoPinNuevo> {
       ),
       FilledButton(
         onPressed: () {
-          if (pinValido(_texto.text)) Navigator.of(context).pop(_texto.text);
+          if (_actual.text.isNotEmpty && pinValido(_nuevo.text)) {
+            Navigator.of(context).pop((_actual.text, _nuevo.text));
+          }
         },
         child: const Text('Guardar'),
       ),

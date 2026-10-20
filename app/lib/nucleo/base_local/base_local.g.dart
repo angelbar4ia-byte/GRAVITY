@@ -91,6 +91,17 @@ class $PendientesTable extends Pendientes
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _personaIdMeta = const VerificationMeta(
+    'personaId',
+  );
+  @override
+  late final GeneratedColumn<String> personaId = GeneratedColumn<String>(
+    'persona_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -101,6 +112,7 @@ class $PendientesTable extends Pendientes
     estado,
     siguienteIntento,
     ultimoError,
+    personaId,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -167,6 +179,12 @@ class $PendientesTable extends Pendientes
         ),
       );
     }
+    if (data.containsKey('persona_id')) {
+      context.handle(
+        _personaIdMeta,
+        personaId.isAcceptableOrUnknown(data['persona_id']!, _personaIdMeta),
+      );
+    }
     return context;
   }
 
@@ -210,6 +228,10 @@ class $PendientesTable extends Pendientes
         DriftSqlType.string,
         data['${effectivePrefix}ultimo_error'],
       ),
+      personaId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}persona_id'],
+      ),
     );
   }
 
@@ -240,6 +262,10 @@ class RegistroPendiente extends DataClass
   /// Cuándo puede volver a intentarse (espera creciente).
   final DateTime? siguienteIntento;
   final String? ultimoError;
+
+  /// Persona que lo registró (id de `personas`). Solo se envía con la sesión
+  /// del servidor de esa misma persona (revisión de la Fase 0, I4).
+  final String? personaId;
   const RegistroPendiente({
     required this.id,
     required this.tipo,
@@ -249,6 +275,7 @@ class RegistroPendiente extends DataClass
     required this.estado,
     this.siguienteIntento,
     this.ultimoError,
+    this.personaId,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -269,6 +296,9 @@ class RegistroPendiente extends DataClass
     if (!nullToAbsent || ultimoError != null) {
       map['ultimo_error'] = Variable<String>(ultimoError);
     }
+    if (!nullToAbsent || personaId != null) {
+      map['persona_id'] = Variable<String>(personaId);
+    }
     return map;
   }
 
@@ -286,6 +316,9 @@ class RegistroPendiente extends DataClass
       ultimoError: ultimoError == null && nullToAbsent
           ? const Value.absent()
           : Value(ultimoError),
+      personaId: personaId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(personaId),
     );
   }
 
@@ -307,6 +340,7 @@ class RegistroPendiente extends DataClass
         json['siguienteIntento'],
       ),
       ultimoError: serializer.fromJson<String?>(json['ultimoError']),
+      personaId: serializer.fromJson<String?>(json['personaId']),
     );
   }
   @override
@@ -323,6 +357,7 @@ class RegistroPendiente extends DataClass
       ),
       'siguienteIntento': serializer.toJson<DateTime?>(siguienteIntento),
       'ultimoError': serializer.toJson<String?>(ultimoError),
+      'personaId': serializer.toJson<String?>(personaId),
     };
   }
 
@@ -335,6 +370,7 @@ class RegistroPendiente extends DataClass
     EstadoPendiente? estado,
     Value<DateTime?> siguienteIntento = const Value.absent(),
     Value<String?> ultimoError = const Value.absent(),
+    Value<String?> personaId = const Value.absent(),
   }) => RegistroPendiente(
     id: id ?? this.id,
     tipo: tipo ?? this.tipo,
@@ -346,6 +382,7 @@ class RegistroPendiente extends DataClass
         ? siguienteIntento.value
         : this.siguienteIntento,
     ultimoError: ultimoError.present ? ultimoError.value : this.ultimoError,
+    personaId: personaId.present ? personaId.value : this.personaId,
   );
   RegistroPendiente copyWithCompanion(PendientesCompanion data) {
     return RegistroPendiente(
@@ -361,6 +398,7 @@ class RegistroPendiente extends DataClass
       ultimoError: data.ultimoError.present
           ? data.ultimoError.value
           : this.ultimoError,
+      personaId: data.personaId.present ? data.personaId.value : this.personaId,
     );
   }
 
@@ -374,7 +412,8 @@ class RegistroPendiente extends DataClass
           ..write('intentos: $intentos, ')
           ..write('estado: $estado, ')
           ..write('siguienteIntento: $siguienteIntento, ')
-          ..write('ultimoError: $ultimoError')
+          ..write('ultimoError: $ultimoError, ')
+          ..write('personaId: $personaId')
           ..write(')'))
         .toString();
   }
@@ -389,6 +428,7 @@ class RegistroPendiente extends DataClass
     estado,
     siguienteIntento,
     ultimoError,
+    personaId,
   );
   @override
   bool operator ==(Object other) =>
@@ -401,7 +441,8 @@ class RegistroPendiente extends DataClass
           other.intentos == this.intentos &&
           other.estado == this.estado &&
           other.siguienteIntento == this.siguienteIntento &&
-          other.ultimoError == this.ultimoError);
+          other.ultimoError == this.ultimoError &&
+          other.personaId == this.personaId);
 }
 
 class PendientesCompanion extends UpdateCompanion<RegistroPendiente> {
@@ -413,6 +454,7 @@ class PendientesCompanion extends UpdateCompanion<RegistroPendiente> {
   final Value<EstadoPendiente> estado;
   final Value<DateTime?> siguienteIntento;
   final Value<String?> ultimoError;
+  final Value<String?> personaId;
   final Value<int> rowid;
   const PendientesCompanion({
     this.id = const Value.absent(),
@@ -423,6 +465,7 @@ class PendientesCompanion extends UpdateCompanion<RegistroPendiente> {
     this.estado = const Value.absent(),
     this.siguienteIntento = const Value.absent(),
     this.ultimoError = const Value.absent(),
+    this.personaId = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   PendientesCompanion.insert({
@@ -434,6 +477,7 @@ class PendientesCompanion extends UpdateCompanion<RegistroPendiente> {
     required EstadoPendiente estado,
     this.siguienteIntento = const Value.absent(),
     this.ultimoError = const Value.absent(),
+    this.personaId = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        tipo = Value(tipo),
@@ -449,6 +493,7 @@ class PendientesCompanion extends UpdateCompanion<RegistroPendiente> {
     Expression<String>? estado,
     Expression<DateTime>? siguienteIntento,
     Expression<String>? ultimoError,
+    Expression<String>? personaId,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -460,6 +505,7 @@ class PendientesCompanion extends UpdateCompanion<RegistroPendiente> {
       if (estado != null) 'estado': estado,
       if (siguienteIntento != null) 'siguiente_intento': siguienteIntento,
       if (ultimoError != null) 'ultimo_error': ultimoError,
+      if (personaId != null) 'persona_id': personaId,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -473,6 +519,7 @@ class PendientesCompanion extends UpdateCompanion<RegistroPendiente> {
     Value<EstadoPendiente>? estado,
     Value<DateTime?>? siguienteIntento,
     Value<String?>? ultimoError,
+    Value<String?>? personaId,
     Value<int>? rowid,
   }) {
     return PendientesCompanion(
@@ -484,6 +531,7 @@ class PendientesCompanion extends UpdateCompanion<RegistroPendiente> {
       estado: estado ?? this.estado,
       siguienteIntento: siguienteIntento ?? this.siguienteIntento,
       ultimoError: ultimoError ?? this.ultimoError,
+      personaId: personaId ?? this.personaId,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -517,6 +565,9 @@ class PendientesCompanion extends UpdateCompanion<RegistroPendiente> {
     if (ultimoError.present) {
       map['ultimo_error'] = Variable<String>(ultimoError.value);
     }
+    if (personaId.present) {
+      map['persona_id'] = Variable<String>(personaId.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -534,6 +585,7 @@ class PendientesCompanion extends UpdateCompanion<RegistroPendiente> {
           ..write('estado: $estado, ')
           ..write('siguienteIntento: $siguienteIntento, ')
           ..write('ultimoError: $ultimoError, ')
+          ..write('personaId: $personaId, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -560,6 +612,7 @@ typedef $$PendientesTableCreateCompanionBuilder = PendientesCompanion Function({
   required EstadoPendiente estado,
   Value<DateTime?> siguienteIntento,
   Value<String?> ultimoError,
+  Value<String?> personaId,
   Value<int> rowid,
 });
 typedef $$PendientesTableUpdateCompanionBuilder = PendientesCompanion Function({
@@ -571,6 +624,7 @@ typedef $$PendientesTableUpdateCompanionBuilder = PendientesCompanion Function({
   Value<EstadoPendiente> estado,
   Value<DateTime?> siguienteIntento,
   Value<String?> ultimoError,
+  Value<String?> personaId,
   Value<int> rowid,
 });
 
@@ -623,6 +677,11 @@ class $$PendientesTableFilterComposer
     column: $table.ultimoError,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnFilters<String> get personaId => $composableBuilder(
+    column: $table.personaId,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$PendientesTableOrderingComposer
@@ -673,6 +732,11 @@ class $$PendientesTableOrderingComposer
     column: $table.ultimoError,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get personaId => $composableBuilder(
+    column: $table.personaId,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$PendientesTableAnnotationComposer
@@ -711,6 +775,9 @@ class $$PendientesTableAnnotationComposer
     column: $table.ultimoError,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get personaId =>
+      $composableBuilder(column: $table.personaId, builder: (column) => column);
 }
 
 class $$PendientesTableTableManager
@@ -752,6 +819,7 @@ class $$PendientesTableTableManager
                 Value<EstadoPendiente> estado = const Value.absent(),
                 Value<DateTime?> siguienteIntento = const Value.absent(),
                 Value<String?> ultimoError = const Value.absent(),
+                Value<String?> personaId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => PendientesCompanion(
                 id: id,
@@ -762,6 +830,7 @@ class $$PendientesTableTableManager
                 estado: estado,
                 siguienteIntento: siguienteIntento,
                 ultimoError: ultimoError,
+                personaId: personaId,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -774,6 +843,7 @@ class $$PendientesTableTableManager
                 required EstadoPendiente estado,
                 Value<DateTime?> siguienteIntento = const Value.absent(),
                 Value<String?> ultimoError = const Value.absent(),
+                Value<String?> personaId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => PendientesCompanion.insert(
                 id: id,
@@ -784,6 +854,7 @@ class $$PendientesTableTableManager
                 estado: estado,
                 siguienteIntento: siguienteIntento,
                 ultimoError: ultimoError,
+                personaId: personaId,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

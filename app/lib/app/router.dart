@@ -62,12 +62,29 @@ GoRoute _cuidados(String segmento, String titulo, IconData icono) => GoRoute(
   ),
 );
 
+/// Navegador de las pantallas dentro del cascarón. Con él y el navegador raíz
+/// se cierran las hojas y diálogos de una persona al cambiar de persona en la
+/// tablet (revisión de la Fase 0, B2).
+final navegadorCascaronKey = GlobalKey<NavigatorState>(
+  debugLabel: 'cascaron',
+);
+
+/// Cierra todo lo que está encima de las pantallas (hojas, diálogos, menús y
+/// avisos), sin tocar las pantallas mismas.
+void cerrarLoQueEstaEncima(BuildContext context) {
+  bool esPantalla(Route<dynamic> ruta) => ruta.settings is Page || ruta.isFirst;
+  navegadorCascaronKey.currentState?.popUntil(esPantalla);
+  Navigator.maybeOf(context, rootNavigator: true)?.popUntil(esPantalla);
+  ScaffoldMessenger.maybeOf(context)?.clearSnackBars();
+}
+
 final List<RouteBase> rutasGravity = [
   GoRoute(
     path: Rutas.entrar,
     builder: (context, estado) => const PantallaEntrar(),
   ),
   ShellRoute(
+    navigatorKey: navegadorCascaronKey,
     builder: (context, estado, child) =>
         CascaronSegunDispositivo(ubicacion: estado.uri.path, child: child),
     routes: [
