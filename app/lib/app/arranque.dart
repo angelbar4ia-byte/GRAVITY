@@ -31,6 +31,7 @@ const Map<String, String> tablasDeLaCola = {};
 Future<List<Override>> prepararArranque({
   ConfiguracionEntorno configuracion =
       const ConfiguracionEntorno.desdeCompilacion(),
+  BaseLocal Function() abrirBase = BaseLocal.enDispositivo,
 }) async {
   final plataforma = defaultTargetPlatform;
   final dispositivo =
@@ -79,7 +80,7 @@ Future<List<Override>> prepararArranque({
     almacenSeguroProvider.overrideWithValue(almacen),
     biometriaProvider.overrideWithValue(biometria),
     servicioSesionProvider.overrideWithValue(sesion),
-    baseLocalProvider.overrideWithValue(BaseLocal.enDispositivo()),
+    baseLocalProvider.overrideWithValue(abrirBase()),
     enviadorProvider.overrideWithValue(enviador),
   ];
 }

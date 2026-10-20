@@ -1,5 +1,6 @@
 package mx.segundocerebro.gravity
 
-import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterFragmentActivity
 
-class MainActivity : FlutterActivity()
+// local_auth (huella en la tablet) necesita FlutterFragmentActivity.
+class MainActivity : FlutterFragmentActivity()

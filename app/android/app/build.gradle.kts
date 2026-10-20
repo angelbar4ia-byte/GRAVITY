@@ -4,6 +4,12 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// Firebase (D7): solo con la configuración del dueño. Sin
+// app/google-services.json la app compila y Firebase queda apagado.
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+}
+
 android {
     namespace = "mx.segundocerebro.gravity"
     compileSdk = flutter.compileSdkVersion
