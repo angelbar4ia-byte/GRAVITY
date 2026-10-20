@@ -89,9 +89,7 @@ final estilosDisponiblesProvider = Provider<List<Estilo>>(
 );
 
 /// Estilo global. Cambiarlo no reinicia la app: los temas se recalculan.
-final estiloProvider = NotifierProvider<EstiloActual, Estilo>(
-  EstiloActual.new,
-);
+final estiloProvider = NotifierProvider<EstiloActual, Estilo>(EstiloActual.new);
 
 class EstiloActual extends Notifier<Estilo> {
   @override

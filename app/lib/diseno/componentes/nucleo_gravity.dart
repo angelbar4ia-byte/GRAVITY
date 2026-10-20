@@ -196,7 +196,10 @@ class PintorNucleo extends CustomPainter {
     var recorrido = 0.0;
     var i = 0;
     while (recorrido < circunferencia) {
-      final largo = math.min(patron[i % patron.length], circunferencia - recorrido);
+      final largo = math.min(
+        patron[i % patron.length],
+        circunferencia - recorrido,
+      );
       if (i.isEven) {
         canvas.drawArc(
           rect,

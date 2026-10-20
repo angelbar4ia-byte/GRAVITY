@@ -69,7 +69,10 @@ class _DisenoAmplio extends StatelessWidget {
     final v = ValoresDiseno.de(context);
     final hueco = v.espacio * 5;
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: hueco * 1.6, vertical: hueco * 1.4),
+      padding: EdgeInsets.symmetric(
+        horizontal: hueco * 1.6,
+        vertical: hueco * 1.4,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -213,10 +216,11 @@ class _Encabezado extends ConsumerWidget {
               SizedBox(width: v.espacio * 1.5),
               Text(
                 'GRAVITY',
+                // 24 px: texto grande (3:1 basta para el acento sobre el fondo).
                 style: v.titulo(
-                  tamano: 22,
+                  tamano: 24,
                   color: v.acento,
-                  espaciadoLetras: 22 * 0.32,
+                  espaciadoLetras: 24 * 0.3,
                 ),
               ),
             ],
@@ -225,15 +229,16 @@ class _Encabezado extends ConsumerWidget {
         Text(
           fechaYHora(ahora).toUpperCase(),
           key: const ValueKey('fecha-hora'),
-          style: v.numero(tamano: 14, color: v.textoTenue).copyWith(
-            letterSpacing: 14 * 0.12,
-          ),
+          style: v
+              .numero(tamano: 14, color: v.textoTenue)
+              .copyWith(letterSpacing: 14 * 0.12),
         ),
-        Row(
-          mainAxisSize: MainAxisSize.min,
+        Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: v.espacio * 1.5,
+          runSpacing: v.espacio,
           children: [
             _IndicadorConexion(enLinea: enLinea),
-            SizedBox(width: v.espacio * 1.5),
             _BotonModoPrivado(activo: privado),
           ],
         ),
@@ -379,9 +384,7 @@ class _PanelHoy extends ConsumerWidget implements _Panel {
             ),
             SizedBox(height: e * 1.5),
             BarraProgreso(
-              valor: r.habitosTotal == 0
-                  ? 0
-                  : r.habitosHechos / r.habitosTotal,
+              valor: r.habitosTotal == 0 ? 0 : r.habitosHechos / r.habitosTotal,
             ),
           ],
         ],
@@ -550,9 +553,9 @@ class _PanelNucleo extends ConsumerWidget {
         SizedBox(height: e * 2.25),
         Text(
           estado.etiqueta.toUpperCase(),
-          style: v.etiquetaPanel(tamano: 13, color: v.acento).copyWith(
-            letterSpacing: 13 * 0.3,
-          ),
+          style: v
+              .etiquetaPanel(tamano: 13, color: v.acento)
+              .copyWith(letterSpacing: 13 * 0.3),
         ),
         SizedBox(height: e * 2.25),
         ConstrainedBox(

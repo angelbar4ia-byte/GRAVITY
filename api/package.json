@@ -1,0 +1,19 @@
+{
+  "name": "gravity-api",
+  "private": true,
+  "description": "Especificación OpenAPI de GRAVITY (D16): validación, generación del Dart de Ajustes › Desarrollador y Swagger UI local.",
+  "type": "module",
+  "scripts": {
+    "validar": "npx --yes @redocly/cli@2.59.0 lint openapi.yaml",
+    "generar": "node generar_dart.mjs",
+    "verificar": "node generar_dart.mjs --verificar",
+    "swagger": "node copiar_swagger.mjs"
+  },
+  "devDependencies": {
+    "swagger-ui-dist": "5.33.1",
+    "yaml": "2.9.1"
+  },
+  "scarfSettings": {
+    "enabled": false
+  }
+}

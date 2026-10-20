@@ -134,7 +134,10 @@ Fecha nEsimoLunes(int anio, int mes, int n) {
 
 /// Formas de ingreso o de pago recurrente (5.1, "Forma de ingreso y día de
 /// pago"). Los extras no tienen calendario: se registran con su fecha real.
-enum FormaPago { semanal, catorcenal, quincenal, mensual }
+///
+/// [cadaMeses] cubre los compromisos bimestrales, trimestrales, semestrales y
+/// anuales (luz, predial, seguro) para la vista de flujo.
+enum FormaPago { semanal, catorcenal, quincenal, mensual, cadaMeses }
 
 /// Día del mes de un pago: un número (1 a 31) o el último día del mes.
 ///
@@ -154,7 +157,8 @@ class DiaDelMes {
   Fecha en(int anio, int mes) => Fecha.enMes(anio, mes, numero ?? 31);
 
   @override
-  bool operator ==(Object other) => other is DiaDelMes && other.numero == numero;
+  bool operator ==(Object other) =>
+      other is DiaDelMes && other.numero == numero;
 
   @override
   int get hashCode => numero.hashCode;
@@ -172,7 +176,12 @@ class CalendarioPago {
   final int? diaSemana;
 
   /// Catorcenal: fecha ancla; se paga cada 14 días desde ella.
+  /// Cada N meses: fecha de un pago conocido.
   final Fecha? ancla;
+
+  /// Cada N meses: el intervalo (2 bimestral, 3 trimestral, 6 semestral,
+  /// 12 anual).
+  final int? intervaloMeses;
 
   /// Quincenal: los dos días del mes (por defecto 15 y último).
   /// Mensual: un solo día.
@@ -184,6 +193,7 @@ class CalendarioPago {
     this.forma, {
     this.diaSemana,
     this.ancla,
+    this.intervaloMeses,
     this.diasDelMes = const [],
     required this.regla,
   });
@@ -195,7 +205,11 @@ class CalendarioPago {
     if (diaSemana < 1 || diaSemana > 7) {
       throw ArgumentError.value(diaSemana, 'diaSemana', 'debe ser de 1 a 7');
     }
-    return CalendarioPago._(FormaPago.semanal, diaSemana: diaSemana, regla: regla);
+    return CalendarioPago._(
+      FormaPago.semanal,
+      diaSemana: diaSemana,
+      regla: regla,
+    );
   }
 
   factory CalendarioPago.catorcenal(
@@ -223,6 +237,24 @@ class CalendarioPago {
     regla: regla,
   );
 
+  /// Cada [meses] meses a partir de la fecha [ancla] (un pago conocido), en
+  /// el mismo día del mes (o el último, si el mes es más corto).
+  factory CalendarioPago.cadaMeses(
+    Fecha ancla,
+    int meses, {
+    ReglaDiaInhabil regla = ReglaDiaInhabil.siguienteDiaHabil,
+  }) {
+    if (meses < 1 || meses > 12) {
+      throw ArgumentError.value(meses, 'meses', 'debe ser de 1 a 12');
+    }
+    return CalendarioPago._(
+      FormaPago.cadaMeses,
+      ancla: ancla,
+      intervaloMeses: meses,
+      regla: regla,
+    );
+  }
+
   /// Fechas nominales (sin ajustar) entre [desde] y [hasta], inclusive.
   List<Fecha> fechasNominales(Fecha desde, Fecha hasta) {
     final fechas = <Fecha>[];
@@ -239,6 +271,18 @@ class CalendarioPago {
         while (!f.despuesDe(hasta)) {
           fechas.add(f);
           f = f.sumarDias(14);
+        }
+      case FormaPago.cadaMeses:
+        final n = intervaloMeses!;
+        final base = ancla!;
+        final mesesHastaDesde =
+            (desde.anio - base.anio) * 12 + desde.mes - base.mes;
+        var k = (mesesHastaDesde / n).floor() - 1;
+        while (true) {
+          final f = Fecha.enMes(base.anio, base.mes + k * n, base.dia);
+          if (f.despuesDe(hasta)) break;
+          if (!f.antesDe(desde)) fechas.add(f);
+          k += 1;
         }
       case FormaPago.quincenal:
       case FormaPago.mensual:
@@ -272,12 +316,15 @@ class CalendarioPago {
   ) {
     const margen = 31;
     return [
-      for (final nominal in fechasNominales(
-        desde.sumarDias(-margen),
-        hasta.sumarDias(margen),
-      ))
-        FechaPago(nominal, ajustarADiaHabil(nominal, regla, calendario)),
-    ].where((p) => !p.ajustada.antesDe(desde) && !p.ajustada.despuesDe(hasta))
+          for (final nominal in fechasNominales(
+            desde.sumarDias(-margen),
+            hasta.sumarDias(margen),
+          ))
+            FechaPago(nominal, ajustarADiaHabil(nominal, regla, calendario)),
+        ]
+        .where(
+          (p) => !p.ajustada.antesDe(desde) && !p.ajustada.despuesDe(hasta),
+        )
         .toList();
   }
 }

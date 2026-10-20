@@ -314,7 +314,12 @@ class ResumenPeriodo {
   final int presupuesto;
   final int deuda;
 
-  const ResumenPeriodo(this.periodo, this.ingreso, this.presupuesto, this.deuda);
+  const ResumenPeriodo(
+    this.periodo,
+    this.ingreso,
+    this.presupuesto,
+    this.deuda,
+  );
 
   int get remanente => ingreso - presupuesto - deuda;
 }
@@ -354,7 +359,8 @@ class PlanSemanal {
   /// INGRESO semanal (solo `segura` y `probable`).
   int get ingreso => ingresoEquivalente.semanal;
 
-  int get ingresoPotencial => ingresosPotenciales.fold(0, (t, r) => t + r.semanal);
+  int get ingresoPotencial =>
+      ingresosPotenciales.fold(0, (t, r) => t + r.semanal);
 
   /// PRESUPUESTO (egreso tipo 1).
   int get presupuesto => presupuestoEquivalente.semanal;
@@ -388,7 +394,8 @@ class PlanSemanal {
 
   int get tasaRemanentePuntosBase => proporcionEnPuntosBase(remanente, ingreso);
   int get tasaResultadoPuntosBase => proporcionEnPuntosBase(resultado, ingreso);
-  int get cargaDeudaPuntosBase => proporcionEnPuntosBase(deudaPlaneada, ingreso);
+  int get cargaDeudaPuntosBase =>
+      proporcionEnPuntosBase(deudaPlaneada, ingreso);
 
   Semaforo get semaforoDelRemanente =>
       semaforoRemanente(remanente, ingreso, umbrales: parametros.umbrales);
@@ -415,7 +422,8 @@ class PlanSemanal {
 List<Renglon<T>> _renglones<T>(List<T> origenes, Equivalente Function(T) eq) {
   final semanales = semanalesQueSuman([for (final o in origenes) eq(o)]);
   return List.unmodifiable([
-    for (var i = 0; i < origenes.length; i++) Renglon(origenes[i], semanales[i]),
+    for (var i = 0; i < origenes.length; i++)
+      Renglon(origenes[i], semanales[i]),
   ]);
 }
 
@@ -429,8 +437,12 @@ PlanSemanal armarPlanSemanal({
 }) {
   _validarIds(partidas.map((p) => p.id), 'partida');
   _validarIds(deudas.map((d) => d.id), 'deuda');
-  final contados = ingresos.where((i) => i.certeza != Certeza.incierta).toList();
-  final inciertos = ingresos.where((i) => i.certeza == Certeza.incierta).toList();
+  final contados = ingresos
+      .where((i) => i.certeza != Certeza.incierta)
+      .toList();
+  final inciertos = ingresos
+      .where((i) => i.certeza == Certeza.incierta)
+      .toList();
 
   final renglonesIngreso = _renglones(contados, (i) => i.equivalente);
   final renglonesPartida = _renglones(partidas, (p) => p.equivalente);
@@ -441,11 +453,9 @@ PlanSemanal armarPlanSemanal({
   final deudaEq = Equivalente.suma(deudas.map((d) => d.equivalente));
 
   final remanente = ingresoEq.semanal - presupuestoEq.semanal - deudaEq.semanal;
-  final destino = repartirRemanente(
-    remanente,
-    {for (final r in renglonesAbono) r.origen: r.semanal},
-    parametros: parametros,
-  );
+  final destino = repartirRemanente(remanente, {
+    for (final r in renglonesAbono) r.origen: r.semanal,
+  }, parametros: parametros);
 
   return PlanSemanal._(
     semana: semana,
@@ -482,19 +492,25 @@ List<DeudaPlan> ordenDeAbonoExtra(Iterable<DeudaPlan> deudas) {
       final p = a.prioridadManual!.compareTo(b.prioridadManual!);
       return p != 0 ? p : a.id.compareTo(b.id);
     });
-  final conCosto = deudas
-      .where((d) => d.prioridadManual == null && d.tipo == TipoDeuda.conCosto)
-      .toList()
-    ..sort((a, b) {
-      final t = b.tasaAnualPuntosBase.compareTo(a.tasaAnualPuntosBase);
-      if (t != 0) return t;
-      final i = b.interesAnualEstimado.compareTo(a.interesAnualEstimado);
-      return i != 0 ? i : a.id.compareTo(b.id);
-    });
-  final familiares = deudas
-      .where((d) => d.prioridadManual == null && d.tipo == TipoDeuda.familiar)
-      .toList()
-    ..sort((a, b) => a.id.compareTo(b.id));
+  final conCosto =
+      deudas
+          .where(
+            (d) => d.prioridadManual == null && d.tipo == TipoDeuda.conCosto,
+          )
+          .toList()
+        ..sort((a, b) {
+          final t = b.tasaAnualPuntosBase.compareTo(a.tasaAnualPuntosBase);
+          if (t != 0) return t;
+          final i = b.interesAnualEstimado.compareTo(a.interesAnualEstimado);
+          return i != 0 ? i : a.id.compareTo(b.id);
+        });
+  final familiares =
+      deudas
+          .where(
+            (d) => d.prioridadManual == null && d.tipo == TipoDeuda.familiar,
+          )
+          .toList()
+        ..sort((a, b) => a.id.compareTo(b.id));
   return [...manuales, ...conCosto, ...familiares];
 }
 
@@ -517,9 +533,9 @@ DestinoRemanente repartirRemanente(
     return c > 0 ? c : 0;
   }
 
-  final elegibles = ordenDeAbonoExtra(
-    abonosAplicados.keys,
-  ).where((d) => capacidad(d) != 0).toList();
+  final elegibles = ordenDeAbonoExtra(abonosAplicados.keys)
+      .where((d) => capacidad(d) != 0)
+      .toList();
   if (elegibles.isEmpty) return DestinoRemanente(const [], remanente);
 
   final ahorroMinimo = aplicarPorcentaje(
@@ -535,7 +551,10 @@ DestinoRemanente repartirRemanente(
     extras.add(AbonoExtra(d, monto));
     porRepartir -= monto;
   }
-  return DestinoRemanente(List.unmodifiable(extras), ahorroMinimo + porRepartir);
+  return DestinoRemanente(
+    List.unmodifiable(extras),
+    ahorroMinimo + porRepartir,
+  );
 }
 
 /// Gasto devengado de una partida fija o de reserva en la semana: lo
@@ -546,8 +565,10 @@ DestinoRemanente repartirRemanente(
 /// fecha real del pago la cuida la vista de flujo. Así, una renta mensual no
 /// aparece como "sobregasto" en la semana en que se paga, y una luz que llegó
 /// $200 más cara sí.
-int gastoDevengado(int asignadoSemanal, Iterable<(int esperado, int pagado)> pagos) =>
-    asignadoSemanal + pagos.fold(0, (t, p) => t + p.$2 - p.$1);
+int gastoDevengado(
+  int asignadoSemanal,
+  Iterable<(int esperado, int pagado)> pagos,
+) => asignadoSemanal + pagos.fold(0, (t, p) => t + p.$2 - p.$1);
 
 /// Estado de una partida al cierre de la semana.
 class CierrePartida {
@@ -625,7 +646,8 @@ class CierreSemanal {
 
   int get abonoReal => abonos.fold(0, (t, a) => t + a.real);
   int get abonoDiferido => abonos.fold(0, (t, a) => t + a.diferido);
-  int get arrastreSiguiente => partidas.fold(0, (t, p) => t + p.arrastreSiguiente);
+  int get arrastreSiguiente =>
+      partidas.fold(0, (t, p) => t + p.arrastreSiguiente);
 
   /// Lo que el gasto real superó al presupuesto de la semana.
   int get sobregasto {
@@ -708,7 +730,11 @@ CierreSemanal cerrarSemana(
         gastado: gastado,
         arrastreSiguiente: siguiente,
         alRemanente: alRemanente,
-        semaforo: semaforoPartida(gastado, r.semanal + recibido, umbrales: p.umbrales),
+        semaforo: semaforoPartida(
+          gastado,
+          r.semanal + recibido,
+          umbrales: p.umbrales,
+        ),
       ),
     );
   }
@@ -722,7 +748,9 @@ CierreSemanal cerrarSemana(
   final abonoTotal = disponible <= 0
       ? 0
       : (disponible >= deudaPlaneada ? deudaPlaneada : disponible);
-  final remanenteReal = disponible > deudaPlaneada ? disponible - deudaPlaneada : 0;
+  final remanenteReal = disponible > deudaPlaneada
+      ? disponible - deudaPlaneada
+      : 0;
   final deficit = disponible < 0 ? -disponible : 0;
 
   final abonos = _repartirAbonoReal(plan.abonos, deudaPlaneada - abonoTotal);
@@ -831,20 +859,23 @@ PropuestaRecortes proponerRecortes(
   List<({PartidaPlan partida, int disponible, int gastado})> estado,
 ) {
   int margen(({PartidaPlan partida, int disponible, int gastado}) e) {
-    final usado = e.gastado > e.partida.pisoMinimo ? e.gastado : e.partida.pisoMinimo;
+    final usado = e.gastado > e.partida.pisoMinimo
+        ? e.gastado
+        : e.partida.pisoMinimo;
     final m = e.disponible - usado;
     return m > 0 ? m : 0;
   }
 
-  final candidatas = estado
-      .where((e) => !e.partida.protegida && margen(e) > 0)
-      .toList()
-    ..sort((a, b) {
-      final p = b.partida.prioridad.index.compareTo(a.partida.prioridad.index);
-      if (p != 0) return p;
-      final m = margen(b).compareTo(margen(a));
-      return m != 0 ? m : a.partida.id.compareTo(b.partida.id);
-    });
+  final candidatas =
+      estado.where((e) => !e.partida.protegida && margen(e) > 0).toList()
+        ..sort((a, b) {
+          final p = b.partida.prioridad.index.compareTo(
+            a.partida.prioridad.index,
+          );
+          if (p != 0) return p;
+          final m = margen(b).compareTo(margen(a));
+          return m != 0 ? m : a.partida.id.compareTo(b.partida.id);
+        });
   var falta = monto;
   final recortes = <Recorte>[];
   for (final e in candidatas) {

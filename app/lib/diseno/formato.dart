@@ -79,16 +79,10 @@ String fechaLarga(DateTime t) =>
 /// `mar 20 oct · 19:42`
 String fechaYHora(DateTime t) => '${fechaCorta(t)} · ${horaMinutos(t)}';
 
-/// Número de semana ISO 8601 (la semana empieza en lunes).
+/// Número de semana ISO 8601 (la semana empieza en lunes): la semana es la del
+/// jueves que le corresponde.
 int semanaIso(DateTime t) {
   final fecha = DateTime.utc(t.year, t.month, t.day);
-  final diaDelAnio = fecha.difference(DateTime.utc(t.year)).inDays + 1;
-  final semana = (diaDelAnio - fecha.weekday + 10) ~/ 7;
-  if (semana < 1) return semanaIso(DateTime.utc(t.year - 1, 12, 28));
-  if (semana > 52) {
-    // La semana 53 solo existe si el 28 de diciembre cae en ella.
-    final ultima = semanaIso(DateTime.utc(t.year, 12, 28));
-    if (semana > ultima) return 1;
-  }
-  return semana;
+  final jueves = fecha.add(Duration(days: DateTime.thursday - fecha.weekday));
+  return jueves.difference(DateTime.utc(jueves.year)).inDays ~/ 7 + 1;
 }

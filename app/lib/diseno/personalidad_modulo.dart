@@ -84,7 +84,10 @@ class PersonalidadModulo {
   // --- Tabla de la sección 5 -------------------------------------------------
 
   /// GRAVITY (pantalla principal): el estilo elegido completo.
-  static const asistente = PersonalidadModulo(id: 'asistente', nombre: 'Asistente');
+  static const asistente = PersonalidadModulo(
+    id: 'asistente',
+    nombre: 'Asistente',
+  );
 
   /// Sin cambios: igual al estilo global (Ajustes y Hábitos en general).
   static const igualAlEstilo = PersonalidadModulo(

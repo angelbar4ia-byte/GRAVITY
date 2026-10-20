@@ -30,14 +30,8 @@ class PantallaHoyTelefono extends ConsumerWidget {
               _TarjetaSigue(siguiente: r.siguiente!),
               hueco,
             ],
-            if (r.habitos.isNotEmpty) ...[
-              const _TarjetaHabitos(),
-              hueco,
-            ],
-            if (r.finanzas != null) ...[
-              const _TarjetaFinanzas(),
-              hueco,
-            ],
+            if (r.habitos.isNotEmpty) ...[const _TarjetaHabitos(), hueco],
+            if (r.finanzas != null) ...[const _TarjetaFinanzas(), hueco],
             if (r.cuidados != null) const _TarjetaCuidados(),
           ],
         ),
@@ -278,8 +272,9 @@ class _TarjetaFinanzas extends ConsumerWidget {
                   ),
                   alTocar: privado
                       ? null
-                      : () =>
-                            ref.read(montosVisiblesProvider.notifier).alternar(),
+                      : () => ref
+                            .read(montosVisiblesProvider.notifier)
+                            .alternar(),
                 ),
               ),
             ],

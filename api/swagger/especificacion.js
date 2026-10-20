@@ -1,0 +1,2731 @@
+// GENERADO por api/generar_dart.mjs a partir de api/openapi.yaml. No se edita a mano.
+// Permite abrir Swagger UI con doble clic (file://), donde el navegador no deja leer
+// ../openapi.yaml. Servida por http, la página lee openapi.yaml directamente.
+// huella: fnv1a32:119577fe
+window.ESPECIFICACION_GRAVITY = {
+  "openapi": "3.1.0",
+  "info": {
+    "title": "GRAVITY · APIs del sistema",
+    "version": "0.1.0",
+    "summary": "Herramientas de GRAVITY, base de datos, funciones del servidor y puente de casa (D16).",
+    "description": "Especificación de las APIs de GRAVITY (decisión D16). Se consulta en la laptop, en\nAjustes › Desarrollador, solo con rol Dueño. **No se publica en internet.**\n\nCada operación declara, con extensiones propias:\n\n- `x-roles`: roles que la pueden usar (D5): `dueno`, `coadministrador`, `familiar`,\n  `cuidador`, `casa`. La verdad de los permisos está en el servidor (RLS).\n- `x-escribe`: `true` si escribe datos; GRAVITY y esta consola piden confirmación antes\n  de enviarla. `segun-herramienta` en la operación genérica de herramientas.\n- `x-solo-local`: `true` si su resultado nunca pasa por la IA en la nube (D3: dinero,\n  datos clínicos y datos personales). `segun-herramienta` en la operación genérica.\n- `x-fase`: fase del roadmap en que se construye.\n\nConvenciones (especificación de la Fase 0, sección 4): dinero en centavos (`int`),\nidentificadores UUID, fechas `date` y `timestamptz`, libros solo-agregar.\n\nLas llaves (Supabase, Home Assistant) entran por `--dart-define` o archivos ignorados\npor git; nunca se escriben aquí.\n",
+    "license": {
+      "name": "Privado. Uso exclusivo del proyecto Segundo Cerebro; no se publica."
+    }
+  },
+  "servers": [
+    {
+      "url": "https://{proyecto}.supabase.co",
+      "description": "Proyecto de Supabase (D7). El identificador real no se guarda en el repositorio.",
+      "variables": {
+        "proyecto": {
+          "default": "tu-proyecto",
+          "description": "Identificador del proyecto de Supabase."
+        }
+      }
+    },
+    {
+      "url": "http://127.0.0.1:54321",
+      "description": "Supabase local para desarrollo (`supabase start`)."
+    }
+  ],
+  "security": [
+    {
+      "llavePublica": [],
+      "sesion": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Herramientas de GRAVITY",
+      "description": "Lista cerrada de funciones que GRAVITY puede usar (D1). Cada una declara su módulo,\nsus roles, si escribe (pide confirmación) y si es solo local (D3). En la Fase 0 son\nde navegación y se ejecutan dentro de la app; exponerlas por red para el puente de\ncasa es una propuesta de la Fase 6.\n"
+    },
+    {
+      "name": "Base de datos",
+      "description": "Supabase (PostgREST): `/rest/v1/<tabla>` con los filtros de PostgREST\n(`?id=eq.<uuid>`, `select`, `order`, `limit`). Cada consulta pasa por las reglas\npor registro (RLS) del rol: se lee solo lo que el rol puede ver. Esquema en\n`supabase/migrations/20261020000000_base.sql`. Nada de esta base va a la IA.\n"
+    },
+    {
+      "name": "Funciones del servidor",
+      "description": "Funciones de Supabase (`/functions/v1/<nombre>`) desde la Fase 2: avisos al instante\ny, en la Fase 6, el intermediario de la IA, que guarda la clave de la API en el\nservidor (nunca en la app).\n"
+    },
+    {
+      "name": "Puente de casa",
+      "description": "Home Assistant en la red de la casa (D9), Fase 6. Usa la cuenta de rol Casa: nunca\nalcanza dinero ni datos clínicos, y las bocinas solo dicen frases genéricas (D3, D6).\nSolo en la red local; nunca se abren puertos del router.\n"
+    }
+  ],
+  "paths": {
+    "/herramientas": {
+      "servers": [
+        {
+          "url": "http://127.0.0.1:{puerto}",
+          "description": "Propuesta para la Fase 6: GRAVITY en la laptop atiende las herramientas para el puente de casa. En la Fase 0 se ejecutan dentro de la app, sin red.",
+          "variables": {
+            "puerto": {
+              "default": "8787"
+            }
+          }
+        }
+      ],
+      "get": {
+        "tags": [
+          "Herramientas de GRAVITY"
+        ],
+        "operationId": "listarHerramientas",
+        "summary": "Herramientas disponibles para la sesión",
+        "description": "Lista las herramientas que el rol de la sesión puede usar con los módulos activos. Lo que no está en la lista no existe para GRAVITY. Es lo único que ve la IA para elegir qué hacer.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar",
+          "cuidador",
+          "casa"
+        ],
+        "x-escribe": false,
+        "x-solo-local": false,
+        "x-fase": 0,
+        "responses": {
+          "200": {
+            "description": "Herramientas del rol.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Herramienta"
+                  }
+                },
+                "example": [
+                  {
+                    "nombre": "habitos.abrir",
+                    "descripcion": "Abre Hábitos.",
+                    "modulo": "habitos",
+                    "roles": [
+                      "dueno",
+                      "coadministrador",
+                      "familiar"
+                    ],
+                    "escribe": false,
+                    "solo_local": false
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/herramientas/{nombre}": {
+      "servers": [
+        {
+          "url": "http://127.0.0.1:{puerto}",
+          "description": "Propuesta para la Fase 6: GRAVITY en la laptop atiende las herramientas para el puente de casa. En la Fase 0 se ejecutan dentro de la app, sin red.",
+          "variables": {
+            "puerto": {
+              "default": "8787"
+            }
+          }
+        }
+      ],
+      "post": {
+        "tags": [
+          "Herramientas de GRAVITY"
+        ],
+        "operationId": "ejecutarHerramienta",
+        "summary": "Ejecutar una herramienta",
+        "description": "Ejecuta la herramienta si el rol la tiene y su módulo está activo; si no, responde 404 con el mismo mensaje en todos los casos. Si escribe y no viene `confirmado: true`, no ejecuta nada y responde `requiere_confirmacion` con el texto de la tarjeta de confirmación. Si es solo local, `para_ia` siempre es nulo.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar",
+          "cuidador",
+          "casa"
+        ],
+        "x-escribe": "segun-herramienta",
+        "x-solo-local": "segun-herramienta",
+        "x-fase": 0,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/nombreHerramienta"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/PeticionHerramienta"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ResultadoHerramienta"
+          },
+          "404": {
+            "$ref": "#/components/responses/HerramientaNoDisponible"
+          }
+        }
+      }
+    },
+    "/herramientas/gravity.abrir": {
+      "servers": [
+        {
+          "url": "http://127.0.0.1:{puerto}",
+          "description": "Propuesta para la Fase 6: GRAVITY en la laptop atiende las herramientas para el puente de casa. En la Fase 0 se ejecutan dentro de la app, sin red.",
+          "variables": {
+            "puerto": {
+              "default": "8787"
+            }
+          }
+        }
+      ],
+      "post": {
+        "tags": [
+          "Herramientas de GRAVITY"
+        ],
+        "operationId": "herramientaGravityAbrir",
+        "summary": "gravity.abrir · Abrir Inicio",
+        "description": "Abre la pantalla principal de GRAVITY.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar",
+          "casa"
+        ],
+        "x-escribe": false,
+        "x-solo-local": false,
+        "x-fase": 0,
+        "requestBody": {
+          "$ref": "#/components/requestBodies/PeticionHerramienta"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ResultadoHerramienta"
+          },
+          "404": {
+            "$ref": "#/components/responses/HerramientaNoDisponible"
+          }
+        }
+      }
+    },
+    "/herramientas/finanzas.abrir": {
+      "servers": [
+        {
+          "url": "http://127.0.0.1:{puerto}",
+          "description": "Propuesta para la Fase 6: GRAVITY en la laptop atiende las herramientas para el puente de casa. En la Fase 0 se ejecutan dentro de la app, sin red.",
+          "variables": {
+            "puerto": {
+              "default": "8787"
+            }
+          }
+        }
+      ],
+      "post": {
+        "tags": [
+          "Herramientas de GRAVITY"
+        ],
+        "operationId": "herramientaFinanzasAbrir",
+        "summary": "finanzas.abrir · Abrir Finanzas",
+        "description": "Abre Finanzas. Solo navega: no lee montos. Sinónimos en la barra de órdenes: presupuesto, dinero.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": false,
+        "x-fase": 0,
+        "requestBody": {
+          "$ref": "#/components/requestBodies/PeticionHerramienta"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ResultadoHerramienta"
+          },
+          "404": {
+            "$ref": "#/components/responses/HerramientaNoDisponible"
+          }
+        }
+      }
+    },
+    "/herramientas/habitos.abrir": {
+      "servers": [
+        {
+          "url": "http://127.0.0.1:{puerto}",
+          "description": "Propuesta para la Fase 6: GRAVITY en la laptop atiende las herramientas para el puente de casa. En la Fase 0 se ejecutan dentro de la app, sin red.",
+          "variables": {
+            "puerto": {
+              "default": "8787"
+            }
+          }
+        }
+      ],
+      "post": {
+        "tags": [
+          "Herramientas de GRAVITY"
+        ],
+        "operationId": "herramientaHabitosAbrir",
+        "summary": "habitos.abrir · Abrir Hábitos",
+        "description": "Abre Hábitos (lo propio de cada persona).",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": false,
+        "x-solo-local": false,
+        "x-fase": 0,
+        "requestBody": {
+          "$ref": "#/components/requestBodies/PeticionHerramienta"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ResultadoHerramienta"
+          },
+          "404": {
+            "$ref": "#/components/responses/HerramientaNoDisponible"
+          }
+        }
+      }
+    },
+    "/herramientas/cuidados.abrir": {
+      "servers": [
+        {
+          "url": "http://127.0.0.1:{puerto}",
+          "description": "Propuesta para la Fase 6: GRAVITY en la laptop atiende las herramientas para el puente de casa. En la Fase 0 se ejecutan dentro de la app, sin red.",
+          "variables": {
+            "puerto": {
+              "default": "8787"
+            }
+          }
+        }
+      ],
+      "post": {
+        "tags": [
+          "Herramientas de GRAVITY"
+        ],
+        "operationId": "herramientaCuidadosAbrir",
+        "summary": "cuidados.abrir · Abrir Cuidados",
+        "description": "Abre Cuidados. Lo que se ve adentro depende del rol: completo (dueño), según consentimiento (coadministrador), su turno (cuidador) o recordatorios genéricos (casa). Sinónimo en la barra de órdenes: papá.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "cuidador",
+          "casa"
+        ],
+        "x-escribe": false,
+        "x-solo-local": false,
+        "x-fase": 0,
+        "requestBody": {
+          "$ref": "#/components/requestBodies/PeticionHerramienta"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ResultadoHerramienta"
+          },
+          "404": {
+            "$ref": "#/components/responses/HerramientaNoDisponible"
+          }
+        }
+      }
+    },
+    "/herramientas/alimentacion.abrir": {
+      "servers": [
+        {
+          "url": "http://127.0.0.1:{puerto}",
+          "description": "Propuesta para la Fase 6: GRAVITY en la laptop atiende las herramientas para el puente de casa. En la Fase 0 se ejecutan dentro de la app, sin red.",
+          "variables": {
+            "puerto": {
+              "default": "8787"
+            }
+          }
+        }
+      ],
+      "post": {
+        "tags": [
+          "Herramientas de GRAVITY"
+        ],
+        "operationId": "herramientaAlimentacionAbrir",
+        "summary": "alimentacion.abrir · Abrir Alimentación",
+        "description": "Abre Alimentación. Sinónimos en la barra de órdenes: comida, cocina, menú, recetas.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar",
+          "casa"
+        ],
+        "x-escribe": false,
+        "x-solo-local": false,
+        "x-fase": 0,
+        "requestBody": {
+          "$ref": "#/components/requestBodies/PeticionHerramienta"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ResultadoHerramienta"
+          },
+          "404": {
+            "$ref": "#/components/responses/HerramientaNoDisponible"
+          }
+        }
+      }
+    },
+    "/herramientas/casa.abrir": {
+      "servers": [
+        {
+          "url": "http://127.0.0.1:{puerto}",
+          "description": "Propuesta para la Fase 6: GRAVITY en la laptop atiende las herramientas para el puente de casa. En la Fase 0 se ejecutan dentro de la app, sin red.",
+          "variables": {
+            "puerto": {
+              "default": "8787"
+            }
+          }
+        }
+      ],
+      "post": {
+        "tags": [
+          "Herramientas de GRAVITY"
+        ],
+        "operationId": "herramientaCasaAbrir",
+        "summary": "casa.abrir · Abrir Casa",
+        "description": "Abre Casa. Sinónimo en la barra de órdenes, hogar.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar",
+          "casa"
+        ],
+        "x-escribe": false,
+        "x-solo-local": false,
+        "x-fase": 0,
+        "requestBody": {
+          "$ref": "#/components/requestBodies/PeticionHerramienta"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ResultadoHerramienta"
+          },
+          "404": {
+            "$ref": "#/components/responses/HerramientaNoDisponible"
+          }
+        }
+      }
+    },
+    "/herramientas/ajustes.abrir": {
+      "servers": [
+        {
+          "url": "http://127.0.0.1:{puerto}",
+          "description": "Propuesta para la Fase 6: GRAVITY en la laptop atiende las herramientas para el puente de casa. En la Fase 0 se ejecutan dentro de la app, sin red.",
+          "variables": {
+            "puerto": {
+              "default": "8787"
+            }
+          }
+        }
+      ],
+      "post": {
+        "tags": [
+          "Herramientas de GRAVITY"
+        ],
+        "operationId": "herramientaAjustesAbrir",
+        "summary": "ajustes.abrir · Abrir Ajustes",
+        "description": "Abre Ajustes (lo propio de cada persona; todo para el dueño).",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar",
+          "cuidador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": false,
+        "x-fase": 0,
+        "requestBody": {
+          "$ref": "#/components/requestBodies/PeticionHerramienta"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ResultadoHerramienta"
+          },
+          "404": {
+            "$ref": "#/components/responses/HerramientaNoDisponible"
+          }
+        }
+      }
+    },
+    "/herramientas/ajustes.abrir_desarrollador": {
+      "servers": [
+        {
+          "url": "http://127.0.0.1:{puerto}",
+          "description": "Propuesta para la Fase 6: GRAVITY en la laptop atiende las herramientas para el puente de casa. En la Fase 0 se ejecutan dentro de la app, sin red.",
+          "variables": {
+            "puerto": {
+              "default": "8787"
+            }
+          }
+        }
+      ],
+      "post": {
+        "tags": [
+          "Herramientas de GRAVITY"
+        ],
+        "operationId": "herramientaAjustesAbrirDesarrollador",
+        "summary": "ajustes.abrir_desarrollador · Abrir Desarrollador",
+        "description": "Abre Ajustes › Desarrollador, esta consola. Solo el dueño y solo en la laptop (lo aplica el cascarón de la app).",
+        "x-roles": [
+          "dueno"
+        ],
+        "x-escribe": false,
+        "x-solo-local": false,
+        "x-fase": 0,
+        "requestBody": {
+          "$ref": "#/components/requestBodies/PeticionHerramienta"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ResultadoHerramienta"
+          },
+          "404": {
+            "$ref": "#/components/responses/HerramientaNoDisponible"
+          }
+        }
+      }
+    },
+    "/rest/v1/hogares": {
+      "get": {
+        "tags": [
+          "Base de datos"
+        ],
+        "operationId": "leerHogares",
+        "summary": "Leer hogares",
+        "description": "Hogares de los que eres miembro vigente.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar",
+          "cuidador",
+          "casa"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 0,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Hogares visibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Hogar"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Base de datos"
+        ],
+        "operationId": "renombrarHogar",
+        "summary": "Cambiar el nombre del hogar",
+        "description": "Solo el dueño (administra Ajustes). Solo la columna `nombre`. Queda en la bitácora.",
+        "x-roles": [
+          "dueno"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 0,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filtroIdObligatorio"
+          },
+          {
+            "$ref": "#/components/parameters/preferir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "nombre"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "nombre": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Actualizado"
+          },
+          "204": {
+            "description": "Actualizado (sin cuerpo)."
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/crear_hogar": {
+      "post": {
+        "tags": [
+          "Base de datos"
+        ],
+        "operationId": "crearHogar",
+        "summary": "Crear un hogar",
+        "description": "Crea un hogar y deja como dueño a quien lo crea. Devuelve el `id` del hogar.",
+        "x-roles": [
+          "dueno"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 0,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_nombre"
+                ],
+                "properties": {
+                  "p_nombre": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Identificador del hogar nuevo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Uuid"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/personas": {
+      "get": {
+        "tags": [
+          "Base de datos"
+        ],
+        "operationId": "leerPersonas",
+        "summary": "Leer personas",
+        "description": "Cada quien se ve a sí mismo; el dueño ve a los miembros de su hogar, también a los dados de baja.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar",
+          "cuidador",
+          "casa"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 0,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Personas visibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Persona"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Base de datos"
+        ],
+        "operationId": "cambiarMiNombre",
+        "summary": "Cambiar mi nombre visible",
+        "description": "Cada quien cambia solo su propio `nombre_visible`.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar",
+          "cuidador",
+          "casa"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 0,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filtroIdObligatorio"
+          },
+          {
+            "$ref": "#/components/parameters/preferir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "nombre_visible"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "nombre_visible": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Actualizado"
+          },
+          "204": {
+            "description": "Actualizado (sin cuerpo)."
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/membresias": {
+      "get": {
+        "tags": [
+          "Base de datos"
+        ],
+        "operationId": "leerMembresias",
+        "summary": "Leer membresías y roles",
+        "description": "Cada quien ve las suyas; el dueño, las de su hogar.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar",
+          "cuidador",
+          "casa"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 0,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Membresías visibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Membresia"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Base de datos"
+        ],
+        "operationId": "cambiarMembresia",
+        "summary": "Cambiar rol o dar de baja",
+        "description": "Solo el dueño, sobre otras personas: cambiar `rol` (nunca a dueño), dar de baja (`activa: false` u `hasta`). La baja quita el acceso de inmediato; las membresías no se borran y todo queda en la bitácora.",
+        "x-roles": [
+          "dueno"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 0,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filtroIdObligatorio"
+          },
+          {
+            "$ref": "#/components/parameters/preferir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "minProperties": 1,
+                "properties": {
+                  "rol": {
+                    "$ref": "#/components/schemas/RolInvitable"
+                  },
+                  "activa": {
+                    "type": "boolean"
+                  },
+                  "hasta": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Actualizado"
+          },
+          "204": {
+            "description": "Actualizado (sin cuerpo)."
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/permisos_rol": {
+      "get": {
+        "tags": [
+          "Base de datos"
+        ],
+        "operationId": "leerMatrizPermisos",
+        "summary": "Leer la matriz de permisos",
+        "description": "Matriz rol × módulo × acción con su alcance. Solo cambia por migración; la app lleva un espejo.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar",
+          "cuidador",
+          "casa"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 0,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "La matriz completa.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PermisoRol"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/mis_permisos": {
+      "post": {
+        "tags": [
+          "Base de datos"
+        ],
+        "operationId": "misPermisos",
+        "summary": "Mis permisos en un hogar",
+        "description": "Los permisos del rol vigente de quien consulta (módulo, acción y alcance).",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar",
+          "cuidador",
+          "casa"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 0,
+        "requestBody": {
+          "$ref": "#/components/requestBodies/SoloHogar"
+        },
+        "responses": {
+          "200": {
+            "description": "Permisos del rol.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "modulo": {
+                        "$ref": "#/components/schemas/Modulo"
+                      },
+                      "accion": {
+                        "$ref": "#/components/schemas/Accion"
+                      },
+                      "alcance": {
+                        "$ref": "#/components/schemas/Alcance"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/invitaciones": {
+      "get": {
+        "tags": [
+          "Base de datos"
+        ],
+        "operationId": "leerInvitaciones",
+        "summary": "Leer invitaciones",
+        "description": "Solo el dueño del hogar. El token no se guarda, solo su huella SHA-256.",
+        "x-roles": [
+          "dueno"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 0,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invitaciones del hogar.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Invitacion"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/crear_invitacion": {
+      "post": {
+        "tags": [
+          "Base de datos"
+        ],
+        "operationId": "crearInvitacion",
+        "summary": "Invitar a una persona",
+        "description": "Solo el dueño. Rol: coadministrador, familiar, cuidador o casa. Devuelve el token una sola vez; las invitaciones pendientes al mismo correo se revocan.",
+        "x-roles": [
+          "dueno"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 0,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_hogar_id",
+                  "p_correo",
+                  "p_rol"
+                ],
+                "properties": {
+                  "p_hogar_id": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_correo": {
+                    "type": "string",
+                    "format": "email",
+                    "maxLength": 254
+                  },
+                  "p_rol": {
+                    "$ref": "#/components/schemas/RolInvitable"
+                  },
+                  "p_vigencia_dias": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 30,
+                    "default": 7
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "La invitación y su token (se muestra una sola vez).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "invitacion_id": {
+                        "$ref": "#/components/schemas/Uuid"
+                      },
+                      "token": {
+                        "type": "string"
+                      },
+                      "expira": {
+                        "type": "string",
+                        "format": "date-time"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/aceptar_invitacion": {
+      "post": {
+        "tags": [
+          "Base de datos"
+        ],
+        "operationId": "aceptarInvitacion",
+        "summary": "Aceptar una invitación",
+        "description": "La acepta la persona cuyo correo confirmado coincide; crea su membresía con el rol invitado. Devuelve el `id` del hogar.",
+        "x-roles": [
+          "coadministrador",
+          "familiar",
+          "cuidador",
+          "casa"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 0,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_token"
+                ],
+                "properties": {
+                  "p_token": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Hogar al que entraste.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Uuid"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Invalido"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/revocar_invitacion": {
+      "post": {
+        "tags": [
+          "Base de datos"
+        ],
+        "operationId": "revocarInvitacion",
+        "summary": "Revocar una invitación pendiente",
+        "description": "Solo el dueño, y solo si la invitación sigue pendiente.",
+        "x-roles": [
+          "dueno"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 0,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_invitacion_id"
+                ],
+                "properties": {
+                  "p_invitacion_id": {
+                    "$ref": "#/components/schemas/Uuid"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Revocada."
+          },
+          "400": {
+            "$ref": "#/components/responses/Invalido"
+          }
+        }
+      }
+    },
+    "/rest/v1/dispositivos": {
+      "get": {
+        "tags": [
+          "Base de datos"
+        ],
+        "operationId": "leerDispositivos",
+        "summary": "Leer mis dispositivos",
+        "description": "Cada quien ve solo los suyos. La función de avisos (Fase 2) los lee desde el servidor.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar",
+          "cuidador",
+          "casa"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 0,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Mis dispositivos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Dispositivo"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Base de datos"
+        ],
+        "operationId": "registrarDispositivo",
+        "summary": "Registrar este dispositivo",
+        "description": "Agrega un dispositivo a tu nombre, con su token de avisos (FCM, solo Android).",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar",
+          "cuidador",
+          "casa"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 0,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/preferir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "plataforma"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "id": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "plataforma": {
+                    "type": "string",
+                    "enum": [
+                      "android",
+                      "windows"
+                    ]
+                  },
+                  "token_avisos": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 4096
+                  },
+                  "nombre": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 80
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Registrado."
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Base de datos"
+        ],
+        "operationId": "actualizarDispositivo",
+        "summary": "Actualizar mi dispositivo",
+        "description": "Token de avisos, nombre o último uso; solo los tuyos.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar",
+          "cuidador",
+          "casa"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 0,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filtroIdObligatorio"
+          },
+          {
+            "$ref": "#/components/parameters/preferir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "minProperties": 1,
+                "properties": {
+                  "token_avisos": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 4096
+                  },
+                  "nombre": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 80
+                  },
+                  "ultimo_uso": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Actualizado"
+          },
+          "204": {
+            "description": "Actualizado (sin cuerpo)."
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Base de datos"
+        ],
+        "operationId": "quitarDispositivo",
+        "summary": "Quitar mi dispositivo",
+        "description": "Deja de recibir avisos en ese dispositivo; solo los tuyos.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar",
+          "cuidador",
+          "casa"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 0,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filtroIdObligatorio"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Quitado."
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/bitacora": {
+      "get": {
+        "tags": [
+          "Base de datos"
+        ],
+        "operationId": "leerBitacora",
+        "summary": "Leer la bitácora",
+        "description": "El dueño ve la de su hogar; cada quien ve lo que hizo. Solo agregar.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar",
+          "cuidador",
+          "casa"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 0,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/orden"
+          },
+          {
+            "$ref": "#/components/parameters/limite"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Entradas visibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EntradaBitacora"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Base de datos"
+        ],
+        "operationId": "agregarABitacora",
+        "summary": "Agregar a la bitácora",
+        "description": "Cualquier miembro agrega a su nombre (p. ej. acciones de GRAVITY en la laptop, D8). No se edita ni se borra: se corrige con una entrada nueva.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar",
+          "cuidador",
+          "casa"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 0,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/preferir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "accion"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "id": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "hogar_id": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "accion": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 60
+                  },
+                  "tabla": {
+                    "type": "string",
+                    "maxLength": 63
+                  },
+                  "registro_id": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "detalle": {
+                    "type": "object"
+                  },
+                  "ocurrido_en": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Agregada."
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/finanzas_muestra": {
+      "get": {
+        "tags": [
+          "Base de datos"
+        ],
+        "operationId": "leerFinanzasMuestra",
+        "summary": "Leer la muestra de Finanzas",
+        "description": "Tabla de muestra de la Fase 0 para comprobar la regla del dinero: dueño y coadministrador leen; familiar, cuidador y casa no ven nada. Se reemplaza en la Fase 1. Montos en centavos.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 0,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Movimientos de muestra.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MovimientoMuestra"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Base de datos"
+        ],
+        "operationId": "agregarFinanzasMuestra",
+        "summary": "Agregar a la muestra de Finanzas",
+        "description": "Solo el dueño. Monto en centavos (entero).",
+        "x-roles": [
+          "dueno"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 0,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/preferir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "hogar_id",
+                  "descripcion",
+                  "monto_centavos"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "id": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "hogar_id": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "descripcion": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "monto_centavos": {
+                    "type": "integer",
+                    "format": "int64"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Agregado."
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Base de datos"
+        ],
+        "operationId": "cambiarFinanzasMuestra",
+        "summary": "Cambiar un registro de la muestra",
+        "description": "Solo el dueño; solo existe en la muestra. En la Fase 1 los movimientos serán solo-agregar.",
+        "x-roles": [
+          "dueno"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 0,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filtroIdObligatorio"
+          },
+          {
+            "$ref": "#/components/parameters/preferir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "minProperties": 1,
+                "properties": {
+                  "descripcion": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "monto_centavos": {
+                    "type": "integer",
+                    "format": "int64"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Actualizado"
+          },
+          "204": {
+            "description": "Actualizado (sin cuerpo)."
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Base de datos"
+        ],
+        "operationId": "borrarFinanzasMuestra",
+        "summary": "Borrar un registro de la muestra",
+        "description": "Solo el dueño; solo existe en la muestra. En la Fase 1 los movimientos no se borran.",
+        "x-roles": [
+          "dueno"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 0,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filtroIdObligatorio"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Borrado."
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/functions/v1/avisos": {
+      "post": {
+        "tags": [
+          "Funciones del servidor"
+        ],
+        "operationId": "enviarAviso",
+        "summary": "Enviar un aviso al instante (Fase 2)",
+        "description": "Propuesta. Envía una notificación (FCM) a los dispositivos de las personas indicadas, p. ej. una alerta de vencimiento o, en la Fase 5, un cambio urgente de medicamento a la cuidadora de turno. El texto es discreto: sin montos ni nombres de medicamentos.",
+        "x-roles": [
+          "dueno"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 2,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Aviso"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Aviso en camino."
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/functions/v1/ia": {
+      "post": {
+        "tags": [
+          "Funciones del servidor"
+        ],
+        "operationId": "preguntarIa",
+        "summary": "Intermediario de la IA (Fase 6)",
+        "description": "Propuesta. Guarda la clave de la API de IA en el servidor (nunca en la app). Recibe solo la pregunta y las herramientas del rol, y responde qué herramienta usar. Nunca recibe resultados de herramientas solo locales (D3). Proveedor por decidir.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar",
+          "cuidador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": false,
+        "x-fase": 6,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreguntaIa"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Herramienta elegida o respuesta breve.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaIa"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/api/services/tts/speak": {
+      "servers": [
+        {
+          "url": "http://{equipo}:8123",
+          "description": "Home Assistant en la red de la casa (D9). Nunca expuesto a internet.",
+          "variables": {
+            "equipo": {
+              "default": "homeassistant.local"
+            }
+          }
+        }
+      ],
+      "post": {
+        "tags": [
+          "Puente de casa"
+        ],
+        "operationId": "decirEnBocina",
+        "summary": "Decir una frase en una bocina",
+        "description": "Propuesta. La voz de GRAVITY en una bocina (D6). Solo frases genéricas: nunca dinero ni datos clínicos; de cuidados, solo recordatorios sin nombres ni medicamentos.",
+        "x-roles": [
+          "dueno",
+          "casa"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 6,
+        "security": [
+          {
+            "tokenPuente": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FraseBocina"
+              },
+              "example": {
+                "entity_id": "tts.google_translate_es_com",
+                "media_player_entity_id": "media_player.bocina_cocina",
+                "message": "Hora de la comida."
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Frase enviada a la bocina."
+          },
+          "401": {
+            "description": "Token del puente inválido."
+          }
+        }
+      }
+    },
+    "/api/services/script/turn_on": {
+      "servers": [
+        {
+          "url": "http://{equipo}:8123",
+          "description": "Home Assistant en la red de la casa (D9). Nunca expuesto a internet.",
+          "variables": {
+            "equipo": {
+              "default": "homeassistant.local"
+            }
+          }
+        }
+      ],
+      "post": {
+        "tags": [
+          "Puente de casa"
+        ],
+        "operationId": "ejecutarFraseFija",
+        "summary": "Ejecutar una frase fija",
+        "description": "Propuesta. Ejecuta un guion de Home Assistant con una frase fija de GRAVITY (D6).",
+        "x-roles": [
+          "dueno",
+          "casa"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 6,
+        "security": [
+          {
+            "tokenPuente": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "entity_id"
+                ],
+                "properties": {
+                  "entity_id": {
+                    "type": "string",
+                    "pattern": "^script\\.[a-z0-9_]+$"
+                  }
+                }
+              },
+              "example": {
+                "entity_id": "script.gravity_buenas_noches"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Guion en marcha."
+          },
+          "401": {
+            "description": "Token del puente inválido."
+          }
+        }
+      }
+    },
+    "/api/states/{entity_id}": {
+      "servers": [
+        {
+          "url": "http://{equipo}:8123",
+          "description": "Home Assistant en la red de la casa (D9). Nunca expuesto a internet.",
+          "variables": {
+            "equipo": {
+              "default": "homeassistant.local"
+            }
+          }
+        }
+      ],
+      "get": {
+        "tags": [
+          "Puente de casa"
+        ],
+        "operationId": "estadoEnCasa",
+        "summary": "Estado de una bocina o guion",
+        "description": "Propuesta. Comprueba que una bocina o un guion existe y en qué estado está.",
+        "x-roles": [
+          "dueno",
+          "casa"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 6,
+        "security": [
+          {
+            "tokenPuente": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "entity_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "media_player.bocina_cocina"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Estado de la entidad.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "entity_id": {
+                      "type": "string"
+                    },
+                    "state": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe esa entidad."
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "llavePublica": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "apikey",
+        "description": "Llave pública de Supabase. Entra por `--dart-define`; nunca en el repositorio."
+      },
+      "sesion": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Sesión de la persona (Supabase Auth). Las reglas RLS usan su rol en el hogar."
+      },
+      "tokenPuente": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Token de larga duración de la cuenta Casa en Home Assistant. Nunca en el repositorio."
+      }
+    },
+    "parameters": {
+      "nombreHerramienta": {
+        "name": "nombre",
+        "in": "path",
+        "required": true,
+        "description": "Nombre `<modulo>.<accion>` de la herramienta.",
+        "schema": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*$"
+        },
+        "example": "habitos.abrir"
+      },
+      "select": {
+        "name": "select",
+        "in": "query",
+        "description": "Columnas a traer (PostgREST).",
+        "schema": {
+          "type": "string",
+          "default": "*"
+        }
+      },
+      "filtroId": {
+        "name": "id",
+        "in": "query",
+        "description": "Filtro de PostgREST por identificador, p. ej. `eq.<uuid>`.",
+        "schema": {
+          "type": "string"
+        },
+        "example": "eq.6f1c2a8e-3b7d-4c55-9e0a-2d4b8f1e7a90"
+      },
+      "filtroIdObligatorio": {
+        "name": "id",
+        "in": "query",
+        "required": true,
+        "description": "Registro a cambiar: `eq.<uuid>`. Obligatorio para no tocar varios a la vez.",
+        "schema": {
+          "type": "string",
+          "pattern": "^eq\\.[0-9a-f-]{36}$"
+        },
+        "example": "eq.6f1c2a8e-3b7d-4c55-9e0a-2d4b8f1e7a90"
+      },
+      "filtroHogar": {
+        "name": "hogar_id",
+        "in": "query",
+        "description": "Filtro por hogar, p. ej. `eq.<uuid>`.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "orden": {
+        "name": "order",
+        "in": "query",
+        "description": "Orden (PostgREST), p. ej. `registrado_en.desc`.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "limite": {
+        "name": "limit",
+        "in": "query",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        }
+      },
+      "preferir": {
+        "name": "Prefer",
+        "in": "header",
+        "description": "`return=representation` para recibir el registro; `return=minimal` para no recibir nada.",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "return=representation",
+            "return=minimal"
+          ]
+        }
+      }
+    },
+    "requestBodies": {
+      "PeticionHerramienta": {
+        "required": false,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/PeticionHerramienta"
+            }
+          }
+        }
+      },
+      "SoloHogar": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": [
+                "p_hogar_id"
+              ],
+              "properties": {
+                "p_hogar_id": {
+                  "$ref": "#/components/schemas/Uuid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "ResultadoHerramienta": {
+        "description": "Resultado, o la tarjeta de confirmación si la herramienta escribe y falta confirmar.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ResultadoHerramienta"
+            },
+            "example": {
+              "herramienta": "habitos.abrir",
+              "contenido": "Abriendo Hábitos…",
+              "requiere_confirmacion": false,
+              "solo_local": false,
+              "para_ia": "Se abrió Hábitos."
+            }
+          }
+        }
+      },
+      "HerramientaNoDisponible": {
+        "description": "No existe para el rol o su módulo está inactivo (mismo mensaje en todos los casos).",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorHerramienta"
+            },
+            "example": {
+              "mensaje": "La herramienta «finanzas.abrir» no está disponible."
+            }
+          }
+        }
+      },
+      "Actualizado": {
+        "description": "Registros actualizados (con `Prefer` igual a `return=representation`).",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      },
+      "SinSesion": {
+        "description": "Falta la sesión o la llave pública.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorPostgrest"
+            },
+            "example": {
+              "code": "PGRST301",
+              "message": "JWT expired",
+              "details": null,
+              "hint": null
+            }
+          }
+        }
+      },
+      "Prohibido": {
+        "description": "Las reglas del servidor (RLS) no lo permiten para tu rol.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorPostgrest"
+            },
+            "example": {
+              "code": "42501",
+              "message": "new row violates row-level security policy",
+              "details": null,
+              "hint": null
+            }
+          }
+        }
+      },
+      "Invalido": {
+        "description": "Datos no válidos (p. ej. invitación vencida o ya usada).",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorPostgrest"
+            },
+            "example": {
+              "code": "22023",
+              "message": "La invitación no es válida o ya expiró.",
+              "details": null,
+              "hint": null
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Uuid": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "Rol": {
+        "type": "string",
+        "enum": [
+          "dueno",
+          "coadministrador",
+          "familiar",
+          "cuidador",
+          "casa"
+        ]
+      },
+      "RolInvitable": {
+        "type": "string",
+        "description": "Cualquier rol menos dueño.",
+        "enum": [
+          "coadministrador",
+          "familiar",
+          "cuidador",
+          "casa"
+        ]
+      },
+      "Modulo": {
+        "type": "string",
+        "enum": [
+          "gravity",
+          "finanzas",
+          "habitos",
+          "cuidados",
+          "alimentacion",
+          "casa",
+          "ajustes"
+        ]
+      },
+      "Accion": {
+        "type": "string",
+        "enum": [
+          "leer",
+          "escribir",
+          "administrar"
+        ]
+      },
+      "Alcance": {
+        "type": "string",
+        "enum": [
+          "total",
+          "propio",
+          "restringido"
+        ]
+      },
+      "Herramienta": {
+        "type": "object",
+        "required": [
+          "nombre",
+          "descripcion",
+          "modulo",
+          "roles",
+          "escribe",
+          "solo_local"
+        ],
+        "properties": {
+          "nombre": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*$"
+          },
+          "descripcion": {
+            "type": "string"
+          },
+          "modulo": {
+            "$ref": "#/components/schemas/Modulo"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Rol"
+            }
+          },
+          "escribe": {
+            "type": "boolean",
+            "description": "Si escribe, pide confirmación."
+          },
+          "solo_local": {
+            "type": "boolean",
+            "description": "Si es solo local, su resultado nunca va a la IA en la nube."
+          }
+        }
+      },
+      "PeticionHerramienta": {
+        "type": "object",
+        "properties": {
+          "parametros": {
+            "type": "object",
+            "description": "Parámetros de la herramienta (las de navegación no llevan)."
+          },
+          "confirmado": {
+            "type": "boolean",
+            "default": false,
+            "description": "Solo `true` después de que la persona aceptó la tarjeta de confirmación."
+          }
+        }
+      },
+      "ResultadoHerramienta": {
+        "type": "object",
+        "required": [
+          "herramienta",
+          "contenido",
+          "requiere_confirmacion",
+          "solo_local",
+          "para_ia"
+        ],
+        "properties": {
+          "herramienta": {
+            "type": "string"
+          },
+          "contenido": {
+            "type": "string",
+            "description": "Texto para la pantalla o la voz local."
+          },
+          "requiere_confirmacion": {
+            "type": "boolean",
+            "description": "Si es `true`, no se escribió nada; `contenido` es la tarjeta de confirmación."
+          },
+          "solo_local": {
+            "type": "boolean"
+          },
+          "para_ia": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Lo mínimo que puede ver la IA. Siempre nulo si `solo_local`."
+          }
+        }
+      },
+      "ErrorHerramienta": {
+        "type": "object",
+        "required": [
+          "mensaje"
+        ],
+        "properties": {
+          "mensaje": {
+            "type": "string",
+            "examples": [
+              "La herramienta «finanzas.abrir» no está disponible."
+            ]
+          }
+        }
+      },
+      "ErrorPostgrest": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "examples": [
+              "42501"
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "details": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "hint": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "Hogar": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "nombre": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "creado_en": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Persona": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "usuario_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Cuenta de Supabase; nulo si la cuenta se eliminó."
+          },
+          "nombre_visible": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "creado_en": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Membresia": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "persona_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "rol": {
+            "$ref": "#/components/schemas/Rol"
+          },
+          "activa": {
+            "type": "boolean"
+          },
+          "desde": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "hasta": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "creado_en": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PermisoRol": {
+        "type": "object",
+        "properties": {
+          "rol": {
+            "$ref": "#/components/schemas/Rol"
+          },
+          "modulo": {
+            "$ref": "#/components/schemas/Modulo"
+          },
+          "accion": {
+            "$ref": "#/components/schemas/Accion"
+          },
+          "alcance": {
+            "$ref": "#/components/schemas/Alcance"
+          },
+          "nota": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "Invitacion": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "correo": {
+            "type": "string",
+            "format": "email"
+          },
+          "rol": {
+            "$ref": "#/components/schemas/RolInvitable"
+          },
+          "token_hash": {
+            "type": "string",
+            "description": "SHA-256 del token; el token no se guarda."
+          },
+          "expira_en": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "creada_por": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "creada_en": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "aceptada_en": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "aceptada_por": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "revocada_en": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "Dispositivo": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "persona_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "plataforma": {
+            "type": "string",
+            "enum": [
+              "android",
+              "windows"
+            ]
+          },
+          "token_avisos": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "nombre": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "creado_en": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ultimo_uso": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "EntradaBitacora": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "persona_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Quién; lo pone el servidor. Nulo = sistema."
+          },
+          "accion": {
+            "type": "string"
+          },
+          "tabla": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "registro_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "detalle": {
+            "type": "object"
+          },
+          "ocurrido_en": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "registrado_en": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "MovimientoMuestra": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "descripcion": {
+            "type": "string"
+          },
+          "monto_centavos": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Dinero en centavos (MXN)."
+          },
+          "registrado_por": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "creado_en": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Aviso": {
+        "type": "object",
+        "description": "Propuesta (Fase 2).",
+        "required": [
+          "personas",
+          "titulo"
+        ],
+        "properties": {
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "personas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          },
+          "titulo": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "cuerpo": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "ruta": {
+            "type": "string",
+            "description": "Ruta de la app que abre al tocar el aviso."
+          }
+        }
+      },
+      "PreguntaIa": {
+        "type": "object",
+        "description": "Propuesta (Fase 6). Sin nombres, montos ni datos clínicos.",
+        "required": [
+          "pregunta",
+          "herramientas"
+        ],
+        "properties": {
+          "pregunta": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "herramientas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Herramienta"
+            }
+          }
+        }
+      },
+      "RespuestaIa": {
+        "type": "object",
+        "description": "Propuesta (Fase 6).",
+        "properties": {
+          "herramienta": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "parametros": {
+            "type": "object"
+          },
+          "texto": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "FraseBocina": {
+        "type": "object",
+        "required": [
+          "entity_id",
+          "media_player_entity_id",
+          "message"
+        ],
+        "properties": {
+          "entity_id": {
+            "type": "string",
+            "description": "Motor de voz de Home Assistant."
+          },
+          "media_player_entity_id": {
+            "type": "string",
+            "description": "Bocina."
+          },
+          "message": {
+            "type": "string",
+            "maxLength": 200,
+            "description": "Frase genérica, sin dinero ni datos clínicos."
+          },
+          "language": {
+            "type": "string",
+            "default": "es-MX"
+          }
+        }
+      }
+    }
+  }
+};
+window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:119577fe';

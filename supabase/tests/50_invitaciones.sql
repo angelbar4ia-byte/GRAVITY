@@ -117,10 +117,21 @@ select pruebas.falla($$select public.aceptar_invitacion((select token from inv2)
   'Una invitación expirada no sirve', '22023');
 
 select pruebas.como('ana@ejemplo.test');
-select pruebas.igual(pruebas.afecta($$select public.revocar_invitacion(
-  (select invitacion_id from inv where true))$$), 1, 'El dueño revoca una invitación');
-select pruebas.falla($$select public.revocar_invitacion((select invitacion_id from inv))$$,
+select pruebas.igual(
+  (select inv.invitacion_id from inv join public.invitaciones i on i.id = inv.invitacion_id
+    where i.revocada_en is not null),
+  (select invitacion_id from inv), 'La invitación anterior quedó revocada al reinvitar');
+create temporary table pendiente on commit drop as
+  select id from public.invitaciones
+   where correo = 'prima@ejemplo.test' and revocada_en is null and aceptada_en is null;
+select public.revocar_invitacion((select id from pendiente));
+select pruebas.ok(
+  (select revocada_en is not null from public.invitaciones where id = (select id from pendiente)),
+  'El dueño revoca una invitación pendiente');
+select pruebas.falla($$select public.revocar_invitacion((select id from pendiente))$$,
   'No se revoca dos veces', '22023');
+select pruebas.falla($$select public.revocar_invitacion((select invitacion_id from inv))$$,
+  'Una invitación ya revocada no se vuelve a revocar', '22023');
 
 -- Quien ya pertenece al hogar no entra dos veces.
 create temporary table inv3 on commit drop as

@@ -1,0 +1,9 @@
+# Reglas de validación de openapi.yaml (Redocly CLI). Se corre con `npm run validar`.
+extends:
+  - recommended
+
+rules:
+  # Especificación privada: no tiene licencia pública con URL.
+  info-license-strict: off
+  # Los servidores de herramientas y del puente son de red local (127.0.0.1, homeassistant.local).
+  no-server-example.com: error

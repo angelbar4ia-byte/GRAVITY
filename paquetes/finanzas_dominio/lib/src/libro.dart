@@ -375,7 +375,9 @@ class LibroMovimientos {
   void eliminarCuenta(String cuentaId) {
     cuenta(cuentaId);
     if (tieneMovimientos(cuentaId)) {
-      throw ErrorLibro('La cuenta $cuentaId tiene movimientos: ciérrala o archívala');
+      throw ErrorLibro(
+        'La cuenta $cuentaId tiene movimientos: ciérrala o archívala',
+      );
     }
     _cuentas.remove(cuentaId);
   }
@@ -638,7 +640,9 @@ class LibroMovimientos {
   EstadoResultados estadoResultados(Periodo periodo) {
     var gastos = 0;
     var financiero = 0;
-    for (final c in _cuentas.values.where((c) => c.clase == ClaseCuenta.gasto)) {
+    for (final c in _cuentas.values.where(
+      (c) => c.clase == ClaseCuenta.gasto,
+    )) {
       final s = saldo(c.id, desde: periodo.inicio, hasta: periodo.fin);
       if (c.tipo == TipoCuenta.gastoFinanciero) {
         financiero += s;
@@ -673,7 +677,10 @@ class LibroMovimientos {
 
   /// Cuánto aportó cada persona a una cuenta de gasto en [periodo]
   /// (5.0 bis, "cada miembro decide a cuál aportar").
-  Map<String, int> aportacionesPorPersona(String cuentaGastoId, Periodo periodo) {
+  Map<String, int> aportacionesPorPersona(
+    String cuentaGastoId,
+    Periodo periodo,
+  ) {
     final c = cuenta(cuentaGastoId);
     if (c.clase != ClaseCuenta.gasto) {
       throw ErrorLibro('$c no es una cuenta de gasto');
@@ -802,7 +809,9 @@ class LibroMovimientos {
     }
     for (final c in [origen, destino]) {
       if (c.estado != EstadoCuenta.activa) {
-        throw ErrorLibro('La cuenta $c está ${c.estado}: no admite movimientos');
+        throw ErrorLibro(
+          'La cuenta $c está ${c.estado}: no admite movimientos',
+        );
       }
     }
     final valida = _combinaciones[m.tipo]!.any(
@@ -825,7 +834,9 @@ class LibroMovimientos {
           );
         }
       case TipoMovimiento.apertura:
-        final cuentaReal = origen.clase == ClaseCuenta.apertura ? destino : origen;
+        final cuentaReal = origen.clase == ClaseCuenta.apertura
+            ? destino
+            : origen;
         final yaAbierta = _movimientos.any(
           (o) =>
               o.tipo == TipoMovimiento.apertura &&

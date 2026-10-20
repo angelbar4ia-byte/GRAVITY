@@ -30,7 +30,10 @@ class TemaModulo extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final sub = submodulo;
-    assert(sub == null || sub.modulo == modulo, 'El submódulo no es de $modulo');
+    assert(
+      sub == null || sub.modulo == modulo,
+      'El submódulo no es de $modulo',
+    );
     final personalidad = sub != null
         ? ref.watch(personalidadSubmoduloProvider(sub))
         : ref.watch(personalidadProvider(modulo));

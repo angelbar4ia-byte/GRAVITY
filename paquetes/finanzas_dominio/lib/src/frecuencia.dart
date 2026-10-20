@@ -72,7 +72,9 @@ class Equivalente {
       return Equivalente(montoCentavos * diasActivosPorSemana * 52);
     }
     if (diasActivosPorSemana != null) {
-      throw ArgumentError('Los días activos solo aplican a la frecuencia diaria');
+      throw ArgumentError(
+        'Los días activos solo aplican a la frecuencia diaria',
+      );
     }
     return Equivalente(montoCentavos * frecuencia.vecesAlAnio!);
   }
@@ -128,8 +130,7 @@ List<int> semanalesQueSuman(List<Equivalente> renglones) {
   if (renglones.any((e) => e.anualCentavos < 0)) {
     throw ArgumentError('Los renglones deben ser cero o positivos');
   }
-  return repartirConMayorResto(
-    [for (final e in renglones) e.anualCentavos],
-    52,
-  );
+  return repartirConMayorResto([
+    for (final e in renglones) e.anualCentavos,
+  ], 52);
 }

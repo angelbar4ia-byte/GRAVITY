@@ -50,7 +50,8 @@ Semaforo semaforoPartida(
   Umbrales umbrales = Umbrales.porDefecto,
 }) {
   if (disponible <= 0) return gastado > 0 ? Semaforo.rojo : Semaforo.verde;
-  if (compararProporcion(gastado, disponible, umbrales.partidaRojoArribaDe) > 0) {
+  if (compararProporcion(gastado, disponible, umbrales.partidaRojoArribaDe) >
+      0) {
     return Semaforo.rojo;
   }
   if (compararProporcion(gastado, disponible, umbrales.partidaAmbarDesde) > 0) {
@@ -66,10 +67,12 @@ Semaforo semaforoRemanente(
   Umbrales umbrales = Umbrales.porDefecto,
 }) {
   if (ingreso <= 0) return Semaforo.rojo;
-  if (compararProporcion(remanente, ingreso, umbrales.remanenteVerdeDesde) >= 0) {
+  if (compararProporcion(remanente, ingreso, umbrales.remanenteVerdeDesde) >=
+      0) {
     return Semaforo.verde;
   }
-  if (compararProporcion(remanente, ingreso, umbrales.remanenteAmbarDesde) >= 0) {
+  if (compararProporcion(remanente, ingreso, umbrales.remanenteAmbarDesde) >=
+      0) {
     return Semaforo.ambar;
   }
   return Semaforo.rojo;

@@ -70,7 +70,8 @@ class Semana implements Comparable<Semana> {
   int get hashCode => inicio.hashCode;
 
   @override
-  String toString() => 'Semana $anioIso-W${numeroIso.toString().padLeft(2, '0')} '
+  String toString() =>
+      'Semana $anioIso-W${numeroIso.toString().padLeft(2, '0')} '
       '($inicio a $fin)';
 }
 
@@ -84,7 +85,9 @@ class Periodo {
 
   Periodo(this.inicio, this.fin) {
     if (fin.antesDe(inicio)) {
-      throw ArgumentError('El periodo termina ($fin) antes de empezar ($inicio)');
+      throw ArgumentError(
+        'El periodo termina ($fin) antes de empezar ($inicio)',
+      );
     }
   }
 
@@ -110,10 +113,17 @@ class Periodo {
   /// defecto), sin depender del día exacto de pago de cada persona.
   factory Periodo.quincena(Fecha fecha, {int diaCorte = 15}) {
     if (diaCorte < 1 || diaCorte >= 28) {
-      throw ArgumentError.value(diaCorte, 'diaCorte', 'debe estar entre 1 y 27');
+      throw ArgumentError.value(
+        diaCorte,
+        'diaCorte',
+        'debe estar entre 1 y 27',
+      );
     }
     if (fecha.dia <= diaCorte) {
-      return Periodo(fecha.primerDiaDelMes, Fecha(fecha.anio, fecha.mes, diaCorte));
+      return Periodo(
+        fecha.primerDiaDelMes,
+        Fecha(fecha.anio, fecha.mes, diaCorte),
+      );
     }
     return Periodo(
       Fecha(fecha.anio, fecha.mes, diaCorte + 1),

@@ -104,7 +104,11 @@ enum TipoAviso { informacion, atencion, hecho }
 
 @immutable
 class AvisoGravity {
-  const AvisoGravity(this.cuando, this.texto, {this.tipo = TipoAviso.informacion});
+  const AvisoGravity(
+    this.cuando,
+    this.texto, {
+    this.tipo = TipoAviso.informacion,
+  });
 
   final String cuando;
   final String texto;

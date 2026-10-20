@@ -4,6 +4,7 @@
 /// `import 'package:gravity/diseno/diseno.dart';`
 library;
 
+export 'ajustes/seccion_apariencia.dart';
 export 'componentes/barra_progreso.dart';
 export 'componentes/estado_vacio.dart';
 export 'componentes/etiqueta_panel.dart';

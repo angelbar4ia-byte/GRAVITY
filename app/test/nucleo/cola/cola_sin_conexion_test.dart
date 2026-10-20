@@ -1,0 +1,228 @@
+import 'dart:async';
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:gravity/nucleo/base_local/base_local.dart';
+import 'package:gravity/nucleo/cola/cola_sin_conexion.dart';
+import 'package:gravity/nucleo/cola/enviador_supabase.dart';
+
+/// Servidor simulado: falla mientras [conSenal] es `false` y guarda por id
+/// (como `ON CONFLICT (id) DO NOTHING`).
+class EnviadorFalso implements Enviador {
+  bool conSenal = false;
+  bool lanzarExcepcion = false;
+  final Set<String> rechazarTipos = {};
+  final Map<String, Map<String, Object?>> servidor = {};
+  final List<String> intentos = [];
+  Completer<void>? pausa;
+
+  @override
+  Future<ResultadoEnvio> enviar(PeticionEnvio peticion) async {
+    intentos.add(peticion.id);
+    if (pausa != null) await pausa!.future;
+    if (lanzarExcepcion) throw StateError('sin red');
+    if (!conSenal) return ResultadoEnvio.reintentar;
+    if (rechazarTipos.contains(peticion.tipo)) return ResultadoEnvio.rechazado;
+    servidor.putIfAbsent(peticion.id, () => peticion.carga);
+    return ResultadoEnvio.enviado;
+  }
+}
+
+void main() {
+  late BaseLocal base;
+  late EnviadorFalso enviador;
+  late DateTime ahora;
+  late ColaSinConexion cola;
+  var siguienteId = 0;
+
+  setUp(() {
+    base = BaseLocal.enMemoria();
+    enviador = EnviadorFalso();
+    ahora = DateTime(2026, 10, 20, 8);
+    siguienteId = 0;
+    cola = ColaSinConexion(
+      base: base,
+      enviador: enviador,
+      reloj: () => ahora,
+      generarId: () => 'id-${siguienteId++}',
+    );
+  });
+
+  tearDown(() => base.close());
+
+  test('encolar guarda con UUID, tipo, carga JSON y estado pendiente', () async {
+    final real = ColaSinConexion(base: base, enviador: enviador);
+    final id = await real.encolar(
+      tipo: 'finanzas.gasto',
+      carga: {'monto_centavos': 12550, 'nota': 'súper'},
+    );
+    expect(
+      id,
+      matches(RegExp(r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$')),
+    );
+    final registros = await real.registros();
+    expect(registros, hasLength(1));
+    expect(registros.single.tipo, 'finanzas.gasto');
+    expect(registros.single.carga, '{"monto_centavos":12550,"nota":"súper"}');
+    expect(registros.single.estado, EstadoPendiente.pendiente);
+    expect(registros.single.intentos, 0);
+  });
+
+  test('sin señal falla, y al volver la señal se sube (servidor simulado)', () async {
+    await cola.encolar(tipo: 'habitos.marca', carga: {'hecho': true});
+
+    final sinSenal = await cola.procesar();
+    expect(sinSenal.enviados, 0);
+    expect(sinSenal.reintentos, 1);
+    expect(sinSenal.restantes, 1);
+    expect(enviador.servidor, isEmpty);
+
+    // Vuelve la señal, pero aún no pasa la espera: no se intenta.
+    enviador.conSenal = true;
+    final antes = await cola.procesar();
+    expect(antes.enviados, 0);
+    expect(enviador.intentos, hasLength(1));
+
+    ahora = ahora.add(const Duration(seconds: 5));
+    final despues = await cola.procesar();
+    expect(despues.enviados, 1);
+    expect(despues.restantes, 0);
+    expect(enviador.servidor.keys, ['id-0']);
+    final registro = (await cola.registros()).single;
+    expect(registro.estado, EstadoPendiente.enviado);
+    expect(registro.intentos, 2);
+    expect(registro.ultimoError, isNull);
+  });
+
+  test('la espera crece con cada intento fallido', () async {
+    await cola.encolar(tipo: 't', carga: {});
+    for (final espera in const [5, 10, 20, 40]) {
+      await cola.procesar();
+      final registro = (await cola.registros()).single;
+      expect(
+        registro.siguienteIntento,
+        ahora.add(Duration(seconds: espera)),
+        reason: 'intento ${registro.intentos}',
+      );
+      ahora = registro.siguienteIntento!;
+    }
+    expect((await cola.registros()).single.intentos, 4);
+  });
+
+  test('PoliticaReintentos tiene tope', () {
+    const politica = PoliticaReintentos(
+      esperaInicial: Duration(seconds: 5),
+      esperaMaxima: Duration(minutes: 1),
+    );
+    expect(politica.esperaTras(1), const Duration(seconds: 5));
+    expect(politica.esperaTras(2), const Duration(seconds: 10));
+    expect(politica.esperaTras(5), const Duration(seconds: 60));
+    expect(politica.esperaTras(30), const Duration(minutes: 1));
+  });
+
+  test('idempotencia: el mismo id no se duplica ni se reenvía', () async {
+    enviador.conSenal = true;
+    await cola.encolar(tipo: 't', carga: {'v': 1}, id: 'uuid-fijo');
+    await cola.encolar(tipo: 't', carga: {'v': 2}, id: 'uuid-fijo');
+    expect(await cola.registros(), hasLength(1));
+    expect(await cola.contarPendientes(), 1);
+
+    await cola.procesar();
+    await cola.procesar();
+    expect(enviador.intentos, ['uuid-fijo']);
+    expect(enviador.servidor['uuid-fijo'], {'v': 1});
+
+    // Encolar de nuevo un id ya enviado tampoco lo revive.
+    await cola.encolar(tipo: 't', carga: {'v': 3}, id: 'uuid-fijo');
+    await cola.procesar();
+    expect(enviador.intentos, ['uuid-fijo']);
+  });
+
+  test('envía en orden de creación y detiene la ronda si falla la red', () async {
+    for (var i = 0; i < 3; i++) {
+      await cola.encolar(tipo: 't', carga: {'n': i});
+    }
+    final resumen = await cola.procesar();
+    expect(enviador.intentos, ['id-0']);
+    expect(resumen.restantes, 3);
+
+    enviador.conSenal = true;
+    ahora = ahora.add(const Duration(minutes: 1));
+    final segundo = await cola.procesar();
+    expect(segundo.enviados, 3);
+    expect(enviador.intentos, ['id-0', 'id-0', 'id-1', 'id-2']);
+  });
+
+  test('una excepción del enviador cuenta como reintento', () async {
+    enviador.lanzarExcepcion = true;
+    await cola.encolar(tipo: 't', carga: {});
+    final resumen = await cola.procesar();
+    expect(resumen.reintentos, 1);
+    final registro = (await cola.registros()).single;
+    expect(registro.estado, EstadoPendiente.pendiente);
+    expect(registro.ultimoError, contains('sin red'));
+  });
+
+  test('lo rechazado no se reintenta y no detiene a los demás', () async {
+    enviador
+      ..conSenal = true
+      ..rechazarTipos.add('malo');
+    await cola.encolar(tipo: 'malo', carga: {});
+    await cola.encolar(tipo: 'bueno', carga: {});
+    final resumen = await cola.procesar();
+    expect(resumen.rechazados, 1);
+    expect(resumen.enviados, 1);
+    expect(resumen.restantes, 0);
+    final estados = [for (final r in await cola.registros()) r.estado];
+    expect(estados, [EstadoPendiente.rechazado, EstadoPendiente.enviado]);
+    await cola.procesar();
+    expect(enviador.intentos, hasLength(2));
+  });
+
+  test('dos llamadas a procesar comparten la misma ronda', () async {
+    enviador
+      ..conSenal = true
+      ..pausa = Completer<void>();
+    await cola.encolar(tipo: 't', carga: {});
+    final primera = cola.procesar();
+    final segunda = cola.procesar();
+    expect(identical(primera, segunda), isTrue);
+    enviador.pausa!.complete();
+    await primera;
+    expect(enviador.intentos, ['id-0']);
+  });
+
+  test('vigilarPendientes avisa cuántos faltan', () async {
+    final valores = <int>[];
+    final suscripcion = cola.vigilarPendientes().listen(valores.add);
+    await pumpEventQueue();
+    await cola.encolar(tipo: 't', carga: {});
+    await pumpEventQueue();
+    enviador.conSenal = true;
+    await cola.procesar();
+    await pumpEventQueue();
+    await suscripcion.cancel();
+    expect(valores.first, 0);
+    expect(valores, contains(1));
+    expect(valores.last, 0);
+  });
+
+  test('limpiarEnviados borra solo lo enviado y viejo', () async {
+    enviador.conSenal = true;
+    await cola.encolar(tipo: 't', carga: {});
+    await cola.procesar();
+    enviador.conSenal = false;
+    await cola.encolar(tipo: 't', carga: {});
+    ahora = ahora.add(const Duration(days: 8));
+    expect(await cola.limpiarEnviados(), 1);
+    expect(await cola.registros(), hasLength(1));
+  });
+
+  test('clasificarErrorPostgrest', () {
+    expect(clasificarErrorPostgrest('42501'), ResultadoEnvio.rechazado);
+    expect(clasificarErrorPostgrest('23505'), ResultadoEnvio.rechazado);
+    expect(clasificarErrorPostgrest('22P02'), ResultadoEnvio.rechazado);
+    expect(clasificarErrorPostgrest('23503'), ResultadoEnvio.reintentar);
+    expect(clasificarErrorPostgrest('PGRST301'), ResultadoEnvio.reintentar);
+    expect(clasificarErrorPostgrest(null), ResultadoEnvio.reintentar);
+  });
+}

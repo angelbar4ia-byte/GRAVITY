@@ -47,8 +47,7 @@ class Fecha implements Comparable<Fecha> {
   /// Número de día dentro del año (1 = 1 de enero).
   int get diaDelAnio => Fecha(anio, 1, 1).diasHasta(this) + 1;
 
-  Fecha sumarDias(int dias) =>
-      Fecha.deDateTime(_utc.add(Duration(days: dias)));
+  Fecha sumarDias(int dias) => Fecha.deDateTime(_utc.add(Duration(days: dias)));
 
   /// Días desde esta fecha hasta [otra] (negativo si [otra] es anterior).
   int diasHasta(Fecha otra) => otra._utc.difference(_utc).inDays;
@@ -57,7 +56,8 @@ class Fecha implements Comparable<Fecha> {
   bool despuesDe(Fecha otra) => compareTo(otra) > 0;
 
   /// Días que tiene el mes de [mes] en [anio].
-  static int diasDelMes(int anio, int mes) => DateTime.utc(anio, mes + 1, 0).day;
+  static int diasDelMes(int anio, int mes) =>
+      DateTime.utc(anio, mes + 1, 0).day;
 
   Fecha get primerDiaDelMes => Fecha._(anio, mes, 1);
   Fecha get ultimoDiaDelMes => Fecha._(anio, mes, diasDelMes(anio, mes));
