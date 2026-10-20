@@ -1,0 +1,26 @@
+/// Lógica pura del módulo Finanzas de GRAVITY (Dart sin Flutter).
+///
+/// Base: diseño de FINANZAS v23 (`docs/modulos/finanzas/`) y la
+/// especificación de la Fase 1 (`docs/specs/fase-1-finanzas.md`).
+///
+/// - Dinero en **centavos** (`int`) con redondeo explícito ([dividirRedondeando]).
+/// - Semana de **lunes a domingo** ([Semana]).
+/// - Equivalentes semanales por frecuencia ([Equivalente]).
+/// - Calendario de días hábiles y fechas de pago ([ajustarADiaHabil]).
+/// - Vista de flujo con peor caso ([proyectarFlujo]).
+/// - Libro de movimientos **solo-agregar** con anulación por contraasiento
+///   ([LibroMovimientos]).
+/// - Motor del presupuesto semanal y la cascada ([armarPlanSemanal],
+///   [cerrarSemana]).
+library;
+
+export 'src/calendario.dart';
+export 'src/dinero.dart';
+export 'src/fecha.dart';
+export 'src/flujo.dart';
+export 'src/frecuencia.dart';
+export 'src/indicadores.dart';
+export 'src/libro.dart';
+export 'src/presupuesto.dart';
+export 'src/proyeccion_deuda.dart';
+export 'src/semana.dart';

@@ -1,0 +1,121 @@
+import 'package:flutter/material.dart';
+
+import '../valores_diseno.dart';
+import 'etiqueta_panel.dart';
+
+/// Tarjeta de resumen de un módulo (sección 19): etiqueta, acción opcional y
+/// contenido. Toma los colores del estilo activo y la personalidad del módulo.
+class TarjetaModulo extends StatelessWidget {
+  const TarjetaModulo({
+    super.key,
+    required this.titulo,
+    required this.child,
+    this.icono,
+    this.accion,
+    this.alTocar,
+    this.colorEtiqueta,
+  });
+
+  /// Texto de la etiqueta; se muestra en mayúsculas.
+  final String titulo;
+
+  /// Contenido de la tarjeta.
+  final Widget child;
+
+  /// Icono de línea junto a la etiqueta.
+  final IconData? icono;
+
+  /// Acción en la esquina superior derecha (por ejemplo, "Mostrar").
+  final Widget? accion;
+
+  /// Si se indica, toda la tarjeta abre el detalle del módulo.
+  final VoidCallback? alTocar;
+
+  /// Color de la etiqueta; por defecto, el de etiquetas del estilo.
+  final Color? colorEtiqueta;
+
+  @override
+  Widget build(BuildContext context) {
+    final v = ValoresDiseno.de(context);
+    final e = v.espacio;
+    final radio = BorderRadius.circular(v.radioMediano);
+
+    Widget contenido = Padding(
+      padding: EdgeInsets.symmetric(horizontal: e * 2 + 2, vertical: e * 2),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              if (icono != null) ...[
+                Icon(icono, size: 16, color: colorEtiqueta ?? v.etiqueta),
+                SizedBox(width: e),
+              ],
+              Expanded(child: EtiquetaPanel(titulo, color: colorEtiqueta)),
+              ?accion,
+            ],
+          ),
+          SizedBox(height: e * 1.5),
+          child,
+        ],
+      ),
+    );
+
+    if (alTocar != null) {
+      contenido = InkWell(
+        onTap: alTocar,
+        borderRadius: radio,
+        child: contenido,
+      );
+    }
+
+    return Semantics(
+      container: true,
+      label: titulo,
+      child: Material(
+        color: v.panel,
+        shape: RoundedRectangleBorder(
+          borderRadius: radio,
+          side: BorderSide(color: v.borde),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: v.decoracion
+            ? CustomPaint(
+                foregroundPainter: MarcasEsquina(color: v.acento),
+                child: contenido,
+              )
+            : contenido,
+      ),
+    );
+  }
+}
+
+/// Marcas finas en las esquinas, adorno del estilo Futurista (HUD).
+/// No se dibujan si el estilo o el módulo van sin decoración.
+class MarcasEsquina extends CustomPainter {
+  const MarcasEsquina({required this.color, this.largo = 10});
+
+  final Color color;
+  final double largo;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final p = Paint()
+      ..color = color.withValues(alpha: 0.55)
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke;
+    final l = largo;
+    final w = size.width;
+    final h = size.height;
+    canvas
+      ..drawLine(Offset.zero, Offset(l, 0), p)
+      ..drawLine(Offset.zero, Offset(0, l), p)
+      ..drawLine(Offset(w, h), Offset(w - l, h), p)
+      ..drawLine(Offset(w, h), Offset(w, h - l), p);
+  }
+
+  @override
+  bool shouldRepaint(MarcasEsquina oldDelegate) =>
+      oldDelegate.color != color || oldDelegate.largo != largo;
+}

@@ -1,0 +1,16 @@
+name: finanzas_dominio
+description: >-
+  Lógica pura del módulo Finanzas de GRAVITY (Dart sin Flutter): semana en
+  lunes, equivalentes semanales, calendario de días hábiles, libro de
+  movimientos solo-agregar y motor del presupuesto semanal en cascada.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.13.5
+
+dependencies:
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.25.6
