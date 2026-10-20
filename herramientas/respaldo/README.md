@@ -99,7 +99,7 @@ La retención borra las copias de más de `-DiasRetencion` días en cada ubicaci
 
 ```powershell
 supabase start
-supabase db reset --no-seed        # migraciones sin datos de ejemplo
+supabase db reset --no-seed        # migraciones sin datos de ejemplo (o [db.seed] enabled = false en config.toml)
 $env:GRAVITY_DB_URL_DESTINO = 'postgresql://postgres:postgres@127.0.0.1:54322/postgres'
 .\restaurar.ps1 -Archivo "$env:USERPROFILE\Respaldos\GRAVITY\gravity_respaldo_20261020_210000.7z"
 ```
