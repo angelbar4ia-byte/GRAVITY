@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Restaura un respaldo cifrado de GRAVITY en una base de datos VACÍA.
 

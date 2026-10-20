@@ -1,4 +1,4 @@
-# GRAVITY - funciones comunes de respaldo_diario.ps1 y restaurar.ps1.
+﻿# GRAVITY - funciones comunes de respaldo_diario.ps1 y restaurar.ps1.
 # Se carga con: . (Join-Path $PSScriptRoot 'respaldo_comun.ps1')
 # Compatible con Windows PowerShell 5.1 y PowerShell 7 (Windows y Linux).
 # Guardado como UTF-8 con BOM para que PowerShell 5.1 lea bien los acentos.
@@ -39,7 +39,8 @@ function Write-Bitacora {
     elseif ($Nivel -eq 'AVISO') { Write-Host $linea -ForegroundColor Yellow }
     else { Write-Host $linea }
     if ($script:ArchivoLog) {
-        try { Add-Content -LiteralPath $script:ArchivoLog -Value $linea -Encoding UTF8 } catch { }
+        try { Add-Content -LiteralPath $script:ArchivoLog -Value $linea -Encoding UTF8 }
+        catch { Write-Verbose "No pude escribir en $($script:ArchivoLog): $($_.Exception.Message)" }
     }
 }
 

@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Respaldo diario de la base de datos de GRAVITY (Supabase) desde la laptop.
 
@@ -96,6 +96,7 @@ try {
     $url = Get-Secreto -Variable $VariableConexion -Descripcion 'cadena de conexión de Supabase'
     $clave = Get-Secreto -Variable $VariableClave -Descripcion 'clave para cifrar los respaldos'
     if ($clave.Length -lt 12) { throw "La clave de $VariableClave debe tener al menos 12 caracteres." }
+    if ($clave.Contains('"')) { throw "La clave de $VariableClave no debe llevar comillas dobles (""): PowerShell 5.1 no las pasa bien a 7-Zip." }
     $urlSinClave = Split-ClaveDeUrl $url
     $pg = Find-HerramientasPostgres -PgBin $PgBin
     if ($Cifrador -eq '7zip') { $herramientaCifrado = Find-SieteZip -Ruta $SieteZip }
