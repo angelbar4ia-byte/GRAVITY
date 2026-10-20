@@ -1,6 +1,6 @@
 // HALLAZGO I3 (IMPORTANTE) · docs/revisiones/fase-0.md
 //
-// FALLA HOY A PROPÓSITO (la primera prueba): demuestra el hallazgo.
+// Prueba de regresión: el hallazgo se resolvió el 20/oct/2026 (docs/revisiones/fase-0.md, sección 11).
 // Excluir mientras tanto: flutter test --exclude-tags hallazgo
 //
 // ServicioSesionSupabase.iniciar() atrapa CUALQUIER error al leer el perfil y

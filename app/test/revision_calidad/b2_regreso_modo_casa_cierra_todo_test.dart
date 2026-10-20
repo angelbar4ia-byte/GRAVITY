@@ -1,6 +1,6 @@
 // HALLAZGO B2 (BLOQUEANTE) · docs/revisiones/fase-0.md
 //
-// FALLA HOY A PROPÓSITO: demuestra el hallazgo. Pasará cuando se arregle.
+// Prueba de regresión: el hallazgo se resolvió el 20/oct/2026 (docs/revisiones/fase-0.md, sección 11).
 // Excluir mientras tanto: flutter test --exclude-tags hallazgo
 //
 // Al regresar solo al modo Casa (2 min sin uso, D14), las hojas y diálogos

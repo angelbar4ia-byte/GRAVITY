@@ -12,6 +12,7 @@ import '../modulos/ajustes/desarrollador/pantalla_desarrollador.dart';
 import '../modulos/gravity/ordenes/barra_ordenes.dart';
 import '../modulos/gravity/pantalla/hoy_telefono.dart';
 import '../modulos/gravity/pantalla/pantalla_principal.dart';
+import '../nucleo/contratos/dispositivo.dart';
 import '../nucleo/contratos/roles.dart';
 
 /// Pantalla principal de GRAVITY en la laptop (agente diseno).
@@ -21,11 +22,14 @@ Widget pantallaPrincipalGravity({Widget? barraOrdenes}) =>
 /// "Hoy" del teléfono y de la tablet por persona (agente diseno).
 Widget pantallaHoyTelefono() => const PantallaHoyTelefono();
 
-/// Barra de órdenes de navegación (agente asistente).
+/// Barra de órdenes de navegación (agente asistente). Con el [dispositivo]
+/// solo sugiere destinos que existen en él (Desarrollador, solo en la laptop;
+/// revisión de la Fase 0, M6).
 Widget barraOrdenes({
   required Rol rol,
   required void Function(String ruta) onNavegar,
-}) => BarraOrdenes(rol: rol, onNavegar: onNavegar);
+  TipoDispositivo? dispositivo,
+}) => BarraOrdenes(rol: rol, onNavegar: onNavegar, dispositivo: dispositivo);
 
 /// Ajustes › Desarrollador (agente asistente).
 Widget pantallaDesarrollador() => const PantallaDesarrollador();

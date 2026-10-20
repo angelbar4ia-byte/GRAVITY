@@ -11,6 +11,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:gravity/app/app_gravity.dart';
 import 'package:gravity/app/arranque.dart';
 import 'package:gravity/app/dispositivo.dart';
+import 'package:gravity/diseno/proveedores.dart' show Reloj, RelojFijo, relojProvider;
 import 'package:gravity/nucleo/base_local/base_local.dart';
 import 'package:gravity/nucleo/cola/proveedores_cola.dart';
 import 'package:gravity/nucleo/contratos/dispositivo.dart';
@@ -41,6 +42,7 @@ Future<void> montarApp(
   AlmacenSeguro? almacen,
   ServicioBiometria? biometria,
   BaseLocal? base,
+  Reloj? reloj,
   List<Override> extras = const [],
 }) async {
   final baseUsada = base ?? BaseLocal.enMemoria();
@@ -66,6 +68,8 @@ Future<void> montarApp(
           biometria ?? const BiometriaNoDisponible(),
         ),
         baseLocalProvider.overrideWithValue(baseUsada),
+        // Hora fija (de día): las pantallas no dependen de la hora real.
+        relojProvider.overrideWithValue(reloj ?? relojDePrueba),
         ...extras,
       ],
       child: const AppGravity(),
@@ -73,6 +77,9 @@ Future<void> montarApp(
   );
   await tester.pumpAndSettle();
 }
+
+/// Hora de las pruebas que montan la app: martes 20 de octubre, 10:00.
+final relojDePrueba = RelojFijo(DateTime(2026, 10, 20, 10));
 
 /// Sesión falsa abierta con la persona de ejemplo del [rol].
 ServicioSesionFalso sesionCon(Rol rol) => ServicioSesionFalso.con(rol);

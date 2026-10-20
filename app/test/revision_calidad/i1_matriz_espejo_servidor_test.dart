@@ -1,6 +1,6 @@
 // HALLAZGO I1 (IMPORTANTE) · docs/revisiones/fase-0.md
 //
-// FALLA HOY A PROPÓSITO: demuestra el hallazgo. Pasará cuando se arregle.
+// Prueba de regresión: el hallazgo se resolvió el 20/oct/2026 (docs/revisiones/fase-0.md, sección 11).
 // Excluir mientras tanto: flutter test --exclude-tags hallazgo
 //
 // El espejo de la app (lib/nucleo/permisos/permisos.dart) debe dar las mismas

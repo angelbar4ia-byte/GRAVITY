@@ -27,6 +27,7 @@ Cuando las decisiones confirmadas cambian el contrato, se reescribe `CONTRATO_CO
 | D15 | Pulsera smart band (reloj Wear OS a futuro) | Confirmada (detalles propuestos) |
 | D16 | APIs documentadas con OpenAPI y Swagger UI | Confirmada (detalles propuestos) |
 | D17 | Reglas técnicas del servidor (Fase 0) | Propuesta |
+| D18 | Decisiones provisionales de la revisión de la Fase 0 | Provisional (pendiente del dueño) |
 
 ---
 
@@ -346,4 +347,21 @@ Propuestas por el agente backend al construir el esquema base; no cambian ningun
 - **Bitácora inmutable** incluso para la cuenta de servicio: sin UPDATE ni DELETE.
 - **Un solo dueño activo por hogar;** transferir la propiedad requerirá una función específica.
 - **Respaldo:** copia local y copia externa, ambas cifradas (AES-256); retención de 30 días con un mínimo de 7 copias.
+- **Bitácora:** las acciones `insertar`, `actualizar` y `borrar` quedan reservadas a los triggers, y toda acción va en minúsculas (`^[a-z][a-z0-9_.]*$`).
+
+---
+
+## D18. Decisiones provisionales de la revisión de la Fase 0 — pendientes del dueño (20/oct/2026)
+
+Tomadas por el arquitecto con el criterio **más seguro** para cerrar los hallazgos de calidad; se pueden cambiar.
+
+| Tema | Provisional | Pregunta para el dueño |
+|---|---|---|
+| Huella en la tablet compartida | **Solo PIN**; la huella queda para el bloqueo del teléfono personal | ¿Se queda así? |
+| Cuenta de la tablet (D14) | La tablet en reposo usa una **cuenta de rol Casa**; cada persona entra con su PIN y usa su propia sesión (guardada cifrada con su PIN) | ¿La tablet será siempre de la casa? |
+| Cuidadora | Sin acceso a Finanzas (solo registrará gastos de cuidado en la Fase 5) ni a GRAVITY | ¿La cuidadora usará GRAVITY? |
+| Coadministrador (pareja) y Cuidados | Sin acceso hasta definir el consentimiento (Fase 5) | ¿Se mantiene? |
+| Dueño y GRAVITY | Acceso total al historial de GRAVITY de todos | Recomendación: **cada quien solo lo suyo** |
+| PIN fallido | Espera de 30 s que se duplica hasta 15 min | ¿Aviso al dueño tras muchos fallos? |
+| Bloqueo del teléfono | Al abrir y tras 1 minuto en segundo plano | ¿Te sirve 1 minuto? |
 

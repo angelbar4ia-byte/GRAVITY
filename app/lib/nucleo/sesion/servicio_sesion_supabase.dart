@@ -38,11 +38,15 @@ Future<Sesion> leerPerfilPorOmision(SupabaseClient cliente) async {
       .eq('usuario_id', usuario.id)
       .maybeSingle();
   if (persona == null) throw ErrorSesion.sinRol;
+  // En orden fijo (la más antigua primero): con dos hogares, siempre el mismo
+  // (revisión de la Fase 0, M4; elegir hogar llega con `mi_perfil()`).
   final membresias = await cliente
       .from('membresias')
       .select('rol, hogar_id, desde, hasta')
       .eq('persona_id', persona['id'] as String)
-      .eq('activa', true);
+      .eq('activa', true)
+      .order('desde')
+      .order('hogar_id');
   final vigente = membresiaVigente(membresias, DateTime.now());
   if (vigente == null) throw ErrorSesion.sinRol;
   return sesionDesdeFila({

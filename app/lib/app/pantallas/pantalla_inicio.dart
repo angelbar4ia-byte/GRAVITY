@@ -26,6 +26,7 @@ class PantallaInicio extends ConsumerWidget {
         barraOrdenes: barraOrdenes(
           rol: rol,
           onNavegar: (ruta) => context.go(ruta),
+          dispositivo: TipoDispositivo.laptop,
         ),
       ),
       TipoDispositivo.tablet when rol == Rol.casa => const PantallaModoCasa(),

@@ -1,6 +1,6 @@
 # Roadmap de GRAVITY (proyecto Segundo Cerebro)
 
-> **Versión 0.7 (20/oct/2026), en ejecución.** El dueño del proyecto dio la orden de inicio el 20/oct/2026. Plan de ejecución de la app única (D1): la **laptop Windows** con el sistema completo y el **teléfono Android** con lo mínimo (D4). Las decisiones de arquitectura están en `DECISIONES.md`; el diseño visual se define en paralelo en `DISENO_UX_UI.md`.
+> **Versión 0.8 (20/oct/2026), en ejecución.** El dueño del proyecto dio la orden de inicio el 20/oct/2026. Plan de ejecución de la app única (D1): la **laptop Windows** con el sistema completo y el **teléfono Android** con lo mínimo (D4). Las decisiones de arquitectura están en `DECISIONES.md`; el diseño visual se define en paralelo en `DISENO_UX_UI.md`.
 >
 > Fuente única: `GRAVITY/docs/ROADMAP.md` (D10 aplicada el 20/oct/2026). La ejecución la hace el **equipo de agentes** de la sección 11.
 
@@ -239,7 +239,7 @@ La ejecución la hace un equipo de agentes de Claude Code, **cada uno especializ
 
 | Fase | Estado | Notas |
 |---|---|---|
-| 0 | **Integrada; en revisión de calidad** (20/oct/2026) | App Flutter con cascarones laptop/tablet/teléfono, navegación por rol, sesión, cola sin conexión, tablet con PIN y modo Casa, estilo Futurista día/noche, pantalla principal de GRAVITY, barra de órdenes, Ajustes › Desarrollador; Supabase con RLS; respaldo cifrado; OpenAPI y Swagger UI. Pruebas: 288 de la app, 211 SQL, 37 de respaldo. **Falta del dueño:** proyecto de Supabase, proyecto de Firebase y Flutter en la laptop (especificación de la Fase 0, sección 8) |
+| 0 | **Cerrada en lo técnico** (20/oct/2026); falta lo del dueño | App con cascarones laptop/tablet/teléfono, navegación y resumen por rol, sesión, cola sin conexión por persona, tablet con cuenta Casa y PIN, bloqueo del teléfono, estilo Futurista día/noche, pantalla principal, barra de órdenes, Desarrollador; Supabase con RLS alineada; respaldo cifrado; OpenAPI. Revisión de calidad con sus hallazgos resueltos (`docs/revisiones/fase-0.md`, sección 11). Pruebas: 409 app, 249 SQL, 43 respaldo, 122 finanzas. **Falta del dueño:** proyecto de Supabase, proyecto de Firebase, Flutter en la laptop y las decisiones provisionales de D18 |
 | 1 | **Especificación lista para aprobación**; dominio adelantado | `docs/specs/fase-1-finanzas.md` (43 reglas, 30 criterios, 22 preguntas). Paquete `finanzas_dominio` con 122 pruebas |
 
 ---
@@ -255,3 +255,4 @@ La ejecución la hace un equipo de agentes de Claude Code, **cada uno especializ
 | 0.5 | 20/oct/2026 | Pulsera smart band en lugar de smartwatch (app propia solo con reloj Wear OS); tablet en horizontal y vertical con contextos ampliables |
 | 0.6 | 20/oct/2026 | Orden de inicio. D10 aplicada (todo en GRAVITY). Sección 11: equipo de agentes especializados con sus instrucciones, asignación por fase y estado de la ejecución |
 | 0.7 | 20/oct/2026 | Fase 0 integrada (estado en 11.4); especificación de la Fase 1 lista para aprobación |
+| 0.8 | 20/oct/2026 | Fase 0 cerrada en lo técnico tras la revisión de calidad; decisiones provisionales en D18 |

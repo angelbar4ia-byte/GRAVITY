@@ -219,3 +219,29 @@ Todas llevan la etiqueta `hallazgo` y el encabezado **"FALLA HOY A PROPÓSITO"**
 5. ¿El coadministrador podrá **escribir** en Cuidados con consentimiento (como dice el servidor) o solo leer (como dice la app)? (I1)
 6. ¿Qué espera quieres tras PINs fallidos en la tablet, y quieres un aviso cuando pase? Propuesta: 30 s, 1 min, 5 min, 15 min y aviso al Dueño. (I2)
 7. Al crear el proyecto de Supabase, deja activa la confirmación de correo (M15).
+
+---
+
+## 11. Estado de los hallazgos (arquitecto, 20/oct/2026)
+
+Corregidos por plataforma, diseno, asistente y backend en una segunda ronda en paralelo. Las pruebas de `app/test/revision_calidad/` pasan y quedan como **pruebas de regresión** (etiqueta `hallazgo`); los casos SQL de `hallazgos_fase0.sql` se integraron a los archivos `10`, `30`, `50` y `70` de la corrida normal y ese archivo ya no existe.
+
+| Hallazgo | Estado | Quién | Nota |
+|---|---|---|---|
+| B1 | Resuelto | diseno, plataforma | Resumen, avisos, saludo y barra filtrados por el rol efectivo; pruebas por llave |
+| B2 | Resuelto | plataforma | Al cambiar de persona se cierra todo lo abierto |
+| B3 | Resuelto (provisional) | plataforma | Tablet compartida solo con PIN; **pendiente de confirmar por el dueño** |
+| I1 | Resuelto (provisional) | plataforma, backend | Matriz alineada (55 filas): cuidador sin Finanzas/leer ni GRAVITY; coadministrador sin Cuidados hasta el consentimiento; dueño × GRAVITY total (**pendiente del dueño**) |
+| I2 | Resuelto | plataforma | Intentos persistentes; espera 30 s → 15 min |
+| I3 | Resuelto | plataforma | Sin rol con señal cierra la sesión; solo sin red usa la guardada |
+| I4 | Resuelto | plataforma | Cola por persona; sin sesión no envía; rechazos visibles ("requiere atención") |
+| I5 | Resuelto | asistente | El registro impone D3 y la matriz al registrar y al ejecutar |
+| I6 | Resuelto (provisional) | plataforma | Tablet con cuenta Casa; sesión por persona cifrada con su PIN; **pendiente de confirmar por el dueño** |
+| I7 | Pendiente del dueño | — | Repositorios privados; decidir si la ficha de deudas pasa a `data/personal/` |
+| I8 | Resuelto | plataforma | Bloqueo del teléfono con PIN o huella (1 min por omisión) |
+| I9 | Resuelto | plataforma | Sin respaldo automático de Android |
+| M1, M2, M3, M10, M11 | Resueltos | backend | — |
+| M4, M5, M6, M7, M8, M11 (app), M14 (parte), M16 | Resueltos | plataforma, diseno, asistente | — |
+| M9 (FLAG_SECURE), M12, M13, M14 (resto), M15, M17 | Pendientes | — | Fases 1, 2 y 6, o del dueño |
+
+**Resultado de la verificación final:** `flutter analyze` sin problemas; `flutter test` 409 pasan (incluidas las 22 de regresión); `finanzas_dominio` 122; SQL 249 afirmaciones; respaldo 43 comprobaciones; OpenAPI válida y al día.
