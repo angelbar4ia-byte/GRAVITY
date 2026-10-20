@@ -240,7 +240,7 @@ La ejecución la hace un equipo de agentes de Claude Code, **cada uno especializ
 | Fase | Estado | Notas |
 |---|---|---|
 | 0 | **Cerrada en lo técnico** (20/oct/2026); falta lo del dueño | App con cascarones laptop/tablet/teléfono, navegación y resumen por rol, sesión, cola sin conexión por persona, tablet con cuenta Casa y PIN, bloqueo del teléfono, estilo Futurista día/noche, pantalla principal, barra de órdenes, Desarrollador; Supabase con RLS alineada; respaldo cifrado; OpenAPI. Revisión de calidad con sus hallazgos resueltos (`docs/revisiones/fase-0.md`, sección 11). Pruebas: 409 app, 249 SQL, 43 respaldo, 122 finanzas. **Falta del dueño:** proyecto de Supabase, proyecto de Firebase, Flutter en la laptop y las decisiones provisionales de D18 |
-| 1 | **Especificación lista para aprobación**; dominio adelantado | `docs/specs/fase-1-finanzas.md` (43 reglas, 30 criterios, 22 preguntas). Paquete `finanzas_dominio` con 122 pruebas |
+| 1 | **En curso** (20/oct/2026) con las propuestas por defecto de la especificación mientras el dueño responde la sección 9 | Agentes en paralelo: backend (tablas `fin_`, RLS y pruebas SQL), finanzas (casos de uso, repositorios y pantallas), diseno (gadgets Cascada, Medidor y Teclado de monto) y plataforma (rutas, hoja (+) y cola). Dominio: 122 pruebas |
 
 ---
 
