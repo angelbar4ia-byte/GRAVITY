@@ -203,6 +203,3 @@ class _BarraOrdenesProvisionalState extends State<_BarraOrdenesProvisional> {
     ),
   );
 }
-
-/// Evita el aviso de import sin uso mientras todo es provisional.
-typedef LectorExterno = WidgetRef;
