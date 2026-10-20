@@ -60,6 +60,18 @@ abstract final class HashPin {
     return diferencia == 0;
   }
 
+  /// Llave de 32 bytes derivada del PIN (PBKDF2-HMAC-SHA256), p. ej. para
+  /// cifrar la credencial de una persona en la tablet (`cifrado.dart`). Usa
+  /// una sal distinta de la del hash.
+  static List<int> derivarLlave(
+    String pin,
+    List<int> sal, {
+    int iteraciones = iteracionesPorDefecto,
+  }) => _pbkdf2(utf8.encode(pin), sal, iteraciones);
+
+  /// Sal aleatoria de 16 bytes.
+  static List<int> salAleatoria() => _salAleatoria();
+
   static List<int> _salAleatoria() {
     final azar = Random.secure();
     return List<int>.generate(_bytesSal, (_) => azar.nextInt(256));

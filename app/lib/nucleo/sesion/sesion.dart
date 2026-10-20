@@ -91,6 +91,10 @@ class ErrorSesion implements Exception {
   static const sinRol = ErrorSesion(
     'Tu cuenta aún no tiene un rol en el hogar. Pide al Dueño que te invite.',
   );
+  static const credencialVencida = ErrorSesion(
+    'Tu sesión en este equipo venció. Pide que te agreguen de nuevo con tu '
+    'correo y contraseña.',
+  );
 
   @override
   String toString() => 'ErrorSesion: $mensaje';
@@ -124,6 +128,72 @@ abstract interface class ServicioSesion {
 
   /// Cierra la sesión.
   Future<void> salir();
+}
+
+/// Credencial de una persona para un equipo compartido: su sesión del
+/// servidor, para volver a abrirla después sin contraseña. La app la guarda
+/// cifrada con el PIN de la persona (`nucleo/seguridad/cifrado.dart`).
+class CredencialPersona {
+  const CredencialPersona(this.sesion, this.credencial);
+
+  final Sesion sesion;
+
+  /// Texto opaco (en Supabase, la sesión con su token de renovación).
+  final String credencial;
+}
+
+/// Resultado de [SesionesPorPersona.abrirSesionDePersona].
+class AperturaPersona {
+  const AperturaPersona({required this.sesion, required this.credencial});
+
+  /// Sesión con el rol vigente según el servidor; `null` sin señal.
+  final Sesion? sesion;
+
+  /// Credencial vigente (el servidor la renueva al usarla).
+  final String credencial;
+
+  bool get sinConexion => sesion == null;
+}
+
+/// Capacidad de los servicios con servidor en un equipo compartido (tablet de
+/// la casa, D14): la sesión del servidor cambia a la persona que entra con su
+/// PIN y regresa a la cuenta del equipo (Casa) al salir. Así el servidor
+/// aplica los permisos de quien usa la tablet y la bitácora lleva su nombre
+/// (D5). [ServicioSesion.sesionActual] sigue siendo la cuenta del equipo.
+abstract interface class SesionesPorPersona {
+  /// Comprueba correo y contraseña de la persona y devuelve su sesión (rol
+  /// real) y una credencial para entrar después con su PIN. No cambia la
+  /// sesión abierta. Lanza [ErrorSesion].
+  Future<CredencialPersona> obtenerCredencial({
+    required String correo,
+    required String contrasena,
+  });
+
+  /// Abre en el servidor la sesión de la persona de [credencial]; las
+  /// peticiones salen con su identidad hasta [cerrarSesionDePersona].
+  ///
+  /// Devuelve su sesión con el rol vigente (`null` si no hay señal: se abre
+  /// con la credencial guardada y el rol que ya se conocía) y la credencial
+  /// renovada, que hay que guardar en lugar de la anterior. Lanza
+  /// [ErrorSesion.sinRol] si ya no tiene acceso (dada de baja) y
+  /// [ErrorSesion.credencialVencida] si la credencial ya no sirve.
+  Future<AperturaPersona> abrirSesionDePersona(
+    String personaId,
+    String credencial,
+  );
+
+  /// Avisa cuando el servidor renueva la credencial de la persona que está
+  /// dentro (hay que guardarla otra vez) y emite `null` si su sesión terminó
+  /// (p. ej. la revocaron): la app regresa a la cuenta del equipo.
+  Stream<String?> get credencialesDePersona;
+
+  /// Cierra la sesión de la persona **sin revocarla** y regresa a la cuenta
+  /// del equipo. Devuelve su credencial vigente, para guardarla.
+  Future<String?> cerrarSesionDePersona();
+
+  /// Persona con cuya sesión salen ahora las peticiones al servidor (la del
+  /// equipo o la que entró con su PIN); `null` si no hay sesión.
+  String? get personaEnServidor;
 }
 
 /// Capacidad extra del modo demostración: entrar con un rol elegido.

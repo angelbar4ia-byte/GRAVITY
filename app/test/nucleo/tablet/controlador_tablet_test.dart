@@ -40,8 +40,8 @@ void main() {
     almacen = AlmacenSeguroEnMemoria();
     servicio = ServicioSesionFalso(
       cuentas: {
-        'ana@ejemplo.mx': CuentaFalsa('clave', sesionDeEjemplo(Rol.cuidador)),
-        'casa@ejemplo.mx': CuentaFalsa('clave', sesionDeEjemplo(Rol.casa)),
+        'ana@ejemplo.test': CuentaFalsa('clave', sesionDeEjemplo(Rol.cuidador)),
+        'casa@ejemplo.test': CuentaFalsa('clave', sesionDeEjemplo(Rol.casa)),
       },
       inicial: sesionDeEjemplo(Rol.casa),
     );
@@ -63,7 +63,7 @@ void main() {
     final contenedor = crear();
     final controlador = await listo(contenedor);
     final usuario = await controlador.agregarConCredenciales(
-      correo: 'ana@ejemplo.mx',
+      correo: 'ana@ejemplo.test',
       contrasena: 'clave',
       pin: '2468',
     );
@@ -85,7 +85,7 @@ void main() {
     final controlador = await listo(crear());
     await expectLater(
       controlador.agregarConCredenciales(
-        correo: 'ana@ejemplo.mx',
+        correo: 'ana@ejemplo.test',
         contrasena: 'mal',
         pin: '2468',
       ),
@@ -93,7 +93,7 @@ void main() {
     );
     await expectLater(
       controlador.agregarConCredenciales(
-        correo: 'ana@ejemplo.mx',
+        correo: 'ana@ejemplo.test',
         contrasena: 'clave',
         pin: '12',
       ),
@@ -101,7 +101,7 @@ void main() {
     );
     await expectLater(
       controlador.agregarConCredenciales(
-        correo: 'casa@ejemplo.mx',
+        correo: 'casa@ejemplo.test',
         contrasena: 'clave',
         pin: '1234',
       ),

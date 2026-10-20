@@ -22,7 +22,8 @@ enum Alcance {
   /// Leer y escribir solo lo propio.
   propio,
 
-  /// Leer según el consentimiento de quien representa a la persona (D2).
+  /// Leer y escribir según el consentimiento de quien representa a la
+  /// persona (D2). Sin consentimiento registrado no hay acceso (Fase 5).
   consentimiento,
 
   /// Leer y escribir lo de su turno.
@@ -34,7 +35,8 @@ enum Alcance {
   /// Leer una parte acotada (su parte, las comidas de papá, el menú y la lista).
   parcial,
 
-  /// Leer y escribir solo lo que la persona registra (gastos de cuidado).
+  /// Solo escribir lo que la persona registra (gastos de cuidado), sin leer
+  /// el módulo (D5: la cuidadora nunca lee Finanzas).
   registroPropio,
 }
 
@@ -71,18 +73,23 @@ class Permiso {
     Alcance.ninguno => const {},
     Alcance.total => const {Accion.leer, Accion.escribir, Accion.administrar},
     Alcance.lectura ||
-    Alcance.consentimiento ||
     Alcance.generico ||
     Alcance.parcial => const {Accion.leer},
     Alcance.propio ||
     Alcance.turno ||
-    Alcance.registroPropio => const {Accion.leer, Accion.escribir},
+    Alcance.consentimiento => const {Accion.leer, Accion.escribir},
+    Alcance.registroPropio => const {Accion.escribir},
   };
 }
 
-/// Matriz rol × módulo. El módulo `gravity` no está en la tabla de la
-/// especificación: es una propuesta de plataforma (la cuidadora solo usa
-/// Cuidados, D5; la casa usa GRAVITY sin dinero ni datos clínicos).
+/// Matriz rol × módulo. Da las mismas acciones que la matriz del servidor
+/// (`permisos_rol` en `supabase/migrations/`); la prueba
+/// `test/revision_calidad/i1_matriz_espejo_servidor_test.dart` lo vigila.
+///
+/// Alineación de la revisión de la Fase 0 (I1, pendiente del dueño): la
+/// cuidadora no lee Finanzas (solo registrará sus gastos de cuidado en la
+/// Fase 5) ni usa GRAVITY (solo Cuidados, D5); el coadministrador no entra a
+/// Cuidados hasta que exista el consentimiento (Fase 5).
 const Map<Modulo, Map<Rol, Permiso>> matrizPermisos = {
   Modulo.gravity: {
     Rol.dueno: Permiso(Alcance.total, 'Completo'),
@@ -103,7 +110,7 @@ const Map<Modulo, Map<Rol, Permiso>> matrizPermisos = {
     Rol.familiar: Permiso.ninguno(),
     Rol.cuidador: Permiso(
       Alcance.registroPropio,
-      'Gastos de cuidado propios, desde Cuidados',
+      'Solo registra sus gastos de cuidado, desde Cuidados; no lee Finanzas',
       accesoDirecto: false,
       desdeFase: 5,
     ),
@@ -120,7 +127,9 @@ const Map<Modulo, Map<Rol, Permiso>> matrizPermisos = {
     Rol.dueno: Permiso(Alcance.total, 'Total'),
     Rol.coadministrador: Permiso(
       Alcance.consentimiento,
-      'Según consentimiento',
+      'Según consentimiento (sin acceso hasta registrarlo)',
+      accesoDirecto: false,
+      desdeFase: 5,
     ),
     Rol.familiar: Permiso.ninguno(),
     Rol.cuidador: Permiso(Alcance.turno, 'Su turno'),

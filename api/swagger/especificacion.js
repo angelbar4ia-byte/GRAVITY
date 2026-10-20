@@ -1,7 +1,7 @@
 // GENERADO por api/generar_dart.mjs a partir de api/openapi.yaml. No se edita a mano.
 // Permite abrir Swagger UI con doble clic (file://), donde el navegador no deja leer
 // ../openapi.yaml. Servida por http, la página lee openapi.yaml directamente.
-// huella: fnv1a32:9a957fe9
+// huella: fnv1a32:cee18773
 window.ESPECIFICACION_GRAVITY = {
   "openapi": "3.1.0",
   "info": {
@@ -302,10 +302,9 @@ window.ESPECIFICACION_GRAVITY = {
         ],
         "operationId": "herramientaCuidadosAbrir",
         "summary": "cuidados.abrir · Abrir Cuidados",
-        "description": "Abre Cuidados. Lo que se ve adentro depende del rol: completo (dueño), según consentimiento (coadministrador), su turno (cuidador) o recordatorios genéricos (casa). Sinónimo en la barra de órdenes: papá.",
+        "description": "Abre Cuidados. Lo que se ve adentro depende del rol: completo (dueño), su turno (cuidador) o recordatorios genéricos (casa). El coadministrador no entra a Cuidados hasta que se registre el consentimiento (Fase 5). Sinónimo en la barra de órdenes: papá.",
         "x-roles": [
           "dueno",
-          "coadministrador",
           "cuidador",
           "casa"
         ],
@@ -1439,7 +1438,7 @@ window.ESPECIFICACION_GRAVITY = {
         ],
         "operationId": "agregarABitacora",
         "summary": "Agregar a la bitácora",
-        "description": "Cualquier miembro agrega a su nombre (p. ej. acciones de GRAVITY en la laptop, D8). No se edita ni se borra: se corrige con una entrada nueva.",
+        "description": "Cualquier miembro agrega a su nombre (p. ej. acciones de GRAVITY en la laptop, D8). No se edita ni se borra: se corrige con una entrada nueva. `accion` es un identificador en minúsculas (`^[a-z][a-z0-9_.]*$`, hasta 60 caracteres), p. ej. `entrega_de_turno` o `gravity.abrir`; si no cumple, responde 400 (código 23514). Las acciones `insertar`, `actualizar` y `borrar` están reservadas a los triggers que registran los cambios de las tablas: nadie puede fabricar una entrada que parezca un cambio automático, y responde 403 (código 42501).",
         "x-roles": [
           "dueno",
           "coadministrador",
@@ -1475,7 +1474,20 @@ window.ESPECIFICACION_GRAVITY = {
                   "accion": {
                     "type": "string",
                     "minLength": 1,
-                    "maxLength": 60
+                    "maxLength": 60,
+                    "pattern": "^[a-z][a-z0-9_.]*$",
+                    "not": {
+                      "enum": [
+                        "insertar",
+                        "actualizar",
+                        "borrar"
+                      ]
+                    },
+                    "description": "Identificador en minúsculas (letras, dígitos, `_` y `.`). `insertar`, `actualizar` y `borrar` están reservadas a los triggers (403, código 42501).",
+                    "examples": [
+                      "entrega_de_turno",
+                      "gravity.abrir"
+                    ]
                   },
                   "tabla": {
                     "type": "string",
@@ -1501,8 +1513,37 @@ window.ESPECIFICACION_GRAVITY = {
           "201": {
             "description": "Agregada."
           },
+          "400": {
+            "description": "`accion` no cumple el formato `^[a-z][a-z0-9_.]*$` o pasa de 60 caracteres (restricción del servidor, código 23514).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorPostgrest"
+                },
+                "example": {
+                  "code": "23514",
+                  "message": "new row for relation \"bitacora\" violates check constraint \"bitacora_accion_check\"",
+                  "details": null,
+                  "hint": null
+                }
+              }
+            }
+          },
           "403": {
-            "$ref": "#/components/responses/Prohibido"
+            "description": "Las reglas del servidor no lo permiten: la acción es `insertar`, `actualizar` o `borrar` (reservadas a los triggers), la entrada va a nombre de otra persona, el hogar no es tuyo o `ocurrido_en` pasa de 10 minutos en el futuro (código 42501).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorPostgrest"
+                },
+                "example": {
+                  "code": "42501",
+                  "message": "new row violates row-level security policy for table \"bitacora\"",
+                  "details": null,
+                  "hint": null
+                }
+              }
+            }
           }
         }
       }
@@ -2573,7 +2614,8 @@ window.ESPECIFICACION_GRAVITY = {
             "description": "Quién; lo pone el servidor. Nulo = sistema."
           },
           "accion": {
-            "type": "string"
+            "type": "string",
+            "description": "Qué pasó, en minúsculas. `insertar`, `actualizar` y `borrar` solo las escriben los triggers que registran los cambios de las tablas."
           },
           "tabla": {
             "type": [
@@ -2732,4 +2774,4 @@ window.ESPECIFICACION_GRAVITY = {
     }
   }
 };
-window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:9a957fe9';
+window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:cee18773';

@@ -11,27 +11,27 @@ const Map<Rol, Persona> personasDeEjemplo = {
   Rol.dueno: Persona(
     id: '00000000-0000-4000-8000-000000000001',
     nombre: 'Dueño de ejemplo',
-    correo: 'dueno@ejemplo.mx',
+    correo: 'dueno@ejemplo.test',
   ),
   Rol.coadministrador: Persona(
     id: '00000000-0000-4000-8000-000000000002',
     nombre: 'Pareja de ejemplo',
-    correo: 'pareja@ejemplo.mx',
+    correo: 'pareja@ejemplo.test',
   ),
   Rol.familiar: Persona(
     id: '00000000-0000-4000-8000-000000000003',
     nombre: 'Familiar de ejemplo',
-    correo: 'familiar@ejemplo.mx',
+    correo: 'familiar@ejemplo.test',
   ),
   Rol.cuidador: Persona(
     id: '00000000-0000-4000-8000-000000000004',
     nombre: 'Cuidadora de ejemplo',
-    correo: 'cuidador@ejemplo.mx',
+    correo: 'cuidador@ejemplo.test',
   ),
   Rol.casa: Persona(
     id: '00000000-0000-4000-8000-000000000005',
     nombre: 'Casa',
-    correo: 'casa@ejemplo.mx',
+    correo: 'casa@ejemplo.test',
   ),
 };
 

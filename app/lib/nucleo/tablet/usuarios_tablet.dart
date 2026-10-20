@@ -1,5 +1,6 @@
 /// Personas que entran en la tablet de la casa (D14) y su configuración.
-/// Todo se guarda en el almacenamiento seguro; el PIN solo como hash.
+/// Todo se guarda en el almacenamiento seguro; el PIN solo como hash, y la
+/// credencial del servidor de cada persona, cifrada con su PIN (I6).
 library;
 
 import 'dart:convert';
@@ -7,6 +8,7 @@ import 'dart:convert';
 import '../contratos/roles.dart';
 import '../sesion/sesion.dart';
 import '../seguridad/almacen_seguro.dart';
+import '../seguridad/cifrado.dart';
 
 /// Contexto de uso de la tablet (D14). Ampliable: se agregan a la lista.
 class ContextoCasa {
@@ -28,29 +30,26 @@ const regresoModoCasaPorOmision = Duration(minutes: 2);
 const regresoModoCasaMinimo = Duration(seconds: 30);
 const regresoModoCasaMaximo = Duration(minutes: 30);
 
-/// Persona registrada en la tablet.
+/// Persona registrada en la tablet. Entra **solo con su PIN**: en la tablet
+/// compartida la huella no identifica a la persona (Android acepta cualquier
+/// dedo registrado en el equipo; revisión de la Fase 0, B3).
 class UsuarioTablet {
   const UsuarioTablet({
     required this.personaId,
     required this.nombre,
     required this.rol,
     required this.hashPin,
-    this.huella = false,
     this.hogarId,
   });
 
-  factory UsuarioTablet.desdeSesion(
-    Sesion sesion, {
-    required String hashPin,
-    bool huella = false,
-  }) => UsuarioTablet(
-    personaId: sesion.persona.id,
-    nombre: sesion.persona.nombre,
-    rol: sesion.rol,
-    hashPin: hashPin,
-    huella: huella,
-    hogarId: sesion.hogarId,
-  );
+  factory UsuarioTablet.desdeSesion(Sesion sesion, {required String hashPin}) =>
+      UsuarioTablet(
+        personaId: sesion.persona.id,
+        nombre: sesion.persona.nombre,
+        rol: sesion.rol,
+        hashPin: hashPin,
+        hogarId: sesion.hogarId,
+      );
 
   final String personaId;
   final String nombre;
@@ -58,9 +57,6 @@ class UsuarioTablet {
 
   /// Hash del PIN (`HashPin.crear`), nunca el PIN.
   final String hashPin;
-
-  /// `true` si puede entrar con huella además del PIN.
-  final bool huella;
   final String? hogarId;
 
   Sesion get sesion => Sesion(
@@ -69,13 +65,12 @@ class UsuarioTablet {
     hogarId: hogarId,
   );
 
-  UsuarioTablet copiarCon({String? hashPin, bool? huella}) => UsuarioTablet(
+  UsuarioTablet copiarCon({String? hashPin, Sesion? sesion}) => UsuarioTablet(
     personaId: personaId,
-    nombre: nombre,
-    rol: rol,
+    nombre: sesion?.persona.nombre ?? nombre,
+    rol: sesion?.rol ?? rol,
     hashPin: hashPin ?? this.hashPin,
-    huella: huella ?? this.huella,
-    hogarId: hogarId,
+    hogarId: sesion?.hogarId ?? hogarId,
   );
 
   Map<String, Object?> aJson() => {
@@ -83,16 +78,16 @@ class UsuarioTablet {
     'nombre': nombre,
     'rol': rol.name,
     'hash_pin': hashPin,
-    'huella': huella,
     if (hogarId != null) 'hogar_id': hogarId,
   };
 
+  /// Lee una persona guardada. Una marca `huella` de versiones anteriores se
+  /// ignora: ya no abre.
   factory UsuarioTablet.desdeJson(Map<String, Object?> json) => UsuarioTablet(
     personaId: json['persona_id']! as String,
     nombre: json['nombre']! as String,
     rol: Rol.values.byName(json['rol']! as String),
     hashPin: json['hash_pin']! as String,
-    huella: (json['huella'] as bool?) ?? false,
     hogarId: json['hogar_id'] as String?,
   );
 }
@@ -136,6 +131,13 @@ class RepositorioTablet {
   static const claveUsuarios = 'tablet.usuarios';
   static const claveConfiguracion = 'tablet.configuracion';
 
+  /// Fallos del PIN por persona (sobreviven al reinicio, I2).
+  static const claveIntentos = 'tablet.intentos_pin';
+
+  /// Credencial cifrada con el PIN de [personaId].
+  static String claveCredencial(String personaId) =>
+      'tablet.credencial.$personaId';
+
   final AlmacenSeguro _almacen;
 
   Future<List<UsuarioTablet>> leerUsuarios() async {
@@ -171,4 +173,28 @@ class RepositorioTablet {
 
   Future<void> guardarConfiguracion(ConfiguracionTablet configuracion) =>
       _almacen.escribir(claveConfiguracion, jsonEncode(configuracion.aJson()));
+
+  /// Guarda la [credencial] de la persona cifrada con [llave] (de su PIN).
+  Future<void> guardarCredencial(
+    String personaId,
+    LlavePin llave,
+    String credencial,
+  ) => _almacen.escribir(
+    claveCredencial(personaId),
+    CifradoPin.cifrar(llave, credencial),
+  );
+
+  /// Descifra la credencial de la persona con su [pin]: devuelve la llave
+  /// (para volver a cifrarla al renovarse) y la credencial, o `null` si no hay
+  /// o el PIN no la abre.
+  Future<(LlavePin, String)?> leerCredencial(String personaId, String pin) async {
+    final sobre = await _almacen.leer(claveCredencial(personaId));
+    return sobre == null ? null : CifradoPin.descifrar(pin, sobre);
+  }
+
+  Future<bool> tieneCredencial(String personaId) async =>
+      await _almacen.leer(claveCredencial(personaId)) != null;
+
+  Future<void> borrarCredencial(String personaId) =>
+      _almacen.borrar(claveCredencial(personaId));
 }

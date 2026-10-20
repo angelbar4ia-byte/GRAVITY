@@ -32,7 +32,7 @@ void main() {
     ) async {
       final sesion = ServicioSesionFalso(
         cuentas: {
-          'ana@ejemplo.mx': CuentaFalsa('secreta', sesionDeEjemplo(Rol.cuidador)),
+          'ana@ejemplo.test': CuentaFalsa('secreta', sesionDeEjemplo(Rol.cuidador)),
         },
       );
       await montarApp(
@@ -47,7 +47,7 @@ void main() {
       await tester.pump();
       expect(find.text('Escribe tu correo.'), findsOneWidget);
 
-      await tester.enterText(find.byType(TextFormField).at(0), 'ana@ejemplo.mx');
+      await tester.enterText(find.byType(TextFormField).at(0), 'ana@ejemplo.test');
       await tester.enterText(find.byType(TextFormField).at(1), 'mala');
       await tester.tap(find.text('Entrar'));
       await tester.pumpAndSettle();

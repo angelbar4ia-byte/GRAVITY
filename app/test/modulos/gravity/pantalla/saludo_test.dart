@@ -152,21 +152,21 @@ void main() {
     });
 
     test('consentimiento (D2): nada hasta que se dé', () {
-      final alcance = permisoDe(Rol.coadministrador, Modulo.cuidados).alcance;
-      if (alcance == Alcance.consentimiento) {
-        expect(ejemplo.paraRol(Rol.coadministrador).cuidados, isNull);
-        expect(
-          ejemplo
-              .paraRol(Rol.coadministrador, conConsentimientoCuidados: true)
-              .cuidados,
-          isNotNull,
-        );
-      } else {
-        expect(
-          ejemplo.paraRol(Rol.coadministrador).cuidados != null,
-          puedeAbrir(Rol.coadministrador, Modulo.cuidados),
-        );
-      }
+      // Sin consentimiento registrado, el coadministrador no ve Cuidados.
+      expect(ejemplo.paraRol(Rol.coadministrador).cuidados, isNull);
+      expect(
+        vistaResumen(Rol.coadministrador, Modulo.cuidados),
+        VistaResumen.nada,
+      );
+      // Con consentimiento, solo si además el espejo de permisos le abre
+      // Cuidados (Fase 5).
+      expect(
+        ejemplo
+                .paraRol(Rol.coadministrador, conConsentimientoCuidados: true)
+                .cuidados !=
+            null,
+        puedeAbrir(Rol.coadministrador, Modulo.cuidados),
+      );
     });
 
     test('Casa no ve hábitos ni agenda personal', () {

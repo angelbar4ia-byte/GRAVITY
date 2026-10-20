@@ -150,4 +150,52 @@ void main() {
       }
     });
   });
+
+  group('conContrasteMinimo (M7)', () {
+    test('si ya llega, no cambia el color', () {
+      final v = futuristaDia;
+      expect(conContrasteMinimo(v.acento, v.panel), v.acento);
+      expect(conContrasteMinimo(v.texto, v.fondo), v.texto);
+    });
+
+    test('lo justo para llegar a 4.5:1, hacia el negro o el blanco', () {
+      for (final estilo in estilosIncluidos) {
+        for (final brillo in Brightness.values) {
+          final v = estilo.valores(brillo);
+          for (final t in [0.0, 0.4, 0.6, 1.0]) {
+            final superficie = Color.lerp(v.fondo, v.panel, t)!;
+            final ajustado = v.acentoParaTextoSobre(superficie);
+            _minimo(
+              ajustado,
+              superficie,
+              contrasteMinimoTexto,
+              '${estilo.nombre} ${brillo.name} acento ajustado/mezcla $t',
+            );
+          }
+        }
+      }
+      // Futurista de día: el acento puro sobre la superficie del núcleo no
+      // llegaba (4.37:1); el ajustado sí y sigue siendo un azul petróleo.
+      final dia = futuristaDia;
+      final nucleo = Color.lerp(dia.fondo, dia.panel, 0.4)!;
+      expect(razonContraste(dia.acento, nucleo), lessThan(4.5));
+      final ajustado = dia.acentoParaTextoSobre(nucleo);
+      expect(
+        luminanciaRelativa(ajustado),
+        lessThan(luminanciaRelativa(dia.acento)),
+      );
+      expect(ajustado.b, greaterThan(ajustado.r));
+    });
+
+    test('sobre fondo oscuro se aclara', () {
+      const fondo = Color(0xFF101010);
+      const tenue = Color(0xFF303030);
+      final ajustado = conContrasteMinimo(tenue, fondo);
+      expect(
+        luminanciaRelativa(ajustado),
+        greaterThan(luminanciaRelativa(tenue)),
+      );
+      _minimo(ajustado, fondo, contrasteMinimoTexto, 'gris sobre negro');
+    });
+  });
 }

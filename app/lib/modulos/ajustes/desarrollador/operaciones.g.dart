@@ -5,7 +5,7 @@ import '../../../nucleo/contratos/roles.dart';
 import 'operacion_api.dart';
 
 /// Huella de api/openapi.yaml con la que se generó este archivo.
-const huellaEspecificacion = 'fnv1a32:9a957fe9';
+const huellaEspecificacion = 'fnv1a32:cee18773';
 
 /// Versión de la especificación (info.version).
 const versionEspecificacion = '0.1.0';
@@ -88,8 +88,8 @@ const gruposOperaciones = <GrupoOperaciones>[
         metodo: MetodoHttp.post,
         ruta: '/herramientas/cuidados.abrir',
         resumen: 'cuidados.abrir · Abrir Cuidados',
-        descripcion: 'Abre Cuidados. Lo que se ve adentro depende del rol: completo (dueño), según consentimiento (coadministrador), su turno (cuidador) o recordatorios genéricos (casa). Sinónimo en la barra de órdenes: papá.',
-        roles: {Rol.dueno, Rol.coadministrador, Rol.cuidador, Rol.casa},
+        descripcion: 'Abre Cuidados. Lo que se ve adentro depende del rol: completo (dueño), su turno (cuidador) o recordatorios genéricos (casa). El coadministrador no entra a Cuidados hasta que se registre el consentimiento (Fase 5). Sinónimo en la barra de órdenes: papá.',
+        roles: {Rol.dueno, Rol.cuidador, Rol.casa},
         escribe: false,
         soloLocal: false,
         fase: 0,
@@ -421,7 +421,7 @@ const gruposOperaciones = <GrupoOperaciones>[
         metodo: MetodoHttp.post,
         ruta: '/rest/v1/bitacora',
         resumen: 'Agregar a la bitácora',
-        descripcion: 'Cualquier miembro agrega a su nombre (p. ej. acciones de GRAVITY en la laptop, D8). No se edita ni se borra: se corrige con una entrada nueva.',
+        descripcion: 'Cualquier miembro agrega a su nombre (p. ej. acciones de GRAVITY en la laptop, D8). No se edita ni se borra: se corrige con una entrada nueva. `accion` es un identificador en minúsculas (`^[a-z][a-z0-9_.]*\$`, hasta 60 caracteres), p. ej. `entrega_de_turno` o `gravity.abrir`; si no cumple, responde 400 (código 23514). Las acciones `insertar`, `actualizar` y `borrar` están reservadas a los triggers que registran los cambios de las tablas: nadie puede fabricar una entrada que parezca un cambio automático, y responde 403 (código 42501).',
         roles: {
           Rol.dueno,
           Rol.coadministrador,

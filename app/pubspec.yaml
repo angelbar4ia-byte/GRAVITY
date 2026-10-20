@@ -51,6 +51,10 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   crypto: ^3.0.7
+  # Cifrado AES-GCM de las credenciales de cada persona en la tablet (I6).
+  pointycastle: ^4.0.0
+  # Para distinguir los errores de red (ClientException) de los del servidor.
+  http: ^1.6.0
 
 dev_dependencies:
   flutter_test:

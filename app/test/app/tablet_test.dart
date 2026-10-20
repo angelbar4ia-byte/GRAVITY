@@ -217,7 +217,7 @@ void main() {
     final sesion = ServicioSesionFalso(
       inicial: sesionDeEjemplo(Rol.casa),
       cuentas: {
-        'ana@ejemplo.mx': CuentaFalsa('clave', sesionDeEjemplo(Rol.cuidador)),
+        'ana@ejemplo.test': CuentaFalsa('clave', sesionDeEjemplo(Rol.cuidador)),
       },
     );
     await montarApp(
@@ -228,7 +228,7 @@ void main() {
     expect(find.text('Aún no hay personas en esta tablet.'), findsOneWidget);
     await tester.tap(find.text('Agregar persona'));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byKey(const Key('agregar-correo')), 'ana@ejemplo.mx');
+    await tester.enterText(find.byKey(const Key('agregar-correo')), 'ana@ejemplo.test');
     await tester.enterText(find.byKey(const Key('agregar-contrasena')), 'mala');
     await tester.enterText(find.byKey(const Key('agregar-pin')), '2468');
     await tester.enterText(find.byKey(const Key('agregar-confirmacion')), '2468');

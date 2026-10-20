@@ -32,17 +32,17 @@ void main() {
     });
 
     test('el rol de ejemplo sale del correo', () async {
-      expect(rolPorCorreoDeEjemplo('cuidador@ejemplo.mx'), Rol.cuidador);
-      expect(rolPorCorreoDeEjemplo('Pareja@ejemplo.mx'), Rol.coadministrador);
-      expect(rolPorCorreoDeEjemplo('yo@ejemplo.mx'), Rol.dueno);
+      expect(rolPorCorreoDeEjemplo('cuidador@ejemplo.test'), Rol.cuidador);
+      expect(rolPorCorreoDeEjemplo('Pareja@ejemplo.test'), Rol.coadministrador);
+      expect(rolPorCorreoDeEjemplo('yo@ejemplo.test'), Rol.dueno);
       final servicio = ServicioSesionDemostracion();
       final sesion = await servicio.entrar(
-        correo: 'familiar@ejemplo.mx',
+        correo: 'familiar@ejemplo.test',
         contrasena: 'x',
       );
       expect(sesion.rol, Rol.familiar);
       expect(
-        () => servicio.entrar(correo: 'a@b.mx', contrasena: ''),
+        () => servicio.entrar(correo: 'a@ejemplo.test', contrasena: ''),
         throwsA(isA<ErrorSesion>()),
       );
     });
@@ -51,7 +51,7 @@ void main() {
       final servicio = ServicioSesionDemostracion();
       await servicio.entrarComo(Rol.casa);
       final otra = await servicio.verificarCredenciales(
-        correo: 'cuidador@ejemplo.mx',
+        correo: 'cuidador@ejemplo.test',
         contrasena: 'x',
       );
       expect(otra.rol, Rol.cuidador);
@@ -63,13 +63,13 @@ void main() {
     final cuenta = CuentaFalsa('secreta', sesionDeEjemplo(Rol.cuidador));
 
     test('entra con la cuenta correcta y falla con la incorrecta', () async {
-      final servicio = ServicioSesionFalso(cuentas: {'ana@ejemplo.mx': cuenta});
+      final servicio = ServicioSesionFalso(cuentas: {'ana@ejemplo.test': cuenta});
       await expectLater(
-        servicio.entrar(correo: 'ana@ejemplo.mx', contrasena: 'mal'),
+        servicio.entrar(correo: 'ana@ejemplo.test', contrasena: 'mal'),
         throwsA(ErrorSesion.credencialesIncorrectas),
       );
       final sesion = await servicio.entrar(
-        correo: ' ANA@ejemplo.mx ',
+        correo: ' ANA@ejemplo.test ',
         contrasena: 'secreta',
       );
       expect(sesion.rol, Rol.cuidador);
@@ -78,11 +78,11 @@ void main() {
 
     test('sin conexión avisa con un mensaje claro', () async {
       final servicio = ServicioSesionFalso(
-        cuentas: {'ana@ejemplo.mx': cuenta},
+        cuentas: {'ana@ejemplo.test': cuenta},
         sinConexion: true,
       );
       await expectLater(
-        servicio.entrar(correo: 'ana@ejemplo.mx', contrasena: 'secreta'),
+        servicio.entrar(correo: 'ana@ejemplo.test', contrasena: 'secreta'),
         throwsA(ErrorSesion.sinConexion),
       );
     });
