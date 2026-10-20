@@ -5,11 +5,14 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../nucleo/contratos/roles.dart';
 import '../../nucleo/permisos/permisos.dart';
 import '../../nucleo/sesion/proveedores_sesion.dart';
 import '../../nucleo/tablet/controlador_tablet.dart';
 import '../../nucleo/tablet/usuarios_tablet.dart';
+import '../navegacion.dart';
 import 'dialogo_agregar_persona.dart';
 import 'dialogo_pin.dart';
 
@@ -63,6 +66,20 @@ class PantallaModoCasa extends ConsumerWidget {
                   Icon(Icons.blur_circular, color: tema.colorScheme.primary),
                   const SizedBox(width: 8),
                   Text('GRAVITY · Casa', style: tema.textTheme.titleLarge),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Wrap(
+                      alignment: WrapAlignment.end,
+                      children: [
+                        for (final modulo in modulosNavegables(Rol.casa))
+                          TextButton.icon(
+                            onPressed: () => context.go(rutaDeModulo(modulo)),
+                            icon: Icon(iconoDeModulo(modulo)),
+                            label: Text(nombreModulo(modulo)),
+                          ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 16),

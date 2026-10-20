@@ -242,4 +242,19 @@ void main() {
       expect(ubicacion(tester), Rutas.ajustes);
     });
   });
+
+  testWidgets('teléfono pequeño (360 × 640) sin desbordes', (tester) async {
+    await montarApp(
+      tester,
+      dispositivo: TipoDispositivo.telefono,
+      sesion: sesionCon(Rol.dueno),
+    );
+    tester.view.physicalSize = const Size(360, 640);
+    await tester.pumpAndSettle();
+    for (final ruta in [Rutas.inicio, Rutas.finanzas, '/mas', Rutas.ajustes]) {
+      routerDe(tester).go(ruta);
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull, reason: ruta);
+    }
+  });
 }

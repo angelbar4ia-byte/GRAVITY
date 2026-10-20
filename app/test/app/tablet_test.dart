@@ -245,4 +245,19 @@ void main() {
     await entrarConPin(tester, nombreCuidadora, '2468');
     expect(ubicacion(tester), Rutas.cuidados);
   });
+
+  testWidgets('vertical: modo Casa y riel sin desbordes', (tester) async {
+    await montarApp(
+      tester,
+      dispositivo: TipoDispositivo.tablet,
+      sesion: sesionCasa(),
+      almacen: await almacenConPersonas({Rol.dueno: '1234'}),
+    );
+    tester.view.physicalSize = const Size(800, 1280);
+    await tester.pumpAndSettle();
+    expect(find.text('¿Quién usa la tablet?'), findsOneWidget);
+    await entrarConPin(tester, nombreDueno, '1234');
+    expect(enRiel('Finanzas'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }
