@@ -53,7 +53,10 @@ La prueba de Flutter `app/test/modulos/ajustes/desarrollador/operaciones_generad
 2. `npm run validar` y `npm run generar`.
 3. `cd ../app && flutter test test/modulos/ajustes/desarrollador`.
 
-Para agregar una herramienta: regístrala en `app/lib/nucleo/herramientas/`, documéntala aquí como `POST /herramientas/<modulo>.<accion>` con sus extensiones y regenera.
+Para agregar una herramienta: agrégala al catálogo de su fase en `app/lib/nucleo/herramientas/catalogo.dart`, documéntala aquí como `POST /herramientas/<modulo>.<accion>` con sus extensiones y regenera. El registro la rechaza al arrancar (`ArgumentError`) si:
+
+- declara un rol que la matriz de permisos (`app/lib/nucleo/permisos/permisos.dart`) no deja abrir el módulo (navegación), escribir en él (si `escribe`) o leerlo (D5);
+- es de Finanzas o Cuidados, no es de navegación y no es `soloLocal` (D3).
 
 ## Abrir Swagger UI
 
