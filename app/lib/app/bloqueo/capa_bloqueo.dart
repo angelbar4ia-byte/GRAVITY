@@ -89,19 +89,28 @@ class _CapaBloqueoTelefonoState extends ConsumerState<_CapaBloqueoTelefono>
           ),
         ),
         if (cubrir)
+          // Overlay propio (los campos de texto lo necesitan). Su entrada se
+          // construye una vez: lee el estado vigente ella misma.
           Overlay(
             key: _claveOverlay,
             initialEntries: [
-              OverlayEntry(
-                builder: (_) => estado.cargado
-                    ? const PantallaBloqueo()
-                    : const ColoredBox(color: Colors.black),
-              ),
+              OverlayEntry(builder: (_) => const _ContenidoBloqueo()),
             ],
           ),
       ],
     );
   }
+}
+
+/// Mientras se lee la configuración, nada; luego, la pantalla del PIN.
+class _ContenidoBloqueo extends ConsumerWidget {
+  const _ContenidoBloqueo();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) =>
+      ref.watch(controladorBloqueoProvider.select((e) => e.cargado))
+      ? const PantallaBloqueo()
+      : ColoredBox(color: Theme.of(context).colorScheme.surface);
 }
 
 /// Pantalla para desbloquear el teléfono.
@@ -250,14 +259,15 @@ class _PantallaBloqueoState extends ConsumerState<PantallaBloqueo> {
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                    OverflowBar(
+                      alignment: MainAxisAlignment.center,
+                      spacing: 8,
+                      overflowAlignment: OverflowBarAlignment.center,
                       children: [
                         TextButton(
                           onPressed: () => setState(() => _olvido = false),
                           child: const Text('Cancelar'),
                         ),
-                        const SizedBox(width: 8),
                         FilledButton.tonal(
                           onPressed: _salirSinPin,
                           child: const Text('Cerrar sesión'),

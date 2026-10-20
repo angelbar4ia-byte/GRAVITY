@@ -101,14 +101,14 @@ class PantallaRegistrosAtencion extends ConsumerWidget {
                           ),
                           if (registro.ultimoError != null)
                             Text(registro.ultimoError!),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
+                          OverflowBar(
+                            alignment: MainAxisAlignment.end,
+                            spacing: 8,
                             children: [
                               TextButton(
                                 onPressed: () => cola.descartar(registro.id),
                                 child: const Text('Descartar'),
                               ),
-                              const SizedBox(width: 8),
                               FilledButton.tonal(
                                 onPressed: () async {
                                   await cola.reintentar(registro.id);
