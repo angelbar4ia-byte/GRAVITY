@@ -13,10 +13,12 @@ final almacenSeguroProvider = Provider<AlmacenSeguro>(
   ),
 );
 
-/// Huella: en Android se usa la del dispositivo; en lo demás, no hay.
+/// Huella: en Android se usa la del dispositivo (bloqueo del teléfono); en lo
+/// demás, no hay.
 final biometriaProvider = Provider<ServicioBiometria>(
   (ref) => const BiometriaNoDisponible(),
 );
 
-/// Reloj inyectable (bloqueo por intentos fallidos del PIN).
+/// Reloj inyectable (esperas por intentos fallidos del PIN y bloqueo del
+/// teléfono).
 final relojSeguridadProvider = Provider<DateTime Function()>((ref) => DateTime.now);

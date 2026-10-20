@@ -2,6 +2,8 @@
 /// una sesión falsa y almacenes en memoria.
 library;
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
@@ -9,10 +11,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:gravity/app/app_gravity.dart';
 import 'package:gravity/app/arranque.dart';
 import 'package:gravity/app/dispositivo.dart';
+import 'package:gravity/nucleo/base_local/base_local.dart';
+import 'package:gravity/nucleo/cola/proveedores_cola.dart';
 import 'package:gravity/nucleo/contratos/dispositivo.dart';
 import 'package:gravity/nucleo/contratos/roles.dart';
 import 'package:gravity/nucleo/seguridad/almacen_seguro.dart';
 import 'package:gravity/nucleo/seguridad/biometria.dart';
+import 'package:gravity/nucleo/seguridad/cifrado.dart';
 import 'package:gravity/nucleo/seguridad/pin.dart';
 import 'package:gravity/nucleo/seguridad/proveedores_seguridad.dart';
 import 'package:gravity/nucleo/sesion/proveedores_sesion.dart';
@@ -35,8 +40,11 @@ Future<void> montarApp(
   required ServicioSesion sesion,
   AlmacenSeguro? almacen,
   ServicioBiometria? biometria,
+  BaseLocal? base,
   List<Override> extras = const [],
 }) async {
+  final baseUsada = base ?? BaseLocal.enMemoria();
+  if (base == null) addTearDown(baseUsada.close);
   tester.view.physicalSize = tamanoDe(dispositivo);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
@@ -57,6 +65,7 @@ Future<void> montarApp(
         biometriaProvider.overrideWithValue(
           biometria ?? const BiometriaNoDisponible(),
         ),
+        baseLocalProvider.overrideWithValue(baseUsada),
         ...extras,
       ],
       child: const AppGravity(),
@@ -71,23 +80,35 @@ ServicioSesionFalso sesionCon(Rol rol) => ServicioSesionFalso.con(rol);
 /// PIN de las pruebas (hash con pocas iteraciones para que sean rápidas).
 String hashDePrueba(String pin) => HashPin.crear(pin, iteraciones: 50);
 
-/// Almacén con personas de la tablet ya registradas (PIN 1234, salvo que se
-/// indique otro).
+/// Almacén con personas de la tablet ya registradas, cada una con su PIN y
+/// su credencial del servidor (la de [ServicioSesionFalso]) cifrada con él.
+///
+/// [conHuella] simula datos de una versión anterior en los que la persona
+/// había activado la huella: ya no abre (B3).
 Future<AlmacenSeguroEnMemoria> almacenConPersonas(
   Map<Rol, String> pinPorRol, {
   Set<Rol> conHuella = const {},
   ConfiguracionTablet? configuracion,
+  bool conCredencial = true,
 }) async {
   final almacen = AlmacenSeguroEnMemoria();
   final repositorio = RepositorioTablet(almacen);
-  await repositorio.guardarUsuarios([
-    for (final MapEntry(key: rol, value: pin) in pinPorRol.entries)
-      UsuarioTablet.desdeSesion(
-        sesionDeEjemplo(rol),
-        hashPin: hashDePrueba(pin),
-        huella: conHuella.contains(rol),
-      ),
-  ]);
+  final usuarios = <Map<String, Object?>>[];
+  for (final MapEntry(key: rol, value: pin) in pinPorRol.entries) {
+    final sesion = sesionDeEjemplo(rol);
+    usuarios.add({
+      ...UsuarioTablet.desdeSesion(sesion, hashPin: hashDePrueba(pin)).aJson(),
+      if (conHuella.contains(rol)) 'huella': true,
+    });
+    if (conCredencial) {
+      await repositorio.guardarCredencial(
+        sesion.persona.id,
+        LlavePin.derivar(pin, iteraciones: 50),
+        ServicioSesionFalso.credencialDe(sesion),
+      );
+    }
+  }
+  await almacen.escribir(RepositorioTablet.claveUsuarios, jsonEncode(usuarios));
   if (configuracion != null) {
     await repositorio.guardarConfiguracion(configuracion);
   }

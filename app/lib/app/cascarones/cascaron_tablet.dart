@@ -16,6 +16,7 @@ import '../../nucleo/tablet/controlador_tablet.dart';
 import '../../nucleo/tablet/usuarios_tablet.dart';
 import '../navegacion.dart';
 import '../pantallas/hoja_registrar.dart';
+import '../pantallas/registros_atencion.dart';
 import '../router.dart';
 import '../sesion_efectiva.dart';
 import '../tablet/detector_inactividad.dart';
@@ -90,7 +91,7 @@ class CascaronTablet extends ConsumerWidget {
                       ],
                     ),
                     const VerticalDivider(width: 1),
-                    Expanded(child: child),
+                    Expanded(child: ConAvisoAtencion(child: child)),
                   ],
                 ),
               ),

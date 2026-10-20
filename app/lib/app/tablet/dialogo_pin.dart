@@ -71,8 +71,9 @@ class _DialogoPinState extends ConsumerState<DialogoPin> {
       _error = null;
     });
     final resultado = await controlador.entrarConPin(personaId, _pin.text);
-    // Al entrar, el cascarón cierra este diálogo (B2).
-    if (!mounted) return;
+    // Al entrar, el cascarón ya cerró este diálogo (B2): no se cierra dos
+    // veces (se cerraría la pantalla de abajo).
+    if (!mounted || !(ModalRoute.of(context)?.isCurrent ?? false)) return;
     if (resultado == ResultadoDesbloqueo.abierto) {
       Navigator.of(context).pop(true);
       return;

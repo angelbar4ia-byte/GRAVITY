@@ -17,6 +17,7 @@ import 'pantallas/pantalla_entrar.dart';
 import 'pantallas/pantalla_inicio.dart';
 import 'pantallas/pantalla_mas.dart';
 import 'pantallas/pantalla_proximamente.dart';
+import 'pantallas/registros_atencion.dart';
 import 'sesion_efectiva.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -116,6 +117,11 @@ final List<RouteBase> rutasGravity = [
       ),
       _modulo(Rutas.alimentacion, Modulo.alimentacion),
       _modulo(Rutas.casa, Modulo.casa),
+      GoRoute(
+        path: RutasApp.pendientes,
+        pageBuilder: (context, estado) =>
+            _sinAnimacion(estado, const PantallaRegistrosAtencion()),
+      ),
       GoRoute(
         path: RutasApp.mas,
         pageBuilder: (context, estado) =>

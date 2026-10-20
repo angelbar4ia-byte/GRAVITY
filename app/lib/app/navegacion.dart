@@ -17,6 +17,9 @@ abstract final class RutasApp {
   static const cuidadosMedicamentos = '${Rutas.cuidados}/medicamentos';
   static const cuidadosComidas = '${Rutas.cuidados}/comidas';
   static const cuidadosBitacora = '${Rutas.cuidados}/bitacora';
+
+  /// Registros que el servidor no aceptó y requieren atención (I4).
+  static const pendientes = '/pendientes';
 }
 
 /// Una pestaña de la barra inferior (teléfono) o del riel lateral (tablet).

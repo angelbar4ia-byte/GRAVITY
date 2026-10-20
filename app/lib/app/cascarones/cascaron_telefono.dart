@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 
 import '../navegacion.dart';
 import '../pantallas/hoja_registrar.dart';
+import '../pantallas/registros_atencion.dart';
 import '../sesion_efectiva.dart';
 
 class CascaronTelefono extends ConsumerWidget {
@@ -25,9 +26,10 @@ class CascaronTelefono extends ConsumerWidget {
     final rol = ref.watch(rolEfectivoProvider);
     if (rol == null) return child;
     final destinos = destinosDe(rol);
-    if (destinos.length < 2) return Scaffold(body: child);
+    final cuerpo = ConAvisoAtencion(child: child);
+    if (destinos.length < 2) return Scaffold(body: cuerpo);
     return Scaffold(
-      body: child,
+      body: cuerpo,
       bottomNavigationBar: NavigationBar(
         selectedIndex: indiceDestino(ubicacion, destinos) ?? 0,
         onDestinationSelected: (indice) {

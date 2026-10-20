@@ -11,6 +11,7 @@ import 'package:go_router/go_router.dart';
 import '../../nucleo/contratos/rutas.dart';
 import '../../nucleo/permisos/permisos.dart';
 import '../navegacion.dart';
+import '../pantallas/registros_atencion.dart';
 import '../sesion_efectiva.dart';
 
 class CascaronLaptop extends ConsumerWidget {
@@ -39,7 +40,10 @@ class CascaronLaptop extends ConsumerWidget {
               SingleActivator(_teclas[i], control: true): () =>
                   context.go(rutaDeModulo(modulosDeTrabajo[i])),
       },
-      child: Focus(autofocus: true, child: child),
+      child: Focus(
+        autofocus: true,
+        child: ConAvisoAtencion(child: child),
+      ),
     );
   }
 }

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Revisión de la Fase 0, I9: nada de GRAVITY se respalda en la nube de
+     Google ni se copia al pasar a otro equipo (Android 12 o más). La base
+     local, las preferencias y el almacenamiento seguro se quedan en el
+     dispositivo (D13); al cambiar de teléfono se entra otra vez con la cuenta
+     y los datos vienen del servidor. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="root" path="."/>
+        <exclude domain="file" path="."/>
+        <exclude domain="database" path="."/>
+        <exclude domain="sharedpref" path="."/>
+        <exclude domain="external" path="."/>
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="root" path="."/>
+        <exclude domain="file" path="."/>
+        <exclude domain="database" path="."/>
+        <exclude domain="sharedpref" path="."/>
+        <exclude domain="external" path="."/>
+    </device-transfer>
+</data-extraction-rules>

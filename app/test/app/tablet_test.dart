@@ -14,6 +14,23 @@ import 'package:gravity/nucleo/tablet/usuarios_tablet.dart';
 
 import 'ayuda_plataforma.dart';
 
+/// Todo el texto visible, en minúsculas (los títulos de las tarjetas van en
+/// mayúsculas: buscar "Finanzas" tal cual pasaría en vacío).
+String textoVisible(WidgetTester tester) => tester
+    .widgetList<Text>(find.byType(Text))
+    .map((t) => t.data ?? t.textSpan?.toPlainText() ?? '')
+    .join(' · ')
+    .toLowerCase();
+
+/// Sin rastro de dinero: ni las piezas de Finanzas (por llave) ni su texto.
+void revisarSinDinero(WidgetTester tester) {
+  for (final llave in ['tarjeta-finanzas', 'panel-finanzas', 'monto-quedan']) {
+    expect(find.byKey(ValueKey(llave)), findsNothing, reason: llave);
+  }
+  expect(textoVisible(tester), isNot(contains('finanzas')));
+  expect(find.textContaining(r'$'), findsNothing);
+}
+
 const nombreDueno = 'Dueño de ejemplo';
 const nombreCuidadora = 'Cuidadora de ejemplo';
 
@@ -51,7 +68,7 @@ void main() {
     await montarApp(
       tester,
       dispositivo: TipoDispositivo.tablet,
-      sesion: sesionCon(Rol.dueno), // aun con la cuenta del Dueño
+      sesion: sesionCasa(),
       almacen: await almacenConPersonas({Rol.dueno: '1234'}),
     );
     expect(find.text('GRAVITY · Casa'), findsOneWidget);
@@ -61,8 +78,7 @@ void main() {
     expect(find.text('¿Quién usa la tablet?'), findsOneWidget);
     expect(find.text(nombreDueno), findsOneWidget);
     expect(find.text('Mantén para hablar'), findsOneWidget);
-    expect(find.textContaining('Finanzas'), findsNothing);
-    expect(find.textContaining(r'$'), findsNothing);
+    revisarSinDinero(tester);
 
     await tester.tap(find.text('Cocina'));
     await tester.pumpAndSettle();
@@ -71,6 +87,76 @@ void main() {
     routerDe(tester).go(Rutas.finanzas);
     await tester.pumpAndSettle();
     expect(ubicacion(tester), Rutas.inicio);
+  });
+
+  // D14 (revisión de la Fase 0, I6): la tablet trabaja con la cuenta de rol
+  // Casa. Antes esta prueba mostraba el modo Casa "aun con la cuenta del
+  // Dueño"; ahora con otra cuenta no se presenta el modo Casa: se pide la
+  // cuenta de la casa.
+  testWidgets('con la cuenta del Dueño pide la cuenta Casa', (tester) async {
+    final sesion = sesionCon(Rol.dueno);
+    await montarApp(
+      tester,
+      dispositivo: TipoDispositivo.tablet,
+      sesion: sesion,
+      almacen: await almacenConPersonas({Rol.familiar: '1234'}),
+    );
+    expect(find.text('GRAVITY · Casa'), findsNothing);
+    expect(ubicacion(tester), Rutas.entrar);
+    expect(find.byKey(const ValueKey('aviso-cuenta-casa')), findsOneWidget);
+    expect(find.text('Entra con la cuenta Casa'), findsOneWidget);
+    revisarSinDinero(tester);
+
+    // Ni por enlace directo.
+    routerDe(tester).go(Rutas.finanzas);
+    await tester.pumpAndSettle();
+    expect(ubicacion(tester), Rutas.entrar);
+
+    await tester.tap(find.text('Cerrar la cuenta de $nombreDueno'));
+    await tester.pumpAndSettle();
+    expect(sesion.sesionActual, isNull);
+    expect(find.byKey(const ValueKey('aviso-cuenta-casa')), findsNothing);
+  });
+
+  testWidgets('I6: con el PIN, la sesión del servidor es la de la persona', (
+    tester,
+  ) async {
+    final sesion = sesionCasa();
+    final casa = sesionDeEjemplo(Rol.casa).persona.id;
+    final dueno = sesionDeEjemplo(Rol.dueno).persona.id;
+    await montarApp(
+      tester,
+      dispositivo: TipoDispositivo.tablet,
+      sesion: sesion,
+      almacen: await almacenConPersonas({Rol.dueno: '1234'}),
+    );
+    expect(sesion.personaEnServidor, casa);
+    await entrarConPin(tester, nombreDueno, '1234');
+    expect(enRiel('Finanzas'), findsOneWidget);
+    expect(sesion.personaEnServidor, dueno);
+    expect(sesion.sesionActual?.rol, Rol.casa, reason: 'la cuenta del equipo');
+
+    await tester.pump(const Duration(minutes: 3));
+    await tester.pumpAndSettle();
+    expect(find.text('GRAVITY · Casa'), findsOneWidget);
+    expect(sesion.personaEnServidor, casa);
+  });
+
+  testWidgets('I6: sin su cuenta guardada, la persona no entra', (tester) async {
+    await montarApp(
+      tester,
+      dispositivo: TipoDispositivo.tablet,
+      sesion: sesionCasa(),
+      almacen: await almacenConPersonas(
+        {Rol.dueno: '1234'},
+        conCredencial: false,
+      ),
+    );
+    await entrarConPin(tester, nombreDueno, '1234');
+    expect(find.textContaining('Falta tu cuenta en esta tablet'), findsOneWidget);
+    await tester.tap(find.text('Cancelar'));
+    await tester.pumpAndSettle();
+    expect(find.text('GRAVITY · Casa'), findsOneWidget);
   });
 
   testWidgets('PIN abre las pantallas de la persona; PIN incorrecto no', (
@@ -143,7 +229,41 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('GRAVITY · Casa'), findsOneWidget);
     expect(ubicacion(tester), Rutas.inicio);
-    expect(find.textContaining('Finanzas'), findsNothing);
+    revisarSinDinero(tester);
+  });
+
+  testWidgets('B2: al volver a Casa se cierran sus menús y diálogos', (
+    tester,
+  ) async {
+    await montarApp(
+      tester,
+      dispositivo: TipoDispositivo.tablet,
+      sesion: sesionCasa(),
+      almacen: await almacenConPersonas({Rol.dueno: '1234'}),
+    );
+    await entrarConPin(tester, nombreDueno, '1234');
+    // El Dueño abre el menú de su cuenta y se va.
+    await tester.tap(find.byTooltip('Cuenta'));
+    await tester.pumpAndSettle();
+    expect(find.text('$nombreDueno · Dueño'), findsOneWidget);
+    await tester.pump(const Duration(minutes: 3));
+    await tester.pumpAndSettle();
+    expect(find.text('GRAVITY · Casa'), findsOneWidget);
+    expect(find.text('$nombreDueno · Dueño'), findsNothing);
+
+    // Lo mismo con un diálogo, al volver a mano desde el riel.
+    await entrarConPin(tester, nombreDueno, '1234');
+    await tester.tap(enRiel('Más'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Ajustes'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cerrar la sesión de la tablet'));
+    await tester.pumpAndSettle();
+    expect(find.text('¿Cerrar la sesión de la tablet?'), findsOneWidget);
+    await tester.pump(const Duration(minutes: 3));
+    await tester.pumpAndSettle();
+    expect(find.text('GRAVITY · Casa'), findsOneWidget);
+    expect(find.text('¿Cerrar la sesión de la tablet?'), findsNothing);
   });
 
   testWidgets('el tiempo de regreso es configurable', (tester) async {
@@ -193,7 +313,9 @@ void main() {
     expect(find.text('GRAVITY · Casa'), findsOneWidget);
   });
 
-  testWidgets('huella opcional', (tester) async {
+  // B3: la tablet compartida se abre solo con PIN (la huella no dice de
+  // quién es). Aunque una versión anterior la hubiera activado, no se ofrece.
+  testWidgets('B3: sin huella en la tablet, solo PIN', (tester) async {
     final biometria = BiometriaFalsa();
     await montarApp(
       tester,
@@ -205,12 +327,32 @@ void main() {
         conHuella: {Rol.dueno},
       ),
     );
+    expect(find.byIcon(Icons.fingerprint), findsNothing);
     await tester.tap(find.text(nombreDueno));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Usar huella'));
+    expect(find.text('Usar huella'), findsNothing);
+    expect(find.byKey(const Key('campo-pin')), findsOneWidget);
+    expect(biometria.intentos, 0);
+  });
+
+  testWidgets('I2: tras 5 PIN incorrectos dice cuánto esperar', (tester) async {
+    await montarApp(
+      tester,
+      dispositivo: TipoDispositivo.tablet,
+      sesion: sesionCasa(),
+      almacen: await almacenConPersonas({Rol.dueno: '1234'}),
+    );
+    await tester.tap(find.text(nombreDueno));
     await tester.pumpAndSettle();
-    expect(biometria.intentos, 1);
-    expect(enRiel('Finanzas'), findsOneWidget);
+    for (var i = 0; i < 5; i++) {
+      await tester.enterText(find.byKey(const Key('campo-pin')), '9999');
+      await tester.tap(find.widgetWithText(FilledButton, 'Entrar'));
+      await tester.pumpAndSettle();
+    }
+    expect(
+      find.text('Demasiados intentos. Espera 30 segundos.'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('agregar persona con su correo y contraseña', (tester) async {

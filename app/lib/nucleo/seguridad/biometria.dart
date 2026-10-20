@@ -1,8 +1,9 @@
-/// Huella (opcional) con `local_auth`.
+/// Huella (opcional) con `local_auth`, solo para el bloqueo del teléfono
+/// personal (`bloqueo.dart`, I8).
 ///
 /// Ojo: Android no dice **de quién** es la huella; cualquier dedo registrado
-/// en el dispositivo la acepta. Por eso en la tablet compartida la huella es
-/// opcional por persona y el PIN siempre está disponible.
+/// en el dispositivo la acepta. Por eso la tablet compartida **no** abre con
+/// huella: solo con el PIN de cada persona (revisión de la Fase 0, B3).
 library;
 
 import 'package:flutter/foundation.dart';

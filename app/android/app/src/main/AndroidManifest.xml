@@ -1,12 +1,20 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Supabase (D7) y avisos de Firebase. -->
     <uses-permission android:name="android.permission.INTERNET"/>
-    <!-- Huella para cambiar de usuario en la tablet (D14). -->
+    <!-- Huella para el bloqueo del teléfono personal (I8). La tablet de la
+         casa no abre con huella: solo con el PIN de cada persona (B3). -->
     <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
+    <!-- Sin respaldo automático de Android (revisión de la Fase 0, I9): la
+         base local (cola de registros), las preferencias y el almacenamiento
+         seguro no salen del dispositivo (D13). allowBackup="false" apaga la
+         copia en la nube; las reglas de extracción excluyen todo también de la
+         transferencia entre equipos (Android 12 o más). -->
     <application
         android:label="GRAVITY"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/reglas_extraccion_datos">
         <activity
             android:name=".MainActivity"
             android:exported="true"

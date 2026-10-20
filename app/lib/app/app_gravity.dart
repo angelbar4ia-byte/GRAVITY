@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'bloqueo/capa_bloqueo.dart';
 import 'pantallas_externas.dart';
 import 'router.dart';
 
@@ -28,6 +29,9 @@ class AppGravity extends ConsumerWidget {
       locale: localeGravity,
       supportedLocales: localesSoportados,
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
+      // Bloqueo del teléfono con PIN o huella (I8), encima de todo.
+      builder: (context, child) =>
+          CapaBloqueo(child: child ?? const SizedBox.shrink()),
     );
   }
 }
