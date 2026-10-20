@@ -1,15 +1,23 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gravity/modulos/gravity/ordenes/interprete_ordenes.dart';
 import 'package:gravity/modulos/gravity/ordenes/texto_ordenes.dart';
+import 'package:gravity/nucleo/contratos/dispositivo.dart';
 import 'package:gravity/nucleo/contratos/roles.dart';
 import 'package:gravity/nucleo/contratos/rutas.dart';
 
-/// Ruta que abre [texto] para [rol], o `null` si no se entendió un único destino.
-String? rutaDe(String texto, {Rol rol = Rol.dueno}) =>
-    switch (InterpreteOrdenes(rol: rol).interpretar(texto)) {
-      OrdenEntendida(:final destino) => destino.ruta,
-      _ => null,
-    };
+/// Ruta que abre [texto] para [rol] en [dispositivo], o `null` si no se
+/// entendió un único destino.
+String? rutaDe(
+  String texto, {
+  Rol rol = Rol.dueno,
+  TipoDispositivo? dispositivo = TipoDispositivo.laptop,
+}) => switch (InterpreteOrdenes(
+  rol: rol,
+  dispositivo: dispositivo,
+).interpretar(texto)) {
+  OrdenEntendida(:final destino) => destino.ruta,
+  _ => null,
+};
 
 List<String> opcionesDe(ResultadoOrden r) => switch (r) {
   OrdenParecida(:final opciones) => [for (final o in opciones) o.ruta],
@@ -123,7 +131,10 @@ void main() {
     });
 
     test('lo que no se parece a nada', () {
-      final r = InterpreteOrdenes(rol: Rol.dueno).interpretar('xyzzy');
+      final r = InterpreteOrdenes(
+        rol: Rol.dueno,
+        dispositivo: TipoDispositivo.laptop,
+      ).interpretar('xyzzy');
       expect(r, isA<OrdenNoEntendida>());
       expect(opcionesDe(r), hasLength(8));
     });
@@ -191,6 +202,44 @@ void main() {
       );
     });
 
+    test('Desarrollador solo en la laptop (D16, M6)', () {
+      expect(rutaDe('desarrollador'), Rutas.desarrollador);
+      for (final dispositivo in [
+        TipoDispositivo.telefono,
+        TipoDispositivo.tablet,
+        null,
+      ]) {
+        final interprete = InterpreteOrdenes(
+          rol: Rol.dueno,
+          dispositivo: dispositivo,
+        );
+        for (final orden in ['desarrollador', 'swagger', 'desarolador']) {
+          final r = interprete.interpretar(orden);
+          expect(
+            r,
+            isNot(isA<OrdenEntendida>()),
+            reason: '$orden en $dispositivo',
+          );
+          expect(
+            opcionesDe(r),
+            isNot(contains(Rutas.desarrollador)),
+            reason: '$orden en $dispositivo',
+          );
+        }
+        expect(
+          interprete.sugerir('desa').map((s) => s.destino.ruta),
+          isNot(contains(Rutas.desarrollador)),
+          reason: '$dispositivo',
+        );
+        expect(
+          interprete.destinos.map((d) => d.ruta),
+          isNot(contains(Rutas.desarrollador)),
+        );
+        // El resto sigue igual.
+        expect(rutaDe('ajustes', dispositivo: dispositivo), Rutas.ajustes);
+      }
+    });
+
     test('módulos inactivos', () {
       final interprete = InterpreteOrdenes(
         rol: Rol.dueno,
@@ -198,6 +247,49 @@ void main() {
       );
       expect(interprete.interpretar('ir a hábitos'), isA<OrdenNoEntendida>());
       expect(interprete.interpretar('abre finanzas'), isA<OrdenEntendida>());
+    });
+  });
+
+  group('Orden de ejemplo de la ayuda (M6)', () {
+    test('nombra un destino que el rol sí ve', () {
+      String? ejemplo(Rol rol) => InterpreteOrdenes(rol: rol).ejemplo;
+      expect(ejemplo(Rol.dueno), 'abre presupuesto');
+      expect(ejemplo(Rol.familiar), 'abre hábitos');
+      expect(ejemplo(Rol.cuidador), 'abre cuidados');
+    });
+
+    test(
+      'para cada rol, el ejemplo se entiende y no es Finanzas si no la ve',
+      () {
+        for (final rol in Rol.values) {
+          final interprete = InterpreteOrdenes(
+            rol: rol,
+            dispositivo: TipoDispositivo.laptop,
+          );
+          final ejemplo = interprete.ejemplo;
+          if (interprete.destinos.length <= 1) continue;
+          expect(ejemplo, isNotNull, reason: rol.name);
+          expect(
+            interprete.interpretar(ejemplo!),
+            isA<OrdenEntendida>(),
+            reason: '${rol.name}: $ejemplo',
+          );
+          final veFinanzas = interprete.destinos.any(
+            (d) => d.ruta == Rutas.finanzas,
+          );
+          if (!veFinanzas) {
+            expect(ejemplo, isNot(contains('presupuesto')), reason: rol.name);
+          }
+        }
+      },
+    );
+
+    test('sin destinos, no hay ejemplo', () {
+      final interprete = InterpreteOrdenes(
+        rol: Rol.dueno,
+        puedeVer: (_) => false,
+      );
+      expect(interprete.ejemplo, isNull);
     });
   });
 

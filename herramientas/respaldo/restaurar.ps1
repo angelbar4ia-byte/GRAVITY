@@ -11,7 +11,8 @@
     3. Carga los datos en UNA transacción con session_replication_role = replica
        (sin triggers: la bitácora conserva sus fechas y no se duplican personas).
     4. Compara las filas de cada tabla con el manifiesto.
-    Los datos sin cifrar se borran al terminar (salvo con -SoloExtraer).
+    Los datos sin cifrar se borran al terminar (salvo con -SoloExtraer), y al
+    empezar se borran los que haya dejado una corrida interrumpida (más de 6 horas).
 
     Antes de restaurar en un proyecto NUEVO de Supabase: aplica las migraciones
     (supabase db push) y NO apliques seed.sql. En Supabase local: supabase db reset
@@ -50,6 +51,7 @@ try {
     if (-not (Test-Path -LiteralPath $Archivo)) { throw "No existe el archivo $Archivo" }
     $Archivo = (Resolve-Path -LiteralPath $Archivo).Path
     $clave = Get-Secreto -Variable $VariableClave -Descripcion 'clave con la que se cifró el respaldo'
+    Remove-TemporalesHuerfanos
 
     # 1. Descifrar y extraer.
     $temporal = New-CarpetaTemporal -Prefijo 'gravity_restaurar'

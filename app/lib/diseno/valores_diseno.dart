@@ -10,6 +10,7 @@ import 'dart:ui' show FontFeature, lerpDouble;
 import 'package:flutter/material.dart';
 
 import '../nucleo/contratos/dispositivo.dart';
+import 'contraste.dart';
 
 /// Familias tipográficas incluidas en el proyecto (licencia OFL, en
 /// `assets/fonts/`). Los nombres coinciden con la sección `fonts:` de
@@ -173,6 +174,14 @@ class ValoresDiseno extends ThemeExtension<ValoresDiseno> {
 
   /// Unidad de espaciado según la densidad.
   double get espacio => densidad.espacio;
+
+  /// El acento, ajustado para texto normal (4.5:1) sobre [superficie].
+  ///
+  /// El acento cumple 4.5:1 sobre el panel, pero sobre el fondo solo 3:1 (texto
+  /// grande y adornos). Úsalo cuando texto chico de acento va sobre otra
+  /// superficie (p. ej. una mezcla de fondo y panel).
+  Color acentoParaTextoSobre(Color superficie) =>
+      conContrasteMinimo(acento, superficie);
 
   /// Estilo para títulos (GRAVITY, encabezados, cifras grandes).
   TextStyle titulo({

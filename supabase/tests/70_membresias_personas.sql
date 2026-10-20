@@ -33,9 +33,8 @@ select pruebas.igual(
   (select string_agg(modulo || ':' || accion || '=' || alcance, ', ' order by modulo, accion)
      from public.mis_permisos('b0000000-0000-4000-8000-000000000001')),
   'ajustes:escribir=propio, ajustes:leer=propio, alimentacion:leer=restringido, casa:leer=total, '
-  'cuidados:escribir=restringido, cuidados:leer=restringido, finanzas:escribir=restringido, '
-  'gravity:escribir=propio, gravity:leer=propio',
-  'Cuidador: Cuidados de su turno, comidas de la persona bajo cuidado, Casa y lo propio; nada de familia');
+  'cuidados:escribir=restringido, cuidados:leer=restringido, finanzas:escribir=restringido',
+  'Cuidador: Cuidados de su turno, comidas de la persona bajo cuidado, Casa y lo propio; nada de familia ni GRAVITY');
 select pruebas.ok(
   not public.puede('b0000000-0000-4000-8000-000000000001', 'habitos', 'leer')
   and not public.puede_sobre('b0000000-0000-4000-8000-000000000001', 'habitos', 'leer',
@@ -43,6 +42,44 @@ select pruebas.ok(
   and not public.puede('b0000000-0000-4000-8000-000000000001', 'alimentacion', 'leer')
   and not public.puede('b0000000-0000-4000-8000-000000000001', 'ajustes', 'leer'),
   'Cuidador: sin Hábitos, sin Alimentación completa y sin Ajustes del hogar');
+select pruebas.ok(
+  public.alcance('b0000000-0000-4000-8000-000000000001', 'gravity', 'leer') is null
+  and not public.puede_sobre('b0000000-0000-4000-8000-000000000001', 'gravity', 'leer',
+                             pruebas.id_persona('diana@ejemplo.test'))
+  and not public.puede_sobre('b0000000-0000-4000-8000-000000000001', 'gravity', 'escribir',
+                             pruebas.id_persona('diana@ejemplo.test')),
+  'I1: Cuidador: sin GRAVITY, ni siquiera lo propio');
+select pruebas.ok(
+  not public.puede('b0000000-0000-4000-8000-000000000001', 'finanzas', 'leer')
+  and not public.puede_sobre('b0000000-0000-4000-8000-000000000001', 'finanzas', 'leer',
+                             pruebas.id_persona('diana@ejemplo.test'))
+  and public.alcance('b0000000-0000-4000-8000-000000000001', 'finanzas', 'leer') is null,
+  'I1: Cuidador: no lee Finanzas, ni lo que él registra');
+
+-- ---------------------------------------------------------------- coadministrador y dueño (I1)
+select pruebas.como('beto@ejemplo.test');
+select pruebas.ok(
+  public.alcance('b0000000-0000-4000-8000-000000000001', 'cuidados', 'leer') = 'restringido'
+  and not public.puede('b0000000-0000-4000-8000-000000000001', 'cuidados', 'leer')
+  and not public.puede('b0000000-0000-4000-8000-000000000001', 'cuidados', 'escribir')
+  and not public.puede_sobre('b0000000-0000-4000-8000-000000000001', 'cuidados', 'leer',
+                             pruebas.id_persona('beto@ejemplo.test'))
+  and not public.puede_sobre('b0000000-0000-4000-8000-000000000001', 'cuidados', 'escribir',
+                             pruebas.id_persona('beto@ejemplo.test')),
+  'I1: Coadministrador: sin acceso a Cuidados hasta que exista el consentimiento (Fase 5)');
+select pruebas.ok(
+  public.puede_sobre('b0000000-0000-4000-8000-000000000001', 'gravity', 'leer',
+                     pruebas.id_persona('beto@ejemplo.test'))
+  and not public.puede_sobre('b0000000-0000-4000-8000-000000000001', 'gravity', 'leer',
+                             pruebas.id_persona('ana@ejemplo.test')),
+  'Coadministrador: GRAVITY lo propio, no lo de otros');
+select pruebas.como('ana@ejemplo.test');
+select pruebas.ok(
+  public.puede('b0000000-0000-4000-8000-000000000001', 'gravity', 'leer')
+  and public.puede('b0000000-0000-4000-8000-000000000001', 'gravity', 'escribir')
+  and public.puede_sobre('b0000000-0000-4000-8000-000000000001', 'gravity', 'leer',
+                         pruebas.id_persona('carla@ejemplo.test')),
+  'I1: Dueño: GRAVITY total');
 
 -- ---------------------------------------------------------------- lo propio (puede_sobre)
 select pruebas.como('carla@ejemplo.test');

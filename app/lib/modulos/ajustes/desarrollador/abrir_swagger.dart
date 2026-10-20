@@ -101,5 +101,7 @@ const String instruccionesSwagger =
     '2. O indica la ruta al compilar la app:\n'
     r'   flutter run -d windows --dart-define=RUTA_SWAGGER=C:\ruta\gravity\api\swagger\index.html'
     '\n'
-    '3. Para leer openapi.yaml en vivo, sirve la carpeta api/ (p. ej. npx http-server api) '
-    'y usa su dirección http como RUTA_SWAGGER.';
+    '3. Para leer openapi.yaml en vivo, sirve la carpeta api/ solo en este equipo '
+    '(npx --yes http-server@14.1.1 api -p 8080 -a 127.0.0.1; sin -a 127.0.0.1 '
+    'la vería toda la red de la casa) y usa '
+    'http://127.0.0.1:8080/swagger/index.html como RUTA_SWAGGER.';

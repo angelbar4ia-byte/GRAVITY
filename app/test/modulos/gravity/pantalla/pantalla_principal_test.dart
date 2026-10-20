@@ -3,9 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:gravity/app/sesion_efectiva.dart';
 import 'package:gravity/diseno/diseno.dart';
 import 'package:gravity/modulos/gravity/pantalla/pantalla_principal.dart';
 import 'package:gravity/modulos/gravity/pantalla/resumen_gravity.dart';
+import 'package:gravity/nucleo/contratos/roles.dart';
 import 'package:gravity/nucleo/contratos/rutas.dart';
 
 import '../../../diseno/ayuda_pruebas.dart';
@@ -201,7 +203,13 @@ void main() {
           ResumenGravity(
             agenda: ResumenGravity.ejemplo.agenda,
             habitos: ResumenGravity.ejemplo.habitos,
-            avisos: const [AvisoGravity('SÁB 14:30', 'Revisión semanal')],
+            avisos: const [
+              AvisoGravity(
+                'SÁB 14:30',
+                'Revisión semanal',
+                modulo: Modulo.finanzas,
+              ),
+            ],
           ),
         ),
       ],
@@ -232,7 +240,10 @@ void main() {
     addTearDown(router.dispose);
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [relojProvider.overrideWithValue(RelojFijo(momentoNoche))],
+        overrides: [
+          relojProvider.overrideWithValue(RelojFijo(momentoNoche)),
+          rolEfectivoProvider.overrideWithValue(Rol.dueno),
+        ],
         child: Consumer(
           builder: (context, ref, _) => MaterialApp.router(
             theme: ref.watch(temaClaroProvider),
@@ -279,6 +290,148 @@ void main() {
       await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
       await expectLater(tester, meetsGuideline(textContrastGuideline));
       semantica.dispose();
+    });
+  }
+
+  group('Por rol (D5)', () {
+    Future<void> montarComo(WidgetTester tester, Rol rol) async {
+      fijarVentana(tester, const Size(1440, 900));
+      await montar(tester, const PantallaPrincipalGravity(), rol: rol);
+    }
+
+    String textoVisible(WidgetTester tester) => tester
+        .widgetList<Text>(find.byType(Text))
+        .map((t) => t.data ?? t.textSpan?.toPlainText() ?? '')
+        .join(' · ')
+        .toLowerCase();
+
+    testWidgets('Familiar: sin dinero ni cuidados, ni en el núcleo', (
+      tester,
+    ) async {
+      await montarComo(tester, Rol.familiar);
+      expect(find.byKey(const ValueKey('panel-finanzas')), findsNothing);
+      expect(find.byKey(const ValueKey('monto-quedan')), findsNothing);
+      expect(find.byKey(const ValueKey('panel-cuidados')), findsNothing);
+      // Lo suyo sí: agenda y hábitos.
+      expect(find.byKey(const ValueKey('panel-hoy')), findsOneWidget);
+      final texto = textoVisible(tester);
+      for (final prohibido in [
+        'quedan',
+        'presupuesto',
+        'tarjeta de crédito',
+        'revisión semanal',
+        'medicamento',
+        'cuidados',
+        'turno',
+      ]) {
+        expect(texto, isNot(contains(prohibido)), reason: prohibido);
+      }
+      expect(
+        find.text('Buenas noches. Te faltan 2 hábitos de hoy.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('Casa: sin dinero ni hábitos; cuidados solo genéricos', (
+      tester,
+    ) async {
+      await montarComo(tester, Rol.casa);
+      expect(find.byKey(const ValueKey('panel-finanzas')), findsNothing);
+      expect(find.byKey(const ValueKey('panel-hoy')), findsNothing);
+      expect(find.byKey(const ValueKey('panel-cuidados')), findsOneWidget);
+      expect(find.text('Turno de cuidados · hasta 20:00'), findsOneWidget);
+      expect(find.text('Recordatorio de cuidados 20:00'), findsOneWidget);
+      final texto = textoVisible(tester);
+      for (final prohibido in [
+        'quedan',
+        'presupuesto',
+        'tarjeta de crédito',
+        'medicamento',
+        'cuidadora',
+        'entrega de turno',
+        'hábito',
+      ]) {
+        expect(texto, isNot(contains(prohibido)), reason: prohibido);
+      }
+      expect(
+        find.text(
+          'Buenas noches. A las 20:00 hay un recordatorio de cuidados.',
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('Coadministrador: Finanzas sí; Cuidados no sin '
+        'consentimiento', (tester) async {
+      await montarComo(tester, Rol.coadministrador);
+      expect(find.byKey(const ValueKey('panel-finanzas')), findsOneWidget);
+      expect(find.byKey(const ValueKey('panel-cuidados')), findsNothing);
+      expect(textoVisible(tester), isNot(contains('medicamento')));
+    });
+
+    testWidgets('sin rol no muestra paneles', (tester) async {
+      fijarVentana(tester, const Size(1440, 900));
+      await montar(tester, const PantallaPrincipalGravity(), rol: null);
+      for (final panel in [
+        'panel-hoy',
+        'panel-cuidados',
+        'panel-finanzas',
+        'panel-avisos',
+      ]) {
+        expect(find.byKey(ValueKey(panel)), findsNothing, reason: panel);
+      }
+      expect(find.byKey(const ValueKey('panel-nucleo')), findsOneWidget);
+    });
+
+    for (final (rol, esperados) in [
+      (
+        Rol.dueno,
+        ['finanzas', 'habitos', 'cuidados', 'alimentacion', 'casa', 'ajustes'],
+      ),
+      (Rol.familiar, ['habitos', 'alimentacion', 'casa', 'ajustes']),
+      (Rol.casa, ['cuidados', 'alimentacion', 'casa']),
+    ]) {
+      testWidgets('barra de módulos de ${rol.name}', (tester) async {
+        await montarComo(tester, rol);
+        for (final m in Modulo.values) {
+          expect(
+            find.byKey(ValueKey('modulo-${m.name}')),
+            esperados.contains(m.name) ? findsOneWidget : findsNothing,
+            reason: '${rol.name}: ${m.name}',
+          );
+        }
+      });
+    }
+
+    testWidgets('el ejemplo de la barra de muestra no ofrece "presupuesto" '
+        'a quien no ve Finanzas', (tester) async {
+      await montarComo(tester, Rol.familiar);
+      expect(find.textContaining('abre presupuesto'), findsNothing);
+      expect(find.textContaining('ej.: abre hábitos'), findsOneWidget);
+    });
+  });
+
+  for (final (nombre, momento) in [
+    ('noche', momentoNoche),
+    ('día', momentoDia),
+  ]) {
+    testWidgets('el estado del núcleo llega a 4.5:1 de $nombre (M7)', (
+      tester,
+    ) async {
+      fijarVentana(tester, const Size(1440, 900));
+      await montar(tester, const PantallaPrincipalGravity(), momento: momento);
+      final estado = tester.widget<Text>(
+        find.byKey(const ValueKey('estado-nucleo')),
+      );
+      expect(estado.data, 'EN ESPERA');
+      final caja = tester.widget<DecoratedBox>(
+        find.byKey(const ValueKey('panel-nucleo')),
+      );
+      final superficie = (caja.decoration as BoxDecoration).color!;
+      expect(
+        razonContraste(estado.style!.color!, superficie),
+        greaterThanOrEqualTo(contrasteMinimoTexto),
+      );
     });
   }
 }

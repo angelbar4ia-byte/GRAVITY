@@ -47,3 +47,28 @@ const double contrasteMinimoTexto = 4.5;
 /// Contraste mínimo para texto grande (24 px, o 18.7 px en negritas) y para
 /// componentes de la interfaz (WCAG AA).
 const double contrasteMinimoGrande = 3.0;
+
+/// [color] con el contraste justo para llegar a [minimo] sobre [fondo]. Si ya
+/// llega, regresa igual; si no, se acerca poco a poco al negro o al blanco (al
+/// que más contraste da con el fondo) hasta llegar.
+///
+/// Sirve para texto de acento sobre superficies intermedias (por ejemplo, el
+/// estado del núcleo sobre su panel) sin cambiar los colores del estilo.
+Color conContrasteMinimo(
+  Color color,
+  Color fondo, {
+  double minimo = contrasteMinimoTexto,
+}) {
+  if (razonContraste(color, fondo) >= minimo) return color;
+  const negro = Color(0xFF000000);
+  const blanco = Color(0xFFFFFFFF);
+  final destino = razonContraste(negro, fondo) >= razonContraste(blanco, fondo)
+      ? negro
+      : blanco;
+  const pasos = 100;
+  for (var paso = 1; paso < pasos; paso++) {
+    final candidato = Color.lerp(color, destino, paso / pasos)!;
+    if (razonContraste(candidato, fondo) >= minimo) return candidato;
+  }
+  return destino;
+}

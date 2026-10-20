@@ -144,6 +144,28 @@ select pruebas.falla($$select public.aceptar_invitacion((select token from inv3)
 select pruebas.igual(public.rol_en_hogar('b0000000-0000-4000-8000-000000000001'), 'familiar',
   'Su rol no cambia por aceptar otra invitación');
 
+-- Con la membresía vencida (activa pero con fecha de fin pasada) sí puede
+-- volver con una invitación nueva (hallazgo M3).
+select pruebas.como_postgres();
+create temporary table membresia_vencida on commit drop as
+  select id from public.membresias where persona_id = pruebas.id_persona('carla@ejemplo.test');
+update public.membresias set desde = now() - interval '30 days', hasta = now() - interval '1 day'
+ where id = (select id from membresia_vencida);
+grant select on membresia_vencida to authenticated;
+select pruebas.como('carla@ejemplo.test');
+select pruebas.igual(public.rol_en_hogar('b0000000-0000-4000-8000-000000000001'), null::text,
+  'M3: con la membresía vencida no tiene rol');
+select pruebas.igual(public.aceptar_invitacion((select token from inv3)),
+  'b0000000-0000-4000-8000-000000000001'::uuid, 'M3: con la membresía vencida acepta la invitación nueva');
+select pruebas.igual(public.rol_en_hogar('b0000000-0000-4000-8000-000000000001'), 'coadministrador',
+  'M3: entra con el rol de la invitación nueva');
+select pruebas.como_postgres();
+select pruebas.ok(
+  (select not activa from public.membresias where id = (select id from membresia_vencida))
+  and (select count(*) = 1 from public.membresias
+        where persona_id = pruebas.id_persona('carla@ejemplo.test') and activa),
+  'M3: la membresía vencida queda cerrada y solo hay una activa');
+
 -- Sin sesión no se acepta nada.
 select pruebas.como_anon();
 select pruebas.falla($$select public.aceptar_invitacion('token-de-ejemplo-solo-local')$$,

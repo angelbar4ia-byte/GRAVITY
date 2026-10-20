@@ -223,15 +223,29 @@ final temaOscuroProvider = Provider<ThemeData>(
 
 // --- Privacidad en pantalla --------------------------------------------------
 
+/// Quién está frente a la pantalla: la persona de la sesión o, en la tablet, la
+/// que entró con PIN (o el modo Casa). Al cambiar, [modoPrivadoProvider] y
+/// [montosVisiblesProvider] vuelven a su estado inicial: los montos que mostró
+/// una persona no quedan visibles para la siguiente.
+///
+/// El sistema de diseño no conoce la sesión; plataforma lo conecta en el
+/// arranque con la persona efectiva:
+/// `personaEnPantallaProvider.overrideWith((ref) => ref.watch(sesionEfectivaProvider)?.persona.id)`.
+final personaEnPantallaProvider = Provider<String?>((ref) => null);
+
 /// Modo privado (secciones 7 y 21): oculta montos **y** datos de cuidados, por
-/// si alguien está viendo. Atajo en la laptop: Ctrl + Shift + O.
+/// si alguien está viendo. Atajo en la laptop: Ctrl + Shift + O. Se quita al
+/// cambiar de persona ([personaEnPantallaProvider]).
 final modoPrivadoProvider = NotifierProvider<ModoPrivado, bool>(
   ModoPrivado.new,
 );
 
 class ModoPrivado extends Notifier<bool> {
   @override
-  bool build() => false;
+  bool build() {
+    ref.watch(personaEnPantallaProvider);
+    return false;
+  }
 
   void alternar() => fijar(!state);
 
@@ -243,14 +257,18 @@ class ModoPrivado extends Notifier<bool> {
 }
 
 /// Si el usuario pidió ver los montos ("Mostrar"). Empieza en falso: como en
-/// los bocetos, los montos se abren ocultos y se muestran con un toque.
+/// los bocetos, los montos se abren ocultos y se muestran con un toque. Vuelve
+/// a ocultarlos al cambiar de persona ([personaEnPantallaProvider]).
 final montosVisiblesProvider = NotifierProvider<MontosVisibles, bool>(
   MontosVisibles.new,
 );
 
 class MontosVisibles extends Notifier<bool> {
   @override
-  bool build() => false;
+  bool build() {
+    ref.watch(personaEnPantallaProvider);
+    return false;
+  }
 
   void alternar() => state = !state;
 

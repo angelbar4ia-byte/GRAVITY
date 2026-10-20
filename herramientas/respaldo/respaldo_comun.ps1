@@ -231,3 +231,28 @@ function Remove-CarpetaSegura {
         Remove-Item -LiteralPath $Ruta -Recurse -Force -ErrorAction SilentlyContinue
     }
 }
+
+# Borra carpetas temporales que dejó una corrida anterior interrumpida (corte de
+# luz, proceso cerrado): pueden tener datos SIN cifrar. Solo toca carpetas con el
+# nombre exacto que crea New-CarpetaTemporal (gravity_respaldo_<guid> o
+# gravity_restaurar_<guid>) y con más de -Horas sin cambios, para no tocar una
+# corrida que siga en curso.
+function Remove-TemporalesHuerfanos {
+    param([int]$Horas = 6)
+    $limite = (Get-Date).AddHours(-$Horas)
+    $base = [System.IO.Path]::GetTempPath()
+    $borradas = 0
+    foreach ($d in @(Get-ChildItem -LiteralPath $base -Directory -ErrorAction SilentlyContinue)) {
+        if ($d.Name -match '^gravity_(respaldo|restaurar)_[0-9a-f]{32}$' -and $d.LastWriteTime -lt $limite) {
+            Remove-Item -LiteralPath $d.FullName -Recurse -Force -ErrorAction SilentlyContinue
+            if (Test-Path -LiteralPath $d.FullName) {
+                Write-Bitacora "No pude borrar la carpeta temporal $($d.FullName): bórrala a mano (puede tener datos sin cifrar)." 'AVISO'
+            } else {
+                $borradas++
+            }
+        }
+    }
+    if ($borradas -gt 0) {
+        Write-Bitacora "Borradas $borradas carpetas temporales de corridas interrumpidas (datos sin cifrar)." 'AVISO'
+    }
+}

@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../diseno/diseno.dart';
+import '../../../nucleo/contratos/roles.dart';
 import 'resumen_gravity.dart';
 import 'saludo.dart';
 
@@ -545,6 +546,7 @@ class _PanelNucleo extends ConsumerWidget {
     final estado = ref.watch(estadoNucleoProvider);
     final e = v.espacio;
     final mensaje = mensajeDelNucleo(ahora, resumen, privado: privado);
+    final superficie = Color.lerp(v.fondo, v.panel, 0.4)!;
 
     Widget contenido(double tamanoNucleo) => Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -553,8 +555,14 @@ class _PanelNucleo extends ConsumerWidget {
         SizedBox(height: e * 2.25),
         Text(
           estado.etiqueta.toUpperCase(),
+          key: const ValueKey('estado-nucleo'),
+          // Texto de 13 px sobre la superficie del núcleo: el acento se
+          // ajusta para llegar a 4.5:1 (de día, el acento puro da 4.37:1).
           style: v
-              .etiquetaPanel(tamano: 13, color: v.acento)
+              .etiquetaPanel(
+                tamano: 13,
+                color: v.acentoParaTextoSobre(superficie),
+              )
               .copyWith(letterSpacing: 13 * 0.3),
         ),
         SizedBox(height: e * 2.25),
@@ -579,7 +587,7 @@ class _PanelNucleo extends ConsumerWidget {
     return DecoratedBox(
       key: const ValueKey('panel-nucleo'),
       decoration: BoxDecoration(
-        color: Color.lerp(v.fondo, v.panel, 0.4),
+        color: superficie,
         border: Border.all(color: v.borde),
         borderRadius: BorderRadius.circular(v.radioMediano),
       ),
@@ -703,13 +711,15 @@ class _TextoOcultoPorPrivacidad extends StatelessWidget {
 // --- Barras ------------------------------------------------------------------
 
 /// Barra de órdenes de muestra (deshabilitada) mientras el asistente entrega la suya.
-class _BarraOrdenesMuestra extends StatelessWidget {
+class _BarraOrdenesMuestra extends ConsumerWidget {
   const _BarraOrdenesMuestra();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final v = ValoresDiseno.de(context);
     final e = v.espacio;
+    final superficie = Color.lerp(v.fondo, v.panel, 0.6)!;
+    final ejemplo = _ejemploDeOrden(ref.watch(modulosBarraProvider));
     return Semantics(
       key: const ValueKey('barra-ordenes-muestra'),
       label: 'Barra de órdenes (muestra, no disponible)',
@@ -721,17 +731,23 @@ class _BarraOrdenesMuestra extends StatelessWidget {
           return Container(
             padding: EdgeInsets.fromLTRB(e * 2.25, e, e, e),
             decoration: BoxDecoration(
-              color: Color.lerp(v.fondo, v.panel, 0.6),
+              color: superficie,
               border: Border.all(color: v.acento),
               borderRadius: BorderRadius.circular(v.radioMediano),
             ),
             child: Row(
               children: [
-                Text('>', style: v.numero(tamano: 18, color: v.acento)),
+                Text(
+                  '>',
+                  style: v.numero(
+                    tamano: 18,
+                    color: v.acentoParaTextoSobre(superficie),
+                  ),
+                ),
                 SizedBox(width: e * 1.5),
                 Expanded(
                   child: Text(
-                    'Escribe o habla a GRAVITY…   ej.: abre presupuesto',
+                    'Escribe o habla a GRAVITY…$ejemplo',
                     style: v.lectura(tamano: 16, color: v.textoTenue),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -762,6 +778,16 @@ class _BarraOrdenesMuestra extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Ejemplo de orden con un destino que el rol sí ve (nunca "presupuesto" a
+/// quien no abre Finanzas).
+String _ejemploDeOrden(List<Modulo> modulos) {
+  if (modulos.contains(Modulo.finanzas)) return '   ej.: abre presupuesto';
+  final destino = modulos.where((m) => m != Modulo.ajustes).firstOrNull;
+  return destino == null
+      ? ''
+      : '   ej.: abre ${nombreModulo(destino).toLowerCase()}';
 }
 
 class _BarraModulos extends ConsumerWidget {

@@ -40,9 +40,12 @@ tags:
   - name: Herramientas de GRAVITY
     description: |
       Lista cerrada de funciones que GRAVITY puede usar (D1). Cada una declara su módulo,
-      sus roles, si escribe (pide confirmación) y si es solo local (D3). En la Fase 0 son
-      de navegación y se ejecutan dentro de la app; exponerlas por red para el puente de
-      casa es una propuesta de la Fase 6.
+      sus roles, si escribe (pide confirmación) y si es solo local (D3). El registro de la
+      app rechaza, al arrancar, una herramienta declarada para un rol que la matriz de
+      permisos no deja abrir, leer o escribir su módulo (D5), y una de Finanzas o Cuidados
+      que no sea solo local (D3), salvo las de navegación, que no leen datos. En la Fase 0
+      son de navegación y se ejecutan dentro de la app; exponerlas por red para el puente
+      de casa es una propuesta de la Fase 6.
   - name: Base de datos
     description: |
       Supabase (PostgREST): `/rest/v1/<tabla>` con los filtros de PostgREST
@@ -113,7 +116,8 @@ paths:
         Ejecuta la herramienta si el rol la tiene y su módulo está activo; si no, responde
         404 con el mismo mensaje en todos los casos. Si escribe y no viene
         `confirmado: true`, no ejecuta nada y responde `requiere_confirmacion` con el texto
-        de la tarjeta de confirmación. Si es solo local, `para_ia` siempre es nulo.
+        de la tarjeta de confirmación. Si es solo local, `para_ia` siempre es nulo y, si
+        falla, el error no lleva el mensaje original (podría llevar cifras).
       x-roles: [dueno, coadministrador, familiar, cuidador, casa]
       x-escribe: segun-herramienta
       x-solo-local: segun-herramienta
@@ -266,8 +270,9 @@ paths:
       operationId: herramientaAjustesAbrirDesarrollador
       summary: ajustes.abrir_desarrollador · Abrir Desarrollador
       description: >-
-        Abre Ajustes › Desarrollador, esta consola. Solo el dueño y solo en la laptop (lo
-        aplica el cascarón de la app).
+        Abre Ajustes › Desarrollador, esta consola. Solo el dueño y solo en la laptop (D16):
+        la barra de órdenes no la ofrece en otro dispositivo y el router de la app lo vuelve
+        a revisar.
       x-roles: [dueno]
       x-escribe: false
       x-solo-local: false
@@ -344,8 +349,12 @@ paths:
       tags: [Base de datos]
       operationId: crearHogar
       summary: Crear un hogar
-      description: Crea un hogar y deja como dueño a quien lo crea. Devuelve el `id` del hogar.
-      x-roles: [dueno]
+      description: >-
+        Crea un hogar y deja como dueño a quien lo crea. Devuelve el `id` del hogar. La puede
+        llamar **cualquier cuenta con sesión**, aunque todavía no pertenezca a ningún hogar
+        o tenga otro rol en otro hogar: por eso `x-roles` lista los cinco roles. Quien la
+        llama queda como dueño solo del hogar nuevo.
+      x-roles: [dueno, coadministrador, familiar, cuidador, casa]
       x-escribe: true
       x-solo-local: true
       x-fase: 0

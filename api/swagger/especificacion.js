@@ -1,7 +1,7 @@
 // GENERADO por api/generar_dart.mjs a partir de api/openapi.yaml. No se edita a mano.
 // Permite abrir Swagger UI con doble clic (file://), donde el navegador no deja leer
 // ../openapi.yaml. Servida por http, la página lee openapi.yaml directamente.
-// huella: fnv1a32:119577fe
+// huella: fnv1a32:9a957fe9
 window.ESPECIFICACION_GRAVITY = {
   "openapi": "3.1.0",
   "info": {
@@ -38,7 +38,7 @@ window.ESPECIFICACION_GRAVITY = {
   "tags": [
     {
       "name": "Herramientas de GRAVITY",
-      "description": "Lista cerrada de funciones que GRAVITY puede usar (D1). Cada una declara su módulo,\nsus roles, si escribe (pide confirmación) y si es solo local (D3). En la Fase 0 son\nde navegación y se ejecutan dentro de la app; exponerlas por red para el puente de\ncasa es una propuesta de la Fase 6.\n"
+      "description": "Lista cerrada de funciones que GRAVITY puede usar (D1). Cada una declara su módulo,\nsus roles, si escribe (pide confirmación) y si es solo local (D3). El registro de la\napp rechaza, al arrancar, una herramienta declarada para un rol que la matriz de\npermisos no deja abrir, leer o escribir su módulo (D5), y una de Finanzas o Cuidados\nque no sea solo local (D3), salvo las de navegación, que no leen datos. En la Fase 0\nson de navegación y se ejecutan dentro de la app; exponerlas por red para el puente\nde casa es una propuesta de la Fase 6.\n"
     },
     {
       "name": "Base de datos",
@@ -135,7 +135,7 @@ window.ESPECIFICACION_GRAVITY = {
         ],
         "operationId": "ejecutarHerramienta",
         "summary": "Ejecutar una herramienta",
-        "description": "Ejecuta la herramienta si el rol la tiene y su módulo está activo; si no, responde 404 con el mismo mensaje en todos los casos. Si escribe y no viene `confirmado: true`, no ejecuta nada y responde `requiere_confirmacion` con el texto de la tarjeta de confirmación. Si es solo local, `para_ia` siempre es nulo.",
+        "description": "Ejecuta la herramienta si el rol la tiene y su módulo está activo; si no, responde 404 con el mismo mensaje en todos los casos. Si escribe y no viene `confirmado: true`, no ejecuta nada y responde `requiere_confirmacion` con el texto de la tarjeta de confirmación. Si es solo local, `para_ia` siempre es nulo y, si falla, el error no lleva el mensaje original (podría llevar cifras).",
         "x-roles": [
           "dueno",
           "coadministrador",
@@ -466,7 +466,7 @@ window.ESPECIFICACION_GRAVITY = {
         ],
         "operationId": "herramientaAjustesAbrirDesarrollador",
         "summary": "ajustes.abrir_desarrollador · Abrir Desarrollador",
-        "description": "Abre Ajustes › Desarrollador, esta consola. Solo el dueño y solo en la laptop (lo aplica el cascarón de la app).",
+        "description": "Abre Ajustes › Desarrollador, esta consola. Solo el dueño y solo en la laptop (D16): la barra de órdenes no la ofrece en otro dispositivo y el router de la app lo vuelve a revisar.",
         "x-roles": [
           "dueno"
         ],
@@ -593,9 +593,13 @@ window.ESPECIFICACION_GRAVITY = {
         ],
         "operationId": "crearHogar",
         "summary": "Crear un hogar",
-        "description": "Crea un hogar y deja como dueño a quien lo crea. Devuelve el `id` del hogar.",
+        "description": "Crea un hogar y deja como dueño a quien lo crea. Devuelve el `id` del hogar. La puede llamar **cualquier cuenta con sesión**, aunque todavía no pertenezca a ningún hogar o tenga otro rol en otro hogar: por eso `x-roles` lista los cinco roles. Quien la llama queda como dueño solo del hogar nuevo.",
         "x-roles": [
-          "dueno"
+          "dueno",
+          "coadministrador",
+          "familiar",
+          "cuidador",
+          "casa"
         ],
         "x-escribe": true,
         "x-solo-local": true,
@@ -2728,4 +2732,4 @@ window.ESPECIFICACION_GRAVITY = {
     }
   }
 };
-window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:119577fe';
+window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:9a957fe9';

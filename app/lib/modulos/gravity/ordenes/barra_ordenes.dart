@@ -16,6 +16,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../nucleo/contratos/dispositivo.dart';
 import '../../../nucleo/contratos/roles.dart';
 import '../../../nucleo/contratos/rutas.dart';
 import '../../../nucleo/herramientas/herramientas.dart';
@@ -23,10 +24,19 @@ import 'interprete_ordenes.dart';
 
 /// Barra de órdenes de navegación.
 class BarraOrdenes extends StatefulWidget {
-  const BarraOrdenes({super.key, required this.rol, required this.onNavegar});
+  const BarraOrdenes({
+    super.key,
+    required this.rol,
+    required this.onNavegar,
+    this.dispositivo,
+  });
 
   /// Rol de la sesión: decide qué destinos se ofrecen.
   final Rol rol;
+
+  /// Dispositivo de la sesión (lo pasa la plataforma). Desarrollador solo se
+  /// ofrece en la laptop (D16); sin dispositivo, no se ofrece.
+  final TipoDispositivo? dispositivo;
 
   /// Abre una ruta de `Rutas` (la conecta el router de la plataforma).
   final void Function(String ruta) onNavegar;
@@ -76,16 +86,20 @@ class _BarraOrdenesState extends State<BarraOrdenes> {
   @override
   void initState() {
     super.initState();
-    _interprete = InterpreteOrdenes(rol: widget.rol);
+    _interprete = _nuevoInterprete();
     _foco.addListener(_alCambiarFoco);
     HardwareKeyboard.instance.addHandler(_atajoGlobal);
   }
 
+  InterpreteOrdenes _nuevoInterprete() =>
+      InterpreteOrdenes(rol: widget.rol, dispositivo: widget.dispositivo);
+
   @override
   void didUpdateWidget(BarraOrdenes anterior) {
     super.didUpdateWidget(anterior);
-    if (anterior.rol != widget.rol) {
-      _interprete = InterpreteOrdenes(rol: widget.rol);
+    if (anterior.rol != widget.rol ||
+        anterior.dispositivo != widget.dispositivo) {
+      _interprete = _nuevoInterprete();
       _aviso = null;
       _resaltada = -1;
       _sugerencias = _interprete.sugerir(_control.text);
@@ -245,6 +259,7 @@ class _BarraOrdenesState extends State<BarraOrdenes> {
   @override
   Widget build(BuildContext context) {
     final tema = Theme.of(context);
+    final ejemplo = _interprete.ejemplo;
     final campo = TextField(
       controller: _control,
       focusNode: _foco,
@@ -256,7 +271,10 @@ class _BarraOrdenesState extends State<BarraOrdenes> {
       autocorrect: false,
       enableSuggestions: false,
       decoration: InputDecoration(
-        hintText: 'Escribe una orden… (p. ej., «abre presupuesto»)',
+        // El ejemplo nombra un destino que el rol sí ve.
+        hintText: ejemplo == null
+            ? 'Escribe una orden…'
+            : 'Escribe una orden… (p. ej., «$ejemplo»)',
         prefixIcon: Padding(
           padding: const EdgeInsetsDirectional.only(start: 14, end: 8),
           child: Text(

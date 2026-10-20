@@ -1,6 +1,8 @@
-/// "Hoy" del Dueño en el teléfono (DISENO_UX_UI, sección 9, boceto "Hoy del
-/// Dueño"): lo que sigue, los hábitos de hoy, las finanzas de la semana con el
-/// monto oculto y cuidados. La barra inferior la pone el cascarón del teléfono.
+/// "Hoy" en el teléfono y en la tablet por persona (DISENO_UX_UI, sección 9,
+/// boceto "Hoy del Dueño"): lo que sigue, los hábitos de hoy, las finanzas de la
+/// semana con el monto oculto y cuidados. Cada tarjeta aparece solo si el rol
+/// efectivo la puede ver (`resumenGravityProvider`, D5). La barra inferior la
+/// pone el cascarón del teléfono.
 library;
 
 import 'package:flutter/material.dart';
@@ -18,6 +20,11 @@ class PantallaHoyTelefono extends ConsumerWidget {
     final r = ref.watch(resumenGravityProvider);
     final e = v.espacio;
     final hueco = SizedBox(height: e * 1.5);
+    final sinNada =
+        r.siguiente == null &&
+        r.habitos.isEmpty &&
+        r.finanzas == null &&
+        r.cuidados == null;
     return Scaffold(
       backgroundColor: v.fondo,
       body: SafeArea(
@@ -33,6 +40,12 @@ class PantallaHoyTelefono extends ConsumerWidget {
             if (r.habitos.isNotEmpty) ...[const _TarjetaHabitos(), hueco],
             if (r.finanzas != null) ...[const _TarjetaFinanzas(), hueco],
             if (r.cuidados != null) const _TarjetaCuidados(),
+            if (sinNada)
+              const EstadoVacio(
+                key: ValueKey('hoy-vacio'),
+                icono: Icons.wb_sunny_outlined,
+                mensaje: 'Nada pendiente por hoy',
+              ),
           ],
         ),
       ),

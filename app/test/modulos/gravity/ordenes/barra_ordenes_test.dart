@@ -2,25 +2,37 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gravity/modulos/gravity/ordenes/barra_ordenes.dart';
+import 'package:gravity/nucleo/contratos/dispositivo.dart';
 import 'package:gravity/nucleo/contratos/roles.dart';
 import 'package:gravity/nucleo/contratos/rutas.dart';
 
 void _sinNavegar(String ruta) {}
 
 /// La barra abajo, como en la pantalla principal de la laptop.
-Widget _app(Rol rol, List<String> rutas) => MaterialApp(
+Widget _app(
+  Rol rol,
+  List<String> rutas, {
+  TipoDispositivo? dispositivo = TipoDispositivo.laptop,
+}) => MaterialApp(
   home: Scaffold(
     body: Column(
       children: [
         const Expanded(child: Center(child: Text('Núcleo'))),
         Padding(
           padding: const EdgeInsets.all(16),
-          child: BarraOrdenes(rol: rol, onNavegar: rutas.add),
+          child: BarraOrdenes(
+            rol: rol,
+            onNavegar: rutas.add,
+            dispositivo: dispositivo,
+          ),
         ),
       ],
     ),
   ),
 );
+
+String? _ayuda(WidgetTester tester) =>
+    tester.widget<TextField>(find.byType(TextField)).decoration!.hintText;
 
 Future<void> _escribir(WidgetTester tester, String texto) async {
   await tester.tap(find.byType(TextField));
@@ -114,6 +126,39 @@ void main() {
     await _escribir(tester, 'desarrollador');
     await _enviar(tester);
     expect(rutas, [Rutas.desarrollador]);
+  });
+
+  testWidgets('fuera de la laptop no ofrece Desarrollador (D16, M6)', (
+    tester,
+  ) async {
+    for (final dispositivo in [
+      TipoDispositivo.telefono,
+      TipoDispositivo.tablet,
+      null,
+    ]) {
+      final rutas = <String>[];
+      await tester.pumpWidget(_app(Rol.dueno, rutas, dispositivo: dispositivo));
+      await _escribir(tester, 'desa');
+      expect(find.text('Abrir Desarrollador'), findsNothing);
+      await _escribir(tester, 'desarrollador');
+      await _enviar(tester);
+      expect(rutas, isEmpty, reason: '$dispositivo');
+      expect(find.text('Abrir Desarrollador'), findsNothing);
+    }
+  });
+
+  testWidgets('la ayuda nombra un destino que el rol sí ve (M6)', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_app(Rol.dueno, []));
+    expect(_ayuda(tester), contains('«abre presupuesto»'));
+    await tester.pumpWidget(_app(Rol.familiar, []));
+    await tester.pump();
+    expect(_ayuda(tester), contains('«abre hábitos»'));
+    expect(_ayuda(tester), isNot(contains('presupuesto')));
+    await tester.pumpWidget(_app(Rol.cuidador, []));
+    await tester.pump();
+    expect(_ayuda(tester), contains('«abre cuidados»'));
   });
 
   testWidgets('flechas para elegir y Enter para abrir', (tester) async {

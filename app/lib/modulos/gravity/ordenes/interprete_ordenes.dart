@@ -7,6 +7,7 @@ library;
 
 import 'dart:math' as math;
 
+import '../../../nucleo/contratos/dispositivo.dart';
 import '../../../nucleo/contratos/roles.dart';
 import '../../../nucleo/herramientas/herramientas.dart';
 import 'texto_ordenes.dart';
@@ -74,25 +75,34 @@ final class _Destino {
 final class InterpreteOrdenes {
   /// [puedeVer] decide qué módulos se ofrecen (por defecto, la matriz de la
   /// sección 5 de la especificación de la Fase 0). Además, cada destino es una
-  /// herramienta y solo se ofrece si [rol] está en sus roles y su módulo está
-  /// en [modulosActivos] (`null`: todos).
+  /// herramienta y solo se ofrece si [rol] está en sus roles, su módulo está
+  /// en [modulosActivos] (`null`: todos) y va en [dispositivo] (Desarrollador
+  /// solo en la laptop, D16). Sin [dispositivo] no se ofrece nada que dependa
+  /// del dispositivo.
   InterpreteOrdenes({
     required this.rol,
+    this.dispositivo,
     PuedeVerModulo? puedeVer,
     Set<Modulo>? modulosActivos,
     List<HerramientaNavegacion>? catalogo,
   }) : _destinos = _armar(
          rol: rol,
+         dispositivo: dispositivo,
          puedeVer: puedeVer ?? puedeVerPorDefecto(rol),
          modulosActivos: modulosActivos,
          catalogo: catalogo ?? herramientasNavegacion,
        );
 
   final Rol rol;
+
+  /// Dispositivo de la sesión; `null` si no se sabe.
+  final TipoDispositivo? dispositivo;
+
   final List<_Destino> _destinos;
 
   static List<_Destino> _armar({
     required Rol rol,
+    required TipoDispositivo? dispositivo,
     required PuedeVerModulo puedeVer,
     required Set<Modulo>? modulosActivos,
     required List<HerramientaNavegacion> catalogo,
@@ -100,7 +110,7 @@ final class InterpreteOrdenes {
     final permitidas = RegistroHerramientas(catalogo)
         .disponibles(rol: rol, modulosActivos: modulosActivos)
         .whereType<HerramientaNavegacion>()
-        .where((h) => puedeVer(h.modulo));
+        .where((h) => puedeVer(h.modulo) && h.disponibleEn(dispositivo));
     return [
       for (final h in permitidas)
         _Destino(h, [
@@ -115,6 +125,21 @@ final class InterpreteOrdenes {
   /// Destinos que este rol puede abrir, en orden.
   List<HerramientaNavegacion> get destinos =>
       List.unmodifiable(_destinos.map((d) => d.herramienta));
+
+  /// Orden de ejemplo para la ayuda de la barra, con un módulo que el rol sí
+  /// abre: «abre presupuesto» a quien ve Finanzas, «abre hábitos» al
+  /// Familiar, «abre cuidados» a la cuidadora. `null` si no hay ninguno.
+  String? get ejemplo {
+    for (final d in _destinos) {
+      final h = d.herramienta;
+      if (h.modulo == Modulo.gravity || h.dispositivos != null) continue;
+      final palabra = h.modulo == Modulo.finanzas
+          ? 'presupuesto'
+          : h.etiqueta.toLowerCase();
+      return 'abre $palabra';
+    }
+    return null;
+  }
 
   /// Interpreta una orden completa (al presionar Enter).
   ResultadoOrden interpretar(String texto) {

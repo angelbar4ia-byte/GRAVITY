@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gravity/diseno/diseno.dart';
 import 'package:gravity/modulos/gravity/pantalla/hoy_telefono.dart';
+import 'package:gravity/modulos/gravity/pantalla/resumen_gravity.dart';
+import 'package:gravity/nucleo/contratos/roles.dart';
 
 import '../../../diseno/ayuda_pruebas.dart';
 
@@ -106,4 +108,83 @@ void main() {
       semantica.dispose();
     });
   }
+
+  group('Por rol (D5)', () {
+    /// Pantalla alta: la lista de "Hoy" es perezosa y así se construye todo.
+    Future<void> montarComo(WidgetTester tester, Rol rol) async {
+      fijarVentana(tester, const Size(390, 3000));
+      await montar(tester, const PantallaHoyTelefono(), rol: rol);
+    }
+
+    String textoVisible(WidgetTester tester) => tester
+        .widgetList<Text>(find.byType(Text))
+        .map((t) => t.data ?? t.textSpan?.toPlainText() ?? '')
+        .join(' · ')
+        .toLowerCase();
+
+    testWidgets('Dueño: todas las tarjetas', (tester) async {
+      await montarComo(tester, Rol.dueno);
+      for (final tarjeta in [
+        'tarjeta-sigue',
+        'tarjeta-habitos',
+        'tarjeta-finanzas',
+        'tarjeta-cuidados',
+      ]) {
+        expect(find.byKey(ValueKey(tarjeta)), findsOneWidget, reason: tarjeta);
+      }
+    });
+
+    testWidgets('Familiar: lo suyo, sin dinero ni cuidados', (tester) async {
+      await montarComo(tester, Rol.familiar);
+      expect(find.byKey(const ValueKey('tarjeta-sigue')), findsOneWidget);
+      expect(find.byKey(const ValueKey('tarjeta-habitos')), findsOneWidget);
+      expect(find.byKey(const ValueKey('tarjeta-finanzas')), findsNothing);
+      expect(find.byKey(const ValueKey('monto-quedan')), findsNothing);
+      expect(find.byKey(const ValueKey('tarjeta-cuidados')), findsNothing);
+      final texto = textoVisible(tester);
+      for (final prohibido in [
+        'quedan',
+        'tarjeta de crédito',
+        'medicamento',
+        'entrega de turno',
+      ]) {
+        expect(texto, isNot(contains(prohibido)), reason: prohibido);
+      }
+    });
+
+    testWidgets('Casa: solo recordatorios genéricos de cuidados', (
+      tester,
+    ) async {
+      await montarComo(tester, Rol.casa);
+      expect(find.byKey(const ValueKey('tarjeta-finanzas')), findsNothing);
+      expect(find.byKey(const ValueKey('tarjeta-habitos')), findsNothing);
+      expect(find.byKey(const ValueKey('tarjeta-sigue')), findsNothing);
+      expect(find.byKey(const ValueKey('tarjeta-cuidados')), findsOneWidget);
+      expect(find.text('Recordatorio de cuidados 20:00'), findsOneWidget);
+      final texto = textoVisible(tester);
+      for (final prohibido in [
+        'quedan',
+        'medicamento',
+        'cuidadora',
+        'entrega de turno',
+      ]) {
+        expect(texto, isNot(contains(prohibido)), reason: prohibido);
+      }
+    });
+
+    testWidgets('sin nada que mostrar: estado vacío, no tarjetas vacías', (
+      tester,
+    ) async {
+      fijarVentana(tester, const Size(390, 844));
+      await montar(
+        tester,
+        const PantallaHoyTelefono(),
+        overrides: [
+          datosResumenGravityProvider.overrideWithValue(const ResumenGravity()),
+        ],
+      );
+      expect(find.byKey(const ValueKey('hoy-vacio')), findsOneWidget);
+      expect(find.text('Nada pendiente por hoy'), findsOneWidget);
+    });
+  });
 }

@@ -144,3 +144,25 @@ final class HerramientaNoDisponible implements Exception {
   @override
   String toString() => 'HerramientaNoDisponible($nombre, ${motivo.name})';
 }
+
+/// Falló una herramienta solo local (D3).
+///
+/// El registro envuelve así cualquier error de una herramienta [Herramienta.soloLocal]:
+/// el mensaje del error original podría llevar cifras o datos clínicos, y
+/// quien lo atrape (p. ej. la conversación con IA de la Fase 6) podría
+/// mandarlo a la nube. Hacia fuera solo dice qué herramienta falló.
+final class FalloHerramienta implements Exception {
+  const FalloHerramienta(this.nombre, {this.causaLocal});
+
+  final String nombre;
+
+  /// El error original. Solo para la pantalla o el registro del dispositivo;
+  /// nunca se envía a la IA en la nube ni a las bocinas.
+  final Object? causaLocal;
+
+  /// Texto seguro para la persona y para la IA.
+  String get mensaje => 'La herramienta «$nombre» no pudo completarse.';
+
+  @override
+  String toString() => 'FalloHerramienta($nombre)';
+}

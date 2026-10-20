@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gravity/nucleo/contratos/dispositivo.dart';
 import 'package:gravity/nucleo/contratos/roles.dart';
 import 'package:gravity/nucleo/contratos/rutas.dart';
 import 'package:gravity/nucleo/herramientas/herramientas.dart';
@@ -7,14 +8,33 @@ import 'package:gravity/nucleo/permisos/permisos.dart';
 /// Herramienta de prueba con contador de ejecuciones.
 final class _Falsa extends Herramienta {
   _Falsa({
-    this.nombre = 'finanzas.resumen_semana',
-    this.modulo = Modulo.finanzas,
-    this.roles = const {Rol.dueno, Rol.coadministrador},
+    this.nombre = 'habitos.resumen_hoy',
+    this.modulo = Modulo.habitos,
+    this.roles = const {Rol.dueno, Rol.coadministrador, Rol.familiar},
     this.escribe = false,
     this.soloLocal = false,
     this.paraIaQueIntenta = 'Resumen listo.',
     this.resultadoAjeno,
+    this.error,
   });
+
+  /// Una de Finanzas solo para el Dueño (D3: solo local).
+  factory _Falsa.deFinanzas({
+    String nombre = 'finanzas.resumen_semana',
+    bool escribe = false,
+    String paraIaQueIntenta = 'Resumen listo.',
+    ResultadoHerramienta? resultadoAjeno,
+    Object? error,
+  }) => _Falsa(
+    nombre: nombre,
+    modulo: Modulo.finanzas,
+    roles: const {Rol.dueno},
+    escribe: escribe,
+    soloLocal: true,
+    paraIaQueIntenta: paraIaQueIntenta,
+    resultadoAjeno: resultadoAjeno,
+    error: error,
+  );
 
   @override
   final String nombre;
@@ -33,6 +53,9 @@ final class _Falsa extends Herramienta {
   /// intentara hacerse pasar por otra).
   final ResultadoHerramienta? resultadoAjeno;
 
+  /// Si no es `null`, la herramienta lo lanza al ejecutarse.
+  final Object? error;
+
   int ejecuciones = 0;
 
   @override
@@ -44,6 +67,7 @@ final class _Falsa extends Herramienta {
     ContextoHerramienta ctx,
   ) async {
     ejecuciones++;
+    if (error case final e?) throw e;
     return resultadoAjeno ??
         ResultadoHerramienta(
           this,
@@ -184,10 +208,7 @@ void main() {
     });
 
     test('tampoco al ejecutarla por el registro', () async {
-      final h = _Falsa(
-        soloLocal: true,
-        paraIaQueIntenta: r'Gastaste $1,234.50',
-      );
+      final h = _Falsa.deFinanzas(paraIaQueIntenta: r'Gastaste $1,234.50');
       final r = await RegistroHerramientas(
         [h],
       ).ejecutar(h.nombre, const {}, const ContextoHerramienta(rol: Rol.dueno));
@@ -197,9 +218,8 @@ void main() {
     });
 
     test('ni si intenta devolver el resultado de otra herramienta', () async {
-      final ajena = _Falsa(nombre: 'habitos.resumen', modulo: Modulo.habitos);
-      final tramposa = _Falsa(
-        soloLocal: true,
+      final ajena = _Falsa(nombre: 'habitos.resumen');
+      final tramposa = _Falsa.deFinanzas(
         resultadoAjeno: ResultadoHerramienta(
           ajena,
           contenido: 'Saldo: \$5,000.00',
@@ -223,11 +243,219 @@ void main() {
       ).ejecutar(h.nombre, const {}, const ContextoHerramienta(rol: Rol.dueno));
       expect(r.paraIa, 'Resumen listo.');
     });
+
+    test('si falla, el error no lleva el mensaje original (M14)', () async {
+      final original = StateError(r'Saldo insuficiente: $5,000.00');
+      final h = _Falsa.deFinanzas(error: original);
+      await expectLater(
+        RegistroHerramientas([h]).ejecutar(
+          h.nombre,
+          const {},
+          const ContextoHerramienta(rol: Rol.dueno),
+        ),
+        throwsA(
+          isA<FalloHerramienta>()
+              .having((e) => e.nombre, 'nombre', h.nombre)
+              .having((e) => '$e', 'toString', isNot(contains('5,000')))
+              .having((e) => e.mensaje, 'mensaje', isNot(contains('5,000')))
+              .having((e) => e.causaLocal, 'causaLocal', same(original)),
+        ),
+      );
+    });
+
+    test('el error de una que no es solo local sale tal cual', () async {
+      final original = StateError('Sin conexión');
+      final h = _Falsa(error: original);
+      await expectLater(
+        RegistroHerramientas([h]).ejecutar(
+          h.nombre,
+          const {},
+          const ContextoHerramienta(rol: Rol.dueno),
+        ),
+        throwsA(same(original)),
+      );
+    });
+  });
+
+  group('D3: Finanzas y Cuidados son solo locales', () {
+    for (final modulo in modulosSoloLocal) {
+      final nombre = '${modulo.name}.resumen';
+
+      test('rechaza una de ${modulo.name} que lee sin soloLocal', () {
+        expect(
+          () => RegistroHerramientas([
+            _Falsa(nombre: nombre, modulo: modulo, roles: const {Rol.dueno}),
+          ]),
+          throwsA(
+            isA<ArgumentError>().having((e) => e.name, 'name', 'soloLocal'),
+          ),
+        );
+      });
+
+      test('rechaza una de ${modulo.name} que escribe sin soloLocal', () {
+        expect(
+          () => RegistroHerramientas([
+            _Falsa(
+              nombre: '${modulo.name}.registrar',
+              modulo: modulo,
+              roles: const {Rol.dueno},
+              escribe: true,
+            ),
+          ]),
+          throwsArgumentError,
+        );
+      });
+
+      test('acepta una de ${modulo.name} solo local', () {
+        final registro = RegistroHerramientas([
+          _Falsa(
+            nombre: nombre,
+            modulo: modulo,
+            roles: const {Rol.dueno},
+            soloLocal: true,
+          ),
+        ]);
+        expect(registro.todas.single.soloLocal, isTrue);
+      });
+    }
+
+    test('solo las de navegación son la excepción', () {
+      for (final h in herramientasNavegacion) {
+        if (!modulosSoloLocal.contains(h.modulo)) continue;
+        expect(h.soloLocal, isFalse, reason: h.nombre);
+        expect(RegistroHerramientas([h]).todas, [h]);
+      }
+    });
+
+    test('otros módulos pueden enviar su resultado a la IA', () {
+      expect(RegistroHerramientas([_Falsa()]).todas.single.soloLocal, isFalse);
+    });
+  });
+
+  group('D5: los roles respetan la matriz de permisos', () {
+    test('rechaza una de Finanzas para el Familiar o la cuenta Casa', () {
+      for (final rol in [Rol.familiar, Rol.casa]) {
+        expect(
+          () => RegistroHerramientas([
+            _Falsa(
+              nombre: 'finanzas.resumen_semana',
+              modulo: Modulo.finanzas,
+              roles: {Rol.dueno, rol},
+              soloLocal: true,
+            ),
+          ]),
+          throwsA(isA<ArgumentError>().having((e) => e.name, 'name', 'roles')),
+          reason: rol.name,
+        );
+      }
+    });
+
+    test('lectura: acepta el rol si y solo si la matriz le deja leer', () {
+      for (final modulo in Modulo.values) {
+        for (final rol in Rol.values) {
+          Object? error;
+          try {
+            RegistroHerramientas([
+              _Falsa(
+                nombre: '${modulo.name}.leer_prueba',
+                modulo: modulo,
+                roles: {rol},
+                soloLocal: true,
+              ),
+            ]);
+          } on ArgumentError catch (e) {
+            error = e;
+          }
+          expect(
+            error == null,
+            puede(rol, modulo, Accion.leer),
+            reason: '${rol.name} × ${modulo.name}',
+          );
+        }
+      }
+    });
+
+    test(
+      'escritura: acepta el rol si y solo si la matriz le deja escribir',
+      () {
+        for (final modulo in Modulo.values) {
+          for (final rol in Rol.values) {
+            Object? error;
+            try {
+              RegistroHerramientas([
+                _Falsa(
+                  nombre: '${modulo.name}.escribir_prueba',
+                  modulo: modulo,
+                  roles: {rol},
+                  escribe: true,
+                  soloLocal: true,
+                ),
+              ]);
+            } on ArgumentError catch (e) {
+              error = e;
+            }
+            expect(
+              error == null,
+              puede(rol, modulo, Accion.escribir),
+              reason: '${rol.name} × ${modulo.name}',
+            );
+          }
+        }
+      },
+    );
+
+    test('el coadministrador lee Finanzas pero no escribe en ellas', () {
+      _Falsa paraCoadministrador({required bool escribe}) => _Falsa(
+        nombre: 'finanzas.prueba',
+        modulo: Modulo.finanzas,
+        roles: const {Rol.dueno, Rol.coadministrador},
+        escribe: escribe,
+        soloLocal: true,
+      );
+      expect(
+        RegistroHerramientas([paraCoadministrador(escribe: false)]).todas,
+        hasLength(1),
+      );
+      expect(
+        () => RegistroHerramientas([paraCoadministrador(escribe: true)]),
+        throwsArgumentError,
+      );
+    });
+
+    test('navegación: solo para quien abre el módulo desde la navegación', () {
+      for (final modulo in Modulo.values) {
+        for (final rol in Rol.values) {
+          Object? error;
+          try {
+            RegistroHerramientas([
+              HerramientaNavegacion(
+                nombre: '${modulo.name}.abrir_prueba',
+                modulo: modulo,
+                roles: {rol},
+                ruta: '/prueba',
+                etiqueta: 'Prueba',
+                palabrasClave: const ['prueba'],
+              ),
+            ]);
+          } on ArgumentError catch (e) {
+            error = e;
+          }
+          expect(
+            error == null,
+            puedeAbrir(rol, modulo),
+            reason: '${rol.name} × ${modulo.name}',
+          );
+        }
+      }
+    });
   });
 
   group('Confirmación', () {
     test('las que escriben piden confirmación y no se ejecutan', () async {
-      final h = _Falsa(nombre: 'finanzas.registrar_gasto', escribe: true);
+      final h = _Falsa.deFinanzas(
+        nombre: 'finanzas.registrar_gasto',
+        escribe: true,
+      );
       final r = await RegistroHerramientas([h]).ejecutar(h.nombre, const {
         'monto_centavos': 12350,
       }, const ContextoHerramienta(rol: Rol.dueno));
@@ -238,7 +466,10 @@ void main() {
     });
 
     test('ya confirmadas, se ejecutan una vez', () async {
-      final h = _Falsa(nombre: 'finanzas.registrar_gasto', escribe: true);
+      final h = _Falsa.deFinanzas(
+        nombre: 'finanzas.registrar_gasto',
+        escribe: true,
+      );
       const ctx = ContextoHerramienta(rol: Rol.dueno);
       final r = await RegistroHerramientas([h])
           .ejecutar(h.nombre, const {'monto_centavos': 12350}, ctx.confirmar());
@@ -271,7 +502,7 @@ void main() {
     test('el prefijo del nombre es el módulo', () {
       expect(
         () => RegistroHerramientas([
-          _Falsa(nombre: 'habitos.resumen', modulo: Modulo.finanzas),
+          _Falsa(nombre: 'finanzas.resumen', modulo: Modulo.habitos),
         ]),
         throwsArgumentError,
       );
@@ -334,6 +565,33 @@ void main() {
             reason: '${h.nombre} / ${rol.name}',
           );
         }
+      }
+    });
+
+    test(
+      'Desarrollador: rol y dispositivo según puedeVerDesarrollador (D16)',
+      () {
+        final h = herramientasNavegacion.singleWhere(
+          (h) => h.nombre == 'ajustes.abrir_desarrollador',
+        );
+        for (final rol in Rol.values) {
+          for (final dispositivo in TipoDispositivo.values) {
+            expect(
+              h.roles.contains(rol) && h.disponibleEn(dispositivo),
+              puedeVerDesarrollador(rol, dispositivo),
+              reason: '${rol.name} en ${dispositivo.name}',
+            );
+          }
+        }
+        expect(h.disponibleEn(null), isFalse);
+      },
+    );
+
+    test('las demás van en todos los dispositivos', () {
+      for (final h in herramientasNavegacion) {
+        if (h.nombre == 'ajustes.abrir_desarrollador') continue;
+        expect(h.dispositivos, isNull, reason: h.nombre);
+        expect(h.disponibleEn(null), isTrue, reason: h.nombre);
       }
     });
   });

@@ -14,7 +14,8 @@
     5. Comprueba que el archivo se puede abrir con la clave.
     6. Lo guarda en la carpeta local y lo copia a la segunda ubicación (disco externo).
     7. Borra copias de más de -DiasRetencion días, conservando siempre las -MinimoConservar más recientes.
-    8. Deja registro en respaldo.log (sin secretos). Los datos sin cifrar se borran al terminar.
+    8. Deja registro en respaldo.log (sin secretos). Los datos sin cifrar se borran al terminar,
+       y al empezar se borran los que haya dejado una corrida interrumpida (más de 6 horas).
 
     Códigos de salida: 0 = todo bien; 1 = error (no hay respaldo nuevo);
     2 = respaldo local bien, pero la segunda ubicación falló o no está configurada.
@@ -91,6 +92,7 @@ try {
     New-Item -ItemType Directory -Path $Destino -Force | Out-Null
     $script:ArchivoLog = Join-Path $Destino 'respaldo.log'
     Write-Bitacora '=== Inicio del respaldo de GRAVITY ==='
+    Remove-TemporalesHuerfanos
 
     # Secretos y herramientas.
     $url = Get-Secreto -Variable $VariableConexion -Descripcion 'cadena de conexión de Supabase'

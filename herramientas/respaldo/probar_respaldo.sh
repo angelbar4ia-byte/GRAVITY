@@ -200,6 +200,26 @@ GRAVITY_DB_URL="postgresql:///no_existe?host=$PGHOST&port=$PGPORT&user=$PGUSER" 
 afirmar "Base inaccesible: código 1" test $? -eq 1
 afirmar "… porque psql no conecta" en_log 'psql terminó con código'
 
+echo "Temporales de corridas interrumpidas:"
+TMP_SIS="$TRABAJO/tmp_sistema"
+VIEJA="$TMP_SIS/gravity_respaldo_0123456789abcdef0123456789abcdef"
+VIEJA_R="$TMP_SIS/gravity_restaurar_fedcba9876543210fedcba9876543210"
+RECIENTE="$TMP_SIS/gravity_respaldo_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+AJENA="$TMP_SIS/gravity_respaldo_de_otra_cosa"
+for d in "$VIEJA" "$VIEJA_R" "$RECIENTE" "$AJENA"; do
+  mkdir -p "$d/volcado"; echo "Despensa sin cifrar" >"$d/volcado/datos.sql"
+done
+touch -d '2 days ago' "$VIEJA" "$VIEJA_R" "$AJENA"
+TMPDIR="$TMP_SIS" respaldar -Destino "$TRABAJO/local_temporales" -DestinoSecundario "$TRABAJO/externo_temporales"
+afirmar "Con temporales viejos, el respaldo termina con código 0" test $? -eq 0
+afirmar "Borra las carpetas sin cifrar de corridas interrumpidas (respaldo y restauración)" \
+  bash -c "test ! -e '$VIEJA' && test ! -e '$VIEJA_R'"
+afirmar "… y lo anota en el registro" en_log 'Borradas 2 carpetas temporales'
+afirmar "No toca una carpeta reciente (podría ser una corrida en curso)" test -e "$RECIENTE/volcado/datos.sql"
+afirmar "No toca carpetas con otro nombre" test -e "$AJENA/volcado/datos.sql"
+afirmar "No deja su propia carpeta temporal" \
+  test "$(find "$TMP_SIS" -mindepth 1 -maxdepth 1 -name 'gravity_*' | wc -l)" -eq 2
+
 echo "Restauración (restaurar.ps1):"
 preparar_bd destino
 GRAVITY_DB_URL_DESTINO="$(pg_local_url destino)" restaurar -Archivo "$ARCHIVO"

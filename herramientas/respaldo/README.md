@@ -119,7 +119,7 @@ Si al restaurar aparece *permission denied to set parameter "session_replication
 
 - Las cadenas de conexión y la clave **solo** viven en variables de entorno de tu cuenta de Windows. El registro (`respaldo.log`) las oculta.
 - La contraseña de la base se pasa a `pg_dump` y `psql` por `PGPASSWORD`, no en la línea de comandos. La clave de 7-Zip sí va en la línea de comandos de `7z.exe` mientras corre (es una limitación de 7-Zip); con `-Cifrador gpg` va por la entrada estándar.
-- Los datos sin cifrar solo existen en la carpeta temporal mientras corre el script y se borran al terminar, aunque falle.
+- Los datos sin cifrar solo existen en la carpeta temporal (`%TEMP%\gravity_respaldo_*` o `gravity_restaurar_*`) mientras corre el script y se borran al terminar, aunque falle. Si el proceso muere a la mitad (corte de luz, ventana cerrada), la siguiente corrida borra al empezar las carpetas de ese tipo con más de 6 horas y lo anota en el registro.
 - Los respaldos contienen datos personales y de dinero: mantén BitLocker activo en la laptop, guarda el disco externo en otro lugar y **nunca** los copies al repositorio.
 - Si pierdes la clave, los respaldos cifrados con ella no se pueden recuperar. Si la cambias, guarda también la anterior mientras existan copias hechas con ella.
 
@@ -130,7 +130,7 @@ herramientas/respaldo/probar_respaldo.sh          # con pwsh: corre los .ps1 rea
 herramientas/respaldo/probar_respaldo.sh --bash   # réplica en bash del flujo básico
 ```
 
-Levanta un Postgres desechable (ver `supabase/README.md`), crea una base con las migraciones y el seed, respalda con `respaldo_diario.ps1`, restaura con `restaurar.ps1` en una base nueva y compara tabla por tabla (filas y huella MD5). También prueba retención, segunda ubicación caída, falta de clave, base inaccesible, clave equivocada, destino con datos, destino sin esquema y la alternativa con GnuPG. Requiere PostgreSQL, `7z`, `pwsh` (PowerShell 7) y `gpg`.
+Levanta un Postgres desechable (ver `supabase/README.md`), crea una base con las migraciones y el seed, respalda con `respaldo_diario.ps1`, restaura con `restaurar.ps1` en una base nueva y compara tabla por tabla (filas y huella MD5). También prueba retención, limpieza de temporales de corridas interrumpidas, segunda ubicación caída, falta de clave, base inaccesible, clave equivocada, destino con datos, destino sin esquema y la alternativa con GnuPG. Requiere PostgreSQL, `7z`, `pwsh` (PowerShell 7) y `gpg`.
 
 ## Mantenimiento
 

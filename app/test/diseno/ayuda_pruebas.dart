@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gravity/app/sesion_efectiva.dart';
 import 'package:gravity/diseno/diseno.dart';
+import 'package:gravity/nucleo/contratos/roles.dart';
 
 /// Martes 20 de octubre de 2026, 19:42 (como en los bocetos): de noche.
 final momentoNoche = DateTime(2026, 10, 20, 19, 42);
@@ -43,12 +45,14 @@ class AppDePrueba extends ConsumerWidget {
   }
 }
 
-/// Monta [home] dentro de `ProviderScope` + `MaterialApp` con el reloj fijo.
+/// Monta [home] dentro de `ProviderScope` + `MaterialApp` con el reloj fijo y
+/// el [rol] efectivo (por omisión, el Dueño, que ve todos los paneles).
 Future<void> montar(
   WidgetTester tester,
   Widget home, {
   DateTime? momento,
   Reloj? reloj,
+  Rol? rol = Rol.dueno,
   List<Override> overrides = const [],
 }) async {
   await tester.pumpWidget(
@@ -57,6 +61,7 @@ Future<void> montar(
         relojProvider.overrideWithValue(
           reloj ?? RelojFijo(momento ?? momentoNoche),
         ),
+        rolEfectivoProvider.overrideWithValue(rol),
         ...overrides,
       ],
       child: AppDePrueba(home: home),

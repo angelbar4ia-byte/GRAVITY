@@ -7,6 +7,11 @@ import 'package:gravity/modulos/ajustes/desarrollador/pantalla_desarrollador.dar
 Widget _app(Widget pantalla) => MaterialApp(home: Scaffold(body: pantalla));
 
 void main() {
+  test('las instrucciones sirven api/ solo en este equipo (M11)', () {
+    expect(instruccionesSwagger, contains('-a 127.0.0.1'));
+    expect(instruccionesSwagger, contains('http://127.0.0.1:8080/'));
+  });
+
   group('ubicarSwagger', () {
     test('una dirección http se usa tal cual', () {
       final u = ubicarSwagger(
@@ -127,7 +132,13 @@ void main() {
       expect(dentro(find.text('/rest/v1/rpc/crear_hogar')), findsOneWidget);
       expect(dentro(find.text('Pide confirmación')), findsOneWidget);
       expect(dentro(find.text('Nunca pasa por la IA')), findsOneWidget);
-      expect(dentro(find.text('Roles: Dueño')), findsOneWidget);
+      // Cualquier cuenta con sesión crea un hogar y queda como su dueño (M5).
+      expect(
+        dentro(
+          find.text('Roles: Dueño, Coadministrador, Familiar, Cuidador, Casa'),
+        ),
+        findsOneWidget,
+      );
 
       // Una herramienta de navegación: no escribe y sí puede verla la IA.
       final finanzas = find.byKey(

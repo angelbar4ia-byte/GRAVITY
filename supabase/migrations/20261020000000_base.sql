@@ -246,7 +246,8 @@ create table public.bitacora (
   id            uuid primary key default gen_random_uuid(),
   hogar_id      uuid references public.hogares (id),
   persona_id    uuid default public.persona_actual() references public.personas (id),
-  accion        text not null check (char_length(accion) between 1 and 60),
+  accion        text not null check (char_length(accion) between 1 and 60
+                                     and accion ~ '^[a-z][a-z0-9_.]*$'),
   tabla         text check (char_length(tabla) <= 63),
   registro_id   text check (char_length(registro_id) <= 200),
   detalle       jsonb not null default '{}'::jsonb
@@ -260,6 +261,9 @@ comment on table public.bitacora is
   'Bitácora de auditoría, SOLO AGREGAR: quién (persona_id), qué (accion), cuándo (ocurrido_en, '
   'registrado_en), tabla, registro y detalle. Sin UPDATE ni DELETE: reglas, permisos y trigger lo impiden.';
 comment on column public.bitacora.persona_id is 'Quién. Lo pone el servidor (persona_actual()); nulo = sistema.';
+comment on column public.bitacora.accion is
+  'Qué: identificador en minúsculas (letras, dígitos, _ y .), p. ej. entrega_de_turno o gravity.abrir. '
+  'insertar, actualizar y borrar están reservadas a registrar_cambio_en_bitacora(): la app no puede usarlas.';
 comment on column public.bitacora.ocurrido_en is 'Cuándo ocurrió (puede venir del dispositivo, p. ej. cola sin conexión).';
 comment on column public.bitacora.registrado_en is 'Cuándo llegó al servidor; lo pone el servidor.';
 
@@ -476,6 +480,12 @@ begin
     raise exception using errcode = '42501',
       message = 'La invitación es para otro correo, o tu correo aún no está confirmado.';
   end if;
+  -- Una membresía con fecha de fin vencida ya no da acceso: se cierra para
+  -- que la persona pueda volver al hogar con la invitación nueva (M3).
+  update public.membresias m
+     set activa = false
+   where m.hogar_id = v_inv.hogar_id and m.persona_id = v_persona
+     and m.activa and m.hasta is not null and m.hasta <= now();
   if exists (select 1 from public.membresias m
              where m.hogar_id = v_inv.hogar_id and m.persona_id = v_persona and m.activa) then
     raise exception using errcode = '23505', message = 'Ya perteneces a este hogar.';
@@ -515,15 +525,18 @@ $$;
 -- 7. Matriz inicial de permisos (especificación de la Fase 0, sección 5)
 -- -----------------------------------------------------------------------------
 -- "total" = todo el módulo; "propio" = solo lo de la persona; "restringido" =
--- subconjunto que define el módulo en su fase (la nota dice cuál). puede() solo
--- es verdadero con "total". El módulo gravity no está en la sección 5: se
--- propone "propio" para todos (su historial y preferencias) y administrar para
--- el dueño.
+-- subconjunto que define el módulo en su fase (la nota dice cuál). puede() y
+-- puede_sobre() solo dan acceso con "total" o "propio": "restringido" no da
+-- acceso hasta que el módulo defina su regla en su fase.
+-- El módulo gravity no está en la sección 5. Alineado con el espejo de la app
+-- en la revisión de la Fase 0 (hallazgo I1): el dueño, total; coadministrador,
+-- familiar y casa, lo propio (su historial y preferencias); el cuidador, nada
+-- (D5: solo Cuidados).
 insert into public.permisos_rol (rol, modulo, accion, alcance, nota) values
   -- dueño
-  ('dueno', 'gravity',      'leer',        'propio',      'Propuesta backend: no está en la sección 5'),
-  ('dueno', 'gravity',      'escribir',    'propio',      'Propuesta backend: no está en la sección 5'),
-  ('dueno', 'gravity',      'administrar', 'total',       'Propuesta backend: no está en la sección 5'),
+  ('dueno', 'gravity',      'leer',        'total',       'Revisión Fase 0 (I1): no está en la sección 5'),
+  ('dueno', 'gravity',      'escribir',    'total',       'Revisión Fase 0 (I1): no está en la sección 5'),
+  ('dueno', 'gravity',      'administrar', 'total',       'Revisión Fase 0 (I1): no está en la sección 5'),
   ('dueno', 'finanzas',     'leer',        'total',       null),
   ('dueno', 'finanzas',     'escribir',    'total',       null),
   ('dueno', 'finanzas',     'administrar', 'total',       null),
@@ -542,13 +555,13 @@ insert into public.permisos_rol (rol, modulo, accion, alcance, nota) values
   ('dueno', 'ajustes',      'escribir',    'total',       null),
   ('dueno', 'ajustes',      'administrar', 'total',       'Personas, roles e invitaciones'),
   -- coadministrador
-  ('coadministrador', 'gravity',      'leer',        'propio',      'Propuesta backend: no está en la sección 5'),
-  ('coadministrador', 'gravity',      'escribir',    'propio',      'Propuesta backend: no está en la sección 5'),
+  ('coadministrador', 'gravity',      'leer',        'propio',      'Revisión Fase 0 (I1): no está en la sección 5'),
+  ('coadministrador', 'gravity',      'escribir',    'propio',      'Revisión Fase 0 (I1): no está en la sección 5'),
   ('coadministrador', 'finanzas',     'leer',        'total',       'Lo que registra se define en la Fase 1'),
   ('coadministrador', 'habitos',      'leer',        'propio',      'Lo propio'),
   ('coadministrador', 'habitos',      'escribir',    'propio',      'Lo propio'),
-  ('coadministrador', 'cuidados',     'leer',        'restringido', 'Según consentimiento (Fase 5)'),
-  ('coadministrador', 'cuidados',     'escribir',    'restringido', 'Según consentimiento (Fase 5)'),
+  ('coadministrador', 'cuidados',     'leer',        'restringido', 'Según consentimiento (Fase 5); sin acceso mientras no exista'),
+  ('coadministrador', 'cuidados',     'escribir',    'restringido', 'Según consentimiento (Fase 5); sin acceso mientras no exista'),
   ('coadministrador', 'alimentacion', 'leer',        'total',       null),
   ('coadministrador', 'alimentacion', 'escribir',    'total',       null),
   ('coadministrador', 'alimentacion', 'administrar', 'total',       null),
@@ -558,17 +571,15 @@ insert into public.permisos_rol (rol, modulo, accion, alcance, nota) values
   ('coadministrador', 'ajustes',      'leer',        'propio',      'Lo propio'),
   ('coadministrador', 'ajustes',      'escribir',    'propio',      'Lo propio'),
   -- familiar
-  ('familiar', 'gravity',      'leer',     'propio',      'Propuesta backend: no está en la sección 5'),
-  ('familiar', 'gravity',      'escribir', 'propio',      'Propuesta backend: no está en la sección 5'),
+  ('familiar', 'gravity',      'leer',     'propio',      'Revisión Fase 0 (I1): no está en la sección 5'),
+  ('familiar', 'gravity',      'escribir', 'propio',      'Revisión Fase 0 (I1): no está en la sección 5'),
   ('familiar', 'habitos',      'leer',     'propio',      'Lo propio'),
   ('familiar', 'habitos',      'escribir', 'propio',      'Lo propio'),
   ('familiar', 'alimentacion', 'leer',     'restringido', 'Su parte (Fase 7)'),
   ('familiar', 'casa',         'leer',     'total',       null),
   ('familiar', 'ajustes',      'leer',     'propio',      'Lo propio'),
   ('familiar', 'ajustes',      'escribir', 'propio',      'Lo propio'),
-  -- cuidador
-  ('cuidador', 'gravity',      'leer',     'propio',      'Propuesta backend: no está en la sección 5'),
-  ('cuidador', 'gravity',      'escribir', 'propio',      'Propuesta backend: no está en la sección 5'),
+  -- cuidador (sin GRAVITY: D5, solo Cuidados)
   ('cuidador', 'finanzas',     'escribir', 'restringido', 'Solo gastos de cuidado propios (Fase 5); nunca lee Finanzas'),
   ('cuidador', 'cuidados',     'leer',     'restringido', 'Su turno (Fase 5)'),
   ('cuidador', 'cuidados',     'escribir', 'restringido', 'Su turno (Fase 5)'),
@@ -577,8 +588,8 @@ insert into public.permisos_rol (rol, modulo, accion, alcance, nota) values
   ('cuidador', 'ajustes',      'leer',     'propio',      'Lo propio'),
   ('cuidador', 'ajustes',      'escribir', 'propio',      'Lo propio'),
   -- casa (cuenta compartida de la tablet y del puente de casa)
-  ('casa', 'gravity',      'leer',     'propio',      'Propuesta backend: no está en la sección 5'),
-  ('casa', 'gravity',      'escribir', 'propio',      'Propuesta backend: no está en la sección 5'),
+  ('casa', 'gravity',      'leer',     'propio',      'Revisión Fase 0 (I1): no está en la sección 5'),
+  ('casa', 'gravity',      'escribir', 'propio',      'Revisión Fase 0 (I1): no está en la sección 5'),
   ('casa', 'cuidados',     'leer',     'restringido', 'Solo recordatorios genéricos, sin nombres ni medicamentos (D3)'),
   ('casa', 'alimentacion', 'leer',     'restringido', 'Menú y lista de compras (Fase 7)'),
   ('casa', 'casa',         'leer',     'total',       null);
@@ -657,6 +668,9 @@ create policy dispositivos_borrar on public.dispositivos
 
 -- bitácora: el dueño ve la de su hogar; cada quien ve lo que él hizo.
 -- Cualquier miembro agrega a su nombre. Sin reglas de UPDATE ni DELETE.
+-- Las acciones de los triggers (insertar, actualizar, borrar) quedan reservadas:
+-- nadie puede fabricar una entrada que parezca un cambio automático (M2). El
+-- trigger escribe como dueño de la tabla, sin pasar por esta regla.
 create policy bitacora_leer on public.bitacora
   for select to authenticated
   using (persona_id = (select public.persona_actual())
@@ -665,7 +679,8 @@ create policy bitacora_agregar on public.bitacora
   for insert to authenticated
   with check (persona_id = (select public.persona_actual())
               and (hogar_id is null or public.rol_en_hogar(hogar_id) is not null)
-              and ocurrido_en <= now() + interval '10 minutes');
+              and ocurrido_en <= now() + interval '10 minutes'
+              and accion not in ('insertar', 'actualizar', 'borrar'));
 
 -- finanzas_muestra: la regla del dinero.
 create policy finanzas_muestra_leer on public.finanzas_muestra
@@ -739,11 +754,21 @@ grant execute on function
   public.aceptar_invitacion(text), public.revocar_invitacion(uuid)
   to authenticated;
 
--- Red de seguridad para lo que se cree después en public: nada para anon.
--- (Cada migración nueva debe, de todos modos, activar RLS y conceder explícito.)
+-- Red de seguridad para lo que cree después quien aplica las migraciones
+-- (postgres). Cada migración nueva debe, de todos modos, activar RLS, revocar
+-- y conceder explícito; esto cubre el olvido (M1):
+-- * Funciones: PostgreSQL da EXECUTE a PUBLIC por omisión en TODOS los
+--   esquemas, y un REVOKE "in schema" no lo quita; por eso se revoca sin
+--   esquema. Con eso anon no ejecuta ninguna función nueva; authenticated y
+--   service_role la siguen ejecutando por los privilegios de Supabase en public.
+-- * Tablas: nada para anon; sin TRUNCATE (salta RLS), REFERENCES ni TRIGGER
+--   para authenticated, y sin TRUNCATE para service_role.
+alter default privileges revoke execute on functions from public;
+alter default privileges in schema public revoke all on functions from anon;
 alter default privileges in schema public revoke all on tables    from anon;
 alter default privileges in schema public revoke all on sequences from anon;
-alter default privileges in schema public revoke all on functions from anon;
+alter default privileges in schema public revoke truncate, references, trigger on tables from authenticated;
+alter default privileges in schema public revoke truncate on tables from service_role;
 
 -- -----------------------------------------------------------------------------
 -- 10. Cuentas que ya existían antes de esta migración (proyecto real)

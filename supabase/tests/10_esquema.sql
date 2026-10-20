@@ -61,8 +61,8 @@ select pruebas.igual(
   0, 'Bitácora sin reglas de UPDATE ni DELETE');
 
 -- La matriz de la sección 5.
-select pruebas.igual((select count(*)::int from public.permisos_rol), 57,
-  'La matriz tiene 57 permisos (sección 5 + módulo gravity propuesto)');
+select pruebas.igual((select count(*)::int from public.permisos_rol), 55,
+  'La matriz tiene 55 permisos (sección 5 + módulo gravity alineado con la app)');
 select pruebas.igual(
   (select string_agg(accion::text || '=' || alcance::text, ',' order by accion)
      from public.permisos_rol where rol = 'dueno' and modulo = 'finanzas'),
@@ -98,6 +98,29 @@ select pruebas.igual(
      from public.permisos_rol where modulo = 'ajustes' and accion = 'administrar'),
   'dueno', 'Solo el dueño administra Ajustes (personas, roles, invitaciones)');
 
+-- Alineación con el espejo de la app (revisión de la Fase 0, hallazgo I1).
+select pruebas.igual(
+  (select string_agg(accion::text || '=' || alcance::text, ',' order by accion)
+     from public.permisos_rol where rol = 'dueno' and modulo = 'gravity'),
+  'administrar=total,escribir=total,leer=total', 'I1: Dueño: GRAVITY total');
+select pruebas.igual(
+  (select count(*)::int from public.permisos_rol where rol = 'cuidador' and modulo = 'gravity'),
+  0, 'I1: Cuidador: sin GRAVITY (D5: solo Cuidados)');
+select pruebas.igual(
+  (select string_agg(rol::text || ':' || accion::text || '=' || alcance::text, ',' order by rol, accion)
+     from public.permisos_rol where modulo = 'gravity' and rol in ('coadministrador', 'familiar', 'casa')),
+  'casa:escribir=propio,casa:leer=propio,coadministrador:escribir=propio,'
+  'coadministrador:leer=propio,familiar:escribir=propio,familiar:leer=propio',
+  'I1: Coadministrador, familiar y casa: GRAVITY solo lo propio');
+select pruebas.igual(
+  (select string_agg(accion::text || '=' || alcance::text, ',' order by accion)
+     from public.permisos_rol where rol = 'coadministrador' and modulo = 'cuidados'),
+  'escribir=restringido,leer=restringido',
+  'I1: Coadministrador: Cuidados restringido (sin acceso hasta que exista el consentimiento)');
+select pruebas.igual(
+  (select count(*)::int from public.permisos_rol where alcance = 'restringido' and accion = 'administrar'),
+  0, 'Ningún alcance restringido administra');
+
 -- puede() rechaza nombres mal escritos en lugar de negar en silencio.
 select pruebas.falla(
   $$select public.puede('b0000000-0000-4000-8000-000000000001', 'finanza', 'leer')$$,
@@ -122,5 +145,34 @@ delete from auth.users where id = 'a0000000-0000-4000-8000-0000000000a2';
 select pruebas.ok(
   exists (select 1 from public.personas where nombre_visible = 'sin.nombre' and usuario_id is null),
   'Al eliminar la cuenta, la persona se conserva sin usuario');
+
+-- Red de seguridad para lo que se cree después en public (hallazgo M1): una
+-- función o tabla de una fase futura creada SIN revoke ni grant explícitos.
+-- Va al final: la tabla de prueba no tiene RLS (lo revisan las de arriba).
+create function public.funcion_de_una_fase_futura() returns integer
+language sql security definer set search_path = '' as $$ select 1 $$;
+create table public.tabla_de_una_fase_futura (id uuid primary key);
+create sequence public.secuencia_de_una_fase_futura;
+
+select pruebas.ok(
+  not has_function_privilege('anon', 'public.funcion_de_una_fase_futura()', 'execute')
+  and not has_function_privilege('public', 'public.funcion_de_una_fase_futura()', 'execute'),
+  'M1: anon (ni PUBLIC) ejecuta una función creada después sin revoke explícito');
+select pruebas.igual(
+  (select coalesce(string_agg(p.priv, ','), '')
+     from unnest(array['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER']) as p(priv)
+    where has_table_privilege('anon', 'public.tabla_de_una_fase_futura', p.priv)),
+  '', 'M1: anon no recibe nada en una tabla creada después');
+select pruebas.ok(
+  not has_sequence_privilege('anon', 'public.secuencia_de_una_fase_futura', 'usage')
+  and not has_sequence_privilege('anon', 'public.secuencia_de_una_fase_futura', 'select'),
+  'M1: anon no recibe nada en una secuencia creada después');
+select pruebas.igual(
+  (select coalesce(string_agg(r.rol || ':' || p.priv, ','), '')
+     from unnest(array['authenticated', 'service_role']) as r(rol),
+          unnest(array['TRUNCATE', 'REFERENCES', 'TRIGGER']) as p(priv)
+    where has_table_privilege(r.rol, 'public.tabla_de_una_fase_futura', p.priv)
+      and not (r.rol = 'service_role' and p.priv <> 'TRUNCATE')),
+  '', 'M1: authenticated no recibe TRUNCATE, REFERENCES ni TRIGGER, ni service_role TRUNCATE, en una tabla creada después');
 
 rollback;

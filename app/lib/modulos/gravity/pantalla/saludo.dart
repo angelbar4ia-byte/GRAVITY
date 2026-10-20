@@ -6,6 +6,9 @@ import '../../../nucleo/contratos/roles.dart';
 import '../../../nucleo/contratos/rutas.dart';
 import 'resumen_gravity.dart';
 
+/// Nombre visible de cada módulo: el del espejo de permisos (uno solo en la app).
+export '../../../nucleo/permisos/permisos.dart' show nombreModulo;
+
 /// "Buenos días" de 05:00 a 11:59, "Buenas tardes" de 12:00 a 18:59 y
 /// "Buenas noches" el resto.
 String saludoSegunHora(DateTime momento) {
@@ -18,7 +21,9 @@ String saludoSegunHora(DateTime momento) {
 /// "Buenas noches. Te faltan 2 hábitos de hoy y a las 20:00 hay un
 /// medicamento en el turno."
 ///
-/// Con [privado], no menciona nada de cuidados.
+/// Solo habla de lo que trae [resumen], que ya viene filtrado por el rol
+/// (`ResumenGravity.paraRol`): si el rol no ve cuidados ni dinero, no los
+/// menciona. Con [privado], no menciona nada de cuidados.
 String mensajeDelNucleo(
   DateTime momento,
   ResumenGravity resumen, {
@@ -37,19 +42,11 @@ String mensajeDelNucleo(
   if (!privado && aviso != null) partes.add(aviso);
   final saludo = '${saludoSegunHora(momento)}.';
   if (partes.isEmpty) return saludo;
-  return '$saludo ${partes.join(' y ')}.';
+  return '$saludo ${_conMayusculaInicial(partes.join(' y '))}.';
 }
 
-/// Nombre visible de cada módulo.
-String nombreModulo(Modulo modulo) => switch (modulo) {
-  Modulo.gravity => 'GRAVITY',
-  Modulo.finanzas => 'Finanzas',
-  Modulo.habitos => 'Hábitos',
-  Modulo.cuidados => 'Cuidados',
-  Modulo.alimentacion => 'Alimentación',
-  Modulo.casa => 'Casa',
-  Modulo.ajustes => 'Ajustes',
-};
+String _conMayusculaInicial(String texto) =>
+    texto.isEmpty ? texto : texto[0].toUpperCase() + texto.substring(1);
 
 /// Ruta de primer nivel de cada módulo.
 String rutaModulo(Modulo modulo) => switch (modulo) {

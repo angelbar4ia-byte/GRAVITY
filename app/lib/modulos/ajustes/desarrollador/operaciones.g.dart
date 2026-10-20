@@ -5,7 +5,7 @@ import '../../../nucleo/contratos/roles.dart';
 import 'operacion_api.dart';
 
 /// Huella de api/openapi.yaml con la que se generó este archivo.
-const huellaEspecificacion = 'fnv1a32:119577fe';
+const huellaEspecificacion = 'fnv1a32:9a957fe9';
 
 /// Versión de la especificación (info.version).
 const versionEspecificacion = '0.1.0';
@@ -14,7 +14,7 @@ const versionEspecificacion = '0.1.0';
 const gruposOperaciones = <GrupoOperaciones>[
   GrupoOperaciones(
     nombre: 'Herramientas de GRAVITY',
-    descripcion: 'Lista cerrada de funciones que GRAVITY puede usar (D1). Cada una declara su módulo, sus roles, si escribe (pide confirmación) y si es solo local (D3). En la Fase 0 son de navegación y se ejecutan dentro de la app; exponerlas por red para el puente de casa es una propuesta de la Fase 6.',
+    descripcion: 'Lista cerrada de funciones que GRAVITY puede usar (D1). Cada una declara su módulo, sus roles, si escribe (pide confirmación) y si es solo local (D3). El registro de la app rechaza, al arrancar, una herramienta declarada para un rol que la matriz de permisos no deja abrir, leer o escribir su módulo (D5), y una de Finanzas o Cuidados que no sea solo local (D3), salvo las de navegación, que no leen datos. En la Fase 0 son de navegación y se ejecutan dentro de la app; exponerlas por red para el puente de casa es una propuesta de la Fase 6.',
     operaciones: [
       OperacionApi(
         id: 'listarHerramientas',
@@ -38,7 +38,7 @@ const gruposOperaciones = <GrupoOperaciones>[
         metodo: MetodoHttp.post,
         ruta: '/herramientas/{nombre}',
         resumen: 'Ejecutar una herramienta',
-        descripcion: 'Ejecuta la herramienta si el rol la tiene y su módulo está activo; si no, responde 404 con el mismo mensaje en todos los casos. Si escribe y no viene `confirmado: true`, no ejecuta nada y responde `requiere_confirmacion` con el texto de la tarjeta de confirmación. Si es solo local, `para_ia` siempre es nulo.',
+        descripcion: 'Ejecuta la herramienta si el rol la tiene y su módulo está activo; si no, responde 404 con el mismo mensaje en todos los casos. Si escribe y no viene `confirmado: true`, no ejecuta nada y responde `requiere_confirmacion` con el texto de la tarjeta de confirmación. Si es solo local, `para_ia` siempre es nulo y, si falla, el error no lleva el mensaje original (podría llevar cifras).',
         roles: {
           Rol.dueno,
           Rol.coadministrador,
@@ -133,7 +133,7 @@ const gruposOperaciones = <GrupoOperaciones>[
         metodo: MetodoHttp.post,
         ruta: '/herramientas/ajustes.abrir_desarrollador',
         resumen: 'ajustes.abrir_desarrollador · Abrir Desarrollador',
-        descripcion: 'Abre Ajustes › Desarrollador, esta consola. Solo el dueño y solo en la laptop (lo aplica el cascarón de la app).',
+        descripcion: 'Abre Ajustes › Desarrollador, esta consola. Solo el dueño y solo en la laptop (D16): la barra de órdenes no la ofrece en otro dispositivo y el router de la app lo vuelve a revisar.',
         roles: {Rol.dueno},
         escribe: false,
         soloLocal: false,
@@ -178,8 +178,14 @@ const gruposOperaciones = <GrupoOperaciones>[
         metodo: MetodoHttp.post,
         ruta: '/rest/v1/rpc/crear_hogar',
         resumen: 'Crear un hogar',
-        descripcion: 'Crea un hogar y deja como dueño a quien lo crea. Devuelve el `id` del hogar.',
-        roles: {Rol.dueno},
+        descripcion: 'Crea un hogar y deja como dueño a quien lo crea. Devuelve el `id` del hogar. La puede llamar **cualquier cuenta con sesión**, aunque todavía no pertenezca a ningún hogar o tenga otro rol en otro hogar: por eso `x-roles` lista los cinco roles. Quien la llama queda como dueño solo del hogar nuevo.',
+        roles: {
+          Rol.dueno,
+          Rol.coadministrador,
+          Rol.familiar,
+          Rol.cuidador,
+          Rol.casa,
+        },
         escribe: true,
         soloLocal: true,
         fase: 0,

@@ -2,12 +2,16 @@
 ///
 /// No escriben datos ni leen nada de los módulos, así que no piden
 /// confirmación y su resultado ("Se abrió Finanzas") sí puede verlo la IA.
+/// Por eso son la única excepción a la regla de D3 del registro: una
+/// herramienta de Finanzas o Cuidados que no sea de navegación tiene que ser
+/// solo local. La clase es `final` y su [HerramientaNavegacion.ejecutar] no lee
+/// datos, así que nadie puede colar por aquí una herramienta que devuelva cifras.
 library;
 
+import '../contratos/dispositivo.dart';
 import '../contratos/roles.dart';
 import '../contratos/rutas.dart';
 import 'herramienta.dart';
-import 'registro_herramientas.dart';
 import 'visibilidad_modulos.dart';
 
 /// Abre una ruta de la app.
@@ -19,6 +23,7 @@ final class HerramientaNavegacion extends Herramienta {
     required this.ruta,
     required this.etiqueta,
     required this.palabrasClave,
+    this.dispositivos,
   });
 
   @override
@@ -39,6 +44,18 @@ final class HerramientaNavegacion extends Herramienta {
   /// Palabras (y frases cortas) que lo nombran en una orden, con acentos.
   /// La barra de órdenes las compara sin acentos ni mayúsculas.
   final List<String> palabrasClave;
+
+  /// Dispositivos donde se ofrece; `null`: en todos (p. ej. Desarrollador solo
+  /// en la laptop, D16). El router de la plataforma lo vuelve a revisar.
+  final Set<TipoDispositivo>? dispositivos;
+
+  /// `true` si se ofrece en [dispositivo]. Si no se sabe en qué dispositivo
+  /// se está (`null`), solo se ofrecen las que van en todos.
+  bool disponibleEn(TipoDispositivo? dispositivo) {
+    final permitidos = dispositivos;
+    return permitidos == null ||
+        (dispositivo != null && permitidos.contains(dispositivo));
+  }
 
   @override
   String get descripcion => 'Abre $etiqueta.';
@@ -144,8 +161,9 @@ final List<HerramientaNavegacion> herramientasNavegacion = List.unmodifiable([
     etiqueta: 'Ajustes',
     palabrasClave: const ['ajustes', 'ajuste', 'configuración', 'preferencias'],
   ),
-  // Ajustes › Desarrollador: solo quien administra Ajustes, el Dueño (D16).
-  // Que solo aparezca en la laptop lo decide el cascarón de la plataforma.
+  // Ajustes › Desarrollador: solo quien administra Ajustes, el Dueño, y solo
+  // en la laptop (D16; `puedeVerDesarrollador` de la plataforma). La barra de
+  // órdenes no la ofrece en otro dispositivo y el router la vuelve a revisar.
   HerramientaNavegacion(
     nombre: 'ajustes.abrir_desarrollador',
     modulo: Modulo.ajustes,
@@ -153,12 +171,6 @@ final List<HerramientaNavegacion> herramientasNavegacion = List.unmodifiable([
     ruta: Rutas.desarrollador,
     etiqueta: 'Desarrollador',
     palabrasClave: const ['desarrollador', 'api', 'apis', 'swagger'],
+    dispositivos: const {TipoDispositivo.laptop},
   ),
 ]);
-
-/// Todas las herramientas de la Fase 0.
-List<Herramienta> herramientasFase0() => [...herramientasNavegacion];
-
-/// Registro con las herramientas de la Fase 0.
-RegistroHerramientas registroFase0() =>
-    RegistroHerramientas(herramientasFase0());
