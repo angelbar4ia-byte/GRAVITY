@@ -224,5 +224,170 @@ void main() {
     expect(clasificarErrorPostgrest('23503'), ResultadoEnvio.reintentar);
     expect(clasificarErrorPostgrest('PGRST301'), ResultadoEnvio.reintentar);
     expect(clasificarErrorPostgrest(null), ResultadoEnvio.reintentar);
+    // Pasajeros: servidor caído u ocupado, conexión con la base, tiempo.
+    for (final codigo in ['503', '502', '429', 'PGRST000', '57014', '40001']) {
+      expect(clasificarErrorPostgrest(codigo), ResultadoEnvio.reintentar,
+          reason: codigo);
+    }
+    // Permanentes: requieren atención (no se reintentan sin fin, M16).
+    for (final codigo in ['PGRST204', '42703', '42P01', 'P0001', '400']) {
+      expect(clasificarErrorPostgrest(codigo), ResultadoEnvio.rechazado,
+          reason: codigo);
+    }
   });
+
+  group('I4: ligada a la persona y a la sesión', () {
+    String? conSesion;
+    String? registra;
+    late ColaSinConexion ligada;
+
+    setUp(() {
+      conSesion = null;
+      registra = 'persona-a';
+      ligada = ColaSinConexion(
+        base: base,
+        enviador: enviador,
+        reloj: () => ahora,
+        generarId: () => 'id-${siguienteId++}',
+        personaQueRegistra: () => registra,
+        personaConSesion: () => conSesion,
+      );
+      enviador.conSenal = true;
+    });
+
+    test('cada registro guarda quién lo hizo', () async {
+      await ligada.encolar(tipo: 't', carga: {});
+      await ligada.encolar(tipo: 't', carga: {}, personaId: 'persona-b');
+      expect([for (final r in await ligada.registros()) r.personaId], [
+        'persona-a',
+        'persona-b',
+      ]);
+    });
+
+    test('sin sesión no envía nada ni cuenta intentos', () async {
+      await ligada.encolar(tipo: 't', carga: {});
+      final resumen = await ligada.procesar();
+      expect(resumen.enviados, 0);
+      expect(resumen.restantes, 1);
+      expect(enviador.intentos, isEmpty);
+      final registro = (await ligada.registros()).single;
+      expect(registro.estado, EstadoPendiente.pendiente);
+      expect(registro.intentos, 0);
+    });
+
+    test('con sesión solo envía lo de esa persona', () async {
+      await ligada.encolar(tipo: 't', carga: {}); // persona-a
+      registra = 'persona-b';
+      await ligada.encolar(tipo: 't', carga: {});
+      conSesion = 'persona-b';
+      expect((await ligada.procesar()).enviados, 1);
+      expect(enviador.intentos, ['id-1']);
+      conSesion = 'persona-a';
+      expect((await ligada.procesar()).enviados, 1);
+      expect(enviador.intentos, ['id-1', 'id-0']);
+    });
+
+    test('"sin sesión" del enviador espera sin contar el intento', () async {
+      final sinSesion = ColaSinConexion(
+        base: base,
+        enviador: const EnviadorSinSesion(),
+        reloj: () => ahora,
+      );
+      await sinSesion.encolar(tipo: 't', carga: {});
+      await sinSesion.procesar();
+      final registro = (await sinSesion.registros()).single;
+      expect(registro.estado, EstadoPendiente.pendiente);
+      expect(registro.intentos, 0);
+      expect(registro.siguienteIntento, isNull);
+    });
+
+    test('lo rechazado requiere atención: se ve, se reintenta o se descarta',
+        () async {
+      conSesion = 'persona-a';
+      enviador.rechazarTipos.add('malo');
+      await ligada.encolar(tipo: 'malo', carga: {'descripcion': 'Despensa'});
+      await ligada.encolar(tipo: 'malo', carga: {}, personaId: 'persona-b');
+      final avisos = <int>[];
+      final suscripcion = ligada
+          .vigilarAtencion(personaId: 'persona-a')
+          .listen((lista) => avisos.add(lista.length));
+      await pumpEventQueue();
+      await ligada.procesar();
+      await pumpEventQueue();
+      expect(avisos.last, 1);
+      // Cada quien ve solo lo suyo (D5).
+      final deA = await ligada.requierenAtencion(personaId: 'persona-a');
+      expect(deA.single.id, 'id-0');
+      expect(deA.single.ultimoError, isNotNull);
+
+      // Reintentar: vuelve a la cola y, si el servidor ya lo acepta, sube.
+      enviador.rechazarTipos.clear();
+      await ligada.reintentar('id-0');
+      await ligada.procesar();
+      expect(enviador.servidor.keys, contains('id-0'));
+      await pumpEventQueue();
+      expect(avisos.last, 0);
+
+      // Descartar: deja de requerir atención y no se sube.
+      registra = 'persona-a';
+      enviador.rechazarTipos.add('malo');
+      await ligada.encolar(tipo: 'malo', carga: {});
+      await ligada.procesar();
+      await ligada.descartar('id-2');
+      expect(await ligada.requierenAtencion(personaId: 'persona-a'), isEmpty);
+      expect(
+        (await ligada.registros()).firstWhere((r) => r.id == 'id-2').estado,
+        EstadoPendiente.descartado,
+      );
+      await suscripcion.cancel();
+    });
+
+    test('M16: tras muchos fallos sin respuesta clara, requiere atención',
+        () async {
+      final limitada = ColaSinConexion(
+        base: base,
+        enviador: enviador,
+        reloj: () => ahora,
+        intentosMaximos: 3,
+      );
+      enviador.lanzarExcepcion = true;
+      await limitada.encolar(tipo: 't', carga: {});
+      for (var i = 0; i < 3; i++) {
+        await limitada.procesar();
+        ahora = ahora.add(const Duration(hours: 1));
+      }
+      final registro = (await limitada.registros()).single;
+      expect(registro.estado, EstadoPendiente.rechazado);
+      expect(registro.ultimoError, contains('Falló 3 veces'));
+    });
+
+    test('un enviador puede rechazar diciendo por qué', () async {
+      final conMotivo = ColaSinConexion(
+        base: base,
+        enviador: const EnviadorQueRechaza(),
+        reloj: () => ahora,
+      );
+      await conMotivo.encolar(tipo: 't', carga: {});
+      await conMotivo.procesar();
+      final registro = (await conMotivo.registros()).single;
+      expect(registro.estado, EstadoPendiente.rechazado);
+      expect(registro.ultimoError, 'Sin permiso para guardarlo (42501).');
+    });
+  });
+}
+
+class EnviadorSinSesion implements Enviador {
+  const EnviadorSinSesion();
+
+  @override
+  Future<ResultadoEnvio> enviar(PeticionEnvio peticion) async =>
+      ResultadoEnvio.sinSesion;
+}
+
+class EnviadorQueRechaza implements Enviador {
+  const EnviadorQueRechaza();
+
+  @override
+  Future<ResultadoEnvio> enviar(PeticionEnvio peticion) async =>
+      throw const RechazoEnvio('Sin permiso para guardarlo (42501).');
 }

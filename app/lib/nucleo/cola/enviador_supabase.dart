@@ -80,7 +80,8 @@ ResultadoEnvio clasificarErrorPostgrest(String? codigo) {
   if (codigo.startsWith('PGRST3')) return ResultadoEnvio.reintentar;
   // Sin conexión con la base (PGRST000 a 003), servidor ocupado o caído.
   if (codigo.startsWith('PGRST0')) return ResultadoEnvio.reintentar;
-  final http = int.tryParse(codigo);
+  // Estado HTTP sin cuerpo de PostgREST (3 cifras; los de PostgreSQL son 5).
+  final http = codigo.length == 3 ? int.tryParse(codigo) : null;
   if (http != null && (http >= 500 || http == 408 || http == 429)) {
     return ResultadoEnvio.reintentar;
   }

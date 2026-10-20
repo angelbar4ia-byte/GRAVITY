@@ -48,7 +48,7 @@ final colaSinConexionProvider = Provider<ColaSinConexion>((ref) {
     personaQueRegistra: () => ref.read(personaQueRegistraProvider),
     personaConSesion: () => personaConSesionServidor(ref),
   );
-  ref.onDispose(cola.detenerAutomatico);
+  ref.onDispose(cola.cerrar);
   return cola;
 });
 

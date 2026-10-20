@@ -147,7 +147,13 @@ void main() {
       routerDe(tester).go(Rutas.finanzas);
       await tester.pumpAndSettle();
       expect(ubicacion(tester), Rutas.inicio);
-      expect(find.textContaining('Finanzas'), findsNothing);
+      // "Hoy" completo: la lista es perezosa y los títulos van en mayúsculas
+      // (antes esta comprobación pasaba en vacío, B1).
+      await construirTodo(tester);
+      revisarSinDinero(tester);
+      revisarSinCuidados(tester);
+      tester.view.physicalSize = tamanoDe(TipoDispositivo.telefono);
+      await tester.pumpAndSettle();
 
       await tester.tap(pestana('Más'));
       await tester.pumpAndSettle();

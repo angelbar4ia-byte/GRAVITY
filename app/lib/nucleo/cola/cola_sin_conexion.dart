@@ -155,6 +155,41 @@ class ColaSinConexion {
   Future<ResumenProceso>? _enCurso;
   Timer? _temporizador;
 
+  /// Avisa cada vez que la cola cambia (para los avisos en pantalla). Se usa
+  /// en lugar de `watch()` de drift, que deja temporizadores al cancelar.
+  final _cambios = StreamController<void>.broadcast(sync: true);
+
+  void _avisar() {
+    if (!_cambios.isClosed) _cambios.add(null);
+  }
+
+  /// Emite [consulta] ahora y otra vez cada vez que la cola cambia.
+  Stream<T> _vigilar<T>(Future<T> Function() consulta) {
+    late final StreamController<T> salida;
+    StreamSubscription<void>? cambios;
+    var activa = true;
+    Future<void> emitir() async {
+      try {
+        final valor = await consulta();
+        if (activa) salida.add(valor);
+      } catch (error, pila) {
+        if (activa) salida.addError(error, pila);
+      }
+    }
+
+    salida = StreamController<T>(
+      onListen: () {
+        cambios = _cambios.stream.listen((_) => emitir());
+        emitir();
+      },
+      onCancel: () {
+        activa = false;
+        return cambios?.cancel();
+      },
+    );
+    return salida.stream;
+  }
+
   $PendientesTable get _tabla => _base.pendientes;
 
   /// Guarda un registro para subirlo. Devuelve su id (UUID). Si ya existe un
@@ -180,6 +215,7 @@ class ColaSinConexion {
           ),
           mode: InsertMode.insertOrIgnore,
         );
+    _avisar();
     return idFinal;
   }
 
@@ -292,6 +328,7 @@ class ColaSinConexion {
       if (resultado == ResultadoEnvio.reintentar) break;
     }
 
+    if (enviados + reintentos + rechazados > 0) _avisar();
     return ResumenProceso(
       enviados: enviados,
       reintentos: reintentos,
@@ -304,7 +341,7 @@ class ColaSinConexion {
   Future<int> contarPendientes() => _consultaPendientes().getSingle();
 
   /// Cuántos faltan por subir, en vivo (para el aviso "3 por subir").
-  Stream<int> vigilarPendientes() => _consultaPendientes().watchSingle();
+  Stream<int> vigilarPendientes() => _vigilar(contarPendientes);
 
   Selectable<int> _consultaPendientes() {
     final cuenta = _tabla.id.count();
@@ -321,7 +358,7 @@ class ColaSinConexion {
 
   /// Lo mismo, en vivo (para el aviso en pantalla).
   Stream<List<RegistroPendiente>> vigilarAtencion({String? personaId}) =>
-      _consultaAtencion(personaId).watch();
+      _vigilar(() => requierenAtencion(personaId: personaId));
 
   SimpleSelectStatement<$PendientesTable, RegistroPendiente> _consultaAtencion(
     String? personaId,
@@ -339,33 +376,33 @@ class ColaSinConexion {
     ]);
 
   /// La persona pide intentar otra vez un registro que requería atención.
-  Future<void> reintentar(String id) =>
-      (_base.update(_tabla)..where(
-            (t) =>
-                t.id.equals(id) &
-                t.estado.equalsValue(EstadoPendiente.rechazado),
-          ))
-          .write(
-            const PendientesCompanion(
-              estado: Value(EstadoPendiente.pendiente),
-              intentos: Value(0),
-              siguienteIntento: Value(null),
-            ),
-          );
+  Future<void> reintentar(String id) => _cambiarAtencion(
+    id,
+    const PendientesCompanion(
+      estado: Value(EstadoPendiente.pendiente),
+      intentos: Value(0),
+      siguienteIntento: Value(null),
+    ),
+  );
 
   /// La persona decide no subir un registro que requería atención.
-  Future<void> descartar(String id) =>
-      (_base.update(_tabla)..where(
-            (t) =>
-                t.id.equals(id) &
-                t.estado.equalsValue(EstadoPendiente.rechazado),
-          ))
-          .write(
-            const PendientesCompanion(
-              estado: Value(EstadoPendiente.descartado),
-              siguienteIntento: Value(null),
-            ),
-          );
+  Future<void> descartar(String id) => _cambiarAtencion(
+    id,
+    const PendientesCompanion(
+      estado: Value(EstadoPendiente.descartado),
+      siguienteIntento: Value(null),
+    ),
+  );
+
+  Future<void> _cambiarAtencion(String id, PendientesCompanion cambio) async {
+    await (_base.update(_tabla)..where(
+          (t) =>
+              t.id.equals(id) &
+              t.estado.equalsValue(EstadoPendiente.rechazado),
+        ))
+        .write(cambio);
+    _avisar();
+  }
 
   /// Todos los registros de la cola (para revisar y para pruebas).
   Future<List<RegistroPendiente>> registros() => (_base.select(_tabla)
@@ -386,6 +423,12 @@ class ColaSinConexion {
               t.creadoEn.isSmallerThanValue(limite),
         ))
         .go();
+  }
+
+  /// Deja de avisar cambios (al desechar la cola).
+  Future<void> cerrar() async {
+    detenerAutomatico();
+    await _cambios.close();
   }
 
   /// Intenta subir cada [cada] mientras la app está abierta (el registro

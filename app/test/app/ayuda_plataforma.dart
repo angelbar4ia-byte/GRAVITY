@@ -114,3 +114,40 @@ Future<AlmacenSeguroEnMemoria> almacenConPersonas(
   }
   return almacen;
 }
+
+/// Todo el texto visible, en minúsculas (los títulos de las tarjetas van en
+/// mayúsculas: buscar "Finanzas" tal cual pasaría en vacío, B1).
+String textoVisible(WidgetTester tester) => tester
+    .widgetList<Text>(find.byType(Text))
+    .map((t) => t.data ?? t.textSpan?.toPlainText() ?? '')
+    .join(' · ')
+    .toLowerCase();
+
+/// Con una pantalla muy alta, las listas perezosas construyen todo.
+Future<void> construirTodo(WidgetTester tester) async {
+  tester.view.physicalSize = Size(tester.view.physicalSize.width, 4000);
+  await tester.pumpAndSettle();
+}
+
+/// Sin rastro de dinero: ni las piezas de Finanzas (por llave) ni su texto.
+void revisarSinDinero(WidgetTester tester) {
+  for (final llave in ['tarjeta-finanzas', 'panel-finanzas', 'monto-quedan']) {
+    expect(find.byKey(ValueKey(llave)), findsNothing, reason: llave);
+  }
+  final texto = textoVisible(tester);
+  for (final prohibido in ['finanzas', 'quedan', 'presupuesto usado']) {
+    expect(texto, isNot(contains(prohibido)), reason: prohibido);
+  }
+  expect(find.textContaining(r'$'), findsNothing);
+}
+
+/// Sin datos de cuidados (ni por llave ni por texto).
+void revisarSinCuidados(WidgetTester tester) {
+  for (final llave in ['tarjeta-cuidados', 'panel-cuidados']) {
+    expect(find.byKey(ValueKey(llave)), findsNothing, reason: llave);
+  }
+  final texto = textoVisible(tester);
+  for (final prohibido in ['medicamento', 'entrega de turno']) {
+    expect(texto, isNot(contains(prohibido)), reason: prohibido);
+  }
+}

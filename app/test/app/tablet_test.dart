@@ -14,23 +14,6 @@ import 'package:gravity/nucleo/tablet/usuarios_tablet.dart';
 
 import 'ayuda_plataforma.dart';
 
-/// Todo el texto visible, en minúsculas (los títulos de las tarjetas van en
-/// mayúsculas: buscar "Finanzas" tal cual pasaría en vacío).
-String textoVisible(WidgetTester tester) => tester
-    .widgetList<Text>(find.byType(Text))
-    .map((t) => t.data ?? t.textSpan?.toPlainText() ?? '')
-    .join(' · ')
-    .toLowerCase();
-
-/// Sin rastro de dinero: ni las piezas de Finanzas (por llave) ni su texto.
-void revisarSinDinero(WidgetTester tester) {
-  for (final llave in ['tarjeta-finanzas', 'panel-finanzas', 'monto-quedan']) {
-    expect(find.byKey(ValueKey(llave)), findsNothing, reason: llave);
-  }
-  expect(textoVisible(tester), isNot(contains('finanzas')));
-  expect(find.textContaining(r'$'), findsNothing);
-}
-
 const nombreDueno = 'Dueño de ejemplo';
 const nombreCuidadora = 'Cuidadora de ejemplo';
 
