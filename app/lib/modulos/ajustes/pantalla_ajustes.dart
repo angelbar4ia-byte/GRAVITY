@@ -11,6 +11,7 @@ import '../../app/pantallas_externas.dart';
 import '../../app/sesion_efectiva.dart';
 import '../../nucleo/contratos/dispositivo.dart';
 import '../../nucleo/contratos/roles.dart';
+import '../../nucleo/contratos/rutas.dart';
 import '../../nucleo/permisos/permisos.dart';
 import '../../nucleo/sesion/proveedores_sesion.dart';
 import '../../nucleo/tablet/controlador_tablet.dart';
@@ -30,7 +31,11 @@ Widget pantallaDeSeccion(SeccionAjustes seccion) => switch (seccion) {
   SeccionAjustes.privacidad => const PantallaPrivacidad(),
   SeccionAjustes.copias => const PantallaCopias(),
   SeccionAjustes.notificaciones => const PantallaNotificaciones(),
-  SeccionAjustes.desarrollador => pantallaDesarrollador(),
+  SeccionAjustes.desarrollador => MarcoPantalla(
+    titulo: infoSecciones[SeccionAjustes.desarrollador]!.titulo,
+    rutaAnterior: Rutas.ajustes,
+    cuerpo: pantallaDesarrollador(),
+  ),
 };
 
 class PantallaAjustes extends ConsumerWidget {

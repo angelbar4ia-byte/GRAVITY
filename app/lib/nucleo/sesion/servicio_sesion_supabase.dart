@@ -19,21 +19,55 @@ import 'sesion.dart';
 /// Lee la persona y el rol del usuario autenticado en [cliente].
 typedef LectorPerfil = Future<Sesion> Function(SupabaseClient cliente);
 
-/// Lector por omisión: función `mi_perfil()` del servidor, que devuelve
-/// `persona_id`, `nombre`, `correo`, `rol` y `hogar_id` de quien llama
-/// (propuesta para el agente backend; se ajusta al esquema final).
+/// Lector por omisión, sobre el esquema base del servidor
+/// (`supabase/migrations/20261020000000_base.sql`): la persona del usuario
+/// (`personas.usuario_id`) y su membresía vigente (`membresias`). Las reglas
+/// por registro dejan leer a cada quien lo suyo.
 Future<Sesion> leerPerfilPorOmision(SupabaseClient cliente) async {
-  final respuesta = await cliente.rpc<dynamic>('mi_perfil');
-  final fila = switch (respuesta) {
-    final List<dynamic> filas when filas.isNotEmpty => filas.first,
-    final Map<dynamic, dynamic> mapa => mapa,
-    _ => null,
-  };
-  if (fila is! Map) throw ErrorSesion.sinRol;
-  return sesionDesdeFila(fila.cast<String, Object?>());
+  final usuario = cliente.auth.currentUser;
+  if (usuario == null) throw ErrorSesion.credencialesIncorrectas;
+  final persona = await cliente
+      .from('personas')
+      .select('id, nombre_visible')
+      .eq('usuario_id', usuario.id)
+      .maybeSingle();
+  if (persona == null) throw ErrorSesion.sinRol;
+  final membresias = await cliente
+      .from('membresias')
+      .select('rol, hogar_id, desde, hasta')
+      .eq('persona_id', persona['id'] as String)
+      .eq('activa', true);
+  final vigente = membresiaVigente(membresias, DateTime.now());
+  if (vigente == null) throw ErrorSesion.sinRol;
+  return sesionDesdeFila({
+    'persona_id': persona['id'],
+    'nombre': persona['nombre_visible'],
+    'correo': usuario.email,
+    'rol': vigente['rol'],
+    'hogar_id': vigente['hogar_id'],
+  });
 }
 
-/// Convierte una fila de `mi_perfil()` en [Sesion].
+/// Primera membresía vigente en [ahora] (`desde <= ahora` y `hasta` nula o
+/// futura), o `null`.
+Map<String, dynamic>? membresiaVigente(
+  List<Map<String, dynamic>> membresias,
+  DateTime ahora,
+) {
+  for (final fila in membresias) {
+    final desde = DateTime.tryParse('${fila['desde']}');
+    final hasta = fila['hasta'] == null
+        ? null
+        : DateTime.tryParse('${fila['hasta']}');
+    if (desde != null && desde.isAfter(ahora)) continue;
+    if (hasta != null && !hasta.isAfter(ahora)) continue;
+    return fila;
+  }
+  return null;
+}
+
+/// Convierte una fila (`persona_id`, `nombre`, `correo`, `rol`, `hogar_id`)
+/// en [Sesion]. Lanza [ErrorSesion.sinRol] si el rol no es de D5.
 Sesion sesionDesdeFila(Map<String, Object?> fila) {
   final rolTexto = fila['rol'];
   final rol = Rol.values.where((r) => r.name == rolTexto).firstOrNull;

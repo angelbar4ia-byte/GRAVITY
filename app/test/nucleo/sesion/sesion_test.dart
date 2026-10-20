@@ -124,6 +124,21 @@ void main() {
       );
     });
 
+    test('membresiaVigente respeta desde, hasta y el orden', () {
+      final ahora = DateTime.utc(2026, 10, 20, 12);
+      final filas = [
+        {'rol': 'familiar', 'desde': '2026-11-01T00:00:00Z', 'hasta': null},
+        {
+          'rol': 'cuidador',
+          'desde': '2026-01-01T00:00:00Z',
+          'hasta': '2026-10-01T00:00:00Z',
+        },
+        {'rol': 'dueno', 'desde': '2026-01-01T00:00:00+00:00', 'hasta': null},
+      ];
+      expect(membresiaVigente(filas, ahora)?['rol'], 'dueno');
+      expect(membresiaVigente(filas.sublist(0, 2), ahora), isNull);
+    });
+
     test('traducirErrorSesion da mensajes en español', () {
       expect(
         traducirErrorSesion(

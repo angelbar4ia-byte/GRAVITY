@@ -39,6 +39,11 @@ Future<void> montarApp(
   tester.view.physicalSize = tamanoDe(dispositivo);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
+  // "Reducir movimiento": el núcleo animado de GRAVITY se detiene y
+  // pumpAndSettle puede terminar.
+  tester.platformDispatcher.accessibilityFeaturesTestValue =
+      const FakeAccessibilityFeatures(disableAnimations: true);
+  addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
   await tester.pumpWidget(
     ProviderScope(
       overrides: [

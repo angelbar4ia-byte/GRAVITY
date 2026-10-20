@@ -84,7 +84,7 @@ Todo pasa por `lib/app/pantallas_externas.dart`: cada función dice en su coment
 
 ## Pendientes
 
-- Función de servidor `mi_perfil()` (agente backend) que devuelva `persona_id`, `nombre`, `correo`, `rol` y `hogar_id`; la app la usa al entrar. Si el esquema final es otro, se cambia `leerPerfilPorOmision` en `lib/nucleo/sesion/servicio_sesion_supabase.dart`.
+- Al entrar, la app lee `personas` (por `usuario_id`) y la membresía vigente en `membresias` (esquema base de `supabase/`). Si cambia el esquema, se ajusta `leerPerfilPorOmision` en `lib/nucleo/sesion/servicio_sesion_supabase.dart`. Propuesta al backend: una función `mi_perfil()` que lo entregue en una sola llamada.
 - Tablet: cambiar también la sesión del servidor por persona (guardar el token de cada una, cifrado y desbloqueado con su PIN).
 - Bloqueo del teléfono con PIN o huella y Crashlytics (complemento de Gradle aparte).
 - Cada módulo registra en `tablasDeLaCola` (`lib/app/arranque.dart`) la tabla de sus registros sin conexión.

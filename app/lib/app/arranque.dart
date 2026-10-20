@@ -9,6 +9,10 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../diseno/licencias.dart';
+import '../diseno/proveedores.dart' show densidadBaseProvider;
+import '../diseno/valores_diseno.dart' show densidadPara;
+
 import '../nucleo/base_local/base_local.dart';
 import '../nucleo/cola/cola_sin_conexion.dart';
 import '../nucleo/cola/enviador_supabase.dart';
@@ -39,6 +43,7 @@ Future<List<Override>> prepararArranque({
       detectarDesdeVista(PlatformDispatcher.instance.views.firstOrNull);
 
   Intl.defaultLocale = 'es_MX';
+  registrarLicenciasFuentes();
   await initializeDateFormatting('es_MX');
 
   final firebase = await prepararFirebase(plataforma: plataforma);
@@ -76,6 +81,7 @@ Future<List<Override>> prepararArranque({
 
   return [
     tipoDispositivoProvider.overrideWithValue(dispositivo),
+    densidadBaseProvider.overrideWithValue(densidadPara(dispositivo)),
     estadoFirebaseProvider.overrideWithValue(firebase),
     almacenSeguroProvider.overrideWithValue(almacen),
     biometriaProvider.overrideWithValue(biometria),

@@ -26,6 +26,7 @@ Cuando las decisiones confirmadas cambian el contrato, se reescribe `CONTRATO_CO
 | D14 | Tablet portátil de la casa con cambio de usuario | Confirmada (detalles propuestos) |
 | D15 | Pulsera smart band (reloj Wear OS a futuro) | Confirmada (detalles propuestos) |
 | D16 | APIs documentadas con OpenAPI y Swagger UI | Confirmada (detalles propuestos) |
+| D17 | Reglas técnicas del servidor (Fase 0) | Propuesta |
 
 ---
 
@@ -332,3 +333,17 @@ GRAVITY/
 - **Dónde:** en la laptop, en Ajustes › Desarrollador, solo con rol Dueño. La especificación **no se publica en internet**.
 - **Cada operación indica** su rol, si pide confirmación y si nunca pasa por la IA (D3).
 - **Desde la Fase 0:** la especificación crece con cada fase y forma parte de la documentación que leen las sesiones de Claude Code.
+
+---
+
+## D17. Reglas técnicas del servidor (Fase 0) — propuesta
+
+Propuestas por el agente backend al construir el esquema base; no cambian ninguna decisión confirmada.
+
+- **Alcance en los permisos:** la matriz rol × módulo × acción lleva un `alcance` (total, propio o restringido). `puede()` solo da permiso con alcance total; "lo propio" y "su turno" se resuelven aparte, sin dar acceso de más.
+- **Personas separadas de las cuentas:** si se borra una cuenta, la persona queda (sin cuenta) para que la bitácora conserve quién hizo qué.
+- **Los hogares no se borran:** la bitácora los referencia.
+- **Bitácora inmutable** incluso para la cuenta de servicio: sin UPDATE ni DELETE.
+- **Un solo dueño activo por hogar;** transferir la propiedad requerirá una función específica.
+- **Respaldo:** copia local y copia externa, ambas cifradas (AES-256); retención de 30 días con un mínimo de 7 copias.
+
