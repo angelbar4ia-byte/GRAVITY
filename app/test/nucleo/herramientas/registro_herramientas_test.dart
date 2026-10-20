@@ -184,12 +184,13 @@ void main() {
     });
 
     test('tampoco al ejecutarla por el registro', () async {
-      final h = _Falsa(soloLocal: true, paraIaQueIntenta: r'Gastaste $1,234.50');
-      final r = await RegistroHerramientas([h]).ejecutar(
-        h.nombre,
-        const {},
-        const ContextoHerramienta(rol: Rol.dueno),
+      final h = _Falsa(
+        soloLocal: true,
+        paraIaQueIntenta: r'Gastaste $1,234.50',
       );
+      final r = await RegistroHerramientas(
+        [h],
+      ).ejecutar(h.nombre, const {}, const ContextoHerramienta(rol: Rol.dueno));
       expect(h.ejecuciones, 1);
       expect(r.contenido, contains(r'$1,234.50'));
       expect(r.paraIa, isNull);
@@ -217,11 +218,9 @@ void main() {
 
     test('una herramienta que no es solo local sí entrega paraIa', () async {
       final h = _Falsa();
-      final r = await RegistroHerramientas([h]).ejecutar(
-        h.nombre,
-        const {},
-        const ContextoHerramienta(rol: Rol.dueno),
-      );
+      final r = await RegistroHerramientas(
+        [h],
+      ).ejecutar(h.nombre, const {}, const ContextoHerramienta(rol: Rol.dueno));
       expect(r.paraIa, 'Resumen listo.');
     });
   });
@@ -229,11 +228,9 @@ void main() {
   group('Confirmación', () {
     test('las que escriben piden confirmación y no se ejecutan', () async {
       final h = _Falsa(nombre: 'finanzas.registrar_gasto', escribe: true);
-      final r = await RegistroHerramientas([h]).ejecutar(
-        h.nombre,
-        const {'monto_centavos': 12350},
-        const ContextoHerramienta(rol: Rol.dueno),
-      );
+      final r = await RegistroHerramientas([h]).ejecutar(h.nombre, const {
+        'monto_centavos': 12350,
+      }, const ContextoHerramienta(rol: Rol.dueno));
       expect(r.requiereConfirmacion, isTrue);
       expect(r.paraIa, isNull);
       expect(r.contenido, isNotEmpty);
@@ -243,22 +240,17 @@ void main() {
     test('ya confirmadas, se ejecutan una vez', () async {
       final h = _Falsa(nombre: 'finanzas.registrar_gasto', escribe: true);
       const ctx = ContextoHerramienta(rol: Rol.dueno);
-      final r = await RegistroHerramientas([h]).ejecutar(
-        h.nombre,
-        const {'monto_centavos': 12350},
-        ctx.confirmar(),
-      );
+      final r = await RegistroHerramientas([h])
+          .ejecutar(h.nombre, const {'monto_centavos': 12350}, ctx.confirmar());
       expect(r.requiereConfirmacion, isFalse);
       expect(h.ejecuciones, 1);
     });
 
     test('las que solo leen no piden confirmación', () async {
       final h = _Falsa();
-      final r = await RegistroHerramientas([h]).ejecutar(
-        h.nombre,
-        const {},
-        const ContextoHerramienta(rol: Rol.dueno),
-      );
+      final r = await RegistroHerramientas(
+        [h],
+      ).ejecutar(h.nombre, const {}, const ContextoHerramienta(rol: Rol.dueno));
       expect(r.requiereConfirmacion, isFalse);
       expect(h.ejecuciones, 1);
     });

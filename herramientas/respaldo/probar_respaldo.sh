@@ -234,7 +234,7 @@ afirmar "… porque falta el esquema" en_log 'no tiene el esquema de GRAVITY'
 echo "Alternativa ZIP + GnuPG:"
 if command -v gpg >/dev/null 2>&1; then
   D3="$TRABAJO/gpg"
-  export GNUPGHOME="$TRABAJO/gnupg"; mkdir -p -m 700 "$GNUPGHOME"
+  export GNUPGHOME="$TRABAJO/gnupg"; mkdir -p "$GNUPGHOME"; chmod 700 "$GNUPGHOME"
   respaldar -Destino "$D3" -DestinoSecundario "$TRABAJO/gpg2" -Cifrador gpg
   afirmar "respaldo_diario.ps1 -Cifrador gpg termina con código 0" test $? -eq 0
   ARCHIVO_GPG="$(ls "$D3"/gravity_respaldo_*.zip.gpg 2>/dev/null | tail -n 1)"

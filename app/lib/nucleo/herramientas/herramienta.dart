@@ -10,7 +10,9 @@ import '../contratos/roles.dart';
 
 /// Formato del nombre: `<modulo>.<accion>`, en minúsculas, sin acentos ni ñ.
 /// Ejemplo: `habitos.resumen_hoy`.
-final RegExp formatoNombreHerramienta = RegExp(r'^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$');
+final RegExp formatoNombreHerramienta = RegExp(
+  r'^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$',
+);
 
 /// Una función que GRAVITY puede usar.
 ///
@@ -39,7 +41,8 @@ abstract class Herramienta {
   bool get soloLocal;
 
   /// Texto de la tarjeta de confirmación (solo se usa si [escribe]).
-  String resumenConfirmacion(Map<String, Object?> parametros) => '¿Confirmas? $descripcion';
+  String resumenConfirmacion(Map<String, Object?> parametros) =>
+      '¿Confirmas? $descripcion';
 
   /// Ejecuta la herramienta. No se llama directamente: se usa
   /// [RegistroHerramientas.ejecutar], que revisa rol, módulo y confirmación.

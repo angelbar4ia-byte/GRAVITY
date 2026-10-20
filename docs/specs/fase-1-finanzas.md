@@ -1,0 +1,357 @@
+# Especificación — Fase 1: Finanzas MVP 1
+
+> Versión 0.1 (20/oct/2026), **para aprobación del dueño**. Base: diseño de FINANZAS v23 (`docs/modulos/finanzas/ESTRUCTURA_APP_PRESUPUESTO_SEMANAL.md`, secciones 1 a 4, 5.0 a 5.2, 5.6, 5.6 bis, 5.9 bis, 7, 8 bis, 9, 10 y 12), `docs/ROADMAP.md` (secciones 4 y 5), `docs/DECISIONES.md` (D3, D4, D5 y D7) y `docs/DISENO_UX_UI.md` (secciones 8, 9, 13 y 14). Se aplican todas las convenciones de `docs/specs/fase-0-cimientos.md`, sección 4.
+>
+> Las preguntas para el dueño están en la **sección 9**. Lo que el diseño dejó ambiguo se resolvió con la interpretación más conservadora y se marca como **(interpretación)**; cada una tiene su pregunta.
+>
+> La lógica ya está adelantada en `paquetes/finanzas_dominio` (Dart puro, 122 pruebas en verde con los ejemplos numéricos del diseño).
+
+---
+
+## 1. Resultado utilizable
+
+**Saber cuánto entra, cuánto sale y cuánto queda en la semana.**
+
+- **Laptop (Dueño):** configuras tus cuentas, ingresos, compromisos, deudas y sobres con el asistente de 5 pasos; activas la semana y ves la cascada **ingreso → presupuesto → deuda → remanente** con semáforos; registras y anulas movimientos; concilias el efectivo; cierras la semana con la revisión de 3 minutos; ves el balance, el estado de resultados y el flujo de las próximas semanas con su alerta.
+- **Teléfono (Dueño):** registras un gasto en **menos de 10 segundos** (también sin señal) y un ingreso extra; ves el resumen de la semana con su semáforo y los movimientos recientes.
+- **Teléfono (Pareja, coadministrador):** ve el resumen de la semana en solo lectura (alcance exacto en la pregunta P1).
+
+---
+
+## 2. Alcance
+
+### 2.1 Entra en el MVP 1
+
+| Submódulo | Qué entra | Diseño |
+|---|---|---|
+| Hogar y perfiles | Modo **Individual** con las personas y roles de D5 (ya creados en la Fase 0); parámetros de Finanzas del hogar (meta de remanente, ahorro mínimo con deuda, tope de arrastre, umbrales de semáforo, cierre automático) | 5.0, 5.6 bis punto 9 |
+| Cuentas y libro | Cuentas por clase (activos, pasivos, ingresos, gastos) con su ciclo de vida; libro **solo-agregar** con partida doble simplificada; anulación con contraasiento; saldo confirmado, balance, estado de resultados, disponible y patrimonio; conciliación de saldo con ajuste | 5.0 bis, 5.0 bis 2 |
+| Ingresos | Por persona: forma (semanal, catorcenal, quincenal, mensual) y día de pago, neto, certeza, vigencias; **extras** con su fecha real; regla de fin de semana y festivos | 5.1; 5.1 bis puntos 2, 4 y 5 |
+| Gastos | Captura manual; árbol de categorías de 3 niveles (sistema y propias; ocultar, archivar, eliminar sin datos); cada categoría principal es una cuenta de gasto; **división por líneas**; "Por clasificar"; gastos con tarjeta (suben la deuda) | 5.2 |
+| Compromisos y deudas (mínimo para la cascada) | Gastos fijos y reservas con frecuencia y fecha; deudas con abono planeado, tipo (con costo, familiar, MSI), tasa, mínimo y prioridad manual | 5.3 (solo lo necesario), 5.6 bis punto 3 |
+| Presupuesto semanal | Asistente de arranque (5 pasos); plan con la cascada; techo y meta de 20 %; destino del remanente; cierre con sobregasto, abono diferido y déficit; arrastre; propuestas de recorte; vistas por semana, catorcena, quincena y mes | 5.6, 5.6 bis |
+| Flujo | Calendario de flujo de 4 a 8 semanas con peor caso diario y **alerta de flujo** dentro de la app | 4; 5.1 bis punto 9; 5.6 bis punto 4 |
+| Tablero | Cascada planeado contra real; partidas con semáforo; lo que vence esta semana; indicadores del MVP 1: remanente, carga de deuda, cumplimiento del presupuesto y patrimonio | 5.9 bis puntos 2 y 3 |
+| Días inhábiles | Precarga de festivos oficiales (LFT art. 74) por año, que el dueño revisa y activa; días propios | 5.1; decisiones 44 y 55 |
+| Datos semilla | Importar la hoja **Categorías** de `data/DATOS_SEMILLA_PRESUPUESTO.xlsx` (o su CSV) | 10 (MVP 1); 6.11 |
+
+### 2.2 Queda fuera (y a dónde va)
+
+| Queda fuera | Va a |
+|---|---|
+| Captura por voz, foto, OCR y QR | Fase 8+ (el modelo ya guarda la vía de captura) |
+| Modo Pareja y Familiar completo: cuentas compartidas, transferencias entre miembros con confirmación, albacea, deudas internas, aportación proporcional (IN11), reporte de auditoría Excel/CSV | Fase 8+ (el dominio ya maneja estados `pendiente` y confirmaciones) |
+| Deudas a detalle: estados de cuenta, estimador de tasa, MSI a detalle, simulador y estrategias, beneficios de tarjetas | Fase 2 y 8+ |
+| Ahorro con métodos, fondo de emergencia, alertas con notificaciones (teléfono, avisos al instante y pulsera) | Fase 2 |
+| Previsión (sobres 5.6 ter), bienes, inversión, objetivos | Fase 8+ |
+| Ingresos variables (base prudente y nivelación), vales de despensa, préstamo recibido (`ingreso_financiado`), recibo de nómina | Fase 2 o 8+ (pregunta P15) |
+| Conciliación renglón por renglón con estados de cuenta; exportar a Excel o CSV | Fase 8+ |
+| Gastos de cuidado registrados por la cuidadora | Fase 5 |
+| Cualquier análisis de dinero con IA en la nube | **Nunca** (D3) |
+
+---
+
+## 3. Convenciones propias de Finanzas
+
+Además de la sección 4 de la Fase 0:
+
+1. **Fuente de los cálculos:** `paquetes/finanzas_dominio`. La app calcula en el dispositivo con la copia local; el servidor guarda, valida la integridad (restricciones, triggers y RLS) y no repite la lógica del motor.
+2. **Redondeo R1:** al centavo más cercano; los medios centavos se alejan de cero (`dividirRedondeando`).
+3. **Redondeo R2:** los equivalentes se guardan exactos como **monto anual en centavos** y se redondean una sola vez; los renglones de un total se reparten por **mayor resto** para que sumen exacto. La cascada se calcula con los totales ya redondeados (`remanente = ingreso − presupuesto − deuda`), así siempre cuadra en pantalla.
+4. **Porcentajes y tasas** en **puntos base** (`int`): 2000 = 20.00 %; 4800 = 48 % anual. Los semáforos comparan la fracción exacta, no el porcentaje redondeado.
+5. **Dos fechas por movimiento:** `fecha` (económica: define la semana) y `registrado_en` (cuándo se capturó). El servidor agrega `recibido_en`.
+6. **Vista devengada** para planear y cerrar la semana; **vista de flujo** (fechas reales) para la caja y la alerta.
+7. **Semana fija en lunes** (convención de GRAVITY), aunque el diseño la permitía configurable (pregunta P11).
+8. **Identificadores de dominio** en español sin acentos (`Movimiento`, `cerrarSemana`); tablas con prefijo `fin_`.
+
+---
+
+## 4. Modelo de datos (Supabase, para el agente backend)
+
+Todas las tablas llevan `hogar_id uuid not null references public.hogares`, RLS activado y trigger de bitácora (`registrar_cambio_en_bitacora`). Dinero en `bigint` de centavos con `check`; porcentajes y tasas en `integer` de puntos base. Los `id` son UUID generados en el dispositivo (con `default gen_random_uuid()` para lo que se cree en el servidor). Se borra la tabla de muestra `finanzas_muestra` de la Fase 0.
+
+### 4.1 Tablas
+
+| Tabla | Campos principales | Notas |
+|---|---|---|
+| `fin_parametros` | `hogar_id` (PK), `meta_remanente_pb` (2000), `ahorro_minimo_con_deuda_pb` (0), `tope_arrastre_semanas` (2), `partida_ambar_pb` (8000), `partida_rojo_pb` (10000), `remanente_verde_pb` (2000), `remanente_ambar_pb` (1000), `carga_ambar_pb` (2000), `carga_rojo_pb` (3500), `cumplimiento_verde_pb` (9000), `cumplimiento_ambar_pb` (7000), `cierre_automatico_dias` (3), `cuenta_ajustes_id`, `cuenta_apertura_id`, `cuenta_por_clasificar_id` | Una fila por hogar; valores por defecto de 5.6 bis y 5.9 bis |
+| `fin_categorias` | `id`, `padre_id` (self), `nivel` (1 a 3, check), `nombre`, `icono`, `color`, `naturaleza` (texto de la plantilla: fija, variable, mixta, eventual…), `prioridad` (`necesario`/`deseable`/`discrecional`), `protegida` (bool), `es_del_sistema`, `oculta`, `archivada`, `posiblemente_deducible`, `cuenta_gasto_id` | Único (`hogar_id`, `padre_id`, `nombre`). Se borra solo sin datos (FK `restrict`); con datos se archiva (5.2) |
+| `fin_cuentas` | `id`, `nombre`, `tipo` (`efectivo`, `banco`, `ahorro`, `inversion`, `por_cobrar`, `tarjeta`, `prestamo`, `origen_ingreso`, `de_gasto`, `gasto_financiero`, `por_clasificar`, `ajustes`, `apertura`), `clase` (columna generada desde `tipo`: `activo`, `pasivo`, `ingreso`, `gasto`, `ajuste`, `apertura`), `liquida` (generada), `estado` (`activa`/`congelada`/`cerrada`/`archivada`), `categoria_id`, `titular_id` (persona; nulo = del hogar), `limite_centavos` (tarjetas, opcional), `creada_por`, `creada_en` | Único (`hogar_id`, `nombre`). Cerrar o archivar solo con saldo cero (trigger). Las de `ajustes`, `apertura` y `por_clasificar` se crean solas con el hogar |
+| `fin_movimientos` | `id` (UUID del dispositivo), `tipo` (`apertura`, `ingreso`, `gasto`, `reembolso`, `transferencia`, `pago_deuda`, `reclasificacion`, `ajuste`, `anulacion`), `fecha` (date), `registrado_en`, `recibido_en` (default `now()`), `cuenta_origen_id`, `cuenta_destino_id`, `monto_centavos` (> 0), `categoria_id` (subcategoría o detalle), `grupo_id` (ticket dividido; capital + intereses), `realizado_por`, `registrado_por` (= `persona_actual()`), `via` (`manual`/`voz`/`imagen`/`qr`/`importacion`), `nota` (≤ 200), `motivo` (≤ 200), `anula_a` (FK a sí misma), `estado_inicial` (`confirmado`/`pendiente`) | **Solo agregar:** trigger `impedir_cambios_solo_agregar` (UPDATE, DELETE, TRUNCATE). Trigger de validación al insertar (sección 4.3). Checks: origen ≠ destino; `motivo` obligatorio en `ajuste` y `anulacion`; `anula_a` solo en `anulacion`. Índice único en `anula_a` (en el MVP 1 no hay anulaciones rechazadas). Índices por (`hogar_id`, `fecha`), por cuenta y por `grupo_id` |
+| `fin_ingresos` | `id`, `persona_id`, `nombre`, `tipo` (`salario`/`independiente`/`prestaciones`/`pension`/`otro`), `cuenta_origen_id` (origen de ingreso), `cuenta_destino_id` (activo), `certeza` (`segura`/`probable`/`incierta`), `activo` | Los extras no tienen configuración: son movimientos `ingreso` desde la cuenta "Extras" |
+| `fin_vigencias_ingreso` | `id`, `ingreso_id`, `monto_neto_centavos`, `forma` (`semanal`/`catorcenal`/`quincenal`/`mensual`), `dia_semana`, `dias_mes` (`smallint[]`; 0 = último día), `fecha_ancla`, `regla_inhabil` (`siguiente_dia_habil`/`dia_habil_anterior`/`sin_cambio`), `desde`, `hasta` | Un cambio de neto crea una vigencia nueva; de la anterior solo se cierra `hasta` (5.1 bis, punto 2) |
+| `fin_compromisos` | `id`, `nombre`, `tipo` (`fija`/`reserva`), `cuenta_gasto_id`, `categoria_id`, `monto_centavos`, `frecuencia` (`semanal`…`anual`, `diaria` con `dias_activos`), calendario (`forma` incluida `cada_meses`, `dia_semana`, `dias_mes`, `fecha_ancla`, `intervalo_meses`), `regla_inhabil` (por defecto `sin_cambio`), `protegida`, `prioridad`, `desde`, `hasta`, `activo` | Renta, servicios, reservas (placas, predial) |
+| `fin_sobres` | `id`, `cuenta_gasto_id`, `nombre`, `monto_semanal_centavos`, `protegida`, `prioridad`, `piso_minimo_centavos`, `modo_arrastre` (`arrastrar`/`al_remanente`), `activo` | Partidas variables por rubro |
+| `fin_deudas` | `id`, `nombre`, `tipo` (`con_costo`/`familiar`/`msi`), `cuenta_pasivo_id` (tarjeta o préstamo), `abono_centavos`, `frecuencia`, calendario (como compromisos), `minimo_centavos`, `tasa_anual_pb` (check: > 0 en `con_costo`; 0 en las demás), `prioridad_manual`, `activa` | El saldo sale del libro (cuenta pasivo). La Fase 2 amplía esta tabla |
+| `fin_dias_inhabiles` | `id`, `fecha`, `nombre`, `tipo` (`festivo_oficial`/`personal`), `fuente`, `activo`, `revisado_por`, `revisado_en` | Único (`hogar_id`, `fecha`) |
+| `fin_semanas` | `id`, `semana_inicio` (date, check lunes: `extract(isodow from semana_inicio) = 1`), `estado` (`borrador`/`activa`/`pendiente_ingreso`/`por_cerrar`/`cerrada`), `metodo` (`sobres`), `ingreso`, `presupuesto`, `deuda_plan`, `remanente_plan`, `meta_remanente_pb`, `ahorro_minimo_con_deuda_pb`, `techo`, `activada_por`, `activada_en` | Único (`hogar_id`, `semana_inicio`). Es la foto del plan; cambia solo mientras no esté cerrada |
+| `fin_partidas_semana` | `id`, `semana_id`, `origen` (`compromiso`/`sobre`), `origen_id`, `cuenta_gasto_id`, `tipo` (`fija`/`variable`/`reserva`), `asignado`, `arrastre_recibido`, `protegida`, `prioridad`, `piso_minimo`, `modo_arrastre` | `asignado` ya repartido por mayor resto |
+| `fin_abonos_semana` | `id`, `semana_id`, `deuda_id`, `abono_planeado`, `minimo`, `extra_planeado` | |
+| `fin_cierres` | `id`, `semana_id`, `version` (único con `semana_id`), `ingreso_real`, `gasto_real`, `abono_real`, `abono_diferido`, `abono_extra_real`, `ahorro_real`, `deficit`, `arrastre_siguiente`, `accion_elegida`, `con_pendientes`, `activos`, `pasivos`, `patrimonio`, `cerrado_por`, `cerrado_en` | **Solo agregar** (foto del cierre y del balance). Reabrir y volver a cerrar crea la versión siguiente |
+| `fin_cierre_partidas` | `cierre_id`, `partida_id`, `gastado`, `arrastre_siguiente`, `al_remanente` | Solo agregar |
+| `fin_cierre_abonos` | `cierre_id`, `deuda_id`, `planeado`, `real`, `minimo` (diferido = planeado − real) | Solo agregar; es el `AbonoDiferido` del diseño |
+| `fin_ocurrencias` | `id`, `origen` (`ingreso`/`compromiso`/`deuda`), `origen_id`, `fecha_programada`, `fecha_ajustada`, `monto_esperado`, `estado` (`esperada`/`cumplida`/`parcial`/`retrasada`/`no_llegara`/`omitida`), `movimiento_id` | Horizonte de 13 semanas; al cambiar la configuración se regeneran las que siguen `esperada` |
+| `fin_conciliaciones` | `id`, `cuenta_id`, `fecha`, `saldo_declarado`, `saldo_calculado`, `diferencia` (generada), `ajuste_movimiento_id`, `motivo`, `persona_id`, `creado_en` | Solo agregar |
+| `fin_importaciones` | `id`, `archivo`, `hoja`, `filas_leidas`, `filas_creadas`, `filas_omitidas`, `detalle` (jsonb), `persona_id`, `creado_en` | Solo agregar |
+
+**Vistas de apoyo** (con `security_invoker = true`, para que respeten la RLS): `fin_v_saldos` (saldo confirmado por cuenta con el signo de su clase) y `fin_v_gasto_semana` (gasto neto por cuenta de gasto y semana).
+
+**Para la Fase 8 (no se crea ahora):** `fin_confirmaciones` (movimiento, resultado, por, en_nombre_de, motivo, fecha_hora; solo agregar), titulares múltiples por cuenta, deudas internas y metas de aportación.
+
+### 4.2 Reglas por rol (RLS), con las funciones de la Fase 0
+
+| Tabla | Leer | Insertar | Cambiar | Borrar |
+|---|---|---|---|---|
+| `fin_movimientos`, `fin_conciliaciones`, `fin_cierres*`, `fin_importaciones` | `puede(hogar_id, 'finanzas', 'leer')` | `puede(…, 'escribir')` y `registrado_por = persona_actual()` | **Nadie** (trigger) | **Nadie** (trigger) |
+| Configuración: `fin_parametros`, `fin_categorias`, `fin_cuentas`, `fin_ingresos`, `fin_vigencias_ingreso`, `fin_compromisos`, `fin_sobres`, `fin_deudas`, `fin_dias_inhabiles` | `puede(…, 'leer')` | `puede(…, 'administrar')` | `puede(…, 'administrar')` | Solo `fin_categorias` y `fin_cuentas` sin datos (FK `restrict`), con `administrar` |
+| Plan: `fin_semanas`, `fin_partidas_semana`, `fin_abonos_semana`, `fin_ocurrencias` | `puede(…, 'leer')` | `puede(…, 'escribir')` | `puede(…, 'escribir')`, nunca si la semana está `cerrada` (trigger) | Nadie |
+
+Con la matriz de la Fase 0: **dueño** lee, escribe y administra; **coadministrador** solo lee (pregunta P1 y P2); **familiar, cuidador y casa** no ven nada de Finanzas (el cuidador registrará gastos de cuidado en la Fase 5 por una regla `restringida` propia). Permisos de columna explícitos como en la migración base.
+
+### 4.3 Validación en el servidor al insertar un movimiento
+
+El trigger repite las reglas que no dependen de cálculos (la tabla de combinaciones es la de `libro.dart`):
+
+| Tipo | Origen → destino |
+|---|---|
+| `apertura` | apertura → activo, o pasivo → apertura (una por cuenta) |
+| `ingreso` | origen de ingreso → activo |
+| `gasto` | activo o pasivo → gasto |
+| `reembolso` | gasto → activo o pasivo |
+| `transferencia` | activo → activo |
+| `pago_deuda` | activo → pasivo |
+| `reclasificacion` | "Por clasificar" → gasto |
+| `ajuste` | ajustes → activo o pasivo, o activo o pasivo → ajustes |
+| `anulacion` | el original con origen y destino invertidos, mismo monto; el original no es una anulación y no tiene otra |
+
+Además: ambas cuentas son del mismo hogar y están `activa` (una anulación también acepta `congelada`). Un movimiento con `estado_inicial = pendiente` no cambia el saldo confirmado (en el MVP 1 todos nacen confirmados).
+
+### 4.4 Lo que el dominio ya modela
+
+| Diseño (sección 7) | Dominio (`finanzas_dominio`) |
+|---|---|
+| Cuenta, ClaseCuenta | `Cuenta`, `TipoCuenta`, `ClaseCuenta`, `EstadoCuenta` |
+| Movimiento, Confirmación, Conciliación | `Movimiento`, `TipoMovimiento`, `Confirmacion`, `Conciliacion`, `LibroMovimientos` |
+| ConfigIngreso, Ocurrencia, DíaInhábil | `CalendarioPago`, `FechaPago`, `DiaInhabil`, `CalendarioDiasInhabiles` |
+| PresupuestoSemana, PartidaPresupuesto | `PlanSemanal`, `PartidaPlan`, `IngresoPlan`, `DeudaPlan`, `ParametrosPlan` |
+| CierreSemana, AbonoDiferido | `CierreSemanal`, `CierrePartida`, `AbonoReal` |
+| Balance, estado de resultados, CierrePeriodo | `Balance`, `EstadoResultados` |
+| ProyeccionFlujo | `ProyeccionFlujo`, `DiaFlujo`, `FlujoSemana` |
+
+---
+
+## 5. Reglas de negocio
+
+### Semana, fechas y dinero
+1. La semana va de **lunes a domingo**; cada movimiento pertenece a la semana de su **fecha**, no de su captura (5.6 bis punto 2; decisión 43).
+2. Dinero en centavos con los redondeos R1 y R2 (sección 3).
+3. **Equivalentes semanales** (sección 4): semanal = monto; catorcenal = monto × 26 ÷ 52; quincenal = × 24 ÷ 52; mensual = × 12 ÷ 52; bimestral, trimestral y semestral = × (12/n) ÷ 52; anual = ÷ 52; diaria = monto × días activos.
+4. **Vistas por periodo** (5.6 bis punto 2): el presupuesto se prorratea con catorcena = semanal × 2, quincena = × 52 ÷ 24 y mes = × 52 ÷ 12 (calculados desde el monto anual exacto); el gasto real sale siempre de las fechas de los movimientos. Quincenas del calendario: 1–15 y 16–fin **(interpretación)**.
+
+### Calendario
+5. Un pago que cae en **sábado, domingo o día inhábil** pasa al **siguiente día hábil**; configurable por ingreso (anterior o sin cambio) (5.1; decisión 44).
+6. Los días inhábiles son **solo los festivos oficiales** (decisión 55): la app precarga por año los del artículo 74 de la Ley Federal del Trabajo (sin jornadas electorales) y el dueño los **revisa y activa**; puede agregar días propios.
+7. Los **pagos que salen** (renta, servicios, deudas) se quedan en su fecha por defecto **(interpretación conservadora; pregunta P13)**.
+8. Un día 29, 30 o 31 que el mes no tiene se paga el **último día** del mes **(interpretación)**.
+
+### Libro y cuentas
+9. **Partida doble simplificada:** cada movimiento tiene origen y destino con el mismo monto, según la tabla de 4.3 (5.0 bis 2 punto 2). Una compra con tarjeta sube la deuda y no baja el efectivo; el pago de capital baja ambos; los intereses son **gasto financiero** aparte.
+10. **Solo agregar:** nada se edita ni se borra. Se corrige con **anulación**: contraasiento con origen y destino invertidos, mismo monto y **motivo obligatorio** (5.0 bis). Solo hay anulación total; para devolver una parte se usa un **reembolso**, que baja el gasto y no es ingreso (5.1 bis punto 1).
+11. El contraasiento lleva la **misma fecha económica** que el original, así la semana del original se recalcula; las fotos de cierre guardadas no cambian **(interpretación; pregunta P14)**.
+12. Mismo id y mismo contenido = no pasa nada (cola sin conexión idempotente); mismo id con otro contenido = error.
+13. Saldo = saldo inicial + entradas − salidas, con el signo de su clase; el saldo inicial es un movimiento de **apertura** con fecha, uno por cuenta (5.0 bis 2 punto 5).
+14. Se muestran: **saldo confirmado**, **disponible** (efectivo y bancos), **patrimonio** (activos − pasivos) y el **cuadre** (patrimonio = inicial + resultado + ajustes; si no, "descuadre") (5.0 bis 2 puntos 3 y 7).
+15. Una cuenta se **cierra o archiva solo con saldo cero**; se **elimina solo si no tiene movimientos**; congelada no admite movimientos nuevos (5.0 bis 2 punto 5).
+16. **Conciliación:** se declara el saldo real; si hay diferencia, se registra un **ajuste** con motivo en la cuenta Ajustes, visible siempre (5.0 bis 2 punto 6). Para el efectivo se propone al cierre semanal.
+17. "Por clasificar" es gasto pero no entra a los reportes por rubro; se clasifica con un movimiento de **reclasificación** (5.0 bis 2 punto 5).
+
+### Ingresos y gastos
+18. Se trabaja con el **neto**; un cambio de neto crea una **vigencia nueva** y no toca el historial (5.1 bis punto 2).
+19. Los ingresos `incierta` no cuentan; se muestran como **ingreso potencial**. `segura` y `probable` sí cuentan (5.1; 5.6 bis punto 3).
+20. Los **extras** se registran con su fecha real y cuentan en la semana en que llegan; su reparto sigue la cascada (5.1 bis punto 4).
+21. Un mes con tres catorcenas o cinco semanas **no es extra**: ya está en el equivalente semanal; el flujo lo muestra tal cual (5.1 bis punto 4; 5.6 bis caso límite 2).
+22. Todo gasto sale de una cuenta (efectivo, banco o tarjeta) y entra a una **cuenta de gasto** por rubro; las subcategorías son su desglose; un ticket con varios rubros se **divide por líneas** con el mismo `grupo_id` (5.2).
+23. Las categorías se crean, ocultan, renombran, mueven y **eliminan solo sin datos**; con datos se archivan o se fusionan (5.2; decisión 17).
+24. Pagos de deuda, ahorro e inversión **no son categorías de gasto** (5.2).
+
+### Presupuesto y cascada
+25. **Cascada** (5.6 bis punto 4; decisión 45): ingreso (seguros y probables) − presupuesto (fijos + variables + reservas) − deuda planeada = **remanente**.
+26. **Meta de remanente: 20 %** del ingreso; **techo** = ingreso − deuda planeada − meta (5.6 bis punto 4, paso 7; decisión 46).
+27. **Destino del remanente** (5.6 bis punto 7; decisiones 46 y 51): primero **abono extra** a deudas con costo por **mayor tasa** (desempate: más interés en pesos), después **préstamos familiares**; las compras a **MSI no reciben extra**; sin deuda, va a **ahorro**. La prioridad manual pasa por encima del costo. **Ahorro mínimo con deuda: 0 %** (porcentaje del remanente, **interpretación**).
+28. Una deuda con costo exige su **tasa anual**; préstamos familiares y MSI van sin tasa. La mensualidad de MSI cuenta completa como mínimo.
+29. **Sobregasto** (5.6 bis punto 6): baja primero el **remanente**, después el **abono planeado** (lo no abonado queda como **abono diferido** y no reduce el saldo) y al final queda un **déficit**.
+30. **Qué abono se reduce primero:** préstamos familiares; luego, en tarjetas y créditos, lo que pasa del mínimo, de menor a mayor costo; al final los **mínimos** (las mensualidades MSI al último, **interpretación**). Un abono bajo el mínimo exigible muestra **alerta roja**.
+31. **Gastos protegidos** (renta, servicios y cuidados de largo plazo) nunca se recortan solos; la app **propone** recortes en lo discrecional, luego lo deseable y al final lo necesario, respetando el piso mínimo y lo ya gastado (5.6 bis punto 6, regla 5).
+32. **Arrastre** (decisión 49): el sobrante de un **sobre** pasa a la semana siguiente hasta **2 semanas de su monto** (2 × asignado semanal); el exceso va al remanente. Gastar lo arrastrado no es sobregasto **(interpretación del tope por monto; pregunta P12)**.
+33. **Cierre en vista devengada** **(interpretación)**: en fijos y reservas, lo asignado se da por consumido y solo cuenta la diferencia del pago real (una luz $200 más cara es sobregasto; pagar la renta completa no lo es); en sobres cuenta lo gastado. Un ingreso que no llegó resta completo en la semana en que debía llegar.
+34. **Estados de la semana:** `borrador` → `activa` → `por cerrar` → `cerrada` (y `pendiente de ingreso` si se retrasa uno). Se cierra el lunes al abrir la app o con *Cerrar semana*; sin cerrar en **3 días**, se cierra con pendientes marcados; se reabre con confirmación y queda en la bitácora (5.6 bis punto 8; 5.9 bis punto 4).
+35. Al cerrar, la app **propone** aplicar el remanente (abono extra o ahorro); al confirmar se crea el movimiento. **La app no mueve dinero sola** (5.6 bis punto 6, regla 6).
+36. Cambios al plan a mitad de semana valen **de ahí en adelante**; una semana cerrada se corrige solo con anulación y contraasiento.
+37. **Proyección de salida de deuda** (ilustrativa): interés semanal simple = saldo × tasa ÷ 52; el abono de una deuda ya liquidada se libera al volver a armar el plan, no solo.
+
+### Flujo, indicadores y privacidad
+38. **Calendario de flujo** de 4 a 8 semanas: saldo actual + ingresos seguros − pagos programados; si en un día hay entradas y salidas, **primero las salidas** (peor caso) y también el saldo al cierre; los `probable` van aparte (5.1 bis punto 9).
+39. **Alerta de flujo** dentro de la app si el peor caso baja de cero (o del mínimo configurable). Nunca propone usar una tarjeta con intereses para tapar el hueco.
+40. **Semáforos** (valores por defecto editables): partida verde hasta 80 %, ámbar hasta 100 %, rojo arriba; remanente verde ≥ 20 %, ámbar ≥ 10 %; carga de deuda verde < 20 %, ámbar ≤ 35 %, rojo arriba; cumplimiento verde ≥ 90 %, ámbar ≥ 70 %. Nunca dependen solo del color (5.6 bis punto 10; 5.9 bis puntos 3 y 5).
+41. Los meses tienen 4 o 5 lunes: los resúmenes mensuales se muestran **por semanas con promedio semanal** (5.9 bis punto 5).
+42. **D3:** el dinero nunca va a la IA en la nube ni a las bocinas. Las herramientas de GRAVITY de Finanzas son `soloLocal`.
+43. **Privacidad en pantalla:** montos ocultables (modo privado) y sin montos en la pantalla bloqueada ni en la pulsera (`DISENO_UX_UI.md`, sección 21; decisión 68 de FINANZAS).
+
+---
+
+## 6. Pantallas
+
+Siguen `DISENO_UX_UI.md` (sección 8 dentro de un módulo en la laptop; sección 9 y flujo F1 en el teléfono), con el tema base en esta fase (el pulido es la Fase 4). Personalidad de Finanzas: "precisa y serena", números de ancho fijo. Todas tienen estados **vacío, cargando, sin conexión y error**, y montos ocultables.
+
+### 6.1 Laptop (Dueño)
+
+| Pantalla | Contenido | Acción principal |
+|---|---|---|
+| **Tablero** | Cascada planeado contra real (gadget Cascada), medidor por partida, lo que vence esta semana (día hábil ajustado), alerta de flujo, cuatro indicadores del MVP 1, siguiente mejor acción | Registrar movimiento (Ctrl + N) |
+| **Semana** | Selector de semana y de periodo (semana, catorcena, quincena, mes); cascada; partidas con asignado, arrastre, gastado, restante y semáforo; abonos; flujo de 4 a 8 semanas; **revisión semanal** (F5): conciliar efectivo → desvíos (las 3 partidas que más se movieron) → propuesta de la semana siguiente → aplicar remanente → cerrar | Cerrar semana |
+| **Movimientos** | Tabla paginada (30 a 50 filas) con filtros por fecha, cuenta, categoría, tipo y estado; detalle en panel lateral con su contraasiento y su bitácora | Anular (pide motivo) |
+| **Cuentas** | Agrupadas en Activos y Pasivos con saldo; detalle con movimientos; **Balance** y **Estado de resultados** con selector de periodo; conciliar; cerrar o archivar | Nueva cuenta |
+| **Ingresos** | Por persona con su equivalente semanal; ficha con vigencias; calendario de ingresos; extras | Nuevo ingreso |
+| **Gastos y categorías** | Árbol de 3 niveles con prioridad, protección y cuenta de gasto; gasto por categoría en el periodo | Nueva categoría |
+| **Compromisos y deudas** | Fijos y reservas con frecuencia y próxima fecha; deudas con abono, mínimo, tasa y orden de abono extra | Nuevo compromiso |
+| **Asistente de arranque** | 5 pasos (hogar, ingresos, compromisos y deudas, meta, sobres hasta el techo) con resumen como el ejemplo de 5.6 bis y botón *Activar semana*; lo omitido no bloquea | Activar semana |
+| **Importar datos** | Elegir archivo → vista previa → confirmar → resumen (creadas, omitidas y por qué) | Importar |
+| **Ajustes de Finanzas** | Parámetros (meta, ahorro mínimo con deuda, tope de arrastre, cierre automático), umbrales de semáforo, días inhábiles por año | Guardar |
+
+### 6.2 Teléfono
+
+| Rol | Pantalla | Contenido |
+|---|---|---|
+| Dueño | **(+) Gasto** (F1) | Teclado numérico ya abierto → categoría (la última preseleccionada y 5 sugeridas) → cuenta (la última usada) → Guardar → aviso *"Guardado · Deshacer"* (deshacer = anulación con motivo "Deshecho al capturar"). Sin señal: *"Guardado en el teléfono; se sube al volver la señal"*. Meta: **menos de 10 s** |
+| Dueño | **(+) Ingreso extra** | Monto → cuenta → fecha (hoy) → Guardar |
+| Dueño y Pareja | **Finanzas › Semana** | Cascada resumida con semáforo, partidas con medidor, alerta de flujo |
+| Dueño | **Finanzas › Movimientos recientes** | Lista corta; anular con motivo |
+
+---
+
+## 7. Criterios de aceptación
+
+Las pruebas del dominio están en `paquetes/finanzas_dominio/test/` (`dart test`, 122 en verde hoy).
+
+| # | Criterio (prueba del diseño) | Cómo se comprueba |
+|---|---|---|
+| 1 | **5.6 bis-1:** ingreso $7,384.62; presupuesto $5,472.31; deuda $392.31; remanente $1,520.00 (20.58 %); meta $1,476.92; techo $5,515.39 | `presupuesto_test.dart` ✔ |
+| 2 | **5.6 bis-2:** sobregasto $300 → remanente $1,220.00; $1,800 → remanente $0, abono $112.31, diferido $280.00; $2,000 → abono $0, déficit $87.69 | `presupuesto_test.dart` ✔ |
+| 3 | **5.6 bis-3:** el sueldo del sábado 31/oct pasa al lunes 2/nov; la semana del 26/oct entra $0 y sale $8,000, con alerta de flujo | `flujo_test.dart` ✔ + prueba de la pantalla Semana |
+| 4 | **5.6 bis-4:** periodo quincenal = semanal × 52 ÷ 24 ($11,856.67); gasto real por las fechas de la quincena | `presupuesto_test.dart`, `semana_test.dart` ✔ |
+| 5 | **5.6 bis-5:** un ingreso `incierta` no cambia el cálculo y aparece como potencial | `presupuesto_test.dart` ✔ |
+| 6 | **5.6 bis-6:** abono a tarjeta bajo el mínimo → alerta roja | `presupuesto_test.dart` ✔ + prueba de widget |
+| 7 | **5.6 bis-7:** los protegidos no aparecen en las propuestas de recorte | `presupuesto_test.dart` ✔ |
+| 8 | **5.6 bis-8:** al cerrar, abono extra a la tarjeta (mayor costo) y familiares al final; el préstamo familiar no crece al diferir | `presupuesto_test.dart`, `proyeccion_deuda_test.dart` ✔ + bitácora (prueba SQL) |
+| 9 | **5.6 bis-9:** corregir un gasto de una semana cerrada genera anulación y contraasiento y recalcula la semana | `libro_test.dart` ✔ + prueba SQL de solo agregar |
+| 10 | **5.6 bis-10:** tarjeta liquidada en la semana 4, préstamo familiar en la 5 y ahorro de $1,520.00 desde la 6 (tolerancia de centavos) | `proyeccion_deuda_test.dart` ✔ |
+| 11 | **5.6 bis-11:** el cálculo funciona sin internet y la pantalla principal abre en menos de 2 s con un año de datos de prueba | Prueba de rendimiento en modo de lanzamiento en el Galaxy A52 y en la laptop |
+| 12 | **5.0 bis 2-1:** activos $22,980; pasivos $2,300; patrimonio $20,680; resultado $7,880; cuadre en cero | `libro_test.dart` ✔ |
+| 13 | **5.0 bis 2-2 a 2-4 y 2-7:** tarjeta sube el pasivo sin bajar el efectivo; aportación a ahorro no cambia el patrimonio; un pendiente no altera el saldo confirmado (la prueba 2-4, préstamo entre miembros, es de la Fase 8) | `libro_test.dart` ✔ |
+| 14 | **5.0 bis 2-5:** una conciliación con diferencia crea un ajuste con motivo, en bitácora y visible | `libro_test.dart` ✔ + prueba SQL |
+| 15 | **5.0 bis 2-6:** no se borra una cuenta con movimientos; sí se cierra con saldo cero | `libro_test.dart` ✔ + prueba SQL (FK `restrict` y trigger) |
+| 16 | **5.0 bis 2-8:** el balance de un cierre guardado no cambia con correcciones posteriores | `libro_test.dart` ✔ + `fin_cierres` solo agregar |
+| 17 | **IN1:** quincenal $6,000, catorcenal $5,000 y mensual $2,000 → $2,769.23, $2,500.00 y $461.54 por semana | `frecuencia_test.dart` ✔ |
+| 18 | **IN2:** la quincena del 31/oct/2026 se paga el lunes 2/nov | `calendario_test.dart` ✔ |
+| 19 | **IN8:** un reembolso médico baja el gasto de Salud y no sube el ingreso | `libro_test.dart` ✔ |
+| 20 | **IN9:** un mes con tres catorcenas no se trata como extra | `calendario_test.dart` ✔ + texto en la pantalla Ingresos |
+| 21 | **IN10:** calendario del ejemplo: peor caso de −$1,350 el lunes 2/nov y aviso anticipado | `flujo_test.dart` ✔ |
+| 22 | **T1 y T2 (5.9 bis):** remanente 20.58 % y carga 5.31 % en verde; con $300 de más en Alimentación, 16.52 % en ámbar con la categoría y el monto | `presupuesto_test.dart` ✔ + prueba de widget |
+| 23 | **T8:** un mes con 5 lunes se muestra por semanas con promedio semanal | Prueba de widget del tablero |
+| 24 | **T9:** una semana sin cerrar 3 días se cierra con pendientes marcados y se puede reabrir | Prueba del caso de uso + prueba SQL |
+| 25 | **Libro solo-agregar:** nadie (ni el dueño) puede editar ni borrar un movimiento, una conciliación o un cierre | Pruebas SQL |
+| 26 | **Roles:** el coadministrador lee y no escribe; familiar, cuidador y casa no ven nada de Finanzas, **comprobado en el servidor** | Pruebas SQL de RLS + pruebas de navegación |
+| 27 | **Sin conexión:** un gasto registrado sin señal se sube al volver; reintentar no lo duplica (mismo UUID) | Pruebas de la cola + prueba SQL de idempotencia |
+| 28 | **F1:** registrar un gasto en el teléfono toma menos de 10 s | Prueba de widget (pasos) + medición manual en el A52 |
+| 29 | **Importación:** la hoja Categorías crea el árbol de 3 niveles con su naturaleza y su cuenta de gasto; reimportar no duplica | Prueba del importador con el archivo semilla |
+| 30 | **D3:** ninguna herramienta de Finanzas envía montos a la IA (todas `soloLocal`) | Prueba del registro de herramientas |
+
+---
+
+## 8. Trabajo por agente
+
+| Agente | Entrega | Carpetas |
+|---|---|---|
+| **finanzas** | Ya entregado: `finanzas_dominio` con pruebas. En la Fase 1: casos de uso (registrar gasto, anular, armar y cerrar semana, conciliar, importar categorías), repositorios contra la base local y Supabase, pantallas de laptop y teléfono de la sección 6, asistente de arranque e importador | `paquetes/finanzas_dominio`, `app/lib/modulos/finanzas` |
+| **backend** | Migración con las tablas de 4.1, borrado de `finanzas_muestra`, triggers (solo agregar, validación de 4.3, saldo cero para cerrar, semana cerrada), RLS de 4.2, vistas `fin_v_*`, cuentas de sistema al crear el hogar, datos de ejemplo en `seed.sql` (el hogar ficticio de Ana y Alex) y pruebas SQL de los criterios 9, 14, 15, 16, 24 a 27 | `supabase/` |
+| **diseno** | Gadgets **Cascada** y **Medidor de presupuesto**; componentes **Monto** (ancho fijo, modo oculto), **Semáforo** con texto o icono, **Registro rápido (+)** con teclado numérico y deshacer; personalidad de Finanzas; maquetas de Tablero, Semana y (+) Gasto | `app/lib/diseno`, `app/assets` |
+| **plataforma** (apoyo) | Rutas de Finanzas por rol; la cola sin conexión acepta movimientos de Finanzas (idempotente por UUID) | `app/lib/app`, `app/lib/nucleo` |
+| **asistente** (apoyo) | Herramientas de navegación a Finanzas (*"abre presupuesto"*), marcadas `soloLocal`; operaciones de Finanzas en `api/openapi.yaml` | `app/lib/nucleo/herramientas`, `api/` |
+| **calidad** | Revisión de cierre: pruebas, RLS, D3 y accesibilidad | `docs/revisiones/` |
+
+---
+
+## 9. Preguntas para el dueño
+
+Cada pregunta trae la **propuesta por defecto** con la que se construye si no hay respuesta. Ninguna bloquea programar.
+
+### 9.1 Roles y permisos financieros entre miembros (5.0 ter → D5)
+
+Los roles del diseño de FINANZAS se acomodan así a los de GRAVITY (D5):
+
+| Rol en FINANZAS (5.0 ter) | Rol en GRAVITY (D5) | En el MVP 1 |
+|---|---|---|
+| Administrador | **Dueño** | Todo |
+| Miembro adulto | **Coadministrador** (pareja) | Solo lectura (P1, P2) |
+| Solo lectura | Coadministrador en el MVP 1 | — |
+| Dependiente | Familiar sin dinero; papá (persona bajo cuidado) sin cuenta | Sin acceso a Finanzas |
+| **Albacea** | No es un rol: una marca sobre un adulto (dueño o coadministrador), con suplente | No hace falta en el MVP 1 (no hay confirmaciones) |
+| — | Cuidador | Sin acceso; en la Fase 5 registra gastos de cuidado |
+
+| # | Pregunta | Propuesta por defecto |
+|---|---|---|
+| **P1** | ¿Qué ve la pareja? D5 dice "presupuesto solo lectura"; la matriz de la Fase 0 y el diseño (transparencia total, 5.0 bis) le dejan leer **todo** Finanzas: movimientos, cuentas y saldos | Lo que ya aprobó la Fase 0: **lee todo Finanzas**. Si prefieres solo el presupuesto, se cambia la regla del servidor a "restringido" (resumen de la semana, partidas y cierres) |
+| **P2** | ¿La pareja **registra** gastos? ¿En qué cuentas: solo las suyas, las del hogar o ambas? | En el MVP 1 **no registra**. Si quieres que registre desde ya: solo en sus propias cuentas y en las cuentas de gasto del hogar, como aportación a su nombre |
+| **P3** | Si la pareja registra en una cuenta que es tuya (por ejemplo, tu tarjeta), ¿hace falta que **tú confirmes**? | Sí: queda `pendiente` hasta que lo confirmes (5.0 ter); no cambia tu saldo confirmado mientras tanto |
+| **P4** | ¿Quién es el **albacea** y quién el **suplente**? | Albacea: tú. Suplente: la pareja. Se activa con el modo Pareja (Fase 8) |
+| **P5** | ¿El dinero de **papá** (pensión, cuentas) se administra en la app? Si sí, ¿quién actúa en su nombre? | Por ahora **no**. Si sí, sus cuentas serían del hogar con el albacea como quien registra y confirma en su nombre, con motivo y bitácora |
+| **P6** | Los **gastos de cuidado** que registre la cuidadora (Fase 5), ¿entran al presupuesto directo o esperan tu confirmación? ¿De qué cuenta salen (caja chica en efectivo)? | Entran como **pendientes** a una cuenta "Caja de cuidados" y cuentan cuando tú (o el albacea) los confirmas |
+| **P7** | ¿La **hermana** comparte gastos de cuidado? ¿Ve el resumen mensual del costo del cuidado? (pendiente de D5) | No ve dinero hasta que lo decidas |
+| **P8** | ¿Mantienes las salvaguardas del albacea (decisión 28): motivo obligatorio, aviso, suplente, no ser la única confirmación de lo propio y cambio de albacea confirmado por otro adulto? | Sí, todas activas (se usan desde la Fase 8) |
+| **P9** | Confirmaciones pendientes (decisión 30): recordatorio a las 24 horas, aviso al albacea a los 3 días, nunca se confirma sola. ¿Bien? | Sí (Fase 8) |
+
+### 9.2 Decisiones "por defecto" de 12.1 que tocan el MVP 1
+
+| # | Decisión | Propuesta |
+|---|---|---|
+| **P10** | **23 (pila)** decía Flutter + Firebase; **D7** la cambió a **Supabase** (Firebase solo para avisos y reparto). ¿Confirmas que la 23 queda reemplazada? | Sí, manda D7 |
+| **P11** | **24 (rendimiento):** abrir en menos de 2 s y registrar un gasto en menos de 10 s, medido en el Galaxy A52. Y, ligado a 43: ¿la semana queda **fija en lunes** (convención de GRAVITY) o la quieres configurable? | Metas tal cual; semana fija en lunes |
+| **P12** | **49 (arrastre):** "el sobrante pasa a la semana siguiente hasta 2 semanas". Lo interpreté como **tope de monto**: lo acumulado en un sobre no pasa de 2 veces su monto semanal y el exceso va al remanente. La otra lectura es de **tiempo**: cada sobrante dura 2 semanas y luego se va. ¿Cuál? ¿Y la lista de **protegidos** es renta, servicios y cuidados de largo plazo, o agregas otros (por ejemplo, colegiaturas o medicinas)? | Tope de monto (2 × semanal); protegidos: renta, servicios y cuidados |
+| **P13** | **44 (fin de semana):** para **ingresos** el pago pasa al siguiente día hábil. Para **pagos que salen**, el diseño se contradice (en 5.1 bis la renta del domingo pasa al lunes; en 5.6 bis sale el domingo). ¿Qué hago con las salidas? | Se quedan en su fecha (lo más prudente para la caja); configurable por compromiso |
+| **P14** | Al **anular** un movimiento de una semana ya cerrada, ¿el contraasiento corrige **esa** semana (misma fecha) o la **actual**? | Esa semana (misma fecha); la foto del cierre guardado no cambia |
+| **P15** | **50 (asistente de 5 pasos):** ¿bien así? ¿Alguien del hogar tiene **ingreso variable** (comisiones, ventas)? Si sí, el método de base prudente (12 semanas × 80 %) entra al MVP 1; si no, se queda para después | 5 pasos; base prudente después |
+| **P16** | Umbrales de semáforo (pendiente 23) y **cierre automático a los 3 días** (5.9 bis): ¿los dejas así? | Sí |
+
+### 9.3 Otras interpretaciones conservadoras (confirmar)
+
+| # | Tema | Cómo quedó |
+|---|---|---|
+| **P17** | **Ahorro mínimo con deuda** (0 %): ¿porcentaje del remanente o del ingreso? | Del **remanente**: nunca quita dinero al presupuesto ni a los abonos |
+| **P18** | **Mensualidades MSI** al reducir abonos por sobregasto | Se reducen al último (no pagarlas puede costar la promoción) |
+| **P19** | **Deuda liquidada:** su abono planeado no pasa solo a otra deuda ni a ahorro; se libera al rearmar el plan (así da el ejemplo del diseño: $160.09 de ahorro en la semana 5) | Se propone en la revisión semanal; tú confirmas |
+| **P20** | **Cierre en vista devengada** para fijos y reservas (regla 33) e **ingreso faltante** completo en la semana en que debía llegar | Así |
+| **P21** | **Quincenas** del calendario (1–15 y 16–fin) para ver los datos por quincena, sin importar el día exacto de pago | Así |
+| **P22** | **Festivos oficiales:** la precarga es la del artículo 74 de la LFT, sin Jueves y Viernes Santo ni 12 de diciembre (son inhábiles bancarios, no festivos oficiales) y sin jornadas electorales, que agregas a mano. ¿Bien? | Así; la revisas cada año antes de activarla |
+
+### 9.4 Datos para usar la app con tu información (no bloquean)
+
+Tus ingresos reales (pendiente 24 de FINANZAS), tus compromisos fijos con montos y fechas (agua, luz, predial, seguros: pendiente 19), los saldos de apertura de cada cuenta, las tasas y abonos de tus deudas (pendientes 8 y 12) y tus categorías propias. Todo se captura en la app; **nada de eso va al repositorio**.
+
+---
+
+## 10. Observaciones sobre el diseño (para corregir en FINANZAS)
+
+1. **Abonos del ejemplo (5.6 bis punto 5):** $276.92 + $115.38 = $392.30, pero el total dice $392.31 (lo exacto). Con la regla R2 el préstamo familiar queda en **$115.39**.
+2. **Presupuesto mensual (5.6 bis punto 5):** el diseño da $23,713.34 (del semanal ya redondeado); con la suma exacta es **$23,713.33**. Igual pasa con la tabla de salida de deuda ($727.02 y $124.49 contra $727.01 y $124.48): diferencias de un centavo, dentro de la tolerancia del diseño.
+3. **15/nov/2026:** el diseño dice que la quincena del domingo 15 se paga el lunes 16, pero el **lunes 16/nov/2026 es festivo oficial** (tercer lunes de noviembre); con la decisión 55 se paga el **martes 17**.
+4. **Renta del 1/nov:** 5.1 bis (punto 9) la mueve al lunes y 5.6 bis (punto 5) no (pregunta P13).
+5. **Decisión 23 y sección 8 bis** hablan de Firebase como base de datos; D7 la reemplazó por Supabase (pregunta P10).
+6. La sección 7 lista dos veces el campo `estado` en `Movimiento`; aquí queda uno solo (`estado_inicial`) y el estado vigente sale de las confirmaciones.
+
+---
+
+## 11. Lo que necesita el dueño del proyecto
+
+1. **Aprobar** esta especificación (o marcar cambios).
+2. Responder las preguntas de la sección 9; mientras tanto se construye con las propuestas por defecto.
+3. Para usarla con tus datos: lo de 9.4, cuando quieras.

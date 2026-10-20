@@ -160,4 +160,5 @@ final List<HerramientaNavegacion> herramientasNavegacion = List.unmodifiable([
 List<Herramienta> herramientasFase0() => [...herramientasNavegacion];
 
 /// Registro con las herramientas de la Fase 0.
-RegistroHerramientas registroFase0() => RegistroHerramientas(herramientasFase0());
+RegistroHerramientas registroFase0() =>
+    RegistroHerramientas(herramientasFase0());

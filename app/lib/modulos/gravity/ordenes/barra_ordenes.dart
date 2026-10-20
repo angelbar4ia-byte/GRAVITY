@@ -109,7 +109,9 @@ class _BarraOrdenesState extends State<BarraOrdenes> {
     OrdenNoEntendida(:final disponibles) => [
       for (final d in disponibles) (destino: d, palabra: null),
     ],
-    _ => [for (final s in _sugerencias) (destino: s.destino, palabra: s.palabra)],
+    _ => [
+      for (final s in _sugerencias) (destino: s.destino, palabra: s.palabra),
+    ],
   };
 
   bool get _hayPanel =>
@@ -292,7 +294,8 @@ class _BarraOrdenesState extends State<BarraOrdenes> {
     final tamanoCampo = info.childSize;
     final inversa = info.childPaintTransform.clone()..invert();
     final areaVisible = MediaQuery.paddingOf(context).deflateRect(
-      MediaQuery.viewInsetsOf(context).deflateRect(Offset.zero & info.overlaySize),
+      MediaQuery.viewInsetsOf(context)
+          .deflateRect(Offset.zero & info.overlaySize),
     );
     final areaEnCampo = MatrixUtils.transformRect(inversa, areaVisible);
     final espacioArriba = -areaEnCampo.top;
@@ -415,7 +418,9 @@ class _FilaDestino extends StatelessWidget {
         selectedTileColor: esquema.primary.withValues(alpha: 0.12),
         leading: Icon(iconoDestino(destino)),
         title: Text('Abrir ${destino.etiqueta}'),
-        subtitle: palabra == null ? null : Text('«$palabra» → ${destino.etiqueta}'),
+        subtitle: palabra == null
+            ? null
+            : Text('«$palabra» → ${destino.etiqueta}'),
         trailing: Text(
           destino.ruta,
           style: tema.textTheme.labelSmall?.copyWith(

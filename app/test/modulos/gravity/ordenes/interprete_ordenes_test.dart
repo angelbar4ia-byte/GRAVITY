@@ -99,8 +99,14 @@ void main() {
       expect(opcionesDe(r).first, Rutas.finanzas);
 
       expect(opcionesDe(interprete.interpretar('abitos')).first, Rutas.habitos);
-      expect(opcionesDe(interprete.interpretar('finansas')).first, Rutas.finanzas);
-      expect(opcionesDe(interprete.interpretar('ajsutes')).first, Rutas.ajustes);
+      expect(
+        opcionesDe(interprete.interpretar('finansas')).first,
+        Rutas.finanzas,
+      );
+      expect(
+        opcionesDe(interprete.interpretar('ajsutes')).first,
+        Rutas.ajustes,
+      );
     });
 
     test('palabras a medias', () {
@@ -110,9 +116,8 @@ void main() {
     });
 
     test('dos destinos a la vez', () {
-      final r = InterpreteOrdenes(
-        rol: Rol.dueno,
-      ).interpretar('abre finanzas y hábitos');
+      final r = InterpreteOrdenes(rol: Rol.dueno)
+          .interpretar('abre finanzas y hábitos');
       expect(r, isA<OrdenParecida>());
       expect(opcionesDe(r), [Rutas.finanzas, Rutas.habitos]);
     });
@@ -138,13 +143,17 @@ void main() {
         expect(r, isNot(isA<OrdenEntendida>()), reason: orden);
         expect(opcionesDe(r), isNot(contains(Rutas.finanzas)), reason: orden);
       }
-      expect(interprete.destinos.map((d) => d.ruta), isNot(contains(Rutas.finanzas)));
+      expect(
+        interprete.destinos.map((d) => d.ruta),
+        isNot(contains(Rutas.finanzas)),
+      );
       expect(rutaDe('ir a hábitos', rol: Rol.familiar), Rutas.habitos);
     });
 
     test('Desarrollador solo para el dueño', () {
       expect(rutaDe('desarrollador', rol: Rol.coadministrador), isNull);
-      final r = InterpreteOrdenes(rol: Rol.coadministrador).interpretar('swagger');
+      final r = InterpreteOrdenes(rol: Rol.coadministrador)
+          .interpretar('swagger');
       expect(opcionesDe(r), isNot(contains(Rutas.desarrollador)));
     });
 
@@ -176,7 +185,10 @@ void main() {
         rol: Rol.familiar,
         puedeVer: (_) => true,
       );
-      expect(interprete.interpretar('abre finanzas'), isNot(isA<OrdenEntendida>()));
+      expect(
+        interprete.interpretar('abre finanzas'),
+        isNot(isA<OrdenEntendida>()),
+      );
     });
 
     test('módulos inactivos', () {
@@ -191,7 +203,9 @@ void main() {
 
   group('Sugerencias mientras se escribe', () {
     List<String> rutas(String texto, {Rol rol = Rol.dueno, int maximo = 5}) => [
-      for (final s in InterpreteOrdenes(rol: rol).sugerir(texto, maximo: maximo))
+      for (final s in InterpreteOrdenes(
+        rol: rol,
+      ).sugerir(texto, maximo: maximo))
         s.destino.ruta,
     ];
 
@@ -210,7 +224,10 @@ void main() {
     });
 
     test('una letra ya sugiere', () {
-      expect(rutas('a', maximo: 8), containsAll([Rutas.ajustes, Rutas.alimentacion]));
+      expect(
+        rutas('a', maximo: 8),
+        containsAll([Rutas.ajustes, Rutas.alimentacion]),
+      );
     });
 
     test('con errores de dedo', () {

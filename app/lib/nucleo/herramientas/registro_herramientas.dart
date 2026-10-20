@@ -37,7 +37,11 @@ final class RegistroHerramientas {
         );
       }
       if (h.roles.isEmpty) {
-        throw ArgumentError.value(h.nombre, 'roles', 'Debe declarar al menos un rol');
+        throw ArgumentError.value(
+          h.nombre,
+          'roles',
+          'Debe declarar al menos un rol',
+        );
       }
       if (porNombre.containsKey(h.nombre)) {
         throw ArgumentError.value(h.nombre, 'nombre', 'Herramienta repetida');
@@ -56,9 +60,7 @@ final class RegistroHerramientas {
     required Rol rol,
     Set<Modulo>? modulosActivos,
   }) => List.unmodifiable(
-    _porNombre.values.where(
-      (h) => _motivo(h, rol, modulosActivos) == null,
-    ),
+    _porNombre.values.where((h) => _motivo(h, rol, modulosActivos) == null),
   );
 
   /// La herramienta [nombre] si [rol] la puede usar; si no, `null`.
@@ -127,7 +129,10 @@ final class RegistroHerramientas {
       return r;
     }
     return r.requiereConfirmacion
-        ? ResultadoHerramienta.pendienteDeConfirmacion(h, contenido: r.contenido)
+        ? ResultadoHerramienta.pendienteDeConfirmacion(
+            h,
+            contenido: r.contenido,
+          )
         : ResultadoHerramienta(h, contenido: r.contenido, paraIa: r.paraIa);
   }
 }

@@ -45,8 +45,12 @@ final class SwaggerNoEncontrado extends UbicacionSwagger {
 
 final RegExp _unidadWindows = RegExp(r'^[A-Za-z]:[\\/]');
 
+final RegExp _uriWindows = RegExp(r'^file:///[A-Za-z]:');
+
 bool _pareceWindows(String ruta) =>
-    _unidadWindows.hasMatch(ruta) || ruta.contains(r'\');
+    _unidadWindows.hasMatch(ruta) ||
+    _uriWindows.hasMatch(ruta) ||
+    ruta.contains(r'\');
 
 Uri _uriDeArchivo(String ruta) =>
     Uri.file(ruta, windows: _pareceWindows(ruta)).normalizePath();
@@ -68,7 +72,8 @@ UbicacionSwagger ubicarSwagger({
   }
   if (configurada.isNotEmpty) {
     final ruta = configurada.startsWith('file://')
-        ? Uri.parse(configurada).toFilePath(windows: _pareceWindows(configurada))
+        ? Uri.parse(configurada)
+              .toFilePath(windows: _pareceWindows(configurada))
         : configurada;
     return existe(ruta)
         ? SwaggerEncontrado(_uriDeArchivo(ruta))

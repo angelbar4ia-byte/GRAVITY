@@ -13,7 +13,8 @@ import '../permisos/permisos.dart';
 typedef PuedeVerModulo = bool Function(Modulo modulo);
 
 /// `true` si [rol] abre las pantallas de [modulo] desde la navegación.
-bool puedeVerModuloPorDefecto(Rol rol, Modulo modulo) => puedeAbrir(rol, modulo);
+bool puedeVerModuloPorDefecto(Rol rol, Modulo modulo) =>
+    puedeAbrir(rol, modulo);
 
 /// La función por defecto para un rol.
 PuedeVerModulo puedeVerPorDefecto(Rol rol) =>

@@ -129,7 +129,10 @@ final class InterpreteOrdenes {
     for (final d in _destinos) {
       for (final c in d.claves) {
         if (_contiene(palabras, c.palabras)) {
-          largoPorDestino[d] = math.max(largoPorDestino[d] ?? 0, c.palabras.length);
+          largoPorDestino[d] = math.max(
+            largoPorDestino[d] ?? 0,
+            c.palabras.length,
+          );
         }
       }
     }
@@ -158,10 +161,9 @@ final class InterpreteOrdenes {
               ? porPuntos
               : _destinos.indexOf(a).compareTo(_destinos.indexOf(b));
         });
-      return OrdenParecida(
-        texto,
-        [for (final d in orden.take(3)) d.herramienta],
-      );
+      return OrdenParecida(texto, [
+        for (final d in orden.take(3)) d.herramienta,
+      ]);
     }
     return OrdenNoEntendida(texto, destinos);
   }
@@ -179,7 +181,8 @@ final class InterpreteOrdenes {
     void anotar(_Destino d, int valor, _Clave c) {
       final actual = puntos[d];
       if (actual == null || valor < actual.$1) {
-        final esEtiqueta = normalizarTexto(c.original) ==
+        final esEtiqueta =
+            normalizarTexto(c.original) ==
             normalizarTexto(d.herramienta.etiqueta);
         puntos[d] = (valor, esEtiqueta ? null : c.original);
       }
@@ -218,7 +221,8 @@ final class InterpreteOrdenes {
     }
 
     // Solo relleno ("abre ") o un verbo a medias: se ofrecen todos.
-    final soloRelleno = completas.isEmpty &&
+    final soloRelleno =
+        completas.isEmpty &&
         (aMedias == null || palabrasDeRelleno.contains(aMedias));
     if (puntos.isEmpty && soloRelleno) {
       return [

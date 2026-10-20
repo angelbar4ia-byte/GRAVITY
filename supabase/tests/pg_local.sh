@@ -37,7 +37,7 @@ pg_local__buscar_bin() {
     PG_LOCAL_BIN="$(pg_config --bindir)"; return 0
   fi
   local d
-  for d in $(ls -d /usr/lib/postgresql/*/bin 2>/dev/null | sort -V -r); do
+  for d in $(printf '%s\n' /usr/lib/postgresql/*/bin | sort -V -r); do
     if [[ -x "$d/initdb" ]]; then PG_LOCAL_BIN="$d"; return 0; fi
   done
   echo "No encontré initdb. Instala PostgreSQL (p. ej. apt-get install postgresql-16)" >&2
