@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gravity/app/app_gravity.dart';
+import 'package:gravity/app/arranque.dart';
 import 'package:gravity/app/dispositivo.dart';
 import 'package:gravity/nucleo/contratos/dispositivo.dart';
 import 'package:gravity/nucleo/contratos/roles.dart';
@@ -47,6 +48,7 @@ Future<void> montarApp(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        ...conexionesDeLaApp(),
         tipoDispositivoProvider.overrideWithValue(dispositivo),
         servicioSesionProvider.overrideWithValue(sesion),
         almacenSeguroProvider.overrideWithValue(

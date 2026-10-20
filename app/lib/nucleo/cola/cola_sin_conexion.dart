@@ -59,6 +59,17 @@ class PeticionEnvio {
   final int intento;
 }
 
+/// Un enviador la lanza para rechazar un registro diciendo por qué (queda en
+/// "requiere atención" con ese motivo).
+class RechazoEnvio implements Exception {
+  const RechazoEnvio(this.motivo);
+
+  final String motivo;
+
+  @override
+  String toString() => 'RechazoEnvio: $motivo';
+}
+
 /// Envía registros al servidor. Debe ser idempotente por [PeticionEnvio.id].
 /// Una excepción cuenta como [ResultadoEnvio.reintentar] (hasta
 /// [ColaSinConexion.intentosMaximos]).
@@ -225,6 +236,9 @@ class ColaSinConexion {
             intento: intento,
           ),
         );
+      } on RechazoEnvio catch (e) {
+        resultado = ResultadoEnvio.rechazado;
+        error = e.motivo;
       } catch (e) {
         resultado = ResultadoEnvio.reintentar;
         error = '$e';
@@ -260,9 +274,7 @@ class ColaSinConexion {
               estado: const Value(EstadoPendiente.rechazado),
               intentos: Value(intento),
               siguienteIntento: const Value(null),
-              ultimoError: Value(
-                error ?? _enviador.ultimoMotivo ?? 'El servidor no lo aceptó',
-              ),
+              ultimoError: Value(error ?? 'El servidor no lo aceptó'),
             ),
           );
         case ResultadoEnvio.reintentar:
@@ -301,6 +313,59 @@ class ColaSinConexion {
           ..where(_tabla.estado.equalsValue(EstadoPendiente.pendiente)))
         .map((fila) => fila.read(cuenta) ?? 0);
   }
+
+  /// Registros que requieren atención (el servidor no los aceptó), de
+  /// [personaId] si se da: nadie ve lo que registró otra persona (D5).
+  Future<List<RegistroPendiente>> requierenAtencion({String? personaId}) =>
+      _consultaAtencion(personaId).get();
+
+  /// Lo mismo, en vivo (para el aviso en pantalla).
+  Stream<List<RegistroPendiente>> vigilarAtencion({String? personaId}) =>
+      _consultaAtencion(personaId).watch();
+
+  SimpleSelectStatement<$PendientesTable, RegistroPendiente> _consultaAtencion(
+    String? personaId,
+  ) => _base.select(_tabla)
+    ..where(
+      (t) =>
+          t.estado.equalsValue(EstadoPendiente.rechazado) &
+          (personaId == null
+              ? const Constant(true)
+              : t.personaId.equals(personaId)),
+    )
+    ..orderBy([
+      (t) => OrderingTerm.asc(t.creadoEn),
+      (t) => OrderingTerm.asc(t.rowId),
+    ]);
+
+  /// La persona pide intentar otra vez un registro que requería atención.
+  Future<void> reintentar(String id) =>
+      (_base.update(_tabla)..where(
+            (t) =>
+                t.id.equals(id) &
+                t.estado.equalsValue(EstadoPendiente.rechazado),
+          ))
+          .write(
+            const PendientesCompanion(
+              estado: Value(EstadoPendiente.pendiente),
+              intentos: Value(0),
+              siguienteIntento: Value(null),
+            ),
+          );
+
+  /// La persona decide no subir un registro que requería atención.
+  Future<void> descartar(String id) =>
+      (_base.update(_tabla)..where(
+            (t) =>
+                t.id.equals(id) &
+                t.estado.equalsValue(EstadoPendiente.rechazado),
+          ))
+          .write(
+            const PendientesCompanion(
+              estado: Value(EstadoPendiente.descartado),
+              siguienteIntento: Value(null),
+            ),
+          );
 
   /// Todos los registros de la cola (para revisar y para pruebas).
   Future<List<RegistroPendiente>> registros() => (_base.select(_tabla)
