@@ -25,6 +25,28 @@ String formatearCentavos(int centavos, {bool mostrarSigno = false}) {
   return '$signo\$$grupos.$resto';
 }
 
+/// Formatea **puntos base** como porcentaje: `2058` → `20.58 %`.
+///
+/// Finanzas guarda porcentajes y tasas en puntos base (2000 = 20.00 %). Con
+/// [decimales] 1 o 0 se redondea al más cercano y los medios se alejan de cero
+/// (regla R1): `2055` con 1 decimal → `20.6 %`; con 0 → `21 %`.
+String formatearPuntosBase(int puntosBase, {int decimales = 2}) {
+  assert(decimales >= 0 && decimales <= 2, 'De 0 a 2 decimales');
+  final divisor = switch (decimales) {
+    0 => 100,
+    1 => 10,
+    _ => 1,
+  };
+  final absoluto = puntosBase.abs();
+  final escalado = (absoluto + divisor ~/ 2) ~/ divisor;
+  final signo = puntosBase < 0 && escalado != 0 ? '-' : '';
+  if (decimales == 0) return '$signo$escalado %';
+  final base = decimales == 1 ? 10 : 100;
+  final entero = escalado ~/ base;
+  final fraccion = (escalado % base).toString().padLeft(decimales, '0');
+  return '$signo$entero.$fraccion %';
+}
+
 const _diasCortos = ['lun', 'mar', 'mié', 'jue', 'vie', 'sáb', 'dom'];
 const _diasLargos = [
   'Lunes',

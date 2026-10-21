@@ -28,6 +28,7 @@ import '../nucleo/sesion/servicio_sesion_demostracion.dart';
 import '../nucleo/sesion/servicio_sesion_supabase.dart';
 import '../nucleo/sesion/sesion.dart';
 import 'dispositivo.dart';
+import 'pantallas_externas.dart' show tablasColaFinanzas;
 import 'sesion_efectiva.dart';
 
 /// Conexiones entre áreas que la app hace siempre (en el arranque y en las
@@ -41,8 +42,10 @@ List<Override> conexionesDeLaApp() => [
 ];
 
 /// Tabla de Supabase por tipo de registro de la cola. Cada módulo agrega los
-/// suyos en su fase (p. ej. `'finanzas.gasto': 'movimientos'`).
-const Map<String, String> tablasDeLaCola = {};
+/// suyos en su fase (`pantallas_externas.dart`); la cola sube cada registro
+/// con la sesión de quien lo registró (en la tablet, la de quien entró con
+/// su PIN).
+const Map<String, String> tablasDeLaCola = {...tablasColaFinanzas};
 
 Future<List<Override>> prepararArranque({
   ConfiguracionEntorno configuracion =

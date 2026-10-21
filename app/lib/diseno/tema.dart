@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'contraste.dart';
 import 'estilo.dart';
 import 'personalidad_modulo.dart';
+import 'superficies.dart';
 import 'valores_diseno.dart';
 
 /// Duración del cambio suave entre claro y oscuro o entre estilos.
@@ -57,7 +58,7 @@ ThemeData construirTema(ValoresDiseno v) {
     v.acento.withValues(alpha: 0.16),
     v.panel,
   );
-  final pista = Color.lerp(v.panel, v.borde, 0.45)!;
+  final pista = v.pista;
 
   final esquema = ColorScheme(
     brightness: v.brillo,
@@ -146,6 +147,30 @@ ThemeData construirTema(ValoresDiseno v) {
       shape: formaPanel,
     ),
     dividerTheme: DividerThemeData(color: v.borde, thickness: 1, space: 1),
+    // Tablas densas (Finanzas en la laptop): mismas superficies y medidas que
+    // `TablaDensa`, por si una pantalla usa el `DataTable` de Material.
+    dataTableTheme: DataTableThemeData(
+      headingRowColor: WidgetStatePropertyAll(v.encabezadoTabla),
+      headingRowHeight: zonaTactilMinima,
+      headingTextStyle: v.lectura(
+        tamano: v.densidad.textoTabla,
+        peso: FontWeight.w600,
+        color: v.etiqueta,
+      ),
+      dataTextStyle: v.lectura(tamano: v.densidad.textoTabla),
+      dataRowColor: WidgetStateProperty.resolveWith(
+        (estados) => estados.contains(WidgetState.selected)
+            ? v.filaSeleccionada
+            : estados.contains(WidgetState.hovered)
+            ? v.filaResaltada
+            : null,
+      ),
+      dataRowMinHeight: zonaTactilMinima,
+      dataRowMaxHeight: zonaTactilMinima + v.espacio * 2,
+      dividerThickness: 1,
+      horizontalMargin: v.espacio * 3,
+      columnSpacing: v.espacio * 4,
+    ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
         backgroundColor: v.acento,

@@ -163,7 +163,7 @@ void main() {
     expect(enRiel('Hábitos'), findsOneWidget);
     await tester.tap(enRiel('Finanzas'));
     await tester.pumpAndSettle();
-    expect(find.text('Finanzas llega en la Fase 1.'), findsOneWidget);
+    expect(ubicacion(tester), Rutas.finanzas);
   });
 
   testWidgets('la cuidadora entra a Mi turno y solo ve Cuidados', (
@@ -204,7 +204,7 @@ void main() {
 
     // Un toque a los 90 s reinicia la cuenta.
     await tester.pump(const Duration(seconds: 90));
-    await tester.tap(find.text('Finanzas llega en la Fase 1.'));
+    await tester.tap(enRiel('Finanzas'));
     await tester.pump(const Duration(seconds: 90));
     expect(find.text('GRAVITY · Casa'), findsNothing);
 

@@ -180,6 +180,30 @@ bool puedeAbrir(Rol rol, Modulo modulo) {
   return permiso.accesoDirecto && permiso.acciones.contains(Accion.leer);
 }
 
+/// Clave de `GoRoute.metadata` con la acción que exige una ruta de un módulo
+/// además de leerlo. Úsala con [exigeAccion].
+const claveAccionDeRuta = 'gravity.accion';
+
+/// `metadata` de una ruta que solo abre quien puede hacer [accion] en su
+/// módulo; a los demás el router los regresa al inicio del módulo (p. ej. el
+/// asistente de arranque de Finanzas: el coadministrador solo lee).
+///
+/// ```dart
+/// GoRoute(path: 'asistente', metadata: exigeAccion(Accion.administrar), …)
+/// ```
+///
+/// Las rutas hijas la heredan. Es solo para la interfaz: la verdad está en el
+/// servidor (RLS).
+Map<String, Object> exigeAccion(Accion accion) => {claveAccionDeRuta: accion};
+
+/// Acción que exige una ruta según su `metadata` ya combinada (`null` si
+/// basta con leer el módulo).
+Accion? accionExigida(Map<String, dynamic> metadata) =>
+    switch (metadata[claveAccionDeRuta]) {
+      final Accion accion => accion,
+      _ => null,
+    };
+
 /// Módulos de trabajo, en el orden de la barra de módulos de la laptop
 /// (`DISENO_UX_UI.md`, sección 7) y de los atajos Ctrl + 1 a 5.
 const List<Modulo> modulosDeTrabajo = [

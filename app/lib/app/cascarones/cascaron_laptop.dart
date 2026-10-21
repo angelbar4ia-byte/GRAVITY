@@ -1,6 +1,7 @@
 /// Cascarón de la laptop (Windows): el contenido ocupa toda la pantalla.
-/// Atajos (`DISENO_UX_UI.md`, sección 15): Esc vuelve a GRAVITY y
-/// Ctrl + 1 a 5 abren cada módulo que el rol puede ver.
+/// Atajos (`DISENO_UX_UI.md`, sección 15): Esc vuelve a GRAVITY,
+/// Ctrl + 1 a 5 abren cada módulo que el rol puede ver y Ctrl + N registra
+/// un movimiento de Finanzas (solo quien escribe en Finanzas).
 library;
 
 import 'package:flutter/material.dart';
@@ -10,7 +11,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../nucleo/contratos/rutas.dart';
 import '../../nucleo/permisos/permisos.dart';
+import '../../nucleo/contratos/roles.dart';
 import '../navegacion.dart';
+import '../pantallas/registro_rapido.dart';
 import '../pantallas/registros_atencion.dart';
 import '../sesion_efectiva.dart';
 
@@ -39,6 +42,9 @@ class CascaronLaptop extends ConsumerWidget {
             if (puedeAbrir(rol, modulosDeTrabajo[i]))
               SingleActivator(_teclas[i], control: true): () =>
                   context.go(rutaDeModulo(modulosDeTrabajo[i])),
+        if (rol != null && puedeRegistrarEn(rol, Modulo.finanzas))
+          const SingleActivator(LogicalKeyboardKey.keyN, control: true): () =>
+              abrirRegistroEnDialogo(context),
       },
       child: Focus(
         autofocus: true,

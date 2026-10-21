@@ -144,15 +144,20 @@ int? indiceDestino(String ubicacion, List<Destino> destinos) {
   return mas >= 0 ? mas : null;
 }
 
+/// Qué registra cada opción del botón (+).
+enum TipoRegistro { gasto, ingresoExtra, habito, consumo, sos }
+
 /// Una opción del botón (+) (sección 9).
 class OpcionRegistrar {
   const OpcionRegistrar({
+    required this.tipo,
     required this.etiqueta,
     required this.icono,
     required this.modulo,
     required this.fase,
   });
 
+  final TipoRegistro tipo;
   final String etiqueta;
   final IconData icono;
   final Modulo modulo;
@@ -163,30 +168,35 @@ class OpcionRegistrar {
 
 const List<OpcionRegistrar> opcionesDeRegistro = [
   OpcionRegistrar(
+    tipo: TipoRegistro.gasto,
     etiqueta: 'Gasto',
     icono: Icons.payments_outlined,
     modulo: Modulo.finanzas,
     fase: 1,
   ),
   OpcionRegistrar(
+    tipo: TipoRegistro.ingresoExtra,
     etiqueta: 'Ingreso extra',
     icono: Icons.savings_outlined,
     modulo: Modulo.finanzas,
     fase: 1,
   ),
   OpcionRegistrar(
+    tipo: TipoRegistro.habito,
     etiqueta: 'Hábito',
     icono: Icons.check_circle_outline,
     modulo: Modulo.habitos,
     fase: 3,
   ),
   OpcionRegistrar(
+    tipo: TipoRegistro.consumo,
     etiqueta: 'Consumo (cigarrillo o azúcar)',
     icono: Icons.smoke_free,
     modulo: Modulo.habitos,
     fase: 3,
   ),
   OpcionRegistrar(
+    tipo: TipoRegistro.sos,
     etiqueta: 'SOS: tengo un antojo',
     icono: Icons.sos_outlined,
     modulo: Modulo.habitos,
@@ -194,12 +204,15 @@ const List<OpcionRegistrar> opcionesDeRegistro = [
   ),
 ];
 
+/// `true` si [rol] registra en [modulo] desde la navegación (el (+) del
+/// teléfono y de la tablet, Ctrl + N en la laptop): lo abre y puede escribir.
+bool puedeRegistrarEn(Rol rol, Modulo modulo) =>
+    puedeAbrir(rol, modulo) && puede(rol, modulo, Accion.escribir);
+
 /// Opciones de (+) que puede usar [rol] (escribir en el módulo).
 List<OpcionRegistrar> opcionesRegistrar(Rol rol) => [
   for (final opcion in opcionesDeRegistro)
-    if (puedeAbrir(rol, opcion.modulo) &&
-        puede(rol, opcion.modulo, Accion.escribir))
-      opcion,
+    if (puedeRegistrarEn(rol, opcion.modulo)) opcion,
 ];
 
 /// Módulos que van en "Más": los navegables que no tienen pestaña propia.
@@ -253,10 +266,14 @@ String inicioDe(Rol rol) => puedeAbrir(rol, Modulo.gravity)
     : rutaDeModulo(modulosNavegables(rol).firstOrNull ?? Modulo.ajustes);
 
 /// Redirección del router (función pura). `null` = se queda donde está.
+///
+/// [accion] es la que exige la ruta además de leer su módulo (`metadata`
+/// con `exigeAccion`): quien no puede hacerla vuelve al inicio del módulo.
 String? calcularRedireccion({
   required String ubicacion,
   required Rol? rol,
   required TipoDispositivo dispositivo,
+  Accion? accion,
 }) {
   if (rol == null) return ubicacion == Rutas.entrar ? null : Rutas.entrar;
   final inicio = inicioDe(rol);
@@ -267,6 +284,13 @@ String? calcularRedireccion({
   }
   final modulo = moduloDeRuta(ubicacion);
   if (modulo != null && !puedeAbrir(rol, modulo)) return inicio;
+  if (modulo != null && accion != null && !puede(rol, modulo, accion)) {
+    final raiz = rutaDeModulo(modulo);
+    if (ubicacion != raiz) return raiz;
+    // La raíz del módulo no debe exigir más que leer; si lo hace, se evita
+    // el ciclo de redirecciones.
+    return inicio == raiz ? null : inicio;
+  }
   final seccion = seccionDeRuta(ubicacion);
   if (seccion != null && !seccionDisponible(seccion, rol, dispositivo)) {
     return Rutas.ajustes;

@@ -10,6 +10,7 @@ import '../modulos/ajustes/pantalla_ajustes.dart';
 import '../modulos/ajustes/secciones_ajustes.dart';
 import '../nucleo/contratos/roles.dart';
 import '../nucleo/contratos/rutas.dart';
+import '../nucleo/permisos/permisos.dart';
 import 'cascarones/cascaron.dart';
 import 'dispositivo.dart';
 import 'navegacion.dart';
@@ -18,7 +19,14 @@ import 'pantallas/pantalla_inicio.dart';
 import 'pantallas/pantalla_mas.dart';
 import 'pantallas/pantalla_proximamente.dart';
 import 'pantallas/registros_atencion.dart';
+import 'pantallas_externas.dart';
 import 'sesion_efectiva.dart';
+
+/// Rutas de Finanzas (agente finanzas, `pantallas_externas.dart`). Las pruebas
+/// la sustituyen para revisar los permisos con rutas de ejemplo.
+final rutasFinanzasProvider = Provider<List<RouteBase>>(
+  (ref) => rutasFinanzas(),
+);
 
 final routerProvider = Provider<GoRouter>((ref) {
   // Cada cambio de rol (entrar, salir, PIN en la tablet) vuelve a evaluar
@@ -32,8 +40,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       ubicacion: estado.uri.path,
       rol: ref.read(rolEfectivoProvider),
       dispositivo: ref.read(tipoDispositivoProvider),
+      accion: accionExigida(estado.metadata),
     ),
-    routes: rutasGravity,
+    routes: rutasDeGravity(finanzas: ref.read(rutasFinanzasProvider)),
     errorBuilder: (context, estado) => const _PantallaNoEncontrada(),
   );
   ref.onDispose(() {
@@ -54,6 +63,63 @@ GoRoute _modulo(String ruta, Modulo modulo, {List<RouteBase> rutas = const []}) 
           _sinAnimacion(estado, PantallaProximamente.modulo(modulo)),
       routes: rutas,
     );
+
+/// Monta las rutas que exporta un módulo bajo [base] (p. ej. `/finanzas`).
+///
+/// [rutas] son relativas a [base] y la pantalla de inicio del módulo es la
+/// raíz: un `GoRoute` de primer nivel con `path: '/'` (también se acepta
+/// `path: base`). La raíz queda en [base] con sus subrutas, y las demás rutas
+/// de primer nivel (relativas, o `ShellRoute` con rutas relativas) quedan
+/// debajo. Sin raíz, [base] lleva a la primera ruta del módulo; sin rutas,
+/// muestra "Próximamente".
+///
+/// Los permisos no dependen de esto: el redirect del router revisa cualquier
+/// ruta bajo [base] con el espejo de permisos y con `exigeAccion`.
+List<RouteBase> montarRutasDeModulo(
+  String base,
+  List<RouteBase> rutas, {
+  required Modulo modulo,
+}) {
+  bool esRaiz(RouteBase ruta) =>
+      ruta is GoRoute && (ruta.path == '/' || ruta.path == base);
+  final raiz = rutas.where(esRaiz).cast<GoRoute>().firstOrNull;
+  final resto = [
+    for (final ruta in rutas)
+      if (!identical(ruta, raiz)) ruta,
+  ];
+  if (raiz == null) {
+    final primera = resto.whereType<GoRoute>().firstOrNull;
+    if (primera == null) return [_modulo(base, modulo, rutas: resto)];
+    return [
+      GoRoute(
+        path: base,
+        redirect: (context, estado) => estado.uri.path == base
+            ? '$base/${primera.path}'
+            : null,
+        routes: resto,
+      ),
+    ];
+  }
+  final pageBuilder = raiz.pageBuilder;
+  final builder = raiz.builder;
+  return [
+    GoRoute(
+      path: base,
+      name: raiz.name,
+      pageBuilder: pageBuilder ??
+          (builder == null
+              ? null
+              : (context, estado) =>
+                    _sinAnimacion(estado, builder(context, estado))),
+      redirect: raiz.redirect,
+      metadata: raiz.metadata,
+      onExit: raiz.onExit,
+      parentNavigatorKey: raiz.parentNavigatorKey,
+      caseSensitive: raiz.caseSensitive,
+      routes: [...raiz.routes, ...resto],
+    ),
+  ];
+}
 
 GoRoute _cuidados(String segmento, String titulo, IconData icono) => GoRoute(
   path: segmento,
@@ -79,7 +145,9 @@ void cerrarLoQueEstaEncima(BuildContext context) {
   ScaffoldMessenger.maybeOf(context)?.clearSnackBars();
 }
 
-final List<RouteBase> rutasGravity = [
+/// Todas las rutas de la app. [finanzas] son las del módulo (relativas a
+/// `Rutas.finanzas`, ver [montarRutasDeModulo]).
+List<RouteBase> rutasDeGravity({required List<RouteBase> finanzas}) => [
   GoRoute(
     path: Rutas.entrar,
     builder: (context, estado) => const PantallaEntrar(),
@@ -94,7 +162,11 @@ final List<RouteBase> rutasGravity = [
         pageBuilder: (context, estado) =>
             _sinAnimacion(estado, const PantallaInicio()),
       ),
-      _modulo(Rutas.finanzas, Modulo.finanzas),
+      ...montarRutasDeModulo(
+        Rutas.finanzas,
+        finanzas,
+        modulo: Modulo.finanzas,
+      ),
       _modulo(Rutas.habitos, Modulo.habitos),
       GoRoute(
         path: Rutas.cuidados,

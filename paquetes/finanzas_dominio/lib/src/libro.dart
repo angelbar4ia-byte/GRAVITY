@@ -63,22 +63,41 @@ class Cuenta {
   /// Categoría ligada (solo en cuentas de gasto por rubro).
   final String? categoriaId;
 
+  /// Persona titular; nulo = del hogar (en el MVP 1 todas son del Dueño).
+  final String? titularId;
+
+  /// Límite de crédito de una tarjeta (opcional, centavos).
+  final int? limiteCentavos;
+
   const Cuenta({
     required this.id,
     required this.nombre,
     required this.tipo,
     this.estado = EstadoCuenta.activa,
     this.categoriaId,
+    this.titularId,
+    this.limiteCentavos,
   });
 
   ClaseCuenta get clase => tipo.clase;
 
-  Cuenta conEstado(EstadoCuenta nuevo) => Cuenta(
+  Cuenta conEstado(EstadoCuenta nuevo) => copiar(estado: nuevo);
+
+  /// Copia con cambios (el id y el tipo no cambian: el libro depende de ellos).
+  Cuenta copiar({
+    String? nombre,
+    EstadoCuenta? estado,
+    String? categoriaId,
+    String? titularId,
+    int? limiteCentavos,
+  }) => Cuenta(
     id: id,
-    nombre: nombre,
+    nombre: nombre ?? this.nombre,
     tipo: tipo,
-    estado: nuevo,
-    categoriaId: categoriaId,
+    estado: estado ?? this.estado,
+    categoriaId: categoriaId ?? this.categoriaId,
+    titularId: titularId ?? this.titularId,
+    limiteCentavos: limiteCentavos ?? this.limiteCentavos,
   );
 
   @override
@@ -336,6 +355,68 @@ class LibroMovimientos {
   LibroMovimientos({Iterable<Cuenta> cuentas = const []}) {
     cuentas.forEach(abrirCuenta);
   }
+
+  /// Vuelve a armar el libro con lo que ya está guardado (en el servidor o en
+  /// la copia local).
+  ///
+  /// Los movimientos se agregan en el orden en que se registraron
+  /// ([Movimiento.registradoEn], luego el id) con todas las cuentas abiertas,
+  /// y al final cada cuenta toma su estado guardado: un movimiento viejo de
+  /// una cuenta que hoy está cerrada sigue contando. Lo que no pasa las reglas
+  /// del libro no se agrega y queda en [rechazadosAlRestaurar] (el servidor
+  /// repite las mismas reglas, así que no debería pasar).
+  factory LibroMovimientos.restaurar({
+    required Iterable<Cuenta> cuentas,
+    Iterable<Movimiento> movimientos = const [],
+    Iterable<Confirmacion> confirmaciones = const [],
+  }) {
+    final libro = LibroMovimientos();
+    final guardadas = cuentas.toList();
+    for (final c in guardadas) {
+      libro.abrirCuenta(c.conEstado(EstadoCuenta.activa));
+    }
+    final ordenados = movimientos.toList()
+      ..sort((a, b) {
+        final r = a.registradoEn.compareTo(b.registradoEn);
+        if (r != 0) return r;
+        // Un contraasiento siempre va después de su original.
+        if (a.anulaA == b.id) return 1;
+        if (b.anulaA == a.id) return -1;
+        return a.id.compareTo(b.id);
+      });
+    for (final m in ordenados) {
+      try {
+        libro.agregar(m);
+      } on ErrorLibro catch (e) {
+        libro._rechazados.add((m, e.mensaje));
+      }
+    }
+    for (final c in confirmaciones) {
+      try {
+        libro._resolver(
+          c.movimientoId,
+          c.resultado,
+          por: c.por,
+          fechaHora: c.fechaHora,
+          enNombreDe: c.enNombreDe,
+          motivo: c.motivo,
+        );
+      } on ErrorLibro catch (e) {
+        libro._rechazados.add((libro._porId[c.movimientoId]!, e.mensaje));
+      }
+    }
+    for (final c in guardadas) {
+      libro._cuentas[c.id] = c;
+    }
+    return libro;
+  }
+
+  final List<(Movimiento, String)> _rechazados = [];
+
+  /// Movimientos guardados que no pasaron las reglas al restaurar, con el
+  /// motivo.
+  List<(Movimiento, String)> get rechazadosAlRestaurar =>
+      List.unmodifiable(_rechazados);
 
   // ---------------------------------------------------------------- cuentas
 

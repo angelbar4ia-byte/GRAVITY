@@ -45,6 +45,28 @@ enum Densidad {
     Densidad.comoda => VisualDensity.standard,
     Densidad.grande => const VisualDensity(horizontal: 1, vertical: 1),
   };
+
+  /// Alto de una fila de tabla **de solo lectura**. Las filas que se tocan
+  /// nunca bajan de 48 dp (sección 20).
+  double get altoFilaTabla => switch (this) {
+    Densidad.compacta => 40,
+    Densidad.comoda => 48,
+    Densidad.grande => 56,
+  };
+
+  /// Alto del encabezado de una tabla (48 dp si se puede ordenar).
+  double get altoEncabezadoTabla => switch (this) {
+    Densidad.compacta => 36,
+    Densidad.comoda => 40,
+    Densidad.grande => 48,
+  };
+
+  /// Tamaño de la letra en las celdas de una tabla.
+  double get textoTabla => switch (this) {
+    Densidad.compacta => 13,
+    Densidad.comoda => 14,
+    Densidad.grande => 16,
+  };
 }
 
 /// Densidad por defecto según el dispositivo (sección 18).

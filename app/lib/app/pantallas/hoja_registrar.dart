@@ -1,12 +1,13 @@
 /// Botón (+) del teléfono: registrar un gasto, un ingreso extra, un hábito o
 /// un consumo, y el SOS (`DISENO_UX_UI.md`, sección 9). Solo las opciones
-/// que permite el rol.
+/// que permite el rol; cada una abre su registro (`registro_rapido.dart`).
 library;
 
 import 'package:flutter/material.dart';
 
 import '../../nucleo/contratos/roles.dart';
 import '../navegacion.dart';
+import 'registro_rapido.dart';
 
 Future<void> mostrarHojaRegistrar(BuildContext context, Rol rol) =>
     showModalBottomSheet<void>(
@@ -40,15 +41,11 @@ class HojaRegistrar extends StatelessWidget {
               title: Text(opcion.etiqueta),
               minTileHeight: 56,
               onTap: () {
-                final mensajero = ScaffoldMessenger.of(context);
+                // La hoja de la opción se abre desde donde se abrió esta
+                // (sigue montado tras cerrarla).
+                final origen = Navigator.of(context).context;
                 Navigator.of(context).pop();
-                mensajero.showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      '${opcion.etiqueta}: llega en la Fase ${opcion.fase}.',
-                    ),
-                  ),
-                );
+                abrirRegistro(origen, opcion);
               },
             ),
         ],

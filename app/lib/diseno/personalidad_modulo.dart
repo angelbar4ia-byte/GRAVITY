@@ -46,6 +46,7 @@ class PersonalidadModulo {
     this.densidad,
     this.duracionAnimacion,
     this.escalaLectura,
+    this.fuenteNumeros,
     this.altoContraste = false,
     this.siempreClaro = false,
     this.sinDecoracion = false,
@@ -68,6 +69,11 @@ class PersonalidadModulo {
 
   /// Escala de la letra de lectura; `null` conserva la del estilo.
   final double? escalaLectura;
+
+  /// Tipografía de números y montos; `null` conserva la del estilo. Finanzas
+  /// la fija en una de ancho fijo para que las cifras se alineen en las tablas
+  /// aunque el estilo global use otra (p. ej. Anton en Swagger).
+  final String? fuenteNumeros;
 
   /// Excepción por función: siempre en alto contraste (Cuidados, bici).
   final bool altoContraste;
@@ -95,13 +101,16 @@ class PersonalidadModulo {
     nombre: 'Igual al estilo global',
   );
 
-  /// Finanzas: acento índigo, poca animación.
+  /// Finanzas: acento índigo, números de ancho fijo, poca animación. La
+  /// densidad es la del dispositivo: compacta en la laptop (tablas densas) y
+  /// cómoda en el teléfono.
   static const precisa = PersonalidadModulo(
     id: 'precisa',
     nombre: 'Precisa y serena',
     acentoDia: Color(0xFF3949AB),
     acentoNoche: Color(0xFF8C9EFF),
     duracionAnimacion: Duration(milliseconds: 120),
+    fuenteNumeros: FuentesGravity.mono,
   );
 
   /// Hábitos · Espiritual: acento violeta, lectura más grande, sin animación.
@@ -258,6 +267,7 @@ class PersonalidadModulo {
       densidad: densidad,
       duracionAnimacion: duracionAnimacion,
       escalaLectura: escalaLectura,
+      fuenteNumeros: fuenteNumeros,
       decoracion: sinDecoracion ? false : null,
     );
   }
@@ -272,6 +282,7 @@ class PersonalidadModulo {
           other.densidad == densidad &&
           other.duracionAnimacion == duracionAnimacion &&
           other.escalaLectura == escalaLectura &&
+          other.fuenteNumeros == fuenteNumeros &&
           other.altoContraste == altoContraste &&
           other.siempreClaro == siempreClaro &&
           other.sinDecoracion == sinDecoracion;
@@ -284,6 +295,7 @@ class PersonalidadModulo {
     densidad,
     duracionAnimacion,
     escalaLectura,
+    fuenteNumeros,
     altoContraste,
     siempreClaro,
     sinDecoracion,

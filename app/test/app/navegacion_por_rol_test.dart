@@ -101,15 +101,15 @@ void main() {
       }
       await tester.tap(pestana('Finanzas'));
       await tester.pumpAndSettle();
-      expect(find.text('Finanzas llega en la Fase 1.'), findsOneWidget);
+      expect(ubicacion(tester), Rutas.finanzas);
 
       await tester.tap(pestana('Registrar'));
       await tester.pumpAndSettle();
       expect(find.text('Gasto'), findsOneWidget);
       expect(find.text('SOS: tengo un antojo'), findsOneWidget);
-      await tester.tap(find.text('Gasto'));
+      await tester.tap(find.text('SOS: tengo un antojo'));
       await tester.pumpAndSettle();
-      expect(find.text('Gasto: llega en la Fase 1.'), findsOneWidget);
+      expect(find.text('SOS: tengo un antojo: llega en la Fase 3.'), findsOneWidget);
 
       await tester.tap(pestana('Más'));
       await tester.pumpAndSettle();
