@@ -17,6 +17,7 @@ import '../../nucleo/sesion/proveedores_sesion.dart';
 import '../../nucleo/tablet/controlador_tablet.dart';
 import 'apariencia/pantalla_apariencia.dart';
 import 'copias/pantalla_copias.dart';
+import 'dispositivos/pantalla_dispositivos.dart';
 import 'notificaciones/pantalla_notificaciones.dart';
 import 'personas/pantalla_personas.dart';
 import 'privacidad/pantalla_privacidad.dart';
@@ -28,6 +29,7 @@ Widget pantallaDeSeccion(SeccionAjustes seccion) => switch (seccion) {
   SeccionAjustes.apariencia => const PantallaApariencia(),
   SeccionAjustes.voz => const PantallaVoz(),
   SeccionAjustes.personas => const PantallaPersonas(),
+  SeccionAjustes.dispositivos => const PantallaDispositivos(),
   SeccionAjustes.privacidad => const PantallaPrivacidad(),
   SeccionAjustes.copias => const PantallaCopias(),
   SeccionAjustes.notificaciones => const PantallaNotificaciones(),
@@ -47,6 +49,9 @@ class PantallaAjustes extends ConsumerWidget {
     if (sesion == null) return const SizedBox.shrink();
     final dispositivo = ref.watch(tipoDispositivoProvider);
     final esTablet = dispositivo == TipoDispositivo.tablet;
+    final tabletPersonal = ref.watch(
+      controladorTabletProvider.select((e) => e.configuracion.esPersonal),
+    );
     return MarcoPantalla(
       titulo: 'Ajustes',
       cuerpo: ListView(
@@ -54,10 +59,18 @@ class PantallaAjustes extends ConsumerWidget {
           ListTile(
             leading: const Icon(Icons.account_circle_outlined),
             title: Text(sesion.persona.nombre),
-            subtitle: Text(nombreRol(sesion.rol)),
+            subtitle: Text(
+              sesion.esMaestra
+                  ? '${nombreRol(sesion.rol)} · cuenta maestra (solo lectura)'
+                  : nombreRol(sesion.rol),
+            ),
           ),
           const Divider(),
-          for (final seccion in seccionesVisibles(sesion.rol, dispositivo))
+          for (final seccion in seccionesVisibles(
+            sesion.rol,
+            dispositivo,
+            esMaestra: sesion.esMaestra,
+          ))
             ListTile(
               leading: Icon(infoSecciones[seccion]!.icono),
               title: Text(infoSecciones[seccion]!.titulo),
@@ -68,12 +81,17 @@ class PantallaAjustes extends ConsumerWidget {
           const Divider(),
           if (esTablet) ...[
             ListTile(
-              leading: const Icon(Icons.home_outlined),
-              title: const Text('Volver al modo Casa'),
+              leading: Icon(
+                tabletPersonal ? Icons.lock_outline : Icons.home_outlined,
+              ),
+              title: Text(
+                tabletPersonal ? 'Bloquear la tablet' : 'Volver al modo Casa',
+              ),
               onTap: () =>
-                  ref.read(controladorTabletProvider.notifier).volverAModoCasa(),
+                  ref.read(controladorTabletProvider.notifier).volverAlReposo(),
             ),
-            if (puede(sesion.rol, Modulo.ajustes, Accion.administrar))
+            if (!sesion.esMaestra &&
+                puede(sesion.rol, Modulo.ajustes, Accion.administrar))
               ListTile(
                 leading: const Icon(Icons.logout),
                 title: const Text('Cerrar la sesión de la tablet'),

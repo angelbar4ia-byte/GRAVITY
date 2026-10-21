@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../nucleo/contratos/dispositivo.dart';
 import '../../nucleo/contratos/roles.dart';
+import '../../nucleo/tablet/controlador_tablet.dart';
 import '../dispositivo.dart';
 import '../pantallas_externas.dart';
 import '../sesion_efectiva.dart';
@@ -21,6 +22,11 @@ class PantallaInicio extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final rol = ref.watch(rolEfectivoProvider);
     if (rol == null) return const SizedBox.shrink();
+    // Tablet pública: durante una acción personal la pantalla sigue en el
+    // modo Casa (D14).
+    final modoCasa = ref.watch(
+      controladorTabletProvider.select((e) => e.muestraModoCasa),
+    );
     return switch (ref.watch(tipoDispositivoProvider)) {
       TipoDispositivo.laptop => pantallaPrincipalGravity(
         barraOrdenes: barraOrdenes(
@@ -29,7 +35,8 @@ class PantallaInicio extends ConsumerWidget {
           dispositivo: TipoDispositivo.laptop,
         ),
       ),
-      TipoDispositivo.tablet when rol == Rol.casa => const PantallaModoCasa(),
+      TipoDispositivo.tablet when rol == Rol.casa || modoCasa =>
+        const PantallaModoCasa(),
       _ => MarcoPantalla(titulo: 'Hoy', cuerpo: pantallaHoyTelefono()),
     };
   }

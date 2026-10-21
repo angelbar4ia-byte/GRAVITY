@@ -22,10 +22,39 @@ String ubicacion(WidgetTester tester) =>
 
 void main() {
   group('secciones visibles', () {
-    test('Dueño en la laptop ve todas, con Desarrollador', () {
+    test('Dueño en la laptop ve todas, con Desarrollador y sin Dispositivos', () {
+      expect(seccionesVisibles(Rol.dueno, TipoDispositivo.laptop), [
+        for (final seccion in SeccionAjustes.values)
+          if (seccion != SeccionAjustes.dispositivos) seccion,
+      ]);
+    });
+
+    test('Dispositivos: solo el Dueño y solo en la tablet', () {
       expect(
-        seccionesVisibles(Rol.dueno, TipoDispositivo.laptop),
-        SeccionAjustes.values,
+        seccionesVisibles(Rol.dueno, TipoDispositivo.tablet),
+        contains(SeccionAjustes.dispositivos),
+      );
+      for (final rol in [Rol.coadministrador, Rol.familiar, Rol.cuidador]) {
+        expect(
+          seccionesVisibles(rol, TipoDispositivo.tablet),
+          isNot(contains(SeccionAjustes.dispositivos)),
+        );
+      }
+    });
+
+    test('cuenta maestra (D19): sin lo que administra el hogar', () {
+      expect(
+        seccionesVisibles(
+          Rol.dueno,
+          TipoDispositivo.laptop,
+          esMaestra: true,
+        ),
+        [
+          SeccionAjustes.apariencia,
+          SeccionAjustes.voz,
+          SeccionAjustes.privacidad,
+          SeccionAjustes.notificaciones,
+        ],
       );
     });
 

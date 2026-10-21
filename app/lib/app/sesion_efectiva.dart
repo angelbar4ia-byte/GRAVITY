@@ -42,3 +42,21 @@ final sesionEfectivaProvider = Provider<Sesion?>((ref) {
 final rolEfectivoProvider = Provider<Rol?>(
   (ref) => ref.watch(sesionEfectivaProvider)?.rol,
 );
+
+/// `true` si quien usa la app ahora es la cuenta maestra (D19): solo lee y
+/// nunca ve botones de escribir en lo ajeno (`puedeSobre`).
+final esCuentaMaestraProvider = Provider<bool>(
+  (ref) => ref.watch(sesionEfectivaProvider)?.esMaestra ?? false,
+);
+
+/// `true` si en la tablet pública alguien entró con su PIN solo para una
+/// acción: la pantalla sigue en el modo Casa (D14).
+final enAccionDeTabletCasaProvider = Provider<bool>(
+  (ref) =>
+      ref.watch(tipoDispositivoProvider) == TipoDispositivo.tablet &&
+      ref.watch(
+        controladorTabletProvider.select(
+          (e) => e.soloAccion && !e.configuracion.esPersonal,
+        ),
+      ),
+);

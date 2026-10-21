@@ -20,6 +20,10 @@ abstract final class RutasApp {
 
   /// Registros que el servidor no aceptó y requieren atención (I4).
   static const pendientes = '/pendientes';
+
+  /// Bandeja de solicitudes y recordatorios de GRAVITY (D18: la cuidadora
+  /// los confirma; no conversa con GRAVITY).
+  static const solicitudes = '/solicitudes';
 }
 
 /// Una pestaña de la barra inferior (teléfono) o del riel lateral (tablet).
@@ -29,6 +33,7 @@ class Destino {
     required this.icono,
     this.ruta,
     this.modulo,
+    this.requiereLeer,
     this.esRegistrar = false,
   });
 
@@ -40,6 +45,10 @@ class Destino {
 
   /// Módulo que exige la pestaña (se filtra con los permisos).
   final Modulo? modulo;
+
+  /// Módulo que la pestaña solo exige **leer** (sin abrir sus pantallas):
+  /// p. ej. la bandeja de solicitudes de GRAVITY de la cuidadora.
+  final Modulo? requiereLeer;
 
   /// `true` en el botón (+), que abre la hoja de registro.
   final bool esRegistrar;
@@ -92,6 +101,12 @@ const Map<Rol, List<Destino>> pestanasPorRol = {
       modulo: Modulo.cuidados,
     ),
     Destino(
+      etiqueta: 'Solicitudes',
+      icono: Icons.inbox_outlined,
+      ruta: RutasApp.solicitudes,
+      requiereLeer: Modulo.gravity,
+    ),
+    Destino(
       etiqueta: 'Medicamentos',
       icono: Icons.medication_outlined,
       ruta: RutasApp.cuidadosMedicamentos,
@@ -119,7 +134,9 @@ List<Destino> destinosDe(Rol rol) => [
   for (final destino in pestanasPorRol[rol] ?? const <Destino>[])
     if (destino.esRegistrar
         ? opcionesRegistrar(rol).isNotEmpty
-        : destino.modulo == null || puedeAbrir(rol, destino.modulo!))
+        : (destino.modulo == null || puedeAbrir(rol, destino.modulo!)) &&
+              (destino.requiereLeer == null ||
+                  puede(rol, destino.requiereLeer!, Accion.leer)))
       destino,
 ];
 
@@ -269,18 +286,31 @@ String inicioDe(Rol rol) => puedeAbrir(rol, Modulo.gravity)
 ///
 /// [accion] es la que exige la ruta además de leer su módulo (`metadata`
 /// con `exigeAccion`): quien no puede hacerla vuelve al inicio del módulo.
+/// [esMaestra]: la cuenta maestra (D19) no abre lo que administra el hogar
+/// (personas, copias, dispositivos, desarrollador). [enAccionDeTabletCasa]:
+/// en la tablet pública alguien entró solo para una acción y la pantalla
+/// sigue en el modo Casa.
 String? calcularRedireccion({
   required String ubicacion,
   required Rol? rol,
   required TipoDispositivo dispositivo,
   Accion? accion,
+  bool esMaestra = false,
+  bool enAccionDeTabletCasa = false,
 }) {
   if (rol == null) return ubicacion == Rutas.entrar ? null : Rutas.entrar;
   final inicio = inicioDe(rol);
   if (ubicacion == Rutas.entrar) return inicio;
-  if (ubicacion == Rutas.inicio) return inicio == Rutas.inicio ? null : inicio;
+  if (ubicacion == Rutas.inicio) {
+    if (enAccionDeTabletCasa) return null;
+    return inicio == Rutas.inicio ? null : inicio;
+  }
   if (ubicacion == RutasApp.mas) {
     return dispositivo == TipoDispositivo.laptop ? inicio : null;
+  }
+  if (ubicacion == RutasApp.solicitudes ||
+      ubicacion.startsWith('${RutasApp.solicitudes}/')) {
+    return puede(rol, Modulo.gravity, Accion.leer) ? null : inicio;
   }
   final modulo = moduloDeRuta(ubicacion);
   if (modulo != null && !puedeAbrir(rol, modulo)) return inicio;
@@ -292,7 +322,8 @@ String? calcularRedireccion({
     return inicio == raiz ? null : inicio;
   }
   final seccion = seccionDeRuta(ubicacion);
-  if (seccion != null && !seccionDisponible(seccion, rol, dispositivo)) {
+  if (seccion != null &&
+      !seccionDisponible(seccion, rol, dispositivo, esMaestra: esMaestra)) {
     return Rutas.ajustes;
   }
   return null;

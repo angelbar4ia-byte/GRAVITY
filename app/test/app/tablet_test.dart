@@ -185,7 +185,13 @@ void main() {
         .destinations
         .map((d) => (d.label as Text).data)
         .toList();
-    expect(etiquetas, ['Mi turno', 'Medicamentos', 'Comidas', 'Bitácora']);
+    expect(etiquetas, [
+      'Mi turno',
+      'Solicitudes',
+      'Medicamentos',
+      'Comidas',
+      'Bitácora',
+    ]);
   });
 
   testWidgets('regresa sola al modo Casa tras 2 minutos sin uso', (

@@ -12,6 +12,7 @@ enum SeccionAjustes {
   apariencia,
   voz,
   personas,
+  dispositivos,
   privacidad,
   copias,
   notificaciones,
@@ -52,6 +53,12 @@ const Map<SeccionAjustes, InfoSeccionAjustes> infoSecciones = {
     descripcion: 'Quién usa la app, qué ve cada rol y la tablet de la casa',
     icono: Icons.people_alt_outlined,
     segmento: 'personas',
+  ),
+  SeccionAjustes.dispositivos: InfoSeccionAjustes(
+    titulo: 'Dispositivos',
+    descripcion: 'Tipo de esta tablet (personal o de la casa) y quién entra',
+    icono: Icons.tablet_android_outlined,
+    segmento: 'dispositivos',
   ),
   SeccionAjustes.privacidad: InfoSeccionAjustes(
     titulo: 'Privacidad',
@@ -95,23 +102,34 @@ SeccionAjustes? seccionDeRuta(String ubicacion) {
 }
 
 /// `true` si [rol] ve la sección en [dispositivo].
+///
+/// La cuenta maestra ([esMaestra], D19) solo lee: no ve lo que administra el
+/// hogar (personas, copias, dispositivos ni desarrollador).
 bool seccionDisponible(
   SeccionAjustes seccion,
   Rol rol,
-  TipoDispositivo dispositivo,
-) {
+  TipoDispositivo dispositivo, {
+  bool esMaestra = false,
+}) {
   if (!puedeAbrir(rol, Modulo.ajustes)) return false;
+  final administra = !esMaestra && puede(rol, Modulo.ajustes, Accion.administrar);
   return switch (seccion) {
-    SeccionAjustes.personas ||
-    SeccionAjustes.copias => puede(rol, Modulo.ajustes, Accion.administrar),
-    SeccionAjustes.desarrollador => puedeVerDesarrollador(rol, dispositivo),
+    SeccionAjustes.personas || SeccionAjustes.copias => administra,
+    SeccionAjustes.dispositivos =>
+      administra && dispositivo == TipoDispositivo.tablet,
+    SeccionAjustes.desarrollador =>
+      !esMaestra && puedeVerDesarrollador(rol, dispositivo),
     _ => true,
   };
 }
 
 /// Secciones que ve [rol] en [dispositivo], en orden.
-List<SeccionAjustes> seccionesVisibles(Rol rol, TipoDispositivo dispositivo) =>
-    [
-      for (final seccion in SeccionAjustes.values)
-        if (seccionDisponible(seccion, rol, dispositivo)) seccion,
-    ];
+List<SeccionAjustes> seccionesVisibles(
+  Rol rol,
+  TipoDispositivo dispositivo, {
+  bool esMaestra = false,
+}) => [
+  for (final seccion in SeccionAjustes.values)
+    if (seccionDisponible(seccion, rol, dispositivo, esMaestra: esMaestra))
+      seccion,
+];

@@ -40,18 +40,29 @@ class Persona {
   String toString() => 'Persona($id, $nombre)';
 }
 
-/// Sesión abierta: persona, rol y hogar.
+/// Sesión abierta: persona, rol, hogar y si es la cuenta maestra.
 class Sesion {
-  const Sesion({required this.persona, required this.rol, this.hogarId});
+  const Sesion({
+    required this.persona,
+    required this.rol,
+    this.hogarId,
+    this.esMaestra = false,
+  });
 
   final Persona persona;
   final Rol rol;
   final String? hogarId;
 
+  /// Cuenta maestra del hogar (D19, `membresias.es_maestra`): **solo lee**
+  /// todo (libros de Finanzas e historial de GRAVITY de todos) y nunca
+  /// escribe en lo ajeno. La asigna el dueño; una por hogar.
+  final bool esMaestra;
+
   Map<String, Object?> aJson() => {
     'persona': persona.aJson(),
     'rol': rol.name,
     if (hogarId != null) 'hogar_id': hogarId,
+    if (esMaestra) 'es_maestra': true,
   };
 
   factory Sesion.desdeJson(Map<String, Object?> json) => Sesion(
@@ -60,6 +71,7 @@ class Sesion {
     ),
     rol: Rol.values.byName(json['rol']! as String),
     hogarId: json['hogar_id'] as String?,
+    esMaestra: json['es_maestra'] == true,
   );
 
   @override
@@ -67,13 +79,15 @@ class Sesion {
       other is Sesion &&
       other.persona == persona &&
       other.rol == rol &&
-      other.hogarId == hogarId;
+      other.hogarId == hogarId &&
+      other.esMaestra == esMaestra;
 
   @override
-  int get hashCode => Object.hash(persona, rol, hogarId);
+  int get hashCode => Object.hash(persona, rol, hogarId, esMaestra);
 
   @override
-  String toString() => 'Sesion(${persona.nombre}, ${rol.name})';
+  String toString() =>
+      'Sesion(${persona.nombre}, ${rol.name}${esMaestra ? ', maestra' : ''})';
 }
 
 /// Error de sesión con un mensaje listo para mostrar en la interfaz.

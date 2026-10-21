@@ -14,15 +14,21 @@ void main() {
       expect(etiquetas(Rol.coadministrador), esperadas);
     });
 
-    test('Cuidador: Mi turno · Medicamentos · Comidas · Bitácora', () {
+    test('Cuidador: Mi turno · Solicitudes · Medicamentos · Comidas · Bitácora', () {
       expect(etiquetas(Rol.cuidador), [
         'Mi turno',
+        'Solicitudes',
         'Medicamentos',
         'Comidas',
         'Bitácora',
       ]);
+      // Solo Cuidados y su bandeja de solicitudes de GRAVITY (D18).
       expect(
-        destinosDe(Rol.cuidador).every((d) => d.ruta!.startsWith(Rutas.cuidados)),
+        destinosDe(Rol.cuidador).every(
+          (d) =>
+              d.ruta!.startsWith(Rutas.cuidados) ||
+              d.ruta == RutasApp.solicitudes,
+        ),
         isTrue,
       );
     });
@@ -40,11 +46,15 @@ void main() {
     final dueno = [for (final o in opcionesRegistrar(Rol.dueno)) o.etiqueta];
     expect(dueno, contains('Gasto'));
     expect(dueno, contains('Hábito'));
+    // D19: la pareja registra en su libro y en los compartidos.
     final pareja = [
       for (final o in opcionesRegistrar(Rol.coadministrador)) o.etiqueta,
     ];
-    expect(pareja, isNot(contains('Gasto')));
-    expect(pareja, contains('Hábito'));
+    expect(pareja, containsAll(['Gasto', 'Ingreso extra', 'Hábito']));
+    expect(
+      [for (final o in opcionesRegistrar(Rol.familiar)) o.etiqueta],
+      isNot(contains('Gasto')),
+    );
     expect(opcionesRegistrar(Rol.cuidador), isEmpty);
     expect(opcionesRegistrar(Rol.casa), isEmpty);
   });
@@ -62,7 +72,8 @@ void main() {
   test('indiceDestino elige la ruta más larga y cae en Más', () {
     final cuidador = destinosDe(Rol.cuidador);
     expect(indiceDestino(Rutas.cuidados, cuidador), 0);
-    expect(indiceDestino(RutasApp.cuidadosComidas, cuidador), 2);
+    expect(indiceDestino(RutasApp.cuidadosComidas, cuidador), 3);
+    expect(indiceDestino(RutasApp.solicitudes, cuidador), 1);
     final dueno = destinosDe(Rol.dueno);
     expect(indiceDestino(Rutas.inicio, dueno), 0);
     expect(indiceDestino(Rutas.finanzas, dueno), 1);

@@ -55,10 +55,15 @@ class ProyeccionDeuda {
 /// - Cada deuda recibe su abono planeado sin pasar de su saldo.
 /// - El [remanenteSemanal] se aplica como abono extra en el orden de
 ///   [ordenDeAbonoExtra] y lo que sobra va a ahorro.
-/// - El abono planeado de una deuda ya liquidada **no se reasigna solo**:
-///   se libera cuando la persona vuelve a armar el plan (la app propone y la
-///   persona confirma). Así se reproduce el ejemplo del diseño (ahorro de
-///   $160.09 en la semana 5 y $1,520.00 desde la semana 6).
+/// - **Sin grupo de deudas prioritarias**, el abono planeado de una deuda ya
+///   liquidada **no se reasigna solo**: se libera cuando la persona vuelve a
+///   armar el plan (la app propone y la persona confirma). Así se reproduce
+///   el ejemplo del diseño (ahorro de $160.09 en la semana 5 y $1,520.00
+///   desde la semana 6).
+/// - **Con grupo** (P12 y P19; regla 4 de 4.5), el abono que libera una
+///   deuda liquidada (completo, o lo que sobró en la semana en que se
+///   liquidó) se suma al remanente y va a la siguiente deuda del grupo; cuando
+///   el grupo queda pagado, va a ahorro.
 ProyeccionDeuda proyectarSalidaDeDeuda({
   required List<Renglon<DeudaPlan>> abonos,
   required int remanenteSemanal,
@@ -73,13 +78,18 @@ ProyeccionDeuda proyectarSalidaDeDeuda({
     }
     saldos[r.origen.id] = saldo;
   }
+  final conGrupo = hayGrupoPrioritario(abonos.map((r) => r.origen));
   final resultado = <SemanaDeuda>[];
   for (var n = 1; n <= semanas; n++) {
     var intereses = 0;
+    var liberado = 0;
     for (final r in abonos) {
       final d = r.origen;
       var saldo = saldos[d.id]!;
-      if (saldo <= 0) continue;
+      if (saldo <= 0) {
+        liberado += r.semanal;
+        continue;
+      }
       if (d.tipo == TipoDeuda.conCosto) {
         final interes = dividirRedondeando(
           saldo * d.tasaAnualPuntosBase,
@@ -88,12 +98,17 @@ ProyeccionDeuda proyectarSalidaDeDeuda({
         saldo += interes;
         intereses += interes;
       }
-      saldo -= r.semanal < saldo ? r.semanal : saldo;
+      final aplicado = r.semanal < saldo ? r.semanal : saldo;
+      saldo -= aplicado;
+      liberado += r.semanal - aplicado;
       saldos[d.id] = saldo;
     }
-    final destino = repartirRemanente(remanenteSemanal, {
-      for (final r in abonos) r.origen.conSaldo(saldos[r.origen.id]!): 0,
-    }, parametros: parametros);
+    final destino = repartirRemanente(
+      remanenteSemanal,
+      {for (final r in abonos) r.origen.conSaldo(saldos[r.origen.id]!): 0},
+      parametros: parametros,
+      liberado: conGrupo ? liberado : 0,
+    );
     for (final extra in destino.abonosExtra) {
       saldos[extra.deuda.id] = saldos[extra.deuda.id]! - extra.monto;
     }

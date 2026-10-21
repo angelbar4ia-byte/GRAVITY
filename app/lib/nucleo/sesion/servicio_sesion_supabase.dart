@@ -40,13 +40,22 @@ Future<Sesion> leerPerfilPorOmision(SupabaseClient cliente) async {
   if (persona == null) throw ErrorSesion.sinRol;
   // En orden fijo (la más antigua primero): con dos hogares, siempre el mismo
   // (revisión de la Fase 0, M4; elegir hogar llega con `mi_perfil()`).
-  final membresias = await cliente
+  Future<List<Map<String, dynamic>>> leerMembresias(String columnas) => cliente
       .from('membresias')
-      .select('rol, hogar_id, desde, hasta')
+      .select(columnas)
       .eq('persona_id', persona['id'] as String)
       .eq('activa', true)
       .order('desde')
       .order('hogar_id');
+  List<Map<String, dynamic>> membresias;
+  try {
+    membresias = await leerMembresias('rol, hogar_id, desde, hasta, es_maestra');
+  } on PostgrestException catch (error) {
+    // Servidor sin la columna de la cuenta maestra (D19) todavía: nadie es
+    // maestra, pero se puede entrar.
+    if (error.code != '42703' && error.code != 'PGRST204') rethrow;
+    membresias = await leerMembresias('rol, hogar_id, desde, hasta');
+  }
   final vigente = membresiaVigente(membresias, DateTime.now());
   if (vigente == null) throw ErrorSesion.sinRol;
   return sesionDesdeFila({
@@ -55,6 +64,7 @@ Future<Sesion> leerPerfilPorOmision(SupabaseClient cliente) async {
     'correo': usuario.email,
     'rol': vigente['rol'],
     'hogar_id': vigente['hogar_id'],
+    'es_maestra': vigente['es_maestra'],
   });
 }
 
@@ -76,8 +86,9 @@ Map<String, dynamic>? membresiaVigente(
   return null;
 }
 
-/// Convierte una fila (`persona_id`, `nombre`, `correo`, `rol`, `hogar_id`)
-/// en [Sesion]. Lanza [ErrorSesion.sinRol] si el rol no es de D5.
+/// Convierte una fila (`persona_id`, `nombre`, `correo`, `rol`, `hogar_id`,
+/// `es_maestra`) en [Sesion]. Lanza [ErrorSesion.sinRol] si el rol no es de
+/// D5.
 Sesion sesionDesdeFila(Map<String, Object?> fila) {
   final rolTexto = fila['rol'];
   final rol = Rol.values.where((r) => r.name == rolTexto).firstOrNull;
@@ -91,6 +102,7 @@ Sesion sesionDesdeFila(Map<String, Object?> fila) {
     ),
     rol: rol,
     hogarId: fila['hogar_id'] as String?,
+    esMaestra: fila['es_maestra'] == true,
   );
 }
 

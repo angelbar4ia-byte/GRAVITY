@@ -1,5 +1,12 @@
-/// Tablet de la casa (D14): modo Casa por omisión con la cuenta de rol Casa,
-/// cambio de persona con PIN y regreso al modo Casa.
+/// Tablets (D14): cambio de persona con PIN y regreso al reposo.
+///
+/// Dos tipos (21/oct/2026), con la cuenta de rol Casa como cuenta del equipo:
+/// - **Pública de la casa:** en reposo, modo Casa. Leer no pide identidad;
+///   registrar algo de la casa pide elegir el nombre (sin PIN) y registrar
+///   algo personal pide nombre y PIN solo para esa acción
+///   ([entrarParaAccion]).
+/// - **Personal** (dueño y pareja): en reposo, pantalla de bloqueo con las
+///   personas permitidas; sin modo Casa.
 ///
 /// Revisión de la Fase 0:
 /// - I6: al entrar una persona con su PIN, la sesión del **servidor** también
@@ -53,6 +60,9 @@ enum ResultadoDesbloqueo {
   /// Se volvió al modo Casa mientras la persona entraba.
   cancelado,
   noExiste,
+
+  /// Tablet personal: la persona no está entre las permitidas.
+  noPermitida,
 }
 
 class EstadoTablet {
@@ -61,16 +71,38 @@ class EstadoTablet {
     this.usuarios = const [],
     this.usuarioActivo,
     this.configuracion = const ConfiguracionTablet(),
+    this.soloAccion = false,
   });
 
   final bool cargado;
   final List<UsuarioTablet> usuarios;
 
-  /// Persona que entró con su PIN; `null` en modo Casa.
+  /// Persona que entró con su PIN; `null` en reposo (modo Casa o bloqueo).
   final UsuarioTablet? usuarioActivo;
   final ConfiguracionTablet configuracion;
 
+  /// Tablet pública: la persona entró solo para **una acción** personal (un
+  /// gasto, un hábito…). La pantalla sigue en el modo Casa y, al terminar la
+  /// acción o tras el tiempo sin uso, vuelve al reposo.
+  final bool soloAccion;
+
+  /// `true` si nadie está dentro (modo Casa en la pública, bloqueo en la
+  /// personal).
   bool get enModoCasa => usuarioActivo == null;
+
+  /// `true` si la pantalla muestra el reposo de la tablet pública (modo
+  /// Casa), también durante una acción personal.
+  bool get muestraModoCasa => !configuracion.esPersonal && (enModoCasa || soloAccion);
+
+  /// `true` si la tablet personal está bloqueada (nadie dentro).
+  bool get bloqueada => configuracion.esPersonal && enModoCasa;
+
+  /// Personas que se muestran para entrar (en la personal, solo las
+  /// permitidas).
+  List<UsuarioTablet> get usuariosQuePuedenEntrar => [
+    for (final usuario in usuarios)
+      if (puedeEntrarEnTablet(usuario, configuracion)) usuario,
+  ];
 
   EstadoTablet copiarCon({
     bool? cargado,
@@ -81,13 +113,18 @@ class EstadoTablet {
     usuarios: usuarios ?? this.usuarios,
     usuarioActivo: usuarioActivo,
     configuracion: configuracion ?? this.configuracion,
+    soloAccion: soloAccion,
   );
 
-  EstadoTablet conUsuarioActivo(UsuarioTablet? usuario) => EstadoTablet(
+  EstadoTablet conUsuarioActivo(
+    UsuarioTablet? usuario, {
+    bool soloAccion = false,
+  }) => EstadoTablet(
     cargado: cargado,
     usuarios: usuarios,
     usuarioActivo: usuario,
     configuracion: configuracion,
+    soloAccion: usuario != null && soloAccion,
   );
 }
 
@@ -192,9 +229,16 @@ class ControladorTablet extends Notifier<EstadoTablet> {
   /// (ver [entrarConPin], que espera a que la sesión del servidor cambie).
   /// Tras 5 fallos seguidos se bloquea 30 s; cada bloqueo siguiente dura el
   /// doble, hasta 15 min. Los fallos sobreviven al reinicio de la app.
-  ResultadoDesbloqueo desbloquearConPin(String personaId, String pin) {
+  ResultadoDesbloqueo desbloquearConPin(
+    String personaId,
+    String pin, {
+    bool soloAccion = false,
+  }) {
     final usuario = _buscar(personaId);
     if (usuario == null) return ResultadoDesbloqueo.noExiste;
+    if (!puedeEntrarEnTablet(usuario, state.configuracion)) {
+      return ResultadoDesbloqueo.noPermitida;
+    }
     if (_intentos.bloqueado(personaId)) return ResultadoDesbloqueo.bloqueado;
     if (!HashPin.verificar(pin, usuario.hashPin)) {
       return _intentos.anotarFallo(personaId) == ResultadoFallo.bloqueado
@@ -202,7 +246,7 @@ class ControladorTablet extends Notifier<EstadoTablet> {
           : ResultadoDesbloqueo.pinIncorrecto;
     }
     _intentos.anotarAcierto(personaId);
-    _entrada = _entrar(usuario, pin);
+    _entrada = _entrar(usuario, pin, soloAccion: soloAccion);
     return ResultadoDesbloqueo.abierto;
   }
 
@@ -215,14 +259,34 @@ class ControladorTablet extends Notifier<EstadoTablet> {
     return _entrada!;
   }
 
+  /// Tablet pública: la persona se identifica con nombre y PIN **solo para
+  /// una acción** personal (un gasto, un hábito, algo de Cuidados). La
+  /// pantalla sigue en el modo Casa; quien abre la acción llama a
+  /// [volverAModoCasa] al terminarla, y si no, el tiempo sin uso lo hace.
+  Future<ResultadoDesbloqueo> entrarParaAccion(
+    String personaId,
+    String pin,
+  ) async {
+    if (state.configuracion.esPersonal) {
+      return entrarConPin(personaId, pin);
+    }
+    final resultado = desbloquearConPin(personaId, pin, soloAccion: true);
+    if (resultado != ResultadoDesbloqueo.abierto) return resultado;
+    return _entrada!;
+  }
+
   bool _vigente(int generacion) => ref.mounted && generacion == _generacion;
 
-  Future<ResultadoDesbloqueo> _entrar(UsuarioTablet usuario, String pin) async {
+  Future<ResultadoDesbloqueo> _entrar(
+    UsuarioTablet usuario,
+    String pin, {
+    bool soloAccion = false,
+  }) async {
     final generacion = ++_generacion;
     final servicio = ref.read(servicioSesionProvider);
     if (servicio is! SesionesPorPersona) {
       // Sin servidor (demostración): solo cambia la interfaz.
-      state = state.conUsuarioActivo(usuario);
+      state = state.conUsuarioActivo(usuario, soloAccion: soloAccion);
       return ResultadoDesbloqueo.abierto;
     }
     final sesiones = servicio as SesionesPorPersona;
@@ -284,7 +348,7 @@ class ControladorTablet extends Notifier<EstadoTablet> {
     _llave = llave;
     _personaConLlave = usuario.personaId;
     _renovaciones = sesiones.credencialesDePersona.listen(_alRenovar);
-    state = state.conUsuarioActivo(activo);
+    state = state.conUsuarioActivo(activo, soloAccion: soloAccion);
     return ResultadoDesbloqueo.abierto;
   }
 
@@ -329,8 +393,12 @@ class ControladorTablet extends Notifier<EstadoTablet> {
       ? ResultadoDesbloqueo.noExiste
       : ResultadoDesbloqueo.huellaNoDisponible;
 
-  /// Regresa al modo Casa (rol Casa, sin dinero ni datos clínicos) y la
-  /// sesión del servidor a la cuenta Casa.
+  /// Regresa al reposo y la sesión del servidor a la cuenta Casa: en la
+  /// tablet pública, al modo Casa (rol Casa, sin dinero ni datos clínicos); en
+  /// la personal, a la pantalla de bloqueo.
+  void volverAlReposo() => volverAModoCasa();
+
+  /// Igual que [volverAlReposo] (nombre de la Fase 0).
   void volverAModoCasa() {
     _generacion++;
     if (state.usuarioActivo != null) state = state.conUsuarioActivo(null);
@@ -383,6 +451,15 @@ class ControladorTablet extends Notifier<EstadoTablet> {
         if (u.personaId != usuario.personaId) u,
       usuario,
     ]);
+    // En la tablet personal, el dueño o la pareja que se agrega puede entrar.
+    final configuracion = state.configuracion;
+    if (configuracion.esPersonal && rolesDeTabletPersonal.contains(usuario.rol)) {
+      await _guardarConfiguracion(
+        configuracion.copiarCon(
+          permitidas: {...configuracion.permitidas, usuario.personaId},
+        ),
+      );
+    }
     return usuario;
   }
 
@@ -428,6 +505,13 @@ class ControladorTablet extends Notifier<EstadoTablet> {
       for (final u in state.usuarios)
         if (u.personaId != personaId) u,
     ]);
+    if (state.configuracion.permitidas.contains(personaId)) {
+      await _guardarConfiguracion(
+        state.configuracion.copiarCon(
+          permitidas: {...state.configuracion.permitidas}..remove(personaId),
+        ),
+      );
+    }
   }
 
   /// Cambia el PIN de la persona. Pide su PIN actual: con él se descifra su
@@ -489,6 +573,53 @@ class ControladorTablet extends Notifier<EstadoTablet> {
 
   Future<void> elegirContexto(String contexto) =>
       _guardarConfiguracion(state.configuracion.copiarCon(contexto: contexto));
+
+  /// Cambia el tipo de tablet (Ajustes › Dispositivos). Al pasar a personal,
+  /// quien está dentro (si es dueño o pareja) queda permitido, para que la
+  /// tablet no quede bloqueada sin nadie que pueda entrar.
+  Future<void> elegirTipo(TipoTablet tipo) async {
+    await listo;
+    final actual = state.configuracion;
+    if (actual.tipo == tipo) return;
+    final activo = state.usuarioActivo;
+    final permitidas = {
+      for (final id in actual.permitidas)
+        if (state.usuarios.any(
+          (u) => u.personaId == id && rolesDeTabletPersonal.contains(u.rol),
+        ))
+          id,
+      if (tipo == TipoTablet.personal &&
+          activo != null &&
+          rolesDeTabletPersonal.contains(activo.rol))
+        activo.personaId,
+    };
+    await _guardarConfiguracion(
+      actual.copiarCon(tipo: tipo, permitidas: permitidas),
+    );
+    // Quien entró solo para una acción en la pública no sigue dentro.
+    if (state.soloAccion) volverAlReposo();
+  }
+
+  /// Permite (o no) que [personaId] entre a la tablet personal. Solo dueño y
+  /// pareja ([rolesDeTabletPersonal]).
+  Future<void> permitir(String personaId, {required bool permitida}) async {
+    await listo;
+    final usuario = _buscar(personaId);
+    if (usuario == null) return;
+    if (permitida && !rolesDeTabletPersonal.contains(usuario.rol)) {
+      throw ArgumentError(
+        'En la tablet personal solo entran el dueño y la pareja.',
+      );
+    }
+    final permitidas = {...state.configuracion.permitidas};
+    permitida ? permitidas.add(personaId) : permitidas.remove(personaId);
+    await _guardarConfiguracion(
+      state.configuracion.copiarCon(permitidas: permitidas),
+    );
+    if (!permitida && state.usuarioActivo?.personaId == personaId) {
+      volverAlReposo();
+    }
+  }
 
   Future<void> _guardarConfiguracion(ConfiguracionTablet configuracion) async {
     await listo;

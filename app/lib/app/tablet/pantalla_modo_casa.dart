@@ -15,6 +15,7 @@ import '../../nucleo/tablet/usuarios_tablet.dart';
 import '../navegacion.dart';
 import 'dialogo_agregar_persona.dart';
 import 'dialogo_pin.dart';
+import 'registro_tablet_casa.dart';
 
 /// Tarjetas de cada contexto (se llenan conforme entran los módulos).
 const Map<String, List<(String, String)>> tarjetasPorContexto = {
@@ -114,14 +115,31 @@ class PantallaModoCasa extends ConsumerWidget {
               const SizedBox(height: 16),
               SizedBox(
                 height: 56,
-                child: FilledButton.tonalIcon(
-                  onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Hablar con GRAVITY llega en la Fase 6.'),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      child: FilledButton.tonalIcon(
+                        onPressed: () =>
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Hablar con GRAVITY llega en la Fase 6.',
+                                ),
+                              ),
+                            ),
+                        icon: const Icon(Icons.mic_none),
+                        label: const Text('Mantén para hablar'),
+                      ),
                     ),
-                  ),
-                  icon: const Icon(Icons.mic_none),
-                  label: const Text('Mantén para hablar'),
+                    const SizedBox(width: 12),
+                    FilledButton.icon(
+                      key: const ValueKey('registrar-tablet-casa'),
+                      onPressed: () => mostrarRegistrarEnTabletCasa(context),
+                      icon: const Icon(Icons.add_circle_outline),
+                      label: const Text('Registrar'),
+                    ),
+                  ],
                 ),
               ),
             ],

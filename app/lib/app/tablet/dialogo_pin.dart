@@ -13,11 +13,17 @@ import '../../nucleo/seguridad/intentos.dart';
 import '../../nucleo/tablet/controlador_tablet.dart';
 import '../../nucleo/tablet/usuarios_tablet.dart';
 
-/// Devuelve `true` si la persona entró.
-Future<bool> mostrarDialogoPin(BuildContext context, UsuarioTablet usuario) async =>
+/// Devuelve `true` si la persona entró. Con [paraAccion] (tablet pública)
+/// entra solo para una acción personal y la pantalla sigue en el modo Casa.
+Future<bool> mostrarDialogoPin(
+  BuildContext context,
+  UsuarioTablet usuario, {
+  bool paraAccion = false,
+}) async =>
     await showDialog<bool>(
       context: context,
-      builder: (contexto) => DialogoPin(usuario: usuario),
+      builder: (contexto) =>
+          DialogoPin(usuario: usuario, paraAccion: paraAccion),
     ) ??
     false;
 
@@ -40,12 +46,17 @@ String? mensajeDesbloqueo(ResultadoDesbloqueo resultado, {Duration? espera}) =>
       ResultadoDesbloqueo.error =>
         'No se pudo comprobar tu cuenta. Intenta de nuevo.',
       ResultadoDesbloqueo.noExiste => 'Esta persona ya no está en la tablet.',
+      ResultadoDesbloqueo.noPermitida =>
+        'Esta tablet es personal y no estás entre las personas permitidas.',
     };
 
 class DialogoPin extends ConsumerStatefulWidget {
-  const DialogoPin({super.key, required this.usuario});
+  const DialogoPin({super.key, required this.usuario, this.paraAccion = false});
 
   final UsuarioTablet usuario;
+
+  /// Entra solo para una acción (tablet pública, D14).
+  final bool paraAccion;
 
   @override
   ConsumerState<DialogoPin> createState() => _DialogoPinState();
@@ -70,7 +81,9 @@ class _DialogoPinState extends ConsumerState<DialogoPin> {
       _entrando = true;
       _error = null;
     });
-    final resultado = await controlador.entrarConPin(personaId, _pin.text);
+    final resultado = widget.paraAccion
+        ? await controlador.entrarParaAccion(personaId, _pin.text)
+        : await controlador.entrarConPin(personaId, _pin.text);
     // Al entrar, el cascarón ya cerró este diálogo (B2): no se cierra dos
     // veces (se cerraría la pantalla de abajo).
     if (!mounted || !(ModalRoute.of(context)?.isCurrent ?? false)) return;
@@ -95,7 +108,11 @@ class _DialogoPinState extends ConsumerState<DialogoPin> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(nombreRol(widget.usuario.rol)),
+        Text(
+          widget.paraAccion
+              ? '${nombreRol(widget.usuario.rol)} · solo para esta acción'
+              : nombreRol(widget.usuario.rol),
+        ),
         const SizedBox(height: 12),
         TextField(
           key: const Key('campo-pin'),

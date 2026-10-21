@@ -18,6 +18,7 @@ import 'pantallas/pantalla_entrar.dart';
 import 'pantallas/pantalla_inicio.dart';
 import 'pantallas/pantalla_mas.dart';
 import 'pantallas/pantalla_proximamente.dart';
+import 'pantallas/pantalla_solicitudes.dart';
 import 'pantallas/registros_atencion.dart';
 import 'pantallas_externas.dart';
 import 'sesion_efectiva.dart';
@@ -33,6 +34,7 @@ final routerProvider = Provider<GoRouter>((ref) {
   // las redirecciones.
   final aviso = ValueNotifier<int>(0);
   ref.listen(rolEfectivoProvider, (_, _) => aviso.value++);
+  ref.listen(esCuentaMaestraProvider, (_, _) => aviso.value++);
   final router = GoRouter(
     initialLocation: Rutas.inicio,
     refreshListenable: aviso,
@@ -41,6 +43,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       rol: ref.read(rolEfectivoProvider),
       dispositivo: ref.read(tipoDispositivoProvider),
       accion: accionExigida(estado.metadata),
+      esMaestra: ref.read(esCuentaMaestraProvider),
+      enAccionDeTabletCasa: ref.read(enAccionDeTabletCasaProvider),
     ),
     routes: rutasDeGravity(finanzas: ref.read(rutasFinanzasProvider)),
     errorBuilder: (context, estado) => const _PantallaNoEncontrada(),
@@ -193,6 +197,11 @@ List<RouteBase> rutasDeGravity({required List<RouteBase> finanzas}) => [
         path: RutasApp.pendientes,
         pageBuilder: (context, estado) =>
             _sinAnimacion(estado, const PantallaRegistrosAtencion()),
+      ),
+      GoRoute(
+        path: RutasApp.solicitudes,
+        pageBuilder: (context, estado) =>
+            _sinAnimacion(estado, const PantallaSolicitudes()),
       ),
       GoRoute(
         path: RutasApp.mas,

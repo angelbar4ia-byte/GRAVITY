@@ -28,6 +28,18 @@ enum EstadoPendiente {
   descartado,
 }
 
+/// Desde dónde y con qué identidad se hizo un registro.
+enum OrigenRegistro {
+  /// La persona con su sesión (teléfono, laptop o tablet con su PIN).
+  propio,
+
+  /// Tablet pública de la casa, sin PIN: la persona **eligió su nombre** para
+  /// registrar algo de la casa (lista de compras, recordatorio genérico). Se
+  /// sube con la cuenta Casa del equipo y queda como *"Ana, desde la tablet
+  /// de la casa"* (D14).
+  tabletCasa,
+}
+
 /// Registros hechos en el dispositivo que faltan por subir al servidor.
 @DataClassName('RegistroPendiente')
 class Pendientes extends Table {
@@ -56,6 +68,10 @@ class Pendientes extends Table {
   /// del servidor de esa misma persona (revisión de la Fase 0, I4).
   TextColumn get personaId => text().nullable()();
 
+  /// Desde dónde se registró (`null` en los de antes de la versión 3:
+  /// [OrigenRegistro.propio]).
+  TextColumn get origen => textEnum<OrigenRegistro>().nullable()();
+
   @override
   Set<Column<Object>> get primaryKey => {id};
 }
@@ -72,12 +88,13 @@ class BaseLocal extends _$BaseLocal {
   factory BaseLocal.enMemoria() => BaseLocal(NativeDatabase.memory());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onUpgrade: (migrador, desde, hasta) async {
       if (desde < 2) await migrador.addColumn(pendientes, pendientes.personaId);
+      if (desde < 3) await migrador.addColumn(pendientes, pendientes.origen);
     },
   );
 }

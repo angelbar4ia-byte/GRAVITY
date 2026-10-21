@@ -33,12 +33,35 @@ void main() {
       expect(puede(Rol.dueno, Modulo.habitos, Accion.administrar), isFalse);
     });
 
-    test('Coadministrador: finanzas solo de lectura', () {
-      expect(puede(Rol.coadministrador, Modulo.finanzas, Accion.leer), isTrue);
-      expect(
-        puede(Rol.coadministrador, Modulo.finanzas, Accion.escribir),
-        isFalse,
-      );
+    test('D19: dueño y pareja llevan su propio libro de Finanzas', () {
+      for (final rol in [Rol.dueno, Rol.coadministrador]) {
+        expect(permisoDe(rol, Modulo.finanzas).alcance, Alcance.propio);
+        for (final accion in Accion.values) {
+          expect(puede(rol, Modulo.finanzas, accion), isTrue, reason: '$rol');
+        }
+        expect(puedeAbrir(rol, Modulo.finanzas), isTrue);
+      }
+    });
+
+    test('D18: GRAVITY es de cada quien, también para el dueño', () {
+      expect(permisoDe(Rol.dueno, Modulo.gravity).alcance, Alcance.propio);
+      expect(puede(Rol.dueno, Modulo.gravity, Accion.administrar), isTrue);
+      for (final rol in [Rol.coadministrador, Rol.familiar, Rol.casa]) {
+        expect(permisoDe(rol, Modulo.gravity).alcance, Alcance.propio);
+      }
+    });
+
+    test('D18: la cuidadora solo usa su bandeja de solicitudes de GRAVITY', () {
+      final permiso = permisoDe(Rol.cuidador, Modulo.gravity);
+      expect(permiso.alcance, Alcance.solicitudes);
+      expect(puede(Rol.cuidador, Modulo.gravity, Accion.leer), isTrue);
+      expect(puede(Rol.cuidador, Modulo.gravity, Accion.escribir), isTrue);
+      expect(puede(Rol.cuidador, Modulo.gravity, Accion.administrar), isFalse);
+      // No abre las pantallas de GRAVITY (ni conversa con él).
+      expect(puedeAbrir(Rol.cuidador, Modulo.gravity), isFalse);
+    });
+
+    test('Coadministrador: lo demás como en la Fase 0', () {
       expect(
         puede(Rol.coadministrador, Modulo.alimentacion, Accion.administrar),
         isTrue,
@@ -103,6 +126,85 @@ void main() {
         );
       }
     }
+  });
+
+  group('puedeSobre: lo suyo, lo ajeno y la cuenta maestra (D19)', () {
+    test('con alcance propio, lo ajeno no se ve ni se toca', () {
+      for (final accion in Accion.values) {
+        expect(
+          puedeSobre(Rol.dueno, Modulo.finanzas, accion, esDeLaPersona: true),
+          isTrue,
+        );
+        expect(
+          puedeSobre(Rol.dueno, Modulo.finanzas, accion, esDeLaPersona: false),
+          isFalse,
+          reason: '$accion',
+        );
+        expect(
+          puedeSobre(Rol.dueno, Modulo.gravity, accion, esDeLaPersona: false),
+          isFalse,
+          reason: '$accion',
+        );
+      }
+    });
+
+    test('con alcance total, lo ajeno también', () {
+      expect(
+        puedeSobre(
+          Rol.dueno,
+          Modulo.cuidados,
+          Accion.escribir,
+          esDeLaPersona: false,
+        ),
+        isTrue,
+      );
+    });
+
+    test('la cuenta maestra lee todo y nunca escribe en lo ajeno', () {
+      for (final modulo in [Modulo.finanzas, Modulo.gravity, Modulo.cuidados]) {
+        expect(
+          puedeSobre(
+            Rol.dueno,
+            modulo,
+            Accion.leer,
+            esDeLaPersona: false,
+            esMaestra: true,
+          ),
+          isTrue,
+          reason: '$modulo',
+        );
+        for (final accion in [Accion.escribir, Accion.administrar]) {
+          expect(
+            puedeSobre(
+              Rol.dueno,
+              modulo,
+              accion,
+              esDeLaPersona: false,
+              esMaestra: true,
+            ),
+            isFalse,
+            reason: '$modulo $accion',
+          );
+        }
+      }
+      // Lo suyo, sí.
+      expect(
+        puedeSobre(
+          Rol.dueno,
+          Modulo.finanzas,
+          Accion.escribir,
+          esDeLaPersona: true,
+          esMaestra: true,
+        ),
+        isTrue,
+      );
+    });
+  });
+
+  test('exigeAccion y accionExigida', () {
+    expect(accionExigida(exigeAccion(Accion.escribir)), Accion.escribir);
+    expect(accionExigida(const {}), isNull);
+    expect(accionExigida(const {claveAccionDeRuta: 'escribir'}), isNull);
   });
 
   test('nombres en español', () {

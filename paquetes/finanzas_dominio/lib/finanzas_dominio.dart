@@ -11,16 +11,27 @@
 /// - Libro de movimientos **solo-agregar** con anulación por contraasiento
 ///   ([LibroMovimientos]).
 /// - Motor del presupuesto semanal y la cascada ([armarPlanSemanal],
-///   [cerrarSemana]).
+///   [cerrarSemana]) con el grupo de deudas prioritarias.
+/// - Libros personales, compartidos y representado (D19) con su permiso
+///   ([permisoEnLibro]) y su vista ([vistaDelLibro]).
+/// - Configuración por libro ([Ingreso], [Compromiso], [Sobre], [Deuda]),
+///   categorías e importador de la plantilla ([planearImportacionCategorias])
+///   y seguimiento de la semana ([vistaSemana]).
 library;
 
 export 'src/calendario.dart';
+export 'src/categorias.dart';
+export 'src/configuracion.dart';
+export 'src/datos_finanzas.dart';
 export 'src/dinero.dart';
 export 'src/fecha.dart';
 export 'src/flujo.dart';
 export 'src/frecuencia.dart';
 export 'src/indicadores.dart';
 export 'src/libro.dart';
+export 'src/libros.dart';
+export 'src/plan_guardado.dart';
 export 'src/presupuesto.dart';
 export 'src/proyeccion_deuda.dart';
 export 'src/semana.dart';
+export 'src/seguimiento.dart';

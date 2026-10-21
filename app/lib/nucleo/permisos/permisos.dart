@@ -38,6 +38,11 @@ enum Alcance {
   /// Solo escribir lo que la persona registra (gastos de cuidado), sin leer
   /// el módulo (D5: la cuidadora nunca lee Finanzas).
   registroPropio,
+
+  /// Solo su bandeja de solicitudes y recordatorios de GRAVITY: los lee y los
+  /// confirma (hecho o no se pudo, con nota). No conversa con GRAVITY ni ve
+  /// nada de la familia (D18, cuidadora).
+  solicitudes,
 }
 
 /// Una celda de la matriz: alcance, texto para mostrar y si el módulo aparece
@@ -48,13 +53,15 @@ class Permiso {
     this.descripcion, {
     this.accesoDirecto = true,
     this.desdeFase,
+    this._acciones,
   });
 
   const Permiso.ninguno()
     : alcance = Alcance.ninguno,
       descripcion = 'Sin acceso',
       accesoDirecto = false,
-      desdeFase = null;
+      desdeFase = null,
+      _acciones = null;
 
   final Alcance alcance;
 
@@ -69,7 +76,15 @@ class Permiso {
   /// Fase en la que se activa, si no es desde el inicio.
   final int? desdeFase;
 
-  Set<Accion> get acciones => switch (alcance) {
+  /// Acciones dadas a mano cuando no salen solo del alcance (p. ej. "lo
+  /// propio" con administrar: cada quien administra su libro de Finanzas).
+  final Set<Accion>? _acciones;
+
+  /// Acciones que da la celda (las mismas que `permisos_rol` en el servidor).
+  Set<Accion> get acciones => _acciones ?? accionesDe(alcance);
+
+  /// Acciones que da [alcance] por omisión.
+  static Set<Accion> accionesDe(Alcance alcance) => switch (alcance) {
     Alcance.ninguno => const {},
     Alcance.total => const {Accion.leer, Accion.escribir, Accion.administrar},
     Alcance.lectura ||
@@ -77,6 +92,7 @@ class Permiso {
     Alcance.parcial => const {Accion.leer},
     Alcance.propio ||
     Alcance.turno ||
+    Alcance.solicitudes ||
     Alcance.consentimiento => const {Accion.leer, Accion.escribir},
     Alcance.registroPropio => const {Accion.escribir},
   };
@@ -86,26 +102,44 @@ class Permiso {
 /// (`permisos_rol` en `supabase/migrations/`); la prueba
 /// `test/revision_calidad/i1_matriz_espejo_servidor_test.dart` lo vigila.
 ///
-/// Alineación de la revisión de la Fase 0 (I1, pendiente del dueño): la
-/// cuidadora no lee Finanzas (solo registrará sus gastos de cuidado en la
-/// Fase 5) ni usa GRAVITY (solo Cuidados, D5); el coadministrador no entra a
-/// Cuidados hasta que exista el consentimiento (Fase 5).
+/// Decisiones del dueño (D18 y D19, 21/oct/2026): cada quien ve lo suyo, también
+/// el dueño (historial de GRAVITY y finanzas personales); el dueño y la pareja
+/// llevan **su** libro de Finanzas y los compartidos de los que son miembros;
+/// la cuidadora no lee Finanzas (solo registrará sus gastos de cuidado en la
+/// Fase 5) y de GRAVITY solo usa su bandeja de solicitudes y recordatorios; el
+/// coadministrador no entra a Cuidados hasta que exista el consentimiento
+/// (Fase 5). La cuenta maestra (D19) se resuelve aparte: [puedeSobre].
+const _todas = {Accion.leer, Accion.escribir, Accion.administrar};
+
 const Map<Modulo, Map<Rol, Permiso>> matrizPermisos = {
   Modulo.gravity: {
-    Rol.dueno: Permiso(Alcance.total, 'Completo'),
+    Rol.dueno: Permiso(
+      Alcance.propio,
+      'Lo suyo (cada quien su historial) y la configuración de GRAVITY',
+      acciones: _todas,
+    ),
     Rol.coadministrador: Permiso(Alcance.propio, 'Lo suyo'),
     Rol.familiar: Permiso(Alcance.propio, 'Lo suyo'),
-    Rol.cuidador: Permiso.ninguno(),
+    Rol.cuidador: Permiso(
+      Alcance.solicitudes,
+      'Solo sus solicitudes y recordatorios, para confirmarlos',
+      accesoDirecto: false,
+    ),
     Rol.casa: Permiso(
       Alcance.propio,
       'Órdenes de la casa, sin dinero ni datos clínicos',
     ),
   },
   Modulo.finanzas: {
-    Rol.dueno: Permiso(Alcance.total, 'Total'),
+    Rol.dueno: Permiso(
+      Alcance.propio,
+      'Su libro, los compartidos y el de papá como albacea',
+      acciones: _todas,
+    ),
     Rol.coadministrador: Permiso(
-      Alcance.lectura,
-      'Leer (lo que registra se define en la Fase 1)',
+      Alcance.propio,
+      'Su libro y los compartidos de los que es miembro',
+      acciones: _todas,
     ),
     Rol.familiar: Permiso.ninguno(),
     Rol.cuidador: Permiso(
@@ -178,6 +212,37 @@ bool puede(Rol rol, Modulo modulo, Accion accion) =>
 bool puedeAbrir(Rol rol, Modulo modulo) {
   final permiso = permisoDe(rol, modulo);
   return permiso.accesoDirecto && permiso.acciones.contains(Accion.leer);
+}
+
+/// Módulos en los que la **cuenta maestra** (D19) lee también lo ajeno: los
+/// libros de Finanzas y el historial de GRAVITY de todos.
+const Set<Modulo> modulosQueLeeLaMaestra = {Modulo.finanzas, Modulo.gravity};
+
+/// Lo que puede hacer una sesión sobre **un dato concreto** de [modulo] (un
+/// libro de Finanzas, una conversación del historial de GRAVITY…).
+///
+/// [esDeLaPersona] es `true` si el dato es suyo o de un libro compartido del
+/// que es miembro (lo dice el módulo, que conoce al dueño del dato).
+/// - Lo suyo: según la matriz ([puede]).
+/// - Lo ajeno: solo con alcance total en el módulo (p. ej. Cuidados del dueño).
+/// - La **cuenta maestra** [esMaestra] además **lee** lo ajeno de
+///   [modulosQueLeeLaMaestra], y **nunca** escribe ni administra lo ajeno: no
+///   se le muestran esos botones.
+///
+/// Solo es para la interfaz; el servidor decide (RLS, `fin_puede`).
+bool puedeSobre(
+  Rol rol,
+  Modulo modulo,
+  Accion accion, {
+  required bool esDeLaPersona,
+  bool esMaestra = false,
+}) {
+  if (esDeLaPersona) return puede(rol, modulo, accion);
+  final conTotal =
+      permisoDe(rol, modulo).alcance == Alcance.total && puede(rol, modulo, accion);
+  if (!esMaestra) return conTotal;
+  if (accion != Accion.leer) return false;
+  return conTotal || modulosQueLeeLaMaestra.contains(modulo);
 }
 
 /// Clave de `GoRoute.metadata` con la acción que exige una ruta de un módulo

@@ -1,4 +1,5 @@
 import 'fecha.dart';
+import 'frecuencia.dart';
 
 /// Qué hacer cuando un pago cae en sábado, domingo o día inhábil
 /// (5.1 y 5.6 bis, punto 2; decisión 44). Es configurable por ingreso.
@@ -23,8 +24,10 @@ enum ReglaDiaInhabil {
 /// Tipo de día inhábil (entidad `DíaInhábil`, sección 7 del diseño).
 enum TipoDiaInhabil { festivoOficial, personal }
 
-/// Un día inhábil del calendario editable del hogar.
+/// Un día inhábil del calendario editable del hogar (`fin_dias_inhabiles`).
 class DiaInhabil {
+  /// UUID del registro (nulo en la precarga que aún no se guarda).
+  final String? id;
   final Fecha fecha;
   final String nombre;
   final TipoDiaInhabil tipo;
@@ -32,12 +35,39 @@ class DiaInhabil {
   /// De dónde sale (por ejemplo, "LFT art. 74, fracción I").
   final String fuente;
 
+  /// Solo los activos cuentan en el calendario. La precarga de festivos
+  /// llega **inactiva** hasta que el dueño la revisa (decisión 55).
+  final bool activo;
+  final String? revisadoPor;
+  final DateTime? revisadoEn;
+
   const DiaInhabil({
+    this.id,
     required this.fecha,
     required this.nombre,
     this.tipo = TipoDiaInhabil.festivoOficial,
     this.fuente = '',
+    this.activo = true,
+    this.revisadoPor,
+    this.revisadoEn,
   });
+
+  DiaInhabil copiar({
+    String? id,
+    String? nombre,
+    bool? activo,
+    String? revisadoPor,
+    DateTime? revisadoEn,
+  }) => DiaInhabil(
+    id: id ?? this.id,
+    fecha: fecha,
+    nombre: nombre ?? this.nombre,
+    tipo: tipo,
+    fuente: fuente,
+    activo: activo ?? this.activo,
+    revisadoPor: revisadoPor ?? this.revisadoPor,
+    revisadoEn: revisadoEn ?? this.revisadoEn,
+  );
 
   @override
   String toString() => '$fecha $nombre';
@@ -56,9 +86,9 @@ class CalendarioFijo implements CalendarioDiasInhabiles {
 
   CalendarioFijo(Iterable<Fecha> fechas) : _fechas = Set.unmodifiable(fechas);
 
-  /// Calendario a partir de los [DiaInhabil] del hogar.
+  /// Calendario a partir de los [DiaInhabil] del hogar (solo los activos).
   factory CalendarioFijo.deDias(Iterable<DiaInhabil> dias) =>
-      CalendarioFijo(dias.map((d) => d.fecha));
+      CalendarioFijo(dias.where((d) => d.activo).map((d) => d.fecha));
 
   /// Sin festivos: solo los fines de semana son inhábiles.
   static final CalendarioFijo vacio = CalendarioFijo(const []);
@@ -237,6 +267,25 @@ class CalendarioPago {
     regla: regla,
   );
 
+  /// Varios **días fijos** de cada mes (por ejemplo, la pensión de los días
+  /// 1 y 11; P15 y regla 6 de 4.5). Con un solo día es igual a [mensual].
+  /// Se admiten 1 o 2 días: con 2 días al mes el equivalente semanal es el
+  /// de 24 pagos al año (× 24 ÷ 52), igual que el quincenal.
+  factory CalendarioPago.diasFijos(
+    List<DiaDelMes> dias, {
+    ReglaDiaInhabil regla = ReglaDiaInhabil.siguienteDiaHabil,
+  }) {
+    final distintos = dias.toSet().toList();
+    if (distintos.isEmpty || distintos.length > 2) {
+      throw ArgumentError('Se admiten 1 o 2 días fijos por mes');
+    }
+    return CalendarioPago._(
+      FormaPago.mensual,
+      diasDelMes: List.unmodifiable(distintos),
+      regla: regla,
+    );
+  }
+
   /// Cada [meses] meses a partir de la fecha [ancla] (un pago conocido), en
   /// el mismo día del mes (o el último, si el mes es más corto).
   factory CalendarioPago.cadaMeses(
@@ -244,8 +293,13 @@ class CalendarioPago {
     int meses, {
     ReglaDiaInhabil regla = ReglaDiaInhabil.siguienteDiaHabil,
   }) {
-    if (meses < 1 || meses > 12) {
-      throw ArgumentError.value(meses, 'meses', 'debe ser de 1 a 12');
+    if (!const {1, 2, 3, 6, 12}.contains(meses)) {
+      throw ArgumentError.value(
+        meses,
+        'meses',
+        'debe ser 1, 2, 3, 6 o 12 (mensual, bimestral, trimestral, semestral '
+            'o anual)',
+      );
     }
     return CalendarioPago._(
       FormaPago.cadaMeses,
@@ -254,6 +308,31 @@ class CalendarioPago {
       regla: regla,
     );
   }
+
+  /// Cuántos pagos hay en un año (base de su equivalente semanal, sección 4).
+  int get vecesAlAnio => switch (forma) {
+    FormaPago.semanal => 52,
+    FormaPago.catorcenal => 26,
+    FormaPago.quincenal => 24,
+    FormaPago.mensual => 12 * diasDelMes.length,
+    FormaPago.cadaMeses => 12 ~/ intervaloMeses!,
+  };
+
+  /// Frecuencia con el mismo número de pagos al año, para el equivalente
+  /// semanal (sección 4). Dos días fijos al mes equivalen a 24 pagos al año,
+  /// como el quincenal; cada 2, 3, 6 o 12 meses es bimestral, trimestral,
+  /// semestral o anual.
+  Frecuencia get frecuencia => switch (vecesAlAnio) {
+    52 => Frecuencia.semanal,
+    26 => Frecuencia.catorcenal,
+    24 => Frecuencia.quincenal,
+    12 => Frecuencia.mensual,
+    6 => Frecuencia.bimestral,
+    4 => Frecuencia.trimestral,
+    2 => Frecuencia.semestral,
+    1 => Frecuencia.anual,
+    final n => throw StateError('$n pagos al año no tienen equivalente'),
+  };
 
   /// Fechas nominales (sin ajustar) entre [desde] y [hasta], inclusive.
   List<Fecha> fechasNominales(Fecha desde, Fecha hasta) {

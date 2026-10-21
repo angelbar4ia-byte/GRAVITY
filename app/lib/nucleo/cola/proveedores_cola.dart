@@ -4,6 +4,7 @@ library;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../base_local/base_local.dart';
+import '../contratos/roles.dart';
 import '../sesion/proveedores_sesion.dart';
 import '../sesion/sesion.dart';
 import '../tablet/controlador_tablet.dart';
@@ -41,12 +42,20 @@ String? personaConSesionServidor(Ref ref) {
   return servicio.sesionActual?.persona.id;
 }
 
+/// Persona de la cuenta del equipo: la cuenta Casa de la tablet (D14), o
+/// `null` si la sesión abierta es de una persona.
+String? cuentaDelEquipo(Ref ref) {
+  final sesion = ref.read(sesionActualProvider);
+  return sesion?.rol == Rol.casa ? sesion!.persona.id : null;
+}
+
 final colaSinConexionProvider = Provider<ColaSinConexion>((ref) {
   final cola = ColaSinConexion(
     base: ref.watch(baseLocalProvider),
     enviador: ref.watch(enviadorProvider),
     personaQueRegistra: () => ref.read(personaQueRegistraProvider),
     personaConSesion: () => personaConSesionServidor(ref),
+    cuentaDelEquipo: () => cuentaDelEquipo(ref),
   );
   ref.onDispose(cola.cerrar);
   return cola;
@@ -64,9 +73,15 @@ final registrosConAtencionProvider = StreamProvider<List<RegistroPendiente>>((
 ) {
   final persona = ref.watch(personaQueRegistraProvider);
   if (persona == null) return Stream.value(const []);
+  // En el modo Casa también se ven los registrados en la tablet sin PIN.
+  final enModoCasa =
+      ref.watch(sesionActualProvider)?.rol == Rol.casa &&
+      ref.watch(
+        controladorTabletProvider.select((e) => e.usuarioActivo == null),
+      );
   return ref
       .watch(colaSinConexionProvider)
-      .vigilarAtencion(personaId: persona);
+      .vigilarAtencion(personaId: persona, deLaTabletCasa: enModoCasa);
 });
 
 /// Enviador del modo demostración: nunca sube (los registros esperan, sin

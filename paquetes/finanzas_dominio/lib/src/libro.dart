@@ -3,9 +3,18 @@ import 'semana.dart';
 
 /// Clases contables de 5.0 bis 2, punto 1 ("¿qué tengo?, ¿qué debo?, ¿qué
 /// entra y qué sale?"), más dos clases técnicas para que la partida doble
-/// cuadre: [ajuste] (la cuenta "Ajustes" de la conciliación) y [apertura]
-/// (contrapartida de los saldos iniciales).
-enum ClaseCuenta { activo, pasivo, ingreso, gasto, ajuste, apertura }
+/// cuadre: [ajuste] (la cuenta "Ajustes" de la conciliación), [apertura]
+/// (contrapartida de los saldos iniciales) y [entreLibros] (lo que entra o
+/// sale hacia otro libro del hogar, D19: aportaciones a un compartido).
+enum ClaseCuenta {
+  activo,
+  pasivo,
+  ingreso,
+  gasto,
+  ajuste,
+  apertura,
+  entreLibros,
+}
 
 /// Tipos de cuenta del MVP 1 (5.0 bis y 5.0 bis 2, punto 5).
 ///
@@ -41,7 +50,12 @@ enum TipoCuenta {
   ajustes(ClaseCuenta.ajuste),
 
   /// Contrapartida técnica de los saldos iniciales (no se muestra).
-  apertura(ClaseCuenta.apertura);
+  apertura(ClaseCuenta.apertura),
+
+  /// Cuenta **virtual** que representa a otro libro del hogar en la vista de
+  /// un libro (D19, regla 1 de 4.5): una aportación de "Mi libro" a "Gastos
+  /// de la casa" sale de mi banco hacia esta cuenta. Nunca se guarda.
+  otroLibro(ClaseCuenta.entreLibros);
 
   final ClaseCuenta clase;
 
@@ -69,6 +83,10 @@ class Cuenta {
   /// Límite de crédito de una tarjeta (opcional, centavos).
   final int? limiteCentavos;
 
+  /// Libro al que pertenece (D19). Nulo = del **hogar**: las cuentas de gasto
+  /// por rubro son comunes a todos los libros (regla 2 de 4.5).
+  final String? libroId;
+
   const Cuenta({
     required this.id,
     required this.nombre,
@@ -77,7 +95,11 @@ class Cuenta {
     this.categoriaId,
     this.titularId,
     this.limiteCentavos,
+    this.libroId,
   });
+
+  /// `true` si es común a todo el hogar (sin libro).
+  bool get delHogar => libroId == null;
 
   ClaseCuenta get clase => tipo.clase;
 
@@ -98,6 +120,7 @@ class Cuenta {
     categoriaId: categoriaId ?? this.categoriaId,
     titularId: titularId ?? this.titularId,
     limiteCentavos: limiteCentavos ?? this.limiteCentavos,
+    libroId: libroId,
   );
 
   @override
@@ -183,6 +206,10 @@ class Movimiento {
   /// En un contraasiento, el movimiento que anula.
   final String? anulaA;
 
+  /// Persona en cuyo nombre se registra: el albacea en el libro de papá
+  /// (D19, regla 3 de 4.5). Exige [motivo].
+  final String? enNombreDe;
+
   /// Estado con el que nace: confirmado, o pendiente si otra persona debe
   /// confirmarlo (5.0 ter).
   final EstadoMovimiento estadoInicial;
@@ -203,6 +230,7 @@ class Movimiento {
     this.nota,
     this.motivo,
     this.anulaA,
+    this.enNombreDe,
     this.estadoInicial = EstadoMovimiento.confirmado,
   }) : registradoPor = registradoPor ?? realizadoPor {
     if (estadoInicial != EstadoMovimiento.confirmado &&
@@ -210,6 +238,28 @@ class Movimiento {
       throw ArgumentError('Un movimiento nace confirmado o pendiente');
     }
   }
+
+  /// El mismo movimiento con otras cuentas (para la vista de un libro, donde
+  /// la cuenta de otro libro se cambia por una virtual).
+  Movimiento conCuentas(String origen, String destino) => Movimiento(
+    id: id,
+    tipo: tipo,
+    fecha: fecha,
+    registradoEn: registradoEn,
+    cuentaOrigenId: origen,
+    cuentaDestinoId: destino,
+    monto: monto,
+    realizadoPor: realizadoPor,
+    registradoPor: registradoPor,
+    via: via,
+    categoriaId: categoriaId,
+    grupoId: grupoId,
+    nota: nota,
+    motivo: motivo,
+    anulaA: anulaA,
+    enNombreDe: enNombreDe,
+    estadoInicial: estadoInicial,
+  );
 
   bool mismoContenido(Movimiento o) =>
       o.id == id &&
@@ -227,6 +277,7 @@ class Movimiento {
       o.nota == nota &&
       o.motivo == motivo &&
       o.anulaA == anulaA &&
+      o.enNombreDe == enNombreDe &&
       o.estadoInicial == estadoInicial;
 
   @override
@@ -277,20 +328,26 @@ class Balance {
   final int resultadoAcumulado;
   final int ajustes;
 
+  /// Lo que entró desde otros libros menos lo que salió hacia ellos (D19).
+  final int entreLibros;
+
   const Balance({
     required this.activos,
     required this.pasivos,
     required this.patrimonioInicial,
     required this.resultadoAcumulado,
     required this.ajustes,
+    this.entreLibros = 0,
   });
 
   int get patrimonio => activos - pasivos;
 
-  /// Diferencia del cuadre: patrimonio − (inicial + resultado + ajustes).
-  /// Cero si todo cuadra; distinto de cero es un "descuadre".
+  /// Diferencia del cuadre: patrimonio − (inicial + resultado + ajustes +
+  /// aportaciones entre libros). Cero si todo cuadra; distinto de cero es un
+  /// "descuadre".
   int get descuadre =>
-      patrimonio - (patrimonioInicial + resultadoAcumulado + ajustes);
+      patrimonio -
+      (patrimonioInicial + resultadoAcumulado + ajustes + entreLibros);
 
   bool get cuadra => descuadre == 0;
 }
@@ -365,12 +422,18 @@ class LibroMovimientos {
   /// una cuenta que hoy está cerrada sigue contando. Lo que no pasa las reglas
   /// del libro no se agrega y queda en [rechazadosAlRestaurar] (el servidor
   /// repite las mismas reglas, así que no debería pasar).
+  ///
+  /// Con [validar] en `false` se confía en lo guardado (el servidor ya aplicó
+  /// las mismas reglas con todas las cuentas del hogar): sirve para armar la
+  /// vista de un libro, donde las cuentas de otros libros son virtuales
+  /// ([TipoCuenta.otroLibro]). Lo que se agregue después sí se valida.
   factory LibroMovimientos.restaurar({
     required Iterable<Cuenta> cuentas,
     Iterable<Movimiento> movimientos = const [],
     Iterable<Confirmacion> confirmaciones = const [],
+    bool validar = true,
   }) {
-    final libro = LibroMovimientos();
+    final libro = LibroMovimientos().._confiar = !validar;
     final guardadas = cuentas.toList();
     for (final c in guardadas) {
       libro.abrirCuenta(c.conEstado(EstadoCuenta.activa));
@@ -408,8 +471,12 @@ class LibroMovimientos {
     for (final c in guardadas) {
       libro._cuentas[c.id] = c;
     }
+    libro._confiar = false;
     return libro;
   }
+
+  /// Mientras se restaura sin validar.
+  bool _confiar = false;
 
   final List<(Movimiento, String)> _rechazados = [];
 
@@ -485,7 +552,7 @@ class LibroMovimientos {
         'no se editan, se anulan',
       );
     }
-    _validar(m);
+    if (!_confiar) _validar(m);
     _movimientos.add(m);
     _porId[m.id] = m;
     _estado[m.id] = m.estadoInicial;
@@ -508,7 +575,9 @@ class LibroMovimientos {
   /// [TipoMovimiento.reembolso].
   ///
   /// Si la anulación involucra a otra persona, se crea con
-  /// [estado] = pendiente y debe confirmarse (5.0 ter).
+  /// [estado] = pendiente y debe confirmarse (5.0 ter). En el libro de papá
+  /// el contraasiento va también [enNombreDe] él (por omisión, el del
+  /// original).
   Movimiento anular(
     String movimientoId, {
     required String nuevoId,
@@ -517,6 +586,7 @@ class LibroMovimientos {
     required DateTime registradoEn,
     Fecha? fecha,
     EstadoMovimiento estado = EstadoMovimiento.confirmado,
+    String? enNombreDe,
   }) {
     final original = movimiento(movimientoId);
     return agregar(
@@ -534,6 +604,7 @@ class LibroMovimientos {
         grupoId: original.grupoId,
         motivo: motivo,
         anulaA: original.id,
+        enNombreDe: enNombreDe ?? original.enNombreDe,
         estadoInicial: estado,
       ),
     );
@@ -673,6 +744,7 @@ class LibroMovimientos {
       case ClaseCuenta.ingreso:
       case ClaseCuenta.ajuste:
       case ClaseCuenta.apertura:
+      case ClaseCuenta.entreLibros:
         return -1;
     }
   }
@@ -715,6 +787,7 @@ class LibroMovimientos {
         _sumaClase(ClaseCuenta.ingreso, hasta: al) -
         _sumaClase(ClaseCuenta.gasto, hasta: al),
     ajustes: _sumaClase(ClaseCuenta.ajuste, hasta: al),
+    entreLibros: _sumaClase(ClaseCuenta.entreLibros, hasta: al),
   );
 
   /// Estado de resultados de [periodo], con el gasto financiero aparte.
@@ -874,6 +947,11 @@ class LibroMovimientos {
   void _validar(Movimiento m) {
     if (m.monto <= 0) {
       throw ErrorLibro('El monto debe ser mayor que cero (${m.id})');
+    }
+    if (m.enNombreDe != null && _vacio(m.motivo)) {
+      throw ErrorLibro(
+        'Registrar en nombre de otra persona exige un motivo (${m.id})',
+      );
     }
     if (m.cuentaOrigenId == m.cuentaDestinoId) {
       throw ErrorLibro('Origen y destino deben ser distintos (${m.id})');

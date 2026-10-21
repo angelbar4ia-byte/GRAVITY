@@ -204,6 +204,15 @@ class DeudaPlan {
   /// por costo (5.3, prioridad de pago, punto 4).
   final int? prioridadManual;
 
+  /// Forma parte del **grupo de deudas prioritarias** que eligió el titular
+  /// (P12; regla 4 de 4.5): si el libro tiene grupo, solo esas deudas reciben
+  /// el remanente y el abono que libera una deuda liquidada, en [ordenGrupo];
+  /// cuando el grupo queda pagado, ese dinero va a ahorro.
+  final bool grupoPrioritario;
+
+  /// Lugar dentro del grupo (1 = primero).
+  final int? ordenGrupo;
+
   DeudaPlan({
     required this.id,
     required this.nombre,
@@ -214,6 +223,8 @@ class DeudaPlan {
     this.tasaAnualPuntosBase = 0,
     this.saldo,
     this.prioridadManual,
+    this.grupoPrioritario = false,
+    this.ordenGrupo,
   }) : minimo = tipo == TipoDeuda.msi ? abono : minimo {
     if (abono < 0 || minimo < 0) {
       throw ArgumentError('Abono y mínimo no pueden ser negativos ($id)');
@@ -242,6 +253,8 @@ class DeudaPlan {
     tasaAnualPuntosBase: tasaAnualPuntosBase,
     saldo: nuevoSaldo,
     prioridadManual: prioridadManual,
+    grupoPrioritario: grupoPrioritario,
+    ordenGrupo: ordenGrupo,
   );
 
   /// Interés en pesos por año (desempate del orden, 5.3).
@@ -478,15 +491,34 @@ void _validarIds(Iterable<String> ids, String que) {
   }
 }
 
-/// Orden en que las deudas reciben el **abono extra** (5.3 y decisión 51):
+/// `true` si alguna de las [deudas] está en el grupo prioritario: entonces el
+/// libro trabaja con su grupo (P12; regla 4 de 4.5).
+bool hayGrupoPrioritario(Iterable<DeudaPlan> deudas) =>
+    deudas.any((d) => d.grupoPrioritario);
+
+/// Orden en que las deudas reciben el **abono extra**.
+///
+/// **Con grupo de deudas prioritarias** (P12; regla 4 de 4.5): solo las del
+/// grupo, en su [DeudaPlan.ordenGrupo] (desempate por id); las demás no
+/// reciben extra, y cuando el grupo queda pagado el dinero va a ahorro.
+///
+/// **Sin grupo** (interpretación: se conserva el orden del diseño, 5.3 y
+/// decisión 51):
 ///
 /// 1. Las que tienen prioridad manual, de menor a mayor número.
 /// 2. Deudas con costo por **mayor tasa**; desempate por mayor interés en
 ///    pesos y después por id.
 /// 3. Préstamos familiares (sin interés), al final.
 ///
-/// Las compras a MSI **no reciben extra** (salvo con prioridad manual).
+/// Las compras a MSI **no reciben extra** (salvo con prioridad manual o en el
+/// grupo).
 List<DeudaPlan> ordenDeAbonoExtra(Iterable<DeudaPlan> deudas) {
+  if (hayGrupoPrioritario(deudas)) {
+    return deudas.where((d) => d.grupoPrioritario).toList()..sort((a, b) {
+      final o = (a.ordenGrupo ?? 1 << 30).compareTo(b.ordenGrupo ?? 1 << 30);
+      return o != 0 ? o : a.id.compareTo(b.id);
+    });
+  }
   final manuales = deudas.where((d) => d.prioridadManual != null).toList()
     ..sort((a, b) {
       final p = a.prioridadManual!.compareTo(b.prioridadManual!);
@@ -517,15 +549,22 @@ List<DeudaPlan> ordenDeAbonoExtra(Iterable<DeudaPlan> deudas) {
 /// Reparte el [remanente] según 5.6 bis, punto 7: abono extra a las deudas en
 /// [ordenDeAbonoExtra] (sin pasar de su saldo menos el abono ya aplicado) y,
 /// cuando ya no hay deuda, ahorro. Con [ParametrosPlan.ahorroMinimoConDeudaPuntosBase]
-/// una parte va a ahorro desde el inicio.
+/// una parte del remanente va a ahorro desde el inicio (la "meta de ahorro"
+/// de la regla 4 de 4.5, interpretación).
 ///
 /// [abonosAplicados] es el abono (planeado o real) de cada deuda en la semana.
+/// [liberado] es el abono que dejó libre una deuda liquidada (regla 4 de 4.5):
+/// va completo a la siguiente deuda del grupo, sin apartar ahorro mínimo, y a
+/// ahorro cuando ya no hay deuda que pagar.
 DestinoRemanente repartirRemanente(
   int remanente,
   Map<DeudaPlan, int> abonosAplicados, {
   ParametrosPlan parametros = const ParametrosPlan(),
+  int liberado = 0,
 }) {
-  if (remanente <= 0) return DestinoRemanente.vacio;
+  if (remanente < 0) remanente = 0;
+  if (liberado < 0) liberado = 0;
+  if (remanente + liberado == 0) return DestinoRemanente.vacio;
   int? capacidad(DeudaPlan d) {
     final saldo = d.saldo;
     if (saldo == null) return null; // sin saldo capturado: sin límite
@@ -536,13 +575,15 @@ DestinoRemanente repartirRemanente(
   final elegibles = ordenDeAbonoExtra(abonosAplicados.keys)
       .where((d) => capacidad(d) != 0)
       .toList();
-  if (elegibles.isEmpty) return DestinoRemanente(const [], remanente);
+  if (elegibles.isEmpty) {
+    return DestinoRemanente(const [], remanente + liberado);
+  }
 
   final ahorroMinimo = aplicarPorcentaje(
     remanente,
     parametros.ahorroMinimoConDeudaPuntosBase,
   );
-  var porRepartir = remanente - ahorroMinimo;
+  var porRepartir = remanente - ahorroMinimo + liberado;
   final extras = <AbonoExtra>[];
   for (final d in elegibles) {
     if (porRepartir <= 0) break;

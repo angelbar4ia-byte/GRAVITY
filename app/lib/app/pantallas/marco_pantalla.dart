@@ -66,18 +66,25 @@ class MarcoPantalla extends ConsumerWidget {
 }
 
 /// GRAVITY en el teléfono: un botón de micrófono arriba (D12). La voz llega
-/// en la Fase 6.
-class BotonMicrofono extends StatelessWidget {
+/// en la Fase 6. No aparece para quien no conversa con GRAVITY (la
+/// cuidadora solo confirma sus solicitudes, D18).
+class BotonMicrofono extends ConsumerWidget {
   const BotonMicrofono({super.key});
 
   @override
-  Widget build(BuildContext context) => IconButton(
-    icon: const Icon(Icons.mic_none),
-    tooltip: 'Hablar con GRAVITY',
-    onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Hablar con GRAVITY llega en la Fase 6.')),
-    ),
-  );
+  Widget build(BuildContext context, WidgetRef ref) {
+    final rol = ref.watch(rolEfectivoProvider);
+    if (rol == null || !puedeAbrir(rol, Modulo.gravity)) {
+      return const SizedBox.shrink();
+    }
+    return IconButton(
+      icon: const Icon(Icons.mic_none),
+      tooltip: 'Hablar con GRAVITY',
+      onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Hablar con GRAVITY llega en la Fase 6.')),
+      ),
+    );
+  }
 }
 
 /// Menú de la cuenta: quién está, Ajustes y salir (o volver al modo Casa en
@@ -91,6 +98,9 @@ class MenuCuenta extends ConsumerWidget {
     if (sesion == null) return const SizedBox.shrink();
     final esTablet = ref.watch(tipoDispositivoProvider) == TipoDispositivo.tablet;
     if (esTablet && sesion.rol == Rol.casa) return const SizedBox.shrink();
+    final personal = ref.watch(
+      controladorTabletProvider.select((e) => e.configuracion.esPersonal),
+    );
     return PopupMenuButton<_OpcionCuenta>(
       tooltip: 'Cuenta',
       icon: const Icon(Icons.account_circle_outlined),
@@ -99,7 +109,7 @@ class MenuCuenta extends ConsumerWidget {
           case _OpcionCuenta.ajustes:
             context.go(Rutas.ajustes);
           case _OpcionCuenta.modoCasa:
-            ref.read(controladorTabletProvider.notifier).volverAModoCasa();
+            ref.read(controladorTabletProvider.notifier).volverAlReposo();
           case _OpcionCuenta.salir:
             await ref.read(servicioSesionProvider).salir();
         }
@@ -116,9 +126,9 @@ class MenuCuenta extends ConsumerWidget {
             child: Text('Ajustes'),
           ),
         if (esTablet)
-          const PopupMenuItem(
+          PopupMenuItem(
             value: _OpcionCuenta.modoCasa,
-            child: Text('Volver al modo Casa'),
+            child: Text(personal ? 'Bloquear la tablet' : 'Volver al modo Casa'),
           )
         else
           const PopupMenuItem(value: _OpcionCuenta.salir, child: Text('Salir')),

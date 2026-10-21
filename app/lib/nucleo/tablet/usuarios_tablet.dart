@@ -1,4 +1,5 @@
-/// Personas que entran en la tablet de la casa (D14) y su configuración.
+/// Personas que entran en las tablets (D14) y su configuración: tipo de tablet
+/// (personal o pública de la casa) y personas permitidas.
 /// Todo se guarda en el almacenamiento seguro; el PIN solo como hash, y la
 /// credencial del servidor de cada persona, cifrada con su PIN (I6).
 library;
@@ -25,7 +26,22 @@ const List<ContextoCasa> contextosCasa = [
   ContextoCasa('cuidados', 'Cuidados'),
 ];
 
-/// Tiempo sin uso para regresar al modo Casa (editable, D14).
+/// Tipo de tablet (D14, actualizada el 21/oct/2026). Se elige en
+/// Ajustes › Dispositivos.
+enum TipoTablet {
+  /// Del dueño y la pareja: en reposo, pantalla de bloqueo con los perfiles
+  /// permitidos; **sin** modo Casa. Tras el tiempo sin uso vuelve al bloqueo.
+  personal,
+
+  /// De la casa: en reposo, modo Casa (cuenta de rol Casa, sin dinero ni datos
+  /// clínicos). Leer no pide identidad; registrar sí.
+  publica,
+}
+
+/// Roles que pueden entrar a una tablet personal (D14: dueño y pareja).
+const Set<Rol> rolesDeTabletPersonal = {Rol.dueno, Rol.coadministrador};
+
+/// Tiempo sin uso para regresar al reposo: modo Casa o bloqueo (D14).
 const regresoModoCasaPorOmision = Duration(minutes: 2);
 const regresoModoCasaMinimo = Duration(seconds: 30);
 const regresoModoCasaMaximo = Duration(minutes: 30);
@@ -40,6 +56,7 @@ class UsuarioTablet {
     required this.rol,
     required this.hashPin,
     this.hogarId,
+    this.esMaestra = false,
   });
 
   factory UsuarioTablet.desdeSesion(Sesion sesion, {required String hashPin}) =>
@@ -49,6 +66,7 @@ class UsuarioTablet {
         rol: sesion.rol,
         hashPin: hashPin,
         hogarId: sesion.hogarId,
+        esMaestra: sesion.esMaestra,
       );
 
   final String personaId;
@@ -59,10 +77,14 @@ class UsuarioTablet {
   final String hashPin;
   final String? hogarId;
 
+  /// Cuenta maestra (D19): solo lee; nunca escribe en lo ajeno.
+  final bool esMaestra;
+
   Sesion get sesion => Sesion(
     persona: Persona(id: personaId, nombre: nombre),
     rol: rol,
     hogarId: hogarId,
+    esMaestra: esMaestra,
   );
 
   UsuarioTablet copiarCon({String? hashPin, Sesion? sesion}) => UsuarioTablet(
@@ -71,6 +93,7 @@ class UsuarioTablet {
     rol: sesion?.rol ?? rol,
     hashPin: hashPin ?? this.hashPin,
     hogarId: sesion?.hogarId ?? hogarId,
+    esMaestra: sesion?.esMaestra ?? esMaestra,
   );
 
   Map<String, Object?> aJson() => {
@@ -79,6 +102,7 @@ class UsuarioTablet {
     'rol': rol.name,
     'hash_pin': hashPin,
     if (hogarId != null) 'hogar_id': hogarId,
+    if (esMaestra) 'es_maestra': true,
   };
 
   /// Lee una persona guardada. Una marca `huella` de versiones anteriores se
@@ -89,6 +113,7 @@ class UsuarioTablet {
     rol: Rol.values.byName(json['rol']! as String),
     hashPin: json['hash_pin']! as String,
     hogarId: json['hogar_id'] as String?,
+    esMaestra: json['es_maestra'] == true,
   );
 }
 
@@ -97,20 +122,38 @@ class ConfiguracionTablet {
   const ConfiguracionTablet({
     this.regresoModoCasa = regresoModoCasaPorOmision,
     this.contexto = 'general',
+    this.tipo = TipoTablet.publica,
+    this.permitidas = const {},
   });
 
+  /// Tiempo sin uso para volver al reposo (modo Casa o bloqueo).
   final Duration regresoModoCasa;
   final String contexto;
+  final TipoTablet tipo;
 
-  ConfiguracionTablet copiarCon({Duration? regresoModoCasa, String? contexto}) =>
-      ConfiguracionTablet(
-        regresoModoCasa: regresoModoCasa ?? this.regresoModoCasa,
-        contexto: contexto ?? this.contexto,
-      );
+  /// En la tablet personal, quiénes pueden entrar (ids de persona). Solo
+  /// cuentan las personas de la tablet con rol de [rolesDeTabletPersonal].
+  final Set<String> permitidas;
+
+  bool get esPersonal => tipo == TipoTablet.personal;
+
+  ConfiguracionTablet copiarCon({
+    Duration? regresoModoCasa,
+    String? contexto,
+    TipoTablet? tipo,
+    Set<String>? permitidas,
+  }) => ConfiguracionTablet(
+    regresoModoCasa: regresoModoCasa ?? this.regresoModoCasa,
+    contexto: contexto ?? this.contexto,
+    tipo: tipo ?? this.tipo,
+    permitidas: permitidas ?? this.permitidas,
+  );
 
   Map<String, Object?> aJson() => {
     'regreso_segundos': regresoModoCasa.inSeconds,
     'contexto': contexto,
+    'tipo': tipo.name,
+    'permitidas': permitidas.toList()..sort(),
   };
 
   factory ConfiguracionTablet.desdeJson(Map<String, Object?> json) =>
@@ -121,8 +164,27 @@ class ConfiguracionTablet {
               regresoModoCasaPorOmision.inSeconds,
         ),
         contexto: (json['contexto'] as String?) ?? 'general',
+        tipo: TipoTablet.values
+                .where((t) => t.name == json['tipo'])
+                .firstOrNull ??
+            TipoTablet.publica,
+        permitidas: {
+          for (final id in (json['permitidas'] as List?) ?? const [])
+            if (id is String) id,
+        },
       );
 }
+
+/// `true` si [usuario] puede entrar a una tablet con [configuracion]: en la
+/// pública, cualquiera de la tablet; en la personal, solo las permitidas con
+/// rol de dueño o pareja.
+bool puedeEntrarEnTablet(
+  UsuarioTablet usuario,
+  ConfiguracionTablet configuracion,
+) =>
+    !configuracion.esPersonal ||
+    (rolesDeTabletPersonal.contains(usuario.rol) &&
+        configuracion.permitidas.contains(usuario.personaId));
 
 /// Lee y guarda personas y configuración de la tablet.
 class RepositorioTablet {

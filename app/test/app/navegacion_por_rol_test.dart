@@ -117,9 +117,7 @@ void main() {
       expect(find.text('Ajustes'), findsOneWidget);
     });
 
-    testWidgets('Pareja: Finanzas de lectura y sin "Gasto" en (+)', (
-      tester,
-    ) async {
+    testWidgets('Pareja: su Finanzas y "Gasto" en (+) (D19)', (tester) async {
       await montarApp(
         tester,
         dispositivo: TipoDispositivo.telefono,
@@ -128,7 +126,8 @@ void main() {
       expect(pestana('Finanzas'), findsOneWidget);
       await tester.tap(pestana('Registrar'));
       await tester.pumpAndSettle();
-      expect(find.text('Gasto'), findsNothing);
+      expect(find.text('Gasto'), findsOneWidget);
+      expect(find.text('Ingreso extra'), findsOneWidget);
       expect(find.text('Hábito'), findsOneWidget);
     });
 
@@ -172,7 +171,13 @@ void main() {
           .widgetList<NavigationDestination>(find.byType(NavigationDestination))
           .map((d) => d.label)
           .toList();
-      expect(etiquetas, ['Mi turno', 'Medicamentos', 'Comidas', 'Bitácora']);
+      expect(etiquetas, [
+        'Mi turno',
+        'Solicitudes',
+        'Medicamentos',
+        'Comidas',
+        'Bitácora',
+      ]);
 
       await tester.tap(pestana('Bitácora'));
       await tester.pumpAndSettle();

@@ -103,6 +103,15 @@ class $PendientesTable extends Pendientes
     requiredDuringInsert: false,
   );
   @override
+  late final GeneratedColumnWithTypeConverter<OrigenRegistro?, String> origen =
+      GeneratedColumn<String>(
+        'origen',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<OrigenRegistro?>($PendientesTable.$converterorigenn);
+  @override
   List<GeneratedColumn> get $columns => [
     id,
     tipo,
@@ -113,6 +122,7 @@ class $PendientesTable extends Pendientes
     siguienteIntento,
     ultimoError,
     personaId,
+    origen,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -232,6 +242,12 @@ class $PendientesTable extends Pendientes
         DriftSqlType.string,
         data['${effectivePrefix}persona_id'],
       ),
+      origen: $PendientesTable.$converterorigenn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}origen'],
+        ),
+      ),
     );
   }
 
@@ -242,6 +258,10 @@ class $PendientesTable extends Pendientes
 
   static JsonTypeConverter2<EstadoPendiente, String, String> $converterestado =
       const EnumNameConverter<EstadoPendiente>(EstadoPendiente.values);
+  static JsonTypeConverter2<OrigenRegistro, String, String> $converterorigen =
+      const EnumNameConverter<OrigenRegistro>(OrigenRegistro.values);
+  static JsonTypeConverter2<OrigenRegistro?, String?, String?>
+  $converterorigenn = JsonTypeConverter2.asNullable($converterorigen);
 }
 
 class RegistroPendiente extends DataClass
@@ -266,6 +286,10 @@ class RegistroPendiente extends DataClass
   /// Persona que lo registró (id de `personas`). Solo se envía con la sesión
   /// del servidor de esa misma persona (revisión de la Fase 0, I4).
   final String? personaId;
+
+  /// Desde dónde se registró (`null` en los de antes de la versión 3:
+  /// [OrigenRegistro.propio]).
+  final OrigenRegistro? origen;
   const RegistroPendiente({
     required this.id,
     required this.tipo,
@@ -276,6 +300,7 @@ class RegistroPendiente extends DataClass
     this.siguienteIntento,
     this.ultimoError,
     this.personaId,
+    this.origen,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -299,6 +324,11 @@ class RegistroPendiente extends DataClass
     if (!nullToAbsent || personaId != null) {
       map['persona_id'] = Variable<String>(personaId);
     }
+    if (!nullToAbsent || origen != null) {
+      map['origen'] = Variable<String>(
+        $PendientesTable.$converterorigenn.toSql(origen),
+      );
+    }
     return map;
   }
 
@@ -319,6 +349,9 @@ class RegistroPendiente extends DataClass
       personaId: personaId == null && nullToAbsent
           ? const Value.absent()
           : Value(personaId),
+      origen: origen == null && nullToAbsent
+          ? const Value.absent()
+          : Value(origen),
     );
   }
 
@@ -341,6 +374,9 @@ class RegistroPendiente extends DataClass
       ),
       ultimoError: serializer.fromJson<String?>(json['ultimoError']),
       personaId: serializer.fromJson<String?>(json['personaId']),
+      origen: $PendientesTable.$converterorigenn.fromJson(
+        serializer.fromJson<String?>(json['origen']),
+      ),
     );
   }
   @override
@@ -358,6 +394,9 @@ class RegistroPendiente extends DataClass
       'siguienteIntento': serializer.toJson<DateTime?>(siguienteIntento),
       'ultimoError': serializer.toJson<String?>(ultimoError),
       'personaId': serializer.toJson<String?>(personaId),
+      'origen': serializer.toJson<String?>(
+        $PendientesTable.$converterorigenn.toJson(origen),
+      ),
     };
   }
 
@@ -371,6 +410,7 @@ class RegistroPendiente extends DataClass
     Value<DateTime?> siguienteIntento = const Value.absent(),
     Value<String?> ultimoError = const Value.absent(),
     Value<String?> personaId = const Value.absent(),
+    Value<OrigenRegistro?> origen = const Value.absent(),
   }) => RegistroPendiente(
     id: id ?? this.id,
     tipo: tipo ?? this.tipo,
@@ -383,6 +423,7 @@ class RegistroPendiente extends DataClass
         : this.siguienteIntento,
     ultimoError: ultimoError.present ? ultimoError.value : this.ultimoError,
     personaId: personaId.present ? personaId.value : this.personaId,
+    origen: origen.present ? origen.value : this.origen,
   );
   RegistroPendiente copyWithCompanion(PendientesCompanion data) {
     return RegistroPendiente(
@@ -399,6 +440,7 @@ class RegistroPendiente extends DataClass
           ? data.ultimoError.value
           : this.ultimoError,
       personaId: data.personaId.present ? data.personaId.value : this.personaId,
+      origen: data.origen.present ? data.origen.value : this.origen,
     );
   }
 
@@ -413,7 +455,8 @@ class RegistroPendiente extends DataClass
           ..write('estado: $estado, ')
           ..write('siguienteIntento: $siguienteIntento, ')
           ..write('ultimoError: $ultimoError, ')
-          ..write('personaId: $personaId')
+          ..write('personaId: $personaId, ')
+          ..write('origen: $origen')
           ..write(')'))
         .toString();
   }
@@ -429,6 +472,7 @@ class RegistroPendiente extends DataClass
     siguienteIntento,
     ultimoError,
     personaId,
+    origen,
   );
   @override
   bool operator ==(Object other) =>
@@ -442,7 +486,8 @@ class RegistroPendiente extends DataClass
           other.estado == this.estado &&
           other.siguienteIntento == this.siguienteIntento &&
           other.ultimoError == this.ultimoError &&
-          other.personaId == this.personaId);
+          other.personaId == this.personaId &&
+          other.origen == this.origen);
 }
 
 class PendientesCompanion extends UpdateCompanion<RegistroPendiente> {
@@ -455,6 +500,7 @@ class PendientesCompanion extends UpdateCompanion<RegistroPendiente> {
   final Value<DateTime?> siguienteIntento;
   final Value<String?> ultimoError;
   final Value<String?> personaId;
+  final Value<OrigenRegistro?> origen;
   final Value<int> rowid;
   const PendientesCompanion({
     this.id = const Value.absent(),
@@ -466,6 +512,7 @@ class PendientesCompanion extends UpdateCompanion<RegistroPendiente> {
     this.siguienteIntento = const Value.absent(),
     this.ultimoError = const Value.absent(),
     this.personaId = const Value.absent(),
+    this.origen = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   PendientesCompanion.insert({
@@ -478,6 +525,7 @@ class PendientesCompanion extends UpdateCompanion<RegistroPendiente> {
     this.siguienteIntento = const Value.absent(),
     this.ultimoError = const Value.absent(),
     this.personaId = const Value.absent(),
+    this.origen = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        tipo = Value(tipo),
@@ -494,6 +542,7 @@ class PendientesCompanion extends UpdateCompanion<RegistroPendiente> {
     Expression<DateTime>? siguienteIntento,
     Expression<String>? ultimoError,
     Expression<String>? personaId,
+    Expression<String>? origen,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -506,6 +555,7 @@ class PendientesCompanion extends UpdateCompanion<RegistroPendiente> {
       if (siguienteIntento != null) 'siguiente_intento': siguienteIntento,
       if (ultimoError != null) 'ultimo_error': ultimoError,
       if (personaId != null) 'persona_id': personaId,
+      if (origen != null) 'origen': origen,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -520,6 +570,7 @@ class PendientesCompanion extends UpdateCompanion<RegistroPendiente> {
     Value<DateTime?>? siguienteIntento,
     Value<String?>? ultimoError,
     Value<String?>? personaId,
+    Value<OrigenRegistro?>? origen,
     Value<int>? rowid,
   }) {
     return PendientesCompanion(
@@ -532,6 +583,7 @@ class PendientesCompanion extends UpdateCompanion<RegistroPendiente> {
       siguienteIntento: siguienteIntento ?? this.siguienteIntento,
       ultimoError: ultimoError ?? this.ultimoError,
       personaId: personaId ?? this.personaId,
+      origen: origen ?? this.origen,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -568,6 +620,11 @@ class PendientesCompanion extends UpdateCompanion<RegistroPendiente> {
     if (personaId.present) {
       map['persona_id'] = Variable<String>(personaId.value);
     }
+    if (origen.present) {
+      map['origen'] = Variable<String>(
+        $PendientesTable.$converterorigenn.toSql(origen.value),
+      );
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -586,6 +643,7 @@ class PendientesCompanion extends UpdateCompanion<RegistroPendiente> {
           ..write('siguienteIntento: $siguienteIntento, ')
           ..write('ultimoError: $ultimoError, ')
           ..write('personaId: $personaId, ')
+          ..write('origen: $origen, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -613,6 +671,7 @@ typedef $$PendientesTableCreateCompanionBuilder = PendientesCompanion Function({
   Value<DateTime?> siguienteIntento,
   Value<String?> ultimoError,
   Value<String?> personaId,
+  Value<OrigenRegistro?> origen,
   Value<int> rowid,
 });
 typedef $$PendientesTableUpdateCompanionBuilder = PendientesCompanion Function({
@@ -625,6 +684,7 @@ typedef $$PendientesTableUpdateCompanionBuilder = PendientesCompanion Function({
   Value<DateTime?> siguienteIntento,
   Value<String?> ultimoError,
   Value<String?> personaId,
+  Value<OrigenRegistro?> origen,
   Value<int> rowid,
 });
 
@@ -682,6 +742,12 @@ class $$PendientesTableFilterComposer
     column: $table.personaId,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnWithTypeConverterFilters<OrigenRegistro?, OrigenRegistro, String>
+  get origen => $composableBuilder(
+    column: $table.origen,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
 }
 
 class $$PendientesTableOrderingComposer
@@ -737,6 +803,11 @@ class $$PendientesTableOrderingComposer
     column: $table.personaId,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get origen => $composableBuilder(
+    column: $table.origen,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$PendientesTableAnnotationComposer
@@ -778,6 +849,9 @@ class $$PendientesTableAnnotationComposer
 
   GeneratedColumn<String> get personaId =>
       $composableBuilder(column: $table.personaId, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<OrigenRegistro?, String> get origen =>
+      $composableBuilder(column: $table.origen, builder: (column) => column);
 }
 
 class $$PendientesTableTableManager
@@ -820,6 +894,7 @@ class $$PendientesTableTableManager
                 Value<DateTime?> siguienteIntento = const Value.absent(),
                 Value<String?> ultimoError = const Value.absent(),
                 Value<String?> personaId = const Value.absent(),
+                Value<OrigenRegistro?> origen = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => PendientesCompanion(
                 id: id,
@@ -831,6 +906,7 @@ class $$PendientesTableTableManager
                 siguienteIntento: siguienteIntento,
                 ultimoError: ultimoError,
                 personaId: personaId,
+                origen: origen,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -844,6 +920,7 @@ class $$PendientesTableTableManager
                 Value<DateTime?> siguienteIntento = const Value.absent(),
                 Value<String?> ultimoError = const Value.absent(),
                 Value<String?> personaId = const Value.absent(),
+                Value<OrigenRegistro?> origen = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => PendientesCompanion.insert(
                 id: id,
@@ -855,6 +932,7 @@ class $$PendientesTableTableManager
                 siguienteIntento: siguienteIntento,
                 ultimoError: ultimoError,
                 personaId: personaId,
+                origen: origen,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

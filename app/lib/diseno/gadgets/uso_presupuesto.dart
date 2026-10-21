@@ -12,8 +12,8 @@ import 'package:flutter/foundation.dart';
 
 import '../componentes/semaforo.dart';
 
-/// Puntos base en 100 %.
-const int puntosBaseEnCien = 10000;
+/// Puntos base en 100 % (privado: `finanzas_dominio` exporta el suyo).
+const int _puntosBaseEnCien = 10000;
 
 @immutable
 class UsoPresupuesto {
@@ -89,7 +89,7 @@ class UsoPresupuesto {
   }
 
   /// gastado ÷ asignado comparado con [puntosBase] ÷ 10 000, en enteros.
-  int _compararCon(int puntosBase) => (gastadoCentavos * puntosBaseEnCien)
+  int _compararCon(int puntosBase) => (gastadoCentavos * _puntosBaseEnCien)
       .compareTo(puntosBase * asignadoCentavos);
 
   @override

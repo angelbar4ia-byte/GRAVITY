@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../superficies.dart';
 import '../valores_diseno.dart';
 
 /// Barra de avance fina (sección 19). [valor] va de 0 a 1.
@@ -30,7 +31,7 @@ class BarraProgreso extends StatelessWidget {
     final v = ValoresDiseno.de(context);
     final avance = valor.isNaN ? 0.0 : valor.clamp(0.0, 1.0);
     final porcentaje = '${(avance * 100).round()} %';
-    final pista = Color.lerp(v.panel, v.borde, 0.45)!;
+    final pista = v.pista;
     final relleno = color ?? v.acento;
     final animar = v.animado && !MediaQuery.disableAnimationsOf(context);
 

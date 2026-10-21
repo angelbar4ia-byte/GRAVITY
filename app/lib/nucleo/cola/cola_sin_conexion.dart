@@ -9,6 +9,10 @@
 /// - Cada registro guarda **quién** lo hizo y solo se envía con la sesión del
 ///   servidor de esa persona; sin sesión no se envía nada (revisión de la
 ///   Fase 0, I4).
+/// - En la tablet pública de la casa (D14), lo de la casa se registra sin PIN
+///   eligiendo el nombre ([OrigenRegistro.tabletCasa]): se guarda quién dijo
+///   ser y solo se envía con la sesión de la **cuenta del equipo** (Casa),
+///   nunca con la de esa persona (no entró con su PIN).
 /// - Lo que el servidor no acepta (sin permiso, datos inválidos) o lo que
 ///   falla demasiadas veces queda en "requiere atención"
 ///   ([EstadoPendiente.rechazado]): no se pierde, no se reintenta solo y la
@@ -48,6 +52,8 @@ class PeticionEnvio {
     required this.carga,
     required this.creadoEn,
     required this.intento,
+    this.personaId,
+    this.origen = OrigenRegistro.propio,
   });
 
   final String id;
@@ -57,6 +63,10 @@ class PeticionEnvio {
 
   /// Número de intento (1 la primera vez).
   final int intento;
+
+  /// Quién lo registró (en [OrigenRegistro.tabletCasa], quien dijo ser).
+  final String? personaId;
+  final OrigenRegistro origen;
 }
 
 /// Un enviador la lanza para rechazar un registro diciendo por qué (queda en
@@ -127,6 +137,7 @@ class ColaSinConexion {
     this.intentosMaximos = 20,
     this.personaQueRegistra,
     this.personaConSesion,
+    this.cuentaDelEquipo,
     DateTime Function()? reloj,
     String Function()? generarId,
   }) : _reloj = reloj ?? DateTime.now,
@@ -148,6 +159,11 @@ class ColaSinConexion {
   /// y devuelve `null` (nadie ha entrado), la cola no envía nada; si devuelve
   /// una persona, solo se envía lo que ella registró.
   final String? Function()? personaConSesion;
+
+  /// Persona de la cuenta del equipo (la cuenta Casa de la tablet pública), o
+  /// `null` si el equipo no tiene una. Lo registrado en la tablet de la casa
+  /// sin PIN solo se envía cuando la sesión del servidor es esa cuenta.
+  final String? Function()? cuentaDelEquipo;
 
   final DateTime Function() _reloj;
   final String Function() _generarId;
@@ -195,12 +211,18 @@ class ColaSinConexion {
   /// Guarda un registro para subirlo. Devuelve su id (UUID). Si ya existe un
   /// registro con [id], no se duplica.
   /// [personaId] es quien lo registra; por omisión, [personaQueRegistra].
+  /// [origen] dice si la persona entró con su sesión o eligió su nombre en la
+  /// tablet de la casa (entonces [personaId] es obligatorio).
   Future<String> encolar({
     required String tipo,
     required Map<String, Object?> carga,
     String? id,
     String? personaId,
+    OrigenRegistro origen = OrigenRegistro.propio,
   }) async {
+    if (origen == OrigenRegistro.tabletCasa && personaId == null) {
+      throw ArgumentError.notNull('personaId');
+    }
     final idFinal = id ?? _generarId();
     await _base
         .into(_tabla)
@@ -212,6 +234,7 @@ class ColaSinConexion {
             creadoEn: _reloj(),
             estado: EstadoPendiente.pendiente,
             personaId: Value(personaId ?? personaQueRegistra?.call()),
+            origen: Value(origen),
           ),
           mode: InsertMode.insertOrIgnore,
         );
@@ -238,17 +261,26 @@ class ColaSinConexion {
         restantes: await contarPendientes(),
       );
     }
+    // Lo de la tablet de la casa (sin PIN) sale solo con la cuenta del
+    // equipo; lo demás, solo con la sesión de quien lo registró.
+    final equipo = cuentaDelEquipo?.call();
+    final conCuentaDelEquipo = persona != null && persona == equipo;
     final listos =
         await (_base.select(_tabla)
-              ..where(
-                (t) =>
-                    t.estado.equalsValue(EstadoPendiente.pendiente) &
+              ..where((t) {
+                final esDeLaCasa = t.origen.equalsValue(
+                  OrigenRegistro.tabletCasa,
+                );
+                final propio = t.origen.isNull() | esDeLaCasa.not();
+                final deQuien = persona == null
+                    ? const Constant(true)
+                    : (propio & t.personaId.equals(persona)) |
+                          (esDeLaCasa & Constant(conCuentaDelEquipo));
+                return t.estado.equalsValue(EstadoPendiente.pendiente) &
                     (t.siguienteIntento.isNull() |
                         t.siguienteIntento.isSmallerOrEqualValue(ahora)) &
-                    (persona == null
-                        ? const Constant(true)
-                        : t.personaId.equals(persona)),
-              )
+                    deQuien;
+              })
               ..orderBy([
                 (t) => OrderingTerm.asc(t.creadoEn),
                 (t) => OrderingTerm.asc(t.rowId),
@@ -270,6 +302,8 @@ class ColaSinConexion {
             carga: (jsonDecode(registro.carga) as Map).cast<String, Object?>(),
             creadoEn: registro.creadoEn,
             intento: intento,
+            personaId: registro.personaId,
+            origen: registro.origen ?? OrigenRegistro.propio,
           ),
         );
       } on RechazoEnvio catch (e) {
@@ -352,24 +386,35 @@ class ColaSinConexion {
   }
 
   /// Registros que requieren atención (el servidor no los aceptó), de
-  /// [personaId] si se da: nadie ve lo que registró otra persona (D5).
-  Future<List<RegistroPendiente>> requierenAtencion({String? personaId}) =>
-      _consultaAtencion(personaId).get();
+  /// [personaId] si se da: nadie ve lo que registró otra persona (D5). Con
+  /// [deLaTabletCasa] (modo Casa) se incluyen los registrados en la tablet de
+  /// la casa sin PIN, que son de la casa.
+  Future<List<RegistroPendiente>> requierenAtencion({
+    String? personaId,
+    bool deLaTabletCasa = false,
+  }) => _consultaAtencion(personaId, deLaTabletCasa).get();
 
   /// Lo mismo, en vivo (para el aviso en pantalla).
-  Stream<List<RegistroPendiente>> vigilarAtencion({String? personaId}) =>
-      _vigilar(() => requierenAtencion(personaId: personaId));
+  Stream<List<RegistroPendiente>> vigilarAtencion({
+    String? personaId,
+    bool deLaTabletCasa = false,
+  }) => _vigilar(
+    () => requierenAtencion(personaId: personaId, deLaTabletCasa: deLaTabletCasa),
+  );
 
   SimpleSelectStatement<$PendientesTable, RegistroPendiente> _consultaAtencion(
     String? personaId,
+    bool deLaTabletCasa,
   ) => _base.select(_tabla)
-    ..where(
-      (t) =>
-          t.estado.equalsValue(EstadoPendiente.rechazado) &
-          (personaId == null
-              ? const Constant(true)
-              : t.personaId.equals(personaId)),
-    )
+    ..where((t) {
+      final esDeLaCasa = t.origen.equalsValue(OrigenRegistro.tabletCasa);
+      final propio = t.origen.isNull() | esDeLaCasa.not();
+      final deQuien = personaId == null
+          ? const Constant(true)
+          : (propio & t.personaId.equals(personaId)) |
+                (esDeLaCasa & Constant(deLaTabletCasa));
+      return t.estado.equalsValue(EstadoPendiente.rechazado) & deQuien;
+    })
     ..orderBy([
       (t) => OrderingTerm.asc(t.creadoEn),
       (t) => OrderingTerm.asc(t.rowId),
