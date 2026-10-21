@@ -1,6 +1,6 @@
 # Especificación — Fase 1: Finanzas MVP 1
 
-> Versión 0.1 (20/oct/2026), **para aprobación del dueño**. Base: diseño de FINANZAS v23 (`docs/modulos/finanzas/ESTRUCTURA_APP_PRESUPUESTO_SEMANAL.md`, secciones 1 a 4, 5.0 a 5.2, 5.6, 5.6 bis, 5.9 bis, 7, 8 bis, 9, 10 y 12), `docs/ROADMAP.md` (secciones 4 y 5), `docs/DECISIONES.md` (D3, D4, D5 y D7) y `docs/DISENO_UX_UI.md` (secciones 8, 9, 13 y 14). Se aplican todas las convenciones de `docs/specs/fase-0-cimientos.md`, sección 4.
+> Versión 0.2 (21/oct/2026): incorpora las respuestas del dueño (sección 9.0 y **D19**: finanzas por persona, cuentas compartidas, albaceas y cuenta maestra). Versión 0.1 (20/oct/2026). Base: diseño de FINANZAS v23 (`docs/modulos/finanzas/ESTRUCTURA_APP_PRESUPUESTO_SEMANAL.md`, secciones 1 a 4, 5.0 a 5.2, 5.6, 5.6 bis, 5.9 bis, 7, 8 bis, 9, 10 y 12), `docs/ROADMAP.md` (secciones 4 y 5), `docs/DECISIONES.md` (D3, D4, D5 y D7) y `docs/DISENO_UX_UI.md` (secciones 8, 9, 13 y 14). Se aplican todas las convenciones de `docs/specs/fase-0-cimientos.md`, sección 4.
 >
 > Las preguntas para el dueño están en la **sección 9**. Lo que el diseño dejó ambiguo se resolvió con la interpretación más conservadora y se marca como **(interpretación)**; cada una tiene su pregunta.
 >
@@ -14,7 +14,9 @@
 
 - **Laptop (Dueño):** configuras tus cuentas, ingresos, compromisos, deudas y sobres con el asistente de 5 pasos; activas la semana y ves la cascada **ingreso → presupuesto → deuda → remanente** con semáforos; registras y anulas movimientos; concilias el efectivo; cierras la semana con la revisión de 3 minutos; ves el balance, el estado de resultados y el flujo de las próximas semanas con su alerta.
 - **Teléfono (Dueño):** registras un gasto en **menos de 10 segundos** (también sin señal) y un ingreso extra; ves el resumen de la semana con su semáforo y los movimientos recientes.
-- **Teléfono (Pareja, coadministrador):** ve el resumen de la semana en solo lectura (alcance exacto en la pregunta P1).
+- **Teléfono y laptop (Pareja, coadministrador):** lleva **su propio libro** (su presupuesto, sus cuentas) y registra en las **cuentas compartidas**; no ve las finanzas personales del dueño (D19, P1).
+- **Libro de papá:** lo llevan sus albaceas (1 o 2); pensión los días 1 y 11 y apoyo 60+ cada bimestre (P5, P15).
+- **Cuenta maestra:** ve todo en solo lectura (D19).
 
 ---
 
@@ -24,9 +26,10 @@
 
 | Submódulo | Qué entra | Diseño |
 |---|---|---|
-| Hogar y perfiles | Modo **Individual** con las personas y roles de D5 (ya creados en la Fase 0); parámetros de Finanzas del hogar (meta de remanente, ahorro mínimo con deuda, tope de arrastre, umbrales de semáforo, cierre automático) | 5.0, 5.6 bis punto 9 |
+| Libros (D19) | **Libro personal** por adulto, **libros compartidos** con sus miembros, **libro de papá** con 1 o 2 albaceas que registran en su nombre (motivo y bitácora) y **cuenta maestra** de solo lectura | Sección 4.5 |
+| Hogar y perfiles | Personas y roles de D5 (ya creados en la Fase 0); parámetros de Finanzas del hogar (meta de remanente, ahorro mínimo con deuda, tope de arrastre, umbrales de semáforo, cierre automático) | 5.0, 5.6 bis punto 9 |
 | Cuentas y libro | Cuentas por clase (activos, pasivos, ingresos, gastos) con su ciclo de vida; libro **solo-agregar** con partida doble simplificada; anulación con contraasiento; saldo confirmado, balance, estado de resultados, disponible y patrimonio; conciliación de saldo con ajuste | 5.0 bis, 5.0 bis 2 |
-| Ingresos | Por persona: forma (semanal, catorcenal, quincenal, mensual) y día de pago, neto, certeza, vigencias; **extras** con su fecha real; regla de fin de semana y festivos | 5.1; 5.1 bis puntos 2, 4 y 5 |
+| Ingresos | Por libro: forma (semanal, catorcenal, quincenal, mensual con **varios días fijos**, por ejemplo 1 y 11, y **cada N meses**, por ejemplo bimestral) y día de pago, neto, certeza, vigencias; **extras** con su fecha real; regla de fin de semana y festivos | 5.1; 5.1 bis puntos 2, 4 y 5 |
 | Gastos | Captura manual; árbol de categorías de 3 niveles (sistema y propias; ocultar, archivar, eliminar sin datos); cada categoría principal es una cuenta de gasto; **división por líneas**; "Por clasificar"; gastos con tarjeta (suben la deuda) | 5.2 |
 | Compromisos y deudas (mínimo para la cascada) | Gastos fijos y reservas con frecuencia y fecha; deudas con abono planeado, tipo (con costo, familiar, MSI), tasa, mínimo y prioridad manual | 5.3 (solo lo necesario), 5.6 bis punto 3 |
 | Presupuesto semanal | Asistente de arranque (5 pasos); plan con la cascada; techo y meta de 20 %; destino del remanente; cierre con sobregasto, abono diferido y déficit; arrastre; propuestas de recorte; vistas por semana, catorcena, quincena y mes | 5.6, 5.6 bis |
@@ -40,11 +43,11 @@
 | Queda fuera | Va a |
 |---|---|
 | Captura por voz, foto, OCR y QR | Fase 8+ (el modelo ya guarda la vía de captura) |
-| Modo Pareja y Familiar completo: cuentas compartidas, transferencias entre miembros con confirmación, albacea, deudas internas, aportación proporcional (IN11), reporte de auditoría Excel/CSV | Fase 8+ (el dominio ya maneja estados `pendiente` y confirmaciones) |
+| Del modo Pareja y Familiar: transferencias entre miembros **con confirmación**, deudas internas, aportación proporcional (IN11), reporte de auditoría Excel/CSV; finanzas de los familiares | Fase 8+ (el dominio ya maneja estados `pendiente` y confirmaciones). Libros personales, compartidos, albaceas y cuenta maestra **sí entran** (D19) |
 | Deudas a detalle: estados de cuenta, estimador de tasa, MSI a detalle, simulador y estrategias, beneficios de tarjetas | Fase 2 y 8+ |
 | Ahorro con métodos, fondo de emergencia, alertas con notificaciones (teléfono, avisos al instante y pulsera) | Fase 2 |
 | Previsión (sobres 5.6 ter), bienes, inversión, objetivos | Fase 8+ |
-| Ingresos variables (base prudente y nivelación), vales de despensa, préstamo recibido (`ingreso_financiado`), recibo de nómina | Fase 2 o 8+ (pregunta P15) |
+| Ingresos variables (base prudente y nivelación), vales de despensa, préstamo recibido (`ingreso_financiado`), recibo de nómina | Fase 2 o 8+ (nadie tiene ingreso variable: P15) |
 | Conciliación renglón por renglón con estados de cuenta; exportar a Excel o CSV | Fase 8+ |
 | Gastos de cuidado registrados por la cuidadora | Fase 5 |
 | Cualquier análisis de dinero con IA en la nube | **Nunca** (D3) |
@@ -96,7 +99,9 @@ Todas las tablas llevan `hogar_id uuid not null references public.hogares`, RLS 
 
 **Vistas de apoyo** (con `security_invoker = true`, para que respeten la RLS): `fin_v_saldos` (saldo confirmado por cuenta con el signo de su clase) y `fin_v_gasto_semana` (gasto neto por cuenta de gasto y semana).
 
-**Para la Fase 8 (no se crea ahora):** `fin_confirmaciones` (movimiento, resultado, por, en_nombre_de, motivo, fecha_hora; solo agregar), titulares múltiples por cuenta, deudas internas y metas de aportación.
+**Para la Fase 8 (no se crea ahora):** `fin_confirmaciones` (movimiento, resultado, por, en_nombre_de, motivo, fecha_hora; solo agregar), deudas internas y metas de aportación.
+
+**Cambios por D19 (sección 4.5):** las tablas de configuración, plan, conciliaciones, cierres y ocurrencias llevan `libro_id`; `fin_cuentas.titular_id` se reemplaza por `libro_id`; `fin_semanas` es única por (`libro_id`, `semana_inicio`); `fin_parametros` es por libro (con los valores del hogar como plantilla); `fin_movimientos` agrega `en_nombre_de` (persona, para el albacea) y su `motivo` es obligatorio cuando `en_nombre_de` no es nulo; `fin_vigencias_ingreso.forma` agrega `cada_meses` con `intervalo_meses`; `fin_deudas` agrega `grupo_prioritario` (bool) y `orden_grupo`.
 
 ### 4.2 Reglas por rol (RLS), con las funciones de la Fase 0
 
@@ -106,7 +111,7 @@ Todas las tablas llevan `hogar_id uuid not null references public.hogares`, RLS 
 | Configuración: `fin_parametros`, `fin_categorias`, `fin_cuentas`, `fin_ingresos`, `fin_vigencias_ingreso`, `fin_compromisos`, `fin_sobres`, `fin_deudas`, `fin_dias_inhabiles` | `puede(…, 'leer')` | `puede(…, 'administrar')` | `puede(…, 'administrar')` | Solo `fin_categorias` y `fin_cuentas` sin datos (FK `restrict`), con `administrar` |
 | Plan: `fin_semanas`, `fin_partidas_semana`, `fin_abonos_semana`, `fin_ocurrencias` | `puede(…, 'leer')` | `puede(…, 'escribir')` | `puede(…, 'escribir')`, nunca si la semana está `cerrada` (trigger) | Nadie |
 
-Con la matriz de la Fase 0: **dueño** lee, escribe y administra; **coadministrador** solo lee (pregunta P1 y P2); **familiar, cuidador y casa** no ven nada de Finanzas (el cuidador registrará gastos de cuidado en la Fase 5 por una regla `restringida` propia). Permisos de columna explícitos como en la migración base.
+**Con D19 la condición cambia:** en lugar de `puede(hogar_id, 'finanzas', …)` se usa `fin_puede(libro_id, accion)` (sección 4.5): ver su libro, los compartidos de los que es miembro y, para los albaceas, el libro de papá; la cuenta maestra solo lee todo. **Dueño y coadministrador** tienen Finanzas con alcance **propio** (cada uno su libro); **familiar, cuidador y casa** no ven nada de Finanzas (el cuidador registrará gastos de cuidado en la Fase 5 por una regla `restringida` propia, como pendientes en el libro de papá). Permisos de columna explícitos como en la migración base.
 
 ### 4.3 Validación en el servidor al insertar un movimiento
 
@@ -137,6 +142,29 @@ Además: ambas cuentas son del mismo hogar y están `activa` (una anulación tam
 | CierreSemana, AbonoDiferido | `CierreSemanal`, `CierrePartida`, `AbonoReal` |
 | Balance, estado de resultados, CierrePeriodo | `Balance`, `EstadoResultados` |
 | ProyeccionFlujo | `ProyeccionFlujo`, `DiaFlujo`, `FlujoSemana` |
+
+### 4.5 Libros, albaceas y cuenta maestra (D19)
+
+| Tabla | Campos principales | Notas |
+|---|---|---|
+| `fin_libros` | `id`, `hogar_id`, `nombre`, `tipo` (`personal`/`compartido`/`representado`), `titular_id` (persona; obligatorio en `personal` y `representado`, nulo en `compartido`), `activo`, `creado_por`, `creado_en` | Un libro `personal` por persona y hogar (único). `representado` = el de papá (persona bajo cuidado, sin cuenta) |
+| `fin_libro_miembros` | `libro_id`, `persona_id`, `papel` (`titular`/`miembro`/`albacea`/`albacea_suplente`), `desde`, `hasta` | El titular de un libro personal es su único miembro. En un `representado`: 1 albacea y, opcional, 1 suplente (máximo 2). Los compartidos tienen 2 o más miembros adultos |
+| `membresias.es_maestra` (columna en la tabla de la Fase 0) | `bool`, default `false` | Una sola por hogar (índice único parcial); solo el dueño la asigna (función `asignar_cuenta_maestra`) |
+
+**Funciones (security definer, `search_path` fijo, como las de la Fase 0):**
+
+- `fin_es_miembro(libro_id)`: la persona actual es miembro vigente del libro (cualquier papel).
+- `fin_puede(libro_id, accion)`: `leer` → miembro o cuenta maestra; `escribir` → miembro (titular, miembro o albacea; el suplente solo si no hay albacea vigente o con motivo); `administrar` → titular de un `personal`, cualquier miembro adulto de un `compartido`, albacea de un `representado`. La cuenta maestra **nunca** escribe en libros de los que no es miembro. Además se exige que el rol tenga Finanzas (`permisos_rol` con alcance `propio`).
+- `fin_registrar_consulta_maestra(libro_id)`: la app la llama al abrir un libro ajeno con la cuenta maestra; deja la consulta en la bitácora (acción `finanzas.consulta_maestra`).
+
+**Reglas:**
+
+1. Las cuentas son del libro (`libro_id`); una transferencia entre libros (aportación a un compartido) es un solo movimiento con origen en un libro y destino en otro, y se ve desde los dos. El nombre de una cuenta de otro libro no se ve si no eres miembro (la app muestra *"Aportación de Ana"*).
+2. Las categorías y las cuentas de gasto son del **hogar** (árbol común); cada libro tiene su presupuesto con sus sobres.
+3. Un movimiento con `en_nombre_de` lo registra un albacea en el libro `representado`; `motivo` obligatorio; queda en la bitácora con quién y en nombre de quién.
+4. **Grupo de deudas prioritarias (P12):** el titular elige qué deudas forman el grupo y su orden. El remanente (después de la meta de ahorro) y el abono que libera una deuda liquidada van a la siguiente deuda del grupo; cuando el grupo queda pagado, ese dinero va a **ahorro**. Se muestra en la revisión semanal.
+5. **Día inhábil por compromiso (P13):** cada compromiso y deuda trae su `regla_inhabil`; por defecto `sin_cambio` (se puede pagar en fin de semana). Solo el pago a **la caja** usa `siguiente_dia_habil` (se configura con los datos del dueño, no en el repositorio).
+6. Ingresos de papá (P15): `mensual` con `dias_mes = {1, 11}` y `siguiente_dia_habil`; apoyo 60+ con `cada_meses`, `intervalo_meses = 2`, certeza `probable` y la fecha que capture el dueño.
 
 ---
 
@@ -284,6 +312,22 @@ Las pruebas del dominio están en `paquetes/finanzas_dominio/test/` (`dart test`
 ## 9. Preguntas para el dueño
 
 Cada pregunta trae la **propuesta por defecto** con la que se construye si no hay respuesta. Ninguna bloquea programar.
+
+### 9.0 Respuestas del dueño (21/oct/2026)
+
+| # | Respuesta | Qué cambia |
+|---|---|---|
+| — | Finanzas propias por usuario, cuentas compartidas para pagos y uno o dos albaceas; cada quien ve lo suyo y una cuenta maestra ve todo | **D19** y sección 4.5; entran al MVP 1 |
+| **P1** | La pareja ve **su** presupuesto y las cuentas compartidas | Su propio libro; no ve el libro personal del dueño |
+| **P2** | (Se sigue de P1) La pareja registra en su libro y en los compartidos | Alcance `propio` en Finanzas para el coadministrador |
+| **P4** | Uno o dos albaceas | Albacea y suplente en el libro de papá |
+| **P5** | Sí: el dinero de papá se lleva en la app (se sigue de P15) | Libro `representado` con sus albaceas |
+| **P12** | Se elige un **grupo de deudas prioritarias**; se abona a esas; cuando se pagan, el dinero pasa a **ahorro** | Regla 4 de la sección 4.5. El tope de arrastre se queda en la propuesta (2 × semanal) y los protegidos en renta, servicios y cuidados, hasta que digas otra cosa |
+| **P13** | Solo **la caja** pasa al siguiente día hábil; los demás pagos se quedan en su fecha | Regla 5 de la sección 4.5 (interpretación: "la caja" es el pago a la caja de ahorro o popular; confirmar) |
+| **P15** | Nadie tiene ingreso variable. Papá recibe su **pensión los días 1 y 11** (si cae en fin de semana o festivo, el siguiente día hábil) y **apoyo 60+ cada bimestre** | Base prudente fuera del MVP 1; forma `cada_meses` y varios días fijos al mes (regla 6) |
+| **P19** | (Se sigue de P12) La deuda liquidada libera su abono hacia el grupo prioritario y luego a ahorro | Regla 4 de la sección 4.5 |
+
+Las demás preguntas siguen con su propuesta por defecto.
 
 ### 9.1 Roles y permisos financieros entre miembros (5.0 ter → D5)
 

@@ -82,7 +82,7 @@ Base: diseño de FINANZAS v23, sección 10 (MVP 1).
 
 **Queda para después:** captura por voz e imagen (foto, OCR, QR), modo Pareja y Familiar completo, conciliación con estados de cuenta y reportes de auditoría.
 
-**Se define en la especificación de esta fase:** los roles y permisos financieros entre miembros (albacea, confirmaciones, qué registra la pareja), tomando como base la sección 5.0 ter del diseño de FINANZAS.
+**Definido (21/oct/2026, D19):** finanzas por persona (cada quien su libro), cuentas compartidas para pagos, libro de papá con 1 o 2 albaceas y cuenta maestra de solo lectura (especificación, secciones 4.5 y 9.0).
 
 **Aceptación:** las pruebas del motor de presupuesto (5.6 bis) y del libro de movimientos (5.0 bis) pasan; registrar un gasto en el teléfono toma menos de 10 s; la app abre en menos de 2 s (decisión 24 de FINANZAS).
 
@@ -162,7 +162,7 @@ Algunas funciones de Hábitos se usan **en el momento** y por eso van en el tel�
 
 ### Fase 8+ — Ampliaciones
 Por bloques, cada uno con su pasada funcional y su pulido.
-- **Finanzas:** modo Pareja y Familiar completo (transferencias con confirmación, albacea, auditoría), conciliación con estados de cuenta en la laptop (los archivos no se suben), simulador de deudas y estimador de intereses, beneficios de tarjetas, inversión, objetivos y plan, bienes y previsión, reportes, y voz e imagen en el teléfono.
+- **Finanzas:** lo que falta del modo Pareja y Familiar (transferencias con confirmación, deudas internas, aportación proporcional, auditoría; los libros personales, compartidos y de papá con albaceas entran en la Fase 1 por D19), conciliación con estados de cuenta en la laptop (los archivos no se suben), simulador de deudas y estimador de intereses, beneficios de tarjetas, inversión, objetivos y plan, bienes y previsión, reportes, y voz e imagen en el teléfono.
 - **Hábitos:** salud (sueño, entrenamiento, suplementos, medidas), bicicleta y música, inglés y modo traslado, estudios bíblicos ampliados, pareja, Health Connect y el coach, que pasa a ser parte de GRAVITY.
 - **GRAVITY:** equipo dedicado para el puente de casa (D9, fase 2), micrófono propio en casa e IA local en la laptop para analizar dinero (D3).
 - **Reloj Wear OS (D15, nivel 2):** app propia, solo si más adelante se cambia la pulsera por un reloj Wear OS.

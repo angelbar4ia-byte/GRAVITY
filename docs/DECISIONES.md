@@ -14,7 +14,7 @@ Cuando las decisiones confirmadas cambian el contrato, se reescribe `CONTRATO_CO
 | D2 | Cuidados entra como módulo | Confirmada |
 | D3 | GRAVITY sí usa dinero, por rol y sin IA en la nube | Confirmada (cuidados: propuesta) |
 | D4 | Laptop Windows con el sistema completo; teléfono con lo mínimo | Confirmada |
-| D5 | Roles y personas | Confirmada (detalles pendientes) |
+| D5 | Roles y personas | Confirmada (actualizada 21/oct; detalles pendientes) |
 | D6 | Bocinas Xiaomi como medio de voz de GRAVITY | Propuesta |
 | D7 | Servidor: Supabase (plan gratis); Firebase solo para avisos y reparto de la app | Confirmada |
 | D8 | Reglas para controlar la laptop | Propuesta |
@@ -23,11 +23,12 @@ Cuando las decisiones confirmadas cambian el contrato, se reescribe `CONTRATO_CO
 | D11 | Prioridad Finanzas → Hábitos; funcional primero, pulido después | Confirmada |
 | D12 | Laptop con pantalla principal de GRAVITY tipo JARVIS; teléfono como app normal | Confirmada |
 | D13 | Datos sensibles de Hábitos: cifrados en la nube o solo en el teléfono, a elegir | Confirmada |
-| D14 | Tablet portátil de la casa con cambio de usuario | Confirmada (detalles propuestos) |
+| D14 | Tablets: personal (dueño y pareja) y pública de la casa | Confirmada (actualizada 21/oct; identidad al registrar: propuesta) |
 | D15 | Pulsera smart band (reloj Wear OS a futuro) | Confirmada (detalles propuestos) |
 | D16 | APIs documentadas con OpenAPI y Swagger UI | Confirmada (detalles propuestos) |
 | D17 | Reglas técnicas del servidor (Fase 0) | Propuesta |
-| D18 | Decisiones provisionales de la revisión de la Fase 0 | Provisional (pendiente del dueño) |
+| D18 | Decisiones de la revisión de la Fase 0 | Confirmada (21/oct; coadministrador y Cuidados hasta la Fase 5) |
+| D19 | Finanzas por persona, cuentas compartidas, albaceas y cuenta maestra | Confirmada (21/oct; detalles propuestos) |
 
 ---
 
@@ -108,11 +109,11 @@ Cuando las decisiones confirmadas cambian el contrato, se reescribe `CONTRATO_CO
 
 | Persona | Rol | Módulos | Dinero en GRAVITY | Cuidados |
 |---|---|---|---|---|
-| Usuario | **Dueño** | Todos | Completo | Completo |
-| Pareja | **Co-administrador** | Alimentación, su Hábitos; Presupuesto solo lectura | Solo lectura del presupuesto | Según consentimiento |
+| Usuario | **Dueño** | Todos | Sus finanzas, las compartidas y las de papá como albacea (D19) | Completo |
+| Pareja | **Co-administrador** | Alimentación, su Hábitos, sus finanzas y las cuentas compartidas | Sus finanzas y las compartidas (D19) | Según consentimiento (Fase 5) |
 | Otros familiares | **Familiar** | Su Hábitos y su parte de Alimentación | No | No |
 | Papá (Alzheimer) | **Persona bajo cuidado** | No usa la app; sus datos viven en Cuidados | — | Titular de los datos |
-| Cuidadora principal (por turnos; puede haber más) | **Cuidador** | Cuidados | Solo los gastos de cuidado que registra | Su parte |
+| Cuidadora principal (por turnos; puede haber más) | **Cuidador** | Cuidados; GRAVITY solo para sus solicitudes y recordatorios; dispositivos de la casa | Solo los gastos de cuidado que registra | Su parte |
 | Hermana (martes, después del turno de la cuidadora) | **Cuidador** (familiar) | Cuidados | Los gastos de cuidado que registra | Su parte |
 | Esposo e hijos de la hermana | Sin cuenta | — | — | — |
 | Cualquiera en casa (bocinas, D6) | **Casa** | Recetas, lista de compras, recordatorios generales | No | Solo recordatorios genéricos |
@@ -125,6 +126,8 @@ Cuando las decisiones confirmadas cambian el contrato, se reescribe `CONTRATO_CO
 - La cuidadora **no ve nada de la familia** fuera de Cuidados (dinero, hábitos, menús de otros).
 - Papá no tiene cuenta; los consentimientos sobre sus datos los da quien lo representa.
 - La voz **no identifica de forma segura** a una persona: las bocinas siempre tienen el rol **Casa**.
+- **Cada quien ve lo suyo** (21/oct/2026): el historial de GRAVITY y las finanzas personales son de cada persona, también para el dueño. Solo la **cuenta maestra** (D19) ve todo.
+- **Cuidadora y GRAVITY** (21/oct/2026): GRAVITY le recuerda sus actividades y le hace solicitudes; ella las **confirma** (hecho, no se pudo, con nota). También usa los **dispositivos de la casa** (Fase 6). No conversa libremente con GRAVITY ni ve nada de la familia.
 
 **Pendiente.**
 - Si la hermana ve el **resumen mensual del costo del cuidado** (p. ej. si comparten gastos).
@@ -293,7 +296,7 @@ GRAVITY/
 
 ---
 
-## D14. Tablet portátil de la casa — confirmada (20/oct/2026; detalles propuestos)
+## D14. Tablets: personal y pública de la casa — confirmada (20/oct/2026; actualizada 21/oct; detalles propuestos)
 
 **Decisión.** Además de la laptop y los teléfonos, hay una **tablet Android portátil**, compartida en la casa, que **se lleva a donde se use**. Es la misma app, con diseño para tablet.
 
@@ -305,7 +308,21 @@ GRAVITY/
 - **Micrófono propio de GRAVITY en casa:** botón "Mantén para hablar" y la palabra *"Gravity"* solo mientras carga, para cuidar la batería. Permite la conversación libre que las bocinas Xiaomi no permiten (D6).
 - **Vista en planta:** descartada (20/oct/2026).
 
-**Pendiente.** Qué contextos se agregan.
+**Dos tipos de tablet (21/oct/2026).** Se elige al registrar el dispositivo en Ajustes › Dispositivos:
+
+| Tipo | En reposo | Quién entra | Qué ve |
+|---|---|---|---|
+| **Personal** (del dueño y la pareja) | Pantalla de bloqueo con los perfiles permitidos; **no** tiene modo Casa | Solo las personas permitidas, con su **PIN** | Sus pantallas según su rol, dinero incluido; tras 2 min sin uso vuelve al bloqueo |
+| **Pública de la casa** | Modo Casa (cuenta de rol Casa), sin dinero ni datos clínicos | Cualquiera ve lo de la casa; para **registrar** pide identidad | Lo de la casa; con PIN, las pantallas de la persona; tras 2 min vuelve al modo Casa |
+
+**Identidad para registrar en la tablet pública — propuesta del arquitecto.**
+- **Leer** lo de la casa (recetas, menú, lista de compras, recordatorios genéricos): sin identidad.
+- **Registrar algo de la casa** (tachar la lista de compras, marcar un recordatorio genérico como hecho, agregar a la lista): **eliges tu nombre** sin PIN; queda en la bitácora como *"Ana, desde la tablet de la casa"*.
+- **Registrar algo personal** (un gasto, un hábito, algo de Cuidados o de papá): **nombre + PIN**; la sesión dura solo esa acción o 2 minutos.
+- Nunca se muestran saldos ni datos clínicos en el modo Casa; para verlos, la persona entra con su PIN.
+- Solo **PIN** en las dos tablets (la huella queda para el teléfono personal).
+
+**Pendiente.** Qué contextos se agregan; confirmar la propuesta de identidad.
 
 ---
 
@@ -351,17 +368,32 @@ Propuestas por el agente backend al construir el esquema base; no cambian ningun
 
 ---
 
-## D18. Decisiones provisionales de la revisión de la Fase 0 — pendientes del dueño (20/oct/2026)
+## D18. Decisiones de la revisión de la Fase 0 — confirmada (21/oct/2026)
 
-Tomadas por el arquitecto con el criterio **más seguro** para cerrar los hallazgos de calidad; se pueden cambiar.
+Tomadas por el arquitecto con el criterio **más seguro** para cerrar los hallazgos de calidad (20/oct) y respondidas por el dueño (21/oct).
 
-| Tema | Provisional | Pregunta para el dueño |
-|---|---|---|
-| Huella en la tablet compartida | **Solo PIN**; la huella queda para el bloqueo del teléfono personal | ¿Se queda así? |
-| Cuenta de la tablet (D14) | La tablet en reposo usa una **cuenta de rol Casa**; cada persona entra con su PIN y usa su propia sesión (guardada cifrada con su PIN) | ¿La tablet será siempre de la casa? |
-| Cuidadora | Sin acceso a Finanzas (solo registrará gastos de cuidado en la Fase 5) ni a GRAVITY | ¿La cuidadora usará GRAVITY? |
-| Coadministrador (pareja) y Cuidados | Sin acceso hasta definir el consentimiento (Fase 5) | ¿Se mantiene? |
-| Dueño y GRAVITY | Acceso total al historial de GRAVITY de todos | Recomendación: **cada quien solo lo suyo** |
-| PIN fallido | Espera de 30 s que se duplica hasta 15 min | ¿Aviso al dueño tras muchos fallos? |
-| Bloqueo del teléfono | Al abrir y tras 1 minuto en segundo plano | ¿Te sirve 1 minuto? |
+| Tema | Queda así |
+|---|---|
+| Huella en las tablets | **Solo PIN** en las dos tablets; la huella queda para el bloqueo del teléfono personal |
+| Tablets (D14) | Dos tipos: **personal** (dueño y pareja, con PIN, sin modo Casa) y **pública de la casa** (modo Casa con cuenta de rol Casa; pide identidad para registrar). La sesión de cada persona se guarda cifrada con su PIN |
+| Cuidadora y GRAVITY | **Restringido:** recibe solicitudes y recordatorios de GRAVITY y los confirma; usa los dispositivos de la casa (Fase 6). Sin Finanzas (solo registrará gastos de cuidado en la Fase 5) |
+| Coadministrador (pareja) y Cuidados | Sin acceso hasta definir el consentimiento (Fase 5) |
+| Historial de GRAVITY | **Cada quien solo lo suyo**, también el dueño; la **cuenta maestra** (D19) ve todo |
+| PIN fallido | Espera de 30 s que se duplica hasta 15 min |
+| Bloqueo del teléfono | Al abrir y tras 1 minuto en segundo plano |
+
+---
+
+## D19. Finanzas por persona, cuentas compartidas, albaceas y cuenta maestra — confirmada (21/oct/2026; detalles propuestos)
+
+**Decisión del dueño.** Finanzas maneja las **finanzas propias de cada persona** y **cuentas compartidas** para hacer pagos, con **uno o dos albaceas**. Cada quien ve lo suyo y hay una **cuenta maestra** que ve todo.
+
+- **Libros.** Cada persona adulta con Finanzas tiene su **libro** (cuentas, ingresos, compromisos, deudas, sobres y su presupuesto semanal). Hay además **libros compartidos** (por ejemplo, "Gastos de la casa") con sus miembros. Papá tiene su libro, que llevan sus albaceas.
+- **Quién ve qué:** cada persona ve su libro y los compartidos de los que es miembro. La pareja ve **su presupuesto y las cuentas compartidas**, no las finanzas personales del dueño (y al revés).
+- **Cuentas compartidas:** cualquier miembro registra pagos e ingresos en ellas; las aportaciones desde un libro personal son transferencias entre libros (se ven en los dos).
+- **Albaceas (1 o 2, el segundo es suplente):** llevan el libro de papá y actúan **en su nombre** con motivo y bitácora (salvaguardas de la decisión 28 de FINANZAS). Ingresos de papá: **pensión los días 1 y 11** de cada mes (si cae en fin de semana o festivo, el siguiente día hábil) y **apoyo gubernamental 60+ cada bimestre**. Montos y fechas los captura el dueño; no se inventan.
+- **Cuenta maestra — propuesta.** Una sola por hogar, la asigna el dueño. **Solo lee** todo (libros, historial de GRAVITY) y no escribe en lo ajeno; cada consulta a lo de otra persona queda en la bitácora y cada persona ve en Ajustes › Privacidad que la cuenta maestra existe. Se recomienda que sea una **cuenta aparte** del dueño, usada solo en la laptop.
+- **D3 sigue igual:** nada de esto va a la IA en la nube ni a las bocinas.
+
+**Qué cambia.** Los libros personales, los compartidos, los albaceas del libro de papá y la cuenta maestra entran al **MVP 1** (Fase 1). Las confirmaciones entre miembros, las deudas internas, la aportación proporcional y la auditoría siguen en la Fase 8. El dueño y la pareja pasan de "total" y "leer todo" a **alcance propio** en Finanzas y GRAVITY.
 
