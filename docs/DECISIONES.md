@@ -366,6 +366,15 @@ Propuestas por el agente backend al construir el esquema base; no cambian ningun
 - **Respaldo:** copia local y copia externa, ambas cifradas (AES-256); retención de 30 días con un mínimo de 7 copias.
 - **Bitácora:** las acciones `insertar`, `actualizar` y `borrar` quedan reservadas a los triggers, y toda acción va en minúsculas (`^[a-z][a-z0-9_.]*$`).
 
+**Fase 1 (21–22/oct/2026), con D19:**
+- **Libro personal automático:** el servidor crea el libro personal (con sus cuentas Ajustes, Apertura y Por clasificar y sus parámetros) al dar un rol con Finanzas; el libro de papá solo lo crea el dueño con `fin_crear_libro_representado`.
+- **Movimientos entre libros:** cada movimiento guarda el libro de cada lado y se ve desde los dos; solo `transferencia` y `pago_deuda` (y su anulación) cruzan de libro.
+- **Cuenta maestra:** solo puede ser una cuenta de rol dueño o coadministrador (nunca familiar, cuidador ni Casa).
+- **Idempotencia:** el mismo `id` con el mismo contenido no hace nada; con otro contenido es un duplicado (23505).
+- **Cierre de semana:** exige antes el cierre de la versión siguiente; en una semana cerrada una ocurrencia puede cambiar su estado y su movimiento (un ingreso que llega tarde), no su fecha ni su monto.
+- **Suplente del albacea:** escribe solo si no hay albacea vigente.
+- **Alcances:** solo `total`, `propio` y `restringido`; lo particular de cada rol (p. ej. la bandeja de la cuidadora en GRAVITY) se resuelve por rol, no con alcances nuevos.
+
 ---
 
 ## D18. Decisiones de la revisión de la Fase 0 — confirmada (21/oct/2026)

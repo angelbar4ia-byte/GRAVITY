@@ -154,7 +154,7 @@ Además: ambas cuentas son del mismo hogar y están `activa` (una anulación tam
 **Funciones (security definer, `search_path` fijo, como las de la Fase 0):**
 
 - `fin_es_miembro(libro_id)`: la persona actual es miembro vigente del libro (cualquier papel).
-- `fin_puede(libro_id, accion)`: `leer` → miembro o cuenta maestra; `escribir` → miembro (titular, miembro o albacea; el suplente solo si no hay albacea vigente o con motivo); `administrar` → titular de un `personal`, cualquier miembro adulto de un `compartido`, albacea de un `representado`. La cuenta maestra **nunca** escribe en libros de los que no es miembro. Además se exige que el rol tenga Finanzas (`permisos_rol` con alcance `propio`).
+- `fin_puede(libro_id, accion)`: `leer` → miembro o cuenta maestra; `escribir` → miembro (titular, miembro o albacea; el suplente solo si no hay albacea vigente); `administrar` → titular de un `personal`, cualquier miembro adulto de un `compartido`, albacea de un `representado`. La cuenta maestra **nunca** escribe en libros de los que no es miembro. Además se exige que el rol tenga Finanzas (`permisos_rol` con alcance `propio`).
 - `fin_registrar_consulta_maestra(libro_id)`: la app la llama al abrir un libro ajeno con la cuenta maestra; deja la consulta en la bitácora (acción `finanzas.consulta_maestra`).
 
 **Reglas:**

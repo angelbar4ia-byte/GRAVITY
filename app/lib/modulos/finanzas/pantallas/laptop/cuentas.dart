@@ -26,7 +26,7 @@ class PantallaCuentas extends StatelessWidget {
           key: const ValueKey('cuentas-nueva'),
           onPressed: () => showDialog<void>(
             context: context,
-            builder: (_) => _DialogoCuenta(contexto: c),
+            builder: (_) => DialogoCuenta(contexto: c),
           ),
           icon: const Icon(Icons.add),
           label: const Text('Nueva cuenta'),
@@ -415,16 +415,17 @@ class _DialogoConciliarState extends ConsumerState<_DialogoConciliar> {
   }
 }
 
-class _DialogoCuenta extends ConsumerStatefulWidget {
-  const _DialogoCuenta({required this.contexto});
+/// Nueva cuenta del libro con su saldo inicial (también en el asistente).
+class DialogoCuenta extends ConsumerStatefulWidget {
+  const DialogoCuenta({super.key, required this.contexto});
 
   final ContextoFinanzas contexto;
 
   @override
-  ConsumerState<_DialogoCuenta> createState() => _DialogoCuentaState();
+  ConsumerState<DialogoCuenta> createState() => _DialogoCuentaState();
 }
 
-class _DialogoCuentaState extends ConsumerState<_DialogoCuenta> {
+class _DialogoCuentaState extends ConsumerState<DialogoCuenta> {
   final _forma = GlobalKey<FormState>();
   final _nombre = TextEditingController();
   final _saldo = TextEditingController();
