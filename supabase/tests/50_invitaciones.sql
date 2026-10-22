@@ -9,7 +9,7 @@ do $$
 declare
   v_correo text;
 begin
-  foreach v_correo in array array['beto@ejemplo.test', 'carla@ejemplo.test', 'diana@ejemplo.test',
+  foreach v_correo in array array['alex@ejemplo.test', 'carla@ejemplo.test', 'diana@ejemplo.test',
                                   'casa@ejemplo.test', 'elena@ejemplo.test', 'nuevo@ejemplo.test']
   loop
     perform pruebas.como(v_correo);
@@ -20,7 +20,7 @@ end
 $$;
 
 -- Solo el dueño invita.
-select pruebas.como('beto@ejemplo.test');
+select pruebas.como('alex@ejemplo.test');
 select pruebas.falla($$select public.crear_invitacion('b0000000-0000-4000-8000-000000000001',
   'alguien@ejemplo.test', 'familiar')$$, 'El coadministrador no invita', '42501');
 select pruebas.como('diana@ejemplo.test');

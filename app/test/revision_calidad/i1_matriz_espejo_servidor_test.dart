@@ -53,11 +53,13 @@ void main() {
   final servidor = matrizDelServidor();
 
   // Ajuste de plataforma (revisión de la Fase 0, I1): la alineación acordada
-  // quita las 2 filas de cuidador × gravity (la cuidadora no usa GRAVITY), así
-  // que el servidor queda con 55 filas, no 57.
-  test('se leyó la matriz del servidor (55 filas)', () {
+  // quitó las 2 filas de cuidador × gravity, y el servidor quedó con 55 filas.
+  // D18 y D19 (21/oct/2026, migración de Finanzas MVP 1) agregan 4: la pareja
+  // escribe y administra su libro de Finanzas, y la cuidadora lee y confirma
+  // sus solicitudes de GRAVITY (restringido). Total: 59.
+  test('se leyó la matriz del servidor (59 filas)', () {
     final filas = servidor.values.fold<int>(0, (n, s) => n + s.length);
-    expect(filas, 55);
+    expect(filas, 59);
   });
 
   test('el espejo de la app da las mismas acciones que el servidor', () {
@@ -79,5 +81,14 @@ void main() {
 
   test('D5: en el espejo la cuidadora tampoco lee Finanzas', () {
     expect(puede(Rol.cuidador, Modulo.finanzas, Accion.leer), isFalse);
+  });
+
+  test('D18: la cuidadora no abre GRAVITY; solo su bandeja de solicitudes', () {
+    expect(servidor[(Rol.cuidador, Modulo.gravity)], {
+      Accion.leer,
+      Accion.escribir,
+    });
+    expect(puedeAbrir(Rol.cuidador, Modulo.gravity), isFalse);
+    expect(modulosNavegables(Rol.cuidador), [Modulo.cuidados]);
   });
 }

@@ -55,6 +55,9 @@ dependencies:
   pointycastle: ^4.0.0
   # Para distinguir los errores de red (ClientException) de los del servidor.
   http: ^1.6.0
+  # Lógica pura de Finanzas (agente finanzas).
+  finanzas_dominio:
+    path: ../paquetes/finanzas_dominio
 
 dev_dependencies:
   flutter_test:

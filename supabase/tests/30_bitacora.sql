@@ -10,7 +10,7 @@ do $$
 declare
   v_correo text;
 begin
-  foreach v_correo in array array['ana@ejemplo.test', 'beto@ejemplo.test', 'carla@ejemplo.test',
+  foreach v_correo in array array['ana@ejemplo.test', 'alex@ejemplo.test', 'carla@ejemplo.test',
                                   'diana@ejemplo.test', 'casa@ejemplo.test', 'elena@ejemplo.test']
   loop
     perform pruebas.como(v_correo);
@@ -81,7 +81,7 @@ declare
   v_correo text;
   v_accion text;
 begin
-  foreach v_correo in array array['ana@ejemplo.test', 'beto@ejemplo.test', 'carla@ejemplo.test',
+  foreach v_correo in array array['ana@ejemplo.test', 'alex@ejemplo.test', 'carla@ejemplo.test',
                                   'diana@ejemplo.test', 'casa@ejemplo.test']
   loop
     perform pruebas.como(v_correo);

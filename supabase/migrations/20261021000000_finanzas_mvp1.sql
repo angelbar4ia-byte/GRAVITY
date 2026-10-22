@@ -1153,16 +1153,17 @@ as $$
 declare
   v_libro public.fin_libros%rowtype;
 begin
-  select * into v_libro from public.fin_libros l where l.hogar_id = new.hogar_id and l.id = new.libro_id;
-  if not found then
+  select * into v_libro from public.fin_libros l where l.id = new.libro_id;
+  if not found or (new.hogar_id is not null and new.hogar_id <> v_libro.hogar_id) then
     raise exception using errcode = '23503', message = 'El libro no existe en este hogar.';
   end if;
+  new.hogar_id := v_libro.hogar_id;
   if tg_op = 'INSERT' and auth.uid() is not null
      and not public.fin_puede(new.libro_id, 'administrar')
      -- Arranque: el primer miembro de un libro nuevo (lo agrega el servidor).
      and not (not exists (select 1 from public.fin_libro_miembros m where m.libro_id = new.libro_id)
-              and new.persona_id = case when v_libro.tipo = 'personal' then v_libro.titular_id
-                                        else v_libro.creado_por end) then
+              and new.persona_id = (case when v_libro.tipo = 'personal' then v_libro.titular_id
+                                         else v_libro.creado_por end)) then
     raise exception using errcode = '42501', message = 'Sin permiso para administrar los miembros de ese libro.';
   end if;
 
@@ -1232,6 +1233,10 @@ language plpgsql
 set search_path = ''
 as $$
 begin
+  -- Desde la app (rol authenticated) quien crea es siempre la sesión.
+  if current_user = 'authenticated' then
+    new.creada_por := public.persona_actual();
+  end if;
   if new.estado <> 'activa' then
     raise exception using errcode = '22023', message = 'Una cuenta nace activa.';
   end if;
@@ -1251,6 +1256,8 @@ declare
   v_total      bigint;
   v_confirmado bigint;
 begin
+  new.creada_por := old.creada_por;
+  new.creada_en  := old.creada_en;
   if new.tipo <> old.tipo then
     if old.tipo in ('ajustes', 'apertura', 'por_clasificar') or new.tipo in ('ajustes', 'apertura', 'por_clasificar') then
       raise exception using errcode = '22023', message = 'Las cuentas de sistema no cambian de tipo.';
@@ -1706,9 +1713,11 @@ begin
     elsif new.libro_id <> v_cierre.libro_id then
       raise exception using errcode = '22023', message = 'Va en el libro de su cierre.';
     end if;
-    if tg_table_name = 'fin_cierre_partidas' and not exists (
-        select 1 from public.fin_partidas_semana p where p.id = new.partida_id and p.semana_id = v_cierre.semana_id) then
-      raise exception using errcode = '22023', message = 'La partida es de otra semana.';
+    if tg_table_name = 'fin_cierre_partidas' then
+      if not exists (select 1 from public.fin_partidas_semana p
+                     where p.id = new.partida_id and p.semana_id = v_cierre.semana_id) then
+        raise exception using errcode = '22023', message = 'La partida es de otra semana.';
+      end if;
     end if;
   end if;
   return new;
@@ -1746,8 +1755,8 @@ begin
       -- Sube un activo: Ajustes → cuenta. Sube un pasivo: cuenta → Ajustes.
       v_hacia := case when v_cuenta.clase = 'activo' then v_dif > 0 else v_dif < 0 end;
       if v_mov.tipo <> 'ajuste' or v_mov.monto_centavos <> abs(v_dif) or v_mov.fecha <> new.fecha
-         or v_mov.cuenta_origen_id <> case when v_hacia then v_ajustes else new.cuenta_id end
-         or v_mov.cuenta_destino_id <> case when v_hacia then new.cuenta_id else v_ajustes end then
+         or v_mov.cuenta_origen_id <> (case when v_hacia then v_ajustes else new.cuenta_id end)
+         or v_mov.cuenta_destino_id <> (case when v_hacia then new.cuenta_id else v_ajustes end) then
         raise exception using errcode = '22023',
           message = 'El ajuste no corresponde a la diferencia de la conciliación (tipo, monto, fecha o dirección).';
       end if;
@@ -1786,7 +1795,7 @@ create trigger fin_b_validar before insert or update on public.fin_categorias
 create trigger fin_a_una_vez before insert on public.fin_cuentas
   for each row execute function public.fin_una_vez('flexible', 'clase', 'liquida', 'creada_por', 'creada_en');
 create trigger fin_a_columnas_fijas before update on public.fin_cuentas
-  for each row execute function public.fin_columnas_fijas('id', 'hogar_id', 'libro_id', 'creada_por', 'creada_en');
+  for each row execute function public.fin_columnas_fijas('id', 'hogar_id', 'libro_id');
 create trigger fin_b_al_insertar before insert on public.fin_cuentas
   for each row execute function public.fin_cuentas_al_insertar();
 create trigger fin_b_al_cambiar before update on public.fin_cuentas
@@ -2063,6 +2072,8 @@ create policy fin_cuentas_borrar on public.fin_cuentas for delete to authenticat
 -- Configuración de cada libro: leer / administrar.
 create policy fin_parametros_leer on public.fin_parametros for select to authenticated
   using (public.fin_puede(libro_id, 'leer'));
+create policy fin_parametros_agregar on public.fin_parametros for insert to authenticated
+  with check (public.fin_puede(libro_id, 'administrar'));
 create policy fin_parametros_editar on public.fin_parametros for update to authenticated
   using (public.fin_puede(libro_id, 'administrar'))
   with check (public.fin_puede(libro_id, 'administrar'));
@@ -2174,13 +2185,18 @@ grant insert (id, hogar_id, padre_id, nivel, nombre, icono, color, naturaleza, p
               es_del_sistema, oculta, archivada, posiblemente_deducible, cuenta_gasto_id),
       delete
   on public.fin_categorias to authenticated;
-grant insert (id, hogar_id, libro_id, nombre, tipo, estado, categoria_id, limite_centavos),
-      update (id, hogar_id, libro_id, nombre, tipo, estado, categoria_id, limite_centavos),
+grant insert (id, hogar_id, libro_id, nombre, tipo, estado, categoria_id, limite_centavos, creada_por),
+      update (id, hogar_id, libro_id, nombre, tipo, estado, categoria_id, limite_centavos, creada_por),
       delete
   on public.fin_cuentas to authenticated;
-grant update (meta_remanente_pb, ahorro_minimo_con_deuda_pb, tope_arrastre_semanas, partida_ambar_pb,
-              partida_rojo_pb, remanente_verde_pb, remanente_ambar_pb, carga_ambar_pb, carga_rojo_pb,
-              cumplimiento_verde_pb, cumplimiento_ambar_pb, cierre_automatico_dias)
+grant insert (libro_id, hogar_id, meta_remanente_pb, ahorro_minimo_con_deuda_pb, tope_arrastre_semanas,
+              partida_ambar_pb, partida_rojo_pb, remanente_verde_pb, remanente_ambar_pb, carga_ambar_pb,
+              carga_rojo_pb, cumplimiento_verde_pb, cumplimiento_ambar_pb, cierre_automatico_dias,
+              cuenta_ajustes_id, cuenta_apertura_id, cuenta_por_clasificar_id),
+      update (libro_id, hogar_id, meta_remanente_pb, ahorro_minimo_con_deuda_pb, tope_arrastre_semanas,
+              partida_ambar_pb, partida_rojo_pb, remanente_verde_pb, remanente_ambar_pb, carga_ambar_pb,
+              carga_rojo_pb, cumplimiento_verde_pb, cumplimiento_ambar_pb, cierre_automatico_dias,
+              cuenta_ajustes_id, cuenta_apertura_id, cuenta_por_clasificar_id)
   on public.fin_parametros to authenticated;
 grant insert (id, hogar_id, libro_id, persona_id, nombre, tipo, cuenta_origen_id, cuenta_destino_id, certeza, activo),
       update (id, hogar_id, libro_id, persona_id, nombre, tipo, cuenta_origen_id, cuenta_destino_id, certeza, activo)
@@ -2209,13 +2225,13 @@ grant insert (id, hogar_id, libro_id, nombre, tipo, cuenta_pasivo_id, abono_cent
               dia_semana, dias_mes, fecha_ancla, intervalo_meses, regla_inhabil, minimo_centavos,
               tasa_anual_pb, prioridad_manual, grupo_prioritario, orden_grupo, activa)
   on public.fin_deudas to authenticated;
-grant insert (id, hogar_id, fecha, nombre, tipo, fuente, activo),
-      update (id, hogar_id, fecha, nombre, tipo, fuente, activo)
+grant insert (id, hogar_id, fecha, nombre, tipo, fuente, activo, revisado_por, revisado_en),
+      update (id, hogar_id, fecha, nombre, tipo, fuente, activo, revisado_por, revisado_en)
   on public.fin_dias_inhabiles to authenticated;
 grant insert (id, hogar_id, libro_id, semana_inicio, estado, metodo, ingreso, presupuesto, deuda_plan,
-              remanente_plan, meta_remanente_pb, ahorro_minimo_con_deuda_pb, techo),
+              remanente_plan, meta_remanente_pb, ahorro_minimo_con_deuda_pb, techo, activada_por, activada_en),
       update (id, hogar_id, libro_id, semana_inicio, estado, metodo, ingreso, presupuesto, deuda_plan,
-              remanente_plan, meta_remanente_pb, ahorro_minimo_con_deuda_pb, techo)
+              remanente_plan, meta_remanente_pb, ahorro_minimo_con_deuda_pb, techo, activada_por, activada_en)
   on public.fin_semanas to authenticated;
 grant insert (id, hogar_id, libro_id, semana_id, origen, origen_id, cuenta_gasto_id, tipo, asignado,
               arrastre_recibido, protegida, prioridad, piso_minimo, modo_arrastre),
@@ -2237,17 +2253,18 @@ grant insert (id, hogar_id, tipo, fecha, registrado_en, cuenta_origen_id, cuenta
               anula_a, estado_inicial)
   on public.fin_movimientos to authenticated;
 grant insert (id, hogar_id, libro_id, cuenta_id, fecha, saldo_declarado, saldo_calculado,
-              ajuste_movimiento_id, motivo, persona_id)
+              ajuste_movimiento_id, motivo, persona_id, creado_en)
   on public.fin_conciliaciones to authenticated;
 grant insert (id, hogar_id, libro_id, semana_id, version, ingreso_real, gasto_real, abono_real, abono_diferido,
               abono_extra_real, ahorro_real, deficit, arrastre_siguiente, accion_elegida, con_pendientes,
-              activos, pasivos, patrimonio, cerrado_por)
+              activos, pasivos, patrimonio, cerrado_por, cerrado_en)
   on public.fin_cierres to authenticated;
 grant insert (id, hogar_id, libro_id, cierre_id, partida_id, gastado, arrastre_siguiente, al_remanente)
   on public.fin_cierre_partidas to authenticated;
 grant insert (id, hogar_id, libro_id, cierre_id, deuda_id, planeado, "real", minimo)
   on public.fin_cierre_abonos to authenticated;
-grant insert (id, hogar_id, archivo, hoja, filas_leidas, filas_creadas, filas_omitidas, detalle, persona_id)
+grant insert (id, hogar_id, archivo, hoja, filas_leidas, filas_creadas, filas_omitidas, detalle, persona_id,
+              creado_en)
   on public.fin_importaciones to authenticated;
 
 -- service_role (funciones de servidor): configuración y plan completos; los

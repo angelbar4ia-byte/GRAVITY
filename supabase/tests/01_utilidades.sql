@@ -147,4 +147,42 @@ begin
 end
 $$;
 
+-- -----------------------------------------------------------------------------
+-- Finanzas (Fase 1)
+--   pruebas.libro_personal(correo)       id del libro personal de esa cuenta.
+--   pruebas.cuenta_sistema(libro, tipo)  Ajustes, Apertura o Por clasificar del libro.
+--   pruebas.registrar(tipo, origen, destino, monto, ...)  Inserta un movimiento
+--     como el rol actual (con RLS) y devuelve su id; nulo si el servidor no
+--     insertó nada (mismo id y mismo contenido: idempotencia).
+-- Libros fijos del seed: compartido f100…0001 ("Gastos de la casa") y
+-- representado f100…0002 ("Papá (ejemplo)", persona e000…0001).
+-- -----------------------------------------------------------------------------
+create function pruebas.libro_personal(p_correo text) returns uuid
+language sql stable security definer set search_path = ''
+as $$
+  select l.id from public.fin_libros l
+  join public.personas p on p.id = l.titular_id
+  join auth.users u on u.id = p.usuario_id
+  where u.email = p_correo and l.tipo = 'personal'
+$$;
+
+create function pruebas.cuenta_sistema(p_libro uuid, p_tipo text) returns uuid
+language sql stable security definer set search_path = ''
+as $$ select c.id from public.fin_cuentas c where c.libro_id = p_libro and c.tipo = p_tipo $$;
+
+create function pruebas.registrar(
+  p_tipo text, p_origen uuid, p_destino uuid, p_monto bigint,
+  p_fecha date default '2026-10-21', p_motivo text default null, p_anula uuid default null,
+  p_en_nombre_de uuid default null, p_id uuid default gen_random_uuid(),
+  p_hogar uuid default 'b0000000-0000-4000-8000-000000000001', p_realizado_por uuid default null)
+returns uuid
+language sql
+as $$
+  insert into public.fin_movimientos (id, hogar_id, tipo, fecha, registrado_en, cuenta_origen_id, cuenta_destino_id,
+                                      monto_centavos, motivo, anula_a, en_nombre_de, realizado_por)
+  values (p_id, p_hogar, p_tipo, p_fecha, '2026-10-21 12:00:00-06', p_origen, p_destino, p_monto, p_motivo,
+          p_anula, p_en_nombre_de, coalesce(p_realizado_por, public.persona_actual()))
+  returning id
+$$;
+
 grant execute on all functions in schema pruebas to anon, authenticated, service_role;

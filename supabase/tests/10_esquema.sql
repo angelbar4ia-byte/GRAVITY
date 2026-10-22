@@ -60,17 +60,21 @@ select pruebas.igual(
     where polrelid = 'public.bitacora'::regclass and polcmd in ('w', 'd')),
   0, 'Bitácora sin reglas de UPDATE ni DELETE');
 
--- La matriz de la sección 5.
-select pruebas.igual((select count(*)::int from public.permisos_rol), 55,
-  'La matriz tiene 55 permisos (sección 5 + módulo gravity alineado con la app)');
+-- La matriz de la sección 5, con los cambios de D18 y D19 (Fase 1).
+select pruebas.igual((select count(*)::int from public.permisos_rol), 59,
+  'La matriz tiene 59 permisos (sección 5 + gravity alineado con la app + D18 y D19)');
 select pruebas.igual(
   (select string_agg(accion::text || '=' || alcance::text, ',' order by accion)
      from public.permisos_rol where rol = 'dueno' and modulo = 'finanzas'),
-  'administrar=total,escribir=total,leer=total', 'Dueño: Finanzas total');
+  'administrar=propio,escribir=propio,leer=propio', 'D19: Dueño: Finanzas propio (su libro y los compartidos)');
 select pruebas.igual(
   (select string_agg(accion::text || '=' || alcance::text, ',' order by accion)
      from public.permisos_rol where rol = 'coadministrador' and modulo = 'finanzas'),
-  'leer=total', 'Coadministrador: Finanzas solo lectura');
+  'administrar=propio,escribir=propio,leer=propio', 'D19 (P1, P2): Coadministrador: Finanzas propio');
+select pruebas.ok(
+  (select bool_and(nota like 'D19%') from public.permisos_rol
+    where modulo = 'finanzas' and rol in ('dueno', 'coadministrador')),
+  'D19: la nota de cada permiso de Finanzas cita la decisión');
 select pruebas.igual(
   (select count(*)::int from public.permisos_rol
     where rol in ('familiar', 'casa') and modulo = 'finanzas'),
@@ -91,6 +95,10 @@ select pruebas.igual(
      from public.permisos_rol where rol = 'cuidador' and accion = 'leer' and alcance = 'total'),
   'casa', 'Cuidador: lectura total solo de Casa; Cuidados por su turno (restringido)');
 select pruebas.igual(
+  (select string_agg(accion::text || '=' || alcance::text, ',' order by accion)
+     from public.permisos_rol where rol = 'cuidador' and modulo = 'gravity'),
+  'escribir=restringido,leer=restringido', 'D18: Cuidador: GRAVITY restringido (sus solicitudes y recordatorios)');
+select pruebas.igual(
   (select count(*)::int from public.permisos_rol where rol = 'casa' and modulo = 'ajustes'),
   0, 'Casa: sin Ajustes');
 select pruebas.igual(
@@ -102,10 +110,7 @@ select pruebas.igual(
 select pruebas.igual(
   (select string_agg(accion::text || '=' || alcance::text, ',' order by accion)
      from public.permisos_rol where rol = 'dueno' and modulo = 'gravity'),
-  'administrar=total,escribir=total,leer=total', 'I1: Dueño: GRAVITY total');
-select pruebas.igual(
-  (select count(*)::int from public.permisos_rol where rol = 'cuidador' and modulo = 'gravity'),
-  0, 'I1: Cuidador: sin GRAVITY (D5: solo Cuidados)');
+  'administrar=propio,escribir=propio,leer=propio', 'D18: Dueño: GRAVITY propio (cada quien su historial)');
 select pruebas.igual(
   (select string_agg(rol::text || ':' || accion::text || '=' || alcance::text, ',' order by rol, accion)
      from public.permisos_rol where modulo = 'gravity' and rol in ('coadministrador', 'familiar', 'casa')),
@@ -120,6 +125,68 @@ select pruebas.igual(
 select pruebas.igual(
   (select count(*)::int from public.permisos_rol where alcance = 'restringido' and accion = 'administrar'),
   0, 'Ningún alcance restringido administra');
+
+-- Finanzas (Fase 1): libros solo agregar, vistas con security_invoker, bitácora.
+select pruebas.ok(to_regclass('public.finanzas_muestra') is null, 'La muestra de la Fase 0 ya no existe');
+select pruebas.igual(
+  (select coalesce(string_agg(t.tabla, ', ' order by t.tabla), '')
+     from unnest(array['fin_movimientos', 'fin_conciliaciones', 'fin_cierres', 'fin_cierre_partidas',
+                       'fin_cierre_abonos', 'fin_importaciones']) as t(tabla)
+    where (select count(*) from pg_trigger g
+            where g.tgrelid = ('public.' || t.tabla)::regclass and not g.tgisinternal
+              and g.tgfoid = 'public.impedir_cambios_solo_agregar()'::regprocedure) <> 2),
+  '', 'Libros solo agregar de Finanzas con los dos triggers de impedir_cambios_solo_agregar()');
+select pruebas.igual(
+  (select coalesce(string_agg(r.rol || ':' || t.tabla || ':' || p.priv, ', '), '')
+     from unnest(array['fin_movimientos', 'fin_conciliaciones', 'fin_cierres', 'fin_cierre_partidas',
+                       'fin_cierre_abonos', 'fin_importaciones']) as t(tabla),
+          unnest(array['anon', 'authenticated', 'service_role']) as r(rol),
+          unnest(array['UPDATE', 'DELETE', 'TRUNCATE']) as p(priv)
+    where (p.priv = 'UPDATE' and has_any_column_privilege(r.rol, 'public.' || t.tabla, 'UPDATE'))
+       or (p.priv <> 'UPDATE' and has_table_privilege(r.rol, 'public.' || t.tabla, p.priv))),
+  '', 'Libros solo agregar de Finanzas sin UPDATE (ni de una columna), DELETE ni TRUNCATE para la API');
+select pruebas.igual(
+  (select count(*)::int from pg_policy
+    where polrelid in ('public.fin_movimientos'::regclass, 'public.fin_conciliaciones'::regclass,
+                       'public.fin_cierres'::regclass, 'public.fin_cierre_partidas'::regclass,
+                       'public.fin_cierre_abonos'::regclass, 'public.fin_importaciones'::regclass)
+      and polcmd in ('w', 'd')),
+  0, 'Libros solo agregar de Finanzas sin reglas de UPDATE ni DELETE');
+select pruebas.igual(
+  (select coalesce(string_agg(c.relname, ', ' order by c.relname), '')
+     from pg_class c join pg_namespace n on n.oid = c.relnamespace
+    where n.nspname = 'public' and c.relkind = 'v' and c.relname like 'fin\_%'
+      and not coalesce(c.reloptions @> array['security_invoker=true'], false)),
+  '', 'Las vistas fin_v_* respetan la RLS de quien consulta (security_invoker)');
+select pruebas.igual(
+  (select count(*)::int from pg_class c join pg_namespace n on n.oid = c.relnamespace
+    where n.nspname = 'public' and c.relkind = 'v' and c.relname like 'fin\_v\_%'),
+  2, 'Existen fin_v_saldos y fin_v_gasto_semana');
+select pruebas.igual(
+  (select coalesce(string_agg(c.relname, ', ' order by c.relname), '')
+     from pg_class c join pg_namespace n on n.oid = c.relnamespace
+    where n.nspname = 'public' and c.relkind = 'r' and c.relname like 'fin\_%'
+      and not exists (select 1 from pg_trigger g
+                       where g.tgrelid = c.oid and not g.tgisinternal
+                         and g.tgfoid = 'public.registrar_cambio_en_bitacora()'::regprocedure)),
+  '', 'Toda tabla fin_* registra sus cambios en la bitácora');
+select pruebas.igual(
+  (select count(*)::int from pg_class c join pg_namespace n on n.oid = c.relnamespace
+    where n.nspname = 'public' and c.relkind = 'r' and c.relname like 'fin\_%'),
+  21, 'Las 21 tablas de Finanzas (4.1 y 4.5)');
+select pruebas.igual(
+  (select coalesce(string_agg(c.relname, ', ' order by c.relname), '')
+     from pg_class c join pg_namespace n on n.oid = c.relnamespace
+    where n.nspname = 'public' and c.relkind = 'r' and c.relname like 'fin\_%'
+      and not exists (select 1 from pg_attribute a
+                       where a.attrelid = c.oid and a.attname = 'hogar_id' and a.attnotnull)),
+  '', 'Toda tabla fin_* lleva hogar_id obligatorio');
+select pruebas.ok(
+  exists (select 1 from pg_indexes where schemaname = 'public' and indexname = 'membresias_una_maestra_por_hogar'),
+  'D19: una sola cuenta maestra por hogar (índice único parcial)');
+select pruebas.ok(
+  not has_column_privilege('authenticated', 'public.membresias', 'es_maestra', 'UPDATE'),
+  'D19: la cuenta maestra solo se asigna con asignar_cuenta_maestra()');
 
 -- puede() rechaza nombres mal escritos en lugar de negar en silencio.
 select pruebas.falla(

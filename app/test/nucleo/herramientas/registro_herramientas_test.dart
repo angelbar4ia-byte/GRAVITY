@@ -404,22 +404,40 @@ void main() {
       },
     );
 
-    test('el coadministrador lee Finanzas pero no escribe en ellas', () {
-      _Falsa paraCoadministrador({required bool escribe}) => _Falsa(
+    // D19 (21/oct/2026): el dueño y la pareja llevan cada quien su libro de
+    // Finanzas (alcance propio): los dos leen y escriben. Familiar, cuidador y
+    // casa siguen sin leer Finanzas; la cuidadora solo registrará gastos de
+    // cuidado (Fase 5), así que nunca recibe una herramienta que lea Finanzas.
+    test('D19: dueño y pareja leen y escriben su Finanzas; nadie más la lee', () {
+      _Falsa deFinanzas(Set<Rol> roles, {required bool escribe}) => _Falsa(
         nombre: 'finanzas.prueba',
         modulo: Modulo.finanzas,
-        roles: const {Rol.dueno, Rol.coadministrador},
+        roles: roles,
         escribe: escribe,
         soloLocal: true,
       );
-      expect(
-        RegistroHerramientas([paraCoadministrador(escribe: false)]).todas,
-        hasLength(1),
-      );
-      expect(
-        () => RegistroHerramientas([paraCoadministrador(escribe: true)]),
-        throwsArgumentError,
-      );
+      const pareja = {Rol.dueno, Rol.coadministrador};
+      for (final escribe in [false, true]) {
+        expect(
+          RegistroHerramientas([deFinanzas(pareja, escribe: escribe)]).todas,
+          hasLength(1),
+          reason: escribe ? 'escribe' : 'lee',
+        );
+      }
+      for (final rol in [Rol.familiar, Rol.cuidador, Rol.casa]) {
+        expect(
+          () => RegistroHerramientas([deFinanzas({rol}, escribe: false)]),
+          throwsArgumentError,
+          reason: '${rol.name} no lee Finanzas',
+        );
+      }
+      for (final rol in [Rol.familiar, Rol.casa]) {
+        expect(
+          () => RegistroHerramientas([deFinanzas({rol}, escribe: true)]),
+          throwsArgumentError,
+          reason: '${rol.name} no escribe en Finanzas',
+        );
+      }
     });
 
     test('navegación: solo para quien abre el módulo desde la navegación', () {

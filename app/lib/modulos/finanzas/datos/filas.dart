@@ -116,7 +116,14 @@ Map<String, Object?> filaLibro(Libro l, {required String hogarId}) => {
   'activo': l.activo,
 };
 
-Map<String, Object?> filaMiembro(String libroId, MiembroLibro m) => {
+Map<String, Object?> filaMiembro(
+  String libroId,
+  MiembroLibro m, {
+  required String hogarId,
+  required String id,
+}) => {
+  'id': id,
+  'hogar_id': hogarId,
   'libro_id': libroId,
   'persona_id': m.personaId,
   'papel': nombreEnum(m.papel),
@@ -231,11 +238,9 @@ Categoria categoriaDeFila(Map<String, dynamic> f) => Categoria(
 
 // ----------------------------------------------------------------- cuentas
 
-Map<String, Object?> filaCuenta(
-  Cuenta c, {
-  required String hogarId,
-  String? creadaPor,
-}) => {
+/// `creada_por` la pone el servidor; las cuentas de gasto (`de_gasto` y
+/// `gasto_financiero`) van sin libro.
+Map<String, Object?> filaCuenta(Cuenta c, {required String hogarId}) => {
   'id': c.id,
   'hogar_id': hogarId,
   'libro_id': c.libroId,
@@ -244,7 +249,6 @@ Map<String, Object?> filaCuenta(
   'estado': nombreEnum(c.estado),
   'categoria_id': c.categoriaId,
   'limite_centavos': c.limiteCentavos,
-  'creada_por': ?creadaPor,
 };
 
 Cuenta cuentaDeFila(Map<String, dynamic> f) => Cuenta(
@@ -533,6 +537,7 @@ DiaInhabil diaInhabilDeFila(Map<String, dynamic> f) => DiaInhabil(
 
 // --------------------------------------------------------------------- plan
 
+/// `activada_por` y `activada_en` los pone el servidor.
 Map<String, Object?> filaSemana(SemanaGuardada s, {required String hogarId}) =>
     {
       'id': s.id,
@@ -548,8 +553,6 @@ Map<String, Object?> filaSemana(SemanaGuardada s, {required String hogarId}) =>
       'meta_remanente_pb': s.metaRemanentePuntosBase,
       'ahorro_minimo_con_deuda_pb': s.ahorroMinimoConDeudaPuntosBase,
       'techo': s.techo,
-      'activada_por': s.activadaPor,
-      'activada_en': s.activadaEn == null ? null : horaIso(s.activadaEn!),
     };
 
 Map<String, Object?> filaPartidaSemana(
