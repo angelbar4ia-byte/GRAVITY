@@ -236,6 +236,7 @@ final servicioFinanzasProvider = Provider<ServicioFinanzas>((ref) {
   return ServicioFinanzas(
     repositorio: ref.watch(repositorioFinanzasProvider),
     personaId: sesion?.persona.id ?? '',
+    hogarId: sesion?.hogarId ?? '',
     esMaestra: ref.watch(esMaestraFinanzasProvider),
     reloj: reloj.ahora,
   );

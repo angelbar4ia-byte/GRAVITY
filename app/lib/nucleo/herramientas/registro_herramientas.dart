@@ -2,31 +2,33 @@ import '../contratos/roles.dart';
 import '../permisos/permisos.dart';
 import 'herramienta.dart';
 import 'navegacion.dart';
+import 'visibilidad_modulos.dart';
 
 /// Módulos que no se desactivan: el núcleo de GRAVITY y los ajustes.
 const Set<Modulo> modulosSiempreActivos = {Modulo.gravity, Modulo.ajustes};
 
-/// Módulos con dinero o datos clínicos (D3): sus herramientas son solo locales,
-/// salvo las de navegación ([HerramientaNavegacion]), que no leen datos.
-const Set<Modulo> modulosSoloLocal = {Modulo.finanzas, Modulo.cuidados};
-
 /// La lista cerrada de herramientas de GRAVITY (D1).
 ///
-/// Filtra por rol y por módulos activos, y es el único camino para ejecutar
-/// una herramienta: revisa el permiso, pide confirmación a las que escriben y
-/// garantiza que el resultado de una herramienta solo local no lleve nada
-/// para la IA (D3).
+/// Filtra por rol, por cuenta maestra y por módulos activos, y es el único
+/// camino para ejecutar una herramienta: revisa el permiso, pide confirmación
+/// a las que escriben y garantiza que el resultado de una herramienta solo
+/// local no lleve nada para la IA (D3).
 final class RegistroHerramientas {
   /// Valida cada herramienta y lanza [ArgumentError] si alguna no cumple:
   ///
   /// - El nombre tiene el formato `<modulo>.<accion>`, el prefijo es su
   ///   módulo y no se repite.
+  /// - Si escribe, exige poder escribir o administrar ([Herramienta.accion]).
   /// - Declara al menos un rol, y cada rol puede usarla según la matriz de
   ///   permisos (D5, `nucleo/permisos/permisos.dart`): abrir el módulo si es
-  ///   de navegación, escribir en él si [Herramienta.escribe], o leerlo.
-  /// - Si es de Finanzas o Cuidados y no es de navegación, es
-  ///   [Herramienta.soloLocal] (D3): el dinero y los datos clínicos nunca van
-  ///   a la IA en la nube. La regla no depende de que el autor recuerde la marca.
+  ///   de navegación y hacer en él su [Herramienta.accion], sobre lo propio o
+  ///   lo ajeno según [Herramienta.pertenencia] ([puedeSobre]; una de lectura
+  ///   de lo ajeno vale si la usa la cuenta maestra, D19).
+  /// - Quien en GRAVITY solo tiene su bandeja (la cuidadora, D18) solo puede
+  ///   tener herramientas de la bandeja, y ninguna de Finanzas.
+  /// - Si es de Finanzas o Cuidados, es [Herramienta.soloLocal] (D3), también
+  ///   las de navegación: el dinero y los datos clínicos nunca van a la IA en
+  ///   la nube. La regla no depende de que el autor recuerde la marca.
   RegistroHerramientas(Iterable<Herramienta> herramientas)
     : _porNombre = _indexar(herramientas);
 
@@ -50,6 +52,13 @@ final class RegistroHerramientas {
           'El prefijo debe ser el módulo "${h.modulo.name}"',
         );
       }
+      if (h.escribe && h.accion == Accion.leer) {
+        throw ArgumentError.value(
+          h.nombre,
+          'accion',
+          'Una herramienta que escribe exige poder escribir o administrar',
+        );
+      }
       if (h.roles.isEmpty) {
         throw ArgumentError.value(
           h.nombre,
@@ -58,18 +67,16 @@ final class RegistroHerramientas {
         );
       }
       for (final rol in h.roles) {
-        if (!_matrizPermite(h, rol)) {
+        if (!_permite(h, rol) && !_permite(h, rol, esMaestra: true)) {
           throw ArgumentError.value(
             h.nombre,
             'roles',
             'La matriz de permisos no deja al rol ${rol.name} '
-                '${_queNecesita(h)} ${nombreModulo(h.modulo)} (D5)',
+                '${_queNecesita(h)} ${nombreModulo(h.modulo)} (D5, D18)',
           );
         }
       }
-      if (modulosSoloLocal.contains(h.modulo) &&
-          !h.soloLocal &&
-          h is! HerramientaNavegacion) {
+      if (modulosSoloLocal.contains(h.modulo) && !h.soloLocal) {
         throw ArgumentError.value(
           h.nombre,
           'soloLocal',
@@ -85,17 +92,44 @@ final class RegistroHerramientas {
     return Map.unmodifiable(porNombre);
   }
 
-  /// `true` si la matriz espejo deja a [rol] usar [h]: abrir el módulo si es
-  /// de navegación; escribir en él si escribe; leerlo si no.
-  static bool _matrizPermite(Herramienta h, Rol rol) => switch (h) {
-    HerramientaNavegacion() => puedeAbrir(rol, h.modulo),
-    _ when h.escribe => puede(rol, h.modulo, Accion.escribir),
-    _ => puede(rol, h.modulo, Accion.leer),
-  };
+  /// `true` si la matriz espejo deja a [rol] usar [h] ([esMaestra]: la
+  /// sesión es la cuenta maestra, D19).
+  ///
+  /// - D18: quien en GRAVITY solo tiene su bandeja solo recibe herramientas
+  ///   de la bandeja, y ninguna de Finanzas (sus gastos de cuidado se
+  ///   registran desde Cuidados, Fase 5).
+  /// - Navegación: abrir las pantallas del módulo, salvo la bandeja, que solo
+  ///   pide leer GRAVITY (como su ruta en el router de la plataforma).
+  /// - Después, poder hacer [Herramienta.accion] sobre lo propio o lo ajeno
+  ///   ([puedeSobre]): la cuenta maestra lee lo ajeno de Finanzas y GRAVITY
+  ///   y nunca lo escribe ni lo administra.
+  static bool _permite(Herramienta h, Rol rol, {bool esMaestra = false}) {
+    // Solo un rol con Finanzas puede ser la cuenta maestra (como en el
+    // servidor, `es_cuenta_maestra`); con otro rol la marca no amplía nada.
+    final maestra = esMaestra && puedeSerCuentaMaestra(rol);
+    final deBandeja = h.ambito == AmbitoHerramienta.solicitudes;
+    if (soloBandejaEnGravity(rol) &&
+        (!deBandeja || h.modulo == Modulo.finanzas)) {
+      return false;
+    }
+    if (h is HerramientaNavegacion && !deBandeja && !puedeAbrir(rol, h.modulo)) {
+      return false;
+    }
+    return puedeSobre(
+      rol,
+      h.modulo,
+      h.accion,
+      esDeLaPersona: h.pertenencia == Pertenencia.propia,
+      esMaestra: maestra,
+    );
+  }
 
   static String _queNecesita(Herramienta h) => switch (h) {
-    HerramientaNavegacion() => 'abrir',
-    _ when h.escribe => 'escribir en',
+    HerramientaNavegacion(accion: Accion.leer) => 'abrir',
+    HerramientaNavegacion(accion: Accion.escribir) => 'abrir y escribir en',
+    HerramientaNavegacion() => 'abrir y administrar',
+    _ when h.accion == Accion.administrar => 'administrar',
+    _ when h.accion == Accion.escribir => 'escribir en',
     _ => 'leer',
   };
 
@@ -104,11 +138,16 @@ final class RegistroHerramientas {
 
   /// Las herramientas que [rol] puede usar con [modulosActivos]
   /// (`null`: todos los módulos activos), en el orden en que se registraron.
+  /// Con [esMaestra] (la cuenta maestra, D19) no aparece ninguna que escriba
+  /// o administre lo ajeno.
   List<Herramienta> disponibles({
     required Rol rol,
     Set<Modulo>? modulosActivos,
+    bool esMaestra = false,
   }) => List.unmodifiable(
-    _porNombre.values.where((h) => _motivo(h, rol, modulosActivos) == null),
+    _porNombre.values.where(
+      (h) => _motivo(h, rol, modulosActivos, esMaestra: esMaestra) == null,
+    ),
   );
 
   /// La herramienta [nombre] si [rol] la puede usar; si no, `null`.
@@ -116,16 +155,20 @@ final class RegistroHerramientas {
     String nombre, {
     required Rol rol,
     Set<Modulo>? modulosActivos,
+    bool esMaestra = false,
   }) {
     final h = _porNombre[nombre];
-    if (h == null || _motivo(h, rol, modulosActivos) != null) return null;
+    if (h == null ||
+        _motivo(h, rol, modulosActivos, esMaestra: esMaestra) != null) {
+      return null;
+    }
     return h;
   }
 
   /// Ejecuta [nombre] con [parametros].
   ///
-  /// - Si no existe para el rol o su módulo está inactivo, lanza
-  ///   [HerramientaNoDisponible].
+  /// - Si no existe para el rol (o para la cuenta maestra) o su módulo está
+  ///   inactivo, lanza [HerramientaNoDisponible].
   /// - Si escribe y [ContextoHerramienta.confirmado] es `false`, no la ejecuta:
   ///   devuelve un resultado con `requiereConfirmacion` y el texto de la
   ///   tarjeta de confirmación.
@@ -141,7 +184,12 @@ final class RegistroHerramientas {
     if (h == null) {
       throw HerramientaNoDisponible(nombre, MotivoNoDisponible.noExiste);
     }
-    final motivo = _motivo(h, ctx.rol, ctx.modulosActivos);
+    final motivo = _motivo(
+      h,
+      ctx.rol,
+      ctx.modulosActivos,
+      esMaestra: ctx.esMaestra,
+    );
     if (motivo != null) throw HerramientaNoDisponible(nombre, motivo);
 
     if (h.escribe && !ctx.confirmado) {
@@ -167,11 +215,15 @@ final class RegistroHerramientas {
   static MotivoNoDisponible? _motivo(
     Herramienta h,
     Rol rol,
-    Set<Modulo>? modulosActivos,
-  ) {
+    Set<Modulo>? modulosActivos, {
+    required bool esMaestra,
+  }) {
+    if (!h.roles.contains(rol)) return MotivoNoDisponible.rolSinPermiso;
     // La matriz ya se revisó al registrar; se vuelve a mirar por si cambia.
-    if (!h.roles.contains(rol) || !_matrizPermite(h, rol)) {
-      return MotivoNoDisponible.rolSinPermiso;
+    if (!_permite(h, rol, esMaestra: esMaestra)) {
+      return esMaestra && _permite(h, rol)
+          ? MotivoNoDisponible.cuentaMaestra
+          : MotivoNoDisponible.rolSinPermiso;
     }
     if (modulosActivos != null &&
         !modulosSiempreActivos.contains(h.modulo) &&

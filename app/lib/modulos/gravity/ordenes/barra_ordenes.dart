@@ -1,11 +1,15 @@
-/// Barra de órdenes de GRAVITY, Fase 0: navegación sin IA
+/// Barra de órdenes de GRAVITY: navegación sin IA
 /// (`docs/DISENO_UX_UI.md`, secciones 7, 14 [F4] y 15).
 ///
 /// - Sugerencias mientras se escribe; ↑ ↓ para elegir, Enter para abrir,
 ///   Esc para cerrar.
 /// - Si no entiende, muestra "¿Quisiste decir…?" con opciones parecidas.
 /// - Solo ofrece lo que el rol ve, y abre cada destino con su herramienta de
-///   navegación (D1): GRAVITY actúa solo por herramientas declaradas.
+///   navegación (D1): GRAVITY actúa solo por herramientas declaradas. A la
+///   cuidadora solo le ofrece su bandeja de solicitudes (D18); a la cuenta
+///   maestra, nada que escriba o administre lo ajeno (D19).
+/// - "Registrar gasto" abre la hoja de registro: la orden nunca guarda dinero
+///   sola, la persona captura y confirma en la hoja.
 /// - Ctrl+K la enfoca desde cualquier parte de la pantalla (sección 15).
 ///
 /// Los colores y la letra salen de `Theme.of(context)` (los define el agente
@@ -15,20 +19,26 @@ library;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../app/navegacion.dart' show TipoRegistro, opcionesDeRegistro;
+import '../../../app/pantallas/registro_rapido.dart';
+import '../../../app/sesion_efectiva.dart';
 import '../../../nucleo/contratos/dispositivo.dart';
 import '../../../nucleo/contratos/roles.dart';
 import '../../../nucleo/contratos/rutas.dart';
 import '../../../nucleo/herramientas/herramientas.dart';
 import 'interprete_ordenes.dart';
 
-/// Barra de órdenes de navegación.
-class BarraOrdenes extends StatefulWidget {
+/// Barra de órdenes de navegación. Va dentro de un `ProviderScope`.
+class BarraOrdenes extends ConsumerStatefulWidget {
   const BarraOrdenes({
     super.key,
     required this.rol,
     required this.onNavegar,
     this.dispositivo,
+    this.esMaestra,
+    this.onAbrirHoja,
   });
 
   /// Rol de la sesión: decide qué destinos se ofrecen.
@@ -41,13 +51,38 @@ class BarraOrdenes extends StatefulWidget {
   /// Abre una ruta de `Rutas` (la conecta el router de la plataforma).
   final void Function(String ruta) onNavegar;
 
+  /// `true` si la sesión es la cuenta maestra (D19). `null`: se lee de la
+  /// sesión (`esCuentaMaestraProvider` de la plataforma).
+  final bool? esMaestra;
+
+  /// Abre una hoja de registro. `null`: la abre la barra con el registro
+  /// rápido de la plataforma (diálogo en la laptop, hoja inferior en el
+  /// teléfono y la tablet), igual que Ctrl + N y el botón (+).
+  final void Function(HojaDeRegistro hoja)? onAbrirHoja;
+
   @override
-  State<BarraOrdenes> createState() => _BarraOrdenesState();
+  ConsumerState<BarraOrdenes> createState() => _BarraOrdenesState();
 }
+
+/// Tipo de registro de la plataforma para cada hoja.
+TipoRegistro tipoDeRegistro(HojaDeRegistro hoja) => switch (hoja) {
+  HojaDeRegistro.gasto => TipoRegistro.gasto,
+  HojaDeRegistro.ingresoExtra => TipoRegistro.ingresoExtra,
+};
 
 /// Ícono de cada destino de navegación.
 IconData iconoDestino(HerramientaNavegacion destino) {
   if (destino.ruta == Rutas.desarrollador) return Icons.code;
+  if (destino.hoja == HojaDeRegistro.gasto) return Icons.payments_outlined;
+  if (destino.hoja == HojaDeRegistro.ingresoExtra) {
+    return Icons.savings_outlined;
+  }
+  if (destino.ambito == AmbitoHerramienta.solicitudes) {
+    return Icons.inbox_outlined;
+  }
+  if (destino.ruta == RutasDeHerramientas.semanaFinanzas) {
+    return Icons.calendar_view_week_outlined;
+  }
   return switch (destino.modulo) {
     Modulo.gravity => Icons.blur_circular,
     Modulo.finanzas => Icons.account_balance_wallet_outlined,
@@ -62,7 +97,7 @@ IconData iconoDestino(HerramientaNavegacion destino) {
 /// Una fila del panel.
 typedef _Fila = ({HerramientaNavegacion destino, String? palabra});
 
-class _BarraOrdenesState extends State<BarraOrdenes> {
+class _BarraOrdenesState extends ConsumerState<BarraOrdenes> {
   static final RegistroHerramientas _registro = RegistroHerramientas(
     herramientasNavegacion,
   );
@@ -79,6 +114,9 @@ class _BarraOrdenesState extends State<BarraOrdenes> {
   late InterpreteOrdenes _interprete;
   List<SugerenciaOrden> _sugerencias = const [];
 
+  /// Si la sesión es la cuenta maestra (D19), como se armó [_interprete].
+  late bool _esMaestra;
+
   /// "¿Quisiste decir…?" o "No entendí": se muestra en lugar de sugerencias.
   ResultadoOrden? _aviso;
   int _resaltada = -1;
@@ -86,24 +124,38 @@ class _BarraOrdenesState extends State<BarraOrdenes> {
   @override
   void initState() {
     super.initState();
+    _esMaestra = widget.esMaestra ?? ref.read(esCuentaMaestraProvider);
     _interprete = _nuevoInterprete();
     _foco.addListener(_alCambiarFoco);
     HardwareKeyboard.instance.addHandler(_atajoGlobal);
   }
 
-  InterpreteOrdenes _nuevoInterprete() =>
-      InterpreteOrdenes(rol: widget.rol, dispositivo: widget.dispositivo);
+  InterpreteOrdenes _nuevoInterprete() => InterpreteOrdenes(
+    rol: widget.rol,
+    dispositivo: widget.dispositivo,
+    esMaestra: _esMaestra,
+  );
+
+  /// Vuelve a armar los destinos (cambió el rol, el dispositivo o la marca
+  /// de cuenta maestra) sin perder lo escrito.
+  void _rearmar() {
+    _interprete = _nuevoInterprete();
+    _aviso = null;
+    _resaltada = -1;
+    _sugerencias = _foco.hasFocus
+        ? _interprete.sugerir(_control.text)
+        : const [];
+    WidgetsBinding.instance.addPostFrameCallback((_) => _sincronizarPanel());
+  }
 
   @override
   void didUpdateWidget(BarraOrdenes anterior) {
     super.didUpdateWidget(anterior);
     if (anterior.rol != widget.rol ||
-        anterior.dispositivo != widget.dispositivo) {
-      _interprete = _nuevoInterprete();
-      _aviso = null;
-      _resaltada = -1;
-      _sugerencias = _interprete.sugerir(_control.text);
-      WidgetsBinding.instance.addPostFrameCallback((_) => _sincronizarPanel());
+        anterior.dispositivo != widget.dispositivo ||
+        anterior.esMaestra != widget.esMaestra) {
+      _esMaestra = widget.esMaestra ?? ref.read(esCuentaMaestraProvider);
+      _rearmar();
     }
   }
 
@@ -231,12 +283,34 @@ class _BarraOrdenesState extends State<BarraOrdenes> {
     });
   }
 
+  /// Abre la hoja de registro: la que conecte la plataforma o, si no, el
+  /// registro rápido (diálogo en la laptop, hoja inferior en lo demás).
+  void _abrirHoja(HojaDeRegistro hoja) {
+    final conectada = widget.onAbrirHoja;
+    if (conectada != null) {
+      conectada(hoja);
+      return;
+    }
+    final tipo = tipoDeRegistro(hoja);
+    if (widget.dispositivo == TipoDispositivo.laptop) {
+      abrirRegistroEnDialogo(context, tipo: tipo);
+      return;
+    }
+    final opcion = opcionesDeRegistro.firstWhere((o) => o.tipo == tipo);
+    abrirRegistro(context, opcion);
+  }
+
   Future<void> _abrir(HerramientaNavegacion destino) async {
     try {
       await _registro.ejecutar(
         destino.nombre,
         const {},
-        ContextoHerramienta(rol: widget.rol, navegar: widget.onNavegar),
+        ContextoHerramienta(
+          rol: widget.rol,
+          esMaestra: _esMaestra,
+          navegar: widget.onNavegar,
+          abrirHoja: _abrirHoja,
+        ),
       );
     } on HerramientaNoDisponible {
       if (!mounted) return;
@@ -258,6 +332,13 @@ class _BarraOrdenesState extends State<BarraOrdenes> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.esMaestra == null) {
+      final esMaestra = ref.watch(esCuentaMaestraProvider);
+      if (esMaestra != _esMaestra) {
+        _esMaestra = esMaestra;
+        _rearmar();
+      }
+    }
     final tema = Theme.of(context);
     final ejemplo = _interprete.ejemplo;
     final campo = TextField(
@@ -435,7 +516,7 @@ class _FilaDestino extends StatelessWidget {
         selected: resaltada,
         selectedTileColor: esquema.primary.withValues(alpha: 0.12),
         leading: Icon(iconoDestino(destino)),
-        title: Text('Abrir ${destino.etiqueta}'),
+        title: Text(destino.titulo),
         subtitle: palabra == null
             ? null
             : Text('«$palabra» → ${destino.etiqueta}'),

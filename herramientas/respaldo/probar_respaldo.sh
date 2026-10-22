@@ -73,12 +73,13 @@ from (select format('%I.%I', n.nspname, c.relname) as nombre
 SQL
 }
 
-# Cuenta filas de finanzas_muestra como una persona (por su id de cuenta).
+# Cuenta los movimientos de Finanzas que ve una persona (por su id de cuenta),
+# con sus reglas (RLS): cada quien sus libros (D19); la familiar, ninguno.
 dinero_visible_para() {
   pg_local_psql "$1" -At <<SQL | tail -n 1
 begin;
 select set_config('role', 'authenticated', true), set_config('request.jwt.claim.sub', '$2', true) \g /dev/null
-select count(*) from public.finanzas_muestra;
+select count(*) from public.fin_movimientos;
 rollback;
 SQL
 }
@@ -91,9 +92,11 @@ pg_local_psql origen -o /dev/null <<'SQL'
 begin;
 select set_config('role', 'authenticated', true),
        set_config('request.jwt.claim.sub', 'a0000000-0000-4000-8000-000000000001', true);
-insert into public.finanzas_muestra (hogar_id, descripcion, monto_centavos) values
-  ('b0000000-0000-4000-8000-000000000001',
-   E'Texto difícil: línea 1\nlínea 2\ttab \\ barra «comillas» ñandú', 12345);
+insert into public.fin_movimientos (hogar_id, tipo, fecha, registrado_en, cuenta_origen_id, cuenta_destino_id,
+                                    monto_centavos, nota)
+values ('b0000000-0000-4000-8000-000000000001', 'gasto', '2026-10-21', now() - interval '2 hours',
+        'c3000000-0000-4000-8000-000000000002', 'c2000000-0000-4000-8000-000000000001', 12345,
+        E'Texto difícil: línea 1\nlínea 2\ttab \\ barra «comillas» ñandú');
 insert into public.bitacora (hogar_id, accion, ocurrido_en)
   values ('b0000000-0000-4000-8000-000000000001', 'registro_sin_conexion', now() - interval '3 hours');
 update public.membresias set activa = false, hasta = now()
@@ -103,7 +106,8 @@ select public.aceptar_invitacion('token-de-ejemplo-solo-local');
 commit;
 SQL
 HUELLA_ORIGEN="$(huella origen)"
-echo "  [ok] origen con $(wc -l <<<"$HUELLA_ORIGEN") tablas"
+DINERO_ANA="$(dinero_visible_para origen a0000000-0000-4000-8000-000000000001)"
+echo "  [ok] origen con $(wc -l <<<"$HUELLA_ORIGEN") tablas; Ana ve $DINERO_ANA movimientos"
 
 D1="$TRABAJO/local"; D2="$TRABAJO/disco_externo"
 export GRAVITY_RESPALDO_CLAVE="$CLAVE"
@@ -131,8 +135,8 @@ if [[ $MODO == bash ]]; then
     -c 'SET session_replication_role = replica' -f "$TRABAJO/ext/gravity_respaldo_prueba/datos.sql" >/dev/null
   afirmar "La base restaurada es idéntica a la original (tabla por tabla)" \
     test "$(huella destino)" == "$HUELLA_ORIGEN"
-  afirmar "Tras restaurar, el dueño ve el dinero" \
-    test "$(dinero_visible_para destino a0000000-0000-4000-8000-000000000001)" == 3
+  afirmar "Tras restaurar, la dueña ve sus movimientos ($DINERO_ANA)" \
+    test "$(dinero_visible_para destino a0000000-0000-4000-8000-000000000001)" == "$DINERO_ANA"
   afirmar "Tras restaurar, el familiar no ve el dinero" \
     test "$(dinero_visible_para destino a0000000-0000-4000-8000-000000000003)" == 0
   echo
@@ -228,8 +232,10 @@ afirmar "restaurar.ps1 termina con código 0" test $codigo -eq 0
 [[ $codigo -ne 0 ]] && mostrar_log
 afirmar "La base restaurada es idéntica a la original (tabla por tabla, filas y MD5)" \
   test "$(huella destino)" == "$HUELLA_ORIGEN"
-afirmar "Tras restaurar, el dueño ve el dinero (3 filas)" \
-  test "$(dinero_visible_para destino a0000000-0000-4000-8000-000000000001)" == 3
+afirmar "Tras restaurar, la dueña ve sus movimientos ($DINERO_ANA)" \
+  test "$(dinero_visible_para destino a0000000-0000-4000-8000-000000000001)" == "$DINERO_ANA"
+afirmar "Tras restaurar, la pareja no ve los movimientos personales de la dueña" \
+  test "$(dinero_visible_para destino a0000000-0000-4000-8000-000000000002)" -lt "$DINERO_ANA"
 afirmar "Tras restaurar, el familiar no ve el dinero" \
   test "$(dinero_visible_para destino a0000000-0000-4000-8000-000000000003)" == 0
 afirmar "La bitácora conserva sus fechas originales" test "$(pg_local_psql destino -At -c \

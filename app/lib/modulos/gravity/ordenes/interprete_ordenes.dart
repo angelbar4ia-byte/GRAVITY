@@ -1,14 +1,17 @@
-/// Intérprete de la barra de órdenes de la Fase 0: solo navegación, sin IA.
+/// Intérprete de la barra de órdenes: solo navegación, sin IA.
 ///
-/// Entiende órdenes como "abre presupuesto", "ir a hábitos" o "ajustes",
-/// tolera acentos, mayúsculas y errores de dedo, sugiere mientras se escribe
-/// y nunca ofrece un destino que el rol no ve.
+/// Entiende órdenes como "abre presupuesto", "registrar gasto", "mi semana",
+/// "ir a hábitos" o "ajustes", tolera acentos, mayúsculas y errores de dedo,
+/// sugiere mientras se escribe y nunca ofrece un destino que el rol no ve: a
+/// la cuidadora solo su bandeja de solicitudes (D18) y a la cuenta maestra
+/// nada que escriba o administre lo ajeno (D19).
 library;
 
 import 'dart:math' as math;
 
 import '../../../nucleo/contratos/dispositivo.dart';
 import '../../../nucleo/contratos/roles.dart';
+import '../../../nucleo/contratos/rutas.dart';
 import '../../../nucleo/herramientas/herramientas.dart';
 import 'texto_ordenes.dart';
 
@@ -73,21 +76,24 @@ final class _Destino {
 
 /// Intérprete de órdenes de navegación para un rol.
 final class InterpreteOrdenes {
-  /// [puedeVer] decide qué módulos se ofrecen (por defecto, la matriz de la
-  /// sección 5 de la especificación de la Fase 0). Además, cada destino es una
-  /// herramienta y solo se ofrece si [rol] está en sus roles, su módulo está
-  /// en [modulosActivos] (`null`: todos) y va en [dispositivo] (Desarrollador
-  /// solo en la laptop, D16). Sin [dispositivo] no se ofrece nada que dependa
-  /// del dispositivo.
+  /// [puedeVer] decide qué módulos se ofrecen (por defecto, el espejo de la
+  /// matriz de permisos). Además, cada destino es una herramienta y solo se
+  /// ofrece si [rol] está en sus roles, su módulo está en [modulosActivos]
+  /// (`null`: todos), va en [dispositivo] (Desarrollador solo en la laptop,
+  /// D16) y, con [esMaestra], no escribe ni administra lo ajeno (D19). Sin
+  /// [dispositivo] no se ofrece nada que dependa del dispositivo. La bandeja
+  /// de solicitudes no es una pantalla de módulo: [puedeVer] no la quita.
   InterpreteOrdenes({
     required this.rol,
     this.dispositivo,
+    this.esMaestra = false,
     PuedeVerModulo? puedeVer,
     Set<Modulo>? modulosActivos,
     List<HerramientaNavegacion>? catalogo,
   }) : _destinos = _armar(
          rol: rol,
          dispositivo: dispositivo,
+         esMaestra: esMaestra,
          puedeVer: puedeVer ?? puedeVerPorDefecto(rol),
          modulosActivos: modulosActivos,
          catalogo: catalogo ?? herramientasNavegacion,
@@ -98,19 +104,32 @@ final class InterpreteOrdenes {
   /// Dispositivo de la sesión; `null` si no se sabe.
   final TipoDispositivo? dispositivo;
 
+  /// `true` si la sesión es la cuenta maestra (D19).
+  final bool esMaestra;
+
   final List<_Destino> _destinos;
 
   static List<_Destino> _armar({
     required Rol rol,
     required TipoDispositivo? dispositivo,
+    required bool esMaestra,
     required PuedeVerModulo puedeVer,
     required Set<Modulo>? modulosActivos,
     required List<HerramientaNavegacion> catalogo,
   }) {
     final permitidas = RegistroHerramientas(catalogo)
-        .disponibles(rol: rol, modulosActivos: modulosActivos)
+        .disponibles(
+          rol: rol,
+          modulosActivos: modulosActivos,
+          esMaestra: esMaestra,
+        )
         .whereType<HerramientaNavegacion>()
-        .where((h) => puedeVer(h.modulo) && h.disponibleEn(dispositivo));
+        .where(
+          (h) =>
+              (h.ambito == AmbitoHerramienta.solicitudes ||
+                  puedeVer(h.modulo)) &&
+              h.disponibleEn(dispositivo),
+        );
     return [
       for (final h in permitidas)
         _Destino(h, [
@@ -126,14 +145,16 @@ final class InterpreteOrdenes {
   List<HerramientaNavegacion> get destinos =>
       List.unmodifiable(_destinos.map((d) => d.herramienta));
 
-  /// Orden de ejemplo para la ayuda de la barra, con un módulo que el rol sí
-  /// abre: «abre presupuesto» a quien ve Finanzas, «abre hábitos» al
-  /// Familiar, «abre cuidados» a la cuidadora. `null` si no hay ninguno.
+  /// Orden de ejemplo para la ayuda de la barra, con un destino que el rol
+  /// sí abre: «abre presupuesto» a quien ve Finanzas, «abre hábitos» al
+  /// Familiar, «abre solicitudes» a la cuidadora. `null` si no hay ninguno
+  /// (además de Inicio).
   String? get ejemplo {
     for (final d in _destinos) {
       final h = d.herramienta;
-      if (h.modulo == Modulo.gravity || h.dispositivos != null) continue;
-      final palabra = h.modulo == Modulo.finanzas
+      if (h.ruta == Rutas.inicio || h.dispositivos != null) continue;
+      if (h.hoja != null) return h.etiqueta.toLowerCase();
+      final palabra = h.ruta == Rutas.finanzas
           ? 'presupuesto'
           : h.etiqueta.toLowerCase();
       return 'abre $palabra';

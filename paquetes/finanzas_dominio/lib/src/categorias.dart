@@ -430,13 +430,23 @@ class PlanImportacion {
 /// Cada categoría nueva de nivel 1 recibe su **cuenta de gasto** del hogar
 /// (`de_gasto`, sin libro), o se liga a una que ya tenga su nombre. Si a una
 /// subcategoría le falta su categoría padre en el archivo, la crea.
+///
+/// Con [idPara], los ids salen de una clave estable (`categoria:<ruta>` y
+/// `cuenta:<nombre>`, normalizadas): reintentar una importación a medias
+/// produce los mismos ids y no choca con los únicos del servidor.
 PlanImportacion planearImportacionCategorias(
   LecturaPlantilla lectura, {
   Iterable<Categoria> existentes = const [],
   Iterable<Cuenta> cuentasExistentes = const [],
-  required String Function() generarId,
+  String Function()? generarId,
+  String Function(String clave)? idPara,
   bool delSistema = true,
 }) {
+  if (generarId == null && idPara == null) {
+    throw ArgumentError('Falta cómo generar los ids');
+  }
+  String nuevoId(String clave) =>
+      idPara != null ? idPara(clave) : generarId!();
   final arbol = ArbolCategorias(existentes);
   final cuentasPorNombre = {
     for (final c in cuentasExistentes) normalizarNombre(c.nombre): c,
@@ -470,7 +480,7 @@ PlanImportacion planearImportacionCategorias(
       } else {
         final nombreCuenta = existente == null ? nombre : '$nombre (gasto)';
         final cuenta = Cuenta(
-          id: generarId(),
+          id: nuevoId('cuenta:${normalizarNombre(nombreCuenta)}'),
           nombre: nombreCuenta,
           tipo: TipoCuenta.deGasto,
         );
@@ -479,7 +489,7 @@ PlanImportacion planearImportacionCategorias(
         cuentaId = cuenta.id;
       }
     }
-    final id = generarId();
+    final id = nuevoId('categoria:$claveRuta');
     final categoria = Categoria(
       id: id,
       padreId: padreId,

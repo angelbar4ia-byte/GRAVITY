@@ -34,10 +34,17 @@ class ResultadoRegistro {
 /// Motivo de la anulación al deshacer justo después de capturar (F1).
 const motivoDeshacer = 'Deshecho al capturar';
 
+/// Id estable (UUID v5) a partir de una clave: reintentar la misma acción da
+/// el mismo id y no choca con los únicos del servidor (la cola trata un 23505
+/// que no es de la llave como "requiere atención").
+String idEstable(String clave) =>
+    const Uuid().v5(Namespace.url.value, 'gravity:finanzas:$clave');
+
 class ServicioFinanzas {
   ServicioFinanzas({
     required this.repositorio,
     required this.personaId,
+    this.hogarId = '',
     this.esMaestra = false,
     DateTime Function()? reloj,
     String Function()? generarId,
@@ -46,9 +53,17 @@ class ServicioFinanzas {
 
   final RepositorioFinanzas repositorio;
   final String personaId;
+
+  /// Hogar de la sesión (para los ids estables de lo que es del hogar).
+  final String hogarId;
   final bool esMaestra;
   final DateTime Function() _reloj;
   final String Function() _generarId;
+
+  /// Id de la anulación de [movimientoId]: hay a lo más una por movimiento
+  /// (índice único en `anula_a`), así que reintentar "Deshacer" no duplica.
+  static String idAnulacionDe(String movimientoId) =>
+      idEstable('anulacion:$movimientoId');
 
   DatosFinanzas get _d => repositorio.actual?.datos ?? DatosFinanzas.vacio;
   DateTime get _ahora => _reloj();
@@ -201,7 +216,7 @@ class ServicioFinanzas {
     try {
       final contra = libro.anular(
         movimientoId,
-        nuevoId: _generarId(),
+        nuevoId: idAnulacionDe(movimientoId),
         motivo: _limpio(motivo)!,
         registradoPor: personaId,
         registradoEn: _ahora,
@@ -612,7 +627,7 @@ class ServicioFinanzas {
         lectura,
         existentes: _d.categorias,
         cuentasExistentes: _d.cuentas,
-        generarId: _generarId,
+        idPara: (clave) => idEstable('$hogarId:$clave'),
       );
 
   /// Importa la hoja Categorías: crea las cuentas de gasto, después el árbol

@@ -1,4 +1,4 @@
-/// Herramientas de GRAVITY (D1, D3): interfaz, registro y catálogo de la Fase 0.
+/// Herramientas de GRAVITY (D1, D3, D18, D19): interfaz, registro y catálogo.
 library;
 
 export 'catalogo.dart';

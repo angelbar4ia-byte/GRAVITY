@@ -17,7 +17,7 @@ Cada respaldo es un archivo `gravity_respaldo_AAAAMMDD_HHMMSS.7z` (o `.zip.gpg`)
 
 | Contenido | Para qué |
 |---|---|
-| `datos.sql` | Datos de todas las tablas de `public` más `auth.users` y `auth.identities` (cuentas, con contraseñas en hash). Sin las tablas que llenan las migraciones (`permisos_rol`) |
+| `datos.sql` | Datos de todas las tablas de `public` (también las de Finanzas, `fin_*`) más `auth.users` y `auth.identities` (cuentas, con contraseñas en hash). Sin las tablas que llenan las migraciones (`permisos_rol`) |
 | `esquema_public.sql` | El esquema de `public`, solo de referencia: la verdad son las migraciones de `supabase/migrations` |
 | `manifiesto.json` | Fecha, equipo, versiones, migraciones aplicadas, filas por tabla y SHA-256 de los archivos |
 | `LEEME.txt` | Recordatorio de cómo restaurar |
@@ -135,3 +135,7 @@ Levanta un Postgres desechable (ver `supabase/README.md`), crea una base con las
 ## Mantenimiento
 
 Cuando una migración llene una tabla de catálogo (como `permisos_rol`), agrégala a `$script:TablasDeMigracion` en `respaldo_comun.ps1`; si no, la restauración chocará con las filas que ya puso la migración.
+
+La migración de Finanzas (`20261021000000_finanzas_mvp1.sql`) no llena catálogos: sus filas automáticas (libros personales, cuentas de sistema y parámetros) se crean con triggers al dar un rol o crear un libro, y en una base vacía no hay nada. Al restaurar, los triggers están apagados (`session_replication_role = replica`), así que esas filas llegan del respaldo y no se duplican.
+
+`pg_dump` avisa de llaves foráneas circulares (`fin_categorias` ↔ `fin_cuentas` y las anulaciones de `fin_movimientos`): es esperado y no afecta, porque la carga se hace en modo `replica` (sin revisar llaves durante la carga).

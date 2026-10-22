@@ -1,0 +1,133 @@
+/// Fila de un movimiento (teléfono y laptop) y la acción de anular con
+/// motivo (5.0 bis: nada se borra; se corrige con un contraasiento).
+library;
+
+import 'package:finanzas_dominio/finanzas_dominio.dart'
+    hide Semaforo, formatearCentavos, TipoLibro, puntosBaseEnCien;
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../diseno/diseno.dart';
+import '../estado/proveedores.dart';
+import 'comunes.dart';
+
+IconData iconoDe(TipoMovimiento t) => switch (t) {
+  TipoMovimiento.gasto => Icons.shopping_bag_outlined,
+  TipoMovimiento.ingreso => Icons.savings_outlined,
+  TipoMovimiento.reembolso => Icons.undo,
+  TipoMovimiento.transferencia => Icons.swap_horiz,
+  TipoMovimiento.pagoDeuda => Icons.credit_score_outlined,
+  TipoMovimiento.reclasificacion => Icons.label_outline,
+  TipoMovimiento.ajuste => Icons.tune,
+  TipoMovimiento.anulacion => Icons.block,
+  TipoMovimiento.apertura => Icons.flag_outlined,
+};
+
+/// `true` si [m] se puede anular desde la vista del libro.
+bool sePuedeAnular(Movimiento m, LibroMovimientos vista, ContextoFinanzas c) =>
+    c.puedeEscribir &&
+    m.tipo != TipoMovimiento.anulacion &&
+    vista.contraasientoDe(m.id) == null &&
+    vista.estadoDe(m.id) == EstadoMovimiento.confirmado;
+
+/// Pide el motivo y anula. Devuelve `true` si se anuló.
+Future<bool> anularConMotivo(
+  BuildContext context,
+  WidgetRef ref,
+  Movimiento m,
+) async {
+  final motivo = await pedirTexto(
+    context,
+    titulo: 'Anular movimiento',
+    etiqueta: 'Motivo (obligatorio)',
+    ayuda:
+        'No se borra: se registra un contraasiento con el mismo monto y la '
+        'misma fecha, y queda en la bitácora.',
+    textoAccion: 'Anular',
+  );
+  if (motivo == null || !context.mounted) return false;
+  final ok = await intentar(
+    context,
+    () => ref.read(servicioFinanzasProvider).anular(m.id, motivo: motivo),
+  );
+  if (ok && context.mounted) avisar(context, 'Movimiento anulado.');
+  return ok;
+}
+
+class FilaMovimiento extends ConsumerWidget {
+  const FilaMovimiento({
+    super.key,
+    required this.movimiento,
+    required this.contexto,
+    this.alTocar,
+    this.seleccionada = false,
+  });
+
+  final Movimiento movimiento;
+  final ContextoFinanzas contexto;
+  final VoidCallback? alTocar;
+  final bool seleccionada;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final m = movimiento;
+    final c = contexto;
+    final vista = c.datos.vista(c.libroId);
+    final anulado = vista.estaAnulado(m.id);
+    final enCola = c.carga.movimientosEnCola.contains(m.id);
+    final v = ValoresDiseno.de(context);
+    final detalles = [
+      textoFecha(m.fecha),
+      if (m.tipo == TipoMovimiento.gasto) vista.cuenta(m.cuentaOrigenId).nombre,
+      if (m.registradoPor != c.personaId) 'por ${c.carga.nombreDe(m.registradoPor)}',
+      if (m.enNombreDe != null) 'en nombre de ${c.carga.nombreDe(m.enNombreDe)}',
+      if (anulado) 'Anulado',
+      if (enCola) 'Por subir',
+    ];
+    return ListTile(
+      key: ValueKey('movimiento-${m.id}'),
+      selected: seleccionada,
+      leading: Icon(iconoDe(m.tipo)),
+      minTileHeight: 56,
+      title: Text(
+        conceptoDe(m, c.datos, vista),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: anulado
+            ? const TextStyle(decoration: TextDecoration.lineThrough)
+            : null,
+      ),
+      subtitle: Text(detalles.join(' · '), maxLines: 1, overflow: TextOverflow.ellipsis),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Monto(
+            efectoEnLibro(m, vista),
+            signo: true,
+            estilo: v.numero(tamano: 15, peso: FontWeight.w600, color: v.textoFuerte),
+          ),
+          if (sePuedeAnular(m, vista, c))
+            PopupMenuButton<String>(
+              key: ValueKey('movimiento-menu-${m.id}'),
+              tooltip: 'Opciones',
+              onSelected: (_) => anularConMotivo(context, ref, m),
+              itemBuilder: (_) => const [
+                PopupMenuItem(value: 'anular', child: Text('Anular…')),
+              ],
+            ),
+        ],
+      ),
+      onTap: alTocar,
+    );
+  }
+}
+
+/// Movimientos del libro activo, del más reciente al más antiguo.
+List<Movimiento> movimientosDelLibro(ContextoFinanzas c) {
+  final lista = [...c.datos.vista(c.libroId).movimientos]
+    ..sort((a, b) {
+      final f = b.fecha.compareTo(a.fecha);
+      return f != 0 ? f : b.registradoEn.compareTo(a.registradoEn);
+    });
+  return lista;
+}

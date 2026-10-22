@@ -21,7 +21,7 @@
 -- Idempotencia (cola sin conexión): insertar dos veces el mismo id con el
 -- mismo contenido NO hace nada y no falla (también con ON CONFLICT DO
 -- NOTHING); el mismo id con otro contenido falla con 23505 en los libros
--- solo-agregar. Ver supabase/README.md, "Finanzas: contrato para la app".
+-- solo-agregar. Ver supabase/README.md, "Contrato para la app".
 --
 -- Compatible con PostgreSQL 15 o superior. Sin extensiones.
 -- =============================================================================
@@ -1073,7 +1073,10 @@ begin
   if tg_op = 'UPDATE' then
     return new;
   end if;
-  if new.tipo = 'personal' and not exists (
+  -- (Desde la app solo se crea el propio; el de otra persona lo rechaza la RLS.)
+  if new.tipo = 'personal'
+     and (current_user <> 'authenticated' or new.titular_id = public.persona_actual())
+     and not exists (
       select 1 from public.membresias m
       join public.permisos_rol pr on pr.rol = m.rol and pr.modulo = 'finanzas' and pr.accion = 'administrar'
       where m.hogar_id = new.hogar_id and m.persona_id = new.titular_id and m.activa
@@ -1154,10 +1157,9 @@ declare
   v_libro public.fin_libros%rowtype;
 begin
   select * into v_libro from public.fin_libros l where l.id = new.libro_id;
-  if not found or (new.hogar_id is not null and new.hogar_id <> v_libro.hogar_id) then
-    raise exception using errcode = '23503', message = 'El libro no existe en este hogar.';
+  if not found then
+    raise exception using errcode = '23503', message = 'El libro no existe (¿aún no se sube?).';
   end if;
-  new.hogar_id := v_libro.hogar_id;
   if tg_op = 'INSERT' and auth.uid() is not null
      and not public.fin_puede(new.libro_id, 'administrar')
      -- Arranque: el primer miembro de un libro nuevo (lo agrega el servidor).
@@ -1166,6 +1168,10 @@ begin
                                          else v_libro.creado_por end)) then
     raise exception using errcode = '42501', message = 'Sin permiso para administrar los miembros de ese libro.';
   end if;
+  if new.hogar_id is not null and new.hogar_id <> v_libro.hogar_id then
+    raise exception using errcode = '22023', message = 'El libro es de otro hogar.';
+  end if;
+  new.hogar_id := v_libro.hogar_id;
 
   if v_libro.tipo = 'personal' and (new.papel <> 'titular' or new.persona_id <> v_libro.titular_id) then
     raise exception using errcode = '22023', message = 'El titular de un libro personal es su único miembro.';
@@ -1338,6 +1344,9 @@ begin
 
   -- 4. Combinación de cuentas por tipo (tabla de 4.3, la de libro.dart).
   if new.tipo = 'anulacion' then
+    if new.anula_a is null then
+      raise exception using errcode = '23514', message = 'Una anulación dice qué movimiento anula (anula_a).';
+    end if;
     select * into v_original from public.fin_movimientos m where m.hogar_id = new.hogar_id and m.id = new.anula_a;
     if not found then
       raise exception using errcode = '23503', message = 'El movimiento que se anula no existe (¿aún no se sube?).';
@@ -1475,7 +1484,9 @@ begin
       raise exception using errcode = '22023', message = 'La vigencia va en el libro de su ingreso.';
     end if;
   end if;
-  if exists (select 1 from public.fin_vigencias_ingreso v
+  -- (Con hasta antes de desde responde el check de la tabla.)
+  if (new.hasta is null or new.hasta >= new.desde) and exists (
+             select 1 from public.fin_vigencias_ingreso v
              where v.ingreso_id = new.ingreso_id and v.id <> new.id
                and daterange(v.desde, v.hasta, '[]') && daterange(new.desde, new.hasta, '[]')) then
     raise exception using errcode = '22023',

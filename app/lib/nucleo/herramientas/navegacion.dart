@@ -1,11 +1,13 @@
-/// Herramientas de navegación de la Fase 0: abrir un módulo o una pantalla.
+/// Herramientas de navegación: abrir un módulo, una pantalla o una hoja de
+/// registro.
 ///
 /// No escriben datos ni leen nada de los módulos, así que no piden
-/// confirmación y su resultado ("Se abrió Finanzas") sí puede verlo la IA.
-/// Por eso son la única excepción a la regla de D3 del registro: una
-/// herramienta de Finanzas o Cuidados que no sea de navegación tiene que ser
-/// solo local. La clase es `final` y su [HerramientaNavegacion.ejecutar] no lee
-/// datos, así que nadie puede colar por aquí una herramienta que devuelva cifras.
+/// confirmación. Abrir la hoja de un gasto tampoco escribe: la persona captura
+/// y confirma en la hoja (una orden nunca registra dinero sola). Las de
+/// Finanzas y Cuidados son solo locales como todas las de esos módulos (D3):
+/// ni siquiera "se abrió Finanzas" llega a la IA en la nube. La clase es
+/// `final` y su [HerramientaNavegacion.ejecutar] no lee datos, así que nadie
+/// puede colar por aquí una herramienta que devuelva cifras.
 library;
 
 import '../contratos/dispositivo.dart';
@@ -14,7 +16,21 @@ import '../contratos/rutas.dart';
 import 'herramienta.dart';
 import 'visibilidad_modulos.dart';
 
-/// Abre una ruta de la app.
+/// Rutas que abren las herramientas además de las del contrato `Rutas`
+/// (`nucleo/contratos/rutas.dart`, del arquitecto). Una prueba las compara
+/// con las de la app; si pasan al contrato, se usan de ahí.
+abstract final class RutasDeHerramientas {
+  /// Semana de Finanzas: cascada, partidas y revisión semanal (pantalla
+  /// "Semana" de la especificación de la Fase 1, sección 6). La declara el
+  /// agente finanzas con `GoRoute(path: 'semana')` bajo la raíz del módulo.
+  static const semanaFinanzas = '${Rutas.finanzas}/semana';
+
+  /// Bandeja de solicitudes y recordatorios de GRAVITY (D18; plataforma:
+  /// `RutasApp.solicitudes`).
+  static const solicitudes = '/solicitudes';
+}
+
+/// Abre una ruta de la app o una hoja de registro.
 final class HerramientaNavegacion extends Herramienta {
   const HerramientaNavegacion({
     required this.nombre,
@@ -24,6 +40,11 @@ final class HerramientaNavegacion extends Herramienta {
     required this.etiqueta,
     required this.palabrasClave,
     this.dispositivos,
+    this.accion = Accion.leer,
+    this.pertenencia = Pertenencia.propia,
+    this.ambito = AmbitoHerramienta.general,
+    this.hoja,
+    this._descripcion,
   });
 
   @override
@@ -35,7 +56,8 @@ final class HerramientaNavegacion extends Herramienta {
   @override
   final Set<Rol> roles;
 
-  /// Ruta de `Rutas` que abre.
+  /// Ruta que abre. Si tiene [hoja], es la pantalla del módulo que se abre
+  /// cuando no hay dónde mostrar la hoja.
   final String ruta;
 
   /// Nombre visible del destino, p. ej. "Finanzas".
@@ -49,6 +71,24 @@ final class HerramientaNavegacion extends Herramienta {
   /// en la laptop, D16). El router de la plataforma lo vuelve a revisar.
   final Set<TipoDispositivo>? dispositivos;
 
+  /// Lo que la persona debe poder hacer en el módulo: leer para abrirlo;
+  /// escribir para abrir la hoja de un registro; administrar para
+  /// Desarrollador.
+  @override
+  final Accion accion;
+
+  @override
+  final Pertenencia pertenencia;
+
+  @override
+  final AmbitoHerramienta ambito;
+
+  /// Hoja de registro que abre, si no es una pantalla. La hoja es la
+  /// confirmación: sin que la persona guarde en ella, no se escribe nada.
+  final HojaDeRegistro? hoja;
+
+  final String? _descripcion;
+
   /// `true` si se ofrece en [dispositivo]. Si no se sabe en qué dispositivo
   /// se está (`null`), solo se ofrecen las que van en todos.
   bool disponibleEn(TipoDispositivo? dispositivo) {
@@ -57,20 +97,37 @@ final class HerramientaNavegacion extends Herramienta {
         (dispositivo != null && permitidos.contains(dispositivo));
   }
 
-  @override
-  String get descripcion => 'Abre $etiqueta.';
+  /// Texto de la opción en la barra: "Abrir Finanzas" o, si abre una hoja,
+  /// su etiqueta ("Registrar gasto").
+  String get titulo => hoja == null ? 'Abrir $etiqueta' : etiqueta;
 
+  @override
+  String get descripcion => _descripcion ?? 'Abre $etiqueta.';
+
+  /// Nunca escribe: abrir una pantalla o una hoja no guarda nada.
   @override
   bool get escribe => false;
 
+  /// Solo local si su módulo lo es (D3: Finanzas y Cuidados). No depende de
+  /// que el autor recuerde la marca.
   @override
-  bool get soloLocal => false;
+  bool get soloLocal => modulosSoloLocal.contains(modulo);
 
   @override
   Future<ResultadoHerramienta> ejecutar(
     Map<String, Object?> parametros,
     ContextoHerramienta ctx,
   ) async {
+    final hoja = this.hoja;
+    final abrirHoja = ctx.abrirHoja;
+    if (hoja != null && abrirHoja != null) {
+      abrirHoja(hoja);
+      return ResultadoHerramienta(
+        this,
+        contenido: '$etiqueta: captura y guarda en la hoja.',
+        paraIa: 'Se abrió la hoja «$etiqueta»; no se guardó nada.',
+      );
+    }
     final navegar = ctx.navegar;
     if (navegar == null) {
       return ResultadoHerramienta(
@@ -88,89 +145,211 @@ final class HerramientaNavegacion extends Herramienta {
   }
 }
 
-/// Catálogo de navegación de la Fase 0, en el orden en que se sugiere.
+// ---------------------------------------------------------------------------
+// Fase 0: abrir cada módulo, Ajustes y Desarrollador.
+// ---------------------------------------------------------------------------
+
+/// Pantalla principal de GRAVITY.
+final herramientaAbrirInicio = HerramientaNavegacion(
+  nombre: 'gravity.abrir',
+  modulo: Modulo.gravity,
+  roles: rolesParaNavegar(Modulo.gravity),
+  ruta: Rutas.inicio,
+  etiqueta: 'Inicio',
+  palabrasClave: const [
+    'inicio',
+    'gravity',
+    'principal',
+    'pantalla principal',
+    'menú principal',
+  ],
+);
+
+/// Finanzas (solo local, D3): dueño y pareja, cada quien su libro (D19).
+final herramientaAbrirFinanzas = HerramientaNavegacion(
+  nombre: 'finanzas.abrir',
+  modulo: Modulo.finanzas,
+  roles: rolesParaNavegar(Modulo.finanzas),
+  ruta: Rutas.finanzas,
+  etiqueta: 'Finanzas',
+  palabrasClave: const ['finanzas', 'presupuesto', 'presupuestos', 'dinero'],
+);
+
+final herramientaAbrirHabitos = HerramientaNavegacion(
+  nombre: 'habitos.abrir',
+  modulo: Modulo.habitos,
+  roles: rolesParaNavegar(Modulo.habitos),
+  ruta: Rutas.habitos,
+  etiqueta: 'Hábitos',
+  palabrasClave: const ['hábitos', 'hábito'],
+);
+
+/// Cuidados (solo local, D3). La cuidadora lo abre desde su navegación, no
+/// desde GRAVITY (D18).
+final herramientaAbrirCuidados = HerramientaNavegacion(
+  nombre: 'cuidados.abrir',
+  modulo: Modulo.cuidados,
+  roles: rolesParaNavegar(Modulo.cuidados),
+  ruta: Rutas.cuidados,
+  etiqueta: 'Cuidados',
+  palabrasClave: const ['cuidados', 'cuidado', 'papá'],
+);
+
+final herramientaAbrirAlimentacion = HerramientaNavegacion(
+  nombre: 'alimentacion.abrir',
+  modulo: Modulo.alimentacion,
+  roles: rolesParaNavegar(Modulo.alimentacion),
+  ruta: Rutas.alimentacion,
+  etiqueta: 'Alimentación',
+  palabrasClave: const [
+    'alimentación',
+    'comida',
+    'comidas',
+    'cocina',
+    'menú',
+    'menús',
+    'receta',
+    'recetas',
+  ],
+);
+
+final herramientaAbrirCasa = HerramientaNavegacion(
+  nombre: 'casa.abrir',
+  modulo: Modulo.casa,
+  roles: rolesParaNavegar(Modulo.casa),
+  ruta: Rutas.casa,
+  etiqueta: 'Casa',
+  palabrasClave: const ['casa', 'hogar'],
+);
+
+final herramientaAbrirAjustes = HerramientaNavegacion(
+  nombre: 'ajustes.abrir',
+  modulo: Modulo.ajustes,
+  roles: rolesParaNavegar(Modulo.ajustes),
+  ruta: Rutas.ajustes,
+  etiqueta: 'Ajustes',
+  palabrasClave: const ['ajustes', 'ajuste', 'configuración', 'preferencias'],
+);
+
+/// Ajustes › Desarrollador: solo quien administra Ajustes, el Dueño, y solo
+/// en la laptop (D16; `puedeVerDesarrollador` de la plataforma). Es de lo que
+/// administra el hogar (lo ajeno): la cuenta maestra no la recibe (D19). La
+/// barra de órdenes no la ofrece en otro dispositivo y el router la vuelve a
+/// revisar.
+final herramientaAbrirDesarrollador = HerramientaNavegacion(
+  nombre: 'ajustes.abrir_desarrollador',
+  modulo: Modulo.ajustes,
+  roles: rolesQueAdministran(Modulo.ajustes),
+  ruta: Rutas.desarrollador,
+  etiqueta: 'Desarrollador',
+  palabrasClave: const ['desarrollador', 'api', 'apis', 'swagger'],
+  dispositivos: const {TipoDispositivo.laptop},
+  accion: Accion.administrar,
+  pertenencia: Pertenencia.ajena,
+);
+
+// ---------------------------------------------------------------------------
+// Fase 1: Finanzas (solo locales, D3) y la bandeja de la cuidadora (D18).
+// ---------------------------------------------------------------------------
+
+/// Abre la hoja de registro rápido de un gasto (F1). No escribe: la hoja es
+/// la confirmación. Solo para quien registra en Finanzas (dueño y pareja); si
+/// no hay dónde mostrar la hoja, abre Finanzas.
+final herramientaRegistrarGasto = HerramientaNavegacion(
+  nombre: 'finanzas.registrar_gasto',
+  modulo: Modulo.finanzas,
+  roles: rolesParaNavegar(Modulo.finanzas, accion: Accion.escribir),
+  ruta: Rutas.finanzas,
+  etiqueta: 'Registrar gasto',
+  palabrasClave: const [
+    'registrar gasto',
+    'registra gasto',
+    'registra un gasto',
+    'nuevo gasto',
+    'anotar gasto',
+    'anota gasto',
+    'apunta gasto',
+    'gasto',
+  ],
+  accion: Accion.escribir,
+  hoja: HojaDeRegistro.gasto,
+  descripcion:
+      'Abre la hoja para registrar un gasto. No guarda nada: la persona '
+      'captura y confirma en la hoja.',
+);
+
+/// La semana de Finanzas: cascada, partidas con semáforo y revisión semanal.
+final herramientaAbrirSemanaFinanzas = HerramientaNavegacion(
+  nombre: 'finanzas.abrir_semana',
+  modulo: Modulo.finanzas,
+  roles: rolesParaNavegar(Modulo.finanzas),
+  ruta: RutasDeHerramientas.semanaFinanzas,
+  etiqueta: 'Presupuesto de la semana',
+  palabrasClave: const [
+    'mi semana',
+    'semana',
+    'esta semana',
+    'presupuesto semanal',
+    'cascada',
+    'remanente',
+    'cuánto me queda',
+  ],
+  descripcion:
+      'Abre la semana de Finanzas (cascada, partidas y revisión semanal). '
+      'Solo navega: los montos se ven en la pantalla, nunca van a la IA.',
+);
+
+/// Bandeja de solicitudes y recordatorios de GRAVITY: lo único de GRAVITY
+/// que usa la cuidadora (D18). No es de conversación libre ni de la familia.
+final herramientaAbrirSolicitudes = HerramientaNavegacion(
+  nombre: 'gravity.abrir_solicitudes',
+  modulo: Modulo.gravity,
+  roles: rolesConBandeja(),
+  ruta: RutasDeHerramientas.solicitudes,
+  etiqueta: 'Solicitudes',
+  palabrasClave: const [
+    'solicitudes',
+    'solicitud',
+    'recordatorios',
+    'recordatorio',
+    'bandeja',
+  ],
+  ambito: AmbitoHerramienta.solicitudes,
+  descripcion:
+      'Abre la bandeja de solicitudes y recordatorios de GRAVITY para '
+      'confirmarlos (hecho o no se pudo, con nota).',
+);
+
+/// Navegación de la Fase 0.
+final List<HerramientaNavegacion> navegacionFase0 = List.unmodifiable([
+  herramientaAbrirInicio,
+  herramientaAbrirFinanzas,
+  herramientaAbrirHabitos,
+  herramientaAbrirCuidados,
+  herramientaAbrirAlimentacion,
+  herramientaAbrirCasa,
+  herramientaAbrirAjustes,
+  herramientaAbrirDesarrollador,
+]);
+
+/// Navegación de la Fase 1: Finanzas y la bandeja de la cuidadora.
+final List<HerramientaNavegacion> navegacionFase1 = List.unmodifiable([
+  herramientaRegistrarGasto,
+  herramientaAbrirSemanaFinanzas,
+  herramientaAbrirSolicitudes,
+]);
+
+/// Todo el catálogo de navegación, en el orden en que se sugiere.
 final List<HerramientaNavegacion> herramientasNavegacion = List.unmodifiable([
-  HerramientaNavegacion(
-    nombre: 'gravity.abrir',
-    modulo: Modulo.gravity,
-    roles: rolesQueVen(Modulo.gravity),
-    ruta: Rutas.inicio,
-    etiqueta: 'Inicio',
-    palabrasClave: const [
-      'inicio',
-      'gravity',
-      'principal',
-      'pantalla principal',
-      'menú principal',
-    ],
-  ),
-  HerramientaNavegacion(
-    nombre: 'finanzas.abrir',
-    modulo: Modulo.finanzas,
-    roles: rolesQueVen(Modulo.finanzas),
-    ruta: Rutas.finanzas,
-    etiqueta: 'Finanzas',
-    palabrasClave: const ['finanzas', 'presupuesto', 'presupuestos', 'dinero'],
-  ),
-  HerramientaNavegacion(
-    nombre: 'habitos.abrir',
-    modulo: Modulo.habitos,
-    roles: rolesQueVen(Modulo.habitos),
-    ruta: Rutas.habitos,
-    etiqueta: 'Hábitos',
-    palabrasClave: const ['hábitos', 'hábito'],
-  ),
-  HerramientaNavegacion(
-    nombre: 'cuidados.abrir',
-    modulo: Modulo.cuidados,
-    roles: rolesQueVen(Modulo.cuidados),
-    ruta: Rutas.cuidados,
-    etiqueta: 'Cuidados',
-    palabrasClave: const ['cuidados', 'cuidado', 'papá'],
-  ),
-  HerramientaNavegacion(
-    nombre: 'alimentacion.abrir',
-    modulo: Modulo.alimentacion,
-    roles: rolesQueVen(Modulo.alimentacion),
-    ruta: Rutas.alimentacion,
-    etiqueta: 'Alimentación',
-    palabrasClave: const [
-      'alimentación',
-      'comida',
-      'comidas',
-      'cocina',
-      'menú',
-      'menús',
-      'receta',
-      'recetas',
-    ],
-  ),
-  HerramientaNavegacion(
-    nombre: 'casa.abrir',
-    modulo: Modulo.casa,
-    roles: rolesQueVen(Modulo.casa),
-    ruta: Rutas.casa,
-    etiqueta: 'Casa',
-    palabrasClave: const ['casa', 'hogar'],
-  ),
-  HerramientaNavegacion(
-    nombre: 'ajustes.abrir',
-    modulo: Modulo.ajustes,
-    roles: rolesQueVen(Modulo.ajustes),
-    ruta: Rutas.ajustes,
-    etiqueta: 'Ajustes',
-    palabrasClave: const ['ajustes', 'ajuste', 'configuración', 'preferencias'],
-  ),
-  // Ajustes › Desarrollador: solo quien administra Ajustes, el Dueño, y solo
-  // en la laptop (D16; `puedeVerDesarrollador` de la plataforma). La barra de
-  // órdenes no la ofrece en otro dispositivo y el router la vuelve a revisar.
-  HerramientaNavegacion(
-    nombre: 'ajustes.abrir_desarrollador',
-    modulo: Modulo.ajustes,
-    roles: rolesQueAdministran(Modulo.ajustes),
-    ruta: Rutas.desarrollador,
-    etiqueta: 'Desarrollador',
-    palabrasClave: const ['desarrollador', 'api', 'apis', 'swagger'],
-    dispositivos: const {TipoDispositivo.laptop},
-  ),
+  herramientaAbrirInicio,
+  herramientaAbrirFinanzas,
+  herramientaRegistrarGasto,
+  herramientaAbrirSemanaFinanzas,
+  herramientaAbrirHabitos,
+  herramientaAbrirCuidados,
+  herramientaAbrirAlimentacion,
+  herramientaAbrirCasa,
+  herramientaAbrirSolicitudes,
+  herramientaAbrirAjustes,
+  herramientaAbrirDesarrollador,
 ]);

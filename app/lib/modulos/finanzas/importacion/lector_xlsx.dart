@@ -155,14 +155,16 @@ LibroXlsx leerXlsx(Uint8List bytes) {
   if (workbook == null || rels == null) {
     throw const ErrorArchivo('No es un libro de Excel (.xlsx).');
   }
-  final destinos = <String, String>{
-    for (final r in RegExp(r'<Relationship\b([^>]*)/?>').allMatches(
-      utf8.decode(rels),
-    ))
-      if (RegExp(r'\bId="([^"]+)"').firstMatch(r.group(1)!)?.group(1)
-          case final id?)
-        id: RegExp(r'\bTarget="([^"]+)"').firstMatch(r.group(1)!)!.group(1)!,
-  };
+  final destinos = <String, String>{};
+  for (final r in RegExp(r'<Relationship\b([^>]*)/?>').allMatches(
+    utf8.decode(rels),
+  )) {
+    final id = RegExp(r'\bId="([^"]+)"').firstMatch(r.group(1)!)?.group(1);
+    final destino = RegExp(
+      r'\bTarget="([^"]+)"',
+    ).firstMatch(r.group(1)!)?.group(1);
+    if (id != null && destino != null) destinos[id] = destino;
+  }
   final hojas = <String, String>{};
   for (final h in RegExp(r'<sheet\b([^>]*)/?>').allMatches(utf8.decode(workbook))) {
     final atributos = h.group(1)!;
