@@ -82,3 +82,31 @@ extension LecturaDeRepo on RepositorioFinanzasEnMemoria {
   Cuenta cuentaDe(String libroId, String nombre) =>
       datos.cuentasDe(libroId).firstWhere((c) => c.nombre == nombre);
 }
+
+/// Hogar recién creado: sus libros y cuentas propias, pero sin categorías,
+/// cuentas de gasto, compromisos ni movimientos (antes de importar la
+/// plantilla).
+RepositorioFinanzasEnMemoria repositorioSinCategorias(Sesion sesion) {
+  final completo = filtrarParaPersona(
+    datosDeDemostracion(hoy: hoyDePrueba),
+    sesion.persona.id,
+    hoy: hoyDePrueba,
+    esMaestra: sesion.esMaestra,
+  );
+  return RepositorioFinanzasEnMemoria(
+    datos: completo.copiar(
+      categorias: const [],
+      cuentas: [
+        for (final c in completo.cuentas)
+          if (c.libroId != null) c,
+      ],
+      compromisos: const [],
+      sobres: const [],
+      semanas: const [],
+      movimientos: const [],
+    ),
+    personaId: sesion.persona.id,
+    personas: personasDeDemostracion(),
+    adultosConFinanzas: adultosDeEjemplo,
+  );
+}

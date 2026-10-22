@@ -341,9 +341,7 @@ class ColaSinConexion {
     // Orden de subida: primero los de nivel menor, y dentro de un nivel, el
     // orden en que se crearon (el de la consulta).
     final nivelDe = nivelDeSubida ?? _nivelDelEnviador;
-    final posicion = {
-      for (var i = 0; i < listos.length; i++) listos[i].id: i,
-    };
+    final posicion = {for (var i = 0; i < listos.length; i++) listos[i].id: i};
     final niveles = {for (final r in listos) r.id: nivelDe(r.tipo)};
     listos.sort((a, b) {
       final porNivel = niveles[a.id]!.compareTo(niveles[b.id]!);
@@ -390,7 +388,8 @@ class ColaSinConexion {
       if (resultado == ResultadoEnvio.reintentar && intento >= limite) {
         // Demasiados intentos sin una respuesta clara: que lo vea la persona.
         resultado = ResultadoEnvio.rechazado;
-        error = 'Falló $intento veces: ${error ?? 'sin respuesta clara del servidor'}';
+        error =
+            'Falló $intento veces: ${error ?? 'sin respuesta clara del servidor'}';
       }
 
       final actualizar = _base.update(_tabla)
@@ -480,7 +479,8 @@ class ColaSinConexion {
     String? personaId,
     bool deLaTabletCasa = false,
   }) => _vigilar(
-    () => requierenAtencion(personaId: personaId, deLaTabletCasa: deLaTabletCasa),
+    () =>
+        requierenAtencion(personaId: personaId, deLaTabletCasa: deLaTabletCasa),
   );
 
   SimpleSelectStatement<$PendientesTable, RegistroPendiente> _consultaAtencion(
@@ -523,25 +523,22 @@ class ColaSinConexion {
   Future<void> _cambiarAtencion(String id, PendientesCompanion cambio) async {
     await (_base.update(_tabla)..where(
           (t) =>
-              t.id.equals(id) &
-              t.estado.equalsValue(EstadoPendiente.rechazado),
+              t.id.equals(id) & t.estado.equalsValue(EstadoPendiente.rechazado),
         ))
         .write(cambio);
     _avisar();
   }
 
   /// Todos los registros de la cola (para revisar y para pruebas).
-  Future<List<RegistroPendiente>> registros() => (_base.select(_tabla)
-        ..orderBy([
-          (t) => OrderingTerm.asc(t.creadoEn),
-          (t) => OrderingTerm.asc(t.rowId),
-        ]))
-      .get();
+  Future<List<RegistroPendiente>> registros() =>
+      (_base.select(_tabla)..orderBy([
+            (t) => OrderingTerm.asc(t.creadoEn),
+            (t) => OrderingTerm.asc(t.rowId),
+          ]))
+          .get();
 
   /// Borra los enviados con más de [antiguedad].
-  Future<int> limpiarEnviados({
-    Duration antiguedad = const Duration(days: 7),
-  }) {
+  Future<int> limpiarEnviados({Duration antiguedad = const Duration(days: 7)}) {
     final limite = _reloj().subtract(antiguedad);
     return (_base.delete(_tabla)..where(
           (t) =>

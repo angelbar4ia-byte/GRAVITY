@@ -66,6 +66,10 @@ enum SeccionFinanzas {
 /// Ancho a partir del cual la barra lateral se queda fija.
 const double anchoBarraLateral = 900;
 
+/// Ancho de la barra lateral: cabe un libro con nombre largo y su marca
+/// ("Solo lectura", "Albacea") en el selector.
+const double anchoBarraLateralFija = 300;
+
 class MarcoFinanzasLaptop extends ConsumerWidget {
   const MarcoFinanzasLaptop({
     super.key,
@@ -104,7 +108,7 @@ class MarcoFinanzasLaptop extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 SizedBox(
-                  width: 260,
+                  width: anchoBarraLateralFija,
                   child: _BarraLateral(seccion: seccion, contexto: c),
                 ),
                 const VerticalDivider(width: 1),
@@ -198,7 +202,9 @@ class _Principal extends StatelessWidget {
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
                   const SizedBox(width: 12),
-                  marcaDe(contexto),
+                  // La marca ("Solo lectura", "En nombre de…") es flexible:
+                  // en una ventana angosta pasa a dos líneas.
+                  Flexible(child: marcaDe(contexto)),
                 ],
               ),
               if (acciones.isNotEmpty)

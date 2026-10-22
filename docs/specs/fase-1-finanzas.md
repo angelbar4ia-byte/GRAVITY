@@ -1,10 +1,12 @@
 # Especificación — Fase 1: Finanzas MVP 1
 
-> Versión 0.2 (21/oct/2026): incorpora las respuestas del dueño (sección 9.0 y **D19**: finanzas por persona, cuentas compartidas, albaceas y cuenta maestra). Versión 0.1 (20/oct/2026). Base: diseño de FINANZAS v23 (`docs/modulos/finanzas/ESTRUCTURA_APP_PRESUPUESTO_SEMANAL.md`, secciones 1 a 4, 5.0 a 5.2, 5.6, 5.6 bis, 5.9 bis, 7, 8 bis, 9, 10 y 12), `docs/ROADMAP.md` (secciones 4 y 5), `docs/DECISIONES.md` (D3, D4, D5 y D7) y `docs/DISENO_UX_UI.md` (secciones 8, 9, 13 y 14). Se aplican todas las convenciones de `docs/specs/fase-0-cimientos.md`, sección 4.
+> Versión 0.3 (22/oct/2026): reglas (sección 5), pantallas (6) y criterios de aceptación (7) para **libros, albaceas, cuenta maestra, grupo de deudas prioritarias e ingresos de papá** (D19), el **contrato con el servidor** (D17 y `supabase/README.md`, "Finanzas (Fase 1)") y los ids estables para reintentar. Versión 0.2 (21/oct/2026): incorpora las respuestas del dueño (sección 9.0 y **D19**: finanzas por persona, cuentas compartidas, albaceas y cuenta maestra). Versión 0.1 (20/oct/2026). Base: diseño de FINANZAS v23 (`docs/modulos/finanzas/ESTRUCTURA_APP_PRESUPUESTO_SEMANAL.md`, secciones 1 a 4, 5.0 a 5.2, 5.6, 5.6 bis, 5.9 bis, 7, 8 bis, 9, 10 y 12), `docs/ROADMAP.md` (secciones 4 y 5), `docs/DECISIONES.md` (D3, D4, D5, D7, D17 y D19) y `docs/DISENO_UX_UI.md` (secciones 8, 9, 13 y 14). Se aplican todas las convenciones de `docs/specs/fase-0-cimientos.md`, sección 4.
 >
 > Las preguntas para el dueño están en la **sección 9**. Lo que el diseño dejó ambiguo se resolvió con la interpretación más conservadora y se marca como **(interpretación)**; cada una tiene su pregunta.
 >
-> La lógica ya está adelantada en `paquetes/finanzas_dominio` (Dart puro, 122 pruebas en verde con los ejemplos numéricos del diseño).
+> La lógica está en `paquetes/finanzas_dominio` (Dart puro, **194 pruebas** en verde con los ejemplos numéricos del diseño, el cuadre por libro y los calendarios de papá). La app (`app/lib/modulos/finanzas`) tiene **66 pruebas propias** en `app/test/modulos/finanzas` (casos de uso, contrato con el servidor y pantallas).
+>
+> **Qué cambió en la v0.3:** reglas 44 a 59 (nuevas), pantallas 6.1 a 6.3, criterios 26 (corregido por D19) y 31 a 44 (nuevos), correcciones menores de la sección 4.1 (columnas que pone el servidor) y de 9.1 (filas superadas por 9.0). La sección 4.5 y la 9.0 no cambian.
 
 ---
 
@@ -66,6 +68,8 @@ Además de la sección 4 de la Fase 0:
 6. **Vista devengada** para planear y cerrar la semana; **vista de flujo** (fechas reales) para la caja y la alerta.
 7. **Semana fija en lunes** (convención de GRAVITY), aunque el diseño la permitía configurable (pregunta P11).
 8. **Identificadores de dominio** en español sin acentos (`Movimiento`, `cerrarSemana`); tablas con prefijo `fin_`.
+9. **Ids estables (UUID v5):** lo que se puede repetir (reintentar sin señal, tocar dos veces, volver a importar) no usa un UUID al azar: su id sale de una clave que dice **qué** es (`ClavesId` en `app/lib/modulos/finanzas/datos/ids.dart`). Así el reintento llega con el mismo id y el servidor no hace nada, en lugar de chocar con un único (`anula_a`, `(hogar_id, padre_id, nombre)`, `(semana_id, origen, origen_id)`…) y quedar en "requiere atención". Lo que es siempre nuevo (un gasto, un ingreso extra) sigue con UUID v4.
+10. **Contrato de columnas:** la app nunca manda `recibido_en`, `libro_origen_id`, `libro_destino_id`, `reaperturas` ni las columnas generadas; manda siempre `registrado_en`; `fin_cuentas.libro_id` va nulo solo en las cuentas de gasto; `fin_libro_miembros.desde` y `hasta` son `timestamptz`; los parámetros del libro se cambian con `UPDATE` (la fila la crea el servidor con el libro).
 
 ---
 
@@ -79,20 +83,20 @@ Todas las tablas llevan `hogar_id uuid not null references public.hogares`, RLS 
 |---|---|---|
 | `fin_parametros` | `hogar_id` (PK), `meta_remanente_pb` (2000), `ahorro_minimo_con_deuda_pb` (0), `tope_arrastre_semanas` (2), `partida_ambar_pb` (8000), `partida_rojo_pb` (10000), `remanente_verde_pb` (2000), `remanente_ambar_pb` (1000), `carga_ambar_pb` (2000), `carga_rojo_pb` (3500), `cumplimiento_verde_pb` (9000), `cumplimiento_ambar_pb` (7000), `cierre_automatico_dias` (3), `cuenta_ajustes_id`, `cuenta_apertura_id`, `cuenta_por_clasificar_id` | Una fila por hogar; valores por defecto de 5.6 bis y 5.9 bis |
 | `fin_categorias` | `id`, `padre_id` (self), `nivel` (1 a 3, check), `nombre`, `icono`, `color`, `naturaleza` (texto de la plantilla: fija, variable, mixta, eventual…), `prioridad` (`necesario`/`deseable`/`discrecional`), `protegida` (bool), `es_del_sistema`, `oculta`, `archivada`, `posiblemente_deducible`, `cuenta_gasto_id` | Único (`hogar_id`, `padre_id`, `nombre`). Se borra solo sin datos (FK `restrict`); con datos se archiva (5.2) |
-| `fin_cuentas` | `id`, `nombre`, `tipo` (`efectivo`, `banco`, `ahorro`, `inversion`, `por_cobrar`, `tarjeta`, `prestamo`, `origen_ingreso`, `de_gasto`, `gasto_financiero`, `por_clasificar`, `ajustes`, `apertura`), `clase` (columna generada desde `tipo`: `activo`, `pasivo`, `ingreso`, `gasto`, `ajuste`, `apertura`), `liquida` (generada), `estado` (`activa`/`congelada`/`cerrada`/`archivada`), `categoria_id`, `titular_id` (persona; nulo = del hogar), `limite_centavos` (tarjetas, opcional), `creada_por`, `creada_en` | Único (`hogar_id`, `nombre`). Cerrar o archivar solo con saldo cero (trigger). Las de `ajustes`, `apertura` y `por_clasificar` se crean solas con el hogar |
-| `fin_movimientos` | `id` (UUID del dispositivo), `tipo` (`apertura`, `ingreso`, `gasto`, `reembolso`, `transferencia`, `pago_deuda`, `reclasificacion`, `ajuste`, `anulacion`), `fecha` (date), `registrado_en`, `recibido_en` (default `now()`), `cuenta_origen_id`, `cuenta_destino_id`, `monto_centavos` (> 0), `categoria_id` (subcategoría o detalle), `grupo_id` (ticket dividido; capital + intereses), `realizado_por`, `registrado_por` (= `persona_actual()`), `via` (`manual`/`voz`/`imagen`/`qr`/`importacion`), `nota` (≤ 200), `motivo` (≤ 200), `anula_a` (FK a sí misma), `estado_inicial` (`confirmado`/`pendiente`) | **Solo agregar:** trigger `impedir_cambios_solo_agregar` (UPDATE, DELETE, TRUNCATE). Trigger de validación al insertar (sección 4.3). Checks: origen ≠ destino; `motivo` obligatorio en `ajuste` y `anulacion`; `anula_a` solo en `anulacion`. Índice único en `anula_a` (en el MVP 1 no hay anulaciones rechazadas). Índices por (`hogar_id`, `fecha`), por cuenta y por `grupo_id` |
+| `fin_cuentas` | `id`, `libro_id` (nulo **solo** en `de_gasto` y `gasto_financiero`), `nombre`, `tipo` (`efectivo`, `banco`, `ahorro`, `inversion`, `por_cobrar`, `tarjeta`, `prestamo`, `origen_ingreso`, `de_gasto`, `gasto_financiero`, `por_clasificar`, `ajustes`, `apertura`), `clase` (columna generada desde `tipo`: `activo`, `pasivo`, `ingreso`, `gasto`, `ajuste`, `apertura`), `liquida` (generada), `estado` (`activa`/`congelada`/`cerrada`/`archivada`), `categoria_id`, `titular_id` (persona; nulo = del hogar), `limite_centavos` (tarjetas, opcional), `creada_por`, `creada_en` | Único (`hogar_id`, `nombre`). Cerrar o archivar solo con saldo cero (trigger). Las de `ajustes`, `apertura` y `por_clasificar` se crean solas con el hogar |
+| `fin_movimientos` | `id` (UUID del dispositivo), `tipo` (`apertura`, `ingreso`, `gasto`, `reembolso`, `transferencia`, `pago_deuda`, `reclasificacion`, `ajuste`, `anulacion`), `fecha` (date), `registrado_en`, `recibido_en` (lo pone el servidor; la app **no** lo manda), `libro_origen_id` y `libro_destino_id` (los pone el servidor; la app tampoco), `registrado_en` (obligatorio), `cuenta_origen_id`, `cuenta_destino_id`, `monto_centavos` (> 0), `categoria_id` (subcategoría o detalle), `grupo_id` (ticket dividido; capital + intereses), `realizado_por`, `registrado_por` (= `persona_actual()`), `via` (`manual`/`voz`/`imagen`/`qr`/`importacion`), `nota` (≤ 200), `motivo` (≤ 200), `anula_a` (FK a sí misma), `estado_inicial` (`confirmado`/`pendiente`) | **Solo agregar:** trigger `impedir_cambios_solo_agregar` (UPDATE, DELETE, TRUNCATE). Trigger de validación al insertar (sección 4.3). Checks: origen ≠ destino; `motivo` obligatorio en `ajuste` y `anulacion`; `anula_a` solo en `anulacion`. Índice único en `anula_a` (en el MVP 1 no hay anulaciones rechazadas). Índices por (`hogar_id`, `fecha`), por cuenta y por `grupo_id` |
 | `fin_ingresos` | `id`, `persona_id`, `nombre`, `tipo` (`salario`/`independiente`/`prestaciones`/`pension`/`otro`), `cuenta_origen_id` (origen de ingreso), `cuenta_destino_id` (activo), `certeza` (`segura`/`probable`/`incierta`), `activo` | Los extras no tienen configuración: son movimientos `ingreso` desde la cuenta "Extras" |
 | `fin_vigencias_ingreso` | `id`, `ingreso_id`, `monto_neto_centavos`, `forma` (`semanal`/`catorcenal`/`quincenal`/`mensual`), `dia_semana`, `dias_mes` (`smallint[]`; 0 = último día), `fecha_ancla`, `regla_inhabil` (`siguiente_dia_habil`/`dia_habil_anterior`/`sin_cambio`), `desde`, `hasta` | Un cambio de neto crea una vigencia nueva; de la anterior solo se cierra `hasta` (5.1 bis, punto 2) |
 | `fin_compromisos` | `id`, `nombre`, `tipo` (`fija`/`reserva`), `cuenta_gasto_id`, `categoria_id`, `monto_centavos`, `frecuencia` (`semanal`…`anual`, `diaria` con `dias_activos`), calendario (`forma` incluida `cada_meses`, `dia_semana`, `dias_mes`, `fecha_ancla`, `intervalo_meses`), `regla_inhabil` (por defecto `sin_cambio`), `protegida`, `prioridad`, `desde`, `hasta`, `activo` | Renta, servicios, reservas (placas, predial) |
 | `fin_sobres` | `id`, `cuenta_gasto_id`, `nombre`, `monto_semanal_centavos`, `protegida`, `prioridad`, `piso_minimo_centavos`, `modo_arrastre` (`arrastrar`/`al_remanente`), `activo` | Partidas variables por rubro |
 | `fin_deudas` | `id`, `nombre`, `tipo` (`con_costo`/`familiar`/`msi`), `cuenta_pasivo_id` (tarjeta o préstamo), `abono_centavos`, `frecuencia`, calendario (como compromisos), `minimo_centavos`, `tasa_anual_pb` (check: > 0 en `con_costo`; 0 en las demás), `prioridad_manual`, `activa` | El saldo sale del libro (cuenta pasivo). La Fase 2 amplía esta tabla |
 | `fin_dias_inhabiles` | `id`, `fecha`, `nombre`, `tipo` (`festivo_oficial`/`personal`), `fuente`, `activo`, `revisado_por`, `revisado_en` | Único (`hogar_id`, `fecha`) |
-| `fin_semanas` | `id`, `semana_inicio` (date, check lunes: `extract(isodow from semana_inicio) = 1`), `estado` (`borrador`/`activa`/`pendiente_ingreso`/`por_cerrar`/`cerrada`), `metodo` (`sobres`), `ingreso`, `presupuesto`, `deuda_plan`, `remanente_plan`, `meta_remanente_pb`, `ahorro_minimo_con_deuda_pb`, `techo`, `activada_por`, `activada_en` | Único (`hogar_id`, `semana_inicio`). Es la foto del plan; cambia solo mientras no esté cerrada |
+| `fin_semanas` | `id`, `semana_inicio` (date, check lunes: `extract(isodow from semana_inicio) = 1`), `estado` (`borrador`/`activa`/`pendiente_ingreso`/`por_cerrar`/`cerrada`), `metodo` (`sobres`), `ingreso`, `presupuesto`, `deuda_plan`, `remanente_plan`, `meta_remanente_pb`, `ahorro_minimo_con_deuda_pb`, `techo`, `activada_por`, `activada_en`, `reaperturas` (las pone el servidor) | Único (`hogar_id`, `semana_inicio`). Es la foto del plan; cambia solo mientras no esté cerrada |
 | `fin_partidas_semana` | `id`, `semana_id`, `origen` (`compromiso`/`sobre`), `origen_id`, `cuenta_gasto_id`, `tipo` (`fija`/`variable`/`reserva`), `asignado`, `arrastre_recibido`, `protegida`, `prioridad`, `piso_minimo`, `modo_arrastre` | `asignado` ya repartido por mayor resto |
 | `fin_abonos_semana` | `id`, `semana_id`, `deuda_id`, `abono_planeado`, `minimo`, `extra_planeado` | |
 | `fin_cierres` | `id`, `semana_id`, `version` (único con `semana_id`), `ingreso_real`, `gasto_real`, `abono_real`, `abono_diferido`, `abono_extra_real`, `ahorro_real`, `deficit`, `arrastre_siguiente`, `accion_elegida`, `con_pendientes`, `activos`, `pasivos`, `patrimonio`, `cerrado_por`, `cerrado_en` | **Solo agregar** (foto del cierre y del balance). Reabrir y volver a cerrar crea la versión siguiente |
-| `fin_cierre_partidas` | `cierre_id`, `partida_id`, `gastado`, `arrastre_siguiente`, `al_remanente` | Solo agregar |
-| `fin_cierre_abonos` | `cierre_id`, `deuda_id`, `planeado`, `real`, `minimo` (diferido = planeado − real) | Solo agregar; es el `AbonoDiferido` del diseño |
+| `fin_cierre_partidas` | `id`, `libro_id`, `cierre_id`, `partida_id`, `gastado`, `arrastre_siguiente`, `al_remanente` | Solo agregar |
+| `fin_cierre_abonos` | `id`, `libro_id`, `cierre_id`, `deuda_id`, `planeado`, `real`, `minimo`, `diferido` (generado: planeado − real) | Solo agregar; es el `AbonoDiferido` del diseño |
 | `fin_ocurrencias` | `id`, `origen` (`ingreso`/`compromiso`/`deuda`), `origen_id`, `fecha_programada`, `fecha_ajustada`, `monto_esperado`, `estado` (`esperada`/`cumplida`/`parcial`/`retrasada`/`no_llegara`/`omitida`), `movimiento_id` | Horizonte de 13 semanas; al cambiar la configuración se regeneran las que siguen `esperada` |
 | `fin_conciliaciones` | `id`, `cuenta_id`, `fecha`, `saldo_declarado`, `saldo_calculado`, `diferencia` (generada), `ajuste_movimiento_id`, `motivo`, `persona_id`, `creado_en` | Solo agregar |
 | `fin_importaciones` | `id`, `archivo`, `hoja`, `filas_leidas`, `filas_creadas`, `filas_omitidas`, `detalle` (jsonb), `persona_id`, `creado_en` | Solo agregar |
@@ -225,41 +229,79 @@ Además: ambas cuentas son del mismo hogar y están `activa` (una anulación tam
 42. **D3:** el dinero nunca va a la IA en la nube ni a las bocinas. Las herramientas de GRAVITY de Finanzas son `soloLocal`.
 43. **Privacidad en pantalla:** montos ocultables (modo privado) y sin montos en la pantalla bloqueada ni en la pulsera (`DISENO_UX_UI.md`, sección 21; decisión 68 de FINANZAS).
 
+### Libros, albaceas y cuenta maestra (D19)
+
+44. **Libro personal:** cada adulto con Finanzas (dueño o coadministrador) lleva el suyo; lo **crea el servidor** al darle el rol y la app lo busca (no lo crea). La pareja no ve el libro personal del dueño ni al revés (P1).
+45. **Libro compartido** (p. ej. "Gastos de la casa"): lo crea un adulto con Finanzas con **2 o más miembros adultos**; cualquier miembro registra y lo administra. Su id sale del nombre: crearlo dos veces no lo duplica.
+46. **Árbol común, presupuesto propio:** las categorías y sus cuentas de gasto son del hogar; cada libro tiene sus sobres, su plan y su gasto (en la cuenta de gasto del hogar cada libro ve **solo lo que gastó él**).
+47. **Entre libros** cruzan **solo** la transferencia y el pago de deuda (y su anulación): una aportación a un compartido o el pago de una deuda de otro libro. Es un solo movimiento que se ve desde los dos libros; la cuenta del otro lado aparece como una cuenta virtual con el nombre del libro (*"Aportación de Ana"*) y, si no eres miembro, sin su nombre. Cualquier otro tipo entre libros se rechaza.
+48. **Cuadre por libro:** `patrimonio final = inicial + resultado + ajustes + aportaciones recibidas − aportaciones entregadas`. Una aportación cambia el patrimonio de cada libro **sin pasar por el resultado**: no es ingreso de quien la recibe ni gasto de quien la entrega. Anular una aportación la descuenta de su mismo lado. Ejemplo: Ana aporta $2,000 a la casa; el patrimonio de Ana baja $2,000 sin gasto, el de la casa sube $2,000 sin ingreso, y los dos libros cuadran.
+49. **Libro de papá** (persona representada, sin cuenta): lo crea el **dueño** con `fin_crear_libro_representado`; quien lo crea queda como **albacea** y puede haber un segundo adulto como **suplente** (máximo 2). Su id sale del nombre de la persona (reintentar no crea otra persona).
+50. **En nombre de papá:** cada movimiento del libro lleva `en_nombre_de` = papá, `realizado_por` = papá, `registrado_por` = quien captura y un **motivo obligatorio**; la anulación también va en su nombre; todo queda en la bitácora con quién y en nombre de quién.
+51. **Suplente:** lee siempre; **escribe y administra solo si no hay albacea vigente** (D17). Con albacea vigente, la app no le muestra botones de escribir.
+52. **Ingresos de papá (P15):** la **pensión** es mensual en los días **1 y 11** (dos pagos al mes = 24 al año, equivalente semanal × 24 ÷ 52) con *siguiente día hábil* si cae en fin de semana o festivo; el **apoyo 60+** es *cada 2 meses* (`cada_meses`, `intervalo_meses = 2`), certeza *probable*, desde la fecha de un pago que ya conozca el dueño. La app **ofrece la forma ya llena y no inventa montos ni fechas**: el neto y la fecha los captura el dueño. Ejemplo: $3,200 por pago de pensión son $1,476.92 por semana.
+53. **Día inhábil por origen (P13):** la regla se guarda siempre (`regla_inhabil`): un **ingreso** pasa por omisión al *siguiente día hábil*; un **compromiso** o una **deuda** se queda **en su fecha** (`sin_cambio`). Solo la caja lleva *siguiente día hábil* (se configura con los datos del dueño, no en el repositorio). Una regla elegida manda sobre la de omisión.
+54. **Grupo de deudas prioritarias (P12, P19):** el titular elige qué deudas lo forman y su orden. El abono extra va **solo** a las deudas del grupo, en ese orden; primero se aparta el ahorro mínimo (porcentaje del remanente); el **abono que libera una deuda liquidada** pasa a la siguiente del grupo; cuando todo el grupo queda pagado, el remanente y los abonos liberados van a **ahorro**. Las deudas fuera del grupo siguen con su abono planeado y su mínimo, sin extra. Sin grupo rige la regla 27 (por costo). La app **propone** en la revisión semanal y la persona confirma (regla 35).
+55. **Cuenta maestra:** una por hogar, de rol dueño o coadministrador (se recomienda una cuenta aparte, usada en la laptop). **Lee todos los libros y nunca escribe en lo ajeno**: en un libro del que no es miembro la app no muestra (+), *Registrar movimiento*, *Anular*, asistente, importar ni guardar. En su propio libro escribe como cualquiera.
+56. **Cada consulta queda en la bitácora:** antes de mostrar un libro ajeno la cuenta maestra llama a `fin_registrar_consulta_maestra`; **si no se puede registrar, no se muestra** (con *Reintentar*). Cada persona ve en *Ajustes de Finanzas › Privacidad* que la cuenta maestra existe y quién es.
+57. **Permisos en la interfaz:** la pantalla esconde lo que no corresponde con el espejo de `fin_puede` más la matriz por rol (`puedeSobre`); **la verdad está en el servidor** (RLS). Familiar, cuidador y Casa no ven nada de Finanzas; las secciones de configuración (asistente, importar y ajustes) piden la acción *administrar* en la ruta (`exigeAccion`).
+58. **Ids estables y reintentos:** llevan id derivado la **anulación** (del movimiento original: hay a lo más una por movimiento, y "Deshacer" repetido avisa *"Ese movimiento ya está anulado"*), las **categorías y cuentas de gasto importadas** (del hogar y su ruta en el árbol), la **semana** (libro y lunes), sus **partidas y abonos**, el **cierre** (semana y versión), los **renglones del cierre**, los movimientos del **remanente** (cierre y destino), las **ocurrencias**, los **días inhábiles** (hogar y fecha), los **libros compartido y de papá** y los **miembros**. Reintentar nunca choca con `anula_a` ni con los únicos.
+59. **Cierre de semana en el servidor:** primero se guarda el **cierre** (versión `reaperturas + 1`, con sus partidas y abonos, cada renglón con su id) y **después** la semana pasa a `cerrada`; hacerlo al revés da 55000. **Reabrir** solo cambia el estado, necesita señal y confirmación, queda en la bitácora y suma una reapertura: el siguiente cierre es la versión siguiente. En una semana cerrada, el plan no cambia.
+
 ---
 
 ## 6. Pantallas
 
-Siguen `DISENO_UX_UI.md` (sección 8 dentro de un módulo en la laptop; sección 9 y flujo F1 en el teléfono), con el tema base en esta fase (el pulido es la Fase 4). Personalidad de Finanzas: "precisa y serena", números de ancho fijo. Todas tienen estados **vacío, cargando, sin conexión y error**, y montos ocultables.
+Siguen `DISENO_UX_UI.md` (sección 8 dentro de un módulo en la laptop; sección 9 y flujo F1 en el teléfono), con el tema base en esta fase (el pulido es la Fase 4). Personalidad de Finanzas: "precisa y serena", números de ancho fijo. Todas tienen estados **vacío, cargando, sin conexión y error**, y montos ocultables. Usan los gadgets de diseno (`package:gravity/diseno/diseno.dart`): Cascada, Medidor de presupuesto, Teclado de monto, Selector de libro con su marca, Tabla densa, Tarjeta de indicador y el aviso *"Guardado · Deshacer"*.
 
-### 6.1 Laptop (Dueño)
+**Libro activo (D19).** Toda pantalla de Finanzas trabaja sobre **un libro**, que se elige en el selector (chips o menú): *Mi libro*, los compartidos, el de papá (con la marca **Albacea**) y, para la cuenta maestra, los ajenos con la marca **Solo lectura**. Debajo del título va la marca del libro: *"En nombre de Papá · cada movimiento pide motivo y queda en la bitácora"* o *"Solo lectura · cuenta maestra: puedes ver, no registrar"*. Cambiar de libro cambia la semana, las cuentas y el presupuesto.
+
+### 6.1 Laptop
+
+La laptop es la versión completa (D4): barra lateral de 300 px con el selector de libro y las secciones (en una ventana angosta pasa a menú). Las secciones de configuración solo aparecen a quien administra el libro.
 
 | Pantalla | Contenido | Acción principal |
 |---|---|---|
-| **Tablero** | Cascada planeado contra real (gadget Cascada), medidor por partida, lo que vence esta semana (día hábil ajustado), alerta de flujo, cuatro indicadores del MVP 1, siguiente mejor acción | Registrar movimiento (Ctrl + N) |
+| **Tablero** (inicio, `/finanzas`) | Cascada planeado contra real (gadget Cascada), medidor por partida, lo que vence esta semana (día hábil ajustado), alerta de flujo, cuatro indicadores del MVP 1, siguiente mejor acción | Registrar movimiento (Ctrl + N), si puede escribir |
 | **Semana** | Selector de semana y de periodo (semana, catorcena, quincena, mes); cascada; partidas con asignado, arrastre, gastado, restante y semáforo; abonos; flujo de 4 a 8 semanas; **revisión semanal** (F5): conciliar efectivo → desvíos (las 3 partidas que más se movieron) → propuesta de la semana siguiente → aplicar remanente → cerrar | Cerrar semana |
-| **Movimientos** | Tabla paginada (30 a 50 filas) con filtros por fecha, cuenta, categoría, tipo y estado; detalle en panel lateral con su contraasiento y su bitácora | Anular (pide motivo) |
-| **Cuentas** | Agrupadas en Activos y Pasivos con saldo; detalle con movimientos; **Balance** y **Estado de resultados** con selector de periodo; conciliar; cerrar o archivar | Nueva cuenta |
-| **Ingresos** | Por persona con su equivalente semanal; ficha con vigencias; calendario de ingresos; extras | Nuevo ingreso |
+| **Movimientos** | Tabla paginada (30 a 50 filas) con filtros por fecha, cuenta, categoría, tipo y estado; detalle en panel lateral con su contraasiento y su bitácora; una aportación entre libros se ve en los dos (*"Aportación de Ana"*) | Anular (pide motivo) |
+| **Cuentas** | Agrupadas en Activos y Pasivos con saldo; detalle con movimientos; **Balance** con el **cuadre del libro** (inicial + resultado + ajustes + aportaciones recibidas − entregadas) y **Estado de resultados** con selector de periodo; conciliar; cerrar o archivar | Nueva cuenta |
+| **Ingresos** | Por persona con su equivalente semanal; ficha con vigencias; calendario de ingresos (semanal, catorcenal, quincenal, mensual con 1 o 2 días fijos y cada N meses); extras. En el libro de papá, los botones **Pensión** (días 1 y 11) y **Apoyo 60+** (bimestral, probable) abren el ingreso con su forma ya llena y **sin monto ni fecha** | Nuevo ingreso |
 | **Gastos y categorías** | Árbol de 3 niveles con prioridad, protección y cuenta de gasto; gasto por categoría en el periodo | Nueva categoría |
-| **Compromisos y deudas** | Fijos y reservas con frecuencia y próxima fecha; deudas con abono, mínimo, tasa y orden de abono extra | Nuevo compromiso |
-| **Asistente de arranque** | 5 pasos (hogar, ingresos, compromisos y deudas, meta, sobres hasta el techo) con resumen como el ejemplo de 5.6 bis y botón *Activar semana*; lo omitido no bloquea | Activar semana |
-| **Importar datos** | Elegir archivo → vista previa → confirmar → resumen (creadas, omitidas y por qué) | Importar |
-| **Ajustes de Finanzas** | Parámetros (meta, ahorro mínimo con deuda, tope de arrastre, cierre automático), umbrales de semáforo, días inhábiles por año | Guardar |
+| **Compromisos y deudas** | Fijos y reservas con frecuencia y próxima fecha (en su fecha por omisión); deudas con abono, mínimo, tasa, saldo y **grupo prioritario** (casilla y orden con subir y bajar); *Orden del abono extra* que explica quién recibe el remanente | Nuevo compromiso |
+| **Asistente de arranque** | 5 pasos (libro y cuentas, ingresos, compromisos y deudas, meta, sobres hasta el techo) con resumen como el ejemplo de 5.6 bis y botón *Activar semana*; lo omitido no bloquea; en el libro de papá ofrece sus ingresos; enlaza a *Libros compartidos y de papá* | Activar semana |
+| **Importar datos** | Elegir archivo (`.xlsx` o `.csv`) → vista previa (creadas, omitidas y por qué) → confirmar → resumen; reimportar no duplica | Importar |
+| **Ajustes de Finanzas** | **Presupuesto del libro:** meta, ahorro mínimo con deuda, tope de arrastre, cierre automático y umbrales de semáforo (por libro). **Días inhábiles** del hogar por año (precarga de festivos inactivos que el dueño activa; días propios). **Libros y albaceas:** lista con sus miembros y papeles; nuevo libro compartido (nombre y miembros); libro de papá (nombre, albacea = quien lo crea y suplente opcional; solo el dueño). **Privacidad:** si existe la cuenta maestra y quién es | Guardar |
 
-### 6.2 Teléfono
+### 6.2 Teléfono y tablet
 
 | Rol | Pantalla | Contenido |
 |---|---|---|
-| Dueño | **(+) Gasto** (F1) | Teclado numérico ya abierto → categoría (la última preseleccionada y 5 sugeridas) → cuenta (la última usada) → Guardar → aviso *"Guardado · Deshacer"* (deshacer = anulación con motivo "Deshecho al capturar"). Sin señal: *"Guardado en el teléfono; se sube al volver la señal"*. Meta: **menos de 10 s** |
-| Dueño | **(+) Ingreso extra** | Monto → cuenta → fecha (hoy) → Guardar |
-| Dueño y Pareja | **Finanzas › Semana** | Cascada resumida con semáforo, partidas con medidor, alerta de flujo |
-| Dueño | **Finanzas › Movimientos recientes** | Lista corta; anular con motivo |
+| Dueño y Pareja | **(+) Gasto** (F1) | Teclado numérico ya abierto → categoría (la última preseleccionada y 5 sugeridas) → cuenta (la última usada) → Guardar → aviso *"Guardado · Deshacer"* (deshacer = anulación con motivo "Deshecho al capturar"). Si hay varios libros donde escribe, se elige el libro (chips). En el libro de papá pide el **motivo** y el gasto va en su nombre. Sin señal: *"Guardado en el teléfono; se sube al volver la señal"*. Meta: **menos de 10 s** |
+| Dueño y Pareja | **(+) Ingreso extra** | Monto → cuenta → fecha (hoy) → Guardar (mismo aviso) |
+| Dueño y Pareja | **Finanzas › Semana** | Libro activo, cascada resumida con semáforo, alerta de flujo, partidas con medidor, movimientos recientes |
+| Dueño y Pareja | **Finanzas › Movimientos** | Lista corta del libro; anular con motivo si puede escribir |
+| Cuenta maestra | Lo mismo que arriba, de cualquier libro, **sin (+) ni Anular** | Solo lectura; la consulta queda en la bitácora |
+
+Las secciones de la laptop (Cuentas, Ingresos, Gastos y categorías, Compromisos y deudas, asistente, importar y ajustes) **no existen en el teléfono**: abrirlas regresa al inicio del módulo (D4). Familiar, cuidador y Casa no ven Finanzas.
+
+### 6.3 Quién ve y hace qué en la interfaz
+
+| Quién | Ve | Escribe | Configura |
+|---|---|---|---|
+| Titular de su libro personal | Su libro, los compartidos de los que es miembro y, si es albacea, el de papá | Sí, en esos libros | Su libro y los compartidos; el hogar (categorías, días inhábiles, importar) |
+| Albacea | Libro de papá | Sí, **en su nombre y con motivo** | Sí |
+| Suplente | Libro de papá | **Solo sin albacea vigente** | Solo sin albacea vigente |
+| Pareja | Su libro y los compartidos; **no** el personal del dueño | Sí, en lo suyo | Su libro |
+| Cuenta maestra | Todos los libros | **No en lo ajeno** (sí en lo suyo) | No en lo ajeno |
+| Familiar, cuidador, Casa | Nada de Finanzas | No | No |
+
 
 ---
 
 ## 7. Criterios de aceptación
 
-Las pruebas del dominio están en `paquetes/finanzas_dominio/test/` (`dart test`, 122 en verde hoy).
+Las pruebas del dominio están en `paquetes/finanzas_dominio/test/` (`dart test`, 194 en verde hoy) y las de la app en `app/test/modulos/finanzas/` (`flutter test`, 66 en verde hoy: `casos_de_uso_test.dart`, `contrato_servidor_test.dart` y `pantallas_test.dart`).
 
 | # | Criterio (prueba del diseño) | Cómo se comprueba |
 |---|---|---|
@@ -288,11 +330,25 @@ Las pruebas del dominio están en `paquetes/finanzas_dominio/test/` (`dart test`
 | 23 | **T8:** un mes con 5 lunes se muestra por semanas con promedio semanal | Prueba de widget del tablero |
 | 24 | **T9:** una semana sin cerrar 3 días se cierra con pendientes marcados y se puede reabrir | Prueba del caso de uso + prueba SQL |
 | 25 | **Libro solo-agregar:** nadie (ni el dueño) puede editar ni borrar un movimiento, una conciliación o un cierre | Pruebas SQL |
-| 26 | **Roles:** el coadministrador lee y no escribe; familiar, cuidador y casa no ven nada de Finanzas, **comprobado en el servidor** | Pruebas SQL de RLS + pruebas de navegación |
+| 26 | **Roles (D19, corregido en la v0.3):** dueño y coadministrador escriben en **su** libro y en los compartidos y no ven lo personal del otro; familiar, cuidador y casa no ven nada de Finanzas, **comprobado en el servidor** | Pruebas SQL de RLS + `libros_test.dart` ✔ + `finanzas_por_rol_test.dart` (plataforma) ✔ |
 | 27 | **Sin conexión:** un gasto registrado sin señal se sube al volver; reintentar no lo duplica (mismo UUID) | Pruebas de la cola + prueba SQL de idempotencia |
 | 28 | **F1:** registrar un gasto en el teléfono toma menos de 10 s | Prueba de widget (pasos) + medición manual en el A52 |
 | 29 | **Importación:** la hoja Categorías crea el árbol de 3 niveles con su naturaleza y su cuenta de gasto; reimportar no duplica | Prueba del importador con el archivo semilla |
 | 30 | **D3:** ninguna herramienta de Finanzas envía montos a la IA (todas `soloLocal`) | Prueba del registro de herramientas |
+| 31 | **Libros (regla 44 a 46):** la pareja no ve ni registra en el libro personal del dueño; ve y registra en el compartido; cada libro ve solo su gasto en la cuenta de gasto del hogar | `libros_test.dart` ✔, `casos_de_uso_test.dart` ✔ + pruebas SQL de RLS |
+| 32 | **Aportación entre libros (regla 47 y 48):** Ana aporta $2,000 a la casa y paga $500 de la tarjeta compartida; el patrimonio de cada libro cambia sin pasar por su resultado (`inicial + resultado + recibidas − entregadas`) y los dos cuadran; anular la aportación la descuenta de su mismo lado | `cuadre_entre_libros_test.dart` ✔, `casos_de_uso_test.dart` ✔ |
+| 33 | **Solo cruzan transferencia y pago de deuda (regla 47):** un ingreso, una apertura o un ajuste entre libros se rechaza; el gasto a una cuenta de gasto del hogar no es un cruce | `cuadre_entre_libros_test.dart` ✔ + prueba SQL del trigger |
+| 34 | **Albacea (reglas 49 a 51):** el gasto en el libro de papá exige motivo y va en su nombre (`en_nombre_de`, `realizado_por` = papá, `registrado_por` = el albacea); el contraasiento también; el suplente lee y **no escribe** con albacea vigente, y escribe y administra sin él | `libros_test.dart` ✔, `casos_de_uso_test.dart` ✔ |
+| 35 | **Cuenta maestra (reglas 55 y 56):** lee todos los libros, no escribe en lo ajeno ni ve botones de escribir, abrir un libro ajeno llama a `fin_registrar_consulta_maestra` (una vez por libro abierto) y *Privacidad* dice quién es; en su propio libro escribe | `pantallas_test.dart` ✔, `casos_de_uso_test.dart` ✔, `contrato_servidor_test.dart` ✔ + pruebas SQL |
+| 36 | **Grupo de deudas prioritarias (regla 54):** el remanente después del ahorro mínimo y el abono liberado van a la siguiente deuda del grupo; con el grupo pagado, a ahorro; las deudas fuera del grupo no reciben extra | `grupo_prioritario_test.dart` ✔ + casilla y orden en *Compromisos y deudas* |
+| 37 | **Ingresos de papá (regla 52):** la pensión de los días 1 y 11 pasa al siguiente día hábil (1/nov/2026, domingo, se paga el lunes 2; 11/oct, domingo, el lunes 12); el apoyo 60+ es bimestral y probable; $3,200 por pago dan $1,476.92 por semana; la plantilla no trae monto ni fecha y el apoyo exige la fecha de un pago conocido | `calendario_d19_test.dart` ✔, `pantallas_test.dart` ✔ |
+| 38 | **Día inhábil por origen (regla 53):** sin regla elegida, un ingreso pasa al siguiente día hábil y una renta o una deuda se quedan en su fecha; la regla elegida (la caja) manda; se guarda siempre la regla efectiva | `calendario_d19_test.dart` ✔, `contrato_servidor_test.dart` ✔ |
+| 39 | **Ids estables (regla 58):** la anulación de un movimiento tiene el mismo id en cualquier dispositivo y es única (anular o deshacer dos veces avisa y no duplica); importar la hoja Categorías en dos dispositivos da los mismos ids; reimportar no duplica; la semana, sus partidas y el cierre salen del libro y el lunes | `casos_de_uso_test.dart` ✔, `pantallas_test.dart` ✔ |
+| 40 | **Cierre en el servidor (regla 59):** el cierre (versión `reaperturas + 1`, renglones con id) se guarda antes de cerrar la semana; reabrir suma una reapertura y el cierre siguiente es la versión 2 con otro id; reintentar el cierre no duplica sus renglones; aplicar el remanente dos veces no duplica | `seguimiento_test.dart` ✔, `casos_de_uso_test.dart` ✔, `contrato_servidor_test.dart` ✔ |
+| 41 | **Contrato de columnas (convención 10):** un movimiento sube con `registrado_en` y sin `recibido_en`, `libro_origen_id` ni `libro_destino_id`; solo las cuentas de gasto van sin libro; `desde` y `hasta` de los miembros son `timestamptz`; los parámetros se cambian con `UPDATE` sin las cuentas de sistema; los renglones del cierre llevan `id` y `libro_id` y no `diferido` | `contrato_servidor_test.dart` ✔ |
+| 42 | **Libro de papá y compartidos (reglas 45 y 49):** crearlos dos veces no los duplica; quien crea el de papá queda como albacea y el suplente entra por miembros; la RPC recibe `p_hogar_id`, `p_nombre_titular`, `p_nombre_libro` y `p_libro_id` | `casos_de_uso_test.dart` ✔, `contrato_servidor_test.dart` ✔, `pantallas_test.dart` ✔ |
+| 43 | **Ajustes (6.1):** la meta de remanente se guarda por libro y un valor fuera de 0 a 100 no; la precarga de festivos nace inactiva y activar uno deja quién y cuándo; un libro compartido nuevo queda elegido | `pantallas_test.dart` ✔ |
+| 44 | **Rutas y dispositivos (regla 57):** el asistente, importar y ajustes exigen *administrar*; en el teléfono las secciones de la laptop regresan al inicio del módulo; la pareja abre el asistente de su libro | `pantallas_test.dart` ✔ |
 
 ---
 
@@ -300,7 +356,7 @@ Las pruebas del dominio están en `paquetes/finanzas_dominio/test/` (`dart test`
 
 | Agente | Entrega | Carpetas |
 |---|---|---|
-| **finanzas** | Ya entregado: `finanzas_dominio` con pruebas. En la Fase 1: casos de uso (registrar gasto, anular, armar y cerrar semana, conciliar, importar categorías), repositorios contra la base local y Supabase, pantallas de laptop y teléfono de la sección 6, asistente de arranque e importador | `paquetes/finanzas_dominio`, `app/lib/modulos/finanzas` |
+| **finanzas** | Ya entregado: `finanzas_dominio` con pruebas (incluye el cuadre por libro) y, en la app, casos de uso, repositorios (memoria y Supabase), pantallas de laptop y teléfono, asistente de arranque, importador, ajustes de Finanzas y las conexiones de `pantallas_externas.dart`. Alcance de la Fase 1: casos de uso (registrar gasto, anular, armar y cerrar semana, conciliar, importar categorías), repositorios contra la base local y Supabase, pantallas de laptop y teléfono de la sección 6, asistente de arranque e importador | `paquetes/finanzas_dominio`, `app/lib/modulos/finanzas` |
 | **backend** | Migración con las tablas de 4.1, borrado de `finanzas_muestra`, triggers (solo agregar, validación de 4.3, saldo cero para cerrar, semana cerrada), RLS de 4.2, vistas `fin_v_*`, cuentas de sistema al crear el hogar, datos de ejemplo en `seed.sql` (el hogar ficticio de Ana y Alex) y pruebas SQL de los criterios 9, 14, 15, 16, 24 a 27 | `supabase/` |
 | **diseno** | Gadgets **Cascada** y **Medidor de presupuesto**; componentes **Monto** (ancho fijo, modo oculto), **Semáforo** con texto o icono, **Registro rápido (+)** con teclado numérico y deshacer; personalidad de Finanzas; maquetas de Tablero, Semana y (+) Gasto | `app/lib/diseno`, `app/assets` |
 | **plataforma** (apoyo) | Rutas de Finanzas por rol; la cola sin conexión acepta movimientos de Finanzas (idempotente por UUID) | `app/lib/app`, `app/lib/nucleo` |
@@ -331,15 +387,17 @@ Las demás preguntas siguen con su propuesta por defecto.
 
 ### 9.1 Roles y permisos financieros entre miembros (5.0 ter → D5)
 
+> **Nota de la v0.3:** las filas P1 a P5 de esta sección se escribieron antes de D19 y quedaron **superadas por la sección 9.0** (cada quien lleva su libro, la pareja registra en el suyo y en los compartidos, el libro de papá lo llevan 1 o 2 albaceas). Se dejan por el historial; manda 9.0. P3 y P6 a P9 siguen para la Fase 8 y la Fase 5.
+
 Los roles del diseño de FINANZAS se acomodan así a los de GRAVITY (D5):
 
 | Rol en FINANZAS (5.0 ter) | Rol en GRAVITY (D5) | En el MVP 1 |
 |---|---|---|
 | Administrador | **Dueño** | Todo |
-| Miembro adulto | **Coadministrador** (pareja) | Solo lectura (P1, P2) |
-| Solo lectura | Coadministrador en el MVP 1 | — |
+| Miembro adulto | **Coadministrador** (pareja) | Su libro y los compartidos (D19; P1, P2) |
+| Solo lectura | **Cuenta maestra** en lo ajeno (D19) | Lee todo, no escribe en lo ajeno |
 | Dependiente | Familiar sin dinero; papá (persona bajo cuidado) sin cuenta | Sin acceso a Finanzas |
-| **Albacea** | No es un rol: una marca sobre un adulto (dueño o coadministrador), con suplente | No hace falta en el MVP 1 (no hay confirmaciones) |
+| **Albacea** | No es un rol: una marca sobre un adulto (dueño o coadministrador), con suplente | Lleva el libro de papá (D19; P4, P5); las confirmaciones son de la Fase 8 |
 | — | Cuidador | Sin acceso; en la Fase 5 registra gastos de cuidado |
 
 | # | Pregunta | Propuesta por defecto |
@@ -391,6 +449,8 @@ Tus ingresos reales (pendiente 24 de FINANZAS), tus compromisos fijos con montos
 4. **Renta del 1/nov:** 5.1 bis (punto 9) la mueve al lunes y 5.6 bis (punto 5) no (pregunta P13).
 5. **Decisión 23 y sección 8 bis** hablan de Firebase como base de datos; D7 la reemplazó por Supabase (pregunta P10).
 6. La sección 7 lista dos veces el campo `estado` en `Movimiento`; aquí queda uno solo (`estado_inicial`) y el estado vigente sale de las confirmaciones.
+7. **Errores de la v0.2 corregidos en la v0.3:** el criterio 26 decía que el coadministrador "lee y no escribe" (D19 lo cambió: escribe en su libro); 4.1 no incluía `libro_id` ni `id` en los renglones del cierre ni las columnas que pone el servidor (`recibido_en`, `libro_origen_id`, `libro_destino_id`, `reaperturas`, `diferido`); y 9.1 seguía con las filas P1 a P5 anteriores a D19.
+8. **Pendiente en 9.0 (P13):** "solo la caja pasa al siguiente día hábil" se interpretó como el pago a la **caja de ahorro o popular**; falta que el dueño lo confirme y diga qué deuda es (no se guarda en el repositorio).
 
 ---
 

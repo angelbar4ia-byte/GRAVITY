@@ -14,61 +14,7 @@ import 'package:gravity/nucleo/cola/cola_sin_conexion.dart';
 import 'package:gravity/nucleo/cola/enviador_supabase.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-String _b64(Object json) =>
-    base64Url.encode(utf8.encode(jsonEncode(json))).replaceAll('=', '');
-
-/// Sesión de Supabase de [uid] con un JWT sin firma válida (el cliente no la
-/// comprueba), vigente una hora.
-String sesionJson(String uid) {
-  final vence = DateTime.now().add(const Duration(hours: 1));
-  final token = [
-    _b64({'alg': 'HS256', 'typ': 'JWT'}),
-    _b64({
-      'sub': uid,
-      'aud': 'authenticated',
-      'role': 'authenticated',
-      'exp': vence.millisecondsSinceEpoch ~/ 1000,
-    }),
-    'firma',
-  ].join('.');
-  return jsonEncode({
-    'access_token': token,
-    'token_type': 'bearer',
-    'expires_in': 3600,
-    'expires_at': vence.millisecondsSinceEpoch ~/ 1000,
-    'refresh_token': 'renovar-$uid',
-    'user': {
-      'id': uid,
-      'aud': 'authenticated',
-      'role': 'authenticated',
-      'email': '$uid@ejemplo.test',
-      'created_at': '2026-10-20T00:00:00Z',
-      'app_metadata': <String, Object?>{},
-      'user_metadata': <String, Object?>{},
-    },
-  });
-}
-
-/// Una petición que recibió el PostgREST simulado.
-class PeticionRecibida {
-  PeticionRecibida(this.metodo, this.uri, this.encabezados, this.cuerpo);
-
-  final String metodo;
-  final Uri uri;
-  final Map<String, String> encabezados;
-  final Object? cuerpo;
-
-  String get bearer =>
-      (encabezados['authorization'] ?? '').replaceFirst('Bearer ', '');
-
-  /// `sub` del JWT con el que salió la petición.
-  String get sujeto {
-    final partes = bearer.split('.');
-    if (partes.length != 3) return '';
-    final carga = utf8.decode(base64Url.decode(base64Url.normalize(partes[1])));
-    return (jsonDecode(carga) as Map)['sub'] as String;
-  }
-}
+import 'postgrest_simulado.dart' show PeticionRecibida, sesionJson;
 
 void main() {
   group('Finanzas en la cola', () {
