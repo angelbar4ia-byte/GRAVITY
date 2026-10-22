@@ -23,7 +23,7 @@ import '../../nucleo/contratos/dispositivo.dart';
 import '../../nucleo/contratos/roles.dart';
 import '../../nucleo/contratos/rutas.dart';
 import '../../nucleo/permisos/permisos.dart';
-import 'datos/repositorio_supabase.dart' as supabase show tablasColaFinanzas;
+import 'datos/repositorio_supabase.dart' as supabase show tablasDeLaColaFinanzas;
 import 'pantallas/laptop/ajustes.dart';
 import 'pantallas/laptop/arranque.dart';
 import 'pantallas/laptop/categorias.dart';
@@ -45,7 +45,7 @@ export 'pantallas/laptop/marco_laptop.dart' show SeccionFinanzas;
 /// Tabla de Supabase de cada tipo de registro de la cola sin conexión
 /// (`'finanzas.movimiento': 'fin_movimientos'`, conciliaciones e
 /// importaciones). La cola sube con `INSERT … ON CONFLICT (id) DO NOTHING`.
-const Map<String, String> tablasColaFinanzas = supabase.tablasColaFinanzas;
+const Map<String, String> tablasColaFinanzas = supabase.tablasDeLaColaFinanzas;
 
 /// Registro rápido de un gasto (F1): teclado ya abierto → categoría →
 /// cuenta → Guardar → *"Guardado · Deshacer"*.

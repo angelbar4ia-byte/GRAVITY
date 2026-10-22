@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gravity/app/navegacion.dart' show RutasApp, calcularRedireccion;
+import 'package:gravity/modulos/finanzas/pantallas/laptop/marco_laptop.dart'
+    show SeccionFinanzas;
 import 'package:gravity/nucleo/contratos/dispositivo.dart';
 import 'package:gravity/nucleo/contratos/roles.dart';
 import 'package:gravity/nucleo/contratos/rutas.dart';
@@ -544,17 +546,33 @@ void main() {
       }
     });
 
-    test('D17: la bandeja se resuelve por rol, no con un alcance propio', () {
-      expect(rolesSoloBandejaEnGravity, {Rol.cuidador});
-      // En la matriz, GRAVITY de la cuidadora es restringido: lee y confirma
-      // sus solicitudes, pero no abre GRAVITY desde la navegación ni tiene
-      // lo propio o lo total de los demás roles.
+    test('D17: la bandeja se resuelve por rol sobre la celda restringido, '
+        'no con un alcance propio', () {
+      // Es la misma regla de la matriz de la plataforma.
+      for (final rol in Rol.values) {
+        expect(
+          soloBandejaEnGravity(rol),
+          soloBandejaDeSolicitudes(rol),
+          reason: rol.name,
+        );
+      }
+      // En el servidor, GRAVITY de la cuidadora es restringido: lee y confirma
+      // sus solicitudes, pero no abre GRAVITY desde la navegación.
       final permiso = permisoDe(Rol.cuidador, Modulo.gravity);
-      expect(permiso.alcance, isNot(anyOf(Alcance.total, Alcance.propio)));
+      expect(permiso.alcance, Alcance.restringido);
+      expect(permiso.alcance.enServidor, 'restringido');
       expect(puede(Rol.cuidador, Modulo.gravity, Accion.leer), isTrue);
       expect(puede(Rol.cuidador, Modulo.gravity, Accion.escribir), isTrue);
       expect(puede(Rol.cuidador, Modulo.gravity, Accion.administrar), isFalse);
       expect(puedeAbrir(Rol.cuidador, Modulo.gravity), isFalse);
+      // Los demás roles tienen GRAVITY propio o total.
+      for (final rol in Rol.values.where((r) => r != Rol.cuidador)) {
+        expect(
+          permisoDe(rol, Modulo.gravity).alcance,
+          anyOf(Alcance.propio, Alcance.total),
+          reason: rol.name,
+        );
+      }
     });
 
     test('su única herramienta es abrir Solicitudes, en todo dispositivo', () {
@@ -868,6 +886,212 @@ void main() {
     });
   });
 
+  group('Herramientas por rol (tabla completa)', () {
+    final registro = registroDeGravity();
+
+    Set<String> nombres(Rol rol, {bool esMaestra = false}) => registro
+        .disponibles(rol: rol, esMaestra: esMaestra)
+        .map((h) => h.nombre)
+        .toSet();
+
+    const finanzas = {
+      'finanzas.abrir',
+      'finanzas.registrar_gasto',
+      'finanzas.abrir_semana',
+    };
+
+    test('exactamente las herramientas de cada rol', () {
+      expect(nombres(Rol.dueno), {
+        'gravity.abrir',
+        ...finanzas,
+        'habitos.abrir',
+        'cuidados.abrir',
+        'alimentacion.abrir',
+        'casa.abrir',
+        'ajustes.abrir',
+        'ajustes.abrir_desarrollador',
+      });
+      expect(nombres(Rol.coadministrador), {
+        'gravity.abrir',
+        ...finanzas,
+        'habitos.abrir',
+        'alimentacion.abrir',
+        'casa.abrir',
+        'ajustes.abrir',
+      });
+      expect(nombres(Rol.familiar), {
+        'gravity.abrir',
+        'habitos.abrir',
+        'alimentacion.abrir',
+        'casa.abrir',
+        'ajustes.abrir',
+      });
+      // D18: la cuidadora solo tiene su bandeja de solicitudes.
+      expect(nombres(Rol.cuidador), {'gravity.abrir_solicitudes'});
+      expect(nombres(Rol.casa), {
+        'gravity.abrir',
+        'cuidados.abrir',
+        'alimentacion.abrir',
+        'casa.abrir',
+      });
+    });
+
+    test('la cuenta maestra recibe lo suyo menos lo que administra el hogar',
+        () {
+      expect(
+        nombres(Rol.dueno, esMaestra: true),
+        nombres(Rol.dueno)..remove('ajustes.abrir_desarrollador'),
+      );
+      expect(
+        nombres(Rol.coadministrador, esMaestra: true),
+        nombres(Rol.coadministrador),
+      );
+      // La marca no amplía nada a quien no puede ser cuenta maestra.
+      for (final rol in [Rol.familiar, Rol.cuidador, Rol.casa]) {
+        expect(nombres(rol, esMaestra: true), nombres(rol), reason: rol.name);
+      }
+    });
+
+    test('Finanzas: solo dueño y coadministrador, con la hoja de registro '
+        'únicamente para quien escribe', () {
+      for (final rol in Rol.values) {
+        final tiene = nombres(rol).intersection(finanzas);
+        expect(
+          tiene,
+          rol == Rol.dueno || rol == Rol.coadministrador ? finanzas : isEmpty,
+          reason: rol.name,
+        );
+      }
+      // Quien no escribe en Finanzas no recibe "registrar gasto" aunque la
+      // pudiera abrir (el registro la rechaza al declararla).
+      expect(
+        () => RegistroHerramientas([
+          HerramientaNavegacion(
+            nombre: 'finanzas.registrar_de_lectura',
+            modulo: Modulo.finanzas,
+            roles: const {Rol.familiar},
+            ruta: Rutas.finanzas,
+            etiqueta: 'Registrar',
+            palabrasClave: const ['registrar'],
+            accion: Accion.escribir,
+            hoja: HojaDeRegistro.gasto,
+          ),
+        ]),
+        throwsArgumentError,
+      );
+    });
+
+    test('ninguna herramienta ofrecida a la cuidadora es de Finanzas, de '
+        'Cuidados ni de conversación libre', () {
+      for (final h in registro.disponibles(rol: Rol.cuidador)) {
+        expect(h.modulo, Modulo.gravity, reason: h.nombre);
+        expect(h.ambito, AmbitoHerramienta.solicitudes, reason: h.nombre);
+        expect(h.soloLocal, isFalse, reason: h.nombre);
+      }
+      // Ni con módulos activos distintos.
+      for (final activos in [
+        <Modulo>{},
+        {Modulo.finanzas},
+        {Modulo.cuidados, Modulo.finanzas},
+      ]) {
+        expect(
+          registro
+              .disponibles(rol: Rol.cuidador, modulosActivos: activos)
+              .map((h) => h.nombre),
+          ['gravity.abrir_solicitudes'],
+        );
+      }
+    });
+  });
+
+  group('Finanzas es solo local (D3), también en la cuenta maestra', () {
+    final registro = registroDeGravity();
+
+    test('toda herramienta de Finanzas declarada es soloLocal y no escribe', () {
+      final deFinanzas = registro.todas
+          .where((h) => h.modulo == Modulo.finanzas)
+          .toList();
+      expect(deFinanzas, isNotEmpty);
+      for (final h in deFinanzas) {
+        expect(h.soloLocal, isTrue, reason: h.nombre);
+        expect(h.escribe, isFalse, reason: h.nombre);
+        expect(modulosSoloLocal, contains(h.modulo));
+      }
+    });
+
+    test('ni ejecutada como dueño, pareja o cuenta maestra deja algo para la '
+        'IA', () async {
+      for (final h in registro.todas.where((h) => h.modulo == Modulo.finanzas)) {
+        for (final rol in h.roles) {
+          for (final esMaestra in [false, true]) {
+            final conPantalla = ContextoHerramienta(
+              rol: rol,
+              esMaestra: esMaestra,
+              navegar: (_) {},
+              abrirHoja: (_) {},
+            );
+            final sinPantalla = ContextoHerramienta(
+              rol: rol,
+              esMaestra: esMaestra,
+            );
+            for (final ctx in [conPantalla, sinPantalla]) {
+              final r = await registro.ejecutar(h.nombre, const {}, ctx);
+              expect(r.paraIa, isNull, reason: '${h.nombre} / ${rol.name}');
+              expect(r.soloLocal, isTrue, reason: h.nombre);
+              expect(r.requiereConfirmacion, isFalse, reason: h.nombre);
+            }
+          }
+        }
+      }
+    });
+
+    test('si falla la pantalla, el error no lleva el mensaje original '
+        '(podría llevar cifras)', () async {
+      final h = herramientaAbrirSemanaFinanzas;
+      await expectLater(
+        registro.ejecutar(
+          h.nombre,
+          const {},
+          ContextoHerramienta(
+            rol: Rol.dueno,
+            navegar: (_) => throw StateError(r'Remanente: $1,520.00'),
+          ),
+        ),
+        throwsA(
+          isA<FalloHerramienta>()
+              .having((e) => e.mensaje, 'mensaje', isNot(contains('1,520')))
+              .having((e) => '$e', 'toString', isNot(contains('1,520')))
+              .having((e) => e.causaLocal, 'causaLocal', isA<StateError>()),
+        ),
+      );
+    });
+
+    test('una orden nunca registra dinero: ni "registrar gasto" con monto '
+        'escribe nada sin la hoja', () async {
+      final h = herramientaRegistrarGasto;
+      expect(h.escribe, isFalse);
+      // Aunque la orden traiga un monto, la herramienta lo ignora: solo abre
+      // la hoja, donde la persona captura y confirma.
+      final hojas = <HojaDeRegistro>[];
+      final r = await registro.ejecutar(
+        h.nombre,
+        const {'monto_centavos': 99999, 'categoria': 'Súper'},
+        ContextoHerramienta(rol: Rol.dueno, abrirHoja: hojas.add),
+      );
+      expect(hojas, [HojaDeRegistro.gasto]);
+      expect(r.contenido, isNot(contains('999')));
+      expect(r.requiereConfirmacion, isFalse);
+      // Sin pantalla donde mostrar la hoja, tampoco escribe: avisa.
+      final sinHoja = await registro.ejecutar(
+        h.nombre,
+        const {'monto_centavos': 99999},
+        const ContextoHerramienta(rol: Rol.dueno),
+      );
+      expect(sinHoja.contenido, contains('No hay una pantalla'));
+      expect(sinHoja.paraIa, isNull);
+    });
+  });
+
   group('Confirmación', () {
     test('las que escriben piden confirmación y no se ejecutan', () async {
       final h = _Falsa.deFinanzas(
@@ -1098,6 +1322,15 @@ void main() {
       for (final h in registro.todas) {
         expect(h.escribe, isFalse, reason: h.nombre);
       }
+    });
+
+    test('"mi semana" abre la misma ruta que la sección Semana de Finanzas',
+        () {
+      expect(
+        herramientaAbrirSemanaFinanzas.ruta,
+        SeccionFinanzas.semana.ruta,
+      );
+      expect(RutasDeHerramientas.semanaFinanzas, SeccionFinanzas.semana.ruta);
     });
 
     test('"mi semana" abre la semana de Finanzas', () async {

@@ -6,6 +6,7 @@ import 'dart:async';
 
 import 'package:finanzas_dominio/finanzas_dominio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show ProviderException;
 
 import '../../../app/sesion_efectiva.dart';
 import '../../../diseno/proveedores.dart' show horaActualProvider, relojProvider;
@@ -262,24 +263,36 @@ final esMaestraFinanzasProvider = Provider<bool>(
 );
 
 final contextoFinanzasProvider = Provider<AsyncValue<ContextoFinanzas>>((ref) {
-  final sesion = ref.watch(sesionEfectivaProvider);
-  final carga = ref.watch(cargaFinanzasProvider);
-  final hoy = ref.watch(hoyFinanzasProvider);
-  final elegido = ref.watch(libroElegidoProvider);
-  final maestra = ref.watch(esMaestraFinanzasProvider);
-  if (sesion == null) {
-    return AsyncError(const ErrorFinanzas('Nadie ha entrado.'), StackTrace.empty);
+  try {
+    final sesion = ref.watch(sesionEfectivaProvider);
+    final carga = ref.watch(cargaFinanzasProvider);
+    final hoy = ref.watch(hoyFinanzasProvider);
+    final elegido = ref.watch(libroElegidoProvider);
+    final maestra = ref.watch(esMaestraFinanzasProvider);
+    if (sesion == null) {
+      return AsyncError(
+        const ErrorFinanzas('Nadie ha entrado.'),
+        StackTrace.empty,
+      );
+    }
+    return carga.whenData(
+      (c) => ContextoFinanzas.armar(
+        carga: c,
+        personaId: sesion.persona.id,
+        rol: sesion.rol,
+        hoy: hoy,
+        esMaestra: maestra,
+        elegido: elegido,
+      ),
+    );
+  } on ProviderException catch (_, pila) {
+    // Sin sesión configurada (arranque incompleto o una prueba que monta solo
+    // la hoja): las pantallas muestran su estado de error en vez de fallar.
+    return AsyncError(
+      const ErrorFinanzas('Finanzas aún no está lista en este equipo.'),
+      pila,
+    );
   }
-  return carga.whenData(
-    (c) => ContextoFinanzas.armar(
-      carga: c,
-      personaId: sesion.persona.id,
-      rol: sesion.rol,
-      hoy: hoy,
-      esMaestra: maestra,
-      elegido: elegido,
-    ),
-  );
 });
 
 /// Casos de uso con la persona y el reloj de ahora.

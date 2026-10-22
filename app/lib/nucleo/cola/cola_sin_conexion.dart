@@ -17,6 +17,16 @@
 ///   falla demasiadas veces queda en "requiere atención"
 ///   ([EstadoPendiente.rechazado]): no se pierde, no se reintenta solo y la
 ///   app lo muestra para que la persona decida.
+/// - **Falta de dependencia** (23503: otra cuenta, el original de una
+///   anulación… que aún no sube): **se reintenta**, con la misma espera
+///   creciente, y no detiene al resto de la ronda ([FaltaDependenciaEnvio]).
+///   No va a "requiere atención" por eso; solo si pasan
+///   [ColaSinConexion.intentosMaximosPorDependencia] intentos.
+/// - **Orden de subida por dependencia:** si el enviador sabe el nivel de
+///   cada tipo ([EnviadorOrdenado]), cada ronda sube primero los de nivel
+///   menor (cuentas, luego movimientos, luego conciliaciones…) y, dentro de
+///   un mismo nivel, en el orden en que se crearon. Un nivel más bajo creado
+///   después pasa primero; el reintento por dependencia cubre lo demás.
 library;
 
 import 'dart:async';
@@ -80,11 +90,36 @@ class RechazoEnvio implements Exception {
   String toString() => 'RechazoEnvio: $motivo';
 }
 
+/// Un enviador la lanza cuando al servidor le **falta algo de lo que el
+/// registro depende** (23503: otra cuenta, el movimiento que se anula, la
+/// semana a la que se aplica… que quizá aún no sube). La cola lo reintenta con
+/// espera creciente **sin detener la ronda**: los demás registros siguen, y el
+/// registro no pasa a "requiere atención" por esto.
+class FaltaDependenciaEnvio implements Exception {
+  const FaltaDependenciaEnvio(this.motivo);
+
+  final String motivo;
+
+  @override
+  String toString() => 'FaltaDependenciaEnvio: $motivo';
+}
+
 /// Envía registros al servidor. Debe ser idempotente por [PeticionEnvio.id].
 /// Una excepción cuenta como [ResultadoEnvio.reintentar] (hasta
-/// [ColaSinConexion.intentosMaximos]).
+/// [ColaSinConexion.intentosMaximos]); [RechazoEnvio] manda el registro a
+/// "requiere atención" y [FaltaDependenciaEnvio] lo reintenta sin detener la
+/// ronda.
 abstract interface class Enviador {
   Future<ResultadoEnvio> enviar(PeticionEnvio peticion);
+}
+
+/// Un [Enviador] que sabe en qué orden deben subir sus tipos de registro
+/// porque unos dependen de otros (cuentas antes que movimientos, el ajuste
+/// antes que su conciliación, el cierre antes de marcar la semana cerrada).
+abstract interface class EnviadorOrdenado implements Enviador {
+  /// Nivel de [tipo]: cada ronda sube primero los de nivel menor. Los tipos
+  /// que no dependen de nada (o que el enviador no conoce) son de nivel 0.
+  int nivelDeSubida(String tipo);
 }
 
 /// Espera creciente entre reintentos: inicial × factor^(intentos − 1), con tope.
@@ -135,6 +170,8 @@ class ColaSinConexion {
     required this._enviador,
     this.politica = const PoliticaReintentos(),
     this.intentosMaximos = 20,
+    this.intentosMaximosPorDependencia = 100,
+    this.nivelDeSubida,
     this.personaQueRegistra,
     this.personaConSesion,
     this.cuentaDelEquipo,
@@ -150,6 +187,18 @@ class ColaSinConexion {
   /// Tras estos intentos fallidos sin respuesta clara, el registro pasa a
   /// "requiere atención" en lugar de reintentarse para siempre (M16).
   final int intentosMaximos;
+
+  /// Lo mismo para la falta de dependencia (23503): se reintenta con la
+  /// espera creciente (tope de 30 minutos), así que 100 intentos son unos dos
+  /// días con la app abierta. Pasado eso, que lo vea la persona; antes no es
+  /// un error permanente (lo que falta puede estar por subir desde otro
+  /// dispositivo).
+  final int intentosMaximosPorDependencia;
+
+  /// Nivel de subida de cada tipo (ver [EnviadorOrdenado]); por omisión, el
+  /// del enviador si es un [EnviadorOrdenado], y si no, todos de nivel 0
+  /// (solo el orden de creación).
+  final int Function(String tipo)? nivelDeSubida;
 
   /// Persona que registra ahora (se guarda en cada registro). En la tablet,
   /// la que entró con su PIN.
@@ -287,6 +336,20 @@ class ColaSinConexion {
               ]))
             .get();
 
+    // Orden de subida: primero los de nivel menor, y dentro de un nivel, el
+    // orden en que se crearon (el de la consulta).
+    final nivelDe = nivelDeSubida ?? _nivelDelEnviador;
+    final posicion = {
+      for (var i = 0; i < listos.length; i++) listos[i].id: i,
+    };
+    final niveles = {for (final r in listos) r.id: nivelDe(r.tipo)};
+    listos.sort((a, b) {
+      final porNivel = niveles[a.id]!.compareTo(niveles[b.id]!);
+      return porNivel != 0
+          ? porNivel
+          : posicion[a.id]!.compareTo(posicion[b.id]!);
+    });
+
     var enviados = 0;
     var reintentos = 0;
     var rechazados = 0;
@@ -294,6 +357,7 @@ class ColaSinConexion {
       final intento = registro.intentos + 1;
       ResultadoEnvio resultado;
       String? error;
+      var faltaDependencia = false;
       try {
         resultado = await _enviador.enviar(
           PeticionEnvio(
@@ -309,12 +373,19 @@ class ColaSinConexion {
       } on RechazoEnvio catch (e) {
         resultado = ResultadoEnvio.rechazado;
         error = e.motivo;
+      } on FaltaDependenciaEnvio catch (e) {
+        resultado = ResultadoEnvio.reintentar;
+        error = e.motivo;
+        faltaDependencia = true;
       } catch (e) {
         resultado = ResultadoEnvio.reintentar;
         error = '$e';
       }
       if (resultado == ResultadoEnvio.sinSesion) break;
-      if (resultado == ResultadoEnvio.reintentar && intento >= intentosMaximos) {
+      final limite = faltaDependencia
+          ? intentosMaximosPorDependencia
+          : intentosMaximos;
+      if (resultado == ResultadoEnvio.reintentar && intento >= limite) {
         // Demasiados intentos sin una respuesta clara: que lo vea la persona.
         resultado = ResultadoEnvio.rechazado;
         error = 'Falló $intento veces: ${error ?? 'sin respuesta clara del servidor'}';
@@ -359,7 +430,10 @@ class ColaSinConexion {
         case ResultadoEnvio.sinSesion:
           break;
       }
-      if (resultado == ResultadoEnvio.reintentar) break;
+      // Sin señal o con el servidor ocupado se detiene la ronda (los demás
+      // fallarían igual); si solo falta una dependencia, el servidor sí
+      // responde y los demás pueden seguir.
+      if (resultado == ResultadoEnvio.reintentar && !faltaDependencia) break;
     }
 
     if (enviados + reintentos + rechazados > 0) _avisar();
@@ -369,6 +443,11 @@ class ColaSinConexion {
       rechazados: rechazados,
       restantes: await contarPendientes(),
     );
+  }
+
+  int _nivelDelEnviador(String tipo) {
+    final enviador = _enviador;
+    return enviador is EnviadorOrdenado ? enviador.nivelDeSubida(tipo) : 0;
   }
 
   /// Cuántos registros faltan por subir.

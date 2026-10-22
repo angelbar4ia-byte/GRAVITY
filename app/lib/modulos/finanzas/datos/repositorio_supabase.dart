@@ -36,7 +36,7 @@ abstract final class TiposCola {
 /// cola sube con `INSERT … ON CONFLICT (id) DO NOTHING` y la sesión de quien
 /// registró. Solo van por la cola los libros **solo agregar**: movimientos,
 /// conciliaciones e importaciones.
-const Map<String, String> tablasColaFinanzas = {
+const Map<String, String> tablasDeLaColaFinanzas = {
   TiposCola.movimiento: TablasFinanzas.movimientos,
   TiposCola.conciliacion: TablasFinanzas.conciliaciones,
   TiposCola.importacion: TablasFinanzas.importaciones,

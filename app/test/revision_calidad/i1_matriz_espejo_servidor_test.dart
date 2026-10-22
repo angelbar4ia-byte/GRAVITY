@@ -113,11 +113,9 @@ Map<Fila, String> matrizDelServidor() {
               Modulo.values.byName(f[2]!),
               Accion.values.byName(f[3]!),
             );
-            expect(
-              matriz.containsKey(clave),
-              isFalse,
-              reason: 'Fila repetida en ${archivo.path}: $clave',
-            );
+            if (matriz.containsKey(clave)) {
+              fail('Fila repetida en ${archivo.path}: $clave');
+            }
             matriz[clave] = f[4]!;
           }
         case 'update':
@@ -140,11 +138,9 @@ Map<Fila, String> matrizDelServidor() {
             for (final f in matriz.keys)
               if (_cumple(f, condiciones)) f,
           ];
-          expect(
-            afectadas,
-            isNotEmpty,
-            reason: 'El update no cambia ninguna fila:\n$texto',
-          );
+          if (afectadas.isEmpty) {
+            fail('El update no cambia ninguna fila:\n$texto');
+          }
           if (alcance != null) {
             for (final f in afectadas) {
               matriz[f] = alcance;
@@ -156,8 +152,9 @@ Map<Fila, String> matrizDelServidor() {
             caseSensitive: false,
             dotAll: true,
           ).firstMatch(texto);
-          if (where == null)
+          if (where == null) {
             fail('Un delete sin where borra toda la matriz:\n$texto');
+          }
           final condiciones = _condiciones(where[1]!, texto);
           matriz.removeWhere((f, _) => _cumple(f, condiciones));
       }

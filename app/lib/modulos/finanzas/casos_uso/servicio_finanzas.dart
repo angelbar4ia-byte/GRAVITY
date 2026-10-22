@@ -210,6 +210,11 @@ class ServicioFinanzas {
     }
     libros.forEach(_exigirEscribir);
     final libro = _d.nuevoLibroHogar();
+    // Hay a lo más una anulación por movimiento (índice único en `anula_a`):
+    // tocar "Deshacer" o "Anular" otra vez avisa en lugar de reintentar.
+    if (libro.contraasientoDe(movimientoId) != null) {
+      throw const ErrorFinanzas('Ese movimiento ya está anulado.');
+    }
     try {
       final contra = libro.anular(
         movimientoId,

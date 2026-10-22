@@ -31,24 +31,15 @@ Set<Rol> rolesQueAdministran(Modulo modulo) => Set.unmodifiable({
     if (puede(rol, modulo, Accion.administrar)) rol,
 });
 
-/// Roles que de GRAVITY solo usan su bandeja de solicitudes y recordatorios
-/// (D18: la cuidadora). Se resuelve **por rol**, no con un alcance propio
-/// (D17: solo hay `total`, `propio` y `restringido`; en el servidor, GRAVITY
-/// del cuidador es `restringido`).
-const Set<Rol> rolesSoloBandejaEnGravity = {Rol.cuidador};
-
 /// `true` si de GRAVITY [rol] solo usa su bandeja de solicitudes y
 /// recordatorios (D18: la cuidadora). A ese rol GRAVITY solo le ofrece
 /// herramientas de la bandeja: nada de dinero, de la familia ni de
 /// conversación libre.
 ///
-/// Además de [rolesSoloBandejaEnGravity], por si la matriz cambia: cualquier
-/// rol que tiene algo de GRAVITY pero no abre sus pantallas desde la
-/// navegación (`accesoDirecto: false`) también queda solo con su bandeja.
-bool soloBandejaEnGravity(Rol rol) =>
-    rolesSoloBandejaEnGravity.contains(rol) ||
-    (puede(rol, Modulo.gravity, Accion.leer) &&
-        !permisoDe(rol, Modulo.gravity).accesoDirecto);
+/// Se resuelve **por rol** sobre la celda `restringido` de GRAVITY, no con un
+/// alcance propio (D17): lo decide `soloBandejaDeSolicitudes` de la matriz de
+/// la plataforma, la misma que vigila la prueba del espejo del servidor.
+bool soloBandejaEnGravity(Rol rol) => soloBandejaDeSolicitudes(rol);
 
 /// Roles a los que GRAVITY les ofrece abrir [modulo] (y, con [accion],
 /// hacer eso en él): los que abren el módulo según la matriz y pueden hacer
