@@ -17,21 +17,24 @@ void main() {
   });
 
   group('sección 5 de la especificación', () {
-    test('Dueño: total en finanzas, cuidados, alimentación, casa y ajustes', () {
-      for (final modulo in [
-        Modulo.finanzas,
-        Modulo.cuidados,
-        Modulo.alimentacion,
-        Modulo.casa,
-        Modulo.ajustes,
-      ]) {
-        for (final accion in Accion.values) {
-          expect(puede(Rol.dueno, modulo, accion), isTrue, reason: '$modulo');
+    test(
+      'Dueño: total en finanzas, cuidados, alimentación, casa y ajustes',
+      () {
+        for (final modulo in [
+          Modulo.finanzas,
+          Modulo.cuidados,
+          Modulo.alimentacion,
+          Modulo.casa,
+          Modulo.ajustes,
+        ]) {
+          for (final accion in Accion.values) {
+            expect(puede(Rol.dueno, modulo, accion), isTrue, reason: '$modulo');
+          }
         }
-      }
-      expect(puede(Rol.dueno, Modulo.habitos, Accion.escribir), isTrue);
-      expect(puede(Rol.dueno, Modulo.habitos, Accion.administrar), isFalse);
-    });
+        expect(puede(Rol.dueno, Modulo.habitos, Accion.escribir), isTrue);
+        expect(puede(Rol.dueno, Modulo.habitos, Accion.administrar), isFalse);
+      },
+    );
 
     test('D19: dueño y pareja llevan su propio libro de Finanzas', () {
       for (final rol in [Rol.dueno, Rol.coadministrador]) {
@@ -52,8 +55,12 @@ void main() {
     });
 
     test('D18: la cuidadora solo usa su bandeja de solicitudes de GRAVITY', () {
+      // Se resuelve por rol: cuidador × gravity × restringido (D17), no con
+      // un alcance propio.
       final permiso = permisoDe(Rol.cuidador, Modulo.gravity);
-      expect(permiso.alcance, Alcance.solicitudes);
+      expect(permiso.alcance, Alcance.restringido);
+      expect(permiso.alcance.enServidor, 'restringido');
+      expect(soloBandejaDeSolicitudes(Rol.cuidador), isTrue);
       expect(puede(Rol.cuidador, Modulo.gravity, Accion.leer), isTrue);
       expect(puede(Rol.cuidador, Modulo.gravity, Accion.escribir), isTrue);
       expect(puede(Rol.cuidador, Modulo.gravity, Accion.administrar), isFalse);
@@ -112,7 +119,93 @@ void main() {
         Modulo.alimentacion,
         Modulo.casa,
       ]);
-      expect(puede(Rol.familiar, Modulo.alimentacion, Accion.escribir), isFalse);
+      expect(
+        puede(Rol.familiar, Modulo.alimentacion, Accion.escribir),
+        isFalse,
+      );
+    });
+  });
+
+  group('D17: solo los alcances del servidor; lo particular, por rol', () {
+    test('cada celda con acciones usa total, propio o restringido', () {
+      for (final modulo in Modulo.values) {
+        for (final rol in Rol.values) {
+          final permiso = permisoDe(rol, modulo);
+          if (permiso.acciones.isEmpty) {
+            expect(permiso.alcance, Alcance.ninguno, reason: '$rol $modulo');
+            expect(permiso.alcance.enServidor, isNull);
+          } else {
+            expect(
+              permiso.alcance.enServidor,
+              isIn(['total', 'propio', 'restringido']),
+              reason: '$rol $modulo',
+            );
+          }
+        }
+      }
+    });
+
+    test('la bandeja de solicitudes es solo de la cuidadora', () {
+      for (final rol in Rol.values) {
+        expect(
+          soloBandejaDeSolicitudes(rol),
+          rol == Rol.cuidador,
+          reason: '$rol',
+        );
+      }
+    });
+
+    test('Casa en Cuidados: solo recordatorios genéricos', () {
+      for (final modulo in Modulo.values) {
+        for (final rol in Rol.values) {
+          expect(
+            soloRecordatoriosGenericos(rol, modulo),
+            rol == Rol.casa && modulo == Modulo.cuidados,
+            reason: '$rol $modulo',
+          );
+        }
+      }
+    });
+
+    test('coadministrador en Cuidados: según consentimiento', () {
+      for (final modulo in Modulo.values) {
+        for (final rol in Rol.values) {
+          expect(
+            dependeDelConsentimiento(rol, modulo),
+            rol == Rol.coadministrador && modulo == Modulo.cuidados,
+            reason: '$rol $modulo',
+          );
+        }
+      }
+    });
+
+    test(
+      'los alcances de transición dicen lo mismo que las funciones por rol',
+      () {
+        for (final modulo in Modulo.values) {
+          for (final rol in Rol.values) {
+            final alcance = permisoDe(rol, modulo).alcance;
+            expect(
+              alcance == Alcance.generico,
+              soloRecordatoriosGenericos(rol, modulo),
+              reason: '$rol $modulo',
+            );
+            expect(
+              alcance == Alcance.consentimiento,
+              dependeDelConsentimiento(rol, modulo),
+              reason: '$rol $modulo',
+            );
+          }
+        }
+      },
+    );
+
+    test('total solo para leer: Casa del familiar, del cuidador y de Casa', () {
+      for (final rol in [Rol.familiar, Rol.cuidador, Rol.casa]) {
+        final permiso = permisoDe(rol, Modulo.casa);
+        expect(permiso.alcance, Alcance.total, reason: '$rol');
+        expect(permiso.acciones, {Accion.leer}, reason: '$rol');
+      }
     });
   });
 

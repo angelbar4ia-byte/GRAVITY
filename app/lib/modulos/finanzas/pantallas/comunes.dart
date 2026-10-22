@@ -88,8 +88,9 @@ const _diasSemana = [
 String _dia(int d) => d == 0 ? 'último' : '$d';
 
 /// "Quincenal (15 y último)", "Mensual (1 y 11)", "Cada 2 meses desde el
-/// 1 sep 2026", con la regla de día inhábil.
-String descripcionCalendario(CalendarioConfig c) {
+/// 1 sep 2026", con la regla de día inhábil. Con [salida] (compromisos y
+/// deudas), sin regla elegida se queda en su fecha (regla 5 de 4.5).
+String descripcionCalendario(CalendarioConfig c, {bool salida = false}) {
   final base = switch (c.forma) {
     FormaPago.semanal => 'Cada ${_diasSemana[(c.diaSemana ?? 1) - 1]}',
     FormaPago.catorcenal =>
@@ -103,7 +104,9 @@ String descripcionCalendario(CalendarioConfig c) {
       'Cada ${c.intervaloMeses ?? '?'} meses desde el '
           '${c.fechaAncla == null ? '?' : '${textoDiaMes(c.fechaAncla!)} ${c.fechaAncla!.anio}'}',
   };
-  final regla = switch (c.regla) {
+  final regla = switch (c.reglaPara(
+    salida ? CalendarioConfig.reglaDeSalida : CalendarioConfig.reglaDeIngreso,
+  )) {
     ReglaDiaInhabil.siguienteDiaHabil => 'si es inhábil, el siguiente día hábil',
     ReglaDiaInhabil.diaHabilAnterior => 'si es inhábil, el día hábil anterior',
     ReglaDiaInhabil.sinCambio => 'en su fecha',
@@ -322,7 +325,7 @@ class ConDatosFinanzas extends ConsumerWidget {
                 'te agregue a los compartidos.',
           );
         }
-        if (c.permiso.escribir &&
+        if (c.puedeEscribir &&
             !ref.read(cierresRevisadosProvider).contains(libro.id)) {
           // Fuera de la construcción: puede guardar cierres.
           WidgetsBinding.instance.addPostFrameCallback((_) {

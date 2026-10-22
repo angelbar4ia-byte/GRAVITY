@@ -317,6 +317,13 @@ class ErrorLibro implements Exception {
 }
 
 /// Activos, pasivos y patrimonio a una fecha (5.0 bis 2, puntos 3 y 4).
+///
+/// **Cuadre por libro (D19):** una aportación entre libros (transferencia o
+/// pago de deuda que cruza de un libro a otro) cambia el patrimonio de cada
+/// libro **sin pasar por su resultado**: no es ingreso del que la recibe ni
+/// gasto del que la entrega. Por eso el cuadre de cada libro es
+///
+/// `patrimonio final = inicial + resultado + ajustes + recibidas − entregadas`.
 class Balance {
   final int activos;
   final int pasivos;
@@ -328,8 +335,13 @@ class Balance {
   final int resultadoAcumulado;
   final int ajustes;
 
-  /// Lo que entró desde otros libros menos lo que salió hacia ellos (D19).
-  final int entreLibros;
+  /// Aportaciones que **entraron** al libro desde otros libros (netas de sus
+  /// anulaciones): suben un activo o bajan un pasivo de este libro.
+  final int aportacionesRecibidas;
+
+  /// Aportaciones que **salieron** del libro hacia otros libros (netas de sus
+  /// anulaciones): bajan un activo de este libro.
+  final int aportacionesEntregadas;
 
   const Balance({
     required this.activos,
@@ -337,17 +349,27 @@ class Balance {
     required this.patrimonioInicial,
     required this.resultadoAcumulado,
     required this.ajustes,
-    this.entreLibros = 0,
+    this.aportacionesRecibidas = 0,
+    this.aportacionesEntregadas = 0,
   });
 
   int get patrimonio => activos - pasivos;
 
-  /// Diferencia del cuadre: patrimonio − (inicial + resultado + ajustes +
-  /// aportaciones entre libros). Cero si todo cuadra; distinto de cero es un
-  /// "descuadre".
-  int get descuadre =>
-      patrimonio -
-      (patrimonioInicial + resultadoAcumulado + ajustes + entreLibros);
+  /// Aportaciones netas: recibidas − entregadas.
+  int get entreLibros => aportacionesRecibidas - aportacionesEntregadas;
+
+  /// Patrimonio que dan las cuentas de resultado y las aportaciones:
+  /// inicial + resultado + ajustes + recibidas − entregadas.
+  int get patrimonioEsperado =>
+      patrimonioInicial +
+      resultadoAcumulado +
+      ajustes +
+      aportacionesRecibidas -
+      aportacionesEntregadas;
+
+  /// Diferencia del cuadre: patrimonio − [patrimonioEsperado]. Cero si todo
+  /// cuadra; distinto de cero es un "descuadre".
+  int get descuadre => patrimonio - patrimonioEsperado;
 
   bool get cuadra => descuadre == 0;
 }
@@ -779,16 +801,56 @@ class LibroMovimientos {
       .fold<int>(0, (t, c) => t + saldo(c.id, desde: desde, hasta: hasta));
 
   /// Balance a la fecha [al] (o con todo el libro si es nulo).
-  Balance balance({Fecha? al}) => Balance(
-    activos: _sumaClase(ClaseCuenta.activo, hasta: al),
-    pasivos: _sumaClase(ClaseCuenta.pasivo, hasta: al),
-    patrimonioInicial: _sumaClase(ClaseCuenta.apertura, hasta: al),
-    resultadoAcumulado:
-        _sumaClase(ClaseCuenta.ingreso, hasta: al) -
-        _sumaClase(ClaseCuenta.gasto, hasta: al),
-    ajustes: _sumaClase(ClaseCuenta.ajuste, hasta: al),
-    entreLibros: _sumaClase(ClaseCuenta.entreLibros, hasta: al),
-  );
+  Balance balance({Fecha? al}) {
+    final (recibidas, entregadas) = aportaciones(hasta: al);
+    return Balance(
+      activos: _sumaClase(ClaseCuenta.activo, hasta: al),
+      pasivos: _sumaClase(ClaseCuenta.pasivo, hasta: al),
+      patrimonioInicial: _sumaClase(ClaseCuenta.apertura, hasta: al),
+      resultadoAcumulado:
+          _sumaClase(ClaseCuenta.ingreso, hasta: al) -
+          _sumaClase(ClaseCuenta.gasto, hasta: al),
+      ajustes: _sumaClase(ClaseCuenta.ajuste, hasta: al),
+      aportacionesRecibidas: recibidas,
+      aportacionesEntregadas: entregadas,
+    );
+  }
+
+  /// Aportaciones con otros libros (D19) como `(recibidas, entregadas)`, con
+  /// la fecha económica entre [desde] y [hasta] (inclusive).
+  ///
+  /// En la vista de un libro, otro libro es una cuenta de clase
+  /// [ClaseCuenta.entreLibros]: lo que va **hacia** ella es una aportación
+  /// entregada y lo que viene **de** ella, una recibida. La anulación de una
+  /// aportación la descuenta de su mismo lado (anular una entregada baja las
+  /// entregadas; no cuenta como recibida).
+  (int, int) aportaciones({Fecha? desde, Fecha? hasta}) {
+    var recibidas = 0;
+    var entregadas = 0;
+    bool otroLibro(String id) => _cuentas[id]?.clase == ClaseCuenta.entreLibros;
+    for (final m in _movimientos) {
+      if (!_cuenta(m.id, incluirPendientes: false)) continue;
+      if (desde != null && m.fecha.antesDe(desde)) continue;
+      if (hasta != null && m.fecha.despuesDe(hasta)) continue;
+      final haciaOtro = otroLibro(m.cuentaDestinoId);
+      final deOtro = otroLibro(m.cuentaOrigenId);
+      if (haciaOtro == deOtro) continue;
+      if (m.tipo == TipoMovimiento.anulacion) {
+        // El contraasiento invierte el original: si ahora viene de otro
+        // libro, el original salió hacia él (era entregada).
+        if (deOtro) {
+          entregadas -= m.monto;
+        } else {
+          recibidas -= m.monto;
+        }
+      } else if (haciaOtro) {
+        entregadas += m.monto;
+      } else {
+        recibidas += m.monto;
+      }
+    }
+    return (recibidas, entregadas);
+  }
 
   /// Estado de resultados de [periodo], con el gasto financiero aparte.
   EstadoResultados estadoResultados(Periodo periodo) {
@@ -980,6 +1042,22 @@ class LibroMovimientos {
       throw ErrorLibro(
         'Un movimiento de tipo ${m.tipo.name} no puede ir de '
         '${origen.clase.name} a ${destino.clase.name} (${m.id})',
+      );
+    }
+    // D19 (regla 5 del trigger): solo una transferencia o un pago de deuda
+    // cruzan de un libro a otro (aportación); su anulación, por ser el
+    // espejo del original, también. Las cuentas de gasto del hogar no tienen
+    // libro y no cuentan como cruce.
+    final libroOrigen = origen.libroId;
+    final libroDestino = destino.libroId;
+    if (libroOrigen != null &&
+        libroDestino != null &&
+        libroOrigen != libroDestino &&
+        m.tipo != TipoMovimiento.transferencia &&
+        m.tipo != TipoMovimiento.pagoDeuda) {
+      throw ErrorLibro(
+        'Solo una transferencia o un pago de deuda va de un libro a otro '
+        '(${m.id})',
       );
     }
     switch (m.tipo) {

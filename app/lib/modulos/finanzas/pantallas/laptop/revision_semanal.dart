@@ -67,7 +67,7 @@ class _RevisionSemanalState extends ConsumerState<RevisionSemanal> {
         _origen != null &&
         (destino.totalAbonoExtra > 0 || destino.ahorro > 0);
     try {
-      await servicio.cerrarSemana(
+      final cierre = await servicio.cerrarSemana(
         widget.libroId,
         widget.semana,
         accion: aplicar ? AccionCierre.aplicarRemanente : AccionCierre.sinAplicar,
@@ -79,6 +79,7 @@ class _RevisionSemanalState extends ConsumerState<RevisionSemanal> {
           cuentaOrigenId: _origen!,
           cuentaAhorroId: _ahorro,
           motivo: c.permiso.enNombreDe ? 'Remanente de la semana' : null,
+          cierreId: cierre.id,
         );
       }
       navegador.pop();

@@ -22,7 +22,7 @@ import '../comunes.dart';
 
 /// Libros donde la persona puede registrar, empezando por el activo.
 List<Libro> librosParaRegistrar(ContextoFinanzas c) => [
-  if (c.libro != null && c.permiso.escribir) c.libro!,
+  if (c.libro != null && c.puedeEscribir) c.libro!,
   for (final l in c.libros)
     if (l.id != c.libro?.id && c.permisoEn(l).escribir) l,
 ];
@@ -32,36 +32,30 @@ String mensajeGuardado(ResultadoRegistro r) => r.enCola
     ? 'Guardado en el teléfono; se sube al volver la señal'
     : 'Guardado';
 
-/// Muestra "Guardado · Deshacer" en el [mensajero] (sigue vivo aunque la
-/// hoja se cierre).
+/// Muestra *"Guardado · Deshacer"* con el aviso de diseno
+/// ([mostrarAvisoDeshacer]); sigue vivo aunque la hoja se cierre. Deshacer no
+/// borra: registra la anulación con motivo "Deshecho al capturar" (su id sale
+/// del original, así repetirlo no duplica).
 void avisarGuardado(
-  ScaffoldMessengerState mensajero,
+  BuildContext context,
   ResultadoRegistro r,
   ServicioFinanzas servicio,
 ) {
-  mensajero
-    ..hideCurrentSnackBar()
-    ..showSnackBar(
-      SnackBar(
-        key: const ValueKey('finanzas-aviso-guardado'),
-        content: Text(mensajeGuardado(r)),
-        duration: const Duration(seconds: 6),
-        persist: false,
-        action: SnackBarAction(
-          label: 'Deshacer',
-          onPressed: () async {
-            try {
-              await servicio.deshacer(r);
-              mensajero.showSnackBar(
-                const SnackBar(content: Text('Se deshizo (queda anulado).')),
-              );
-            } catch (e) {
-              mensajero.showSnackBar(SnackBar(content: Text('$e')));
-            }
-          },
-        ),
-      ),
-    );
+  final mensajero = ScaffoldMessenger.of(context);
+  mostrarAvisoDeshacer(
+    context,
+    mensaje: mensajeGuardado(r),
+    alDeshacer: () async {
+      try {
+        await servicio.deshacer(r);
+        mensajero.showSnackBar(
+          const SnackBar(content: Text('Se deshizo (queda anulado).')),
+        );
+      } catch (e) {
+        mensajero.showSnackBar(SnackBar(content: Text('$e')));
+      }
+    },
+  );
 }
 
 class HojaRegistrarGasto extends ConsumerStatefulWidget {
@@ -93,7 +87,6 @@ class _HojaRegistrarGastoState extends ConsumerState<HojaRegistrarGasto> {
   Future<void> _guardar(ContextoFinanzas c, Libro libro) async {
     if (_guardando) return;
     setState(() => _guardando = true);
-    final mensajero = ScaffoldMessenger.of(context);
     final navegador = Navigator.of(context);
     final servicio = ref.read(servicioFinanzasProvider);
     try {
@@ -105,7 +98,7 @@ class _HojaRegistrarGastoState extends ConsumerState<HojaRegistrarGasto> {
         nota: _conNota ? _nota.text : null,
         motivo: libro.tipo == dom.TipoLibro.representado ? _motivo.text : null,
       );
-      avisarGuardado(mensajero, r, servicio);
+      if (mounted) avisarGuardado(context, r, servicio);
       if (navegador.canPop()) navegador.pop();
     } catch (e) {
       if (mounted) {

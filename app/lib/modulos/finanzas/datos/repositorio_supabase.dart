@@ -15,13 +15,13 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:finanzas_dominio/finanzas_dominio.dart';
-import 'package:uuid/uuid.dart';
 
 import '../../../nucleo/base_local/base_local.dart';
 import '../../../nucleo/cola/cola_sin_conexion.dart';
 import '../../../nucleo/seguridad/almacen_seguro.dart';
 import 'filas.dart';
 import 'fuente_tablas.dart';
+import 'ids.dart';
 import 'repositorio.dart';
 
 /// Tipos de registro de la cola sin conexión y su tabla (contrato con
@@ -32,7 +32,11 @@ abstract final class TiposCola {
   static const importacion = 'finanzas.importacion';
 }
 
-const Map<String, String> tablasDeLaColaFinanzas = {
+/// Tabla de Supabase de cada tipo de registro de la cola sin conexión. La
+/// cola sube con `INSERT … ON CONFLICT (id) DO NOTHING` y la sesión de quien
+/// registró. Solo van por la cola los libros **solo agregar**: movimientos,
+/// conciliaciones e importaciones.
+const Map<String, String> tablasColaFinanzas = {
   TiposCola.movimiento: TablasFinanzas.movimientos,
   TiposCola.conciliacion: TablasFinanzas.conciliaciones,
   TiposCola.importacion: TablasFinanzas.importaciones,
@@ -83,8 +87,7 @@ class RepositorioFinanzasSupabase implements RepositorioFinanzas {
     required this.personaId,
     this.copia,
     this.esperaSubida = const Duration(milliseconds: 1500),
-    String Function()? generarId,
-  }) : _generarId = generarId ?? const Uuid().v4;
+  });
 
   final FuenteTablas fuente;
   final ColaSinConexion cola;
@@ -95,7 +98,6 @@ class RepositorioFinanzasSupabase implements RepositorioFinanzas {
   /// Cuánto se espera a que suba un registro antes de decir "se sube al
   /// volver la señal".
   final Duration esperaSubida;
-  final String Function() _generarId;
 
   CargaFinanzas? _actual;
   final _cambios = StreamController<CargaFinanzas>.broadcast();
@@ -241,6 +243,28 @@ class RepositorioFinanzasSupabase implements RepositorioFinanzas {
     return (movimientos, conciliaciones);
   }
 
+  /// Nombre de la cuenta maestra del hogar, si existe (`cuenta_maestra`, D19:
+  /// cada quien ve que existe). Si no se puede leer, no detiene la carga.
+  Future<String?> _cuentaMaestra() async {
+    try {
+      final r = await fuente.rpc(TablasFinanzas.cuentaMaestra, {
+        'p_hogar_id': hogarId,
+      });
+      final filas = switch (r) {
+        final List<Object?> l => l,
+        final Map<Object?, Object?> m => [m],
+        _ => const <Object?>[],
+      };
+      for (final f in filas) {
+        if (f is Map) return '${f['nombre_visible'] ?? 'Otra persona'}';
+      }
+      return null;
+    } on ErrorFinanzas catch (e) {
+      if (e.sinConexion) rethrow;
+      return null;
+    }
+  }
+
   @override
   Future<CargaFinanzas> cargar() async {
     final (enColaMov, enColaConc) = await _enCola();
@@ -259,7 +283,19 @@ class RepositorioFinanzasSupabase implements RepositorioFinanzas {
       final maestra = await fuente.rpc('es_cuenta_maestra', {
         'p_hogar_id': hogarId,
       });
+      final membresias = await fuente.leer(
+        'membresias',
+        columnas: 'persona_id, rol, activa, hogar_id',
+      );
       final carga = CargaFinanzas(
+        cuentaMaestra: await _cuentaMaestra(),
+        adultosConFinanzas: {
+          for (final m in membresias)
+            if ('${m['hogar_id']}' == hogarId &&
+                m['activa'] != false &&
+                (m['rol'] == 'dueno' || m['rol'] == 'coadministrador'))
+              '${m['persona_id']}',
+        },
         datos: armar(
           filas,
           movimientosEnCola: enColaMov,
@@ -277,6 +313,7 @@ class RepositorioFinanzasSupabase implements RepositorioFinanzas {
           for (final t in CopiaLocalFinanzas.tablas) t: filas[t],
           'personas': carga.personas,
           'es_maestra': carga.esMaestra,
+          'cuenta_maestra': carga.cuentaMaestra,
         }),
       );
       return carga;
@@ -304,6 +341,7 @@ class RepositorioFinanzasSupabase implements RepositorioFinanzas {
           conciliacionesEnCola: enColaConc,
         ),
         esMaestra: guardada['es_maestra'] == true,
+        cuentaMaestra: guardada['cuenta_maestra'] as String?,
         personas: (guardada['personas'] as Map? ?? const {})
             .cast<String, String>(),
         desdeCopia: true,
@@ -440,9 +478,13 @@ class RepositorioFinanzasSupabase implements RepositorioFinanzas {
 
   @override
   Future<void> guardarCuentas(List<Cuenta> cuentas) async {
-    await fuente.guardar(TablasFinanzas.cuentas, [
-      for (final c in cuentas) filaCuenta(c, hogarId: hogarId),
-    ]);
+    final List<Map<String, Object?>> filas;
+    try {
+      filas = [for (final c in cuentas) filaCuenta(c, hogarId: hogarId)];
+    } on ArgumentError catch (e) {
+      throw ErrorFinanzas('${e.message}');
+    }
+    await fuente.guardar(TablasFinanzas.cuentas, filas);
     _local((d) {
       var lista = d.cuentas;
       for (final c in cuentas) {
@@ -482,11 +524,15 @@ class RepositorioFinanzasSupabase implements RepositorioFinanzas {
     );
   }
 
+  /// La fila de parámetros nace con el libro (la crea el servidor): aquí
+  /// solo se cambia (UPDATE), sin las cuentas de sistema, que no cambian.
   @override
   Future<void> guardarParametros(ParametrosFinanzas parametros) async {
-    await fuente.guardar(TablasFinanzas.parametros, [
-      filaParametros(parametros, hogarId: hogarId),
-    ], conflicto: 'libro_id');
+    await fuente.actualizar(
+      TablasFinanzas.parametros,
+      cambiosParametros(parametros),
+      donde: {'libro_id': parametros.libroId},
+    );
     _local(
       (d) => d.copiar(
         parametros: _reemplazar(
@@ -558,7 +604,12 @@ class RepositorioFinanzasSupabase implements RepositorioFinanzas {
   @override
   Future<void> guardarDiasInhabiles(List<DiaInhabil> dias) async {
     final conId = [
-      for (final d in dias) d.id == null ? d.copiar(id: _generarId()) : d,
+      // Un día por fecha en el hogar (único `(hogar_id, fecha)`): el id sale
+      // de la fecha, así precargar dos veces no choca.
+      for (final d in dias)
+        d.id == null
+            ? d.copiar(id: idEstable(ClavesId.diaInhabil(hogarId, fechaIso(d.fecha))))
+            : d,
     ];
     await fuente.guardar(TablasFinanzas.diasInhabiles, [
       for (final d in conId) filaDiaInhabil(d, hogarId: hogarId, id: d.id!),
@@ -593,7 +644,7 @@ class RepositorioFinanzasSupabase implements RepositorioFinanzas {
             id,
             MiembroLibro(personaId: p, papel: PapelLibro.miembro),
             hogarId: hogarId,
-            id: _generarId(),
+            id: idEstable(ClavesId.miembro(id, p, 'miembro')),
           ),
     ], ignorarDuplicados: true);
     await cargar();
@@ -606,7 +657,7 @@ class RepositorioFinanzasSupabase implements RepositorioFinanzas {
     String? nombreLibro,
     String? suplenteId,
   }) async {
-    await fuente.rpc('fin_crear_libro_representado', {
+    await fuente.rpc(TablasFinanzas.crearLibroRepresentado, {
       'p_hogar_id': hogarId,
       'p_nombre_titular': nombreTitular,
       'p_nombre_libro': nombreLibro,
@@ -618,7 +669,7 @@ class RepositorioFinanzasSupabase implements RepositorioFinanzas {
           id,
           MiembroLibro(personaId: suplenteId, papel: PapelLibro.albaceaSuplente),
           hogarId: hogarId,
-          id: _generarId(),
+          id: idEstable(ClavesId.miembro(id, suplenteId, 'albacea_suplente')),
         ),
       ], ignorarDuplicados: true);
     }
@@ -663,6 +714,11 @@ class RepositorioFinanzasSupabase implements RepositorioFinanzas {
     );
   }
 
+  /// Cierra la semana en el orden que exige el servidor: primero el cierre
+  /// (versión `reaperturas + 1`) con sus renglones y después la semana a
+  /// `cerrada`. Los renglones llevan ids estables; el cierre queda en la copia
+  /// en cuanto se guarda, así un reintento (si falla el último paso) reusa el
+  /// mismo cierre y no choca con nada.
   @override
   Future<void> agregarCierre(
     CierreGuardado cierre, {
@@ -673,18 +729,29 @@ class RepositorioFinanzasSupabase implements RepositorioFinanzas {
     ], ignorarDuplicados: true);
     await fuente.guardar(TablasFinanzas.cierrePartidas, [
       for (final p in cierre.partidas)
-        {
-          'id': _generarId(),
-          ...filaCierrePartida(cierre.id, p, hogarId: hogarId, libroId: libroId),
-        },
-    ], conflicto: 'cierre_id,partida_id', ignorarDuplicados: true);
+        filaCierrePartida(
+          cierre.id,
+          p,
+          hogarId: hogarId,
+          libroId: libroId,
+          id: idEstable(ClavesId.cierrePartida(cierre.id, p.partidaId)),
+        ),
+    ], ignorarDuplicados: true);
     await fuente.guardar(TablasFinanzas.cierreAbonos, [
       for (final a in cierre.abonos)
-        {
-          'id': _generarId(),
-          ...filaCierreAbono(cierre.id, a, hogarId: hogarId, libroId: libroId),
-        },
-    ], conflicto: 'cierre_id,deuda_id', ignorarDuplicados: true);
+        filaCierreAbono(
+          cierre.id,
+          a,
+          hogarId: hogarId,
+          libroId: libroId,
+          id: idEstable(ClavesId.cierreAbono(cierre.id, a.deudaId)),
+        ),
+    ], ignorarDuplicados: true);
+    _local(
+      (d) => d.copiar(
+        cierres: [...d.cierres.where((c) => c.id != cierre.id), cierre],
+      ),
+    );
     await fuente.actualizar(
       TablasFinanzas.semanas,
       {'estado': nombreEnum(EstadoSemana.cerrada)},
@@ -692,10 +759,6 @@ class RepositorioFinanzasSupabase implements RepositorioFinanzas {
     );
     _local(
       (d) => d.copiar(
-        cierres: [
-          ...d.cierres.where((c) => c.id != cierre.id),
-          cierre,
-        ],
         semanas: [
           for (final s in d.semanas)
             s.id == cierre.semanaId ? s.conEstado(EstadoSemana.cerrada) : s,

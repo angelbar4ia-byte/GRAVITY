@@ -165,9 +165,10 @@ class PermisoLibro {
 /// Permiso de [personaId] en [libro] (regla de `fin_puede`, 4.5):
 ///
 /// - **leer:** miembro vigente o cuenta maestra.
-/// - **escribir:** miembro vigente (titular, miembro, albacea o suplente; en
-///   el representado siempre con motivo). La cuenta maestra **nunca** escribe
-///   en un libro del que no es miembro.
+/// - **escribir:** miembro vigente (titular, miembro o albacea; en el
+///   representado siempre con motivo). El **suplente** escribe solo si no hay
+///   albacea vigente (D17). La cuenta maestra **nunca** escribe en un libro
+///   del que no es miembro.
 /// - **administrar:** titular de un personal; cualquier miembro de un
 ///   compartido; albacea de un representado (el suplente, solo si no hay
 ///   albacea vigente).
@@ -192,17 +193,19 @@ PermisoLibro permisoEnLibro(
         ? const PermisoLibro(leer: true, comoMaestra: true)
         : PermisoLibro.ninguno;
   }
+  // El suplente solo actúa cuando no hay albacea vigente (D17).
+  final suplenteEnEspera =
+      papel == PapelLibro.albaceaSuplente && libro.hayAlbaceaVigente(hoy);
   final administra = switch (libro.tipo) {
     TipoLibro.personal => papel == PapelLibro.titular,
     TipoLibro.compartido => true,
     TipoLibro.representado =>
       papel == PapelLibro.albacea ||
-          (papel == PapelLibro.albaceaSuplente &&
-              !libro.hayAlbaceaVigente(hoy)),
+          (papel == PapelLibro.albaceaSuplente && !suplenteEnEspera),
   };
   return PermisoLibro(
     leer: true,
-    escribir: true,
+    escribir: !suplenteEnEspera,
     administrar: administra,
     enNombreDe: libro.tipo == TipoLibro.representado,
   );

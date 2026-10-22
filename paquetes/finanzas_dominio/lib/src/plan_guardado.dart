@@ -84,6 +84,10 @@ class SemanaGuardada {
   final int techo;
   final String? activadaPor;
   final DateTime? activadaEn;
+
+  /// Veces que se reabrió (lo pone el servidor). El cierre siguiente es la
+  /// versión `reaperturas + 1` (`fin_cierres.version`).
+  final int reaperturas;
   final List<PartidaSemana> partidas;
   final List<AbonoSemana> abonos;
 
@@ -102,11 +106,17 @@ class SemanaGuardada {
     required this.techo,
     this.activadaPor,
     this.activadaEn,
+    this.reaperturas = 0,
     List<PartidaSemana> partidas = const [],
     List<AbonoSemana> abonos = const [],
   }) : partidas = List.unmodifiable(partidas),
        abonos = List.unmodifiable(abonos);
 
+  /// Versión que lleva el cierre siguiente (`reaperturas + 1`).
+  int get versionDelSiguienteCierre => reaperturas + 1;
+
+  /// La misma semana con otro estado. Como el servidor, reabrir una semana
+  /// cerrada suma una reapertura.
   SemanaGuardada conEstado(EstadoSemana nuevo) => SemanaGuardada(
     id: id,
     libroId: libroId,
@@ -122,6 +132,10 @@ class SemanaGuardada {
     techo: techo,
     activadaPor: activadaPor,
     activadaEn: activadaEn,
+    reaperturas:
+        estado == EstadoSemana.cerrada && nuevo != EstadoSemana.cerrada
+        ? reaperturas + 1
+        : reaperturas,
     partidas: partidas,
     abonos: abonos,
   );

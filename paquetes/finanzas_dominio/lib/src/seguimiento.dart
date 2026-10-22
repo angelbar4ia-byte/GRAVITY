@@ -910,6 +910,11 @@ VistaSemana vistaSemana(
 
 /// La foto del plan para activar la semana (`fin_semanas` con sus partidas y
 /// abonos). Lleva el arrastre que trae cada partida.
+///
+/// Con [idPara], los ids de las partidas y los abonos salen de una clave
+/// estable (`partida:<semana>:<origen>:<id>` y `abono:<semana>:<deuda>`): volver
+/// a guardar la misma foto no choca con los únicos (`semana_id`, `origen`,
+/// `origen_id`) y (`semana_id`, `deuda_id`).
 SemanaGuardada fotoDelPlan(
   PlanDelLibro p, {
   required String id,
@@ -917,8 +922,13 @@ SemanaGuardada fotoDelPlan(
   required Map<String, int> arrastrePorOrigen,
   required String activadaPor,
   required DateTime activadaEn,
-  required String Function() generarId,
+  String Function()? generarId,
+  String Function(String clave)? idPara,
 }) {
+  if (generarId == null && idPara == null) {
+    throw ArgumentError('Falta cómo generar los ids (generarId o idPara)');
+  }
+  String idDe(String clave) => idPara != null ? idPara(clave) : generarId!();
   final plan = p.plan;
   return SemanaGuardada(
     id: id,
@@ -938,7 +948,10 @@ SemanaGuardada fotoDelPlan(
     partidas: [
       for (final r in plan.partidas)
         PartidaSemana(
-          id: generarId(),
+          id: idDe(
+            'partida:$id:${p.info(r.origen.id).origen.name}:'
+            '${p.info(r.origen.id).origenId}',
+          ),
           semanaId: id,
           origen: p.info(r.origen.id).origen,
           origenId: p.info(r.origen.id).origenId,
@@ -956,7 +969,7 @@ SemanaGuardada fotoDelPlan(
     abonos: [
       for (final r in plan.abonos)
         AbonoSemana(
-          id: generarId(),
+          id: idDe('abono:$id:${r.origen.id}'),
           semanaId: id,
           deudaId: r.origen.id,
           abonoPlaneado: r.semanal,
@@ -993,7 +1006,8 @@ CierreGuardado cierreDeLaVista(
   return CierreGuardado(
     id: id,
     semanaId: g.id,
-    version: (v.ultimoCierre?.version ?? 0) + 1,
+    // El servidor exige la versión `reaperturas + 1` (fin_cierres_validar).
+    version: g.versionDelSiguienteCierre,
     ingresoReal: r.ingresoReal,
     gastoReal: r.gastoReal,
     abonoReal: r.abonoReal,

@@ -121,7 +121,7 @@ class _Compromisos extends ConsumerWidget {
                     CeldaTexto(
                       x.calendario == null
                           ? nombreFrecuencia(x.frecuencia)
-                          : descripcionCalendario(x.calendario!),
+                          : descripcionCalendario(x.calendario!, salida: true),
                     ),
                     CeldaTexto(proxima(x.pagosEntre(c.hoy, c.hoy.sumarDias(400), cal))),
                   ],

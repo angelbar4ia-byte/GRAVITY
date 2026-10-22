@@ -102,8 +102,8 @@ void main() {
       expect(permisoEnLibro(libro(casa), papa, hoy: hoy).leer, isFalse);
     });
 
-    test('el albacea registra en nombre de papá; el suplente no administra '
-        'mientras haya albacea', () {
+    test('el albacea registra en nombre de papá; el suplente no escribe ni '
+        'administra mientras haya albacea (D17)', () {
       final albacea = permisoEnLibro(libro(libroPapa), ana, hoy: hoy);
       expect(
         (albacea.escribir, albacea.administrar, albacea.enNombreDe),
@@ -111,8 +111,9 @@ void main() {
       );
       final suplente = permisoEnLibro(libro(libroPapa), alex, hoy: hoy);
       expect(
-        (suplente.escribir, suplente.administrar, suplente.enNombreDe),
-        (true, false, true),
+        (suplente.leer, suplente.escribir, suplente.administrar),
+        (true, false, false),
+        reason: 'lee el libro, pero solo actúa sin albacea vigente',
       );
     });
 
@@ -134,7 +135,11 @@ void main() {
           ),
         ],
       );
-      expect(permisoEnLibro(sinAlbacea, alex, hoy: hoy).administrar, isTrue);
+      final suplente = permisoEnLibro(sinAlbacea, alex, hoy: hoy);
+      expect(
+        (suplente.escribir, suplente.administrar, suplente.enNombreDe),
+        (true, true, true),
+      );
       expect(
         permisoEnLibro(sinAlbacea, ana, hoy: hoy).leer,
         isFalse,
@@ -228,6 +233,8 @@ void main() {
       expect(deCasa.disponible(), 500000 + 200000 - 150000);
       expect(deAna.balance().entreLibros, -200000);
       expect(deCasa.balance().entreLibros, 200000);
+      expect(deAna.balance().aportacionesEntregadas, 200000);
+      expect(deCasa.balance().aportacionesRecibidas, 200000);
       expect(deAna.balance().cuadra, isTrue);
       expect(deCasa.balance().cuadra, isTrue);
     });

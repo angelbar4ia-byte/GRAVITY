@@ -61,9 +61,15 @@ class _EditorCalendarioState extends State<EditorCalendario> {
   late final _dias = TextEditingController(
     text: widget.inicial.diasMes.map((d) => d == 0 ? 'último' : '$d').join(', '),
   );
-  late Fecha _ancla = widget.inicial.fechaAncla ?? Fecha.deDateTime(DateTime.now());
+  /// Fecha de un pago conocido: la escribe la persona (no se inventa); sin
+  /// ella el calendario catorcenal o cada N meses no está completo.
+  late Fecha? _ancla = widget.inicial.fechaAncla;
   late int _intervalo = widget.inicial.intervaloMeses ?? 2;
-  late ReglaDiaInhabil _regla = widget.inicial.regla;
+  late ReglaDiaInhabil _regla = widget.inicial.reglaPara(
+    widget.paraIngreso
+        ? CalendarioConfig.reglaDeIngreso
+        : CalendarioConfig.reglaDeSalida,
+  );
 
   @override
   void dispose() {
@@ -73,9 +79,11 @@ class _EditorCalendarioState extends State<EditorCalendario> {
 
   CalendarioConfig? _armar() {
     final dias = diasDeTexto(_dias.text);
+    final ancla = _ancla;
     final c = switch (_forma) {
       FormaPago.semanal => CalendarioConfig.semanal(_diaSemana, regla: _regla),
-      FormaPago.catorcenal => CalendarioConfig.catorcenal(_ancla, regla: _regla),
+      FormaPago.catorcenal =>
+        ancla == null ? null : CalendarioConfig.catorcenal(ancla, regla: _regla),
       FormaPago.quincenal => CalendarioConfig.quincenal(
         diasMes: dias != null && dias.length == 2 ? dias : const [15, 0],
         regla: _regla,
@@ -83,7 +91,9 @@ class _EditorCalendarioState extends State<EditorCalendario> {
       FormaPago.mensual => dias == null
           ? null
           : CalendarioConfig.mensual(dias, regla: _regla),
-      FormaPago.cadaMeses => CalendarioConfig.cadaMeses(_ancla, _intervalo, regla: _regla),
+      FormaPago.cadaMeses => ancla == null
+          ? null
+          : CalendarioConfig.cadaMeses(ancla, _intervalo, regla: _regla),
     };
     if (c == null) return null;
     try {
@@ -153,18 +163,31 @@ class _EditorCalendarioState extends State<EditorCalendario> {
                     : null),
         ),
       if (_forma == FormaPago.catorcenal || _forma == FormaPago.cadaMeses)
-        ListTile(
-          contentPadding: EdgeInsets.zero,
-          title: const Text('Fecha de un pago conocido'),
-          subtitle: Text('${textoFecha(_ancla)} ${_ancla.anio}'),
-          trailing: const Icon(Icons.event_outlined),
-          onTap: () async {
-            final f = await elegirFecha(context, _ancla);
-            if (f != null) {
-              setState(() => _ancla = f);
-              _avisar();
-            }
-          },
+        FormField<Fecha>(
+          key: const ValueKey('calendario-ancla'),
+          validator: (_) =>
+              _ancla == null ? 'Elige la fecha de un pago que ya conozcas' : null,
+          builder: (estado) => ListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Fecha de un pago conocido'),
+            subtitle: Text(
+              _ancla == null
+                  ? (estado.errorText ?? 'Sin elegir: toca para escribirla')
+                  : '${textoFecha(_ancla!)} ${_ancla!.anio}',
+            ),
+            trailing: const Icon(Icons.event_outlined),
+            onTap: () async {
+              final f = await elegirFecha(
+                context,
+                _ancla ?? Fecha.deDateTime(DateTime.now()),
+              );
+              if (f != null) {
+                setState(() => _ancla = f);
+                estado.didChange(f);
+                _avisar();
+              }
+            },
+          ),
         ),
       if (_forma == FormaPago.cadaMeses)
         DropdownButtonFormField<int>(
@@ -254,10 +277,66 @@ class _DialogoForma extends StatelessWidget {
 
 // ------------------------------------------------------------------ ingreso
 
+/// Forma de un ingreso conocido, **sin montos ni fechas**: esos los captura
+/// el dueño (D19: "Montos y fechas los captura el dueño; no se inventan").
+class PlantillaIngreso {
+  const PlantillaIngreso({
+    required this.nombre,
+    required this.tipo,
+    required this.certeza,
+    required this.calendario,
+    required this.ayuda,
+  });
+
+  final String nombre;
+  final TipoIngreso tipo;
+  final Certeza certeza;
+  final CalendarioConfig calendario;
+  final String ayuda;
+
+  /// Pensión de papá: días 1 y 11 de cada mes; si cae en fin de semana o
+  /// festivo, el siguiente día hábil (P15; regla 6 de 4.5).
+  static const pension = PlantillaIngreso(
+    nombre: 'Pensión',
+    tipo: TipoIngreso.pension,
+    certeza: Certeza.segura,
+    calendario: CalendarioConfig.mensual(
+      [1, 11],
+      regla: ReglaDiaInhabil.siguienteDiaHabil,
+    ),
+    ayuda:
+        'Días 1 y 11 de cada mes; si cae en fin de semana o festivo, el '
+        'siguiente día hábil. Escribe el neto que llega en cada pago.',
+  );
+
+  /// Apoyo 60+ cada bimestre, probable (P15; regla 6 de 4.5). La fecha de un
+  /// pago la elige el dueño.
+  static const apoyo60 = PlantillaIngreso(
+    nombre: 'Apoyo 60+',
+    tipo: TipoIngreso.otro,
+    certeza: Certeza.probable,
+    calendario: CalendarioConfig(
+      forma: FormaPago.cadaMeses,
+      intervaloMeses: 2,
+      regla: ReglaDiaInhabil.siguienteDiaHabil,
+    ),
+    ayuda:
+        'Cada 2 meses, desde la fecha de un pago que ya conozcas. Cuenta como '
+        'probable. Escribe el monto de cada pago.',
+  );
+
+  /// Las del libro de una persona representada.
+  static const deRepresentado = [pension, apoyo60];
+}
+
 class DialogoIngreso extends ConsumerStatefulWidget {
-  const DialogoIngreso({super.key, required this.contexto});
+  const DialogoIngreso({super.key, required this.contexto, this.plantilla});
 
   final ContextoFinanzas contexto;
+
+  /// Forma ya llenada (p. ej. la pensión de papá); el monto y las fechas los
+  /// escribe la persona.
+  final PlantillaIngreso? plantilla;
 
   @override
   ConsumerState<DialogoIngreso> createState() => _DialogoIngresoState();
@@ -265,12 +344,25 @@ class DialogoIngreso extends ConsumerStatefulWidget {
 
 class _DialogoIngresoState extends ConsumerState<DialogoIngreso> {
   final _forma = GlobalKey<FormState>();
-  final _nombre = TextEditingController();
+  late final _nombre = TextEditingController(text: widget.plantilla?.nombre ?? '');
   final _monto = TextEditingController();
-  CalendarioConfig? _calendario = const CalendarioConfig.quincenal();
-  Certeza _certeza = Certeza.segura;
-  TipoIngreso _tipo = TipoIngreso.salario;
+  late final CalendarioConfig _inicial =
+      widget.plantilla?.calendario ?? const CalendarioConfig.quincenal();
+  late CalendarioConfig? _calendario = widget.plantilla == null
+      ? _inicial
+      : (_completo(_inicial) ? _inicial : null);
+  late Certeza _certeza = widget.plantilla?.certeza ?? Certeza.segura;
+  late TipoIngreso _tipo = widget.plantilla?.tipo ?? TipoIngreso.salario;
   String? _destino;
+
+  static bool _completo(CalendarioConfig c) {
+    try {
+      c.calendario;
+      return true;
+    } on ArgumentError {
+      return false;
+    }
+  }
 
   @override
   void dispose() {
@@ -284,10 +376,16 @@ class _DialogoIngresoState extends ConsumerState<DialogoIngreso> {
     final c = widget.contexto;
     final destinos = cuentasParaRecibir(c.datos, c.libroId);
     _destino ??= destinos.firstOrNull?.id;
+    final plantilla = widget.plantilla;
     return _DialogoForma(
-      titulo: 'Nuevo ingreso',
+      titulo: plantilla == null ? 'Nuevo ingreso' : 'Nuevo ingreso: ${plantilla.nombre}',
       forma: _forma,
       campos: [
+        if (plantilla != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(plantilla.ayuda, key: const ValueKey('ingreso-ayuda-plantilla')),
+          ),
         TextFormField(
           key: const ValueKey('ingreso-nombre'),
           controller: _nombre,
@@ -301,7 +399,7 @@ class _DialogoIngresoState extends ConsumerState<DialogoIngreso> {
           ayuda: 'Lo que llega a la cuenta, después de descuentos.',
         ),
         EditorCalendario(
-          inicial: const CalendarioConfig.quincenal(),
+          inicial: _inicial,
           alCambiar: (cal) => _calendario = cal,
         ),
         DropdownButtonFormField<TipoIngreso>(
@@ -731,6 +829,12 @@ class _DialogoDeudaState extends ConsumerState<DialogoDeuda> {
             for (final x in pasivos) DropdownMenuItem(value: x.id, child: Text(x.nombre)),
           ],
           onChanged: (x) => setState(() => _cuenta = x),
+          // fin_deudas.cuenta_pasivo_id es obligatoria: el saldo sale de ella.
+          validator: (v) => v == null
+              ? (pasivos.isEmpty
+                    ? 'Crea primero la tarjeta o el préstamo en Cuentas'
+                    : 'Elige la cuenta de la deuda')
+              : null,
         ),
         CampoMonto(
           key: const ValueKey('deuda-abono'),

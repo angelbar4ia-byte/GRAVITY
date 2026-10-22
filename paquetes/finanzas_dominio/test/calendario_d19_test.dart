@@ -148,6 +148,86 @@ void main() {
       );
     });
 
+    test('sin regla elegida, un compromiso y una deuda se quedan en su fecha '
+        'y un ingreso pasa al siguiente día hábil (default del servidor)', () {
+      // 1/nov/2026 es domingo.
+      const delUno = CalendarioConfig.mensual([1]);
+      expect(delUno.reglaElegida, isNull);
+      final compromiso = Compromiso(
+        id: 'renta-sin-regla',
+        libroId: casa,
+        nombre: 'Renta',
+        cuentaGastoId: 'g-vivienda',
+        monto: 800000,
+        frecuencia: Frecuencia.mensual,
+        calendario: delUno,
+      );
+      const deuda = Deuda(
+        id: 'deuda-sin-regla',
+        libroId: casa,
+        nombre: 'Tarjeta',
+        tipo: TipoDeuda.conCosto,
+        abono: 100000,
+        frecuencia: Frecuencia.mensual,
+        tasaAnualPuntosBase: 4800,
+        calendario: delUno,
+      );
+      final ingreso = Ingreso(
+        id: 'ing-sin-regla',
+        libroId: casa,
+        nombre: 'Sueldo',
+        cuentaOrigenId: 'sueldo-ana',
+        cuentaDestinoId: 'banco-casa',
+        vigencias: [
+          VigenciaIngreso(
+            id: 'v',
+            ingresoId: 'ing-sin-regla',
+            montoNeto: 100000,
+            calendario: delUno,
+            desde: Fecha(2026, 1, 1),
+          ),
+        ],
+      );
+      final desde = Fecha(2026, 10, 26);
+      final hasta = Fecha(2026, 11, 8);
+      expect(compromiso.reglaInhabil, ReglaDiaInhabil.sinCambio);
+      expect(deuda.reglaInhabil, ReglaDiaInhabil.sinCambio);
+      expect(
+        compromiso.pagosEntre(desde, hasta, festivos).single.ajustada,
+        Fecha(2026, 11, 1),
+      );
+      expect(
+        deuda.pagosEntre(desde, hasta, festivos).single.ajustada,
+        Fecha(2026, 11, 1),
+      );
+      expect(
+        ingreso.pagosEntre(desde, hasta, festivos).single.$1.ajustada,
+        Fecha(2026, 11, 2),
+      );
+      // La regla elegida manda (la caja).
+      const caja = CalendarioConfig.mensual(
+        [1],
+        regla: ReglaDiaInhabil.siguienteDiaHabil,
+      );
+      final conCaja = Deuda(
+        id: 'caja',
+        libroId: casa,
+        nombre: 'Caja',
+        tipo: TipoDeuda.conCosto,
+        abono: 100000,
+        frecuencia: Frecuencia.mensual,
+        tasaAnualPuntosBase: 1800,
+        calendario: caja,
+      );
+      expect(conCaja.reglaInhabil, ReglaDiaInhabil.siguienteDiaHabil);
+      expect(
+        conCaja.pagosEntre(desde, hasta, festivos).single.ajustada,
+        Fecha(2026, 11, 2),
+      );
+      expect(delUno.conRegla(ReglaDiaInhabil.diaHabilAnterior).regla,
+          ReglaDiaInhabil.diaHabilAnterior);
+    });
+
     test('la frecuencia debe coincidir con el calendario', () {
       final mal = Compromiso(
         id: 'x',

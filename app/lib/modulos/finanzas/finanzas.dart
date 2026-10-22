@@ -1,0 +1,135 @@
+/// Módulo **Finanzas** de GRAVITY (agente finanzas, Fase 1).
+///
+/// Lo que la plataforma conecta en `app/lib/app/pantallas_externas.dart`:
+///
+/// - [rutasFinanzas]: rutas **relativas** a `/finanzas`. La raíz
+///   (`GoRoute(path: '/')`) es el Tablero en la laptop y la Semana resumida en
+///   el teléfono y la tablet; las demás secciones van como segmentos
+///   (`'semana'`, `'movimientos'`, …). Las que cambian la configuración
+///   (asistente de arranque, importar y ajustes) llevan
+///   `metadata: exigeAccion(Accion.administrar)`. Las secciones de la laptop
+///   (D4) regresan al inicio del módulo en el teléfono.
+/// - [hojaRegistrarGasto] y [hojaIngresoExtra]: las hojas del (+) (flujo F1).
+/// - [tablasColaFinanzas]: tabla de Supabase de cada tipo de registro de la
+///   cola sin conexión (solo los libros "solo agregar").
+library;
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../app/dispositivo.dart' show tipoDispositivoProvider;
+import '../../nucleo/contratos/dispositivo.dart';
+import '../../nucleo/contratos/roles.dart';
+import '../../nucleo/contratos/rutas.dart';
+import '../../nucleo/permisos/permisos.dart';
+import 'datos/repositorio_supabase.dart' as supabase show tablasColaFinanzas;
+import 'pantallas/laptop/ajustes.dart';
+import 'pantallas/laptop/arranque.dart';
+import 'pantallas/laptop/categorias.dart';
+import 'pantallas/laptop/compromisos.dart';
+import 'pantallas/laptop/cuentas.dart';
+import 'pantallas/laptop/importar.dart';
+import 'pantallas/laptop/ingresos.dart';
+import 'pantallas/laptop/marco_laptop.dart';
+import 'pantallas/laptop/movimientos.dart';
+import 'pantallas/laptop/semana.dart';
+import 'pantallas/laptop/tablero.dart';
+import 'pantallas/registro/hoja_gasto.dart';
+import 'pantallas/registro/hoja_ingreso_extra.dart';
+import 'pantallas/telefono/pantallas_telefono.dart';
+
+export 'datos/repositorio_supabase.dart' show TiposCola;
+export 'pantallas/laptop/marco_laptop.dart' show SeccionFinanzas;
+
+/// Tabla de Supabase de cada tipo de registro de la cola sin conexión
+/// (`'finanzas.movimiento': 'fin_movimientos'`, conciliaciones e
+/// importaciones). La cola sube con `INSERT … ON CONFLICT (id) DO NOTHING`.
+const Map<String, String> tablasColaFinanzas = supabase.tablasColaFinanzas;
+
+/// Registro rápido de un gasto (F1): teclado ya abierto → categoría →
+/// cuenta → Guardar → *"Guardado · Deshacer"*.
+Widget hojaRegistrarGasto() => const HojaRegistrarGasto();
+
+/// Registro de un ingreso extra: monto → cuenta → fecha → Guardar.
+Widget hojaIngresoExtra() => const HojaIngresoExtra();
+
+/// `true` si [dispositivo] lleva Finanzas completo (D4: la laptop).
+bool esFinanzasCompleto(TipoDispositivo dispositivo) =>
+    dispositivo == TipoDispositivo.laptop;
+
+/// Rutas de Finanzas, relativas a `Rutas.finanzas` (ver arriba).
+List<RouteBase> rutasFinanzas() => [
+  GoRoute(
+    path: '/',
+    pageBuilder: _pagina(
+      (_) => const _SegunDispositivo(
+        laptop: PantallaTablero(),
+        telefono: PantallaSemanaTelefono(),
+      ),
+    ),
+  ),
+  GoRoute(
+    path: SeccionFinanzas.semana.segmento,
+    pageBuilder: _pagina(
+      (_) => const _SegunDispositivo(
+        laptop: PantallaSemana(),
+        telefono: PantallaSemanaTelefono(),
+      ),
+    ),
+  ),
+  GoRoute(
+    path: SeccionFinanzas.movimientos.segmento,
+    pageBuilder: _pagina(
+      (_) => const _SegunDispositivo(
+        laptop: PantallaMovimientos(),
+        telefono: PantallaMovimientosTelefono(),
+      ),
+    ),
+  ),
+  _soloLaptop(SeccionFinanzas.cuentas, (_) => const PantallaCuentas()),
+  _soloLaptop(SeccionFinanzas.ingresos, (_) => const PantallaIngresos()),
+  _soloLaptop(SeccionFinanzas.categorias, (_) => const PantallaCategorias()),
+  _soloLaptop(SeccionFinanzas.compromisos, (_) => const PantallaCompromisos()),
+  _soloLaptop(SeccionFinanzas.arranque, (_) => const PantallaArranque()),
+  _soloLaptop(SeccionFinanzas.importar, (_) => const PantallaImportar()),
+  _soloLaptop(SeccionFinanzas.ajustes, (_) => const PantallaAjustesFinanzas()),
+];
+
+/// Página sin animación (cambiar de sección es cambiar de pestaña).
+Page<void> Function(BuildContext, GoRouterState) _pagina(
+  WidgetBuilder pantalla,
+) => (context, estado) =>
+    NoTransitionPage<void>(key: estado.pageKey, child: pantalla(context));
+
+/// Sección que solo existe en la laptop (D4). En el teléfono y la tablet
+/// regresa al inicio del módulo. Las de configuración exigen administrar.
+GoRoute _soloLaptop(SeccionFinanzas seccion, WidgetBuilder pantalla) =>
+    GoRoute(
+      path: seccion.segmento,
+      metadata: seccion.esDeConfiguracion
+          ? exigeAccion(Accion.administrar)
+          : null,
+      redirect: (context, estado) {
+        final dispositivo = ProviderScope.containerOf(
+          context,
+          listen: false,
+        ).read(tipoDispositivoProvider);
+        return esFinanzasCompleto(dispositivo) ? null : Rutas.finanzas;
+      },
+      pageBuilder: _pagina(pantalla),
+    );
+
+/// La pantalla de la laptop o la del teléfono (y la tablet).
+class _SegunDispositivo extends ConsumerWidget {
+  const _SegunDispositivo({required this.laptop, required this.telefono});
+
+  final Widget laptop;
+  final Widget telefono;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) =>
+      esFinanzasCompleto(ref.watch(tipoDispositivoProvider))
+      ? laptop
+      : telefono;
+}

@@ -1,14 +1,14 @@
 // GENERADO por api/generar_dart.mjs a partir de api/openapi.yaml. No se edita a mano.
 // Permite abrir Swagger UI con doble clic (file://), donde el navegador no deja leer
 // ../openapi.yaml. Servida por http, la página lee openapi.yaml directamente.
-// huella: fnv1a32:cee18773
+// huella: fnv1a32:bd1d5844
 window.ESPECIFICACION_GRAVITY = {
   "openapi": "3.1.0",
   "info": {
     "title": "GRAVITY · APIs del sistema",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "summary": "Herramientas de GRAVITY, base de datos, funciones del servidor y puente de casa (D16).",
-    "description": "Especificación de las APIs de GRAVITY (decisión D16). Se consulta en la laptop, en\nAjustes › Desarrollador, solo con rol Dueño. **No se publica en internet.**\n\nCada operación declara, con extensiones propias:\n\n- `x-roles`: roles que la pueden usar (D5): `dueno`, `coadministrador`, `familiar`,\n  `cuidador`, `casa`. La verdad de los permisos está en el servidor (RLS).\n- `x-escribe`: `true` si escribe datos; GRAVITY y esta consola piden confirmación antes\n  de enviarla. `segun-herramienta` en la operación genérica de herramientas.\n- `x-solo-local`: `true` si su resultado nunca pasa por la IA en la nube (D3: dinero,\n  datos clínicos y datos personales). `segun-herramienta` en la operación genérica.\n- `x-fase`: fase del roadmap en que se construye.\n\nConvenciones (especificación de la Fase 0, sección 4): dinero en centavos (`int`),\nidentificadores UUID, fechas `date` y `timestamptz`, libros solo-agregar.\n\nLas llaves (Supabase, Home Assistant) entran por `--dart-define` o archivos ignorados\npor git; nunca se escriben aquí.\n",
+    "description": "Especificación de las APIs de GRAVITY (decisión D16). Se consulta en la laptop, en\nAjustes › Desarrollador, solo con rol Dueño. **No se publica en internet.**\n\nCada operación declara, con extensiones propias:\n\n- `x-roles`: roles que la pueden usar (D5): `dueno`, `coadministrador`, `familiar`,\n  `cuidador`, `casa`. La verdad de los permisos está en el servidor (RLS).\n- `x-escribe`: `true` si escribe datos; GRAVITY y esta consola piden confirmación antes\n  de enviarla. `segun-herramienta` en la operación genérica de herramientas.\n- `x-solo-local`: `true` si su resultado nunca pasa por la IA en la nube (D3: dinero,\n  datos clínicos y datos personales). `segun-herramienta` en la operación genérica.\n- `x-fase`: fase del roadmap en que se construye.\n\nConvenciones (especificación de la Fase 0, sección 4): dinero en centavos (`int`),\nidentificadores UUID, fechas `date` y `timestamptz`, semana en lunes, libros solo-agregar.\n\nFase 1 (Finanzas, D19): cada quien ve **su** libro y los compartidos de los que es\nmiembro; la **cuenta maestra** lee todo y nunca escribe en lo ajeno. Los ejemplos son\ninventados (el hogar de Ana y Alex de `supabase/seed.sql`, con \"Papá (ejemplo)\").\n\nLas llaves (Supabase, Home Assistant) entran por `--dart-define` o archivos ignorados\npor git; nunca se escriben aquí.\n",
     "license": {
       "name": "Privado. Uso exclusivo del proyecto Segundo Cerebro; no se publica."
     }
@@ -38,11 +38,15 @@ window.ESPECIFICACION_GRAVITY = {
   "tags": [
     {
       "name": "Herramientas de GRAVITY",
-      "description": "Lista cerrada de funciones que GRAVITY puede usar (D1). Cada una declara su módulo,\nsus roles, si escribe (pide confirmación) y si es solo local (D3). El registro de la\napp rechaza, al arrancar, una herramienta declarada para un rol que la matriz de\npermisos no deja abrir, leer o escribir su módulo (D5), y una de Finanzas o Cuidados\nque no sea solo local (D3), salvo las de navegación, que no leen datos. En la Fase 0\nson de navegación y se ejecutan dentro de la app; exponerlas por red para el puente\nde casa es una propuesta de la Fase 6.\n"
+      "description": "Lista cerrada de funciones que GRAVITY puede usar (D1). Cada una declara su módulo,\nsus roles, si escribe (pide confirmación) y si es solo local (D3). El registro de la\napp rechaza, al arrancar, una herramienta declarada para un rol que la matriz de\npermisos no deja abrir, leer o escribir su módulo (D5), y una de Finanzas o Cuidados\nque no sea solo local (D3), **también las de navegación**: ni siquiera \"se abrió\nFinanzas\" llega a la IA en la nube. A la cuidadora solo se le ofrece su bandeja de\nsolicitudes (D18: nada de dinero, de la familia ni de conversación libre) y a la\ncuenta maestra nada que escriba o administre lo ajeno (D19). En las Fases 0 y 1 son\nde navegación y se ejecutan dentro de la app; \"registrar gasto\" solo abre la hoja de\nregistro, que es la confirmación (una orden nunca registra dinero sola). Exponerlas\npor red para el puente de casa es una propuesta de la Fase 6.\n"
     },
     {
       "name": "Base de datos",
-      "description": "Supabase (PostgREST): `/rest/v1/<tabla>` con los filtros de PostgREST\n(`?id=eq.<uuid>`, `select`, `order`, `limit`). Cada consulta pasa por las reglas\npor registro (RLS) del rol: se lee solo lo que el rol puede ver. Esquema en\n`supabase/migrations/20261020000000_base.sql`. Nada de esta base va a la IA.\n"
+      "description": "Supabase (PostgREST): `/rest/v1/<tabla>` con los filtros de PostgREST\n(`?id=eq.<uuid>`, `select`, `order`, `limit`). Cada consulta pasa por las reglas\npor registro (RLS) del rol: se lee solo lo que el rol puede ver. Esquema en\n`supabase/migrations/20261020000000_base.sql` (Finanzas, en su propio grupo). Nada de\nesta base va a la IA.\n"
+    },
+    {
+      "name": "Base de datos · Finanzas",
+      "description": "Tablas `fin_*`, vistas y funciones de Finanzas (Fase 1, D19), según\n`supabase/migrations/20261021000000_finanzas_mvp1.sql` y `supabase/README.md`\n(\"Finanzas (Fase 1)\"). Solo dueño y coadministrador, cada quien **su libro** y los\ncompartidos de los que es miembro (`fin_puede`); familiar, cuidador y Casa no ven\nnada. La **cuenta maestra** lee todo y nunca escribe en lo ajeno. Nada de esto va a\nla IA en la nube ni a las bocinas (D3, D6).\n\n- **Dinero** en centavos (entero); porcentajes y tasas en puntos base (2000 = 20 %);\n  semana en lunes; identificadores UUID generados en el dispositivo.\n- **Solo agregar:** `fin_movimientos`, `fin_conciliaciones`, `fin_cierres`,\n  `fin_cierre_partidas`, `fin_cierre_abonos` y `fin_importaciones` solo aceptan\n  INSERT; un error se corrige con una anulación (contraasiento) o una versión nueva.\n- **Cola sin conexión (idempotente):** se sube con `on_conflict=id` y\n  `Prefer: resolution=ignore-duplicates`. El mismo `id` con el mismo contenido no hace\n  nada y no falla; con otro contenido, en los libros solo agregar, 409 (23505).\n- **Lo que pone el servidor** (marcado como de solo lectura; no se manda):\n  `recibido_en`, `libro_origen_id` y `libro_destino_id` de los movimientos, las\n  columnas generadas y `reaperturas`.\n- **Errores** (código de PostgreSQL → HTTP de PostgREST): `23503` falta algo de lo\n  que depende (otra cuenta, el original de una anulación; la cola reintenta) → 409;\n  `23505` duplicado o mismo `id` con otro contenido → 409; `23514` regla de la tabla\n  (monto, motivo, lunes, cascada) → 400; `22023` regla de negocio (combinación de\n  cuentas, libro equivocado, papel) → 400; `55000` estado (cuenta no activa, semana\n  cerrada) → 500; `42501` sin permiso o columna que no cambia → 403.\n"
     },
     {
       "name": "Funciones del servidor",
@@ -72,7 +76,7 @@ window.ESPECIFICACION_GRAVITY = {
         ],
         "operationId": "listarHerramientas",
         "summary": "Herramientas disponibles para la sesión",
-        "description": "Lista las herramientas que el rol de la sesión puede usar con los módulos activos. Lo que no está en la lista no existe para GRAVITY. Es lo único que ve la IA para elegir qué hacer.",
+        "description": "Lista las herramientas que el rol de la sesión puede usar con los módulos activos. Lo que no está en la lista no existe para GRAVITY. Es lo único que ve la IA para elegir qué hacer. A la cuidadora solo le llega su bandeja de solicitudes (D18); a la cuenta maestra, ninguna que escriba o administre lo ajeno (D19).",
         "x-roles": [
           "dueno",
           "coadministrador",
@@ -105,7 +109,26 @@ window.ESPECIFICACION_GRAVITY = {
                       "familiar"
                     ],
                     "escribe": false,
-                    "solo_local": false
+                    "solo_local": false,
+                    "accion": "leer",
+                    "pertenencia": "propia",
+                    "ambito": "general",
+                    "hoja": null
+                  },
+                  {
+                    "nombre": "finanzas.registrar_gasto",
+                    "descripcion": "Abre la hoja para registrar un gasto. No guarda nada: la persona captura y confirma en la hoja.",
+                    "modulo": "finanzas",
+                    "roles": [
+                      "dueno",
+                      "coadministrador"
+                    ],
+                    "escribe": false,
+                    "solo_local": true,
+                    "accion": "escribir",
+                    "pertenencia": "propia",
+                    "ambito": "general",
+                    "hoja": "gasto"
                   }
                 ]
               }
@@ -182,7 +205,7 @@ window.ESPECIFICACION_GRAVITY = {
         ],
         "operationId": "herramientaGravityAbrir",
         "summary": "gravity.abrir · Abrir Inicio",
-        "description": "Abre la pantalla principal de GRAVITY.",
+        "description": "Abre la pantalla principal de GRAVITY. No es para la cuidadora: de GRAVITY solo usa su bandeja de solicitudes (D18).",
         "x-roles": [
           "dueno",
           "coadministrador",
@@ -223,14 +246,92 @@ window.ESPECIFICACION_GRAVITY = {
         ],
         "operationId": "herramientaFinanzasAbrir",
         "summary": "finanzas.abrir · Abrir Finanzas",
-        "description": "Abre Finanzas. Solo navega: no lee montos. Sinónimos en la barra de órdenes: presupuesto, dinero.",
+        "description": "Abre Finanzas: cada quien su libro y los compartidos de los que es miembro (D19). Solo navega: no lee montos. Es solo local como toda herramienta de Finanzas (D3): ni siquiera \"se abrió Finanzas\" llega a la IA en la nube. Órdenes: \"abre presupuesto\", \"abre finanzas\", \"dinero\".",
         "x-roles": [
           "dueno",
           "coadministrador"
         ],
         "x-escribe": false,
-        "x-solo-local": false,
+        "x-solo-local": true,
         "x-fase": 0,
+        "requestBody": {
+          "$ref": "#/components/requestBodies/PeticionHerramienta"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ResultadoHerramienta"
+          },
+          "404": {
+            "$ref": "#/components/responses/HerramientaNoDisponible"
+          }
+        }
+      }
+    },
+    "/herramientas/finanzas.registrar_gasto": {
+      "servers": [
+        {
+          "url": "http://127.0.0.1:{puerto}",
+          "description": "Propuesta para la Fase 6: GRAVITY en la laptop atiende las herramientas para el puente de casa. En la Fase 0 se ejecutan dentro de la app, sin red.",
+          "variables": {
+            "puerto": {
+              "default": "8787"
+            }
+          }
+        }
+      ],
+      "post": {
+        "tags": [
+          "Herramientas de GRAVITY"
+        ],
+        "operationId": "herramientaFinanzasRegistrarGasto",
+        "summary": "finanzas.registrar_gasto · Registrar gasto",
+        "description": "Abre la hoja de registro rápido de un gasto (F1): diálogo en la laptop, hoja inferior en el teléfono y la tablet. No guarda nada: la persona captura y confirma en la hoja, que es la confirmación; una orden nunca registra dinero sola. Exige poder escribir en Finanzas (dueño y coadministrador, cada quien en sus libros); la cuenta maestra la recibe para sus propios libros y nunca escribe en lo ajeno (D19). Solo local (D3). Órdenes: \"registrar gasto\", \"registra un gasto\", \"nuevo gasto\", \"anota gasto\".",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "requestBody": {
+          "$ref": "#/components/requestBodies/PeticionHerramienta"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ResultadoHerramienta"
+          },
+          "404": {
+            "$ref": "#/components/responses/HerramientaNoDisponible"
+          }
+        }
+      }
+    },
+    "/herramientas/finanzas.abrir_semana": {
+      "servers": [
+        {
+          "url": "http://127.0.0.1:{puerto}",
+          "description": "Propuesta para la Fase 6: GRAVITY en la laptop atiende las herramientas para el puente de casa. En la Fase 0 se ejecutan dentro de la app, sin red.",
+          "variables": {
+            "puerto": {
+              "default": "8787"
+            }
+          }
+        }
+      ],
+      "post": {
+        "tags": [
+          "Herramientas de GRAVITY"
+        ],
+        "operationId": "herramientaFinanzasAbrirSemana",
+        "summary": "finanzas.abrir_semana · Abrir Presupuesto de la semana",
+        "description": "Abre Finanzas › Semana (`/finanzas/semana`): cascada, partidas con semáforo y revisión semanal. Solo navega: los montos se ven en la pantalla y nunca van a la IA (D3). Órdenes: \"mi semana\", \"presupuesto semanal\", \"cuánto me queda\".",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 1,
         "requestBody": {
           "$ref": "#/components/requestBodies/PeticionHerramienta"
         },
@@ -302,14 +403,13 @@ window.ESPECIFICACION_GRAVITY = {
         ],
         "operationId": "herramientaCuidadosAbrir",
         "summary": "cuidados.abrir · Abrir Cuidados",
-        "description": "Abre Cuidados. Lo que se ve adentro depende del rol: completo (dueño), su turno (cuidador) o recordatorios genéricos (casa). El coadministrador no entra a Cuidados hasta que se registre el consentimiento (Fase 5). Sinónimo en la barra de órdenes: papá.",
+        "description": "Abre Cuidados. Lo que se ve adentro depende del rol: completo (dueño) o recordatorios genéricos (casa). Es solo local (D3). La cuidadora abre Cuidados desde su navegación, no desde GRAVITY (D18), y el coadministrador no entra hasta que se registre el consentimiento (Fase 5). Sinónimo en la barra de órdenes: papá.",
         "x-roles": [
           "dueno",
-          "cuidador",
           "casa"
         ],
         "x-escribe": false,
-        "x-solo-local": false,
+        "x-solo-local": true,
         "x-fase": 0,
         "requestBody": {
           "$ref": "#/components/requestBodies/PeticionHerramienta"
@@ -406,6 +506,44 @@ window.ESPECIFICACION_GRAVITY = {
         }
       }
     },
+    "/herramientas/gravity.abrir_solicitudes": {
+      "servers": [
+        {
+          "url": "http://127.0.0.1:{puerto}",
+          "description": "Propuesta para la Fase 6: GRAVITY en la laptop atiende las herramientas para el puente de casa. En la Fase 0 se ejecutan dentro de la app, sin red.",
+          "variables": {
+            "puerto": {
+              "default": "8787"
+            }
+          }
+        }
+      ],
+      "post": {
+        "tags": [
+          "Herramientas de GRAVITY"
+        ],
+        "operationId": "herramientaGravityAbrirSolicitudes",
+        "summary": "gravity.abrir_solicitudes · Abrir Solicitudes",
+        "description": "Abre la bandeja de solicitudes y recordatorios de GRAVITY (`/solicitudes`) para confirmarlos (hecho o no se pudo, con nota). Es lo único de GRAVITY que usa la cuidadora (D18): nada de dinero, de la familia ni de conversación libre. Se resuelve por rol (D17); en el servidor su GRAVITY es `restringido`. Órdenes: \"solicitudes\", \"recordatorios\", \"bandeja\".",
+        "x-roles": [
+          "cuidador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": false,
+        "x-fase": 1,
+        "requestBody": {
+          "$ref": "#/components/requestBodies/PeticionHerramienta"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ResultadoHerramienta"
+          },
+          "404": {
+            "$ref": "#/components/responses/HerramientaNoDisponible"
+          }
+        }
+      }
+    },
     "/herramientas/ajustes.abrir": {
       "servers": [
         {
@@ -424,12 +562,11 @@ window.ESPECIFICACION_GRAVITY = {
         ],
         "operationId": "herramientaAjustesAbrir",
         "summary": "ajustes.abrir · Abrir Ajustes",
-        "description": "Abre Ajustes (lo propio de cada persona; todo para el dueño).",
+        "description": "Abre Ajustes (lo propio de cada persona; todo para el dueño). La cuidadora abre sus ajustes desde su navegación, no desde GRAVITY (D18).",
         "x-roles": [
           "dueno",
           "coadministrador",
-          "familiar",
-          "cuidador"
+          "familiar"
         ],
         "x-escribe": false,
         "x-solo-local": false,
@@ -465,7 +602,7 @@ window.ESPECIFICACION_GRAVITY = {
         ],
         "operationId": "herramientaAjustesAbrirDesarrollador",
         "summary": "ajustes.abrir_desarrollador · Abrir Desarrollador",
-        "description": "Abre Ajustes › Desarrollador, esta consola. Solo el dueño y solo en la laptop (D16): la barra de órdenes no la ofrece en otro dispositivo y el router de la app lo vuelve a revisar.",
+        "description": "Abre Ajustes › Desarrollador, esta consola. Solo el dueño y solo en la laptop (D16): la barra de órdenes no la ofrece en otro dispositivo y el router de la app lo vuelve a revisar. Administra el hogar (lo ajeno): la cuenta maestra no la recibe (D19).",
         "x-roles": [
           "dueno"
         ],
@@ -647,7 +784,7 @@ window.ESPECIFICACION_GRAVITY = {
         ],
         "operationId": "leerPersonas",
         "summary": "Leer personas",
-        "description": "Cada quien se ve a sí mismo; el dueño ve a los miembros de su hogar, también a los dados de baja.",
+        "description": "Cada quien se ve a sí mismo; el dueño ve a los miembros de su hogar (también a los dados de baja) y a los titulares de sus libros; quien comparte un libro de Finanzas ve a sus miembros y a su titular (p. ej. los albaceas ven a Papá); la cuenta maestra, a todos (D19).",
         "x-roles": [
           "dueno",
           "coadministrador",
@@ -751,7 +888,7 @@ window.ESPECIFICACION_GRAVITY = {
         ],
         "operationId": "leerMembresias",
         "summary": "Leer membresías y roles",
-        "description": "Cada quien ve las suyas; el dueño, las de su hogar.",
+        "description": "Cada quien ve las suyas; el dueño, las de su hogar. `es_maestra` dice cuál es la cuenta maestra (D19); para mostrarla a todos en Ajustes › Privacidad se usa `cuenta_maestra`.",
         "x-roles": [
           "dueno",
           "coadministrador",
@@ -798,7 +935,7 @@ window.ESPECIFICACION_GRAVITY = {
         ],
         "operationId": "cambiarMembresia",
         "summary": "Cambiar rol o dar de baja",
-        "description": "Solo el dueño, sobre otras personas: cambiar `rol` (nunca a dueño), dar de baja (`activa: false` u `hasta`). La baja quita el acceso de inmediato; las membresías no se borran y todo queda en la bitácora.",
+        "description": "Solo el dueño, sobre otras personas: cambiar `rol` (nunca a dueño), dar de baja (`activa: false` u `hasta`). La baja quita el acceso de inmediato; las membresías no se borran y todo queda en la bitácora. Dar un rol con Finanzas crea el libro personal de esa persona. `es_maestra` no se cambia aquí: `asignar_cuenta_maestra`.",
         "x-roles": [
           "dueno"
         ],
@@ -1388,7 +1525,7 @@ window.ESPECIFICACION_GRAVITY = {
         ],
         "operationId": "leerBitacora",
         "summary": "Leer la bitácora",
-        "description": "El dueño ve la de su hogar; cada quien ve lo que hizo. Solo agregar.",
+        "description": "Solo agregar. Cada quien ve lo que hizo; el historial de GRAVITY (`gravity.*`), solo su autor, también para el dueño (D18); lo de Finanzas (`fin_*` y `finanzas.*`), quien puede leer ese libro; lo demás (membresías, invitaciones…), el dueño. La cuenta maestra ve todo (D19), y sus consultas a libros ajenos quedan aquí (`finanzas.consulta_maestra`).",
         "x-roles": [
           "dueno",
           "coadministrador",
@@ -1548,24 +1685,27 @@ window.ESPECIFICACION_GRAVITY = {
         }
       }
     },
-    "/rest/v1/finanzas_muestra": {
+    "/rest/v1/fin_libros": {
       "get": {
         "tags": [
-          "Base de datos"
+          "Base de datos · Finanzas"
         ],
-        "operationId": "leerFinanzasMuestra",
-        "summary": "Leer la muestra de Finanzas",
-        "description": "Tabla de muestra de la Fase 0 para comprobar la regla del dinero: dueño y coadministrador leen; familiar, cuidador y casa no ven nada. Se reemplaza en la Fase 1. Montos en centavos.",
+        "operationId": "leerLibrosFinanzas",
+        "summary": "Leer libros",
+        "description": "Tu libro personal, los compartidos de los que eres miembro y, si eres albacea, el de Papá (D19). La cuenta maestra los lee todos y, al abrir uno ajeno, la app llama `fin_registrar_consulta_maestra`. El libro personal lo crea el servidor al dar un rol con Finanzas: la app lo busca (`tipo=eq.personal` y `titular_id` = su persona), no lo crea.",
         "x-roles": [
           "dueno",
           "coadministrador"
         ],
         "x-escribe": false,
         "x-solo-local": true,
-        "x-fase": 0,
+        "x-fase": 1,
         "parameters": [
           {
             "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
           },
           {
             "$ref": "#/components/parameters/filtroHogar"
@@ -1573,13 +1713,207 @@ window.ESPECIFICACION_GRAVITY = {
         ],
         "responses": {
           "200": {
-            "description": "Movimientos de muestra.",
+            "description": "Libros que puedes leer.",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/MovimientoMuestra"
+                    "$ref": "#/components/schemas/FinLibro"
+                  }
+                },
+                "example": [
+                  {
+                    "id": "f1000000-0000-4000-8000-000000000001",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "nombre": "Gastos de la casa",
+                    "tipo": "compartido",
+                    "titular_id": null,
+                    "activo": true
+                  },
+                  {
+                    "id": "f1000000-0000-4000-8000-000000000002",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "nombre": "Papá (ejemplo)",
+                    "tipo": "representado",
+                    "titular_id": "e0000000-0000-4000-8000-000000000009",
+                    "activo": true
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "crearLibroCompartido",
+        "summary": "Crear un libro compartido",
+        "description": "Cualquier adulto con Finanzas crea un libro `compartido` (p. ej. \"Gastos de la casa\") y queda como su miembro; luego agrega a los demás en `fin_libro_miembros`. El personal lo crea el servidor y el representado (Papá), `fin_crear_libro_representado`. `creado_por` y `creado_en` los pone el servidor.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/alConflicto"
+          },
+          {
+            "$ref": "#/components/parameters/preferirAlSubir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/FinLibro"
+                  },
+                  {
+                    "required": [
+                      "id",
+                      "hogar_id",
+                      "nombre",
+                      "tipo"
+                    ]
+                  }
+                ]
+              },
+              "examples": {
+                "compartido": {
+                  "summary": "Gastos de la casa (Ana y Alex)",
+                  "value": {
+                    "id": "f1000000-0000-4000-8000-000000000001",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "nombre": "Gastos de la casa",
+                    "tipo": "compartido"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/Agregado"
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "cambiarLibroFinanzas",
+        "summary": "Cambiar el nombre o desactivar un libro",
+        "description": "Quien lo administra (titular de un personal, miembro de un compartido, albacea de un representado). Solo `nombre` y `activo`: `tipo`, `titular_id` y las llaves no cambian (42501). Un libro inactivo ya no admite movimientos.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filtroIdObligatorio"
+          },
+          {
+            "$ref": "#/components/parameters/preferir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/FinLibro"
+                  },
+                  {
+                    "minProperties": 1
+                  }
+                ]
+              },
+              "example": {
+                "activo": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Actualizado"
+          },
+          "204": {
+            "description": "Actualizado (sin cuerpo)."
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_libro_miembros": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerMiembrosLibro",
+        "summary": "Leer quién lleva cada libro",
+        "description": "Miembros vigentes e históricos de los libros que puedes leer. Personal: solo su titular. Compartido: sus miembros adultos. Representado: 1 albacea y, opcional, 1 suplente.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/filtroLibro"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Miembros visibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinLibroMiembro"
                   }
                 }
               }
@@ -1592,20 +1926,24 @@ window.ESPECIFICACION_GRAVITY = {
       },
       "post": {
         "tags": [
-          "Base de datos"
+          "Base de datos · Finanzas"
         ],
-        "operationId": "agregarFinanzasMuestra",
-        "summary": "Agregar a la muestra de Finanzas",
-        "description": "Solo el dueño. Monto en centavos (entero).",
+        "operationId": "agregarMiembroLibro",
+        "summary": "Agregar un miembro, albacea o suplente",
+        "description": "Quien administra el libro agrega a otra persona adulta con Finanzas (dueño o coadministrador): `miembro` en un compartido; `albacea_suplente` en el de Papá (máximo un albacea y un suplente vigentes; el suplente escribe solo si no hay albacea vigente). Nunca familiar, cuidador ni Casa (22023).",
         "x-roles": [
-          "dueno"
+          "dueno",
+          "coadministrador"
         ],
         "x-escribe": true,
         "x-solo-local": true,
-        "x-fase": 0,
+        "x-fase": 1,
         "parameters": [
           {
-            "$ref": "#/components/parameters/preferir"
+            "$ref": "#/components/parameters/alConflicto"
+          },
+          {
+            "$ref": "#/components/parameters/preferirAlSubir"
           }
         ],
         "requestBody": {
@@ -1613,28 +1951,28 @@ window.ESPECIFICACION_GRAVITY = {
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "required": [
-                  "hogar_id",
-                  "descripcion",
-                  "monto_centavos"
-                ],
-                "additionalProperties": false,
-                "properties": {
-                  "id": {
-                    "$ref": "#/components/schemas/Uuid"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/FinLibroMiembro"
                   },
-                  "hogar_id": {
-                    "$ref": "#/components/schemas/Uuid"
-                  },
-                  "descripcion": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 200
-                  },
-                  "monto_centavos": {
-                    "type": "integer",
-                    "format": "int64"
+                  {
+                    "required": [
+                      "hogar_id",
+                      "libro_id",
+                      "persona_id",
+                      "papel"
+                    ]
+                  }
+                ]
+              },
+              "examples": {
+                "suplente": {
+                  "summary": "Alex, suplente del albacea en el libro de Papá",
+                  "value": {
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000002",
+                    "persona_id": "e0000000-0000-4000-8000-000000000002",
+                    "papel": "albacea_suplente"
                   }
                 }
               }
@@ -1643,26 +1981,33 @@ window.ESPECIFICACION_GRAVITY = {
         },
         "responses": {
           "201": {
-            "description": "Agregado."
+            "$ref": "#/components/responses/Agregado"
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
           },
           "403": {
             "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
           }
         }
       },
       "patch": {
         "tags": [
-          "Base de datos"
+          "Base de datos · Finanzas"
         ],
-        "operationId": "cambiarFinanzasMuestra",
-        "summary": "Cambiar un registro de la muestra",
-        "description": "Solo el dueño; solo existe en la muestra. En la Fase 1 los movimientos serán solo-agregar.",
+        "operationId": "cambiarMiembroLibro",
+        "summary": "Cerrar la participación en un libro",
+        "description": "Los miembros no se borran: se cierra `hasta` (queda en la bitácora). `libro_id` y `persona_id` no cambian (42501).",
         "x-roles": [
-          "dueno"
+          "dueno",
+          "coadministrador"
         ],
         "x-escribe": true,
         "x-solo-local": true,
-        "x-fase": 0,
+        "x-fase": 1,
         "parameters": [
           {
             "$ref": "#/components/parameters/filtroIdObligatorio"
@@ -1676,20 +2021,17 @@ window.ESPECIFICACION_GRAVITY = {
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "additionalProperties": false,
-                "minProperties": 1,
-                "properties": {
-                  "descripcion": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 200
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/FinLibroMiembro"
                   },
-                  "monto_centavos": {
-                    "type": "integer",
-                    "format": "int64"
+                  {
+                    "minProperties": 1
                   }
-                }
+                ]
+              },
+              "example": {
+                "hasta": "2026-10-22T18:00:00-06:00"
               }
             }
           }
@@ -1701,24 +2043,209 @@ window.ESPECIFICACION_GRAVITY = {
           "204": {
             "description": "Actualizado (sin cuerpo)."
           },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
           "403": {
             "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_categorias": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerCategoriasFinanzas",
+        "summary": "Leer el árbol de categorías",
+        "description": "Árbol común del hogar (3 niveles), para todos los libros. Lo leen quienes tienen Finanzas y la cuenta maestra.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Categorías del hogar.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinCategoria"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "agregarCategoriaFinanzas",
+        "summary": "Agregar una categoría",
+        "description": "Nivel 1 sin padre; niveles 2 y 3 con `padre_id`. Única por (`hogar_id`, `padre_id`, `nombre`). La importación de la hoja Categorías usa la misma operación.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/alConflicto"
+          },
+          {
+            "$ref": "#/components/parameters/preferirAlSubir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/FinCategoria"
+                  },
+                  {
+                    "required": [
+                      "id",
+                      "hogar_id",
+                      "nivel",
+                      "nombre"
+                    ]
+                  }
+                ]
+              },
+              "examples": {
+                "alimentacion": {
+                  "summary": "Alimentación (nivel 1)",
+                  "value": {
+                    "id": "c1000000-0000-4000-8000-000000000010",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "nivel": 1,
+                    "nombre": "Alimentación",
+                    "naturaleza": "variable",
+                    "prioridad": "necesario"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/Agregado"
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "cambiarCategoriaFinanzas",
+        "summary": "Cambiar, ocultar o archivar una categoría",
+        "description": "Una categoría con datos no se borra: se archiva (`archivada: true`) o se oculta.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filtroIdObligatorio"
+          },
+          {
+            "$ref": "#/components/parameters/preferir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/FinCategoria"
+                  },
+                  {
+                    "minProperties": 1
+                  }
+                ]
+              },
+              "example": {
+                "archivada": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Actualizado"
+          },
+          "204": {
+            "description": "Actualizado (sin cuerpo)."
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
           }
         }
       },
       "delete": {
         "tags": [
-          "Base de datos"
+          "Base de datos · Finanzas"
         ],
-        "operationId": "borrarFinanzasMuestra",
-        "summary": "Borrar un registro de la muestra",
-        "description": "Solo el dueño; solo existe en la muestra. En la Fase 1 los movimientos no se borran.",
+        "operationId": "borrarCategoriaFinanzas",
+        "summary": "Borrar una categoría sin datos",
+        "description": "Solo sin datos: si la usa un movimiento, una cuenta o una subcategoría, responde 409 (23503); entonces se archiva.",
         "x-roles": [
-          "dueno"
+          "dueno",
+          "coadministrador"
         ],
         "x-escribe": true,
         "x-solo-local": true,
-        "x-fase": 0,
+        "x-fase": 1,
         "parameters": [
           {
             "$ref": "#/components/parameters/filtroIdObligatorio"
@@ -1730,6 +2257,3579 @@ window.ESPECIFICACION_GRAVITY = {
           },
           "403": {
             "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_cuentas": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerCuentasFinanzas",
+        "summary": "Leer cuentas",
+        "description": "Las cuentas de tus libros (efectivo, banco, tarjeta…) y las de gasto del hogar (`libro_id` nulo). El nombre de una cuenta de un libro del que no eres miembro no se ve. `clase` y `liquida` son generadas.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/filtroLibro"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cuentas visibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinCuenta"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "agregarCuentaFinanzas",
+        "summary": "Agregar una cuenta",
+        "description": "De un libro (activos, pasivos, origen de ingreso) o del hogar si es `de_gasto` o `gasto_financiero` (`libro_id` nulo). Ajustes, Apertura y Por clasificar se crean solas con cada libro. Única por (`hogar_id`, `libro_id`, `nombre`).",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/alConflicto"
+          },
+          {
+            "$ref": "#/components/parameters/preferirAlSubir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/FinCuenta"
+                  },
+                  {
+                    "required": [
+                      "id",
+                      "hogar_id",
+                      "nombre",
+                      "tipo"
+                    ]
+                  }
+                ]
+              },
+              "examples": {
+                "efectivo": {
+                  "summary": "Efectivo del libro compartido",
+                  "value": {
+                    "id": "c3000000-0000-4000-8000-000000000020",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000001",
+                    "nombre": "Efectivo de la casa",
+                    "tipo": "efectivo"
+                  }
+                },
+                "tarjeta": {
+                  "summary": "Tarjeta con límite (pasivo)",
+                  "value": {
+                    "id": "c3000000-0000-4000-8000-000000000021",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000001",
+                    "nombre": "Tarjeta de la casa (ejemplo)",
+                    "tipo": "tarjeta",
+                    "limite_centavos": 1500000
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/Agregado"
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "cambiarCuentaFinanzas",
+        "summary": "Cambiar, congelar, cerrar o archivar una cuenta",
+        "description": "Cerrar o archivar solo con saldo cero (confirmado y con pendientes; si no, 55000). Las de sistema no cambian de tipo ni de estado. `libro_id` no cambia (42501).",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filtroIdObligatorio"
+          },
+          {
+            "$ref": "#/components/parameters/preferir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/FinCuenta"
+                  },
+                  {
+                    "minProperties": 1
+                  }
+                ]
+              },
+              "example": {
+                "estado": "congelada"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Actualizado"
+          },
+          "204": {
+            "description": "Actualizado (sin cuerpo)."
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          },
+          "500": {
+            "$ref": "#/components/responses/EstadoFinanzas"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "borrarCuentaFinanzas",
+        "summary": "Borrar una cuenta sin movimientos",
+        "description": "Solo sin movimientos: con movimientos responde 409 (23503) y se cierra o archiva con saldo cero.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filtroIdObligatorio"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Borrado."
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_parametros": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerParametrosFinanzas",
+        "summary": "Leer los parámetros de un libro",
+        "description": "Una fila por libro (la crea el servidor con los valores por defecto de 5.6 bis y 5.9 bis): meta de remanente, ahorro mínimo con deuda, tope de arrastre, umbrales de semáforo y cierre automático. Porcentajes en puntos base.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/filtroLibro"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Parámetros de los libros visibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinParametros"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "cambiarParametrosFinanzas",
+        "summary": "Cambiar los parámetros de un libro",
+        "description": "Quien administra el libro. Se cambian con UPDATE (la fila ya existe). Los ids de las cuentas de sistema no cambian (42501).",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filtroLibroObligatorio"
+          },
+          {
+            "$ref": "#/components/parameters/preferir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/FinParametros"
+                  },
+                  {
+                    "minProperties": 1
+                  }
+                ]
+              },
+              "example": {
+                "meta_remanente_pb": 2000,
+                "tope_arrastre_semanas": 2
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Actualizado"
+          },
+          "204": {
+            "description": "Actualizado (sin cuerpo)."
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_movimientos": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerMovimientos",
+        "summary": "Leer movimientos",
+        "description": "Movimientos de los libros que puedes leer; uno entre libros (aportación a un compartido) se ve desde los dos. Para el saldo usa `fin_v_saldos`.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/filtroLibro"
+          },
+          {
+            "$ref": "#/components/parameters/filtroFecha"
+          },
+          {
+            "$ref": "#/components/parameters/orden"
+          },
+          {
+            "$ref": "#/components/parameters/limite"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Movimientos visibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinMovimiento"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "registrarMovimiento",
+        "summary": "Registrar un movimiento (solo agregar)",
+        "description": "Libro **solo agregar** (sección 4.3): no se edita ni se borra; un error se corrige con una `anulacion` (contraasiento: `anula_a`, mismo monto con origen y destino invertidos y `motivo`). Hay que poder escribir en cada libro que toca (`fin_puede`) y siempre a nombre propio. `registrado_en` es **obligatorio** (cuándo se capturó; si faltara, cada reenvío sería distinto). No mandes `recibido_en`, `libro_origen_id` ni `libro_destino_id`: los pone el servidor (sin permiso de columna, 42501). El albacea registra en nombre de Papá con `en_nombre_de` y `motivo`. Solo `transferencia` y `pago_deuda` (y su anulación) cruzan de un libro a otro. Reenviar el mismo `id` con el mismo contenido no hace nada (0 filas, sin error); con otro contenido, 409 (23505). GRAVITY nunca llama esta operación por su cuenta: la persona confirma en la hoja de registro (D3).",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/alConflicto"
+          },
+          {
+            "$ref": "#/components/parameters/preferirAlSubir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/FinMovimiento"
+                  },
+                  {
+                    "required": [
+                      "id",
+                      "hogar_id",
+                      "tipo",
+                      "fecha",
+                      "registrado_en",
+                      "cuenta_origen_id",
+                      "cuenta_destino_id",
+                      "monto_centavos"
+                    ]
+                  }
+                ]
+              },
+              "examples": {
+                "gasto": {
+                  "summary": "Gasto con la tarjeta del banco ($123.50)",
+                  "value": {
+                    "id": "3d0c2f5e-8a41-4b7e-9c1d-5f2a6b8e9a01",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "tipo": "gasto",
+                    "fecha": "2026-10-21",
+                    "registrado_en": "2026-10-21T19:42:10-06:00",
+                    "cuenta_origen_id": "c3000000-0000-4000-8000-000000000001",
+                    "cuenta_destino_id": "c2000000-0000-4000-8000-000000000003",
+                    "monto_centavos": 12350,
+                    "categoria_id": "c1000000-0000-4000-8000-000000000012",
+                    "via": "manual",
+                    "nota": "Mercado (ejemplo)"
+                  }
+                },
+                "anulacion": {
+                  "summary": "Anulación del gasto anterior (contraasiento)",
+                  "value": {
+                    "id": "3d0c2f5e-8a41-4b7e-9c1d-5f2a6b8e9a02",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "tipo": "anulacion",
+                    "fecha": "2026-10-21",
+                    "registrado_en": "2026-10-21T19:43:00-06:00",
+                    "cuenta_origen_id": "c2000000-0000-4000-8000-000000000003",
+                    "cuenta_destino_id": "c3000000-0000-4000-8000-000000000001",
+                    "monto_centavos": 12350,
+                    "anula_a": "3d0c2f5e-8a41-4b7e-9c1d-5f2a6b8e9a01",
+                    "motivo": "Deshecho al capturar"
+                  }
+                },
+                "albacea": {
+                  "summary": "La albacea paga la luz en nombre de Papá",
+                  "value": {
+                    "id": "3d0c2f5e-8a41-4b7e-9c1d-5f2a6b8e9a03",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "tipo": "gasto",
+                    "fecha": "2026-10-20",
+                    "registrado_en": "2026-10-20T10:05:00-06:00",
+                    "cuenta_origen_id": "c3000000-0000-4000-8000-000000000030",
+                    "cuenta_destino_id": "c2000000-0000-4000-8000-000000000005",
+                    "monto_centavos": 48000,
+                    "en_nombre_de": "e0000000-0000-4000-8000-000000000009",
+                    "motivo": "Recibo de luz de Papá (ejemplo)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/Agregado"
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          },
+          "500": {
+            "$ref": "#/components/responses/EstadoFinanzas"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_ingresos": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerIngresos",
+        "summary": "Leer ingresos recurrentes",
+        "description": "Ingresos de cada libro por persona (sueldo, pensión…). Los extras no se configuran: son movimientos `ingreso`.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/filtroLibro"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ingresos visibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinIngreso"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "agregarIngreso",
+        "summary": "Agregar un ingreso recurrente",
+        "description": "Quien administra el libro. El monto y el calendario van en `fin_vigencias_ingreso`.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/alConflicto"
+          },
+          {
+            "$ref": "#/components/parameters/preferirAlSubir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/FinIngreso"
+                  },
+                  {
+                    "required": [
+                      "id",
+                      "hogar_id",
+                      "libro_id",
+                      "persona_id",
+                      "nombre"
+                    ]
+                  }
+                ]
+              },
+              "examples": {
+                "pension": {
+                  "summary": "Pensión de Papá (ejemplo)",
+                  "value": {
+                    "id": "1a000000-0000-4000-8000-000000000001",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000002",
+                    "persona_id": "e0000000-0000-4000-8000-000000000009",
+                    "nombre": "Pensión (ejemplo)",
+                    "tipo": "pension",
+                    "certeza": "segura"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/Agregado"
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "cambiarIngreso",
+        "summary": "Cambiar un ingreso recurrente",
+        "description": "Nombre, cuentas, certeza o `activo`. Un cambio de monto no va aquí: crea una vigencia nueva.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filtroIdObligatorio"
+          },
+          {
+            "$ref": "#/components/parameters/preferir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/FinIngreso"
+                  },
+                  {
+                    "minProperties": 1
+                  }
+                ]
+              },
+              "example": {
+                "certeza": "probable"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Actualizado"
+          },
+          "204": {
+            "description": "Actualizado (sin cuerpo)."
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_vigencias_ingreso": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerVigenciasIngreso",
+        "summary": "Leer vigencias de ingresos",
+        "description": "Monto neto y calendario de cada ingreso por periodo.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/filtroLibro"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Vigencias visibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinVigenciaIngreso"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "agregarVigenciaIngreso",
+        "summary": "Agregar una vigencia (monto y calendario)",
+        "description": "Un cambio de neto crea una vigencia nueva y cierra `hasta` en la anterior; no se traslapan (22023). `libro_id` lo toma el servidor del ingreso. Pensión de Papá: `mensual` con `dias_mes` `[1, 11]` y `siguiente_dia_habil`; apoyo 60+: `cada_meses` con `intervalo_meses` 2.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/alConflicto"
+          },
+          {
+            "$ref": "#/components/parameters/preferirAlSubir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/FinVigenciaIngreso"
+                  },
+                  {
+                    "required": [
+                      "id",
+                      "hogar_id",
+                      "ingreso_id",
+                      "monto_neto_centavos",
+                      "forma",
+                      "desde"
+                    ]
+                  }
+                ]
+              },
+              "examples": {
+                "pension": {
+                  "summary": "Pensión los días 1 y 11 (monto inventado)",
+                  "value": {
+                    "id": "1b000000-0000-4000-8000-000000000001",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000002",
+                    "ingreso_id": "1a000000-0000-4000-8000-000000000001",
+                    "monto_neto_centavos": 350000,
+                    "forma": "mensual",
+                    "dias_mes": [
+                      1,
+                      11
+                    ],
+                    "regla_inhabil": "siguiente_dia_habil",
+                    "desde": "2026-10-01"
+                  }
+                },
+                "apoyo": {
+                  "summary": "Apoyo 60+ cada bimestre (monto inventado)",
+                  "value": {
+                    "id": "1b000000-0000-4000-8000-000000000002",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000002",
+                    "ingreso_id": "1a000000-0000-4000-8000-000000000002",
+                    "monto_neto_centavos": 620000,
+                    "forma": "cada_meses",
+                    "fecha_ancla": "2026-11-03",
+                    "intervalo_meses": 2,
+                    "regla_inhabil": "siguiente_dia_habil",
+                    "desde": "2026-11-01"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/Agregado"
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "cambiarVigenciaIngreso",
+        "summary": "Cerrar o corregir una vigencia",
+        "description": "Lo normal es cerrar `hasta` al crear la vigencia siguiente. `ingreso_id` y `libro_id` no cambian (42501).",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filtroIdObligatorio"
+          },
+          {
+            "$ref": "#/components/parameters/preferir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/FinVigenciaIngreso"
+                  },
+                  {
+                    "minProperties": 1
+                  }
+                ]
+              },
+              "example": {
+                "hasta": "2026-12-31"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Actualizado"
+          },
+          "204": {
+            "description": "Actualizado (sin cuerpo)."
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_compromisos": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerCompromisos",
+        "summary": "Leer compromisos (fijos y reservas)",
+        "description": "Renta, servicios y reservas (placas, predial) de cada libro, con su frecuencia y su regla de día inhábil.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/filtroLibro"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Compromisos visibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinCompromiso"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "agregarCompromiso",
+        "summary": "Agregar un compromiso",
+        "description": "Su cuenta es una cuenta de gasto del hogar. `regla_inhabil` por omisión `sin_cambio` (D19, regla 5: solo la caja pasa al siguiente día hábil).",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/alConflicto"
+          },
+          {
+            "$ref": "#/components/parameters/preferirAlSubir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/FinCompromiso"
+                  },
+                  {
+                    "required": [
+                      "id",
+                      "hogar_id",
+                      "libro_id",
+                      "nombre",
+                      "tipo",
+                      "monto_centavos",
+                      "frecuencia"
+                    ]
+                  }
+                ]
+              },
+              "examples": {
+                "renta": {
+                  "summary": "Renta mensual del libro compartido (monto inventado)",
+                  "value": {
+                    "id": "1c000000-0000-4000-8000-000000000001",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000001",
+                    "nombre": "Renta (ejemplo)",
+                    "tipo": "fija",
+                    "cuenta_gasto_id": "c2000000-0000-4000-8000-000000000001",
+                    "monto_centavos": 800000,
+                    "frecuencia": "mensual",
+                    "forma": "mensual",
+                    "dias_mes": [
+                      1
+                    ],
+                    "protegida": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/Agregado"
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "cambiarCompromiso",
+        "summary": "Cambiar un compromiso",
+        "description": "Monto, calendario, protección, prioridad o `activo`. Las ocurrencias que siguen `esperada` se regeneran.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filtroIdObligatorio"
+          },
+          {
+            "$ref": "#/components/parameters/preferir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/FinCompromiso"
+                  },
+                  {
+                    "minProperties": 1
+                  }
+                ]
+              },
+              "example": {
+                "activo": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Actualizado"
+          },
+          "204": {
+            "description": "Actualizado (sin cuerpo)."
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_sobres": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerSobres",
+        "summary": "Leer sobres (partidas variables)",
+        "description": "Partidas variables por rubro del presupuesto de cada libro.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/filtroLibro"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sobres visibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinSobre"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "agregarSobre",
+        "summary": "Agregar un sobre",
+        "description": "Monto semanal en centavos; `piso_minimo_centavos` entre 0 y el monto semanal.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/alConflicto"
+          },
+          {
+            "$ref": "#/components/parameters/preferirAlSubir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/FinSobre"
+                  },
+                  {
+                    "required": [
+                      "id",
+                      "hogar_id",
+                      "libro_id",
+                      "cuenta_gasto_id",
+                      "nombre",
+                      "monto_semanal_centavos"
+                    ]
+                  }
+                ]
+              },
+              "examples": {
+                "super": {
+                  "summary": "Súper semanal (monto inventado)",
+                  "value": {
+                    "id": "1d000000-0000-4000-8000-000000000001",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000001",
+                    "cuenta_gasto_id": "c2000000-0000-4000-8000-000000000003",
+                    "nombre": "Súper",
+                    "monto_semanal_centavos": 150000,
+                    "prioridad": "necesario"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/Agregado"
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "cambiarSobre",
+        "summary": "Cambiar un sobre",
+        "description": "Monto, protección, prioridad, piso, modo de arrastre o `activo`.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filtroIdObligatorio"
+          },
+          {
+            "$ref": "#/components/parameters/preferir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/FinSobre"
+                  },
+                  {
+                    "minProperties": 1
+                  }
+                ]
+              },
+              "example": {
+                "monto_semanal_centavos": 140000
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Actualizado"
+          },
+          "204": {
+            "description": "Actualizado (sin cuerpo)."
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_deudas": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerDeudas",
+        "summary": "Leer deudas",
+        "description": "Deudas de cada libro; el saldo sale del libro (cuenta pasivo, `fin_v_saldos`).",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/filtroLibro"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deudas visibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinDeuda"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "agregarDeuda",
+        "summary": "Agregar una deuda",
+        "description": "Cuenta pasivo del mismo libro. Tasa en puntos base: mayor que 0 solo en `con_costo` (23514). `grupo_prioritario` y `orden_grupo` van juntos (P12: el grupo que elige el titular).",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/alConflicto"
+          },
+          {
+            "$ref": "#/components/parameters/preferirAlSubir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/FinDeuda"
+                  },
+                  {
+                    "required": [
+                      "id",
+                      "hogar_id",
+                      "libro_id",
+                      "nombre",
+                      "tipo",
+                      "cuenta_pasivo_id",
+                      "abono_centavos",
+                      "frecuencia"
+                    ]
+                  }
+                ]
+              },
+              "examples": {
+                "tarjeta": {
+                  "summary": "Tarjeta con costo en el grupo prioritario (cifras inventadas)",
+                  "value": {
+                    "id": "1e000000-0000-4000-8000-000000000001",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000001",
+                    "nombre": "Tarjeta de la casa (ejemplo)",
+                    "tipo": "con_costo",
+                    "cuenta_pasivo_id": "c3000000-0000-4000-8000-000000000021",
+                    "abono_centavos": 39231,
+                    "frecuencia": "semanal",
+                    "minimo_centavos": 25000,
+                    "tasa_anual_pb": 4800,
+                    "grupo_prioritario": true,
+                    "orden_grupo": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/Agregado"
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "cambiarDeuda",
+        "summary": "Cambiar una deuda",
+        "description": "Abono, calendario, mínimo, tasa, prioridad, grupo prioritario o `activa`.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filtroIdObligatorio"
+          },
+          {
+            "$ref": "#/components/parameters/preferir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/FinDeuda"
+                  },
+                  {
+                    "minProperties": 1
+                  }
+                ]
+              },
+              "example": {
+                "orden_grupo": 2
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Actualizado"
+          },
+          "204": {
+            "description": "Actualizado (sin cuerpo)."
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_dias_inhabiles": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerDiasInhabiles",
+        "summary": "Leer días inhábiles",
+        "description": "Calendario del hogar: festivos oficiales (LFT art. 74) y días propios.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/filtroFecha"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Días inhábiles del hogar.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinDiaInhabil"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "agregarDiaInhabil",
+        "summary": "Agregar un día inhábil",
+        "description": "La precarga de festivos nace inactiva: el dueño la revisa y la activa. Único por (`hogar_id`, `fecha`).",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/alConflicto"
+          },
+          {
+            "$ref": "#/components/parameters/preferirAlSubir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/FinDiaInhabil"
+                  },
+                  {
+                    "required": [
+                      "id",
+                      "hogar_id",
+                      "fecha",
+                      "nombre"
+                    ]
+                  }
+                ]
+              },
+              "examples": {
+                "festivo": {
+                  "summary": "Festivo oficial por revisar",
+                  "value": {
+                    "id": "1f000000-0000-4000-8000-000000000001",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "fecha": "2026-11-16",
+                    "nombre": "Día de la Revolución (tercer lunes de noviembre)",
+                    "tipo": "festivo_oficial",
+                    "fuente": "LFT art. 74",
+                    "activo": false
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/Agregado"
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "cambiarDiaInhabil",
+        "summary": "Activar o cambiar un día inhábil",
+        "description": "Al cambiar `activo`, el servidor pone `revisado_por` y `revisado_en`.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filtroIdObligatorio"
+          },
+          {
+            "$ref": "#/components/parameters/preferir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/FinDiaInhabil"
+                  },
+                  {
+                    "minProperties": 1
+                  }
+                ]
+              },
+              "example": {
+                "activo": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Actualizado"
+          },
+          "204": {
+            "description": "Actualizado (sin cuerpo)."
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_semanas": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerSemanas",
+        "summary": "Leer semanas del plan",
+        "description": "Foto del plan de cada semana (lunes) por libro, con la cascada ingreso → presupuesto → deuda → remanente.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/filtroLibro"
+          },
+          {
+            "$ref": "#/components/parameters/filtroSemanaInicio"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Semanas visibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinSemana"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "agregarSemana",
+        "summary": "Armar una semana",
+        "description": "`semana_inicio` es lunes (23514). Única por (`libro_id`, `semana_inicio`). La cascada cuadra: `remanente_plan = ingreso − presupuesto − deuda_plan` (23514). `activada_por`, `activada_en` y `reaperturas` los pone el servidor.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/alConflicto"
+          },
+          {
+            "$ref": "#/components/parameters/preferirAlSubir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/FinSemana"
+                  },
+                  {
+                    "required": [
+                      "id",
+                      "hogar_id",
+                      "libro_id",
+                      "semana_inicio"
+                    ]
+                  }
+                ]
+              },
+              "examples": {
+                "activa": {
+                  "summary": "Semana del 19/oct (ejemplo 5.6 bis-1)",
+                  "value": {
+                    "id": "2a000000-0000-4000-8000-000000000001",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000001",
+                    "semana_inicio": "2026-10-19",
+                    "estado": "activa",
+                    "ingreso": 738462,
+                    "presupuesto": 547231,
+                    "deuda_plan": 39231,
+                    "remanente_plan": 152000,
+                    "meta_remanente_pb": 2000,
+                    "techo": 551539
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/Agregado"
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          },
+          "500": {
+            "$ref": "#/components/responses/EstadoFinanzas"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "cambiarSemana",
+        "summary": "Cambiar el plan o el estado de una semana",
+        "description": "Solo mientras no esté `cerrada` (55000). Para cerrarla se guarda antes el cierre (`fin_cierres`, versión `reaperturas + 1`); reabrir es cambiar solo `estado` (a `activa`, `pendiente_ingreso` o `por_cerrar`), y queda en la bitácora.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filtroIdObligatorio"
+          },
+          {
+            "$ref": "#/components/parameters/preferir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/FinSemana"
+                  },
+                  {
+                    "minProperties": 1
+                  }
+                ]
+              },
+              "example": {
+                "estado": "por_cerrar"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Actualizado"
+          },
+          "204": {
+            "description": "Actualizado (sin cuerpo)."
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          },
+          "500": {
+            "$ref": "#/components/responses/EstadoFinanzas"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_partidas_semana": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerPartidasSemana",
+        "summary": "Leer partidas de la semana",
+        "description": "Lo asignado a cada compromiso y sobre en la semana, ya repartido por mayor resto.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/filtroLibro"
+          },
+          {
+            "$ref": "#/components/parameters/filtroSemana"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Partidas visibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinPartidaSemana"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "agregarPartidaSemana",
+        "summary": "Agregar una partida a la semana",
+        "description": "Una por origen en cada semana. No se agrega en una semana cerrada (55000).",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/alConflicto"
+          },
+          {
+            "$ref": "#/components/parameters/preferirAlSubir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/FinPartidaSemana"
+                  },
+                  {
+                    "required": [
+                      "id",
+                      "hogar_id",
+                      "semana_id",
+                      "origen",
+                      "origen_id",
+                      "tipo",
+                      "asignado"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/Agregado"
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          },
+          "500": {
+            "$ref": "#/components/responses/EstadoFinanzas"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "cambiarPartidaSemana",
+        "summary": "Cambiar una partida de la semana",
+        "description": "Solo mientras la semana no esté cerrada (55000).",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filtroIdObligatorio"
+          },
+          {
+            "$ref": "#/components/parameters/preferir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/FinPartidaSemana"
+                  },
+                  {
+                    "minProperties": 1
+                  }
+                ]
+              },
+              "example": {
+                "asignado": 140000
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Actualizado"
+          },
+          "204": {
+            "description": "Actualizado (sin cuerpo)."
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          },
+          "500": {
+            "$ref": "#/components/responses/EstadoFinanzas"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_abonos_semana": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerAbonosSemana",
+        "summary": "Leer abonos planeados",
+        "description": "Abono planeado, mínimo y extra de cada deuda en la semana.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/filtroLibro"
+          },
+          {
+            "$ref": "#/components/parameters/filtroSemana"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Abonos visibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinAbonoSemana"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "agregarAbonoSemana",
+        "summary": "Agregar un abono planeado",
+        "description": "Uno por deuda en cada semana. No se agrega en una semana cerrada (55000).",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/alConflicto"
+          },
+          {
+            "$ref": "#/components/parameters/preferirAlSubir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/FinAbonoSemana"
+                  },
+                  {
+                    "required": [
+                      "id",
+                      "hogar_id",
+                      "semana_id",
+                      "deuda_id",
+                      "abono_planeado"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/Agregado"
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          },
+          "500": {
+            "$ref": "#/components/responses/EstadoFinanzas"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "cambiarAbonoSemana",
+        "summary": "Cambiar un abono planeado",
+        "description": "Solo mientras la semana no esté cerrada (55000).",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filtroIdObligatorio"
+          },
+          {
+            "$ref": "#/components/parameters/preferir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/FinAbonoSemana"
+                  },
+                  {
+                    "minProperties": 1
+                  }
+                ]
+              },
+              "example": {
+                "extra_planeado": 10000
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Actualizado"
+          },
+          "204": {
+            "description": "Actualizado (sin cuerpo)."
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          },
+          "500": {
+            "$ref": "#/components/responses/EstadoFinanzas"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_ocurrencias": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerOcurrencias",
+        "summary": "Leer ocurrencias (fechas esperadas)",
+        "description": "Fechas esperadas de ingresos, compromisos y deudas (horizonte de 13 semanas), con la fecha ajustada por días inhábiles.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/filtroLibro"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ocurrencias visibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinOcurrencia"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "agregarOcurrencia",
+        "summary": "Agregar una ocurrencia",
+        "description": "Única por (`libro_id`, `origen`, `origen_id`, `fecha_programada`). En una semana cerrada no se agregan (55000).",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/alConflicto"
+          },
+          {
+            "$ref": "#/components/parameters/preferirAlSubir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/FinOcurrencia"
+                  },
+                  {
+                    "required": [
+                      "id",
+                      "hogar_id",
+                      "libro_id",
+                      "origen",
+                      "origen_id",
+                      "fecha_programada",
+                      "fecha_ajustada",
+                      "monto_esperado"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/Agregado"
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          },
+          "500": {
+            "$ref": "#/components/responses/EstadoFinanzas"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "cambiarOcurrencia",
+        "summary": "Cambiar el estado de una ocurrencia",
+        "description": "P. ej. `cumplida` con su `movimiento_id`, o `retrasada`. En una semana cerrada solo cambian el estado y el movimiento (un ingreso que llega tarde), no la fecha ni el monto (55000).",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filtroIdObligatorio"
+          },
+          {
+            "$ref": "#/components/parameters/preferir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/FinOcurrencia"
+                  },
+                  {
+                    "minProperties": 1
+                  }
+                ]
+              },
+              "example": {
+                "estado": "cumplida",
+                "movimiento_id": "3d0c2f5e-8a41-4b7e-9c1d-5f2a6b8e9a04"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Actualizado"
+          },
+          "204": {
+            "description": "Actualizado (sin cuerpo)."
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          },
+          "500": {
+            "$ref": "#/components/responses/EstadoFinanzas"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_cierres": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerCierres",
+        "summary": "Leer cierres de semana",
+        "description": "Fotos del cierre de cada semana y del balance; una por versión.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/filtroLibro"
+          },
+          {
+            "$ref": "#/components/parameters/filtroSemana"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cierres visibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinCierre"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "registrarCierre",
+        "summary": "Guardar el cierre de una semana (solo agregar)",
+        "description": "**Solo agregar.** `version` = reaperturas + 1 (la siguiente al reabrir); `patrimonio = activos − pasivos` (23514). Se guarda antes de cambiar la semana a `cerrada`, junto con sus partidas y abonos. Las correcciones posteriores no cambian una foto guardada.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/alConflicto"
+          },
+          {
+            "$ref": "#/components/parameters/preferirAlSubir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/FinCierre"
+                  },
+                  {
+                    "required": [
+                      "id",
+                      "hogar_id",
+                      "semana_id",
+                      "version",
+                      "ingreso_real",
+                      "gasto_real",
+                      "activos",
+                      "pasivos",
+                      "patrimonio"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/Agregado"
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          },
+          "500": {
+            "$ref": "#/components/responses/EstadoFinanzas"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_cierre_partidas": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerCierrePartidas",
+        "summary": "Leer partidas de un cierre",
+        "description": "Lo gastado, el arrastre y lo que pasó al remanente de cada partida al cerrar.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/filtroLibro"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Partidas de cierres visibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinCierrePartida"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "registrarCierrePartida",
+        "summary": "Guardar una partida del cierre (solo agregar)",
+        "description": "**Solo agregar.** Una por partida en cada cierre.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/alConflicto"
+          },
+          {
+            "$ref": "#/components/parameters/preferirAlSubir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/FinCierrePartida"
+                  },
+                  {
+                    "required": [
+                      "id",
+                      "hogar_id",
+                      "cierre_id",
+                      "partida_id",
+                      "gastado"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/Agregado"
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          },
+          "500": {
+            "$ref": "#/components/responses/EstadoFinanzas"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_cierre_abonos": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerCierreAbonos",
+        "summary": "Leer abonos de un cierre",
+        "description": "Abono planeado, real y mínimo de cada deuda al cerrar; `diferido` = planeado − real (generado).",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/filtroLibro"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Abonos de cierres visibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinCierreAbono"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "registrarCierreAbono",
+        "summary": "Guardar un abono del cierre (solo agregar)",
+        "description": "**Solo agregar.** Uno por deuda en cada cierre. No mandes `diferido`: es generado.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/alConflicto"
+          },
+          {
+            "$ref": "#/components/parameters/preferirAlSubir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/FinCierreAbono"
+                  },
+                  {
+                    "required": [
+                      "id",
+                      "hogar_id",
+                      "cierre_id",
+                      "deuda_id",
+                      "planeado",
+                      "real"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/Agregado"
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          },
+          "500": {
+            "$ref": "#/components/responses/EstadoFinanzas"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_conciliaciones": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerConciliaciones",
+        "summary": "Leer conciliaciones",
+        "description": "Conciliaciones de saldo de las cuentas de tus libros.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/filtroLibro"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Conciliaciones visibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinConciliacion"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "registrarConciliacion",
+        "summary": "Registrar una conciliación (solo agregar)",
+        "description": "**Solo agregar.** Si el saldo declarado difiere del calculado, primero se registra el movimiento de `ajuste` (contra la cuenta Ajustes del libro, mismo monto, fecha y dirección, con motivo) y luego la conciliación que lo referencia con `motivo` (22023 si no corresponde). `diferencia` es generada.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/alConflicto"
+          },
+          {
+            "$ref": "#/components/parameters/preferirAlSubir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/FinConciliacion"
+                  },
+                  {
+                    "required": [
+                      "id",
+                      "hogar_id",
+                      "libro_id",
+                      "cuenta_id",
+                      "fecha",
+                      "saldo_declarado",
+                      "saldo_calculado"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/Agregado"
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          },
+          "500": {
+            "$ref": "#/components/responses/EstadoFinanzas"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_importaciones": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerImportaciones",
+        "summary": "Leer importaciones",
+        "description": "Registro de importaciones del hogar (p. ej. la hoja Categorías de los datos semilla).",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Importaciones del hogar.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinImportacion"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "registrarImportacion",
+        "summary": "Registrar una importación (solo agregar)",
+        "description": "**Solo agregar.** `detalle` hasta 256 KB (no se copia a la bitácora). `filas_creadas + filas_omitidas` no pasa de `filas_leidas` (23514).",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/alConflicto"
+          },
+          {
+            "$ref": "#/components/parameters/preferirAlSubir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/FinImportacion"
+                  },
+                  {
+                    "required": [
+                      "id",
+                      "hogar_id",
+                      "archivo"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/Agregado"
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_v_saldos": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerSaldos",
+        "summary": "Leer saldos por cuenta (vista)",
+        "description": "Saldo confirmado por cuenta con el signo de su clase (en una tarjeta, lo que se debe) y el saldo con pendientes. Las cuentas de gasto del hogar salen una vez por libro. Respeta la RLS de quien consulta (`security_invoker`).",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/filtroLibro"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Saldos de las cuentas visibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinSaldo"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_v_gasto_semana": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerGastoSemana",
+        "summary": "Leer gasto por semana (vista)",
+        "description": "Gasto neto confirmado por libro, cuenta de gasto y semana (lunes): gastos − reembolsos ± anulaciones y reclasificaciones, por la fecha económica. Respeta la RLS de quien consulta.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/filtroLibro"
+          },
+          {
+            "$ref": "#/components/parameters/filtroSemanaInicio"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Gasto por semana de los libros visibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinGastoSemana"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/fin_puede": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finPuede",
+        "summary": "¿Puedo leer, escribir o administrar este libro?",
+        "description": "La regla de las tablas de cada libro (D19). `leer`: miembro vigente o cuenta maestra. `escribir`: titular, miembro o albacea (el suplente solo si no hay albacea vigente), con el libro activo. `administrar`: titular de un personal, miembro de un compartido, albacea de un representado. La cuenta maestra nunca escribe ni administra lo ajeno. Siempre exige un rol con Finanzas: a familiar, cuidador y Casa les responde `false`.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_libro_id",
+                  "p_accion"
+                ],
+                "properties": {
+                  "p_libro_id": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_accion": {
+                    "$ref": "#/components/schemas/Accion"
+                  }
+                }
+              },
+              "example": {
+                "p_libro_id": "f1000000-0000-4000-8000-000000000001",
+                "p_accion": "escribir"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Si puede.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                },
+                "example": true
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/fin_puede_hogar": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finPuedeHogar",
+        "summary": "¿Puedo usar lo de Finanzas del hogar?",
+        "description": "La regla de lo que es del hogar (categorías, cuentas de gasto, días inhábiles, importaciones): el rol tiene Finanzas para esa acción; la cuenta maestra además lee. A familiar, cuidador y Casa les responde `false`.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_hogar_id",
+                  "p_accion"
+                ],
+                "properties": {
+                  "p_hogar_id": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_accion": {
+                    "$ref": "#/components/schemas/Accion"
+                  }
+                }
+              },
+              "example": {
+                "p_hogar_id": "b0000000-0000-4000-8000-000000000001",
+                "p_accion": "leer"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Si puede.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                },
+                "example": true
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/fin_es_miembro": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finEsMiembro",
+        "summary": "¿Soy miembro de este libro?",
+        "description": "Miembro vigente del libro con cualquier papel (titular, miembro, albacea o suplente) y sigue en el hogar. La cuenta maestra no es miembro de lo ajeno: con esto la app decide si llamar `fin_registrar_consulta_maestra`.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_libro_id"
+                ],
+                "properties": {
+                  "p_libro_id": {
+                    "$ref": "#/components/schemas/Uuid"
+                  }
+                }
+              },
+              "example": {
+                "p_libro_id": "f1000000-0000-4000-8000-000000000002"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Si es miembro.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                },
+                "example": true
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/es_cuenta_maestra": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "esCuentaMaestra",
+        "summary": "¿Esta sesión es la cuenta maestra?",
+        "description": "Verdadero si quien consulta es la cuenta maestra vigente del hogar (D19) y su rol tiene Finanzas (dueño o coadministrador). Cualquier sesión la puede llamar; a las demás les responde `false`.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar",
+          "cuidador",
+          "casa"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_hogar_id"
+                ],
+                "properties": {
+                  "p_hogar_id": {
+                    "$ref": "#/components/schemas/Uuid"
+                  }
+                }
+              },
+              "example": {
+                "p_hogar_id": "b0000000-0000-4000-8000-000000000001"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Si es la cuenta maestra.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                },
+                "example": false
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/cuenta_maestra": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "cuentaMaestra",
+        "summary": "¿Existe la cuenta maestra y de quién es?",
+        "description": "Para Ajustes › Privacidad: cualquier miembro del hogar ve si existe la cuenta maestra y de quién es (D19). Lista vacía si no hay.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar",
+          "cuidador",
+          "casa"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_hogar_id"
+                ],
+                "properties": {
+                  "p_hogar_id": {
+                    "$ref": "#/components/schemas/Uuid"
+                  }
+                }
+              },
+              "example": {
+                "p_hogar_id": "b0000000-0000-4000-8000-000000000001"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "La cuenta maestra del hogar (o ninguna).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "persona_id": {
+                        "$ref": "#/components/schemas/Uuid"
+                      },
+                      "nombre_visible": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "example": [
+                  {
+                    "persona_id": "e0000000-0000-4000-8000-000000000008",
+                    "nombre_visible": "Marta Maestra"
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/asignar_cuenta_maestra": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "asignarCuentaMaestra",
+        "summary": "Nombrar o quitar la cuenta maestra",
+        "description": "Solo el dueño (42501). Nombra la cuenta maestra del hogar: un miembro vigente con rol dueño o coadministrador (si no, 22023); nunca familiar, cuidador ni Casa. Con `p_persona_id` nulo la quita. Una sola por hogar; se recomienda una cuenta aparte del dueño, usada solo en la laptop. Queda en la bitácora.",
+        "x-roles": [
+          "dueno"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_hogar_id",
+                  "p_persona_id"
+                ],
+                "properties": {
+                  "p_hogar_id": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_persona_id": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "uuid",
+                    "description": "Persona que será la cuenta maestra; nulo la quita."
+                  }
+                }
+              },
+              "example": {
+                "p_hogar_id": "b0000000-0000-4000-8000-000000000001",
+                "p_persona_id": "e0000000-0000-4000-8000-000000000008"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Asignada (o quitada)."
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/fin_registrar_consulta_maestra": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finRegistrarConsultaMaestra",
+        "summary": "Registrar que la cuenta maestra abrió un libro ajeno",
+        "description": "La app la llama al abrir un libro ajeno con la cuenta maestra: deja la consulta en la bitácora (`finanzas.consulta_maestra`), visible para quienes llevan ese libro. Devuelve `false` si el libro es propio (no se registra). Si la sesión no es la cuenta maestra, 403 (42501).",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_libro_id"
+                ],
+                "properties": {
+                  "p_libro_id": {
+                    "$ref": "#/components/schemas/Uuid"
+                  }
+                }
+              },
+              "example": {
+                "p_libro_id": "f1000000-0000-4000-8000-000000000001"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Si se registró la consulta.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                },
+                "example": true
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/fin_crear_libro_representado": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finCrearLibroRepresentado",
+        "summary": "Crear el libro de Papá (representado)",
+        "description": "Solo el dueño (42501). Crea a la persona sin cuenta (Papá) y su libro `representado`; quien lo crea queda como albacea (el suplente se agrega en `fin_libro_miembros`). Con `p_libro_id` es idempotente: si ese libro ya existe, lo devuelve. Sin nombre, 22023.",
+        "x-roles": [
+          "dueno"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_hogar_id",
+                  "p_nombre_titular"
+                ],
+                "properties": {
+                  "p_hogar_id": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_nombre_titular": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  },
+                  "p_nombre_libro": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 80,
+                    "description": "Por omisión, el nombre del titular."
+                  },
+                  "p_libro_id": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "uuid",
+                    "description": "Id generado en el dispositivo (reintento sin duplicar)."
+                  }
+                }
+              },
+              "example": {
+                "p_hogar_id": "b0000000-0000-4000-8000-000000000001",
+                "p_nombre_titular": "Papá (ejemplo)",
+                "p_nombre_libro": "Papá (ejemplo)",
+                "p_libro_id": "f1000000-0000-4000-8000-000000000002"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Identificador del libro (nuevo o el que ya existía).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Uuid"
+                },
+                "example": "f1000000-0000-4000-8000-000000000002"
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/fin_lunes": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finLunes",
+        "summary": "Lunes de la semana de una fecha",
+        "description": "La semana empieza en lunes (convención de GRAVITY). No lee datos.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_fecha"
+                ],
+                "properties": {
+                  "p_fecha": {
+                    "type": "string",
+                    "format": "date"
+                  }
+                }
+              },
+              "example": {
+                "p_fecha": "2026-10-22"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "El lunes de esa semana.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "example": "2026-10-19"
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
           }
         }
       }
@@ -2096,6 +6196,77 @@ window.ESPECIFICACION_GRAVITY = {
             "return=minimal"
           ]
         }
+      },
+      "filtroLibro": {
+        "name": "libro_id",
+        "in": "query",
+        "description": "Filtro por libro de Finanzas, p. ej. `eq.<uuid>`. Sin filtro llegan todos los que puedes leer.",
+        "schema": {
+          "type": "string"
+        },
+        "example": "eq.f1000000-0000-4000-8000-000000000001"
+      },
+      "filtroLibroObligatorio": {
+        "name": "libro_id",
+        "in": "query",
+        "required": true,
+        "description": "Libro a cambiar: `eq.<uuid>`.",
+        "schema": {
+          "type": "string",
+          "pattern": "^eq\\.[0-9a-f-]{36}$"
+        },
+        "example": "eq.f1000000-0000-4000-8000-000000000001"
+      },
+      "filtroFecha": {
+        "name": "fecha",
+        "in": "query",
+        "description": "Filtro de PostgREST por fecha, p. ej. `gte.2026-10-19`.",
+        "schema": {
+          "type": "string"
+        },
+        "example": "gte.2026-10-19"
+      },
+      "filtroSemana": {
+        "name": "semana_id",
+        "in": "query",
+        "description": "Filtro por semana del plan, p. ej. `eq.<uuid>`.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "filtroSemanaInicio": {
+        "name": "semana_inicio",
+        "in": "query",
+        "description": "Filtro por el lunes de la semana, p. ej. `eq.2026-10-19`.",
+        "schema": {
+          "type": "string"
+        },
+        "example": "eq.2026-10-19"
+      },
+      "alConflicto": {
+        "name": "on_conflict",
+        "in": "query",
+        "description": "Columna que identifica un reenvío de la cola sin conexión. Con `Prefer: resolution=ignore-duplicates` equivale a `INSERT … ON CONFLICT (id) DO NOTHING`.",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "id"
+          ]
+        }
+      },
+      "preferirAlSubir": {
+        "name": "Prefer",
+        "in": "header",
+        "description": "`resolution=ignore-duplicates` para subir desde la cola sin conexión (un reenvío idéntico no hace nada); `return=representation` para recibir lo insertado.",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "return=minimal",
+            "return=representation",
+            "resolution=ignore-duplicates,return=minimal",
+            "resolution=ignore-duplicates,return=representation"
+          ]
+        }
       }
     },
     "requestBodies": {
@@ -2155,6 +6326,67 @@ window.ESPECIFICACION_GRAVITY = {
             },
             "example": {
               "mensaje": "La herramienta «finanzas.abrir» no está disponible."
+            }
+          }
+        }
+      },
+      "Agregado": {
+        "description": "Agregado. Con `Prefer: return=representation` devuelve lo insertado; un reenvío idéntico desde la cola no inserta nada y devuelve una lista vacía.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      },
+      "ReglaFinanzas": {
+        "description": "No cumple una regla: de la tabla (23514: monto, motivo, lunes, cascada…) o de negocio (22023: combinación de cuentas, libro equivocado, papel…).",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorPostgrest"
+            },
+            "example": {
+              "code": "22023",
+              "message": "Solo una transferencia o un pago de deuda va de un libro a otro.",
+              "details": null,
+              "hint": null
+            }
+          }
+        }
+      },
+      "ConflictoFinanzas": {
+        "description": "23503: falta algo de lo que depende (otra cuenta, el original de una anulación; la cola reintenta cuando ya se subió). 23505: duplicado, o el mismo `id` con otro contenido (no se edita: se corrige con un registro nuevo).",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorPostgrest"
+            },
+            "example": {
+              "code": "23505",
+              "message": "Ya existe el movimiento 3d0c2f5e-8a41-4b7e-9c1d-5f2a6b8e9a01 con otro contenido.",
+              "details": null,
+              "hint": "No se edita: se corrige con un registro nuevo (anulación o versión siguiente)."
+            }
+          }
+        }
+      },
+      "EstadoFinanzas": {
+        "description": "55000: el registro no está en el estado que se necesita (cuenta congelada, cerrada o archivada; semana cerrada).",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorPostgrest"
+            },
+            "example": {
+              "code": "55000",
+              "message": "Una de las cuentas no está activa (congelada, cerrada o archivada): no admite movimientos nuevos.",
+              "details": null,
+              "hint": null
             }
           }
         }
@@ -2308,6 +6540,38 @@ window.ESPECIFICACION_GRAVITY = {
           "solo_local": {
             "type": "boolean",
             "description": "Si es solo local, su resultado nunca va a la IA en la nube."
+          },
+          "accion": {
+            "$ref": "#/components/schemas/Accion",
+            "description": "Lo que la persona debe poder hacer en el módulo para que se le ofrezca (abrir la hoja de un gasto exige escribir, aunque la que guarda es la hoja)."
+          },
+          "pertenencia": {
+            "type": "string",
+            "enum": [
+              "propia",
+              "ajena"
+            ],
+            "description": "Sobre qué datos actúa (D19). La cuenta maestra nunca recibe una que escriba o administre lo ajeno."
+          },
+          "ambito": {
+            "type": "string",
+            "enum": [
+              "general",
+              "solicitudes"
+            ],
+            "description": "`solicitudes`: la bandeja de la cuidadora (D18), lo único de GRAVITY que recibe."
+          },
+          "hoja": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "gasto",
+              "ingreso_extra",
+              null
+            ],
+            "description": "Hoja de registro que abre (la hoja es la confirmación); nula si abre una pantalla."
           }
         }
       },
@@ -2466,6 +6730,11 @@ window.ESPECIFICACION_GRAVITY = {
               "null"
             ],
             "format": "date-time"
+          },
+          "es_maestra": {
+            "type": "boolean",
+            "readOnly": true,
+            "description": "Cuenta maestra del hogar (D19): una por hogar, solo dueño o coadministrador; la asigna el dueño con `asignar_cuenta_maestra`."
           },
           "creado_en": {
             "type": "string",
@@ -2642,8 +6911,139 @@ window.ESPECIFICACION_GRAVITY = {
           }
         }
       },
-      "MovimientoMuestra": {
+      "Centavos": {
+        "type": "integer",
+        "format": "int64",
+        "description": "Dinero en centavos (MXN), entero. Nunca va a la IA en la nube (D3)."
+      },
+      "CentavosPositivos": {
+        "type": "integer",
+        "format": "int64",
+        "minimum": 1,
+        "description": "Dinero en centavos (MXN), mayor que cero."
+      },
+      "CentavosNoNegativos": {
+        "type": "integer",
+        "format": "int64",
+        "minimum": 0,
+        "description": "Dinero en centavos (MXN), cero o más."
+      },
+      "PuntosBase": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 10000,
+        "description": "Porcentaje en puntos base (2000 = 20.00 %)."
+      },
+      "UuidONulo": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "format": "uuid"
+      },
+      "FinNombre": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 80
+      },
+      "FinPrioridad": {
+        "type": "string",
+        "enum": [
+          "necesario",
+          "deseable",
+          "discrecional"
+        ]
+      },
+      "FinReglaInhabil": {
+        "type": "string",
+        "enum": [
+          "siguiente_dia_habil",
+          "dia_habil_anterior",
+          "sin_cambio"
+        ],
+        "description": "Qué hacer si un pago cae en sábado, domingo o día inhábil (D19, regla 5)."
+      },
+      "FinFormaPago": {
+        "type": "string",
+        "enum": [
+          "semanal",
+          "catorcenal",
+          "quincenal",
+          "mensual",
+          "cada_meses"
+        ],
+        "description": "semanal (`dia_semana`), catorcenal (`fecha_ancla`), quincenal (2 `dias_mes`), mensual (1 o más `dias_mes`, p. ej. `[1, 11]`) o cada_meses (`fecha_ancla` e `intervalo_meses`)."
+      },
+      "FinFormaPagoONula": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "enum": [
+          "semanal",
+          "catorcenal",
+          "quincenal",
+          "mensual",
+          "cada_meses",
+          null
+        ],
+        "description": "Calendario opcional (como `FinFormaPago`)."
+      },
+      "FinFrecuencia": {
+        "type": "string",
+        "enum": [
+          "semanal",
+          "catorcenal",
+          "quincenal",
+          "mensual",
+          "bimestral",
+          "trimestral",
+          "semestral",
+          "anual",
+          "diaria"
+        ]
+      },
+      "FinModoArrastre": {
+        "type": "string",
+        "enum": [
+          "arrastrar",
+          "al_remanente"
+        ]
+      },
+      "FinDiaSemana": {
+        "type": [
+          "integer",
+          "null"
+        ],
+        "minimum": 1,
+        "maximum": 7,
+        "description": "1 = lunes … 7 = domingo."
+      },
+      "FinDiasMes": {
+        "type": [
+          "array",
+          "null"
+        ],
+        "items": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 31
+        },
+        "minItems": 1,
+        "maxItems": 31,
+        "description": "Días del mes (0 = último día), p. ej. `[1, 11]` o `[15, 0]`."
+      },
+      "FinIntervaloMeses": {
+        "type": [
+          "integer",
+          "null"
+        ],
+        "minimum": 1,
+        "maximum": 12
+      },
+      "FinLibro": {
         "type": "object",
+        "description": "Libro de Finanzas (D19): `personal` (lo crea el servidor al dar un rol con Finanzas), `compartido` (2 o más adultos) o `representado` (el de Papá, que llevan sus albaceas).",
         "properties": {
           "id": {
             "$ref": "#/components/schemas/Uuid"
@@ -2651,24 +7051,1347 @@ window.ESPECIFICACION_GRAVITY = {
           "hogar_id": {
             "$ref": "#/components/schemas/Uuid"
           },
-          "descripcion": {
-            "type": "string"
+          "nombre": {
+            "$ref": "#/components/schemas/FinNombre"
           },
-          "monto_centavos": {
-            "type": "integer",
-            "format": "int64",
-            "description": "Dinero en centavos (MXN)."
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "personal",
+              "compartido",
+              "representado"
+            ]
           },
-          "registrado_por": {
+          "titular_id": {
+            "$ref": "#/components/schemas/UuidONulo",
+            "description": "Obligatorio en personal y representado; nulo en compartido."
+          },
+          "activo": {
+            "type": "boolean",
+            "default": true
+          },
+          "creado_por": {
+            "$ref": "#/components/schemas/UuidONulo",
+            "readOnly": true
+          },
+          "creado_en": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        }
+      },
+      "FinLibroMiembro": {
+        "type": "object",
+        "description": "Quién lleva cada libro. No se borra; se cierra `hasta`.",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "libro_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "persona_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "papel": {
+            "type": "string",
+            "enum": [
+              "titular",
+              "miembro",
+              "albacea",
+              "albacea_suplente"
+            ]
+          },
+          "desde": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "hasta": {
             "type": [
               "string",
               "null"
             ],
-            "format": "uuid"
+            "format": "date-time"
+          }
+        }
+      },
+      "FinCategoria": {
+        "type": "object",
+        "description": "Árbol de categorías del hogar (3 niveles, común a todos los libros).",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "padre_id": {
+            "$ref": "#/components/schemas/UuidONulo",
+            "description": "Nulo solo en el nivel 1."
+          },
+          "nivel": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 3
+          },
+          "nombre": {
+            "$ref": "#/components/schemas/FinNombre"
+          },
+          "icono": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 64
+          },
+          "color": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 32
+          },
+          "naturaleza": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 40,
+            "description": "Texto de la plantilla (fija, variable, mixta, eventual…)."
+          },
+          "prioridad": {
+            "$ref": "#/components/schemas/FinPrioridad"
+          },
+          "protegida": {
+            "type": "boolean"
+          },
+          "es_del_sistema": {
+            "type": "boolean"
+          },
+          "oculta": {
+            "type": "boolean"
+          },
+          "archivada": {
+            "type": "boolean"
+          },
+          "posiblemente_deducible": {
+            "type": "boolean"
+          },
+          "cuenta_gasto_id": {
+            "$ref": "#/components/schemas/UuidONulo"
+          }
+        }
+      },
+      "FinCuenta": {
+        "type": "object",
+        "description": "Cuenta de un libro o, si es `de_gasto` o `gasto_financiero`, del hogar (`libro_id` nulo). Cerrar o archivar solo con saldo cero; borrar solo sin movimientos.",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "libro_id": {
+            "$ref": "#/components/schemas/UuidONulo"
+          },
+          "nombre": {
+            "$ref": "#/components/schemas/FinNombre"
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "efectivo",
+              "banco",
+              "ahorro",
+              "inversion",
+              "por_cobrar",
+              "tarjeta",
+              "prestamo",
+              "origen_ingreso",
+              "de_gasto",
+              "gasto_financiero",
+              "por_clasificar",
+              "ajustes",
+              "apertura"
+            ]
+          },
+          "clase": {
+            "type": "string",
+            "enum": [
+              "activo",
+              "pasivo",
+              "ingreso",
+              "gasto",
+              "ajuste",
+              "apertura"
+            ],
+            "readOnly": true,
+            "description": "Generada desde `tipo`."
+          },
+          "liquida": {
+            "type": "boolean",
+            "readOnly": true,
+            "description": "Generada; efectivo y banco entran al \"disponible\"."
+          },
+          "estado": {
+            "type": "string",
+            "enum": [
+              "activa",
+              "congelada",
+              "cerrada",
+              "archivada"
+            ],
+            "default": "activa"
+          },
+          "categoria_id": {
+            "$ref": "#/components/schemas/UuidONulo",
+            "description": "Solo en cuentas de gasto."
+          },
+          "limite_centavos": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "minimum": 1,
+            "description": "Límite de una tarjeta, en centavos (opcional)."
+          },
+          "creada_por": {
+            "$ref": "#/components/schemas/UuidONulo",
+            "description": "La app la puede mandar; el servidor la sobrescribe con la sesión."
+          },
+          "creada_en": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        }
+      },
+      "FinParametros": {
+        "type": "object",
+        "description": "Parámetros de un libro (una fila por libro; porcentajes en puntos base).",
+        "properties": {
+          "libro_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "meta_remanente_pb": {
+            "$ref": "#/components/schemas/PuntosBase"
+          },
+          "ahorro_minimo_con_deuda_pb": {
+            "$ref": "#/components/schemas/PuntosBase"
+          },
+          "tope_arrastre_semanas": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 52
+          },
+          "partida_ambar_pb": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100000
+          },
+          "partida_rojo_pb": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100000
+          },
+          "remanente_verde_pb": {
+            "$ref": "#/components/schemas/PuntosBase"
+          },
+          "remanente_ambar_pb": {
+            "$ref": "#/components/schemas/PuntosBase"
+          },
+          "carga_ambar_pb": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100000
+          },
+          "carga_rojo_pb": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100000
+          },
+          "cumplimiento_verde_pb": {
+            "$ref": "#/components/schemas/PuntosBase"
+          },
+          "cumplimiento_ambar_pb": {
+            "$ref": "#/components/schemas/PuntosBase"
+          },
+          "cierre_automatico_dias": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 30
+          },
+          "cuenta_ajustes_id": {
+            "$ref": "#/components/schemas/Uuid",
+            "readOnly": true
+          },
+          "cuenta_apertura_id": {
+            "$ref": "#/components/schemas/Uuid",
+            "readOnly": true
+          },
+          "cuenta_por_clasificar_id": {
+            "$ref": "#/components/schemas/Uuid",
+            "readOnly": true
+          }
+        }
+      },
+      "FinMovimiento": {
+        "type": "object",
+        "description": "Movimiento del libro **solo agregar** (partida doble simplificada). Se corrige con una anulación; nunca se edita ni se borra.",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid",
+            "description": "Generado en el dispositivo (la cola sin conexión reenvía el mismo)."
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "apertura",
+              "ingreso",
+              "gasto",
+              "reembolso",
+              "transferencia",
+              "pago_deuda",
+              "reclasificacion",
+              "ajuste",
+              "anulacion"
+            ]
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date",
+            "description": "Fecha económica; define la semana."
+          },
+          "registrado_en": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Cuándo se capturó, en el dispositivo. **Obligatorio.**"
+          },
+          "recibido_en": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "description": "Cuándo llegó al servidor; lo pone el servidor."
+          },
+          "cuenta_origen_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "cuenta_destino_id": {
+            "$ref": "#/components/schemas/Uuid",
+            "description": "Distinta de la de origen."
+          },
+          "libro_origen_id": {
+            "$ref": "#/components/schemas/UuidONulo",
+            "readOnly": true,
+            "description": "Libro de la cuenta de origen; lo pone el servidor."
+          },
+          "libro_destino_id": {
+            "$ref": "#/components/schemas/UuidONulo",
+            "readOnly": true,
+            "description": "Libro de la cuenta de destino; lo pone el servidor."
+          },
+          "monto_centavos": {
+            "$ref": "#/components/schemas/CentavosPositivos"
+          },
+          "categoria_id": {
+            "$ref": "#/components/schemas/UuidONulo"
+          },
+          "grupo_id": {
+            "$ref": "#/components/schemas/UuidONulo",
+            "description": "Agrupa un ticket dividido o capital más intereses."
+          },
+          "realizado_por": {
+            "$ref": "#/components/schemas/Uuid",
+            "description": "Por omisión, la sesión."
+          },
+          "registrado_por": {
+            "$ref": "#/components/schemas/Uuid",
+            "description": "Por omisión, la sesión; siempre la sesión (nadie registra a nombre de otro)."
+          },
+          "en_nombre_de": {
+            "$ref": "#/components/schemas/UuidONulo",
+            "description": "Persona representada (Papá) cuando un albacea registra en su nombre; `motivo` obligatorio."
+          },
+          "via": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "voz",
+              "imagen",
+              "qr",
+              "importacion"
+            ],
+            "default": "manual"
+          },
+          "nota": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 200
+          },
+          "motivo": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 200,
+            "description": "Obligatorio en `ajuste`, `anulacion` y con `en_nombre_de`."
+          },
+          "anula_a": {
+            "$ref": "#/components/schemas/UuidONulo",
+            "description": "Solo en `anulacion`; cada movimiento tiene a lo más una."
+          },
+          "estado_inicial": {
+            "type": "string",
+            "enum": [
+              "confirmado",
+              "pendiente"
+            ],
+            "default": "confirmado"
+          }
+        }
+      },
+      "FinIngreso": {
+        "type": "object",
+        "description": "Ingreso recurrente de un libro (por persona).",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "libro_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "persona_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "nombre": {
+            "$ref": "#/components/schemas/FinNombre"
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "salario",
+              "independiente",
+              "prestaciones",
+              "pension",
+              "otro"
+            ],
+            "default": "salario"
+          },
+          "cuenta_origen_id": {
+            "$ref": "#/components/schemas/UuidONulo",
+            "description": "Cuenta `origen_ingreso` del mismo libro."
+          },
+          "cuenta_destino_id": {
+            "$ref": "#/components/schemas/UuidONulo",
+            "description": "Activo del mismo libro donde se recibe."
+          },
+          "certeza": {
+            "type": "string",
+            "enum": [
+              "segura",
+              "probable",
+              "incierta"
+            ],
+            "default": "segura"
+          },
+          "activo": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "FinVigenciaIngreso": {
+        "type": "object",
+        "description": "Monto neto y calendario de un ingreso por periodo; no se traslapan.",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "libro_id": {
+            "$ref": "#/components/schemas/Uuid",
+            "description": "El del ingreso (lo pone el servidor)."
+          },
+          "ingreso_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "monto_neto_centavos": {
+            "$ref": "#/components/schemas/CentavosPositivos"
+          },
+          "forma": {
+            "$ref": "#/components/schemas/FinFormaPago"
+          },
+          "dia_semana": {
+            "$ref": "#/components/schemas/FinDiaSemana"
+          },
+          "dias_mes": {
+            "$ref": "#/components/schemas/FinDiasMes"
+          },
+          "fecha_ancla": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "intervalo_meses": {
+            "$ref": "#/components/schemas/FinIntervaloMeses"
+          },
+          "regla_inhabil": {
+            "$ref": "#/components/schemas/FinReglaInhabil",
+            "default": "siguiente_dia_habil"
+          },
+          "desde": {
+            "type": "string",
+            "format": "date"
+          },
+          "hasta": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          }
+        }
+      },
+      "FinCompromiso": {
+        "type": "object",
+        "description": "Gasto fijo o reserva de un libro (renta, servicios, placas, predial).",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "libro_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "nombre": {
+            "$ref": "#/components/schemas/FinNombre"
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "fija",
+              "reserva"
+            ]
+          },
+          "cuenta_gasto_id": {
+            "$ref": "#/components/schemas/UuidONulo"
+          },
+          "categoria_id": {
+            "$ref": "#/components/schemas/UuidONulo"
+          },
+          "monto_centavos": {
+            "$ref": "#/components/schemas/CentavosPositivos"
+          },
+          "frecuencia": {
+            "$ref": "#/components/schemas/FinFrecuencia"
+          },
+          "dias_activos": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 7,
+            "description": "Solo con frecuencia `diaria`."
+          },
+          "forma": {
+            "$ref": "#/components/schemas/FinFormaPagoONula"
+          },
+          "dia_semana": {
+            "$ref": "#/components/schemas/FinDiaSemana"
+          },
+          "dias_mes": {
+            "$ref": "#/components/schemas/FinDiasMes"
+          },
+          "fecha_ancla": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "intervalo_meses": {
+            "$ref": "#/components/schemas/FinIntervaloMeses"
+          },
+          "regla_inhabil": {
+            "$ref": "#/components/schemas/FinReglaInhabil",
+            "default": "sin_cambio"
+          },
+          "protegida": {
+            "type": "boolean"
+          },
+          "prioridad": {
+            "$ref": "#/components/schemas/FinPrioridad"
+          },
+          "desde": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "hasta": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "activo": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "FinSobre": {
+        "type": "object",
+        "description": "Partida variable por rubro (sobre) del presupuesto de un libro.",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "libro_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "cuenta_gasto_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "nombre": {
+            "$ref": "#/components/schemas/FinNombre"
+          },
+          "monto_semanal_centavos": {
+            "$ref": "#/components/schemas/CentavosNoNegativos"
+          },
+          "protegida": {
+            "type": "boolean"
+          },
+          "prioridad": {
+            "$ref": "#/components/schemas/FinPrioridad"
+          },
+          "piso_minimo_centavos": {
+            "$ref": "#/components/schemas/CentavosNoNegativos",
+            "description": "Entre 0 y el monto semanal."
+          },
+          "modo_arrastre": {
+            "$ref": "#/components/schemas/FinModoArrastre"
+          },
+          "activo": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "FinDeuda": {
+        "type": "object",
+        "description": "Deuda de un libro; el saldo sale de su cuenta pasivo.",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "libro_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "nombre": {
+            "$ref": "#/components/schemas/FinNombre"
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "con_costo",
+              "familiar",
+              "msi"
+            ]
+          },
+          "cuenta_pasivo_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "abono_centavos": {
+            "$ref": "#/components/schemas/CentavosNoNegativos"
+          },
+          "frecuencia": {
+            "$ref": "#/components/schemas/FinFrecuencia",
+            "description": "Cualquiera menos `diaria`."
+          },
+          "forma": {
+            "$ref": "#/components/schemas/FinFormaPagoONula"
+          },
+          "dia_semana": {
+            "$ref": "#/components/schemas/FinDiaSemana"
+          },
+          "dias_mes": {
+            "$ref": "#/components/schemas/FinDiasMes"
+          },
+          "fecha_ancla": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "intervalo_meses": {
+            "$ref": "#/components/schemas/FinIntervaloMeses"
+          },
+          "regla_inhabil": {
+            "$ref": "#/components/schemas/FinReglaInhabil",
+            "default": "sin_cambio"
+          },
+          "minimo_centavos": {
+            "$ref": "#/components/schemas/CentavosNoNegativos"
+          },
+          "tasa_anual_pb": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Puntos base (4800 = 48 % anual); mayor que 0 solo en `con_costo`."
+          },
+          "prioridad_manual": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1
+          },
+          "grupo_prioritario": {
+            "type": "boolean",
+            "description": "Del grupo de deudas prioritarias que elige el titular (P12)."
+          },
+          "orden_grupo": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "description": "Obligatorio si y solo si `grupo_prioritario`."
+          },
+          "activa": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "FinDiaInhabil": {
+        "type": "object",
+        "description": "Día inhábil del hogar; la precarga de festivos nace inactiva.",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date"
+          },
+          "nombre": {
+            "$ref": "#/components/schemas/FinNombre"
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "festivo_oficial",
+              "personal"
+            ],
+            "default": "festivo_oficial"
+          },
+          "fuente": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 120
+          },
+          "activo": {
+            "type": "boolean",
+            "default": false
+          },
+          "revisado_por": {
+            "$ref": "#/components/schemas/UuidONulo",
+            "description": "Lo pone el servidor al cambiar `activo`."
+          },
+          "revisado_en": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Lo pone el servidor al cambiar `activo`."
+          }
+        }
+      },
+      "FinSemana": {
+        "type": "object",
+        "description": "Foto del plan de una semana (lunes) de un libro. Cascada: `remanente_plan = ingreso − presupuesto − deuda_plan`.",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "libro_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "semana_inicio": {
+            "type": "string",
+            "format": "date",
+            "description": "Lunes."
+          },
+          "estado": {
+            "type": "string",
+            "enum": [
+              "borrador",
+              "activa",
+              "pendiente_ingreso",
+              "por_cerrar",
+              "cerrada"
+            ],
+            "default": "borrador"
+          },
+          "metodo": {
+            "type": "string",
+            "enum": [
+              "sobres"
+            ],
+            "default": "sobres"
+          },
+          "ingreso": {
+            "$ref": "#/components/schemas/CentavosNoNegativos"
+          },
+          "presupuesto": {
+            "$ref": "#/components/schemas/CentavosNoNegativos"
+          },
+          "deuda_plan": {
+            "$ref": "#/components/schemas/CentavosNoNegativos"
+          },
+          "remanente_plan": {
+            "$ref": "#/components/schemas/Centavos"
+          },
+          "meta_remanente_pb": {
+            "$ref": "#/components/schemas/PuntosBase"
+          },
+          "ahorro_minimo_con_deuda_pb": {
+            "$ref": "#/components/schemas/PuntosBase"
+          },
+          "techo": {
+            "$ref": "#/components/schemas/Centavos"
+          },
+          "activada_por": {
+            "$ref": "#/components/schemas/UuidONulo",
+            "description": "La pone el servidor."
+          },
+          "activada_en": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "La pone el servidor."
+          },
+          "reaperturas": {
+            "type": "integer",
+            "minimum": 0,
+            "readOnly": true,
+            "description": "Veces que se reabrió; lo pone el servidor."
+          }
+        }
+      },
+      "FinPartidaSemana": {
+        "type": "object",
+        "description": "Lo asignado a un compromiso o sobre en una semana.",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "libro_id": {
+            "$ref": "#/components/schemas/Uuid",
+            "description": "El de su semana."
+          },
+          "semana_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "origen": {
+            "type": "string",
+            "enum": [
+              "compromiso",
+              "sobre"
+            ]
+          },
+          "origen_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "cuenta_gasto_id": {
+            "$ref": "#/components/schemas/UuidONulo"
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "fija",
+              "variable",
+              "reserva"
+            ],
+            "description": "`variable` si y solo si el origen es un sobre."
+          },
+          "asignado": {
+            "$ref": "#/components/schemas/CentavosNoNegativos"
+          },
+          "arrastre_recibido": {
+            "$ref": "#/components/schemas/CentavosNoNegativos"
+          },
+          "protegida": {
+            "type": "boolean"
+          },
+          "prioridad": {
+            "$ref": "#/components/schemas/FinPrioridad"
+          },
+          "piso_minimo": {
+            "$ref": "#/components/schemas/CentavosNoNegativos"
+          },
+          "modo_arrastre": {
+            "$ref": "#/components/schemas/FinModoArrastre"
+          }
+        }
+      },
+      "FinAbonoSemana": {
+        "type": "object",
+        "description": "Abono planeado a una deuda en una semana.",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "libro_id": {
+            "$ref": "#/components/schemas/Uuid",
+            "description": "El de su semana."
+          },
+          "semana_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "deuda_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "abono_planeado": {
+            "$ref": "#/components/schemas/CentavosNoNegativos"
+          },
+          "minimo": {
+            "$ref": "#/components/schemas/CentavosNoNegativos"
+          },
+          "extra_planeado": {
+            "$ref": "#/components/schemas/CentavosNoNegativos"
+          }
+        }
+      },
+      "FinCierre": {
+        "type": "object",
+        "description": "Foto del cierre de una semana y del balance (**solo agregar**).",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "libro_id": {
+            "$ref": "#/components/schemas/Uuid",
+            "description": "El de su semana."
+          },
+          "semana_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Reaperturas de la semana + 1."
+          },
+          "ingreso_real": {
+            "$ref": "#/components/schemas/Centavos"
+          },
+          "gasto_real": {
+            "$ref": "#/components/schemas/Centavos"
+          },
+          "abono_real": {
+            "$ref": "#/components/schemas/CentavosNoNegativos"
+          },
+          "abono_diferido": {
+            "$ref": "#/components/schemas/CentavosNoNegativos"
+          },
+          "abono_extra_real": {
+            "$ref": "#/components/schemas/CentavosNoNegativos"
+          },
+          "ahorro_real": {
+            "$ref": "#/components/schemas/CentavosNoNegativos"
+          },
+          "deficit": {
+            "$ref": "#/components/schemas/CentavosNoNegativos"
+          },
+          "arrastre_siguiente": {
+            "$ref": "#/components/schemas/CentavosNoNegativos"
+          },
+          "accion_elegida": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "con_pendientes": {
+            "type": "boolean"
+          },
+          "activos": {
+            "$ref": "#/components/schemas/Centavos"
+          },
+          "pasivos": {
+            "$ref": "#/components/schemas/Centavos"
+          },
+          "patrimonio": {
+            "$ref": "#/components/schemas/Centavos",
+            "description": "Activos − pasivos."
+          },
+          "cerrado_por": {
+            "$ref": "#/components/schemas/Uuid",
+            "description": "Por omisión, la sesión (siempre la sesión)."
+          },
+          "cerrado_en": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Se acepta del dispositivo."
+          }
+        }
+      },
+      "FinCierrePartida": {
+        "type": "object",
+        "description": "Una partida al cerrar la semana (**solo agregar**).",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "libro_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "cierre_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "partida_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "gastado": {
+            "$ref": "#/components/schemas/Centavos"
+          },
+          "arrastre_siguiente": {
+            "$ref": "#/components/schemas/CentavosNoNegativos"
+          },
+          "al_remanente": {
+            "$ref": "#/components/schemas/CentavosNoNegativos"
+          }
+        }
+      },
+      "FinCierreAbono": {
+        "type": "object",
+        "description": "Un abono al cerrar la semana (**solo agregar**; el AbonoDiferido del diseño).",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "libro_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "cierre_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "deuda_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "planeado": {
+            "$ref": "#/components/schemas/CentavosNoNegativos"
+          },
+          "real": {
+            "$ref": "#/components/schemas/CentavosNoNegativos"
+          },
+          "minimo": {
+            "$ref": "#/components/schemas/CentavosNoNegativos"
+          },
+          "diferido": {
+            "$ref": "#/components/schemas/CentavosNoNegativos",
+            "readOnly": true,
+            "description": "Generado; planeado − real (no menos de cero)."
+          }
+        }
+      },
+      "FinOcurrencia": {
+        "type": "object",
+        "description": "Fecha esperada de un ingreso, compromiso o deuda.",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "libro_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "origen": {
+            "type": "string",
+            "enum": [
+              "ingreso",
+              "compromiso",
+              "deuda"
+            ]
+          },
+          "origen_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "fecha_programada": {
+            "type": "string",
+            "format": "date"
+          },
+          "fecha_ajustada": {
+            "type": "string",
+            "format": "date",
+            "description": "Con la regla de día inhábil aplicada."
+          },
+          "monto_esperado": {
+            "$ref": "#/components/schemas/CentavosNoNegativos"
+          },
+          "estado": {
+            "type": "string",
+            "enum": [
+              "esperada",
+              "cumplida",
+              "parcial",
+              "retrasada",
+              "no_llegara",
+              "omitida"
+            ],
+            "default": "esperada"
+          },
+          "movimiento_id": {
+            "$ref": "#/components/schemas/UuidONulo"
+          }
+        }
+      },
+      "FinConciliacion": {
+        "type": "object",
+        "description": "Conciliación de saldo de una cuenta (**solo agregar**).",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "libro_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "cuenta_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date"
+          },
+          "saldo_declarado": {
+            "$ref": "#/components/schemas/Centavos"
+          },
+          "saldo_calculado": {
+            "$ref": "#/components/schemas/Centavos"
+          },
+          "diferencia": {
+            "$ref": "#/components/schemas/Centavos",
+            "readOnly": true,
+            "description": "Generada; declarado − calculado."
+          },
+          "ajuste_movimiento_id": {
+            "$ref": "#/components/schemas/UuidONulo",
+            "description": "Obligatorio si y solo si hay diferencia."
+          },
+          "motivo": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 200,
+            "description": "Obligatorio si hay diferencia."
+          },
+          "persona_id": {
+            "$ref": "#/components/schemas/Uuid",
+            "description": "Por omisión, la sesión (siempre la sesión)."
           },
           "creado_en": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "description": "Se acepta del dispositivo."
+          }
+        }
+      },
+      "FinImportacion": {
+        "type": "object",
+        "description": "Registro de una importación del hogar (**solo agregar**).",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "archivo": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "hoja": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 100
+          },
+          "filas_leidas": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "filas_creadas": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "filas_omitidas": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "detalle": {
+            "type": [
+              "object",
+              "array"
+            ],
+            "description": "Hasta 256 KB; no se copia a la bitácora."
+          },
+          "persona_id": {
+            "$ref": "#/components/schemas/Uuid",
+            "description": "Por omisión, la sesión (siempre la sesión)."
+          },
+          "creado_en": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Se acepta del dispositivo."
+          }
+        }
+      },
+      "FinSaldo": {
+        "type": "object",
+        "description": "Fila de la vista `fin_v_saldos`.",
+        "properties": {
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "libro_id": {
+            "$ref": "#/components/schemas/UuidONulo"
+          },
+          "cuenta_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "tipo": {
+            "type": "string"
+          },
+          "clase": {
+            "type": "string",
+            "enum": [
+              "activo",
+              "pasivo",
+              "ingreso",
+              "gasto",
+              "ajuste",
+              "apertura"
+            ]
+          },
+          "liquida": {
+            "type": "boolean"
+          },
+          "estado": {
+            "type": "string",
+            "enum": [
+              "activa",
+              "congelada",
+              "cerrada",
+              "archivada"
+            ]
+          },
+          "saldo_centavos": {
+            "$ref": "#/components/schemas/Centavos",
+            "description": "Saldo confirmado con el signo de su clase (en una tarjeta, lo que se debe)."
+          },
+          "saldo_con_pendientes_centavos": {
+            "$ref": "#/components/schemas/Centavos"
+          }
+        }
+      },
+      "FinGastoSemana": {
+        "type": "object",
+        "description": "Fila de la vista `fin_v_gasto_semana`.",
+        "properties": {
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "libro_id": {
+            "$ref": "#/components/schemas/UuidONulo"
+          },
+          "semana_inicio": {
+            "type": "string",
+            "format": "date"
+          },
+          "cuenta_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "tipo": {
+            "type": "string"
+          },
+          "gasto_centavos": {
+            "$ref": "#/components/schemas/Centavos"
           }
         }
       },
@@ -2774,4 +8497,4 @@ window.ESPECIFICACION_GRAVITY = {
     }
   }
 };
-window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:cee18773';
+window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:bd1d5844';

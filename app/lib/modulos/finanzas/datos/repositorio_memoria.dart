@@ -17,12 +17,16 @@ class RepositorioFinanzasEnMemoria implements RepositorioFinanzas {
     this.personaId,
     Map<String, String> personas = const {},
     bool esMaestra = false,
+    String? cuentaMaestra,
+    Set<String> adultosConFinanzas = const {},
     String Function()? generarId,
     this.simularSinConexion = false,
   }) : _carga = CargaFinanzas(
          datos: datos ?? DatosFinanzas.vacio,
          personas: Map.of(personas),
          esMaestra: esMaestra,
+         cuentaMaestra: cuentaMaestra,
+         adultosConFinanzas: adultosConFinanzas,
        ),
        _generarId = generarId ?? const Uuid().v4;
 
@@ -432,7 +436,8 @@ class RepositorioFinanzasEnMemoria implements RepositorioFinanzas {
         'La semana ya está cerrada: reábrela para cerrarla otra vez.',
       );
     }
-    final version = _d.cierresDe(s.id).length + 1;
+    // Como el servidor: la versión es `reaperturas + 1`.
+    final version = s.versionDelSiguienteCierre;
     if (cierre.version != version) {
       throw ErrorFinanzas('La versión de este cierre es $version.');
     }

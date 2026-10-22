@@ -5,6 +5,7 @@ library;
 
 import 'package:finanzas_dominio/finanzas_dominio.dart'
     hide Semaforo, formatearCentavos, TipoLibro, puntosBaseEnCien;
+import 'package:finanzas_dominio/finanzas_dominio.dart' as dom show TipoLibro;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -21,7 +22,18 @@ class PantallaIngresos extends StatelessWidget {
   Widget build(BuildContext context) => MarcoFinanzasLaptop(
     seccion: SeccionFinanzas.ingresos,
     acciones: (context, c) => [
-      if (c.puedeAdministrar)
+      if (c.puedeAdministrar) ...[
+        // En el libro de papá: pensión (días 1 y 11) y apoyo 60+ (bimestral).
+        if (c.libro!.tipo == dom.TipoLibro.representado)
+          for (final p in PlantillaIngreso.deRepresentado)
+            OutlinedButton(
+              key: ValueKey('ingresos-plantilla-${p.nombre}'),
+              onPressed: () => showDialog<void>(
+                context: context,
+                builder: (_) => DialogoIngreso(contexto: c, plantilla: p),
+              ),
+              child: Text(p.nombre),
+            ),
         FilledButton.icon(
           key: const ValueKey('ingresos-nuevo'),
           onPressed: () => showDialog<void>(
@@ -31,6 +43,7 @@ class PantallaIngresos extends StatelessWidget {
           icon: const Icon(Icons.add),
           label: const Text('Nuevo ingreso'),
         ),
+      ],
     ],
     builder: (context, c) => _Ingresos(contexto: c),
   );

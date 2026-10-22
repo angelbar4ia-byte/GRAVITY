@@ -4,8 +4,17 @@
 /// fechas como `AAAA-MM-DD`, las horas en ISO 8601 (UTC) y el dinero en
 /// centavos.
 ///
-/// Las columnas que genera el servidor (`clase`, `liquida`, `recibido_en`,
-/// `diferencia`) no se envían.
+/// Contrato con el servidor (`supabase/README.md`, "Contrato para la app"):
+/// - Las columnas que pone o genera el servidor no se envían: `clase`,
+///   `liquida`, `recibido_en`, `libro_origen_id`, `libro_destino_id`,
+///   `diferencia`, `diferido`, `reaperturas`, `activada_por`/`activada_en` y
+///   `creada_por`.
+/// - `fin_libro_miembros.desde`/`hasta` son `timestamptz` (hora ISO); sin
+///   `desde` el servidor pone `now()`.
+/// - `fin_cuentas.libro_id` va nulo solo en `de_gasto` y `gasto_financiero`.
+/// - `regla_inhabil` siempre se envía con la regla efectiva: la elegida o la
+///   de por omisión de su origen (ingreso: siguiente día hábil; compromiso y
+///   deuda: en su fecha).
 library;
 
 import 'package:finanzas_dominio/finanzas_dominio.dart';
@@ -36,6 +45,12 @@ abstract final class TablasFinanzas {
 
   /// Función que deja en la bitácora la consulta de la cuenta maestra.
   static const consultaMaestra = 'fin_registrar_consulta_maestra';
+
+  /// Función que dice si existe la cuenta maestra y de quién es.
+  static const cuentaMaestra = 'cuenta_maestra';
+
+  /// Función que crea el libro de una persona representada (papá).
+  static const crearLibroRepresentado = 'fin_crear_libro_representado';
 }
 
 // ------------------------------------------------------------------ ayudas
@@ -116,6 +131,19 @@ Map<String, Object?> filaLibro(Libro l, {required String hogarId}) => {
   'activo': l.activo,
 };
 
+/// Inicio del día [f] en la hora local, como `timestamptz` ISO (UTC).
+String horaDeFecha(Fecha f) => horaIso(DateTime(f.anio, f.mes, f.dia));
+
+/// Fecha local de un `timestamptz` (o de una fecha `AAAA-MM-DD`).
+Fecha? fechaDeHora(Object? v) {
+  if (v == null) return null;
+  final texto = '$v';
+  if (texto.length <= 10) return fechaDe(texto);
+  return Fecha.deDateTime(DateTime.parse(texto).toLocal());
+}
+
+/// Fila de `fin_libro_miembros`. `desde` y `hasta` son `timestamptz`; sin
+/// `desde` no se manda y el servidor pone `now()`.
 Map<String, Object?> filaMiembro(
   String libroId,
   MiembroLibro m, {
@@ -127,8 +155,8 @@ Map<String, Object?> filaMiembro(
   'libro_id': libroId,
   'persona_id': m.personaId,
   'papel': nombreEnum(m.papel),
-  'desde': m.desde == null ? null : fechaIso(m.desde!),
-  'hasta': m.hasta == null ? null : fechaIso(m.hasta!),
+  if (m.desde != null) 'desde': horaDeFecha(m.desde!),
+  'hasta': m.hasta == null ? null : horaDeFecha(m.hasta!),
 };
 
 Libro libroDeFila(
@@ -146,13 +174,30 @@ Libro libroDeFila(
         MiembroLibro(
           personaId: '${m['persona_id']}',
           papel: enumDe(PapelLibro.values, m['papel']),
-          desde: fechaDe(m['desde']),
-          hasta: fechaDe(m['hasta']),
+          desde: fechaDeHora(m['desde']),
+          hasta: fechaDeHora(m['hasta']),
         ),
   ],
 );
 
 // -------------------------------------------------------------- parámetros
+
+/// Lo que cambia la persona en `fin_parametros` (UPDATE por `libro_id`). La
+/// fila nace con el libro y las cuentas de sistema no cambian, así que no van.
+Map<String, Object?> cambiosParametros(ParametrosFinanzas p) => {
+  'meta_remanente_pb': p.metaRemanentePuntosBase,
+  'ahorro_minimo_con_deuda_pb': p.ahorroMinimoConDeudaPuntosBase,
+  'tope_arrastre_semanas': p.topeArrastreSemanas,
+  'partida_ambar_pb': p.umbrales.partidaAmbarDesde,
+  'partida_rojo_pb': p.umbrales.partidaRojoArribaDe,
+  'remanente_verde_pb': p.umbrales.remanenteVerdeDesde,
+  'remanente_ambar_pb': p.umbrales.remanenteAmbarDesde,
+  'carga_ambar_pb': p.umbrales.cargaDeudaAmbarDesde,
+  'carga_rojo_pb': p.umbrales.cargaDeudaRojoArribaDe,
+  'cumplimiento_verde_pb': p.umbrales.cumplimientoVerdeDesde,
+  'cumplimiento_ambar_pb': p.umbrales.cumplimientoAmbarDesde,
+  'cierre_automatico_dias': p.cierreAutomaticoDias,
+};
 
 Map<String, Object?> filaParametros(
   ParametrosFinanzas p, {
@@ -238,9 +283,26 @@ Categoria categoriaDeFila(Map<String, dynamic> f) => Categoria(
 
 // ----------------------------------------------------------------- cuentas
 
+/// Tipos de cuenta que son del **hogar** (sin libro): las de gasto por rubro.
+const tiposDelHogar = {TipoCuenta.deGasto, TipoCuenta.gastoFinanciero};
+
 /// `creada_por` la pone el servidor; las cuentas de gasto (`de_gasto` y
-/// `gasto_financiero`) van sin libro.
-Map<String, Object?> filaCuenta(Cuenta c, {required String hogarId}) => {
+/// `gasto_financiero`) van sin libro y todas las demás con el suyo (check
+/// `fin_cuentas_gasto_es_del_hogar`). Lanza [ArgumentError] si no se cumple:
+/// mejor aquí que un 23514 del servidor.
+Map<String, Object?> filaCuenta(Cuenta c, {required String hogarId}) {
+  if (tiposDelHogar.contains(c.tipo) != (c.libroId == null)) {
+    throw ArgumentError(
+      'La cuenta ${c.nombre}: solo las cuentas de gasto van sin libro.',
+    );
+  }
+  if (c.tipo == TipoCuenta.otroLibro) {
+    throw ArgumentError('Una cuenta de otro libro es virtual: no se guarda.');
+  }
+  return _filaCuenta(c, hogarId: hogarId);
+}
+
+Map<String, Object?> _filaCuenta(Cuenta c, {required String hogarId}) => {
   'id': c.id,
   'hogar_id': hogarId,
   'libro_id': c.libroId,
@@ -309,13 +371,18 @@ Movimiento movimientoDeFila(Map<String, dynamic> f) => Movimiento(
 
 // --------------------------------------------------------------- calendario
 
-Map<String, Object?> filaCalendario(CalendarioConfig? c) => {
+/// Columnas del calendario. `regla_inhabil` va con la regla efectiva: la
+/// elegida o [porOmision] (es `not null` en el servidor).
+Map<String, Object?> filaCalendario(
+  CalendarioConfig? c, {
+  required ReglaDiaInhabil porOmision,
+}) => {
   'forma': c == null ? null : nombreEnum(c.forma),
   'dia_semana': c?.diaSemana,
-  'dias_mes': c?.diasMes,
+  'dias_mes': c == null || c.diasMes.isEmpty ? null : c.diasMes,
   'fecha_ancla': c?.fechaAncla == null ? null : fechaIso(c!.fechaAncla!),
   'intervalo_meses': c?.intervaloMeses,
-  'regla_inhabil': c == null ? null : nombreEnum(c.regla),
+  'regla_inhabil': nombreEnum(c?.reglaPara(porOmision) ?? porOmision),
 };
 
 CalendarioConfig? calendarioDeFila(
@@ -360,7 +427,10 @@ Map<String, Object?> filaVigencia(
   'libro_id': libroId,
   'ingreso_id': v.ingresoId,
   'monto_neto_centavos': v.montoNeto,
-  ...filaCalendario(v.calendario),
+  ...filaCalendario(
+    v.calendario,
+    porOmision: CalendarioConfig.reglaDeIngreso,
+  ),
   'desde': fechaIso(v.desde),
   'hasta': v.hasta == null ? null : fechaIso(v.hasta!),
 };
@@ -409,7 +479,10 @@ Map<String, Object?> filaCompromiso(Compromiso c, {required String hogarId}) =>
       'monto_centavos': c.monto,
       'frecuencia': nombreEnum(c.frecuencia),
       'dias_activos': c.diasActivos,
-      ...filaCalendario(c.calendario),
+      ...filaCalendario(
+        c.calendario,
+        porOmision: CalendarioConfig.reglaDeSalida,
+      ),
       'protegida': c.protegida,
       'prioridad': nombreEnum(c.prioridad),
       'desde': c.desde == null ? null : fechaIso(c.desde!),
@@ -478,7 +551,7 @@ Map<String, Object?> filaDeuda(Deuda d, {required String hogarId}) => {
   'cuenta_pasivo_id': d.cuentaPasivoId,
   'abono_centavos': d.abono,
   'frecuencia': nombreEnum(d.frecuencia),
-  ...filaCalendario(d.calendario),
+  ...filaCalendario(d.calendario, porOmision: CalendarioConfig.reglaDeSalida),
   'minimo_centavos': d.minimo,
   'tasa_anual_pb': d.tasaAnualPuntosBase,
   'prioridad_manual': d.prioridadManual,
@@ -612,6 +685,7 @@ SemanaGuardada semanaDeFila(
     techo: entero(f['techo']),
     activadaPor: texto(f['activada_por']),
     activadaEn: horaDe(f['activada_en']),
+    reaperturas: entero(f['reaperturas']),
     partidas: [
       for (final p in partidas)
         if ('${p['semana_id']}' == id)
@@ -676,12 +750,16 @@ Map<String, Object?> filaCierre(
   'cerrado_en': horaIso(c.cerradoEn),
 };
 
+/// Fila de `fin_cierre_partidas`. Su [id] debe ser estable (sale del cierre
+/// y la partida) para que reintentar no duplique.
 Map<String, Object?> filaCierrePartida(
   String cierreId,
   CierrePartidaGuardada p, {
   required String hogarId,
   required String libroId,
+  required String id,
 }) => {
+  'id': id,
   'cierre_id': cierreId,
   'hogar_id': hogarId,
   'libro_id': libroId,
@@ -691,12 +769,16 @@ Map<String, Object?> filaCierrePartida(
   'al_remanente': p.alRemanente,
 };
 
+/// Fila de `fin_cierre_abonos` (sin `diferido`: lo genera el servidor). Su
+/// [id] debe ser estable (sale del cierre y la deuda).
 Map<String, Object?> filaCierreAbono(
   String cierreId,
   CierreAbonoGuardado a, {
   required String hogarId,
   required String libroId,
+  required String id,
 }) => {
+  'id': id,
   'cierre_id': cierreId,
   'hogar_id': hogarId,
   'libro_id': libroId,

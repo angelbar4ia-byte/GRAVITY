@@ -19,8 +19,8 @@ final class _Falsa extends Herramienta {
     this.error,
     this.pertenencia = Pertenencia.propia,
     this.ambito = AmbitoHerramienta.general,
-    Accion? accion,
-  }) : _accion = accion;
+    this._accion,
+  });
 
   /// Una de Finanzas solo para el Dueño (D3: solo local).
   factory _Falsa.deFinanzas({
@@ -542,6 +542,19 @@ void main() {
       for (final rol in Rol.values.where((r) => r != Rol.cuidador)) {
         expect(soloBandejaEnGravity(rol), isFalse, reason: rol.name);
       }
+    });
+
+    test('D17: la bandeja se resuelve por rol, no con un alcance propio', () {
+      expect(rolesSoloBandejaEnGravity, {Rol.cuidador});
+      // En la matriz, GRAVITY de la cuidadora es restringido: lee y confirma
+      // sus solicitudes, pero no abre GRAVITY desde la navegación ni tiene
+      // lo propio o lo total de los demás roles.
+      final permiso = permisoDe(Rol.cuidador, Modulo.gravity);
+      expect(permiso.alcance, isNot(anyOf(Alcance.total, Alcance.propio)));
+      expect(puede(Rol.cuidador, Modulo.gravity, Accion.leer), isTrue);
+      expect(puede(Rol.cuidador, Modulo.gravity, Accion.escribir), isTrue);
+      expect(puede(Rol.cuidador, Modulo.gravity, Accion.administrar), isFalse);
+      expect(puedeAbrir(Rol.cuidador, Modulo.gravity), isFalse);
     });
 
     test('su única herramienta es abrir Solicitudes, en todo dispositivo', () {

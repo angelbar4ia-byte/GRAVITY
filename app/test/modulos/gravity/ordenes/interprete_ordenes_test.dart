@@ -4,6 +4,7 @@ import 'package:gravity/modulos/gravity/ordenes/texto_ordenes.dart';
 import 'package:gravity/nucleo/contratos/dispositivo.dart';
 import 'package:gravity/nucleo/contratos/roles.dart';
 import 'package:gravity/nucleo/contratos/rutas.dart';
+import 'package:gravity/nucleo/herramientas/herramientas.dart';
 
 /// Ruta que abre [texto] para [rol] en [dispositivo], o `null` si no se
 /// entendió un único destino.
@@ -120,7 +121,11 @@ void main() {
     test('palabras a medias', () {
       final r = InterpreteOrdenes(rol: Rol.dueno).interpretar('abre presu');
       expect(r, isA<OrdenParecida>());
-      expect(opcionesDe(r), [Rutas.finanzas]);
+      // "presupuesto" y "presupuesto de la semana": primero Finanzas.
+      expect(opcionesDe(r), [
+        Rutas.finanzas,
+        RutasDeHerramientas.semanaFinanzas,
+      ]);
     });
 
     test('dos destinos a la vez', () {
@@ -136,7 +141,9 @@ void main() {
         dispositivo: TipoDispositivo.laptop,
       ).interpretar('xyzzy');
       expect(r, isA<OrdenNoEntendida>());
-      expect(opcionesDe(r), hasLength(8));
+      // Todo lo del dueño en la laptop menos la bandeja de la cuidadora.
+      expect(opcionesDe(r), hasLength(herramientasNavegacion.length - 1));
+      expect(opcionesDe(r), isNot(contains(RutasDeHerramientas.solicitudes)));
     });
   });
 
@@ -168,14 +175,68 @@ void main() {
       expect(opcionesDe(r), isNot(contains(Rutas.desarrollador)));
     });
 
-    test('cuidador: solo Cuidados y sus ajustes', () {
+    test('cuidador: solo su bandeja de solicitudes (D18)', () {
+      for (final dispositivo in [...TipoDispositivo.values, null]) {
+        final interprete = InterpreteOrdenes(
+          rol: Rol.cuidador,
+          dispositivo: dispositivo,
+        );
+        expect(interprete.destinos.map((d) => d.nombre), [
+          'gravity.abrir_solicitudes',
+        ], reason: '$dispositivo');
+      }
+      for (final orden in [
+        'abre solicitudes',
+        'solicitudes',
+        'mis recordatorios',
+        'abre la bandeja',
+      ]) {
+        expect(
+          rutaDe(orden, rol: Rol.cuidador),
+          RutasDeHerramientas.solicitudes,
+          reason: orden,
+        );
+      }
+      // Nada de dinero, de la familia ni de los demás módulos desde GRAVITY
+      // (Cuidados y sus ajustes los abre desde su navegación).
       final interprete = InterpreteOrdenes(rol: Rol.cuidador);
-      expect(interprete.destinos.map((d) => d.ruta), [
-        Rutas.cuidados,
-        Rutas.ajustes,
-      ]);
-      expect(rutaDe('papá', rol: Rol.cuidador), Rutas.cuidados);
-      expect(rutaDe('abre recetas', rol: Rol.cuidador), isNull);
+      for (final orden in [
+        'abre presupuesto',
+        'registrar gasto',
+        'mi semana',
+        'dinero',
+        'presupusto',
+        'abre hábitos',
+        'abre recetas',
+        'papá',
+        'inicio',
+        'ajustes',
+      ]) {
+        final r = interprete.interpretar(orden);
+        expect(r, isNot(isA<OrdenEntendida>()), reason: orden);
+        expect(
+          opcionesDe(r),
+          everyElement(RutasDeHerramientas.solicitudes),
+          reason: orden,
+        );
+      }
+      expect(
+        interprete.sugerir('a').map((s) => s.destino.ruta),
+        everyElement(RutasDeHerramientas.solicitudes),
+      );
+    });
+
+    test('casa: sin Finanzas ni la bandeja', () {
+      final interprete = InterpreteOrdenes(rol: Rol.casa);
+      final nombres = interprete.destinos.map((d) => d.nombre).toList();
+      expect(nombres, isNot(contains('gravity.abrir_solicitudes')));
+      expect(
+        interprete.destinos.where((d) => d.modulo == Modulo.finanzas),
+        isEmpty,
+      );
+      for (final orden in ['abre presupuesto', 'registrar gasto', 'mi semana']) {
+        expect(rutaDe(orden, rol: Rol.casa), isNull, reason: orden);
+      }
     });
 
     test('puedeVer inyectable', () {
@@ -250,12 +311,173 @@ void main() {
     });
   });
 
+  group('Finanzas (Fase 1)', () {
+    /// Herramienta que entiende [texto] para [rol], o `null`.
+    HerramientaNavegacion? destinoDe(
+      String texto, {
+      Rol rol = Rol.dueno,
+      bool esMaestra = false,
+    }) => switch (InterpreteOrdenes(
+      rol: rol,
+      dispositivo: TipoDispositivo.laptop,
+      esMaestra: esMaestra,
+    ).interpretar(texto)) {
+      OrdenEntendida(:final destino) => destino,
+      _ => null,
+    };
+
+    test('"abre presupuesto" y "abre finanzas" abren Finanzas', () {
+      for (final rol in [Rol.dueno, Rol.coadministrador]) {
+        for (final orden in [
+          'abre presupuesto',
+          'abre finanzas',
+          'Abre el presupuesto',
+          'ir a finanzas',
+          'mi dinero',
+        ]) {
+          expect(
+            destinoDe(orden, rol: rol)?.nombre,
+            'finanzas.abrir',
+            reason: '$orden / ${rol.name}',
+          );
+        }
+      }
+    });
+
+    test('"registrar gasto" abre la hoja del gasto (no guarda nada)', () {
+      for (final rol in [Rol.dueno, Rol.coadministrador]) {
+        for (final orden in [
+          'registrar gasto',
+          'Registra un gasto',
+          'nuevo gasto',
+          'anota gasto',
+          'gasto',
+        ]) {
+          final destino = destinoDe(orden, rol: rol);
+          expect(
+            destino?.nombre,
+            'finanzas.registrar_gasto',
+            reason: '$orden / ${rol.name}',
+          );
+          expect(destino!.hoja, HojaDeRegistro.gasto);
+          expect(destino.escribe, isFalse);
+          expect(destino.soloLocal, isTrue);
+        }
+      }
+    });
+
+    test('"mi semana" abre la semana de Finanzas', () {
+      for (final rol in [Rol.dueno, Rol.coadministrador]) {
+        for (final orden in [
+          'mi semana',
+          'abre mi semana',
+          'presupuesto semanal',
+          'abre el presupuesto de la semana',
+          '¿cuánto me queda?',
+        ]) {
+          expect(
+            destinoDe(orden, rol: rol)?.ruta,
+            RutasDeHerramientas.semanaFinanzas,
+            reason: '$orden / ${rol.name}',
+          );
+        }
+      }
+    });
+
+    test('familiar, cuidador y casa: ninguna orden de Finanzas', () {
+      for (final rol in [Rol.familiar, Rol.cuidador, Rol.casa]) {
+        final interprete = InterpreteOrdenes(
+          rol: rol,
+          dispositivo: TipoDispositivo.laptop,
+        );
+        expect(
+          interprete.destinos.where((d) => d.modulo == Modulo.finanzas),
+          isEmpty,
+          reason: rol.name,
+        );
+        for (final orden in [
+          'abre presupuesto',
+          'abre finanzas',
+          'registrar gasto',
+          'mi semana',
+          'gasto',
+        ]) {
+          final r = interprete.interpretar(orden);
+          expect(r, isNot(isA<OrdenEntendida>()), reason: '$orden / $rol');
+          expect(
+            opcionesDe(r).where((ruta) => ruta.startsWith(Rutas.finanzas)),
+            isEmpty,
+            reason: '$orden / ${rol.name}',
+          );
+        }
+      }
+    });
+
+    test('las sugerencias de Finanzas salen al escribir', () {
+      final s = InterpreteOrdenes(rol: Rol.dueno).sugerir('regis');
+      expect(s.first.destino.nombre, 'finanzas.registrar_gasto');
+      final semana = InterpreteOrdenes(rol: Rol.dueno).sugerir('mi sem');
+      expect(semana.first.destino.ruta, RutasDeHerramientas.semanaFinanzas);
+    });
+  });
+
+  group('Cuenta maestra (D19)', () {
+    test('no recibe nada que escriba o administre lo ajeno', () {
+      for (final rol in [Rol.dueno, Rol.coadministrador]) {
+        final maestra = InterpreteOrdenes(
+          rol: rol,
+          dispositivo: TipoDispositivo.laptop,
+          esMaestra: true,
+        );
+        expect(
+          maestra.destinos.map((d) => d.ruta),
+          isNot(contains(Rutas.desarrollador)),
+          reason: rol.name,
+        );
+        for (final d in maestra.destinos) {
+          expect(
+            d.pertenencia == Pertenencia.ajena && d.accion != Accion.leer,
+            isFalse,
+            reason: '${d.nombre} / ${rol.name}',
+          );
+        }
+        expect(
+          maestra.interpretar('desarrollador'),
+          isNot(isA<OrdenEntendida>()),
+        );
+      }
+    });
+
+    test('lo suyo sigue igual: Finanzas, su semana y la hoja de su gasto', () {
+      final maestra = InterpreteOrdenes(
+        rol: Rol.coadministrador,
+        dispositivo: TipoDispositivo.laptop,
+        esMaestra: true,
+      );
+      for (final (orden, nombre) in [
+        ('abre presupuesto', 'finanzas.abrir'),
+        ('registrar gasto', 'finanzas.registrar_gasto'),
+        ('mi semana', 'finanzas.abrir_semana'),
+      ]) {
+        expect(
+          switch (maestra.interpretar(orden)) {
+            OrdenEntendida(:final destino) => destino.nombre,
+            _ => null,
+          },
+          nombre,
+          reason: orden,
+        );
+      }
+    });
+  });
+
   group('Orden de ejemplo de la ayuda (M6)', () {
     test('nombra un destino que el rol sí ve', () {
       String? ejemplo(Rol rol) => InterpreteOrdenes(rol: rol).ejemplo;
       expect(ejemplo(Rol.dueno), 'abre presupuesto');
+      expect(ejemplo(Rol.coadministrador), 'abre presupuesto');
       expect(ejemplo(Rol.familiar), 'abre hábitos');
-      expect(ejemplo(Rol.cuidador), 'abre cuidados');
+      expect(ejemplo(Rol.cuidador), 'abre solicitudes');
     });
 
     test(

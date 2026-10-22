@@ -65,6 +65,11 @@ final repositorioFinanzasProvider = Provider<RepositorioFinanzas>((ref) {
       personaId: personaId,
       personas: personasDeDemostracion(),
       esMaestra: maestra,
+      // Como `membresias` en el servidor: el dueño ve a todos; los demás, a
+      // sí mismos.
+      adultosConFinanzas: sesion.rol == Rol.dueno
+          ? {IdsDemostracion.dueno, IdsDemostracion.pareja}
+          : {personaId},
     );
     ref.onDispose(repo.cerrar);
     return repo;
@@ -155,16 +160,64 @@ class ContextoFinanzas {
 
   DatosFinanzas get datos => carga.datos;
   String get libroId => libro!.id;
-  bool get puedeEscribir => permiso.escribir;
-  bool get puedeAdministrar => permiso.administrar;
+
+  /// `true` si el libro activo es de la persona: es su titular, miembro o
+  /// albacea vigente (no lo lee como cuenta maestra).
+  bool get esLibroPropio => libro != null && permiso.leer && !permiso.comoMaestra;
+
+  /// Lo que deja la matriz de la interfaz (`puedeSobre`) sobre el libro
+  /// activo: en lo propio, lo de su rol; en lo ajeno, la cuenta maestra solo
+  /// lee (D19).
+  bool _matrizDeja(Accion accion) => permisos.puedeSobre(
+    rol,
+    Modulo.finanzas,
+    accion,
+    esDeLaPersona: esLibroPropio,
+    esMaestra: esMaestra,
+  );
+
+  /// Puede registrar en el libro activo: el espejo de `fin_puede` (papel en
+  /// el libro) **y** la matriz por rol. Si no, no se muestran los botones de
+  /// escribir.
+  bool get puedeEscribir => permiso.escribir && _matrizDeja(Accion.escribir);
+
+  /// Puede cambiar la configuración del libro activo.
+  bool get puedeAdministrar =>
+      permiso.administrar && _matrizDeja(Accion.administrar);
+
+  /// Solo lee el libro activo (la pareja en lo ajeno nunca llega aquí; la
+  /// cuenta maestra en un libro ajeno, sí).
+  bool get soloLectura => !puedeEscribir;
 
   /// Permiso para lo que es del **hogar** (categorías y cuentas de gasto,
-  /// días inhábiles e importaciones): el rol tiene Finanzas (D19).
-  bool get administraHogar =>
-      permisos.puede(rol, Modulo.finanzas, Accion.administrar);
+  /// días inhábiles e importaciones): el rol tiene Finanzas (D19). Lo del
+  /// hogar es de todos sus adultos con Finanzas, también de la maestra.
+  bool get administraHogar => permisos.puedeSobre(
+    rol,
+    Modulo.finanzas,
+    Accion.administrar,
+    esDeLaPersona: true,
+    esMaestra: esMaestra,
+  );
 
-  PermisoLibro permisoEn(Libro l) =>
-      permisoEnLibro(l, personaId, hoy: hoy, esMaestra: esMaestra);
+  PermisoLibro permisoEn(Libro l) {
+    final p = permisoEnLibro(l, personaId, hoy: hoy, esMaestra: esMaestra);
+    final propio = p.leer && !p.comoMaestra;
+    bool deja(Accion a) => permisos.puedeSobre(
+      rol,
+      Modulo.finanzas,
+      a,
+      esDeLaPersona: propio,
+      esMaestra: esMaestra,
+    );
+    return PermisoLibro(
+      leer: p.leer && deja(Accion.leer),
+      escribir: p.escribir && deja(Accion.escribir),
+      administrar: p.administrar && deja(Accion.administrar),
+      enNombreDe: p.enNombreDe,
+      comoMaestra: p.comoMaestra,
+    );
+  }
 
   static ContextoFinanzas armar({
     required CargaFinanzas carga,
@@ -243,12 +296,14 @@ final servicioFinanzasProvider = Provider<ServicioFinanzas>((ref) {
 });
 
 /// La consulta de la cuenta maestra a un libro ajeno queda en la bitácora
-/// **antes** de mostrarlo (D19). Si no se puede registrar, no se muestra.
-final consultaMaestraProvider = FutureProvider.family<bool, String>((
+/// **antes** de mostrarlo (D19; RPC `fin_registrar_consulta_maestra`). Si no
+/// se puede registrar, no se muestra. Se registra una vez por libro mientras
+/// esté abierto; al salir de Finanzas y volver, otra vez.
+final consultaMaestraProvider = FutureProvider.autoDispose.family<bool, String>((
   ref,
   libroId,
 ) async {
-  await ref.read(repositorioFinanzasProvider).registrarConsultaMaestra(libroId);
+  await ref.watch(repositorioFinanzasProvider).registrarConsultaMaestra(libroId);
   return true;
 });
 

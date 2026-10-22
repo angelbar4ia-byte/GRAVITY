@@ -38,7 +38,20 @@ enum SeccionFinanzas {
   final String titulo;
   final IconData icono;
 
-  String get ruta => '${Rutas.finanzas}/$segmento';
+  /// Ruta de la sección. El tablero es el inicio del módulo en la laptop
+  /// (`/finanzas`).
+  String get ruta => this == SeccionFinanzas.tablero
+      ? Rutas.finanzas
+      : '${Rutas.finanzas}/$segmento';
+
+  /// `true` si la sección solo cambia la configuración (la ruta exige
+  /// administrar: `exigeAccion`).
+  bool get esDeConfiguracion => switch (this) {
+    SeccionFinanzas.arranque ||
+    SeccionFinanzas.importar ||
+    SeccionFinanzas.ajustes => true,
+    _ => false,
+  };
 
   /// Si la sección aparece para el contexto (lo que es solo de configurar no
   /// se muestra a quien solo lee).

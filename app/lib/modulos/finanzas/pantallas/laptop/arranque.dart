@@ -5,6 +5,7 @@ library;
 
 import 'package:finanzas_dominio/finanzas_dominio.dart'
     hide Semaforo, formatearCentavos, TipoLibro, puntosBaseEnCien;
+import 'package:finanzas_dominio/finanzas_dominio.dart' as dom show TipoLibro;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -121,11 +122,17 @@ class _AsistenteState extends ConsumerState<_Asistente> {
                   () => DialogoCuenta(contexto: c),
                   key: const ValueKey('arranque-cuenta'),
                 ),
-                if (d.categorias.isEmpty)
+                if (d.categorias.isEmpty && c.administraHogar)
                   TextButton(
+                    key: const ValueKey('arranque-importar'),
                     onPressed: () => context.go(SeccionFinanzas.importar.ruta),
                     child: const Text('Importar las categorías de la plantilla'),
                   ),
+                TextButton(
+                  key: const ValueKey('arranque-libros'),
+                  onPressed: () => context.go(SeccionFinanzas.ajustes.ruta),
+                  child: const Text('Libros compartidos y de papá (albaceas)'),
+                ),
               ],
             ),
           ],
@@ -146,10 +153,24 @@ class _AsistenteState extends ConsumerState<_Asistente> {
               'quincenal, mensual o cada N meses), su día y su neto.',
             ),
             const SizedBox(height: 8),
-            _boton(
-              'Agregar ingreso',
-              () => DialogoIngreso(contexto: c),
-              key: const ValueKey('arranque-ingreso'),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _boton(
+                  'Agregar ingreso',
+                  () => DialogoIngreso(contexto: c),
+                  key: const ValueKey('arranque-ingreso'),
+                ),
+                // Libro de papá (P15): la forma ya va; montos y fechas, no.
+                if (c.libro!.tipo == dom.TipoLibro.representado)
+                  for (final p in PlantillaIngreso.deRepresentado)
+                    _boton(
+                      p.nombre,
+                      () => DialogoIngreso(contexto: c, plantilla: p),
+                      key: ValueKey('arranque-plantilla-${p.nombre}'),
+                    ),
+              ],
             ),
           ],
         ),

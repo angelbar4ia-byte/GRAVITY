@@ -8,7 +8,10 @@ library;
 import 'package:finanzas_dominio/finanzas_dominio.dart';
 import 'package:uuid/uuid.dart';
 
+import '../datos/ids.dart';
 import '../datos/repositorio.dart';
+
+export '../datos/ids.dart' show ClavesId, idEstable;
 
 /// Una línea de un gasto (un ticket con varios rubros se divide por líneas).
 class LineaGasto {
@@ -34,12 +37,6 @@ class ResultadoRegistro {
 /// Motivo de la anulación al deshacer justo después de capturar (F1).
 const motivoDeshacer = 'Deshecho al capturar';
 
-/// Id estable (UUID v5) a partir de una clave: reintentar la misma acción da
-/// el mismo id y no choca con los únicos del servidor (la cola trata un 23505
-/// que no es de la llave como "requiere atención").
-String idEstable(String clave) =>
-    const Uuid().v5(Namespace.url.value, 'gravity:finanzas:$clave');
-
 class ServicioFinanzas {
   ServicioFinanzas({
     required this.repositorio,
@@ -63,7 +60,7 @@ class ServicioFinanzas {
   /// Id de la anulación de [movimientoId]: hay a lo más una por movimiento
   /// (índice único en `anula_a`), así que reintentar "Deshacer" no duplica.
   static String idAnulacionDe(String movimientoId) =>
-      idEstable('anulacion:$movimientoId');
+      idEstable(ClavesId.anulacion(movimientoId));
 
   DatosFinanzas get _d => repositorio.actual?.datos ?? DatosFinanzas.vacio;
   DateTime get _ahora => _reloj();
@@ -282,8 +279,10 @@ class ServicioFinanzas {
         )
         .firstOrNull;
     if (existente != null) return existente.id;
+    // Id estable: si el primer intento creó la cuenta y falló después, el
+    // reintento no choca con el único (libro, nombre).
     final nueva = Cuenta(
-      id: _generarId(),
+      id: idEstable(ClavesId.cuentaDeLibro(libroId, 'origen_ingreso', 'Extras')),
       nombre: 'Extras',
       tipo: TipoCuenta.origenIngreso,
       libroId: libroId,
@@ -320,6 +319,13 @@ class ServicioFinanzas {
       throw const ErrorFinanzas('Una de las cuentas debe ser de un libro.');
     }
     libros.forEach(_exigirEscribir);
+    if (libros.toSet().length > 1 &&
+        tipo != TipoMovimiento.transferencia &&
+        tipo != TipoMovimiento.pagoDeuda) {
+      throw const ErrorFinanzas(
+        'Solo una transferencia o un pago de deuda va de un libro a otro.',
+      );
+    }
     final representado = libros
         .map(_libro)
         .where((l) => l.tipo == TipoLibro.representado)
@@ -582,13 +588,26 @@ class ServicioFinanzas {
     }
     String? cuentaId;
     if (padre == null) {
-      final cuenta = Cuenta(
-        id: _generarId(),
-        nombre: limpio,
-        tipo: TipoCuenta.deGasto,
-      );
-      await repositorio.guardarCuentas([cuenta]);
-      cuentaId = cuenta.id;
+      // Cada categoría principal es una cuenta de gasto del hogar (5.2). Si
+      // ya hay una con ese nombre (p. ej. de un intento anterior), se usa.
+      final existente = _d.cuentas
+          .where(
+            (c) =>
+                c.tipo == TipoCuenta.deGasto &&
+                normalizarNombre(c.nombre) == normalizarNombre(limpio),
+          )
+          .firstOrNull;
+      if (existente != null) {
+        cuentaId = existente.id;
+      } else {
+        final cuenta = Cuenta(
+          id: idEstable(ClavesId.cuentaDeGasto(hogarId, limpio)),
+          nombre: limpio,
+          tipo: TipoCuenta.deGasto,
+        );
+        await repositorio.guardarCuentas([cuenta]);
+        cuentaId = cuenta.id;
+      }
     }
     final categoria = Categoria(
       id: _generarId(),
@@ -627,7 +646,7 @@ class ServicioFinanzas {
         lectura,
         existentes: _d.categorias,
         cuentasExistentes: _d.cuentas,
-        idPara: (clave) => idEstable('$hogarId:$clave'),
+        idPara: (clave) => idEstable(ClavesId.importacion(hogarId, clave)),
       );
 
   /// Importa la hoja Categorías: crea las cuentas de gasto, después el árbol
@@ -685,13 +704,37 @@ class ServicioFinanzas {
     } on ArgumentError catch (e) {
       throw ErrorFinanzas('${e.message}');
     }
-    final origen = Cuenta(
-      id: _generarId(),
-      nombre: nombre.trim(),
-      tipo: TipoCuenta.origenIngreso,
-      libroId: libroId,
-    );
-    await repositorio.guardarCuentas([origen]);
+    // La cuenta de origen del ingreso (5.1) lleva su nombre; con id estable,
+    // un reintento no choca con el único (libro, nombre).
+    final usadas = {for (final i in _d.ingresosDe(libroId)) i.cuentaOrigenId};
+    final previa = _d
+        .cuentasDe(libroId)
+        .where(
+          (c) =>
+              c.tipo == TipoCuenta.origenIngreso &&
+              !usadas.contains(c.id) &&
+              normalizarNombre(c.nombre) == normalizarNombre(nombre),
+        )
+        .firstOrNull;
+    if (previa == null &&
+        _d.cuentasDe(libroId).any(
+          (c) => normalizarNombre(c.nombre) == normalizarNombre(nombre),
+        )) {
+      throw const ErrorFinanzas(
+        'Ya hay una cuenta con ese nombre en el libro: usa otro nombre.',
+      );
+    }
+    final origen =
+        previa ??
+        Cuenta(
+          id: idEstable(
+            ClavesId.cuentaDeLibro(libroId, 'origen_ingreso', nombre.trim()),
+          ),
+          nombre: nombre.trim(),
+          tipo: TipoCuenta.origenIngreso,
+          libroId: libroId,
+        );
+    if (previa == null) await repositorio.guardarCuentas([origen]);
     final libro = _libro(libroId);
     final id = _generarId();
     final ingreso = Ingreso(
@@ -823,28 +866,60 @@ class ServicioFinanzas {
 
   // ------------------------------------------------------------------- libros
 
-  Future<void> crearLibroCompartido(String nombre, List<String> otros) {
+  /// Crea un libro compartido (p. ej. "Gastos de la casa"): quien lo crea
+  /// queda como miembro y agrega a [otros] (2 o más adultos). El id sale del
+  /// nombre: tocar dos veces o reintentar no crea otro.
+  Future<String> crearLibroCompartido(String nombre, List<String> otros) async {
+    if (esMaestra && !_tieneLibroPropio) {
+      throw const ErrorFinanzas('La cuenta maestra solo lee.');
+    }
     if (nombre.trim().isEmpty) throw const ErrorFinanzas('Escribe un nombre.');
-    if (otros.isEmpty) {
+    final demas = [
+      for (final p in {...otros})
+        if (p != personaId) p,
+    ];
+    if (demas.isEmpty) {
       throw const ErrorFinanzas('Un libro compartido tiene 2 o más miembros.');
     }
-    return repositorio.crearLibroCompartido(
-      id: _generarId(),
+    final id = idEstable(ClavesId.libroCompartido(hogarId, nombre.trim()));
+    await repositorio.crearLibroCompartido(
+      id: id,
       nombre: nombre.trim(),
-      otrosMiembros: otros,
+      otrosMiembros: demas,
     );
+    return id;
   }
 
-  Future<void> crearLibroRepresentado(String nombreTitular, {String? suplenteId}) {
+  /// Crea el libro de una persona representada (papá, sin cuenta; D19):
+  /// quien lo crea queda como albacea y [suplenteId], si se da, como
+  /// suplente. Lo hace el dueño (RPC `fin_crear_libro_representado`). El id
+  /// sale del nombre: reintentar no crea otra persona.
+  Future<String> crearLibroRepresentado(
+    String nombreTitular, {
+    String? nombreLibro,
+    String? suplenteId,
+  }) async {
     if (nombreTitular.trim().isEmpty) {
       throw const ErrorFinanzas('Escribe el nombre de la persona.');
     }
-    return repositorio.crearLibroRepresentado(
-      id: _generarId(),
+    if (suplenteId == personaId) {
+      throw const ErrorFinanzas('El suplente es otra persona.');
+    }
+    final id = idEstable(
+      ClavesId.libroRepresentado(hogarId, nombreTitular.trim()),
+    );
+    await repositorio.crearLibroRepresentado(
+      id: id,
       nombreTitular: nombreTitular.trim(),
+      nombreLibro: nombreLibro?.trim(),
       suplenteId: suplenteId,
     );
+    return id;
   }
+
+  bool get _tieneLibroPropio => _d.libros.any(
+    (l) => l.papelDe(personaId, hoy) != null,
+  );
 
   // --------------------------------------------------------------------- plan
 
@@ -858,14 +933,16 @@ class ServicioFinanzas {
       throw const ErrorFinanzas('Esa semana ya está activada.');
     }
     final plan = armarPlanDelLibro(_d, libroId, semana);
+    // Ids estables: la semana es única por (libro, lunes) y sus partidas por
+    // (semana, origen); reintentar una activación a medias no choca.
     final foto = fotoDelPlan(
       plan,
-      id: _generarId(),
+      id: idEstable(ClavesId.semana(libroId, '${semana.inicio}')),
       libroId: libroId,
       arrastrePorOrigen: arrastresPorOrigen(_d, libroId, semana),
       activadaPor: personaId,
       activadaEn: _ahora,
-      generarId: _generarId,
+      idPara: idEstable,
     );
     await repositorio.guardarSemana(foto);
     return foto;
@@ -887,15 +964,23 @@ class ServicioFinanzas {
     if (v.estado == EstadoSemana.cerrada) {
       throw const ErrorFinanzas('La semana ya está cerrada.');
     }
-    final cierre = cierreDeLaVista(
-      v,
-      _d,
-      id: _generarId(),
-      accion: accion,
-      cerradoPor: personaId,
-      cerradoEn: _ahora,
-      conPendientes: conPendientes,
-    );
+    final g = v.guardada!;
+    final version = g.versionDelSiguienteCierre;
+    final id = idEstable(ClavesId.cierre(g.id, version));
+    // Si un intento anterior ya guardó el cierre de esta versión (y falló al
+    // cerrar la semana), se reusa tal cual: mismo id y mismo contenido.
+    final previo = _d.cierres.where((x) => x.id == id).firstOrNull;
+    final cierre =
+        previo ??
+        cierreDeLaVista(
+          v,
+          _d,
+          id: id,
+          accion: accion,
+          cerradoPor: personaId,
+          cerradoEn: _ahora,
+          conPendientes: conPendientes,
+        );
     await repositorio.agregarCierre(cierre, libroId: libroId);
     return cierre;
   }
@@ -936,15 +1021,22 @@ class ServicioFinanzas {
   /// Aplica el remanente que propuso el cierre: abono extra a cada deuda (pago
   /// de deuda) y ahorro (transferencia). Solo con la confirmación de la
   /// persona (5.6 bis, punto 6, regla 6).
+  ///
+  /// Con [cierreId], los movimientos llevan ids estables (uno por deuda y uno
+  /// de ahorro por cierre): aplicar dos veces el mismo cierre no duplica.
   Future<List<Movimiento>> aplicarRemanente({
     required String libroId,
     required DestinoRemanente destino,
     required String cuentaOrigenId,
     String? cuentaAhorroId,
     String? motivo,
+    String? cierreId,
   }) async {
     _exigirEscribir(libroId);
     final quien = _quien(libroId, motivo);
+    String idPara(String destino) => cierreId == null
+        ? _generarId()
+        : idEstable(ClavesId.remanente(cierreId, destino));
     final movimientos = <Movimiento>[];
     for (final a in destino.abonosExtra) {
       final deuda = _d.deudas.where((x) => x.id == a.deuda.id).firstOrNull;
@@ -952,7 +1044,7 @@ class ServicioFinanzas {
       if (pasivo == null || a.monto <= 0) continue;
       movimientos.add(
         Movimiento(
-          id: _generarId(),
+          id: idPara(a.deuda.id),
           tipo: TipoMovimiento.pagoDeuda,
           fecha: hoy,
           registradoEn: _ahora,
@@ -970,7 +1062,7 @@ class ServicioFinanzas {
     if (destino.ahorro > 0 && cuentaAhorroId != null) {
       movimientos.add(
         Movimiento(
-          id: _generarId(),
+          id: idPara('ahorro'),
           tipo: TipoMovimiento.transferencia,
           fecha: hoy,
           registradoEn: _ahora,
@@ -986,7 +1078,13 @@ class ServicioFinanzas {
       );
     }
     if (movimientos.isEmpty) return movimientos;
-    await repositorio.agregarMovimientos(movimientos);
+    // Los que ya están (mismo id) no se repiten.
+    final ya = {for (final m in _d.movimientos) m.id};
+    final nuevos = [
+      for (final m in movimientos)
+        if (!ya.contains(m.id)) m,
+    ];
+    if (nuevos.isNotEmpty) await repositorio.agregarMovimientos(nuevos);
     return movimientos;
   }
 
@@ -1009,7 +1107,14 @@ class ServicioFinanzas {
     await repositorio.guardarOcurrencia(
       existente?.conEstado(estado) ??
           Ocurrencia(
-            id: _generarId(),
+            id: idEstable(
+              ClavesId.ocurrencia(
+                libroId,
+                v.origen.name,
+                v.origenId,
+                '${v.fecha.programada}',
+              ),
+            ),
             libroId: libroId,
             origen: v.origen,
             origenId: v.origenId,

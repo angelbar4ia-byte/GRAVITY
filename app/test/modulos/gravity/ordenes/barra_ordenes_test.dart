@@ -1,32 +1,47 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gravity/app/navegacion.dart' show RutasApp, TipoRegistro;
+import 'package:gravity/app/pantallas/registro_rapido.dart' show llaveRegistro;
+import 'package:gravity/app/sesion_efectiva.dart';
 import 'package:gravity/modulos/gravity/ordenes/barra_ordenes.dart';
 import 'package:gravity/nucleo/contratos/dispositivo.dart';
 import 'package:gravity/nucleo/contratos/roles.dart';
 import 'package:gravity/nucleo/contratos/rutas.dart';
+import 'package:gravity/nucleo/herramientas/herramientas.dart';
 
 void _sinNavegar(String ruta) {}
 
-/// La barra abajo, como en la pantalla principal de la laptop.
+/// La barra abajo, como en la pantalla principal de la laptop. La marca de
+/// cuenta maestra sale de la sesión ([esCuentaMaestraProvider]) salvo que la
+/// barra la reciba en [esMaestraDelWidget].
 Widget _app(
   Rol rol,
   List<String> rutas, {
   TipoDispositivo? dispositivo = TipoDispositivo.laptop,
-}) => MaterialApp(
-  home: Scaffold(
-    body: Column(
-      children: [
-        const Expanded(child: Center(child: Text('Núcleo'))),
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: BarraOrdenes(
-            rol: rol,
-            onNavegar: rutas.add,
-            dispositivo: dispositivo,
+  bool esMaestraEnSesion = false,
+  bool? esMaestraDelWidget,
+  void Function(HojaDeRegistro hoja)? onAbrirHoja,
+}) => ProviderScope(
+  overrides: [esCuentaMaestraProvider.overrideWithValue(esMaestraEnSesion)],
+  child: MaterialApp(
+    home: Scaffold(
+      body: Column(
+        children: [
+          const Expanded(child: Center(child: Text('Núcleo'))),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: BarraOrdenes(
+              rol: rol,
+              onNavegar: rutas.add,
+              dispositivo: dispositivo,
+              esMaestra: esMaestraDelWidget,
+              onAbrirHoja: onAbrirHoja,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     ),
   ),
 );
@@ -158,7 +173,7 @@ void main() {
     expect(_ayuda(tester), isNot(contains('presupuesto')));
     await tester.pumpWidget(_app(Rol.cuidador, []));
     await tester.pump();
-    expect(_ayuda(tester), contains('«abre cuidados»'));
+    expect(_ayuda(tester), contains('«abre solicitudes»'));
   });
 
   testWidgets('flechas para elegir y Enter para abrir', (tester) async {
@@ -201,5 +216,123 @@ void main() {
     await tester.pumpWidget(_app(Rol.familiar, []));
     await tester.pump();
     expect(find.text('Abrir Finanzas'), findsNothing);
+  });
+
+  group('Finanzas (Fase 1)', () {
+    testWidgets('"registrar gasto" abre la hoja: no navega ni guarda nada', (
+      tester,
+    ) async {
+      final rutas = <String>[];
+      final hojas = <HojaDeRegistro>[];
+      await tester.pumpWidget(
+        _app(Rol.coadministrador, rutas, onAbrirHoja: hojas.add),
+      );
+      await _escribir(tester, 'registrar gasto');
+      await _enviar(tester);
+      expect(hojas, [HojaDeRegistro.gasto]);
+      expect(rutas, isEmpty);
+      expect(_textoDelCampo(tester), isEmpty);
+    });
+
+    testWidgets('sin hoja conectada, en la laptop abre el registro rápido en '
+        'un diálogo (como Ctrl + N)', (tester) async {
+      final rutas = <String>[];
+      await tester.pumpWidget(_app(Rol.dueno, rutas));
+      await _escribir(tester, 'registrar gasto');
+      await _enviar(tester);
+      await tester.pumpAndSettle();
+      expect(find.byType(Dialog), findsOneWidget);
+      expect(find.byKey(llaveRegistro(TipoRegistro.gasto)), findsOneWidget);
+      expect(rutas, isEmpty);
+    });
+
+    testWidgets('en el teléfono abre el registro rápido en una hoja inferior', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _app(Rol.dueno, [], dispositivo: TipoDispositivo.telefono),
+      );
+      await _escribir(tester, 'nuevo gasto');
+      await _enviar(tester);
+      await tester.pumpAndSettle();
+      expect(find.byType(BottomSheet), findsOneWidget);
+      expect(find.byKey(llaveRegistro(TipoRegistro.gasto)), findsOneWidget);
+    });
+
+    testWidgets('"mi semana" abre la semana de Finanzas', (tester) async {
+      final rutas = <String>[];
+      await tester.pumpWidget(_app(Rol.dueno, rutas));
+      await _escribir(tester, 'mi semana');
+      await _enviar(tester);
+      expect(rutas, [RutasDeHerramientas.semanaFinanzas]);
+    });
+
+    testWidgets('sugiere "Registrar gasto" y "Presupuesto de la semana"', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_app(Rol.dueno, []));
+      await _escribir(tester, 'regis');
+      expect(find.text('Registrar gasto'), findsOneWidget);
+      await _escribir(tester, 'mi sem');
+      expect(find.text('Abrir Presupuesto de la semana'), findsOneWidget);
+    });
+  });
+
+  group('Cuidadora (D18)', () {
+    testWidgets('solo le ofrece su bandeja de solicitudes', (tester) async {
+      final rutas = <String>[];
+      await tester.pumpWidget(_app(Rol.cuidador, rutas));
+      await _escribir(tester, 'abre ');
+      expect(find.text('Abrir Solicitudes'), findsOneWidget);
+      expect(find.byType(ListTile), findsOneWidget);
+      await _escribir(tester, 'abre presupuesto');
+      await _enviar(tester);
+      expect(rutas, isEmpty);
+      expect(
+        find.textContaining('No entendí «abre presupuesto»'),
+        findsOneWidget,
+      );
+      expect(find.text('Abrir Finanzas'), findsNothing);
+      await tester.tap(find.text('Abrir Solicitudes'));
+      await tester.pump();
+      expect(rutas, [RutasApp.solicitudes]);
+    });
+  });
+
+  group('Cuenta maestra (D19)', () {
+    testWidgets('lee la marca de la sesión: sin Desarrollador', (
+      tester,
+    ) async {
+      final rutas = <String>[];
+      await tester.pumpWidget(_app(Rol.dueno, rutas, esMaestraEnSesion: true));
+      await _escribir(tester, 'desa');
+      expect(find.text('Abrir Desarrollador'), findsNothing);
+      await _escribir(tester, 'desarrollador');
+      await _enviar(tester);
+      expect(rutas, isEmpty);
+      // Lo suyo sigue igual.
+      await _escribir(tester, 'abre presupuesto');
+      await _enviar(tester);
+      expect(rutas, [Rutas.finanzas]);
+    });
+
+    testWidgets('la marca del widget manda sobre la de la sesión', (
+      tester,
+    ) async {
+      final rutas = <String>[];
+      await tester.pumpWidget(
+        _app(Rol.dueno, rutas, esMaestraDelWidget: true),
+      );
+      await _escribir(tester, 'desarrollador');
+      await _enviar(tester);
+      expect(rutas, isEmpty);
+      await tester.pumpWidget(
+        _app(Rol.dueno, rutas, esMaestraDelWidget: false),
+      );
+      await tester.pump();
+      await _escribir(tester, 'desarrollador');
+      await _enviar(tester);
+      expect(rutas, [Rutas.desarrollador]);
+    });
   });
 }

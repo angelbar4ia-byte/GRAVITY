@@ -17,7 +17,9 @@ class CargaFinanzas {
   const CargaFinanzas({
     required this.datos,
     this.esMaestra = false,
+    this.cuentaMaestra,
     this.personas = const {},
+    this.adultosConFinanzas = const {},
     this.desdeCopia = false,
     this.movimientosEnCola = const {},
   });
@@ -28,8 +30,18 @@ class CargaFinanzas {
   /// en lo ajeno.
   final bool esMaestra;
 
+  /// Nombre de quien tiene la cuenta maestra del hogar, si existe (D19:
+  /// cada persona ve en Ajustes que existe).
+  final String? cuentaMaestra;
+
   /// Nombre visible de cada persona que se puede ver (id → nombre).
   final Map<String, String> personas;
+
+  /// Personas del hogar con un rol con Finanzas (dueño y coadministrador)
+  /// que la sesión puede ver: las que pueden ser miembros de un libro
+  /// compartido o suplentes del libro de papá. El dueño las ve todas; los
+  /// demás, solo a sí mismos.
+  final Set<String> adultosConFinanzas;
 
   /// `true` si no hubo conexión y se muestra lo último que se cargó.
   final bool desdeCopia;
@@ -46,7 +58,9 @@ class CargaFinanzas {
   }) => CargaFinanzas(
     datos: datos ?? this.datos,
     esMaestra: esMaestra ?? this.esMaestra,
+    cuentaMaestra: cuentaMaestra,
     personas: personas ?? this.personas,
+    adultosConFinanzas: adultosConFinanzas,
     desdeCopia: desdeCopia ?? this.desdeCopia,
     movimientosEnCola: movimientosEnCola ?? this.movimientosEnCola,
   );

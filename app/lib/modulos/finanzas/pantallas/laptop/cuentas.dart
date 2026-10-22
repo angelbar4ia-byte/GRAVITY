@@ -117,10 +117,27 @@ class _CuentasState extends ConsumerState<_Cuentas> {
                   _Renglon('Pasivos', balance.pasivos),
                   _Renglon('Patrimonio', balance.patrimonio),
                   _Renglon('Disponible (efectivo y bancos)', vista.disponible()),
-                  if (balance.entreLibros != 0)
-                    _Renglon('Aportaciones con otros libros', balance.entreLibros),
+                  const Divider(),
+                  // Cuadre del libro (D19): las aportaciones entre libros
+                  // cambian el patrimonio sin pasar por el resultado.
+                  _Renglon('Patrimonio inicial', balance.patrimonioInicial),
+                  _Renglon('+ Resultado (ingresos − gastos)', balance.resultadoAcumulado),
+                  if (balance.ajustes != 0)
+                    _Renglon('+ Ajustes de conciliación', balance.ajustes),
+                  if (balance.aportacionesRecibidas != 0)
+                    _Renglon(
+                      '+ Aportaciones recibidas de otros libros',
+                      balance.aportacionesRecibidas,
+                    ),
+                  if (balance.aportacionesEntregadas != 0)
+                    _Renglon(
+                      '− Aportaciones entregadas a otros libros',
+                      balance.aportacionesEntregadas,
+                    ),
+                  _Renglon('= Patrimonio', balance.patrimonioEsperado),
                   const SizedBox(height: 8),
                   Semaforo(
+                    key: const ValueKey('cuentas-cuadre'),
                     estado: balance.cuadra ? EstadoSemaforo.verde : EstadoSemaforo.rojo,
                     etiqueta: balance.cuadra ? 'Cuadra' : 'Descuadre',
                   ),

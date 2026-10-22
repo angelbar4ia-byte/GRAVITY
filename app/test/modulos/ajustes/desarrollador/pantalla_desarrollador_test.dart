@@ -110,16 +110,6 @@ void main() {
         find.textContaining('OpenAPI $versionEspecificacion'),
         findsOneWidget,
       );
-      for (final g in gruposOperaciones) {
-        final titulo = find.text('${g.nombre} (${g.operaciones.length})');
-        await tester.scrollUntilVisible(
-          titulo,
-          300,
-          scrollable: find.byType(Scrollable).first,
-        );
-        expect(titulo, findsOneWidget);
-      }
-
       // Una operación que escribe y nunca pasa por la IA.
       final crearHogar = find.byKey(const ValueKey('operacion-crearHogar'));
       await tester.scrollUntilVisible(
@@ -140,7 +130,8 @@ void main() {
         findsOneWidget,
       );
 
-      // Una herramienta de navegación: no escribe y sí puede verla la IA.
+      // Una herramienta de navegación de Finanzas: no escribe y, como todo
+      // Finanzas, nunca pasa por la IA (D3).
       final finanzas = find.byKey(
         const ValueKey('operacion-herramientaFinanzasAbrir'),
       );
@@ -155,7 +146,48 @@ void main() {
         findsOneWidget,
       );
       expect(enFinanzas(find.text('Pide confirmación')), findsNothing);
-      expect(enFinanzas(find.text('Nunca pasa por la IA')), findsNothing);
+      expect(enFinanzas(find.text('Nunca pasa por la IA')), findsOneWidget);
+
+      // Una de otro módulo: no escribe y sí puede verla la IA.
+      final habitos = find.byKey(
+        const ValueKey('operacion-herramientaHabitosAbrir'),
+      );
+      await tester.scrollUntilVisible(
+        habitos,
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      Finder enHabitos(Finder f) => find.descendant(of: habitos, matching: f);
+      expect(enHabitos(find.text('Pide confirmación')), findsNothing);
+      expect(enHabitos(find.text('Nunca pasa por la IA')), findsNothing);
+
+      // La bandeja de la cuidadora (D18), de la Fase 1.
+      final bandeja = find.byKey(
+        const ValueKey('operacion-herramientaGravityAbrirSolicitudes'),
+      );
+      await tester.scrollUntilVisible(
+        bandeja,
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      Finder enBandeja(Finder f) => find.descendant(of: bandeja, matching: f);
+      expect(enBandeja(find.text('Roles: Cuidador')), findsOneWidget);
+      expect(enBandeja(find.text('Fase 1')), findsOneWidget);
+
+      // Cada grupo con su número de operaciones (Finanzas tiene su grupo).
+      expect(
+        gruposOperaciones.map((g) => g.nombre),
+        contains('Base de datos · Finanzas'),
+      );
+      for (final g in gruposOperaciones) {
+        final titulo = find.text('${g.nombre} (${g.operaciones.length})');
+        await tester.scrollUntilVisible(
+          titulo,
+          600,
+          scrollable: find.byType(Scrollable).first,
+        );
+        expect(titulo, findsOneWidget);
+      }
     });
   });
 

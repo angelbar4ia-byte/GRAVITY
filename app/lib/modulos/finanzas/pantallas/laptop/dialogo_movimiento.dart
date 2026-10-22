@@ -135,7 +135,6 @@ class _DialogoMovimientoState extends ConsumerState<DialogoMovimiento> {
     if (!(_forma.currentState?.validate() ?? false)) return;
     setState(() => _guardando = true);
     final servicio = ref.read(servicioFinanzasProvider);
-    final mensajero = ScaffoldMessenger.of(context);
     final navegador = Navigator.of(context);
     final motivo = _motivo.text.trim().isEmpty ? null : _motivo.text.trim();
     try {
@@ -187,7 +186,7 @@ class _DialogoMovimientoState extends ConsumerState<DialogoMovimiento> {
             motivo: motivo,
           );
       }
-      avisarGuardado(mensajero, r, servicio);
+      if (mounted) avisarGuardado(context, r, servicio);
       navegador.pop();
     } catch (e) {
       if (mounted) {

@@ -94,6 +94,12 @@ class ParametrosFinanzas {
 
 /// Cómo se guarda un calendario de pago (`forma`, `dia_semana`, `dias_mes`,
 /// `fecha_ancla`, `intervalo_meses` y `regla_inhabil`).
+///
+/// La regla de día inhábil es **por origen** (regla 5 de 4.5; P13): si no se
+/// elige ([reglaElegida] nula), un **ingreso** pasa al siguiente día hábil y
+/// un **compromiso** o una **deuda** se queda en su fecha (`sin_cambio`,
+/// como el `default` de `fin_compromisos` y `fin_deudas`). Solo la caja se
+/// configura con `siguiente_dia_habil`.
 class CalendarioConfig {
   final FormaPago forma;
 
@@ -108,7 +114,10 @@ class CalendarioConfig {
 
   /// Cada N meses: 1, 2, 3, 6 o 12.
   final int? intervaloMeses;
-  final ReglaDiaInhabil regla;
+
+  /// Regla que eligió la persona; nula = la de por omisión de quien usa el
+  /// calendario ([reglaPara]).
+  final ReglaDiaInhabil? reglaElegida;
 
   const CalendarioConfig({
     required this.forma,
@@ -116,56 +125,77 @@ class CalendarioConfig {
     this.diasMes = const [],
     this.fechaAncla,
     this.intervaloMeses,
-    required this.regla,
-  });
+    ReglaDiaInhabil? regla,
+  }) : reglaElegida = regla;
 
-  const CalendarioConfig.semanal(
-    int this.diaSemana, {
-    this.regla = ReglaDiaInhabil.siguienteDiaHabil,
-  }) : forma = FormaPago.semanal,
-       diasMes = const [],
-       fechaAncla = null,
-       intervaloMeses = null;
+  const CalendarioConfig.semanal(int this.diaSemana, {ReglaDiaInhabil? regla})
+    : forma = FormaPago.semanal,
+      diasMes = const [],
+      fechaAncla = null,
+      intervaloMeses = null,
+      reglaElegida = regla;
 
   const CalendarioConfig.catorcenal(
     Fecha this.fechaAncla, {
-    this.regla = ReglaDiaInhabil.siguienteDiaHabil,
+    ReglaDiaInhabil? regla,
   }) : forma = FormaPago.catorcenal,
        diaSemana = null,
        diasMes = const [],
-       intervaloMeses = null;
+       intervaloMeses = null,
+       reglaElegida = regla;
 
   /// Quincenal: por defecto el 15 y el último día.
   const CalendarioConfig.quincenal({
     this.diasMes = const [15, 0],
-    this.regla = ReglaDiaInhabil.siguienteDiaHabil,
+    ReglaDiaInhabil? regla,
   }) : forma = FormaPago.quincenal,
        diaSemana = null,
        fechaAncla = null,
-       intervaloMeses = null;
+       intervaloMeses = null,
+       reglaElegida = regla;
 
   /// Mensual en uno o dos días fijos (por ejemplo, 1 y 11).
-  const CalendarioConfig.mensual(
-    this.diasMes, {
-    this.regla = ReglaDiaInhabil.siguienteDiaHabil,
-  }) : forma = FormaPago.mensual,
-       diaSemana = null,
-       fechaAncla = null,
-       intervaloMeses = null;
+  const CalendarioConfig.mensual(this.diasMes, {ReglaDiaInhabil? regla})
+    : forma = FormaPago.mensual,
+      diaSemana = null,
+      fechaAncla = null,
+      intervaloMeses = null,
+      reglaElegida = regla;
 
   /// Cada [intervaloMeses] meses desde [fechaAncla] (bimestral = 2).
   const CalendarioConfig.cadaMeses(
     Fecha this.fechaAncla,
     int this.intervaloMeses, {
-    this.regla = ReglaDiaInhabil.siguienteDiaHabil,
+    ReglaDiaInhabil? regla,
   }) : forma = FormaPago.cadaMeses,
        diaSemana = null,
-       diasMes = const [];
+       diasMes = const [],
+       reglaElegida = regla;
+
+  /// Regla por omisión de un ingreso: el siguiente día hábil (5.1; decisión
+  /// 44).
+  static const reglaDeIngreso = ReglaDiaInhabil.siguienteDiaHabil;
+
+  /// Regla por omisión de un pago que sale (compromiso o deuda): en su fecha
+  /// (regla 5 de 4.5; P13).
+  static const reglaDeSalida = ReglaDiaInhabil.sinCambio;
+
+  /// La regla elegida o, si no hay, [porOmision].
+  ReglaDiaInhabil reglaPara(ReglaDiaInhabil porOmision) =>
+      reglaElegida ?? porOmision;
+
+  /// La regla de un **ingreso** (por omisión, el siguiente día hábil).
+  ReglaDiaInhabil get regla => reglaPara(reglaDeIngreso);
 
   static DiaDelMes _dia(int d) => d == 0 ? DiaDelMes.ultimo : DiaDelMes(d);
 
-  /// El calendario del dominio. Lanza [ArgumentError] si le falta un dato.
-  CalendarioPago get calendario {
+  /// El calendario del dominio con la regla de un ingreso (o [porOmision]).
+  /// Lanza [ArgumentError] si le falta un dato.
+  CalendarioPago get calendario => calendarioCon(reglaDeIngreso);
+
+  /// El calendario del dominio con la regla elegida o [porOmision].
+  CalendarioPago calendarioCon(ReglaDiaInhabil porOmision) {
+    final regla = reglaPara(porOmision);
     switch (forma) {
       case FormaPago.semanal:
         return CalendarioPago.semanal(
@@ -204,14 +234,16 @@ class CalendarioConfig {
   /// Frecuencia con los mismos pagos al año (para el equivalente semanal).
   Frecuencia get frecuencia => calendario.frecuencia;
 
-  /// Fechas de pago (ya ajustadas al día hábil) entre [desde] y [hasta].
+  /// Fechas de pago (ya ajustadas al día hábil) entre [desde] y [hasta], con
+  /// la regla elegida o [porOmision] (por omisión, la de un ingreso).
   List<FechaPago> pagosEntre(
     Fecha desde,
     Fecha hasta,
-    CalendarioDiasInhabiles inhabiles,
-  ) => calendario.fechasDePago(desde, hasta, inhabiles);
+    CalendarioDiasInhabiles inhabiles, {
+    ReglaDiaInhabil porOmision = reglaDeIngreso,
+  }) => calendarioCon(porOmision).fechasDePago(desde, hasta, inhabiles);
 
-  CalendarioConfig conRegla(ReglaDiaInhabil nueva) => CalendarioConfig(
+  CalendarioConfig conRegla(ReglaDiaInhabil? nueva) => CalendarioConfig(
     forma: forma,
     diaSemana: diaSemana,
     diasMes: diasMes,
@@ -482,6 +514,12 @@ class Compromiso {
     }
   }
 
+  /// Regla de día inhábil del compromiso (`fin_compromisos.regla_inhabil`):
+  /// la elegida o, por omisión, **en su fecha** (regla 5 de 4.5).
+  ReglaDiaInhabil get reglaInhabil =>
+      calendario?.reglaPara(CalendarioConfig.reglaDeSalida) ??
+      CalendarioConfig.reglaDeSalida;
+
   /// Pagos entre [desde] y [hasta] (vacío sin calendario).
   List<FechaPago> pagosEntre(
     Fecha inicio,
@@ -491,7 +529,12 @@ class Compromiso {
     final c = calendario;
     if (c == null || !activo) return const [];
     return c
-        .pagosEntre(inicio, fin, inhabiles)
+        .pagosEntre(
+          inicio,
+          fin,
+          inhabiles,
+          porOmision: CalendarioConfig.reglaDeSalida,
+        )
         .where(
           (p) =>
               (desde == null || !p.programada.antesDe(desde!)) &&
@@ -620,6 +663,13 @@ class Deuda {
     }
   }
 
+  /// Regla de día inhábil de la deuda (`fin_deudas.regla_inhabil`): la
+  /// elegida o, por omisión, **en su fecha** (regla 5 de 4.5; solo la caja
+  /// pasa al siguiente día hábil).
+  ReglaDiaInhabil get reglaInhabil =>
+      calendario?.reglaPara(CalendarioConfig.reglaDeSalida) ??
+      CalendarioConfig.reglaDeSalida;
+
   List<FechaPago> pagosEntre(
     Fecha inicio,
     Fecha fin,
@@ -627,7 +677,12 @@ class Deuda {
   ) {
     final c = calendario;
     if (c == null || !activa) return const [];
-    return c.pagosEntre(inicio, fin, inhabiles);
+    return c.pagosEntre(
+      inicio,
+      fin,
+      inhabiles,
+      porOmision: CalendarioConfig.reglaDeSalida,
+    );
   }
 
   Deuda copiar({

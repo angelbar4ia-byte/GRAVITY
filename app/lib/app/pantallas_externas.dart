@@ -3,10 +3,7 @@
 /// Integrado por el arquitecto (Fase 0): cada función devuelve la pantalla real
 /// del agente dueño. Para cambiar una conexión, cambia solo este archivo.
 ///
-/// Fase 1: los huecos de Finanzas devuelven piezas **provisionales**. Al
-/// integrar, el arquitecto agrega
-/// `import '../modulos/finanzas/finanzas.dart' as finanzas;` y reemplaza el
-/// cuerpo de cada uno por la línea de su comentario "Conectar:".
+/// Fase 1: Finanzas ya está conectado (`modulos/finanzas/finanzas.dart`).
 library;
 
 import 'package:flutter/material.dart';
@@ -18,9 +15,9 @@ import '../modulos/ajustes/desarrollador/pantalla_desarrollador.dart';
 import '../modulos/gravity/ordenes/barra_ordenes.dart';
 import '../modulos/gravity/pantalla/hoy_telefono.dart';
 import '../modulos/gravity/pantalla/pantalla_principal.dart';
+import '../modulos/finanzas/finanzas.dart' as finanzas;
 import '../nucleo/contratos/dispositivo.dart';
 import '../nucleo/contratos/roles.dart';
-import 'pantallas/pantalla_proximamente.dart';
 
 /// Pantalla principal de GRAVITY en la laptop (agente diseno).
 Widget pantallaPrincipalGravity({Widget? barraOrdenes}) =>
@@ -56,104 +53,30 @@ Widget? seccionApariencia() => const SeccionApariencia();
 /// laptop a pantalla completa y en el teléfono en la pestaña Finanzas.
 ///
 /// El router ya deja fuera a familiar, cuidador y casa en cualquier ruta bajo
-/// `/finanzas`. Las rutas que además de leer exigen escribir o administrar
-/// (asistente de arranque, importar, ajustes de Finanzas, nueva cuenta…)
-/// llevan `metadata: exigeAccion(Accion.escribir)` (o `administrar`) de
-/// `nucleo/permisos/permisos.dart`: el coadministrador, que solo lee, vuelve
-/// al inicio del módulo.
-///
-/// Conectar: `List<RouteBase> rutasFinanzas() => finanzas.rutasFinanzas();`
-List<RouteBase> rutasFinanzas() => [
-  GoRoute(
-    path: '/',
-    pageBuilder: (context, estado) => NoTransitionPage<void>(
-      key: estado.pageKey,
-      child: PantallaProximamente.modulo(
-        Modulo.finanzas,
-        detalle: 'Tablero, semana, movimientos y cuentas (provisional).',
-      ),
-    ),
-  ),
-];
+/// `/finanzas`. Las rutas que además de leer exigen administrar (asistente
+/// de arranque, importar y ajustes de Finanzas) llevan
+/// `metadata: exigeAccion(Accion.administrar)` de
+/// `nucleo/permisos/permisos.dart`. Desde D19 el coadministrador administra
+/// su libro; lo ajeno (la cuenta maestra) se resuelve en cada pantalla con
+/// `puedeSobre`. Las secciones de la laptop regresan al inicio del módulo en
+/// el teléfono (D4).
+List<RouteBase> rutasFinanzas() => finanzas.rutasFinanzas();
 
 /// Registro rápido de un gasto (F1). La plataforma lo muestra en una hoja
 /// inferior desde el (+) del teléfono y de la tablet, y en un diálogo con
 /// Ctrl + N en la laptop (`pantallas/registro_rapido.dart`). La hoja se
 /// cierra sola con `Navigator.pop` al guardar o cancelar, se ajusta al
 /// teclado y avisa *"Guardado · Deshacer"*.
-///
-/// Conectar: `Widget hojaRegistrarGasto() => finanzas.hojaRegistrarGasto();`
-Widget hojaRegistrarGasto() => const _RegistroProvisional(
-  titulo: 'Registrar gasto',
-  icono: Icons.payments_outlined,
-);
+Widget hojaRegistrarGasto() => finanzas.hojaRegistrarGasto();
 
 /// Registro de un ingreso extra (monto → cuenta → fecha → Guardar), en una
 /// hoja inferior desde el (+), igual que [hojaRegistrarGasto].
-///
-/// Conectar: `Widget hojaIngresoExtra() => finanzas.hojaIngresoExtra();`
-Widget hojaIngresoExtra() => const _RegistroProvisional(
-  titulo: 'Registrar ingreso extra',
-  icono: Icons.savings_outlined,
-);
+Widget hojaIngresoExtra() => finanzas.hojaIngresoExtra();
 
 /// Tabla de Supabase por tipo de registro de la cola sin conexión (p. ej.
 /// `'finanzas.movimiento': 'fin_movimientos'`). La cola sube con
 /// `INSERT … ON CONFLICT (id) DO NOTHING` y la sesión de quien registró.
-///
-/// Conectar:
-/// ```dart
-/// const Map<String, String> tablasColaFinanzas = finanzas.tablasColaFinanzas;
-/// ```
-const Map<String, String> tablasColaFinanzas = {
-  'finanzas.movimiento': 'fin_movimientos',
-};
-
-/// Hoja provisional de un registro de Finanzas.
-class _RegistroProvisional extends StatelessWidget {
-  const _RegistroProvisional({required this.titulo, required this.icono});
-
-  final String titulo;
-  final IconData icono;
-
-  @override
-  Widget build(BuildContext context) {
-    final tema = Theme.of(context);
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Icon(icono, color: tema.colorScheme.primary),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(titulo, style: tema.textTheme.titleLarge),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Llega con el módulo de Finanzas (provisional).',
-              style: tema.textTheme.bodyLarge,
-            ),
-            const SizedBox(height: 24),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cerrar'),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+const Map<String, String> tablasColaFinanzas = finanzas.tablasColaFinanzas;
 
 /// Tema de la app.
 class TemaExterno {

@@ -7,3 +7,6 @@ rules:
   info-license-strict: off
   # Los servidores de herramientas y del puente son de red local (127.0.0.1, homeassistant.local).
   no-server-example.com: error
+  # Los ejemplos (inventados) deben cumplir su esquema: un ejemplo inválido enseña mal la API.
+  no-invalid-media-type-examples: error
+  no-invalid-parameter-examples: error

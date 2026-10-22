@@ -5,7 +5,7 @@ La especificación de las APIs del sistema y su consola local. Se consulta en la
 | Archivo | Qué es |
 |---|---|
 | `openapi.yaml` | La especificación (OpenAPI 3.1). Es la fuente: todo lo demás se genera de aquí. |
-| `redocly.yaml` | Reglas de validación. |
+| `redocly.yaml` | Reglas de validación (los ejemplos deben cumplir su esquema). |
 | `generar_dart.mjs` | Genera `app/lib/modulos/ajustes/desarrollador/operaciones.g.dart` y `swagger/especificacion.js`. |
 | `copiar_swagger.mjs` | Copia los archivos de `swagger-ui-dist` a `swagger/swagger-ui/`. |
 | `swagger/index.html` | Swagger UI local con el estilo Futurista de noche (`gravity.css`). |
@@ -13,10 +13,11 @@ La especificación de las APIs del sistema y su consola local. Se consulta en la
 
 ## Grupos
 
-1. **Herramientas de GRAVITY** (D1, D3): `GET /herramientas`, `POST /herramientas/{nombre}` y una operación por herramienta registrada (Fase 0: navegación).
-2. **Base de datos**: Supabase/PostgREST (`/rest/v1/...`), según `supabase/migrations/`. Cada consulta pasa por RLS.
-3. **Funciones del servidor**: avisos (Fase 2) e intermediario de la IA (Fase 6). Propuestas.
-4. **Puente de casa**: Home Assistant en la red local (Fase 6). Propuestas.
+1. **Herramientas de GRAVITY** (D1, D3): `GET /herramientas`, `POST /herramientas/{nombre}` y una operación por herramienta registrada (Fases 0 y 1: navegación; "registrar gasto" solo abre la hoja de registro).
+2. **Base de datos**: Supabase/PostgREST (`/rest/v1/...`), según `supabase/migrations/20261020000000_base.sql`. Cada consulta pasa por RLS.
+3. **Base de datos · Finanzas** (Fase 1, D19): las 21 tablas `fin_*`, las vistas `fin_v_saldos` y `fin_v_gasto_semana`, y las funciones `fin_puede`, `fin_puede_hogar`, `fin_es_miembro`, `es_cuenta_maestra`, `cuenta_maestra`, `asignar_cuenta_maestra`, `fin_registrar_consulta_maestra`, `fin_crear_libro_representado` y `fin_lunes`, según `supabase/migrations/20261021000000_finanzas_mvp1.sql`. Solo dueño y coadministrador (cada quien su libro); los libros solo-agregar no tienen PATCH ni DELETE; lo que pone el servidor (`recibido_en`, `libro_*` de los movimientos, columnas generadas) va como `readOnly`; los errores `23503`, `23505`, `23514`, `22023`, `55000` y `42501` están en la descripción del grupo. Ejemplos inventados: el hogar de Ana y Alex de `supabase/seed.sql`, con "Papá (ejemplo)".
+4. **Funciones del servidor**: avisos (Fase 2) e intermediario de la IA (Fase 6). Propuestas.
+5. **Puente de casa**: Home Assistant en la red local (Fase 6). Propuestas.
 
 ## Extensiones obligatorias en cada operación
 
@@ -45,7 +46,7 @@ Desde la raíz del repositorio, la validación equivale a:
 npx --yes @redocly/cli@2.59.0 lint api/openapi.yaml --config api/redocly.yaml
 ```
 
-La prueba de Flutter `app/test/modulos/ajustes/desarrollador/operaciones_generadas_test.dart` falla si `operaciones.g.dart` o `especificacion.js` no corresponden a `openapi.yaml` (huella FNV-1a), o si una herramienta registrada en `app/lib/nucleo/herramientas/` no está documentada con los mismos roles, `escribe` y `soloLocal`.
+La prueba de Flutter `app/test/modulos/ajustes/desarrollador/operaciones_generadas_test.dart` falla si `operaciones.g.dart` o `especificacion.js` no corresponden a `openapi.yaml` (huella FNV-1a), si una herramienta registrada en `app/lib/nucleo/herramientas/` no está documentada con los mismos roles, `escribe`, `soloLocal` y fase, si falta una tabla o vista `fin_*` de la migración de Finanzas o una de sus funciones, o si algo de Finanzas no es `x-solo-local` (D3).
 
 ## Al cambiar la especificación
 
@@ -56,7 +57,9 @@ La prueba de Flutter `app/test/modulos/ajustes/desarrollador/operaciones_generad
 Para agregar una herramienta: agrégala al catálogo de su fase en `app/lib/nucleo/herramientas/catalogo.dart`, documéntala aquí como `POST /herramientas/<modulo>.<accion>` con sus extensiones y regenera. El registro la rechaza al arrancar (`ArgumentError`) si:
 
 - declara un rol que la matriz de permisos (`app/lib/nucleo/permisos/permisos.dart`) no deja abrir el módulo (navegación), escribir en él (si `escribe`) o leerlo (D5);
-- es de Finanzas o Cuidados, no es de navegación y no es `soloLocal` (D3).
+- es de Finanzas o Cuidados y no es `soloLocal` (D3), **también las de navegación**;
+- se la declara a la cuidadora y no es de su bandeja de solicitudes (D18; se resuelve por rol, D17);
+- escribe o administra lo ajeno en un módulo donde el rol no tiene alcance total (D19: en Finanzas nadie escribe en el libro de otro). Además, a la cuenta maestra nunca se le ofrece una que escriba o administre lo ajeno.
 
 ## Abrir Swagger UI
 

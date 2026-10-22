@@ -40,7 +40,6 @@ class _HojaIngresoExtraState extends ConsumerState<HojaIngresoExtra> {
 
   Future<void> _guardar(Libro libro) async {
     setState(() => _guardando = true);
-    final mensajero = ScaffoldMessenger.of(context);
     final navegador = Navigator.of(context);
     final servicio = ref.read(servicioFinanzasProvider);
     try {
@@ -52,7 +51,7 @@ class _HojaIngresoExtraState extends ConsumerState<HojaIngresoExtra> {
         nota: _nota.text,
         motivo: libro.tipo == dom.TipoLibro.representado ? _motivo.text : null,
       );
-      avisarGuardado(mensajero, r, servicio);
+      if (mounted) avisarGuardado(context, r, servicio);
       if (navegador.canPop()) navegador.pop();
     } catch (e) {
       if (mounted) {

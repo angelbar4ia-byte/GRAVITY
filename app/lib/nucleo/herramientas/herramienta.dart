@@ -34,8 +34,8 @@ enum AmbitoHerramienta {
 
   /// La bandeja de solicitudes y recordatorios que GRAVITY le hace a la
   /// cuidadora y que ella confirma (hecho o no se pudo, con nota). Es lo único
-  /// que recibe quien en GRAVITY solo tiene su bandeja (alcance
-  /// `solicitudes` de la matriz de permisos).
+  /// que recibe quien en GRAVITY solo tiene su bandeja (`soloBandejaEnGravity`:
+  /// se resuelve por rol, D17; en el servidor su GRAVITY es `restringido`).
   solicitudes,
 }
 

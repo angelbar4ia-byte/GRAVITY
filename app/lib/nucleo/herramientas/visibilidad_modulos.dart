@@ -31,12 +31,24 @@ Set<Rol> rolesQueAdministran(Modulo modulo) => Set.unmodifiable({
     if (puede(rol, modulo, Accion.administrar)) rol,
 });
 
+/// Roles que de GRAVITY solo usan su bandeja de solicitudes y recordatorios
+/// (D18: la cuidadora). Se resuelve **por rol**, no con un alcance propio
+/// (D17: solo hay `total`, `propio` y `restringido`; en el servidor, GRAVITY
+/// del cuidador es `restringido`).
+const Set<Rol> rolesSoloBandejaEnGravity = {Rol.cuidador};
+
 /// `true` si de GRAVITY [rol] solo usa su bandeja de solicitudes y
 /// recordatorios (D18: la cuidadora). A ese rol GRAVITY solo le ofrece
 /// herramientas de la bandeja: nada de dinero, de la familia ni de
 /// conversación libre.
+///
+/// Además de [rolesSoloBandejaEnGravity], por si la matriz cambia: cualquier
+/// rol que tiene algo de GRAVITY pero no abre sus pantallas desde la
+/// navegación (`accesoDirecto: false`) también queda solo con su bandeja.
 bool soloBandejaEnGravity(Rol rol) =>
-    permisoDe(rol, Modulo.gravity).alcance == Alcance.solicitudes;
+    rolesSoloBandejaEnGravity.contains(rol) ||
+    (puede(rol, Modulo.gravity, Accion.leer) &&
+        !permisoDe(rol, Modulo.gravity).accesoDirecto);
 
 /// Roles a los que GRAVITY les ofrece abrir [modulo] (y, con [accion],
 /// hacer eso en él): los que abren el módulo según la matriz y pueden hacer
@@ -50,10 +62,15 @@ Set<Rol> rolesParaNavegar(Modulo modulo, {Accion accion = Accion.leer}) =>
           rol,
     });
 
-/// Roles que tienen bandeja de solicitudes y recordatorios en GRAVITY (D18).
+/// Roles que tienen bandeja de solicitudes y recordatorios en GRAVITY (D18):
+/// los de solo bandeja que, según la matriz, leen GRAVITY (sus solicitudes)
+/// y escriben en él (las confirman).
 Set<Rol> rolesConBandeja() => Set.unmodifiable({
   for (final rol in Rol.values)
-    if (soloBandejaEnGravity(rol)) rol,
+    if (soloBandejaEnGravity(rol) &&
+        puede(rol, Modulo.gravity, Accion.leer) &&
+        puede(rol, Modulo.gravity, Accion.escribir))
+      rol,
 });
 
 /// `true` si [rol] puede ser la cuenta maestra del hogar (D19): solo un rol

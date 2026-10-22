@@ -8,41 +8,51 @@ library;
 import '../contratos/dispositivo.dart';
 import '../contratos/roles.dart';
 
-/// Qué tanto puede un rol dentro de un módulo.
+/// Alcance de una celda de la matriz, **el mismo que en el servidor**
+/// (`permisos_rol.alcance`, dominio `alcance_permiso`): `total`, `propio` o
+/// `restringido` (D17).
+///
+/// Lo particular de cada rol no es un alcance: se resuelve **por rol** sobre
+/// una celda `restringido` (rol × módulo × restringido). Así, la bandeja de
+/// solicitudes y recordatorios de la cuidadora en GRAVITY es
+/// cuidador × gravity × restringido ([soloBandejaDeSolicitudes]); su turno en
+/// Cuidados, cuidador × cuidados × restringido; el menú y la lista de la
+/// cuenta Casa, casa × alimentacion × restringido. El texto de cada celda
+/// ([Permiso.descripcion]) dice qué subconjunto es.
 enum Alcance {
-  /// Sin acceso (— en la matriz).
-  ninguno,
+  /// Sin acceso (sin fila en el servidor).
+  ninguno(null),
 
-  /// Leer, escribir y administrar.
-  total,
+  /// Todo el módulo en el hogar. Con [Permiso.acciones] puede ser solo leer
+  /// (p. ej. Casa para el familiar).
+  total('total'),
 
-  /// Solo leer.
-  lectura,
+  /// Solo lo de la persona (en Finanzas, también los libros compartidos de los
+  /// que es miembro y el de papá si es su albacea: `fin_puede`).
+  propio('propio'),
 
-  /// Leer y escribir solo lo propio.
-  propio,
+  /// Un subconjunto que define el módulo para ese rol (su turno, su parte, el
+  /// menú y la lista, sus solicitudes…). Siempre con [Permiso.acciones]
+  /// explícitas.
+  restringido('restringido'),
 
-  /// Leer y escribir según el consentimiento de quien representa a la
-  /// persona (D2). Sin consentimiento registrado no hay acceso (Fase 5).
-  consentimiento,
+  /// **Transición:** `restringido` en el servidor. Casa en Cuidados: solo
+  /// recordatorios genéricos, sin nombres ni medicamentos (D3). Lo distingue
+  /// todavía el resumen de GRAVITY (agente diseno); en su lugar va
+  /// [soloRecordatoriosGenericos], y entonces este valor se quita.
+  generico('restringido'),
 
-  /// Leer y escribir lo de su turno.
-  turno,
+  /// **Transición:** `restringido` en el servidor. Coadministrador en
+  /// Cuidados: según el consentimiento de quien representa a la persona (D2,
+  /// D18); sin consentimiento registrado no hay acceso (Fase 5). Lo distingue
+  /// todavía el resumen de GRAVITY (agente diseno); en su lugar va
+  /// [dependeDelConsentimiento], y entonces este valor se quita.
+  consentimiento('restringido');
 
-  /// Solo recordatorios genéricos, sin nombres ni medicamentos (D3).
-  generico,
+  const Alcance(this.enServidor);
 
-  /// Leer una parte acotada (su parte, las comidas de papá, el menú y la lista).
-  parcial,
-
-  /// Solo escribir lo que la persona registra (gastos de cuidado), sin leer
-  /// el módulo (D5: la cuidadora nunca lee Finanzas).
-  registroPropio,
-
-  /// Solo su bandeja de solicitudes y recordatorios de GRAVITY: los lee y los
-  /// confirma (hecho o no se pudo, con nota). No conversa con GRAVITY ni ve
-  /// nada de la familia (D18, cuidadora).
-  solicitudes,
+  /// Valor de `permisos_rol.alcance` en el servidor (`null`: sin fila).
+  final String? enServidor;
 }
 
 /// Una celda de la matriz: alcance, texto para mostrar y si el módulo aparece
@@ -65,42 +75,44 @@ class Permiso {
 
   final Alcance alcance;
 
-  /// Texto en español para Ajustes › Personas y roles.
+  /// Texto en español para Ajustes › Personas y roles. En una celda
+  /// `restringido` dice qué subconjunto le toca al rol.
   final String descripcion;
 
   /// `true` si el rol abre las pantallas del módulo desde la navegación.
-  /// `false` si lo usa solo desde otro módulo (p. ej. la cuidadora registra
-  /// gastos de cuidado desde Cuidados, no desde Finanzas).
+  /// `false` si lo usa solo desde otro módulo o desde su bandeja (p. ej. la
+  /// cuidadora registra gastos de cuidado desde Cuidados, no desde Finanzas, y
+  /// de GRAVITY solo usa su bandeja de solicitudes).
   final bool accesoDirecto;
 
   /// Fase en la que se activa, si no es desde el inicio.
   final int? desdeFase;
 
   /// Acciones dadas a mano cuando no salen solo del alcance (p. ej. "lo
-  /// propio" con administrar: cada quien administra su libro de Finanzas).
+  /// propio" con administrar: cada quien administra su libro de Finanzas; o
+  /// "total" solo para leer).
   final Set<Accion>? _acciones;
 
-  /// Acciones que da la celda (las mismas que `permisos_rol` en el servidor).
+  /// Acciones que da la celda: una fila de `permisos_rol` por acción, con
+  /// este mismo alcance.
   Set<Accion> get acciones => _acciones ?? accionesDe(alcance);
 
-  /// Acciones que da [alcance] por omisión.
+  /// Acciones que da [alcance] por omisión. `restringido` no tiene: cada
+  /// celda dice las suyas (solo leer, por si faltaran).
   static Set<Accion> accionesDe(Alcance alcance) => switch (alcance) {
     Alcance.ninguno => const {},
     Alcance.total => const {Accion.leer, Accion.escribir, Accion.administrar},
-    Alcance.lectura ||
-    Alcance.generico ||
-    Alcance.parcial => const {Accion.leer},
+    Alcance.restringido || Alcance.generico => const {Accion.leer},
     Alcance.propio ||
-    Alcance.turno ||
-    Alcance.solicitudes ||
     Alcance.consentimiento => const {Accion.leer, Accion.escribir},
-    Alcance.registroPropio => const {Accion.escribir},
   };
 }
 
-/// Matriz rol × módulo. Da las mismas acciones que la matriz del servidor
-/// (`permisos_rol` en `supabase/migrations/`); la prueba
-/// `test/revision_calidad/i1_matriz_espejo_servidor_test.dart` lo vigila.
+/// Matriz rol × módulo. Da las mismas filas que la matriz del servidor
+/// (`permisos_rol` en `supabase/migrations/`): las mismas acciones y el mismo
+/// alcance en cada una. La prueba
+/// `test/revision_calidad/i1_matriz_espejo_servidor_test.dart` lo vigila fila
+/// por fila.
 ///
 /// Decisiones del dueño (D18 y D19, 21/oct/2026): cada quien ve lo suyo, también
 /// el dueño (historial de GRAVITY y finanzas personales); el dueño y la pareja
@@ -110,6 +122,8 @@ class Permiso {
 /// coadministrador no entra a Cuidados hasta que exista el consentimiento
 /// (Fase 5). La cuenta maestra (D19) se resuelve aparte: [puedeSobre].
 const _todas = {Accion.leer, Accion.escribir, Accion.administrar};
+const _leer = {Accion.leer};
+const _leerYEscribir = {Accion.leer, Accion.escribir};
 
 const Map<Modulo, Map<Rol, Permiso>> matrizPermisos = {
   Modulo.gravity: {
@@ -120,9 +134,12 @@ const Map<Modulo, Map<Rol, Permiso>> matrizPermisos = {
     ),
     Rol.coadministrador: Permiso(Alcance.propio, 'Lo suyo'),
     Rol.familiar: Permiso(Alcance.propio, 'Lo suyo'),
+    // D18: restringido = su bandeja de solicitudes y recordatorios (los lee y
+    // los confirma). No abre las pantallas de GRAVITY ni conversa con él.
     Rol.cuidador: Permiso(
-      Alcance.solicitudes,
+      Alcance.restringido,
       'Solo sus solicitudes y recordatorios, para confirmarlos',
+      acciones: _leerYEscribir,
       accesoDirecto: false,
     ),
     Rol.casa: Permiso(
@@ -142,9 +159,11 @@ const Map<Modulo, Map<Rol, Permiso>> matrizPermisos = {
       acciones: _todas,
     ),
     Rol.familiar: Permiso.ninguno(),
+    // D5: restringido = solo escribe sus gastos de cuidado; nunca lee.
     Rol.cuidador: Permiso(
-      Alcance.registroPropio,
+      Alcance.restringido,
       'Solo registra sus gastos de cuidado, desde Cuidados; no lee Finanzas',
+      acciones: {Accion.escribir},
       accesoDirecto: false,
       desdeFase: 5,
     ),
@@ -166,30 +185,45 @@ const Map<Modulo, Map<Rol, Permiso>> matrizPermisos = {
       desdeFase: 5,
     ),
     Rol.familiar: Permiso.ninguno(),
-    Rol.cuidador: Permiso(Alcance.turno, 'Su turno'),
+    // Restringido = su turno.
+    Rol.cuidador: Permiso(
+      Alcance.restringido,
+      'Su turno',
+      acciones: _leerYEscribir,
+    ),
     Rol.casa: Permiso(Alcance.generico, 'Recordatorios genéricos'),
   },
   Modulo.alimentacion: {
     Rol.dueno: Permiso(Alcance.total, 'Total'),
     Rol.coadministrador: Permiso(Alcance.total, 'Total'),
-    Rol.familiar: Permiso(Alcance.parcial, 'Leer su parte'),
+    Rol.familiar: Permiso(
+      Alcance.restringido,
+      'Leer su parte',
+      acciones: _leer,
+    ),
     Rol.cuidador: Permiso(
-      Alcance.parcial,
+      Alcance.restringido,
       'Leer las comidas de papá, desde Cuidados',
+      acciones: _leer,
       accesoDirecto: false,
     ),
-    Rol.casa: Permiso(Alcance.parcial, 'Leer el menú y la lista'),
+    Rol.casa: Permiso(
+      Alcance.restringido,
+      'Leer el menú y la lista',
+      acciones: _leer,
+    ),
   },
   Modulo.casa: {
     Rol.dueno: Permiso(Alcance.total, 'Total'),
     Rol.coadministrador: Permiso(Alcance.total, 'Total'),
-    Rol.familiar: Permiso(Alcance.lectura, 'Leer'),
+    Rol.familiar: Permiso(Alcance.total, 'Leer', acciones: _leer),
     Rol.cuidador: Permiso(
-      Alcance.lectura,
+      Alcance.total,
       'Leer, desde Cuidados',
+      acciones: _leer,
       accesoDirecto: false,
     ),
-    Rol.casa: Permiso(Alcance.lectura, 'Leer'),
+    Rol.casa: Permiso(Alcance.total, 'Leer', acciones: _leer),
   },
   Modulo.ajustes: {
     Rol.dueno: Permiso(Alcance.total, 'Total'),
@@ -213,6 +247,36 @@ bool puedeAbrir(Rol rol, Modulo modulo) {
   final permiso = permisoDe(rol, modulo);
   return permiso.accesoDirecto && permiso.acciones.contains(Accion.leer);
 }
+
+// ---------------------------------------------------------------------------
+// Lo particular de cada rol sobre una celda `restringido` (D17): se resuelve
+// por rol, no con alcances nuevos.
+// ---------------------------------------------------------------------------
+
+bool _restringido(Rol rol, Modulo modulo) =>
+    permisoDe(rol, modulo).alcance.enServidor == 'restringido';
+
+/// D18: de GRAVITY, [rol] solo usa su **bandeja de solicitudes y
+/// recordatorios** (los lee y los confirma: *Hecho* o *No se pudo*, con nota),
+/// sin abrir las pantallas de GRAVITY ni conversar con él, y sin ver nada de
+/// la familia. Es lo que significa gravity × restringido: hoy, la cuidadora.
+bool soloBandejaDeSolicitudes(Rol rol) =>
+    _restringido(rol, Modulo.gravity) &&
+    puede(rol, Modulo.gravity, Accion.leer) &&
+    !puedeAbrir(rol, Modulo.gravity);
+
+/// D3: de Cuidados, [rol] solo ve recordatorios genéricos, sin nombres ni
+/// medicamentos: la cuenta Casa (casa × cuidados × restringido).
+bool soloRecordatoriosGenericos(Rol rol, Modulo modulo) =>
+    modulo == Modulo.cuidados && rol == Rol.casa && _restringido(rol, modulo);
+
+/// D2 y D18: [rol] entra a [modulo] solo con el consentimiento de quien
+/// representa a la persona (sin él, nada; Fase 5): el coadministrador en
+/// Cuidados (coadministrador × cuidados × restringido).
+bool dependeDelConsentimiento(Rol rol, Modulo modulo) =>
+    modulo == Modulo.cuidados &&
+    rol == Rol.coadministrador &&
+    _restringido(rol, modulo);
 
 /// Módulos en los que la **cuenta maestra** (D19) lee también lo ajeno: los
 /// libros de Finanzas y el historial de GRAVITY de todos.
@@ -239,7 +303,8 @@ bool puedeSobre(
 }) {
   if (esDeLaPersona) return puede(rol, modulo, accion);
   final conTotal =
-      permisoDe(rol, modulo).alcance == Alcance.total && puede(rol, modulo, accion);
+      permisoDe(rol, modulo).alcance == Alcance.total &&
+      puede(rol, modulo, accion);
   if (!esMaestra) return conTotal;
   if (accion != Accion.leer) return false;
   return conTotal || modulosQueLeeLaMaestra.contains(modulo);

@@ -316,6 +316,70 @@ void main() {
       expect(siguienteVista.arrastreRecibido['transporte'], 70000);
       expect(siguienteVista.patrimonioAnterior, cierre.patrimonio);
     });
+
+    test('reabrir suma una reapertura y el cierre siguiente es la versión '
+        'reaperturas + 1 (como exige el servidor)', () {
+      var d = activada(hogarEjemplo());
+      final g = d.semanaGuardada(casa, semana)!;
+      expect(g.reaperturas, 0);
+      expect(g.versionDelSiguienteCierre, 1);
+      CierreGuardado cerrar(DatosFinanzas d, String id) => cierreDeLaVista(
+        vistaSemana(d, casa, semana, hoy: Fecha(2026, 11, 2)),
+        d,
+        id: id,
+        accion: AccionCierre.sinAplicar,
+        cerradoPor: ana,
+        cerradoEn: DateTime(2026, 11, 2, 9),
+      );
+      final primero = cerrar(d, 'cierre-1');
+      expect(primero.version, 1);
+      final cerrada = g.conEstado(EstadoSemana.cerrada);
+      expect(cerrada.reaperturas, 0, reason: 'cerrar no es reabrir');
+      final reabierta = cerrada.conEstado(EstadoSemana.activa);
+      expect(reabierta.reaperturas, 1);
+      expect(
+        reabierta.conEstado(EstadoSemana.porCerrar).reaperturas,
+        1,
+        reason: 'cambiar de estado sin estar cerrada no suma',
+      );
+      d = d.copiar(semanas: [reabierta], cierres: [primero]);
+      expect(cerrar(d, 'cierre-2').version, 2);
+    });
+
+    test('con idPara, la foto lleva ids estables: guardarla otra vez no '
+        'choca con los únicos de partidas y abonos', () {
+      final d = hogarEjemplo();
+      SemanaGuardada foto() => fotoDelPlan(
+        armarPlanDelLibro(d, casa, semana),
+        id: 'sem-estable',
+        libroId: casa,
+        arrastrePorOrigen: const {},
+        activadaPor: ana,
+        activadaEn: DateTime(2026, 10, 26, 8),
+        idPara: (clave) => 'id:$clave',
+      );
+      final a = foto();
+      final b = foto();
+      expect(a.partidas.map((p) => p.id), b.partidas.map((p) => p.id));
+      expect(a.abonos.map((x) => x.id), b.abonos.map((x) => x.id));
+      expect(
+        a.partidas.first.id,
+        startsWith('id:partida:sem-estable:'),
+      );
+      expect(a.abonos.map((x) => x.id), contains('id:abono:sem-estable:deuda-tarjeta'));
+      expect(a.partidas.map((p) => p.id).toSet(), hasLength(a.partidas.length));
+      expect(
+        () => fotoDelPlan(
+          armarPlanDelLibro(d, casa, semana),
+          id: 'x',
+          libroId: casa,
+          arrastrePorOrigen: const {},
+          activadaPor: ana,
+          activadaEn: DateTime(2026, 10, 26, 8),
+        ),
+        throwsArgumentError,
+      );
+    });
   });
 
   test('T8: un mes con 5 lunes se muestra por semanas con promedio', () {
