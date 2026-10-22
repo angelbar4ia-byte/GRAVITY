@@ -1,0 +1,1008 @@
+/// Casos de uso de Finanzas (especificación de la Fase 1, sección 8): cada
+/// acción revisa el permiso en el libro (espejo de `fin_puede`), arma los
+/// movimientos con `finanzas_dominio` (que valida las reglas del libro) y los
+/// guarda con el repositorio. **La app no mueve dinero sola**: todo lo que
+/// crea movimientos es una acción confirmada por la persona.
+library;
+
+import 'package:finanzas_dominio/finanzas_dominio.dart';
+import 'package:uuid/uuid.dart';
+
+import '../datos/repositorio.dart';
+
+/// Una línea de un gasto (un ticket con varios rubros se divide por líneas).
+class LineaGasto {
+  const LineaGasto({required this.monto, this.categoriaId, this.nota});
+
+  final int monto;
+
+  /// Subcategoría o detalle; nula = "Por clasificar".
+  final String? categoriaId;
+  final String? nota;
+}
+
+/// Lo que se registró (para deshacer y para el aviso).
+class ResultadoRegistro {
+  const ResultadoRegistro(this.movimientos, this.resultado);
+
+  final List<Movimiento> movimientos;
+  final ResultadoEscritura resultado;
+
+  bool get enCola => resultado == ResultadoEscritura.enCola;
+}
+
+/// Motivo de la anulación al deshacer justo después de capturar (F1).
+const motivoDeshacer = 'Deshecho al capturar';
+
+class ServicioFinanzas {
+  ServicioFinanzas({
+    required this.repositorio,
+    required this.personaId,
+    this.esMaestra = false,
+    DateTime Function()? reloj,
+    String Function()? generarId,
+  }) : _reloj = reloj ?? DateTime.now,
+       _generarId = generarId ?? const Uuid().v4;
+
+  final RepositorioFinanzas repositorio;
+  final String personaId;
+  final bool esMaestra;
+  final DateTime Function() _reloj;
+  final String Function() _generarId;
+
+  DatosFinanzas get _d => repositorio.actual?.datos ?? DatosFinanzas.vacio;
+  DateTime get _ahora => _reloj();
+  Fecha get hoy => Fecha.deDateTime(_reloj());
+
+  // ---------------------------------------------------------------- permisos
+
+  Libro _libro(String libroId) =>
+      _d.libro(libroId) ?? (throw const ErrorFinanzas('No existe ese libro.'));
+
+  PermisoLibro permiso(String libroId) {
+    final libro = _d.libro(libroId);
+    if (libro == null) return PermisoLibro.ninguno;
+    return permisoEnLibro(libro, personaId, hoy: hoy, esMaestra: esMaestra);
+  }
+
+  void _exigirEscribir(String libroId) {
+    if (!permiso(libroId).escribir) {
+      throw const ErrorFinanzas(
+        'Solo lectura: no puedes registrar en este libro.',
+      );
+    }
+  }
+
+  void _exigirAdministrar(String libroId) {
+    if (!permiso(libroId).administrar) {
+      throw const ErrorFinanzas(
+        'Solo quien lleva este libro cambia su configuración.',
+      );
+    }
+  }
+
+  /// En el libro de papá todo va en su nombre y con motivo (regla 3 de 4.5).
+  ({String realizadoPor, String? enNombreDe}) _quien(
+    String libroId,
+    String? motivo,
+  ) {
+    final libro = _libro(libroId);
+    if (libro.tipo != TipoLibro.representado) {
+      return (realizadoPor: personaId, enNombreDe: null);
+    }
+    if (motivo == null || motivo.trim().isEmpty) {
+      throw ErrorFinanzas(
+        'En el libro de ${libro.nombre} cada movimiento lleva un motivo.',
+      );
+    }
+    return (realizadoPor: libro.titularId!, enNombreDe: libro.titularId);
+  }
+
+  static String? _limpio(String? texto) {
+    final t = texto?.trim();
+    if (t == null || t.isEmpty) return null;
+    return t.length > 200 ? t.substring(0, 200) : t;
+  }
+
+  // ------------------------------------------------------------------ gastos
+
+  /// Registra un gasto (F1) con una o varias líneas; varias líneas comparten
+  /// `grupo_id` (ticket dividido, 5.2). Sin categoría va a "Por clasificar".
+  Future<ResultadoRegistro> registrarGasto({
+    required String libroId,
+    required String cuentaOrigenId,
+    required List<LineaGasto> lineas,
+    Fecha? fecha,
+    String? nota,
+    String? motivo,
+    ViaCaptura via = ViaCaptura.manual,
+  }) async {
+    _exigirEscribir(libroId);
+    if (lineas.isEmpty || lineas.any((l) => l.monto <= 0)) {
+      throw const ErrorFinanzas('Escribe un monto mayor que cero.');
+    }
+    final origen = _d.cuenta(cuentaOrigenId);
+    if (origen == null ||
+        origen.libroId != libroId ||
+        (origen.clase != ClaseCuenta.activo &&
+            origen.clase != ClaseCuenta.pasivo)) {
+      throw const ErrorFinanzas('Elige una cuenta de este libro para pagar.');
+    }
+    final quien = _quien(libroId, motivo);
+    final porClasificar = _cuentaPorClasificar(libroId);
+    final grupo = lineas.length > 1 ? _generarId() : null;
+    final ahora = _ahora;
+    final movimientos = <Movimiento>[];
+    for (final l in lineas) {
+      final cuentaGasto = l.categoriaId == null
+          ? porClasificar
+          : _d.arbol.cuentaGastoDe(l.categoriaId!);
+      if (cuentaGasto == null) {
+        throw const ErrorFinanzas('Esa categoría no tiene cuenta de gasto.');
+      }
+      movimientos.add(
+        Movimiento(
+          id: _generarId(),
+          tipo: TipoMovimiento.gasto,
+          fecha: fecha ?? hoy,
+          registradoEn: ahora,
+          cuentaOrigenId: cuentaOrigenId,
+          cuentaDestinoId: cuentaGasto,
+          monto: l.monto,
+          realizadoPor: quien.realizadoPor,
+          registradoPor: personaId,
+          via: via,
+          categoriaId: l.categoriaId,
+          grupoId: grupo,
+          nota: _limpio(l.nota ?? nota),
+          motivo: _limpio(motivo),
+          enNombreDe: quien.enNombreDe,
+        ),
+      );
+    }
+    final r = await repositorio.agregarMovimientos(movimientos);
+    return ResultadoRegistro(movimientos, r);
+  }
+
+  String? _cuentaPorClasificar(String libroId) =>
+      _d.parametrosDe(libroId).cuentaPorClasificarId ??
+      _d
+          .cuentasDe(libroId)
+          .where((c) => c.tipo == TipoCuenta.porClasificar)
+          .firstOrNull
+          ?.id;
+
+  /// Deshace lo recién capturado con anulaciones (nunca se borra).
+  Future<void> deshacer(ResultadoRegistro registro) async {
+    for (final m in registro.movimientos) {
+      await anular(m.id, motivo: motivoDeshacer);
+    }
+  }
+
+  /// Anula un movimiento con un contraasiento (motivo obligatorio). Lleva la
+  /// misma fecha económica: la semana del original se recalcula (P14).
+  Future<Movimiento> anular(String movimientoId, {required String motivo}) async {
+    if (motivo.trim().isEmpty) {
+      throw const ErrorFinanzas('Escribe el motivo de la anulación.');
+    }
+    final original = _d.movimientos
+        .where((m) => m.id == movimientoId)
+        .firstOrNull;
+    if (original == null) throw const ErrorFinanzas('No existe ese movimiento.');
+    final libros = {
+      for (final id in [original.cuentaOrigenId, original.cuentaDestinoId])
+        ?_d.cuenta(id)?.libroId,
+    };
+    if (libros.isEmpty) {
+      throw const ErrorFinanzas('No puedes anular ese movimiento.');
+    }
+    libros.forEach(_exigirEscribir);
+    final libro = _d.nuevoLibroHogar();
+    try {
+      final contra = libro.anular(
+        movimientoId,
+        nuevoId: _generarId(),
+        motivo: _limpio(motivo)!,
+        registradoPor: personaId,
+        registradoEn: _ahora,
+      );
+      await repositorio.agregarMovimientos([contra]);
+      return contra;
+    } on ErrorLibro catch (e) {
+      throw ErrorFinanzas(e.mensaje);
+    }
+  }
+
+  // ---------------------------------------------------------------- ingresos
+
+  /// Registra un ingreso extra con su fecha real (5.1 bis, punto 4) desde la
+  /// cuenta "Extras" del libro (se crea si no existe).
+  Future<ResultadoRegistro> registrarIngresoExtra({
+    required String libroId,
+    required int monto,
+    required String cuentaDestinoId,
+    Fecha? fecha,
+    String? nota,
+    String? motivo,
+  }) async {
+    _exigirEscribir(libroId);
+    if (monto <= 0) throw const ErrorFinanzas('Escribe un monto mayor que cero.');
+    final destino = _d.cuenta(cuentaDestinoId);
+    if (destino == null ||
+        destino.libroId != libroId ||
+        destino.clase != ClaseCuenta.activo) {
+      throw const ErrorFinanzas('Elige la cuenta donde entró el dinero.');
+    }
+    final quien = _quien(libroId, motivo);
+    final extras = await _cuentaExtras(libroId);
+    final m = Movimiento(
+      id: _generarId(),
+      tipo: TipoMovimiento.ingreso,
+      fecha: fecha ?? hoy,
+      registradoEn: _ahora,
+      cuentaOrigenId: extras,
+      cuentaDestinoId: cuentaDestinoId,
+      monto: monto,
+      realizadoPor: quien.realizadoPor,
+      registradoPor: personaId,
+      nota: _limpio(nota),
+      motivo: _limpio(motivo),
+      enNombreDe: quien.enNombreDe,
+    );
+    final r = await repositorio.agregarMovimientos([m]);
+    return ResultadoRegistro([m], r);
+  }
+
+  Future<String> _cuentaExtras(String libroId) async {
+    final configuradas = {
+      for (final i in _d.ingresosDe(libroId)) i.cuentaOrigenId,
+    };
+    final existente = _d
+        .cuentasDe(libroId)
+        .where(
+          (c) =>
+              c.tipo == TipoCuenta.origenIngreso &&
+              c.estado == EstadoCuenta.activa &&
+              !configuradas.contains(c.id),
+        )
+        .firstOrNull;
+    if (existente != null) return existente.id;
+    final nueva = Cuenta(
+      id: _generarId(),
+      nombre: 'Extras',
+      tipo: TipoCuenta.origenIngreso,
+      libroId: libroId,
+    );
+    await repositorio.guardarCuentas([nueva]);
+    return nueva.id;
+  }
+
+  /// Registra cualquier movimiento del libro (laptop, Ctrl + N): ingreso,
+  /// gasto, reembolso, transferencia (también a otro libro: aportación),
+  /// pago de deuda o reclasificación.
+  Future<ResultadoRegistro> registrarMovimiento({
+    required TipoMovimiento tipo,
+    required String cuentaOrigenId,
+    required String cuentaDestinoId,
+    required int monto,
+    Fecha? fecha,
+    String? categoriaId,
+    String? nota,
+    String? motivo,
+  }) async {
+    if (monto <= 0) throw const ErrorFinanzas('Escribe un monto mayor que cero.');
+    if (tipo == TipoMovimiento.anulacion ||
+        tipo == TipoMovimiento.ajuste ||
+        tipo == TipoMovimiento.apertura) {
+      throw const ErrorFinanzas(
+        'Las anulaciones, ajustes y saldos iniciales tienen su propia acción.',
+      );
+    }
+    final libros = [
+      for (final id in [cuentaOrigenId, cuentaDestinoId]) ?_d.cuenta(id)?.libroId,
+    ];
+    if (libros.isEmpty) {
+      throw const ErrorFinanzas('Una de las cuentas debe ser de un libro.');
+    }
+    libros.forEach(_exigirEscribir);
+    final representado = libros
+        .map(_libro)
+        .where((l) => l.tipo == TipoLibro.representado)
+        .firstOrNull;
+    final quien = representado == null
+        ? (realizadoPor: personaId, enNombreDe: null)
+        : _quien(representado.id, motivo);
+    final m = Movimiento(
+      id: _generarId(),
+      tipo: tipo,
+      fecha: fecha ?? hoy,
+      registradoEn: _ahora,
+      cuentaOrigenId: cuentaOrigenId,
+      cuentaDestinoId: cuentaDestinoId,
+      monto: monto,
+      realizadoPor: quien.realizadoPor,
+      registradoPor: personaId,
+      categoriaId: categoriaId,
+      nota: _limpio(nota),
+      motivo: _limpio(motivo),
+      enNombreDe: quien.enNombreDe,
+    );
+    final r = await repositorio.agregarMovimientos([m]);
+    return ResultadoRegistro([m], r);
+  }
+
+  // ----------------------------------------------------------------- cuentas
+
+  String? _cuentaTecnica(String libroId, TipoCuenta tipo) {
+    final p = _d.parametrosDe(libroId);
+    final id = switch (tipo) {
+      TipoCuenta.apertura => p.cuentaAperturaId,
+      TipoCuenta.ajustes => p.cuentaAjustesId,
+      _ => null,
+    };
+    return id ??
+        _d.cuentasDe(libroId).where((c) => c.tipo == tipo).firstOrNull?.id;
+  }
+
+  /// Saldo inicial de una cuenta (uno por cuenta, 5.0 bis 2 punto 5).
+  Future<void> registrarApertura({
+    required String cuentaId,
+    required int saldo,
+    required Fecha fecha,
+    String? motivo,
+  }) async {
+    final cuenta = _d.cuenta(cuentaId);
+    final libroId = cuenta?.libroId;
+    if (cuenta == null || libroId == null) {
+      throw const ErrorFinanzas('No existe esa cuenta.');
+    }
+    _exigirEscribir(libroId);
+    if (saldo <= 0) return;
+    final apertura = _cuentaTecnica(libroId, TipoCuenta.apertura);
+    if (apertura == null) {
+      throw const ErrorFinanzas('El libro no tiene su cuenta de apertura.');
+    }
+    final pasivo = cuenta.clase == ClaseCuenta.pasivo;
+    final quien = _quien(libroId, motivo ?? (
+        _libro(libroId).tipo == TipoLibro.representado ? 'Saldo inicial' : null));
+    await repositorio.agregarMovimientos([
+      Movimiento(
+        id: _generarId(),
+        tipo: TipoMovimiento.apertura,
+        fecha: fecha,
+        registradoEn: _ahora,
+        cuentaOrigenId: pasivo ? cuentaId : apertura,
+        cuentaDestinoId: pasivo ? apertura : cuentaId,
+        monto: saldo,
+        realizadoPor: quien.realizadoPor,
+        registradoPor: personaId,
+        motivo: quien.enNombreDe == null ? null : (motivo ?? 'Saldo inicial'),
+        enNombreDe: quien.enNombreDe,
+      ),
+    ]);
+  }
+
+  /// Crea una cuenta del libro y, si se da, su saldo inicial.
+  Future<Cuenta> crearCuenta({
+    required String libroId,
+    required String nombre,
+    required TipoCuenta tipo,
+    int saldoInicial = 0,
+    Fecha? fechaSaldo,
+    int? limiteCentavos,
+  }) async {
+    _exigirAdministrar(libroId);
+    if (nombre.trim().isEmpty) throw const ErrorFinanzas('Escribe un nombre.');
+    const permitidos = {
+      TipoCuenta.efectivo,
+      TipoCuenta.banco,
+      TipoCuenta.ahorro,
+      TipoCuenta.inversion,
+      TipoCuenta.tarjeta,
+      TipoCuenta.prestamo,
+      TipoCuenta.origenIngreso,
+      TipoCuenta.porCobrar,
+    };
+    if (!permitidos.contains(tipo)) {
+      throw const ErrorFinanzas('Ese tipo de cuenta no se crea a mano.');
+    }
+    final repetido = _d.cuentas.any(
+      (c) => normalizarNombre(c.nombre) == normalizarNombre(nombre) &&
+          c.libroId == libroId,
+    );
+    if (repetido) throw const ErrorFinanzas('Ya hay una cuenta con ese nombre.');
+    final cuenta = Cuenta(
+      id: _generarId(),
+      nombre: nombre.trim(),
+      tipo: tipo,
+      libroId: libroId,
+      limiteCentavos: limiteCentavos,
+    );
+    await repositorio.guardarCuentas([cuenta]);
+    if (saldoInicial > 0) {
+      await registrarApertura(
+        cuentaId: cuenta.id,
+        saldo: saldoInicial,
+        fecha: fechaSaldo ?? hoy,
+      );
+    }
+    return cuenta;
+  }
+
+  /// Congela, cierra, archiva o reactiva. Cerrar y archivar solo con saldo
+  /// cero (5.0 bis 2, punto 5).
+  Future<void> cambiarEstadoCuenta(String cuentaId, EstadoCuenta estado) async {
+    final cuenta = _d.cuenta(cuentaId);
+    final libroId = cuenta?.libroId;
+    if (cuenta == null || libroId == null) {
+      throw const ErrorFinanzas('No existe esa cuenta.');
+    }
+    _exigirAdministrar(libroId);
+    try {
+      _d.nuevoLibroHogar().cambiarEstadoCuenta(cuentaId, estado);
+    } on ErrorLibro {
+      throw const ErrorFinanzas(
+        'Solo se cierra o archiva una cuenta con saldo cero.',
+      );
+    }
+    await repositorio.guardarCuentas([cuenta.conEstado(estado)]);
+  }
+
+  /// Borra una cuenta sin movimientos.
+  Future<void> eliminarCuenta(String cuentaId) async {
+    final cuenta = _d.cuenta(cuentaId);
+    final libroId = cuenta?.libroId;
+    if (cuenta == null || libroId == null) {
+      throw const ErrorFinanzas('No existe esa cuenta.');
+    }
+    _exigirAdministrar(libroId);
+    if (_d.movimientos.any(
+      (m) => m.cuentaOrigenId == cuentaId || m.cuentaDestinoId == cuentaId,
+    )) {
+      throw const ErrorFinanzas(
+        'La cuenta tiene movimientos: ciérrala o archívala.',
+      );
+    }
+    await repositorio.eliminarCuenta(cuentaId);
+  }
+
+  /// Concilia una cuenta: declara el saldo real y, si hay diferencia, crea un
+  /// **ajuste** con motivo en la cuenta Ajustes del libro (5.0 bis 2, punto 6).
+  Future<ConciliacionGuardada> conciliar({
+    required String cuentaId,
+    required int saldoDeclarado,
+    Fecha? fecha,
+    String? motivo,
+  }) async {
+    final cuenta = _d.cuenta(cuentaId);
+    final libroId = cuenta?.libroId;
+    if (cuenta == null || libroId == null) {
+      throw const ErrorFinanzas('No existe esa cuenta.');
+    }
+    _exigirEscribir(libroId);
+    final dia = fecha ?? hoy;
+    final ajustes = _cuentaTecnica(libroId, TipoCuenta.ajustes);
+    if (ajustes == null) {
+      throw const ErrorFinanzas('El libro no tiene su cuenta de ajustes.');
+    }
+    final libro = _d.nuevoLibroHogar();
+    final calculado = libro.saldo(cuentaId, hasta: dia);
+    if (saldoDeclarado != calculado && (motivo == null || motivo.trim().isEmpty)) {
+      throw const ErrorFinanzas('Hay diferencia: escribe el motivo del ajuste.');
+    }
+    final quien = _quien(
+      libroId,
+      _libro(libroId).tipo == TipoLibro.representado
+          ? (motivo ?? 'Conciliación sin diferencia')
+          : motivo,
+    );
+    final Conciliacion c;
+    try {
+      c = libro.conciliar(
+        cuentaId: cuentaId,
+        fecha: dia,
+        saldoDeclarado: saldoDeclarado,
+        cuentaAjustesId: ajustes,
+        idAjuste: _generarId(),
+        persona: quien.realizadoPor,
+        registradoEn: _ahora,
+        motivo: _limpio(motivo),
+      );
+    } on ErrorLibro catch (e) {
+      throw ErrorFinanzas(e.mensaje);
+    }
+    final ajuste = c.ajuste;
+    if (ajuste != null) {
+      final conAutor = Movimiento(
+        id: ajuste.id,
+        tipo: ajuste.tipo,
+        fecha: ajuste.fecha,
+        registradoEn: ajuste.registradoEn,
+        cuentaOrigenId: ajuste.cuentaOrigenId,
+        cuentaDestinoId: ajuste.cuentaDestinoId,
+        monto: ajuste.monto,
+        realizadoPor: quien.realizadoPor,
+        registradoPor: personaId,
+        motivo: ajuste.motivo,
+        enNombreDe: quien.enNombreDe,
+      );
+      await repositorio.agregarMovimientos([conAutor]);
+    }
+    final guardada = ConciliacionGuardada(
+      id: _generarId(),
+      libroId: libroId,
+      cuentaId: cuentaId,
+      fecha: dia,
+      saldoDeclarado: saldoDeclarado,
+      saldoCalculado: calculado,
+      ajusteMovimientoId: ajuste?.id,
+      motivo: _limpio(motivo),
+      personaId: personaId,
+      creadoEn: _ahora,
+    );
+    await repositorio.agregarConciliacion(guardada);
+    return guardada;
+  }
+
+  // -------------------------------------------------------------- categorías
+
+  /// Crea una categoría del hogar; las de nivel 1 llevan su cuenta de gasto.
+  Future<Categoria> crearCategoria({
+    required String nombre,
+    String? padreId,
+    Prioridad? prioridad,
+    bool? protegida,
+  }) async {
+    final limpio = nombre.trim();
+    if (limpio.isEmpty) throw const ErrorFinanzas('Escribe un nombre.');
+    final padre = _d.arbol.porId(padreId);
+    if (padreId != null && padre == null) {
+      throw const ErrorFinanzas('No existe la categoría padre.');
+    }
+    if (padre != null && padre.nivel >= 3) {
+      throw const ErrorFinanzas('El árbol tiene 3 niveles como máximo.');
+    }
+    if (_d.arbol.buscar(limpio, padreId: padreId) != null) {
+      throw const ErrorFinanzas('Ya existe una categoría con ese nombre ahí.');
+    }
+    String? cuentaId;
+    if (padre == null) {
+      final cuenta = Cuenta(
+        id: _generarId(),
+        nombre: limpio,
+        tipo: TipoCuenta.deGasto,
+      );
+      await repositorio.guardarCuentas([cuenta]);
+      cuentaId = cuenta.id;
+    }
+    final categoria = Categoria(
+      id: _generarId(),
+      padreId: padreId,
+      nivel: (padre?.nivel ?? 0) + 1,
+      nombre: limpio,
+      prioridad: prioridad ?? padre?.prioridad ?? Prioridad.deseable,
+      protegida: protegida ?? padre?.protegida ?? false,
+      naturaleza: padre?.naturaleza ?? '',
+      cuentaGastoId: cuentaId,
+    );
+    await repositorio.guardarCategorias([categoria]);
+    return categoria;
+  }
+
+  Future<void> cambiarCategoria(Categoria categoria) =>
+      repositorio.guardarCategorias([categoria]);
+
+  /// Borra una categoría **sin datos**; con datos se archiva (5.2).
+  Future<void> eliminarCategoria(String categoriaId) async {
+    final conDatos =
+        _d.categorias.any((c) => c.padreId == categoriaId) ||
+        _d.movimientos.any((m) => m.categoriaId == categoriaId) ||
+        _d.compromisos.any((c) => c.categoriaId == categoriaId);
+    if (conDatos) {
+      throw const ErrorFinanzas(
+        'La categoría tiene datos: archívala en lugar de eliminarla.',
+      );
+    }
+    await repositorio.eliminarCategoria(categoriaId);
+  }
+
+  /// Vista previa de la importación de la hoja Categorías (no guarda nada).
+  PlanImportacion previsualizarImportacion(LecturaPlantilla lectura) =>
+      planearImportacionCategorias(
+        lectura,
+        existentes: _d.categorias,
+        cuentasExistentes: _d.cuentas,
+        generarId: _generarId,
+      );
+
+  /// Importa la hoja Categorías: crea las cuentas de gasto, después el árbol
+  /// y deja el registro de la importación. Reimportar no duplica.
+  Future<PlanImportacion> importarCategorias(
+    LecturaPlantilla lectura, {
+    required String archivo,
+    String hoja = 'Categorías',
+  }) async {
+    final plan = previsualizarImportacion(lectura);
+    if (plan.cuentasNuevas.isNotEmpty) {
+      await repositorio.guardarCuentas(plan.cuentasNuevas);
+    }
+    if (plan.nuevas.isNotEmpty) {
+      await repositorio.guardarCategorias(plan.nuevas);
+    }
+    await repositorio.agregarImportacion(
+      ImportacionGuardada(
+        id: _generarId(),
+        archivo: archivo,
+        hoja: hoja,
+        filasLeidas: plan.filasLeidas,
+        filasCreadas: plan.filasCreadas,
+        filasOmitidas: plan.omitidas.length,
+        detalle: [
+          for (final o in plan.omitidas.take(500))
+            {'fila': o.numero, 'texto': o.texto, 'motivo': o.motivo},
+        ],
+        personaId: personaId,
+        creadoEn: _ahora,
+      ),
+    );
+    return plan;
+  }
+
+  // ----------------------------------------------------------- configuración
+
+  /// Crea un ingreso con su primera vigencia y su cuenta de origen.
+  Future<Ingreso> crearIngreso({
+    required String libroId,
+    required String nombre,
+    required int montoNeto,
+    required CalendarioConfig calendario,
+    required String cuentaDestinoId,
+    String? personaId,
+    TipoIngreso tipo = TipoIngreso.salario,
+    Certeza certeza = Certeza.segura,
+    Fecha? desde,
+  }) async {
+    _exigirAdministrar(libroId);
+    if (nombre.trim().isEmpty) throw const ErrorFinanzas('Escribe un nombre.');
+    if (montoNeto <= 0) throw const ErrorFinanzas('El neto debe ser mayor que cero.');
+    try {
+      calendario.calendario;
+    } on ArgumentError catch (e) {
+      throw ErrorFinanzas('${e.message}');
+    }
+    final origen = Cuenta(
+      id: _generarId(),
+      nombre: nombre.trim(),
+      tipo: TipoCuenta.origenIngreso,
+      libroId: libroId,
+    );
+    await repositorio.guardarCuentas([origen]);
+    final libro = _libro(libroId);
+    final id = _generarId();
+    final ingreso = Ingreso(
+      id: id,
+      libroId: libroId,
+      personaId: personaId ??
+          (libro.tipo == TipoLibro.personal || libro.tipo == TipoLibro.representado
+              ? libro.titularId
+              : this.personaId),
+      nombre: nombre.trim(),
+      tipo: tipo,
+      cuentaOrigenId: origen.id,
+      cuentaDestinoId: cuentaDestinoId,
+      certeza: certeza,
+      vigencias: [
+        VigenciaIngreso(
+          id: _generarId(),
+          ingresoId: id,
+          montoNeto: montoNeto,
+          calendario: calendario,
+          desde: desde ?? Semana.de(hoy).inicio,
+        ),
+      ],
+    );
+    await repositorio.guardarIngreso(ingreso);
+    return ingreso;
+  }
+
+  /// Cambia el neto o el calendario desde una fecha: vigencia nueva; la
+  /// anterior solo cierra su `hasta` (5.1 bis, punto 2).
+  Future<void> cambiarNeto(
+    String ingresoId, {
+    required int montoNeto,
+    required CalendarioConfig calendario,
+    required Fecha desde,
+  }) async {
+    final ingreso = _d.ingresos.where((i) => i.id == ingresoId).firstOrNull;
+    if (ingreso == null) throw const ErrorFinanzas('No existe ese ingreso.');
+    _exigirAdministrar(ingreso.libroId);
+    try {
+      await repositorio.guardarIngreso(
+        ingreso.conNuevaVigencia(
+          id: _generarId(),
+          montoNeto: montoNeto,
+          calendario: calendario,
+          desde: desde,
+        ),
+      );
+    } on ArgumentError catch (e) {
+      throw ErrorFinanzas('${e.message}');
+    }
+  }
+
+  Future<void> guardarIngreso(Ingreso ingreso) async {
+    _exigirAdministrar(ingreso.libroId);
+    await repositorio.guardarIngreso(ingreso);
+  }
+
+  Future<void> guardarCompromiso(Compromiso compromiso) async {
+    _exigirAdministrar(compromiso.libroId);
+    try {
+      compromiso.validar();
+    } on ArgumentError catch (e) {
+      throw ErrorFinanzas('${e.message}');
+    }
+    await repositorio.guardarCompromiso(compromiso);
+  }
+
+  Future<void> guardarSobre(Sobre sobre) async {
+    _exigirAdministrar(sobre.libroId);
+    if (sobre.montoSemanal < 0) {
+      throw const ErrorFinanzas('El monto no puede ser negativo.');
+    }
+    await repositorio.guardarSobre(sobre);
+  }
+
+  Future<void> guardarDeuda(Deuda deuda) async {
+    _exigirAdministrar(deuda.libroId);
+    try {
+      deuda.validar();
+    } on ArgumentError catch (e) {
+      throw ErrorFinanzas('${e.message}');
+    }
+    await repositorio.guardarDeuda(deuda);
+  }
+
+  Future<void> guardarParametros(ParametrosFinanzas parametros) async {
+    _exigirAdministrar(parametros.libroId);
+    try {
+      parametros.validar();
+    } on ArgumentError catch (e) {
+      throw ErrorFinanzas('${e.message}');
+    }
+    await repositorio.guardarParametros(parametros);
+  }
+
+  /// Precarga los festivos oficiales del año (LFT art. 74) **inactivos**,
+  /// para que el dueño los revise y active (decisión 55).
+  Future<int> precargarFestivos(int anio) async {
+    final existentes = {for (final d in _d.diasInhabiles) d.fecha};
+    final nuevos = [
+      for (final d in festivosOficialesMexico(anio))
+        if (!existentes.contains(d.fecha)) d.copiar(activo: false),
+    ];
+    if (nuevos.isNotEmpty) await repositorio.guardarDiasInhabiles(nuevos);
+    return nuevos.length;
+  }
+
+  Future<void> activarDiaInhabil(DiaInhabil dia, {required bool activo}) =>
+      repositorio.guardarDiasInhabiles([
+        dia.copiar(activo: activo, revisadoPor: personaId, revisadoEn: _ahora),
+      ]);
+
+  Future<void> agregarDiaPropio(Fecha fecha, String nombre) {
+    if (nombre.trim().isEmpty) {
+      throw const ErrorFinanzas('Escribe el nombre del día.');
+    }
+    return repositorio.guardarDiasInhabiles([
+      DiaInhabil(
+        fecha: fecha,
+        nombre: nombre.trim(),
+        tipo: TipoDiaInhabil.personal,
+        fuente: 'Propio',
+        revisadoPor: personaId,
+        revisadoEn: _ahora,
+      ),
+    ]);
+  }
+
+  // ------------------------------------------------------------------- libros
+
+  Future<void> crearLibroCompartido(String nombre, List<String> otros) {
+    if (nombre.trim().isEmpty) throw const ErrorFinanzas('Escribe un nombre.');
+    if (otros.isEmpty) {
+      throw const ErrorFinanzas('Un libro compartido tiene 2 o más miembros.');
+    }
+    return repositorio.crearLibroCompartido(
+      id: _generarId(),
+      nombre: nombre.trim(),
+      otrosMiembros: otros,
+    );
+  }
+
+  Future<void> crearLibroRepresentado(String nombreTitular, {String? suplenteId}) {
+    if (nombreTitular.trim().isEmpty) {
+      throw const ErrorFinanzas('Escribe el nombre de la persona.');
+    }
+    return repositorio.crearLibroRepresentado(
+      id: _generarId(),
+      nombreTitular: nombreTitular.trim(),
+      suplenteId: suplenteId,
+    );
+  }
+
+  // --------------------------------------------------------------------- plan
+
+  VistaSemana vista(String libroId, Semana semana) =>
+      vistaSemana(_d, libroId, semana, hoy: hoy);
+
+  /// Activa la semana con la foto del plan (estado `activa`).
+  Future<SemanaGuardada> activarSemana(String libroId, Semana semana) async {
+    _exigirEscribir(libroId);
+    if (_d.semanaGuardada(libroId, semana) != null) {
+      throw const ErrorFinanzas('Esa semana ya está activada.');
+    }
+    final plan = armarPlanDelLibro(_d, libroId, semana);
+    final foto = fotoDelPlan(
+      plan,
+      id: _generarId(),
+      libroId: libroId,
+      arrastrePorOrigen: arrastresPorOrigen(_d, libroId, semana),
+      activadaPor: personaId,
+      activadaEn: _ahora,
+      generarId: _generarId,
+    );
+    await repositorio.guardarSemana(foto);
+    return foto;
+  }
+
+  /// Cierra la semana (revisión de 3 minutos): guarda la foto del cierre y del
+  /// balance. No mueve dinero: aplicar el remanente es otra acción.
+  Future<CierreGuardado> cerrarSemana(
+    String libroId,
+    Semana semana, {
+    AccionCierre accion = AccionCierre.sinAplicar,
+    bool conPendientes = false,
+  }) async {
+    _exigirEscribir(libroId);
+    final v = vista(libroId, semana);
+    if (v.guardada == null) {
+      throw const ErrorFinanzas('Activa la semana antes de cerrarla.');
+    }
+    if (v.estado == EstadoSemana.cerrada) {
+      throw const ErrorFinanzas('La semana ya está cerrada.');
+    }
+    final cierre = cierreDeLaVista(
+      v,
+      _d,
+      id: _generarId(),
+      accion: accion,
+      cerradoPor: personaId,
+      cerradoEn: _ahora,
+      conPendientes: conPendientes,
+    );
+    await repositorio.agregarCierre(cierre, libroId: libroId);
+    return cierre;
+  }
+
+  /// Cierra con pendientes las semanas que pasaron 3 días sin cerrar
+  /// (5.9 bis, punto 4). Devuelve cuántas cerró.
+  Future<int> cerrarSemanasVencidas(String libroId) async {
+    if (!permiso(libroId).escribir) return 0;
+    var cerradas = 0;
+    final abiertas = _d.semanas
+        .where((s) => s.libroId == libroId && s.estado != EstadoSemana.cerrada)
+        .toList()
+      ..sort((a, b) => a.semana.compareTo(b.semana));
+    for (final s in abiertas) {
+      if (!vista(libroId, s.semana).debeCerrarseSola) continue;
+      await cerrarSemana(
+        libroId,
+        s.semana,
+        accion: AccionCierre.cierreAutomatico,
+        conPendientes: true,
+      );
+      cerradas++;
+    }
+    return cerradas;
+  }
+
+  /// Reabre una semana cerrada (con confirmación); queda en la bitácora y el
+  /// siguiente cierre es la versión siguiente.
+  Future<void> reabrirSemana(String libroId, Semana semana) async {
+    _exigirEscribir(libroId);
+    final g = _d.semanaGuardada(libroId, semana);
+    if (g == null || g.estado != EstadoSemana.cerrada) {
+      throw const ErrorFinanzas('Solo se reabre una semana cerrada.');
+    }
+    await repositorio.cambiarEstadoSemana(g.id, EstadoSemana.activa);
+  }
+
+  /// Aplica el remanente que propuso el cierre: abono extra a cada deuda (pago
+  /// de deuda) y ahorro (transferencia). Solo con la confirmación de la
+  /// persona (5.6 bis, punto 6, regla 6).
+  Future<List<Movimiento>> aplicarRemanente({
+    required String libroId,
+    required DestinoRemanente destino,
+    required String cuentaOrigenId,
+    String? cuentaAhorroId,
+    String? motivo,
+  }) async {
+    _exigirEscribir(libroId);
+    final quien = _quien(libroId, motivo);
+    final movimientos = <Movimiento>[];
+    for (final a in destino.abonosExtra) {
+      final deuda = _d.deudas.where((x) => x.id == a.deuda.id).firstOrNull;
+      final pasivo = deuda?.cuentaPasivoId;
+      if (pasivo == null || a.monto <= 0) continue;
+      movimientos.add(
+        Movimiento(
+          id: _generarId(),
+          tipo: TipoMovimiento.pagoDeuda,
+          fecha: hoy,
+          registradoEn: _ahora,
+          cuentaOrigenId: cuentaOrigenId,
+          cuentaDestinoId: pasivo,
+          monto: a.monto,
+          realizadoPor: quien.realizadoPor,
+          registradoPor: personaId,
+          nota: 'Abono extra con el remanente',
+          motivo: _limpio(motivo),
+          enNombreDe: quien.enNombreDe,
+        ),
+      );
+    }
+    if (destino.ahorro > 0 && cuentaAhorroId != null) {
+      movimientos.add(
+        Movimiento(
+          id: _generarId(),
+          tipo: TipoMovimiento.transferencia,
+          fecha: hoy,
+          registradoEn: _ahora,
+          cuentaOrigenId: cuentaOrigenId,
+          cuentaDestinoId: cuentaAhorroId,
+          monto: destino.ahorro,
+          realizadoPor: quien.realizadoPor,
+          registradoPor: personaId,
+          nota: 'Ahorro con el remanente',
+          motivo: _limpio(motivo),
+          enNombreDe: quien.enNombreDe,
+        ),
+      );
+    }
+    if (movimientos.isEmpty) return movimientos;
+    await repositorio.agregarMovimientos(movimientos);
+    return movimientos;
+  }
+
+  /// Marca un ingreso esperado como llegado, retrasado o que no llegará: uno
+  /// que no llegó resta completo en su semana (regla 33).
+  Future<void> marcarIngreso(
+    String libroId,
+    Vencimiento v,
+    EstadoOcurrencia estado,
+  ) async {
+    _exigirEscribir(libroId);
+    final existente = _d.ocurrencias
+        .where(
+          (o) =>
+              o.libroId == libroId &&
+              o.origenId == v.origenId &&
+              o.fechaProgramada == v.fecha.programada,
+        )
+        .firstOrNull;
+    await repositorio.guardarOcurrencia(
+      existente?.conEstado(estado) ??
+          Ocurrencia(
+            id: _generarId(),
+            libroId: libroId,
+            origen: v.origen,
+            origenId: v.origenId,
+            fechaProgramada: v.fecha.programada,
+            fechaAjustada: v.fecha.ajustada,
+            montoEsperado: v.monto,
+            estado: estado,
+          ),
+    );
+  }
+}

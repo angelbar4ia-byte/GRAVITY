@@ -74,7 +74,8 @@ select pruebas.igual(public.aceptar_invitacion('token-de-ejemplo-solo-local'),
   'b0000000-0000-4000-8000-000000000001'::uuid, 'Nuevo acepta su invitación');
 select pruebas.igual(public.rol_en_hogar('b0000000-0000-4000-8000-000000000001'), 'familiar',
   'Nuevo entra con el rol invitado (familiar)');
-select pruebas.igual(pruebas.cuenta('select * from public.finanzas_muestra'), 0,
+select pruebas.igual(pruebas.cuenta('select * from public.fin_movimientos')
+                     + pruebas.cuenta('select * from public.fin_libros'), 0,
   'Como familiar, Nuevo no ve dinero');
 select pruebas.falla($$select public.aceptar_invitacion('token-de-ejemplo-solo-local')$$,
   'Una invitación aceptada no se reutiliza', '22023');

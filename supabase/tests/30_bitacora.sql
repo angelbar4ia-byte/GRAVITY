@@ -89,7 +89,7 @@ begin
     loop
       perform pruebas.falla(format($q$
         insert into public.bitacora (hogar_id, accion, tabla, registro_id, detalle)
-        values ('b0000000-0000-4000-8000-000000000001', %L, 'finanzas_muestra',
+        values ('b0000000-0000-4000-8000-000000000001', %L, 'fin_movimientos',
                 'c0000000-0000-4000-8000-000000000001',
                 '{"antes": {"monto_centavos": 185000, "descripcion": "Despensa semanal (ejemplo)"}}')$q$,
         v_accion),
@@ -101,15 +101,15 @@ $$;
 select pruebas.como('casa@ejemplo.test');
 select pruebas.falla($$
   insert into public.bitacora (hogar_id, accion, tabla)
-  values ('b0000000-0000-4000-8000-000000000001', 'Borrar', 'finanzas_muestra')$$,
+  values ('b0000000-0000-4000-8000-000000000001', 'Borrar', 'fin_movimientos')$$,
   'M2: tampoco con mayúsculas', '23514');
 select pruebas.falla($$
   insert into public.bitacora (hogar_id, accion, tabla)
-  values ('b0000000-0000-4000-8000-000000000001', ' borrar', 'finanzas_muestra')$$,
+  values ('b0000000-0000-4000-8000-000000000001', ' borrar', 'fin_movimientos')$$,
   'M2: ni con espacios', '23514');
 select pruebas.falla($$
   insert into public.bitacora (hogar_id, accion, tabla)
-  values ('b0000000-0000-4000-8000-000000000001', 'bоrrar', 'finanzas_muestra')$$,
+  values ('b0000000-0000-4000-8000-000000000001', 'bоrrar', 'fin_movimientos')$$,
   'M2: ni con letras de otro alfabeto que se parecen', '23514');
 select pruebas.igual(pruebas.afecta($$
   insert into public.bitacora (hogar_id, accion, detalle)

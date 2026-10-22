@@ -4,17 +4,28 @@ begin;
 
 -- ---------------------------------------------------------------- quién ve a quién
 select pruebas.como('ana@ejemplo.test');
-select pruebas.igual(pruebas.cuenta('select * from public.personas'), 5,
-  'El dueño ve a las 5 personas de su hogar');
-select pruebas.igual(pruebas.cuenta('select * from public.membresias'), 5,
-  'El dueño ve las 5 membresías de su hogar');
+select pruebas.igual(pruebas.cuenta('select * from public.personas'), 7,
+  'El dueño ve a las 6 personas de su hogar y a Papá (titular de un libro del hogar, sin cuenta)');
+select pruebas.igual(pruebas.cuenta('select * from public.membresias'), 6,
+  'El dueño ve las 6 membresías de su hogar');
+
+-- D19: quien comparte un libro de Finanzas ve a los demás miembros y al titular.
+select pruebas.como('alex@ejemplo.test');
+select pruebas.igual(
+  (select string_agg(nombre_visible, ', ' order by nombre_visible) from public.personas),
+  'Alex Ejemplo, Ana Ejemplo, Papá (ejemplo)',
+  'D19: la pareja ve a quien comparte libros con ella (Ana) y a Papá (es su suplente); a nadie más');
+select pruebas.igual(pruebas.cuenta('select * from public.membresias'), 1, 'La pareja solo ve su membresía');
+-- La cuenta maestra ve a todas las personas del hogar.
+select pruebas.como('marta@ejemplo.test');
+select pruebas.igual(pruebas.cuenta('select * from public.personas'), 7,
+  'D19: la cuenta maestra ve a las personas del hogar y a Papá');
 
 do $$
 declare
   v_correo text;
 begin
-  foreach v_correo in array array['alex@ejemplo.test', 'carla@ejemplo.test',
-                                  'diana@ejemplo.test', 'casa@ejemplo.test']
+  foreach v_correo in array array['carla@ejemplo.test', 'diana@ejemplo.test', 'casa@ejemplo.test']
   loop
     perform pruebas.como(v_correo);
     perform pruebas.igual(pruebas.cuenta('select * from public.personas'), 1,
@@ -33,8 +44,9 @@ select pruebas.igual(
   (select string_agg(modulo || ':' || accion || '=' || alcance, ', ' order by modulo, accion)
      from public.mis_permisos('b0000000-0000-4000-8000-000000000001')),
   'ajustes:escribir=propio, ajustes:leer=propio, alimentacion:leer=restringido, casa:leer=total, '
-  'cuidados:escribir=restringido, cuidados:leer=restringido, finanzas:escribir=restringido',
-  'Cuidador: Cuidados de su turno, comidas de la persona bajo cuidado, Casa y lo propio; nada de familia ni GRAVITY');
+  'cuidados:escribir=restringido, cuidados:leer=restringido, finanzas:escribir=restringido, '
+  'gravity:escribir=restringido, gravity:leer=restringido',
+  'Cuidador: Cuidados de su turno, comidas de la persona bajo cuidado, Casa, lo propio y GRAVITY restringido (D18)');
 select pruebas.ok(
   not public.puede('b0000000-0000-4000-8000-000000000001', 'habitos', 'leer')
   and not public.puede_sobre('b0000000-0000-4000-8000-000000000001', 'habitos', 'leer',
@@ -43,12 +55,13 @@ select pruebas.ok(
   and not public.puede('b0000000-0000-4000-8000-000000000001', 'ajustes', 'leer'),
   'Cuidador: sin Hábitos, sin Alimentación completa y sin Ajustes del hogar');
 select pruebas.ok(
-  public.alcance('b0000000-0000-4000-8000-000000000001', 'gravity', 'leer') is null
+  public.alcance('b0000000-0000-4000-8000-000000000001', 'gravity', 'leer') = 'restringido'
+  and not public.puede('b0000000-0000-4000-8000-000000000001', 'gravity', 'leer')
   and not public.puede_sobre('b0000000-0000-4000-8000-000000000001', 'gravity', 'leer',
                              pruebas.id_persona('diana@ejemplo.test'))
   and not public.puede_sobre('b0000000-0000-4000-8000-000000000001', 'gravity', 'escribir',
                              pruebas.id_persona('diana@ejemplo.test')),
-  'I1: Cuidador: sin GRAVITY, ni siquiera lo propio');
+  'D18: Cuidador: GRAVITY restringido (solo sus solicitudes, con su regla propia); no abre GRAVITY');
 select pruebas.ok(
   not public.puede('b0000000-0000-4000-8000-000000000001', 'finanzas', 'leer')
   and not public.puede_sobre('b0000000-0000-4000-8000-000000000001', 'finanzas', 'leer',
@@ -75,11 +88,12 @@ select pruebas.ok(
   'Coadministrador: GRAVITY lo propio, no lo de otros');
 select pruebas.como('ana@ejemplo.test');
 select pruebas.ok(
-  public.puede('b0000000-0000-4000-8000-000000000001', 'gravity', 'leer')
-  and public.puede('b0000000-0000-4000-8000-000000000001', 'gravity', 'escribir')
-  and public.puede_sobre('b0000000-0000-4000-8000-000000000001', 'gravity', 'leer',
-                         pruebas.id_persona('carla@ejemplo.test')),
-  'I1: Dueño: GRAVITY total');
+  public.puede_sobre('b0000000-0000-4000-8000-000000000001', 'gravity', 'leer',
+                     pruebas.id_persona('ana@ejemplo.test'))
+  and not public.puede('b0000000-0000-4000-8000-000000000001', 'gravity', 'leer')
+  and not public.puede_sobre('b0000000-0000-4000-8000-000000000001', 'gravity', 'leer',
+                             pruebas.id_persona('carla@ejemplo.test')),
+  'D18: Dueño: GRAVITY lo propio; no el historial de otros');
 
 -- ---------------------------------------------------------------- lo propio (puede_sobre)
 select pruebas.como('carla@ejemplo.test');
@@ -122,8 +136,10 @@ select pruebas.igual(pruebas.afecta($$update public.membresias set rol = 'famili
   where persona_id = pruebas.id_persona('alex@ejemplo.test')$$), 1,
   'El dueño cambia el rol del coadministrador a familiar');
 select pruebas.como('alex@ejemplo.test');
-select pruebas.igual(pruebas.cuenta('select * from public.finanzas_muestra'), 0,
-  'Con el rol nuevo deja de ver el dinero al instante');
+select pruebas.igual(pruebas.cuenta('select * from public.fin_movimientos')
+                     + pruebas.cuenta('select * from public.fin_libros')
+                     + pruebas.cuenta('select * from public.fin_cuentas'), 0,
+  'Con el rol nuevo deja de ver el dinero al instante (ni su libro, ni el compartido)');
 
 -- Baja de la cuidadora (D5): pierde el acceso; lo que hizo queda con su nombre.
 select pruebas.como('diana@ejemplo.test');

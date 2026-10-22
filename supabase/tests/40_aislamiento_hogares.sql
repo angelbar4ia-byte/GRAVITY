@@ -18,21 +18,40 @@ select pruebas.igual(pruebas.cuenta('select * from public.personas'), 1,
 select pruebas.igual(pruebas.cuenta($$select * from public.membresias
   where hogar_id = 'b0000000-0000-4000-8000-000000000001'$$), 0, 'No ve membresías del hogar ajeno');
 select pruebas.igual(pruebas.cuenta('select * from public.invitaciones'), 0, 'No ve invitaciones ajenas');
-select pruebas.igual(pruebas.cuenta($$select * from public.finanzas_muestra
+select pruebas.igual(pruebas.cuenta($$select * from public.fin_movimientos
   where hogar_id = 'b0000000-0000-4000-8000-000000000001'$$), 0, 'No ve dinero del hogar ajeno');
-select pruebas.igual(pruebas.cuenta('select * from public.finanzas_muestra'), 1, 'Ve el dinero de su hogar');
+select pruebas.igual(pruebas.cuenta('select * from public.fin_movimientos'), 2, 'Ve el dinero de su hogar (2 movimientos)');
+select pruebas.igual(pruebas.cuenta($$select * from public.fin_libros
+  where hogar_id = 'b0000000-0000-4000-8000-000000000001'$$), 0, 'No ve libros del hogar ajeno');
+select pruebas.igual(pruebas.cuenta($$select * from public.fin_cuentas
+  where hogar_id = 'b0000000-0000-4000-8000-000000000001'$$), 0, 'No ve cuentas ni categorías de gasto del hogar ajeno');
+select pruebas.igual(pruebas.cuenta($$select * from public.fin_categorias
+  where hogar_id = 'b0000000-0000-4000-8000-000000000001'$$), 0, 'No ve el árbol de categorías del hogar ajeno');
+select pruebas.igual(pruebas.cuenta($$select * from public.fin_v_saldos
+  where hogar_id = 'b0000000-0000-4000-8000-000000000001'$$), 0, 'No ve saldos del hogar ajeno');
+select pruebas.ok(not public.fin_puede('f1000000-0000-4000-8000-000000000001', 'leer')
+                  and not public.fin_puede_hogar('b0000000-0000-4000-8000-000000000001', 'leer'),
+  'fin_puede() y fin_puede_hogar(): nada en el hogar ajeno');
 select pruebas.igual(pruebas.cuenta($$select * from public.bitacora
   where hogar_id = 'b0000000-0000-4000-8000-000000000001'$$), 0, 'No ve la bitácora del hogar ajeno');
 select pruebas.igual(pruebas.cuenta('select * from public.dispositivos'), 0, 'No ve dispositivos ajenos');
 
 -- Escritura sobre el hogar ajeno: nada.
 select pruebas.falla($$
-  insert into public.finanzas_muestra (hogar_id, descripcion, monto_centavos)
-  values ('b0000000-0000-4000-8000-000000000001', 'Intrusión', 1)$$,
-  'No registra dinero en el hogar ajeno', '42501');
+  select pruebas.registrar('gasto', 'c3000000-0000-4000-8000-000000000002', 'c2000000-0000-4000-8000-000000000001', 100)$$,
+  'No registra dinero en el hogar ajeno (con cuentas de ese hogar)', '42501');
+select pruebas.falla($$
+  select pruebas.registrar('gasto', 'c7000000-0000-4000-8000-000000000001', 'c2000000-0000-4000-8000-000000000001', 100,
+                           p_hogar => 'b0000000-0000-4000-8000-000000000002')$$,
+  'No mezcla una cuenta suya con una del hogar ajeno', '23503');
 select pruebas.igual(pruebas.afecta($$
-  update public.finanzas_muestra set monto_centavos = 0
-  where hogar_id = 'b0000000-0000-4000-8000-000000000001'$$), 0, 'No cambia dinero ajeno');
+  update public.fin_cuentas set nombre = 'Tomada'
+  where hogar_id = 'b0000000-0000-4000-8000-000000000001'$$), 0, 'No cambia cuentas ajenas');
+select pruebas.falla($$
+  insert into public.fin_libro_miembros (hogar_id, libro_id, persona_id, papel)
+  values ('b0000000-0000-4000-8000-000000000001', 'f1000000-0000-4000-8000-000000000001',
+          pruebas.id_persona('elena@ejemplo.test'), 'miembro')$$,
+  'No se mete a un libro compartido del hogar ajeno', '42501');
 select pruebas.igual(pruebas.afecta($$
   update public.hogares set nombre = 'Tomado'
   where id = 'b0000000-0000-4000-8000-000000000001'$$), 0, 'No renombra el hogar ajeno');
@@ -50,8 +69,10 @@ select pruebas.falla($$
 select pruebas.como('ana@ejemplo.test');
 select pruebas.igual(pruebas.cuenta($$select * from public.hogares
   where id = 'b0000000-0000-4000-8000-000000000002'$$), 0, 'Ana no ve el Hogar Vecino');
-select pruebas.igual(pruebas.cuenta($$select * from public.finanzas_muestra
+select pruebas.igual(pruebas.cuenta($$select * from public.fin_movimientos
   where hogar_id = 'b0000000-0000-4000-8000-000000000002'$$), 0, 'Ana no ve el dinero del Hogar Vecino');
+select pruebas.igual(pruebas.cuenta($$select * from public.fin_cuentas
+  where hogar_id = 'b0000000-0000-4000-8000-000000000002'$$), 0, 'Ana no ve las cuentas del Hogar Vecino');
 select pruebas.igual(pruebas.cuenta($$select * from public.personas
   where id = pruebas.id_persona('elena@ejemplo.test')$$), 0, 'Ana no ve a Elena');
 
@@ -61,7 +82,9 @@ select pruebas.igual(
   pruebas.cuenta('select * from public.hogares')
   + pruebas.cuenta('select * from public.membresias')
   + pruebas.cuenta('select * from public.invitaciones')
-  + pruebas.cuenta('select * from public.finanzas_muestra')
+  + pruebas.cuenta('select * from public.fin_movimientos')
+  + pruebas.cuenta('select * from public.fin_libros')
+  + pruebas.cuenta('select * from public.fin_cuentas')
   + pruebas.cuenta('select * from public.bitacora')
   + pruebas.cuenta('select * from public.dispositivos'), 0,
   'Una cuenta sin hogar no ve hogares, dinero, invitaciones, bitácora ni dispositivos');
