@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../superficies.dart';
@@ -211,78 +213,142 @@ class SelectorLibro extends StatelessWidget {
 }
 
 /// Etiqueta + marca corta, en una línea.
+///
+/// Las dos partes son flexibles y se recortan con puntos suspensivos: con un
+/// nombre largo, letra grande o una fuente ancha nada desborda. El espacio se
+/// reparte **en proporción al ancho natural de cada parte** (y no por mitades),
+/// de modo que, si el nombre y la marca caben juntos, ninguno se recorta de
+/// más; el nombre pesa como mucho [_veces] veces la marca, para que ésta
+/// conserve siempre un tramo legible. El texto completo de la marca está en su
+/// tooltip y en la semántica del libro ([OpcionLibro.descripcion]).
 class _TextoLibro extends StatelessWidget {
   const _TextoLibro({required this.libro, this.fuerte = false});
 
   final OpcionLibro libro;
   final bool fuerte;
 
+  /// Lo más que puede pesar el nombre frente a la marca en el reparto.
+  static const _veces = 3;
+
   @override
   Widget build(BuildContext context) {
     final v = ValoresDiseno.de(context);
     final marca = libro.marca;
+    final estilo = v.lectura(
+      tamano: 14,
+      peso: fuerte ? FontWeight.w600 : FontWeight.w500,
+      color: v.textoFuerte,
+    );
+    var pesoEtiqueta = 1;
+    var pesoMarca = 1;
+    if (marca != null) {
+      final anchoMarca = _Marquita.anchoNatural(context, marca);
+      final anchoEtiqueta = _anchoTexto(context, libro.etiqueta, estilo);
+      pesoMarca = math.max(1, anchoMarca.ceil());
+      pesoEtiqueta = math.max(
+        1,
+        math.min(anchoEtiqueta, anchoMarca * _veces).ceil(),
+      );
+    }
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Flexible(
+          flex: pesoEtiqueta,
           child: Text(
             libro.etiqueta,
-            style: v.lectura(
-              tamano: 14,
-              peso: fuerte ? FontWeight.w600 : FontWeight.w500,
-              color: v.textoFuerte,
-            ),
+            style: estilo,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
         ),
         if (marca != null) ...[
           SizedBox(width: v.espacio),
-          _Marquita(texto: marca, soloLectura: libro.soloLectura),
+          Flexible(
+            flex: pesoMarca,
+            child: _Marquita(texto: marca, soloLectura: libro.soloLectura),
+          ),
         ],
       ],
     );
   }
 }
 
+/// Ancho que ocupa [texto] en una línea, con la escala de letra de [context].
+double _anchoTexto(BuildContext context, String texto, TextStyle estilo) {
+  final medidor = TextPainter(
+    text: TextSpan(text: texto, style: estilo),
+    textDirection: Directionality.of(context),
+    textScaler: MediaQuery.textScalerOf(context),
+    maxLines: 1,
+  )..layout();
+  final ancho = medidor.width;
+  medidor.dispose();
+  return ancho;
+}
+
 /// La marca corta del chip: icono + texto, con borde.
+///
+/// Se recorta con puntos suspensivos si no cabe; su tooltip trae el texto
+/// completo (no repite la semántica: el texto ya la lleva completa).
 class _Marquita extends StatelessWidget {
   const _Marquita({required this.texto, required this.soloLectura});
 
   final String texto;
   final bool soloLectura;
 
+  static const _tamanoIcono = 13.0;
+  static const _separacion = 3.0;
+  static const _grosorBorde = 1.0;
+
+  static TextStyle _estilo(ValoresDiseno v) =>
+      v.lectura(tamano: 12, peso: FontWeight.w500, color: v.textoTenue);
+
+  static double _relleno(ValoresDiseno v) => v.espacio * 0.75;
+
+  /// Ancho de la marca con todo su texto: icono, separación, relleno y borde.
+  static double anchoNatural(BuildContext context, String texto) {
+    final v = ValoresDiseno.de(context);
+    return _anchoTexto(context, texto, _estilo(v)) +
+        _tamanoIcono +
+        _separacion +
+        2 * _relleno(v) +
+        2 * _grosorBorde;
+  }
+
   @override
   Widget build(BuildContext context) {
     final v = ValoresDiseno.de(context);
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        border: Border.all(color: v.borde),
-        borderRadius: BorderRadius.circular(v.radioChico),
-      ),
-      child: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: v.espacio * 0.75,
-          vertical: 2,
+    return Tooltip(
+      message: texto,
+      excludeFromSemantics: true,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          border: Border.all(color: v.borde, width: _grosorBorde),
+          borderRadius: BorderRadius.circular(v.radioChico),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              soloLectura ? Icons.lock_outline : Icons.draw_outlined,
-              size: 13,
-              color: v.textoTenue,
-            ),
-            const SizedBox(width: 3),
-            Text(
-              texto,
-              style: v.lectura(
-                tamano: 12,
-                peso: FontWeight.w500,
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: _relleno(v), vertical: 2),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                soloLectura ? Icons.lock_outline : Icons.draw_outlined,
+                size: _tamanoIcono,
                 color: v.textoTenue,
               ),
-            ),
-          ],
+              const SizedBox(width: _separacion),
+              Flexible(
+                child: Text(
+                  texto,
+                  style: _estilo(v),
+                  maxLines: 1,
+                  softWrap: false,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

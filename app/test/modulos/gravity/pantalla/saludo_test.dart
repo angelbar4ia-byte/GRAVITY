@@ -143,6 +143,12 @@ void main() {
     test('Cuidados: solo quien lo lee; Casa, solo lo genérico', () {
       expect(ejemplo.paraRol(Rol.familiar).cuidados, isNull);
       expect(ejemplo.paraRol(Rol.cuidador).cuidados, isNotNull);
+      // La vista sale de las funciones por rol del espejo de permisos.
+      expect(vistaResumen(Rol.casa, Modulo.cuidados), VistaResumen.generica);
+      expect(
+        vistaResumen(Rol.cuidador, Modulo.cuidados),
+        VistaResumen.completa,
+      );
       final casa = ejemplo.paraRol(Rol.casa).cuidados!;
       expect(casa.turno, 'Turno de cuidados · hasta 20:00');
       expect(casa.pendientes.map((p) => p.texto), [

@@ -184,8 +184,10 @@ enum VistaResumen {
 
 /// Vista del resumen de [modulo] para [rol], **siempre** con el espejo de
 /// permisos: el módulo aparece solo si el rol puede abrirlo (`puedeAbrir`, que
-/// exige leer); con alcance genérico, solo recordatorios genéricos; con alcance
-/// por consentimiento, nada hasta que la persona representada lo dé (D2).
+/// exige leer); si el rol solo ve recordatorios genéricos
+/// (`soloRecordatoriosGenericos`), solo esos; si depende del consentimiento
+/// (`dependeDelConsentimiento`), nada hasta que la persona representada lo dé
+/// (D2).
 /// Sin rol (nadie ha entrado), nada.
 VistaResumen vistaResumen(
   Rol? rol,
@@ -193,12 +195,11 @@ VistaResumen vistaResumen(
   bool conConsentimiento = false,
 }) {
   if (rol == null || !puedeAbrir(rol, modulo)) return VistaResumen.nada;
-  return switch (permisoDe(rol, modulo).alcance) {
-    Alcance.generico => VistaResumen.generica,
-    Alcance.consentimiento =>
-      conConsentimiento ? VistaResumen.completa : VistaResumen.nada,
-    _ => VistaResumen.completa,
-  };
+  if (soloRecordatoriosGenericos(rol, modulo)) return VistaResumen.generica;
+  if (dependeDelConsentimiento(rol, modulo)) {
+    return conConsentimiento ? VistaResumen.completa : VistaResumen.nada;
+  }
+  return VistaResumen.completa;
 }
 
 @immutable

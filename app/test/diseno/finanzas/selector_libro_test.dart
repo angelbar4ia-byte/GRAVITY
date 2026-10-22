@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show RenderParagraph;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gravity/diseno/diseno.dart';
 
@@ -28,6 +29,47 @@ const _deAna = OpcionLibro(
   tipo: TipoLibro.personal,
   acceso: AccesoLibro.soloLectura,
 );
+
+// Nombres largos de ejemplo, con marca: la prueba de desborde.
+const _largoSoloLectura = OpcionLibro(
+  id: 'libro-largo-lectura',
+  nombre: 'Libro de la tía Magdalena del Carmen y familia (ejemplo)',
+  tipo: TipoLibro.personal,
+  acceso: AccesoLibro.soloLectura,
+);
+const _largoAlbacea = OpcionLibro(
+  id: 'libro-largo-albacea',
+  nombre: 'Papá Bartolomé de los Ángeles Fernández (ejemplo)',
+  tipo: TipoLibro.representado,
+  acceso: AccesoLibro.albacea,
+);
+
+/// Letra grande ([escala]) y la fuente de prueba (Ahem: cada letra mide
+/// 1 em de ancho, la más ancha posible) en el texto de lectura, para forzar el
+/// peor caso de ancho con cualquier nombre.
+Widget _conLetraAncha(Widget hijo, {required double escala}) {
+  return Builder(
+    builder: (context) {
+      final tema = Theme.of(context);
+      final v = ValoresDiseno.de(context);
+      return Theme(
+        data: tema.copyWith(
+          extensions: [
+            ...tema.extensions.values
+                .whereType<ThemeExtension<dynamic>>()
+                .where((e) => e is! ValoresDiseno),
+            v.copyWith(fuenteLectura: 'Ahem'),
+          ],
+        ),
+        child: MediaQuery(
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: TextScaler.linear(escala)),
+          child: hijo,
+        ),
+      );
+    },
+  );
+}
 
 void main() {
   group('OpcionLibro', () {
@@ -201,6 +243,170 @@ void main() {
       expect(cambios, ['libro-ana']);
       semantica.dispose();
     });
+  });
+
+  group('SelectorLibro sin desbordes (nombre largo y letra ancha)', () {
+    // Una excepción de desborde (RenderFlex) hace fallar la prueba.
+    for (final escala in [1.0, 1.5, 2.0]) {
+      for (final ancho in [200.0, 260.0, 320.0, 360.0, 600.0]) {
+        testWidgets('chips a $ancho dp con letra x$escala', (tester) async {
+          await montarEnFinanzas(
+            tester,
+            _conLetraAncha(
+              SelectorLibro(
+                libros: const [_largoSoloLectura, _largoAlbacea],
+                libroActualId: _largoSoloLectura.id,
+                alCambiar: (_) {},
+                comoMenu: false,
+              ),
+              escala: escala,
+            ),
+            ancho: ancho,
+          );
+          expect(tester.takeException(), isNull);
+          // Cada chip cabe en el ancho disponible y sigue siendo tocable.
+          final chips = find.descendant(
+            of: find.byType(SelectorLibro),
+            matching: find.byType(InkWell),
+          );
+          expect(chips, findsNWidgets(2));
+          for (final chip in chips.evaluate()) {
+            final tamano = tester.getSize(find.byWidget(chip.widget));
+            expect(tamano.width, lessThanOrEqualTo(ancho));
+            expect(tamano.height, greaterThanOrEqualTo(zonaTactilMinima));
+          }
+          // Las marcas siguen ahí, con tooltip del texto completo.
+          expect(find.byTooltip('Solo lectura'), findsOneWidget);
+          expect(find.byTooltip('Albacea'), findsOneWidget);
+        });
+      }
+    }
+
+    testWidgets('la marca se recorta con puntos suspensivos, no desborda', (
+      tester,
+    ) async {
+      await montarEnFinanzas(
+        tester,
+        _conLetraAncha(
+          SelectorLibro(
+            libros: const [_largoSoloLectura],
+            libroActualId: _largoSoloLectura.id,
+            alCambiar: (_) {},
+            comoMenu: false,
+          ),
+          escala: 2,
+        ),
+        ancho: 260,
+      );
+      expect(tester.takeException(), isNull);
+      final marca = tester.widget<Text>(find.text('Solo lectura'));
+      expect(marca.overflow, TextOverflow.ellipsis);
+      expect(marca.maxLines, 1);
+      final etiqueta = tester.widget<Text>(
+        find.text(_largoSoloLectura.etiqueta),
+      );
+      expect(etiqueta.overflow, TextOverflow.ellipsis);
+      // Lo visible se recorta, el texto no pierde nada.
+      expect(
+        tester
+            .renderObject<RenderParagraph>(find.text(marca.data!))
+            .didExceedMaxLines,
+        isTrue,
+      );
+      expect(marca.data, 'Solo lectura');
+    });
+
+    testWidgets('si nombre y marca caben juntos, ninguno se recorta', (
+      tester,
+    ) async {
+      // En las pruebas el texto de lectura mide 1 em por letra (fuente de
+      // prueba): nombre 196 dp + marca 114 dp + separaciones y relleno del
+      // chip. Con 380 dp caben apenas; un reparto por mitades recortaría el
+      // nombre aunque quepa, el proporcional no recorta nada.
+      await montarEnFinanzas(
+        tester,
+        SelectorLibro(
+          libros: const [_papa],
+          libroActualId: _papa.id,
+          alCambiar: (_) {},
+          comoMenu: false,
+        ),
+        ancho: 380,
+      );
+      expect(tester.takeException(), isNull);
+      for (final texto in ['Papá (ejemplo)', 'Albacea']) {
+        expect(
+          tester
+              .renderObject<RenderParagraph>(find.text(texto))
+              .didExceedMaxLines,
+          isFalse,
+          reason: '"$texto" se recortó aunque cabe',
+        );
+      }
+    });
+
+    testWidgets('semántica completa aunque se recorte lo visible', (
+      tester,
+    ) async {
+      final semantica = tester.ensureSemantics();
+      await montarEnFinanzas(
+        tester,
+        _conLetraAncha(
+          SelectorLibro(
+            libros: const [_largoSoloLectura, _largoAlbacea],
+            libroActualId: _largoSoloLectura.id,
+            alCambiar: (_) {},
+            comoMenu: false,
+          ),
+          escala: 2,
+        ),
+        ancho: 260,
+      );
+      expect(tester.takeException(), isNull);
+      expect(
+        _largoSoloLectura.descripcion,
+        'Libro: ${_largoSoloLectura.nombre}, solo lectura',
+      );
+      expect(
+        find.bySemanticsLabel(_largoSoloLectura.descripcion),
+        findsOneWidget,
+      );
+      expect(find.bySemanticsLabel(_largoAlbacea.descripcion), findsOneWidget);
+      semantica.dispose();
+    });
+
+    for (final escala in [1.0, 2.0]) {
+      testWidgets('menú con nombres largos y letra x$escala', (tester) async {
+        await montarEnFinanzas(
+          tester,
+          _conLetraAncha(
+            SelectorLibro(
+              libros: const [_mio, _largoSoloLectura, _largoAlbacea],
+              libroActualId: _largoAlbacea.id,
+              alCambiar: (_) {},
+              comoMenu: true,
+            ),
+            escala: escala,
+          ),
+          ancho: 360,
+        );
+        expect(tester.takeException(), isNull);
+        // El botón del menú cabe en el ancho y conserva la marca.
+        final boton = find.descendant(
+          of: find.byType(SelectorLibro),
+          matching: find.byType(InkWell),
+        );
+        expect(tester.getSize(boton).width, lessThanOrEqualTo(360));
+        expect(find.byTooltip('Albacea'), findsOneWidget);
+
+        await tester.tap(boton);
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+        // Las tres opciones del menú, con la marca de cada una.
+        expect(find.byTooltip('Solo lectura'), findsOneWidget);
+        expect(find.byTooltip('Albacea'), findsNWidgets(2));
+      });
+    }
   });
 
   group('MarcaLibro', () {
