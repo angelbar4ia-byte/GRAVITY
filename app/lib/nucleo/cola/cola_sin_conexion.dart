@@ -291,9 +291,11 @@ class ColaSinConexion {
     return idFinal;
   }
 
-  /// Envía, en orden de creación, los pendientes cuya espera ya pasó. Si un
-  /// envío falla por red, se programa su reintento y se detiene la ronda. Si
-  /// ya hay una ronda en curso, devuelve esa misma (nunca envía en paralelo).
+  /// Envía los pendientes cuya espera ya pasó: primero los de nivel de subida
+  /// menor y, dentro de un nivel, en orden de creación. Si un envío falla por
+  /// red, se programa su reintento y se detiene la ronda; si solo falta una
+  /// dependencia (23503), se programa su reintento y la ronda sigue. Si ya hay
+  /// una ronda en curso, devuelve esa misma (nunca envía en paralelo).
   Future<ResumenProceso> procesar() =>
       _enCurso ??= _procesar().whenComplete(() => _enCurso = null);
 
