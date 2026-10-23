@@ -525,7 +525,7 @@ void main() {
       // queda privado para quien se queda.
       await tester.tap(find.byKey(ValueKey('miembro-quitar-${IdsDemostracion.pareja}')));
       await tester.pumpAndSettle();
-      expect(find.textContaining('pasa a privado'), findsOneWidget);
+      expect(find.textContaining('Quedará menos de 2 miembros'), findsOneWidget);
       await tester.tap(find.text('Sacar').last);
       await tester.pumpAndSettle();
       final solo = repo.datos.libro(casa)!;

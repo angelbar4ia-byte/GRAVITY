@@ -16,6 +16,7 @@ import 'package:gravity/modulos/finanzas/finanzas.dart' show tablasColaFinanzas;
 import 'package:gravity/nucleo/base_local/base_local.dart';
 import 'package:gravity/nucleo/cola/cola_sin_conexion.dart';
 import 'package:gravity/nucleo/contratos/roles.dart';
+import 'package:gravity/nucleo/seguridad/almacen_seguro.dart';
 import 'package:gravity/modulos/finanzas/datos/demostracion.dart';
 
 import 'ayuda_finanzas.dart';
@@ -677,6 +678,74 @@ void main() {
       expect(await repo.registrarConsultaMaestra(IdsDemostracion.libroDueno), isFalse);
       memoria.funciones['fin_registrar_consulta_maestra'] = (_) => null;
       expect(await repo.registrarConsultaMaestra(IdsDemostracion.libroPareja), isFalse);
+    });
+  });
+
+  group('Adultos con Finanzas del hogar (fin_adultos_con_finanzas)', () {
+    test('cualquier adulto con Finanzas ve a los demás: se llama con '
+        'p_hogar_id y se usa para elegir a quién agregar', () async {
+      memoria.funciones['fin_adultos_con_finanzas'] = (_) => [
+        {'persona_id': IdsDemostracion.dueno, 'nombre_visible': 'Dueño de ejemplo', 'rol': 'dueno'},
+        {'persona_id': IdsDemostracion.pareja, 'nombre_visible': 'Pareja de ejemplo', 'rol': 'coadministrador'},
+        {'persona_id': 'persona-tercera', 'nombre_visible': 'Tercera de ejemplo', 'rol': 'coadministrador'},
+      ];
+      // Una pareja que, por la RLS de las membresías, solo se ve a sí misma.
+      memoria.tabla('membresias').removeWhere((m) => m['persona_id'] == IdsDemostracion.dueno);
+      final comoPareja = RepositorioFinanzasSupabase(
+        fuente: fuente,
+        cola: cola,
+        hogarId: hogar,
+        personaId: IdsDemostracion.pareja,
+        esperaSubida: const Duration(seconds: 2),
+      );
+      addTearDown(comoPareja.cerrar);
+      final carga = await comoPareja.cargar();
+      final llamada = memoria.llamadas.firstWhere((l) => l.$1 == 'fin_adultos_con_finanzas');
+      expect(llamada.$2, {'p_hogar_id': hogar});
+      expect(carga.adultosConFinanzas, {
+        IdsDemostracion.dueno,
+        IdsDemostracion.pareja,
+        'persona-tercera',
+      });
+      expect(carga.nombreDe('persona-tercera'), 'Tercera de ejemplo');
+    });
+
+    test('si la función no responde, se queda con las membresías que la '
+        'sesión alcanza a leer', () async {
+      final carga = await repo.cargar();
+      expect(carga.adultosConFinanzas, {IdsDemostracion.dueno, IdsDemostracion.pareja});
+    });
+
+    test('la lista se guarda en la copia para trabajar sin señal', () async {
+      final almacen = AlmacenSeguroEnMemoria();
+      memoria.funciones['fin_adultos_con_finanzas'] = (_) => [
+        {'persona_id': IdsDemostracion.dueno, 'nombre_visible': 'Dueño de ejemplo', 'rol': 'dueno'},
+        {'persona_id': 'persona-tercera', 'nombre_visible': 'Tercera de ejemplo', 'rol': 'coadministrador'},
+      ];
+      final conCopia = RepositorioFinanzasSupabase(
+        fuente: fuente,
+        cola: cola,
+        hogarId: hogar,
+        personaId: dueno.persona.id,
+        copia: CopiaLocalFinanzas(almacen, personaId: dueno.persona.id),
+        esperaSubida: const Duration(seconds: 2),
+      );
+      addTearDown(conCopia.cerrar);
+      await conCopia.cargar();
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      memoria.sinSenal = true;
+      final otra = RepositorioFinanzasSupabase(
+        fuente: fuente,
+        cola: cola,
+        hogarId: hogar,
+        personaId: dueno.persona.id,
+        copia: CopiaLocalFinanzas(almacen, personaId: dueno.persona.id),
+        esperaSubida: const Duration(seconds: 2),
+      );
+      addTearDown(otra.cerrar);
+      final sinSenal = await otra.cargar();
+      expect(sinSenal.desdeCopia, isTrue);
+      expect(sinSenal.adultosConFinanzas, {IdsDemostracion.dueno, 'persona-tercera'});
     });
   });
 
