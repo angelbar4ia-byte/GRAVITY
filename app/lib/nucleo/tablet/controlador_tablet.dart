@@ -64,6 +64,12 @@ enum ResultadoDesbloqueo {
 
   /// Tablet personal: la persona no está entre las permitidas.
   noPermitida,
+
+  /// El PIN es el correcto, pero quien ve dinero ahora lo necesita de 6
+  /// dígitos (D18, 23/oct): no entra todavía; debe elegir uno nuevo
+  /// ([ControladorTablet.cambiarPinYEntrar]). Su cuenta guardada y su
+  /// bandeja de salida se conservan: el cambio las vuelve a cifrar.
+  debeCambiarPin,
 }
 
 class EstadoTablet {
@@ -144,8 +150,9 @@ class ControladorTablet extends Notifier<EstadoTablet> {
     esperaMaxima: duracionBloqueoMaxima,
   );
 
-  /// PIN de las personas de ejemplo (solo en modo demostración).
-  static const pinDeDemostracion = '1234';
+  /// PIN de las personas de ejemplo (solo en modo demostración). Es de 6
+  /// dígitos y no trivial: así sirve también para el dueño y la pareja.
+  static const pinDeDemostracion = '246813';
 
   late RepositorioTablet _repositorio;
   late LimiteIntentos _intentos;
@@ -240,6 +247,9 @@ class ControladorTablet extends Notifier<EstadoTablet> {
           : ResultadoDesbloqueo.pinIncorrecto;
     }
     _intentos.anotarAcierto(personaId);
+    if (pinEsCortoParaSuRol(usuario.rol, pin)) {
+      return ResultadoDesbloqueo.debeCambiarPin;
+    }
     return ResultadoDesbloqueo.abierto;
   }
 
@@ -264,6 +274,11 @@ class ControladorTablet extends Notifier<EstadoTablet> {
           : ResultadoDesbloqueo.pinIncorrecto;
     }
     _intentos.anotarAcierto(personaId);
+    // D18 (23/oct): quien ve dinero necesita un PIN de 6 dígitos. Con uno más
+    // corto no entra todavía: primero lo cambia (cambiarPinYEntrar).
+    if (pinEsCortoParaSuRol(usuario.rol, pin)) {
+      return ResultadoDesbloqueo.debeCambiarPin;
+    }
     _entrada = _entrar(usuario, pin, soloAccion: soloAccion);
     return ResultadoDesbloqueo.abierto;
   }
@@ -291,6 +306,27 @@ class ControladorTablet extends Notifier<EstadoTablet> {
     final resultado = desbloquearConPin(personaId, pin, soloAccion: true);
     if (resultado != ResultadoDesbloqueo.abierto) return resultado;
     return _entrada!;
+  }
+
+  /// Migración del PIN corto (D18, 23/oct): quien ve dinero y entró con un PIN
+  /// de menos de 6 dígitos ([ResultadoDesbloqueo.debeCambiarPin]) elige uno
+  /// nuevo y entra. [cambiarPin] vuelve a cifrar su credencial y, si salió con
+  /// algo por subir, la llave de su bandeja de salida; nada se pierde.
+  Future<ResultadoDesbloqueo> cambiarPinYEntrar(
+    String personaId, {
+    required String pinActual,
+    required String pinNuevo,
+    bool paraAccion = false,
+  }) async {
+    final cambio = await cambiarPin(
+      personaId,
+      pinActual: pinActual,
+      pinNuevo: pinNuevo,
+    );
+    if (cambio != ResultadoDesbloqueo.abierto) return cambio;
+    return paraAccion
+        ? entrarParaAccion(personaId, pinNuevo)
+        : entrarConPin(personaId, pinNuevo);
   }
 
   bool _vigente(int generacion) => ref.mounted && generacion == _generacion;
@@ -381,6 +417,12 @@ class ControladorTablet extends Notifier<EstadoTablet> {
         return ResultadoDesbloqueo.cancelado;
       }
     }
+    if (activo.rol != usuario.rol && pinEsCortoParaSuRol(activo.rol, pin)) {
+      // El servidor le dio un rol que ve dinero y su PIN es corto: no entra
+      // (se regresa a la cuenta Hogar) hasta que lo cambie.
+      await _enSerie(() => _cerrarEnServidor(sesiones, usuario.personaId, llave));
+      return ResultadoDesbloqueo.debeCambiarPin;
+    }
     _llave = llave;
     _personaConLlave = usuario.personaId;
     _renovaciones = sesiones.credencialesDePersona.listen(_alRenovar);
@@ -466,9 +508,10 @@ class ControladorTablet extends Notifier<EstadoTablet> {
 
   /// Agrega (o actualiza) a una persona con su PIN. La [sesion] viene del
   /// servidor, así el rol es real; la [credencial] (su sesión del servidor) se
-  /// guarda cifrada con el PIN. Solo revisa el formato del PIN: que no sea
+  /// guarda cifrada con el PIN. Revisa el formato y el largo del PIN: que no sea
   /// trivial se exige donde la persona lo elige ([agregarConCredenciales] y
-  /// [cambiarPin]).
+  /// [cambiarPin]). El largo sí se exige aquí, con el rol real: 6 dígitos si
+  /// la persona ve dinero (D18, 23/oct).
   Future<UsuarioTablet> agregarUsuario(
     Sesion sesion, {
     required String pin,
@@ -477,8 +520,8 @@ class ControladorTablet extends Notifier<EstadoTablet> {
     if (sesion.rol == Rol.casa) {
       throw ArgumentError('La cuenta Casa es el modo Casa: no necesita PIN.');
     }
-    if (!pinValido(pin)) {
-      throw ArgumentError('El PIN debe tener de 4 a 6 dígitos.');
+    if (!pinValidoPara(sesion.rol, pin)) {
+      throw ArgumentError(_textoPinInvalido(sesion.rol));
     }
     await listo;
     final usuario = UsuarioTablet.desdeSesion(
@@ -511,15 +554,19 @@ class ControladorTablet extends Notifier<EstadoTablet> {
     return usuario;
   }
 
-  /// Un PIN que la persona **elige** debe tener de 4 a 6 dígitos y no ser
-  /// trivial (`0000`, `1234`, repetidos, secuencias: M9). Lanza
-  /// [ArgumentError] con el motivo para mostrar.
-  static void _exigirPinNuevo(String pin) {
-    final error = errorDePinNuevo(pin);
+  static String _textoPinInvalido(Rol? rol) => rol != null && rolVeDinero(rol)
+      ? 'Quien ve dinero usa un PIN de 6 dígitos.'
+      : 'El PIN debe tener de 4 a 6 dígitos.';
+
+  /// Un PIN que la persona **elige** debe tener el largo de su rol (6 dígitos
+  /// si ve dinero; si no, de 4 a 6) y no ser trivial (`0000`, `1234`,
+  /// repetidos, secuencias: M9). Lanza [ArgumentError] con el motivo para
+  /// mostrar. Con [rol] `null` (aún no se sabe cuál será) solo exige el
+  /// formato general; el largo del rol se exige al conocerlo.
+  static void _exigirPinNuevo(String pin, {Rol? rol}) {
+    final error = errorDePinNuevo(pin, rol: rol);
     if (error != null) {
-      throw ArgumentError(
-        pinValido(pin) ? error : 'El PIN debe tener de 4 a 6 dígitos.',
-      );
+      throw ArgumentError(pinValido(pin) ? error : _textoPinInvalido(rol));
     }
   }
 
@@ -586,10 +633,10 @@ class ControladorTablet extends Notifier<EstadoTablet> {
     required String pinActual,
     required String pinNuevo,
   }) async {
-    _exigirPinNuevo(pinNuevo);
     await listo;
     final usuario = _buscar(personaId);
     if (usuario == null) return ResultadoDesbloqueo.noExiste;
+    _exigirPinNuevo(pinNuevo, rol: usuario.rol);
     if (_intentos.bloqueado(personaId)) return ResultadoDesbloqueo.bloqueado;
     if (!HashPin.verificar(pinActual, usuario.hashPin)) {
       return _intentos.anotarFallo(personaId) == ResultadoFallo.bloqueado

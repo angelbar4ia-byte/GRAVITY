@@ -12,9 +12,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../nucleo/contratos/dispositivo.dart';
 import '../../nucleo/seguridad/bloqueo.dart';
 import '../../nucleo/seguridad/intentos.dart';
+import '../../nucleo/seguridad/pin.dart';
 import '../../nucleo/seguridad/proveedores_seguridad.dart';
 import '../../nucleo/sesion/proveedores_sesion.dart';
 import '../dispositivo.dart';
+import '../pin/campos_pin_nuevo.dart';
 
 class CapaBloqueo extends ConsumerWidget {
   const CapaBloqueo({super.key, required this.child});
@@ -123,9 +125,17 @@ class PantallaBloqueo extends ConsumerStatefulWidget {
 
 class _PantallaBloqueoState extends ConsumerState<PantallaBloqueo> {
   final _pin = TextEditingController();
+  final _nuevo = TextEditingController();
+  final _confirmacion = TextEditingController();
   String? _error;
   bool _hayHuella = false;
   bool _olvido = false;
+
+  /// El PIN era el correcto pero corto, y quien lo usa ve dinero (D18,
+  /// 23/oct): elige uno de 6 dígitos para abrir. [_pinActual] es el que acaba
+  /// de escribir.
+  bool _cambiando = false;
+  String _pinActual = '';
 
   @override
   void initState() {
@@ -138,12 +148,23 @@ class _PantallaBloqueoState extends ConsumerState<PantallaBloqueo> {
   @override
   void dispose() {
     _pin.dispose();
+    _nuevo.dispose();
+    _confirmacion.dispose();
     super.dispose();
   }
 
   void _mostrar(ResultadoBloqueo resultado) {
     if (resultado == ResultadoBloqueo.abierto) return;
     final controlador = ref.read(controladorBloqueoProvider.notifier);
+    if (resultado == ResultadoBloqueo.debeCambiarPin) {
+      _pinActual = _pin.text;
+      _pin.clear();
+      setState(() {
+        _cambiando = true;
+        _error = null;
+      });
+      return;
+    }
     _pin.clear();
     setState(
       () => _error = switch (resultado) {
@@ -152,7 +173,7 @@ class _PantallaBloqueoState extends ConsumerState<PantallaBloqueo> {
           'Demasiados intentos. Espera '
               '${textoEspera(controlador.esperaRestante() ?? const Duration(seconds: 30))}.',
         ResultadoBloqueo.huellaFallida => 'No se reconoció la huella.',
-        ResultadoBloqueo.abierto => null,
+        ResultadoBloqueo.abierto || ResultadoBloqueo.debeCambiarPin => null,
       },
     );
   }
@@ -160,6 +181,37 @@ class _PantallaBloqueoState extends ConsumerState<PantallaBloqueo> {
   void _desbloquear() => _mostrar(
     ref.read(controladorBloqueoProvider.notifier).desbloquearConPin(_pin.text),
   );
+
+  /// Guarda el PIN de 6 dígitos y abre.
+  Future<void> _guardarNuevoYAbrir() async {
+    final rol = ref.read(sesionActualProvider)?.rol;
+    final error = errorDePinNuevoConfirmado(
+      _nuevo.text,
+      _confirmacion.text,
+      rol: rol,
+    );
+    if (error != null) {
+      setState(() => _error = error);
+      return;
+    }
+    try {
+      final resultado = await ref
+          .read(controladorBloqueoProvider.notifier)
+          .cambiarPin(_pinActual, _nuevo.text);
+      if (!mounted || resultado == ResultadoBloqueo.abierto) return;
+      _nuevo.clear();
+      _confirmacion.clear();
+      setState(() {
+        _cambiando = false;
+        _error = resultado == ResultadoBloqueo.bloqueado
+            ? 'Demasiados intentos. Espera '
+                  '${textoEspera(ref.read(controladorBloqueoProvider.notifier).esperaRestante() ?? const Duration(seconds: 30))}.'
+            : 'PIN incorrecto.';
+      });
+    } on ArgumentError catch (e) {
+      if (mounted) setState(() => _error = '${e.message}');
+    }
+  }
 
   Future<void> _conHuella() async {
     final resultado = await ref
@@ -211,31 +263,51 @@ class _PantallaBloqueoState extends ConsumerState<PantallaBloqueo> {
                       style: tema.textTheme.bodyLarge,
                     ),
                   const SizedBox(height: 24),
-                  TextField(
-                    key: const Key('campo-pin-bloqueo'),
-                    controller: _pin,
-                    autofocus: true,
-                    obscureText: true,
-                    keyboardType: TextInputType.number,
-                    maxLength: 6,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    onSubmitted: (_) => _desbloquear(),
-                    style: const TextStyle(fontSize: 28, letterSpacing: 8),
-                    decoration: InputDecoration(
-                      labelText: 'PIN',
+                  if (_cambiando) ...[
+                    const AvisoPinCorto(),
+                    CamposPinNuevo(
+                      pin: _nuevo,
+                      confirmacion: _confirmacion,
+                      rol: sesion?.rol,
+                      alEnviar: _guardarNuevoYAbrir,
                       errorText: _error,
-                      border: const OutlineInputBorder(),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    height: 48,
-                    child: FilledButton(
-                      onPressed: _desbloquear,
-                      child: const Text('Desbloquear'),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      height: 48,
+                      child: FilledButton(
+                        key: const ValueKey('guardar-pin-y-abrir'),
+                        onPressed: _guardarNuevoYAbrir,
+                        child: const Text('Guardar y desbloquear'),
+                      ),
                     ),
-                  ),
-                  if (conHuella) ...[
+                  ] else ...[
+                    TextField(
+                      key: const Key('campo-pin-bloqueo'),
+                      controller: _pin,
+                      autofocus: true,
+                      obscureText: true,
+                      keyboardType: TextInputType.number,
+                      maxLength: 6,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      onSubmitted: (_) => _desbloquear(),
+                      style: const TextStyle(fontSize: 28, letterSpacing: 8),
+                      decoration: InputDecoration(
+                        labelText: 'PIN',
+                        errorText: _error,
+                        border: const OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      height: 48,
+                      child: FilledButton(
+                        onPressed: _desbloquear,
+                        child: const Text('Desbloquear'),
+                      ),
+                    ),
+                  ],
+                  if (conHuella && !_cambiando) ...[
                     const SizedBox(height: 8),
                     SizedBox(
                       height: 48,

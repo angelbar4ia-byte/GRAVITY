@@ -203,12 +203,15 @@ abstract interface class RepositorioFinanzas {
   Future<void> agregarMiembro(String libroId, String personaId);
 
   /// Saca a [personaId] de un compartido: su fila deja de ser vigente ahora
-  /// (solo su administrador; no puede dejar menos de 2 miembros).
+  /// (solo su administrador). Si quedan menos de 2 miembros, el presupuesto
+  /// pasa a **privado** y sigue activo (2.ª ronda del 23/oct/2026).
   Future<void> quitarMiembro(String libroId, String personaId);
 
   /// La persona de la sesión se sale del libro: cualquier miembro puede, en
-  /// cualquier momento. Si quedan menos de 2 miembros, el servidor archiva el
-  /// libro; si era el administrador, el cargo pasa al miembro más antiguo.
+  /// cualquier momento, menos el **último**. Si quedan menos de 2 miembros, el
+  /// presupuesto pasa a **privado** y sigue activo (quien queda es el
+  /// administrador); si era el administrador, el cargo pasa al miembro más
+  /// antiguo. La hora de salida es la del teléfono.
   Future<void> salirDelLibro(String libroId);
 
   /// Crea el libro de una persona representada (papá): quien lo crea queda

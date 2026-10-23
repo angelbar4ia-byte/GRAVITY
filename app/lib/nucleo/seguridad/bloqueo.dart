@@ -1,9 +1,10 @@
 /// Bloqueo del teléfono personal con PIN o huella (ROADMAP, Fase 0; revisión
 /// de la Fase 0, I8).
 ///
-/// - Se activa en Ajustes › Privacidad con un PIN de 4 a 6 dígitos (solo se
-///   guarda su hash) y, si el teléfono la tiene, la huella. En un teléfono
-///   personal la huella sí sirve: los dedos registrados son de su dueño.
+/// - Se activa en Ajustes › Privacidad con un PIN (solo se guarda su hash) y,
+///   si el teléfono la tiene, la huella. El PIN es de 6 dígitos para quien ve
+///   dinero y de 4 a 6 para los demás (D18, 23/oct). En un teléfono personal
+///   la huella sí sirve: los dedos registrados son de su dueño.
 /// - Bloquea al abrir la app y al volver de segundo plano tras un tiempo
 ///   (1 minuto por omisión; configurable).
 /// - Los intentos fallidos se guardan y la espera crece, como en la tablet.
@@ -14,6 +15,7 @@ import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../contratos/roles.dart';
 import '../sesion/proveedores_sesion.dart';
 import 'intentos.dart';
 import 'pin.dart';
@@ -83,7 +85,17 @@ class EstadoBloqueo {
   bool get activo => configuracion != null;
 }
 
-enum ResultadoBloqueo { abierto, pinIncorrecto, bloqueado, huellaFallida }
+enum ResultadoBloqueo {
+  abierto,
+  pinIncorrecto,
+  bloqueado,
+  huellaFallida,
+
+  /// El PIN es el correcto, pero quien ve dinero ahora lo necesita de 6
+  /// dígitos (D18, 23/oct): no se abre todavía; hay que elegir uno nuevo
+  /// ([ControladorBloqueo.cambiarPin]).
+  debeCambiarPin,
+}
 
 final controladorBloqueoProvider =
     NotifierProvider<ControladorBloqueo, EstadoBloqueo>(ControladorBloqueo.new);
@@ -172,14 +184,15 @@ class ControladorBloqueo extends Notifier<EstadoBloqueo> {
     }
   }
 
-  /// Activa el bloqueo (o cambia el PIN).
+  /// Rol de la persona de este teléfono (de él depende el largo del PIN).
+  Rol? get _rol => ref.read(sesionActualProvider)?.rol;
+
+  /// Activa el bloqueo (o cambia el PIN). El PIN es de 6 dígitos si la persona
+  /// ve dinero y de 4 a 6 si no (D18, 23/oct).
   Future<void> configurarPin(String pin) async {
-    if (!pinValido(pin)) {
-      throw ArgumentError('El PIN debe tener de 4 a 6 dígitos.');
-    }
-    // M9: nada de 0000, 1234, repetidos ni secuencias.
-    final debil = motivoPinDebil(pin);
-    if (debil != null) throw ArgumentError(debil);
+    // Largo del rol y M9: nada de 0000, 1234, repetidos ni secuencias.
+    final error = errorDePinNuevo(pin, rol: _rol);
+    if (error != null) throw ArgumentError(error);
     await listo;
     final actual = state.configuracion;
     final hash = HashPin.crear(pin);
@@ -229,6 +242,31 @@ class ControladorBloqueo extends Notifier<EstadoBloqueo> {
           : ResultadoBloqueo.pinIncorrecto;
     }
     _intentos.anotarAcierto(persona);
+    if (pinEsCortoParaSuRol(_rol, pin)) return ResultadoBloqueo.debeCambiarPin;
+    return ResultadoBloqueo.abierto;
+  }
+
+  /// Cambia el PIN del bloqueo comprobando el actual y, si el teléfono estaba
+  /// bloqueado, lo abre. Es la salida de [ResultadoBloqueo.debeCambiarPin]
+  /// (PIN corto de quien ve dinero). Lanza [ArgumentError] si el nuevo no sirve.
+  Future<ResultadoBloqueo> cambiarPin(String pinActual, String pinNuevo) async {
+    final error = errorDePinNuevo(pinNuevo, rol: _rol);
+    if (error != null) throw ArgumentError(error);
+    await listo;
+    final persona = _persona;
+    final configuracion = state.configuracion;
+    if (persona == null || configuracion == null) {
+      return ResultadoBloqueo.pinIncorrecto;
+    }
+    if (_intentos.bloqueado(persona)) return ResultadoBloqueo.bloqueado;
+    if (!HashPin.verificar(pinActual, configuracion.hashPin)) {
+      return _intentos.anotarFallo(persona) == ResultadoFallo.bloqueado
+          ? ResultadoBloqueo.bloqueado
+          : ResultadoBloqueo.pinIncorrecto;
+    }
+    _intentos.anotarAcierto(persona);
+    await _guardar(configuracion.copiarCon(hashPin: HashPin.crear(pinNuevo)));
+    _desbloquear();
     return ResultadoBloqueo.abierto;
   }
 
@@ -246,6 +284,8 @@ class ControladorBloqueo extends Notifier<EstadoBloqueo> {
           : ResultadoBloqueo.pinIncorrecto;
     }
     _intentos.anotarAcierto(persona);
+    // D18 (23/oct): con un PIN corto, quien ve dinero no entra todavía.
+    if (pinEsCortoParaSuRol(_rol, pin)) return ResultadoBloqueo.debeCambiarPin;
     _desbloquear();
     return ResultadoBloqueo.abierto;
   }

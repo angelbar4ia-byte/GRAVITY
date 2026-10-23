@@ -12,7 +12,17 @@
 /// - **Si no hay ninguno** (la laptop, o un teléfono sin bloqueo): un PIN
 ///   **propio para ver los montos**, que la persona crea la primera vez. Nunca
 ///   se guarda el PIN, solo su hash con sal; no se aceptan PIN triviales
-///   ([motivoPinDebil]) y el largo es el de siempre (4 a 6 dígitos).
+///   ([motivoPinDebil]).
+///
+/// Largo del PIN (D18, 23/oct): **6 dígitos para quien ve dinero**; de 4 a 6
+/// para los demás. Quien tiene un PIN más corto y ve dinero lo cambia al
+/// usarlo ([ResultadoRevelar.debeCambiarPin], [ControladorMontos.cambiarPin]).
+///
+/// **En la tablet, entrar con el PIN ya cuenta como haber pedido ver los
+/// montos**: la persona los ve de una vez, sin que se le pida el PIN otra vez
+/// (`app/montos/montos_al_entrar.dart`). Las reglas de ocultar por inactividad
+/// siguen igual: tras el tiempo sin uso se ocultan y volver a verlos pide el
+/// PIN.
 ///
 /// El ocultado en pantalla (qué es "visible", los widgets de monto) es del
 /// sistema de diseño (`diseno/proveedores.dart`: `montosVisiblesProvider`,
@@ -26,6 +36,8 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../cola/proveedores_cola.dart' show personaQueRegistraProvider;
+import '../contratos/roles.dart';
+import '../sesion/proveedores_sesion.dart';
 import '../tablet/controlador_tablet.dart';
 import 'bloqueo.dart';
 import 'intentos.dart';
@@ -68,6 +80,10 @@ enum ResultadoRevelar {
   /// Aún no hay un PIN propio: hay que crearlo ([ControladorMontos.crearPin]).
   faltaPin,
   huellaFallida,
+
+  /// El PIN es el correcto, pero quien ve dinero ahora lo necesita de 6
+  /// dígitos: hay que elegir uno nuevo ([ControladorMontos.cambiarPin]).
+  debeCambiarPin,
 }
 
 class EstadoMontos {
@@ -204,11 +220,21 @@ class ControladorMontos extends Notifier<EstadoMontos> {
   bool get hayQueCrearPin =>
       fuente == FuenteDePinMontos.propio && !state.tienePinPropio;
 
+  /// Rol de quien ve los montos ahora: en la tablet, el de la persona que
+  /// entró; en los demás equipos, el de la sesión. De él depende el largo del
+  /// PIN.
+  Rol? get rol {
+    final persona = _persona;
+    final activo = ref.read(controladorTabletProvider).usuarioActivo;
+    if (persona != null && activo?.personaId == persona) return activo!.rol;
+    return ref.read(sesionActualProvider)?.rol;
+  }
+
   /// Crea (o cambia) el PIN propio para ver los montos. Lanza
   /// [ArgumentError] con el motivo si no es un PIN que se pueda aceptar
-  /// (formato o trivial: `0000`, `1234`, repetidos, secuencias).
+  /// (largo del rol, o trivial: `0000`, `1234`, repetidos, secuencias).
   Future<void> crearPin(String pin) async {
-    final error = errorDePinNuevo(pin);
+    final error = errorDePinNuevo(pin, rol: rol);
     if (error != null) throw ArgumentError(error);
     await listo;
     await _guardar(hashPin: HashPin.crear(pin));
@@ -243,6 +269,7 @@ class ControladorMontos extends Notifier<EstadoMontos> {
             .comprobarPin(persona, pin)) {
           ResultadoDesbloqueo.abierto => ResultadoRevelar.revelado,
           ResultadoDesbloqueo.bloqueado => ResultadoRevelar.bloqueado,
+          ResultadoDesbloqueo.debeCambiarPin => ResultadoRevelar.debeCambiarPin,
           _ => ResultadoRevelar.pinIncorrecto,
         };
       case FuenteDePinMontos.bloqueo:
@@ -251,6 +278,7 @@ class ControladorMontos extends Notifier<EstadoMontos> {
             .comprobarPin(pin)) {
           ResultadoBloqueo.abierto => ResultadoRevelar.revelado,
           ResultadoBloqueo.bloqueado => ResultadoRevelar.bloqueado,
+          ResultadoBloqueo.debeCambiarPin => ResultadoRevelar.debeCambiarPin,
           _ => ResultadoRevelar.pinIncorrecto,
         };
       case FuenteDePinMontos.propio:
@@ -263,6 +291,50 @@ class ControladorMontos extends Notifier<EstadoMontos> {
               : ResultadoRevelar.pinIncorrecto;
         }
         _intentos.anotarAcierto(persona);
+        return pinEsCortoParaSuRol(rol, pin)
+            ? ResultadoRevelar.debeCambiarPin
+            : ResultadoRevelar.revelado;
+    }
+  }
+
+  /// Cambia el PIN con el que se piden los montos (salida de
+  /// [ResultadoRevelar.debeCambiarPin]): comprueba el actual y guarda el
+  /// nuevo donde corresponde (el de la tablet, el del bloqueo o el propio).
+  /// `revelado` si quedó cambiado. Lanza [ArgumentError] si el nuevo no sirve.
+  Future<ResultadoRevelar> cambiarPin(String pinActual, String pinNuevo) async {
+    final error = errorDePinNuevo(pinNuevo, rol: rol);
+    if (error != null) throw ArgumentError(error);
+    await listo;
+    final persona = _persona;
+    if (persona == null) return ResultadoRevelar.pinIncorrecto;
+    switch (fuente) {
+      case FuenteDePinMontos.tablet:
+        return switch (await ref
+            .read(controladorTabletProvider.notifier)
+            .cambiarPin(persona, pinActual: pinActual, pinNuevo: pinNuevo)) {
+          ResultadoDesbloqueo.abierto => ResultadoRevelar.revelado,
+          ResultadoDesbloqueo.bloqueado => ResultadoRevelar.bloqueado,
+          _ => ResultadoRevelar.pinIncorrecto,
+        };
+      case FuenteDePinMontos.bloqueo:
+        return switch (await ref
+            .read(controladorBloqueoProvider.notifier)
+            .cambiarPin(pinActual, pinNuevo)) {
+          ResultadoBloqueo.abierto => ResultadoRevelar.revelado,
+          ResultadoBloqueo.bloqueado => ResultadoRevelar.bloqueado,
+          _ => ResultadoRevelar.pinIncorrecto,
+        };
+      case FuenteDePinMontos.propio:
+        final hash = _hashPin;
+        if (hash == null) return ResultadoRevelar.faltaPin;
+        if (_intentos.bloqueado(persona)) return ResultadoRevelar.bloqueado;
+        if (!HashPin.verificar(pinActual, hash)) {
+          return _intentos.anotarFallo(persona) == ResultadoFallo.bloqueado
+              ? ResultadoRevelar.bloqueado
+              : ResultadoRevelar.pinIncorrecto;
+        }
+        _intentos.anotarAcierto(persona);
+        await _guardar(hashPin: HashPin.crear(pinNuevo));
         return ResultadoRevelar.revelado;
     }
   }

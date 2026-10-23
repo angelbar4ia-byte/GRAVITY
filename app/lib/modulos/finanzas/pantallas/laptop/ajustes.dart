@@ -456,12 +456,12 @@ class _Libros extends ConsumerWidget {
         children: [
           const Text(
             'Cada adulto lleva su libro personal (lo crea el servidor al darle '
-            'su rol). Un libro compartido tiene 2 o más miembros: quien lo '
+            'su rol). Un libro compartido se crea con 2 o más miembros: quien lo '
             'crea es su administrador (agrega y saca miembros, lo hace pública '
-            'o privada y lo archiva) y cualquiera puede salirse; si quedan '
-            'menos de 2, el libro se archiva. El libro de papá lo llevan 1 '
-            'albacea y, si quieres, 1 suplente, que escribe solo si no hay '
-            'albacea vigente.',
+            'o privada y lo archiva) y cualquiera puede salirse, menos el '
+            'último; si quedan menos de 2, el presupuesto pasa a privado para '
+            'quien se queda. El libro de papá lo llevan 1 albacea y, si '
+            'quieres, 1 suplente, que escribe solo si no hay albacea vigente.',
           ),
           const SizedBox(height: 8),
           for (final l in c.libros) _FilaLibro(contexto: c, libro: l),
@@ -544,7 +544,13 @@ class _FilaLibro extends ConsumerWidget {
           for (final m in l.vigentes(c.hoy))
             '${c.carga.nombreDe(m.personaId)} (${nombrePapel(m.papel)}'
                 '${l.esAdministrador(m.personaId) ? ', administrador' : ''})',
-        ].join(', '),
+        ].join(', ') +
+            (compartido &&
+                    l.papelDe(c.personaId, c.hoy) != null &&
+                    l.vigentes(c.hoy).length == 1
+                ? '\nEres el último miembro: no puedes salirte; para dejar de '
+                      'usarlo, archívalo.'
+                : ''),
       ),
       trailing: compartido && (c.administraMiembrosDe(l) || c.puedeSalirDe(l))
           ? Wrap(

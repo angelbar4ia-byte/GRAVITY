@@ -290,6 +290,33 @@ class RepositorioFinanzasSupabase implements RepositorioFinanzas {
     }
   }
 
+  /// Los adultos con Finanzas del hogar según `fin_adultos_con_finanzas`
+  /// (`persona_id`, `nombre_visible`, `rol`): los puede ver **cualquier**
+  /// adulto con Finanzas, no solo el dueño, para invitarlos a un compartido que
+  /// administra. `null` si la función no responde (se queda con las membresías
+  /// que la sesión alcanza a leer).
+  Future<List<({String id, String nombre})>?> _adultos() async {
+    try {
+      final r = await fuente.rpc(TablasFinanzas.adultosConFinanzas, {
+        'p_hogar_id': hogarId,
+      });
+      final filas = switch (r) {
+        final List<Object?> l => l,
+        final Map<Object?, Object?> m => [m],
+        _ => const <Object?>[],
+      };
+      final adultos = [
+        for (final f in filas)
+          if (f is Map && f['persona_id'] != null)
+            (id: '${f['persona_id']}', nombre: '${f['nombre_visible'] ?? ''}'),
+      ];
+      return adultos.isEmpty ? null : adultos;
+    } on ErrorFinanzas catch (e) {
+      if (e.sinConexion) rethrow;
+      return null;
+    }
+  }
+
   /// Lo que el servidor deja hacer al **suplente** del libro de papá: escribe
   /// y administra solo si el albacea ya no es un adulto con Finanzas del hogar
   /// (I4). Quien no es el dueño no ve las membresías de los demás, así que se
@@ -352,19 +379,24 @@ class RepositorioFinanzasSupabase implements RepositorioFinanzas {
         movimientosEnCola: enColaMov,
         conciliacionesEnCola: enColaConc,
       );
+      final adultos = await _adultos();
       final carga = CargaFinanzas(
         cuentaMaestra: await _cuentaMaestra(),
-        adultosConFinanzas: {
-          for (final m in membresias)
-            if ('${m['hogar_id']}' == hogarId &&
-                m['activa'] != false &&
-                (m['rol'] == 'dueno' || m['rol'] == 'coadministrador'))
-              '${m['persona_id']}',
-        },
+        adultosConFinanzas: adultos != null
+            ? {for (final a in adultos) a.id}
+            : {
+                for (final m in membresias)
+                  if ('${m['hogar_id']}' == hogarId &&
+                      m['activa'] != false &&
+                      (m['rol'] == 'dueno' || m['rol'] == 'coadministrador'))
+                    '${m['persona_id']}',
+              },
         datos: datos,
         permisosServidor: await _permisosDelSuplente(datos),
         esMaestra: maestra == true,
         personas: {
+          for (final a in adultos ?? const <({String id, String nombre})>[])
+            if (a.nombre.isNotEmpty) a.id: a.nombre,
           for (final p in personas) '${p['id']}': '${p['nombre_visible']}',
         },
         movimientosEnCola: {for (final m in enColaMov) m.id},
@@ -376,6 +408,7 @@ class RepositorioFinanzasSupabase implements RepositorioFinanzas {
           'personas': carga.personas,
           'es_maestra': carga.esMaestra,
           'cuenta_maestra': carga.cuentaMaestra,
+          'adultos': carga.adultosConFinanzas.toList(),
           'permisos_servidor': {
             for (final e in carga.permisosServidor.entries)
               e.key: e.value.aJson(),
@@ -408,6 +441,10 @@ class RepositorioFinanzasSupabase implements RepositorioFinanzas {
         ),
         esMaestra: guardada['es_maestra'] == true,
         cuentaMaestra: guardada['cuenta_maestra'] as String?,
+        adultosConFinanzas: {
+          for (final a in (guardada['adultos'] as List<Object?>? ?? const []))
+            '$a',
+        },
         personas: (guardada['personas'] as Map? ?? const {})
             .cast<String, String>(),
         permisosServidor: {

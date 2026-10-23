@@ -1,8 +1,9 @@
 /// Libros compartidos (respuestas del dueño del 23/oct/2026, D19): quien lo
 /// crea es su **administrador**; agrega y saca miembros, decide si es
 /// **pública o privada** y lo archiva o reactiva. Cualquier miembro puede
-/// **salirse**; si quedan menos de 2 miembros, el libro pasa a archivado (solo
-/// lectura).
+/// **salirse**, menos el último; si quedan menos de 2 miembros, el presupuesto
+/// pasa a **privado** y sigue activo (2.ª ronda: ya no se archiva; archivar es
+/// solo una decisión explícita del administrador).
 library;
 
 import 'package:finanzas_dominio/finanzas_dominio.dart'
@@ -11,6 +12,8 @@ import 'package:finanzas_dominio/finanzas_dominio.dart'
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../diseno/diseno.dart'
+    show formatearCentavos, montoOculto, montosOcultosProvider;
 import '../../estado/proveedores.dart';
 import '../comunes.dart';
 
@@ -73,26 +76,33 @@ class SelectorVisibilidad extends StatelessWidget {
   );
 }
 
-/// Se sale del libro (cualquier miembro), con el aviso de lo que pasa.
+/// Se sale del libro (cualquier miembro, menos el último), con el aviso de lo
+/// que pasa: si quedan menos de 2, el presupuesto queda **privado** para quien
+/// se queda; si el libro tiene saldo, un aviso informativo (no bloquea).
 Future<void> salirDelLibro(
   BuildContext context,
   WidgetRef ref,
   ContextoFinanzas c,
   dom.Libro libro,
 ) async {
-  final seArchiva = libro.seArchivaAlSalir(c.hoy);
+  final quedaPrivado = libro.quedaPrivadoAlSalir(c.hoy);
   final esAdmin = libro.esAdministrador(c.personaId);
+  final saldo = c.datos.vista(libro.id).balance().patrimonio;
+  final oculto = ref.read(montosOcultosProvider);
   final ok = await confirmar(
     context,
     titulo: 'Salir de ${libro.nombre}',
     mensaje: [
       'Dejarás de ver y registrar en este libro.',
-      if (seArchiva)
-        'Quedarán menos de 2 miembros: el libro pasa a archivado (solo '
-            'lectura para todos).',
-      if (esAdmin && !seArchiva)
+      if (quedaPrivado)
+        'Quedarán menos de 2 miembros: el presupuesto queda privado para '
+            'quien se queda, que será su administrador.',
+      if (esAdmin && !quedaPrivado)
         'Dejas de ser su administrador: el cargo pasa al miembro más antiguo.',
-      'Lo que ya registraste se queda en el libro.',
+      'Lo que registraste se queda en el historial del libro.',
+      if (saldo != 0)
+        'El presupuesto tiene ${oculto ? montoOculto : formatearCentavos(saldo)}'
+            '; lo que aportaste se queda aquí.',
     ].join(' '),
     textoAccion: 'Salir del libro',
   );
@@ -142,7 +152,8 @@ class _DialogoMiembrosLibroState extends ConsumerState<DialogoMiembrosLibro> {
       for (final p in c.carga.adultosConFinanzas)
         if (libro.papelDe(p, c.hoy) == null) p,
     ];
-    final puedeQuitar = vigentes.length > 2;
+    // Sacar a alguien con solo 2 miembros deja el libro con uno: pasa a privado.
+    final avisoPrivado = vigentes.length <= 2;
     return AlertDialog(
       title: Text(libro.nombre),
       content: SizedBox(
@@ -183,19 +194,30 @@ class _DialogoMiembrosLibroState extends ConsumerState<DialogoMiembrosLibro> {
                   trailing: puedeMiembros && m.personaId != c.personaId
                       ? IconButton(
                           key: ValueKey('miembro-quitar-${m.personaId}'),
-                          tooltip: puedeQuitar
-                              ? 'Sacar del libro'
-                              : 'Un compartido tiene 2 o más miembros: para '
-                                    'terminarlo, archívalo',
+                          tooltip: 'Sacar del libro',
                           icon: const Icon(Icons.person_remove_outlined),
-                          onPressed: !puedeQuitar || _ocupado
+                          onPressed: _ocupado
                               ? null
-                              : () => _hacer(
-                                  () => servicio.quitarMiembroLibro(
-                                    libro.id,
-                                    m.personaId,
-                                  ),
-                                ),
+                              : () async {
+                                  if (avisoPrivado) {
+                                    final ok = await confirmar(
+                                      context,
+                                      titulo: 'Sacar a ${c.carga.nombreDe(m.personaId)}',
+                                      mensaje:
+                                          'Quedará menos de 2 miembros: el '
+                                          'presupuesto pasa a privado y sigue '
+                                          'activo para ti.',
+                                      textoAccion: 'Sacar',
+                                    );
+                                    if (!ok) return;
+                                  }
+                                  await _hacer(
+                                    () => servicio.quitarMiembroLibro(
+                                      libro.id,
+                                      m.personaId,
+                                    ),
+                                  );
+                                },
                         )
                       : null,
                 ),

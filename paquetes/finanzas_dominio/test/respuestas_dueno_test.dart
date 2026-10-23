@@ -145,36 +145,61 @@ void main() {
       );
     });
 
-    test('con 3 miembros, al salirse uno quedan 2 y el libro sigue activo', () {
-      final libro = compartido();
-      expect(libro.seArchivaAlSalir(hoy), isFalse);
+    test('con 3 miembros, al salirse uno quedan 2 y todo sigue igual', () {
+      final libro = compartido(visibilidad: VisibilidadLibro.publica);
+      expect(libro.quedaPrivadoAlSalir(hoy), isFalse);
       final despues = libro.alSalirse(bea, hoy);
       expect(despues.activo, isTrue);
+      expect(despues.visibilidad, VisibilidadLibro.publica,
+          reason: 'con 2 miembros sigue como estaba');
       expect(despues.vigentes(hoy).map((m) => m.personaId), [ana, alex]);
-      expect(permisoEnLibro(despues, bea, hoy: hoy).leer, isFalse);
+      final quienSeFue = permisoEnLibro(despues, bea, hoy: hoy);
+      expect((quienSeFue.escribir, quienSeFue.comoLector), (false, true),
+          reason: 'ya no es miembro: en un público solo lo lee');
       expect(permisoEnLibro(despues, alex, hoy: hoy).escribir, isTrue);
     });
 
-    test('con 2 miembros, al salirse uno el libro se archiva (solo lectura)', () {
-      final libro = compartido(
-        miembros: [
-          MiembroLibro(personaId: ana, papel: PapelLibro.miembro, desde: Fecha(2026, 1, 1)),
-          MiembroLibro(personaId: alex, papel: PapelLibro.miembro, desde: Fecha(2026, 2, 1)),
-        ],
-      );
-      expect(libro.seArchivaAlSalir(hoy), isTrue);
+    List<MiembroLibro> dos() => [
+      MiembroLibro(personaId: ana, papel: PapelLibro.miembro, desde: Fecha(2026, 1, 1)),
+      MiembroLibro(personaId: alex, papel: PapelLibro.miembro, desde: Fecha(2026, 2, 1)),
+    ];
+
+    test('con 2 miembros, al salirse uno el presupuesto pasa a PRIVADO y sigue '
+        'activo (ya no se archiva); el que queda es el administrador', () {
+      final libro = compartido(visibilidad: VisibilidadLibro.publica, miembros: dos());
+      expect(libro.quedaPrivadoAlSalir(hoy), isTrue);
       final despues = libro.alSalirse(alex, hoy);
-      expect(despues.archivado, isTrue);
-      expect(despues.activo, isFalse);
+      expect(despues.archivado, isFalse);
+      expect(despues.activo, isTrue);
+      expect(despues.visibilidad, VisibilidadLibro.privada);
+      expect(despues.esAdministrador(ana), isTrue);
       final quedo = permisoEnLibro(despues, ana, hoy: hoy);
-      expect(
-        (quedo.leer, quedo.escribir),
-        (true, false),
-        reason: 'el que se queda lo lee pero ya no registra',
-      );
+      expect((quedo.leer, quedo.escribir, quedo.administrar), (true, true, true),
+          reason: 'quien se queda sigue registrando');
+      final fuera = permisoEnLibro(despues, alex, hoy: hoy);
+      expect(fuera.leer, isFalse, reason: 'quien se sale pierde el acceso');
     });
 
-    test('un libro archivado: la maestra lo lee, nadie escribe, solo el administrador reactiva', () {
+    test('si el administrador se sale y solo eran 2, el que queda es el '
+        'administrador y el libro pasa a privado', () {
+      final libro = compartido(visibilidad: VisibilidadLibro.publica, miembros: dos());
+      final despues = libro.alSalirse(ana, hoy);
+      expect(despues.esAdministrador(alex), isTrue);
+      expect(despues.esAdministrador(ana), isFalse);
+      expect(despues.visibilidad, VisibilidadLibro.privada);
+      expect(despues.activo, isTrue);
+    });
+
+    test('el último miembro no puede salirse', () {
+      final libro = compartido(miembros: dos()).alSalirse(alex, hoy);
+      expect(libro.vigentes(hoy), hasLength(1));
+      expect(libro.puedeSalir(ana, hoy), isFalse);
+      final igual = libro.alSalirse(ana, hoy);
+      expect(igual.vigentes(hoy).map((m) => m.personaId), [ana]);
+      expect(igual.activo, isTrue);
+    });
+
+    test('un libro archivado (solo por decisión del administrador): la maestra lo lee, nadie escribe, solo el administrador reactiva', () {
       final libro = compartido(activo: false);
       final admin = permisoEnLibro(libro, ana, hoy: hoy);
       final otro = permisoEnLibro(libro, alex, hoy: hoy);
@@ -182,7 +207,7 @@ void main() {
       expect((otro.leer, otro.escribir, otro.administrar), (true, false, false));
       final m = permisoEnLibro(libro, maestra, hoy: hoy, esMaestra: true);
       expect((m.leer, m.escribir, m.comoMaestra), (true, false, true));
-      expect(() => libro.validar(hoy), returnsNormally, reason: 'archivado puede tener menos de 2');
+      expect(() => libro.validar(hoy), returnsNormally);
     });
 
     test('si el administrador se sale, el cargo pasa al miembro vigente más antiguo', () {
@@ -201,11 +226,17 @@ void main() {
       expect(fila.vigenteEn(hoy.sumarDias(-1)), isTrue);
     });
 
-    test('un compartido activo sigue pidiendo 2 o más miembros', () {
-      final solo = compartido(
-        miembros: const [MiembroLibro(personaId: ana, papel: PapelLibro.miembro)],
+    test('con un solo miembro el compartido es privado: público no vale', () {
+      const unico = [MiembroLibro(personaId: ana, papel: PapelLibro.miembro)];
+      expect(() => compartido(miembros: unico).validar(hoy), returnsNormally);
+      expect(
+        () => compartido(
+          miembros: unico,
+          visibilidad: VisibilidadLibro.publica,
+        ).validar(hoy),
+        throwsA(isA<ErrorLibros>()),
       );
-      expect(() => solo.validar(hoy), throwsA(isA<ErrorLibros>()));
+      expect(() => compartido(miembros: const []).validar(hoy), throwsA(isA<ErrorLibros>()));
     });
   });
 

@@ -99,16 +99,24 @@ void main() {
       );
     });
 
-    test('agrega y saca miembros; no puede dejar menos de 2', () async {
+    test('agrega y saca miembros; con menos de 2 pasa a privado y sigue activo',
+        () async {
       final repo = hogarDeTres(dueno);
       addTearDown(repo.cerrar);
       final servicio = servicioDe(repo, dueno);
+      await servicio.cambiarVisibilidadLibro(casa, VisibilidadLibro.publica);
       await servicio.quitarMiembroLibro(casa, tercera);
       expect(repo.datos.libro(casa)!.papelDe(tercera, hoyDePrueba), isNull);
-      await expectLater(
-        servicio.quitarMiembroLibro(casa, idPareja),
-        throwsA(isA<ErrorFinanzas>().having((e) => e.mensaje, 'mensaje', contains('archívalo'))),
-      );
+      expect(repo.datos.libro(casa)!.visibilidad, VisibilidadLibro.publica,
+          reason: 'con 2 miembros sigue público');
+      // Sacar al segundo deja a uno solo: privado, activo y él administra.
+      await servicio.quitarMiembroLibro(casa, idPareja);
+      final solo = repo.datos.libro(casa)!;
+      expect(solo.vigentes(hoyDePrueba).map((m) => m.personaId), [idDueno]);
+      expect(solo.visibilidad, VisibilidadLibro.privada);
+      expect(solo.activo, isTrue);
+      expect(solo.esAdministrador(idDueno), isTrue);
+      // Y se puede volver a agregar gente.
       await servicio.agregarMiembroLibro(casa, tercera);
       expect(repo.datos.libro(casa)!.papelDe(tercera, hoyDePrueba), PapelLibro.miembro);
       await expectLater(
@@ -166,15 +174,35 @@ void main() {
       expect(libro.vigentes(hoyDePrueba), hasLength(2));
     });
 
-    test('con 2 miembros, al salirse uno el libro se archiva', () async {
+    test('con 2 miembros, al salirse uno el presupuesto pasa a privado y sigue '
+        'activo; el que queda es el administrador', () async {
       final repo = repositorioDe(pareja);
       addTearDown(repo.cerrar);
       expect(repo.datos.libro(casa)!.vigentes(hoyDePrueba), hasLength(2));
       await servicioDe(repo, pareja).salirDelLibro(casa);
       final libro = repo.datos.libro(casa)!;
-      expect(libro.archivado, isTrue);
-      expect(libro.papelDe(idDueno, hoyDePrueba), PapelLibro.miembro,
-          reason: 'el que se queda sigue leyéndolo');
+      expect(libro.archivado, isFalse);
+      expect(libro.visibilidad, VisibilidadLibro.privada);
+      expect(libro.papelDe(idDueno, hoyDePrueba), PapelLibro.miembro);
+      expect(libro.papelDe(idPareja, hoyDePrueba), isNull);
+      expect(libro.esAdministrador(idDueno), isTrue);
+    });
+
+    test('el último miembro no puede salirse (puede archivar el libro)', () async {
+      final repo = repositorioDe(dueno);
+      addTearDown(repo.cerrar);
+      final servicio = servicioDe(repo, dueno);
+      await servicio.quitarMiembroLibro(casa, idPareja);
+      final libro = repo.datos.libro(casa)!;
+      expect(libro.vigentes(hoyDePrueba), hasLength(1));
+      expect(libro.puedeSalir(idDueno, hoyDePrueba), isFalse);
+      await expectLater(
+        servicio.salirDelLibro(casa),
+        throwsA(isA<ErrorFinanzas>().having((e) => e.mensaje, 'mensaje', contains('último miembro'))),
+      );
+      // Lo que sí puede es archivarlo.
+      await servicio.archivarLibro(casa);
+      expect(repo.datos.libro(casa)!.archivado, isTrue);
     });
 
     test('si se sale el administrador, el cargo pasa al miembro más antiguo', () async {

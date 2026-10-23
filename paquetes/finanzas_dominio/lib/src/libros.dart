@@ -104,9 +104,9 @@ class Libro {
     this.visibilidad = VisibilidadLibro.privada,
   }) : miembros = List.unmodifiable(miembros);
 
-  /// Archivado (`activo = false`): **solo lectura para todos**. Un compartido
-  /// se archiva solo cuando, al salirse alguien, quedan menos de 2 miembros
-  /// vigentes; el administrador también puede archivarlo y reactivarlo.
+  /// Archivado (`activo = false`): **solo lectura para todos**. Es solo una
+  /// decisión explícita del administrador (la toma y la deshace él): salirse
+  /// alguien **no** archiva el libro (23/oct/2026, 2.ª ronda).
   bool get archivado => !activo;
 
   /// Copia con cambios (el id y el tipo no cambian).
@@ -133,19 +133,29 @@ class Libro {
       tipo == TipoLibro.compartido && creadoPor == personaId;
 
   /// `true` si [personaId] es miembro vigente de este compartido y puede
-  /// **salirse** (cualquier miembro, también de uno archivado).
+  /// **salirse**: cualquier miembro, menos el **último** (que archiva o cierra
+  /// el libro en lugar de salirse).
   bool puedeSalir(String personaId, Fecha dia) =>
-      tipo == TipoLibro.compartido && papelDe(personaId, dia) != null;
+      tipo == TipoLibro.compartido &&
+      papelDe(personaId, dia) != null &&
+      vigentes(dia).length >= 2;
 
-  /// `true` si, al salirse una persona, el compartido se archiva: antes de
-  /// salir había 2 miembros vigentes o menos (nunca quedan menos de 2).
-  bool seArchivaAlSalir(Fecha dia) =>
+  /// `true` si, al salirse una persona o sacar a otra, el compartido queda con
+  /// **menos de 2 miembros**: entonces el presupuesto pasa a **privado** (sigue
+  /// activo para quien se queda, que es su administrador).
+  bool quedaPrivadoAlSalir(Fecha dia) =>
       tipo == TipoLibro.compartido && vigentes(dia).length <= 2;
 
-  /// El libro después de que [personaId] se sale hoy: su fila deja de ser
-  /// vigente ese día (`hasta`, exclusivo) y, si quedan menos de 2 miembros, el
-  /// libro se archiva. Si el administrador se sale, el cargo pasa al miembro
-  /// vigente más antiguo (el que tenga el `desde` más viejo).
+  /// El libro después de que [personaId] se sale (o es sacado) en [dia]: su
+  /// fila deja de ser vigente ese día (`hasta`, exclusivo).
+  ///
+  /// - Si quedan **menos de 2 miembros**, el libro pasa a **privado** y sigue
+  ///   **activo** (ya no se archiva).
+  /// - **Administrador:** si quedó una sola persona, es el administrador; si se
+  ///   sale el administrador y quedan 2 o más, el cargo pasa al miembro vigente
+  ///   más antiguo (el que tenga el `desde` más viejo).
+  ///
+  /// Quien es el último miembro no puede salirse: no cambia nada.
   Libro alSalirse(String personaId, Fecha dia) {
     if (!puedeSalir(personaId, dia)) return this;
     final nuevos = [
@@ -162,7 +172,9 @@ class Libro {
     ];
     final quedan = nuevos.where((m) => m.vigenteEn(dia)).toList();
     var nuevoAdmin = creadoPor;
-    if (creadoPor == personaId && quedan.isNotEmpty) {
+    if (quedan.length == 1) {
+      nuevoAdmin = quedan.single.personaId;
+    } else if (creadoPor == personaId && quedan.isNotEmpty) {
       quedan.sort((a, b) {
         final da = a.desde;
         final db = b.desde;
@@ -175,8 +187,8 @@ class Libro {
     }
     return copiar(
       miembros: nuevos,
-      activo: quedan.length < 2 ? false : activo,
       creadoPor: nuevoAdmin,
+      visibilidad: quedan.length < 2 ? VisibilidadLibro.privada : visibilidad,
     );
   }
 
@@ -196,7 +208,8 @@ class Libro {
       vigentes(dia).any((m) => m.papel == PapelLibro.albacea);
 
   /// Revisa las reglas de 4.5 (`fin_libro_miembros`). Lanza [ErrorLibros].
-  /// Un compartido **archivado** puede tener menos de 2 miembros.
+  /// Un compartido se **crea** con 2 o más miembros; después puede quedar con
+  /// uno solo (el administrador), siempre **privado**.
   ///
   /// - `personal`: con titular, y el titular es su único miembro.
   /// - `representado`: con titular (la persona representada, que no es
@@ -241,9 +254,13 @@ class Libro {
         if (titularId != null) {
           throw const ErrorLibros('Un libro compartido no tiene titular');
         }
-        if ((v.length < 2 && activo) ||
-            v.any((m) => m.papel != PapelLibro.miembro)) {
-          throw const ErrorLibros('Un libro compartido tiene 2 o más miembros');
+        if (v.isEmpty || v.any((m) => m.papel != PapelLibro.miembro)) {
+          throw const ErrorLibros('Un libro compartido tiene miembros');
+        }
+        if (v.length < 2 && visibilidad == VisibilidadLibro.publica) {
+          throw const ErrorLibros(
+            'Con menos de 2 miembros el libro compartido es privado',
+          );
         }
     }
   }

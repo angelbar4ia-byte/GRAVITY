@@ -67,11 +67,9 @@ final repositorioFinanzasProvider = Provider<RepositorioFinanzas>((ref) {
       personaId: personaId,
       personas: personasDeDemostracion(),
       esMaestra: maestra,
-      // Como `membresias` en el servidor: el dueño ve a todos; los demás, a
-      // sí mismos.
-      adultosConFinanzas: sesion.rol == Rol.dueno
-          ? {IdsDemostracion.dueno, IdsDemostracion.pareja}
-          : {personaId},
+      // Como `fin_adultos_con_finanzas`: cualquier adulto con Finanzas ve a
+      // los demás (solo nombres) para invitarlos a un compartido.
+      adultosConFinanzas: {IdsDemostracion.dueno, IdsDemostracion.pareja},
       // La hora de la app, para las altas y bajas de miembros.
       reloj: ref.read(relojProvider).ahora,
     );

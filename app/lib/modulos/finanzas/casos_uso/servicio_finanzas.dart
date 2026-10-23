@@ -959,7 +959,7 @@ class ServicioFinanzas {
         if (p != personaId) p,
     ];
     if (demas.isEmpty) {
-      throw const ErrorFinanzas('Un libro compartido tiene 2 o más miembros.');
+      throw const ErrorFinanzas('Un libro compartido se crea con 2 o más miembros.');
     }
     final id = idEstable(ClavesId.libroCompartido(hogarId, nombre.trim()));
     await repositorio.crearLibroCompartido(
@@ -993,24 +993,18 @@ class ServicioFinanzas {
     await repositorio.cambiarVisibilidadLibro(libroId, visibilidad);
   }
 
-  /// Archiva un compartido: solo lectura para todos (solo su administrador).
+  /// Archiva un compartido: solo lectura para todos. Es solo una decisión
+  /// explícita de su administrador (salirse alguien ya no lo archiva).
   Future<void> archivarLibro(String libroId) async {
     final libro = _delAdministrador(libroId, quehacer: 'lo archiva');
     if (libro.archivado) return;
     await repositorio.archivarLibro(libroId, archivado: true);
   }
 
-  /// Reactiva un compartido archivado (solo su administrador). Necesita 2 o
-  /// más miembros vigentes.
+  /// Reactiva un compartido archivado (solo su administrador).
   Future<void> reactivarLibro(String libroId) async {
     final libro = _delAdministrador(libroId, quehacer: 'lo reactiva');
     if (!libro.archivado) return;
-    if (libro.vigentes(hoy).length < 2) {
-      throw const ErrorFinanzas(
-        'Para reactivarlo agrega primero un miembro: un compartido tiene 2 o '
-        'más.',
-      );
-    }
     await repositorio.archivarLibro(libroId, archivado: false);
   }
 
@@ -1034,8 +1028,9 @@ class ServicioFinanzas {
     await repositorio.agregarMiembro(libroId, persona);
   }
 
-  /// Saca a [persona] de un compartido (su administrador). Nunca quedan menos
-  /// de 2 miembros: para terminar el libro se archiva.
+  /// Saca a [persona] de un compartido (su administrador). Si quedan menos de
+  /// 2 miembros, el presupuesto pasa a **privado** y sigue activo (2.ª ronda
+  /// del 23/oct/2026); archivarlo es una acción aparte.
   Future<void> quitarMiembroLibro(String libroId, String persona) async {
     final libro = _libro(libroId);
     if (persona == personaId) return salirDelLibro(libroId);
@@ -1043,21 +1038,22 @@ class ServicioFinanzas {
       throw ErrorFinanzas('Solo quien creó ${libro.nombre} saca miembros.');
     }
     if (libro.papelDe(persona, hoy) == null) return;
-    if (libro.vigentes(hoy).length <= 2) {
-      throw const ErrorFinanzas(
-        'Un libro compartido tiene 2 o más miembros: para terminarlo, '
-        'archívalo.',
-      );
-    }
     await repositorio.quitarMiembro(libroId, persona);
   }
 
-  /// La persona se sale del libro (cualquier miembro puede). Si quedan menos
-  /// de 2 miembros, el libro pasa a archivado (solo lectura).
+  /// La persona se sale del libro (cualquier miembro puede, menos el último).
+  /// Si quedan menos de 2 miembros, el presupuesto pasa a privado y sigue
+  /// activo para quien se queda, que queda como administrador.
   Future<void> salirDelLibro(String libroId) async {
     final libro = _libro(libroId);
-    if (soloLectura || !libro.puedeSalir(personaId, hoy)) {
+    if (soloLectura || libro.papelDe(personaId, hoy) == null) {
       throw const ErrorFinanzas('No eres miembro de ese libro.');
+    }
+    if (!libro.puedeSalir(personaId, hoy)) {
+      throw ErrorFinanzas(
+        'Eres el último miembro de ${libro.nombre}: no puedes salirte. Para '
+        'dejar de usarlo, archívalo.',
+      );
     }
     await repositorio.salirDelLibro(libroId);
   }

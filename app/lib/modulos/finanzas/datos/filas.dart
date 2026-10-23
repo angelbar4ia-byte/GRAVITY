@@ -49,6 +49,11 @@ abstract final class TablasFinanzas {
   /// Función que dice si existe la cuenta maestra y de quién es.
   static const cuentaMaestra = 'cuenta_maestra';
 
+  /// Función que lista a los adultos con Finanzas del hogar (nombre y rol; sin
+  /// la cuenta maestra): cualquier adulto con Finanzas la llama para elegir a
+  /// quién agregar a un compartido que administra o como suplente de papá.
+  static const adultosConFinanzas = 'fin_adultos_con_finanzas';
+
   /// Función que dice si la persona puede `leer`, `escribir` o `administrar`
   /// en un libro (la que usa la RLS).
   static const puede = 'fin_puede';

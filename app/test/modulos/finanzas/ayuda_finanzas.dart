@@ -88,9 +88,9 @@ RepositorioFinanzasEnMemoria repositorioDe(
     },
     esMaestra: sesion.esMaestra,
     cuentaMaestra: sesion.esMaestra ? null : 'Cuenta maestra de ejemplo',
-    adultosConFinanzas: sesion.rol == Rol.dueno
-        ? adultosDeEjemplo
-        : {sesion.persona.id},
+    // Como `fin_adultos_con_finanzas`: cualquier adulto con Finanzas ve a los
+    // demás, no solo el dueño.
+    adultosConFinanzas: adultosDeEjemplo,
     exigeConsultaMaestra: exigeConsulta,
     adultosActivosDelHogar: adultosActivosDelHogar,
     reloj: reloj ?? () => ahoraDePrueba,

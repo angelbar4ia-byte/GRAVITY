@@ -448,19 +448,58 @@ void main() {
       expect(find.byKey(const ValueKey('libro-salir-$casa')), findsOneWidget);
     });
 
-    testWidgets('salirse avisa que el libro se archiva si quedan menos de 2 y '
-        'lo deja archivado', (tester) async {
+    testWidgets('salirse avisa que el presupuesto queda privado si quedan menos '
+        'de 2, informa el saldo y lo deja privado y activo', (tester) async {
       final repo = await montarAjustes(tester, pareja);
+      final casaAntes = repo.datos.libro(casa)!;
+      final saldo = repo.datos.vista(casa).balance().patrimonio;
+      expect(saldo, isNot(0), reason: 'el ejemplo tiene dinero en la casa');
       final salir = find.byKey(const ValueKey('libro-salir-$casa'));
       await tester.ensureVisible(salir);
       await tester.tap(salir);
       await tester.pumpAndSettle();
-      expect(find.textContaining('el libro pasa a archivado'), findsOneWidget);
+      expect(find.textContaining('el presupuesto queda privado'), findsOneWidget);
+      expect(find.textContaining('archivado'), findsNothing, reason: 'ya no se archiva');
+      expect(find.textContaining('El presupuesto tiene'), findsOneWidget);
+      expect(find.textContaining('lo que aportaste se queda aquí'), findsOneWidget);
       await tester.tap(find.text('Salir del libro').last);
       await tester.pumpAndSettle();
       final libro = repo.datos.libro(casa)!;
-      expect(libro.archivado, isTrue);
+      expect(casaAntes.visibilidad, VisibilidadLibro.privada);
+      expect(libro.archivado, isFalse);
+      expect(libro.visibilidad, VisibilidadLibro.privada);
       expect(libro.papelDe(IdsDemostracion.pareja, hoyDePrueba), isNull);
+      expect(libro.esAdministrador(IdsDemostracion.dueno), isTrue);
+    });
+
+    testWidgets('el último miembro no ve "Salir del libro" y se le explica',
+        (tester) async {
+      final repo = await montarAjustes(tester, dueno);
+      await servicioDe(repo, dueno).quitarMiembroLibro(casa, IdsDemostracion.pareja);
+      await tester.pumpAndSettle();
+      final fila = find.byKey(const ValueKey('ajustes-libro-$casa'));
+      await tester.ensureVisible(fila);
+      expect(find.byKey(const ValueKey('libro-salir-$casa')), findsNothing);
+      expect(find.textContaining('Eres el último miembro'), findsOneWidget);
+      expect(find.byKey(const ValueKey('libro-miembros-$casa')), findsOneWidget,
+          reason: 'el administrador sigue pudiendo archivarlo');
+    });
+
+    testWidgets('quien administra elige a quién agregar entre los adultos con '
+        'Finanzas del hogar, aunque no sea el dueño', (tester) async {
+      final repo = await montarAjustes(tester, pareja);
+      // La pareja crea su propio compartido con otra persona de ejemplo.
+      await servicioDe(repo, pareja).crearLibroCompartido('Viaje', ['otra-persona']);
+      final id = repo.datos.libros.firstWhere((l) => l.nombre == 'Viaje').id;
+      await tester.pumpAndSettle();
+      final admin = find.byKey(ValueKey('libro-miembros-$id'));
+      await tester.ensureVisible(admin);
+      await tester.tap(admin);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('miembro-agregar')));
+      await tester.pumpAndSettle();
+      // El dueño aparece aunque la pareja no pueda leer sus membresías.
+      expect(find.text(repo.actual.nombreDe(IdsDemostracion.dueno)).last, findsOneWidget);
     });
 
     testWidgets('el administrador cambia la visibilidad, saca y agrega '
@@ -482,11 +521,18 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('miembro-quitar-persona-extra')));
       await tester.pumpAndSettle();
       expect(repo.datos.libro(casa)!.papelDe('persona-extra', hoyDePrueba), isNull);
-      // Con 2 miembros ya no se puede sacar a nadie.
-      final quitar = tester.widget<IconButton>(
-        find.byKey(ValueKey('miembro-quitar-${IdsDemostracion.pareja}')),
-      );
-      expect(quitar.onPressed, isNull);
+      // Con 2 miembros también se puede sacar a uno: avisa que el presupuesto
+      // queda privado para quien se queda.
+      await tester.tap(find.byKey(ValueKey('miembro-quitar-${IdsDemostracion.pareja}')));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('pasa a privado'), findsOneWidget);
+      await tester.tap(find.text('Sacar').last);
+      await tester.pumpAndSettle();
+      final solo = repo.datos.libro(casa)!;
+      expect(solo.vigentes(hoyDePrueba), hasLength(1));
+      expect(solo.visibilidad, dom.VisibilidadLibro.privada);
+      expect(solo.archivado, isFalse);
+      expect(solo.esAdministrador(IdsDemostracion.dueno), isTrue);
 
       await tester.ensureVisible(find.byKey(const ValueKey('libro-archivar')));
       await tester.tap(find.byKey(const ValueKey('libro-archivar')));

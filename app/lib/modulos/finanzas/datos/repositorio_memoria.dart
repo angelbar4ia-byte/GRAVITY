@@ -481,10 +481,10 @@ class RepositorioFinanzasEnMemoria implements RepositorioFinanzas {
     final libro = _delAdministrador(libroId);
     final hoy = Fecha.deDateTime(_reloj());
     if (libro.papelDe(persona, hoy) == null) return;
-    if (libro.vigentes(hoy).length <= 2) {
-      throw const ErrorFinanzas(
-        'Un libro compartido tiene 2 o más miembros: para terminarlo, archívalo.',
-      );
+    // Como el servidor: si quedan menos de 2, el libro pasa a privado y sigue
+    // activo (2.ª ronda del 23/oct); el administrador no se saca a sí mismo.
+    if (persona == personaId) {
+      throw const ErrorFinanzas('Para dejar el libro usa "Salir del libro".');
     }
     _cambiarLibro(libroId, (l) => l.alSalirse(persona, hoy));
   }
@@ -495,8 +495,14 @@ class RepositorioFinanzasEnMemoria implements RepositorioFinanzas {
     final yo = personaId;
     final libro = _d.libro(libroId);
     final hoy = Fecha.deDateTime(_reloj());
-    if (yo == null || libro == null || !libro.puedeSalir(yo, hoy)) {
+    if (yo == null || libro == null || libro.papelDe(yo, hoy) == null) {
       throw const ErrorFinanzas('No eres miembro de ese libro.');
+    }
+    if (!libro.puedeSalir(yo, hoy)) {
+      throw const ErrorFinanzas(
+        'Eres el último miembro: no puedes salirte. Para dejar de usar el '
+        'libro, archívalo.',
+      );
     }
     _cambiarLibro(libroId, (l) => l.alSalirse(yo, hoy));
   }

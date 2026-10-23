@@ -159,23 +159,49 @@ select pruebas.ok(not public.fin_puede('f1000000-0000-4000-8000-0000000000e1', '
                   and pruebas.cuenta('select * from public.fin_movimientos where libro_origen_id = ''f1000000-0000-4000-8000-0000000000e1''') = 0,
   'La dueña deja de leerlo al instante');
 
--- ---------------------------------------------------------------- archivado y público; salir de uno público
+-- ---------------------------------------------------------------- salir o sacar de uno público: con menos de 2 pasa a privado
 select pruebas.como('alex@ejemplo.test');
 update public.fin_libros set visibilidad = 'publica' where id = 'f1000000-0000-4000-8000-0000000000e1';
-select pruebas.falla($$update public.fin_libro_miembros set hasta = now()
-  where libro_id = 'f1000000-0000-4000-8000-0000000000e1' and persona_id = pruebas.id_persona('teo@ejemplo.test')$$,
-  'Alex (creador) no saca a Teo: dejaría el libro con 1 miembro (solo se sale uno mismo, y entonces se archiva)', '22023');
 select pruebas.como('teo@ejemplo.test');
+select pruebas.ok(public.fin_puede('f1000000-0000-4000-8000-0000000000e1', 'leer'), 'Teo (miembro) lo lee');
 select pruebas.igual(pruebas.afecta($$update public.fin_libro_miembros set hasta = now()
   where libro_id = 'f1000000-0000-4000-8000-0000000000e1' and persona_id = pruebas.id_persona('teo@ejemplo.test')$$), 1,
-  'Teo se sale del libro público (quedan 1: se archiva)');
-select pruebas.ok(public.fin_puede('f1000000-0000-4000-8000-0000000000e1', 'leer')
-                  and not public.fin_puede('f1000000-0000-4000-8000-0000000000e1', 'escribir'),
-  'Quien se sale de un libro público lo sigue leyendo como adulto del hogar (pero no escribe)');
+  'Teo se sale del libro público (queda 1 miembro)');
+select pruebas.ok(not public.fin_puede('f1000000-0000-4000-8000-0000000000e1', 'leer'),
+  'Al quedar 1 miembro el libro pasó a privado: Teo ya no lo lee, ni como adulto del hogar');
+select pruebas.como('ana@ejemplo.test');
+select pruebas.ok(not public.fin_puede('f1000000-0000-4000-8000-0000000000e1', 'leer'), 'Tampoco la dueña (adulta con Finanzas, no miembro)');
+select pruebas.como('alex@ejemplo.test');
+select pruebas.ok((select activo from public.fin_libros where id = 'f1000000-0000-4000-8000-0000000000e1')
+                  and (select visibilidad from public.fin_libros where id = 'f1000000-0000-4000-8000-0000000000e1') = 'privada'
+                  and public.fin_puede('f1000000-0000-4000-8000-0000000000e1', 'escribir'),
+  'Alex: el libro sigue activo, es privado y registra');
+select pruebas.ok((select creado_por from public.fin_libros where id = 'f1000000-0000-4000-8000-0000000000e1') = pruebas.id_persona('alex@ejemplo.test'),
+  'y sigue siendo su administrador');
+-- Sacar a otro con 2 miembros: lo mismo (ya no es error).
+select pruebas.igual(pruebas.afecta($$insert into public.fin_libro_miembros (libro_id, persona_id, papel)
+  values ('f1000000-0000-4000-8000-0000000000e1', pruebas.id_persona('teo@ejemplo.test'), 'miembro')$$), 1, 'Alex agrega otra vez a Teo');
+select pruebas.igual(pruebas.afecta($$update public.fin_libros set visibilidad = 'publica'
+  where id = 'f1000000-0000-4000-8000-0000000000e1'$$), 1, 'y lo hace público');
+select pruebas.como('ana@ejemplo.test');
+select pruebas.ok(public.fin_puede('f1000000-0000-4000-8000-0000000000e1', 'leer'), 'La dueña lo lee (público)');
+select pruebas.como('alex@ejemplo.test');
+select pruebas.igual(pruebas.afecta($$update public.fin_libro_miembros set hasta = now()
+  where libro_id = 'f1000000-0000-4000-8000-0000000000e1' and persona_id = pruebas.id_persona('teo@ejemplo.test')
+    and hasta is null$$), 1,
+  'Alex (creador) saca a Teo: quedaría 1 miembro y ya no da error (22023)');
+select pruebas.como('ana@ejemplo.test');
+select pruebas.ok(not public.fin_puede('f1000000-0000-4000-8000-0000000000e1', 'leer'), 'La dueña deja de leerlo: pasó a privado');
+select pruebas.como('alex@ejemplo.test');
+select pruebas.ok((select activo from public.fin_libros where id = 'f1000000-0000-4000-8000-0000000000e1'), 'y sigue activo, no archivado');
+
+-- ---------------------------------------------------------------- archivado y público
+select pruebas.igual(pruebas.afecta($$update public.fin_libros set visibilidad = 'publica', activo = false
+  where id = 'f1000000-0000-4000-8000-0000000000e1'$$), 1, 'El administrador lo hace público y lo archiva (decisión explícita)');
 select pruebas.como('ana@ejemplo.test');
 select pruebas.ok(not (select activo from public.fin_libros where id = 'f1000000-0000-4000-8000-0000000000e1')
                   and public.fin_puede('f1000000-0000-4000-8000-0000000000e1', 'leer')
                   and not public.fin_puede('f1000000-0000-4000-8000-0000000000e1', 'escribir'),
-  'Archivado y público: la dueña lo sigue leyendo, solo lectura');
+  'Archivado y público: la dueña lo lee en solo lectura');
 
 rollback;

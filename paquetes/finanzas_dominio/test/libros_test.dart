@@ -66,16 +66,17 @@ void main() {
       );
     });
 
-    test('un compartido tiene 2 o más miembros', () {
-      final solo = Libro(
-        id: 'c',
-        nombre: 'C',
-        tipo: TipoLibro.compartido,
-        miembros: const [
-          MiembroLibro(personaId: ana, papel: PapelLibro.miembro),
-        ],
+    test('un compartido sin miembros no es válido; con uno solo debe ser '
+        'privado (2.ª ronda del 23/oct)', () {
+      Libro con(List<MiembroLibro> m, {VisibilidadLibro v = VisibilidadLibro.privada}) =>
+          Libro(id: 'c', nombre: 'C', tipo: TipoLibro.compartido, miembros: m, visibilidad: v);
+      const uno = [MiembroLibro(personaId: ana, papel: PapelLibro.miembro)];
+      expect(() => con(const []).validar(hoy), throwsA(isA<ErrorLibros>()));
+      expect(() => con(uno).validar(hoy), returnsNormally);
+      expect(
+        () => con(uno, v: VisibilidadLibro.publica).validar(hoy),
+        throwsA(isA<ErrorLibros>()),
       );
-      expect(() => solo.validar(hoy), throwsA(isA<ErrorLibros>()));
     });
   });
 

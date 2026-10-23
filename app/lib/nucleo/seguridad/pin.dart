@@ -1,6 +1,12 @@
-/// PIN de 4 a 6 dígitos, no trivial al elegirlo ([motivoPinDebil]). Nunca se
-/// guarda el PIN: solo su hash con sal
-/// (PBKDF2 con HMAC-SHA256), dentro del almacenamiento seguro.
+/// PIN no trivial al elegirlo ([motivoPinDebil]). Nunca se guarda el PIN: solo
+/// su hash con sal (PBKDF2 con HMAC-SHA256), dentro del almacenamiento seguro.
+///
+/// Largo (decisión del dueño, 23/oct/2026, D18): **6 dígitos para quien ve
+/// dinero** (dueño y coadministradores, incluida la cuenta maestra:
+/// [rolVeDinero]); familiar y cuidador conservan de 4 a 6. Un PIN anterior más
+/// corto sigue abriendo la cuenta una última vez, pero su dueño debe cambiarlo
+/// en ese momento ([pinEsCortoParaSuRol]); cada lugar donde se escribe un PIN
+/// lo maneja con un resultado `debeCambiarPin`.
 library;
 
 import 'dart:convert';
@@ -9,10 +15,41 @@ import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
 
+import '../contratos/roles.dart';
+import '../permisos/permisos.dart';
+
 final _formatoPin = RegExp(r'^\d{4,6}$');
 
-/// `true` si [pin] tiene de 4 a 6 dígitos.
+/// Largo del PIN de quien ve dinero.
+const largoPinConDinero = 6;
+
+/// `true` si [pin] tiene de 4 a 6 dígitos (el formato general; el largo que
+/// pide cada rol es [pinValidoPara]).
 bool pinValido(String pin) => _formatoPin.hasMatch(pin);
+
+/// `true` si [rol] ve dinero: abre Finanzas según la matriz de permisos
+/// (dueño y coadministrador; la cuenta maestra es coadministradora).
+bool rolVeDinero(Rol rol) => puedeAbrir(rol, Modulo.finanzas);
+
+/// `true` si [pin] tiene el largo que pide [rol]: 6 dígitos si ve dinero, de 4
+/// a 6 si no. Con [rol] `null` (aún no se sabe) vale el formato general.
+bool pinValidoPara(Rol? rol, String pin) =>
+    pinValido(pin) &&
+    (rol == null || !rolVeDinero(rol) || pin.length == largoPinConDinero);
+
+/// `true` si [rol] ve dinero y [pin] (que ya es el correcto) es de menos de 6
+/// dígitos: hay que cambiarlo antes de entrar.
+bool pinEsCortoParaSuRol(Rol? rol, String pin) =>
+    rol != null && rolVeDinero(rol) && pin.length < largoPinConDinero;
+
+/// Cuántos dígitos pide [rol], para etiquetas y ayudas.
+String textoDelLargoDelPin(Rol? rol) =>
+    rol != null && rolVeDinero(rol) ? '6 dígitos' : '4 a 6 dígitos';
+
+/// Aviso que se le da a quien ve dinero y tiene un PIN más corto.
+const avisoPinCortoConDinero =
+    'Ahora el PIN de quien ve dinero es de 6 dígitos. Elige uno nuevo para '
+    'seguir; tu cuenta y lo que tengas por subir se conservan.';
 
 /// Por qué [pin] (de 4 a 6 dígitos) es **trivial** y no se acepta como PIN
 /// nuevo (M9, revisión de la Fase 1), o `null` si no lo es. Cuenta como
@@ -62,10 +99,26 @@ String? motivoPinDebil(String pin) {
 /// `true` si [pin] es trivial (ver [motivoPinDebil]).
 bool pinEsDebil(String pin) => motivoPinDebil(pin) != null;
 
-/// Mensaje para un PIN nuevo que no se puede aceptar (formato o trivial), o
-/// `null` si sirve. Es lo que muestran los formularios.
-String? errorDePinNuevo(String pin) =>
-    pinValido(pin) ? motivoPinDebil(pin) : 'De 4 a 6 dígitos.';
+/// Mensaje para un PIN nuevo que no se puede aceptar (largo o trivial), o
+/// `null` si sirve. Es lo que muestran los formularios. Con [rol] pide el
+/// largo de ese rol (6 dígitos si ve dinero); sin él, de 4 a 6.
+String? errorDePinNuevo(String pin, {Rol? rol}) {
+  if (!pinValido(pin)) {
+    return rol != null && rolVeDinero(rol)
+        ? 'El PIN es de 6 dígitos.'
+        : 'De 4 a 6 dígitos.';
+  }
+  if (!pinValidoPara(rol, pin)) return 'El PIN es de 6 dígitos.';
+  return motivoPinDebil(pin);
+}
+
+/// Como [errorDePinNuevo], y además que [confirmacion] sea igual.
+String? errorDePinNuevoConfirmado(
+  String pin,
+  String confirmacion, {
+  Rol? rol,
+}) => errorDePinNuevo(pin, rol: rol) ??
+    (pin == confirmacion ? null : 'Los PIN no coinciden.');
 
 abstract final class HashPin {
   static const version = 'pbkdf2-sha256';
