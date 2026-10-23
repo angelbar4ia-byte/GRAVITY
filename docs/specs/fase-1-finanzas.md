@@ -407,7 +407,7 @@ Cada pregunta trae la **propuesta por defecto** con la que se construye si no ha
 | **P4** | Uno o dos albaceas | Albacea y suplente en el libro de papá |
 | **P5** | Sí: el dinero de papá se lleva en la app (se sigue de P15) | Libro `representado` con sus albaceas |
 | **P12** | Se elige un **grupo de deudas prioritarias**; se abona a esas; cuando se pagan, el dinero pasa a **ahorro** | Regla 4 de la sección 4.5. El tope de arrastre se queda en la propuesta (2 × semanal) y los protegidos en renta, servicios y cuidados, hasta que digas otra cosa |
-| **P13** | Solo **la caja** pasa al siguiente día hábil; los demás pagos se quedan en su fecha | Regla 5 de la sección 4.5 (interpretación: "la caja" es el pago a la caja de ahorro o popular; confirmar) |
+| **P13** | Solo **la caja** pasa al siguiente día hábil; los demás pagos se quedan en su fecha | Regla 5 de la sección 4.5 (confirmado el 23/oct: "la caja" es la Caja Popular Mexicana, el crédito automotriz del dueño) |
 | **P15** | Nadie tiene ingreso variable. Papá recibe su **pensión los días 1 y 11** (si cae en fin de semana o festivo, el siguiente día hábil) y **apoyo 60+ cada bimestre** | Base prudente fuera del MVP 1; forma `cada_meses` y varios días fijos al mes (regla 6) |
 | **P19** | (Se sigue de P12) La deuda liquidada libera su abono hacia el grupo prioritario y luego a ahorro | Regla 4 de la sección 4.5 |
 
@@ -497,7 +497,7 @@ Tus ingresos reales (pendiente 24 de FINANZAS), tus compromisos fijos con montos
 5. **Decisión 23 y sección 8 bis** hablan de Firebase como base de datos; D7 la reemplazó por Supabase (pregunta P10).
 6. La sección 7 lista dos veces el campo `estado` en `Movimiento`; aquí queda uno solo (`estado_inicial`) y el estado vigente sale de las confirmaciones.
 7. **Errores de la v0.2 corregidos en la v0.3:** el criterio 26 decía que el coadministrador "lee y no escribe" (D19 lo cambió: escribe en su libro); 4.1 no incluía `libro_id` ni `id` en los renglones del cierre ni las columnas que pone el servidor (`recibido_en`, `libro_origen_id`, `libro_destino_id`, `reaperturas`, `diferido`); y 9.1 seguía con las filas P1 a P5 anteriores a D19.
-8. **Pendiente en 9.0 (P13):** "solo la caja pasa al siguiente día hábil" se interpretó como el pago a la **caja de ahorro o popular**; falta que el dueño lo confirme y diga qué deuda es (no se guarda en el repositorio).
+8. **Resuelto el 23/oct (P13):** "la caja" es la Caja Popular Mexicana, el crédito automotriz del dueño; es la única deuda con *siguiente día hábil* y se configura en la app (nada de eso se guarda en el repositorio).
 
 ---
 
