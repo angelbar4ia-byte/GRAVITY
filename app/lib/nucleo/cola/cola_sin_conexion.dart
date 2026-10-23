@@ -155,6 +155,48 @@ class PoliticaReintentos {
   }
 }
 
+/// Qué permisos de subida hay y cuáles caducaron (ver `bandeja_salida.dart`).
+class PreparacionSalida {
+  const PreparacionSalida({
+    this.conPermiso = const [],
+    this.caducadas = const [],
+  });
+
+  /// Personas con algo por subir y un permiso vigente.
+  final List<String> conPermiso;
+
+  /// Personas cuyo permiso caducó (ya se borró su credencial).
+  final List<String> caducadas;
+}
+
+/// Una sesión abierta aparte para subir lo de una persona.
+abstract interface class SesionDeSubida {
+  /// Sube con el token de **esa persona**.
+  Enviador get enviador;
+
+  /// Termina: con [quedanPendientes] guarda la credencial renovada para la
+  /// próxima ronda; sin ellos, la sella y borra la copia en claro.
+  Future<void> cerrar({required bool quedanPendientes});
+}
+
+/// Bandeja de salida sin PIN (D14, 23/oct/2026): sube lo registrado por una
+/// persona que ya salió de la tablet, con su propio token, sin pedir su PIN.
+abstract interface class SalidaSinPin {
+  /// Borra los permisos caducados y dice a quiénes se les puede subir.
+  /// [hayPendientes] dice si la persona tiene algo por subir.
+  Future<PreparacionSalida> preparar(
+    Future<bool> Function(String personaId) hayPendientes,
+  );
+
+  /// Abre la sesión de [personaId] para subir; `null` si ahora no se puede
+  /// (sin señal). Lanza [ErrorSesion] si su sesión ya no sirve (vencida o dada
+  /// de baja).
+  Future<SesionDeSubida?> abrir(String personaId);
+
+  /// Borra el permiso de [personaId] (su sesión ya no sirve).
+  Future<void> descartar(String personaId);
+}
+
 /// Resultado de una ronda de envío.
 class ResumenProceso {
   const ResumenProceso({
@@ -188,6 +230,7 @@ class ColaSinConexion {
     this.personaQueRegistra,
     this.personaConSesion,
     this.cuentaDelEquipo,
+    this.salida,
     DateTime Function()? reloj,
     String Function()? generarId,
   }) : _reloj = reloj ?? DateTime.now,
@@ -226,6 +269,11 @@ class ColaSinConexion {
   /// `null` si el equipo no tiene una. Lo registrado en la tablet de la casa
   /// sin PIN solo se envía cuando la sesión del servidor es esa cuenta.
   final String? Function()? cuentaDelEquipo;
+
+  /// Bandeja de salida sin PIN: sube lo de las personas que ya salieron de la
+  /// tablet con su propio token. `null`: sin ella (lo de cada persona espera a
+  /// que vuelva a entrar con su PIN).
+  final SalidaSinPin? salida;
 
   final DateTime Function() _reloj;
   final String Function() _generarId;
@@ -375,6 +423,35 @@ class ColaSinConexion {
           : posicion[a.id]!.compareTo(posicion[b.id]!);
     });
 
+    var conteo = await _enviarLote(listos, _enviador, ahora);
+
+    // Bandeja de salida: lo de las personas que ya salieron de la tablet sube
+    // con su propio token, sin pedir su PIN.
+    final bandeja = salida;
+    if (bandeja != null && (conSesion == null || persona != null)) {
+      conteo += await _subirBandeja(bandeja, persona, ahora);
+    }
+    final (enviados, reintentos, rechazados) = (
+      conteo.enviados,
+      conteo.reintentos,
+      conteo.rechazados,
+    );
+
+    if (enviados + reintentos + rechazados > 0) _avisar();
+    return ResumenProceso(
+      enviados: enviados,
+      reintentos: reintentos,
+      rechazados: rechazados,
+      restantes: await contarPendientes(),
+    );
+  }
+
+  /// Envía [listos] (ya ordenados) con [enviador] y anota cada resultado.
+  Future<_Conteo> _enviarLote(
+    List<RegistroPendiente> listos,
+    Enviador enviador,
+    DateTime ahora,
+  ) async {
     var enviados = 0;
     var reintentos = 0;
     var rechazados = 0;
@@ -384,7 +461,7 @@ class ColaSinConexion {
       String? error;
       var faltaDependencia = false;
       try {
-        resultado = await _enviador.enviar(
+        resultado = await enviador.enviar(
           PeticionEnvio(
             id: registro.id,
             tipo: registro.tipo,
@@ -462,13 +539,7 @@ class ColaSinConexion {
       if (resultado == ResultadoEnvio.reintentar && !faltaDependencia) break;
     }
 
-    if (enviados + reintentos + rechazados > 0) _avisar();
-    return ResumenProceso(
-      enviados: enviados,
-      reintentos: reintentos,
-      rechazados: rechazados,
-      restantes: await contarPendientes(),
-    );
+    return _Conteo(enviados, reintentos, rechazados);
   }
 
   int _nivelDelEnviador(String tipo) {
@@ -590,4 +661,19 @@ class ColaSinConexion {
     _temporizador?.cancel();
     _temporizador = null;
   }
+}
+
+/// Lo que pasó en un lote de envíos.
+class _Conteo {
+  const _Conteo(this.enviados, this.reintentos, this.rechazados);
+
+  final int enviados;
+  final int reintentos;
+  final int rechazados;
+
+  _Conteo operator +(_Conteo otro) => _Conteo(
+    enviados + otro.enviados,
+    reintentos + otro.reintentos,
+    rechazados + otro.rechazados,
+  );
 }

@@ -837,6 +837,8 @@ int? centavosDeTexto(String texto) {
     }
     enteros = enteros.replaceAll(miles, '');
   }
+  // ".5" es $0.50: sin enteros, pero con decimales.
+  if (enteros.isEmpty && decimales.isNotEmpty) enteros = '0';
   if (!RegExp(r'^\d{1,9}$').hasMatch(enteros) ||
       !RegExp(r'^\d{0,2}$').hasMatch(decimales)) {
     return null;

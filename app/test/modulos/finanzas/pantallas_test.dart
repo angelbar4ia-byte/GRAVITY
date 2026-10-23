@@ -2,7 +2,10 @@
 // maestra de solo lectura con su consulta en la bitácora, asistente de
 // arranque con los ingresos de papá, importación, ajustes y el flujo F1 del
 // teléfono (registrar un gasto y deshacerlo).
-import 'package:finanzas_dominio/finanzas_dominio.dart' hide Semaforo, formatearCentavos, TipoLibro, puntosBaseEnCien;
+import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:finanzas_dominio/finanzas_dominio.dart' hide Semaforo, formatearCentavos, TipoLibro, VisibilidadLibro, puntosBaseEnCien;
 import 'package:finanzas_dominio/finanzas_dominio.dart' as dom show TipoLibro;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,7 +20,7 @@ import 'package:gravity/modulos/finanzas/datos/ids.dart' show idEstable;
 import 'package:gravity/modulos/finanzas/datos/repositorio_memoria.dart';
 import 'package:gravity/modulos/finanzas/estado/proveedores.dart';
 import 'package:gravity/modulos/finanzas/finanzas.dart';
-import 'package:gravity/modulos/finanzas/importacion/lector_xlsx.dart';
+import 'package:gravity/modulos/finanzas/pantallas/registro/hoja_gasto.dart' show librosParaRegistrar;
 import 'package:gravity/modulos/finanzas/pantallas/laptop/importar.dart';
 import 'package:gravity/nucleo/contratos/dispositivo.dart';
 import 'package:gravity/nucleo/contratos/roles.dart';
@@ -70,7 +73,9 @@ Future<RepositorioFinanzasEnMemoria> _montar(
 void main() {
   final dueno = sesionDe(Rol.dueno);
   final pareja = sesionDe(Rol.coadministrador);
-  final maestra = sesionDe(Rol.dueno, maestra: true);
+  // La cuenta maestra con login propio: otra persona (coadministrador), sin libro
+  // propio, de solo lectura total (respuestas del dueño del 23/oct/2026).
+  final maestra = sesionDe(Rol.coadministrador, maestra: true);
 
   group('Rutas de Finanzas (contrato con la plataforma)', () {
     test('la raíz es "/" y las de configuración exigen administrar', () {
@@ -131,19 +136,43 @@ void main() {
   });
 
   group('Cuenta maestra (D19)', () {
-    testWidgets('abrir un libro ajeno registra la consulta y no muestra botones '
-        'de escribir', (tester) async {
+    testWidgets('entra por la portada: ve los libros sin leerlos y sin dejar '
+        'consulta', (tester) async {
       final repo = await _montar(
         tester,
         dispositivo: TipoDispositivo.laptop,
         sesion: maestra,
       );
       await _ir(tester, Rutas.finanzas);
-      // Su primer libro es ajeno: la consulta quedó en la bitácora.
-      expect(repo.consultasMaestra, isNotEmpty);
+      expect(find.byKey(const ValueKey('finanzas-portada')), findsOneWidget);
+      expect(repo.consultasMaestra, isEmpty, reason: 'ver la portada no consulta');
+      final c = _contenedor(tester).read(contextoFinanzasProvider).value!;
+      expect(c.enPortada, isTrue);
+      expect(c.libros, hasLength(4));
+      for (final l in c.libros) {
+        expect(
+          find.byKey(ValueKey('finanzas-portada-libro-${l.id}')),
+          findsOneWidget,
+        );
+      }
+    });
+
+    testWidgets('abrir un libro ajeno registra la consulta y no muestra '
+        'botones de escribir', (tester) async {
+      final repo = await _montar(
+        tester,
+        dispositivo: TipoDispositivo.laptop,
+        sesion: maestra,
+      );
+      await _ir(tester, Rutas.finanzas);
+      await tester.tap(
+        find.byKey(const ValueKey('finanzas-portada-libro-${IdsDemostracion.libroDueno}')),
+      );
+      await tester.pumpAndSettle();
+      expect(repo.consultasMaestra, [IdsDemostracion.libroDueno]);
       final c = _contenedor(tester).read(contextoFinanzasProvider).value!;
       expect(c.permiso.comoMaestra, isTrue);
-      expect(repo.consultasMaestra.single, c.libroId);
+      expect(c.libroId, IdsDemostracion.libroDueno);
       expect(c.puedeEscribir, isFalse);
       expect(c.puedeAdministrar, isFalse);
       expect(
@@ -151,9 +180,14 @@ void main() {
         findsNothing,
         reason: 'ni (+) ni Registrar movimiento en lo ajeno',
       );
-      // Sin asistente ni importar mientras ve lo ajeno.
+      // Sin asistente, importar ni ajustes: es de solo lectura total (M6).
       expect(find.byKey(const ValueKey('finanzas-seccion-arranque')), findsNothing);
       expect(find.byKey(const ValueKey('finanzas-seccion-importar')), findsNothing);
+      expect(find.byKey(const ValueKey('finanzas-seccion-ajustes')), findsNothing);
+      // Puede volver a la portada.
+      await tester.tap(find.byKey(const ValueKey('finanzas-todos-los-libros')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('finanzas-portada')), findsOneWidget);
     });
 
     testWidgets('cada libro ajeno que abre deja su consulta; los pasos no la '
@@ -165,27 +199,85 @@ void main() {
       );
       await _ir(tester, Rutas.finanzas);
       final contenedor = _contenedor(tester);
-      final libros = contenedor.read(contextoFinanzasProvider).value!.libros;
-      expect(libros, hasLength(4));
       contenedor.read(libroElegidoProvider.notifier).elegir(IdsDemostracion.libroDueno);
       await tester.pumpAndSettle();
-      expect(repo.consultasMaestra, contains(IdsDemostracion.libroDueno));
-      final antes = repo.consultasMaestra.length;
+      expect(repo.consultasMaestra, [IdsDemostracion.libroDueno]);
       await _ir(tester, SeccionFinanzas.movimientos.ruta);
       expect(
         repo.consultasMaestra.where((l) => l == IdsDemostracion.libroDueno),
         hasLength(1),
       );
-      expect(repo.consultasMaestra.length, greaterThanOrEqualTo(antes));
+      contenedor.read(libroElegidoProvider.notifier).elegir(IdsDemostracion.libroCasa);
+      await tester.pumpAndSettle();
+      expect(repo.consultasMaestra, [
+        IdsDemostracion.libroDueno,
+        IdsDemostracion.libroCasa,
+      ]);
     });
 
     testWidgets('Movimientos de lo ajeno: sin Anular', (tester) async {
       await _montar(tester, dispositivo: TipoDispositivo.laptop, sesion: maestra);
       await _ir(tester, SeccionFinanzas.movimientos.ruta);
+      _contenedor(tester).read(libroElegidoProvider.notifier).elegir(IdsDemostracion.libroDueno);
+      await tester.pumpAndSettle();
       final c = _contenedor(tester).read(contextoFinanzasProvider).value!;
       expect(c.puedeEscribir, isFalse);
       expect(find.byKey(const ValueKey('finanzas-registrar-movimiento')), findsNothing);
       expect(find.text('Anular…'), findsNothing);
+    });
+
+    testWidgets('la maestra que no es la dueña no abre Ajustes, Importar ni '
+        'el asistente (solo lectura total)', (tester) async {
+      await _montar(tester, dispositivo: TipoDispositivo.laptop, sesion: maestra);
+      for (final s in [
+        SeccionFinanzas.ajustes,
+        SeccionFinanzas.importar,
+        SeccionFinanzas.arranque,
+      ]) {
+        await _ir(tester, s.ruta);
+        expect(_ubicacion(tester), isNot(s.ruta), reason: s.segmento);
+      }
+    });
+
+    testWidgets('una maestra con libro propio (datos viejos) tampoco escribe en '
+        'lo suyo', (tester) async {
+      await _montar(
+        tester,
+        dispositivo: TipoDispositivo.laptop,
+        sesion: sesionParejaMaestra(),
+      );
+      await _ir(tester, Rutas.finanzas);
+      final c = _contenedor(tester).read(contextoFinanzasProvider).value!;
+      expect(c.libroId, IdsDemostracion.libroPareja);
+      expect(c.esLibroPropio, isTrue);
+      expect(c.permiso.comoMaestra, isFalse);
+      expect(c.soloLecturaTotal, isTrue);
+      expect(c.puedeEscribir, isFalse);
+      expect(c.puedeAdministrar, isFalse);
+      expect(c.administraHogar, isFalse);
+      expect(find.byKey(const ValueKey('finanzas-registrar-movimiento')), findsNothing);
+    });
+
+    testWidgets('el dueño que es también la maestra escribe en lo suyo y en '
+        'lo ajeno solo lee, con consulta', (tester) async {
+      final repo = await _montar(
+        tester,
+        dispositivo: TipoDispositivo.laptop,
+        sesion: sesionDuenoMaestro(),
+      );
+      await _ir(tester, Rutas.finanzas);
+      var c = _contenedor(tester).read(contextoFinanzasProvider).value!;
+      expect(c.libroId, IdsDemostracion.libroDueno);
+      expect(c.puedeEscribir, isTrue);
+      expect(c.puedeAdministrar, isTrue);
+      expect(c.administraHogar, isTrue);
+      expect(repo.consultasMaestra, isEmpty, reason: 'lo suyo no se consulta');
+      _contenedor(tester).read(libroElegidoProvider.notifier).elegir(IdsDemostracion.libroPareja);
+      await tester.pumpAndSettle();
+      c = _contenedor(tester).read(contextoFinanzasProvider).value!;
+      expect(c.permiso.comoMaestra, isTrue);
+      expect(c.puedeEscribir, isFalse);
+      expect(repo.consultasMaestra, [IdsDemostracion.libroPareja]);
     });
 
     testWidgets('el dueño sin la marca escribe en lo suyo y registra sin '
@@ -286,14 +378,16 @@ void main() {
       );
     });
 
-    testWidgets('la cuenta maestra ve los ajustes del libro ajeno sin poder '
-        'guardarlos', (tester) async {
-      await _montar(tester, dispositivo: TipoDispositivo.laptop, sesion: maestra);
+    testWidgets('el dueño que es también la maestra ve en Privacidad que lo '
+        'es', (tester) async {
+      await _montar(
+        tester,
+        dispositivo: TipoDispositivo.laptop,
+        sesion: sesionDuenoMaestro(),
+      );
       _alto(tester);
       await _ir(tester, SeccionFinanzas.ajustes.ruta);
-      expect(find.byKey(const ValueKey('ajustes-guardar')), findsNothing);
-      expect(find.byKey(const ValueKey('ajustes-dias-inhabiles')), findsNothing);
-      expect(find.text('Solo lectura: los cambia quien lleva este libro.'), findsOneWidget);
+      expect(find.byKey(const ValueKey('ajustes-guardar')), findsOneWidget);
       expect(find.textContaining('cuenta maestra del hogar'), findsOneWidget);
     });
 
@@ -412,14 +506,20 @@ void main() {
     });
   });
 
-  group('Importar datos', () {
-    late LecturaPlantilla lectura;
+  group('Importar datos (selector de archivos)', () {
+    late Uint8List bytesSemilla;
 
     setUpAll(() async {
-      lectura = await leerPlantillaDeRuta('../data/DATOS_SEMILLA_PRESUPUESTO.xlsx');
+      // El archivo semilla real (sin autor): sigue importando con el selector.
+      bytesSemilla = await File('../data/DATOS_SEMILLA_PRESUPUESTO.xlsx').readAsBytes();
     });
 
-    testWidgets('archivo → vista previa → confirmar → resumen', (tester) async {
+    List<Override> conArchivo(ArchivoElegido? archivo) => [
+      selectorArchivoProvider.overrideWithValue(() async => archivo),
+    ];
+
+    testWidgets('elegir archivo → vista previa → confirmar → resumen; ya no '
+        'se escribe una ruta', (tester) async {
       final repo = repositorioSinCategorias(dueno);
       await montarApp(
         tester,
@@ -427,18 +527,21 @@ void main() {
         sesion: ServicioSesionDemostracion(inicial: dueno),
         extras: [
           repositorioFinanzasProvider.overrideWithValue(repo),
-          lectorPlantillaProvider.overrideWithValue((ruta, hoja) async => lectura),
+          ...conArchivo(ArchivoElegido('DATOS_SEMILLA_PRESUPUESTO.xlsx', bytesSemilla)),
         ],
       );
       addTearDown(repo.cerrar);
       _alto(tester);
       await _ir(tester, SeccionFinanzas.importar.ruta);
-      await tester.enterText(
+      expect(
         find.byKey(const ValueKey('importar-ruta')),
-        r'C:\datos\DATOS_SEMILLA_PRESUPUESTO.xlsx',
+        findsNothing,
+        reason: 'la ruta escrita quedó oculta (solo pruebas)',
       );
-      await tester.tap(find.byKey(const ValueKey('importar-vista-previa')));
+      expect(find.byKey(const ValueKey('importar-elegir')), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('importar-elegir')));
       await tester.pumpAndSettle();
+      expect(find.text('Archivo: DATOS_SEMILLA_PRESUPUESTO.xlsx'), findsOneWidget);
       expect(find.byKey(const ValueKey('importar-previa')), findsOneWidget);
       expect(repo.datos.categorias, isEmpty, reason: 'la vista previa no guarda');
       final confirmar = find.byKey(const ValueKey('importar-confirmar'));
@@ -460,8 +563,85 @@ void main() {
       expect(repo.datos.categorias, hasLength(cuantas));
     });
 
-    testWidgets('un archivo que no existe se explica', (tester) async {
-      await _montar(tester, dispositivo: TipoDispositivo.laptop, sesion: dueno);
+    testWidgets('si la persona cancela el selector no pasa nada', (tester) async {
+      final repo = repositorioSinCategorias(dueno);
+      await montarApp(
+        tester,
+        dispositivo: TipoDispositivo.laptop,
+        sesion: ServicioSesionDemostracion(inicial: dueno),
+        extras: [repositorioFinanzasProvider.overrideWithValue(repo), ...conArchivo(null)],
+      );
+      addTearDown(repo.cerrar);
+      await _ir(tester, SeccionFinanzas.importar.ruta);
+      await tester.tap(find.byKey(const ValueKey('importar-elegir')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('importar-previa')), findsNothing);
+      expect(find.byKey(const ValueKey('importar-error')), findsNothing);
+      expect(find.byKey(const ValueKey('importar-archivo')), findsNothing);
+    });
+
+    testWidgets('un archivo que no es .xlsx ni .csv se explica', (tester) async {
+      final repo = repositorioSinCategorias(dueno);
+      await montarApp(
+        tester,
+        dispositivo: TipoDispositivo.laptop,
+        sesion: ServicioSesionDemostracion(inicial: dueno),
+        extras: [
+          repositorioFinanzasProvider.overrideWithValue(repo),
+          ...conArchivo(ArchivoElegido('notas.docx', Uint8List(10))),
+        ],
+      );
+      addTearDown(repo.cerrar);
+      await _ir(tester, SeccionFinanzas.importar.ruta);
+      await tester.tap(find.byKey(const ValueKey('importar-elegir')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('importar-error')), findsOneWidget);
+      expect(find.textContaining('.xlsx o .csv'), findsWidgets);
+      expect(repo.datos.categorias, isEmpty);
+    });
+
+    testWidgets('un .csv elegido con el selector también se lee', (tester) async {
+      final repo = repositorioSinCategorias(dueno);
+      final csv = Uint8List.fromList(
+        'Nivel 1,Nivel 2,Nivel 3,Naturaleza,Prioridad,Protegida\n'
+                'Vivienda y servicios,Luz,,fija,necesario,sí\n'
+            .codeUnits,
+      );
+      await montarApp(
+        tester,
+        dispositivo: TipoDispositivo.laptop,
+        sesion: ServicioSesionDemostracion(inicial: dueno),
+        extras: [
+          repositorioFinanzasProvider.overrideWithValue(repo),
+          ...conArchivo(ArchivoElegido('categorias.csv', csv)),
+        ],
+      );
+      addTearDown(repo.cerrar);
+      await _ir(tester, SeccionFinanzas.importar.ruta);
+      await tester.tap(find.byKey(const ValueKey('importar-elegir')));
+      await tester.pumpAndSettle();
+      // O se entiende o se explica, pero no se rompe la pantalla.
+      expect(tester.takeException(), isNull);
+      expect(
+        find.byKey(const ValueKey('importar-previa')).evaluate().isNotEmpty ||
+            find.byKey(const ValueKey('importar-error')).evaluate().isNotEmpty,
+        isTrue,
+      );
+    });
+
+    testWidgets('ruta oculta (solo pruebas): un archivo que no existe se '
+        'explica', (tester) async {
+      final repo = repositorioSinCategorias(dueno);
+      await montarApp(
+        tester,
+        dispositivo: TipoDispositivo.laptop,
+        sesion: ServicioSesionDemostracion(inicial: dueno),
+        extras: [
+          repositorioFinanzasProvider.overrideWithValue(repo),
+          rutaManualProvider.overrideWithValue(true),
+        ],
+      );
+      addTearDown(repo.cerrar);
       await _ir(tester, SeccionFinanzas.importar.ruta);
       await tester.enterText(
         find.byKey(const ValueKey('importar-ruta')),
@@ -525,12 +705,13 @@ void main() {
       expect(repo.datos.movimientos, hasLength(antes + 2), reason: 'nada se borra');
     });
 
-    testWidgets('la cuenta maestra no ve el (+) de Finanzas con lo ajeno',
-        (tester) async {
+    testWidgets('la cuenta maestra no registra: la hoja del (+) solo avisa que '
+        'es de solo lectura', (tester) async {
       await _montar(tester, dispositivo: TipoDispositivo.telefono, sesion: maestra);
       await _ir(tester, Rutas.finanzas);
       final c = _contenedor(tester).read(contextoFinanzasProvider).value!;
       expect(c.puedeEscribir, isFalse);
+      expect(librosParaRegistrar(c), isEmpty);
     });
   });
 }
