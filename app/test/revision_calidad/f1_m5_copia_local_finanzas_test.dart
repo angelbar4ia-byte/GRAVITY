@@ -149,7 +149,7 @@ void main() {
     await controlador.listo;
     await controlador.agregarUsuario(
       dueno,
-      pin: '1234',
+      pin: '246813',
       credencial: ServicioSesionFalso.credencialDe(dueno),
     );
     final copia = await _conCopia(almacen, dueno.persona.id);

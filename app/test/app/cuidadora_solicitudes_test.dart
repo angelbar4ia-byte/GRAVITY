@@ -204,7 +204,7 @@ void main() {
       sesion: sesionCon(Rol.casa),
       almacen: await almacenConPersonas({
         Rol.cuidador: '5678',
-        Rol.dueno: '1234',
+        Rol.dueno: '246813',
       }),
     );
     // Modo Casa: sin las solicitudes de nadie.
@@ -229,7 +229,7 @@ void main() {
     expect(find.text('GRAVITY · Casa'), findsOneWidget);
     expect(find.textContaining('Ofrecer agua'), findsNothing);
 
-    await entrar('Dueño de ejemplo', '1234');
+    await entrar('Dueño de ejemplo', '246813');
     await ir(tester, RutasApp.solicitudes);
     expect(find.text('Sin solicitudes por ahora.'), findsOneWidget);
   });

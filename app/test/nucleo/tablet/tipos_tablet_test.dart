@@ -40,7 +40,7 @@ void main() {
   Future<UsuarioTablet> agregar(ControladorTablet controlador, Rol rol) =>
       controlador.agregarUsuario(
         sesionDeEjemplo(rol),
-        pin: '1234',
+        pin: '246813',
         credencial: ServicioSesionFalso.credencialDe(sesionDeEjemplo(rol)),
       );
 
@@ -74,7 +74,7 @@ void main() {
     await agregar(controlador, Rol.familiar);
     expect(controlador.state.configuracion.tipo, TipoTablet.publica);
     expect(
-      await controlador.entrarConPin(id(Rol.familiar), '1234'),
+      await controlador.entrarConPin(id(Rol.familiar), '246813'),
       ResultadoDesbloqueo.abierto,
     );
     expect(controlador.state.bloqueada, isFalse);
@@ -86,7 +86,7 @@ void main() {
     await agregar(controlador, Rol.dueno);
     await agregar(controlador, Rol.coadministrador);
     await agregar(controlador, Rol.familiar);
-    await controlador.entrarConPin(id(Rol.dueno), '1234');
+    await controlador.entrarConPin(id(Rol.dueno), '246813');
 
     await controlador.elegirTipo(TipoTablet.personal);
     expect(controlador.state.configuracion.esPersonal, isTrue);
@@ -117,7 +117,7 @@ void main() {
     for (final rol in [Rol.coadministrador, Rol.familiar]) {
       for (var i = 0; i < 6; i++) {
         expect(
-          await controlador.entrarConPin(id(rol), '1234'),
+          await controlador.entrarConPin(id(rol), '246813'),
           ResultadoDesbloqueo.noPermitida,
           reason: '${rol.name} #$i',
         );
@@ -128,7 +128,7 @@ void main() {
     // La pareja se permite; el familiar no puede serlo.
     await controlador.permitir(id(Rol.coadministrador), permitida: true);
     expect(
-      await controlador.entrarConPin(id(Rol.coadministrador), '1234'),
+      await controlador.entrarConPin(id(Rol.coadministrador), '246813'),
       ResultadoDesbloqueo.abierto,
     );
     expect(
@@ -158,7 +158,7 @@ void main() {
     final controlador = await listo(crear());
     await agregar(controlador, Rol.dueno);
     expect(
-      await controlador.entrarParaAccion(id(Rol.dueno), '1234'),
+      await controlador.entrarParaAccion(id(Rol.dueno), '246813'),
       ResultadoDesbloqueo.abierto,
     );
     expect(controlador.state.usuarioActivo?.personaId, id(Rol.dueno));
@@ -184,7 +184,7 @@ void main() {
   test('cambiar a personal saca a quien entró solo para una acción', () async {
     final controlador = await listo(crear());
     await agregar(controlador, Rol.dueno);
-    await controlador.entrarParaAccion(id(Rol.dueno), '1234');
+    await controlador.entrarParaAccion(id(Rol.dueno), '246813');
     await controlador.elegirTipo(TipoTablet.personal);
     expect(controlador.state.usuarioActivo, isNull);
     expect(controlador.state.bloqueada, isTrue);

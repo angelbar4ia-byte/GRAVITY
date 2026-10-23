@@ -1,12 +1,12 @@
 // GENERADO por api/generar_dart.mjs a partir de api/openapi.yaml. No se edita a mano.
 // Permite abrir Swagger UI con doble clic (file://), donde el navegador no deja leer
 // ../openapi.yaml. Servida por http, la página lee openapi.yaml directamente.
-// huella: fnv1a32:07406750
+// huella: fnv1a32:7577b1b9
 window.ESPECIFICACION_GRAVITY = {
   "openapi": "3.1.0",
   "info": {
     "title": "GRAVITY · APIs del sistema",
-    "version": "0.4.0",
+    "version": "0.5.0",
     "summary": "Herramientas de GRAVITY, base de datos, funciones del servidor y puente de casa (D16).",
     "description": "Especificación de las APIs de GRAVITY (decisión D16). Se consulta en la laptop, en\nAjustes › Desarrollador, solo con rol Dueño. **No se publica en internet.**\n\nCada operación declara, con extensiones propias:\n\n- `x-roles`: roles que la pueden usar (D5): `dueno`, `coadministrador`, `familiar`,\n  `cuidador`, `casa`. La verdad de los permisos está en el servidor (RLS).\n- `x-escribe`: `true` si escribe datos; GRAVITY y esta consola piden confirmación antes\n  de enviarla. `segun-herramienta` en la operación genérica de herramientas.\n- `x-solo-local`: `true` si su resultado nunca pasa por la IA en la nube (D3: dinero,\n  datos clínicos y datos personales). `segun-herramienta` en la operación genérica.\n- `x-fase`: fase del roadmap en que se construye.\n\nConvenciones (especificación de la Fase 0, sección 4): dinero en centavos (`int`),\nidentificadores UUID, fechas `date` y `timestamptz`, semana en lunes, libros solo-agregar.\n\nFase 1 (Finanzas, D19): cada quien ve **su** libro y los compartidos de los que es\nmiembro (o que son públicos); la **cuenta maestra** es otra persona con su propio login\ny de solo lectura total: lee con una consulta registrada y no escribe nada. Las\nsalvaguardas y las respuestas del dueño del 23/oct viven en el servidor, no en el\ncliente (`supabase/migrations/20261023000000_finanzas_salvaguardas.sql` y\n`supabase/migrations/20261024000000_finanzas_respuestas_dueno.sql`). Los ejemplos\nson inventados (el hogar de Ana y Alex de `supabase/seed.sql`, con \"Papá (ejemplo)\").\n\nLas llaves (Supabase, Home Assistant) entran por `--dart-define` o archivos ignorados\npor git; nunca se escriben aquí.\n",
     "license": {
@@ -46,7 +46,7 @@ window.ESPECIFICACION_GRAVITY = {
     },
     {
       "name": "Base de datos · Finanzas",
-      "description": "Tablas `fin_*`, vistas y funciones de Finanzas (Fase 1, D19), según\n`supabase/migrations/20261021000000_finanzas_mvp1.sql`,\n`supabase/migrations/20261023000000_finanzas_salvaguardas.sql`,\n`supabase/migrations/20261024000000_finanzas_respuestas_dueno.sql` y\n`supabase/README.md` (\"Finanzas (Fase 1)\"). Solo dueño y coadministrador, cada quien\n**su libro** y los compartidos de los que es miembro, más los compartidos públicos\n(`fin_puede`); familiar, cuidador y Casa no ven nada. La **cuenta maestra** es otra\npersona con su propio login: el dueño la invita con `crear_invitacion` y\n`p_es_maestra`, y queda como coadministrador con la marca de maestra, sin libro\npersonal ni membresía en ningún libro. Si no es la dueña es de **solo lectura\ntotal**: lee con una consulta registrada y toda escritura suya (movimientos,\nconfiguración del hogar, crear libros) responde 403 (42501). El dueño también puede\nser la maestra con su propia persona, y en lo suyo sigue escribiendo. Nada de esto va\na la IA en la nube ni a las bocinas (D3, D6).\n\n- **Dinero** en centavos (entero); porcentajes y tasas en puntos base (2000 = 20 %);\n  semana en lunes; identificadores UUID generados en el dispositivo.\n- **Solo agregar:** `fin_movimientos`, `fin_conciliaciones`, `fin_cierres`,\n  `fin_cierre_partidas`, `fin_cierre_abonos` y `fin_importaciones` solo aceptan\n  INSERT; un error se corrige con una anulación (contraasiento) o una versión nueva.\n- **Cola sin conexión (idempotente):** se sube con `on_conflict=id` y\n  `Prefer: resolution=ignore-duplicates`. El mismo `id` con el mismo contenido no hace\n  nada y no falla; con otro contenido, en los libros solo agregar, 409 (23505).\n- **Lo que pone el servidor** (marcado como de solo lectura; no se manda):\n  `recibido_en`, `libro_origen_id` y `libro_destino_id` de los movimientos, las\n  columnas generadas y `reaperturas`.\n- **Errores** (código de PostgreSQL → HTTP de PostgREST): `23503` falta algo de lo\n  que depende (otra cuenta, el original de una anulación; la cola reintenta) → 409;\n  `23505` duplicado o mismo `id` con otro contenido → 409; `23514` regla de la tabla\n  (monto, motivo, lunes, cascada) → 400; `22023` regla de negocio (combinación de\n  cuentas, libro equivocado, papel) → 400; `55000` estado (cuenta no activa, semana\n  cerrada) → 500; `42501` sin permiso o columna que no cambia → 403.\n- **Cuenta maestra y consulta registrada (I2):** sin una consulta vigente, la maestra\n  solo ve la **portada**: los libros y quién los lleva (`fin_libros`,\n  `fin_libro_miembros`), las categorías, las cuentas de gasto del hogar y lo que no es\n  de Finanzas. El contenido de un libro ajeno (cuentas, movimientos, plan, cierres,\n  saldos y su bitácora) llega **vacío, sin error**, hasta que llama\n  `fin_registrar_consulta_maestra(libro)`, que deja la entrada\n  `finanzas.consulta_maestra` y habilita la lectura de ese libro por **30 minutos**\n  (por libro y por persona; pasado el tiempo hay que llamarla otra vez, y la app la\n  renueva sola mientras el libro está abierto).\n- **Salvaguardas en el servidor** (hallazgos I1 a I5, M6 y M10 de la revisión de\n  calidad): (I1) en un libro compartido solo quien lo creó, o el dueño del hogar si es\n  miembro, agrega o cambia a otra persona (42501), y quitar a otro nunca deja menos de\n  2 miembros vigentes (22023; salirse siempre se puede, ver abajo); (I2) la consulta\n  registrada de arriba; (I3) todo movimiento del libro de Papá lleva `en_nombre_de` y\n  `motivo` (23514) y las salidas hacia un libro personal dejan la entrada\n  `finanzas.salida_libro_representado`; (I4) un albacea es vigente solo si sigue siendo\n  adulto con Finanzas, y si no, escribe el suplente; (I5) las acciones `finanzas*` y\n  las tablas `fin_*` de la bitácora las escribe solo el servidor (42501 si la app las\n  inserta); (M6) la maestra que no es la dueña no escribe nada, tampoco la\n  configuración del hogar (42501); (M10) asignar o quitar la maestra deja\n  `finanzas.maestra_asignada`.\n- **Libros compartidos (respuestas del dueño del 23/oct):** quien crea el libro\n  (`creado_por`) es su administrador: agrega y saca miembros, cambia la `visibilidad`\n  y lo archiva. La API no manda ni cambia `creado_por` (42501): solo el servidor, que\n  lo pasa al miembro vigente más antiguo si el creador se sale. `visibilidad` solo\n  existe en los compartidos: `privada` (por omisión; todo nace privado) o `publica`.\n  Privada: leen y escriben sus miembros, y la maestra lee con consulta; el dueño no\n  entra a un compartido privado del que no es miembro. Pública: además la **leen**\n  (no la escriben) los adultos con Finanzas del hogar. **Salirse** es un `PATCH` a la\n  propia fila de `fin_libro_miembros` con `hasta` = ahora, siempre posible; si quedan\n  menos de 2 miembros vigentes el servidor archiva el libro (`fin_libros.activo` =\n  `false`: solo lectura, rechaza movimientos nuevos con 403, 42501). Reactivarlo\n  (`activo` = `true`) y administrarlo mientras está archivado es solo de su\n  administrador.\n- **Cuentas de periodo:** solo las de activo y pasivo piden saldo cero para cerrarse\n  o archivarse (22023); las de gasto e ingreso se cierran o archivan con saldo, y en\n  ellas se puede anular un movimiento aunque estén archivadas. Archivar una\n  categoría archiva su cuenta de gasto (si ninguna otra categoría activa la usa) y\n  desarchivarla la reactiva.\n- **Funciones internas:** `fin_vigencia_consulta_maestra`, `fin_adulto_con_finanzas` y\n  las de los triggers (`fin_libro_miembros_proteger`, `fin_libros_proteger`,\n  `fin_libro_miembros_sin_maestra`, `fin_categorias_archivar_cuenta`…) no son\n  llamables desde la API (se les quitó `EXECUTE` a todos los roles); por eso no\n  tienen operación aquí. Sí lo son `fin_solo_lectura` y `fin_puede_salir`, que las\n  reglas llaman con el rol de la sesión.\n"
+      "description": "Tablas `fin_*`, vistas y funciones de Finanzas (Fase 1, D19), según\n`supabase/migrations/20261021000000_finanzas_mvp1.sql`,\n`supabase/migrations/20261023000000_finanzas_salvaguardas.sql`,\n`supabase/migrations/20261024000000_finanzas_respuestas_dueno.sql` y\n`supabase/README.md` (\"Finanzas (Fase 1)\"). Solo dueño y coadministrador, cada quien\n**su libro** y los compartidos de los que es miembro, más los compartidos públicos\n(`fin_puede`); familiar, cuidador y Casa no ven nada. La **cuenta maestra** es otra\npersona con su propio login: el dueño la invita con `crear_invitacion` y\n`p_es_maestra`, y queda como coadministrador con la marca de maestra, sin libro\npersonal ni membresía en ningún libro. Si no es la dueña es de **solo lectura\ntotal**: lee con una consulta registrada y toda escritura suya (movimientos,\nconfiguración del hogar, crear libros) responde 403 (42501). El dueño también puede\nser la maestra con su propia persona, y en lo suyo sigue escribiendo. Nada de esto va\na la IA en la nube ni a las bocinas (D3, D6).\n\n- **Dinero** en centavos (entero); porcentajes y tasas en puntos base (2000 = 20 %);\n  semana en lunes; identificadores UUID generados en el dispositivo.\n- **Solo agregar:** `fin_movimientos`, `fin_conciliaciones`, `fin_cierres`,\n  `fin_cierre_partidas`, `fin_cierre_abonos` y `fin_importaciones` solo aceptan\n  INSERT; un error se corrige con una anulación (contraasiento) o una versión nueva.\n- **Cola sin conexión (idempotente):** se sube con `on_conflict=id` y\n  `Prefer: resolution=ignore-duplicates`. El mismo `id` con el mismo contenido no hace\n  nada y no falla; con otro contenido, en los libros solo agregar, 409 (23505).\n- **Lo que pone el servidor** (marcado como de solo lectura; no se manda):\n  `recibido_en`, `libro_origen_id` y `libro_destino_id` de los movimientos, las\n  columnas generadas y `reaperturas`.\n- **Errores** (código de PostgreSQL → HTTP de PostgREST): `23503` falta algo de lo\n  que depende (otra cuenta, el original de una anulación; la cola reintenta) → 409;\n  `23505` duplicado o mismo `id` con otro contenido → 409; `23514` regla de la tabla\n  (monto, motivo, lunes, cascada) → 400; `22023` regla de negocio (combinación de\n  cuentas, libro equivocado, papel) → 400; `55000` estado (cuenta no activa, semana\n  cerrada) → 500; `42501` sin permiso o columna que no cambia → 403.\n- **Cuenta maestra y consulta registrada (I2):** sin una consulta vigente, la maestra\n  solo ve la **portada**: los libros y quién los lleva (`fin_libros`,\n  `fin_libro_miembros`), las categorías, las cuentas de gasto del hogar y lo que no es\n  de Finanzas. El contenido de un libro ajeno (cuentas, movimientos, plan, cierres,\n  saldos y su bitácora) llega **vacío, sin error**, hasta que llama\n  `fin_registrar_consulta_maestra(libro)`, que deja la entrada\n  `finanzas.consulta_maestra` y habilita la lectura de ese libro por **30 minutos**\n  (por libro y por persona; pasado el tiempo hay que llamarla otra vez, y la app la\n  renueva sola mientras el libro está abierto).\n- **Salvaguardas en el servidor** (hallazgos I1 a I5, M6 y M10 de la revisión de\n  calidad): (I1) en un libro compartido solo quien lo creó, o el dueño del hogar si es\n  miembro, agrega o cambia a otra persona (42501); salirse, o que te saquen, con menos\n  de 2 miembros deja el libro privado y activo, y el último miembro no puede salirse\n  (22023; ver abajo); (I2) la consulta\n  registrada de arriba; (I3) todo movimiento del libro de Papá lleva `en_nombre_de` y\n  `motivo` (23514) y las salidas hacia un libro personal dejan la entrada\n  `finanzas.salida_libro_representado`; (I4) un albacea es vigente solo si sigue siendo\n  adulto con Finanzas, y si no, escribe el suplente; (I5) las acciones `finanzas*` y\n  las tablas `fin_*` de la bitácora las escribe solo el servidor (42501 si la app las\n  inserta); (M6) la maestra que no es la dueña no escribe nada, tampoco la\n  configuración del hogar (42501); (M10) asignar o quitar la maestra deja\n  `finanzas.maestra_asignada`.\n- **Libros compartidos (respuestas del dueño del 23/oct):** quien crea el libro\n  (`creado_por`) es su administrador: agrega y saca miembros, cambia la `visibilidad`\n  y lo archiva. La API no manda ni cambia `creado_por` (42501): solo el servidor, que\n  lo pasa al miembro vigente más antiguo si el creador se sale. `visibilidad` solo\n  existe en los compartidos: `privada` (por omisión; todo nace privado) o `publica`.\n  Privada: leen y escriben sus miembros, y la maestra lee con consulta; el dueño no\n  entra a un compartido privado del que no es miembro. Pública: además la **leen**\n  (no la escriben) los adultos con Finanzas del hogar. **Salirse** es un `PATCH` a la\n  propia fila de `fin_libro_miembros` con `hasta` = ahora (la hora la pone el\n  dispositivo), siempre posible. Si quedan menos de 2 miembros vigentes (también cuando\n  el administrador saca a alguien) el libro **no se archiva**: el servidor lo deja\n  `activo` y `privada`, y el miembro que queda es el administrador (`creado_por`); si\n  se va el administrador, `creado_por` pasa al miembro vigente más antiguo. El\n  **último miembro no puede salirse** (400, 22023: si ya no lo usa, lo archiva).\n  **Archivar** es solo la decisión del administrador (`activo` = `false`) y nunca\n  ocurre solo: un libro archivado se lee y no registra movimientos (403, 42501);\n  reactivarlo (`activo` = `true`) no exige 2 miembros, y mientras está archivado solo su\n  administrador lo administra.\n- **Cuentas de periodo:** solo las de activo y pasivo piden saldo cero para cerrarse\n  o archivarse (22023); las de gasto e ingreso se cierran o archivan con saldo, y en\n  ellas se puede anular un movimiento aunque estén archivadas. Archivar una\n  categoría archiva su cuenta de gasto (si ninguna otra categoría activa la usa) y\n  desarchivarla la reactiva.\n- **Funciones internas:** `fin_vigencia_consulta_maestra`, `fin_adulto_con_finanzas` y\n  las de los triggers (`fin_libro_miembros_proteger`, `fin_libros_proteger`,\n  `fin_libro_miembros_sin_maestra`, `fin_categorias_archivar_cuenta`…) no son\n  llamables desde la API (se les quitó `EXECUTE` a todos los roles); por eso no\n  tienen operación aquí. Sí lo son `fin_solo_lectura` y `fin_puede_salir`, que las\n  reglas llaman con el rol de la sesión, y `fin_adultos_con_finanzas` (en plural: la\n  que lista a los adultos con Finanzas del hogar; no la confundas con el ayudante\n  interno `fin_adulto_con_finanzas`, en singular).\n"
     },
     {
       "name": "Funciones del servidor",
@@ -1924,7 +1924,7 @@ window.ESPECIFICACION_GRAVITY = {
         ],
         "operationId": "cambiarLibroFinanzas",
         "summary": "Cambiar el nombre, la visibilidad o archivar un libro",
-        "description": "Quien lo administra (titular de un personal, miembro de un compartido, albacea de un representado). Se cambian `nombre`, `activo` y, en un compartido, `visibilidad`; `tipo`, `titular_id`, `creado_por` y las llaves no cambian (42501). En un compartido, solo quien lo creó cambia la `visibilidad`, lo archiva (`activo: false`) o lo reactiva (`activo: true`); a otro miembro responde 403 (42501). Un libro archivado es de solo lectura: ya no admite movimientos nuevos y, mientras lo está, solo su administrador lo administra. Los miembros que se salen lo archivan solos cuando quedan menos de 2 (ver `cambiarMiembroLibro`).",
+        "description": "Quien lo administra (titular de un personal, miembro de un compartido, albacea de un representado). Se cambian `nombre`, `activo` y, en un compartido, `visibilidad`; `tipo`, `titular_id`, `creado_por` y las llaves no cambian (42501). En un compartido, solo quien lo creó cambia la `visibilidad`, lo archiva (`activo: false`) o lo reactiva (`activo: true`); a otro miembro responde 403 (42501). Archivar es solo la decisión explícita del administrador y nunca ocurre solo: cuando quedan menos de 2 miembros el libro pasa a `privada` y sigue activo (ver `cambiarMiembroLibro`). Reactivarlo no exige 2 miembros. Un libro archivado es de solo lectura: se lee y ya no admite movimientos nuevos y, mientras lo está, solo su administrador lo administra.",
         "x-roles": [
           "dueno",
           "coadministrador"
@@ -2111,7 +2111,7 @@ window.ESPECIFICACION_GRAVITY = {
         ],
         "operationId": "cambiarMiembroLibro",
         "summary": "Cerrar la participación en un libro",
-        "description": "Los miembros no se borran: se cierra `hasta` (queda en la bitácora). `libro_id` y `persona_id` no cambian (42501). En un libro **compartido**: **salirse** es un `PATCH` a la propia fila con `hasta` = ahora; cualquier miembro puede, siempre, también con el libro archivado (`fin_puede_salir`). Si al salir quedan menos de 2 miembros vigentes (adultos con Finanzas), el servidor archiva el libro (`fin_libros.activo` = `false`, solo lectura) y no da error; si se sale quien lo creó, `creado_por` pasa al miembro vigente más antiguo. Quien se salió no vuelve a abrir su fila (ni con `upsert`): lo reingresa el administrador con una fila nueva. **Quitar a otro** (o cambiar su `desde`, `hasta` o `papel`) es solo de quien creó el libro, o del dueño del hogar si es miembro (I1); a cualquier otro responde 403 (42501), y nunca deja menos de 2 miembros vigentes (400, 22023, \"Un libro compartido no baja de 2 miembros vigentes\"; para dejar de usarlo, se archiva). Cambiar la fecha `desde` de la propia fila también es solo del administrador (42501). Un albacea es vigente (I4) solo si su membresía del hogar sigue activa y con Finanzas; si no, escribe el suplente.",
+        "description": "Los miembros no se borran: se cierra `hasta` (queda en la bitácora). `libro_id` y `persona_id` no cambian (42501). En un libro **compartido**: **salirse** es un `PATCH` a la propia fila con `hasta` = ahora (la hora la manda el dispositivo); cualquier miembro puede, siempre, también con el libro archivado (`fin_puede_salir`). Si al salir (o al sacar a alguien) quedan menos de 2 miembros vigentes (adultos con Finanzas), el libro **no se archiva**: sigue `activo` y pasa a `visibilidad` = `privada`, y el miembro que queda es el administrador (`creado_por`), sin error. Si se va quien lo administra (o ya no es adulto con Finanzas del hogar), `creado_por` pasa al miembro vigente más antiguo (`desde`, luego `id`). El **último miembro vigente no puede salirse** ni lo saca nadie (400, 22023, \"El último miembro de un libro compartido no puede salirse\"; si ya no se usa, el administrador lo archiva). Todo cambio de `fin_libros` que hace el servidor queda en la bitácora. Quien se salió no vuelve a abrir su fila (ni con `upsert`): lo reingresa el administrador con una fila nueva. **Quitar a otro** (o cambiar su `desde`, `hasta` o `papel`) es solo de quien creó el libro, o del dueño del hogar si es miembro (I1); a cualquier otro responde 403 (42501). Cambiar la fecha `desde` de la propia fila también es solo del administrador (42501). Un albacea es vigente (I4) solo si su membresía del hogar sigue activa y con Finanzas; si no, escribe el suplente.",
         "x-roles": [
           "dueno",
           "coadministrador"
@@ -2143,7 +2143,7 @@ window.ESPECIFICACION_GRAVITY = {
               },
               "examples": {
                 "salirse": {
-                  "summary": "Salirme de un libro compartido (PATCH a mi propia fila)",
+                  "summary": "Salirme de un libro compartido (PATCH a mi propia fila; si quedan menos de 2 miembros, el libro pasa a privado)",
                   "value": {
                     "hasta": "2026-10-23T09:30:00-06:00"
                   }
@@ -5647,7 +5647,7 @@ window.ESPECIFICACION_GRAVITY = {
         ],
         "operationId": "finPuedeSalir",
         "summary": "¿Puedo salirme de este libro compartido?",
-        "description": "Verdadero si la sesión es miembro vigente de este libro compartido (con un rol vigente en el hogar): puede cerrar su propia participación con un `PATCH` a su fila de `fin_libro_miembros` (`hasta` = ahora), siempre, también si el libro está archivado. En un libro personal o representado, y para quien no es miembro, responde `false`.",
+        "description": "Verdadero si la sesión es miembro vigente de este libro compartido (con un rol vigente en el hogar): puede cerrar su propia participación con un `PATCH` a su fila de `fin_libro_miembros` (`hasta` = ahora), siempre, también si el libro está archivado. En un libro personal o representado, y para quien no es miembro, responde `false`. Si es el último miembro vigente, la respuesta es `true` pero el servidor rechaza la salida (400, 22023): el libro no se queda sin nadie.",
         "x-roles": [
           "dueno",
           "coadministrador"
@@ -5685,6 +5685,74 @@ window.ESPECIFICACION_GRAVITY = {
                   "type": "boolean"
                 },
                 "example": true
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/fin_adultos_con_finanzas": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finAdultosConFinanzas",
+        "summary": "Los adultos con Finanzas del hogar (para agregarlos a un compartido)",
+        "description": "Dueño y coadministradores vigentes del hogar, con su nombre y su rol, para elegir a quién agregar a un libro compartido (`agregarMiembroLibro`). Nunca devuelve familiar, cuidador ni Casa, ni a Papá, ni la cuenta maestra que no es la dueña (es de solo lectura y no lleva libros). La ve cualquier adulto con Finanzas del hogar (incluida la maestra); a quien no lo es le devuelve cero filas, sin error. Incluye a la propia sesión. Ordenada por nombre.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 1,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_hogar_id"
+                ],
+                "properties": {
+                  "p_hogar_id": {
+                    "$ref": "#/components/schemas/Uuid"
+                  }
+                }
+              },
+              "example": {
+                "p_hogar_id": "b0000000-0000-4000-8000-000000000001"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Adultos con Finanzas del hogar (vacío si quien consulta no lo es).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinAdultoConFinanzas"
+                  }
+                },
+                "example": [
+                  {
+                    "persona_id": "e0000000-0000-4000-8000-000000000002",
+                    "nombre_visible": "Alex Ejemplo",
+                    "rol": "coadministrador"
+                  },
+                  {
+                    "persona_id": "e0000000-0000-4000-8000-000000000001",
+                    "nombre_visible": "Ana Ejemplo",
+                    "rol": "dueno"
+                  }
+                ]
               }
             }
           },
@@ -7333,7 +7401,7 @@ window.ESPECIFICACION_GRAVITY = {
           "activo": {
             "type": "boolean",
             "default": true,
-            "description": "`false` = archivado: solo lectura, sin movimientos nuevos."
+            "description": "`false` = archivado por su administrador (nunca ocurre solo): se lee y no registra movimientos nuevos."
           },
           "visibilidad": {
             "type": "string",
@@ -7342,12 +7410,12 @@ window.ESPECIFICACION_GRAVITY = {
               "publica"
             ],
             "default": "privada",
-            "description": "Solo en los compartidos (en los demás, siempre `privada`). `privada`: leen y escriben sus miembros (la maestra lee con consulta). `publica`: además la leen, sin escribir, todos los adultos con Finanzas del hogar. La cambia solo quien creó el libro (42501)."
+            "description": "Solo en los compartidos (en los demás, siempre `privada`). `privada`: leen y escriben sus miembros (la maestra lee con consulta). `publica`: además la leen, sin escribir, todos los adultos con Finanzas del hogar. La cambia solo quien creó el libro (42501). Pasa sola a `privada` cuando quedan menos de 2 miembros vigentes."
           },
           "creado_por": {
             "$ref": "#/components/schemas/UuidONulo",
             "readOnly": true,
-            "description": "El administrador del libro (quien lo creó). La API no lo manda ni lo cambia (42501); el servidor lo pasa al miembro vigente más antiguo si el creador se sale."
+            "description": "El administrador del libro (quien lo creó). La API no lo manda ni lo cambia (42501); el servidor lo pasa al miembro vigente más antiguo si el administrador se sale o deja de ser adulto con Finanzas, y al que queda si quedan menos de 2."
           },
           "creado_en": {
             "type": "string",
@@ -8670,6 +8738,27 @@ window.ESPECIFICACION_GRAVITY = {
           }
         }
       },
+      "FinAdultoConFinanzas": {
+        "type": "object",
+        "description": "Una fila de `fin_adultos_con_finanzas`.",
+        "properties": {
+          "persona_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "nombre_visible": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "rol": {
+            "type": "string",
+            "enum": [
+              "dueno",
+              "coadministrador"
+            ],
+            "description": "Nunca familiar, cuidador ni casa."
+          }
+        }
+      },
       "Aviso": {
         "type": "object",
         "description": "Propuesta (Fase 2).",
@@ -8772,4 +8861,4 @@ window.ESPECIFICACION_GRAVITY = {
     }
   }
 };
-window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:07406750';
+window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:7577b1b9';

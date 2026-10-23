@@ -44,7 +44,7 @@ void main() {
   }
 
   setUp(() async {
-    almacen = await almacenConPersonas({Rol.dueno: '1234'});
+    almacen = await almacenConPersonas({Rol.dueno: '246813'});
     ahora = DateTime(2026, 10, 20, 9);
   });
 

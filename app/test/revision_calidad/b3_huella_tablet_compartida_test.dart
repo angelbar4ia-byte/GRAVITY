@@ -32,7 +32,7 @@ void main() {
     // La cuidadora registró su dedo en la tablet para su propio turno; el
     // Dueño activó la huella para sí.
     final almacen = await almacenConPersonas(
-      {Rol.dueno: '1234', Rol.cuidador: '5678'},
+      {Rol.dueno: '246813', Rol.cuidador: '5678'},
       conHuella: {Rol.dueno, Rol.cuidador},
     );
     final dedoDeLaCuidadora = BiometriaFalsa(acepta: true);

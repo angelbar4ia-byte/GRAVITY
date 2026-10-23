@@ -52,7 +52,7 @@ void main() {
       tester,
       dispositivo: TipoDispositivo.tablet,
       sesion: sesionCasa(),
-      almacen: await almacenConPersonas({Rol.dueno: '1234'}),
+      almacen: await almacenConPersonas({Rol.dueno: '246813'}),
     );
     expect(find.text('GRAVITY · Casa'), findsOneWidget);
     for (final contexto in contextosCasa) {
@@ -111,10 +111,10 @@ void main() {
       tester,
       dispositivo: TipoDispositivo.tablet,
       sesion: sesion,
-      almacen: await almacenConPersonas({Rol.dueno: '1234'}),
+      almacen: await almacenConPersonas({Rol.dueno: '246813'}),
     );
     expect(sesion.personaEnServidor, casa);
-    await entrarConPin(tester, nombreDueno, '1234');
+    await entrarConPin(tester, nombreDueno, '246813');
     expect(enRiel('Finanzas'), findsOneWidget);
     expect(sesion.personaEnServidor, dueno);
     expect(sesion.sesionActual?.rol, Rol.casa, reason: 'la cuenta del equipo');
@@ -131,11 +131,11 @@ void main() {
       dispositivo: TipoDispositivo.tablet,
       sesion: sesionCasa(),
       almacen: await almacenConPersonas(
-        {Rol.dueno: '1234'},
+        {Rol.dueno: '246813'},
         conCredencial: false,
       ),
     );
-    await entrarConPin(tester, nombreDueno, '1234');
+    await entrarConPin(tester, nombreDueno, '246813');
     expect(find.textContaining('Falta tu cuenta en esta tablet'), findsOneWidget);
     await tester.tap(find.text('Cancelar'));
     await tester.pumpAndSettle();
@@ -149,7 +149,7 @@ void main() {
       tester,
       dispositivo: TipoDispositivo.tablet,
       sesion: sesionCasa(),
-      almacen: await almacenConPersonas({Rol.dueno: '1234'}),
+      almacen: await almacenConPersonas({Rol.dueno: '246813'}),
     );
     await entrarConPin(tester, nombreDueno, '9999');
     expect(find.text('PIN incorrecto.'), findsOneWidget);
@@ -157,7 +157,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('GRAVITY · Casa'), findsOneWidget);
 
-    await entrarConPin(tester, nombreDueno, '1234');
+    await entrarConPin(tester, nombreDueno, '246813');
     expect(find.text('GRAVITY · Casa'), findsNothing);
     expect(enRiel('Finanzas'), findsOneWidget);
     expect(enRiel('Hábitos'), findsOneWidget);
@@ -174,7 +174,7 @@ void main() {
       dispositivo: TipoDispositivo.tablet,
       sesion: sesionCasa(),
       almacen: await almacenConPersonas({
-        Rol.dueno: '1234',
+        Rol.dueno: '246813',
         Rol.cuidador: '5678',
       }),
     );
@@ -201,9 +201,9 @@ void main() {
       tester,
       dispositivo: TipoDispositivo.tablet,
       sesion: sesionCasa(),
-      almacen: await almacenConPersonas({Rol.dueno: '1234'}),
+      almacen: await almacenConPersonas({Rol.dueno: '246813'}),
     );
-    await entrarConPin(tester, nombreDueno, '1234');
+    await entrarConPin(tester, nombreDueno, '246813');
     await tester.tap(enRiel('Finanzas'));
     await tester.pumpAndSettle();
     expect(ubicacion(tester), Rutas.finanzas);
@@ -228,9 +228,9 @@ void main() {
       tester,
       dispositivo: TipoDispositivo.tablet,
       sesion: sesionCasa(),
-      almacen: await almacenConPersonas({Rol.dueno: '1234'}),
+      almacen: await almacenConPersonas({Rol.dueno: '246813'}),
     );
-    await entrarConPin(tester, nombreDueno, '1234');
+    await entrarConPin(tester, nombreDueno, '246813');
     // El Dueño abre el menú de su cuenta y se va.
     await tester.tap(find.byTooltip('Cuenta'));
     await tester.pumpAndSettle();
@@ -241,7 +241,7 @@ void main() {
     expect(find.text('$nombreDueno · Dueño'), findsNothing);
 
     // Lo mismo con un diálogo, al volver a mano desde el riel.
-    await entrarConPin(tester, nombreDueno, '1234');
+    await entrarConPin(tester, nombreDueno, '246813');
     await tester.tap(enRiel('Más'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Ajustes'));
@@ -279,7 +279,7 @@ void main() {
       tester,
       dispositivo: TipoDispositivo.tablet,
       sesion: sesionCasa(),
-      almacen: await almacenConPersonas({Rol.dueno: '1234'}),
+      almacen: await almacenConPersonas({Rol.dueno: '246813'}),
     );
     await tester.tap(find.text('Alimentación'));
     await tester.pumpAndSettle();
@@ -294,9 +294,9 @@ void main() {
       tester,
       dispositivo: TipoDispositivo.tablet,
       sesion: sesionCasa(),
-      almacen: await almacenConPersonas({Rol.dueno: '1234'}),
+      almacen: await almacenConPersonas({Rol.dueno: '246813'}),
     );
-    await entrarConPin(tester, nombreDueno, '1234');
+    await entrarConPin(tester, nombreDueno, '246813');
     await tester.tap(find.byTooltip('Volver al modo Casa'));
     await tester.pumpAndSettle();
     expect(find.text('GRAVITY · Casa'), findsOneWidget);
@@ -312,7 +312,7 @@ void main() {
       sesion: sesionCasa(),
       biometria: biometria,
       almacen: await almacenConPersonas(
-        {Rol.dueno: '1234'},
+        {Rol.dueno: '246813'},
         conHuella: {Rol.dueno},
       ),
     );
@@ -329,7 +329,7 @@ void main() {
       tester,
       dispositivo: TipoDispositivo.tablet,
       sesion: sesionCasa(),
-      almacen: await almacenConPersonas({Rol.dueno: '1234'}),
+      almacen: await almacenConPersonas({Rol.dueno: '246813'}),
     );
     await tester.tap(find.text(nombreDueno));
     await tester.pumpAndSettle();
@@ -420,12 +420,12 @@ void main() {
       tester,
       dispositivo: TipoDispositivo.tablet,
       sesion: sesionCasa(),
-      almacen: await almacenConPersonas({Rol.dueno: '1234'}),
+      almacen: await almacenConPersonas({Rol.dueno: '246813'}),
     );
     tester.view.physicalSize = const Size(800, 1280);
     await tester.pumpAndSettle();
     expect(find.text('¿Quién usa la tablet?'), findsOneWidget);
-    await entrarConPin(tester, nombreDueno, '1234');
+    await entrarConPin(tester, nombreDueno, '246813');
     expect(enRiel('Finanzas'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });

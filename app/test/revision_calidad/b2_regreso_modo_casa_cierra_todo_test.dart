@@ -30,11 +30,11 @@ void main() {
       tester,
       dispositivo: TipoDispositivo.tablet,
       sesion: sesionCon(Rol.casa),
-      almacen: await almacenConPersonas({Rol.dueno: '1234'}),
+      almacen: await almacenConPersonas({Rol.dueno: '246813'}),
     );
     await tester.tap(find.text('Dueño de ejemplo'));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byKey(const Key('campo-pin')), '1234');
+    await tester.enterText(find.byKey(const Key('campo-pin')), '246813');
     await tester.tap(find.widgetWithText(FilledButton, 'Entrar'));
     await tester.pumpAndSettle();
 

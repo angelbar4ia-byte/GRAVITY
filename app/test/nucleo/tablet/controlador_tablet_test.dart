@@ -43,7 +43,7 @@ void main() {
   Future<UsuarioTablet> agregar(
     ControladorTablet controlador,
     Rol rol, {
-    String pin = '1234',
+    String pin = '246813',
   }) => controlador.agregarUsuario(
     sesionDeEjemplo(rol),
     pin: pin,
@@ -149,7 +149,7 @@ void main() {
       await expectLater(
         controlador.cambiarPin(
           usuario.personaId,
-          pinActual: '1234',
+          pinActual: '246813',
           pinNuevo: trivial,
         ),
         throwsArgumentError,
@@ -160,7 +160,7 @@ void main() {
     expect(
       await controlador.cambiarPin(
         usuario.personaId,
-        pinActual: '1234',
+        pinActual: '246813',
         pinNuevo: '7391',
       ),
       ResultadoDesbloqueo.abierto,
@@ -248,13 +248,13 @@ void main() {
         rol: Rol.familiar,
         hogarId: hogarDeEjemplo,
       ),
-      pin: '1234',
+      pin: '246813',
       credencial: ServicioSesionFalso.credencialDe(
         sesionDeEjemplo(Rol.coadministrador),
       ),
     );
     expect(
-      await controlador.entrarConPin(guardado.personaId, '1234'),
+      await controlador.entrarConPin(guardado.personaId, '246813'),
       ResultadoDesbloqueo.abierto,
     );
     expect(
@@ -271,7 +271,7 @@ void main() {
     // El Dueño la da de baja: con señal, ya no entra y se quita.
     falso().bajas.add(guardado.personaId);
     expect(
-      await controlador.entrarConPin(guardado.personaId, '1234'),
+      await controlador.entrarConPin(guardado.personaId, '246813'),
       ResultadoDesbloqueo.sinAcceso,
     );
     final estado = contenedor.read(controladorTabletProvider);
@@ -292,7 +292,7 @@ void main() {
     final usuario = await agregar(controlador, Rol.familiar);
     falso().sinConexion = true;
     expect(
-      await controlador.entrarConPin(usuario.personaId, '1234'),
+      await controlador.entrarConPin(usuario.personaId, '246813'),
       ResultadoDesbloqueo.abierto,
     );
     expect(
@@ -307,10 +307,10 @@ void main() {
     final controlador = await listo(contenedor);
     final usuario = await controlador.agregarUsuario(
       sesionDeEjemplo(Rol.dueno),
-      pin: '1234',
+      pin: '246813',
     );
     expect(
-      await controlador.entrarConPin(usuario.personaId, '1234'),
+      await controlador.entrarConPin(usuario.personaId, '246813'),
       ResultadoDesbloqueo.faltaCuenta,
     );
     expect(contenedor.read(controladorTabletProvider).enModoCasa, isTrue);
@@ -323,7 +323,7 @@ void main() {
     final controlador = await listo(contenedor);
     final usuario = await agregar(controlador, Rol.familiar);
     expect(
-      await controlador.entrarConPin(usuario.personaId, '1234'),
+      await controlador.entrarConPin(usuario.personaId, '246813'),
       ResultadoDesbloqueo.requiereCuentaCasa,
     );
     expect(contenedor.read(controladorTabletProvider).enModoCasa, isTrue);
@@ -333,13 +333,13 @@ void main() {
     final contenedor = crear();
     final controlador = await listo(contenedor);
     final usuario = await agregar(controlador, Rol.dueno);
-    await controlador.entrarConPin(usuario.personaId, '1234');
+    await controlador.entrarConPin(usuario.personaId, '246813');
     falso().revocarSesionDePersona();
     await pumpEventQueue();
     expect(contenedor.read(controladorTabletProvider).enModoCasa, isTrue);
     await controlador.cambiosEnServidor;
     expect(falso().personaEnServidor, casa);
-    expect(await vueltaGuardada(usuario.personaId, '1234'), isNull);
+    expect(await vueltaGuardada(usuario.personaId, '246813'), isNull);
   });
 
   test('I2: 5 fallos bloquean 30 s; la espera se duplica en cada bloqueo', () async {
@@ -435,15 +435,15 @@ void main() {
     expect(
       await controlador.cambiarPin(
         usuario.personaId,
-        pinActual: '1234',
+        pinActual: '246813',
         pinNuevo: '73915',
       ),
       ResultadoDesbloqueo.abierto,
     );
-    expect(await vueltaGuardada(usuario.personaId, '1234'), isNull);
+    expect(await vueltaGuardada(usuario.personaId, '246813'), isNull);
     expect(await vueltaGuardada(usuario.personaId, '73915'), 0);
     expect(
-      controlador.desbloquearConPin(usuario.personaId, '1234'),
+      controlador.desbloquearConPin(usuario.personaId, '246813'),
       ResultadoDesbloqueo.pinIncorrecto,
     );
     expect(
@@ -488,7 +488,7 @@ void main() {
     final controlador = await listo(contenedor);
     contenedor.listen(sesionActualProvider, (_, _) {});
     final usuario = await agregar(controlador, Rol.dueno);
-    await controlador.entrarConPin(usuario.personaId, '1234');
+    await controlador.entrarConPin(usuario.personaId, '246813');
     expect(contenedor.read(controladorTabletProvider).enModoCasa, isFalse);
     await servicio.salir();
     await pumpEventQueue();

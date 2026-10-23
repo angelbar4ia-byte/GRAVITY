@@ -1,6 +1,6 @@
 # Roadmap de GRAVITY (proyecto Segundo Cerebro)
 
-> **Versión 0.8 (20/oct/2026), en ejecución.** El dueño del proyecto dio la orden de inicio el 20/oct/2026. Plan de ejecución de la app única (D1): la **laptop Windows** con el sistema completo y el **teléfono Android** con lo mínimo (D4). Las decisiones de arquitectura están en `DECISIONES.md`; el diseño visual se define en paralelo en `DISENO_UX_UI.md`.
+> **Versión 0.9 (23/oct/2026), en ejecución.** El dueño del proyecto dio la orden de inicio el 20/oct/2026. Plan de ejecución de la app única (D1): la **laptop Windows** con el sistema completo y el **teléfono Android** con lo mínimo (D4). Las decisiones de arquitectura están en `DECISIONES.md`; el diseño visual se define en paralelo en `DISENO_UX_UI.md`.
 >
 > Fuente única: `GRAVITY/docs/ROADMAP.md` (D10 aplicada el 20/oct/2026). La ejecución la hace el **equipo de agentes** de la sección 11.
 
@@ -72,7 +72,8 @@ Base: diseño de FINANZAS v23, sección 10 (MVP 1).
 
 | Submódulo | Laptop | Teléfono |
 |---|---|---|
-| Hogar y perfiles (modo Individual, con las personas de D5) | Alta y configuración | — |
+| Libros (D19): personal por adulto, compartidos (públicos o privados), libro de papá con albaceas y cuenta maestra de solo lectura | Completo | Ver el libro activo y cambiar de libro |
+| Hogar y perfiles (con las personas de D5) | Alta y configuración | — |
 | Cuentas y libro de movimientos (solo-agregar; se corrige con anulación y contraasiento) | Completo | Se alimenta al registrar |
 | Ingresos (forma y día de pago por miembro, extras) | Completo | Registrar un ingreso extra |
 | Gastos (captura manual, categorías de hasta 3 niveles, división por líneas) | Completo | **Registrar un gasto en menos de 10 s** |
@@ -82,7 +83,13 @@ Base: diseño de FINANZAS v23, sección 10 (MVP 1).
 
 **Queda para después:** captura por voz e imagen (foto, OCR, QR), modo Pareja y Familiar completo, conciliación con estados de cuenta y reportes de auditoría.
 
-**Definido (21/oct/2026, D19):** finanzas por persona (cada quien su libro), cuentas compartidas para pagos, libro de papá con 1 o 2 albaceas y cuenta maestra de solo lectura (especificación, secciones 4.5 y 9.0).
+**Definido (21 a 23/oct/2026, D18 y D19):**
+- Finanzas **por persona** (cada quien su libro) y **cuentas compartidas** para pagos. Quien crea un compartido es su administrador y decide si es público o privado; cualquiera puede salirse, y con menos de 2 miembros el libro pasa a privado.
+- **Libro de papá** con 1 o 2 albaceas: todo movimiento va en su nombre y con motivo; pensión los días 1 y 11 y apoyo 60+ cada bimestre.
+- **Cuenta maestra** con login propio: solo lectura total, con consulta registrada (30 min, la app la renueva sola). Más adelante se decide si también puede editar.
+- **Seguridad en pantalla:** montos ocultos automáticos tras 2 min sin uso, PIN de 6 dígitos para quien ve dinero, pantallas con dinero bloqueadas para capturas (FLAG_SECURE).
+- **Tablets:** pública de la casa (cuenta "Hogar") y personal; **bandeja de salida** que sube sola lo registrado sin señal, a prueba.
+- Especificación v0.5 (`docs/specs/fase-1-finanzas.md`); revisiones de calidad en `docs/revisiones/fase-1.md` y `fase-1b.md`.
 
 **Aceptación:** las pruebas del motor de presupuesto (5.6 bis) y del libro de movimientos (5.0 bis) pasan; registrar un gasto en el teléfono toma menos de 10 s; la app abre en menos de 2 s (decisión 24 de FINANZAS).
 
@@ -227,7 +234,7 @@ La ejecución la hace un equipo de agentes de Claude Code, **cada uno especializ
 | Fase | Agentes en paralelo | Cierre |
 |---|---|---|
 | 0 | plataforma, diseno, backend, asistente; **finanzas** adelanta la especificación de la Fase 1 y el dominio | calidad |
-| 1 | finanzas, backend (esquema de Finanzas), diseno (pantallas y gadgets de Finanzas) | calidad |
+| 1 | finanzas, backend (esquema de Finanzas), diseno (pantallas y gadgets de Finanzas), plataforma (rutas, tablets, cola, seguridad), asistente (herramientas y APIs) | calidad |
 | 2 | finanzas, backend (funciones de avisos), plataforma (avisos y pulsera) | calidad |
 | 3 | habitos, backend, diseno | calidad |
 | 4 | diseno, plataforma | calidad |
@@ -241,7 +248,8 @@ La ejecución la hace un equipo de agentes de Claude Code, **cada uno especializ
 | Fase | Estado | Notas |
 |---|---|---|
 | 0 | **Cerrada en lo técnico** (20/oct/2026); falta lo del dueño | App con cascarones laptop/tablet/teléfono, navegación y resumen por rol, sesión, cola sin conexión por persona, tablet con cuenta Casa y PIN, bloqueo del teléfono, estilo Futurista día/noche, pantalla principal, barra de órdenes, Desarrollador; Supabase con RLS alineada; respaldo cifrado; OpenAPI. Revisión de calidad con sus hallazgos resueltos (`docs/revisiones/fase-0.md`, sección 11). Pruebas: 409 app, 249 SQL, 43 respaldo, 122 finanzas. **Falta del dueño:** proyecto de Supabase, proyecto de Firebase, Flutter en la laptop y las decisiones provisionales de D18 |
-| 1 | **En curso** (20/oct/2026) con las propuestas por defecto de la especificación mientras el dueño responde la sección 9 | Agentes en paralelo: backend (tablas `fin_`, RLS y pruebas SQL), finanzas (casos de uso, repositorios y pantallas), diseno (gadgets Cascada, Medidor y Teclado de monto) y plataforma (rutas, hoja (+) y cola). Dominio: 122 pruebas |
+| 1 | **Construida, en revisión de calidad** (23/oct/2026) | Hecho por los cinco agentes: dominio (libros, cuadre entre libros, grupo de deudas prioritarias, ingresos con días fijos y cada N meses), módulo Finanzas (asistente de arranque, importar con selector de archivos, ajustes, tablero, semana, movimientos, hojas (+)), base de datos (libros, albaceas, cuenta maestra, salvaguardas, compartidos públicos o privados, 4 migraciones), gadgets y componentes de diseño, tablets y bandeja de salida, FLAG_SECURE, PIN de 6 dígitos, montos ocultos, órdenes de GRAVITY y APIs (versión 0.4.0). Última corrida completa: **224** pruebas de dominio, **1240** de la app, **1455** comprobaciones SQL, 44 de respaldo, APIs válidas. Calidad: primera revisión sin bloqueantes y con 11 importantes, ya corregidos; revisión corta (`fase-1b.md`) en curso. **Falta:** cerrar los hallazgos de la revisión corta, probar `flutter build` de Windows (file_picker) y de Android (FLAG_SECURE), y medir el arranque y el registro de un gasto en el Galaxy A52 (criterios 11 y 28) |
+| Siguiente ronda | Pendiente | Pantalla "Tengo una invitación" (registro y aceptar invitación); indicador "En línea" con conectividad real; cifras reales de Finanzas en "Hoy"; cómo cambia un ingreso (vigencias: explicado, falta decidir si se endurece); decidir si la cuenta maestra también edita; acotar la bandeja de salida si calidad lo recomienda; aviso al suplente por notificaciones y consulta registrada en el historial de GRAVITY (Fase 2) |
 
 ---
 
@@ -257,3 +265,4 @@ La ejecución la hace un equipo de agentes de Claude Code, **cada uno especializ
 | 0.6 | 20/oct/2026 | Orden de inicio. D10 aplicada (todo en GRAVITY). Sección 11: equipo de agentes especializados con sus instrucciones, asignación por fase y estado de la ejecución |
 | 0.7 | 20/oct/2026 | Fase 0 integrada (estado en 11.4); especificación de la Fase 1 lista para aprobación |
 | 0.8 | 20/oct/2026 | Fase 0 cerrada en lo técnico tras la revisión de calidad; decisiones provisionales en D18 |
+| 0.9 | 23/oct/2026 | Fase 1 construida y en revisión de calidad. Decisiones del dueño D18 (confirmada) y D19 (finanzas por persona, cuentas compartidas, albaceas, cuenta maestra con login propio, compartidos públicos o privados). Tablets pública y personal con bandeja de salida; PIN de 6 dígitos y montos ocultos automáticos; agentes fijados en Sonnet 5.5 (regla 11.1.10); siguiente ronda definida |

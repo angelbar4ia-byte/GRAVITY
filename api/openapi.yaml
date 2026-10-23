@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: GRAVITY · APIs del sistema
-  version: 0.4.0
+  version: 0.5.0
   summary: Herramientas de GRAVITY, base de datos, funciones del servidor y puente de casa (D16).
   description: |
     Especificación de las APIs de GRAVITY (decisión D16). Se consulta en la laptop, en
@@ -115,8 +115,9 @@ tags:
         renueva sola mientras el libro está abierto).
       - **Salvaguardas en el servidor** (hallazgos I1 a I5, M6 y M10 de la revisión de
         calidad): (I1) en un libro compartido solo quien lo creó, o el dueño del hogar si es
-        miembro, agrega o cambia a otra persona (42501), y quitar a otro nunca deja menos de
-        2 miembros vigentes (22023; salirse siempre se puede, ver abajo); (I2) la consulta
+        miembro, agrega o cambia a otra persona (42501); salirse, o que te saquen, con menos
+        de 2 miembros deja el libro privado y activo, y el último miembro no puede salirse
+        (22023; ver abajo); (I2) la consulta
         registrada de arriba; (I3) todo movimiento del libro de Papá lleva `en_nombre_de` y
         `motivo` (23514) y las salidas hacia un libro personal dejan la entrada
         `finanzas.salida_libro_representado`; (I4) un albacea es vigente solo si sigue siendo
@@ -133,11 +134,16 @@ tags:
         Privada: leen y escriben sus miembros, y la maestra lee con consulta; el dueño no
         entra a un compartido privado del que no es miembro. Pública: además la **leen**
         (no la escriben) los adultos con Finanzas del hogar. **Salirse** es un `PATCH` a la
-        propia fila de `fin_libro_miembros` con `hasta` = ahora, siempre posible; si quedan
-        menos de 2 miembros vigentes el servidor archiva el libro (`fin_libros.activo` =
-        `false`: solo lectura, rechaza movimientos nuevos con 403, 42501). Reactivarlo
-        (`activo` = `true`) y administrarlo mientras está archivado es solo de su
-        administrador.
+        propia fila de `fin_libro_miembros` con `hasta` = ahora (la hora la pone el
+        dispositivo), siempre posible. Si quedan menos de 2 miembros vigentes (también cuando
+        el administrador saca a alguien) el libro **no se archiva**: el servidor lo deja
+        `activo` y `privada`, y el miembro que queda es el administrador (`creado_por`); si
+        se va el administrador, `creado_por` pasa al miembro vigente más antiguo. El
+        **último miembro no puede salirse** (400, 22023: si ya no lo usa, lo archiva).
+        **Archivar** es solo la decisión del administrador (`activo` = `false`) y nunca
+        ocurre solo: un libro archivado se lee y no registra movimientos (403, 42501);
+        reactivarlo (`activo` = `true`) no exige 2 miembros, y mientras está archivado solo su
+        administrador lo administra.
       - **Cuentas de periodo:** solo las de activo y pasivo piden saldo cero para cerrarse
         o archivarse (22023); las de gasto e ingreso se cierran o archivan con saldo, y en
         ellas se puede anular un movimiento aunque estén archivadas. Archivar una
@@ -148,7 +154,9 @@ tags:
         `fin_libro_miembros_sin_maestra`, `fin_categorias_archivar_cuenta`…) no son
         llamables desde la API (se les quitó `EXECUTE` a todos los roles); por eso no
         tienen operación aquí. Sí lo son `fin_solo_lectura` y `fin_puede_salir`, que las
-        reglas llaman con el rol de la sesión.
+        reglas llaman con el rol de la sesión, y `fin_adultos_con_finanzas` (en plural: la
+        que lista a los adultos con Finanzas del hogar; no la confundas con el ayudante
+        interno `fin_adulto_con_finanzas`, en singular).
   - name: Funciones del servidor
     description: |
       Funciones de Supabase (`/functions/v1/<nombre>`) desde la Fase 2: avisos al instante
@@ -1320,10 +1328,12 @@ paths:
         representado). Se cambian `nombre`, `activo` y, en un compartido, `visibilidad`;
         `tipo`, `titular_id`, `creado_por` y las llaves no cambian (42501). En un compartido,
         solo quien lo creó cambia la `visibilidad`, lo archiva (`activo: false`) o lo
-        reactiva (`activo: true`); a otro miembro responde 403 (42501). Un libro archivado
-        es de solo lectura: ya no admite movimientos nuevos y, mientras lo está, solo su
-        administrador lo administra. Los miembros que se salen lo archivan solos cuando
-        quedan menos de 2 (ver `cambiarMiembroLibro`).
+        reactiva (`activo: true`); a otro miembro responde 403 (42501). Archivar es solo la
+        decisión explícita del administrador y nunca ocurre solo: cuando quedan menos de 2
+        miembros el libro pasa a `privada` y sigue activo (ver `cambiarMiembroLibro`).
+        Reactivarlo no exige 2 miembros. Un libro archivado es de solo lectura: se lee y ya
+        no admite movimientos nuevos y, mientras lo está, solo su administrador lo
+        administra.
       x-roles: [dueno, coadministrador]
       x-escribe: true
       x-solo-local: true
@@ -1439,18 +1449,22 @@ paths:
       description: >-
         Los miembros no se borran: se cierra `hasta` (queda en la bitácora). `libro_id` y
         `persona_id` no cambian (42501). En un libro **compartido**: **salirse** es un
-        `PATCH` a la propia fila con `hasta` = ahora; cualquier miembro puede, siempre, también
-        con el libro archivado (`fin_puede_salir`). Si al salir quedan menos de 2 miembros
-        vigentes (adultos con Finanzas), el servidor archiva el libro (`fin_libros.activo` =
-        `false`, solo lectura) y no da error; si se sale quien lo creó, `creado_por` pasa al
-        miembro vigente más antiguo. Quien se salió no vuelve a abrir su fila (ni con
-        `upsert`): lo reingresa el administrador con una fila nueva. **Quitar a otro** (o
-        cambiar su `desde`, `hasta` o `papel`) es solo de quien creó el libro, o del dueño del
-        hogar si es miembro (I1); a cualquier otro responde 403 (42501), y nunca deja menos
-        de 2 miembros vigentes (400, 22023, "Un libro compartido no baja de 2 miembros
-        vigentes"; para dejar de usarlo, se archiva). Cambiar la fecha `desde` de la propia
-        fila también es solo del administrador (42501). Un albacea es vigente (I4) solo si su
-        membresía del hogar sigue activa y con Finanzas; si no, escribe el suplente.
+        `PATCH` a la propia fila con `hasta` = ahora (la hora la manda el dispositivo);
+        cualquier miembro puede, siempre, también con el libro archivado (`fin_puede_salir`).
+        Si al salir (o al sacar a alguien) quedan menos de 2 miembros vigentes (adultos con
+        Finanzas), el libro **no se archiva**: sigue `activo` y pasa a `visibilidad` =
+        `privada`, y el miembro que queda es el administrador (`creado_por`), sin error. Si se
+        va quien lo administra (o ya no es adulto con Finanzas del hogar), `creado_por` pasa
+        al miembro vigente más antiguo (`desde`, luego `id`). El **último miembro vigente no
+        puede salirse** ni lo saca nadie (400, 22023, "El último miembro de un libro
+        compartido no puede salirse"; si ya no se usa, el administrador lo archiva). Todo
+        cambio de `fin_libros` que hace el servidor queda en la bitácora. Quien se salió no
+        vuelve a abrir su fila (ni con `upsert`): lo reingresa el administrador con una fila
+        nueva. **Quitar a otro** (o cambiar su `desde`, `hasta` o `papel`) es solo de quien
+        creó el libro, o del dueño del hogar si es miembro (I1); a cualquier otro responde
+        403 (42501). Cambiar la fecha `desde` de la propia fila también es solo del
+        administrador (42501). Un albacea es vigente (I4) solo si su membresía del hogar
+        sigue activa y con Finanzas; si no, escribe el suplente.
       x-roles: [dueno, coadministrador]
       x-escribe: true
       x-solo-local: true
@@ -1468,7 +1482,9 @@ paths:
                 - minProperties: 1
             examples:
               salirse:
-                summary: Salirme de un libro compartido (PATCH a mi propia fila)
+                summary: >-
+                  Salirme de un libro compartido (PATCH a mi propia fila; si quedan menos de 2
+                  miembros, el libro pasa a privado)
                 value:
                   hasta: '2026-10-23T09:30:00-06:00'
               quitar:
@@ -3579,7 +3595,8 @@ paths:
         vigente en el hogar): puede cerrar su propia participación con un `PATCH` a su fila
         de `fin_libro_miembros` (`hasta` = ahora), siempre, también si el libro está
         archivado. En un libro personal o representado, y para quien no es miembro, responde
-        `false`.
+        `false`. Si es el último miembro vigente, la respuesta es `true` pero el servidor
+        rechaza la salida (400, 22023): el libro no se queda sin nadie.
       x-roles: [dueno, coadministrador]
       x-escribe: false
       x-solo-local: true
@@ -3604,6 +3621,52 @@ paths:
               schema:
                 type: boolean
               example: true
+        '401':
+          $ref: '#/components/responses/SinSesion'
+  /rest/v1/rpc/fin_adultos_con_finanzas:
+    post:
+      tags: [Base de datos · Finanzas]
+      operationId: finAdultosConFinanzas
+      summary: Los adultos con Finanzas del hogar (para agregarlos a un compartido)
+      description: >-
+        Dueño y coadministradores vigentes del hogar, con su nombre y su rol, para elegir a
+        quién agregar a un libro compartido (`agregarMiembroLibro`). Nunca devuelve
+        familiar, cuidador ni Casa, ni a Papá, ni la cuenta maestra que no es la dueña (es
+        de solo lectura y no lleva libros). La ve cualquier adulto con Finanzas del hogar
+        (incluida la maestra); a quien no lo es le devuelve cero filas, sin error. Incluye a
+        la propia sesión. Ordenada por nombre.
+      x-roles: [dueno, coadministrador]
+      x-escribe: false
+      x-solo-local: true
+      x-fase: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [p_hogar_id]
+              properties:
+                p_hogar_id:
+                  $ref: '#/components/schemas/Uuid'
+            example:
+              p_hogar_id: b0000000-0000-4000-8000-000000000001
+      responses:
+        '200':
+          description: Adultos con Finanzas del hogar (vacío si quien consulta no lo es).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FinAdultoConFinanzas'
+              example:
+                - persona_id: e0000000-0000-4000-8000-000000000002
+                  nombre_visible: Alex Ejemplo
+                  rol: coadministrador
+                - persona_id: e0000000-0000-4000-8000-000000000001
+                  nombre_visible: Ana Ejemplo
+                  rol: dueno
         '401':
           $ref: '#/components/responses/SinSesion'
   /rest/v1/rpc/es_cuenta_maestra:
@@ -4665,7 +4728,9 @@ components:
         activo:
           type: boolean
           default: true
-          description: '`false` = archivado: solo lectura, sin movimientos nuevos.'
+          description: >-
+            `false` = archivado por su administrador (nunca ocurre solo): se lee y no
+            registra movimientos nuevos.
         visibilidad:
           type: string
           enum: [privada, publica]
@@ -4674,13 +4739,15 @@ components:
             Solo en los compartidos (en los demás, siempre `privada`). `privada`: leen y
             escriben sus miembros (la maestra lee con consulta). `publica`: además la leen,
             sin escribir, todos los adultos con Finanzas del hogar. La cambia solo quien
-            creó el libro (42501).
+            creó el libro (42501). Pasa sola a `privada` cuando quedan menos de 2 miembros
+            vigentes.
         creado_por:
           $ref: '#/components/schemas/UuidONulo'
           readOnly: true
           description: >-
             El administrador del libro (quien lo creó). La API no lo manda ni lo cambia
-            (42501); el servidor lo pasa al miembro vigente más antiguo si el creador se sale.
+            (42501); el servidor lo pasa al miembro vigente más antiguo si el administrador se
+            sale o deja de ser adulto con Finanzas, y al que queda si quedan menos de 2.
         creado_en:
           type: string
           format: date-time
@@ -5509,6 +5576,19 @@ components:
           type: string
         gasto_centavos:
           $ref: '#/components/schemas/Centavos'
+    FinAdultoConFinanzas:
+      type: object
+      description: Una fila de `fin_adultos_con_finanzas`.
+      properties:
+        persona_id:
+          $ref: '#/components/schemas/Uuid'
+        nombre_visible:
+          type: string
+          maxLength: 80
+        rol:
+          type: string
+          enum: [dueno, coadministrador]
+          description: Nunca familiar, cuidador ni casa.
     Aviso:
       type: object
       description: Propuesta (Fase 2).

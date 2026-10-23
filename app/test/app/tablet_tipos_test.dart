@@ -68,7 +68,7 @@ Future<void> montarPersonal(WidgetTester tester) async => montarApp(
   dispositivo: TipoDispositivo.tablet,
   sesion: sesionCon(Rol.casa),
   almacen: await almacenConPersonas(
-    {Rol.dueno: '1234', Rol.coadministrador: '2222', Rol.familiar: '3333'},
+    {Rol.dueno: '246813', Rol.coadministrador: '222222', Rol.familiar: '3333'},
     configuracion: ConfiguracionTablet(
       tipo: TipoTablet.personal,
       permitidas: {id(Rol.dueno)},
@@ -84,7 +84,7 @@ Future<void> montarPublica(WidgetTester tester, {BaseLocal? base}) async =>
       sesion: sesionCon(Rol.casa),
       base: base,
       almacen: await almacenConPersonas({
-        Rol.dueno: '1234',
+        Rol.dueno: '246813',
         Rol.familiar: '3333',
       }),
     );
@@ -101,7 +101,7 @@ Future<void> registrarGastoDesdeCasa(WidgetTester tester) async {
   await tester.tap(find.byKey(ValueKey('nombre-${id(Rol.dueno)}')));
   await tester.pumpAndSettle();
   expect(find.text('Dueño · solo para esta acción'), findsOneWidget);
-  await escribirPin(tester, '1234');
+  await escribirPin(tester, '246813');
 }
 
 void main() {
@@ -135,7 +135,7 @@ void main() {
       await tester.pumpAndSettle();
       await escribirPin(tester, '9999');
       expect(find.text('PIN incorrecto.'), findsOneWidget);
-      await escribirPin(tester, '1234');
+      await escribirPin(tester, '246813');
 
       expect(find.byKey(llaveBloqueo), findsNothing);
       expect(enRiel('Finanzas'), findsOneWidget);
@@ -156,7 +156,7 @@ void main() {
       await montarPersonal(tester);
       await tester.tap(find.text(nombreDueno));
       await tester.pumpAndSettle();
-      await escribirPin(tester, '1234');
+      await escribirPin(tester, '246813');
       await tester.tap(find.byTooltip('Bloquear la tablet'));
       await tester.pumpAndSettle();
       expect(find.byKey(llaveBloqueo), findsOneWidget);
@@ -172,15 +172,15 @@ void main() {
         dispositivo: TipoDispositivo.tablet,
         sesion: sesionCon(Rol.casa),
         almacen: await almacenConPersonas({
-          Rol.dueno: '1234',
-          Rol.coadministrador: '2222',
+          Rol.dueno: '246813',
+          Rol.coadministrador: '222222',
           Rol.familiar: '3333',
         }),
       );
       expect(find.text('GRAVITY · Casa'), findsOneWidget);
       await tester.tap(find.text(nombreDueno));
       await tester.pumpAndSettle();
-      await escribirPin(tester, '1234');
+      await escribirPin(tester, '246813');
 
       contenedorDe(tester).read(routerProvider).go('/ajustes/dispositivos');
       await tester.pumpAndSettle();
@@ -214,11 +214,11 @@ void main() {
         tester,
         dispositivo: TipoDispositivo.tablet,
         sesion: sesionCon(Rol.casa),
-        almacen: await almacenConPersonas({Rol.coadministrador: '2222'}),
+        almacen: await almacenConPersonas({Rol.coadministrador: '222222'}),
       );
       await tester.tap(find.text(nombrePareja));
       await tester.pumpAndSettle();
-      await escribirPin(tester, '2222');
+      await escribirPin(tester, '222222');
       contenedorDe(tester).read(routerProvider).go('/ajustes/dispositivos');
       await tester.pumpAndSettle();
       expect(ubicacion(tester), Rutas.ajustes);

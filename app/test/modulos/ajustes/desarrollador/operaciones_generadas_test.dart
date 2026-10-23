@@ -39,6 +39,7 @@ const _rpcDeLectura = {
   'finLunes',
   'finSoloLectura',
   'finPuedeSalir',
+  'finAdultosConFinanzas',
 };
 
 /// Libros solo-agregar de Finanzas: no tienen PATCH ni DELETE.
@@ -432,34 +433,32 @@ void main() {
         expect(esquema, contains('El administrador del libro (quien lo creó)'));
       });
 
-      test('salirse, quitar a otro, archivar y reactivar coinciden con la '
-          'migración', () {
-        expect(
-          respuestas,
-          contains('Un libro compartido no baja de 2 miembros vigentes.'),
-        );
-        expect(
-          respuestas,
-          contains('activo = case when v_otros < 2 then false'),
-        );
-        expect(respuestas, contains('order by m.desde, m.id'));
-        final miembros = _plano(_bloque(yaml, '/rest/v1/fin_libro_miembros'));
-        expect(
-          miembros,
-          contains('**salirse** es un `PATCH` a la propia fila'),
-        );
-        expect(miembros, contains('`hasta` = ahora'));
-        expect(miembros, contains('archiva el libro'));
-        expect(miembros, contains('`fin_libros.activo` = `false`'));
-        expect(miembros, contains('pasa al miembro vigente más antiguo'));
-        expect(miembros, contains('ni con `upsert`'));
-        expect(miembros, contains('403 (42501)'));
-        expect(miembros, contains('400, 22023'));
-        expect(miembros, contains('2 miembros vigentes'));
-        final libros = _plano(_bloque(yaml, '/rest/v1/fin_libros'));
-        expect(libros, contains('lo archiva (`activo: false`) o lo reactiva'));
-        expect(libros, contains('archivado es de solo lectura'));
-      });
+      test(
+        'quitar a otro, reactivar y el relevo siguen la migración (la salida '
+        'la cambió 20261025)',
+        () {
+          // El orden del relevo es el de la migración; el efecto de salirse con
+          // menos de 2 miembros lo reemplazó 20261025000000 (ver su grupo).
+          expect(respuestas, contains('order by m.desde, m.id'));
+          final miembros = _plano(_bloque(yaml, '/rest/v1/fin_libro_miembros'));
+          expect(
+            miembros,
+            contains('**salirse** es un `PATCH` a la propia fila'),
+          );
+          expect(miembros, contains('`hasta` = ahora'));
+          expect(miembros, contains('pasa al miembro vigente más antiguo'));
+          expect(miembros, contains('ni con `upsert`'));
+          expect(miembros, contains('403 (42501)'));
+          expect(miembros, contains('400, 22023'));
+          expect(miembros, contains('2 miembros vigentes'));
+          final libros = _plano(_bloque(yaml, '/rest/v1/fin_libros'));
+          expect(
+            libros,
+            contains('lo archiva (`activo: false`) o lo reactiva'),
+          );
+          expect(libros, contains('archivado es de solo lectura'));
+        },
+      );
 
       test('un libro archivado rechaza movimientos', () {
         expect(respuestas, contains('-- archivado: solo lectura'));
@@ -621,6 +620,226 @@ void main() {
             reason: nombre,
           );
           expect(yaml, isNot(contains('/rpc/$nombre')), reason: nombre);
+        }
+      });
+    });
+
+    group('compartidos privados de 20261025000000_finanzas_compartidos_privados.sql', () {
+      final privados = File(
+        '${raiz.path}/supabase/migrations/'
+        '20261025000000_finanzas_compartidos_privados.sql',
+      ).readAsStringSync();
+
+      test('salirse con menos de 2 miembros deja el libro activo y privado; '
+          'ya no se archiva solo', () {
+        // La migración: privado y sin tocar `activo`.
+        expect(
+          privados,
+          contains("visibilidad = case when v_otros < 2 then 'privada'"),
+        );
+        expect(privados, isNot(contains('activo = case')));
+        expect(privados, contains('NUNCA se archiva solo'));
+        expect(privados, contains('order by m.desde, m.id'));
+
+        final miembros = _plano(_bloque(yaml, '/rest/v1/fin_libro_miembros'));
+        expect(miembros, contains('el libro **no se archiva**'));
+        expect(
+          miembros,
+          contains('sigue `activo` y pasa a `visibilidad` = `privada`'),
+        );
+        expect(
+          miembros,
+          contains('el miembro que queda es el administrador (`creado_por`)'),
+        );
+        expect(
+          miembros,
+          contains('`creado_por` pasa al miembro vigente más antiguo'),
+        );
+        expect(
+          miembros,
+          contains(
+            'cambio de `fin_libros` que hace el servidor queda en la bitácora',
+          ),
+        );
+        // Y lo que se documentó antes del cambio ya no está.
+        final todo = _plano(yaml);
+        for (final viejo in [
+          'el servidor archiva el libro',
+          'lo archivan solos',
+          'Un libro compartido no baja de 2 miembros vigentes"; para dejar de usarlo',
+          'salirse siempre se puede',
+        ]) {
+          expect(todo, isNot(contains(viejo)), reason: viejo);
+        }
+        final libros = _plano(_bloque(yaml, '/rest/v1/fin_libros'));
+        expect(
+          libros,
+          contains('Archivar es solo la decisión explícita del administrador'),
+        );
+        expect(libros, contains('nunca ocurre solo'));
+        expect(libros, contains('Reactivarlo no exige 2 miembros'));
+        expect(
+          todo,
+          contains(
+            '`false` = archivado por su administrador (nunca ocurre solo)',
+          ),
+        );
+        expect(
+          todo,
+          contains(
+            'Pasa sola a `privada` cuando quedan menos de 2 miembros vigentes.',
+          ),
+        );
+      });
+
+      test('el último miembro no puede salirse (22023) ni lo saca nadie', () {
+        expect(
+          privados,
+          contains(
+            'El último miembro de un libro compartido no puede salirse.',
+          ),
+        );
+        expect(privados, contains("errcode = '22023'"));
+        expect(privados, contains('if v_otros = 0 then'));
+        final miembros = _plano(_bloque(yaml, '/rest/v1/fin_libro_miembros'));
+        expect(
+          miembros,
+          contains('El **último miembro vigente no puede salirse**'),
+        );
+        expect(
+          miembros,
+          contains(
+            '"El último miembro de un libro compartido no puede salirse"',
+          ),
+        );
+        expect(miembros, contains('400, 22023'));
+        // La RPC de "puedo salirme" avisa que el servidor aún puede rechazarlo.
+        final puedeSalir = _plano(
+          _bloque(yaml, '/rest/v1/rpc/fin_puede_salir'),
+        );
+        expect(puedeSalir, contains('Si es el último miembro vigente'));
+        expect(puedeSalir, contains('22023'));
+      });
+
+      test(
+        'quitar a otro dejando menos de 2 ya no da 22023: pasa a privado',
+        () {
+          // La migración trata igual salirse que ser sacado (ya no hay un
+          // `elsif v_otros < 2 then raise` solo para el que saca a otro).
+          expect(privados, isNot(contains('elsif v_otros < 2')));
+          expect(
+            privados,
+            contains('Quitar a otro dejando menos de 2 se trata igual'),
+          );
+          final miembros = _plano(_bloque(yaml, '/rest/v1/fin_libro_miembros'));
+          expect(
+            miembros,
+            contains(
+              'Si al salir (o al sacar a alguien) quedan menos de 2 miembros vigentes',
+            ),
+          );
+          expect(miembros, isNot(contains('nunca deja menos de 2')));
+        },
+      );
+
+      test('fin_adultos_con_finanzas(hogar) -> (persona_id, nombre_visible, '
+          'rol): solo authenticated, sin la maestra no dueña', () {
+        expect(
+          privados,
+          contains(
+            'create function public.fin_adultos_con_finanzas(p_hogar_id uuid)',
+          ),
+        );
+        expect(
+          privados,
+          contains(
+            'returns table (persona_id uuid, nombre_visible text, rol text)',
+          ),
+        );
+        expect(
+          privados,
+          contains("and not (m.es_maestra and m.rol <> 'dueno')"),
+        );
+        expect(
+          privados,
+          contains(
+            'revoke execute on function public.fin_adultos_con_finanzas(uuid) from public, anon, authenticated, service_role;',
+          ),
+        );
+        expect(
+          privados,
+          contains(
+            'grant execute on function public.fin_adultos_con_finanzas(uuid) to authenticated;',
+          ),
+        );
+        final adultos = operaciones.singleWhere(
+          (o) => o.ruta == '/rest/v1/rpc/fin_adultos_con_finanzas',
+        );
+        expect(adultos.id, 'finAdultosConFinanzas');
+        expect(adultos.metodo, MetodoHttp.post);
+        expect(adultos.roles, {Rol.dueno, Rol.coadministrador});
+        expect(adultos.escribe, isFalse);
+        expect(adultos.soloLocal, isTrue);
+        expect(adultos.fase, 1);
+        final bloque = _plano(
+          _bloque(yaml, '/rest/v1/rpc/fin_adultos_con_finanzas'),
+        );
+        expect(
+          bloque,
+          contains('Nunca devuelve familiar, cuidador ni Casa, ni a Papá'),
+        );
+        expect(bloque, contains('ni la cuenta maestra que no es la dueña'));
+        expect(bloque, contains('cero filas, sin error'));
+        expect(
+          bloque,
+          contains(
+            '`#/components/schemas/FinAdultoConFinanzas`'.replaceAll('`', "'"),
+          ),
+        );
+        // El esquema de la fila.
+        final esquema = _plano(yaml);
+        expect(
+          esquema,
+          contains(
+            'FinAdultoConFinanzas: type: object description: Una fila de `fin_adultos_con_finanzas`. properties: persona_id: \$ref: \'#/components/schemas/Uuid\' nombre_visible: type: string maxLength: 80 rol: type: string enum: [dueno, coadministrador]',
+          ),
+        );
+      });
+
+      test('toda función fin_* que las migraciones conceden a authenticated '
+          'tiene operación', () {
+        final migraciones = Directory('${raiz.path}/supabase/migrations')
+            .listSync()
+            .whereType<File>()
+            .where((f) => f.path.endsWith('.sql'));
+        final llamables = <String>{
+          for (final f in migraciones)
+            for (final m in RegExp(
+              r'grant execute on function([^;]*?)\bto authenticated',
+              dotAll: true,
+            ).allMatches(f.readAsStringSync()))
+              for (final fn in RegExp(
+                r'public\.(fin_\w+)\(',
+              ).allMatches(m.group(1)!))
+                fn.group(1)!,
+        };
+        expect(
+          llamables,
+          containsAll(<String>{
+            'fin_puede',
+            'fin_puede_hogar',
+            'fin_es_miembro',
+            'fin_lunes',
+            'fin_registrar_consulta_maestra',
+            'fin_crear_libro_representado',
+            'fin_solo_lectura',
+            'fin_puede_salir',
+            'fin_adultos_con_finanzas',
+          }),
+        );
+        final rutas = operaciones.map((o) => o.ruta).toSet();
+        for (final nombre in llamables) {
+          expect(rutas, contains('/rest/v1/rpc/$nombre'), reason: nombre);
         }
       });
     });
