@@ -1,4 +1,4 @@
-// C1 (revisión de calidad, Fase 1): la copia local de Finanzas no se borra al
+// M5 (revisión de calidad, Fase 1): la copia local de Finanzas no se borra al
 // cerrar sesión, al detectar una baja ni al quitar a una persona de la tablet.
 //
 // `CopiaLocalFinanzas` guarda en el almacenamiento seguro, por persona

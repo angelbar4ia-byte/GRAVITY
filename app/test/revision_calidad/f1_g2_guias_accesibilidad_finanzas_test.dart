@@ -2,7 +2,7 @@
 // de Flutter (zona táctil de 48 dp, botones con etiqueta para el lector de
 // pantalla y contraste del texto) sobre todas las pantallas de Finanzas, en el
 // teléfono y la laptop, de día y de noche, y sobre las dos hojas del (+).
-// Hoy PASAN; no cubren la letra grande (ver a1 y a2).
+// Hoy PASAN; no cubren la letra grande (ver f1_i6 y f1_i7).
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gravity/diseno/proveedores.dart' show RelojFijo;
@@ -66,6 +66,9 @@ void main() {
     for (final opcion in ['Gasto', 'Ingreso extra']) {
       await abrirRegistroDelTelefono(tester, opcion);
       await _guias(tester, '(+) $opcion');
+      // Cancelar queda bajo el borde de la pantalla (ver f1_i8): se desplaza.
+      await tester.ensureVisible(find.text('Cancelar'));
+      await tester.pump(const Duration(milliseconds: 200));
       await tester.tap(find.text('Cancelar'));
       await avanzar(tester);
     }

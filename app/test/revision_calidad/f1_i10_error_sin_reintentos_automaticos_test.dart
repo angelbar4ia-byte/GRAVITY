@@ -1,4 +1,4 @@
-// R2 (revisión de calidad, Fase 1): una carga fallida de Finanzas se queda en
+// I10 (revisión de calidad, Fase 1): una carga fallida de Finanzas se queda en
 // "Cargando Finanzas…" unos 40 segundos antes de mostrar el error o el aviso
 // de "sin conexión".
 //
@@ -15,7 +15,6 @@
 @Tags(['hallazgo'])
 library;
 
-import 'package:finanzas_dominio/finanzas_dominio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gravity/modulos/finanzas/datos/repositorio.dart';

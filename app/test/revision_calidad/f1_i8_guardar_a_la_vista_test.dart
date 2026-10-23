@@ -1,4 +1,4 @@
-// F1 (revisión de calidad, Fase 1): en (+) Gasto el botón Guardar no se ve sin
+// I8 (revisión de calidad, Fase 1): en (+) Gasto el botón Guardar no se ve sin
 // desplazar la hoja en los teléfonos habituales.
 //
 // El flujo F1 (DISENO_UX_UI sección 14, criterio 28) es "teclado → categoría →
@@ -20,11 +20,12 @@ import 'package:gravity/nucleo/contratos/dispositivo.dart';
 import 'ayuda_calidad.dart';
 
 void main() {
-  for (final (nombre, llave) in [
-    ('Gasto', 'gasto-guardar'),
-    ('Ingreso extra', 'extra-guardar'),
+  // (+) Ingreso extra sí queda a la vista en 411 x 850 dp: no se prueba.
+  for (final (nombre, llave, tamanos) in [
+    ('Gasto', 'gasto-guardar', [const Size(360, 800), const Size(411, 850)]),
+    ('Ingreso extra', 'extra-guardar', [const Size(360, 800)]),
   ]) {
-    for (final tamano in [const Size(360, 800), const Size(411, 850)]) {
+    for (final tamano in tamanos) {
       testWidgets(
         '(+) $nombre en $tamano: Guardar se alcanza sin desplazar la hoja',
         (tester) async {

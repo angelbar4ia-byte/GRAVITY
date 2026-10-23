@@ -1,4 +1,4 @@
-// R1 (revisión de calidad, Fase 1): con una sesión REAL, "Hoy" del teléfono y
+// I9 (revisión de calidad, Fase 1): con una sesión REAL, "Hoy" del teléfono y
 // la pantalla principal de la laptop siguen mostrando los datos de ejemplo de
 // los bocetos (`ResumenGravity.ejemplo`): "Quedan $1,330", "Presupuesto usado
 // 62 %", "Vence la tarjeta de crédito", la agenda de hábitos y un medicamento

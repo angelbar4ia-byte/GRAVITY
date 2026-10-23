@@ -1,4 +1,4 @@
-// Hallazgos MENORES de la revisión de calidad de la Fase 1
+// Hallazgos MENORES de la revisión de calidad de la Fase 1 y el I11
 // (docs/revisiones/fase-1.md). Cada prueba demuestra uno y FALLA HOY A
 // PROPÓSITO (etiqueta `hallazgo`); pasarán cuando se arreglen.
 //
@@ -11,7 +11,8 @@
 //     de D14 debe estar también en la cola.
 // M4  Dos días fijos del mes que caen el mismo día (30 y último en febrero)
 //     pierden un pago en el calendario (el equivalente semanal cuenta 24).
-// M5  Sin FLAG_SECURE: la miniatura de "recientes" de Android muestra las
+// M8  Con letra al 200 % "Hoy" del teléfono (chips de hábitos) se desborda.
+// I11 Sin FLAG_SECURE: la miniatura de "recientes" de Android muestra las
 //     pantallas de Finanzas (pendiente M9 de la Fase 0).
 @Tags(['hallazgo'])
 library;
@@ -19,12 +20,17 @@ library;
 import 'dart:io';
 
 import 'package:finanzas_dominio/finanzas_dominio.dart';
+import 'package:flutter/widgets.dart' show Size;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gravity/modulos/finanzas/datos/filas.dart';
 import 'package:gravity/modulos/finanzas/pantallas/comunes.dart'
     show centavosDeTexto;
 import 'package:gravity/nucleo/base_local/base_local.dart';
 import 'package:gravity/nucleo/cola/cola_sin_conexion.dart';
+import 'package:gravity/nucleo/contratos/dispositivo.dart';
+import 'package:gravity/nucleo/contratos/rutas.dart';
+
+import 'ayuda_calidad.dart';
 
 class _EnviadorQueNoEnvia implements Enviador {
   @override
@@ -112,7 +118,26 @@ void main() {
     );
   });
 
-  test('M5: la ventana de Android no se puede capturar (FLAG_SECURE)', () {
+  testWidgets('M8: "Hoy" del teléfono con la letra al 200 % no se desborda', (
+    tester,
+  ) async {
+    await montarFinanzasConTamano(
+      tester,
+      dispositivo: TipoDispositivo.telefono,
+      tamano: const Size(360, 800),
+      escalaDeLetra: 2.0,
+    );
+    final errores = await recolectar(() => irA(tester, Rutas.inicio));
+    expect(
+      errores.desbordes,
+      isEmpty,
+      reason:
+          'El chip de un hábito es un Row rígido (hoy_telefono.dart, '
+          '_ChipHabito)',
+    );
+  });
+
+  test('I11: la ventana de Android no se puede capturar (FLAG_SECURE)', () {
     final actividad = File(
       'android/app/src/main/kotlin/mx/segundocerebro/gravity/MainActivity.kt',
     );

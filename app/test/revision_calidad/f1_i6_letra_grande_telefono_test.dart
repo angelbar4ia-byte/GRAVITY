@@ -1,4 +1,4 @@
-// A1 (revisión de calidad, Fase 1): con la letra grande del sistema las
+// I6 (revisión de calidad, Fase 1): con la letra grande del sistema las
 // pantallas del teléfono de Finanzas se desbordan. Un teléfono de 360 dp con
 // "Tamaño de fuente: grande" (1.3) ya corta el botón Guardar de (+) Gasto y de
 // (+) Ingreso extra y el encabezado de la semana; con la letra más grande (2.0)
@@ -34,7 +34,7 @@ void main() {
     });
   });
 
-  group('A1: con letra grande (hallazgo)', () {
+  group('I6: con letra grande (hallazgo)', () {
     testWidgets(
       'la semana del teléfono (360 dp, letra 1.3) no se desborda',
       (tester) async {

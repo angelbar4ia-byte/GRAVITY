@@ -4,7 +4,6 @@
 // pantalla. Hoy PASAN y deben seguir pasando.
 import 'dart:async';
 
-import 'package:finanzas_dominio/finanzas_dominio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gravity/modulos/finanzas/datos/repositorio.dart';
@@ -76,7 +75,7 @@ void main() {
         await _montar(tester, repo, dispositivo: dispositivo);
         await irA(tester, Rutas.finanzas);
         // Riverpod reintenta solo una carga fallida (11 veces, ~40 s) y mientras
-        // tanto muestra "Cargando": ver r2_error_sin_reintentos_automaticos_test.
+        // tanto muestra "Cargando": ver f1_i10_error_sin_reintentos_automaticos_test.
         await tester.pump(const Duration(seconds: 60));
         expect(find.byKey(const ValueKey('finanzas-sin-conexion')), findsOneWidget);
         expect(

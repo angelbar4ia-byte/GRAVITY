@@ -1,10 +1,10 @@
-// A2 y A3 (revisión de calidad, Fase 1): pantallas de Finanzas de la laptop que
+// I7 y M7 (revisión de calidad, Fase 1): pantallas de Finanzas de la laptop que
 // se desbordan.
 //
-// - A2: el asistente de arranque (Resumen: remanente · techo) se desborda en
+// - I7: el asistente de arranque (Resumen: remanente · techo) se desborda en
 //   ventanas de hasta unos 1100 dp con la letra normal: una laptop de 1366 px
 //   con la pantalla al 125 % (muy común) mide 1093 dp.
-// - A3: con la letra al 150 % varias secciones (Semana, Ingresos, Categorías,
+// - M7: con la letra al 150 % varias secciones (Semana, Ingresos, Categorías,
 //   Compromisos, Ajustes y el propio asistente) se desbordan.
 //
 // FALLAN HOY A PROPÓSITO las pruebas con la etiqueta `hallazgo`. El control
@@ -42,7 +42,7 @@ void main() {
   });
 
   testWidgets(
-    'A2: el asistente de arranque cabe en una ventana de 1100 dp (letra normal)',
+    'I7: el asistente de arranque cabe en una ventana de 1100 dp (letra normal)',
     (tester) async {
       await montarFinanzasConTamano(
         tester,
@@ -64,7 +64,7 @@ void main() {
   );
 
   testWidgets(
-    'A3: con la letra al 150 % ninguna sección de la laptop se desborda '
+    'M7: con la letra al 150 % ninguna sección de la laptop se desborda '
     '(1100 dp)',
     (tester) async {
       await montarFinanzasConTamano(

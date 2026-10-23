@@ -181,15 +181,25 @@ void main() {
       }
     });
 
-    test('la cuenta maestra no recibe "registrar gasto"', () {
-      final interprete = InterpreteOrdenes(rol: Rol.coadministrador, esMaestra: true);
-      final r = interprete.interpretar('registrar gasto');
-      if (r is OrdenEntendida) {
-        expect(r.destino.nombre, isNot('finanzas.registrar_gasto'));
+    test('la cuenta maestra no recibe herramientas que escriban lo ajeno', () {
+      final registro = registroDeGravity();
+      for (final rol in [Rol.dueno, Rol.coadministrador]) {
+        for (final h in registro.disponibles(rol: rol, esMaestra: true)) {
+          if (h.pertenencia == Pertenencia.ajena) {
+            expect(
+              h.accion,
+              Accion.leer,
+              reason: '${h.nombre}: la maestra solo lee lo ajeno (D19)',
+            );
+          }
+        }
       }
-      for (final s in interprete.sugerir('registrar gasto')) {
-        expect(s.destino.nombre, isNot('finanzas.registrar_gasto'));
-      }
+      // "Registrar gasto" abre la hoja de su PROPIO libro: la hoja misma no
+      // deja registrar en uno ajeno (ver pantallas_test de Finanzas).
+      expect(
+        registro.buscar('finanzas.registrar_gasto', rol: Rol.coadministrador, esMaestra: true),
+        isNotNull,
+      );
     });
   });
 
