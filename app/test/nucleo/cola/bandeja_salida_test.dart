@@ -17,31 +17,7 @@ import 'package:gravity/nucleo/sesion/servicio_sesion_demostracion.dart';
 import 'package:gravity/nucleo/sesion/servicio_sesion_falso.dart';
 import 'package:gravity/nucleo/sesion/sesion.dart';
 
-/// Servidor falso: hay señal o no, y anota con la sesión de quién llegó cada
-/// registro.
-class ServidorFalso {
-  bool conSenal = true;
-  final List<({String id, String? sesionDe})> recibidos = [];
-
-  List<String> idsDe(String? sesionDe) => [
-    for (final r in recibidos)
-      if (r.sesionDe == sesionDe) r.id,
-  ];
-}
-
-class EnviadorDeSesion implements Enviador {
-  EnviadorDeSesion(this.servidor, this.sesionDe);
-
-  final ServidorFalso servidor;
-  final String? Function() sesionDe;
-
-  @override
-  Future<ResultadoEnvio> enviar(PeticionEnvio peticion) async {
-    if (!servidor.conSenal) return ResultadoEnvio.reintentar;
-    servidor.recibidos.add((id: peticion.id, sesionDe: sesionDe()));
-    return ResultadoEnvio.enviado;
-  }
-}
+import 'ayuda_bandeja.dart';
 
 void main() {
   final dueno = sesionDeEjemplo(Rol.dueno);

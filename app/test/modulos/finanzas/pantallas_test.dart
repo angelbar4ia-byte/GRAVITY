@@ -14,7 +14,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gravity/app/app_gravity.dart';
 import 'package:gravity/app/router.dart';
-import 'package:gravity/diseno/diseno.dart' show TecladoMonto;
+import 'package:gravity/diseno/diseno.dart' show TecladoMonto, montosVisiblesProvider;
 import 'package:gravity/modulos/finanzas/datos/demostracion.dart';
 import 'package:gravity/modulos/finanzas/datos/ids.dart' show idEstable;
 import 'package:gravity/modulos/finanzas/datos/repositorio_memoria.dart';
@@ -52,6 +52,13 @@ void _alto(WidgetTester tester) {
 ProviderContainer _contenedor(WidgetTester tester) =>
     ProviderScope.containerOf(tester.element(find.byType(AppGravity)));
 
+/// Deja los montos a la vista (se abren ocultos, como en la app): sin la marca
+/// "Montos ocultos" estorbando al tocar.
+Future<void> _verMontos(WidgetTester tester) async {
+  _contenedor(tester).read(montosVisiblesProvider.notifier).fijar(true);
+  await tester.pump();
+}
+
 /// Monta la app con el hogar de ejemplo de [sesion] en memoria.
 Future<RepositorioFinanzasEnMemoria> _montar(
   WidgetTester tester, {
@@ -67,6 +74,7 @@ Future<RepositorioFinanzasEnMemoria> _montar(
     extras: [repositorioFinanzasProvider.overrideWithValue(repo), ...extras],
   );
   addTearDown(repo.cerrar);
+  await _verMontos(tester);
   return repo;
 }
 
@@ -531,6 +539,7 @@ void main() {
         ],
       );
       addTearDown(repo.cerrar);
+      await _verMontos(tester);
       _alto(tester);
       await _ir(tester, SeccionFinanzas.importar.ruta);
       expect(
@@ -642,11 +651,13 @@ void main() {
         ],
       );
       addTearDown(repo.cerrar);
+      await _verMontos(tester);
       await _ir(tester, SeccionFinanzas.importar.ruta);
       await tester.enterText(
         find.byKey(const ValueKey('importar-ruta')),
         '/no/existe/archivo.xlsx',
       );
+      await tester.pump(); // el botón se habilita al haber una ruta
       await tester.runAsync(() async {
         await tester.tap(find.byKey(const ValueKey('importar-vista-previa')));
         await Future<void>.delayed(const Duration(milliseconds: 200));

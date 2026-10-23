@@ -72,6 +72,7 @@ final colaSinConexionProvider = Provider<ColaSinConexion>((ref) {
     personaConSesion: () => personaConSesionServidor(ref),
     cuentaDelEquipo: () => cuentaDelEquipo(ref),
     salida: ref.watch(salidaSinPinProvider),
+    reloj: ref.watch(relojSeguridadProvider),
   );
   ref.onDispose(cola.cerrar);
   return cola;
