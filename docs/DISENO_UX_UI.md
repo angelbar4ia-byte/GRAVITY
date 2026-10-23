@@ -1,6 +1,6 @@
 # Diseño UX/UI de GRAVITY
 
-> **Versión 0.5 (20/oct/2026), borrador para definir juntos.** Documento común de experiencia y diseño visual de toda la app: la **pantalla principal de GRAVITY en la laptop**, las **pantallas de los módulos**, la **app del teléfono**, la **tablet portátil de la casa** y la **pulsera (smart band)**. Las pantallas de cada módulo siguen en sus diseños (FINANZAS, sección 8; HÁBITOS, Anexo G) y deben respetar este documento.
+> **Versión 0.6 (23/oct/2026), borrador para definir juntos.** Documento común de experiencia y diseño visual de toda la app: la **pantalla principal de GRAVITY en la laptop**, las **pantallas de los módulos**, la **app del teléfono**, la **tablet portátil de la casa** y la **pulsera (smart band)**. Las pantallas de cada módulo siguen en sus diseños (FINANZAS, sección 8; HÁBITOS, Anexo G) y deben respetar este documento.
 >
 > **(decidido)** = ya lo confirmaste. **(propuesto)** = sugerencia para revisar. Las preguntas para definir están en la sección 22.
 >
@@ -212,7 +212,9 @@ Cada gadget responde a una pregunta concreta y toma el estilo activo y la person
 - **Dispositivo:** tablet Android **portátil**, compartida en la casa; se lleva a donde se use. Es la misma app con diseño para tablet, en horizontal y en vertical.
 - **Modo Casa** (al encender y en reposo): rol Casa (D5). Muestra GRAVITY, lo de hoy en la casa, la cocina, el turno de cuidados con recordatorios genéricos y los avisos. Sin dinero ni datos clínicos.
 - **Contextos (decidido, ampliables):** arriba se elige dónde se está usando. Para empezar: **General · Cocina · Gimnasio · Cuidados**; se pueden agregar más (p. ej. Estudio, Sala, Lectura, Cochera). Cada contexto define sus gadgets, el tamaño de letra y la personalidad. Ejemplos: en Cocina, la receta paso a paso con letra enorme y voz; en Gimnasio, la serie y el descanso; en Cuidados, "Mi turno" (con la sesión de la cuidadora).
-- **Cambio de usuario:** se toca un nombre y se entra con PIN o huella a las pantallas de esa persona según su rol. Después de 2 minutos sin uso (editable) regresa sola al modo Casa.
+- **Dos tipos de tablet (23/oct/2026):** *pública de la casa* (modo Casa, cuenta de rol Casa con nombre visible **"Hogar"**) y *personal* (solo dueño y pareja; en reposo muestra el bloqueo con sus perfiles, sin modo Casa). Se elige en Ajustes › Dispositivos. Solo PIN.
+- **Cambio de usuario:** se toca un nombre y se entra con PIN a las pantallas de esa persona según su rol. Después de 2 minutos sin uso (editable) regresa sola al modo Casa (o al bloqueo, en la personal).
+- **Registrar en la tablet pública:** leer lo de la casa no pide identidad; registrar algo de la casa pide **elegir tu nombre**; algo personal pide **nombre y PIN** *(propuesto)*. Lo registrado sin señal queda en la **bandeja de salida** ("2 por subir") y se sube solo al volver la señal, sin pedir el PIN otra vez.
 - **GRAVITY en la tablet:** botón **"Mantén para hablar"** siempre; la palabra *"Gravity"* solo mientras carga, para no gastar batería *(propuesto)*. Aquí sí hay conversación libre, algo que las bocinas Xiaomi no permiten (D6).
 - **Vista en planta:** descartada.
 
@@ -368,6 +370,9 @@ Todos se pueden cambiar en Ajustes.
 ## 21. Privacidad en pantalla
 
 - Montos ocultables y modo privado en la laptop.
+- **Montos ocultos automáticos *(propuesto, 23/oct/2026)*:** tras unos minutos sin uso (2 por omisión, editable en Ajustes › Privacidad) los montos se ocultan solos (`••••`, de ancho fijo y sin signo de pesos). Una marca de 48 dp, **"Montos ocultos · Toca para ver"**, pide el PIN (o la huella en el teléfono) para mostrarlos. En modo privado la marca dice "modo privado" y no se toca. Todo componente que muestra dinero lee este estado (`montosOcultosProvider`); un porcentaje no se oculta.
+- **Marcas de los libros de Finanzas:** *Solo lectura* (cuenta maestra), *Albacea* y "En nombre de…" (libro de papá), *Privada* o *Pública* y *Archivado* (libros compartidos). Siempre con texto además de icono, y las marcas bajan a otra línea si no caben.
+- **Tamaños mínimos probados *(propuesto)*:** letra al doble (2.0) en 360 dp en el teléfono y desde 900 dp de ancho en la laptop; con letra grande las tres columnas de la pantalla principal se apilan.
 - Modo Casa en la tablet sin dinero ni datos clínicos; lo personal solo tras PIN o huella.
 - Sin montos en la pulsera ni en el reloj.
 - Notificaciones discretas en dinero, hábitos sensibles y cuidados (sección 17).
@@ -408,3 +413,4 @@ Todos se pueden cambiar en Ajustes.
 | 0.3 | 20/oct/2026 | Estilo configurable en cuatro capas; estilos D arquitectónico, E glass y F swagger; claro/oscuro automático por hora; personalidad por módulo y submódulo; gadgets; tablet maestra de la casa con cambio de usuario; voces configurables; la pregunta sobre la pareja pasa a la especificación de Finanzas |
 | 0.4 | 20/oct/2026 | Futurista por defecto (con versión de día); Swagger como estilo y como herramienta (Ajustes › Desarrollador, D16); tablet portátil con contextos y sin vista en planta; smartwatch en dos niveles (D15) |
 | 0.5 | 20/oct/2026 | Pulsera smart band en lugar de smartwatch (app propia solo con reloj Wear OS); tablet en horizontal y vertical con contextos ampliables; núcleo con anillos que giran. Ronda cerrada, en espera de nuevas instrucciones |
+| 0.6 | 23/oct/2026 | Fase 1: dos tipos de tablet (pública "Hogar" y personal) y bandeja de salida; montos ocultos automáticos con marca para revelarlos; marcas de libros de Finanzas (solo lectura, albacea, pública, privada, archivado); tamaños mínimos probados |

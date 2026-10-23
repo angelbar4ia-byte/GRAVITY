@@ -207,17 +207,15 @@ class _Principal extends StatelessWidget {
                   marcaDe(contexto),
                 ],
               ),
-              if (acciones.isNotEmpty)
-                Wrap(spacing: 8, runSpacing: 8, children: acciones),
+              // La marca "Montos ocultos · Toca para ver" (solo cuando lo
+              // están) va con las acciones: sin quitarle una fila al contenido.
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [const MarcaMontosOcultos(), ...acciones],
+              ),
             ],
-          ),
-        ),
-        // Con los montos ocultos por falta de uso: la marca para verlos.
-        Padding(
-          padding: EdgeInsets.fromLTRB(v.espacio * 3, 0, v.espacio * 3, 0),
-          child: const Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: MarcaMontosOcultos(),
           ),
         ),
         if (conMenu)

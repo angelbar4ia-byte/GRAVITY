@@ -465,7 +465,7 @@ class SalidaSinPinConSesiones implements SalidaSinPin {
         // De inmediato: la anterior ya no sirve (y reusarla puede revocar la
         // sesión). Aunque la apertura falle después, esto ya quedó guardado.
         guardando = guardando.then(
-          (_) async {},
+          (_) => bandeja.guardarCredencialRenovada(personaId, nueva),
         );
       }
 
