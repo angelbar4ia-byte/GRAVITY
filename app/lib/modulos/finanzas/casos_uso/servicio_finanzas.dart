@@ -689,9 +689,9 @@ class ServicioFinanzas {
     return categoria;
   }
 
-  Future<void> cambiarCategoria(Categoria categoria) {
+  Future<void> cambiarCategoria(Categoria categoria) async {
     _exigirHogar();
-    return repositorio.guardarCategorias([categoria]);
+    await repositorio.guardarCategorias([categoria]);
   }
 
   /// Borra una categoría **sin datos**; con datos se archiva (5.2).
@@ -914,19 +914,19 @@ class ServicioFinanzas {
     return nuevos.length;
   }
 
-  Future<void> activarDiaInhabil(DiaInhabil dia, {required bool activo}) {
+  Future<void> activarDiaInhabil(DiaInhabil dia, {required bool activo}) async {
     _exigirHogar();
-    return repositorio.guardarDiasInhabiles([
+    await repositorio.guardarDiasInhabiles([
       dia.copiar(activo: activo, revisadoPor: personaId, revisadoEn: _ahora),
     ]);
   }
 
-  Future<void> agregarDiaPropio(Fecha fecha, String nombre) {
+  Future<void> agregarDiaPropio(Fecha fecha, String nombre) async {
     _exigirHogar();
     if (nombre.trim().isEmpty) {
       throw const ErrorFinanzas('Escribe el nombre del día.');
     }
-    return repositorio.guardarDiasInhabiles([
+    await repositorio.guardarDiasInhabiles([
       DiaInhabil(
         fecha: fecha,
         nombre: nombre.trim(),

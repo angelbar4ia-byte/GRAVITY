@@ -42,10 +42,10 @@ void main() {
       }
     });
 
-    test('cuenta maestra (D19): sin lo que administra el hogar', () {
+    test('cuenta maestra (D19, solo lectura): sin lo que administra el hogar', () {
       expect(
         seccionesVisibles(
-          Rol.dueno,
+          Rol.coadministrador,
           TipoDispositivo.laptop,
           esMaestra: true,
         ),
@@ -55,6 +55,13 @@ void main() {
           SeccionAjustes.privacidad,
           SeccionAjustes.notificaciones,
         ],
+      );
+    });
+
+    test('la dueña que además es maestra conserva todas sus secciones', () {
+      expect(
+        seccionesVisibles(Rol.dueno, TipoDispositivo.laptop, esMaestra: true),
+        seccionesVisibles(Rol.dueno, TipoDispositivo.laptop),
       );
     });
 

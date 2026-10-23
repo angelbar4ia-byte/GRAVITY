@@ -13,7 +13,6 @@
 // La simulación no distingue dedos, igual que Android: `BiometriaFalsa`
 // acepta cualquiera. Lo esperado es que la huella SOLA no abra a una persona
 // en la tablet compartida (p. ej., huella + PIN, o sin huella en la tablet).
-@Tags(['hallazgo'])
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';

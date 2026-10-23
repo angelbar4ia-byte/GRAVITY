@@ -51,6 +51,8 @@ DatosFinanzas datosDeDemostracion({required Fecha hoy}) {
       id: casa,
       nombre: 'Gastos de la casa',
       tipo: TipoLibro.compartido,
+      // Quien lo crea es su administrador (23/oct/2026); privado por omisión.
+      creadoPor: dueno,
       miembros: [
         MiembroLibro(personaId: dueno, papel: PapelLibro.miembro),
         MiembroLibro(personaId: pareja, papel: PapelLibro.miembro),

@@ -12,7 +12,6 @@
 //
 // Esta prueba queda como guardia permanente: cuando una migración cambie la
 // matriz, obliga a actualizar el espejo (y al revés).
-@Tags(['hallazgo'])
 library;
 
 import 'dart:io';

@@ -7,7 +7,6 @@
 // (`_fallos` y `_bloqueadoHasta` en ControladorTablet): al cerrar y abrir la
 // app se borran. Además la espera es fija (30 s) y no crece: un PIN de 4
 // dígitos se recorre en horas, y reiniciando la app, en menos.
-@Tags(['hallazgo'])
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';

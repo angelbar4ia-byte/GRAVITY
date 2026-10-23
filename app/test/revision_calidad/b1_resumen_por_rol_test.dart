@@ -13,7 +13,6 @@
 // (test/app/navegacion_por_rol_test.dart) pasa en vacío: busca 'Finanzas'
 // y el título se dibuja en mayúsculas ("FINANZAS · SEMANA"), además de que la
 // lista de "Hoy" construye sus tarjetas de forma perezosa.
-@Tags(['hallazgo'])
 library;
 
 import 'package:flutter/material.dart';

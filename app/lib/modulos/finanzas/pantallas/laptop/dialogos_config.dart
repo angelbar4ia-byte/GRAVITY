@@ -211,8 +211,9 @@ class _EditorCalendarioState extends State<EditorCalendario> {
           labelText: 'Si cae en fin de semana o festivo',
           helperText: widget.paraIngreso
               ? 'Los ingresos pasan al siguiente día hábil'
-              : 'Los pagos se quedan en su fecha; solo la caja pasa al '
-                    'siguiente día hábil',
+              : 'Los pagos se quedan en su fecha. Elige "Siguiente día hábil" '
+                    'solo para la deuda cuyo pago pasa al día hábil siguiente '
+                    '(se decide deuda por deuda)',
         ),
         items: const [
           DropdownMenuItem(

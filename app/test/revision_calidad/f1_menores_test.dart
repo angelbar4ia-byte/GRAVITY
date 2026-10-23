@@ -90,7 +90,7 @@ void main() {
           'se registra con el nombre y sin PIN (D14); el dinero pide nombre y '
           'PIN y sube con la sesión de la persona',
     );
-  }, tags: ['hallazgo']);
+  });
 
   test('M4: dos días fijos que coinciden en un mes corto no pierden un pago', () {
     final CalendarioPago calendario;
@@ -148,5 +148,5 @@ void main() {
           'Sin FLAG_SECURE ni cubierta al pasar a segundo plano, la miniatura '
           'de "recientes" (también en la tablet de la casa) muestra Finanzas',
     );
-  }, tags: ['hallazgo']);
+  });
 }

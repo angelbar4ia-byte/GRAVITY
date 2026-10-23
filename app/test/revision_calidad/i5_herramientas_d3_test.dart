@@ -8,7 +8,6 @@
 // Familiar (fuera de la matriz, D5) y una de Finanzas o Cuidados que lee datos
 // sin `soloLocal` (su resultado iría a la IA en la nube, contra D3). Hoy solo
 // hay herramientas de navegación; la guardia debe existir antes de la Fase 1.
-@Tags(['hallazgo'])
 library;
 
 import 'package:flutter_test/flutter_test.dart';

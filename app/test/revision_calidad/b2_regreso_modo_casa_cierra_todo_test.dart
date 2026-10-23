@@ -8,7 +8,6 @@
 // "Registrar" del Dueño (Gasto, Ingreso extra) queda al alcance de cualquiera
 // (criterio 6). Las hojas y diálogos van en el navegador raíz, fuera del
 // cascarón, y `volverAModoCasa` solo cambia la ruta del cascarón.
-@Tags(['hallazgo'])
 library;
 
 import 'package:flutter/material.dart';

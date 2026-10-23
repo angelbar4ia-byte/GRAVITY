@@ -8,7 +8,6 @@
 // ya no tiene rol (la cuidadora fue dada de baja: ErrorSesion.sinRol), la app
 // abre igual con el rol anterior. D5: "al darlos de baja pierden el acceso de
 // inmediato". La sesión guardada solo debe usarse cuando NO hay señal.
-@Tags(['hallazgo'])
 library;
 
 import 'dart:convert';

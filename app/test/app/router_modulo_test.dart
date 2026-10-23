@@ -159,10 +159,44 @@ void main() {
       redirigir('/finanzas/asistente', Rol.coadministrador, accion: Accion.administrar),
       isNull,
     );
-    // La cuenta maestra no abre lo que administra el hogar.
-    expect(redirigir('/ajustes/personas', Rol.dueno, esMaestra: true), Rutas.ajustes);
-    expect(redirigir(Rutas.desarrollador, Rol.dueno, esMaestra: true), Rutas.ajustes);
-    expect(redirigir('/ajustes/voz', Rol.dueno, esMaestra: true), isNull);
+    // D19 (23/oct): la cuenta maestra que no es la dueña es de solo lectura:
+    // no abre lo que administra el hogar ni lo que exige escribir.
+    expect(
+      redirigir('/ajustes/personas', Rol.coadministrador, esMaestra: true),
+      Rutas.ajustes,
+    );
+    expect(
+      redirigir(Rutas.desarrollador, Rol.coadministrador, esMaestra: true),
+      Rutas.ajustes,
+    );
+    expect(
+      redirigir('/ajustes/voz', Rol.coadministrador, esMaestra: true),
+      isNull,
+    );
+    expect(
+      redirigir(
+        '/finanzas/asistente',
+        Rol.coadministrador,
+        accion: Accion.administrar,
+        esMaestra: true,
+      ),
+      '/finanzas',
+    );
+    expect(
+      redirigir(
+        '/casa/editar',
+        Rol.coadministrador,
+        accion: Accion.escribir,
+        esMaestra: true,
+      ),
+      '/casa',
+    );
+    // La dueña que además es maestra conserva sus permisos de dueña.
+    expect(redirigir('/ajustes/personas', Rol.dueno, esMaestra: true), isNull);
+    expect(
+      redirigir('/casa/editar', Rol.dueno, accion: Accion.escribir, esMaestra: true),
+      isNull,
+    );
     // Durante una acción personal en la tablet pública, la pantalla sigue en
     // el modo Casa aunque el inicio de la persona sea otro.
     expect(redirigir(Rutas.inicio, Rol.cuidador), Rutas.cuidados);

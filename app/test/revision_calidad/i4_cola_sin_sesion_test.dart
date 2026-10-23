@@ -12,7 +12,6 @@
 // señal el gasto se pierde. Criterio 3: "lo registrado sin señal se sube".
 //
 // Aquí un servidor HTTP local responde como PostgREST para el rol anon.
-@Tags(['hallazgo'])
 library;
 
 import 'dart:convert';

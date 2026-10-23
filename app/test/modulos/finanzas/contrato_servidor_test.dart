@@ -553,6 +553,158 @@ void main() {
     });
   });
 
+  group('Libros compartidos (respuestas del dueño del 23/oct/2026)', () {
+    final ahora = DateTime.utc(2026, 10, 23, 15, 30);
+
+    test('todos los libros mandan la visibilidad (privada por omisión)', () {
+      for (final l in demo.libros) {
+        expect(filaLibro(l, hogarId: hogar)['visibilidad'], 'privada', reason: l.nombre);
+      }
+      final publico = demo.libros.firstWhere((l) => l.id == libroCasa).copiar(
+        visibilidad: VisibilidadLibro.publica,
+      );
+      expect(filaLibro(publico, hogarId: hogar)['visibilidad'], 'publica');
+      // creado_por lo pone el servidor: no se manda.
+      expect(filaLibro(publico, hogarId: hogar).containsKey('creado_por'), isFalse);
+    });
+
+    test('cargar lee la visibilidad y quién lo creó (el administrador)', () async {
+      final fila = memoria.tabla(TablasFinanzas.libros).firstWhere((l) => l['id'] == libroCasa);
+      fila['visibilidad'] = 'publica';
+      fila['creado_por'] = IdsDemostracion.dueno;
+      final casa = (await repo.cargar()).datos.libro(libroCasa)!;
+      expect(casa.visibilidad, VisibilidadLibro.publica);
+      expect(casa.creadoPor, IdsDemostracion.dueno);
+      expect(casa.esAdministrador(IdsDemostracion.dueno), isTrue);
+      // Una fila vieja sin la columna se lee como privada.
+      fila.remove('visibilidad');
+      expect((await repo.cargar()).datos.libro(libroCasa)!.visibilidad, VisibilidadLibro.privada);
+    });
+
+    test('crear un compartido manda su visibilidad en el INSERT del libro',
+        () async {
+      await repo.cargar();
+      await repo.crearLibroCompartido(
+        id: 'libro-publico',
+        nombre: 'Gastos abiertos',
+        otrosMiembros: [IdsDemostracion.pareja],
+        visibilidad: VisibilidadLibro.publica,
+      );
+      final fila = memoria.tabla(TablasFinanzas.libros).firstWhere((l) => l['id'] == 'libro-publico');
+      expect(fila['visibilidad'], 'publica');
+      expect(fila['tipo'], 'compartido');
+      expect(fila['titular_id'], isNull);
+    });
+
+    test('cambiar la visibilidad y archivar o reactivar son UPDATE del libro',
+        () async {
+      await repo.cargar();
+      await repo.cambiarVisibilidadLibro(libroCasa, VisibilidadLibro.publica);
+      var fila = memoria.tabla(TablasFinanzas.libros).firstWhere((l) => l['id'] == libroCasa);
+      expect(fila['visibilidad'], 'publica');
+      expect(repo.actual!.datos.libro(libroCasa)!.visibilidad, VisibilidadLibro.publica);
+      await repo.archivarLibro(libroCasa, archivado: true);
+      fila = memoria.tabla(TablasFinanzas.libros).firstWhere((l) => l['id'] == libroCasa);
+      expect(fila['activo'], isFalse);
+      expect(repo.actual!.datos.libro(libroCasa)!.archivado, isTrue);
+      await repo.archivarLibro(libroCasa, archivado: false);
+      expect(
+        memoria.tabla(TablasFinanzas.libros).firstWhere((l) => l['id'] == libroCasa)['activo'],
+        isTrue,
+      );
+    });
+
+    test('salirse es un UPDATE de la propia fila: hasta = ahora', () async {
+      final yo = RepositorioFinanzasSupabase(
+        fuente: fuente,
+        cola: cola,
+        hogarId: hogar,
+        personaId: IdsDemostracion.pareja,
+        esperaSubida: const Duration(seconds: 2),
+        reloj: () => ahora,
+      );
+      addTearDown(yo.cerrar);
+      await yo.cargar();
+      fuente.operaciones.clear();
+      await yo.salirDelLibro(libroCasa);
+      expect(fuente.operaciones, contains('actualizar:${TablasFinanzas.miembros}'));
+      final propia = memoria
+          .tabla(TablasFinanzas.miembros)
+          .firstWhere((m) => m['libro_id'] == libroCasa && m['persona_id'] == IdsDemostracion.pareja);
+      expect(propia['hasta'], ahora.toIso8601String());
+      final ajena = memoria
+          .tabla(TablasFinanzas.miembros)
+          .firstWhere((m) => m['libro_id'] == libroCasa && m['persona_id'] == IdsDemostracion.dueno);
+      expect(ajena['hasta'], isNull, reason: 'la fila de otra persona no se toca');
+    });
+
+    test('el administrador saca a otro con el mismo UPDATE', () async {
+      await repo.cargar();
+      await repo.quitarMiembro(libroCasa, IdsDemostracion.pareja);
+      final fila = memoria
+          .tabla(TablasFinanzas.miembros)
+          .firstWhere((m) => m['libro_id'] == libroCasa && m['persona_id'] == IdsDemostracion.pareja);
+      expect(fila['hasta'], isNotNull);
+    });
+
+    test('agregar: id estable la primera vez y fila nueva si ya se había '
+        'salido (no se reabre la anterior)', () async {
+      await repo.cargar();
+      await repo.agregarMiembro(libroCasa, 'persona-nueva');
+      final primera = memoria
+          .tabla(TablasFinanzas.miembros)
+          .firstWhere((m) => m['persona_id'] == 'persona-nueva');
+      expect(primera['id'], idEstable(ClavesId.miembro(libroCasa, 'persona-nueva', 'miembro')));
+      expect(primera['papel'], 'miembro');
+
+      await repo.quitarMiembro(libroCasa, IdsDemostracion.pareja);
+      await repo.agregarMiembro(libroCasa, IdsDemostracion.pareja);
+      final filas = memoria
+          .tabla(TablasFinanzas.miembros)
+          .where((m) => m['libro_id'] == libroCasa && m['persona_id'] == IdsDemostracion.pareja)
+          .toList();
+      expect(filas, hasLength(2));
+      expect(filas.first['hasta'], isNotNull, reason: 'la anterior sigue cerrada');
+      expect(filas.last['hasta'], isNull);
+      expect(filas.last['id'], isNot(filas.first['id']));
+    });
+
+    test('la consulta de la cuenta maestra devuelve lo que dice el servidor '
+        '(falso si el libro es propio)', () async {
+      memoria.funciones['fin_registrar_consulta_maestra'] = (p) =>
+          p['p_libro_id'] != IdsDemostracion.libroDueno;
+      expect(await repo.registrarConsultaMaestra(IdsDemostracion.libroPareja), isTrue);
+      expect(await repo.registrarConsultaMaestra(IdsDemostracion.libroDueno), isFalse);
+      memoria.funciones['fin_registrar_consulta_maestra'] = (_) => null;
+      expect(await repo.registrarConsultaMaestra(IdsDemostracion.libroPareja), isFalse);
+    });
+  });
+
+  group('El suplente de papá: el permiso lo dice fin_puede (I4)', () {
+    test('solo el suplente pregunta; el albacea no', () async {
+      await repo.cargar(); // el dueño es el albacea
+      expect(memoria.llamadas.where((l) => l.$1 == 'fin_puede'), isEmpty);
+
+      memoria.funciones['fin_puede'] = (p) => p['p_accion'] == 'escribir';
+      final suplente = RepositorioFinanzasSupabase(
+        fuente: fuente,
+        cola: cola,
+        hogarId: hogar,
+        personaId: IdsDemostracion.pareja,
+        esperaSubida: const Duration(seconds: 2),
+        reloj: () => DateTime(2026, 10, 20, 10),
+      );
+      addTearDown(suplente.cerrar);
+      final carga = await suplente.cargar();
+      final llamadas = memoria.llamadas.where((l) => l.$1 == 'fin_puede').toList();
+      expect(llamadas, hasLength(2));
+      expect({for (final l in llamadas) l.$2['p_accion']}, {'escribir', 'administrar'});
+      expect(llamadas.every((l) => l.$2['p_libro_id'] == IdsDemostracion.libroPapa), isTrue);
+      final permiso = carga.permisosServidor[IdsDemostracion.libroPapa]!;
+      expect((permiso.escribir, permiso.administrar), (true, false));
+    });
+  });
+
   group('Sin señal', () {
     test('cargar sin señal ni copia avisa; con lo último cargado, lo marca '
         'como copia', () async {

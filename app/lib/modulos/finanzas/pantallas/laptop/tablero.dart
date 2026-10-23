@@ -99,6 +99,7 @@ class _Tablero extends ConsumerWidget {
               etiqueta: 'Patrimonio',
               valor: formatearCentavos(ind.patrimonio),
               oculto: ocultos,
+              esMonto: true, // cifra de dinero: se oculta sola; los % no
               detalle: tendencia,
             ),
           ],

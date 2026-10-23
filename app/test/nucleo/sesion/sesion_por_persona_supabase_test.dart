@@ -243,4 +243,105 @@ void main() {
     expect(servicio.sesionActual, isNull);
     expect(servicio.personaEnServidor, isNull);
   });
+
+  group('sesión aparte (bandeja de salida)', () {
+    String credencialDelDueno(String renovar) =>
+        jsonEncode(sesionJson(uidDueno, renovar, vencida: true));
+
+    test('abre aparte, entrega la credencial renovada y no toca al equipo', () async {
+      await preparar();
+      final entregadas = <String>[];
+      final aparte = await servicio.abrirSesionAparte(
+        dueno.persona.id,
+        credencialDelDueno('r0'),
+        alRenovar: entregadas.add,
+      );
+      expect(aparte.personaId, dueno.persona.id);
+      // El servidor rotó el refresh token: la nueva se entregó, no se perdió.
+      expect(entregadas, isNotEmpty);
+      expect(entregadas.last, contains('renovado-1'));
+      // La cuenta del equipo y la persona en pantalla no cambiaron.
+      expect(servicio.sesionActual, casa);
+      expect(servicio.personaEnServidor, casa.persona.id);
+      expect(servicio.clienteActivo, same(equipo));
+      expect(equipo.auth.currentUser?.id, uidCasa);
+
+      await aparte.cerrar();
+      // Cerrar no revoca la credencial: sigue sirviendo para la próxima vez.
+      expect(gotrue.rutas, isNot(contains('POST /auth/v1/logout')));
+    });
+
+    test('credencial revocada: no entrega nada y pide volver a agregarla', () async {
+      await preparar();
+      gotrue.revocados.add('r0');
+      final entregadas = <String>[];
+      await expectLater(
+        servicio.abrirSesionAparte(
+          dueno.persona.id,
+          credencialDelDueno('r0'),
+          alRenovar: entregadas.add,
+        ),
+        throwsA(ErrorSesion.credencialVencida),
+      );
+      expect(entregadas, isEmpty);
+      expect(servicio.clienteActivo, same(equipo));
+    });
+
+    test('credencial ilegible o sin refresh token: vencida', () async {
+      await preparar();
+      for (final credencial in [
+        'no es una credencial',
+        jsonEncode(sesionJson(uidDueno, '')),
+      ]) {
+        await expectLater(
+          servicio.abrirSesionAparte(
+            dueno.persona.id,
+            credencial,
+            alRenovar: (_) {},
+          ),
+          throwsA(ErrorSesion.credencialVencida),
+        );
+      }
+    });
+
+    test('la credencial es de otra persona: no se usa', () async {
+      await preparar();
+      await expectLater(
+        servicio.abrirSesionAparte(
+          'otra-persona',
+          credencialDelDueno('r0'),
+          alRenovar: (_) {},
+        ),
+        throwsA(ErrorSesion.credencialVencida),
+      );
+    });
+
+    test('dada de baja: sin rol, y se cierra su sesión en el servidor', () async {
+      await preparar();
+      bajas.add(uidDueno);
+      await expectLater(
+        servicio.abrirSesionAparte(
+          dueno.persona.id,
+          credencialDelDueno('r0'),
+          alRenovar: (_) {},
+        ),
+        throwsA(ErrorSesion.sinRol),
+      );
+      expect(gotrue.rutas, contains('POST /auth/v1/logout'));
+    });
+
+    test('sin señal: sinConexion (la credencial no se descarta)', () async {
+      await preparar(url: 'http://127.0.0.1:9');
+      final entregadas = <String>[];
+      await expectLater(
+        servicio.abrirSesionAparte(
+          dueno.persona.id,
+          credencialDelDueno('r0'),
+          alRenovar: entregadas.add,
+        ),
+        throwsA(ErrorSesion.sinConexion),
+      );
+      expect(entregadas, isEmpty);
+    });
+  });
 }

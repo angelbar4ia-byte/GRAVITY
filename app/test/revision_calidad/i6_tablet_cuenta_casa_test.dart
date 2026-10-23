@@ -15,7 +15,6 @@
 //
 // Arreglo mínimo esperado: la tablet solo presenta el modo Casa con la cuenta
 // de rol Casa (con otra cuenta, avisa y pide la cuenta Casa).
-@Tags(['hallazgo'])
 library;
 
 import 'package:flutter_test/flutter_test.dart';
