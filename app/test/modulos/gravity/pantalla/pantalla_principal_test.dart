@@ -138,17 +138,48 @@ void main() {
       await montar(tester, const PantallaPrincipalGravity());
       expect(find.text(montoOculto), findsOneWidget);
       expect(find.text(r'$1,330.00'), findsNothing);
+      // La marca avisa y es la forma de pedir verlos (por omisión, sin PIN).
+      expect(find.text(MarcaMontosOcultos.texto), findsOneWidget);
+      expect(find.text('Ocultar'), findsNothing);
 
-      await tester.tap(find.byKey(const ValueKey('boton-mostrar-montos')));
+      await tester.tap(find.byKey(const ValueKey('marca-montos-ocultos')));
       await tester.pump();
       expect(find.text(r'$1,330.00'), findsOneWidget);
+      expect(find.text(MarcaMontosOcultos.texto), findsNothing);
       expect(find.text('Ocultar'), findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey('boton-ocultar-montos')));
+      await tester.pump();
+      expect(find.text(r'$1,330.00'), findsNothing);
+      expect(find.text(montoOculto), findsOneWidget);
+      expect(find.text(MarcaMontosOcultos.texto), findsOneWidget);
+    });
+
+    testWidgets('pedir ver los montos pasa por el flujo de plataforma '
+        '(revelarMontosProvider)', (tester) async {
+      fijarVentana(tester, const Size(1440, 900));
+      var pedidos = 0;
+      await montar(
+        tester,
+        const PantallaPrincipalGravity(),
+        overrides: [
+          revelarMontosProvider.overrideWithValue((context) async {
+            pedidos++;
+            return false; // el PIN falló: siguen ocultos
+          }),
+        ],
+      );
+      await tester.tap(find.byKey(const ValueKey('marca-montos-ocultos')));
+      await tester.pump();
+      expect(pedidos, 1);
+      expect(find.text(r'$1,330.00'), findsNothing);
+      expect(find.text(montoOculto), findsOneWidget);
     });
 
     testWidgets('el modo privado oculta montos y cuidados', (tester) async {
       fijarVentana(tester, const Size(1440, 900));
       await montar(tester, const PantallaPrincipalGravity());
-      await tester.tap(find.byKey(const ValueKey('boton-mostrar-montos')));
+      await tester.tap(find.byKey(const ValueKey('marca-montos-ocultos')));
       await tester.pump();
       expect(find.text(r'$1,330.00'), findsOneWidget);
 
@@ -156,7 +187,10 @@ void main() {
       await tester.pump();
       expect(find.text(r'$1,330.00'), findsNothing);
       expect(find.text(montoOculto), findsOneWidget);
-      expect(find.byKey(const ValueKey('boton-mostrar-montos')), findsNothing);
+      expect(find.byKey(const ValueKey('boton-ocultar-montos')), findsNothing);
+      // En modo privado la marca lo dice y no se toca: se quita el modo.
+      expect(find.text(MarcaMontosOcultos.textoPrivado), findsOneWidget);
+      expect(find.text(MarcaMontosOcultos.texto), findsNothing);
       expect(find.text('Medicamento 20:00'), findsNothing);
       expect(
         find.text('Datos de cuidados ocultos (modo privado)'),

@@ -58,7 +58,8 @@ class CascaronTablet extends ConsumerWidget {
     if (!estado.cargado) {
       return ColoredBox(color: Theme.of(context).colorScheme.surface);
     }
-    final destinos = destinosDe(rol);
+    final esMaestra = ref.watch(esCuentaMaestraProvider);
+    final destinos = destinosDe(rol, esMaestra: esMaestra);
     final enInicioCasa = estado.muestraModoCasa && ubicacion == Rutas.inicio;
     final personal = estado.configuracion.esPersonal;
 
@@ -81,7 +82,7 @@ class CascaronTablet extends ConsumerWidget {
                       onDestinationSelected: (indice) {
                         final destino = destinos[indice];
                         if (destino.esRegistrar) {
-                          mostrarHojaRegistrar(context, rol);
+                          mostrarHojaRegistrar(context, rol, esMaestra: esMaestra);
                         } else if (destino.ruta != null) {
                           context.go(destino.ruta!);
                         }

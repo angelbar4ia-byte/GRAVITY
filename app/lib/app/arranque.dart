@@ -11,7 +11,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../diseno/licencias.dart';
 import '../diseno/proveedores.dart'
-    show densidadBaseProvider, personaEnPantallaProvider;
+    show densidadBaseProvider, personaEnPantallaProvider, revelarMontosProvider;
 import '../diseno/valores_diseno.dart' show densidadPara;
 
 import '../nucleo/base_local/base_local.dart';
@@ -20,6 +20,7 @@ import '../nucleo/cola/enviador_supabase.dart';
 import '../nucleo/cola/proveedores_cola.dart';
 import '../nucleo/configuracion/configuracion_entorno.dart';
 import '../nucleo/firebase/firebase.dart';
+import '../nucleo/invitaciones/invitaciones.dart';
 import '../nucleo/seguridad/almacen_seguro.dart';
 import '../nucleo/seguridad/biometria.dart';
 import '../nucleo/seguridad/limpieza_local.dart';
@@ -30,6 +31,7 @@ import '../nucleo/sesion/servicio_sesion_demostracion.dart';
 import '../nucleo/sesion/servicio_sesion_supabase.dart';
 import '../nucleo/sesion/sesion.dart';
 import 'dispositivo.dart';
+import 'montos/revelar_montos.dart';
 import 'pantallas_externas.dart' show tablasColaFinanzas;
 import 'sesion_efectiva.dart';
 
@@ -41,6 +43,9 @@ List<Override> conexionesDeLaApp() => [
   personaEnPantallaProvider.overrideWith(
     (ref) => ref.watch(sesionEfectivaProvider)?.persona.id,
   ),
+  // Los montos se ocultan solos y para verlos se pide el PIN (o la huella en
+  // el teléfono), decisión del 23/oct/2026.
+  revelarMontosProvider.overrideWith((ref) => revelarMontos),
 ];
 
 /// Tabla de Supabase por tipo de registro de la cola. Cada módulo agrega los
@@ -75,6 +80,7 @@ Future<List<Override>> prepararArranque({
   var limpieza = LimpiezaLocal(almacen);
   ServicioSesion? sesion;
   Enviador enviador = const EnviadorSinServidor();
+  RepositorioInvitaciones? invitaciones;
   if (configuracion.tieneSupabase) {
     try {
       await Supabase.initialize(
@@ -89,6 +95,10 @@ Future<List<Override>> prepararArranque({
         limpieza: limpieza,
       );
       sesion = servicio;
+      // Invitaciones (cuenta maestra): con la sesión de quien está dentro.
+      invitaciones = RepositorioInvitacionesSupabase(
+        () => servicio.clienteActivo,
+      );
       // En la tablet, la cola envía con la sesión de quien entró con su PIN.
       enviador = EnviadorSupabase.dinamico(
         () => servicio.clienteActivo,
@@ -128,5 +138,7 @@ Future<List<Override>> prepararArranque({
       sesion.esDemostracion ? BaseLocal.enMemoria() : abrirBase(),
     ),
     enviadorProvider.overrideWithValue(enviador),
+    if (invitaciones != null)
+      repositorioInvitacionesProvider.overrideWithValue(invitaciones),
   ];
 }

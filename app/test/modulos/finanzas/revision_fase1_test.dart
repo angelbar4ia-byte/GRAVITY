@@ -497,9 +497,9 @@ class _ConsultaQueFalla extends RepositorioFinanzasEnMemoria {
   int intentos = 0;
 
   @override
-  Future<void> registrarConsultaMaestra(String libroId) async {
+  Future<bool> registrarConsultaMaestra(String libroId) async {
     intentos++;
     if (falla) throw ErrorFinanzas.conexion;
-    await super.registrarConsultaMaestra(libroId);
+    return super.registrarConsultaMaestra(libroId);
   }
 }

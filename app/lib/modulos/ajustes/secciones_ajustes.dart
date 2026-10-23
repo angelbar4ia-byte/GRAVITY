@@ -103,8 +103,10 @@ SeccionAjustes? seccionDeRuta(String ubicacion) {
 
 /// `true` si [rol] ve la sección en [dispositivo].
 ///
-/// La cuenta maestra ([esMaestra], D19) solo lee: no ve lo que administra el
-/// hogar (personas, copias, dispositivos ni desarrollador).
+/// La cuenta maestra que no es la dueña ([esMaestra], D19, 23/oct/2026) es de
+/// solo lectura total: no ve lo que administra el hogar (personas, copias,
+/// dispositivos ni desarrollador). La dueña que además es maestra conserva
+/// sus permisos de dueña ([esSoloLectura]).
 bool seccionDisponible(
   SeccionAjustes seccion,
   Rol rol,
@@ -112,13 +114,15 @@ bool seccionDisponible(
   bool esMaestra = false,
 }) {
   if (!puedeAbrir(rol, Modulo.ajustes)) return false;
-  final administra = !esMaestra && puede(rol, Modulo.ajustes, Accion.administrar);
+  final soloLectura = esSoloLectura(rol, esMaestra: esMaestra);
+  final administra =
+      !soloLectura && puede(rol, Modulo.ajustes, Accion.administrar);
   return switch (seccion) {
     SeccionAjustes.personas || SeccionAjustes.copias => administra,
     SeccionAjustes.dispositivos =>
       administra && dispositivo == TipoDispositivo.tablet,
     SeccionAjustes.desarrollador =>
-      !esMaestra && puedeVerDesarrollador(rol, dispositivo),
+      !soloLectura && puedeVerDesarrollador(rol, dispositivo),
     _ => true,
   };
 }

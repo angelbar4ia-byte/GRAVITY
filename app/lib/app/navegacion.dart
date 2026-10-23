@@ -129,11 +129,12 @@ const Map<Rol, List<Destino>> pestanasPorRol = {
   Rol.casa: [_hoy, _alimentacion, _mas],
 };
 
-/// Pestañas de [rol], ya filtradas con el espejo de permisos.
-List<Destino> destinosDe(Rol rol) => [
+/// Pestañas de [rol], ya filtradas con el espejo de permisos. La cuenta
+/// maestra que no es la dueña ([esMaestra]) no tiene el botón (+).
+List<Destino> destinosDe(Rol rol, {bool esMaestra = false}) => [
   for (final destino in pestanasPorRol[rol] ?? const <Destino>[])
     if (destino.esRegistrar
-        ? opcionesRegistrar(rol).isNotEmpty
+        ? opcionesRegistrar(rol, esMaestra: esMaestra).isNotEmpty
         : (destino.modulo == null || puedeAbrir(rol, destino.modulo!)) &&
               (destino.requiereLeer == null ||
                   puede(rol, destino.requiereLeer!, Accion.leer)))
@@ -223,13 +224,17 @@ const List<OpcionRegistrar> opcionesDeRegistro = [
 
 /// `true` si [rol] registra en [modulo] desde la navegación (el (+) del
 /// teléfono y de la tablet, Ctrl + N en la laptop): lo abre y puede escribir.
-bool puedeRegistrarEn(Rol rol, Modulo modulo) =>
-    puedeAbrir(rol, modulo) && puede(rol, modulo, Accion.escribir);
+///
+/// La cuenta maestra que no es la dueña ([esMaestra], D19) es de solo lectura
+/// total: no registra nada.
+bool puedeRegistrarEn(Rol rol, Modulo modulo, {bool esMaestra = false}) =>
+    puedeAbrir(rol, modulo) &&
+    puedeConSesion(rol, modulo, Accion.escribir, esMaestra: esMaestra);
 
 /// Opciones de (+) que puede usar [rol] (escribir en el módulo).
-List<OpcionRegistrar> opcionesRegistrar(Rol rol) => [
+List<OpcionRegistrar> opcionesRegistrar(Rol rol, {bool esMaestra = false}) => [
   for (final opcion in opcionesDeRegistro)
-    if (puedeRegistrarEn(rol, opcion.modulo)) opcion,
+    if (puedeRegistrarEn(rol, opcion.modulo, esMaestra: esMaestra)) opcion,
 ];
 
 /// Módulos que van en "Más": los navegables que no tienen pestaña propia.
@@ -314,7 +319,9 @@ String? calcularRedireccion({
   }
   final modulo = moduloDeRuta(ubicacion);
   if (modulo != null && !puedeAbrir(rol, modulo)) return inicio;
-  if (modulo != null && accion != null && !puede(rol, modulo, accion)) {
+  if (modulo != null &&
+      accion != null &&
+      !puedeConSesion(rol, modulo, accion, esMaestra: esMaestra)) {
     final raiz = rutaDeModulo(modulo);
     if (ubicacion != raiz) return raiz;
     // La raíz del módulo no debe exigir más que leer; si lo hace, se evita

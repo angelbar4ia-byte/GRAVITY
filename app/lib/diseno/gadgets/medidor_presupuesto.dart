@@ -1,8 +1,10 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../componentes/monto_ocultable.dart';
+import '../proveedores.dart';
 import '../componentes/semaforo.dart';
 import '../superficies.dart';
 import '../valores_diseno.dart';
@@ -13,13 +15,14 @@ import 'uso_presupuesto.dart';
 ///
 /// Semicírculo con el porcentaje usado, cuánto queda (o por cuánto se excedió)
 /// y el semáforo **con texto** ("Bien", "Cerca del límite", "Excedido"): el
-/// estado nunca depende solo del color. Con [montosOcultos], el porcentaje se
-/// sigue viendo y los pesos no.
+/// estado nunca depende solo del color. Con [montosOcultos] **o** con los montos
+/// ocultos de la app ([montosOcultosProvider]), el porcentaje se sigue viendo y
+/// los pesos no.
 ///
 /// Los umbrales por defecto son los de la partida en `finanzas_dominio`
 /// (`Umbrales.partidaAmbarDesde` y `partidaRojoArribaDe`); pásalos si el dueño
 /// los editó.
-class MedidorPresupuesto extends StatelessWidget {
+class MedidorPresupuesto extends ConsumerWidget {
   const MedidorPresupuesto({
     super.key,
     required this.asignadoCentavos,
@@ -54,7 +57,9 @@ class MedidorPresupuesto extends StatelessWidget {
   );
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final montosOcultos =
+        this.montosOcultos || ref.watch(montosOcultosProvider);
     final v = ValoresDiseno.de(context);
     final e = v.espacio;
     final uso = this.uso;

@@ -212,6 +212,46 @@ select pruebas.ok(
 select pruebas.igual(public.fin_vigencia_consulta_maestra(), interval '30 minutes' ,
   'I2: la consulta de la cuenta maestra vale 30 minutos');
 
+-- Respuestas del dueño del 23/oct (20261024): visibilidad, cuenta maestra con login propio y archivo.
+select pruebas.igual(
+  (select string_agg(g.tgrelid::regclass::text || ':' || g.tgname, ',' order by g.tgrelid::regclass::text, g.tgname)
+     from pg_trigger g
+    where not g.tgisinternal
+      and g.tgname in ('fin_c_proteger', 'fin_c_sin_maestra', 'fin_d_archivar_cuenta')),
+  'fin_categorias:fin_d_archivar_cuenta,fin_libro_miembros:fin_c_proteger,fin_libro_miembros:fin_c_sin_maestra,fin_libros:fin_c_proteger',
+  '23/oct: triggers de administrador, salida, maestra de solo lectura y archivo de la cuenta de gasto instalados');
+select pruebas.igual(
+  (select column_default || ' ' || is_nullable from information_schema.columns
+    where table_schema = 'public' and table_name = 'fin_libros' and column_name = 'visibilidad'),
+  '''privada''::text NO', '23/oct: fin_libros.visibilidad es privada por omisión y obligatoria');
+select pruebas.ok(
+  has_column_privilege('authenticated', 'public.fin_libros', 'visibilidad', 'INSERT')
+  and has_column_privilege('authenticated', 'public.fin_libros', 'visibilidad', 'UPDATE')
+  and not has_column_privilege('authenticated', 'public.fin_libros', 'creado_por', 'UPDATE'),
+  '23/oct: la app manda y cambia visibilidad; creado_por (el administrador) solo lo cambia el servidor');
+select pruebas.ok(
+  (select count(*) = 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'crear_invitacion'),
+  '23/oct: una sola crear_invitacion (con p_es_maestra), sin sobrecargas ambiguas');
+select pruebas.ok(
+  exists (select 1 from information_schema.columns
+           where table_schema = 'public' and table_name = 'invitaciones' and column_name = 'es_maestra'),
+  '23/oct: las invitaciones llevan es_maestra');
+select pruebas.igual(
+  (select coalesce(string_agg(p.proname || ':' || r.rol, ', ' order by p.proname, r.rol), '')
+     from pg_proc p join pg_namespace n on n.oid = p.pronamespace,
+          unnest(array['anon', 'authenticated']) as r(rol)
+    where n.nspname = 'public'
+      and p.proname in ('fin_libro_miembros_sin_maestra', 'fin_libros_proteger', 'fin_categorias_archivar_cuenta')
+      and has_function_privilege(r.rol, p.oid, 'execute')),
+  '', '23/oct: los triggers nuevos no se ejecutan desde la API');
+select pruebas.ok(
+  not has_function_privilege('anon', 'public.fin_solo_lectura(uuid)', 'execute')
+  and not has_function_privilege('anon', 'public.fin_puede_salir(uuid)', 'execute')
+  and not has_function_privilege('anon', 'public.crear_invitacion(uuid, text, text, integer, boolean)', 'execute')
+  and has_function_privilege('authenticated', 'public.crear_invitacion(uuid, text, text, integer, boolean)', 'execute'),
+  '23/oct: anon no ejecuta las funciones nuevas; authenticated sí crea invitaciones');
+
 -- puede() rechaza nombres mal escritos en lugar de negar en silencio.
 select pruebas.falla(
   $$select public.puede('b0000000-0000-4000-8000-000000000001', 'finanza', 'leer')$$,

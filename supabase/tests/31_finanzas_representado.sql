@@ -7,6 +7,9 @@
 -- (El resto de las reglas del albacea está en 21_finanzas_albacea.sql.)
 begin;
 
+-- Un tercer adulto (la cuenta maestra es solo lectura y no puede llevar un libro).
+select pruebas.nuevo_adulto('teo@ejemplo.test');
+
 -- ---------------------------------------------------------------- I3: todo en nombre de Papá y con motivo
 -- (Revisión de calidad de la Fase 1; criterio 34: el servidor lo exige, no solo la app.)
 select pruebas.como('ana@ejemplo.test');
@@ -133,7 +136,7 @@ select pruebas.igual(pruebas.afecta($$update public.fin_libro_miembros set hasta
   where libro_id = 'f1000000-0000-4000-8000-000000000002' and papel = 'albacea' and hasta is null$$), 1,
   'I4: puede cerrar el cargo del albacea que se fue');
 select pruebas.igual(pruebas.afecta($$insert into public.fin_libro_miembros (libro_id, persona_id, papel)
-  values ('f1000000-0000-4000-8000-000000000002', pruebas.id_persona('marta@ejemplo.test'), 'albacea')$$), 1,
+  values ('f1000000-0000-4000-8000-000000000002', pruebas.id_persona('teo@ejemplo.test'), 'albacea')$$), 1,
   'I4: y nombrar a un albacea nuevo');
 select pruebas.como('alex@ejemplo.test');
 select pruebas.ok(not public.fin_puede('f1000000-0000-4000-8000-000000000002', 'leer'),

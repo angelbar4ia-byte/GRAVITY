@@ -225,6 +225,23 @@ class ControladorTablet extends Notifier<EstadoTablet> {
   Duration? esperaRestante(String personaId) =>
       _intentos.esperaRestante(personaId);
 
+  /// Comprueba el PIN de [personaId] **sin entrar ni cambiar nada** (p. ej.
+  /// para volver a ver los montos, que se ocultan solos tras unos minutos sin
+  /// uso). Cuenta los intentos fallidos igual que al entrar: la espera crece y
+  /// la comparten los dos caminos.
+  ResultadoDesbloqueo comprobarPin(String personaId, String pin) {
+    final usuario = _buscar(personaId);
+    if (usuario == null) return ResultadoDesbloqueo.noExiste;
+    if (_intentos.bloqueado(personaId)) return ResultadoDesbloqueo.bloqueado;
+    if (!HashPin.verificar(pin, usuario.hashPin)) {
+      return _intentos.anotarFallo(personaId) == ResultadoFallo.bloqueado
+          ? ResultadoDesbloqueo.bloqueado
+          : ResultadoDesbloqueo.pinIncorrecto;
+    }
+    _intentos.anotarAcierto(personaId);
+    return ResultadoDesbloqueo.abierto;
+  }
+
   /// Comprueba el PIN de [personaId] y, si es correcto, empieza a entrar
   /// (ver [entrarConPin], que espera a que la sesión del servidor cambie).
   /// Tras 5 fallos seguidos se bloquea 30 s; cada bloqueo siguiente dura el

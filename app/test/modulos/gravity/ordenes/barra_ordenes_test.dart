@@ -252,11 +252,30 @@ void main() {
       await tester.pumpWidget(
         _app(Rol.dueno, [], dispositivo: TipoDispositivo.telefono),
       );
-      await _escribir(tester, 'nuevo gasto');
+      await _escribir(tester, 'registra un gasto');
       await _enviar(tester);
       await tester.pumpAndSettle();
       expect(find.byType(BottomSheet), findsOneWidget);
       expect(find.byKey(llaveRegistro(TipoRegistro.gasto)), findsOneWidget);
+    });
+
+    testWidgets('el gasto exige el verbo: "gasto" suelto, "nuevo gasto" y '
+        '"anota gasto" no abren la hoja (23/oct)', (tester) async {
+      final rutas = <String>[];
+      final hojas = <HojaDeRegistro>[];
+      await tester.pumpWidget(_app(Rol.dueno, rutas, onAbrirHoja: hojas.add));
+      for (final orden in ['gasto', 'nuevo gasto', 'anota gasto']) {
+        await _escribir(tester, orden);
+        await _enviar(tester);
+        expect(hojas, isEmpty, reason: orden);
+        expect(rutas, isEmpty, reason: orden);
+        // A lo más sugiere, y nada se abre sin que la persona lo elija.
+        expect(find.text('¿Quisiste decir…?'), findsOneWidget, reason: orden);
+      }
+      // Con el verbo, sí.
+      await _escribir(tester, 'registrar gasto');
+      await _enviar(tester);
+      expect(hojas, [HojaDeRegistro.gasto]);
     });
 
     testWidgets('"mi semana" abre la semana de Finanzas', (tester) async {
@@ -300,9 +319,48 @@ void main() {
   });
 
   group('Cuenta maestra (D19)', () {
-    testWidgets('lee la marca de la sesión: sin Desarrollador', (
+    testWidgets('con login propio (coadministrador) es de solo lectura: '
+        '"registrar gasto" no abre ninguna hoja; Finanzas y su semana sí', (
       tester,
     ) async {
+      final rutas = <String>[];
+      final hojas = <HojaDeRegistro>[];
+      await tester.pumpWidget(
+        _app(
+          Rol.coadministrador,
+          rutas,
+          esMaestraEnSesion: true,
+          onAbrirHoja: hojas.add,
+        ),
+      );
+      await _escribir(tester, 'regis');
+      expect(find.text('Registrar gasto'), findsNothing);
+      await _escribir(tester, 'registrar gasto');
+      await _enviar(tester);
+      expect(hojas, isEmpty);
+      expect(rutas, isEmpty);
+      expect(find.text('Registrar gasto'), findsNothing);
+      await _escribir(tester, 'mi semana');
+      await _enviar(tester);
+      expect(rutas, [RutasDeHerramientas.semanaFinanzas]);
+      await _escribir(tester, 'abre presupuesto');
+      await _enviar(tester);
+      expect(rutas, [RutasDeHerramientas.semanaFinanzas, Rutas.finanzas]);
+      expect(hojas, isEmpty);
+    });
+
+    testWidgets('el dueño que además es maestro conserva la hoja de su '
+        'gasto', (tester) async {
+      final hojas = <HojaDeRegistro>[];
+      await tester.pumpWidget(
+        _app(Rol.dueno, [], esMaestraEnSesion: true, onAbrirHoja: hojas.add),
+      );
+      await _escribir(tester, 'registrar gasto');
+      await _enviar(tester);
+      expect(hojas, [HojaDeRegistro.gasto]);
+    });
+
+    testWidgets('lee la marca de la sesión: sin Desarrollador', (tester) async {
       final rutas = <String>[];
       await tester.pumpWidget(_app(Rol.dueno, rutas, esMaestraEnSesion: true));
       await _escribir(tester, 'desa');
@@ -320,9 +378,7 @@ void main() {
       tester,
     ) async {
       final rutas = <String>[];
-      await tester.pumpWidget(
-        _app(Rol.dueno, rutas, esMaestraDelWidget: true),
-      );
+      await tester.pumpWidget(_app(Rol.dueno, rutas, esMaestraDelWidget: true));
       await _escribir(tester, 'desarrollador');
       await _enviar(tester);
       expect(rutas, isEmpty);

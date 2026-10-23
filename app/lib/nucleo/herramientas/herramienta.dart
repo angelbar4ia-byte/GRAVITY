@@ -173,7 +173,11 @@ final class ContextoHerramienta {
   final Rol rol;
 
   /// `true` si la sesión es la cuenta maestra del hogar (D19): lee lo ajeno
-  /// de Finanzas y GRAVITY y nunca recibe herramientas que lo escriban.
+  /// de Finanzas y GRAVITY y nunca recibe herramientas que lo escriban. Si
+  /// además no es la dueña (login propio), es de **solo lectura total**:
+  /// ninguna herramienta que escriba ni abra una hoja de registro, tampoco
+  /// para lo propio (23/oct). Si es la dueña, conserva las suyas para lo
+  /// propio.
   final bool esMaestra;
 
   /// `true` solo después de que la persona aceptó la tarjeta de confirmación.
@@ -206,7 +210,8 @@ enum MotivoNoDisponible {
   rolSinPermiso,
   moduloInactivo,
 
-  /// La cuenta maestra no escribe ni administra lo ajeno (D19).
+  /// La cuenta maestra no escribe ni administra lo ajeno (D19), y si no es la
+  /// dueña no escribe nada, ni abre una hoja de registro (solo lectura total).
   cuentaMaestra,
 }
 

@@ -238,6 +238,7 @@ class _VistaPrevia extends StatelessWidget {
           Expanded(
             child: MontoOcultable(
               centavos: 123450,
+              deEjemplo: true,
               estilo: v.numero(
                 tamano: 20,
                 peso: FontWeight.w600,

@@ -273,6 +273,26 @@ bool dependeDelConsentimiento(Rol rol, Modulo modulo) =>
     rol == Rol.coadministrador &&
     _restringido(rol, modulo);
 
+/// `true` si la sesión es de **solo lectura total** (D19, 23/oct/2026): una
+/// cuenta maestra que **no es la dueña**. La maestra con su propio login es
+/// otra persona: lee todo y no registra ni administra nada, ni en lo suyo
+/// (lo suyo lo registra el dueño con su cuenta normal), y no tiene (+) ni
+/// órdenes que abran una hoja de registro. Si la dueña es además la maestra,
+/// escribe en lo suyo y en lo ajeno solo lee ([puedeSobre]).
+bool esSoloLectura(Rol rol, {required bool esMaestra}) =>
+    esMaestra && rol != Rol.dueno;
+
+/// [puede] para una sesión: igual, salvo que una cuenta de solo lectura
+/// ([esSoloLectura]) nunca escribe ni administra.
+bool puedeConSesion(
+  Rol rol,
+  Modulo modulo,
+  Accion accion, {
+  bool esMaestra = false,
+}) =>
+    puede(rol, modulo, accion) &&
+    (accion == Accion.leer || !esSoloLectura(rol, esMaestra: esMaestra));
+
 /// Módulos en los que la **cuenta maestra** (D19) lee también lo ajeno: los
 /// libros de Finanzas y el historial de GRAVITY de todos.
 const Set<Modulo> modulosQueLeeLaMaestra = {Modulo.finanzas, Modulo.gravity};
@@ -286,7 +306,8 @@ const Set<Modulo> modulosQueLeeLaMaestra = {Modulo.finanzas, Modulo.gravity};
 /// - Lo ajeno: solo con alcance total en el módulo (p. ej. Cuidados del dueño).
 /// - La **cuenta maestra** [esMaestra] además **lee** lo ajeno de
 ///   [modulosQueLeeLaMaestra], y **nunca** escribe ni administra lo ajeno: no
-///   se le muestran esos botones.
+///   se le muestran esos botones. Si no es la dueña ([esSoloLectura]), tampoco
+///   escribe ni administra **lo suyo** (D19, 23/oct/2026).
 ///
 /// Solo es para la interfaz; el servidor decide (RLS, `fin_puede`).
 bool puedeSobre(
@@ -296,6 +317,9 @@ bool puedeSobre(
   required bool esDeLaPersona,
   bool esMaestra = false,
 }) {
+  if (accion != Accion.leer && esSoloLectura(rol, esMaestra: esMaestra)) {
+    return false;
+  }
   if (esDeLaPersona) return puede(rol, modulo, accion);
   final conTotal =
       permisoDe(rol, modulo).alcance == Alcance.total &&

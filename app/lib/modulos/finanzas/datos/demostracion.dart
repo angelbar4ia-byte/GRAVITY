@@ -498,8 +498,9 @@ DatosFinanzas datosDeDemostracion({required Fecha hoy}) {
 
 /// Lo que **una persona** ve del hogar (como lo filtraría la RLS con
 /// `fin_puede`): sus libros, los compartidos de los que es miembro, el
-/// representado si es albacea y, para la cuenta maestra, todos. Las cuentas
-/// de gasto y las categorías del hogar las ve quien tiene Finanzas.
+/// representado si es albacea, los compartidos públicos (solo lectura) y, para
+/// la cuenta maestra, todos. Las cuentas de gasto y las categorías del hogar
+/// las ve quien tiene Finanzas.
 DatosFinanzas filtrarParaPersona(
   DatosFinanzas d,
   String personaId, {
@@ -511,6 +512,19 @@ DatosFinanzas filtrarParaPersona(
       if (permisoEnLibro(l, personaId, hoy: hoy, esMaestra: esMaestra).leer)
         l.id,
   };
+  return datosDeLibros(d, visibles, conservarLibros: false);
+}
+
+/// Los datos de [d] solo con el **contenido** de los libros [visibles]: sus
+/// cuentas, movimientos, plan y cierres. Las cuentas de gasto del hogar
+/// (sin libro) se conservan. Con [conservarLibros] la lista de libros queda
+/// completa (la portada de la cuenta maestra: libros y quién los lleva, sin
+/// consulta registrada); si no, solo los visibles.
+DatosFinanzas datosDeLibros(
+  DatosFinanzas d,
+  Set<String> visibles, {
+  bool conservarLibros = true,
+}) {
   bool delLibro(String? libroId) => libroId != null && visibles.contains(libroId);
   final cuentas = [
     for (final c in d.cuentas)
@@ -523,7 +537,10 @@ DatosFinanzas filtrarParaPersona(
   final semanas = [for (final s in d.semanas) if (delLibro(s.libroId)) s];
   final semanasIds = {for (final s in semanas) s.id};
   return d.copiar(
-    libros: [for (final l in d.libros) if (visibles.contains(l.id)) l],
+    libros: [
+      for (final l in d.libros)
+        if (conservarLibros || visibles.contains(l.id)) l,
+    ],
     parametros: [for (final p in d.parametros) if (delLibro(p.libroId)) p],
     cuentas: cuentas,
     ingresos: [for (final i in d.ingresos) if (delLibro(i.libroId)) i],

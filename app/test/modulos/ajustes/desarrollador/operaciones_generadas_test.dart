@@ -49,6 +49,18 @@ const _soloAgregar = {
   'fin_importaciones',
 };
 
+/// El texto de la ruta [ruta] en el YAML (todas sus operaciones y respuestas).
+String _bloque(String yaml, String ruta) {
+  final inicio = yaml.indexOf('\n  $ruta:\n');
+  expect(inicio, isNonNegative, reason: 'No encontré $ruta en openapi.yaml');
+  final siguiente = RegExp(r'\n  (?:/|\#)|\ncomponents:')
+      .firstMatch(yaml.substring(inicio + 1));
+  return yaml.substring(
+    inicio,
+    siguiente == null ? yaml.length : inicio + 1 + siguiente.start,
+  );
+}
+
 String _huella(String texto) {
   var h = 0x811c9dc5;
   for (final b in utf8.encode(texto.replaceAll('\r\n', '\n'))) {
@@ -153,16 +165,14 @@ void main() {
     test('la muestra de la Fase 0 ya no existe', () {
       expect(migracion, contains('drop table public.finanzas_muestra'));
       expect(yaml, isNot(contains('finanzas_muestra')));
-      expect(
-        operaciones.where((o) => o.ruta.contains('muestra')),
-        isEmpty,
-      );
+      expect(operaciones.where((o) => o.ruta.contains('muestra')), isEmpty);
     });
 
     test('cada tabla y vista fin_* de la migración está documentada', () {
-      final tablas = RegExp(
-        r'create (?:table|view) public\.(fin_\w+)',
-      ).allMatches(migracion).map((m) => m.group(1)!).toSet();
+      final tablas = RegExp(r'create (?:table|view) public\.(fin_\w+)')
+          .allMatches(migracion)
+          .map((m) => m.group(1)!)
+          .toSet();
       expect(tablas, hasLength(23));
       final rutas = finanzas.map((o) => o.ruta).toSet();
       for (final tabla in tablas) {
@@ -213,6 +223,155 @@ void main() {
       }
     });
 
+    group('salvaguardas de 20261023000000_finanzas_salvaguardas.sql', () {
+      final salvaguardas = File(
+        '${raiz.path}/supabase/migrations/'
+        '20261023000000_finanzas_salvaguardas.sql',
+      ).readAsStringSync();
+
+      test('I2: la consulta de la cuenta maestra (boolean, 30 minutos, vacío '
+          'sin error) coincide con la migración', () {
+        expect(salvaguardas, contains("interval '30 minutes'"));
+        expect(salvaguardas, contains("'finanzas.consulta_maestra'"));
+        final consulta = _bloque(
+          yaml,
+          '/rest/v1/rpc/fin_registrar_consulta_maestra',
+        );
+        expect(consulta, contains('30 minutos'));
+        expect(consulta, contains('sin error'));
+        expect(consulta, contains('type: boolean'));
+        expect(consulta, contains('`false`'));
+        expect(consulta, contains('finanzas.consulta_maestra'));
+        expect(consulta, contains('42501'));
+        // La portada (libros y miembros) se ve sin consulta; el contenido no.
+        for (final ruta in ['fin_libros', 'fin_libro_miembros']) {
+          expect(
+            _bloque(yaml, '/rest/v1/$ruta'),
+            contains('sin consulta'),
+            reason: ruta,
+          );
+        }
+        for (final ruta in [
+          'fin_movimientos',
+          'fin_cuentas',
+          'fin_semanas',
+          'fin_cierres',
+          'fin_v_saldos',
+        ]) {
+          expect(
+            _bloque(yaml, '/rest/v1/$ruta'),
+            contains('ve vacío'),
+            reason: ruta,
+          );
+        }
+      });
+
+      test('I5: la bitácora reserva al servidor las acciones finanzas* y las '
+          'tablas fin_* para todo rol de la app', () {
+        expect(salvaguardas, contains("accion !~* '^\\s*finanzas'"));
+        expect(salvaguardas, contains('fin_'));
+        final bitacora = _bloque(yaml, '/rest/v1/bitacora');
+        expect(bitacora, contains('empiece por\n        `finanzas`'));
+        expect(bitacora, contains('`fin_*`'));
+        expect(bitacora, contains('42501'));
+        expect(bitacora, contains("pattern: '^finanzas'"));
+        // Las tres acciones que deja el servidor, con su ejemplo de lectura.
+        for (final accion in [
+          'finanzas.consulta_maestra',
+          'finanzas.maestra_asignada',
+          'finanzas.salida_libro_representado',
+        ]) {
+          expect(salvaguardas, contains("'$accion'"), reason: accion);
+          expect(bitacora, contains('accion: $accion'), reason: accion);
+          expect(yaml, contains('- $accion'), reason: accion);
+        }
+      });
+
+      test('I3: el libro de Papá exige en_nombre_de y motivo (23514) y la '
+          'salida a un libro personal deja su entrada', () {
+        expect(salvaguardas, contains("errcode = '23514'"));
+        expect(salvaguardas, contains('en_nombre_de'));
+        expect(salvaguardas, contains("'finanzas.salida_libro_representado'"));
+        final movimientos = _bloque(yaml, '/rest/v1/fin_movimientos');
+        expect(movimientos, contains('`en_nombre_de`'));
+        expect(movimientos, contains('`motivo`'));
+        expect(movimientos, contains('23514'));
+        expect(movimientos, contains('finanzas.salida_libro_representado'));
+        expect(movimientos, contains('salida:'));
+      });
+
+      test('M10: asignar la cuenta maestra deja finanzas.maestra_asignada', () {
+        expect(salvaguardas, contains("'finanzas.maestra_asignada'"));
+        final asignar = _bloque(yaml, '/rest/v1/rpc/asignar_cuenta_maestra');
+        expect(asignar, contains('finanzas.maestra_asignada'));
+        expect(asignar, contains('anterior_persona_id'));
+        expect(asignar, contains('nueva_persona_id'));
+      });
+
+      test('I1: los miembros de un libro compartido (42501 y 22023)', () {
+        expect(
+          salvaguardas,
+          contains('Un libro compartido no baja de 2 miembros'),
+        );
+        final miembros = _bloque(yaml, '/rest/v1/fin_libro_miembros');
+        expect(miembros, contains('42501'));
+        expect(miembros, contains('22023'));
+        expect(miembros, contains('2 miembros vigentes'));
+      });
+
+      test('M6: la maestra que no es la dueña no cambia la configuración del '
+          'hogar', () {
+        expect(salvaguardas, contains("<> 'dueno'"));
+        for (final ruta in [
+          'fin_categorias',
+          'fin_cuentas',
+          'fin_dias_inhabiles',
+          'fin_importaciones',
+          'rpc/fin_puede_hogar',
+        ]) {
+          expect(
+            _bloque(yaml, '/rest/v1/$ruta'),
+            contains('(M6)'),
+            reason: ruta,
+          );
+        }
+      });
+
+      test('ninguna función nueva es llamable desde la API: las internas no '
+          'tienen operación', () {
+        final revoke = RegExp(
+          r'revoke execute on function([^;]*?)\s+from public, anon, '
+          r'authenticated, service_role;',
+          dotAll: true,
+        ).firstMatch(salvaguardas)!.group(1)!;
+        final internas = RegExp(r'public\.(\w+)\(')
+            .allMatches(revoke)
+            .map((m) => m.group(1)!)
+            .toSet();
+        expect(internas, {
+          'fin_vigencia_consulta_maestra',
+          'fin_adulto_con_finanzas',
+          'fin_libro_miembros_proteger',
+          'fin_movimientos_representado',
+          'fin_movimientos_salida_representado',
+        });
+        // Las que crea esta migración (no `or replace`) son todas internas.
+        final nuevas = RegExp(r'create function public\.(\w+)\(')
+            .allMatches(salvaguardas)
+            .map((m) => m.group(1)!)
+            .toSet();
+        expect(nuevas, internas);
+        for (final nombre in internas) {
+          expect(yaml, isNot(contains('/rpc/$nombre')), reason: nombre);
+          expect(
+            operaciones.map((o) => o.ruta),
+            isNot(contains('/rest/v1/rpc/$nombre')),
+            reason: nombre,
+          );
+        }
+      });
+    });
+
     test('los libros solo-agregar no se cambian ni se borran', () {
       for (final tabla in _soloAgregar) {
         final metodos = finanzas
@@ -233,9 +392,9 @@ void main() {
 
     test('el movimiento: registrado_en obligatorio; lo del servidor, de solo '
         'lectura; los códigos de error documentados', () {
-      final movimiento = RegExp(
-        r'\n    FinMovimiento:\n(?:      .*\n|\n)*',
-      ).firstMatch(yaml)!.group(0)!;
+      final movimiento = RegExp(r'\n    FinMovimiento:\n(?:      .*\n|\n)*')
+          .firstMatch(yaml)!
+          .group(0)!;
       for (final columna in [
         'recibido_en',
         'libro_origen_id',

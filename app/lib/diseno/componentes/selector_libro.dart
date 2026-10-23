@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
 import '../superficies.dart';
@@ -40,6 +38,58 @@ enum AccesoLibro {
 
   /// Cuenta maestra en un libro ajeno: **solo lee**.
   soloLectura,
+
+  /// Adulto con Finanzas del hogar que **lee** un libro compartido **público**
+  /// sin ser miembro: solo lee (D19, respuestas del 23/oct).
+  lector,
+}
+
+/// Quién más ve un libro compartido (D19, respuestas del dueño del 23/oct).
+enum VisibilidadLibro {
+  /// Por omisión: la ven y escriben sus miembros; la lee también la cuenta
+  /// maestra.
+  privada('Privada', Icons.lock_person_outlined),
+
+  /// Además la **leen** (no escriben) los adultos con Finanzas del hogar.
+  publica('Pública', Icons.public);
+
+  const VisibilidadLibro(this.etiqueta, this.icono);
+
+  /// Texto de la marca: la visibilidad nunca depende solo del icono.
+  final String etiqueta;
+  final IconData icono;
+
+  /// Lo que explica el tooltip de la marca.
+  String get explicacion => switch (this) {
+    VisibilidadLibro.privada =>
+      'Privada: la ven y escriben sus miembros; la lee también la cuenta '
+          'maestra',
+    VisibilidadLibro.publica =>
+      'Pública: además la leen, sin escribir, los adultos con Finanzas del '
+          'hogar',
+  };
+}
+
+/// Una marca corta de un libro en el selector: texto (siempre), icono y el
+/// texto del tooltip.
+@immutable
+class MarcaDeOpcion {
+  const MarcaDeOpcion(this.texto, this.icono, {String? explicacion})
+    : explicacion = explicacion ?? texto;
+
+  final String texto;
+  final IconData icono;
+  final String explicacion;
+
+  @override
+  bool operator ==(Object other) =>
+      other is MarcaDeOpcion &&
+      other.texto == texto &&
+      other.icono == icono &&
+      other.explicacion == explicacion;
+
+  @override
+  int get hashCode => Object.hash(texto, icono, explicacion);
 }
 
 /// Un libro que se puede elegir en [SelectorLibro].
@@ -50,6 +100,8 @@ class OpcionLibro {
     required this.nombre,
     required this.tipo,
     this.acceso = AccesoLibro.titular,
+    this.visibilidad = VisibilidadLibro.privada,
+    this.archivado = false,
   });
 
   /// `fin_libros.id` (UUID).
@@ -61,33 +113,79 @@ class OpcionLibro {
   final TipoLibro tipo;
   final AccesoLibro acceso;
 
+  /// Solo cuenta en los libros compartidos (`fin_libros.visibilidad`): en los
+  /// demás no se muestra.
+  final VisibilidadLibro visibilidad;
+
+  /// Libro archivado (por ejemplo, al salirse un miembro y quedar menos de 2):
+  /// **solo lectura para todos**.
+  final bool archivado;
+
   /// Lo que se ve: "Mi libro" en el personal propio; si no, [nombre].
   String get etiqueta =>
       tipo == TipoLibro.personal && acceso == AccesoLibro.titular
       ? 'Mi libro'
       : nombre;
 
-  /// La cuenta maestra solo lee este libro.
-  bool get soloLectura => acceso == AccesoLibro.soloLectura;
+  /// La persona solo lee este libro por su acceso: la cuenta maestra en uno
+  /// ajeno o un adulto del hogar en uno compartido público.
+  bool get soloLectura =>
+      acceso == AccesoLibro.soloLectura || acceso == AccesoLibro.lector;
+
+  /// Nadie puede registrar en este libro: la persona solo lee ([soloLectura])
+  /// o el libro está [archivado].
+  bool get sinEscritura => soloLectura || archivado;
 
   /// Se registra en nombre de su titular (albacea de un representado).
   bool get enNombreDe =>
       tipo == TipoLibro.representado && acceso == AccesoLibro.albacea;
 
-  /// Marca corta que acompaña a la etiqueta en el selector; `null` si no hay.
-  String? get marca => soloLectura
+  /// Marca corta de **estado** que acompaña a la etiqueta en el selector;
+  /// `null` si no hay: "Archivado" (solo lectura para todos), "Solo lectura"
+  /// (solo lee por su acceso) o "Albacea".
+  String? get marca => archivado
+      ? 'Archivado'
+      : soloLectura
       ? 'Solo lectura'
       : enNombreDe
       ? 'Albacea'
       : null;
+
+  /// Marca de **visibilidad** ("Pública" o "Privada"): solo los libros
+  /// compartidos; `null` en los demás.
+  String? get marcaVisibilidad =>
+      tipo == TipoLibro.compartido ? visibilidad.etiqueta : null;
+
+  /// Las marcas del selector, en orden: visibilidad y luego estado.
+  List<MarcaDeOpcion> get marcas => [
+    if (tipo == TipoLibro.compartido)
+      MarcaDeOpcion(
+        visibilidad.etiqueta,
+        visibilidad.icono,
+        explicacion: visibilidad.explicacion,
+      ),
+    if (archivado)
+      const MarcaDeOpcion(
+        'Archivado',
+        Icons.archive_outlined,
+        explicacion: 'Archivado: solo lectura, ya no se registra en este libro',
+      )
+    else if (soloLectura)
+      const MarcaDeOpcion('Solo lectura', Icons.lock_outline)
+    else if (enNombreDe)
+      const MarcaDeOpcion('Albacea', Icons.draw_outlined),
+  ];
 
   /// Lo que dice el lector de pantalla del libro.
   String get descripcion {
     final partes = <String>[
       'Libro: $etiqueta',
       if (tipo == TipoLibro.compartido) 'compartido',
+      if (tipo == TipoLibro.compartido)
+        visibilidad == VisibilidadLibro.publica ? 'público' : 'privado',
       if (enNombreDe) 'en nombre de $nombre',
-      if (soloLectura) 'solo lectura',
+      if (archivado) 'archivado',
+      if (sinEscritura) 'solo lectura',
     ];
     return partes.join(', ');
   }
@@ -98,10 +196,13 @@ class OpcionLibro {
       other.id == id &&
       other.nombre == nombre &&
       other.tipo == tipo &&
-      other.acceso == acceso;
+      other.acceso == acceso &&
+      other.visibilidad == visibilidad &&
+      other.archivado == archivado;
 
   @override
-  int get hashCode => Object.hash(id, nombre, tipo, acceso);
+  int get hashCode =>
+      Object.hash(id, nombre, tipo, acceso, visibilidad, archivado);
 
   @override
   String toString() => 'OpcionLibro($id, $etiqueta)';
@@ -112,9 +213,11 @@ class OpcionLibro {
 /// maestra, los ajenos en solo lectura.
 ///
 /// Con [comoMenu] en `null` decide solo: **chips** si son 4 o menos y caben
-/// (360 dp o más), **menú** si no. Cada opción lleva el icono de su tipo y su
-/// marca ("Solo lectura", "Albacea"); la elegida lleva además una palomita.
-/// [alCambiar] recibe el id solo cuando el libro cambia.
+/// (360 dp o más), **menú** si no. Cada opción lleva el icono de su tipo y sus
+/// marcas, siempre con texto además del icono: "Pública" o "Privada" en los
+/// compartidos y, según el caso, "Archivado", "Solo lectura" o "Albacea"; la
+/// elegida lleva además una palomita. [alCambiar] recibe el id solo cuando el
+/// libro cambia.
 ///
 /// La marca grande del libro activo va aparte, en [MarcaLibro].
 class SelectorLibro extends StatelessWidget {
@@ -212,136 +315,83 @@ class SelectorLibro extends StatelessWidget {
   }
 }
 
-/// Etiqueta + marca corta, en una línea.
+/// Etiqueta + marcas cortas.
 ///
-/// Las dos partes son flexibles y se recortan con puntos suspensivos: con un
-/// nombre largo, letra grande o una fuente ancha nada desborda. El espacio se
-/// reparte **en proporción al ancho natural de cada parte** (y no por mitades),
-/// de modo que, si el nombre y la marca caben juntos, ninguno se recorta de
-/// más; el nombre pesa como mucho [_veces] veces la marca, para que ésta
-/// conserve siempre un tramo legible. El texto completo de la marca está en su
-/// tooltip y en la semántica del libro ([OpcionLibro.descripcion]).
+/// Van en una línea si caben. Si no, **las marcas bajan a la línea siguiente**
+/// (un `Wrap`) en lugar de comprimirse: con un nombre largo, letra grande o una
+/// fuente ancha nada desborda ni se corta, y solo un nombre o una marca más
+/// ancho que todo el espacio se recorta con puntos suspensivos. El texto
+/// completo de cada marca está en su tooltip y en la semántica del libro
+/// ([OpcionLibro.descripcion]).
 class _TextoLibro extends StatelessWidget {
   const _TextoLibro({required this.libro, this.fuerte = false});
 
   final OpcionLibro libro;
   final bool fuerte;
 
-  /// Lo más que puede pesar el nombre frente a la marca en el reparto.
-  static const _veces = 3;
-
   @override
   Widget build(BuildContext context) {
     final v = ValoresDiseno.de(context);
-    final marca = libro.marca;
-    final estilo = v.lectura(
-      tamano: 14,
-      peso: fuerte ? FontWeight.w600 : FontWeight.w500,
-      color: v.textoFuerte,
-    );
-    var pesoEtiqueta = 1;
-    var pesoMarca = 1;
-    if (marca != null) {
-      final anchoMarca = _Marquita.anchoNatural(context, marca);
-      final anchoEtiqueta = _anchoTexto(context, libro.etiqueta, estilo);
-      pesoMarca = math.max(1, anchoMarca.ceil());
-      pesoEtiqueta = math.max(
-        1,
-        math.min(anchoEtiqueta, anchoMarca * _veces).ceil(),
-      );
-    }
-    return Row(
-      mainAxisSize: MainAxisSize.min,
+    return Wrap(
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: v.espacio,
+      runSpacing: 2,
       children: [
-        Flexible(
-          flex: pesoEtiqueta,
-          child: Text(
-            libro.etiqueta,
-            style: estilo,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+        Text(
+          libro.etiqueta,
+          style: v.lectura(
+            tamano: 14,
+            peso: fuerte ? FontWeight.w600 : FontWeight.w500,
+            color: v.textoFuerte,
           ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
-        if (marca != null) ...[
-          SizedBox(width: v.espacio),
-          Flexible(
-            flex: pesoMarca,
-            child: _Marquita(texto: marca, soloLectura: libro.soloLectura),
-          ),
-        ],
+        for (final marca in libro.marcas) _Marquita(marca: marca),
       ],
     );
   }
 }
 
-/// Ancho que ocupa [texto] en una línea, con la escala de letra de [context].
-double _anchoTexto(BuildContext context, String texto, TextStyle estilo) {
-  final medidor = TextPainter(
-    text: TextSpan(text: texto, style: estilo),
-    textDirection: Directionality.of(context),
-    textScaler: MediaQuery.textScalerOf(context),
-    maxLines: 1,
-  )..layout();
-  final ancho = medidor.width;
-  medidor.dispose();
-  return ancho;
-}
-
-/// La marca corta del chip: icono + texto, con borde.
+/// Una marca corta del chip: icono + texto, con borde.
 ///
-/// Se recorta con puntos suspensivos si no cabe; su tooltip trae el texto
-/// completo (no repite la semántica: el texto ya la lleva completa).
+/// Se recorta con puntos suspensivos si no cabe ni en una línea propia; su
+/// tooltip trae la explicación completa (no repite la semántica: el texto ya la
+/// lleva).
 class _Marquita extends StatelessWidget {
-  const _Marquita({required this.texto, required this.soloLectura});
+  const _Marquita({required this.marca});
 
-  final String texto;
-  final bool soloLectura;
-
-  static const _tamanoIcono = 13.0;
-  static const _separacion = 3.0;
-  static const _grosorBorde = 1.0;
-
-  static TextStyle _estilo(ValoresDiseno v) =>
-      v.lectura(tamano: 12, peso: FontWeight.w500, color: v.textoTenue);
-
-  static double _relleno(ValoresDiseno v) => v.espacio * 0.75;
-
-  /// Ancho de la marca con todo su texto: icono, separación, relleno y borde.
-  static double anchoNatural(BuildContext context, String texto) {
-    final v = ValoresDiseno.de(context);
-    return _anchoTexto(context, texto, _estilo(v)) +
-        _tamanoIcono +
-        _separacion +
-        2 * _relleno(v) +
-        2 * _grosorBorde;
-  }
+  final MarcaDeOpcion marca;
 
   @override
   Widget build(BuildContext context) {
     final v = ValoresDiseno.de(context);
     return Tooltip(
-      message: texto,
+      message: marca.explicacion,
       excludeFromSemantics: true,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          border: Border.all(color: v.borde, width: _grosorBorde),
+          border: Border.all(color: v.borde),
           borderRadius: BorderRadius.circular(v.radioChico),
         ),
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: _relleno(v), vertical: 2),
+          padding: EdgeInsets.symmetric(
+            horizontal: v.espacio * 0.75,
+            vertical: 2,
+          ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                soloLectura ? Icons.lock_outline : Icons.draw_outlined,
-                size: _tamanoIcono,
-                color: v.textoTenue,
-              ),
-              const SizedBox(width: _separacion),
+              Icon(marca.icono, size: 13, color: v.textoTenue),
+              const SizedBox(width: 3),
               Flexible(
                 child: Text(
-                  texto,
-                  style: _estilo(v),
+                  marca.texto,
+                  style: v.lectura(
+                    tamano: 12,
+                    peso: FontWeight.w500,
+                    color: v.textoTenue,
+                  ),
                   maxLines: 1,
                   softWrap: false,
                   overflow: TextOverflow.ellipsis,
@@ -485,26 +535,43 @@ class _BotonMenu extends StatelessWidget {
 ///   registrar".
 /// - Albacea: **"En nombre de Papá** · cada movimiento pide motivo y queda en
 ///   la bitácora".
+/// - Libro archivado: **"Archivado** · solo lectura: ya no se puede registrar
+///   en este libro".
+/// - Adulto del hogar en un compartido público: **"Solo lectura** · libro
+///   público: puedes ver, no registrar".
 ///
-/// En el libro propio o en uno compartido no dibuja nada.
+/// En el libro propio o en uno compartido (como miembro) no dibuja nada.
 class MarcaLibro extends StatelessWidget {
   const MarcaLibro({super.key, required this.libro});
 
   final OpcionLibro libro;
 
   /// Título de la marca; `null` si el libro no lleva.
-  String? get titulo => libro.soloLectura
+  String? get titulo => libro.archivado
+      ? 'Archivado'
+      : libro.soloLectura
       ? 'Solo lectura'
       : libro.enNombreDe
       ? 'En nombre de ${libro.nombre}'
       : null;
 
   /// Detalle de la marca; `null` si el libro no lleva.
-  String? get detalle => libro.soloLectura
+  String? get detalle => libro.archivado
+      ? 'solo lectura: ya no se puede registrar en este libro'
+      : libro.acceso == AccesoLibro.lector
+      ? 'libro público: puedes ver, no registrar'
+      : libro.soloLectura
       ? 'cuenta maestra: puedes ver, no registrar'
       : libro.enNombreDe
       ? 'cada movimiento pide motivo y queda en la bitácora'
       : null;
+
+  /// Icono de la marca: candado si solo se lee, archivo si está archivado.
+  IconData get _icono => libro.archivado
+      ? Icons.archive_outlined
+      : libro.soloLectura
+      ? Icons.lock_outline
+      : Icons.draw_outlined;
 
   @override
   Widget build(BuildContext context) {
@@ -528,11 +595,7 @@ class MarcaLibro extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                libro.soloLectura ? Icons.lock_outline : Icons.draw_outlined,
-                size: 18,
-                color: v.acentoParaTextoSobre(fondo),
-              ),
+              Icon(_icono, size: 18, color: v.acentoParaTextoSobre(fondo)),
               SizedBox(width: e),
               Flexible(
                 child: Text.rich(

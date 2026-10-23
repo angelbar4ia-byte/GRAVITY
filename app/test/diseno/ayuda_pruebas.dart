@@ -26,6 +26,12 @@ class RelojMovible implements Reloj {
   DateTime ahora() => momento;
 }
 
+/// Montos a la vista desde el primer cuadro (en la app, empiezan ocultos).
+class _Visibles extends MontosVisibles {
+  @override
+  bool build() => true;
+}
+
 /// App mínima con el tema de GRAVITY tomado de los proveedores, como la armará
 /// plataforma.
 class AppDePrueba extends ConsumerWidget {
@@ -48,7 +54,8 @@ class AppDePrueba extends ConsumerWidget {
 
 /// Monta [home] dentro de `ProviderScope` + `MaterialApp` con el reloj fijo y
 /// el [rol] efectivo (por omisión, el Dueño, que ve todos los paneles). Los
-/// [datos] del resumen de GRAVITY son los de ejemplo de los bocetos.
+/// [datos] del resumen de GRAVITY son los de ejemplo de los bocetos. Los montos
+/// empiezan **ocultos**, como en la app; con [montosVisibles] se ven.
 Future<void> montar(
   WidgetTester tester,
   Widget home, {
@@ -56,6 +63,7 @@ Future<void> montar(
   Reloj? reloj,
   Rol? rol = Rol.dueno,
   ResumenGravity datos = ResumenGravity.ejemplo,
+  bool montosVisibles = false,
   List<Override> overrides = const [],
 }) async {
   await tester.pumpWidget(
@@ -68,6 +76,7 @@ Future<void> montar(
         // Sin servicio de sesión, las pruebas usan los datos de ejemplo de los
         // bocetos (con una sesión real el resumen viene vacío: I9).
         datosResumenGravityProvider.overrideWithValue(datos),
+        if (montosVisibles) montosVisiblesProvider.overrideWith(_Visibles.new),
         ...overrides,
       ],
       child: AppDePrueba(home: home),

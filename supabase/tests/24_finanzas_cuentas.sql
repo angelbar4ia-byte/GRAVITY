@@ -54,8 +54,36 @@ select pruebas.falla($$select pruebas.registrar('gasto', 'c3000000-0000-4000-800
   'c2000000-0000-4000-8000-000000000001', 100)$$, 'Congelada no admite movimientos nuevos', '55000');
 select pruebas.igual(pruebas.afecta($$update public.fin_cuentas set estado = 'activa'
   where id = 'c3000000-0000-4000-8000-000000000002'$$), 1, 'Y se reactiva');
-select pruebas.falla($$update public.fin_cuentas set estado = 'archivada' where id = 'c2000000-0000-4000-8000-000000000001'$$,
-  'Una cuenta de gasto del hogar con movimientos de varios libros no se archiva', '22023');
+
+-- D19 (23/oct/2026): el saldo cero solo vale para activos y pasivos; las cuentas de gasto e
+-- ingreso son de periodo y se archivan o cierran con su saldo.
+select pruebas.igual(pruebas.afecta($$update public.fin_cuentas set estado = 'archivada'
+  where id = 'c2000000-0000-4000-8000-000000000008'$$), 1,
+  'Una cuenta de gasto con movimientos (Entretenimiento) se archiva sin saldo cero');
+select pruebas.falla($$select pruebas.registrar('gasto', 'c3000000-0000-4000-8000-000000000002',
+  'c2000000-0000-4000-8000-000000000008', 100)$$,
+  'Archivada, no admite gastos nuevos', '55000');
+select pruebas.ok(
+  pruebas.registrar('anulacion', 'c2000000-0000-4000-8000-000000000008', 'c3000000-0000-4000-8000-000000000003', 25000,
+                    '2026-10-14', 'Cine mal capturado (ejemplo)', 'd1000000-0000-4000-8000-000000000006') is not null,
+  'Pero sí se anula un gasto anterior (acerca la cuenta a cero)');
+select pruebas.igual(pruebas.afecta($$update public.fin_cuentas set estado = 'cerrada'
+  where id = 'c3000000-0000-4000-8000-000000000005'$$), 1,
+  'Una cuenta de ingreso (Sueldo de Ana) se cierra sin saldo cero');
+select pruebas.falla($$select pruebas.registrar('ingreso', 'c3000000-0000-4000-8000-000000000005',
+  'c3000000-0000-4000-8000-000000000001', 100)$$,
+  'Cerrada, no admite ingresos nuevos', '55000');
+select pruebas.ok(
+  pruebas.registrar('anulacion', 'c3000000-0000-4000-8000-000000000001', 'c3000000-0000-4000-8000-000000000005', 900000,
+                    '2026-10-15', 'Quincena duplicada (ejemplo)', 'd1000000-0000-4000-8000-000000000007') is not null,
+  'Pero sí se anula uno anterior');
+select pruebas.falla($$update public.fin_cuentas set estado = 'archivada' where id = 'c3000000-0000-4000-8000-000000000003'$$,
+  'Una tarjeta (pasivo) con deuda sigue pidiendo saldo cero', '22023');
+select pruebas.falla($$update public.fin_cuentas set estado = 'cerrada' where id = 'c3000000-0000-4000-8000-000000000001'$$,
+  'Un banco (activo) con saldo, también', '22023');
+select pruebas.falla($$update public.fin_cuentas set estado = 'archivada'
+  where id = pruebas.cuenta_sistema(pruebas.libro_personal('ana@ejemplo.test'), 'por_clasificar')$$,
+  'Una cuenta de sistema (Por clasificar) nunca se archiva', '22023');
 
 -- ---------------------------------------------------------------- cuentas de sistema y tipos
 select pruebas.falla($$update public.fin_cuentas set estado = 'congelada'
@@ -132,5 +160,33 @@ select pruebas.igual(pruebas.afecta($$update public.fin_categorias set padre_id 
   where id = 'c1000000-0000-4000-8000-000000000002'$$), 1, 'Se mueve a otra categoría del mismo nivel');
 select pruebas.falla($$update public.fin_categorias set cuenta_gasto_id = 'c3000000-0000-4000-8000-000000000001'
   where id = 'c1000000-0000-4000-8000-000000000011'$$, 'La cuenta de una categoría es de gasto', '22023');
+
+-- D19 (23/oct/2026): archivar una categoría archiva su cuenta de gasto (cuando ya no queda otra
+-- categoría activa que la use); desarchivarla la reactiva.
+select pruebas.igual((select estado from public.fin_cuentas where id = 'c2000000-0000-4000-8000-000000000001'),
+  'activa', 'Archivar la subcategoría Súper no archiva la cuenta de Alimentación (la usa otra categoría activa)');
+select pruebas.igual(pruebas.afecta($$update public.fin_categorias set archivada = true
+  where id = 'c1000000-0000-4000-8000-000000000001'$$), 1, 'Se archiva la categoría Alimentación');
+select pruebas.igual((select estado from public.fin_cuentas where id = 'c2000000-0000-4000-8000-000000000001'),
+  'archivada', 'Ya no queda ninguna categoría activa con esa cuenta: se archiva también la cuenta de gasto');
+select pruebas.falla($$select pruebas.registrar('gasto', 'c3000000-0000-4000-8000-000000000002',
+  'c2000000-0000-4000-8000-000000000001', 100)$$, 'Y ya no admite gastos', '55000');
+select pruebas.igual(pruebas.afecta($$update public.fin_categorias set archivada = false
+  where id = 'c1000000-0000-4000-8000-000000000001'$$), 1, 'Se desarchiva la categoría');
+select pruebas.igual((select estado from public.fin_cuentas where id = 'c2000000-0000-4000-8000-000000000001'),
+  'activa', 'y su cuenta vuelve a estar activa');
+select pruebas.ok(
+  pruebas.registrar('gasto', 'c3000000-0000-4000-8000-000000000002', 'c2000000-0000-4000-8000-000000000001', 100) is not null,
+  'Admite gastos otra vez');
+select pruebas.igual(pruebas.afecta($$update public.fin_categorias set archivada = true
+  where id = 'c1000000-0000-4000-8000-000000000011'$$), 1, 'Se archiva Transporte (cuenta propia, con movimientos)');
+select pruebas.igual((select estado from public.fin_cuentas where id = 'c2000000-0000-4000-8000-000000000004'),
+  'archivada', 'y su cuenta de gasto también (con saldo)');
+-- La pareja también configura el hogar; la maestra no (M6).
+select pruebas.como('marta@ejemplo.test');
+select pruebas.igual(pruebas.afecta($$update public.fin_categorias set archivada = false
+  where id = 'c1000000-0000-4000-8000-000000000011'$$), 0, 'La cuenta maestra no desarchiva categorías');
+select pruebas.igual((select estado from public.fin_cuentas where id = 'c2000000-0000-4000-8000-000000000004'),
+  'archivada', 'ni se reactivan cuentas por esa vía');
 
 rollback;

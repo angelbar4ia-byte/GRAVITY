@@ -18,6 +18,7 @@ import '../../../nucleo/tablet/controlador_tablet.dart';
 import '../../../nucleo/tablet/usuarios_tablet.dart';
 import '../marco_seccion.dart';
 import '../secciones_ajustes.dart';
+import 'seccion_cuenta_maestra.dart';
 
 /// Opciones del tiempo sin uso para regresar al modo Casa.
 const opcionesRegresoModoCasa = [
@@ -49,6 +50,10 @@ class PantallaPersonas extends ConsumerWidget {
           icono: Icons.person_add_alt,
         ),
         const SizedBox(height: 8),
+        // Solo el dueño (esta sección ya es solo del dueño): la cuenta maestra
+        // es otra persona, de solo lectura total (D19, 23/oct).
+        const SeccionCuentaMaestra(),
+        const SizedBox(height: 16),
         Text('Qué ve cada rol', style: tema.textTheme.titleMedium),
         for (final rol in Rol.values) _TarjetaRol(rol: rol),
         if (esTablet) ...[

@@ -12,6 +12,25 @@ library;
 
 import 'package:finanzas_dominio/finanzas_dominio.dart';
 
+/// Lo que el servidor dice que la persona puede hacer en un libro
+/// (`fin_puede`). Solo se pide donde el espejo del cliente no alcanza: el
+/// **suplente** del libro de papá, que escribe cuando el albacea deja de ser un
+/// adulto con Finanzas del hogar (baja o cambio de rol), algo que quien no es
+/// el dueño no puede ver en las membresías (I4 de la revisión de la Fase 1).
+class PermisoServidor {
+  const PermisoServidor({required this.escribir, required this.administrar});
+
+  final bool escribir;
+  final bool administrar;
+
+  Map<String, Object?> aJson() => {'escribir': escribir, 'administrar': administrar};
+
+  static PermisoServidor deJson(Map<Object?, Object?> j) => PermisoServidor(
+    escribir: j['escribir'] == true,
+    administrar: j['administrar'] == true,
+  );
+}
+
 /// Lo que se cargó del servidor, con el contexto de quién lo ve.
 class CargaFinanzas {
   const CargaFinanzas({
@@ -22,6 +41,7 @@ class CargaFinanzas {
     this.adultosConFinanzas = const {},
     this.desdeCopia = false,
     this.movimientosEnCola = const {},
+    this.permisosServidor = const {},
   });
 
   final DatosFinanzas datos;
@@ -49,12 +69,17 @@ class CargaFinanzas {
   /// Movimientos registrados en este dispositivo que aún no suben.
   final Set<String> movimientosEnCola;
 
+  /// Permiso que dio el servidor en los libros donde el espejo no alcanza
+  /// (libro id → permiso). Vacío si no hace falta preguntar.
+  final Map<String, PermisoServidor> permisosServidor;
+
   CargaFinanzas copiar({
     DatosFinanzas? datos,
     bool? esMaestra,
     Map<String, String>? personas,
     bool? desdeCopia,
     Set<String>? movimientosEnCola,
+    Map<String, PermisoServidor>? permisosServidor,
   }) => CargaFinanzas(
     datos: datos ?? this.datos,
     esMaestra: esMaestra ?? this.esMaestra,
@@ -63,7 +88,17 @@ class CargaFinanzas {
     adultosConFinanzas: adultosConFinanzas,
     desdeCopia: desdeCopia ?? this.desdeCopia,
     movimientosEnCola: movimientosEnCola ?? this.movimientosEnCola,
+    permisosServidor: permisosServidor ?? this.permisosServidor,
   );
+
+  /// `true` si la persona es la cuenta maestra y el servidor no devolvió nada
+  /// del libro ajeno [libroId]: un libro siempre tiene al menos sus cuentas
+  /// técnicas (Ajustes, Apertura y Por clasificar), así que "vacío" quiere
+  /// decir que la consulta registrada **venció** y la lectura quedó filtrada
+  /// (I2 de la revisión de la Fase 1: el servidor no da error, filtra).
+  bool libroSinContenido(String libroId) =>
+      !datos.cuentas.any((c) => c.libroId == libroId) &&
+      !datos.parametros.any((p) => p.libroId == libroId);
 
   String nombreDe(String? personaId) =>
       personaId == null ? '' : (personas[personaId] ?? 'Otra persona');
@@ -146,12 +181,35 @@ abstract interface class RepositorioFinanzas {
 
   Future<void> guardarDiasInhabiles(List<DiaInhabil> dias);
 
-  /// Crea un libro compartido con sus miembros (quien lo crea es miembro).
+  /// Crea un libro compartido con sus miembros (quien lo crea es miembro y su
+  /// **administrador**). [visibilidad]: privada por omisión; pública = los
+  /// adultos con Finanzas del hogar la leen.
   Future<void> crearLibroCompartido({
     required String id,
     required String nombre,
     required List<String> otrosMiembros,
+    VisibilidadLibro visibilidad = VisibilidadLibro.privada,
   });
+
+  /// Cambia la visibilidad de un compartido (solo su administrador).
+  Future<void> cambiarVisibilidadLibro(String libroId, VisibilidadLibro v);
+
+  /// Archiva (`activo = false`, solo lectura para todos) o reactiva un
+  /// compartido (solo su administrador).
+  Future<void> archivarLibro(String libroId, {required bool archivado});
+
+  /// Agrega a [personaId] como miembro de un compartido (solo su
+  /// administrador).
+  Future<void> agregarMiembro(String libroId, String personaId);
+
+  /// Saca a [personaId] de un compartido: su fila deja de ser vigente ahora
+  /// (solo su administrador; no puede dejar menos de 2 miembros).
+  Future<void> quitarMiembro(String libroId, String personaId);
+
+  /// La persona de la sesión se sale del libro: cualquier miembro puede, en
+  /// cualquier momento. Si quedan menos de 2 miembros, el servidor archiva el
+  /// libro; si era el administrador, el cargo pasa al miembro más antiguo.
+  Future<void> salirDelLibro(String libroId);
 
   /// Crea el libro de una persona representada (papá): quien lo crea queda
   /// como albacea; [suplenteId], si se da, como suplente.
@@ -176,6 +234,9 @@ abstract interface class RepositorioFinanzas {
 
   Future<void> guardarOcurrencia(Ocurrencia ocurrencia);
 
-  /// Deja en la bitácora que la cuenta maestra abrió un libro ajeno.
-  Future<void> registrarConsultaMaestra(String libroId);
+  /// Deja en la bitácora que la cuenta maestra abrió un libro ajeno y **habilita
+  /// su lectura 30 minutos** (`fin_registrar_consulta_maestra`, I2). Hay que
+  /// llamarla **antes** de pedir los datos de ese libro. Devuelve `false` si el
+  /// libro es de la propia persona (no se registra nada).
+  Future<bool> registrarConsultaMaestra(String libroId);
 }

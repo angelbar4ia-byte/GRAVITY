@@ -297,15 +297,25 @@ class _TarjetaFinanzas extends ConsumerWidget {
                     peso: FontWeight.w600,
                     color: v.acento,
                   ),
+                  // Ocultos: pide verlos (PIN o huella). A la vista: los oculta.
                   alTocar: privado
                       ? null
+                      : ocultos
+                      ? () => ref.read(revelarMontosProvider)(context)
                       : () => ref
                             .read(montosVisiblesProvider.notifier)
-                            .alternar(),
+                            .fijar(false),
                 ),
               ),
             ],
           ),
+          if (ocultos) ...[
+            SizedBox(height: e * 0.5),
+            const Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: MarcaMontosOcultos(),
+            ),
+          ],
           if (f.aviso != null) ...[
             SizedBox(height: e * 0.5),
             Text(f.aviso!, style: v.lectura(tamano: 14, color: v.textoTenue)),

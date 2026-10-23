@@ -525,11 +525,16 @@ class LibroMovimientos {
     (m) => m.cuentaOrigenId == cuentaId || m.cuentaDestinoId == cuentaId,
   );
 
-  /// Cambia el estado de una cuenta. Solo se cierra o se archiva con saldo
-  /// cero y sin movimientos pendientes (5.0 bis 2, punto 5; prueba 6).
+  /// Cambia el estado de una cuenta. Una cuenta de **activos o pasivos** solo
+  /// se cierra o se archiva con saldo cero y sin movimientos pendientes (5.0 bis
+  /// 2, punto 5; prueba 6). Las de **gasto e ingreso** se cierran o archivan
+  /// sin pedir saldo cero (respuestas del dueño del 23/oct/2026): lo gastado o
+  /// ingresado queda en su historia y ya no admiten movimientos nuevos.
   void cambiarEstadoCuenta(String cuentaId, EstadoCuenta nuevo) {
     final actual = cuenta(cuentaId);
-    if (nuevo == EstadoCuenta.cerrada || nuevo == EstadoCuenta.archivada) {
+    if ((nuevo == EstadoCuenta.cerrada || nuevo == EstadoCuenta.archivada) &&
+        (actual.clase == ClaseCuenta.activo ||
+            actual.clase == ClaseCuenta.pasivo)) {
       if (saldo(cuentaId, incluirPendientes: true) != 0 ||
           saldo(cuentaId) != 0) {
         throw ErrorLibro(
@@ -1124,9 +1129,17 @@ class LibroMovimientos {
     if (_vacio(c.motivo)) {
       throw const ErrorLibro('Una anulación exige motivo');
     }
+    // Una cuenta cerrada o archivada no admite movimientos nuevos; la
+    // anulación de uno anterior sí si la cuenta es de **gasto o ingreso**
+    // (que se cierran con saldo; respuestas del dueño del 23/oct/2026).
     for (final cuenta in [origen, destino]) {
-      if (cuenta.estado == EstadoCuenta.cerrada ||
-          cuenta.estado == EstadoCuenta.archivada) {
+      final cerrada =
+          cuenta.estado == EstadoCuenta.cerrada ||
+          cuenta.estado == EstadoCuenta.archivada;
+      final deResultado =
+          cuenta.clase == ClaseCuenta.gasto ||
+          cuenta.clase == ClaseCuenta.ingreso;
+      if (cerrada && !deResultado) {
         throw ErrorLibro('La cuenta $cuenta está ${cuenta.estado}');
       }
     }

@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: GRAVITY · APIs del sistema
-  version: 0.2.0
+  version: 0.3.0
   summary: Herramientas de GRAVITY, base de datos, funciones del servidor y puente de casa (D16).
   description: |
     Especificación de las APIs de GRAVITY (decisión D16). Se consulta en la laptop, en
@@ -21,8 +21,10 @@ info:
     identificadores UUID, fechas `date` y `timestamptz`, semana en lunes, libros solo-agregar.
 
     Fase 1 (Finanzas, D19): cada quien ve **su** libro y los compartidos de los que es
-    miembro; la **cuenta maestra** lee todo y nunca escribe en lo ajeno. Los ejemplos son
-    inventados (el hogar de Ana y Alex de `supabase/seed.sql`, con "Papá (ejemplo)").
+    miembro; la **cuenta maestra** es de solo lectura total: lee todo con una consulta
+    registrada y nunca escribe en lo ajeno. Las salvaguardas viven en el servidor, no en el
+    cliente (`supabase/migrations/20261023000000_finanzas_salvaguardas.sql`). Los ejemplos
+    son inventados (el hogar de Ana y Alex de `supabase/seed.sql`, con "Papá (ejemplo)").
 
     Las llaves (Supabase, Home Assistant) entran por `--dart-define` o archivos ignorados
     por git; nunca se escriben aquí.
@@ -49,26 +51,34 @@ tags:
       permisos no deja abrir, leer o escribir su módulo (D5), y una de Finanzas o Cuidados
       que no sea solo local (D3), **también las de navegación**: ni siquiera "se abrió
       Finanzas" llega a la IA en la nube. A la cuidadora solo se le ofrece su bandeja de
-      solicitudes (D18: nada de dinero, de la familia ni de conversación libre) y a la
-      cuenta maestra nada que escriba o administre lo ajeno (D19). En las Fases 0 y 1 son
-      de navegación y se ejecutan dentro de la app; "registrar gasto" solo abre la hoja de
-      registro, que es la confirmación (una orden nunca registra dinero sola). Exponerlas
-      por red para el puente de casa es una propuesta de la Fase 6.
+      solicitudes (D18: nada de dinero, de la familia ni de conversación libre). Una cuenta
+      maestra que no es la dueña es de **solo lectura total** (D19, 23/oct): solo
+      navegación y lectura, ninguna herramienta que escriba ni que abra una hoja de
+      registro; si el dueño es además la maestra, conserva las suyas para lo propio y no
+      recibe lo que administra el hogar. En las Fases 0 y 1 son de navegación y se ejecutan
+      dentro de la app; "registrar gasto" solo abre la hoja de registro, que es la
+      confirmación (una orden nunca registra dinero sola), y hay que decir el verbo: la
+      palabra "gasto" suelta no abre nada. Exponerlas por red para el puente de casa es una
+      propuesta de la Fase 6.
   - name: Base de datos
     description: |
       Supabase (PostgREST): `/rest/v1/<tabla>` con los filtros de PostgREST
       (`?id=eq.<uuid>`, `select`, `order`, `limit`). Cada consulta pasa por las reglas
       por registro (RLS) del rol: se lee solo lo que el rol puede ver. Esquema en
-      `supabase/migrations/20261020000000_base.sql` (Finanzas, en su propio grupo). Nada de
-      esta base va a la IA.
+      `supabase/migrations/20261020000000_base.sql` (Finanzas, en su propio grupo). La
+      bitácora solo se agrega, y lo de Finanzas (acciones `finanzas*` y tablas `fin_*`) lo
+      escribe solo el servidor. Nada de esta base va a la IA.
   - name: Base de datos · Finanzas
     description: |
       Tablas `fin_*`, vistas y funciones de Finanzas (Fase 1, D19), según
-      `supabase/migrations/20261021000000_finanzas_mvp1.sql` y `supabase/README.md`
+      `supabase/migrations/20261021000000_finanzas_mvp1.sql`,
+      `supabase/migrations/20261023000000_finanzas_salvaguardas.sql` y `supabase/README.md`
       ("Finanzas (Fase 1)"). Solo dueño y coadministrador, cada quien **su libro** y los
       compartidos de los que es miembro (`fin_puede`); familiar, cuidador y Casa no ven
-      nada. La **cuenta maestra** lee todo y nunca escribe en lo ajeno. Nada de esto va a
-      la IA en la nube ni a las bocinas (D3, D6).
+      nada. La **cuenta maestra** es de solo lectura total: lee todo con una consulta
+      registrada y nunca escribe en lo ajeno; en la app tampoco registra lo suyo, y si no
+      es la dueña no cambia la configuración del hogar. Nada de esto va a la IA en la nube
+      ni a las bocinas (D3, D6).
 
       - **Dinero** en centavos (entero); porcentajes y tasas en puntos base (2000 = 20 %);
         semana en lunes; identificadores UUID generados en el dispositivo.
@@ -87,6 +97,28 @@ tags:
         (monto, motivo, lunes, cascada) → 400; `22023` regla de negocio (combinación de
         cuentas, libro equivocado, papel) → 400; `55000` estado (cuenta no activa, semana
         cerrada) → 500; `42501` sin permiso o columna que no cambia → 403.
+      - **Cuenta maestra y consulta registrada (I2):** sin una consulta vigente, la maestra
+        solo ve la **portada**: los libros y quién los lleva (`fin_libros`,
+        `fin_libro_miembros`), las categorías, las cuentas de gasto del hogar y lo que no es
+        de Finanzas. El contenido de un libro ajeno (cuentas, movimientos, plan, cierres,
+        saldos y su bitácora) llega **vacío, sin error**, hasta que llama
+        `fin_registrar_consulta_maestra(libro)`, que deja la entrada
+        `finanzas.consulta_maestra` y habilita la lectura de ese libro por **30 minutos**
+        (por libro y por persona; pasado el tiempo hay que llamarla otra vez, y la app la
+        renueva sola mientras el libro está abierto).
+      - **Salvaguardas en el servidor** (hallazgos I1 a I5, M6 y M10 de la revisión de
+        calidad): (I1) un libro compartido solo cambia la membresía de otra persona quien lo
+        creó o el dueño (42501) y nunca baja de 2 miembros vigentes (22023); (I2) la consulta
+        registrada de arriba; (I3) todo movimiento del libro de Papá lleva `en_nombre_de` y
+        `motivo` (23514) y las salidas hacia un libro personal dejan la entrada
+        `finanzas.salida_libro_representado`; (I4) un albacea es vigente solo si sigue siendo
+        adulto con Finanzas, y si no, escribe el suplente; (I5) las acciones `finanzas*` y
+        las tablas `fin_*` de la bitácora las escribe solo el servidor (42501 si la app las
+        inserta); (M6) la maestra que no es la dueña no cambia la configuración del hogar
+        (42501); (M10) asignar o quitar la maestra deja `finanzas.maestra_asignada`.
+      - **Funciones internas:** `fin_vigencia_consulta_maestra`, `fin_adulto_con_finanzas` y
+        las de los triggers no son llamables desde la API (se les quitó `EXECUTE` a todos
+        los roles); por eso no tienen operación aquí.
   - name: Funciones del servidor
     description: |
       Funciones de Supabase (`/functions/v1/<nombre>`) desde la Fase 2: avisos al instante
@@ -119,7 +151,8 @@ paths:
         Lista las herramientas que el rol de la sesión puede usar con los módulos activos.
         Lo que no está en la lista no existe para GRAVITY. Es lo único que ve la IA para
         elegir qué hacer. A la cuidadora solo le llega su bandeja de solicitudes (D18); a
-        la cuenta maestra, ninguna que escriba o administre lo ajeno (D19).
+        una cuenta maestra que no es la dueña, solo navegación y lectura: ninguna que
+        escriba ni abra una hoja de registro (D19).
       x-roles: [dueno, coadministrador, familiar, cuidador, casa]
       x-escribe: false
       x-solo-local: false
@@ -235,10 +268,11 @@ paths:
         Abre la hoja de registro rápido de un gasto (F1): diálogo en la laptop, hoja
         inferior en el teléfono y la tablet. No guarda nada: la persona captura y confirma
         en la hoja, que es la confirmación; una orden nunca registra dinero sola. Exige
-        poder escribir en Finanzas (dueño y coadministrador, cada quien en sus libros); la
-        cuenta maestra la recibe para sus propios libros y nunca escribe en lo ajeno (D19).
-        Solo local (D3). Órdenes: "registrar gasto", "registra un gasto", "nuevo gasto",
-        "anota gasto".
+        poder escribir en Finanzas (dueño y coadministrador, cada quien en sus libros). La
+        cuenta maestra con login propio es de solo lectura total (D19, 23/oct): no la
+        recibe; si el dueño es además la maestra, la conserva para lo propio. Solo local
+        (D3). Hay que decir el verbo (D19, 23/oct): "registrar gasto", "registra gasto",
+        "registrar un gasto" o "registra un gasto"; la palabra "gasto" suelta no abre nada.
       x-roles: [dueno, coadministrador]
       x-escribe: false
       x-solo-local: true
@@ -940,11 +974,16 @@ paths:
       operationId: leerBitacora
       summary: Leer la bitácora
       description: >-
-        Solo agregar. Cada quien ve lo que hizo; el historial de GRAVITY (`gravity.*`), solo
-        su autor, también para el dueño (D18); lo de Finanzas (`fin_*` y `finanzas.*`), quien
-        puede leer ese libro; lo demás (membresías, invitaciones…), el dueño. La cuenta
-        maestra ve todo (D19), y sus consultas a libros ajenos quedan aquí
-        (`finanzas.consulta_maestra`).
+        Solo agregar. Cada quien ve lo que hizo. El historial de GRAVITY (`gravity.*`): su
+        autor, también para el dueño (D18), y la cuenta maestra. Lo de Finanzas (tablas
+        `fin_*` y acciones `finanzas*`): quien puede leer el libro de la entrada (la cuenta
+        maestra solo con una consulta vigente, I2) o, si es del hogar, quien tiene Finanzas.
+        Lo demás (membresías, invitaciones…): el dueño y la cuenta maestra. Las acciones que
+        el servidor deja en Finanzas son `finanzas.consulta_maestra` (cada consulta de la
+        maestra a un libro ajeno, visible para quienes lo llevan), `finanzas.maestra_asignada`
+        (quién es la maestra, visible para todo adulto con Finanzas) y
+        `finanzas.salida_libro_representado` (una salida del libro de Papá hacia un libro
+        personal, visible para quienes lo llevan).
       x-roles: [dueno, coadministrador, familiar, cuidador, casa]
       x-escribe: false
       x-solo-local: true
@@ -963,6 +1002,46 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/EntradaBitacora'
+              example:
+                - id: 9a1b2c3d-4e5f-4a6b-8c7d-0e1f2a3b4c01
+                  hogar_id: b0000000-0000-4000-8000-000000000001
+                  persona_id: e0000000-0000-4000-8000-000000000008
+                  accion: finanzas.consulta_maestra
+                  tabla: fin_libros
+                  registro_id: f1000000-0000-4000-8000-000000000001
+                  detalle:
+                    libro_id: f1000000-0000-4000-8000-000000000001
+                    tipo: compartido
+                    vigencia_minutos: 30
+                  ocurrido_en: '2026-10-23T09:15:00-06:00'
+                  registrado_en: '2026-10-23T09:15:00-06:00'
+                - id: 9a1b2c3d-4e5f-4a6b-8c7d-0e1f2a3b4c02
+                  hogar_id: b0000000-0000-4000-8000-000000000001
+                  persona_id: e0000000-0000-4000-8000-000000000001
+                  accion: finanzas.maestra_asignada
+                  tabla: membresias
+                  registro_id: e0000000-0000-4000-8000-000000000008
+                  detalle:
+                    anterior_persona_id: null
+                    nueva_persona_id: e0000000-0000-4000-8000-000000000008
+                  ocurrido_en: '2026-10-22T20:00:00-06:00'
+                  registrado_en: '2026-10-22T20:00:00-06:00'
+                - id: 9a1b2c3d-4e5f-4a6b-8c7d-0e1f2a3b4c03
+                  hogar_id: b0000000-0000-4000-8000-000000000001
+                  persona_id: e0000000-0000-4000-8000-000000000001
+                  accion: finanzas.salida_libro_representado
+                  tabla: fin_movimientos
+                  registro_id: 3d0c2f5e-8a41-4b7e-9c1d-5f2a6b8e9a05
+                  detalle:
+                    libro_id: f1000000-0000-4000-8000-000000000002
+                    libro_destino_id: f1000000-0000-4000-8000-000000000003
+                    tipo: transferencia
+                    fecha: '2026-10-21'
+                    monto_centavos: 150000
+                    en_nombre_de: e0000000-0000-4000-8000-000000000009
+                    motivo: Reembolso de la farmacia de Papá (ejemplo)
+                  ocurrido_en: '2026-10-21T11:20:00-06:00'
+                  registrado_en: '2026-10-21T11:20:03-06:00'
         '401':
           $ref: '#/components/responses/SinSesion'
     post:
@@ -974,9 +1053,14 @@ paths:
         No se edita ni se borra: se corrige con una entrada nueva. `accion` es un
         identificador en minúsculas (`^[a-z][a-z0-9_.]*$`, hasta 60 caracteres), p. ej.
         `entrega_de_turno` o `gravity.abrir`; si no cumple, responde 400 (código 23514).
-        Las acciones `insertar`, `actualizar` y `borrar` están reservadas a los triggers
-        que registran los cambios de las tablas: nadie puede fabricar una entrada que
-        parezca un cambio automático, y responde 403 (código 42501).
+        Hay entradas reservadas al servidor, **para todo rol de la app**, y responden 403
+        (código 42501): las acciones `insertar`, `actualizar` y `borrar` (las de los
+        triggers que registran los cambios de las tablas), cualquier acción que empiece por
+        `finanzas` (p. ej. `finanzas.consulta_maestra`, `finanzas.maestra_asignada` y
+        `finanzas.salida_libro_representado`) y cualquier entrada cuya `tabla` sea `fin_*`
+        (con o sin `public.`). Esas las escriben solo los triggers y las funciones del
+        servidor: así nadie fabrica un cambio automático, una consulta de la cuenta maestra
+        ni un aviso de Finanzas (I5).
       x-roles: [dueno, coadministrador, familiar, cuidador, casa]
       x-escribe: true
       x-solo-local: true
@@ -1002,15 +1086,20 @@ paths:
                   maxLength: 60
                   pattern: '^[a-z][a-z0-9_.]*$'
                   not:
-                    enum: [insertar, actualizar, borrar]
+                    anyOf:
+                      - enum: [insertar, actualizar, borrar]
+                      - pattern: '^finanzas'
                   description: >-
                     Identificador en minúsculas (letras, dígitos, `_` y `.`). `insertar`,
-                    `actualizar` y `borrar` están reservadas a los triggers (403, código
-                    42501).
+                    `actualizar` y `borrar`, y toda acción que empiece por `finanzas`, están
+                    reservadas al servidor (403, código 42501).
                   examples: [entrega_de_turno, gravity.abrir]
                 tabla:
                   type: string
                   maxLength: 63
+                  not:
+                    pattern: '^\s*(public\.)?[fF][iI][nN]_'
+                  description: Las tablas `fin_*` están reservadas al servidor (403, código 42501).
                 registro_id:
                   type: string
                   maxLength: 200
@@ -1040,8 +1129,10 @@ paths:
         '403':
           description: >-
             Las reglas del servidor no lo permiten: la acción es `insertar`, `actualizar`
-            o `borrar` (reservadas a los triggers), la entrada va a nombre de otra persona,
-            el hogar no es tuyo o `ocurrido_en` pasa de 10 minutos en el futuro (código 42501).
+            o `borrar` (reservadas a los triggers) o empieza por `finanzas`, la tabla es
+            `fin_*` (también reservadas al servidor, I5), la entrada va a nombre de otra
+            persona, el hogar no es tuyo o `ocurrido_en` pasa de 10 minutos en el futuro
+            (código 42501).
           content:
             application/json:
               schema:
@@ -1062,10 +1153,11 @@ paths:
       summary: Leer libros
       description: >-
         Tu libro personal, los compartidos de los que eres miembro y, si eres albacea, el de
-        Papá (D19). La cuenta maestra los lee todos y, al abrir uno ajeno, la app llama
-        `fin_registrar_consulta_maestra`. El libro personal lo crea el servidor al dar un
-        rol con Finanzas: la app lo busca (`tipo=eq.personal` y `titular_id` = su persona),
-        no lo crea.
+        Papá (D19). La cuenta maestra ve la **portada** de todos los libros del hogar (el
+        libro y quién lo lleva) sin consulta, para elegir cuál mirar; su contenido exige una
+        consulta registrada (`fin_registrar_consulta_maestra`, I2). El libro personal lo
+        crea el servidor al dar un rol con Finanzas: la app lo busca (`tipo=eq.personal` y
+        `titular_id` = su persona), no lo crea.
       x-roles: [dueno, coadministrador]
       x-escribe: false
       x-solo-local: true
@@ -1107,6 +1199,8 @@ paths:
         casa") y queda como su miembro; luego agrega a los demás en `fin_libro_miembros`. El
         personal lo crea el servidor y el representado (Papá),
         `fin_crear_libro_representado`. `creado_por` y `creado_en` los pone el servidor.
+        La cuenta maestra también puede crear los suyos: crear un libro propio no es
+        configuración del hogar (M6).
       x-roles: [dueno, coadministrador]
       x-escribe: true
       x-solo-local: true
@@ -1181,9 +1275,9 @@ paths:
       operationId: leerMiembrosLibro
       summary: Leer quién lleva cada libro
       description: >-
-        Miembros vigentes e históricos de los libros que puedes leer. Personal: solo su
-        titular. Compartido: sus miembros adultos. Representado: 1 albacea y, opcional, 1
-        suplente.
+        Miembros vigentes e históricos de los libros que puedes leer; la cuenta maestra ve
+        quién lleva cada libro del hogar sin consulta (I2). Personal: solo su titular.
+        Compartido: sus miembros adultos. Representado: 1 albacea y, opcional, 1 suplente.
       x-roles: [dueno, coadministrador]
       x-escribe: false
       x-solo-local: true
@@ -1250,7 +1344,14 @@ paths:
       summary: Cerrar la participación en un libro
       description: >-
         Los miembros no se borran: se cierra `hasta` (queda en la bitácora). `libro_id` y
-        `persona_id` no cambian (42501).
+        `persona_id` no cambian (42501). En un libro **compartido** (I1): solo quien lo creó,
+        o el dueño del hogar, cambia la membresía de otra persona (`desde`, `hasta` o
+        `papel`); a cualquier otro responde 403 (42501). Cada quien puede salirse cerrando su
+        propia participación. Nunca quedan menos de 2 miembros vigentes (adultos con
+        Finanzas): el cambio que lo dejaría en menos responde 400 (22023, "Un libro
+        compartido no baja de 2 miembros vigentes"; para dejar de usarlo se desactiva el
+        libro con `cambiarLibroFinanzas`). Un albacea es vigente (I4) solo si su membresía
+        del hogar sigue activa y con Finanzas; si no, escribe el suplente.
       x-roles: [dueno, coadministrador]
       x-escribe: true
       x-solo-local: true
@@ -1313,6 +1414,8 @@ paths:
       description: >-
         Nivel 1 sin padre; niveles 2 y 3 con `padre_id`. Única por (`hogar_id`, `padre_id`,
         `nombre`). La importación de la hoja Categorías usa la misma operación.
+        Es configuración del hogar (M6): la hacen el dueño y la pareja; la cuenta maestra que no
+        es la dueña no la cambia (403, 42501).
       x-roles: [dueno, coadministrador]
       x-escribe: true
       x-solo-local: true
@@ -1353,6 +1456,8 @@ paths:
       summary: Cambiar, ocultar o archivar una categoría
       description: >-
         Una categoría con datos no se borra: se archiva (`archivada: true`) o se oculta.
+        Es configuración del hogar (M6): la hacen el dueño y la pareja; la cuenta maestra que no
+        es la dueña no la cambia (403, 42501).
       x-roles: [dueno, coadministrador]
       x-escribe: true
       x-solo-local: true
@@ -1388,6 +1493,8 @@ paths:
       description: >-
         Solo sin datos: si la usa un movimiento, una cuenta o una subcategoría, responde 409
         (23503); entonces se archiva.
+        Es configuración del hogar (M6): la hacen el dueño y la pareja; la cuenta maestra que no
+        es la dueña no la cambia (403, 42501).
       x-roles: [dueno, coadministrador]
       x-escribe: true
       x-solo-local: true
@@ -1410,6 +1517,8 @@ paths:
         Las cuentas de tus libros (efectivo, banco, tarjeta…) y las de gasto del hogar
         (`libro_id` nulo). El nombre de una cuenta de un libro del que no eres miembro no se
         ve. `clase` y `liquida` son generadas.
+        La cuenta maestra ve vacío el libro de otra persona mientras no tenga una consulta
+        vigente (`fin_registrar_consulta_maestra`, 30 minutos): no da error, no devuelve filas.
       x-roles: [dueno, coadministrador]
       x-escribe: false
       x-solo-local: true
@@ -1438,6 +1547,8 @@ paths:
         De un libro (activos, pasivos, origen de ingreso) o del hogar si es `de_gasto` o
         `gasto_financiero` (`libro_id` nulo). Ajustes, Apertura y Por clasificar se crean
         solas con cada libro. Única por (`hogar_id`, `libro_id`, `nombre`).
+        Las cuentas de gasto son configuración del hogar (M6): la cuenta maestra que no es la
+        dueña no las cambia (403, 42501).
       x-roles: [dueno, coadministrador]
       x-escribe: true
       x-solo-local: true
@@ -1487,6 +1598,8 @@ paths:
       description: >-
         Cerrar o archivar solo con saldo cero (confirmado y con pendientes; si no, 55000).
         Las de sistema no cambian de tipo ni de estado. `libro_id` no cambia (42501).
+        Las cuentas de gasto son configuración del hogar (M6): la cuenta maestra que no es la
+        dueña no las cambia (403, 42501).
       x-roles: [dueno, coadministrador]
       x-escribe: true
       x-solo-local: true
@@ -1524,6 +1637,8 @@ paths:
       description: >-
         Solo sin movimientos: con movimientos responde 409 (23503) y se cierra o archiva con
         saldo cero.
+        Las cuentas de gasto son configuración del hogar (M6): la cuenta maestra que no es la
+        dueña no las cambia (403, 42501).
       x-roles: [dueno, coadministrador]
       x-escribe: true
       x-solo-local: true
@@ -1546,6 +1661,8 @@ paths:
         Una fila por libro (la crea el servidor con los valores por defecto de 5.6 bis y 5.9
         bis): meta de remanente, ahorro mínimo con deuda, tope de arrastre, umbrales de
         semáforo y cierre automático. Porcentajes en puntos base.
+        La cuenta maestra ve vacío el libro de otra persona mientras no tenga una consulta
+        vigente (`fin_registrar_consulta_maestra`, 30 minutos): no da error, no devuelve filas.
       x-roles: [dueno, coadministrador]
       x-escribe: false
       x-solo-local: true
@@ -1609,6 +1726,8 @@ paths:
       description: >-
         Movimientos de los libros que puedes leer; uno entre libros (aportación a un
         compartido) se ve desde los dos. Para el saldo usa `fin_v_saldos`.
+        La cuenta maestra ve vacío el libro de otra persona mientras no tenga una consulta
+        vigente (`fin_registrar_consulta_maestra`, 30 minutos): no da error, no devuelve filas.
       x-roles: [dueno, coadministrador]
       x-escribe: false
       x-solo-local: true
@@ -1642,9 +1761,14 @@ paths:
         invertidos y `motivo`). Hay que poder escribir en cada libro que toca (`fin_puede`)
         y siempre a nombre propio. `registrado_en` es **obligatorio** (cuándo se capturó; si
         faltara, cada reenvío sería distinto). No mandes `recibido_en`, `libro_origen_id` ni
-        `libro_destino_id`: los pone el servidor (sin permiso de columna, 42501). El albacea
-        registra en nombre de Papá con `en_nombre_de` y `motivo`. Solo `transferencia` y
-        `pago_deuda` (y su anulación) cruzan de un libro a otro. Reenviar el mismo `id` con
+        `libro_destino_id`: los pone el servidor (sin permiso de columna, 42501). En el libro
+        de Papá (`representado`) **todo** movimiento, también una anulación, lleva
+        `en_nombre_de` (su titular) y `motivo`; si falta alguno, 400 (23514, I3). Lo registra
+        el albacea, que es vigente solo si sigue siendo adulto con Finanzas (I4); si no,
+        escribe el suplente. Una salida del libro de Papá hacia un libro personal deja
+        además la entrada `finanzas.salida_libro_representado` en la bitácora, visible para
+        quienes llevan el libro. Solo `transferencia` y `pago_deuda` (y su anulación) cruzan
+        de un libro a otro. Reenviar el mismo `id` con
         el mismo contenido no hace nada (0 filas, sin error); con otro contenido, 409
         (23505). GRAVITY nunca llama esta operación por su cuenta: la persona confirma en la
         hoja de registro (D3).
@@ -1704,6 +1828,19 @@ paths:
                   monto_centavos: 48000
                   en_nombre_de: e0000000-0000-4000-8000-000000000009
                   motivo: Recibo de luz de Papá (ejemplo)
+              salida:
+                summary: Salida del libro de Papá a un libro personal (queda en la bitácora)
+                value:
+                  id: 3d0c2f5e-8a41-4b7e-9c1d-5f2a6b8e9a05
+                  hogar_id: b0000000-0000-4000-8000-000000000001
+                  tipo: transferencia
+                  fecha: '2026-10-21'
+                  registrado_en: '2026-10-21T11:20:00-06:00'
+                  cuenta_origen_id: c3000000-0000-4000-8000-000000000030
+                  cuenta_destino_id: c3000000-0000-4000-8000-000000000001
+                  monto_centavos: 150000
+                  en_nombre_de: e0000000-0000-4000-8000-000000000009
+                  motivo: Reembolso de la farmacia de Papá (ejemplo)
       responses:
         '201':
           $ref: '#/components/responses/Agregado'
@@ -1723,6 +1860,8 @@ paths:
       description: >-
         Ingresos de cada libro por persona (sueldo, pensión…). Los extras no se configuran:
         son movimientos `ingreso`.
+        La cuenta maestra ve vacío el libro de otra persona mientras no tenga una consulta
+        vigente (`fin_registrar_consulta_maestra`, 30 minutos): no da error, no devuelve filas.
       x-roles: [dueno, coadministrador]
       x-escribe: false
       x-solo-local: true
@@ -1826,6 +1965,8 @@ paths:
       summary: Leer vigencias de ingresos
       description: >-
         Monto neto y calendario de cada ingreso por periodo.
+        La cuenta maestra ve vacío el libro de otra persona mientras no tenga una consulta
+        vigente (`fin_registrar_consulta_maestra`, 30 minutos): no da error, no devuelve filas.
       x-roles: [dueno, coadministrador]
       x-escribe: false
       x-solo-local: true
@@ -1948,6 +2089,8 @@ paths:
       description: >-
         Renta, servicios y reservas (placas, predial) de cada libro, con su frecuencia y su
         regla de día inhábil.
+        La cuenta maestra ve vacío el libro de otra persona mientras no tenga una consulta
+        vigente (`fin_registrar_consulta_maestra`, 30 minutos): no da error, no devuelve filas.
       x-roles: [dueno, coadministrador]
       x-escribe: false
       x-solo-local: true
@@ -2056,6 +2199,8 @@ paths:
       summary: Leer sobres (partidas variables)
       description: >-
         Partidas variables por rubro del presupuesto de cada libro.
+        La cuenta maestra ve vacío el libro de otra persona mientras no tenga una consulta
+        vigente (`fin_registrar_consulta_maestra`, 30 minutos): no da error, no devuelve filas.
       x-roles: [dueno, coadministrador]
       x-escribe: false
       x-solo-local: true
@@ -2158,6 +2303,8 @@ paths:
       summary: Leer deudas
       description: >-
         Deudas de cada libro; el saldo sale del libro (cuenta pasivo, `fin_v_saldos`).
+        La cuenta maestra ve vacío el libro de otra persona mientras no tenga una consulta
+        vigente (`fin_registrar_consulta_maestra`, 30 minutos): no da error, no devuelve filas.
       x-roles: [dueno, coadministrador]
       x-escribe: false
       x-solo-local: true
@@ -2294,6 +2441,8 @@ paths:
       description: >-
         La precarga de festivos nace inactiva: el dueño la revisa y la activa. Único por
         (`hogar_id`, `fecha`).
+        Es configuración del hogar (M6): la hacen el dueño y la pareja; la cuenta maestra que no
+        es la dueña no la cambia (403, 42501).
       x-roles: [dueno, coadministrador]
       x-escribe: true
       x-solo-local: true
@@ -2335,6 +2484,8 @@ paths:
       summary: Activar o cambiar un día inhábil
       description: >-
         Al cambiar `activo`, el servidor pone `revisado_por` y `revisado_en`.
+        Es configuración del hogar (M6): la hacen el dueño y la pareja; la cuenta maestra que no
+        es la dueña no la cambia (403, 42501).
       x-roles: [dueno, coadministrador]
       x-escribe: true
       x-solo-local: true
@@ -2371,6 +2522,8 @@ paths:
       description: >-
         Foto del plan de cada semana (lunes) por libro, con la cascada ingreso → presupuesto
         → deuda → remanente.
+        La cuenta maestra ve vacío el libro de otra persona mientras no tenga una consulta
+        vigente (`fin_registrar_consulta_maestra`, 30 minutos): no da error, no devuelve filas.
       x-roles: [dueno, coadministrador]
       x-escribe: false
       x-solo-local: true
@@ -2486,6 +2639,8 @@ paths:
       summary: Leer partidas de la semana
       description: >-
         Lo asignado a cada compromiso y sobre en la semana, ya repartido por mayor resto.
+        La cuenta maestra ve vacío el libro de otra persona mientras no tenga una consulta
+        vigente (`fin_registrar_consulta_maestra`, 30 minutos): no da error, no devuelve filas.
       x-roles: [dueno, coadministrador]
       x-escribe: false
       x-solo-local: true
@@ -2581,6 +2736,8 @@ paths:
       summary: Leer abonos planeados
       description: >-
         Abono planeado, mínimo y extra de cada deuda en la semana.
+        La cuenta maestra ve vacío el libro de otra persona mientras no tenga una consulta
+        vigente (`fin_registrar_consulta_maestra`, 30 minutos): no da error, no devuelve filas.
       x-roles: [dueno, coadministrador]
       x-escribe: false
       x-solo-local: true
@@ -2677,6 +2834,8 @@ paths:
       description: >-
         Fechas esperadas de ingresos, compromisos y deudas (horizonte de 13 semanas), con la
         fecha ajustada por días inhábiles.
+        La cuenta maestra ve vacío el libro de otra persona mientras no tenga una consulta
+        vigente (`fin_registrar_consulta_maestra`, 30 minutos): no da error, no devuelve filas.
       x-roles: [dueno, coadministrador]
       x-escribe: false
       x-solo-local: true
@@ -2776,6 +2935,8 @@ paths:
       summary: Leer cierres de semana
       description: >-
         Fotos del cierre de cada semana y del balance; una por versión.
+        La cuenta maestra ve vacío el libro de otra persona mientras no tenga una consulta
+        vigente (`fin_registrar_consulta_maestra`, 30 minutos): no da error, no devuelve filas.
       x-roles: [dueno, coadministrador]
       x-escribe: false
       x-solo-local: true
@@ -2838,6 +2999,8 @@ paths:
       summary: Leer partidas de un cierre
       description: >-
         Lo gastado, el arrastre y lo que pasó al remanente de cada partida al cerrar.
+        La cuenta maestra ve vacío el libro de otra persona mientras no tenga una consulta
+        vigente (`fin_registrar_consulta_maestra`, 30 minutos): no da error, no devuelve filas.
       x-roles: [dueno, coadministrador]
       x-escribe: false
       x-solo-local: true
@@ -2897,6 +3060,8 @@ paths:
       description: >-
         Abono planeado, real y mínimo de cada deuda al cerrar; `diferido` = planeado − real
         (generado).
+        La cuenta maestra ve vacío el libro de otra persona mientras no tenga una consulta
+        vigente (`fin_registrar_consulta_maestra`, 30 minutos): no da error, no devuelve filas.
       x-roles: [dueno, coadministrador]
       x-escribe: false
       x-solo-local: true
@@ -2955,6 +3120,8 @@ paths:
       summary: Leer conciliaciones
       description: >-
         Conciliaciones de saldo de las cuentas de tus libros.
+        La cuenta maestra ve vacío el libro de otra persona mientras no tenga una consulta
+        vigente (`fin_registrar_consulta_maestra`, 30 minutos): no da error, no devuelve filas.
       x-roles: [dueno, coadministrador]
       x-escribe: false
       x-solo-local: true
@@ -3044,6 +3211,8 @@ paths:
       description: >-
         **Solo agregar.** `detalle` hasta 256 KB (no se copia a la bitácora). `filas_creadas
         + filas_omitidas` no pasa de `filas_leidas` (23514).
+        Es configuración del hogar (M6): la hacen el dueño y la pareja; la cuenta maestra que no
+        es la dueña no la cambia (403, 42501).
       x-roles: [dueno, coadministrador]
       x-escribe: true
       x-solo-local: true
@@ -3077,6 +3246,8 @@ paths:
         Saldo confirmado por cuenta con el signo de su clase (en una tarjeta, lo que se
         debe) y el saldo con pendientes. Las cuentas de gasto del hogar salen una vez por
         libro. Respeta la RLS de quien consulta (`security_invoker`).
+        La cuenta maestra ve vacío el libro de otra persona mientras no tenga una consulta
+        vigente (`fin_registrar_consulta_maestra`, 30 minutos): no da error, no devuelve filas.
       x-roles: [dueno, coadministrador]
       x-escribe: false
       x-solo-local: true
@@ -3105,6 +3276,8 @@ paths:
         Gasto neto confirmado por libro, cuenta de gasto y semana (lunes): gastos −
         reembolsos ± anulaciones y reclasificaciones, por la fecha económica. Respeta la RLS
         de quien consulta.
+        La cuenta maestra ve vacío el libro de otra persona mientras no tenga una consulta
+        vigente (`fin_registrar_consulta_maestra`, 30 minutos): no da error, no devuelve filas.
       x-roles: [dueno, coadministrador]
       x-escribe: false
       x-solo-local: true
@@ -3131,9 +3304,11 @@ paths:
       operationId: finPuede
       summary: ¿Puedo leer, escribir o administrar este libro?
       description: >-
-        La regla de las tablas de cada libro (D19). `leer`: miembro vigente o cuenta
-        maestra. `escribir`: titular, miembro o albacea (el suplente solo si no hay albacea
-        vigente), con el libro activo. `administrar`: titular de un personal, miembro de un
+        La regla de las tablas de cada libro (D19). `leer`: miembro vigente o, para la
+        cuenta maestra, solo con una consulta registrada en ese libro en los últimos 30
+        minutos (I2). `escribir`: titular, miembro o albacea (el suplente solo si no hay
+        albacea vigente; el albacea es vigente solo si sigue siendo adulto con Finanzas,
+        I4), con el libro activo. `administrar`: titular de un personal, miembro de un
         compartido, albacea de un representado. La cuenta maestra nunca escribe ni
         administra lo ajeno. Siempre exige un rol con Finanzas: a familiar, cuidador y Casa
         les responde `false`.
@@ -3173,8 +3348,10 @@ paths:
       summary: ¿Puedo usar lo de Finanzas del hogar?
       description: >-
         La regla de lo que es del hogar (categorías, cuentas de gasto, días inhábiles,
-        importaciones): el rol tiene Finanzas para esa acción; la cuenta maestra además lee.
-        A familiar, cuidador y Casa les responde `false`.
+        importaciones): el rol tiene Finanzas para esa acción; la cuenta maestra además lee
+        (sin consulta: es la portada). Si la cuenta maestra no es la dueña, `escribir` y
+        `administrar` responden `false`: no cambia la configuración del hogar (M6); el dueño
+        y la pareja sí. A familiar, cuidador y Casa les responde `false`.
       x-roles: [dueno, coadministrador]
       x-escribe: false
       x-solo-local: true
@@ -3323,8 +3500,12 @@ paths:
       description: >-
         Solo el dueño (42501). Nombra la cuenta maestra del hogar: un miembro vigente con
         rol dueño o coadministrador (si no, 22023); nunca familiar, cuidador ni Casa. Con
-        `p_persona_id` nulo la quita. Una sola por hogar; se recomienda una cuenta aparte
-        del dueño, usada solo en la laptop. Queda en la bitácora.
+        `p_persona_id` nulo la quita. Una sola por hogar. Lo recomendado es otra persona con
+        su propio login (un coadministrador que crea el dueño, D19 del 23/oct), que en la
+        app es de solo lectura total; el dueño también puede nombrarse a sí mismo. Si
+        cambia quién es, deja la entrada `finanzas.maestra_asignada` (en `detalle`,
+        `anterior_persona_id` y `nueva_persona_id`), que ve todo adulto con Finanzas
+        (M10), además de la de membresías, que solo ve el dueño.
       x-roles: [dueno]
       x-escribe: true
       x-solo-local: true
@@ -3357,12 +3538,18 @@ paths:
     post:
       tags: [Base de datos · Finanzas]
       operationId: finRegistrarConsultaMaestra
-      summary: Registrar que la cuenta maestra abrió un libro ajeno
+      summary: Registrar una consulta de la cuenta maestra a un libro ajeno
       description: >-
-        La app la llama al abrir un libro ajeno con la cuenta maestra: deja la consulta en
-        la bitácora (`finanzas.consulta_maestra`), visible para quienes llevan ese libro.
-        Devuelve `false` si el libro es propio (no se registra). Si la sesión no es la
-        cuenta maestra, 403 (42501).
+        La cuenta maestra la llama **antes** de abrir un libro ajeno. Deja la consulta en la
+        bitácora (`finanzas.consulta_maestra`, visible para quienes llevan ese libro) y
+        habilita la lectura de ese libro por **30 minutos** (I2): es por libro y por
+        persona, y pasado el tiempo hay que llamarla otra vez (cada llamada queda en la
+        bitácora; la app la renueva sola mientras el libro está abierto). Sin una consulta
+        vigente, el servidor no devuelve filas del contenido de un libro ajeno (cuentas,
+        movimientos, plan, cierres, saldos): llega vacío, **sin error**; los libros y sus
+        miembros sí se ven (la portada). Devuelve `true` si registró la consulta y `false`
+        si el libro es propio (no se registra ni hace falta). Si la sesión no es la cuenta
+        maestra del hogar, o el libro no existe, 403 (42501).
       x-roles: [dueno, coadministrador]
       x-escribe: true
       x-solo-local: true
@@ -3381,12 +3568,19 @@ paths:
               p_libro_id: f1000000-0000-4000-8000-000000000001
       responses:
         '200':
-          description: Si se registró la consulta.
+          description: >-
+            `true` si se registró la consulta (vale 30 minutos); `false` si el libro es propio.
           content:
             application/json:
               schema:
                 type: boolean
-              example: true
+              examples:
+                registrada:
+                  summary: 'Libro ajeno (Gastos de la casa): consulta registrada'
+                  value: true
+                propia:
+                  summary: 'Libro propio: no se registra ni hace falta'
+                  value: false
         '403':
           $ref: '#/components/responses/Prohibido'
         '401':
@@ -3969,7 +4163,10 @@ components:
         hoja:
           type: [string, 'null']
           enum: [gasto, ingreso_extra, null]
-          description: Hoja de registro que abre (la hoja es la confirmación); nula si abre una pantalla.
+          description: >-
+            Hoja de registro que abre (la hoja es la confirmación); nula si abre una
+            pantalla. Una cuenta maestra que no es la dueña no recibe ninguna herramienta con
+            hoja (solo lectura total).
     PeticionHerramienta:
       type: object
       properties:
@@ -4153,7 +4350,17 @@ components:
           type: string
           description: >-
             Qué pasó, en minúsculas. `insertar`, `actualizar` y `borrar` solo las escriben
-            los triggers que registran los cambios de las tablas.
+            los triggers que registran los cambios de las tablas. Las de Finanzas las
+            escribe solo el servidor (I5): `finanzas.consulta_maestra` (la cuenta maestra
+            consultó un libro ajeno; vale 30 minutos), `finanzas.maestra_asignada` (el dueño
+            nombró o quitó la cuenta maestra; `detalle` lleva `anterior_persona_id` y
+            `nueva_persona_id`) y `finanzas.salida_libro_representado` (una salida del libro
+            de Papá hacia un libro personal; `detalle` lleva el libro de origen, el de
+            destino, el tipo, la fecha, el monto en centavos, `en_nombre_de` y `motivo`).
+          examples:
+            - finanzas.consulta_maestra
+            - finanzas.maestra_asignada
+            - finanzas.salida_libro_representado
         tabla:
           type: [string, 'null']
         registro_id:
@@ -4482,7 +4689,9 @@ components:
           description: Por omisión, la sesión; siempre la sesión (nadie registra a nombre de otro).
         en_nombre_de:
           $ref: '#/components/schemas/UuidONulo'
-          description: Persona representada (Papá) cuando un albacea registra en su nombre; `motivo` obligatorio.
+          description: >-
+            Persona representada (Papá). Obligatoria, junto con `motivo`, en todo movimiento
+            que toque el libro de Papá (23514, I3); es el titular de ese libro.
         via:
           type: string
           enum: [manual, voz, imagen, qr, importacion]

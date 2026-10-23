@@ -9,6 +9,7 @@ export 'componentes/aviso_deshacer.dart';
 export 'componentes/barra_progreso.dart';
 export 'componentes/estado_vacio.dart';
 export 'componentes/etiqueta_panel.dart';
+export 'componentes/marca_montos_ocultos.dart';
 export 'componentes/monto_ocultable.dart';
 export 'componentes/nucleo_gravity.dart';
 export 'componentes/selector_libro.dart';

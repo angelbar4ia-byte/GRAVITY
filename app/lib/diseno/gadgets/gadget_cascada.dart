@@ -1,8 +1,10 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../componentes/monto_ocultable.dart';
+import '../proveedores.dart';
 import '../superficies.dart';
 import '../valores_diseno.dart';
 
@@ -84,8 +86,9 @@ class EscalonCascada {
 /// "*real* de *planeado*" y una leyenda al pie. Los negativos (un déficit)
 /// miden por su valor absoluto y el monto lleva su signo.
 ///
-/// Con [montosOcultos] se ven las barras y no los pesos.
-class GadgetCascada extends StatelessWidget {
+/// Con [montosOcultos] **o** con los montos ocultos de la app
+/// ([montosOcultosProvider]) se ven las barras y no los pesos.
+class GadgetCascada extends ConsumerWidget {
   const GadgetCascada({
     super.key,
     required this.escalones,
@@ -113,9 +116,10 @@ class GadgetCascada extends StatelessWidget {
     ValoresDiseno v,
     EscalonCascada escalon,
     bool comparar,
+    bool ocultos,
   ) {
     String monto(int centavos) =>
-        montosOcultos ? montoOculto : formatearCentavos(centavos);
+        ocultos ? montoOculto : formatearCentavos(centavos);
     final real = escalon.realCentavos;
     final texto = !comparar
         ? monto(escalon.planeadoCentavos)
@@ -137,8 +141,9 @@ class GadgetCascada extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (escalones.isEmpty) return const SizedBox.shrink();
+    final ocultos = montosOcultos || ref.watch(montosOcultosProvider);
     final v = ValoresDiseno.de(context);
     final e = v.espacio;
     final comparar = comparaReal;
@@ -152,7 +157,10 @@ class GadgetCascada extends StatelessWidget {
           // Si la etiqueta (al menos 120 dp) y los montos no caben en una
           // línea, todas las filas se apilan: etiqueta arriba, montos abajo.
           final anchoMontos = escalones
-              .map((escalon) => _anchoMontos(context, v, escalon, comparar))
+              .map(
+                (escalon) =>
+                    _anchoMontos(context, v, escalon, comparar, ocultos),
+              )
               .reduce(math.max);
           final angosto = limites.maxWidth < 120 + e * 1.5 + anchoMontos;
           return Column(
@@ -165,7 +173,7 @@ class GadgetCascada extends StatelessWidget {
                   escalon: escalones[i],
                   escala: escala,
                   comparar: comparar,
-                  oculto: montosOcultos,
+                  oculto: ocultos,
                   angosto: angosto,
                 ),
               ],

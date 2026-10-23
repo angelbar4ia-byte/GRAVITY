@@ -25,7 +25,7 @@ void main() {
     });
 
     test('texto del monto oculto', () {
-      expect(montoOculto, r'$ • • • • •');
+      expect(montoOculto, '••••');
     });
   });
 
@@ -34,6 +34,7 @@ void main() {
       await montar(
         tester,
         const Scaffold(body: MontoOcultable(centavos: 123450)),
+        montosVisibles: true,
       );
       expect(find.text(r'$1,234.50'), findsOneWidget);
     });
@@ -46,11 +47,82 @@ void main() {
         tester,
         const Scaffold(body: MontoOcultable(centavos: 123450, oculto: true)),
       );
-      expect(find.text(r'$ • • • • •'), findsOneWidget);
+      expect(find.text('••••'), findsOneWidget);
       expect(find.text(r'$1,234.50'), findsNothing);
       expect(find.bySemanticsLabel('Monto oculto'), findsOneWidget);
       expect(find.bySemanticsLabel(RegExp(r'1,234')), findsNothing);
       semantica.dispose();
+    });
+
+    testWidgets('sin pedirlo, también se oculta con el provider (montos sin '
+        'mostrar)', (tester) async {
+      final semantica = tester.ensureSemantics();
+      await montar(
+        tester,
+        const Scaffold(body: MontoOcultable(centavos: 123450)),
+      );
+      expect(find.text('••••'), findsOneWidget);
+      expect(find.text(r'$1,234.50'), findsNothing);
+      expect(find.bySemanticsLabel('Monto oculto'), findsOneWidget);
+      expect(find.bySemanticsLabel(RegExp(r'1,234')), findsNothing);
+      // Al mostrarlos (por ejemplo, tras el PIN), se ven.
+      contenedorDe(
+        tester,
+        find.byType(MontoOcultable),
+      ).read(montosVisiblesProvider.notifier).fijar(true);
+      await tester.pump();
+      expect(find.text(r'$1,234.50'), findsOneWidget);
+      // El modo privado los vuelve a ocultar.
+      contenedorDe(
+        tester,
+        find.byType(MontoOcultable),
+      ).read(modoPrivadoProvider.notifier).fijar(true);
+      await tester.pump();
+      expect(find.text(r'$1,234.50'), findsNothing);
+      expect(find.text('••••'), findsOneWidget);
+      semantica.dispose();
+    });
+
+    testWidgets('con los montos a la vista, oculto: true sigue ocultando', (
+      tester,
+    ) async {
+      await montar(
+        tester,
+        const Scaffold(body: MontoOcultable(centavos: 123450, oculto: true)),
+        montosVisibles: true,
+      );
+      expect(find.text('••••'), findsOneWidget);
+    });
+
+    testWidgets('deEjemplo: una cifra inventada de una vista previa no se '
+        'oculta', (tester) async {
+      await montar(
+        tester,
+        const Scaffold(body: MontoOcultable(centavos: 123450, deEjemplo: true)),
+      );
+      expect(find.text(r'$1,234.50'), findsOneWidget);
+    });
+
+    testWidgets('el texto oculto mide lo mismo con cualquier cifra', (
+      tester,
+    ) async {
+      await montar(
+        tester,
+        const Scaffold(
+          body: Column(
+            children: [
+              MontoOcultable(centavos: 5),
+              MontoOcultable(centavos: 99999999999),
+            ],
+          ),
+        ),
+      );
+      final textos = find.text('••••');
+      expect(textos, findsNWidgets(2));
+      expect(
+        tester.getSize(textos.first).width,
+        tester.getSize(textos.last).width,
+      );
     });
 
     testWidgets('al tocar avisa y tiene zona táctil de 48', (tester) async {

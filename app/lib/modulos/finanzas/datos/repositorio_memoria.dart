@@ -9,6 +9,7 @@ import 'dart:async';
 import 'package:finanzas_dominio/finanzas_dominio.dart';
 import 'package:uuid/uuid.dart';
 
+import 'demostracion.dart' show datosDeLibros;
 import 'repositorio.dart';
 
 class RepositorioFinanzasEnMemoria implements RepositorioFinanzas {
@@ -21,6 +22,10 @@ class RepositorioFinanzasEnMemoria implements RepositorioFinanzas {
     Set<String> adultosConFinanzas = const {},
     String Function()? generarId,
     this.simularSinConexion = false,
+    this.exigeConsultaMaestra = false,
+    this.vigenciaConsulta = const Duration(minutes: 30),
+    this.adultosActivosDelHogar,
+    DateTime Function()? reloj,
   }) : _carga = CargaFinanzas(
          datos: datos ?? DatosFinanzas.vacio,
          personas: Map.of(personas),
@@ -28,11 +33,28 @@ class RepositorioFinanzasEnMemoria implements RepositorioFinanzas {
          cuentaMaestra: cuentaMaestra,
          adultosConFinanzas: adultosConFinanzas,
        ),
-       _generarId = generarId ?? const Uuid().v4;
+       _generarId = generarId ?? const Uuid().v4,
+       _reloj = reloj ?? DateTime.now;
 
   /// Persona que usa la app (para los libros que crea).
   final String? personaId;
   final String Function() _generarId;
+  final DateTime Function() _reloj;
+
+  /// En pruebas: hace como el servidor (I2). La cuenta maestra no recibe el
+  /// contenido de un libro ajeno (solo la portada: libros y miembros) mientras
+  /// no tenga una consulta registrada y vigente; sin ella el resultado viene
+  /// **vacío**, sin error.
+  final bool exigeConsultaMaestra;
+
+  /// Cuánto vale una consulta registrada (30 minutos en el servidor).
+  final Duration vigenciaConsulta;
+
+  /// En pruebas: las personas que hoy son adultos con Finanzas del hogar (lo
+  /// que sabe el servidor aunque la sesión no lo vea). Con esto, el permiso del
+  /// suplente del libro de papá sale como en `fin_puede` (I4). Nulo = no se
+  /// emula (se usa el espejo por fechas).
+  Set<String>? adultosActivosDelHogar;
 
   /// En pruebas: hace que la configuración falle como sin conexión.
   bool simularSinConexion;
@@ -43,11 +65,63 @@ class RepositorioFinanzasEnMemoria implements RepositorioFinanzas {
   /// Consultas de la cuenta maestra registradas (para las pruebas).
   final List<String> consultasMaestra = [];
 
+  /// Cuándo se registró la última consulta de cada libro (libro → instante).
+  final Map<String, DateTime> _consultas = {};
+
   /// Veces que se cargó (para las pruebas).
   int vecesCargado = 0;
 
+  bool _consultaVigente(String libroId) {
+    final t = _consultas[libroId];
+    return t != null && _reloj().difference(t) < vigenciaConsulta;
+  }
+
+  /// Lo que ve la persona: con [exigeConsultaMaestra], la cuenta maestra sin
+  /// consulta vigente solo ve la portada de los libros ajenos.
+  CargaFinanzas get _vista {
+    var carga = _carga;
+    final yo = personaId;
+    if (yo != null) {
+      final hoy = Fecha.deDateTime(_reloj());
+      if (exigeConsultaMaestra && carga.esMaestra) {
+        final visibles = {
+          for (final l in carga.datos.libros)
+            if (permisoEnLibro(l, yo, hoy: hoy).leer || _consultaVigente(l.id))
+              l.id,
+        };
+        carga = carga.copiar(datos: datosDeLibros(carga.datos, visibles));
+      }
+      final activos = adultosActivosDelHogar;
+      if (activos != null) {
+        carga = carga.copiar(
+          permisosServidor: {
+            for (final l in _carga.datos.libros)
+              if (l.tipo == TipoLibro.representado &&
+                  l.papelDe(yo, hoy) == PapelLibro.albaceaSuplente)
+                l.id: () {
+                  // `fin_puede`: el albacea cuenta si su cargo está abierto y
+                  // sigue siendo adulto con Finanzas.
+                  final hayAlbacea = l
+                      .vigentes(hoy)
+                      .any(
+                        (m) =>
+                            m.papel == PapelLibro.albacea &&
+                            activos.contains(m.personaId),
+                      );
+                  return PermisoServidor(
+                    escribir: l.activo && !hayAlbacea,
+                    administrar: !hayAlbacea,
+                  );
+                }(),
+          },
+        );
+      }
+    }
+    return carga;
+  }
+
   @override
-  CargaFinanzas get actual => _carga;
+  CargaFinanzas get actual => _vista;
 
   @override
   Stream<CargaFinanzas> get cambios => _cambios.stream;
@@ -55,14 +129,14 @@ class RepositorioFinanzasEnMemoria implements RepositorioFinanzas {
   @override
   Future<CargaFinanzas> cargar() async {
     vecesCargado++;
-    return _carga;
+    return _vista;
   }
 
   DatosFinanzas get _d => _carga.datos;
 
   void _publicar(DatosFinanzas datos, {Map<String, String>? personas}) {
     _carga = _carga.copiar(datos: datos, personas: personas);
-    if (!_cambios.isClosed) _cambios.add(_carga);
+    if (!_cambios.isClosed) _cambios.add(_vista);
   }
 
   void _requiereConexion() {
@@ -159,10 +233,13 @@ class RepositorioFinanzasEnMemoria implements RepositorioFinanzas {
     var lista = _d.cuentas;
     for (final c in cuentas) {
       final antes = _d.cuenta(c.id);
+      // Solo activos y pasivos piden saldo cero; las de gasto e ingreso se
+      // cierran o archivan con saldo (23/oct/2026).
       if (antes != null &&
           (c.estado == EstadoCuenta.cerrada ||
               c.estado == EstadoCuenta.archivada) &&
-          antes.estado != c.estado) {
+          antes.estado != c.estado &&
+          (c.clase == ClaseCuenta.activo || c.clase == ClaseCuenta.pasivo)) {
         final libro = _d.nuevoLibroHogar();
         if (libro.saldo(c.id, incluirPendientes: true) != 0) {
           throw const ErrorFinanzas(
@@ -313,22 +390,45 @@ class RepositorioFinanzasEnMemoria implements RepositorioFinanzas {
     );
   }
 
+  /// Lo que el servidor rechaza con 42501: cambiar un compartido que no es de
+  /// quien lo hace.
+  Libro _delAdministrador(String libroId) {
+    final libro = _d.libro(libroId);
+    if (libro == null || libro.tipo != TipoLibro.compartido) {
+      throw const ErrorFinanzas('No existe ese libro compartido.');
+    }
+    if (personaId == null || !libro.esAdministrador(personaId!)) {
+      throw const ErrorFinanzas('No tienes permiso para hacer eso en este libro.');
+    }
+    return libro;
+  }
+
+  void _cambiarLibro(String libroId, Libro Function(Libro) cambio) => _publicar(
+    _d.copiar(
+      libros: [for (final l in _d.libros) l.id == libroId ? cambio(l) : l],
+    ),
+  );
+
   @override
   Future<void> crearLibroCompartido({
     required String id,
     required String nombre,
     required List<String> otrosMiembros,
+    VisibilidadLibro visibilidad = VisibilidadLibro.privada,
   }) async {
     _requiereConexion();
     if (_d.libro(id) != null) return;
     final yo = personaId;
+    final hoy = Fecha.deDateTime(_reloj());
     final libro = Libro(
       id: id,
       nombre: nombre,
       tipo: TipoLibro.compartido,
+      creadoPor: yo,
+      visibilidad: visibilidad,
       miembros: [
         for (final p in {?yo, ...otrosMiembros})
-          MiembroLibro(personaId: p, papel: PapelLibro.miembro),
+          MiembroLibro(personaId: p, papel: PapelLibro.miembro, desde: hoy),
       ],
     );
     final (cuentas, parametros) = _arranqueDeLibro(id);
@@ -339,6 +439,66 @@ class RepositorioFinanzasEnMemoria implements RepositorioFinanzas {
         parametros: [..._d.parametros, parametros],
       ),
     );
+  }
+
+  @override
+  Future<void> cambiarVisibilidadLibro(
+    String libroId,
+    VisibilidadLibro visibilidad,
+  ) async {
+    _requiereConexion();
+    _delAdministrador(libroId);
+    _cambiarLibro(libroId, (l) => l.copiar(visibilidad: visibilidad));
+  }
+
+  @override
+  Future<void> archivarLibro(String libroId, {required bool archivado}) async {
+    _requiereConexion();
+    _delAdministrador(libroId);
+    _cambiarLibro(libroId, (l) => l.copiar(activo: !archivado));
+  }
+
+  @override
+  Future<void> agregarMiembro(String libroId, String persona) async {
+    _requiereConexion();
+    final libro = _delAdministrador(libroId);
+    final hoy = Fecha.deDateTime(_reloj());
+    if (libro.papelDe(persona, hoy) != null) return;
+    _cambiarLibro(
+      libroId,
+      (l) => l.copiar(
+        miembros: [
+          ...l.miembros,
+          MiembroLibro(personaId: persona, papel: PapelLibro.miembro, desde: hoy),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Future<void> quitarMiembro(String libroId, String persona) async {
+    _requiereConexion();
+    final libro = _delAdministrador(libroId);
+    final hoy = Fecha.deDateTime(_reloj());
+    if (libro.papelDe(persona, hoy) == null) return;
+    if (libro.vigentes(hoy).length <= 2) {
+      throw const ErrorFinanzas(
+        'Un libro compartido tiene 2 o más miembros: para terminarlo, archívalo.',
+      );
+    }
+    _cambiarLibro(libroId, (l) => l.alSalirse(persona, hoy));
+  }
+
+  @override
+  Future<void> salirDelLibro(String libroId) async {
+    _requiereConexion();
+    final yo = personaId;
+    final libro = _d.libro(libroId);
+    final hoy = Fecha.deDateTime(_reloj());
+    if (yo == null || libro == null || !libro.puedeSalir(yo, hoy)) {
+      throw const ErrorFinanzas('No eres miembro de ese libro.');
+    }
+    _cambiarLibro(libroId, (l) => l.alSalirse(yo, hoy));
   }
 
   @override
@@ -467,8 +627,17 @@ class RepositorioFinanzasEnMemoria implements RepositorioFinanzas {
   }
 
   @override
-  Future<void> registrarConsultaMaestra(String libroId) async {
+  Future<bool> registrarConsultaMaestra(String libroId) async {
+    final yo = personaId;
+    final libro = _d.libro(libroId);
+    if (yo != null &&
+        libro != null &&
+        libro.papelDe(yo, Fecha.deDateTime(_reloj())) != null) {
+      return false; // lo propio no se registra
+    }
     consultasMaestra.add(libroId);
+    _consultas[libroId] = _reloj();
+    return true;
   }
 
   Future<void> cerrar() => _cambios.close();

@@ -33,6 +33,7 @@ class CascaronLaptop extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final rol = ref.watch(rolEfectivoProvider);
+    final esMaestra = ref.watch(esCuentaMaestraProvider);
     return CallbackShortcuts(
       bindings: {
         const SingleActivator(LogicalKeyboardKey.escape): () =>
@@ -42,7 +43,8 @@ class CascaronLaptop extends ConsumerWidget {
             if (puedeAbrir(rol, modulosDeTrabajo[i]))
               SingleActivator(_teclas[i], control: true): () =>
                   context.go(rutaDeModulo(modulosDeTrabajo[i])),
-        if (rol != null && puedeRegistrarEn(rol, Modulo.finanzas))
+        if (rol != null &&
+            puedeRegistrarEn(rol, Modulo.finanzas, esMaestra: esMaestra))
           const SingleActivator(LogicalKeyboardKey.keyN, control: true): () =>
               abrirRegistroEnDialogo(context),
       },

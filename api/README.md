@@ -15,7 +15,7 @@ La especificación de las APIs del sistema y su consola local. Se consulta en la
 
 1. **Herramientas de GRAVITY** (D1, D3): `GET /herramientas`, `POST /herramientas/{nombre}` y una operación por herramienta registrada (Fases 0 y 1: navegación; "registrar gasto" solo abre la hoja de registro).
 2. **Base de datos**: Supabase/PostgREST (`/rest/v1/...`), según `supabase/migrations/20261020000000_base.sql`. Cada consulta pasa por RLS.
-3. **Base de datos · Finanzas** (Fase 1, D19): las 21 tablas `fin_*`, las vistas `fin_v_saldos` y `fin_v_gasto_semana`, y las funciones `fin_puede`, `fin_puede_hogar`, `fin_es_miembro`, `es_cuenta_maestra`, `cuenta_maestra`, `asignar_cuenta_maestra`, `fin_registrar_consulta_maestra`, `fin_crear_libro_representado` y `fin_lunes`, según `supabase/migrations/20261021000000_finanzas_mvp1.sql`. Solo dueño y coadministrador (cada quien su libro); los libros solo-agregar no tienen PATCH ni DELETE; lo que pone el servidor (`recibido_en`, `libro_*` de los movimientos, columnas generadas) va como `readOnly`; los errores `23503`, `23505`, `23514`, `22023`, `55000` y `42501` están en la descripción del grupo. Ejemplos inventados: el hogar de Ana y Alex de `supabase/seed.sql`, con "Papá (ejemplo)".
+3. **Base de datos · Finanzas** (Fase 1, D19): las 21 tablas `fin_*`, las vistas `fin_v_saldos` y `fin_v_gasto_semana`, y las funciones `fin_puede`, `fin_puede_hogar`, `fin_es_miembro`, `es_cuenta_maestra`, `cuenta_maestra`, `asignar_cuenta_maestra`, `fin_registrar_consulta_maestra`, `fin_crear_libro_representado` y `fin_lunes`, según `supabase/migrations/20261021000000_finanzas_mvp1.sql` y las salvaguardas de `20261023000000_finanzas_salvaguardas.sql` (consulta registrada de la cuenta maestra con vigencia de 30 minutos, bitácora reservada al servidor, libro de Papá con `en_nombre_de` y `motivo`, membresías de los compartidos, `finanzas.maestra_asignada`). Esa migración no agrega ninguna función llamable desde la API: sus ayudantes y triggers no tienen operación. Solo dueño y coadministrador (cada quien su libro); los libros solo-agregar no tienen PATCH ni DELETE; lo que pone el servidor (`recibido_en`, `libro_*` de los movimientos, columnas generadas) va como `readOnly`; los errores `23503`, `23505`, `23514`, `22023`, `55000` y `42501` están en la descripción del grupo. Ejemplos inventados: el hogar de Ana y Alex de `supabase/seed.sql`, con "Papá (ejemplo)".
 4. **Funciones del servidor**: avisos (Fase 2) e intermediario de la IA (Fase 6). Propuestas.
 5. **Puente de casa**: Home Assistant en la red local (Fase 6). Propuestas.
 
@@ -59,7 +59,9 @@ Para agregar una herramienta: agrégala al catálogo de su fase en `app/lib/nucl
 - declara un rol que la matriz de permisos (`app/lib/nucleo/permisos/permisos.dart`) no deja abrir el módulo (navegación), escribir en él (si `escribe`) o leerlo (D5);
 - es de Finanzas o Cuidados y no es `soloLocal` (D3), **también las de navegación**;
 - se la declara a la cuidadora y no es de su bandeja de solicitudes (D18; se resuelve por rol, D17);
-- escribe o administra lo ajeno en un módulo donde el rol no tiene alcance total (D19: en Finanzas nadie escribe en el libro de otro). Además, a la cuenta maestra nunca se le ofrece una que escriba o administre lo ajeno.
+- escribe o administra lo ajeno en un módulo donde el rol no tiene alcance total (D19: en Finanzas nadie escribe en el libro de otro). Además, a la cuenta maestra nunca se le ofrece una que escriba o administre lo ajeno y, si no es la dueña (login propio), es de **solo lectura total** (D19, 23/oct): ninguna herramienta que escriba ni que abra una hoja de registro, tampoco para lo propio; si el dueño es además la maestra, conserva las suyas para lo propio.
+
+La orden de gasto exige el verbo (D19, 23/oct): solo "registrar gasto" y sus variantes con ese verbo; la palabra "gasto" suelta no abre nada.
 
 ## Abrir Swagger UI
 

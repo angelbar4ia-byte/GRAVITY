@@ -9,8 +9,15 @@
 library;
 
 import 'package:finanzas_dominio/finanzas_dominio.dart'
-    hide Semaforo, formatearCentavos, TipoLibro, puntosBaseEnCien;
-import 'package:finanzas_dominio/finanzas_dominio.dart' as dom show TipoLibro;
+    hide
+        Semaforo,
+        formatearCentavos,
+        TipoLibro,
+        VisibilidadLibro,
+        puntosBaseEnCien;
+import 'package:finanzas_dominio/finanzas_dominio.dart'
+    as dom
+    show TipoLibro, VisibilidadLibro;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -19,6 +26,7 @@ import '../../../../nucleo/contratos/roles.dart';
 import '../../datos/repositorio.dart';
 import '../../estado/proveedores.dart';
 import '../comunes.dart';
+import 'dialogos_libros.dart';
 import 'marco_laptop.dart';
 
 class PantallaAjustesFinanzas extends StatelessWidget {
@@ -448,31 +456,15 @@ class _Libros extends ConsumerWidget {
         children: [
           const Text(
             'Cada adulto lleva su libro personal (lo crea el servidor al darle '
-            'su rol); los compartidos tienen 2 o más miembros; el libro de '
-            'papá lo llevan 1 albacea y, si quieres, 1 suplente, que escribe '
-            'solo si no hay albacea vigente.',
+            'su rol). Un libro compartido tiene 2 o más miembros: quien lo '
+            'crea es su administrador (agrega y saca miembros, lo hace pública '
+            'o privada y lo archiva) y cualquiera puede salirse; si quedan '
+            'menos de 2, el libro se archiva. El libro de papá lo llevan 1 '
+            'albacea y, si quieres, 1 suplente, que escribe solo si no hay '
+            'albacea vigente.',
           ),
           const SizedBox(height: 8),
-          for (final l in c.libros)
-            ListTile(
-              key: ValueKey('ajustes-libro-${l.id}'),
-              contentPadding: EdgeInsets.zero,
-              leading: Icon(switch (l.tipo) {
-                dom.TipoLibro.personal => Icons.person_outline,
-                dom.TipoLibro.compartido => Icons.groups_outlined,
-                dom.TipoLibro.representado => Icons.elderly_outlined,
-              }),
-              title: Text('${l.nombre} · ${nombreTipoLibro(l.tipo)}'),
-              subtitle: Text(
-                [
-                  for (final m in l.vigentes(c.hoy))
-                    '${c.carga.nombreDe(m.personaId)} (${nombrePapel(m.papel)})',
-                ].join(', '),
-              ),
-              trailing: c.permisoEn(l).comoMaestra
-                  ? const Text('Solo lectura')
-                  : null,
-            ),
+          for (final l in c.libros) _FilaLibro(contexto: c, libro: l),
           if (creaLibros) ...[
             const SizedBox(height: 8),
             Wrap(
@@ -517,7 +509,71 @@ class _Libros extends ConsumerWidget {
   }
 }
 
-/// Nuevo libro compartido: nombre y otros miembros adultos con Finanzas.
+/// Un libro en la lista de Ajustes: sus miembros, su visibilidad y lo que
+/// puede hacer la persona (administrarlo si lo creó; salirse si es miembro).
+class _FilaLibro extends ConsumerWidget {
+  const _FilaLibro({required this.contexto, required this.libro});
+
+  final ContextoFinanzas contexto;
+  final Libro libro;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = contexto;
+    final l = libro;
+    final compartido = l.tipo == dom.TipoLibro.compartido;
+    final permiso = c.permisoEn(l);
+    final marcas = [
+      if (compartido) nombreVisibilidad(l.visibilidad),
+      if (l.archivado) 'Archivado · solo lectura',
+      if (permiso.comoMaestra || permiso.comoLector) 'Solo lectura',
+    ];
+    return ListTile(
+      key: ValueKey('ajustes-libro-${l.id}'),
+      contentPadding: EdgeInsets.zero,
+      leading: Icon(switch (l.tipo) {
+        dom.TipoLibro.personal => Icons.person_outline,
+        dom.TipoLibro.compartido => Icons.groups_outlined,
+        dom.TipoLibro.representado => Icons.elderly_outlined,
+      }),
+      title: Text(
+        ['${l.nombre} · ${nombreTipoLibro(l.tipo)}', ...marcas].join(' · '),
+      ),
+      subtitle: Text(
+        [
+          for (final m in l.vigentes(c.hoy))
+            '${c.carga.nombreDe(m.personaId)} (${nombrePapel(m.papel)}'
+                '${l.esAdministrador(m.personaId) ? ', administrador' : ''})',
+        ].join(', '),
+      ),
+      trailing: compartido && (c.administraMiembrosDe(l) || c.puedeSalirDe(l))
+          ? Wrap(
+              spacing: 4,
+              children: [
+                if (c.administraMiembrosDe(l))
+                  TextButton(
+                    key: ValueKey('libro-miembros-${l.id}'),
+                    onPressed: () => showDialog<void>(
+                      context: context,
+                      builder: (_) => DialogoMiembrosLibro(libroId: l.id),
+                    ),
+                    child: const Text('Administrar'),
+                  ),
+                if (c.puedeSalirDe(l))
+                  TextButton(
+                    key: ValueKey('libro-salir-${l.id}'),
+                    onPressed: () => salirDelLibro(context, ref, c, l),
+                    child: const Text('Salir del libro'),
+                  ),
+              ],
+            )
+          : null,
+    );
+  }
+}
+
+/// Nuevo libro compartido: nombre, visibilidad (privada por omisión) y otros
+/// miembros adultos con Finanzas. Quien lo crea es su administrador.
 class DialogoLibroCompartido extends ConsumerStatefulWidget {
   const DialogoLibroCompartido({super.key, required this.contexto});
 
@@ -532,6 +588,7 @@ class _DialogoLibroCompartidoState
     extends ConsumerState<DialogoLibroCompartido> {
   final _nombre = TextEditingController();
   final _elegidos = <String>{};
+  dom.VisibilidadLibro _visibilidad = dom.VisibilidadLibro.privada;
   bool _guardando = false;
 
   @override
@@ -552,35 +609,47 @@ class _DialogoLibroCompartidoState
       title: const Text('Nuevo libro compartido'),
       content: SizedBox(
         width: 420,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            TextField(
-              key: const ValueKey('compartido-nombre'),
-              controller: _nombre,
-              maxLength: 80,
-              decoration: const InputDecoration(
-                labelText: 'Nombre (p. ej. Gastos de la casa)',
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TextField(
+                key: const ValueKey('compartido-nombre'),
+                controller: _nombre,
+                maxLength: 80,
+                decoration: const InputDecoration(
+                  labelText: 'Nombre (p. ej. Gastos de la casa)',
+                ),
+                onChanged: (_) => setState(() {}),
               ),
-              onChanged: (_) => setState(() {}),
-            ),
-            const Text('Miembros (además de ti):'),
-            for (final p in otros)
-              CheckboxListTile(
-                key: ValueKey('compartido-miembro-$p'),
-                contentPadding: EdgeInsets.zero,
-                value: _elegidos.contains(p),
-                title: Text(c.carga.nombreDe(p)),
-                onChanged: (x) => setState(() {
-                  if (x ?? false) {
-                    _elegidos.add(p);
-                  } else {
-                    _elegidos.remove(p);
-                  }
-                }),
+              const SizedBox(height: 4),
+              const Text('Quién lo ve'),
+              const SizedBox(height: 4),
+              SelectorVisibilidad(
+                valor: _visibilidad,
+                alCambiar: (v) => setState(() => _visibilidad = v),
               ),
-          ],
+              const SizedBox(height: 12),
+              const Text(
+                'Miembros (además de ti, que serás el administrador):',
+              ),
+              for (final p in otros)
+                CheckboxListTile(
+                  key: ValueKey('compartido-miembro-$p'),
+                  contentPadding: EdgeInsets.zero,
+                  value: _elegidos.contains(p),
+                  title: Text(c.carga.nombreDe(p)),
+                  onChanged: (x) => setState(() {
+                    if (x ?? false) {
+                      _elegidos.add(p);
+                    } else {
+                      _elegidos.remove(p);
+                    }
+                  }),
+                ),
+            ],
+          ),
         ),
       ),
       actions: [
@@ -599,7 +668,9 @@ class _DialogoLibroCompartidoState
                   final ok = await intentar(context, () async {
                     id = await ref
                         .read(servicioFinanzasProvider)
-                        .crearLibroCompartido(_nombre.text, [..._elegidos]);
+                        .crearLibroCompartido(_nombre.text, [
+                          ..._elegidos,
+                        ], visibilidad: _visibilidad);
                   });
                   if (!mounted) return;
                   if (ok) {
@@ -689,7 +760,10 @@ class _DialogoLibroRepresentadoState
                 helperText: 'Escribe solo si no hay albacea vigente.',
               ),
               items: [
-                const DropdownMenuItem(value: null, child: Text('Sin suplente')),
+                const DropdownMenuItem(
+                  value: null,
+                  child: Text('Sin suplente'),
+                ),
                 for (final p in otros)
                   DropdownMenuItem(value: p, child: Text(c.carga.nombreDe(p))),
               ],

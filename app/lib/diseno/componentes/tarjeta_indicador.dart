@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../formato.dart';
+import '../proveedores.dart';
 import '../valores_diseno.dart';
 import 'etiqueta_panel.dart';
 import 'semaforo.dart';
@@ -10,14 +12,17 @@ import 'semaforo.dart';
 /// aplica, su semáforo **con texto** y un detalle ("Meta 20 %").
 ///
 /// [valor] llega ya formateado (`formatearPuntosBase`, `formatearCentavos`).
-/// Con [oculto] la cifra se cambia por `$ • • • • •` (úsalo en los montos; un
-/// porcentaje del ingreso puede quedar visible).
-class TarjetaIndicador extends StatelessWidget {
+/// Con [oculto] la cifra se cambia por `••••` (úsalo en los montos; un
+/// porcentaje del ingreso puede quedar visible). Con [esMonto], la cifra es un
+/// monto en pesos y también se oculta cuando la app tiene los montos ocultos
+/// ([montosOcultosProvider]).
+class TarjetaIndicador extends ConsumerWidget {
   const TarjetaIndicador({
     super.key,
     required this.etiqueta,
     required this.valor,
     this.oculto = false,
+    this.esMonto = false,
     this.estado,
     this.textoEstado,
     this.detalle,
@@ -27,6 +32,9 @@ class TarjetaIndicador extends StatelessWidget {
   final String etiqueta;
   final String valor;
   final bool oculto;
+
+  /// La cifra es un monto en pesos: se oculta también con el provider.
+  final bool esMonto;
   final EstadoSemaforo? estado;
 
   /// Texto del semáforo; por defecto, el del estado ("En verde").
@@ -35,7 +43,8 @@ class TarjetaIndicador extends StatelessWidget {
   final VoidCallback? alTocar;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final oculto = this.oculto || (esMonto && ref.watch(montosOcultosProvider));
     final v = ValoresDiseno.de(context);
     final e = v.espacio;
     final radio = BorderRadius.circular(v.radioMediano);

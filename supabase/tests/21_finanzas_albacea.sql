@@ -4,6 +4,9 @@
 -- suplente); solo adultos con Finanzas. Papá no tiene cuenta.
 begin;
 
+-- Un tercer adulto (la cuenta maestra es solo lectura y no puede llevar un libro).
+select pruebas.nuevo_adulto('teo@ejemplo.test');
+
 -- ---------------------------------------------------------------- el albacea
 select pruebas.como('ana@ejemplo.test');
 select pruebas.ok(public.fin_puede('f1000000-0000-4000-8000-000000000002', 'escribir')
@@ -70,10 +73,10 @@ select pruebas.igual(pruebas.afecta($$update public.fin_libro_miembros set hasta
 -- ---------------------------------------------------------------- miembros válidos
 select pruebas.como('ana@ejemplo.test');
 select pruebas.falla($$insert into public.fin_libro_miembros (libro_id, persona_id, papel)
-  values ('f1000000-0000-4000-8000-000000000002', pruebas.id_persona('marta@ejemplo.test'), 'albacea_suplente')$$,
+  values ('f1000000-0000-4000-8000-000000000002', pruebas.id_persona('teo@ejemplo.test'), 'albacea_suplente')$$,
   'Solo un suplente (máximo 2 en un libro representado)', '23505');
 select pruebas.falla($$insert into public.fin_libro_miembros (libro_id, persona_id, papel)
-  values ('f1000000-0000-4000-8000-000000000002', pruebas.id_persona('marta@ejemplo.test'), 'albacea')$$,
+  values ('f1000000-0000-4000-8000-000000000002', pruebas.id_persona('teo@ejemplo.test'), 'albacea')$$,
   'Solo un albacea vigente', '23505');
 select pruebas.falla($$insert into public.fin_libro_miembros (libro_id, persona_id, papel)
   values ('f1000000-0000-4000-8000-000000000002', pruebas.id_persona('carla@ejemplo.test'), 'albacea')$$,
@@ -82,18 +85,18 @@ select pruebas.falla($$insert into public.fin_libro_miembros (libro_id, persona_
   values ('f1000000-0000-4000-8000-000000000002', 'e0000000-0000-4000-8000-000000000001', 'albacea')$$,
   'Papá no es miembro de su propio libro', '22023');
 select pruebas.falla($$insert into public.fin_libro_miembros (libro_id, persona_id, papel)
-  values ('f1000000-0000-4000-8000-000000000002', pruebas.id_persona('marta@ejemplo.test'), 'miembro')$$,
+  values ('f1000000-0000-4000-8000-000000000002', pruebas.id_persona('teo@ejemplo.test'), 'miembro')$$,
   'En un libro representado solo hay albacea y suplente', '22023');
 select pruebas.falla($$insert into public.fin_libro_miembros (libro_id, persona_id, papel)
   values (pruebas.libro_personal('ana@ejemplo.test'), pruebas.id_persona('alex@ejemplo.test'), 'miembro')$$,
   'Nadie más entra a un libro personal', '22023');
 select pruebas.falla($$insert into public.fin_libro_miembros (libro_id, persona_id, papel)
-  values ('f1000000-0000-4000-8000-000000000001', pruebas.id_persona('marta@ejemplo.test'), 'albacea')$$,
+  values ('f1000000-0000-4000-8000-000000000001', pruebas.id_persona('teo@ejemplo.test'), 'albacea')$$,
   'En un libro compartido todos son miembros', '22023');
 select pruebas.falla($$update public.fin_libro_miembros set hasta = now()
   where libro_id = pruebas.libro_personal('ana@ejemplo.test')$$,
   'El titular no deja su libro personal', '22023');
-select pruebas.falla($$update public.fin_libro_miembros set persona_id = pruebas.id_persona('marta@ejemplo.test')
+select pruebas.falla($$update public.fin_libro_miembros set persona_id = pruebas.id_persona('teo@ejemplo.test')
   where libro_id = 'f1000000-0000-4000-8000-000000000002' and papel = 'albacea_suplente'$$,
   'Un miembro no se cambia por otra persona (se cierra y se agrega)', '42501');
 
@@ -113,7 +116,7 @@ select pruebas.ok(
                     p_en_nombre_de => 'e0000000-0000-4000-8000-000000000001') is not null,
   'El suplente registra en nombre de Papá, con motivo');
 select pruebas.igual(pruebas.afecta($$insert into public.fin_libro_miembros (libro_id, persona_id, papel)
-  values ('f1000000-0000-4000-8000-000000000002', pruebas.id_persona('marta@ejemplo.test'), 'albacea')$$), 1,
+  values ('f1000000-0000-4000-8000-000000000002', pruebas.id_persona('teo@ejemplo.test'), 'albacea')$$), 1,
   'El suplente nombra un albacea nuevo (hogar_id lo pone el servidor)');
 select pruebas.ok(not public.fin_puede('f1000000-0000-4000-8000-000000000002', 'escribir'),
   'Con albacea vigente otra vez, el suplente vuelve a solo leer');

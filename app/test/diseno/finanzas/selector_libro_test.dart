@@ -30,6 +30,29 @@ const _deAna = OpcionLibro(
   acceso: AccesoLibro.soloLectura,
 );
 
+const _publico = OpcionLibro(
+  id: 'libro-publico',
+  nombre: 'Viaje en familia (ejemplo)',
+  tipo: TipoLibro.compartido,
+  acceso: AccesoLibro.lector,
+  visibilidad: VisibilidadLibro.publica,
+);
+const _archivado = OpcionLibro(
+  id: 'libro-archivado',
+  nombre: 'Boda de Eva (ejemplo)',
+  tipo: TipoLibro.compartido,
+  acceso: AccesoLibro.miembro,
+  archivado: true,
+);
+const _largoArchivadoPublico = OpcionLibro(
+  id: 'libro-largo-archivado',
+  nombre: 'Gastos compartidos de la casa de campo de la familia (ejemplo)',
+  tipo: TipoLibro.compartido,
+  acceso: AccesoLibro.miembro,
+  visibilidad: VisibilidadLibro.publica,
+  archivado: true,
+);
+
 // Nombres largos de ejemplo, con marca: la prueba de desborde.
 const _largoSoloLectura = OpcionLibro(
   id: 'libro-largo-lectura',
@@ -100,7 +123,10 @@ void main() {
 
     test('lo que dice el lector de pantalla', () {
       expect(_mio.descripcion, 'Libro: Mi libro');
-      expect(_casa.descripcion, 'Libro: Gastos de la casa, compartido');
+      expect(
+        _casa.descripcion,
+        'Libro: Gastos de la casa, compartido, privado',
+      );
       expect(
         _papa.descripcion,
         'Libro: Papá (ejemplo), en nombre de Papá (ejemplo)',
@@ -407,6 +433,259 @@ void main() {
         expect(find.byTooltip('Albacea'), findsNWidgets(2));
       });
     }
+  });
+
+  group('Pública, Privada y Archivado (D19, 23/oct)', () {
+    test('los compartidos son privados por omisión y llevan su marca', () {
+      expect(_casa.visibilidad, VisibilidadLibro.privada);
+      expect(_casa.marcaVisibilidad, 'Privada');
+      expect(_publico.marcaVisibilidad, 'Pública');
+      // Solo los compartidos tienen visibilidad.
+      expect(_mio.marcaVisibilidad, isNull);
+      expect(_papa.marcaVisibilidad, isNull);
+      expect(_deAna.marcaVisibilidad, isNull);
+      expect([for (final m in _casa.marcas) m.texto], ['Privada']);
+      expect(
+        [for (final m in _publico.marcas) m.texto],
+        ['Pública', 'Solo lectura'],
+      );
+      // Siempre texto además del icono, y distintos entre sí.
+      expect(
+        VisibilidadLibro.privada.icono,
+        isNot(VisibilidadLibro.publica.icono),
+      );
+    });
+
+    test('archivado: solo lectura para todos, con su marca', () {
+      expect(_archivado.archivado, isTrue);
+      expect(_archivado.sinEscritura, isTrue);
+      // No es el "solo lectura" de la cuenta maestra.
+      expect(_archivado.soloLectura, isFalse);
+      expect(_archivado.marca, 'Archivado');
+      expect(
+        [for (final m in _archivado.marcas) m.texto],
+        ['Privada', 'Archivado'],
+      );
+      expect(
+        _archivado.descripcion,
+        'Libro: Boda de Eva (ejemplo), compartido, privado, archivado, '
+        'solo lectura',
+      );
+      // Un archivado que además se lee por acceso no repite la marca.
+      const maestraEnArchivado = OpcionLibro(
+        id: 'x',
+        nombre: 'Viejo (ejemplo)',
+        tipo: TipoLibro.compartido,
+        acceso: AccesoLibro.soloLectura,
+        archivado: true,
+      );
+      expect(
+        [for (final m in maestraEnArchivado.marcas) m.texto],
+        ['Privada', 'Archivado'],
+      );
+    });
+
+    test('lector de un público: solo lee, no es la cuenta maestra', () {
+      expect(_publico.soloLectura, isTrue);
+      expect(_publico.sinEscritura, isTrue);
+      expect(_publico.marca, 'Solo lectura');
+      expect(
+        _publico.descripcion,
+        'Libro: Viaje en familia (ejemplo), compartido, público, solo lectura',
+      );
+      expect(_casa.sinEscritura, isFalse);
+      expect(_mio.sinEscritura, isFalse);
+      expect(_papa.sinEscritura, isFalse);
+    });
+
+    test('igualdad incluye visibilidad y archivado', () {
+      expect(
+        _casa,
+        const OpcionLibro(
+          id: 'libro-casa',
+          nombre: 'Gastos de la casa',
+          tipo: TipoLibro.compartido,
+          acceso: AccesoLibro.miembro,
+        ),
+      );
+      expect(
+        _casa,
+        isNot(
+          const OpcionLibro(
+            id: 'libro-casa',
+            nombre: 'Gastos de la casa',
+            tipo: TipoLibro.compartido,
+            acceso: AccesoLibro.miembro,
+            visibilidad: VisibilidadLibro.publica,
+          ),
+        ),
+      );
+      expect(
+        _casa,
+        isNot(
+          const OpcionLibro(
+            id: 'libro-casa',
+            nombre: 'Gastos de la casa',
+            tipo: TipoLibro.compartido,
+            acceso: AccesoLibro.miembro,
+            archivado: true,
+          ),
+        ),
+      );
+    });
+
+    testWidgets('chips: marca con texto, icono y tooltip; archivado', (
+      tester,
+    ) async {
+      final semantica = tester.ensureSemantics();
+      await montarEnFinanzas(
+        tester,
+        SelectorLibro(
+          libros: const [_mio, _casa, _publico, _archivado],
+          libroActualId: _mio.id,
+          alCambiar: (_) {},
+          comoMenu: false,
+        ),
+        ancho: 900,
+      );
+      expect(find.text('Privada'), findsNWidgets(2)); // _casa y _archivado
+      expect(find.text('Pública'), findsOneWidget);
+      expect(find.text('Archivado'), findsOneWidget);
+      expect(
+        find.text('Solo lectura'),
+        findsOneWidget,
+      ); // el lector del público
+      expect(find.byIcon(Icons.lock_person_outlined), findsNWidgets(2));
+      expect(find.byIcon(Icons.public), findsOneWidget);
+      expect(find.byIcon(Icons.archive_outlined), findsOneWidget);
+      expect(
+        find.byTooltip(VisibilidadLibro.publica.explicacion),
+        findsOneWidget,
+      );
+      expect(
+        find.byTooltip(VisibilidadLibro.privada.explicacion),
+        findsNWidgets(2),
+      );
+      // El lector de pantalla dice todo en una frase.
+      expect(
+        find.bySemanticsLabel(
+          'Libro: Boda de Eva (ejemplo), compartido, privado, archivado, '
+          'solo lectura',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.bySemanticsLabel(
+          'Libro: Viaje en familia (ejemplo), compartido, público, '
+          'solo lectura',
+        ),
+        findsOneWidget,
+      );
+      revisarZonasTactiles(tester, find.byType(SelectorLibro));
+      expect(tester.takeException(), isNull);
+      semantica.dispose();
+    });
+
+    testWidgets('menú: las marcas también salen en las opciones', (
+      tester,
+    ) async {
+      await montarEnFinanzas(
+        tester,
+        SelectorLibro(
+          libros: const [_mio, _casa, _publico, _archivado],
+          libroActualId: _casa.id,
+          alCambiar: (_) {},
+          comoMenu: true,
+        ),
+      );
+      // El botón lleva la marca del libro abierto.
+      expect(find.text('Privada'), findsOneWidget);
+      await tester.tap(find.byType(InkWell).first);
+      await tester.pumpAndSettle();
+      expect(find.text('Privada'), findsNWidgets(3));
+      expect(find.text('Pública'), findsOneWidget);
+      expect(find.text('Archivado'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    for (final escala in [1.0, 2.0]) {
+      for (final ancho in [260.0, 360.0, 600.0]) {
+        testWidgets(
+          'dos marcas con nombre largo a $ancho dp y letra x$escala no '
+          'desbordan',
+          (tester) async {
+            await montarEnFinanzas(
+              tester,
+              _conLetraAncha(
+                SelectorLibro(
+                  libros: const [_largoArchivadoPublico, _largoSoloLectura],
+                  libroActualId: _largoArchivadoPublico.id,
+                  alCambiar: (_) {},
+                  comoMenu: false,
+                ),
+                escala: escala,
+              ),
+              ancho: ancho,
+            );
+            expect(tester.takeException(), isNull);
+            for (final chip
+                in find
+                    .descendant(
+                      of: find.byType(SelectorLibro),
+                      matching: find.byType(InkWell),
+                    )
+                    .evaluate()) {
+              expect(
+                tester.getSize(find.byWidget(chip.widget)).width,
+                lessThanOrEqualTo(ancho),
+              );
+            }
+            // Las dos marcas del compartido siguen ahí, con su tooltip.
+            expect(
+              find.byTooltip(VisibilidadLibro.publica.explicacion),
+              findsOneWidget,
+            );
+          },
+        );
+      }
+    }
+
+    testWidgets('MarcaLibro: archivado y lector de un público', (tester) async {
+      final semantica = tester.ensureSemantics();
+      await montarEnFinanzas(tester, const MarcaLibro(libro: _archivado));
+      expect(
+        find.textContaining('Archivado', findRichText: true),
+        findsOneWidget,
+      );
+      expect(find.byIcon(Icons.archive_outlined), findsOneWidget);
+      expect(
+        find.bySemanticsLabel(
+          'Archivado, solo lectura: ya no se puede registrar en este libro',
+        ),
+        findsOneWidget,
+      );
+      await montarEnFinanzas(tester, const MarcaLibro(libro: _publico));
+      expect(
+        find.textContaining('Solo lectura', findRichText: true),
+        findsOneWidget,
+      );
+      expect(find.byIcon(Icons.lock_outline), findsOneWidget);
+      expect(
+        find.bySemanticsLabel(
+          'Solo lectura, libro público: puedes ver, no registrar',
+        ),
+        findsOneWidget,
+      );
+      // La cuenta maestra conserva su texto.
+      await montarEnFinanzas(tester, const MarcaLibro(libro: _deAna));
+      expect(
+        find.bySemanticsLabel(
+          'Solo lectura, cuenta maestra: puedes ver, no registrar',
+        ),
+        findsOneWidget,
+      );
+      semantica.dispose();
+    });
   });
 
   group('MarcaLibro', () {

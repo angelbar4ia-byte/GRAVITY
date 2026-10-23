@@ -3,14 +3,20 @@
 /// vacío), selector de libro, montos ocultables y diálogos.
 ///
 /// El dominio se importa ocultando los nombres que también exporta diseno
-/// (`Semaforo`, `formatearCentavos`, `TipoLibro`, `puntosBaseEnCien`); donde
+/// (`Semaforo`, `formatearCentavos`, `TipoLibro`, `VisibilidadLibro`,
+/// `puntosBaseEnCien`); donde
 /// hace falta el del dominio se usa el prefijo `dom`.
 library;
 
 import 'package:finanzas_dominio/finanzas_dominio.dart'
-    hide Semaforo, formatearCentavos, TipoLibro, puntosBaseEnCien;
+    hide
+        Semaforo,
+        formatearCentavos,
+        TipoLibro,
+        VisibilidadLibro,
+        puntosBaseEnCien;
 import 'package:finanzas_dominio/finanzas_dominio.dart' as dom
-    show Semaforo, TipoLibro;
+    show Semaforo, TipoLibro, VisibilidadLibro;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -167,14 +173,31 @@ OpcionLibro opcionDe(Libro libro, PermisoLibro permiso, String personaId) {
     dom.TipoLibro.compartido => TipoLibro.compartido,
     dom.TipoLibro.representado => TipoLibro.representado,
   };
-  final acceso = permiso.comoMaestra || !permiso.escribir
+  // Cómo lo ve la persona: la maestra y quien lee un público solo leen; un
+  // archivado conserva su acceso (la marca "Archivado" ya dice que nadie
+  // registra); si no puede escribir por otra razón (el suplente en espera),
+  // solo lee.
+  final acceso = permiso.comoMaestra
+      ? AccesoLibro.soloLectura
+      : permiso.comoLector
+      ? AccesoLibro.lector
+      : (!permiso.escribir && !libro.archivado)
       ? AccesoLibro.soloLectura
       : switch (libro.tipo) {
           dom.TipoLibro.personal => AccesoLibro.titular,
           dom.TipoLibro.compartido => AccesoLibro.miembro,
           dom.TipoLibro.representado => AccesoLibro.albacea,
         };
-  return OpcionLibro(id: libro.id, nombre: libro.nombre, tipo: tipo, acceso: acceso);
+  return OpcionLibro(
+    id: libro.id,
+    nombre: libro.nombre,
+    tipo: tipo,
+    acceso: acceso,
+    visibilidad: libro.visibilidad == dom.VisibilidadLibro.publica
+        ? VisibilidadLibro.publica
+        : VisibilidadLibro.privada,
+    archivado: libro.archivado,
+  );
 }
 
 /// La cascada planeado contra real (5.6 bis; 5.9 bis punto 2.1).
@@ -317,8 +340,9 @@ String textoConMonto(AccionSugerida a, bool oculto) =>
 // ----------------------------------------------------------------- estados
 
 /// Pantalla de Finanzas con sus estados: cargando, sin conexión, error, sin
-/// libros y, para la cuenta maestra en un libro ajeno, el registro de la
-/// consulta en la bitácora antes de mostrarlo (D19).
+/// libros, la **portada** de la cuenta maestra (sus libros, sin consulta
+/// registrada) y, para ella en un libro ajeno, el registro de la consulta en la
+/// bitácora **antes** de pedir y mostrar sus datos (D19, I2).
 class ConDatosFinanzas extends ConsumerWidget {
   const ConDatosFinanzas({super.key, required this.builder});
 
@@ -329,11 +353,14 @@ class ConDatosFinanzas extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final asincrono = ref.watch(contextoFinanzasProvider);
     return asincrono.when(
+      // Una recarga (renovar la consulta, escribir) no tapa la pantalla.
+      skipLoadingOnReload: true,
       loading: () => const _Cargando(),
       error: (error, _) => _Error(error: error),
       data: (c) {
         final libro = c.libro;
         if (libro == null) {
+          if (c.enPortada) return PortadaMaestra(contexto: c);
           return const EstadoVacio(
             icono: Icons.account_balance_wallet_outlined,
             mensaje: 'Aún no tienes un libro de Finanzas.',
@@ -351,26 +378,9 @@ class ConDatosFinanzas extends ConsumerWidget {
             }
           });
         }
-        Widget contenido = builder(context, c);
-        if (c.permiso.comoMaestra) {
-          final consulta = ref.watch(consultaMaestraProvider(libro.id));
-          contenido = consulta.when(
-            // La renovación (cada 25 min) no tapa la pantalla con "Cargando".
-            skipLoadingOnReload: true,
-            data: (_) => contenido,
-            loading: () => const _Cargando(),
-            error: (e, _) => EstadoVacio(
-              icono: Icons.lock_outline,
-              mensaje: 'No se pudo registrar la consulta en la bitácora.',
-              detalle:
-                  'La cuenta maestra abre un libro ajeno solo si la consulta '
-                  'queda registrada. $e',
-              textoAccion: 'Reintentar',
-              alAccionar: () =>
-                  ref.invalidate(consultaMaestraProvider(libro.id)),
-            ),
-          );
-        }
+        Widget contenido = c.requiereConsulta
+            ? _ConConsultaMaestra(contexto: c, builder: builder)
+            : builder(context, c);
         if (!c.carga.desdeCopia) return contenido;
         return Column(
           children: [
@@ -393,6 +403,160 @@ class ConDatosFinanzas extends ConsumerWidget {
           ],
         );
       },
+    );
+  }
+}
+
+/// Muestra el libro ajeno a la cuenta maestra solo cuando su consulta está
+/// registrada y los datos ya se pidieron con ella ([consultaMaestraProvider]).
+/// Si el servidor devuelve vacío un libro ya consultado, la consulta venció
+/// (filtra sin dar error): se renueva y se recarga sola.
+class _ConConsultaMaestra extends ConsumerWidget {
+  const _ConConsultaMaestra({required this.contexto, required this.builder});
+
+  final ContextoFinanzas contexto;
+  final Widget Function(BuildContext context, ContextoFinanzas contexto)
+  builder;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = contexto;
+    final libroId = c.libroId;
+    final consulta = ref.watch(consultaMaestraProvider(libroId));
+    final listaYVacia =
+        consulta.hasValue &&
+        !consulta.isLoading &&
+        !consulta.hasError &&
+        c.carga.libroSinContenido(libroId);
+    if (listaYVacia) {
+      // Vacío después de una consulta buena: venció. Se registra otra vez.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted) ref.invalidate(consultaMaestraProvider(libroId));
+      });
+    }
+    return consulta.when(
+      // La renovación (cada 25 min) no tapa la pantalla con "Cargando".
+      skipLoadingOnReload: true,
+      data: (_) => listaYVacia ? _CargandoConsulta(contexto: c) : builder(context, c),
+      loading: () => _CargandoConsulta(contexto: c),
+      error: (e, _) => Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: SelectorLibroFinanzas(contexto: c),
+          ),
+          Expanded(
+            child: EstadoVacio(
+              key: const ValueKey('finanzas-consulta-error'),
+              icono: Icons.lock_outline,
+              mensaje: 'No se pudo registrar la consulta de este libro.',
+              detalle:
+                  'La cuenta maestra abre un libro ajeno solo si la consulta '
+                  'queda registrada en la bitácora. $e',
+              textoAccion: 'Reintentar',
+              alAccionar: () => ref.invalidate(consultaMaestraProvider(libroId)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CargandoConsulta extends StatelessWidget {
+  const _CargandoConsulta({required this.contexto});
+
+  final ContextoFinanzas contexto;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    key: const ValueKey('finanzas-consultando'),
+    children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+        child: SelectorLibroFinanzas(contexto: contexto),
+      ),
+      const Expanded(
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 12),
+              Text('Registrando la consulta…'),
+            ],
+          ),
+        ),
+      ),
+    ],
+  );
+}
+
+/// Portada de la cuenta maestra: los libros del hogar y quién los lleva, sin
+/// leer su contenido. Abrir uno **registra la consulta** en la bitácora (la
+/// ven quienes lo llevan).
+class PortadaMaestra extends ConsumerWidget {
+  const PortadaMaestra({super.key, required this.contexto});
+
+  final ContextoFinanzas contexto;
+
+  String _quienes(Libro l) {
+    final c = contexto.carga;
+    final vigentes = l.vigentes(contexto.hoy);
+    final nombres = [
+      for (final m in vigentes)
+        if (m.papel != PapelLibro.albaceaSuplente) c.nombreDe(m.personaId),
+    ];
+    return switch (l.tipo) {
+      dom.TipoLibro.personal => 'De ${c.nombreDe(l.titularId)}',
+      dom.TipoLibro.representado =>
+        'En nombre de ${c.nombreDe(l.titularId)}'
+            '${nombres.isEmpty ? '' : ' · lo lleva ${nombres.join(', ')}'}',
+      dom.TipoLibro.compartido => 'Miembros: ${nombres.join(', ')}',
+    };
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tema = Theme.of(context);
+    return ListView(
+      key: const ValueKey('finanzas-portada'),
+      padding: const EdgeInsets.all(16),
+      children: [
+        Text('Libros del hogar', style: tema.textTheme.titleLarge),
+        const SizedBox(height: 4),
+        Text(
+          'Cuenta maestra: solo lectura. Al abrir un libro, la consulta queda '
+          'registrada en la bitácora y la ven quienes lo llevan.',
+          style: tema.textTheme.bodyMedium,
+        ),
+        const SizedBox(height: 12),
+        for (final l in contexto.libros)
+          Card(
+            key: ValueKey('finanzas-portada-libro-${l.id}'),
+            child: ListTile(
+              minVerticalPadding: 12,
+              leading: Icon(switch (l.tipo) {
+                dom.TipoLibro.personal => Icons.person_outline,
+                dom.TipoLibro.compartido => Icons.group_outlined,
+                dom.TipoLibro.representado => Icons.volunteer_activism_outlined,
+              }),
+              title: Text(l.nombre),
+              subtitle: Text(
+                [
+                  _quienes(l),
+                  if (l.tipo == dom.TipoLibro.compartido)
+                    l.visibilidad == dom.VisibilidadLibro.publica
+                        ? 'Pública'
+                        : 'Privada',
+                  if (l.archivado) 'Archivado',
+                ].join(' · '),
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => ref.read(libroElegidoProvider.notifier).elegir(l.id),
+            ),
+          ),
+      ],
     );
   }
 }
@@ -445,16 +609,36 @@ class SelectorLibroFinanzas extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (contexto.libros.length < 2) return const SizedBox.shrink();
-    return SelectorLibro(
-      key: const ValueKey('finanzas-selector-libro'),
-      libros: [
-        for (final l in contexto.libros)
-          opcionDe(l, contexto.permisoEn(l), contexto.personaId),
+    // La cuenta maestra que no tiene libro propio entra por la portada y
+    // puede volver a ella.
+    final conPortada = contexto.esMaestra && !contexto.tienePropioLibro;
+    if (contexto.libros.length < 2 && !conPortada) {
+      return const SizedBox.shrink();
+    }
+    final selector = contexto.libros.length < 2
+        ? const SizedBox.shrink()
+        : SelectorLibro(
+            key: const ValueKey('finanzas-selector-libro'),
+            libros: [
+              for (final l in contexto.libros)
+                opcionDe(l, contexto.permisoEn(l), contexto.personaId),
+            ],
+            libroActualId: contexto.libroId,
+            alCambiar: (id) => ref.read(libroElegidoProvider.notifier).elegir(id),
+            comoMenu: comoMenu,
+          );
+    if (!conPortada) return selector;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        selector,
+        TextButton.icon(
+          key: const ValueKey('finanzas-todos-los-libros'),
+          onPressed: () => ref.read(libroElegidoProvider.notifier).alaPortada(),
+          icon: const Icon(Icons.library_books_outlined),
+          label: const Text('Todos los libros'),
+        ),
       ],
-      libroActualId: contexto.libroId,
-      alCambiar: (id) => ref.read(libroElegidoProvider.notifier).elegir(id),
-      comoMenu: comoMenu,
     );
   }
 }

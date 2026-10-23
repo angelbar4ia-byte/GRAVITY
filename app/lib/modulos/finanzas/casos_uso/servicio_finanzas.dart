@@ -9,6 +9,7 @@ import 'package:finanzas_dominio/finanzas_dominio.dart';
 import 'package:uuid/uuid.dart';
 
 import '../datos/ids.dart';
+import '../datos/permisos_libro.dart';
 import '../datos/repositorio.dart';
 
 export '../datos/ids.dart' show ClavesId, idEstable;
@@ -43,6 +44,8 @@ class ServicioFinanzas {
     required this.personaId,
     this.hogarId = '',
     this.esMaestra = false,
+    this.soloLectura = false,
+    this.esDueno = false,
     DateTime Function()? reloj,
     String Function()? generarId,
   }) : _reloj = reloj ?? DateTime.now,
@@ -54,6 +57,14 @@ class ServicioFinanzas {
   /// Hogar de la sesión (para los ids estables de lo que es del hogar).
   final String hogarId;
   final bool esMaestra;
+
+  /// La cuenta maestra que **no es la dueña** (D19, 23/oct/2026): no registra
+  /// ni administra nada, tampoco lo suyo ni lo del hogar.
+  final bool soloLectura;
+
+  /// La persona es el dueño del hogar (puede cambiar la membresía de un
+  /// compartido del que es miembro, aunque no lo haya creado).
+  final bool esDueno;
   final DateTime Function() _reloj;
   final String Function() _generarId;
 
@@ -74,10 +85,27 @@ class ServicioFinanzas {
   PermisoLibro permiso(String libroId) {
     final libro = _d.libro(libroId);
     if (libro == null) return PermisoLibro.ninguno;
-    return permisoEnLibro(libro, personaId, hoy: hoy, esMaestra: esMaestra);
+    return permisoDeCarga(
+      repositorio.actual ?? CargaFinanzas(datos: DatosFinanzas.vacio),
+      libro,
+      personaId,
+      hoy: hoy,
+      esMaestra: esMaestra,
+      soloLectura: soloLectura,
+    );
   }
 
   void _exigirEscribir(String libroId) {
+    if (soloLectura) {
+      throw const ErrorFinanzas('La cuenta maestra solo lee: no registra nada.');
+    }
+    final libro = _d.libro(libroId);
+    if (libro != null && libro.archivado && permiso(libroId).leer) {
+      throw ErrorFinanzas(
+        '${libro.nombre} está archivado: es de solo lectura, ya no se '
+        'registra en él.',
+      );
+    }
     if (!permiso(libroId).escribir) {
       throw const ErrorFinanzas(
         'Solo lectura: no puedes registrar en este libro.',
@@ -85,7 +113,25 @@ class ServicioFinanzas {
     }
   }
 
+  /// Lo del **hogar** (categorías, cuentas de gasto, días inhábiles,
+  /// importaciones): la cuenta maestra que no es la dueña solo lo lee (M6).
+  void _exigirHogar() {
+    if (soloLectura) {
+      throw const ErrorFinanzas(
+        'La cuenta maestra solo lee: no cambia la configuración del hogar.',
+      );
+    }
+  }
+
   void _exigirAdministrar(String libroId) {
+    final libro = _d.libro(libroId);
+    if (libro != null && libro.archivado && !soloLectura) {
+      if (!permiso(libroId).administrar) {
+        throw ErrorFinanzas(
+          '${libro.nombre} está archivado: solo quien lo creó lo reactiva.',
+        );
+      }
+    }
     if (!permiso(libroId).administrar) {
       throw const ErrorFinanzas(
         'Solo quien lleva este libro cambia su configuración.',
@@ -462,20 +508,27 @@ class ServicioFinanzas {
     return cuenta;
   }
 
-  /// Congela, cierra, archiva o reactiva. Cerrar y archivar solo con saldo
-  /// cero (5.0 bis 2, punto 5).
+  /// Congela, cierra, archiva o reactiva. Una cuenta de **activos o pasivos**
+  /// se cierra o archiva solo con saldo cero (5.0 bis 2, punto 5); las de
+  /// **gasto e ingreso** se cierran o archivan sin pedir saldo cero (respuestas
+  /// del dueño del 23/oct/2026): ya no admiten movimientos nuevos, pero lo
+  /// anterior se puede anular.
   Future<void> cambiarEstadoCuenta(String cuentaId, EstadoCuenta estado) async {
     final cuenta = _d.cuenta(cuentaId);
-    final libroId = cuenta?.libroId;
-    if (cuenta == null || libroId == null) {
-      throw const ErrorFinanzas('No existe esa cuenta.');
+    if (cuenta == null) throw const ErrorFinanzas('No existe esa cuenta.');
+    final libroId = cuenta.libroId;
+    if (libroId == null) {
+      // Cuenta de gasto del hogar: es configuración del hogar.
+      _exigirHogar();
+    } else {
+      _exigirAdministrar(libroId);
     }
-    _exigirAdministrar(libroId);
     try {
       _d.nuevoLibroHogar().cambiarEstadoCuenta(cuentaId, estado);
     } on ErrorLibro {
       throw const ErrorFinanzas(
-        'Solo se cierra o archiva una cuenta con saldo cero.',
+        'Una cuenta de activos o pasivos se cierra o archiva solo con saldo '
+        'cero.',
       );
     }
     await repositorio.guardarCuentas([cuenta.conEstado(estado)]);
@@ -586,6 +639,7 @@ class ServicioFinanzas {
     Prioridad? prioridad,
     bool? protegida,
   }) async {
+    _exigirHogar();
     final limpio = nombre.trim();
     if (limpio.isEmpty) throw const ErrorFinanzas('Escribe un nombre.');
     final padre = _d.arbol.porId(padreId);
@@ -635,11 +689,14 @@ class ServicioFinanzas {
     return categoria;
   }
 
-  Future<void> cambiarCategoria(Categoria categoria) =>
-      repositorio.guardarCategorias([categoria]);
+  Future<void> cambiarCategoria(Categoria categoria) {
+    _exigirHogar();
+    return repositorio.guardarCategorias([categoria]);
+  }
 
   /// Borra una categoría **sin datos**; con datos se archiva (5.2).
   Future<void> eliminarCategoria(String categoriaId) async {
+    _exigirHogar();
     final conDatos =
         _d.categorias.any((c) => c.padreId == categoriaId) ||
         _d.movimientos.any((m) => m.categoriaId == categoriaId) ||
@@ -668,6 +725,7 @@ class ServicioFinanzas {
     required String archivo,
     String hoja = 'Categorías',
   }) async {
+    _exigirHogar();
     final plan = previsualizarImportacion(lectura);
     if (plan.cuentasNuevas.isNotEmpty) {
       await repositorio.guardarCuentas(plan.cuentasNuevas);
@@ -846,6 +904,7 @@ class ServicioFinanzas {
   /// Precarga los festivos oficiales del año (LFT art. 74) **inactivos**,
   /// para que el dueño los revise y active (decisión 55).
   Future<int> precargarFestivos(int anio) async {
+    _exigirHogar();
     final existentes = {for (final d in _d.diasInhabiles) d.fecha};
     final nuevos = [
       for (final d in festivosOficialesMexico(anio))
@@ -855,12 +914,15 @@ class ServicioFinanzas {
     return nuevos.length;
   }
 
-  Future<void> activarDiaInhabil(DiaInhabil dia, {required bool activo}) =>
-      repositorio.guardarDiasInhabiles([
-        dia.copiar(activo: activo, revisadoPor: personaId, revisadoEn: _ahora),
-      ]);
+  Future<void> activarDiaInhabil(DiaInhabil dia, {required bool activo}) {
+    _exigirHogar();
+    return repositorio.guardarDiasInhabiles([
+      dia.copiar(activo: activo, revisadoPor: personaId, revisadoEn: _ahora),
+    ]);
+  }
 
   Future<void> agregarDiaPropio(Fecha fecha, String nombre) {
+    _exigirHogar();
     if (nombre.trim().isEmpty) {
       throw const ErrorFinanzas('Escribe el nombre del día.');
     }
@@ -879,11 +941,17 @@ class ServicioFinanzas {
   // ------------------------------------------------------------------- libros
 
   /// Crea un libro compartido (p. ej. "Gastos de la casa"): quien lo crea
-  /// queda como miembro y agrega a [otros] (2 o más adultos). El id sale del
+  /// queda como miembro y como su **administrador**, y agrega a [otros] (2 o
+  /// más adultos). Es **privado** por omisión; con [visibilidad] pública los
+  /// adultos con Finanzas del hogar lo leen (sin escribir). El id sale del
   /// nombre: tocar dos veces o reintentar no crea otro.
-  Future<String> crearLibroCompartido(String nombre, List<String> otros) async {
-    if (esMaestra && !_tieneLibroPropio) {
-      throw const ErrorFinanzas('La cuenta maestra solo lee.');
+  Future<String> crearLibroCompartido(
+    String nombre,
+    List<String> otros, {
+    VisibilidadLibro visibilidad = VisibilidadLibro.privada,
+  }) async {
+    if (soloLectura) {
+      throw const ErrorFinanzas('La cuenta maestra solo lee: no crea libros.');
     }
     if (nombre.trim().isEmpty) throw const ErrorFinanzas('Escribe un nombre.');
     final demas = [
@@ -898,8 +966,100 @@ class ServicioFinanzas {
       id: id,
       nombre: nombre.trim(),
       otrosMiembros: demas,
+      visibilidad: visibilidad,
     );
     return id;
+  }
+
+  /// El compartido [libroId] si la persona lo administra (lo creó); si no,
+  /// error.
+  Libro _delAdministrador(String libroId, {String quehacer = 'lo cambia'}) {
+    final libro = _libro(libroId);
+    if (soloLectura ||
+        libro.tipo != TipoLibro.compartido ||
+        !libro.esAdministrador(personaId)) {
+      throw ErrorFinanzas('Solo quien creó ${libro.nombre} $quehacer.');
+    }
+    return libro;
+  }
+
+  /// Cambia quién más ve un compartido (solo su administrador).
+  Future<void> cambiarVisibilidadLibro(
+    String libroId,
+    VisibilidadLibro visibilidad,
+  ) async {
+    final libro = _delAdministrador(libroId, quehacer: 'cambia su visibilidad');
+    if (libro.visibilidad == visibilidad) return;
+    await repositorio.cambiarVisibilidadLibro(libroId, visibilidad);
+  }
+
+  /// Archiva un compartido: solo lectura para todos (solo su administrador).
+  Future<void> archivarLibro(String libroId) async {
+    final libro = _delAdministrador(libroId, quehacer: 'lo archiva');
+    if (libro.archivado) return;
+    await repositorio.archivarLibro(libroId, archivado: true);
+  }
+
+  /// Reactiva un compartido archivado (solo su administrador). Necesita 2 o
+  /// más miembros vigentes.
+  Future<void> reactivarLibro(String libroId) async {
+    final libro = _delAdministrador(libroId, quehacer: 'lo reactiva');
+    if (!libro.archivado) return;
+    if (libro.vigentes(hoy).length < 2) {
+      throw const ErrorFinanzas(
+        'Para reactivarlo agrega primero un miembro: un compartido tiene 2 o '
+        'más.',
+      );
+    }
+    await repositorio.archivarLibro(libroId, archivado: false);
+  }
+
+  /// `true` si la persona cambia la membresía de otros en [libro]: quien lo
+  /// creó o el dueño del hogar si es miembro.
+  bool _administraMiembros(Libro libro) =>
+      !soloLectura &&
+      libro.tipo == TipoLibro.compartido &&
+      (libro.esAdministrador(personaId) ||
+          (esDueno && libro.papelDe(personaId, hoy) != null && !libro.archivado));
+
+  /// Agrega a [persona] a un compartido (su administrador).
+  Future<void> agregarMiembroLibro(String libroId, String persona) async {
+    final libro = _libro(libroId);
+    if (!_administraMiembros(libro)) {
+      throw ErrorFinanzas('Solo quien creó ${libro.nombre} agrega miembros.');
+    }
+    if (libro.papelDe(persona, hoy) != null) {
+      throw const ErrorFinanzas('Esa persona ya es miembro.');
+    }
+    await repositorio.agregarMiembro(libroId, persona);
+  }
+
+  /// Saca a [persona] de un compartido (su administrador). Nunca quedan menos
+  /// de 2 miembros: para terminar el libro se archiva.
+  Future<void> quitarMiembroLibro(String libroId, String persona) async {
+    final libro = _libro(libroId);
+    if (persona == personaId) return salirDelLibro(libroId);
+    if (!_administraMiembros(libro)) {
+      throw ErrorFinanzas('Solo quien creó ${libro.nombre} saca miembros.');
+    }
+    if (libro.papelDe(persona, hoy) == null) return;
+    if (libro.vigentes(hoy).length <= 2) {
+      throw const ErrorFinanzas(
+        'Un libro compartido tiene 2 o más miembros: para terminarlo, '
+        'archívalo.',
+      );
+    }
+    await repositorio.quitarMiembro(libroId, persona);
+  }
+
+  /// La persona se sale del libro (cualquier miembro puede). Si quedan menos
+  /// de 2 miembros, el libro pasa a archivado (solo lectura).
+  Future<void> salirDelLibro(String libroId) async {
+    final libro = _libro(libroId);
+    if (soloLectura || !libro.puedeSalir(personaId, hoy)) {
+      throw const ErrorFinanzas('No eres miembro de ese libro.');
+    }
+    await repositorio.salirDelLibro(libroId);
   }
 
   /// Crea el libro de una persona representada (papá, sin cuenta; D19):
@@ -911,6 +1071,7 @@ class ServicioFinanzas {
     String? nombreLibro,
     String? suplenteId,
   }) async {
+    _exigirHogar();
     if (nombreTitular.trim().isEmpty) {
       throw const ErrorFinanzas('Escribe el nombre de la persona.');
     }
@@ -928,10 +1089,6 @@ class ServicioFinanzas {
     );
     return id;
   }
-
-  bool get _tieneLibroPropio => _d.libros.any(
-    (l) => l.papelDe(personaId, hoy) != null,
-  );
 
   // --------------------------------------------------------------------- plan
 

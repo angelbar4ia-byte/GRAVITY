@@ -60,9 +60,15 @@ class PantallaAjustes extends ConsumerWidget {
             leading: const Icon(Icons.account_circle_outlined),
             title: Text(sesion.persona.nombre),
             subtitle: Text(
-              sesion.esMaestra
-                  ? '${nombreRol(sesion.rol)} · cuenta maestra (solo lectura)'
-                  : nombreRol(sesion.rol),
+              !sesion.esMaestra
+                  ? nombreRol(sesion.rol)
+                  : (sesion.rol == Rol.dueno
+                        // La dueña que además es la maestra escribe en lo
+                        // suyo y en lo ajeno solo lee.
+                        ? '${nombreRol(sesion.rol)} · también cuenta maestra '
+                              '(lo ajeno, solo lectura)'
+                        : '${nombreRol(sesion.rol)} · cuenta maestra '
+                              '(solo lectura)'),
             ),
           ),
           const Divider(),
@@ -90,7 +96,7 @@ class PantallaAjustes extends ConsumerWidget {
               onTap: () =>
                   ref.read(controladorTabletProvider.notifier).volverAlReposo(),
             ),
-            if (!sesion.esMaestra &&
+            if (!esSoloLectura(sesion.rol, esMaestra: sesion.esMaestra) &&
                 puede(sesion.rol, Modulo.ajustes, Accion.administrar))
               ListTile(
                 leading: const Icon(Icons.logout),

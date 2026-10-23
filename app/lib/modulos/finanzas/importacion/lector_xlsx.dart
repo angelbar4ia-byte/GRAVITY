@@ -242,7 +242,34 @@ List<List<String>> tablaDeArchivo(
   throw const ErrorArchivo('Elige un archivo .xlsx o .csv.');
 }
 
-/// Lee un archivo del disco (laptop) y devuelve la hoja Categorías ya leída.
+/// Tamaño máximo de un archivo de datos (la plantilla pesa unas decenas de KB).
+const maximoBytesDeImportacion = 10 * 1024 * 1024;
+
+/// Lee los bytes de un `.xlsx` o `.csv` ([nombre] decide el formato) y
+/// devuelve la hoja Categorías ya leída. Es lo que usa el selector de archivos:
+/// el sistema entrega el nombre y los bytes, no una ruta que se pueda abrir
+/// (en Android es un `content://`).
+LecturaPlantilla leerPlantillaDeBytes(
+  Uint8List bytes, {
+  required String nombre,
+  String hoja = 'Categorías',
+}) {
+  if (bytes.length > maximoBytesDeImportacion) {
+    throw const ErrorArchivo('El archivo pesa más de 10 MB: no es la plantilla.');
+  }
+  try {
+    return leerPlantillaCategorias(
+      tablaDeArchivo(bytes, nombreArchivo: nombre, hoja: hoja),
+    );
+  } on ErrorPlantilla catch (e) {
+    throw ErrorArchivo(e.mensaje);
+  } on FormatException catch (e) {
+    throw ErrorArchivo('No pude leer el archivo: ${e.message}');
+  }
+}
+
+/// Lee un archivo del disco por su ruta y devuelve la hoja Categorías ya
+/// leída (para pruebas y herramientas; la app usa el selector de archivos).
 Future<LecturaPlantilla> leerPlantillaDeRuta(
   String ruta, {
   String hoja = 'Categorías',
@@ -251,14 +278,9 @@ Future<LecturaPlantilla> leerPlantillaDeRuta(
   if (!await archivo.exists()) {
     throw ErrorArchivo('No encontré el archivo: ${archivo.path}');
   }
-  final bytes = await archivo.readAsBytes();
-  try {
-    return leerPlantillaCategorias(
-      tablaDeArchivo(bytes, nombreArchivo: archivo.path, hoja: hoja),
-    );
-  } on ErrorPlantilla catch (e) {
-    throw ErrorArchivo(e.mensaje);
-  } on FormatException catch (e) {
-    throw ErrorArchivo('No pude leer el archivo: ${e.message}');
-  }
+  return leerPlantillaDeBytes(
+    await archivo.readAsBytes(),
+    nombre: archivo.path,
+    hoja: hoja,
+  );
 }

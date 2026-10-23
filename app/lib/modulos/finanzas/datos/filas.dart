@@ -49,6 +49,10 @@ abstract final class TablasFinanzas {
   /// Función que dice si existe la cuenta maestra y de quién es.
   static const cuentaMaestra = 'cuenta_maestra';
 
+  /// Función que dice si la persona puede `leer`, `escribir` o `administrar`
+  /// en un libro (la que usa la RLS).
+  static const puede = 'fin_puede';
+
   /// Función que crea el libro de una persona representada (papá).
   static const crearLibroRepresentado = 'fin_crear_libro_representado';
 }
@@ -129,6 +133,8 @@ Map<String, Object?> filaLibro(Libro l, {required String hogarId}) => {
   'tipo': nombreEnum(l.tipo),
   'titular_id': l.titularId,
   'activo': l.activo,
+  // Solo cuenta en los compartidos; en los demás el servidor exige 'privada'.
+  'visibilidad': nombreEnum(l.visibilidad),
 };
 
 /// Inicio del día [f] en la hora local, como `timestamptz` ISO (UTC).
@@ -168,6 +174,10 @@ Libro libroDeFila(
   tipo: enumDe(TipoLibro.values, f['tipo']),
   titularId: texto(f['titular_id']),
   activo: booleano(f['activo'], true),
+  creadoPor: texto(f['creado_por']),
+  visibilidad:
+      enumONulo(VisibilidadLibro.values, f['visibilidad']) ??
+      VisibilidadLibro.privada,
   miembros: [
     for (final m in miembros)
       if ('${m['libro_id']}' == '${f['id']}')

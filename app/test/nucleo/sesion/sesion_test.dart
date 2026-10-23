@@ -16,6 +16,55 @@ void main() {
     expect(Sesion.desdeJson(sesion.aJson()), sesion);
   });
 
+  group('la cuenta del equipo de las tablets se muestra como "Hogar" (23/oct)', () {
+    test('el rol sigue siendo casa; el nombre visible, Hogar', () {
+      final sesion = sesionDeEjemplo(Rol.casa);
+      expect(sesion.rol, Rol.casa);
+      expect(sesion.persona.nombre, 'Hogar');
+      expect(nombreCuentaDelHogar, 'Hogar');
+      expect(Rol.casa.name, 'casa');
+    });
+
+    test('lo que diga el servidor no cambia el nombre de la cuenta Casa', () {
+      final sesion = sesionDesdeFila({
+        'persona_id': 'p-casa',
+        'nombre': 'Casa (ejemplo)',
+        'rol': 'casa',
+        'hogar_id': 'h1',
+      });
+      expect(sesion.rol, Rol.casa);
+      expect(sesion.persona.nombre, 'Hogar');
+      // Las demás personas conservan su nombre.
+      final ana = sesionDesdeFila({
+        'persona_id': 'p-ana',
+        'nombre': 'Ana (ejemplo)',
+        'rol': 'dueno',
+        'hogar_id': 'h1',
+      });
+      expect(ana.persona.nombre, 'Ana (ejemplo)');
+    });
+
+    test('una sesión guardada antes del cambio también se muestra como Hogar', () {
+      final vieja = {
+        'persona': {'id': 'p-casa', 'nombre': 'Casa'},
+        'rol': 'casa',
+        'hogar_id': 'h1',
+      };
+      expect(Sesion.desdeJson(vieja).persona.nombre, 'Hogar');
+      expect(Sesion.desdeJson(vieja).persona.id, 'p-casa');
+    });
+
+    test('nombreParaMostrar solo toca a la cuenta Casa', () {
+      for (final rol in Rol.values) {
+        expect(
+          nombreParaMostrar(rol, 'Alguien'),
+          rol == Rol.casa ? 'Hogar' : 'Alguien',
+          reason: rol.name,
+        );
+      }
+    });
+  });
+
   group('modo demostración', () {
     test('entrarComo abre la sesión del rol elegido y avisa', () async {
       final servicio = ServicioSesionDemostracion();

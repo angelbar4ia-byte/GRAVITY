@@ -68,7 +68,7 @@ class MarcoHojaRegistro extends StatelessWidget {
                           runSpacing: 4,
                           children: [
                             Text(titulo, style: tema.textTheme.titleLarge),
-                            if (tituloDerecha != null) tituloDerecha!,
+                            ?tituloDerecha,
                           ],
                         ),
                         const SizedBox(height: 8),

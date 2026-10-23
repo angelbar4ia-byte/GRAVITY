@@ -214,6 +214,24 @@ class ControladorBloqueo extends Notifier<EstadoBloqueo> {
     return persona == null ? null : _intentos.esperaRestante(persona);
   }
 
+  /// Comprueba el PIN del bloqueo **sin desbloquear nada** (p. ej. para volver
+  /// a ver los montos). Cuenta los fallos igual que [desbloquearConPin].
+  ResultadoBloqueo comprobarPin(String pin) {
+    final persona = _persona;
+    final configuracion = state.configuracion;
+    if (persona == null || configuracion == null) {
+      return ResultadoBloqueo.pinIncorrecto;
+    }
+    if (_intentos.bloqueado(persona)) return ResultadoBloqueo.bloqueado;
+    if (!HashPin.verificar(pin, configuracion.hashPin)) {
+      return _intentos.anotarFallo(persona) == ResultadoFallo.bloqueado
+          ? ResultadoBloqueo.bloqueado
+          : ResultadoBloqueo.pinIncorrecto;
+    }
+    _intentos.anotarAcierto(persona);
+    return ResultadoBloqueo.abierto;
+  }
+
   ResultadoBloqueo desbloquearConPin(String pin) {
     final persona = _persona;
     final configuracion = state.configuracion;

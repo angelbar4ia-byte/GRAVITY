@@ -25,7 +25,8 @@ class CascaronTelefono extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final rol = ref.watch(rolEfectivoProvider);
     if (rol == null) return child;
-    final destinos = destinosDe(rol);
+    final esMaestra = ref.watch(esCuentaMaestraProvider);
+    final destinos = destinosDe(rol, esMaestra: esMaestra);
     final cuerpo = ConAvisoAtencion(child: child);
     if (destinos.length < 2) return Scaffold(body: cuerpo);
     return Scaffold(
@@ -35,7 +36,7 @@ class CascaronTelefono extends ConsumerWidget {
         onDestinationSelected: (indice) {
           final destino = destinos[indice];
           if (destino.esRegistrar) {
-            mostrarHojaRegistrar(context, rol);
+            mostrarHojaRegistrar(context, rol, esMaestra: esMaestra);
           } else if (destino.ruta != null) {
             context.go(destino.ruta!);
           }

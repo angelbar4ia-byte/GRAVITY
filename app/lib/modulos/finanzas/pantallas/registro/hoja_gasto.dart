@@ -8,7 +8,12 @@
 library;
 
 import 'package:finanzas_dominio/finanzas_dominio.dart'
-    hide Semaforo, formatearCentavos, TipoLibro, puntosBaseEnCien;
+    hide
+        Semaforo,
+        formatearCentavos,
+        TipoLibro,
+        VisibilidadLibro,
+        puntosBaseEnCien;
 import 'package:finanzas_dominio/finanzas_dominio.dart' as dom show TipoLibro;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,6 +24,7 @@ import '../../casos_uso/sugerencias.dart';
 import '../../estado/proveedores.dart';
 import '../comunes.dart';
 import 'marco_hoja.dart';
+import 'nueva_cuenta_en_hoja.dart';
 
 /// Libros donde la persona puede registrar, empezando por el activo.
 List<Libro> librosParaRegistrar(ContextoFinanzas c) => [
@@ -73,6 +79,7 @@ class _HojaRegistrarGastoState extends ConsumerState<HojaRegistrarGasto> {
   String? _cuentaId;
   Fecha? _fecha;
   bool _conNota = false;
+  bool _creandoCuenta = false;
   final _nota = TextEditingController();
   final _motivo = TextEditingController();
   bool _guardando = false;
@@ -152,9 +159,10 @@ class _HojaRegistrarGastoState extends ConsumerState<HojaRegistrarGasto> {
       personaId: c.personaId,
       hoy: c.hoy,
     );
+    // La categoría es **opcional**: sin ella el gasto queda en "Por
+    // clasificar". Solo se preselecciona la última que usó la persona.
     if (!_categoriaElegida && _categoriaId == null) {
-      _categoriaId = sugerencias.ultimaCategoriaId ??
-          sugerencias.categorias.firstOrNull?.id;
+      _categoriaId = sugerencias.ultimaCategoriaId;
     }
     _cuentaId ??= sugerencias.ultimaCuentaId;
     if (_cuentaId != null && !sugerencias.cuentas.any((x) => x.id == _cuentaId)) {
@@ -215,6 +223,7 @@ class _HojaRegistrarGastoState extends ConsumerState<HojaRegistrarGasto> {
                       onSelected: (_) => setState(() {
                         _libroId = l.id;
                         _cuentaId = null;
+                        _creandoCuenta = false;
                       }),
                     ),
                     const SizedBox(width: 8),
@@ -243,7 +252,7 @@ class _HojaRegistrarGastoState extends ConsumerState<HojaRegistrarGasto> {
             compacto: true,
           ),
           const SizedBox(height: 12),
-          const EtiquetaPanel('Categoría'),
+          const EtiquetaPanel('Categoría (opcional)'),
           const SizedBox(height: 4),
           Wrap(
             spacing: 8,
@@ -254,8 +263,9 @@ class _HojaRegistrarGastoState extends ConsumerState<HojaRegistrarGasto> {
                   key: ValueKey('gasto-categoria-${cat.id}'),
                   label: Text(cat.nombre),
                   selected: _categoriaId == cat.id,
-                  onSelected: (_) => setState(() {
-                    _categoriaId = cat.id;
+                  // Tocar la elegida otra vez la quita: queda "Por clasificar".
+                  onSelected: (sel) => setState(() {
+                    _categoriaId = sel ? cat.id : null;
                     _categoriaElegida = true;
                   }),
                 ),
@@ -274,12 +284,28 @@ class _HojaRegistrarGastoState extends ConsumerState<HojaRegistrarGasto> {
           const SizedBox(height: 12),
           const EtiquetaPanel('Cuenta'),
           const SizedBox(height: 4),
-          if (sugerencias.cuentas.isEmpty)
-            const Text(
-              'Este libro aún no tiene cuentas para pagar (efectivo, banco o '
-              'tarjeta). Créalas en la laptop.',
-            )
-          else
+          if (sugerencias.cuentas.isEmpty || _creandoCuenta) ...[
+            if (sugerencias.cuentas.isEmpty)
+              Text(
+                'Este libro aún no tiene cuentas de donde pagar. Crea la '
+                'primera (efectivo, banco o tarjeta) y sigue con el gasto.',
+                key: const ValueKey('gasto-sin-cuentas'),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            if (c.permisoEn(libro).administrar)
+              NuevaCuentaEnHoja(
+                key: ValueKey('gasto-cuenta-nueva-${libro.id}'),
+                libroId: libro.id,
+                alCrear: (id) => setState(() {
+                  _cuentaId = id;
+                  _creandoCuenta = false;
+                }),
+              )
+            else
+              const Text(
+                'Pide a quien administra este libro que cree una cuenta.',
+              ),
+          ] else
             Wrap(
               spacing: 8,
               runSpacing: 4,
@@ -290,6 +316,13 @@ class _HojaRegistrarGastoState extends ConsumerState<HojaRegistrarGasto> {
                     label: Text(cuenta.nombre),
                     selected: _cuentaId == cuenta.id,
                     onSelected: (_) => setState(() => _cuentaId = cuenta.id),
+                  ),
+                if (c.permisoEn(libro).administrar)
+                  ActionChip(
+                    key: const ValueKey('gasto-cuenta-nueva'),
+                    avatar: const Icon(Icons.add, size: 18),
+                    label: const Text('Cuenta nueva'),
+                    onPressed: () => setState(() => _creandoCuenta = true),
                   ),
               ],
             ),

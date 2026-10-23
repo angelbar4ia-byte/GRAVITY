@@ -7,9 +7,11 @@
 /// - Solo ofrece lo que el rol ve, y abre cada destino con su herramienta de
 ///   navegación (D1): GRAVITY actúa solo por herramientas declaradas. A la
 ///   cuidadora solo le ofrece su bandeja de solicitudes (D18); a la cuenta
-///   maestra, nada que escriba o administre lo ajeno (D19).
+///   maestra, nada que escriba o administre lo ajeno y, si no es la dueña,
+///   ninguna hoja de registro (solo lectura total, D19).
 /// - "Registrar gasto" abre la hoja de registro: la orden nunca guarda dinero
-///   sola, la persona captura y confirma en la hoja.
+///   sola, la persona captura y confirma en la hoja. Hay que decir el verbo:
+///   "gasto" suelto no abre nada (23/oct).
 /// - Ctrl+K la enfoca desde cualquier parte de la pantalla (sección 15).
 ///
 /// Los colores y la letra salen de `Theme.of(context)` (los define el agente

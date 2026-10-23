@@ -9,21 +9,27 @@ import '../../nucleo/contratos/roles.dart';
 import '../navegacion.dart';
 import 'registro_rapido.dart';
 
-Future<void> mostrarHojaRegistrar(BuildContext context, Rol rol) =>
-    showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      builder: (contexto) => HojaRegistrar(rol: rol),
-    );
+Future<void> mostrarHojaRegistrar(
+  BuildContext context,
+  Rol rol, {
+  bool esMaestra = false,
+}) => showModalBottomSheet<void>(
+  context: context,
+  showDragHandle: true,
+  builder: (contexto) => HojaRegistrar(rol: rol, esMaestra: esMaestra),
+);
 
 class HojaRegistrar extends StatelessWidget {
-  const HojaRegistrar({super.key, required this.rol});
+  const HojaRegistrar({super.key, required this.rol, this.esMaestra = false});
 
   final Rol rol;
 
+  /// Cuenta maestra (D19): si no es la dueña, no registra nada.
+  final bool esMaestra;
+
   @override
   Widget build(BuildContext context) {
-    final opciones = opcionesRegistrar(rol);
+    final opciones = opcionesRegistrar(rol, esMaestra: esMaestra);
     return SafeArea(
       child: ListView(
         shrinkWrap: true,

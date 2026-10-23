@@ -98,7 +98,7 @@ Sesion sesionDesdeFila(Map<String, Object?> fila) {
   return Sesion(
     persona: Persona(
       id: personaId,
-      nombre: (fila['nombre'] as String?) ?? 'Sin nombre',
+      nombre: nombreParaMostrar(rol, (fila['nombre'] as String?) ?? 'Sin nombre'),
       correo: fila['correo'] as String?,
     ),
     rol: rol,

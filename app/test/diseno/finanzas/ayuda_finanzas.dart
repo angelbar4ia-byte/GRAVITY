@@ -11,13 +11,15 @@ import '../ayuda_pruebas.dart';
 
 /// Monta [hijo] con la personalidad de Finanzas ("precisa y serena"), en una
 /// columna de [ancho] dp. Por omisión, de noche y con "reducir movimiento"
-/// activado para que las barras lleguen a su valor sin esperar.
+/// activado para que las barras lleguen a su valor sin esperar. Los montos se
+/// ven (con [montosVisibles] en falso empiezan ocultos, como en la app).
 Future<void> montarEnFinanzas(
   WidgetTester tester,
   Widget hijo, {
   double ancho = 360,
   DateTime? momento,
   bool reducirMovimiento = true,
+  bool montosVisibles = true,
   List<Override> overrides = const [],
 }) async {
   await montar(
@@ -40,6 +42,7 @@ Future<void> montarEnFinanzas(
       ),
     ),
     momento: momento,
+    montosVisibles: montosVisibles,
     overrides: overrides,
   );
   await tester.pumpAndSettle();

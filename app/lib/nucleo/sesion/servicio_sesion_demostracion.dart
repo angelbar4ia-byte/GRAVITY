@@ -30,7 +30,7 @@ const Map<Rol, Persona> personasDeEjemplo = {
   ),
   Rol.casa: Persona(
     id: '00000000-0000-4000-8000-000000000005',
-    nombre: 'Casa',
+    nombre: nombreCuentaDelHogar,
     correo: 'casa@ejemplo.test',
   ),
 };

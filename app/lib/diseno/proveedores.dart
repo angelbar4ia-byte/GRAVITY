@@ -275,6 +275,22 @@ class MontosVisibles extends Notifier<bool> {
   void fijar(bool visibles) => state = visibles;
 }
 
+/// Cómo se pide ver los montos cuando están ocultos (decisión del 23/oct: tras
+/// unos minutos sin uso se ocultan solos y **volver a verlos pide el PIN**, o la
+/// huella en el teléfono). Devuelve `true` si se mostraron.
+///
+/// El sistema de diseño no conoce el PIN ni la huella: plataforma lo conecta en
+/// el arranque con su flujo (`revelarMontos`). Por omisión (modo demostración y
+/// pruebas) los muestra sin pedir nada.
+typedef RevelarMontos = Future<bool> Function(BuildContext context);
+
+final revelarMontosProvider = Provider<RevelarMontos>(
+  (ref) => (context) async {
+    ref.read(montosVisiblesProvider.notifier).fijar(true);
+    return true;
+  },
+);
+
 /// Si los montos se dibujan ocultos: con modo privado, siempre.
 final montosOcultosProvider = Provider<bool>(
   (ref) => ref.watch(modoPrivadoProvider) || !ref.watch(montosVisiblesProvider),

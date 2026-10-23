@@ -18,13 +18,15 @@
 --   alex@ejemplo.test   Alex Ejemplo     coadministrador (pareja; suplente)
 --   carla@ejemplo.test  Carla Ejemplo    familiar
 --   diana@ejemplo.test  Diana Cuidadora  cuidador
---   casa@ejemplo.test   Casa Ejemplo     casa (tablet y puente de casa)
---   marta@ejemplo.test  Marta Maestra    coadministrador con la CUENTA MAESTRA
---                                        (cuenta aparte, como recomienda D19)
+--   casa@ejemplo.test   Hogar            casa (cuenta del equipo de las tablets; el
+--                                        identificador sigue siendo "casa", D14)
+--   marta@ejemplo.test  Marta Maestra    coadministrador con la CUENTA MAESTRA: otra
+--                                        persona con su PROPIO login (D19, 23/oct), solo
+--                                        lectura total en Finanzas y SIN libro propio
 --   Papá (ejemplo)      persona bajo cuidado, SIN cuenta (e000…0001)
 -- Libros de Finanzas (D19):
---   personal de Ana, de Alex y de Marta (los crea el servidor al dar el rol)
---   f100…0001  "Gastos de la casa"  compartido: Ana y Alex
+--   personal de Ana y de Alex (los crea el servidor al dar el rol; la maestra no lleva)
+--   f100…0001  "Gastos de la casa"  compartido PRIVADO: Ana (administradora) y Alex
 --   f100…0002  "Papá (ejemplo)"     representado: Ana albacea, Alex suplente
 -- Hogar Vecino (b000…0002): para probar el aislamiento entre hogares.
 --   elena@ejemplo.test  Elena Vecina     dueno
@@ -48,7 +50,7 @@ from (values
   ('a0000000-0000-4000-8000-000000000002', 'alex@ejemplo.test',  'Alex Ejemplo'),
   ('a0000000-0000-4000-8000-000000000003', 'carla@ejemplo.test', 'Carla Ejemplo'),
   ('a0000000-0000-4000-8000-000000000004', 'diana@ejemplo.test', 'Diana Cuidadora'),
-  ('a0000000-0000-4000-8000-000000000005', 'casa@ejemplo.test',  'Casa Ejemplo'),
+  ('a0000000-0000-4000-8000-000000000005', 'casa@ejemplo.test',  'Hogar'),
   ('a0000000-0000-4000-8000-000000000006', 'elena@ejemplo.test', 'Elena Vecina'),
   ('a0000000-0000-4000-8000-000000000007', 'nuevo@ejemplo.test', 'Nuevo Ejemplo'),
   ('a0000000-0000-4000-8000-000000000008', 'marta@ejemplo.test', 'Marta Maestra')
@@ -59,7 +61,8 @@ insert into public.hogares (id, nombre) values
   ('b0000000-0000-4000-8000-000000000002', 'Hogar Vecino');
 
 -- Al dar un rol con Finanzas (dueño, coadministrador) el servidor crea su
--- libro personal con sus cuentas de sistema (Ajustes, Apertura, Por clasificar).
+-- libro personal con sus cuentas de sistema (Ajustes, Apertura, Por clasificar);
+-- a la cuenta maestra (coadministrador con es_maestra) no le crea ninguno.
 insert into public.membresias (hogar_id, persona_id, rol, es_maestra)
 select m.hogar::uuid, p.id, m.rol, m.maestra
 from (values
@@ -130,11 +133,13 @@ $$;
 select pg_temp.como('a0000000-0000-4000-8000-000000000001');
 
 -- Libros compartido y representado; quien los crea queda como miembro o albacea.
-insert into public.fin_libros (id, hogar_id, nombre, tipo, titular_id) values
+-- "Gastos de la casa" es privado (por omisión): lo leen y escriben solo Ana (quien lo creó, su
+-- administradora) y Alex; la cuenta maestra lo lee con consulta; el dueño solo lo ve por ser miembro.
+insert into public.fin_libros (id, hogar_id, nombre, tipo, titular_id, visibilidad) values
   ('f1000000-0000-4000-8000-000000000001', 'b0000000-0000-4000-8000-000000000001',
-   'Gastos de la casa', 'compartido', null),
+   'Gastos de la casa', 'compartido', null, 'privada'),
   ('f1000000-0000-4000-8000-000000000002', 'b0000000-0000-4000-8000-000000000001',
-   'Papá (ejemplo)', 'representado', 'e0000000-0000-4000-8000-000000000001');
+   'Papá (ejemplo)', 'representado', 'e0000000-0000-4000-8000-000000000001', 'privada');
 insert into public.fin_libro_miembros (hogar_id, libro_id, persona_id, papel) values
   ('b0000000-0000-4000-8000-000000000001', 'f1000000-0000-4000-8000-000000000001',
    pg_temp.persona('a0000000-0000-4000-8000-000000000002'), 'miembro'),

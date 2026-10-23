@@ -5,6 +5,16 @@ import 'dart:async';
 
 import '../contratos/roles.dart';
 
+/// Nombre que se muestra de la cuenta del equipo de las tablets (rol `casa`,
+/// D14; decisión del dueño del 23/oct/2026): **"Hogar"**. El rol sigue
+/// llamándose `casa` en el código y en el servidor.
+const nombreCuentaDelHogar = 'Hogar';
+
+/// El nombre que se muestra de la persona de [rol]: el de la cuenta del
+/// equipo siempre es [nombreCuentaDelHogar], diga lo que diga el servidor.
+String nombreParaMostrar(Rol rol, String nombre) =>
+    rol == Rol.casa ? nombreCuentaDelHogar : nombre;
+
 /// Persona con cuenta propia (D5). Nunca se guardan datos reales en el código.
 class Persona {
   const Persona({required this.id, required this.nombre, this.correo});
@@ -65,14 +75,23 @@ class Sesion {
     if (esMaestra) 'es_maestra': true,
   };
 
-  factory Sesion.desdeJson(Map<String, Object?> json) => Sesion(
-    persona: Persona.desdeJson(
+  factory Sesion.desdeJson(Map<String, Object?> json) {
+    final rol = Rol.values.byName(json['rol']! as String);
+    final persona = Persona.desdeJson(
       (json['persona']! as Map).cast<String, Object?>(),
-    ),
-    rol: Rol.values.byName(json['rol']! as String),
-    hogarId: json['hogar_id'] as String?,
-    esMaestra: json['es_maestra'] == true,
-  );
+    );
+    return Sesion(
+      // Una sesión guardada antes del cambio de nombre se muestra como "Hogar".
+      persona: Persona(
+        id: persona.id,
+        nombre: nombreParaMostrar(rol, persona.nombre),
+        correo: persona.correo,
+      ),
+      rol: rol,
+      hogarId: json['hogar_id'] as String?,
+      esMaestra: json['es_maestra'] == true,
+    );
+  }
 
   @override
   bool operator ==(Object other) =>

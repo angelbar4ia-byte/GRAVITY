@@ -9,8 +9,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/dispositivo.dart';
 import '../../../nucleo/contratos/dispositivo.dart';
 import '../../../nucleo/seguridad/bloqueo.dart';
+import '../../../nucleo/seguridad/montos.dart';
 import '../../../nucleo/seguridad/pin.dart';
 import '../../../nucleo/seguridad/proveedores_seguridad.dart';
+import '../../../nucleo/tablet/controlador_tablet.dart';
 import '../marco_seccion.dart';
 import '../secciones_ajustes.dart';
 
@@ -24,6 +26,8 @@ class PantallaPrivacidad extends ConsumerWidget {
     return MarcoSeccion(
       seccion: SeccionAjustes.privacidad,
       hijos: [
+        const _MontosOcultos(),
+        const SizedBox(height: 16),
         if (esTelefono) ...[
           const _BloqueoTelefono(),
           const SizedBox(height: 16),
@@ -34,6 +38,7 @@ class PantallaPrivacidad extends ConsumerWidget {
           icono: Icons.shield_outlined,
         ),
         const NotaAjustes(
+          'Los montos también se ocultan solos tras unos minutos sin uso. '
           'Modo privado: oculta montos y datos de cuidados con un toque (en la '
           'laptop, Ctrl + Shift + O).',
           icono: Icons.visibility_off_outlined,
@@ -47,6 +52,100 @@ class PantallaPrivacidad extends ConsumerWidget {
     );
   }
 }
+
+/// Ocultar los montos solos tras unos minutos sin uso (decisión del 23/oct):
+/// el tiempo es editable aquí y para volver a verlos se pide el PIN (en el
+/// teléfono, también la huella).
+class _MontosOcultos extends ConsumerWidget {
+  const _MontosOcultos();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tema = Theme.of(context);
+    final estado = ref.watch(controladorMontosProvider);
+    final controlador = ref.read(controladorMontosProvider.notifier);
+    // Quién pide el PIN: la tablet (el de la persona), el bloqueo del teléfono
+    // o uno propio. Se vuelve a leer al cambiar el bloqueo o la persona.
+    ref.watch(controladorBloqueoProvider);
+    ref.watch(controladorTabletProvider.select((e) => e.usuarioActivo?.personaId));
+    final fuente = controlador.fuente;
+    return Card(
+      key: const ValueKey('privacidad-montos'),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: Text('Montos', style: tema.textTheme.titleMedium),
+            ),
+            ListTile(
+              title: const Text('Ocultar los montos tras'),
+              subtitle: const Text(
+                'Sin tocar la pantalla. Para volver a verlos se pide tu PIN.',
+              ),
+              trailing: DropdownButton<Duration>(
+                key: const ValueKey('montos-ocultar-tras'),
+                value: opcionesOcultarMontosTras.contains(estado.ocultarTras)
+                    ? estado.ocultarTras
+                    : null,
+                hint: Text(textoOcultarMontosTras(estado.ocultarTras)),
+                items: [
+                  for (final opcion in opcionesOcultarMontosTras)
+                    DropdownMenuItem(
+                      value: opcion,
+                      child: Text(textoOcultarMontosTras(opcion)),
+                    ),
+                ],
+                onChanged: !estado.cargado
+                    ? null
+                    : (opcion) {
+                        if (opcion != null) controlador.fijarOcultarTras(opcion);
+                      },
+              ),
+            ),
+            switch (fuente) {
+              FuenteDePinMontos.tablet => const ListTile(
+                leading: Icon(Icons.pin_outlined),
+                title: Text('PIN de la tablet'),
+                subtitle: Text('Se usa tu PIN de la tablet.'),
+              ),
+              FuenteDePinMontos.bloqueo => const ListTile(
+                leading: Icon(Icons.pin_outlined),
+                title: Text('PIN del bloqueo'),
+                subtitle: Text('Se usa el PIN del bloqueo del teléfono.'),
+              ),
+              FuenteDePinMontos.propio => ListTile(
+                key: const ValueKey('montos-pin-propio'),
+                leading: const Icon(Icons.pin_outlined),
+                title: Text(
+                  estado.tienePinPropio
+                      ? 'Cambiar el PIN para ver los montos'
+                      : 'Crear un PIN para ver los montos',
+                ),
+                subtitle: const Text('De 4 a 6 dígitos; nada fácil como 1234.'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () async {
+                  final pin = await showDialog<String>(
+                    context: context,
+                    builder: (contexto) => const _DialogoPinBloqueo(
+                      titulo: 'PIN para ver los montos',
+                    ),
+                  );
+                  if (pin != null) await controlador.crearPin(pin);
+                },
+              ),
+            },
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+String textoOcultarMontosTras(Duration tras) =>
+    tras.inMinutes == 1 ? '1 minuto' : '${tras.inMinutes} minutos';
 
 String textoBloqueoTras(Duration tras) => switch (tras.inMinutes) {
   0 => 'Al instante',
@@ -155,7 +254,9 @@ class _BloqueoTelefonoState extends ConsumerState<_BloqueoTelefono> {
 }
 
 class _DialogoPinBloqueo extends StatefulWidget {
-  const _DialogoPinBloqueo();
+  const _DialogoPinBloqueo({this.titulo = 'PIN del teléfono'});
+
+  final String titulo;
 
   @override
   State<_DialogoPinBloqueo> createState() => _DialogoPinBloqueoState();
@@ -197,7 +298,7 @@ class _DialogoPinBloqueoState extends State<_DialogoPinBloqueo> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-    title: const Text('PIN del teléfono'),
+    title: Text(widget.titulo),
     content: Column(
       mainAxisSize: MainAxisSize.min,
       children: [

@@ -159,7 +159,12 @@ Future<void> registrarAlgoPersonal(
   final estado = contenedor.read(controladorTabletProvider);
   final candidatos = [
     for (final usuario in estado.usuarios)
-      if (puedeRegistrarEn(usuario.rol, opcion.modulo)) usuario,
+      if (puedeRegistrarEn(
+        usuario.rol,
+        opcion.modulo,
+        esMaestra: usuario.esMaestra,
+      ))
+        usuario,
   ];
   if (candidatos.isEmpty) {
     mensajero?.showSnackBar(
@@ -223,7 +228,13 @@ class HojaRegistrarTabletCasa extends ConsumerWidget {
     );
     final personales = [
       for (final opcion in opcionesDeRegistro)
-        if (usuarios.any((u) => puedeRegistrarEn(u.rol, opcion.modulo)))
+        if (usuarios.any(
+          (u) => puedeRegistrarEn(
+            u.rol,
+            opcion.modulo,
+            esMaestra: u.esMaestra,
+          ),
+        ))
           opcion,
     ];
     final tema = Theme.of(context);
@@ -304,5 +315,12 @@ class HojaRegistrarTabletCasa extends ConsumerWidget {
 /// `true` si alguien de la tablet puede registrar en [modulo].
 bool puedeRegistrarAlgo(List<UsuarioTablet> usuarios, Modulo modulo) =>
     usuarios.any(
-      (u) => puedeAbrir(u.rol, modulo) && puede(u.rol, modulo, Accion.escribir),
+      (u) =>
+          puedeAbrir(u.rol, modulo) &&
+          puedeConSesion(
+            u.rol,
+            modulo,
+            Accion.escribir,
+            esMaestra: u.esMaestra,
+          ),
     );

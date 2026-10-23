@@ -3,8 +3,10 @@
 /// Funciones puras, sin depender de la configuración regional del dispositivo.
 library;
 
-/// Texto que reemplaza a un monto oculto (modo privado).
-const String montoOculto = r'$ • • • • •';
+/// Texto que reemplaza a un monto oculto (modo privado u ocultamiento
+/// automático): cuatro puntos de ancho fijo, para que no se adivine la cifra
+/// por el largo.
+const String montoOculto = '••••';
 
 /// Formatea centavos como pesos mexicanos: `123450` → `$1,234.50`.
 ///

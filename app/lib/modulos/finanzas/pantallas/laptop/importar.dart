@@ -1,11 +1,22 @@
-/// Importar datos (laptop; especificación 6.1): elegir archivo → vista
-/// previa → confirmar → resumen (creadas, omitidas y por qué). Importa la
-/// hoja **Categorías** de `data/DATOS_SEMILLA_PRESUPUESTO.xlsx` o su CSV;
-/// reimportar no duplica.
+/// Importar datos (laptop; especificación 6.1): elegir archivo con el
+/// **selector de archivos** del sistema → vista previa → confirmar → resumen
+/// (creadas, omitidas y por qué). Importa la hoja **Categorías** de
+/// `data/DATOS_SEMILLA_PRESUPUESTO.xlsx` o su CSV; reimportar no duplica.
+///
+/// Ya no se escribe una ruta (respuestas del dueño del 23/oct/2026). Para las
+/// pruebas queda una ruta **oculta** ([rutaManualProvider]).
 library;
 
+import 'dart:typed_data';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:finanzas_dominio/finanzas_dominio.dart'
-    hide Semaforo, formatearCentavos, TipoLibro, puntosBaseEnCien;
+    hide
+        Semaforo,
+        formatearCentavos,
+        TipoLibro,
+        VisibilidadLibro,
+        puntosBaseEnCien;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -15,11 +26,43 @@ import '../../importacion/lector_xlsx.dart';
 import '../comunes.dart';
 import 'marco_laptop.dart';
 
-/// Lee la plantilla de una ruta. Se reemplaza en las pruebas.
+/// Lee la plantilla de una ruta. Solo para las pruebas (ruta oculta).
 typedef LectorPlantilla = Future<LecturaPlantilla> Function(String ruta, String hoja);
 
 final lectorPlantillaProvider = Provider<LectorPlantilla>(
   (ref) => (ruta, hoja) => leerPlantillaDeRuta(ruta, hoja: hoja),
+);
+
+/// Muestra el campo de ruta escrita (oculto por omisión; solo las pruebas lo
+/// encienden).
+final rutaManualProvider = Provider<bool>((ref) => false);
+
+/// Lo que devuelve el selector de archivos: el nombre y los bytes (en Android
+/// el sistema da un `content://`, no una ruta que se pueda abrir).
+class ArchivoElegido {
+  const ArchivoElegido(this.nombre, this.bytes);
+
+  final String nombre;
+  final Uint8List bytes;
+}
+
+/// Abre el selector de archivos del sistema (`.xlsx` o `.csv`). `null` si la
+/// persona cancela.
+typedef SelectorArchivo = Future<ArchivoElegido?> Function();
+
+Future<ArchivoElegido?> elegirArchivoDelSistema() async {
+  final archivo = await FilePicker.pickFile(
+    dialogTitle: 'Elegir el archivo de datos',
+    type: FileType.custom,
+    allowedExtensions: const ['xlsx', 'csv'],
+  );
+  if (archivo == null) return null;
+  return ArchivoElegido(archivo.name, await archivo.readAsBytes());
+}
+
+/// El selector de archivos de la app; las pruebas lo reemplazan.
+final selectorArchivoProvider = Provider<SelectorArchivo>(
+  (ref) => elegirArchivoDelSistema,
 );
 
 class PantallaImportar extends StatelessWidget {
@@ -49,6 +92,7 @@ class _Importar extends ConsumerStatefulWidget {
 class _ImportarState extends ConsumerState<_Importar> {
   final _ruta = TextEditingController();
   final _hoja = TextEditingController(text: 'Categorías');
+  ArchivoElegido? _archivo;
   LecturaPlantilla? _lectura;
   PlanImportacion? _vista;
   PlanImportacion? _resultado;
@@ -62,6 +106,45 @@ class _ImportarState extends ConsumerState<_Importar> {
     super.dispose();
   }
 
+  /// Nombre del archivo con el que se trabaja: el elegido o, en las pruebas, la
+  /// ruta oculta.
+  String get _nombreArchivo =>
+      _archivo?.nombre ?? _ruta.text.trim().split(RegExp(r'[\\/]')).last;
+
+  bool get _hayArchivo =>
+      _archivo != null || (ref.read(rutaManualProvider) && _ruta.text.trim().isNotEmpty);
+
+  Future<void> _elegir() async {
+    setState(() {
+      _trabajando = true;
+      _error = null;
+    });
+    ArchivoElegido? elegido;
+    try {
+      elegido = await ref.read(selectorArchivoProvider)();
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _trabajando = false;
+          _error = 'No pude abrir el selector de archivos: $e';
+        });
+      }
+      return;
+    }
+    if (!mounted) return;
+    if (elegido == null) {
+      setState(() => _trabajando = false); // la persona canceló
+      return;
+    }
+    setState(() {
+      _archivo = elegido;
+      _lectura = null;
+      _vista = null;
+      _resultado = null;
+    });
+    await _previsualizar();
+  }
+
   Future<void> _previsualizar() async {
     setState(() {
       _trabajando = true;
@@ -69,7 +152,14 @@ class _ImportarState extends ConsumerState<_Importar> {
       _resultado = null;
     });
     try {
-      final lectura = await ref.read(lectorPlantillaProvider)(_ruta.text, _hoja.text);
+      final archivo = _archivo;
+      final lectura = archivo != null
+          ? leerPlantillaDeBytes(
+              archivo.bytes,
+              nombre: archivo.nombre,
+              hoja: _hoja.text,
+            )
+          : await ref.read(lectorPlantillaProvider)(_ruta.text, _hoja.text);
       final vista = ref.read(servicioFinanzasProvider).previsualizarImportacion(lectura);
       setState(() {
         _lectura = lectura;
@@ -88,7 +178,7 @@ class _ImportarState extends ConsumerState<_Importar> {
     final lectura = _lectura;
     if (lectura == null) return;
     setState(() => _trabajando = true);
-    final nombre = _ruta.text.trim().split(RegExp(r'[\\/]')).last;
+    final nombre = _nombreArchivo;
     try {
       final r = await ref.read(servicioFinanzasProvider).importarCategorias(
         lectura,
@@ -134,26 +224,50 @@ class _ImportarState extends ConsumerState<_Importar> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              TextField(
-                key: const ValueKey('importar-ruta'),
-                controller: _ruta,
-                decoration: const InputDecoration(
-                  labelText: 'Ruta del archivo (.xlsx o .csv)',
-                  hintText: r'p. ej. C:\Users\...\DATOS_SEMILLA_PRESUPUESTO.xlsx',
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: OutlinedButton.icon(
+                  key: const ValueKey('importar-elegir'),
+                  onPressed: _trabajando ? null : _elegir,
+                  icon: const Icon(Icons.folder_open_outlined),
+                  label: const Text('Elegir archivo…'),
                 ),
               ),
-              TextField(
-                controller: _hoja,
-                decoration: const InputDecoration(labelText: 'Hoja (solo .xlsx)'),
-              ),
+              if (_archivo != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    'Archivo: ${_archivo!.nombre}',
+                    key: const ValueKey('importar-archivo'),
+                  ),
+                )
+              else
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    'Elige el archivo .xlsx o .csv de tu equipo.',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
+              if (ref.watch(rutaManualProvider))
+                TextField(
+                  key: const ValueKey('importar-ruta'),
+                  controller: _ruta,
+                  decoration: const InputDecoration(labelText: 'Ruta del archivo'),
+                  onChanged: (_) => setState(() {}),
+                ),
+              if (_archivo == null || _nombreArchivo.toLowerCase().endsWith('.xlsx'))
+                TextField(
+                  key: const ValueKey('importar-hoja'),
+                  controller: _hoja,
+                  decoration: const InputDecoration(labelText: 'Hoja (solo .xlsx)'),
+                ),
               const SizedBox(height: 8),
               Align(
                 alignment: AlignmentDirectional.centerEnd,
                 child: FilledButton(
                   key: const ValueKey('importar-vista-previa'),
-                  onPressed: _trabajando || _ruta.text.trim().isEmpty && false
-                      ? null
-                      : _previsualizar,
+                  onPressed: _trabajando || !_hayArchivo ? null : _previsualizar,
                   child: const Text('Vista previa'),
                 ),
               ),

@@ -512,17 +512,26 @@ class _PanelFinanzas extends ConsumerWidget implements _Panel {
                   ),
                 ),
               ),
-              if (!privado) ...[
+              if (!privado && !ocultos) ...[
                 SizedBox(width: e),
                 OutlinedButton(
-                  key: const ValueKey('boton-mostrar-montos'),
+                  key: const ValueKey('boton-ocultar-montos'),
                   onPressed: () =>
-                      ref.read(montosVisiblesProvider.notifier).alternar(),
-                  child: Text(ocultos ? 'Mostrar' : 'Ocultar'),
+                      ref.read(montosVisiblesProvider.notifier).fijar(false),
+                  child: const Text('Ocultar'),
                 ),
               ],
             ],
           ),
+          // Ocultos: la marca es también la forma de pedir verlos (PIN o
+          // huella).
+          if (ocultos) ...[
+            SizedBox(height: e * 0.5),
+            const Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: MarcaMontosOcultos(),
+            ),
+          ],
           SizedBox(height: e * 1.5),
           BarraProgreso(
             etiqueta: 'Presupuesto usado',

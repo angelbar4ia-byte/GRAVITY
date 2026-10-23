@@ -147,9 +147,9 @@ void main() {
     test('familiar, cuidador y casa: ninguna herramienta de Finanzas', () {
       for (final rol in [Rol.familiar, Rol.cuidador, Rol.casa]) {
         expect(
-          registro.disponibles(rol: rol).where(
-            (h) => h.modulo == Modulo.finanzas,
-          ),
+          registro
+              .disponibles(rol: rol)
+              .where((h) => h.modulo == Modulo.finanzas),
           isEmpty,
           reason: rol.name,
         );
@@ -476,7 +476,9 @@ void main() {
         );
         for (final rol in [Rol.familiar, Rol.cuidador, Rol.casa]) {
           expect(
-            () => RegistroHerramientas([deFinanzas({rol}, escribe: escribe)]),
+            () => RegistroHerramientas([
+              deFinanzas({rol}, escribe: escribe),
+            ]),
             throwsArgumentError,
             reason: '${rol.name} ${escribe ? 'escribe' : 'lee'} Finanzas',
           );
@@ -703,50 +705,189 @@ void main() {
 
     test('solo un rol con Finanzas puede ser la cuenta maestra', () {
       expect(
-        {for (final rol in Rol.values) if (puedeSerCuentaMaestra(rol)) rol},
+        {
+          for (final rol in Rol.values)
+            if (puedeSerCuentaMaestra(rol)) rol,
+        },
         {Rol.dueno, Rol.coadministrador},
       );
     });
 
-    test('no recibe Desarrollador (administra el hogar: es lo ajeno)', () async {
-      expect(
-        registro.buscar('ajustes.abrir_desarrollador', rol: Rol.dueno),
-        isNotNull,
-      );
-      expect(
-        registro.buscar(
-          'ajustes.abrir_desarrollador',
-          rol: Rol.dueno,
+    test(
+      'no recibe Desarrollador (administra el hogar: es lo ajeno)',
+      () async {
+        expect(
+          registro.buscar('ajustes.abrir_desarrollador', rol: Rol.dueno),
+          isNotNull,
+        );
+        expect(
+          registro.buscar(
+            'ajustes.abrir_desarrollador',
+            rol: Rol.dueno,
+            esMaestra: true,
+          ),
+          isNull,
+        );
+        await expectLater(
+          registro.ejecutar(
+            'ajustes.abrir_desarrollador',
+            const {},
+            ContextoHerramienta(
+              rol: Rol.dueno,
+              esMaestra: true,
+              navegar: (_) {},
+            ),
+          ),
+          _noDisponiblePor(MotivoNoDisponible.cuentaMaestra),
+        );
+      },
+    );
+
+    test('el dueño que además es maestro conserva lo suyo: abre Finanzas, su '
+        'semana y la hoja de su gasto (la hoja solo ofrece sus libros)', () {
+      final normal = registro
+          .disponibles(rol: Rol.dueno)
+          .map((h) => h.nombre)
+          .toSet();
+      final maestra = registro
+          .disponibles(rol: Rol.dueno, esMaestra: true)
+          .map((h) => h.nombre)
+          .toSet();
+      // Solo pierde lo que administra el hogar (lo ajeno).
+      expect(normal.difference(maestra), {'ajustes.abrir_desarrollador'});
+      expect(maestra.difference(normal), isEmpty);
+      expect(maestra, contains('finanzas.registrar_gasto'));
+    });
+
+    test(
+      'la maestra con login propio (coadministrador) es de solo lectura '
+      'total: sin hoja de registro ni nada que escriba, ni lo propio (23/oct)',
+      () {
+        final normal = registro
+            .disponibles(rol: Rol.coadministrador)
+            .map((h) => h.nombre)
+            .toSet();
+        final maestra = registro.disponibles(
+          rol: Rol.coadministrador,
           esMaestra: true,
-        ),
-        isNull,
-      );
+        );
+        expect(
+          maestra.map((h) => h.nombre).toSet(),
+          {...normal}..remove('finanzas.registrar_gasto'),
+        );
+        // Lo de Finanzas que conserva es navegación y lectura.
+        expect(
+          maestra
+              .where((h) => h.modulo == Modulo.finanzas)
+              .map((h) => h.nombre),
+          ['finanzas.abrir', 'finanzas.abrir_semana'],
+        );
+        for (final h in maestra) {
+          expect(h.accion, Accion.leer, reason: h.nombre);
+          expect(h.escribe, isFalse, reason: h.nombre);
+          expect(
+            h is HerramientaNavegacion && h.hoja != null,
+            isFalse,
+            reason: '${h.nombre} abre una hoja de registro',
+          );
+        }
+      },
+    );
+
+    test('ejecutar "registrar gasto" como maestra con login propio no la '
+        'ejecuta ni abre la hoja', () async {
+      final hojas = <HojaDeRegistro>[];
+      final rutas = <String>[];
       await expectLater(
         registro.ejecutar(
-          'ajustes.abrir_desarrollador',
+          'finanzas.registrar_gasto',
           const {},
-          ContextoHerramienta(rol: Rol.dueno, esMaestra: true, navegar: (_) {}),
+          ContextoHerramienta(
+            rol: Rol.coadministrador,
+            esMaestra: true,
+            navegar: rutas.add,
+            abrirHoja: hojas.add,
+          ),
         ),
         _noDisponiblePor(MotivoNoDisponible.cuentaMaestra),
       );
+      expect(hojas, isEmpty);
+      expect(rutas, isEmpty);
+      // Sin la marca, la pareja sí la tiene.
+      await registro.ejecutar(
+        'finanzas.registrar_gasto',
+        const {},
+        ContextoHerramienta(rol: Rol.coadministrador, abrirHoja: hojas.add),
+      );
+      expect(hojas, [HojaDeRegistro.gasto]);
     });
 
-    test('lo propio sigue igual: abre Finanzas, su semana y la hoja de su '
-        'gasto (la hoja solo ofrece sus libros)', () {
-      for (final rol in [Rol.dueno, Rol.coadministrador]) {
-        final normal = registro
-            .disponibles(rol: rol)
-            .map((h) => h.nombre)
-            .toSet();
-        final maestra = registro
-            .disponibles(rol: rol, esMaestra: true)
-            .map((h) => h.nombre)
-            .toSet();
-        expect(normal.difference(maestra), {
-          if (rol == Rol.dueno) 'ajustes.abrir_desarrollador',
-        }, reason: rol.name);
-        expect(maestra.difference(normal), isEmpty, reason: rol.name);
-      }
+    test('solo lectura total en cualquier módulo: una maestra que no es la '
+        'dueña no recibe ninguna herramienta que escriba o abra una hoja, '
+        'tampoco para lo propio', () {
+      final propias = [
+        _Falsa(
+          nombre: 'habitos.marcar_hecho',
+          modulo: Modulo.habitos,
+          roles: const {Rol.dueno, Rol.coadministrador},
+          escribe: true,
+        ),
+        _Falsa(
+          nombre: 'finanzas.anular_propio',
+          modulo: Modulo.finanzas,
+          roles: const {Rol.dueno, Rol.coadministrador},
+          escribe: true,
+          soloLocal: true,
+        ),
+        _Falsa(
+          nombre: 'alimentacion.leer_menu',
+          modulo: Modulo.alimentacion,
+          roles: const {Rol.dueno, Rol.coadministrador},
+        ),
+      ];
+      final r = RegistroHerramientas([...herramientasDeGravity(), ...propias]);
+      Set<String> nombres(Rol rol, bool esMaestra) => r
+          .disponibles(rol: rol, esMaestra: esMaestra)
+          .map((h) => h.nombre)
+          .toSet();
+      // La pareja maestra solo lee.
+      expect(
+        nombres(Rol.coadministrador, true),
+        contains('alimentacion.leer_menu'),
+      );
+      expect(
+        nombres(Rol.coadministrador, true),
+        isNot(contains('habitos.marcar_hecho')),
+      );
+      expect(
+        nombres(Rol.coadministrador, true),
+        isNot(contains('finanzas.anular_propio')),
+      );
+      // Sin la marca, la pareja escribe lo suyo.
+      expect(
+        nombres(Rol.coadministrador, false),
+        contains('habitos.marcar_hecho'),
+      );
+      expect(
+        nombres(Rol.coadministrador, false),
+        contains('finanzas.anular_propio'),
+      );
+      // El dueño maestro conserva lo suyo.
+      expect(nombres(Rol.dueno, true), contains('habitos.marcar_hecho'));
+      expect(nombres(Rol.dueno, true), contains('finanzas.anular_propio'));
+      // Ni ejecutando directo con la confirmación ya dada.
+      expect(
+        r.ejecutar(
+          'habitos.marcar_hecho',
+          const {},
+          const ContextoHerramienta(
+            rol: Rol.coadministrador,
+            esMaestra: true,
+            confirmado: true,
+          ),
+        ),
+        _noDisponiblePor(MotivoNoDisponible.cuentaMaestra),
+      );
     });
 
     test('ninguna herramienta que escribe o administra lo ajeno aparece para '
@@ -848,7 +989,11 @@ void main() {
       expect(r.buscar(h.nombre, rol: Rol.dueno), isNull);
       expect(r.buscar(h.nombre, rol: Rol.dueno, esMaestra: true), isNotNull);
       await expectLater(
-        r.ejecutar(h.nombre, const {}, const ContextoHerramienta(rol: Rol.dueno)),
+        r.ejecutar(
+          h.nombre,
+          const {},
+          const ContextoHerramienta(rol: Rol.dueno),
+        ),
         _noDisponiblePor(MotivoNoDisponible.rolSinPermiso),
       );
       final resultado = await r.ejecutar(
@@ -936,15 +1081,17 @@ void main() {
       });
     });
 
-    test('la cuenta maestra recibe lo suyo menos lo que administra el hogar',
-        () {
+    test('la cuenta maestra recibe lo suyo menos lo que administra el hogar '
+        '(el dueño) o menos lo que registra (la pareja)', () {
       expect(
         nombres(Rol.dueno, esMaestra: true),
         nombres(Rol.dueno)..remove('ajustes.abrir_desarrollador'),
       );
+      // La maestra con login propio (coadministrador) es de solo lectura
+      // total (23/oct): sin la hoja de registro.
       expect(
         nombres(Rol.coadministrador, esMaestra: true),
-        nombres(Rol.coadministrador),
+        nombres(Rol.coadministrador)..remove('finanzas.registrar_gasto'),
       );
       // La marca no amplía nada a quien no puede ser cuenta maestra.
       for (final rol in [Rol.familiar, Rol.cuidador, Rol.casa]) {
@@ -1007,21 +1154,26 @@ void main() {
   group('Finanzas es solo local (D3), también en la cuenta maestra', () {
     final registro = registroDeGravity();
 
-    test('toda herramienta de Finanzas declarada es soloLocal y no escribe', () {
-      final deFinanzas = registro.todas
-          .where((h) => h.modulo == Modulo.finanzas)
-          .toList();
-      expect(deFinanzas, isNotEmpty);
-      for (final h in deFinanzas) {
-        expect(h.soloLocal, isTrue, reason: h.nombre);
-        expect(h.escribe, isFalse, reason: h.nombre);
-        expect(modulosSoloLocal, contains(h.modulo));
-      }
-    });
+    test(
+      'toda herramienta de Finanzas declarada es soloLocal y no escribe',
+      () {
+        final deFinanzas = registro.todas
+            .where((h) => h.modulo == Modulo.finanzas)
+            .toList();
+        expect(deFinanzas, isNotEmpty);
+        for (final h in deFinanzas) {
+          expect(h.soloLocal, isTrue, reason: h.nombre);
+          expect(h.escribe, isFalse, reason: h.nombre);
+          expect(modulosSoloLocal, contains(h.modulo));
+        }
+      },
+    );
 
     test('ni ejecutada como dueño, pareja o cuenta maestra deja algo para la '
         'IA', () async {
-      for (final h in registro.todas.where((h) => h.modulo == Modulo.finanzas)) {
+      for (final h in registro.todas.where(
+        (h) => h.modulo == Modulo.finanzas,
+      )) {
         for (final rol in h.roles) {
           for (final esMaestra in [false, true]) {
             final conPantalla = ContextoHerramienta(
@@ -1034,7 +1186,20 @@ void main() {
               rol: rol,
               esMaestra: esMaestra,
             );
+            // La maestra con login propio no recibe la hoja de registro:
+            // no se ejecuta (ver "solo lectura total").
+            final seOfrece =
+                registro.buscar(h.nombre, rol: rol, esMaestra: esMaestra) !=
+                null;
             for (final ctx in [conPantalla, sinPantalla]) {
+              if (!seOfrece) {
+                await expectLater(
+                  registro.ejecutar(h.nombre, const {}, ctx),
+                  _noDisponiblePor(MotivoNoDisponible.cuentaMaestra),
+                  reason: '${h.nombre} / ${rol.name} (maestra)',
+                );
+                continue;
+              }
               final r = await registro.ejecutar(h.nombre, const {}, ctx);
               expect(r.paraIa, isNull, reason: '${h.nombre} / ${rol.name}');
               expect(r.soloLocal, isTrue, reason: h.nombre);
@@ -1073,20 +1238,17 @@ void main() {
       // Aunque la orden traiga un monto, la herramienta lo ignora: solo abre
       // la hoja, donde la persona captura y confirma.
       final hojas = <HojaDeRegistro>[];
-      final r = await registro.ejecutar(
-        h.nombre,
-        const {'monto_centavos': 99999, 'categoria': 'Súper'},
-        ContextoHerramienta(rol: Rol.dueno, abrirHoja: hojas.add),
-      );
+      final r = await registro.ejecutar(h.nombre, const {
+        'monto_centavos': 99999,
+        'categoria': 'Súper',
+      }, ContextoHerramienta(rol: Rol.dueno, abrirHoja: hojas.add));
       expect(hojas, [HojaDeRegistro.gasto]);
       expect(r.contenido, isNot(contains('999')));
       expect(r.requiereConfirmacion, isFalse);
       // Sin pantalla donde mostrar la hoja, tampoco escribe: avisa.
-      final sinHoja = await registro.ejecutar(
-        h.nombre,
-        const {'monto_centavos': 99999},
-        const ContextoHerramienta(rol: Rol.dueno),
-      );
+      final sinHoja = await registro.ejecutar(h.nombre, const {
+        'monto_centavos': 99999,
+      }, const ContextoHerramienta(rol: Rol.dueno));
       expect(sinHoja.contenido, contains('No hay una pantalla'));
       expect(sinHoja.paraIa, isNull);
     });
@@ -1147,9 +1309,8 @@ void main() {
 
     test('una que escribe debe exigir poder escribir o administrar', () {
       expect(
-        () => RegistroHerramientas([
-          _Falsa(escribe: true, accion: Accion.leer),
-        ]),
+        () =>
+            RegistroHerramientas([_Falsa(escribe: true, accion: Accion.leer)]),
         throwsA(isA<ArgumentError>().having((e) => e.name, 'name', 'accion')),
       );
     });
@@ -1188,13 +1349,10 @@ void main() {
     });
 
     test('el catálogo vigente es el de la Fase 0 más el de la Fase 1', () {
-      expect(
-        herramientasDeGravity().map((h) => h.nombre).toSet(),
-        {
-          ...herramientasFase0().map((h) => h.nombre),
-          ...herramientasFase1().map((h) => h.nombre),
-        },
-      );
+      expect(herramientasDeGravity().map((h) => h.nombre).toSet(), {
+        ...herramientasFase0().map((h) => h.nombre),
+        ...herramientasFase1().map((h) => h.nombre),
+      });
       expect(registroFase0().todas, hasLength(8));
       expect(registroDeGravity().todas, hasLength(11));
     });
@@ -1324,14 +1482,16 @@ void main() {
       }
     });
 
-    test('"mi semana" abre la misma ruta que la sección Semana de Finanzas',
-        () {
-      expect(
-        herramientaAbrirSemanaFinanzas.ruta,
-        SeccionFinanzas.semana.ruta,
-      );
-      expect(RutasDeHerramientas.semanaFinanzas, SeccionFinanzas.semana.ruta);
-    });
+    test(
+      '"mi semana" abre la misma ruta que la sección Semana de Finanzas',
+      () {
+        expect(
+          herramientaAbrirSemanaFinanzas.ruta,
+          SeccionFinanzas.semana.ruta,
+        );
+        expect(RutasDeHerramientas.semanaFinanzas, SeccionFinanzas.semana.ruta);
+      },
+    );
 
     test('"mi semana" abre la semana de Finanzas', () async {
       final h = herramientaAbrirSemanaFinanzas;

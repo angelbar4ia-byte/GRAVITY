@@ -103,10 +103,24 @@ final class RegistroHerramientas {
   /// - Después, poder hacer [Herramienta.accion] sobre lo propio o lo ajeno
   ///   ([puedeSobre]): la cuenta maestra lee lo ajeno de Finanzas y GRAVITY
   ///   y nunca lo escribe ni lo administra.
+  /// - La cuenta maestra que no es la dueña es de solo lectura total
+  ///   ([esSoloLectura]): solo navegación y lectura, ninguna herramienta que
+  ///   escriba ni que abra una hoja de registro (D19, 23/oct).
   static bool _permite(Herramienta h, Rol rol, {bool esMaestra = false}) {
     // Solo un rol con Finanzas puede ser la cuenta maestra (como en el
     // servidor, `es_cuenta_maestra`); con otro rol la marca no amplía nada.
     final maestra = esMaestra && puedeSerCuentaMaestra(rol);
+    // D19 (23/oct): la maestra con login propio, que no es la dueña, es de
+    // solo lectura total ([esSoloLectura] de la plataforma): ni una
+    // herramienta que escriba ni una que abra una hoja de registro, tampoco
+    // para lo propio. Solo navegación y lectura. ([puedeSobre] ya le quita lo
+    // que no es de leer; aquí se cierra también la hoja de registro.)
+    if (esSoloLectura(rol, esMaestra: maestra) &&
+        (h.accion != Accion.leer ||
+            h.escribe ||
+            (h is HerramientaNavegacion && h.hoja != null))) {
+      return false;
+    }
     final deBandeja = h.ambito == AmbitoHerramienta.solicitudes;
     if (soloBandejaEnGravity(rol) &&
         (!deBandeja || h.modulo == Modulo.finanzas)) {
@@ -139,7 +153,8 @@ final class RegistroHerramientas {
   /// Las herramientas que [rol] puede usar con [modulosActivos]
   /// (`null`: todos los módulos activos), en el orden en que se registraron.
   /// Con [esMaestra] (la cuenta maestra, D19) no aparece ninguna que escriba
-  /// o administre lo ajeno.
+  /// o administre lo ajeno y, si no es la dueña, tampoco ninguna que escriba
+  /// ni abra una hoja de registro (solo lectura total, [esSoloLectura]).
   List<Herramienta> disponibles({
     required Rol rol,
     Set<Modulo>? modulosActivos,

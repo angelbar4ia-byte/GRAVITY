@@ -1,7 +1,9 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../proveedores.dart';
 import '../superficies.dart';
 import '../tema.dart';
 import '../valores_diseno.dart';
@@ -438,10 +440,11 @@ class CeldaTexto extends StatelessWidget {
   }
 }
 
-/// Monto en una celda: ancho fijo, cifras tabulares y modo oculto. Los
-/// negativos van en rojo **y** con su signo (salvo en modo privado, donde el
-/// color no delata nada).
-class CeldaMonto extends StatelessWidget {
+/// Monto en una celda: ancho fijo, cifras tabulares y modo oculto (si lo pide
+/// [oculto] o la app tiene los montos ocultos: [montosOcultosProvider]). Los
+/// negativos van en rojo **y** con su signo (salvo con el monto oculto, donde
+/// el color no delata nada).
+class CeldaMonto extends ConsumerWidget {
   const CeldaMonto(
     this.centavos, {
     super.key,
@@ -458,7 +461,8 @@ class CeldaMonto extends StatelessWidget {
   final bool tenue;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final oculto = this.oculto || ref.watch(montosOcultosProvider);
     final v = ValoresDiseno.de(context);
     final t = EstiloTabla.de(context);
     final Color color;

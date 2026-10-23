@@ -15,6 +15,18 @@ enum TipoLibro { personal, compartido, representado }
 /// Papel de una persona en un libro (`fin_libro_miembros.papel`).
 enum PapelLibro { titular, miembro, albacea, albaceaSuplente }
 
+/// Quién más ve un libro **compartido** (`fin_libros.visibilidad`; respuestas
+/// del dueño del 23/oct/2026, D19).
+///
+/// - [privada] (por omisión): la ven y escriben sus miembros; la lee también la
+///   cuenta maestra (con consulta registrada). El dueño no entra si no es
+///   miembro.
+/// - [publica]: además la **leen** (no escriben) los adultos con Finanzas del
+///   hogar que no son miembros.
+///
+/// En los libros personales y representados siempre es [privada].
+enum VisibilidadLibro { privada, publica }
+
 /// Una persona en un libro, con su vigencia.
 ///
 /// **Vigencia (misma regla que el servidor, `fin_libro_miembros`):** vigente
@@ -72,6 +84,15 @@ class Libro {
   final bool activo;
   final List<MiembroLibro> miembros;
 
+  /// Quién lo creó (`fin_libros.creado_por`). En un compartido es su
+  /// **administrador**: agrega y saca miembros, cambia la visibilidad, lo
+  /// archiva y lo reactiva. Si el creador se sale, el servidor pasa el cargo al
+  /// miembro vigente más antiguo (hay que releer la fila).
+  final String? creadoPor;
+
+  /// Solo cuenta en los compartidos (en los demás siempre [VisibilidadLibro.privada]).
+  final VisibilidadLibro visibilidad;
+
   Libro({
     required this.id,
     required this.nombre,
@@ -79,7 +100,85 @@ class Libro {
     this.titularId,
     this.activo = true,
     List<MiembroLibro> miembros = const [],
+    this.creadoPor,
+    this.visibilidad = VisibilidadLibro.privada,
   }) : miembros = List.unmodifiable(miembros);
+
+  /// Archivado (`activo = false`): **solo lectura para todos**. Un compartido
+  /// se archiva solo cuando, al salirse alguien, quedan menos de 2 miembros
+  /// vigentes; el administrador también puede archivarlo y reactivarlo.
+  bool get archivado => !activo;
+
+  /// Copia con cambios (el id y el tipo no cambian).
+  Libro copiar({
+    String? nombre,
+    bool? activo,
+    List<MiembroLibro>? miembros,
+    String? creadoPor,
+    VisibilidadLibro? visibilidad,
+  }) => Libro(
+    id: id,
+    nombre: nombre ?? this.nombre,
+    tipo: tipo,
+    titularId: titularId,
+    activo: activo ?? this.activo,
+    miembros: miembros ?? this.miembros,
+    creadoPor: creadoPor ?? this.creadoPor,
+    visibilidad: visibilidad ?? this.visibilidad,
+  );
+
+  /// `true` si [personaId] es el administrador de este compartido: quien lo
+  /// creó.
+  bool esAdministrador(String personaId) =>
+      tipo == TipoLibro.compartido && creadoPor == personaId;
+
+  /// `true` si [personaId] es miembro vigente de este compartido y puede
+  /// **salirse** (cualquier miembro, también de uno archivado).
+  bool puedeSalir(String personaId, Fecha dia) =>
+      tipo == TipoLibro.compartido && papelDe(personaId, dia) != null;
+
+  /// `true` si, al salirse una persona, el compartido se archiva: antes de
+  /// salir había 2 miembros vigentes o menos (nunca quedan menos de 2).
+  bool seArchivaAlSalir(Fecha dia) =>
+      tipo == TipoLibro.compartido && vigentes(dia).length <= 2;
+
+  /// El libro después de que [personaId] se sale hoy: su fila deja de ser
+  /// vigente ese día (`hasta`, exclusivo) y, si quedan menos de 2 miembros, el
+  /// libro se archiva. Si el administrador se sale, el cargo pasa al miembro
+  /// vigente más antiguo (el que tenga el `desde` más viejo).
+  Libro alSalirse(String personaId, Fecha dia) {
+    if (!puedeSalir(personaId, dia)) return this;
+    final nuevos = [
+      for (final m in miembros)
+        if (m.personaId == personaId && m.vigenteEn(dia))
+          MiembroLibro(
+            personaId: m.personaId,
+            papel: m.papel,
+            desde: m.desde,
+            hasta: dia,
+          )
+        else
+          m,
+    ];
+    final quedan = nuevos.where((m) => m.vigenteEn(dia)).toList();
+    var nuevoAdmin = creadoPor;
+    if (creadoPor == personaId && quedan.isNotEmpty) {
+      quedan.sort((a, b) {
+        final da = a.desde;
+        final db = b.desde;
+        if (da == null && db == null) return 0;
+        if (da == null) return -1;
+        if (db == null) return 1;
+        return da.compareTo(db);
+      });
+      nuevoAdmin = quedan.first.personaId;
+    }
+    return copiar(
+      miembros: nuevos,
+      activo: quedan.length < 2 ? false : activo,
+      creadoPor: nuevoAdmin,
+    );
+  }
 
   List<MiembroLibro> vigentes(Fecha dia) =>
       miembros.where((m) => m.vigenteEn(dia)).toList();
@@ -97,6 +196,7 @@ class Libro {
       vigentes(dia).any((m) => m.papel == PapelLibro.albacea);
 
   /// Revisa las reglas de 4.5 (`fin_libro_miembros`). Lanza [ErrorLibros].
+  /// Un compartido **archivado** puede tener menos de 2 miembros.
   ///
   /// - `personal`: con titular, y el titular es su único miembro.
   /// - `representado`: con titular (la persona representada, que no es
@@ -141,7 +241,8 @@ class Libro {
         if (titularId != null) {
           throw const ErrorLibros('Un libro compartido no tiene titular');
         }
-        if (v.length < 2 || v.any((m) => m.papel != PapelLibro.miembro)) {
+        if ((v.length < 2 && activo) ||
+            v.any((m) => m.papel != PapelLibro.miembro)) {
           throw const ErrorLibros('Un libro compartido tiene 2 o más miembros');
         }
     }
@@ -162,8 +263,13 @@ class PermisoLibro {
   final bool enNombreDe;
 
   /// Lee como cuenta maestra un libro del que no es miembro: solo lectura, y
-  /// la app registra la consulta (`fin_registrar_consulta_maestra`).
+  /// la app registra la consulta (`fin_registrar_consulta_maestra`) antes de
+  /// pedir sus datos.
   final bool comoMaestra;
+
+  /// Lee un compartido **público** sin ser miembro (adulto con Finanzas del
+  /// hogar): solo lectura, sin consulta registrada.
+  final bool comoLector;
 
   const PermisoLibro({
     this.leer = false,
@@ -171,6 +277,7 @@ class PermisoLibro {
     this.administrar = false,
     this.enNombreDe = false,
     this.comoMaestra = false,
+    this.comoLector = false,
   });
 
   static const ninguno = PermisoLibro();
@@ -180,34 +287,50 @@ class PermisoLibro {
 
 /// Permiso de [personaId] en [libro] (regla de `fin_puede`, 4.5):
 ///
-/// - **leer:** miembro vigente o cuenta maestra.
+/// - **leer:** miembro vigente (también de un libro archivado); cualquier
+///   adulto con Finanzas si es un compartido **público**; la cuenta maestra
+///   (con consulta registrada, que la app hace aparte).
 /// - **escribir:** miembro vigente (titular, miembro o albacea; en el
-///   representado siempre con motivo). El **suplente** escribe solo si no hay
-///   albacea vigente (D17). La cuenta maestra **nunca** escribe en un libro
-///   del que no es miembro.
-/// - **administrar:** titular de un personal; cualquier miembro de un
-///   compartido; albacea de un representado (el suplente, solo si no hay
-///   albacea vigente).
+///   representado siempre con motivo) de un libro **activo**. El **suplente**
+///   escribe solo si no hay albacea vigente (D17). La cuenta maestra **nunca**
+///   escribe en un libro del que no es miembro.
+/// - **administrar:** titular de un personal; miembro de un compartido; albacea
+///   de un representado (el suplente, solo si no hay albacea vigente). En un
+///   libro **archivado** solo el administrador del compartido (reactivar).
 ///
 /// [rolConFinanzas] es `false` si el rol de la persona no tiene Finanzas
-/// (familiar, cuidador, casa): entonces nada.
+/// (familiar, cuidador, casa): entonces nada. [soloLectura] es `true` para la
+/// cuenta maestra que **no es la dueña** (respuestas del dueño del 23/oct): no
+/// registra ni administra nada, tampoco lo suyo.
 PermisoLibro permisoEnLibro(
   Libro libro,
   String personaId, {
   required Fecha hoy,
   bool esMaestra = false,
   bool rolConFinanzas = true,
+  bool soloLectura = false,
 }) {
-  if (!rolConFinanzas || !libro.activo) {
-    return esMaestra && rolConFinanzas
-        ? const PermisoLibro(leer: true, comoMaestra: true)
-        : PermisoLibro.ninguno;
-  }
+  if (!rolConFinanzas) return PermisoLibro.ninguno;
   final papel = libro.papelDe(personaId, hoy);
   if (papel == null) {
-    return esMaestra
-        ? const PermisoLibro(leer: true, comoMaestra: true)
-        : PermisoLibro.ninguno;
+    if (esMaestra) {
+      return const PermisoLibro(leer: true, comoMaestra: true);
+    }
+    if (libro.tipo == TipoLibro.compartido &&
+        libro.visibilidad == VisibilidadLibro.publica) {
+      return const PermisoLibro(leer: true, comoLector: true);
+    }
+    return PermisoLibro.ninguno;
+  }
+  if (soloLectura) return const PermisoLibro(leer: true);
+  if (libro.archivado) {
+    // Archivado: nadie registra; solo el administrador del compartido lo
+    // reactiva.
+    return PermisoLibro(
+      leer: true,
+      administrar: libro.esAdministrador(personaId),
+      enNombreDe: libro.tipo == TipoLibro.representado,
+    );
   }
   // El suplente solo actúa cuando no hay albacea vigente (D17).
   final suplenteEnEspera =

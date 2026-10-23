@@ -15,6 +15,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:finanzas_dominio/finanzas_dominio.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../nucleo/base_local/base_local.dart';
 import '../../../nucleo/cola/cola_sin_conexion.dart';
@@ -108,7 +109,8 @@ class RepositorioFinanzasSupabase implements RepositorioFinanzas {
     required this.personaId,
     this.copia,
     this.esperaSubida = const Duration(milliseconds: 1500),
-  });
+    DateTime Function()? reloj,
+  }) : _reloj = reloj ?? DateTime.now;
 
   final FuenteTablas fuente;
   final ColaSinConexion cola;
@@ -119,6 +121,8 @@ class RepositorioFinanzasSupabase implements RepositorioFinanzas {
   /// Cuánto se espera a que suba un registro antes de decir "se sube al
   /// volver la señal".
   final Duration esperaSubida;
+
+  final DateTime Function() _reloj;
 
   CargaFinanzas? _actual;
   final _cambios = StreamController<CargaFinanzas>.broadcast();
@@ -286,6 +290,41 @@ class RepositorioFinanzasSupabase implements RepositorioFinanzas {
     }
   }
 
+  /// Lo que el servidor deja hacer al **suplente** del libro de papá: escribe
+  /// y administra solo si el albacea ya no es un adulto con Finanzas del hogar
+  /// (I4). Quien no es el dueño no ve las membresías de los demás, así que se
+  /// pregunta a `fin_puede` en lugar de adivinar. Solo para ese papel.
+  Future<Map<String, PermisoServidor>> _permisosDelSuplente(
+    DatosFinanzas datos,
+  ) async {
+    final hoy = Fecha.deDateTime(_reloj());
+    final resultado = <String, PermisoServidor>{};
+    for (final l in datos.libros) {
+      if (l.tipo != TipoLibro.representado ||
+          l.papelDe(personaId, hoy) != PapelLibro.albaceaSuplente) {
+        continue;
+      }
+      try {
+        final escribir = await fuente.rpc(TablasFinanzas.puede, {
+          'p_libro_id': l.id,
+          'p_accion': 'escribir',
+        });
+        final administrar = await fuente.rpc(TablasFinanzas.puede, {
+          'p_libro_id': l.id,
+          'p_accion': 'administrar',
+        });
+        resultado[l.id] = PermisoServidor(
+          escribir: escribir == true,
+          administrar: administrar == true,
+        );
+      } on ErrorFinanzas catch (e) {
+        if (e.sinConexion) rethrow;
+        // Sin respuesta, se queda con el espejo (fechas del libro).
+      }
+    }
+    return resultado;
+  }
+
   @override
   Future<CargaFinanzas> cargar() async {
     final (enColaMov, enColaConc) = await _enCola();
@@ -308,6 +347,11 @@ class RepositorioFinanzasSupabase implements RepositorioFinanzas {
         'membresias',
         columnas: 'persona_id, rol, activa, hogar_id',
       );
+      final datos = armar(
+        filas,
+        movimientosEnCola: enColaMov,
+        conciliacionesEnCola: enColaConc,
+      );
       final carga = CargaFinanzas(
         cuentaMaestra: await _cuentaMaestra(),
         adultosConFinanzas: {
@@ -317,11 +361,8 @@ class RepositorioFinanzasSupabase implements RepositorioFinanzas {
                 (m['rol'] == 'dueno' || m['rol'] == 'coadministrador'))
               '${m['persona_id']}',
         },
-        datos: armar(
-          filas,
-          movimientosEnCola: enColaMov,
-          conciliacionesEnCola: enColaConc,
-        ),
+        datos: datos,
+        permisosServidor: await _permisosDelSuplente(datos),
         esMaestra: maestra == true,
         personas: {
           for (final p in personas) '${p['id']}': '${p['nombre_visible']}',
@@ -335,6 +376,10 @@ class RepositorioFinanzasSupabase implements RepositorioFinanzas {
           'personas': carga.personas,
           'es_maestra': carga.esMaestra,
           'cuenta_maestra': carga.cuentaMaestra,
+          'permisos_servidor': {
+            for (final e in carga.permisosServidor.entries)
+              e.key: e.value.aJson(),
+          },
         }),
       );
       return carga;
@@ -365,6 +410,10 @@ class RepositorioFinanzasSupabase implements RepositorioFinanzas {
         cuentaMaestra: guardada['cuenta_maestra'] as String?,
         personas: (guardada['personas'] as Map? ?? const {})
             .cast<String, String>(),
+        permisosServidor: {
+          for (final e in (guardada['permisos_servidor'] as Map? ?? const {}).entries)
+            '${e.key}': PermisoServidor.deJson(e.value as Map),
+        },
         desdeCopia: true,
         movimientosEnCola: {for (final m in enColaMov) m.id},
       );
@@ -649,12 +698,18 @@ class RepositorioFinanzasSupabase implements RepositorioFinanzas {
     required String id,
     required String nombre,
     required List<String> otrosMiembros,
+    VisibilidadLibro visibilidad = VisibilidadLibro.privada,
   }) async {
-    // El servidor agrega a quien lo crea, las cuentas técnicas y los
-    // parámetros (fin_libros_al_crear).
+    // El servidor agrega a quien lo crea (su administrador, `creado_por`), las
+    // cuentas técnicas y los parámetros (fin_libros_al_crear).
     await fuente.guardar(TablasFinanzas.libros, [
       filaLibro(
-        Libro(id: id, nombre: nombre, tipo: TipoLibro.compartido),
+        Libro(
+          id: id,
+          nombre: nombre,
+          tipo: TipoLibro.compartido,
+          visibilidad: visibilidad,
+        ),
         hogarId: hogarId,
       ),
     ], ignorarDuplicados: true);
@@ -669,6 +724,113 @@ class RepositorioFinanzasSupabase implements RepositorioFinanzas {
           ),
     ], ignorarDuplicados: true);
     await cargar();
+  }
+
+  @override
+  Future<void> cambiarVisibilidadLibro(
+    String libroId,
+    VisibilidadLibro visibilidad,
+  ) async {
+    await fuente.actualizar(
+      TablasFinanzas.libros,
+      {'visibilidad': nombreEnum(visibilidad)},
+      donde: {'id': libroId},
+    );
+    _local(
+      (d) => d.copiar(
+        libros: [
+          for (final l in d.libros)
+            l.id == libroId ? l.copiar(visibilidad: visibilidad) : l,
+        ],
+      ),
+    );
+  }
+
+  @override
+  Future<void> archivarLibro(String libroId, {required bool archivado}) async {
+    await fuente.actualizar(
+      TablasFinanzas.libros,
+      {'activo': !archivado},
+      donde: {'id': libroId},
+    );
+    _local(
+      (d) => d.copiar(
+        libros: [
+          for (final l in d.libros)
+            l.id == libroId ? l.copiar(activo: !archivado) : l,
+        ],
+      ),
+    );
+  }
+
+  @override
+  Future<void> agregarMiembro(String libroId, String personaId) async {
+    final libro = _carga.datos.libro(libroId);
+    // Quien ya estuvo y se salió vuelve con una fila nueva (el único vigente es
+    // `(libro, persona)`); la primera vez, un id estable para que reintentar no
+    // duplique.
+    final yaEstuvo = libro?.miembros.any((m) => m.personaId == personaId) ?? false;
+    final id = yaEstuvo
+        ? const Uuid().v4()
+        : idEstable(ClavesId.miembro(libroId, personaId, 'miembro'));
+    await fuente.guardar(TablasFinanzas.miembros, [
+      filaMiembro(
+        libroId,
+        MiembroLibro(personaId: personaId, papel: PapelLibro.miembro),
+        hogarId: hogarId,
+        id: id,
+      ),
+    ], ignorarDuplicados: true);
+    await cargar();
+  }
+
+  /// `hasta = ahora` en la fila vigente de [persona]: deja de ser vigente al
+  /// instante (el servidor compara `hasta > now()`).
+  Future<void> _terminarMembresia(String libroId, String persona) =>
+      fuente.actualizar(
+        TablasFinanzas.miembros,
+        {'hasta': horaIso(_reloj())},
+        donde: {'libro_id': libroId, 'persona_id': persona, 'hasta': null},
+      );
+
+  @override
+  Future<void> quitarMiembro(String libroId, String persona) async {
+    await _terminarMembresia(libroId, persona);
+    final hoy = Fecha.deDateTime(_reloj());
+    _local(
+      (d) => d.copiar(
+        libros: [
+          for (final l in d.libros)
+            l.id == libroId ? l.alSalirse(persona, hoy) : l,
+        ],
+      ),
+    );
+    try {
+      await cargar();
+    } on ErrorFinanzas {
+      // Se queda con lo local hasta la próxima carga.
+    }
+  }
+
+  @override
+  Future<void> salirDelLibro(String libroId) async {
+    await _terminarMembresia(libroId, personaId);
+    // Ya no tiene acceso: el libro sale de su lista (o queda como lector si es
+    // público). Lo que cuenta es la próxima carga.
+    final hoy = Fecha.deDateTime(_reloj());
+    _local(
+      (d) => d.copiar(
+        libros: [
+          for (final l in d.libros)
+            l.id == libroId ? l.alSalirse(personaId, hoy) : l,
+        ],
+      ),
+    );
+    try {
+      await cargar();
+    } on ErrorFinanzas {
+      // Se queda con lo local hasta la próxima carga.
+    }
   }
 
   @override
@@ -805,8 +967,11 @@ class RepositorioFinanzasSupabase implements RepositorioFinanzas {
   }
 
   @override
-  Future<void> registrarConsultaMaestra(String libroId) async {
-    await fuente.rpc(TablasFinanzas.consultaMaestra, {'p_libro_id': libroId});
+  Future<bool> registrarConsultaMaestra(String libroId) async {
+    final registrada = await fuente.rpc(TablasFinanzas.consultaMaestra, {
+      'p_libro_id': libroId,
+    });
+    return registrada == true;
   }
 
   Future<void> cerrar() => _cambios.close();

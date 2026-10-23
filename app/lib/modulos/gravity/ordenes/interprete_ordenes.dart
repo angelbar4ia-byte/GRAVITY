@@ -4,7 +4,12 @@
 /// "ir a hábitos" o "ajustes", tolera acentos, mayúsculas y errores de dedo,
 /// sugiere mientras se escribe y nunca ofrece un destino que el rol no ve: a
 /// la cuidadora solo su bandeja de solicitudes (D18) y a la cuenta maestra
-/// nada que escriba o administre lo ajeno (D19).
+/// nada que escriba o administre lo ajeno (D19); si además no es la dueña,
+/// solo navegación y lectura (ninguna hoja de registro, 23/oct).
+///
+/// El gasto exige el verbo (23/oct): "registrar gasto". La palabra "gasto"
+/// suelta no lo nombra; a lo más sale como "¿Quisiste decir…?", que nunca abre
+/// nada sin que la persona lo elija.
 library;
 
 import 'dart:math' as math;
@@ -80,7 +85,8 @@ final class InterpreteOrdenes {
   /// matriz de permisos). Además, cada destino es una herramienta y solo se
   /// ofrece si [rol] está en sus roles, su módulo está en [modulosActivos]
   /// (`null`: todos), va en [dispositivo] (Desarrollador solo en la laptop,
-  /// D16) y, con [esMaestra], no escribe ni administra lo ajeno (D19). Sin
+  /// D16) y, con [esMaestra], no escribe ni administra lo ajeno y, si [rol]
+  /// no es el dueño, tampoco abre una hoja de registro (D19). Sin
   /// [dispositivo] no se ofrece nada que dependa del dispositivo. La bandeja
   /// de solicitudes no es una pantalla de módulo: [puedeVer] no la quita.
   InterpreteOrdenes({

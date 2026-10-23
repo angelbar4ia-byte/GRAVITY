@@ -255,6 +255,12 @@ final herramientaAbrirDesarrollador = HerramientaNavegacion(
 /// Abre la hoja de registro rápido de un gasto (F1). No escribe: la hoja es
 /// la confirmación. Solo para quien registra en Finanzas (dueño y pareja); si
 /// no hay dónde mostrar la hoja, abre Finanzas.
+///
+/// **Hay que decir el verbo** (el dueño, 23/oct/2026): solo "registrar gasto"
+/// y sus variantes con ese verbo. La palabra "gasto" suelta, "nuevo gasto" o
+/// "anota gasto" ya no la nombran; así una palabra al aire no abre la hoja de
+/// dinero. Tampoco la recibe la cuenta maestra que no es la dueña (solo
+/// lectura total, D19): lo decide [RegistroHerramientas], no esta lista.
 final herramientaRegistrarGasto = HerramientaNavegacion(
   nombre: 'finanzas.registrar_gasto',
   modulo: Modulo.finanzas,
@@ -264,12 +270,8 @@ final herramientaRegistrarGasto = HerramientaNavegacion(
   palabrasClave: const [
     'registrar gasto',
     'registra gasto',
+    'registrar un gasto',
     'registra un gasto',
-    'nuevo gasto',
-    'anotar gasto',
-    'anota gasto',
-    'apunta gasto',
-    'gasto',
   ],
   accion: Accion.escribir,
   hoja: HojaDeRegistro.gasto,

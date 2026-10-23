@@ -20,6 +20,28 @@ String? rutaDe(
   _ => null,
 };
 
+/// Herramienta que entiende [texto] para [rol], o `null`.
+HerramientaNavegacion? destinoDe(
+  String texto, {
+  Rol rol = Rol.dueno,
+  bool esMaestra = false,
+}) => switch (InterpreteOrdenes(
+  rol: rol,
+  dispositivo: TipoDispositivo.laptop,
+  esMaestra: esMaestra,
+).interpretar(texto)) {
+  OrdenEntendida(:final destino) => destino,
+  _ => null,
+};
+
+/// Destinos que ofrece un resultado ("¿Quisiste decir…?" o "No entendí").
+List<HerramientaNavegacion> destinosDe(ResultadoOrden r) => switch (r) {
+  OrdenEntendida(:final destino) => [destino],
+  OrdenParecida(:final opciones) => opciones,
+  OrdenNoEntendida(:final disponibles) => disponibles,
+  OrdenVacia() => const [],
+};
+
 List<String> opcionesDe(ResultadoOrden r) => switch (r) {
   OrdenParecida(:final opciones) => [for (final o in opciones) o.ruta],
   OrdenNoEntendida(:final disponibles) => [for (final o in disponibles) o.ruta],
@@ -234,7 +256,11 @@ void main() {
         interprete.destinos.where((d) => d.modulo == Modulo.finanzas),
         isEmpty,
       );
-      for (final orden in ['abre presupuesto', 'registrar gasto', 'mi semana']) {
+      for (final orden in [
+        'abre presupuesto',
+        'registrar gasto',
+        'mi semana',
+      ]) {
         expect(rutaDe(orden, rol: Rol.casa), isNull, reason: orden);
       }
     });
@@ -312,20 +338,6 @@ void main() {
   });
 
   group('Finanzas (Fase 1)', () {
-    /// Herramienta que entiende [texto] para [rol], o `null`.
-    HerramientaNavegacion? destinoDe(
-      String texto, {
-      Rol rol = Rol.dueno,
-      bool esMaestra = false,
-    }) => switch (InterpreteOrdenes(
-      rol: rol,
-      dispositivo: TipoDispositivo.laptop,
-      esMaestra: esMaestra,
-    ).interpretar(texto)) {
-      OrdenEntendida(:final destino) => destino,
-      _ => null,
-    };
-
     test('"abre presupuesto" y "abre finanzas" abren Finanzas', () {
       for (final rol in [Rol.dueno, Rol.coadministrador]) {
         for (final orden in [
@@ -348,10 +360,15 @@ void main() {
       for (final rol in [Rol.dueno, Rol.coadministrador]) {
         for (final orden in [
           'registrar gasto',
+          'Registrar gasto',
+          'REGISTRAR GASTO',
+          'registra gasto',
           'Registra un gasto',
-          'nuevo gasto',
-          'anota gasto',
-          'gasto',
+          'registrar un gasto',
+          'registrar el gasto',
+          '¡Registra un gasto, por favor!',
+          'gravity, registrar gasto',
+          'registrar gasto de 100 pesos',
         ]) {
           final destino = destinoDe(orden, rol: rol);
           expect(
@@ -362,6 +379,44 @@ void main() {
           expect(destino!.hoja, HojaDeRegistro.gasto);
           expect(destino.escribe, isFalse);
           expect(destino.soloLocal, isTrue);
+        }
+      }
+    });
+
+    test('el gasto exige el verbo (23/oct): la palabra suelta, "nuevo gasto" '
+        'y "anota gasto" ya no abren la hoja', () {
+      final gasto = herramientaRegistrarGasto;
+      // Solo las frases con el verbo "registrar".
+      expect(gasto.palabrasClave, [
+        'registrar gasto',
+        'registra gasto',
+        'registrar un gasto',
+        'registra un gasto',
+      ]);
+      for (final orden in [
+        'gasto',
+        'Gasto',
+        'un gasto',
+        'mi gasto',
+        'nuevo gasto',
+        'anota gasto',
+        'anotar gasto',
+        'apunta gasto',
+      ]) {
+        for (final rol in [Rol.dueno, Rol.coadministrador]) {
+          final interprete = InterpreteOrdenes(
+            rol: rol,
+            dispositivo: TipoDispositivo.laptop,
+          );
+          // Nunca se entiende como una orden que abre algo: a lo más sale
+          // "¿Quisiste decir…?", que no abre nada sin que la persona elija.
+          final r = interprete.interpretar(orden);
+          expect(
+            r,
+            isNot(isA<OrdenEntendida>()),
+            reason: '$orden / ${rol.name}',
+          );
+          expect(r, isA<OrdenParecida>(), reason: '$orden / ${rol.name}');
         }
       }
     });
@@ -448,9 +503,64 @@ void main() {
       }
     });
 
-    test('lo suyo sigue igual: Finanzas, su semana y la hoja de su gasto', () {
+    test('la maestra con login propio (coadministrador) solo lee: Finanzas y '
+        'su semana sí; la hoja de registro no (23/oct)', () {
       final maestra = InterpreteOrdenes(
         rol: Rol.coadministrador,
+        dispositivo: TipoDispositivo.laptop,
+        esMaestra: true,
+      );
+      for (final (orden, nombre) in [
+        ('abre presupuesto', 'finanzas.abrir'),
+        ('abre finanzas', 'finanzas.abrir'),
+        ('mi semana', 'finanzas.abrir_semana'),
+      ]) {
+        expect(
+          switch (maestra.interpretar(orden)) {
+            OrdenEntendida(:final destino) => destino.nombre,
+            _ => null,
+          },
+          nombre,
+          reason: orden,
+        );
+      }
+      // Ninguna hoja de registro: ni se entiende ni se sugiere ni se ofrece.
+      expect(
+        maestra.destinos.where(
+          (d) => d.hoja != null || d.accion != Accion.leer,
+        ),
+        isEmpty,
+      );
+      for (final orden in [
+        'registrar gasto',
+        'registra un gasto',
+        'registrar un gasto',
+        'gasto',
+        'regis',
+      ]) {
+        final r = maestra.interpretar(orden);
+        expect(r, isNot(isA<OrdenEntendida>()), reason: orden);
+        expect(
+          destinosDe(r).where((d) => d.hoja != null),
+          isEmpty,
+          reason: orden,
+        );
+        expect(
+          maestra.sugerir(orden).map((s) => s.destino.hoja),
+          everyElement(isNull),
+          reason: orden,
+        );
+      }
+      // Sin la marca, la pareja sí la tiene.
+      expect(
+        destinoDe('registrar gasto', rol: Rol.coadministrador)?.nombre,
+        'finanzas.registrar_gasto',
+      );
+    });
+
+    test('el dueño que además es maestro conserva la hoja de su gasto', () {
+      final maestro = InterpreteOrdenes(
+        rol: Rol.dueno,
         dispositivo: TipoDispositivo.laptop,
         esMaestra: true,
       );
@@ -460,7 +570,7 @@ void main() {
         ('mi semana', 'finanzas.abrir_semana'),
       ]) {
         expect(
-          switch (maestra.interpretar(orden)) {
+          switch (maestro.interpretar(orden)) {
             OrdenEntendida(:final destino) => destino.nombre,
             _ => null,
           },

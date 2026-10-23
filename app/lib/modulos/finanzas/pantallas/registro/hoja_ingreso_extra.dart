@@ -3,7 +3,12 @@
 library;
 
 import 'package:finanzas_dominio/finanzas_dominio.dart'
-    hide Semaforo, formatearCentavos, TipoLibro, puntosBaseEnCien;
+    hide
+        Semaforo,
+        formatearCentavos,
+        TipoLibro,
+        VisibilidadLibro,
+        puntosBaseEnCien;
 import 'package:finanzas_dominio/finanzas_dominio.dart' as dom show TipoLibro;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,6 +19,7 @@ import '../../estado/proveedores.dart';
 import '../comunes.dart';
 import 'hoja_gasto.dart';
 import 'marco_hoja.dart';
+import 'nueva_cuenta_en_hoja.dart';
 
 class HojaIngresoExtra extends ConsumerStatefulWidget {
   const HojaIngresoExtra({super.key});
@@ -27,6 +33,7 @@ class _HojaIngresoExtraState extends ConsumerState<HojaIngresoExtra> {
   String? _libroId;
   String? _cuentaId;
   Fecha? _fecha;
+  bool _creandoCuenta = false;
   final _nota = TextEditingController();
   final _motivo = TextEditingController();
   bool _guardando = false;
@@ -130,7 +137,10 @@ class _HojaIngresoExtraState extends ConsumerState<HojaIngresoExtra> {
                         opcionDe(l, c.permisoEn(l), c.personaId).etiqueta,
                       ),
                       selected: l.id == libro.id,
-                      onSelected: (_) => setState(() => _libroId = l.id),
+                      onSelected: (_) => setState(() {
+                        _libroId = l.id;
+                        _creandoCuenta = false;
+                      }),
                     ),
                     const SizedBox(width: 8),
                   ],
@@ -145,18 +155,46 @@ class _HojaIngresoExtraState extends ConsumerState<HojaIngresoExtra> {
           ),
           const SizedBox(height: 12),
           const EtiquetaPanel('Entró a'),
-          Wrap(
-            spacing: 8,
-            children: [
-              for (final cuenta in cuentas)
-                ChoiceChip(
-                  key: ValueKey('extra-cuenta-${cuenta.id}'),
-                  label: Text(cuenta.nombre),
-                  selected: _cuentaId == cuenta.id,
-                  onSelected: (_) => setState(() => _cuentaId = cuenta.id),
-                ),
-            ],
-          ),
+          if (cuentas.isEmpty || _creandoCuenta) ...[
+            if (cuentas.isEmpty)
+              Text(
+                'Este libro aún no tiene una cuenta donde reciba dinero. Crea '
+                'la primera y sigue con el ingreso.',
+                key: const ValueKey('extra-sin-cuentas'),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            if (c.permisoEn(libro).administrar)
+              NuevaCuentaEnHoja(
+                key: ValueKey('extra-cuenta-nueva-${libro.id}'),
+                libroId: libro.id,
+                tipos: const [TipoCuenta.efectivo, TipoCuenta.banco],
+                alCrear: (id) => setState(() {
+                  _cuentaId = id;
+                  _creandoCuenta = false;
+                }),
+              )
+            else
+              const Text('Pide a quien administra este libro que cree una cuenta.'),
+          ] else
+            Wrap(
+              spacing: 8,
+              children: [
+                for (final cuenta in cuentas)
+                  ChoiceChip(
+                    key: ValueKey('extra-cuenta-${cuenta.id}'),
+                    label: Text(cuenta.nombre),
+                    selected: _cuentaId == cuenta.id,
+                    onSelected: (_) => setState(() => _cuentaId = cuenta.id),
+                  ),
+                if (c.permisoEn(libro).administrar)
+                  ActionChip(
+                    key: const ValueKey('extra-cuenta-nueva'),
+                    avatar: const Icon(Icons.add, size: 18),
+                    label: const Text('Cuenta nueva'),
+                    onPressed: () => setState(() => _creandoCuenta = true),
+                  ),
+              ],
+            ),
           const SizedBox(height: 8),
           Align(
             alignment: AlignmentDirectional.centerStart,

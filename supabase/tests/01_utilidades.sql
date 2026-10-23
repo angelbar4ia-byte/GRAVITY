@@ -12,6 +12,7 @@
 --   pruebas.afecta(sql)       Cuántas filas cambió (UPDATE o DELETE filtrado = 0).
 --   pruebas.falla(sql, desc, sqlstate)  Exige que el SQL lance error (y su código).
 --   pruebas.id_usuario(correo), pruebas.id_persona(correo)
+--   pruebas.nuevo_adulto(correo)   Un coadministrador más (login propio) para pruebas de libros.
 -- Cada afirmación correcta imprime "NOTICE: ok - ..."; una falla lanza error.
 -- =============================================================================
 
@@ -183,6 +184,29 @@ as $$
   values (p_id, p_hogar, p_tipo, p_fecha, '2026-10-21 12:00:00-06', p_origen, p_destino, p_monto, p_motivo,
           p_anula, p_en_nombre_de, coalesce(p_realizado_por, public.persona_actual()))
   returning id
+$$;
+
+-- Un adulto más en el Hogar Ejemplo (por omisión coadministrador, con login propio y correo
+-- confirmado). El servidor le crea su libro personal. Llámalo como postgres, al inicio de la prueba;
+-- devuelve su personas.id. (La cuenta maestra no puede ser miembro de un libro: para un tercer
+-- miembro, albacea o suplente en las pruebas se usa esta persona.)
+create function pruebas.nuevo_adulto(
+  p_correo text, p_nombre text default null, p_rol text default 'coadministrador',
+  p_hogar uuid default 'b0000000-0000-4000-8000-000000000001')
+returns uuid
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  v_usuario uuid := gen_random_uuid();
+  v_persona uuid;
+begin
+  insert into auth.users (id, email, raw_user_meta_data, email_confirmed_at)
+  values (v_usuario, p_correo,
+          jsonb_build_object('nombre', coalesce(p_nombre, initcap(split_part(p_correo, '@', 1)))), now());
+  select p.id into v_persona from public.personas p where p.usuario_id = v_usuario;
+  insert into public.membresias (hogar_id, persona_id, rol) values (p_hogar, v_persona, p_rol);
+  return v_persona;
+end
 $$;
 
 grant execute on all functions in schema pruebas to anon, authenticated, service_role;
