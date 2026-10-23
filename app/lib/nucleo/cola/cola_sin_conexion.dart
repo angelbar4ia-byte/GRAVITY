@@ -37,6 +37,7 @@ import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 
 import '../base_local/base_local.dart';
+import '../sesion/sesion.dart' show ErrorSesion;
 
 /// Lo que responde el servidor a un envío.
 enum ResultadoEnvio {
@@ -66,6 +67,17 @@ const List<String> prefijosDeTiposPersonales = [
 /// `true` si [tipo] es un registro personal (ver [prefijosDeTiposPersonales]).
 bool esTipoPersonal(String tipo) =>
     prefijosDeTiposPersonales.any(tipo.startsWith);
+
+/// Motivos que ve la persona en "Por revisar" cuando la bandeja de salida no
+/// pudo subir lo suyo (ver `bandeja_salida.dart`).
+const motivoBandejaCaducada =
+    'No se pudo subir en 7 días: la bandeja de salida caducó. Revísalo y '
+    'vuelve a intentarlo con tu PIN.';
+const motivoSesionInservible =
+    'Tu sesión en esta tablet ya no sirve para subirlo sola. Entra con tu PIN '
+    'para revisarlo.';
+const motivoPersonaQuitada =
+    'Se quitó a la persona de la tablet antes de que se pudiera subir.';
 
 /// Un registro listo para enviarse.
 class PeticionEnvio {
@@ -411,19 +423,7 @@ class ColaSinConexion {
               ]))
             .get();
 
-    // Orden de subida: primero los de nivel menor, y dentro de un nivel, el
-    // orden en que se crearon (el de la consulta).
-    final nivelDe = nivelDeSubida ?? _nivelDelEnviador;
-    final posicion = {for (var i = 0; i < listos.length; i++) listos[i].id: i};
-    final niveles = {for (final r in listos) r.id: nivelDe(r.tipo)};
-    listos.sort((a, b) {
-      final porNivel = niveles[a.id]!.compareTo(niveles[b.id]!);
-      return porNivel != 0
-          ? porNivel
-          : posicion[a.id]!.compareTo(posicion[b.id]!);
-    });
-
-    var conteo = await _enviarLote(listos, _enviador, ahora);
+    var conteo = await _enviarLote(_ordenados(listos), _enviador, ahora);
 
     // Bandeja de salida: lo de las personas que ya salieron de la tablet sube
     // con su propio token, sin pedir su PIN.
@@ -444,6 +444,133 @@ class ColaSinConexion {
       rechazados: rechazados,
       restantes: await contarPendientes(),
     );
+  }
+
+  /// Orden de subida: primero los de nivel menor, y dentro de un nivel, el
+  /// orden en que se crearon (el de la consulta).
+  List<RegistroPendiente> _ordenados(List<RegistroPendiente> listos) {
+    final nivelDe = nivelDeSubida ?? _nivelDelEnviador;
+    final posicion = {for (var i = 0; i < listos.length; i++) listos[i].id: i};
+    final niveles = {for (final r in listos) r.id: nivelDe(r.tipo)};
+    return [...listos]..sort((a, b) {
+      final porNivel = niveles[a.id]!.compareTo(niveles[b.id]!);
+      return porNivel != 0
+          ? porNivel
+          : posicion[a.id]!.compareTo(posicion[b.id]!);
+    });
+  }
+
+  /// Lo de [personaId] (registrado con su sesión) que ya se puede intentar.
+  Future<List<RegistroPendiente>> _listosDePersona(
+    String personaId,
+    DateTime ahora,
+  ) async => _ordenados(
+    await (_base.select(_tabla)
+          ..where(
+            (t) =>
+                t.estado.equalsValue(EstadoPendiente.pendiente) &
+                (t.siguienteIntento.isNull() |
+                    t.siguienteIntento.isSmallerOrEqualValue(ahora)) &
+                (t.origen.isNull() |
+                    t.origen.equalsValue(OrigenRegistro.tabletCasa).not()) &
+                t.personaId.equals(personaId),
+          )
+          ..orderBy([
+            (t) => OrderingTerm.asc(t.creadoEn),
+            (t) => OrderingTerm.asc(t.rowId),
+          ]))
+        .get(),
+  );
+
+  /// Cuántos registros de [personaId] (con su sesión) faltan por subir.
+  Future<int> contarPendientesDe(String personaId) {
+    final cuenta = _tabla.id.count();
+    return (_base.selectOnly(_tabla)
+          ..addColumns([cuenta])
+          ..where(
+            _tabla.estado.equalsValue(EstadoPendiente.pendiente) &
+                (_tabla.origen.isNull() |
+                    _tabla.origen
+                        .equalsValue(OrigenRegistro.tabletCasa)
+                        .not()) &
+                _tabla.personaId.equals(personaId),
+          ))
+        .map((fila) => fila.read(cuenta) ?? 0)
+        .getSingle();
+  }
+
+  /// `true` si [personaId] tiene algo por subir.
+  Future<bool> hayPendientesDe(String personaId) async =>
+      await contarPendientesDe(personaId) > 0;
+
+  /// Pasa lo pendiente de [personaId] a "requiere atención" con [motivo] (p.
+  /// ej. la bandeja caducó). No se pierde: la persona lo ve en "Por revisar".
+  /// Devuelve cuántos fueron.
+  Future<int> rechazarPendientesDe(String personaId, String motivo) async {
+    final cuantos =
+        await (_base.update(_tabla)..where(
+              (t) =>
+                  t.estado.equalsValue(EstadoPendiente.pendiente) &
+                  (t.origen.isNull() |
+                      t.origen.equalsValue(OrigenRegistro.tabletCasa).not()) &
+                  t.personaId.equals(personaId),
+            ))
+            .write(
+              PendientesCompanion(
+                estado: const Value(EstadoPendiente.rechazado),
+                siguienteIntento: const Value(null),
+                ultimoError: Value(motivo),
+              ),
+            );
+    if (cuantos > 0) _avisar();
+    return cuantos;
+  }
+
+  /// Sube la bandeja de salida: lo de cada persona con permiso que no es la
+  /// que tiene la sesión ahora, con su propio token.
+  Future<_Conteo> _subirBandeja(
+    SalidaSinPin bandeja,
+    String? persona,
+    DateTime ahora,
+  ) async {
+    final preparacion = await bandeja.preparar(hayPendientesDe);
+    var total = const _Conteo(0, 0, 0);
+    for (final caducada in preparacion.caducadas) {
+      final cuantos = await rechazarPendientesDe(
+        caducada,
+        motivoBandejaCaducada,
+      );
+      total += _Conteo(0, 0, cuantos);
+    }
+    for (final personaId in preparacion.conPermiso) {
+      // Quien está dentro sube con su propia sesión (ronda de arriba).
+      if (personaId == persona) continue;
+      final listos = await _listosDePersona(personaId, ahora);
+      if (listos.isEmpty) continue;
+      SesionDeSubida? sesion;
+      try {
+        sesion = await bandeja.abrir(personaId);
+      } on ErrorSesion {
+        // Su sesión ya no sirve (vencida o dada de baja): no subirá sola. Lo
+        // pendiente pasa a "requiere atención"; con su PIN lo revisa.
+        final cuantos = await rechazarPendientesDe(
+          personaId,
+          motivoSesionInservible,
+        );
+        await bandeja.descartar(personaId);
+        total += _Conteo(0, 0, cuantos);
+        continue;
+      } catch (_) {
+        continue; // Algo inesperado: se intenta en la siguiente ronda.
+      }
+      if (sesion == null) continue; // Sin señal.
+      try {
+        total += await _enviarLote(listos, sesion.enviador, ahora);
+      } finally {
+        await sesion.cerrar(quedanPendientes: await hayPendientesDe(personaId));
+      }
+    }
+    return total;
   }
 
   /// Envía [listos] (ya ordenados) con [enviador] y anota cada resultado.

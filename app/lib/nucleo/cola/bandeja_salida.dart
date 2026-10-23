@@ -68,16 +68,6 @@ import 'cola_sin_conexion.dart';
 /// Cuánto dura un permiso de subida, desde que se crea.
 const vigenciaDelPermisoDeSubida = Duration(days: 7);
 
-/// Motivos que se ven en "Por revisar" (solo la persona que lo registró).
-const motivoBandejaCaducada =
-    'No se pudo subir en 7 días: la bandeja de salida caducó. Revísalo y '
-    'vuelve a intentarlo con tu PIN.';
-const motivoSesionInservible =
-    'Tu sesión en esta tablet ya no sirve para subirlo sola. Entra con tu PIN '
-    'para revisarlo.';
-const motivoPersonaQuitada =
-    'Se quitó a la persona de la tablet antes de que se pudiera subir.';
-
 /// En qué momento está el permiso de una persona.
 enum EstadoPermiso {
   /// Hay algo por subir: la credencial está en claro (cifrada solo por el
