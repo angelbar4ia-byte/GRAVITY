@@ -43,7 +43,12 @@ comment on column public.fin_libros.visibilidad is
   'Solo en libros compartidos. privada (por omisión): leen y escriben sus miembros; la cuenta maestra lee con '
   'consulta. publica: además LEEN (no escriben) los adultos con Finanzas del hogar. La cambia solo quien lo creó.';
 
-grant insert (visibilidad), update (visibilidad) on public.fin_libros to authenticated;
+-- Los permisos por columna se suman; se repite la lista completa (y no solo la columna
+-- nueva) para que quien lea las migraciones con un grant por tabla (las pruebas de la app
+-- toman el último "grant insert" de cada tabla) vea todas las columnas que la app puede mandar.
+grant insert (id, hogar_id, nombre, tipo, titular_id, activo, visibilidad),
+      update (id, hogar_id, nombre, tipo, titular_id, activo, visibilidad)
+  on public.fin_libros to authenticated;
 
 -- -----------------------------------------------------------------------------
 -- 2. Cuenta maestra: solo lectura total si no es la dueña
