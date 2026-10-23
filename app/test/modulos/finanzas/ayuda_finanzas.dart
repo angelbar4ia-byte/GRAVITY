@@ -93,7 +93,7 @@ RepositorioFinanzasEnMemoria repositorioDe(
         : {sesion.persona.id},
     exigeConsultaMaestra: exigeConsulta,
     adultosActivosDelHogar: adultosActivosDelHogar,
-    reloj: reloj,
+    reloj: reloj ?? () => ahoraDePrueba,
   );
 }
 
@@ -102,6 +102,7 @@ RepositorioFinanzasEnMemoria repositorioVacio() => RepositorioFinanzasEnMemoria(
   personaId: IdsDemostracion.dueno,
   personas: personasDeDemostracion(),
   adultosConFinanzas: adultosDeEjemplo,
+  reloj: () => ahoraDePrueba,
 );
 
 ServicioFinanzas servicioDe(
@@ -150,5 +151,6 @@ RepositorioFinanzasEnMemoria repositorioSinCategorias(Sesion sesion) {
     personaId: sesion.persona.id,
     personas: personasDeDemostracion(),
     adultosConFinanzas: adultosDeEjemplo,
+    reloj: () => ahoraDePrueba,
   );
 }

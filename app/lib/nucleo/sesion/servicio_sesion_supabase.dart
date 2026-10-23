@@ -390,6 +390,70 @@ class ServicioSesionSupabase extends ServicioSesionEnMemoria
   }
 
   @override
+  Future<SesionAparte> abrirSesionAparte(
+    String personaId,
+    String credencial, {
+    required void Function(String credencial) alRenovar,
+  }) async {
+    final Session? guardada;
+    try {
+      guardada = Session.fromJson(
+        (jsonDecode(credencial) as Map).cast<String, dynamic>(),
+      );
+    } catch (_) {
+      throw ErrorSesion.credencialVencida;
+    }
+    final renovar = guardada?.refreshToken;
+    if (guardada == null || renovar == null || renovar.isEmpty) {
+      throw ErrorSesion.credencialVencida;
+    }
+
+    // Cliente propio, sin guardar nada en el equipo y sin tocar la sesión del
+    // equipo ni la de quien esté dentro.
+    final cliente = _crearCliente(url, llavePublica, autoRenovar: true);
+    // Se escucha ANTES de abrir: el servidor rota el refresh token al renovar
+    // y la credencial nueva se entrega de inmediato, aunque lo que sigue falle.
+    final suscripcion = cliente.auth.onAuthStateChange.listen(
+      (estado) {
+        final abierta = estado.session;
+        if (abierta != null &&
+            (estado.event == AuthChangeEvent.tokenRefreshed ||
+                estado.event == AuthChangeEvent.signedIn ||
+                estado.event == AuthChangeEvent.userUpdated)) {
+          alRenovar(jsonEncode(abierta.toJson()));
+        }
+      },
+      onError: (Object error) => debugPrint('Sesión aparte: $error'),
+    );
+    Future<void> soltar() async {
+      await suscripcion.cancel();
+      await cliente.dispose();
+    }
+
+    try {
+      await cliente.auth.setSession(
+        renovar,
+        accessToken: guardada.isExpired ? null : guardada.accessToken,
+      );
+    } catch (error) {
+      await soltar();
+      if (esErrorDeRed(error)) throw ErrorSesion.sinConexion;
+      throw ErrorSesion.credencialVencida;
+    }
+    try {
+      final sesion = await _lector(cliente);
+      if (sesion.persona.id != personaId) throw ErrorSesion.credencialVencida;
+    } catch (error) {
+      // Sin rol (baja) la sesión se cierra; sin señal se deja como está (la
+      // credencial vigente ya se entregó por [alRenovar] si cambió).
+      if (error == ErrorSesion.sinRol) await _salirSinFallar(cliente);
+      await soltar();
+      throw traducirErrorSesion(error);
+    }
+    return SesionAparteSupabase._(personaId, cliente, suscripcion);
+  }
+
+  @override
   Future<void> salir() async {
     final persona = sesionActual?.persona.id;
     _saliendo = true;
@@ -468,5 +532,29 @@ class ServicioSesionSupabase extends ServicioSesionEnMemoria
     await _suscripcion?.cancel();
     await _credenciales.close();
     await super.cerrar();
+  }
+}
+
+/// Sesión aparte de una persona con Supabase: [cliente] sube con su token.
+class SesionAparteSupabase implements SesionAparte {
+  SesionAparteSupabase._(this.personaId, this.cliente, this._suscripcion);
+
+  @override
+  final String personaId;
+
+  /// Cliente con la sesión de esa persona.
+  final SupabaseClient cliente;
+  final StreamSubscription<AuthState> _suscripcion;
+  bool _cerrada = false;
+
+  @override
+  Future<String?> cerrar() async {
+    if (_cerrada) return null;
+    _cerrada = true;
+    final vigente = cliente.auth.currentSession;
+    await _suscripcion.cancel();
+    // Sin cerrar sesión en el servidor: la credencial sigue sirviendo.
+    await cliente.dispose();
+    return vigente == null ? null : jsonEncode(vigente.toJson());
   }
 }

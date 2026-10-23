@@ -233,7 +233,16 @@ abstract interface class SesionesPorPersona {
   /// quien esté dentro. Lanza [ErrorSesion.sinConexion] sin señal,
   /// [ErrorSesion.sinRol] si ya no tiene acceso (dada de baja) y
   /// [ErrorSesion.credencialVencida] si la credencial ya no sirve.
-  Future<SesionAparte> abrirSesionAparte(String personaId, String credencial);
+  ///
+  /// El servidor **rota** el refresh token al renovar: cada vez que lo hace se
+  /// llama a [alRenovar] **de inmediato** con la credencial nueva (también si
+  /// esto ocurre mientras se abre y luego falla), porque la anterior ya no
+  /// sirve y reusarla puede revocar toda la sesión.
+  Future<SesionAparte> abrirSesionAparte(
+    String personaId,
+    String credencial, {
+    required void Function(String credencial) alRenovar,
+  });
 }
 
 /// Una sesión de [personaId] abierta **aparte** de la de la tablet y de la de
@@ -241,10 +250,6 @@ abstract interface class SesionesPorPersona {
 /// (D14, 23/oct/2026; ver `cola/bandeja_salida.dart`).
 abstract interface class SesionAparte {
   String get personaId;
-
-  /// Avisa cada vez que el servidor renueva la credencial: hay que guardarla
-  /// de inmediato (la anterior ya no sirve; reusarla puede revocar la sesión).
-  Stream<String> get renovaciones;
 
   /// Cierra la sesión **sin revocarla** y devuelve la credencial vigente.
   Future<String?> cerrar();

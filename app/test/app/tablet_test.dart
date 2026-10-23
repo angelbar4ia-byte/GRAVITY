@@ -87,7 +87,7 @@ void main() {
     expect(find.text('GRAVITY · Casa'), findsNothing);
     expect(ubicacion(tester), Rutas.entrar);
     expect(find.byKey(const ValueKey('aviso-cuenta-casa')), findsOneWidget);
-    expect(find.text('Entra con la cuenta Casa'), findsOneWidget);
+    expect(find.text('Entra con la cuenta Hogar'), findsOneWidget);
     revisarSinDinero(tester);
 
     // Ni por enlace directo.

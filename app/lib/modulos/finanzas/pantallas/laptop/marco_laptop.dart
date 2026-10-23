@@ -212,6 +212,14 @@ class _Principal extends StatelessWidget {
             ],
           ),
         ),
+        // Con los montos ocultos por falta de uso: la marca para verlos.
+        Padding(
+          padding: EdgeInsets.fromLTRB(v.espacio * 3, 0, v.espacio * 3, 0),
+          child: const Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: MarcaMontosOcultos(),
+          ),
+        ),
         if (conMenu)
           Padding(
             padding: EdgeInsets.fromLTRB(v.espacio * 3, v.espacio, v.espacio * 3, 0),

@@ -72,11 +72,16 @@ final repositorioFinanzasProvider = Provider<RepositorioFinanzas>((ref) {
       adultosConFinanzas: sesion.rol == Rol.dueno
           ? {IdsDemostracion.dueno, IdsDemostracion.pareja}
           : {personaId},
+      // La hora de la app, para las altas y bajas de miembros.
+      reloj: ref.read(relojProvider).ahora,
     );
     ref.onDispose(repo.cerrar);
     return repo;
   }
-  final repo = RepositorioFinanzasEnMemoria(personaId: personaId);
+  final repo = RepositorioFinanzasEnMemoria(
+    personaId: personaId,
+    reloj: ref.read(relojProvider).ahora,
+  );
   ref.onDispose(repo.cerrar);
   return repo;
 });

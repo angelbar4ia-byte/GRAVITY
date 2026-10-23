@@ -499,6 +499,25 @@ class ColaSinConexion {
         .getSingle();
   }
 
+  /// Cuántos registros (de cualquier persona) pasaron a "requiere atención"
+  /// porque la bandeja de salida caducó. Es un número: nadie ve de quién es
+  /// ni qué dice (D5).
+  Future<int> contarCaducadosDeLaBandeja() {
+    final cuenta = _tabla.id.count();
+    return (_base.selectOnly(_tabla)
+          ..addColumns([cuenta])
+          ..where(
+            _tabla.estado.equalsValue(EstadoPendiente.rechazado) &
+                _tabla.ultimoError.equals(motivoBandejaCaducada),
+          ))
+        .map((fila) => fila.read(cuenta) ?? 0)
+        .getSingle();
+  }
+
+  /// Lo mismo, en vivo.
+  Stream<int> vigilarCaducadosDeLaBandeja() =>
+      _vigilar(contarCaducadosDeLaBandeja);
+
   /// `true` si [personaId] tiene algo por subir.
   Future<bool> hayPendientesDe(String personaId) async =>
       await contarPendientesDe(personaId) > 0;

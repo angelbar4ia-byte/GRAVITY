@@ -42,7 +42,7 @@ String? mensajeDesbloqueo(ResultadoDesbloqueo resultado, {Duration? espera}) =>
       ResultadoDesbloqueo.sinAcceso =>
         'Tu cuenta ya no tiene acceso a esta casa. Se quitó de la tablet.',
       ResultadoDesbloqueo.requiereCuentaCasa =>
-        'La tablet debe tener abierta la cuenta Casa.',
+        'La tablet debe tener abierta la cuenta Hogar.',
       ResultadoDesbloqueo.error =>
         'No se pudo comprobar tu cuenta. Intenta de nuevo.',
       ResultadoDesbloqueo.noExiste => 'Esta persona ya no está en la tablet.',

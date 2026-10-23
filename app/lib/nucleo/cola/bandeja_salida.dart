@@ -58,6 +58,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../seguridad/almacen_seguro.dart';
 import '../seguridad/cifrado.dart';
@@ -399,7 +400,11 @@ class BandejaDeSalida {
 /// Cómo se abre una [SesionAparte]: lo ofrecen los servicios con servidor
 /// (`SesionesPorPersona.abrirSesionAparte`).
 typedef AbridorDeSesionAparte =
-    Future<SesionAparte> Function(String personaId, String credencial);
+    Future<SesionAparte> Function(
+      String personaId,
+      String credencial, {
+      required void Function(String credencial) alRenovar,
+    });
 
 /// Crea el [Enviador] que sube con la sesión de [sesion].
 typedef FabricaDeEnviador = Enviador Function(SesionAparte sesion);
@@ -452,26 +457,33 @@ class SalidaSinPinConSesiones implements SalidaSinPin {
         soltar();
         return null;
       }
+      var ultima = permiso.credencial!;
+      // Escrituras en orden: la renovación más nueva siempre gana.
+      var guardando = Future<void>.value();
+      void alRenovar(String nueva) {
+        ultima = nueva;
+        // De inmediato: la anterior ya no sirve (y reusarla puede revocar la
+        // sesión). Aunque la apertura falle después, esto ya quedó guardado.
+        guardando = guardando.then(
+          (_) async {},
+        );
+      }
+
       final SesionAparte aparte;
       try {
-        aparte = await _abrir(personaId, permiso.credencial!);
+        aparte = await _abrir(personaId, ultima, alRenovar: alRenovar);
       } on ErrorSesion catch (error) {
+        await guardando;
         soltar();
         if (error == ErrorSesion.sinConexion) return null;
         rethrow;
       }
-      var ultima = permiso.credencial!;
-      final suscripcion = aparte.renovaciones.listen((nueva) {
-        ultima = nueva;
-        // De inmediato: la anterior ya no sirve.
-        unawaited(bandeja.guardarCredencialRenovada(personaId, nueva));
-      });
       return _SesionDeSubida(
         enviador: _enviadorDe(aparte),
         alCerrar: (quedanPendientes) async {
           try {
             final vigente = await aparte.cerrar() ?? ultima;
-            await suscripcion.cancel();
+            await guardando;
             if (quedanPendientes) {
               await bandeja.guardarCredencialRenovada(personaId, vigente);
             } else {
@@ -509,3 +521,68 @@ class _SesionDeSubida implements SesionDeSubida {
     await alCerrar(quedanPendientes);
   }
 }
+
+// ---------------------------------------------------------------------------
+// Lo que la tablet necesita de la bandeja
+// ---------------------------------------------------------------------------
+
+/// La bandeja de salida vista desde la tablet (`ControladorTablet`): qué hacer
+/// con la credencial de una persona al salir, al entrar, al cambiar su PIN y
+/// al quitarla. Sin ella (`null`), la credencial queda siempre en el sobre del
+/// PIN y lo de cada persona espera a que vuelva a entrar.
+abstract interface class BandejaDeLaTablet {
+  /// La persona tiene algo por subir (registrado con su sesión).
+  Future<bool> hayPendientesDe(String personaId);
+
+  /// La persona sale con algo por subir: su [credencial] pasa al permiso de
+  /// subida ([BandejaDeSalida.delegar]).
+  Future<void> delegar(String personaId, String credencial, LlavePin llave);
+
+  /// La persona entra con su [pin] (ya comprobado): su credencial más reciente
+  /// si estaba en la bandeja, o `null`.
+  Future<String?> tomarParaEntrada(String personaId, String pin);
+
+  /// La llave del permiso pasa al PIN nuevo. `false` si el actual no la abre.
+  Future<bool> cambiarPin(String personaId, String pinActual, String pinNuevo);
+
+  /// Quitan a la persona de la tablet: se borra su permiso y lo que tenía por
+  /// subir pasa a "requiere atención" ([motivoPersonaQuitada]).
+  Future<void> alQuitarPersona(String personaId);
+}
+
+/// [BandejaDeLaTablet] con la [BandejaDeSalida] y la cola.
+class BandejaDeLaTabletConCola implements BandejaDeLaTablet {
+  BandejaDeLaTabletConCola(this.bandeja, this._cola);
+
+  final BandejaDeSalida bandeja;
+  final ColaSinConexion Function() _cola;
+
+  @override
+  Future<bool> hayPendientesDe(String personaId) =>
+      _cola().hayPendientesDe(personaId);
+
+  @override
+  Future<void> delegar(String personaId, String credencial, LlavePin llave) =>
+      bandeja.delegar(personaId, credencial, llave);
+
+  @override
+  Future<String?> tomarParaEntrada(String personaId, String pin) =>
+      bandeja.tomarParaEntrada(personaId, pin);
+
+  @override
+  Future<bool> cambiarPin(
+    String personaId,
+    String pinActual,
+    String pinNuevo,
+  ) => bandeja.cambiarPin(personaId, pinActual, pinNuevo);
+
+  @override
+  Future<void> alQuitarPersona(String personaId) async {
+    await bandeja.conCandado(personaId, () => bandeja.borrar(personaId));
+    await _cola().rechazarPendientesDe(personaId, motivoPersonaQuitada);
+  }
+}
+
+/// Se fija en el arranque y en las pruebas de la app (`conexionesDeLaApp`);
+/// por omisión, sin bandeja.
+final bandejaDeLaTabletProvider = Provider<BandejaDeLaTablet?>((ref) => null);

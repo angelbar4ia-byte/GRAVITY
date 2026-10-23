@@ -101,7 +101,7 @@ class _PantallaEntrarState extends ConsumerState<PantallaEntrar> {
                     const SizedBox(height: 4),
                     Text(
                       esTablet
-                          ? 'Entra con la cuenta Casa'
+                          ? 'Entra con la cuenta Hogar'
                           : 'Entra con tu cuenta',
                       textAlign: TextAlign.center,
                       style: tema.textTheme.bodyLarge,

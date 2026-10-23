@@ -8,6 +8,8 @@ import '../contratos/roles.dart';
 import '../sesion/proveedores_sesion.dart';
 import '../sesion/sesion.dart';
 import '../tablet/controlador_tablet.dart';
+import '../seguridad/proveedores_seguridad.dart';
+import 'bandeja_salida.dart';
 import 'cola_sin_conexion.dart';
 
 /// Base local. Se fija en el arranque (archivo del dispositivo) o en la
@@ -49,6 +51,19 @@ String? cuentaDelEquipo(Ref ref) {
   return sesion?.rol == Rol.casa ? sesion!.persona.id : null;
 }
 
+/// Permisos de subida de la bandeja de salida (D14, 23/oct/2026).
+final bandejaDeSalidaProvider = Provider<BandejaDeSalida>(
+  (ref) => BandejaDeSalida(
+    ref.watch(almacenSeguroProvider),
+    reloj: ref.watch(relojSeguridadProvider),
+  ),
+);
+
+/// Sube lo de las personas que ya salieron de la tablet, con su propio token.
+/// El arranque la fija con Supabase; por omisión (demostración y pruebas), sin
+/// ella.
+final salidaSinPinProvider = Provider<SalidaSinPin?>((ref) => null);
+
 final colaSinConexionProvider = Provider<ColaSinConexion>((ref) {
   final cola = ColaSinConexion(
     base: ref.watch(baseLocalProvider),
@@ -56,6 +71,7 @@ final colaSinConexionProvider = Provider<ColaSinConexion>((ref) {
     personaQueRegistra: () => ref.read(personaQueRegistraProvider),
     personaConSesion: () => personaConSesionServidor(ref),
     cuentaDelEquipo: () => cuentaDelEquipo(ref),
+    salida: ref.watch(salidaSinPinProvider),
   );
   ref.onDispose(cola.cerrar);
   return cola;
@@ -65,6 +81,41 @@ final colaSinConexionProvider = Provider<ColaSinConexion>((ref) {
 final pendientesPorSubirProvider = StreamProvider<int>(
   (ref) => ref.watch(colaSinConexionProvider).vigilarPendientes(),
 );
+
+/// Cuántos registros caducaron en la bandeja de salida (solo el número).
+final caducadosDeLaBandejaProvider = StreamProvider<int>(
+  (ref) => ref.watch(colaSinConexionProvider).vigilarCaducadosDeLaBandeja(),
+);
+
+/// Cómo está la bandeja de salida del equipo (solo números: nada de montos ni
+/// de quién registró qué).
+class EstadoBandeja {
+  const EstadoBandeja({this.porSubir = 0, this.seSubenSolos = 0});
+
+  static const vacio = EstadoBandeja();
+
+  /// Registros pendientes de cualquier persona.
+  final int porSubir;
+
+  /// De ellos, los que se subirán solos al haber señal (su persona dejó un
+  /// permiso de subida); los demás esperan a que la persona entre con su PIN.
+  final int seSubenSolos;
+
+  int get esperanElPin => porSubir - seSubenSolos;
+}
+
+final estadoBandejaProvider = FutureProvider<EstadoBandeja>((ref) async {
+  final porSubir = ref.watch(pendientesPorSubirProvider).value ?? 0;
+  if (porSubir == 0) return EstadoBandeja.vacio;
+  final cola = ref.read(colaSinConexionProvider);
+  var solos = 0;
+  for (final permiso in await ref.read(bandejaDeSalidaProvider).todos()) {
+    if (permiso.estado == EstadoPermiso.enEspera) {
+      solos += await cola.contarPendientesDe(permiso.personaId);
+    }
+  }
+  return EstadoBandeja(porSubir: porSubir, seSubenSolos: solos);
+});
 
 /// Registros de la persona que usa la app ahora y que requieren atención (el
 /// servidor no los aceptó). Nadie ve los de otra persona (D5).

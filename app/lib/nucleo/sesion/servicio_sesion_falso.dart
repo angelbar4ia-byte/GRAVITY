@@ -52,6 +52,40 @@ class ServicioSesionFalso extends ServicioSesionEnMemoria
   /// Veces que se abrió la sesión del servidor de una persona.
   int vecesAbrirPersona = 0;
 
+  /// Como el refresh token de Supabase: al usarse **rota**, y usar uno que ya
+  /// rotó no sirve ([ErrorSesion.credencialVencida]; en Supabase, además,
+  /// puede revocar toda la sesión). Sirve para vigilar que la app nunca use
+  /// una copia vieja de la credencial. Por omisión, apagado.
+  bool rotacionEstricta = false;
+
+  /// Veces que se intentó abrir con una credencial que ya había rotado.
+  int usosDeCredencialVieja = 0;
+
+  /// Veces que se abrió una sesión aparte (bandeja de salida).
+  int vecesAbrirAparte = 0;
+
+  /// Si las sesiones aparte rotan la credencial al abrirse (como Supabase
+  /// cuando el token de acceso ya venció).
+  bool rotaAlAbrirAparte = true;
+
+  /// Sesiones aparte abiertas y aún sin cerrar.
+  final List<SesionAparteFalsa> sesionesAparteAbiertas = [];
+
+  /// La última sesión aparte que se abrió.
+  SesionAparteFalsa? ultimaSesionAparte;
+
+  /// Vuelta de la credencial que sirve ahora, por persona.
+  final Map<String, int> _vigente = {};
+
+  void _revisarCadena(String personaId, int vuelta) {
+    if (!rotacionEstricta) return;
+    final vigente = _vigente[personaId];
+    if (vigente != null && vuelta != vigente) {
+      usosDeCredencialVieja++;
+      throw ErrorSesion.credencialVencida;
+    }
+  }
+
   String? _personaActiva;
   String? _credencialActiva;
   final _credenciales = StreamController<String?>.broadcast();
@@ -76,8 +110,7 @@ class ServicioSesionFalso extends ServicioSesionEnMemoria
   }
 
   @override
-  String? get personaEnServidor =>
-      _personaActiva ?? sesionActual?.persona.id;
+  String? get personaEnServidor => _personaActiva ?? sesionActual?.persona.id;
 
   @override
   Stream<String?> get credencialesDePersona => _credenciales.stream;
@@ -104,7 +137,9 @@ class ServicioSesionFalso extends ServicioSesionEnMemoria
       throw ErrorSesion.credencialVencida;
     }
     if (!sinConexion && bajas.contains(personaId)) throw ErrorSesion.sinRol;
+    _revisarCadena(personaId, leida.$2);
     final renovada = credencialDe(leida.$1, vuelta: leida.$2 + 1);
+    _vigente[personaId] = leida.$2 + 1;
     _personaActiva = personaId;
     _credencialActiva = renovada;
     return AperturaPersona(
@@ -120,6 +155,7 @@ class ServicioSesionFalso extends ServicioSesionEnMemoria
     final leida = actual == null ? null : leerCredencial(actual);
     if (leida == null) return;
     _credencialActiva = credencialDe(leida.$1, vuelta: leida.$2 + 1);
+    _vigente[leida.$1.persona.id] = leida.$2 + 1;
     _credenciales.add(_credencialActiva);
   }
 
@@ -129,6 +165,32 @@ class ServicioSesionFalso extends ServicioSesionEnMemoria
     _personaActiva = null;
     _credencialActiva = null;
     _credenciales.add(null);
+  }
+
+  @override
+  Future<SesionAparte> abrirSesionAparte(
+    String personaId,
+    String credencial, {
+    required void Function(String credencial) alRenovar,
+  }) async {
+    vecesAbrirAparte++;
+    if (sinConexion) throw ErrorSesion.sinConexion;
+    final leida = leerCredencial(credencial);
+    if (leida == null || leida.$1.persona.id != personaId) {
+      throw ErrorSesion.credencialVencida;
+    }
+    if (bajas.contains(personaId)) throw ErrorSesion.sinRol;
+    _revisarCadena(personaId, leida.$2);
+    var vuelta = leida.$2;
+    if (rotaAlAbrirAparte) {
+      vuelta++;
+      _vigente[personaId] = vuelta;
+      alRenovar(credencialDe(leida.$1, vuelta: vuelta));
+    }
+    final sesion = SesionAparteFalsa._(this, leida.$1, vuelta, alRenovar);
+    sesionesAparteAbiertas.add(sesion);
+    ultimaSesionAparte = sesion;
+    return sesion;
   }
 
   @override
@@ -185,5 +247,43 @@ class ServicioSesionFalso extends ServicioSesionEnMemoria
   Future<void> cerrar() async {
     await _credenciales.close();
     await super.cerrar();
+  }
+}
+
+/// Sesión aparte falsa: lleva la credencial vigente y puede simular que el
+/// servidor la rota a mitad de la subida.
+class SesionAparteFalsa implements SesionAparte {
+  SesionAparteFalsa._(
+    this._servicio,
+    this._sesion,
+    this._vuelta,
+    this._alRenovar,
+  );
+
+  final ServicioSesionFalso _servicio;
+  final Sesion _sesion;
+  int _vuelta;
+  final void Function(String credencial) _alRenovar;
+  bool cerrada = false;
+
+  @override
+  String get personaId => _sesion.persona.id;
+
+  /// Credencial que sirve ahora.
+  String get credencial =>
+      ServicioSesionFalso.credencialDe(_sesion, vuelta: _vuelta);
+
+  /// El servidor rota la credencial (token de acceso vencido): se entrega ya.
+  void rotar() {
+    _vuelta++;
+    _servicio._vigente[personaId] = _vuelta;
+    _alRenovar(credencial);
+  }
+
+  @override
+  Future<String?> cerrar() async {
+    cerrada = true;
+    _servicio.sesionesAparteAbiertas.remove(this);
+    return credencial;
   }
 }

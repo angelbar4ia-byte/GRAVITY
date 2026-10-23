@@ -61,6 +61,10 @@ class _SemanaResumida extends ConsumerWidget {
         SelectorLibroFinanzas(contexto: c),
         if (c.libros.length > 1) const SizedBox(height: 8),
         marcaDe(c),
+        const Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: MarcaMontosOcultos(),
+        ),
         hueco,
         TarjetaModulo(
           key: const ValueKey('finanzas-semana-resumen'),
@@ -186,6 +190,13 @@ class PantallaMovimientosTelefono extends ConsumerWidget {
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                 child: SelectorLibroFinanzas(contexto: c),
+              ),
+              const Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: MarcaMontosOcultos(),
+                ),
               ),
               Expanded(
                 child: lista.isEmpty

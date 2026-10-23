@@ -203,7 +203,21 @@ Future<void> registrarAlgoPersonal(
           .procesar()
           .timeout(const Duration(seconds: 5));
     } catch (_) {
-      // Sin señal: se sube la próxima vez que entre con su PIN.
+      // Sin señal: queda en la bandeja de salida (abajo).
+    }
+    // Sin señal, lo registrado queda en la bandeja de salida: se sube solo
+    // cuando haya señal, sin pedir el PIN otra vez (D14, 23/oct/2026).
+    if (await contenedor
+        .read(colaSinConexionProvider)
+        .hayPendientesDe(persona.personaId)) {
+      mensajero?.showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Sin señal: quedó en la bandeja de salida. Se sube solo cuando '
+            'haya señal; no hace falta tu PIN otra vez.',
+          ),
+        ),
+      );
     }
     contenedor.read(controladorTabletProvider.notifier).volverAlReposo();
   }

@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: GRAVITY · APIs del sistema
-  version: 0.3.0
+  version: 0.4.0
   summary: Herramientas de GRAVITY, base de datos, funciones del servidor y puente de casa (D16).
   description: |
     Especificación de las APIs de GRAVITY (decisión D16). Se consulta en la laptop, en
@@ -21,9 +21,11 @@ info:
     identificadores UUID, fechas `date` y `timestamptz`, semana en lunes, libros solo-agregar.
 
     Fase 1 (Finanzas, D19): cada quien ve **su** libro y los compartidos de los que es
-    miembro; la **cuenta maestra** es de solo lectura total: lee todo con una consulta
-    registrada y nunca escribe en lo ajeno. Las salvaguardas viven en el servidor, no en el
-    cliente (`supabase/migrations/20261023000000_finanzas_salvaguardas.sql`). Los ejemplos
+    miembro (o que son públicos); la **cuenta maestra** es otra persona con su propio login
+    y de solo lectura total: lee con una consulta registrada y no escribe nada. Las
+    salvaguardas y las respuestas del dueño del 23/oct viven en el servidor, no en el
+    cliente (`supabase/migrations/20261023000000_finanzas_salvaguardas.sql` y
+    `supabase/migrations/20261024000000_finanzas_respuestas_dueno.sql`). Los ejemplos
     son inventados (el hogar de Ana y Alex de `supabase/seed.sql`, con "Papá (ejemplo)").
 
     Las llaves (Supabase, Home Assistant) entran por `--dart-define` o archivos ignorados
@@ -72,13 +74,18 @@ tags:
     description: |
       Tablas `fin_*`, vistas y funciones de Finanzas (Fase 1, D19), según
       `supabase/migrations/20261021000000_finanzas_mvp1.sql`,
-      `supabase/migrations/20261023000000_finanzas_salvaguardas.sql` y `supabase/README.md`
-      ("Finanzas (Fase 1)"). Solo dueño y coadministrador, cada quien **su libro** y los
-      compartidos de los que es miembro (`fin_puede`); familiar, cuidador y Casa no ven
-      nada. La **cuenta maestra** es de solo lectura total: lee todo con una consulta
-      registrada y nunca escribe en lo ajeno; en la app tampoco registra lo suyo, y si no
-      es la dueña no cambia la configuración del hogar. Nada de esto va a la IA en la nube
-      ni a las bocinas (D3, D6).
+      `supabase/migrations/20261023000000_finanzas_salvaguardas.sql`,
+      `supabase/migrations/20261024000000_finanzas_respuestas_dueno.sql` y
+      `supabase/README.md` ("Finanzas (Fase 1)"). Solo dueño y coadministrador, cada quien
+      **su libro** y los compartidos de los que es miembro, más los compartidos públicos
+      (`fin_puede`); familiar, cuidador y Casa no ven nada. La **cuenta maestra** es otra
+      persona con su propio login: el dueño la invita con `crear_invitacion` y
+      `p_es_maestra`, y queda como coadministrador con la marca de maestra, sin libro
+      personal ni membresía en ningún libro. Si no es la dueña es de **solo lectura
+      total**: lee con una consulta registrada y toda escritura suya (movimientos,
+      configuración del hogar, crear libros) responde 403 (42501). El dueño también puede
+      ser la maestra con su propia persona, y en lo suyo sigue escribiendo. Nada de esto va
+      a la IA en la nube ni a las bocinas (D3, D6).
 
       - **Dinero** en centavos (entero); porcentajes y tasas en puntos base (2000 = 20 %);
         semana en lunes; identificadores UUID generados en el dispositivo.
@@ -107,18 +114,41 @@ tags:
         (por libro y por persona; pasado el tiempo hay que llamarla otra vez, y la app la
         renueva sola mientras el libro está abierto).
       - **Salvaguardas en el servidor** (hallazgos I1 a I5, M6 y M10 de la revisión de
-        calidad): (I1) un libro compartido solo cambia la membresía de otra persona quien lo
-        creó o el dueño (42501) y nunca baja de 2 miembros vigentes (22023); (I2) la consulta
+        calidad): (I1) en un libro compartido solo quien lo creó, o el dueño del hogar si es
+        miembro, agrega o cambia a otra persona (42501), y quitar a otro nunca deja menos de
+        2 miembros vigentes (22023; salirse siempre se puede, ver abajo); (I2) la consulta
         registrada de arriba; (I3) todo movimiento del libro de Papá lleva `en_nombre_de` y
         `motivo` (23514) y las salidas hacia un libro personal dejan la entrada
         `finanzas.salida_libro_representado`; (I4) un albacea es vigente solo si sigue siendo
         adulto con Finanzas, y si no, escribe el suplente; (I5) las acciones `finanzas*` y
         las tablas `fin_*` de la bitácora las escribe solo el servidor (42501 si la app las
-        inserta); (M6) la maestra que no es la dueña no cambia la configuración del hogar
-        (42501); (M10) asignar o quitar la maestra deja `finanzas.maestra_asignada`.
+        inserta); (M6) la maestra que no es la dueña no escribe nada, tampoco la
+        configuración del hogar (42501); (M10) asignar o quitar la maestra deja
+        `finanzas.maestra_asignada`.
+      - **Libros compartidos (respuestas del dueño del 23/oct):** quien crea el libro
+        (`creado_por`) es su administrador: agrega y saca miembros, cambia la `visibilidad`
+        y lo archiva. La API no manda ni cambia `creado_por` (42501): solo el servidor, que
+        lo pasa al miembro vigente más antiguo si el creador se sale. `visibilidad` solo
+        existe en los compartidos: `privada` (por omisión; todo nace privado) o `publica`.
+        Privada: leen y escriben sus miembros, y la maestra lee con consulta; el dueño no
+        entra a un compartido privado del que no es miembro. Pública: además la **leen**
+        (no la escriben) los adultos con Finanzas del hogar. **Salirse** es un `PATCH` a la
+        propia fila de `fin_libro_miembros` con `hasta` = ahora, siempre posible; si quedan
+        menos de 2 miembros vigentes el servidor archiva el libro (`fin_libros.activo` =
+        `false`: solo lectura, rechaza movimientos nuevos con 403, 42501). Reactivarlo
+        (`activo` = `true`) y administrarlo mientras está archivado es solo de su
+        administrador.
+      - **Cuentas de periodo:** solo las de activo y pasivo piden saldo cero para cerrarse
+        o archivarse (22023); las de gasto e ingreso se cierran o archivan con saldo, y en
+        ellas se puede anular un movimiento aunque estén archivadas. Archivar una
+        categoría archiva su cuenta de gasto (si ninguna otra categoría activa la usa) y
+        desarchivarla la reactiva.
       - **Funciones internas:** `fin_vigencia_consulta_maestra`, `fin_adulto_con_finanzas` y
-        las de los triggers no son llamables desde la API (se les quitó `EXECUTE` a todos
-        los roles); por eso no tienen operación aquí.
+        las de los triggers (`fin_libro_miembros_proteger`, `fin_libros_proteger`,
+        `fin_libro_miembros_sin_maestra`, `fin_categorias_archivar_cuenta`…) no son
+        llamables desde la API (se les quitó `EXECUTE` a todos los roles); por eso no
+        tienen operación aquí. Sí lo son `fin_solo_lectura` y `fin_puede_salir`, que las
+        reglas llaman con el rol de la sesión.
   - name: Funciones del servidor
     description: |
       Funciones de Supabase (`/functions/v1/<nombre>`) desde la Fase 2: avisos al instante
@@ -551,8 +581,8 @@ paths:
       description: >-
         Cada quien se ve a sí mismo; el dueño ve a los miembros de su hogar (también a los
         dados de baja) y a los titulares de sus libros; quien comparte un libro de Finanzas
-        ve a sus miembros y a su titular (p. ej. los albaceas ven a Papá); la cuenta maestra,
-        a todos (D19).
+        ve a sus miembros y a su titular (p. ej. los albaceas ven a Papá); quien lee un
+        compartido público ve a sus miembros; la cuenta maestra, a todos (D19).
       x-roles: [dueno, coadministrador, familiar, cuidador, casa]
       x-escribe: false
       x-solo-local: true
@@ -728,7 +758,9 @@ paths:
       tags: [Base de datos]
       operationId: leerInvitaciones
       summary: Leer invitaciones
-      description: Solo el dueño del hogar. El token no se guarda, solo su huella SHA-256.
+      description: >-
+        Solo el dueño del hogar. El token no se guarda, solo su huella SHA-256.
+        `es_maestra` marca una invitación a la cuenta maestra (D19, 23/oct).
       x-roles: [dueno]
       x-escribe: false
       x-solo-local: true
@@ -754,7 +786,13 @@ paths:
       summary: Invitar a una persona
       description: >-
         Solo el dueño. Rol: coadministrador, familiar, cuidador o casa. Devuelve el token una
-        sola vez; las invitaciones pendientes al mismo correo se revocan.
+        sola vez; las invitaciones pendientes al mismo correo se revocan. Con
+        `p_es_maestra: true` (D19, 23/oct) invita a la **cuenta maestra**: otra persona con
+        su propio login. El rol debe ser `coadministrador` y el correo no puede ser el de un
+        miembro vigente del hogar (400, 22023). Al aceptarla, la persona queda
+        coadministrador con la marca de cuenta maestra, sin libro personal y de solo lectura
+        total en Finanzas. Se llama igual con 3 o 4 parámetros: `p_vigencia_dias` y
+        `p_es_maestra` son opcionales.
       x-roles: [dueno]
       x-escribe: true
       x-solo-local: true
@@ -780,6 +818,26 @@ paths:
                   minimum: 1
                   maximum: 30
                   default: 7
+                p_es_maestra:
+                  type: boolean
+                  default: false
+                  description: >-
+                    Invitar a la cuenta maestra (solo con rol `coadministrador` y un correo
+                    que no sea de un miembro del hogar).
+            examples:
+              maestra:
+                summary: Invitar a la cuenta maestra (otra persona, con otro correo)
+                value:
+                  p_hogar_id: b0000000-0000-4000-8000-000000000001
+                  p_correo: marta@ejemplo.test
+                  p_rol: coadministrador
+                  p_es_maestra: true
+              coadministrador:
+                summary: Invitar a la pareja
+                value:
+                  p_hogar_id: b0000000-0000-4000-8000-000000000001
+                  p_correo: alex@ejemplo.test
+                  p_rol: coadministrador
       responses:
         '200':
           description: La invitación y su token (se muestra una sola vez).
@@ -797,6 +855,8 @@ paths:
                     expira:
                       type: string
                       format: date-time
+        '400':
+          $ref: '#/components/responses/Invalido'
         '403':
           $ref: '#/components/responses/Prohibido'
   /rest/v1/rpc/aceptar_invitacion:
@@ -806,7 +866,10 @@ paths:
       summary: Aceptar una invitación
       description: >-
         La acepta la persona cuyo correo confirmado coincide; crea su membresía con el rol
-        invitado. Devuelve el `id` del hogar.
+        invitado. Devuelve el `id` del hogar. Si la invitación era de cuenta maestra
+        (`es_maestra`), la membresía nace con `es_maestra` y sin libro personal; la maestra
+        anterior, si la había, deja de serlo, y queda la entrada `finanzas.maestra_asignada`
+        en la bitácora (con `anterior_persona_id`, `nueva_persona_id` e `invitada_por`).
       x-roles: [coadministrador, familiar, cuidador, casa]
       x-escribe: true
       x-solo-local: true
@@ -1024,6 +1087,7 @@ paths:
                   detalle:
                     anterior_persona_id: null
                     nueva_persona_id: e0000000-0000-4000-8000-000000000008
+                    invitada_por: e0000000-0000-4000-8000-000000000001
                   ocurrido_en: '2026-10-22T20:00:00-06:00'
                   registrado_en: '2026-10-22T20:00:00-06:00'
                 - id: 9a1b2c3d-4e5f-4a6b-8c7d-0e1f2a3b4c03
@@ -1153,11 +1217,15 @@ paths:
       summary: Leer libros
       description: >-
         Tu libro personal, los compartidos de los que eres miembro y, si eres albacea, el de
-        Papá (D19). La cuenta maestra ve la **portada** de todos los libros del hogar (el
-        libro y quién lo lleva) sin consulta, para elegir cuál mirar; su contenido exige una
-        consulta registrada (`fin_registrar_consulta_maestra`, I2). El libro personal lo
-        crea el servidor al dar un rol con Finanzas: la app lo busca (`tipo=eq.personal` y
-        `titular_id` = su persona), no lo crea.
+        Papá (D19). Un compartido `publica` lo leen (no lo escriben) todos los adultos con
+        Finanzas del hogar; uno `privada` (por omisión), solo sus miembros: el dueño no
+        entra a un compartido privado del que no es miembro. Un libro archivado
+        (`activo: false`) sigue en la lista, de solo lectura. La cuenta maestra ve la
+        **portada** de todos los libros del hogar (el libro y quién lo lleva) sin consulta,
+        para elegir cuál mirar; su contenido exige una consulta registrada
+        (`fin_registrar_consulta_maestra`, I2). El libro personal lo crea el servidor al
+        dar un rol con Finanzas (la maestra no lleva uno): la app lo busca
+        (`tipo=eq.personal` y `titular_id` = su persona), no lo crea.
       x-roles: [dueno, coadministrador]
       x-escribe: false
       x-solo-local: true
@@ -1182,6 +1250,7 @@ paths:
                   tipo: compartido
                   titular_id: null
                   activo: true
+                  visibilidad: privada
                 - id: f1000000-0000-4000-8000-000000000002
                   hogar_id: b0000000-0000-4000-8000-000000000001
                   nombre: Papá (ejemplo)
@@ -1196,11 +1265,12 @@ paths:
       summary: Crear un libro compartido
       description: >-
         Cualquier adulto con Finanzas crea un libro `compartido` (p. ej. "Gastos de la
-        casa") y queda como su miembro; luego agrega a los demás en `fin_libro_miembros`. El
-        personal lo crea el servidor y el representado (Papá),
-        `fin_crear_libro_representado`. `creado_por` y `creado_en` los pone el servidor.
-        La cuenta maestra también puede crear los suyos: crear un libro propio no es
-        configuración del hogar (M6).
+        casa") y queda como su miembro y su **administrador** (`creado_por`); luego agrega a
+        los demás en `fin_libro_miembros`. Todo nace `privada` (por omisión); `visibilidad`
+        solo existe en los compartidos y se puede crear ya `publica`. El personal lo crea el
+        servidor y el representado (Papá), `fin_crear_libro_representado`. `creado_por` y
+        `creado_en` los pone el servidor: mandar `creado_por` responde 403 (42501). La
+        cuenta maestra que no es la dueña no crea libros (solo lectura total, 403, 42501).
       x-roles: [dueno, coadministrador]
       x-escribe: true
       x-solo-local: true
@@ -1218,12 +1288,20 @@ paths:
                 - required: [id, hogar_id, nombre, tipo]
             examples:
               compartido:
-                summary: Gastos de la casa (Ana y Alex)
+                summary: Gastos de la casa (Ana y Alex), privado por omisión
                 value:
                   id: f1000000-0000-4000-8000-000000000001
                   hogar_id: b0000000-0000-4000-8000-000000000001
                   nombre: Gastos de la casa
                   tipo: compartido
+              publico:
+                summary: Un compartido público (los adultos con Finanzas lo leen)
+                value:
+                  id: f1000000-0000-4000-8000-000000000004
+                  hogar_id: b0000000-0000-4000-8000-000000000001
+                  nombre: Vacaciones (ejemplo)
+                  tipo: compartido
+                  visibilidad: publica
       responses:
         '201':
           $ref: '#/components/responses/Agregado'
@@ -1236,11 +1314,16 @@ paths:
     patch:
       tags: [Base de datos · Finanzas]
       operationId: cambiarLibroFinanzas
-      summary: Cambiar el nombre o desactivar un libro
+      summary: Cambiar el nombre, la visibilidad o archivar un libro
       description: >-
         Quien lo administra (titular de un personal, miembro de un compartido, albacea de un
-        representado). Solo `nombre` y `activo`: `tipo`, `titular_id` y las llaves no
-        cambian (42501). Un libro inactivo ya no admite movimientos.
+        representado). Se cambian `nombre`, `activo` y, en un compartido, `visibilidad`;
+        `tipo`, `titular_id`, `creado_por` y las llaves no cambian (42501). En un compartido,
+        solo quien lo creó cambia la `visibilidad`, lo archiva (`activo: false`) o lo
+        reactiva (`activo: true`); a otro miembro responde 403 (42501). Un libro archivado
+        es de solo lectura: ya no admite movimientos nuevos y, mientras lo está, solo su
+        administrador lo administra. Los miembros que se salen lo archivan solos cuando
+        quedan menos de 2 (ver `cambiarMiembroLibro`).
       x-roles: [dueno, coadministrador]
       x-escribe: true
       x-solo-local: true
@@ -1256,8 +1339,15 @@ paths:
               allOf:
                 - $ref: '#/components/schemas/FinLibro'
                 - minProperties: 1
-            example:
-              activo: false
+            examples:
+              publicar:
+                summary: Hacer público un compartido (solo su administrador)
+                value:
+                  visibilidad: publica
+              archivar:
+                summary: Archivar el libro (solo lectura)
+                value:
+                  activo: false
       responses:
         '200':
           $ref: '#/components/responses/Actualizado'
@@ -1275,8 +1365,9 @@ paths:
       operationId: leerMiembrosLibro
       summary: Leer quién lleva cada libro
       description: >-
-        Miembros vigentes e históricos de los libros que puedes leer; la cuenta maestra ve
-        quién lleva cada libro del hogar sin consulta (I2). Personal: solo su titular.
+        Miembros vigentes e históricos de los libros que puedes leer (quien lee un compartido
+        público ve a sus miembros); la cuenta maestra ve quién lleva cada libro del hogar sin
+        consulta (I2). Personal: solo su titular.
         Compartido: sus miembros adultos. Representado: 1 albacea y, opcional, 1 suplente.
       x-roles: [dueno, coadministrador]
       x-escribe: false
@@ -1305,7 +1396,10 @@ paths:
         Quien administra el libro agrega a otra persona adulta con Finanzas (dueño o
         coadministrador): `miembro` en un compartido; `albacea_suplente` en el de Papá
         (máximo un albacea y un suplente vigentes; el suplente escribe solo si no hay
-        albacea vigente). Nunca familiar, cuidador ni Casa (22023).
+        albacea vigente). Nunca familiar, cuidador ni Casa (22023). En un compartido solo
+        agrega quien lo creó, o el dueño del hogar si es miembro (403, 42501). La cuenta
+        maestra que no es la dueña no puede ser miembro de ningún libro (400, 22023: es
+        solo lectura).
       x-roles: [dueno, coadministrador]
       x-escribe: true
       x-solo-local: true
@@ -1344,14 +1438,19 @@ paths:
       summary: Cerrar la participación en un libro
       description: >-
         Los miembros no se borran: se cierra `hasta` (queda en la bitácora). `libro_id` y
-        `persona_id` no cambian (42501). En un libro **compartido** (I1): solo quien lo creó,
-        o el dueño del hogar, cambia la membresía de otra persona (`desde`, `hasta` o
-        `papel`); a cualquier otro responde 403 (42501). Cada quien puede salirse cerrando su
-        propia participación. Nunca quedan menos de 2 miembros vigentes (adultos con
-        Finanzas): el cambio que lo dejaría en menos responde 400 (22023, "Un libro
-        compartido no baja de 2 miembros vigentes"; para dejar de usarlo se desactiva el
-        libro con `cambiarLibroFinanzas`). Un albacea es vigente (I4) solo si su membresía
-        del hogar sigue activa y con Finanzas; si no, escribe el suplente.
+        `persona_id` no cambian (42501). En un libro **compartido**: **salirse** es un
+        `PATCH` a la propia fila con `hasta` = ahora; cualquier miembro puede, siempre, también
+        con el libro archivado (`fin_puede_salir`). Si al salir quedan menos de 2 miembros
+        vigentes (adultos con Finanzas), el servidor archiva el libro (`fin_libros.activo` =
+        `false`, solo lectura) y no da error; si se sale quien lo creó, `creado_por` pasa al
+        miembro vigente más antiguo. Quien se salió no vuelve a abrir su fila (ni con
+        `upsert`): lo reingresa el administrador con una fila nueva. **Quitar a otro** (o
+        cambiar su `desde`, `hasta` o `papel`) es solo de quien creó el libro, o del dueño del
+        hogar si es miembro (I1); a cualquier otro responde 403 (42501), y nunca deja menos
+        de 2 miembros vigentes (400, 22023, "Un libro compartido no baja de 2 miembros
+        vigentes"; para dejar de usarlo, se archiva). Cambiar la fecha `desde` de la propia
+        fila también es solo del administrador (42501). Un albacea es vigente (I4) solo si su
+        membresía del hogar sigue activa y con Finanzas; si no, escribe el suplente.
       x-roles: [dueno, coadministrador]
       x-escribe: true
       x-solo-local: true
@@ -1367,8 +1466,15 @@ paths:
               allOf:
                 - $ref: '#/components/schemas/FinLibroMiembro'
                 - minProperties: 1
-            example:
-              hasta: '2026-10-22T18:00:00-06:00'
+            examples:
+              salirse:
+                summary: Salirme de un libro compartido (PATCH a mi propia fila)
+                value:
+                  hasta: '2026-10-23T09:30:00-06:00'
+              quitar:
+                summary: El administrador cierra la participación de otro miembro
+                value:
+                  hasta: '2026-10-23T09:35:00-06:00'
       responses:
         '200':
           $ref: '#/components/responses/Actualizado'
@@ -1458,6 +1564,8 @@ paths:
         Una categoría con datos no se borra: se archiva (`archivada: true`) o se oculta.
         Es configuración del hogar (M6): la hacen el dueño y la pareja; la cuenta maestra que no
         es la dueña no la cambia (403, 42501).
+        Archivar una categoría archiva su cuenta de gasto (si ninguna otra categoría activa la
+        usa) y desarchivarla (`archivada: false`) la reactiva.
       x-roles: [dueno, coadministrador]
       x-escribe: true
       x-solo-local: true
@@ -1596,7 +1704,9 @@ paths:
       operationId: cambiarCuentaFinanzas
       summary: Cambiar, congelar, cerrar o archivar una cuenta
       description: >-
-        Cerrar o archivar solo con saldo cero (confirmado y con pendientes; si no, 55000).
+        Cerrar o archivar exige saldo cero (confirmado y con pendientes; si no, 400, 22023)
+        solo en las cuentas de activo y pasivo: las de gasto e ingreso son de periodo y se
+        cierran o archivan con saldo.
         Las de sistema no cambian de tipo ni de estado. `libro_id` no cambia (42501).
         Las cuentas de gasto son configuración del hogar (M6): la cuenta maestra que no es la
         dueña no las cambia (403, 42501).
@@ -1767,8 +1877,11 @@ paths:
         el albacea, que es vigente solo si sigue siendo adulto con Finanzas (I4); si no,
         escribe el suplente. Una salida del libro de Papá hacia un libro personal deja
         además la entrada `finanzas.salida_libro_representado` en la bitácora, visible para
-        quienes llevan el libro. Solo `transferencia` y `pago_deuda` (y su anulación) cruzan
-        de un libro a otro. Reenviar el mismo `id` con
+        quienes llevan el libro. Un libro archivado (`fin_libros.activo` = `false`) rechaza
+        los movimientos nuevos, y la cuenta maestra que no es la dueña no registra nada: en
+        ambos casos 403 (42501). La anulación acepta cuentas de gasto o ingreso archivadas
+        (se archivan con saldo); en activos y pasivos cerrados o archivados, no (500, 55000).
+        Solo `transferencia` y `pago_deuda` (y su anulación) cruzan de un libro a otro. Reenviar el mismo `id` con
         el mismo contenido no hace nada (0 filas, sin error); con otro contenido, 409
         (23505). GRAVITY nunca llama esta operación por su cuenta: la persona confirma en la
         hoja de registro (D3).
@@ -3304,14 +3417,16 @@ paths:
       operationId: finPuede
       summary: ¿Puedo leer, escribir o administrar este libro?
       description: >-
-        La regla de las tablas de cada libro (D19). `leer`: miembro vigente o, para la
-        cuenta maestra, solo con una consulta registrada en ese libro en los últimos 30
-        minutos (I2). `escribir`: titular, miembro o albacea (el suplente solo si no hay
-        albacea vigente; el albacea es vigente solo si sigue siendo adulto con Finanzas,
-        I4), con el libro activo. `administrar`: titular de un personal, miembro de un
-        compartido, albacea de un representado. La cuenta maestra nunca escribe ni
-        administra lo ajeno. Siempre exige un rol con Finanzas: a familiar, cuidador y Casa
-        les responde `false`.
+        La regla de las tablas de cada libro (D19). `leer`: miembro vigente; la cuenta
+        maestra, solo con una consulta registrada en ese libro en los últimos 30 minutos
+        (I2, también si es público); y, en un compartido `publica`, todo adulto con Finanzas
+        del hogar. `escribir`: titular, miembro o albacea (el suplente solo si no hay albacea
+        vigente; el albacea es vigente solo si sigue siendo adulto con Finanzas, I4), con el
+        libro activo (archivado = solo lectura). `administrar`: titular de un personal,
+        miembro de un compartido (si está archivado, solo quien lo creó, para reactivarlo),
+        albacea de un representado. La cuenta maestra que no es la dueña nunca escribe ni
+        administra, en ningún libro. Siempre exige un rol con Finanzas: a familiar, cuidador
+        y Casa les responde `false`.
       x-roles: [dueno, coadministrador]
       x-escribe: false
       x-solo-local: true
@@ -3350,8 +3465,9 @@ paths:
         La regla de lo que es del hogar (categorías, cuentas de gasto, días inhábiles,
         importaciones): el rol tiene Finanzas para esa acción; la cuenta maestra además lee
         (sin consulta: es la portada). Si la cuenta maestra no es la dueña, `escribir` y
-        `administrar` responden `false`: no cambia la configuración del hogar (M6); el dueño
-        y la pareja sí. A familiar, cuidador y Casa les responde `false`.
+        `administrar` responden `false`: no escribe ni cambia nada del hogar (M6). Es de solo
+        lectura total (D19, 23/oct); el dueño y la pareja sí escriben. A familiar, cuidador y
+        Casa les responde `false`.
       x-roles: [dueno, coadministrador]
       x-escribe: false
       x-solo-local: true
@@ -3409,6 +3525,80 @@ paths:
       responses:
         '200':
           description: Si es miembro.
+          content:
+            application/json:
+              schema:
+                type: boolean
+              example: true
+        '401':
+          $ref: '#/components/responses/SinSesion'
+  /rest/v1/rpc/fin_solo_lectura:
+    post:
+      tags: [Base de datos · Finanzas]
+      operationId: finSoloLectura
+      summary: ¿Esta sesión es de solo lectura total en Finanzas?
+      description: >-
+        Verdadero si la sesión es la cuenta maestra y no es la dueña (D19, 23/oct): en
+        Finanzas solo lee, en cualquier libro y en lo del hogar. `fin_puede` y
+        `fin_puede_hogar` de `escribir` y `administrar` le responden `false`; la app la usa
+        para no mostrar (+), Anular ni asistentes. Al dueño (aunque sea además la maestra) y
+        a los demás roles les responde `false`.
+      x-roles: [dueno, coadministrador]
+      x-escribe: false
+      x-solo-local: true
+      x-fase: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [p_hogar_id]
+              properties:
+                p_hogar_id:
+                  $ref: '#/components/schemas/Uuid'
+            example:
+              p_hogar_id: b0000000-0000-4000-8000-000000000001
+      responses:
+        '200':
+          description: Si la sesión es de solo lectura total.
+          content:
+            application/json:
+              schema:
+                type: boolean
+              example: false
+        '401':
+          $ref: '#/components/responses/SinSesion'
+  /rest/v1/rpc/fin_puede_salir:
+    post:
+      tags: [Base de datos · Finanzas]
+      operationId: finPuedeSalir
+      summary: ¿Puedo salirme de este libro compartido?
+      description: >-
+        Verdadero si la sesión es miembro vigente de este libro compartido (con un rol
+        vigente en el hogar): puede cerrar su propia participación con un `PATCH` a su fila
+        de `fin_libro_miembros` (`hasta` = ahora), siempre, también si el libro está
+        archivado. En un libro personal o representado, y para quien no es miembro, responde
+        `false`.
+      x-roles: [dueno, coadministrador]
+      x-escribe: false
+      x-solo-local: true
+      x-fase: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [p_libro_id]
+              properties:
+                p_libro_id:
+                  $ref: '#/components/schemas/Uuid'
+            example:
+              p_libro_id: f1000000-0000-4000-8000-000000000001
+      responses:
+        '200':
+          description: Si puede salirse.
           content:
             application/json:
               schema:
@@ -3500,12 +3690,15 @@ paths:
       description: >-
         Solo el dueño (42501). Nombra la cuenta maestra del hogar: un miembro vigente con
         rol dueño o coadministrador (si no, 22023); nunca familiar, cuidador ni Casa. Con
-        `p_persona_id` nulo la quita. Una sola por hogar. Lo recomendado es otra persona con
-        su propio login (un coadministrador que crea el dueño, D19 del 23/oct), que en la
-        app es de solo lectura total; el dueño también puede nombrarse a sí mismo. Si
-        cambia quién es, deja la entrada `finanzas.maestra_asignada` (en `detalle`,
-        `anterior_persona_id` y `nueva_persona_id`), que ve todo adulto con Finanzas
-        (M10), además de la de membresías, que solo ve el dueño.
+        `p_persona_id` nulo la quita. Una sola por hogar. Puede ser el propio dueño (con su
+        persona: en lo suyo sigue escribiendo) o un coadministrador vigente que no lleve
+        libro propio; a uno que sí lo lleva lo rechaza con 400 (22023: "invita a otra
+        persona como cuenta maestra, o nómbrate tú"). Lo normal es invitarla con
+        `crearInvitacion` y `p_es_maestra: true` (otra persona con su propio login, sin
+        libro personal); si no es la dueña, es de solo lectura total. Si cambia quién es,
+        deja la entrada `finanzas.maestra_asignada` (en `detalle`, `anterior_persona_id` y
+        `nueva_persona_id`), que ve todo adulto con Finanzas (M10), además de la de
+        membresías, que solo ve el dueño.
       x-roles: [dueno]
       x-escribe: true
       x-solo-local: true
@@ -4293,6 +4486,12 @@ components:
           format: email
         rol:
           $ref: '#/components/schemas/RolInvitable'
+        es_maestra:
+          type: boolean
+          default: false
+          description: >-
+            Invitación a la cuenta maestra (D19, 23/oct): solo con rol `coadministrador`; al
+            aceptarla, la persona queda con la marca de cuenta maestra y sin libro personal.
         token_hash:
           type: string
           description: SHA-256 del token; el token no se guarda.
@@ -4353,8 +4552,9 @@ components:
             los triggers que registran los cambios de las tablas. Las de Finanzas las
             escribe solo el servidor (I5): `finanzas.consulta_maestra` (la cuenta maestra
             consultó un libro ajeno; vale 30 minutos), `finanzas.maestra_asignada` (el dueño
-            nombró o quitó la cuenta maestra; `detalle` lleva `anterior_persona_id` y
-            `nueva_persona_id`) y `finanzas.salida_libro_representado` (una salida del libro
+            nombró o quitó la cuenta maestra, o se aceptó una invitación de cuenta maestra;
+            `detalle` lleva `anterior_persona_id` y `nueva_persona_id` y, con invitación,
+            `invitada_por`) y `finanzas.salida_libro_representado` (una salida del libro
             de Papá hacia un libro personal; `detalle` lleva el libro de origen, el de
             destino, el tipo, la fecha, el monto en centavos, `en_nombre_de` y `motivo`).
           examples:
@@ -4465,9 +4665,22 @@ components:
         activo:
           type: boolean
           default: true
+          description: '`false` = archivado: solo lectura, sin movimientos nuevos.'
+        visibilidad:
+          type: string
+          enum: [privada, publica]
+          default: privada
+          description: >-
+            Solo en los compartidos (en los demás, siempre `privada`). `privada`: leen y
+            escriben sus miembros (la maestra lee con consulta). `publica`: además la leen,
+            sin escribir, todos los adultos con Finanzas del hogar. La cambia solo quien
+            creó el libro (42501).
         creado_por:
           $ref: '#/components/schemas/UuidONulo'
           readOnly: true
+          description: >-
+            El administrador del libro (quien lo creó). La API no lo manda ni lo cambia
+            (42501); el servidor lo pasa al miembro vigente más antiguo si el creador se sale.
         creado_en:
           type: string
           format: date-time
@@ -4538,7 +4751,8 @@ components:
       type: object
       description: >-
         Cuenta de un libro o, si es `de_gasto` o `gasto_financiero`, del hogar (`libro_id`
-        nulo). Cerrar o archivar solo con saldo cero; borrar solo sin movimientos.
+        nulo). Cerrar o archivar exige saldo cero solo en activos y pasivos (las de gasto e
+        ingreso son de periodo); borrar solo sin movimientos.
       properties:
         id:
           $ref: '#/components/schemas/Uuid'

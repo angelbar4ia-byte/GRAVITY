@@ -22,6 +22,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../cola/bandeja_salida.dart';
 import '../contratos/roles.dart';
 import '../seguridad/cifrado.dart';
 import '../seguridad/intentos.dart';
@@ -310,7 +311,25 @@ class ControladorTablet extends Notifier<EstadoTablet> {
     if (ref.read(sesionActualProvider)?.rol != Rol.casa) {
       return ResultadoDesbloqueo.requiereCuentaCasa;
     }
-    final guardada = await _repositorio.leerCredencial(usuario.personaId, pin);
+    // Si la persona salió con algo por subir, su credencial más reciente está
+    // en la bandeja de salida (se mueve, no se copia): vuelve al sobre de su
+    // PIN ahora que lo tenemos.
+    final bandeja = ref.read(bandejaDeLaTabletProvider);
+    final delaBandeja = bandeja == null
+        ? null
+        : await bandeja.tomarParaEntrada(usuario.personaId, pin);
+    final (LlavePin, String)? guardada;
+    if (delaBandeja != null) {
+      final llaveNueva = LlavePin.derivar(pin);
+      await _repositorio.guardarCredencial(
+        usuario.personaId,
+        llaveNueva,
+        delaBandeja,
+      );
+      guardada = (llaveNueva, delaBandeja);
+    } else {
+      guardada = await _repositorio.leerCredencial(usuario.personaId, pin);
+    }
     if (guardada == null) return ResultadoDesbloqueo.faltaCuenta;
     final (llave, credencial) = guardada;
 
@@ -389,7 +408,17 @@ class ControladorTablet extends Notifier<EstadoTablet> {
   ) async {
     final credencial = await sesiones.cerrarSesionDePersona();
     if (credencial != null) {
-      await _repositorio.guardarCredencial(personaId, llave, credencial);
+      final bandeja = ref.mounted ? ref.read(bandejaDeLaTabletProvider) : null;
+      if (bandeja != null && await bandeja.hayPendientesDe(personaId)) {
+        // Sale con algo por subir (sin señal): su credencial pasa a la bandeja
+        // de salida para que se suba sola, sin pedir el PIN otra vez. Se
+        // MUEVE: el sobre del PIN se borra, porque dos copias se estorban (el
+        // servidor rota el refresh token al usarlo).
+        await bandeja.delegar(personaId, credencial, llave);
+        await _repositorio.borrarCredencial(personaId);
+      } else {
+        await _repositorio.guardarCredencial(personaId, llave, credencial);
+      }
     }
     llave.olvidar();
   }
@@ -530,6 +559,9 @@ class ControladorTablet extends Notifier<EstadoTablet> {
     }
     await _repositorio.borrarCredencial(personaId);
     _intentos.olvidar(personaId);
+    // Su permiso de subida (si salió con algo pendiente) también se borra, y lo
+    // que no alcanzó a subir queda en "requiere atención".
+    await ref.read(bandejaDeLaTabletProvider)?.alQuitarPersona(personaId);
     // M5: lo guardado de la persona (copias locales de los módulos) tampoco
     // se queda en la tablet.
     await ref.read(limpiezaLocalProvider).alQuitarPersona(personaId);
@@ -565,6 +597,11 @@ class ControladorTablet extends Notifier<EstadoTablet> {
           : ResultadoDesbloqueo.pinIncorrecto;
     }
     _intentos.anotarAcierto(personaId);
+    // Si su credencial está en la bandeja, la llave que la protege pasa al PIN
+    // nuevo (si no, el próximo PIN no podría abrirla).
+    await ref
+        .read(bandejaDeLaTabletProvider)
+        ?.cambiarPin(personaId, pinActual, pinNuevo);
     final guardada = await _repositorio.leerCredencial(personaId, pinActual);
     if (guardada != null) {
       final llaveNueva = LlavePin.derivar(pinNuevo);

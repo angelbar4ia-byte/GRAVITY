@@ -325,8 +325,11 @@ class BotonMontos extends ConsumerWidget {
       tooltip: privado
           ? 'Modo privado: montos ocultos'
           : (ocultos ? 'Mostrar montos' : 'Ocultar montos'),
+      // Mostrar pide el PIN o la huella (plataforma); Ocultar es inmediato.
       onPressed: privado
           ? null
+          : ocultos
+          ? () => ref.read(revelarMontosProvider)(context)
           : () => ref.read(montosVisiblesProvider.notifier).alternar(),
       icon: Icon(ocultos ? Icons.visibility_outlined : Icons.visibility_off_outlined),
     );

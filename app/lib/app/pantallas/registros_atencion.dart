@@ -11,6 +11,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../nucleo/base_local/base_local.dart';
 import '../../nucleo/cola/proveedores_cola.dart';
+import '../../nucleo/contratos/dispositivo.dart';
+import '../dispositivo.dart';
 import '../navegacion.dart';
 import 'marco_pantalla.dart';
 
@@ -50,7 +52,70 @@ class AvisoRegistrosAtencion extends ConsumerWidget {
   }
 }
 
-/// Pone [AvisoRegistrosAtencion] encima de [child] (solo se ve si hay algo).
+/// Bandeja de salida de la tablet (D14, 23/oct/2026): lo registrado sin señal
+/// queda aquí y se sube solo cuando hay señal, sin pedir el PIN otra vez. Solo
+/// cuenta (nunca dice qué ni de quién): la tablet es compartida.
+class AvisoBandejaDeSalida extends ConsumerWidget {
+  const AvisoBandejaDeSalida({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (ref.watch(tipoDispositivoProvider) != TipoDispositivo.tablet) {
+      return const SizedBox.shrink();
+    }
+    final estado = ref.watch(estadoBandejaProvider).value ?? EstadoBandeja.vacio;
+    final caducados = ref.watch(caducadosDeLaBandejaProvider).value ?? 0;
+    if (estado.porSubir == 0 && caducados == 0) return const SizedBox.shrink();
+    final tema = Theme.of(context);
+    final lineas = <String>[
+      if (estado.porSubir > 0)
+        estado.porSubir == 1
+            ? '1 por subir'
+            : '${estado.porSubir} por subir',
+      if (estado.seSubenSolos > 0)
+        estado.seSubenSolos == estado.porSubir
+            ? 'Se suben solos cuando haya señal; no hace falta el PIN.'
+            : '${estado.seSubenSolos} se suben solos cuando haya señal.',
+      if (estado.esperanElPin > 0)
+        estado.esperanElPin == 1
+            ? '1 espera a que su persona entre con su PIN.'
+            : '${estado.esperanElPin} esperan a que su persona entre con su PIN.',
+      if (caducados > 0)
+        caducados == 1
+            ? '1 caducó (7 días sin señal): quien lo registró lo ve al entrar con su PIN.'
+            : '$caducados caducaron (7 días sin señal): quien los registró los ve al entrar con su PIN.',
+    ];
+    return Material(
+      key: const ValueKey('aviso-bandeja-de-salida'),
+      color: tema.colorScheme.secondaryContainer,
+      child: SafeArea(
+        bottom: false,
+        child: ListTile(
+          dense: true,
+          leading: Icon(
+            Icons.cloud_upload_outlined,
+            color: tema.colorScheme.onSecondaryContainer,
+          ),
+          title: Text(
+            lineas.first,
+            style: TextStyle(color: tema.colorScheme.onSecondaryContainer),
+          ),
+          subtitle: lineas.length > 1
+              ? Text(
+                  lineas.skip(1).join(' '),
+                  style: TextStyle(
+                    color: tema.colorScheme.onSecondaryContainer,
+                  ),
+                )
+              : null,
+        ),
+      ),
+    );
+  }
+}
+
+/// Pone [AvisoRegistrosAtencion] y [AvisoBandejaDeSalida] encima de [child]
+/// (solo se ven si hay algo).
 class ConAvisoAtencion extends StatelessWidget {
   const ConAvisoAtencion({super.key, required this.child});
 
@@ -60,6 +125,7 @@ class ConAvisoAtencion extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     children: [
       const AvisoRegistrosAtencion(),
+      const AvisoBandejaDeSalida(),
       Expanded(child: child),
     ],
   );

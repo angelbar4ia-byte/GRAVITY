@@ -15,6 +15,7 @@ import '../diseno/proveedores.dart'
 import '../diseno/valores_diseno.dart' show densidadPara;
 
 import '../nucleo/base_local/base_local.dart';
+import '../nucleo/cola/bandeja_salida.dart';
 import '../nucleo/cola/cola_sin_conexion.dart';
 import '../nucleo/cola/enviador_supabase.dart';
 import '../nucleo/cola/proveedores_cola.dart';
@@ -46,6 +47,14 @@ List<Override> conexionesDeLaApp() => [
   // Los montos se ocultan solos y para verlos se pide el PIN (o la huella en
   // el teléfono), decisión del 23/oct/2026.
   revelarMontosProvider.overrideWith((ref) => revelarMontos),
+  // Bandeja de salida (D14, 23/oct/2026): la tablet mueve la credencial de
+  // quien sale con algo por subir a su permiso de subida.
+  bandejaDeLaTabletProvider.overrideWith(
+    (ref) => BandejaDeLaTabletConCola(
+      ref.watch(bandejaDeSalidaProvider),
+      () => ref.read(colaSinConexionProvider),
+    ),
+  ),
 ];
 
 /// Tabla de Supabase por tipo de registro de la cola. Cada módulo agrega los
@@ -81,6 +90,7 @@ Future<List<Override>> prepararArranque({
   ServicioSesion? sesion;
   Enviador enviador = const EnviadorSinServidor();
   RepositorioInvitaciones? invitaciones;
+  Override? salidaSinPin;
   if (configuracion.tieneSupabase) {
     try {
       await Supabase.initialize(
@@ -98,6 +108,18 @@ Future<List<Override>> prepararArranque({
       // Invitaciones (cuenta maestra): con la sesión de quien está dentro.
       invitaciones = RepositorioInvitacionesSupabase(
         () => servicio.clienteActivo,
+      );
+      // Bandeja de salida (D14, 23/oct): lo de quien ya salió de la tablet
+      // sube con su propio token, en una sesión aparte, sin pedir su PIN.
+      salidaSinPin = salidaSinPinProvider.overrideWith(
+        (ref) => SalidaSinPinConSesiones(
+          bandeja: ref.watch(bandejaDeSalidaProvider),
+          abrir: servicio.abrirSesionAparte,
+          enviadorDe: (aparte) => EnviadorSupabase(
+            (aparte as SesionAparteSupabase).cliente,
+            tablas: tablasDeLaCola,
+          ),
+        ),
       );
       // En la tablet, la cola envía con la sesión de quien entró con su PIN.
       enviador = EnviadorSupabase.dinamico(
@@ -140,5 +162,6 @@ Future<List<Override>> prepararArranque({
     enviadorProvider.overrideWithValue(enviador),
     if (invitaciones != null)
       repositorioInvitacionesProvider.overrideWithValue(invitaciones),
+    ?salidaSinPin,
   ];
 }
