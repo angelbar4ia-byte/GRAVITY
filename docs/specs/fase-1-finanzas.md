@@ -427,7 +427,14 @@ Detalle y razones en `docs/DECISIONES.md` (D14, D18 y D19).
 | Orden "registrar gasto" | Hay que decir el verbo | "gasto" suelto no abre nada |
 | Gastos y cuentas | Cuenta existente; si no hay, "Crear cuenta nueva"; categoría opcional | La hoja (+) lo ofrece |
 | Tablets | Cuenta del equipo = Casa con nombre "Hogar"; bandeja de salida sin pedir PIN otra vez | D14 |
-| Aprobación de la v0.3 | El dueño pidió que se le explique la pregunta | Pendiente |
+| Salir de un compartido (2.ª ronda, 23/oct) | Con menos de 2 miembros el presupuesto **pasa a privado**, no se archiva; el último miembro no puede salirse; si se sale el administrador, el cargo pasa al más antiguo | Regla 4.5 y D19 |
+| Adultos con Finanzas | Cualquier adulto con Finanzas ve los nombres de los demás para invitarlos | Función de servidor nueva |
+| Chip "Cuenta nueva" | Siempre visible | Como está |
+| Hora al salirse | La del teléfono | Sin cambio |
+| PIN | 6 dígitos para quien ve dinero; al entrar con PIN en la tablet, los montos se ven de una vez | D18 |
+| Bandeja de salida | Se prueba; si no, permiso de subida acotado | D14 |
+| Maestra | Solo lectura; más adelante se verá si también edita | Sin cambio |
+| Aprobación de la v0.3 | El dueño pidió que se le explique la pregunta (explicada el 23/oct) | Pendiente |
 | Cambio de ingreso | El dueño pidió que se le explique | Pendiente |
 
 Las demás preguntas siguen con su propuesta por defecto.

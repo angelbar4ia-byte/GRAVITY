@@ -324,7 +324,7 @@ GRAVITY/
 
 **Respuestas del dueño (23/oct/2026).**
 - La cuenta del equipo de las tablets es la cuenta de rol Casa y su **nombre visible es "Hogar"** (el rol sigue llamándose `casa` en el código).
-- **Bandeja de salida:** un gasto registrado en la tablet pública, con nombre y PIN, y sin señal, **queda en la bandeja de salida y se sube solo cuando hay señal**, sin pedir el PIN otra vez. *(Propuesta técnica: la bandeja guarda el permiso de esa persona cifrado con la llave del dispositivo solo mientras haya algo por subir, lo borra al terminar y caduca a los 7 días; calidad lo revisa.)*
+- **Bandeja de salida:** un gasto registrado en la tablet pública, con nombre y PIN, y sin señal, **queda en la bandeja de salida y se sube solo cuando hay señal**, sin pedir el PIN otra vez. *(Propuesta técnica: la bandeja guarda el permiso de esa persona cifrado con la llave del dispositivo solo mientras haya algo por subir, lo borra al terminar y caduca a los 7 días; calidad lo revisa.)* *(23/oct/2026, 2.ª ronda: el dueño acepta probarla; si la revisión de calidad ve un riesgo que no se pueda aceptar, se pasa a un permiso de subida acotado que dé backend.)*
 
 **Pendiente.** Qué contextos se agregan; confirmar la propuesta de identidad.
 
@@ -395,7 +395,7 @@ Tomadas por el arquitecto con el criterio **más seguro** para cerrar los hallaz
 | PIN fallido | Espera de 30 s que se duplica hasta 15 min |
 | Bloqueo del teléfono | Al abrir y tras 1 minuto en segundo plano |
 | Confirmación de correo en Supabase | **Activa** (confirmado 23/oct) |
-| PIN y montos ocultos *(propuesta; el dueño no está seguro)* | El correo y la contraseña se piden **una vez por dispositivo**; la sesión sigue abierta. Tras unos minutos sin uso (2 por omisión, editable en Ajustes › Privacidad) **los montos se ocultan solos**; para volver a verlos se pide el **PIN** (o la huella en el teléfono). En las tablets el PIN además elige a la persona. Se rechazan los PIN triviales; el largo no cambia por ahora |
+| PIN y montos ocultos (confirmado 23/oct) | El correo y la contraseña se piden **una vez por dispositivo**; la sesión sigue abierta. Tras unos minutos sin uso (2 por omisión, editable en Ajustes › Privacidad) **los montos se ocultan solos**; para volver a verlos se pide el **PIN** (o la huella en el teléfono). **PIN de 6 dígitos para quien ve dinero** (dueño y coadministradores, incluida la cuenta maestra); se rechazan los PIN triviales. En las tablets el PIN además elige a la persona, y **al entrar con su PIN la persona ve sus montos de una vez**, sin pedirlo otra vez |
 | Mediciones en el Galaxy A52 y la laptop | Sí, cuando sea posible; no es prioridad |
 | Propiedades de los archivos `.xlsx` | Quitado el autor de `data/*.xlsx`; **el historial de git se conserva** |
 
@@ -417,11 +417,13 @@ Tomadas por el arquitecto con el criterio **más seguro** para cerrar los hallaz
 **Respuestas del dueño del 23/oct/2026 (revisión de calidad de la Fase 1).**
 
 - **Cuenta maestra con login propio.** El dueño usa **su cuenta normal** para lo suyo y entra a la maestra con **un login distinto**. Como cada persona tiene un solo login, la maestra es **otra persona con su propia cuenta**, que crea el dueño (rol coadministrador con la marca de maestra). **No se prohíbe** que el dueño sea también la maestra con su propia persona.
-- **La maestra es solo lectura total:** no registra nada, ni propio; lo suyo lo registra el dueño con su cuenta normal. No tiene (+) ni órdenes que abran una hoja de registro.
+- **La maestra es solo lectura total:** no registra nada, ni propio; lo suyo lo registra el dueño con su cuenta normal. No tiene (+) ni órdenes que abran una hoja de registro. *(Confirmado el 23/oct/2026; más adelante se verá si también puede editar.)*
 - **Consulta registrada:** para leer el libro de otra persona, la maestra debe tener una consulta registrada (dura 30 min y la app la renueva sola mientras el libro está abierto; la persona no nota nada). Sirve para que cada consulta quede en la bitácora y los demás puedan ver quién miró y cuándo. Solo cambia el valor de la vigencia si el dueño lo pide.
 - **Libros compartidos:**
   - **Quien lo crea es el administrador:** agrega y saca miembros, decide si es **pública o privada** y lo cierra.
-  - **Cualquier miembro puede salirse** cuando quiera. Si al salir quedan menos de 2 miembros, el libro pasa a archivado, solo lectura *(propuesta)*.
+  - **Cualquier miembro puede salirse** cuando quiera. **Si al salir queda menos de 2 miembros, el presupuesto NO se archiva: pasa a privado** (decidido el 23/oct/2026) y sigue activo para quien se queda, que queda como administrador. El que se sale pierde el acceso, y lo que registró queda en el historial. Archivar es solo una decisión explícita del administrador; el último miembro no puede salirse (archiva o cierra el libro).
+  - **Si se sale el administrador,** el cargo pasa al miembro más antiguo (confirmado el 23/oct/2026). Si solo eran 2, el que queda es el administrador y el presupuesto pasa a privado.
+  - **Agregar miembros:** cualquier adulto con Finanzas puede ver quiénes son los adultos con Finanzas del hogar (solo nombres, nunca la cuenta maestra) para poder invitarlos a un compartido que administra.
   - **Privada** (por omisión): la ven y escriben sus miembros; la lee también la maestra. **Pública:** además la **leen** (no escriben) los adultos con Finanzas del hogar.
   - **El dueño no entra a un compartido privado del que no es miembro;** solo la maestra.
 - **Libro de papá:** todo movimiento va **en nombre de papá y con motivo**; las salidas hacia un libro personal avisan al suplente.
@@ -432,5 +434,6 @@ Tomadas por el arquitecto con el criterio **más seguro** para cerrar los hallaz
 - **Importar datos:** con **selector de archivos**.
 - **Orden de voz o escrita:** hay que decir **"registrar gasto"**; la palabra "gasto" suelta ya no abre nada.
 - **Pendiente de explicar al dueño:** cómo cambia un ingreso y cómo afecta uno nuevo (vigencias); hasta que responda, la app sigue permitiendo editar una vigencia.
+- **Segunda ronda del 23/oct/2026:** el chip "Cuenta nueva" de la hoja de gasto se ve **siempre**; la hora al salirse de un libro la pone el teléfono (no se pide función de servidor); la pantalla "Tengo una invitación" se construye en la siguiente ronda.
 
 
