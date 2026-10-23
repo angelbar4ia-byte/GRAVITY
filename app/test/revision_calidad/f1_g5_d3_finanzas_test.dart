@@ -194,10 +194,14 @@ void main() {
           }
         }
       }
-      // "Registrar gasto" abre la hoja de su PROPIO libro: la hoja misma no
-      // deja registrar en uno ajeno (ver pantallas_test de Finanzas).
+      // D19 (23/oct): la maestra con login propio solo lee; el dueño que además
+      // es maestro conserva "registrar gasto" para lo suyo.
       expect(
         registro.buscar('finanzas.registrar_gasto', rol: Rol.coadministrador, esMaestra: true),
+        isNull,
+      );
+      expect(
+        registro.buscar('finanzas.registrar_gasto', rol: Rol.dueno, esMaestra: true),
         isNotNull,
       );
     });

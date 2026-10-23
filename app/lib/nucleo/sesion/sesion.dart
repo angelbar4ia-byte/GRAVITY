@@ -227,6 +227,27 @@ abstract interface class SesionesPorPersona {
   /// Persona con cuya sesión salen ahora las peticiones al servidor (la del
   /// equipo o la que entró con su PIN); `null` si no hay sesión.
   String? get personaEnServidor;
+
+  /// Abre una sesión **aparte** de la persona de [credencial] (su permiso de
+  /// subida de la bandeja de salida) sin cambiar la sesión del equipo ni la de
+  /// quien esté dentro. Lanza [ErrorSesion.sinConexion] sin señal,
+  /// [ErrorSesion.sinRol] si ya no tiene acceso (dada de baja) y
+  /// [ErrorSesion.credencialVencida] si la credencial ya no sirve.
+  Future<SesionAparte> abrirSesionAparte(String personaId, String credencial);
+}
+
+/// Una sesión de [personaId] abierta **aparte** de la de la tablet y de la de
+/// quien esté dentro, solo para subir su bandeja de salida sin pedir su PIN
+/// (D14, 23/oct/2026; ver `cola/bandeja_salida.dart`).
+abstract interface class SesionAparte {
+  String get personaId;
+
+  /// Avisa cada vez que el servidor renueva la credencial: hay que guardarla
+  /// de inmediato (la anterior ya no sirve; reusarla puede revocar la sesión).
+  Stream<String> get renovaciones;
+
+  /// Cierra la sesión **sin revocarla** y devuelve la credencial vigente.
+  Future<String?> cerrar();
 }
 
 /// Capacidad extra del modo demostración: entrar con un rol elegido.

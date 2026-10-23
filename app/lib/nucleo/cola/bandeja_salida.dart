@@ -62,7 +62,7 @@ import 'package:flutter/foundation.dart';
 import '../seguridad/almacen_seguro.dart';
 import '../seguridad/cifrado.dart';
 import '../seguridad/sobre_sellado.dart';
-import '../sesion/sesion.dart';
+import '../sesion/sesion.dart' show ErrorSesion, SesionAparte;
 import 'cola_sin_conexion.dart';
 
 /// Cuánto dura un permiso de subida, desde que se crea.
@@ -396,19 +396,6 @@ class BandejaDeSalida {
 // Sesión aparte para subir
 // ---------------------------------------------------------------------------
 
-/// Una sesión de [personaId] abierta **aparte** de la de la tablet y de la de
-/// quien esté dentro, solo para subir su bandeja.
-abstract interface class SesionAparte {
-  String get personaId;
-
-  /// Avisa cada vez que el servidor renueva la credencial: hay que guardarla
-  /// de inmediato (la anterior ya no sirve).
-  Stream<String> get renovaciones;
-
-  /// Cierra la sesión **sin revocarla** y devuelve la credencial vigente.
-  Future<String?> cerrar();
-}
-
 /// Cómo se abre una [SesionAparte]: lo ofrecen los servicios con servidor
 /// (`SesionesPorPersona.abrirSesionAparte`).
 typedef AbridorDeSesionAparte =
@@ -421,10 +408,9 @@ typedef FabricaDeEnviador = Enviador Function(SesionAparte sesion);
 class SalidaSinPinConSesiones implements SalidaSinPin {
   SalidaSinPinConSesiones({
     required this.bandeja,
-    required AbridorDeSesionAparte abrir,
-    required FabricaDeEnviador enviadorDe,
-  }) : _abrir = abrir,
-       _enviadorDe = enviadorDe;
+    required this._abrir,
+    required this._enviadorDe,
+  });
 
   final BandejaDeSalida bandeja;
   final AbridorDeSesionAparte _abrir;

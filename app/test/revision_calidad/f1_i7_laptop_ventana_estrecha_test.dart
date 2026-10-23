@@ -7,10 +7,10 @@
 // - M7: con la letra al 150 % varias secciones (Semana, Ingresos, Categorías,
 //   Compromisos, Ajustes y el propio asistente) se desbordan.
 //
-// Estado: I7 resuelto (sin etiqueta). M7 conserva la etiqueta `hallazgo`: las
-// secciones de Finanzas ya caben a 1100 dp con letra 1.5, pero la pantalla
-// principal de GRAVITY (diseno, pantalla_principal.dart) todavía se desborda en
-// ese tamaño y la prueba la arma antes de ir a Finanzas.
+// Estado: I7 y M7 resueltos (sin etiqueta). Las secciones de Finanzas caben a
+// 1100 dp con letra 1.5 (finanzas) y la pantalla principal de GRAVITY que la
+// prueba arma antes de ir a Finanzas apila sus paneles cuando la letra es
+// grande (diseno, pantalla_principal.dart).
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gravity/modulos/finanzas/finanzas.dart';
@@ -83,6 +83,5 @@ void main() {
             'Asistente y Ajustes (marco_laptop.dart)',
       );
     },
-    tags: ['hallazgo'],
   );
 }
