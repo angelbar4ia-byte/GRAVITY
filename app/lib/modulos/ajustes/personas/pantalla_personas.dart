@@ -172,7 +172,8 @@ class _PersonasTablet extends ConsumerWidget {
   ) async {
     final pines = await showDialog<(String, String)>(
       context: context,
-      builder: (contexto) => _DialogoPinNuevo(nombre: usuario.nombre),
+      builder: (contexto) =>
+          _DialogoPinNuevo(nombre: usuario.nombre, rol: usuario.rol),
     );
     if (pines == null) return null;
     final resultado = await controlador.cambiarPin(
@@ -190,9 +191,12 @@ class _PersonasTablet extends ConsumerWidget {
 }
 
 class _DialogoPinNuevo extends StatefulWidget {
-  const _DialogoPinNuevo({required this.nombre});
+  const _DialogoPinNuevo({required this.nombre, required this.rol});
 
   final String nombre;
+
+  /// De su rol depende el largo del PIN (6 dígitos si ve dinero).
+  final Rol rol;
 
   @override
   State<_DialogoPinNuevo> createState() => _DialogoPinNuevoState();
@@ -228,7 +232,11 @@ class _DialogoPinNuevoState extends State<_DialogoPinNuevo> {
       mainAxisSize: MainAxisSize.min,
       children: [
         _campo(_actual, 'PIN actual', const Key('pin-actual')),
-        _campo(_nuevo, 'PIN nuevo (4 a 6 dígitos)', const Key('pin-nuevo')),
+        _campo(
+          _nuevo,
+          'PIN nuevo (${textoDelLargoDelPin(widget.rol)})',
+          const Key('pin-nuevo'),
+        ),
         if (_error != null)
           Text(
             _error!,
@@ -249,7 +257,7 @@ class _DialogoPinNuevoState extends State<_DialogoPinNuevo> {
       FilledButton(
         onPressed: () {
           if (_actual.text.isEmpty) return;
-          final error = errorDePinNuevo(_nuevo.text);
+          final error = errorDePinNuevo(_nuevo.text, rol: widget.rol);
           if (error != null) {
             setState(() => _error = error);
             return;

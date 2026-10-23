@@ -218,6 +218,7 @@ Crea una base desechable, aplica `tests/00_emulacion_supabase.sql` (roles `anon`
 | `70_membresias_personas.sql` | El cuidador no ve a la familia y su GRAVITY es restringido (D18); el coadministrador no entra a Cuidados; el dueño, GRAVITY propio (D18); quien comparte un libro ve a sus miembros (D19); roles, bajas y fechas de fin; lo propio; dispositivos |
 
 | `80_calidad_fase1.sql` | Guardias de la revisión de calidad de la Fase 1: escalada, roles sin Finanzas, solo agregar (con TRUNCATE en cascada), cruce entre libros, reenvío de otra persona |
+| `81_calidad_fase1b.sql` | Guardias de la revisión de calidad de la Fase 1b (las escribe calidad): intentos de romper las reglas del 23/oct (cuenta maestra con login propio, compartidos, libro de Papá, bitácora); no dependen de que un compartido se archive. Lo que sigue abierto vive en `hallazgos_fase1b.sql`, que no entra en la corrida normal (`correr.sh hallazgos_fase1b.sql`) |
 
 Los casos de la revisión de calidad de la Fase 0 (`docs/revisiones/fase-0.md`: I1, M1, M2 y M3) y de la Fase 1 (`docs/revisiones/fase-1.md`: I1 a I5, M6 y M10) viven en estos archivos con la clave del hallazgo al inicio de su descripción (p. ej. `M2: …`, `I2: …`); `hallazgos_fase0.sql` y `hallazgos_fase1.sql` ya no existen.
 

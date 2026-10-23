@@ -8,10 +8,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/dispositivo.dart';
 import '../../../nucleo/contratos/dispositivo.dart';
+import '../../../nucleo/contratos/roles.dart';
 import '../../../nucleo/seguridad/bloqueo.dart';
 import '../../../nucleo/seguridad/montos.dart';
 import '../../../nucleo/seguridad/pin.dart';
 import '../../../nucleo/seguridad/proveedores_seguridad.dart';
+import '../../../nucleo/sesion/proveedores_sesion.dart';
 import '../../../nucleo/tablet/controlador_tablet.dart';
 import '../marco_seccion.dart';
 import '../secciones_ajustes.dart';
@@ -124,13 +126,17 @@ class _MontosOcultos extends ConsumerWidget {
                       ? 'Cambiar el PIN para ver los montos'
                       : 'Crear un PIN para ver los montos',
                 ),
-                subtitle: const Text('De 4 a 6 dígitos; nada fácil como 1234.'),
+                subtitle: Text(
+                  'De ${textoDelLargoDelPin(controlador.rol)}; nada fácil como '
+                  '1234.',
+                ),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () async {
                   final pin = await showDialog<String>(
                     context: context,
-                    builder: (contexto) => const _DialogoPinBloqueo(
+                    builder: (contexto) => _DialogoPinBloqueo(
                       titulo: 'PIN para ver los montos',
+                      rol: controlador.rol,
                     ),
                   );
                   if (pin != null) await controlador.crearPin(pin);
@@ -174,7 +180,8 @@ class _BloqueoTelefonoState extends ConsumerState<_BloqueoTelefono> {
   Future<void> _elegirPin() async {
     final pin = await showDialog<String>(
       context: context,
-      builder: (contexto) => const _DialogoPinBloqueo(),
+      builder: (contexto) =>
+          _DialogoPinBloqueo(rol: ref.read(sesionActualProvider)?.rol),
     );
     if (pin == null) return;
     await ref.read(controladorBloqueoProvider.notifier).configurarPin(pin);
@@ -254,9 +261,12 @@ class _BloqueoTelefonoState extends ConsumerState<_BloqueoTelefono> {
 }
 
 class _DialogoPinBloqueo extends StatefulWidget {
-  const _DialogoPinBloqueo({this.titulo = 'PIN del teléfono'});
+  const _DialogoPinBloqueo({this.titulo = 'PIN del teléfono', this.rol});
 
   final String titulo;
+
+  /// De su rol depende el largo del PIN (6 dígitos si ve dinero; D18, 23/oct).
+  final Rol? rol;
 
   @override
   State<_DialogoPinBloqueo> createState() => _DialogoPinBloqueoState();
@@ -286,11 +296,13 @@ class _DialogoPinBloqueoState extends State<_DialogoPinBloqueo> {
       );
 
   void _guardar() {
-    final errorPin = errorDePinNuevo(_pin.text);
-    if (errorPin != null) {
-      setState(() => _error = errorPin);
-    } else if (_pin.text != _confirmacion.text) {
-      setState(() => _error = 'Los PIN no coinciden.');
+    final error = errorDePinNuevoConfirmado(
+      _pin.text,
+      _confirmacion.text,
+      rol: widget.rol,
+    );
+    if (error != null) {
+      setState(() => _error = error);
     } else {
       Navigator.of(context).pop(_pin.text);
     }
@@ -302,7 +314,11 @@ class _DialogoPinBloqueoState extends State<_DialogoPinBloqueo> {
     content: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _campo(_pin, 'PIN (4 a 6 dígitos)', const Key('bloqueo-pin')),
+        _campo(
+          _pin,
+          'PIN (${textoDelLargoDelPin(widget.rol)})',
+          const Key('bloqueo-pin'),
+        ),
         _campo(_confirmacion, 'Repite el PIN', const Key('bloqueo-confirmacion')),
         if (_error != null)
           Text(

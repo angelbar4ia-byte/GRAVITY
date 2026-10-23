@@ -45,13 +45,44 @@
 ///   persona hasta que la sesión caduque o se revoque. Es lo que el dueño
 ///   aceptó; por eso solo existe mientras hay algo por subir y caduca.
 /// - Una sesión de Supabase da **todo** lo que la persona puede, no solo
-///   "subir su bandeja". Acotarlo pide al servidor un token de subida
-///   (propuesta: una función que firme solo `fin_movimientos`/`fin_conciliaciones`
-///   de esa persona).
+///   "subir su bandeja" (ver "Qué haría falta del servidor", abajo).
 /// - Si la app se cierra justo después de que el servidor renovó el refresh
 ///   token y antes de guardarlo, la credencial guardada queda vieja y la persona
 ///   tendrá que volver a agregarse. Se guarda en cuanto llega la renovación
 ///   para reducirlo al mínimo.
+///
+/// ## Qué haría falta del servidor para un permiso de subida acotado
+///
+/// El dueño aceptó probar la bandeja tal como está (23/oct/2026). Si la
+/// revisión de calidad pidiera acotarla, esto es lo que tendría que dar
+/// backend; **nada de esto existe hoy** y la app actual no lo necesita:
+///
+/// 1. **Un permiso de subida por persona**, no una sesión. Una función
+///    `emitir_permiso_subida()` que la persona llama con su sesión (cuando sale
+///    de la tablet con algo por subir) y que devuelve un secreto de un solo
+///    propósito: ligado a la persona y al dispositivo, de 7 días como máximo,
+///    revocable y guardado en el servidor solo como hash.
+/// 2. **Una función de subida** `subir_pendientes(permiso, registros)` (RPC
+///    `security definer` o Edge Function) que valide el permiso y acepte
+///    **solo** los tipos que se registran sin conexión (las tablas de
+///    `contrato_servidor.dart`), **solo** `insert` idempotente
+///    (`on conflict (id) do nothing`, como la cola de hoy) y con las **mismas
+///    reglas de RLS** de esa persona (ejecutando como su `auth.uid()`, nunca
+///    con permisos de servicio sin revisar). Cualquier otra operación (leer,
+///    actualizar, borrar, otras tablas) se rechaza.
+/// 3. **Sin refresh token que rote.** El permiso no se renueva al usarse, así
+///    desaparecen el riesgo de perder la cadena y el candado/ordenamiento que
+///    hoy exige la rotación; quien lo extraiga solo puede **insertar** lo que
+///    la persona ya podía registrar, no leer ni cambiar nada.
+/// 4. **Baja inmediata** (D5): `revocar_permiso_subida(persona)` al quitarla de
+///    la tablet, al darla de baja o al cambiarle el rol, y que la bitácora
+///    diga "subido desde la tablet con permiso de subida".
+/// 5. **Un tope** de registros por lote y por día para que un permiso robado
+///    no pueda llenar la base.
+///
+/// En la app el cambio queda dentro de [SalidaSinPinConSesiones] y
+/// `EnviadorSupabase`: [PermisoDeSubida] guardaría el permiso en vez de la
+/// credencial y desaparecería la [SesionAparte].
 library;
 
 import 'dart:async';

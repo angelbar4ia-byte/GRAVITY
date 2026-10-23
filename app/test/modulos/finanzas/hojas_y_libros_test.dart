@@ -465,9 +465,9 @@ void main() {
       await tester.tap(find.text('Salir del libro').last);
       await tester.pumpAndSettle();
       final libro = repo.datos.libro(casa)!;
-      expect(casaAntes.visibilidad, VisibilidadLibro.privada);
+      expect(casaAntes.visibilidad, dom.VisibilidadLibro.privada);
       expect(libro.archivado, isFalse);
-      expect(libro.visibilidad, VisibilidadLibro.privada);
+      expect(libro.visibilidad, dom.VisibilidadLibro.privada);
       expect(libro.papelDe(IdsDemostracion.pareja, hoyDePrueba), isNull);
       expect(libro.esAdministrador(IdsDemostracion.dueno), isTrue);
     });

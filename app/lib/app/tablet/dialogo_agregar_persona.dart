@@ -1,7 +1,10 @@
 /// Agregar a una persona a la tablet: su correo y contraseña (se comprueban
-/// en el servidor, así el rol es el real) y un PIN nuevo de 4 a 6 dígitos. Su
-/// sesión del servidor queda guardada, cifrada con ese PIN, para que al entrar
-/// las peticiones salgan con su identidad (revisión de la Fase 0, I6).
+/// en el servidor, así el rol es el real) y un PIN nuevo: de 6 dígitos si la
+/// persona ve dinero (dueño y coadministradores) y de 4 a 6 si no (D18,
+/// 23/oct). Como el rol se conoce al comprobar la cuenta, un PIN demasiado
+/// corto para ese rol se avisa ahí mismo. Su sesión del servidor queda
+/// guardada, cifrada con ese PIN, para que al entrar las peticiones salgan con
+/// su identidad (revisión de la Fase 0, I6).
 library;
 
 import 'package:flutter/material.dart';
@@ -118,7 +121,10 @@ class _DialogoAgregarPersonaState extends ConsumerState<DialogoAgregarPersona> {
                   maxLength: 6,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   decoration: const InputDecoration(
-                    labelText: 'PIN nuevo (4 a 6 dígitos)',
+                    labelText: 'PIN nuevo (6 dígitos si ve dinero; si no, 4 a 6)',
+                    helperText:
+                        'Dueño y pareja usan 6 dígitos. No uno fácil como 1234.',
+                    helperMaxLines: 2,
                   ),
                   validator: (v) => errorDePinNuevo(v ?? ''),
                 ),

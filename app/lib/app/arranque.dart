@@ -11,7 +11,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../diseno/licencias.dart';
 import '../diseno/proveedores.dart'
-    show densidadBaseProvider, personaEnPantallaProvider, revelarMontosProvider;
+    show
+        densidadBaseProvider,
+        montosVisiblesProvider,
+        personaEnPantallaProvider,
+        revelarMontosProvider;
 import '../diseno/valores_diseno.dart' show densidadPara;
 
 import '../nucleo/base_local/base_local.dart';
@@ -32,6 +36,7 @@ import '../nucleo/sesion/servicio_sesion_demostracion.dart';
 import '../nucleo/sesion/servicio_sesion_supabase.dart';
 import '../nucleo/sesion/sesion.dart';
 import 'dispositivo.dart';
+import 'montos/montos_al_entrar.dart';
 import 'montos/revelar_montos.dart';
 import 'pantallas_externas.dart' show tablasColaFinanzas;
 import 'sesion_efectiva.dart';
@@ -47,6 +52,10 @@ List<Override> conexionesDeLaApp() => [
   // Los montos se ocultan solos y para verlos se pide el PIN (o la huella en
   // el teléfono), decisión del 23/oct/2026.
   revelarMontosProvider.overrideWith((ref) => revelarMontos),
+  // En la tablet, entrar con el PIN cuenta como haber pedido ver los montos
+  // (23/oct/2026): se abren a la vista; las reglas de ocultar por inactividad
+  // siguen.
+  montosVisiblesProvider.overrideWith(MontosVisiblesAlEntrar.new),
   // Bandeja de salida (D14, 23/oct/2026): la tablet mueve la credencial de
   // quien sale con algo por subir a su permiso de subida.
   bandejaDeLaTabletProvider.overrideWith(
