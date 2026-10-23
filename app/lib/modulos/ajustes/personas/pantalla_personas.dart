@@ -196,6 +196,7 @@ class _DialogoPinNuevo extends StatefulWidget {
 class _DialogoPinNuevoState extends State<_DialogoPinNuevo> {
   final _actual = TextEditingController();
   final _nuevo = TextEditingController();
+  String? _error;
 
   @override
   void dispose() {
@@ -223,6 +224,12 @@ class _DialogoPinNuevoState extends State<_DialogoPinNuevo> {
       children: [
         _campo(_actual, 'PIN actual', const Key('pin-actual')),
         _campo(_nuevo, 'PIN nuevo (4 a 6 dígitos)', const Key('pin-nuevo')),
+        if (_error != null)
+          Text(
+            _error!,
+            key: const Key('pin-nuevo-error'),
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
+          ),
         const Text(
           'Si olvidaste tu PIN, quítate de la tablet y vuelve a agregarte con '
           'tu correo y contraseña.',
@@ -236,9 +243,13 @@ class _DialogoPinNuevoState extends State<_DialogoPinNuevo> {
       ),
       FilledButton(
         onPressed: () {
-          if (_actual.text.isNotEmpty && pinValido(_nuevo.text)) {
-            Navigator.of(context).pop((_actual.text, _nuevo.text));
+          if (_actual.text.isEmpty) return;
+          final error = errorDePinNuevo(_nuevo.text);
+          if (error != null) {
+            setState(() => _error = error);
+            return;
           }
+          Navigator.of(context).pop((_actual.text, _nuevo.text));
         },
         child: const Text('Guardar'),
       ),

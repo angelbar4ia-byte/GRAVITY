@@ -185,8 +185,9 @@ class _DialogoPinBloqueoState extends State<_DialogoPinBloqueo> {
       );
 
   void _guardar() {
-    if (!pinValido(_pin.text)) {
-      setState(() => _error = 'De 4 a 6 dígitos.');
+    final errorPin = errorDePinNuevo(_pin.text);
+    if (errorPin != null) {
+      setState(() => _error = errorPin);
     } else if (_pin.text != _confirmacion.text) {
       setState(() => _error = 'Los PIN no coinciden.');
     } else {

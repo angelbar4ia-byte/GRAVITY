@@ -81,10 +81,20 @@ final repositorioFinanzasProvider = Provider<RepositorioFinanzas>((ref) {
 });
 
 /// Lo cargado de Finanzas, al día con cada escritura.
+///
+/// **Sin reintentos automáticos** (I10 de la revisión de la Fase 1): Riverpod
+/// reintenta solo lo que falla (11 intentos en unos 40 s) y mientras tanto la
+/// pantalla dice "Cargando…". Aquí el error se ve de inmediato (sin señal y
+/// sin copia: "Sin conexión… Reintentar") y se reintenta a mano.
 final cargaFinanzasProvider =
     AsyncNotifierProvider<CargaFinanzasNotifier, CargaFinanzas>(
       CargaFinanzasNotifier.new,
+      retry: sinReintentosAutomaticos,
     );
+
+/// `retry` de Riverpod que nunca reintenta (el error se muestra y la persona
+/// decide).
+Duration? sinReintentosAutomaticos(int intentos, Object error) => null;
 
 class CargaFinanzasNotifier extends AsyncNotifier<CargaFinanzas> {
   @override
@@ -308,17 +318,38 @@ final servicioFinanzasProvider = Provider<ServicioFinanzas>((ref) {
   );
 });
 
+/// Cuánto vale una consulta registrada de la cuenta maestra: el servidor deja
+/// leer un libro ajeno solo mientras la consulta está vigente (30 min).
+const vigenciaConsultaMaestra = Duration(minutes: 30);
+
+/// Cada cuánto se renueva la consulta mientras el libro sigue abierto: antes de
+/// que venza, para que la lectura nunca se quede sin respaldo en la bitácora.
+const renovarConsultaCada = Duration(minutes: 25);
+
 /// La consulta de la cuenta maestra a un libro ajeno queda en la bitácora
 /// **antes** de mostrarlo (D19; RPC `fin_registrar_consulta_maestra`). Si no
-/// se puede registrar, no se muestra. Se registra una vez por libro mientras
-/// esté abierto; al salir de Finanzas y volver, otra vez.
-final consultaMaestraProvider = FutureProvider.autoDispose.family<bool, String>((
-  ref,
-  libroId,
-) async {
-  await ref.watch(repositorioFinanzasProvider).registrarConsultaMaestra(libroId);
-  return true;
-});
+/// se puede registrar, no se muestra (con *Reintentar*; sin reintentos
+/// automáticos). Mientras el libro siga abierto la consulta se **renueva** cada
+/// [renovarConsultaCada] (vigencia de [vigenciaConsultaMaestra]) y los datos se
+/// vuelven a pedir con la consulta vigente. Al cerrar el libro, la renovación
+/// se detiene; al volver a abrirlo se registra otra vez.
+final consultaMaestraProvider = FutureProvider.autoDispose.family<bool, String>(
+  (ref, libroId) async {
+    final repo = ref.watch(repositorioFinanzasProvider);
+    await repo.registrarConsultaMaestra(libroId);
+    final renovacion = Timer(renovarConsultaCada, ref.invalidateSelf);
+    ref.onDispose(renovacion.cancel);
+    // Con la consulta registrada ya se pueden leer los datos de ese libro.
+    unawaited(
+      ref
+          .read(cargaFinanzasProvider.notifier)
+          .recargar()
+          .catchError((Object _) {}),
+    );
+    return true;
+  },
+  retry: sinReintentosAutomaticos,
+);
 
 /// Libros a los que ya se les revisó el cierre automático en esta sesión.
 final cierresRevisadosProvider = NotifierProvider<CierresRevisados, Set<String>>(

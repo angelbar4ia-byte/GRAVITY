@@ -215,6 +215,12 @@ class ServicioFinanzas {
     if (libro.contraasientoDe(movimientoId) != null) {
       throw const ErrorFinanzas('Ese movimiento ya está anulado.');
     }
+    // En el libro de papá la anulación también va en su nombre (el servidor
+    // exige `en_nombre_de` y motivo en todo movimiento de ese libro).
+    final representado = libros
+        .map(_libro)
+        .where((l) => l.tipo == TipoLibro.representado)
+        .firstOrNull;
     try {
       final contra = libro.anular(
         movimientoId,
@@ -222,6 +228,7 @@ class ServicioFinanzas {
         motivo: _limpio(motivo)!,
         registradoPor: personaId,
         registradoEn: _ahora,
+        enNombreDe: representado?.titularId,
       );
       await repositorio.agregarMovimientos([contra]);
       return contra;
@@ -1101,6 +1108,22 @@ class ServicioFinanzas {
     EstadoOcurrencia estado,
   ) async {
     _exigirEscribir(libroId);
+    // Si dos pagos del mismo ingreso caen el mismo día (30 y último en
+    // febrero; M4), la ocurrencia (única por fecha programada) vale los dos.
+    final delDia = vencimientosEntre(
+      _d,
+      libroId,
+      v.fecha.ajustada,
+      v.fecha.ajustada,
+    ).where(
+      (x) =>
+          x.origen == v.origen &&
+          x.origenId == v.origenId &&
+          x.fecha.programada == v.fecha.programada,
+    );
+    final montoEsperado = delDia.isEmpty
+        ? v.monto
+        : delDia.fold<int>(0, (t, x) => t + x.monto);
     final existente = _d.ocurrencias
         .where(
           (o) =>
@@ -1125,7 +1148,7 @@ class ServicioFinanzas {
             origenId: v.origenId,
             fechaProgramada: v.fecha.programada,
             fechaAjustada: v.fecha.ajustada,
-            montoEsperado: v.monto,
+            montoEsperado: montoEsperado,
             estado: estado,
           ),
     );

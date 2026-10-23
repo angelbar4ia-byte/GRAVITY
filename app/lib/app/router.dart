@@ -14,6 +14,7 @@ import '../nucleo/permisos/permisos.dart';
 import 'cascarones/cascaron.dart';
 import 'dispositivo.dart';
 import 'navegacion.dart';
+import 'pantalla_segura.dart';
 import 'pantallas/pantalla_entrar.dart';
 import 'pantallas/pantalla_inicio.dart';
 import 'pantallas/pantalla_mas.dart';
@@ -158,8 +159,10 @@ List<RouteBase> rutasDeGravity({required List<RouteBase> finanzas}) => [
   ),
   ShellRoute(
     navigatorKey: navegadorCascaronKey,
-    builder: (context, estado, child) =>
-        CascaronSegunDispositivo(ubicacion: estado.uri.path, child: child),
+    builder: (context, estado, child) => GuardiaDePantallaSegura(
+      ubicacion: estado.uri.path,
+      child: CascaronSegunDispositivo(ubicacion: estado.uri.path, child: child),
+    ),
     routes: [
       GoRoute(
         path: Rutas.inicio,

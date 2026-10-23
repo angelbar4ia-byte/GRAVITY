@@ -14,11 +14,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../diseno/diseno.dart';
-import '../../../../nucleo/contratos/roles.dart';
 import '../../casos_uso/servicio_finanzas.dart';
 import '../../casos_uso/sugerencias.dart';
 import '../../estado/proveedores.dart';
 import '../comunes.dart';
+import 'marco_hoja.dart';
 
 /// Libros donde la persona puede registrar, empezando por el activo.
 List<Libro> librosParaRegistrar(ContextoFinanzas c) => [
@@ -128,18 +128,18 @@ class _HojaRegistrarGastoState extends ConsumerState<HojaRegistrarGasto> {
     final asincrono = ref.watch(contextoFinanzasProvider);
     final c = asincrono.value;
     if (c == null) {
-      return _Marco(
+      return MarcoHojaRegistro(
         titulo: 'Gasto',
-        child: asincrono.hasError
+        cuerpo: asincrono.hasError
             ? Text('No se pudo abrir Finanzas: ${asincrono.error}')
             : const Center(child: CircularProgressIndicator()),
       );
     }
     final libros = librosParaRegistrar(c);
     if (libros.isEmpty) {
-      return const _Marco(
+      return const MarcoHojaRegistro(
         titulo: 'Gasto',
-        child: Text('Solo lectura: no tienes un libro donde registrar gastos.'),
+        cuerpo: Text('Solo lectura: no tienes un libro donde registrar gastos.'),
       );
     }
     final libro = libros.firstWhere(
@@ -174,29 +174,39 @@ class _HojaRegistrarGastoState extends ConsumerState<HojaRegistrarGasto> {
         (!representado || _motivo.text.trim().isNotEmpty);
     final v = ValoresDiseno.de(context);
     final fecha = _fecha ?? c.hoy;
-    return _Marco(
+    return MarcoHojaRegistro(
       titulo: 'Gasto',
-      child: Column(
+      barra: BarraAccionesRegistro(
+        llaveGuardar: const ValueKey('gasto-guardar'),
+        alGuardar: puedeGuardar ? () => _guardar(c, libro) : null,
+      ),
+      cuerpo: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
           if (libros.length > 1)
-            Wrap(
-              spacing: 8,
-              children: [
-                for (final l in libros)
-                  ChoiceChip(
-                    key: ValueKey('gasto-libro-${l.id}'),
-                    label: Text(
-                      opcionDe(l, c.permisoEn(l), c.personaId).etiqueta,
+            // Una sola línea que se desliza: cada fila de más empuja la
+            // categoría y la cuenta fuera de la pantalla (I8).
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  for (final l in libros) ...[
+                    ChoiceChip(
+                      key: ValueKey('gasto-libro-${l.id}'),
+                      label: Text(
+                        opcionDe(l, c.permisoEn(l), c.personaId).etiqueta,
+                      ),
+                      selected: l.id == libro.id,
+                      onSelected: (_) => setState(() {
+                        _libroId = l.id;
+                        _cuentaId = null;
+                      }),
                     ),
-                    selected: l.id == libro.id,
-                    onSelected: (_) => setState(() {
-                      _libroId = l.id;
-                      _cuentaId = null;
-                    }),
-                  ),
-              ],
+                    const SizedBox(width: 8),
+                  ],
+                ],
+              ),
             ),
           if (representado) ...[
             const SizedBox(height: 4),
@@ -212,16 +222,26 @@ class _HojaRegistrarGastoState extends ConsumerState<HojaRegistrarGasto> {
             ),
           ],
           const SizedBox(height: 8),
-          Text(
-            formatearCentavos(_monto),
-            key: const ValueKey('gasto-monto'),
-            textAlign: TextAlign.center,
-            style: v.numero(tamano: 36, peso: FontWeight.w600, color: v.textoFuerte),
+          // Se encoge en vez de partirse en dos líneas con letra grande.
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              formatearCentavos(_monto),
+              key: const ValueKey('gasto-monto'),
+              textAlign: TextAlign.center,
+              style: v.numero(
+                tamano: 36,
+                peso: FontWeight.w600,
+                color: v.textoFuerte,
+              ),
+            ),
           ),
           const SizedBox(height: 8),
           TecladoMonto(
             alCambiar: (centavos) => setState(() => _monto = centavos),
             autofocus: true,
+            // Teclas de 48 dp: categoría y cuenta quedan a la vista (I8).
+            compacto: true,
           ),
           const SizedBox(height: 12),
           const EtiquetaPanel('Categoría'),
@@ -313,60 +333,10 @@ class _HojaRegistrarGastoState extends ConsumerState<HojaRegistrarGasto> {
                 helperText: 'Se registra en nombre de ${libro.nombre}.',
               ),
             ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              TextButton(
-                onPressed: () => Navigator.of(context).maybePop(),
-                child: const Text('Cancelar'),
-              ),
-              const Spacer(),
-              FilledButton.icon(
-                key: const ValueKey('gasto-guardar'),
-                onPressed: puedeGuardar ? () => _guardar(c, libro) : null,
-                icon: const Icon(Icons.check),
-                label: const Text('Guardar'),
-              ),
-            ],
-          ),
         ],
       ),
     );
   }
-}
-
-/// Marco de las hojas de registro: título, desplazamiento y teclado.
-class _Marco extends StatelessWidget {
-  const _Marco({required this.titulo, required this.child});
-
-  final String titulo;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) => TemaModulo(
-    modulo: Modulo.finanzas,
-    child: Builder(
-      builder: (context) => SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.fromLTRB(
-            16,
-            0,
-            16,
-            16 + MediaQuery.viewInsetsOf(context).bottom,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(titulo, style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: 8),
-              child,
-            ],
-          ),
-        ),
-      ),
-    ),
-  );
 }
 
 /// Todas las categorías visibles, con búsqueda. Devuelve el id ('' = Por

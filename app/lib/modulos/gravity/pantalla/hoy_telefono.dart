@@ -40,7 +40,17 @@ class PantallaHoyTelefono extends ConsumerWidget {
             if (r.habitos.isNotEmpty) ...[const _TarjetaHabitos(), hueco],
             if (r.finanzas != null) ...[const _TarjetaFinanzas(), hueco],
             if (r.cuidados != null) const _TarjetaCuidados(),
-            if (sinNada)
+            if (sinNada && r.sinDatos)
+              const EstadoVacio(
+                key: ValueKey('hoy-sin-datos'),
+                icono: Icons.hourglass_empty,
+                mensaje: 'Sin datos todavía',
+                // Sin nombres de módulos: quien no ve uno no debe enterarse.
+                detalle:
+                    'Tu resumen del día se arma con lo que cada módulo '
+                    'comparte, y aún no hay nada.',
+              )
+            else if (sinNada)
               const EstadoVacio(
                 key: ValueKey('hoy-vacio'),
                 icono: Icons.wb_sunny_outlined,
@@ -233,11 +243,15 @@ class _ChipHabito extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              habito.nombre,
-              style: v.lectura(
-                tamano: 13,
-                color: hecho ? v.textoFuerte : v.texto,
+            Flexible(
+              child: Text(
+                habito.nombre,
+                style: v.lectura(
+                  tamano: 13,
+                  color: hecho ? v.textoFuerte : v.texto,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             if (hecho) ...[

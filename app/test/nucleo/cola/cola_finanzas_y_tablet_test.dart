@@ -6,6 +6,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gravity/app/arranque.dart';
 import 'package:gravity/app/pantallas_externas.dart';
@@ -14,7 +15,8 @@ import 'package:gravity/nucleo/cola/cola_sin_conexion.dart';
 import 'package:gravity/nucleo/cola/enviador_supabase.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'postgrest_simulado.dart' show PeticionRecibida, sesionJson;
+import 'postgrest_simulado.dart'
+    show PeticionRecibida, PostgrestSimulado, sesionJson;
 
 void main() {
   group('Finanzas en la cola', () {
@@ -205,6 +207,73 @@ void main() {
       expect(enviadas.last.tipo, 'casa.lista');
       expect(enviadas.last.personaId, ana);
       expect(enviadas.last.origen, OrigenRegistro.tabletCasa);
+    });
+
+    test('M3: el dinero no se registra con el origen "tablet de la casa"', () async {
+      for (final tipo in [
+        'finanzas.movimiento',
+        'finanzas.conciliacion',
+        'habitos.marca',
+        'cuidados.medicamento',
+      ]) {
+        await expectLater(
+          cola.encolar(
+            tipo: tipo,
+            carga: const {'monto_centavos': 5000},
+            personaId: ana,
+            origen: OrigenRegistro.tabletCasa,
+          ),
+          throwsArgumentError,
+          reason: tipo,
+        );
+      }
+      expect(await cola.registros(), isEmpty, reason: 'nada quedó guardado');
+
+      // Con nombre y PIN (la sesión de la persona) sí se registra.
+      await cola.encolar(
+        tipo: 'finanzas.movimiento',
+        carga: const {'monto_centavos': 5000},
+        personaId: ana,
+      );
+      // Y lo de la casa, con solo el nombre.
+      await cola.encolar(
+        tipo: 'casa.lista',
+        carga: const {'texto': 'Tortillas'},
+        personaId: ana,
+        origen: OrigenRegistro.tabletCasa,
+      );
+      expect(await cola.registros(), hasLength(2));
+    });
+
+    test('M3: un registro viejo de dinero con ese origen no sube', () async {
+      final servidor = await PostgrestSimulado.iniciar();
+      addTearDown(servidor.cerrar);
+      final cliente = await servidor.cliente('uid-casa');
+      addTearDown(cliente.dispose);
+      // Como si quedara de antes de la regla: se guarda directo en la base.
+      await base.into(base.pendientes).insert(
+        PendientesCompanion.insert(
+          id: 'viejo-1',
+          tipo: 'finanzas.movimiento',
+          carga: '{"monto_centavos": 5000}',
+          creadoEn: DateTime(2026, 10, 22),
+          estado: EstadoPendiente.pendiente,
+          personaId: const Value(ana),
+          origen: const Value(OrigenRegistro.tabletCasa),
+        ),
+      );
+      final deLaCasa = ColaSinConexion(
+        base: base,
+        enviador: EnviadorSupabase(cliente, tablas: tablasDeLaCola),
+        personaConSesion: () => casa,
+        cuentaDelEquipo: () => casa,
+      );
+      final resumen = await deLaCasa.procesar();
+      expect(resumen.rechazados, 1);
+      expect(servidor.peticiones, isEmpty, reason: 'ni siquiera sale');
+      final registro = (await deLaCasa.registros()).single;
+      expect(registro.estado, EstadoPendiente.rechazado);
+      expect(registro.ultimoError, contains('nombre y PIN'));
     });
 
     test('lo que requiere atención de la casa se ve en el modo Casa', () async {

@@ -12,6 +12,8 @@
 /// - [hojaRegistrarGasto] y [hojaIngresoExtra]: las hojas del (+) (flujo F1).
 /// - [tablasColaFinanzas]: tabla de Supabase de cada tipo de registro de la
 ///   cola sin conexión (solo los libros "solo agregar").
+/// - [limpiarCopiaLocalFinanzas]: borra del equipo la copia local de una
+///   persona (salir, baja y quitarla de la tablet).
 library;
 
 import 'package:flutter/material.dart';
@@ -23,7 +25,9 @@ import '../../nucleo/contratos/dispositivo.dart';
 import '../../nucleo/contratos/roles.dart';
 import '../../nucleo/contratos/rutas.dart';
 import '../../nucleo/permisos/permisos.dart';
-import 'datos/repositorio_supabase.dart' as supabase show tablasDeLaColaFinanzas;
+import '../../nucleo/seguridad/almacen_seguro.dart';
+import 'datos/repositorio_supabase.dart' as supabase
+    show CopiaLocalFinanzas, tablasDeLaColaFinanzas;
 import 'pantallas/laptop/ajustes.dart';
 import 'pantallas/laptop/arranque.dart';
 import 'pantallas/laptop/categorias.dart';
@@ -46,6 +50,20 @@ export 'pantallas/laptop/marco_laptop.dart' show SeccionFinanzas;
 /// (`'finanzas.movimiento': 'fin_movimientos'`, conciliaciones e
 /// importaciones). La cola sube con `INSERT … ON CONFLICT (id) DO NOTHING`.
 const Map<String, String> tablasColaFinanzas = supabase.tablasDeLaColaFinanzas;
+
+/// Borra del equipo lo que Finanzas guardó de [personaId] (la copia local para
+/// trabajar sin señal: libros, cuentas, categorías, sobres, nombres). Lo llama
+/// la limpieza de plataforma al **salir**, al detectar una **baja** y al
+/// **quitar a la persona de la tablet** (M5 de la revisión de la Fase 1; D5).
+/// Nunca lanza. [almacen] es el almacén seguro del equipo (por omisión, el del
+/// dispositivo).
+Future<void> limpiarCopiaLocalFinanzas(
+  String personaId, {
+  AlmacenSeguro? almacen,
+}) => supabase.CopiaLocalFinanzas.borrarDe(
+  almacen ?? AlmacenSeguroDispositivo(),
+  personaId,
+);
 
 /// Registro rápido de un gasto (F1): teclado ya abierto → categoría →
 /// cuenta → Guardar → *"Guardado · Deshacer"*.

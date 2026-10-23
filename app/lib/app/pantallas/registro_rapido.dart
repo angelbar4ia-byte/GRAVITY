@@ -6,6 +6,7 @@ library;
 import 'package:flutter/material.dart';
 
 import '../navegacion.dart';
+import '../pantalla_segura.dart';
 import '../pantallas_externas.dart';
 
 /// Llave del contenido de cada registro (para encontrarlo en las pruebas sin
@@ -40,8 +41,12 @@ Future<void> abrirRegistro(BuildContext context, OpcionRegistrar opcion) {
     isScrollControlled: true,
     useSafeArea: true,
     showDragHandle: true,
-    builder: (contexto) =>
-        KeyedSubtree(key: llaveRegistro(opcion.tipo), child: contenido),
+    // Un registro (gasto, ingreso…) es personal: la hoja no se puede capturar
+    // (I11).
+    builder: (contexto) => PantallaSegura(
+      activa: true,
+      child: KeyedSubtree(key: llaveRegistro(opcion.tipo), child: contenido),
+    ),
   );
 }
 
@@ -60,7 +65,10 @@ Future<void> abrirRegistroEnDialogo(
         constraints: const BoxConstraints(maxWidth: 520),
         child: Material(
           type: MaterialType.transparency,
-          child: KeyedSubtree(key: llaveRegistro(tipo), child: contenido),
+          child: PantallaSegura(
+            activa: true,
+            child: KeyedSubtree(key: llaveRegistro(tipo), child: contenido),
+          ),
         ),
       ),
     ),

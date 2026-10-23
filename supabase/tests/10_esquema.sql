@@ -188,6 +188,30 @@ select pruebas.ok(
   not has_column_privilege('authenticated', 'public.membresias', 'es_maestra', 'UPDATE'),
   'D19: la cuenta maestra solo se asigna con asignar_cuenta_maestra()');
 
+-- Salvaguardas de Finanzas (20261023000000): triggers en su sitio y funciones internas
+-- que la app no puede llamar como RPC.
+select pruebas.igual(
+  (select string_agg(g.tgname, ',' order by g.tgname) from pg_trigger g
+    where not g.tgisinternal
+      and ((g.tgrelid = 'public.fin_libro_miembros'::regclass and g.tgname = 'fin_c_proteger')
+        or (g.tgrelid = 'public.fin_movimientos'::regclass and g.tgname in ('fin_b_representado', 'fin_y_salida_representado')))),
+  'fin_b_representado,fin_c_proteger,fin_y_salida_representado',
+  'I1 e I3: triggers de membresías del compartido y del libro representado instalados');
+select pruebas.igual(
+  (select coalesce(string_agg(p.proname || ':' || r.rol, ', ' order by p.proname, r.rol), '')
+     from pg_proc p join pg_namespace n on n.oid = p.pronamespace,
+          unnest(array['anon', 'authenticated', 'service_role']) as r(rol)
+    where n.nspname = 'public'
+      and p.proname in ('fin_vigencia_consulta_maestra', 'fin_adulto_con_finanzas', 'fin_libro_miembros_proteger',
+                        'fin_movimientos_representado', 'fin_movimientos_salida_representado')
+      and has_function_privilege(r.rol, p.oid, 'execute')),
+  '', 'Los ayudantes y triggers de las salvaguardas no se ejecutan desde la API');
+select pruebas.ok(
+  exists (select 1 from pg_indexes where schemaname = 'public' and indexname = 'bitacora_consulta_maestra_idx'),
+  'I2: índice parcial para buscar la consulta vigente de la cuenta maestra');
+select pruebas.igual(public.fin_vigencia_consulta_maestra(), interval '30 minutes' ,
+  'I2: la consulta de la cuenta maestra vale 30 minutos');
+
 -- puede() rechaza nombres mal escritos en lugar de negar en silencio.
 select pruebas.falla(
   $$select public.puede('b0000000-0000-4000-8000-000000000001', 'finanza', 'leer')$$,

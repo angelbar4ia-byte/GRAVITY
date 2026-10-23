@@ -46,15 +46,11 @@ class TarjetaModulo extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
-            children: [
-              if (icono != null) ...[
-                Icon(icono, size: 16, color: colorEtiqueta ?? v.etiqueta),
-                SizedBox(width: e),
-              ],
-              Expanded(child: EtiquetaPanel(titulo, color: colorEtiqueta)),
-              ?accion,
-            ],
+          _Cabecera(
+            titulo: titulo,
+            icono: icono,
+            accion: accion,
+            colorEtiqueta: colorEtiqueta,
           ),
           SizedBox(height: e * 1.5),
           child,
@@ -87,6 +83,51 @@ class TarjetaModulo extends StatelessWidget {
               )
             : contenido,
       ),
+    );
+  }
+}
+
+/// Cabecera de la tarjeta: etiqueta a la izquierda y [accion] a la derecha.
+///
+/// Con letra grande o poco ancho, la acción **baja a su propia línea** (queda
+/// al inicio) en lugar de cortarse, y la etiqueta usa todo el ancho: un `Wrap`
+/// con `spaceBetween`, nunca una fila rígida. Una acción más ancha que la
+/// tarjeta debe poder encogerse sola (el [Semaforo] recorta su texto).
+class _Cabecera extends StatelessWidget {
+  const _Cabecera({
+    required this.titulo,
+    required this.icono,
+    required this.accion,
+    required this.colorEtiqueta,
+  });
+
+  final String titulo;
+  final IconData? icono;
+  final Widget? accion;
+  final Color? colorEtiqueta;
+
+  @override
+  Widget build(BuildContext context) {
+    final v = ValoresDiseno.de(context);
+    final e = v.espacio;
+    final etiqueta = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (icono != null) ...[
+          Icon(icono, size: 16, color: colorEtiqueta ?? v.etiqueta),
+          SizedBox(width: e),
+        ],
+        Flexible(child: EtiquetaPanel(titulo, color: colorEtiqueta)),
+      ],
+    );
+    final accion = this.accion;
+    if (accion == null) return etiqueta;
+    return Wrap(
+      alignment: WrapAlignment.spaceBetween,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: e,
+      runSpacing: e * 0.5,
+      children: [etiqueta, accion],
     );
   }
 }

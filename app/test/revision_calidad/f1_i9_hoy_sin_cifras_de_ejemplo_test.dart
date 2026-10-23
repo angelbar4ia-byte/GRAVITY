@@ -11,8 +11,9 @@
 // resumen a los datos locales (Finanzas, la semana activa) o dejándolo vacío
 // hasta que cada módulo entregue los suyos.
 //
-// FALLA HOY A PROPÓSITO (etiqueta `hallazgo`).
-@Tags(['hallazgo'])
+// RESUELTO (diseno): con una sesión real el resumen viene vacío
+// (`ResumenGravity.sinDatosTodavia`) y las pantallas dicen "Sin datos todavía";
+// el ejemplo queda para el modo demostración y las pruebas. Sin etiqueta.
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';

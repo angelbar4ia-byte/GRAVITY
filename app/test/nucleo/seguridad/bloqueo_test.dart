@@ -158,5 +158,13 @@ void main() {
       isFalse,
     );
     expect(() => controlador.configurarPin('12'), throwsArgumentError);
+    // M9: tampoco un PIN trivial.
+    for (final trivial in ['0000', '1234', '4321', '2222', '123456']) {
+      await expectLater(
+        controlador.configurarPin(trivial),
+        throwsArgumentError,
+        reason: trivial,
+      );
+    }
   });
 }

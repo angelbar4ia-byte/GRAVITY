@@ -377,6 +377,44 @@ void main() {
     expect(ubicacion(tester), Rutas.cuidados);
   });
 
+  testWidgets('M9: agregar persona no acepta un PIN trivial', (tester) async {
+    final sesion = ServicioSesionFalso(
+      inicial: sesionDeEjemplo(Rol.casa),
+      cuentas: {
+        'ana@ejemplo.test': CuentaFalsa('clave', sesionDeEjemplo(Rol.cuidador)),
+      },
+    );
+    await montarApp(
+      tester,
+      dispositivo: TipoDispositivo.tablet,
+      sesion: sesion,
+    );
+    await tester.tap(find.text('Agregar persona'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('agregar-correo')), 'ana@ejemplo.test');
+    await tester.enterText(find.byKey(const Key('agregar-contrasena')), 'clave');
+    for (final (pin, texto) in [
+      ('1234', 'Ese PIN es una secuencia'),
+      ('0000', 'Ese PIN repite el mismo número'),
+      ('1212', 'Ese PIN repite un mismo bloque'),
+    ]) {
+      await tester.enterText(find.byKey(const Key('agregar-pin')), pin);
+      await tester.enterText(find.byKey(const Key('agregar-confirmacion')), pin);
+      await tester.tap(find.widgetWithText(FilledButton, 'Agregar'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining(texto), findsOneWidget, reason: pin);
+      expect(find.text(nombreCuidadora), findsNothing, reason: 'no se agregó');
+    }
+    expect(sesion.vecesVerificar, 0, reason: 'ni siquiera se consultó al servidor');
+
+    // Con un PIN que no es trivial, sí.
+    await tester.enterText(find.byKey(const Key('agregar-pin')), '2846');
+    await tester.enterText(find.byKey(const Key('agregar-confirmacion')), '2846');
+    await tester.tap(find.widgetWithText(FilledButton, 'Agregar'));
+    await tester.pumpAndSettle();
+    expect(find.text(nombreCuidadora), findsOneWidget);
+  });
+
   testWidgets('vertical: modo Casa y riel sin desbordes', (tester) async {
     await montarApp(
       tester,

@@ -18,6 +18,8 @@ import 'package:finanzas_dominio/finanzas_dominio.dart';
 
 import '../../../nucleo/base_local/base_local.dart';
 import '../../../nucleo/cola/cola_sin_conexion.dart';
+import '../../../nucleo/contratos/roles.dart' show Modulo;
+import '../../../nucleo/seguridad/limpieza_local.dart' show claveCopiaLocal;
 import '../../../nucleo/seguridad/almacen_seguro.dart';
 import 'filas.dart';
 import 'fuente_tablas.dart';
@@ -43,9 +45,28 @@ const Map<String, String> tablasDeLaColaFinanzas = {
 };
 
 /// Copia mínima para trabajar sin señal (cifrada en el dispositivo).
+///
+/// Vive en el almacén seguro bajo `finanzas.copia.<persona>`
+/// ([claveCopiaLocal]): la convención con la que la limpieza de plataforma la
+/// borra al **salir**, al detectar una **baja** y al **quitar a la persona de
+/// la tablet** (M5 de la revisión de la Fase 1; D5). No guarda saldos ni
+/// movimientos.
 class CopiaLocalFinanzas {
   CopiaLocalFinanzas(this._almacen, {required String personaId})
-    : _clave = 'finanzas.copia.$personaId';
+    : _clave = claveCopiaLocal(Modulo.finanzas, personaId);
+
+  /// Borra la copia de [personaId] de [almacen]. Nunca lanza: una copia que
+  /// no se puede borrar no impide salir ni quitar a nadie.
+  static Future<void> borrarDe(AlmacenSeguro almacen, String personaId) =>
+      CopiaLocalFinanzas(almacen, personaId: personaId).borrar();
+
+  Future<void> borrar() async {
+    try {
+      await _almacen.borrar(_clave);
+    } catch (_) {
+      // Sin esto no pasa nada grave: la próxima carga con señal la reescribe.
+    }
+  }
 
   final AlmacenSeguro _almacen;
   final String _clave;

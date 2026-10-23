@@ -135,9 +135,9 @@ class _FichaIngreso extends StatelessWidget {
         children: [
           if (actual != null) ...[
             Text(descripcionCalendario(actual.calendario)),
-            Row(children: [const Text('Neto por pago: '), Monto(actual.montoNeto)]),
+            DatoConMonto('Neto por pago', actual.montoNeto),
           ],
-          Row(children: [const Text('Equivalente semanal: '), Monto(semanal)]),
+          DatoConMonto('Equivalente semanal', semanal),
           Text('Certeza: ${nombreCerteza(i.certeza)}${i.activo ? '' : ' · inactivo'}'),
           if (proximos.isNotEmpty)
             Text(

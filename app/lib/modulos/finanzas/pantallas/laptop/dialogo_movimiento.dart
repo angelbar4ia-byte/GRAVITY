@@ -317,9 +317,25 @@ class _DialogoMovimientoState extends ConsumerState<DialogoMovimiento> {
     }
   }
 
+  /// El libro representado (papá) que toca este movimiento, si lo hay: el
+  /// libro activo o el de la cuenta elegida (una aportación hacia o desde su
+  /// libro también va en su nombre y pide motivo).
+  Libro? _libroRepresentado() {
+    Libro? deCuenta(String? cuentaId) {
+      final libroId = d.cuenta(cuentaId ?? '')?.libroId;
+      final libro = libroId == null ? null : d.libro(libroId);
+      return libro?.tipo == dom.TipoLibro.representado ? libro : null;
+    }
+
+    final activo = c.libro!;
+    if (activo.tipo == dom.TipoLibro.representado) return activo;
+    return deCuenta(_origen) ?? deCuenta(_destino);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final representado = c.libro!.tipo == dom.TipoLibro.representado;
+    final representadoLibro = _libroRepresentado();
+    final representado = representadoLibro != null;
     return TemaModulo(
       modulo: Modulo.finanzas,
       child: Form(
@@ -385,20 +401,21 @@ class _DialogoMovimientoState extends ConsumerState<DialogoMovimiento> {
                 maxLength: 200,
                 decoration: InputDecoration(
                   labelText: 'Motivo (obligatorio)',
-                  helperText: 'Se registra en nombre de ${c.libro!.nombre}.',
+                  helperText: 'Se registra en nombre de ${representadoLibro.nombre}.',
                 ),
                 validator: (v) =>
                     (v ?? '').trim().isEmpty ? 'Escribe el motivo' : null,
               ),
             const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+            Wrap(
+              alignment: WrapAlignment.end,
+              spacing: 8,
+              runSpacing: 8,
               children: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
                   child: const Text('Cancelar'),
                 ),
-                const SizedBox(width: 8),
                 FilledButton(
                   key: const ValueKey('movimiento-guardar'),
                   onPressed: _guardando ? null : _guardar,

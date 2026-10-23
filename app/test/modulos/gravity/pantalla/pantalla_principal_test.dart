@@ -243,6 +243,7 @@ void main() {
         overrides: [
           relojProvider.overrideWithValue(RelojFijo(momentoNoche)),
           rolEfectivoProvider.overrideWithValue(Rol.dueno),
+          datosResumenGravityProvider.overrideWithValue(ResumenGravity.ejemplo),
         ],
         child: Consumer(
           builder: (context, ref, _) => MaterialApp.router(

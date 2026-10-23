@@ -120,8 +120,7 @@ class _DialogoAgregarPersonaState extends ConsumerState<DialogoAgregarPersona> {
                   decoration: const InputDecoration(
                     labelText: 'PIN nuevo (4 a 6 dígitos)',
                   ),
-                  validator: (v) =>
-                      pinValido(v ?? '') ? null : 'De 4 a 6 dígitos.',
+                  validator: (v) => errorDePinNuevo(v ?? ''),
                 ),
                 TextFormField(
                   key: const Key('agregar-confirmacion'),

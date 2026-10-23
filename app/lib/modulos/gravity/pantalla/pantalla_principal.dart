@@ -4,6 +4,8 @@
 /// paneles se apilan (sección 8).
 library;
 
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,8 +16,16 @@ import '../../../nucleo/contratos/roles.dart';
 import 'resumen_gravity.dart';
 import 'saludo.dart';
 
-/// Ancho mínimo para las tres columnas; debajo, los paneles se apilan.
+/// Ancho mínimo para las tres columnas con la letra normal; debajo, los
+/// paneles se apilan.
 const double anchoTresColumnas = 1000;
+
+/// Ancho mínimo para las tres columnas: crece con la letra del sistema (con la
+/// letra al 150 % las columnas laterales no caben en 1000 dp, así que se
+/// apilan hasta que haya ancho para ellas).
+double anchoParaTresColumnas(BuildContext context) =>
+    anchoTresColumnas *
+    math.max(1.0, MediaQuery.textScalerOf(context).scale(16) / 16);
 
 class PantallaPrincipalGravity extends ConsumerWidget {
   const PantallaPrincipalGravity({super.key, this.barraOrdenes});
@@ -44,7 +54,7 @@ class PantallaPrincipalGravity extends ConsumerWidget {
             autofocus: true,
             child: LayoutBuilder(
               builder: (context, limites) =>
-                  limites.maxWidth >= anchoTresColumnas
+                  limites.maxWidth >= anchoParaTresColumnas(context)
                   ? _DisenoAmplio(barraOrdenes: barra)
                   : _DisenoApilado(
                       barraOrdenes: barra,
@@ -86,7 +96,11 @@ class _DisenoAmplio extends StatelessWidget {
                 Expanded(
                   child: _ColumnaPaneles(
                     key: const ValueKey('columna-izquierda'),
-                    paneles: const [_PanelHoy(), _PanelCuidados()],
+                    paneles: const [
+                      _PanelSinDatos(),
+                      _PanelHoy(),
+                      _PanelCuidados(),
+                    ],
                   ),
                 ),
                 SizedBox(width: hueco),
@@ -136,6 +150,7 @@ class _DisenoApilado extends StatelessWidget {
           _ColumnaPaneles(
             desplazable: false,
             paneles: const [
+              _PanelSinDatos(),
               _PanelHoy(),
               _PanelCuidados(),
               _PanelFinanzas(),
@@ -337,6 +352,31 @@ class _PintorLogo extends CustomPainter {
 }
 
 // --- Paneles -----------------------------------------------------------------
+
+/// Con una sesión real y ningún módulo conectado todavía (I9): en lugar de
+/// cifras de ejemplo, el aviso honesto.
+class _PanelSinDatos extends ConsumerWidget implements _Panel {
+  const _PanelSinDatos();
+
+  @override
+  bool visible(ResumenGravity resumen) => resumen.sinDatos;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return const TarjetaModulo(
+      key: ValueKey('panel-sin-datos'),
+      titulo: 'Hoy',
+      child: EstadoVacio(
+        mensaje: 'Sin datos todavía',
+        // Sin nombres de módulos: quien no ve uno no debe enterarse.
+        detalle:
+            'El resumen se arma con lo que cada módulo comparte, y aún no hay '
+            'nada.',
+        icono: Icons.hourglass_empty,
+      ),
+    );
+  }
+}
 
 class _PanelHoy extends ConsumerWidget implements _Panel {
   const _PanelHoy();

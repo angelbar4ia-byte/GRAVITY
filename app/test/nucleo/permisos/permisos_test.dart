@@ -103,7 +103,8 @@ void main() {
     });
 
     test('Casa: recordatorios genéricos de cuidados y sin Ajustes', () {
-      expect(permisoDe(Rol.casa, Modulo.cuidados).alcance, Alcance.generico);
+      expect(permisoDe(Rol.casa, Modulo.cuidados).alcance, Alcance.restringido);
+      expect(soloRecordatoriosGenericos(Rol.casa, Modulo.cuidados), isTrue);
       expect(puede(Rol.casa, Modulo.cuidados, Accion.escribir), isFalse);
       expect(puedeAbrir(Rol.casa, Modulo.ajustes), isFalse);
       expect(modulosNavegables(Rol.casa), [
@@ -179,26 +180,29 @@ void main() {
       }
     });
 
-    test(
-      'los alcances de transición dicen lo mismo que las funciones por rol',
-      () {
-        for (final modulo in Modulo.values) {
-          for (final rol in Rol.values) {
-            final alcance = permisoDe(rol, modulo).alcance;
-            expect(
-              alcance == Alcance.generico,
-              soloRecordatoriosGenericos(rol, modulo),
-              reason: '$rol $modulo',
-            );
-            expect(
-              alcance == Alcance.consentimiento,
-              dependeDelConsentimiento(rol, modulo),
-              reason: '$rol $modulo',
-            );
-          }
+    test('el enum de alcances es exactamente el del servidor', () {
+      expect(
+        [for (final a in Alcance.values) a.enServidor],
+        [null, 'total', 'propio', 'restringido'],
+      );
+    });
+
+    test('lo restringido por rol: cada celda restringida dice sus acciones', () {
+      // Una celda restringida nunca depende de las acciones por omisión (solo
+      // leer): el subconjunto lo define el rol, y sus acciones van explícitas.
+      for (final modulo in Modulo.values) {
+        for (final rol in Rol.values) {
+          final permiso = permisoDe(rol, modulo);
+          if (permiso.alcance != Alcance.restringido) continue;
+          expect(permiso.acciones, isNotEmpty, reason: '$rol $modulo');
+          expect(
+            permiso.acciones,
+            isNot(contains(Accion.administrar)),
+            reason: '$rol $modulo',
+          );
         }
-      },
-    );
+      }
+    });
 
     test('total solo para leer: Casa del familiar, del cuidador y de Casa', () {
       for (final rol in [Rol.familiar, Rol.cuidador, Rol.casa]) {

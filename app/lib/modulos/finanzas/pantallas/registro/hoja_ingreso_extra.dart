@@ -9,11 +9,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../diseno/diseno.dart';
-import '../../../../nucleo/contratos/roles.dart';
 import '../../casos_uso/sugerencias.dart';
 import '../../estado/proveedores.dart';
 import '../comunes.dart';
 import 'hoja_gasto.dart';
+import 'marco_hoja.dart';
 
 class HojaIngresoExtra extends ConsumerStatefulWidget {
   const HojaIngresoExtra({super.key});
@@ -65,49 +65,83 @@ class _HojaIngresoExtraState extends ConsumerState<HojaIngresoExtra> {
   Widget build(BuildContext context) {
     final c = ref.watch(contextoFinanzasProvider).value;
     final v = ValoresDiseno.de(context);
-    Widget cuerpo;
     if (c == null) {
-      cuerpo = const Center(child: CircularProgressIndicator());
-    } else if (librosParaRegistrar(c).isEmpty) {
-      cuerpo = const Text('Solo lectura: no tienes un libro donde registrar.');
-    } else {
-      final libros = librosParaRegistrar(c);
-      final libro = libros.firstWhere(
-        (l) => l.id == _libroId,
-        orElse: () => libros.first,
+      return const MarcoHojaRegistro(
+        titulo: 'Ingreso extra',
+        cuerpo: Center(child: CircularProgressIndicator()),
       );
-      final cuentas = cuentasParaRecibir(c.datos, libro.id);
-      if (!cuentas.any((x) => x.id == _cuentaId)) {
-        _cuentaId = cuentas.firstOrNull?.id;
-      }
-      final representado = libro.tipo == dom.TipoLibro.representado;
-      final fecha = _fecha ?? c.hoy;
-      cuerpo = Column(
+    }
+    final libros = librosParaRegistrar(c);
+    if (libros.isEmpty) {
+      return const MarcoHojaRegistro(
+        titulo: 'Ingreso extra',
+        cuerpo: Text('Solo lectura: no tienes un libro donde registrar.'),
+      );
+    }
+    final libro = libros.firstWhere(
+      (l) => l.id == _libroId,
+      orElse: () => libros.first,
+    );
+    final cuentas = cuentasParaRecibir(c.datos, libro.id);
+    if (!cuentas.any((x) => x.id == _cuentaId)) {
+      _cuentaId = cuentas.firstOrNull?.id;
+    }
+    final representado = libro.tipo == dom.TipoLibro.representado;
+    final fecha = _fecha ?? c.hoy;
+    final puedeGuardar =
+        _monto > 0 &&
+        _cuentaId != null &&
+        !_guardando &&
+        (!representado || _motivo.text.trim().isNotEmpty);
+    return MarcoHojaRegistro(
+      titulo: 'Ingreso extra',
+      barra: BarraAccionesRegistro(
+        llaveGuardar: const ValueKey('extra-guardar'),
+        alGuardar: puedeGuardar ? () => _guardar(libro) : null,
+      ),
+      cuerpo: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
           if (libros.length > 1)
-            Wrap(
-              spacing: 8,
-              children: [
-                for (final l in libros)
-                  ChoiceChip(
-                    key: ValueKey('extra-libro-${l.id}'),
-                    label: Text(opcionDe(l, c.permisoEn(l), c.personaId).etiqueta),
-                    selected: l.id == libro.id,
-                    onSelected: (_) => setState(() => _libroId = l.id),
-                  ),
-              ],
+            // Una sola línea que se desliza (ver hoja_gasto.dart, I8).
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  for (final l in libros) ...[
+                    ChoiceChip(
+                      key: ValueKey('extra-libro-${l.id}'),
+                      label: Text(
+                        opcionDe(l, c.permisoEn(l), c.personaId).etiqueta,
+                      ),
+                      selected: l.id == libro.id,
+                      onSelected: (_) => setState(() => _libroId = l.id),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                ],
+              ),
             ),
-          Text(
-            formatearCentavos(_monto),
-            key: const ValueKey('extra-monto'),
-            textAlign: TextAlign.center,
-            style: v.numero(tamano: 36, peso: FontWeight.w600, color: v.textoFuerte),
+          // Se encoge en vez de partirse en dos líneas con letra grande.
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              formatearCentavos(_monto),
+              key: const ValueKey('extra-monto'),
+              textAlign: TextAlign.center,
+              style: v.numero(
+                tamano: 36,
+                peso: FontWeight.w600,
+                color: v.textoFuerte,
+              ),
+            ),
           ),
           TecladoMonto(
             alCambiar: (centavos) => setState(() => _monto = centavos),
             autofocus: true,
+            // Teclas de 48 dp: categoría y cuenta quedan a la vista (I8).
+            compacto: true,
           ),
           const SizedBox(height: 12),
           const EtiquetaPanel('Entró a'),
@@ -152,50 +186,7 @@ class _HojaIngresoExtraState extends ConsumerState<HojaIngresoExtra> {
                 helperText: 'Se registra en nombre de ${libro.nombre}.',
               ),
             ),
-          Row(
-            children: [
-              TextButton(
-                onPressed: () => Navigator.of(context).maybePop(),
-                child: const Text('Cancelar'),
-              ),
-              const Spacer(),
-              FilledButton.icon(
-                key: const ValueKey('extra-guardar'),
-                onPressed:
-                    _monto > 0 &&
-                        _cuentaId != null &&
-                        !_guardando &&
-                        (!representado || _motivo.text.trim().isNotEmpty)
-                    ? () => _guardar(libro)
-                    : null,
-                icon: const Icon(Icons.check),
-                label: const Text('Guardar'),
-              ),
-            ],
-          ),
         ],
-      );
-    }
-    return TemaModulo(
-      modulo: Modulo.finanzas,
-      child: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.fromLTRB(
-            16,
-            0,
-            16,
-            16 + MediaQuery.viewInsetsOf(context).bottom,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Ingreso extra', style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: 8),
-              cuerpo,
-            ],
-          ),
-        ),
       ),
     );
   }

@@ -10,6 +10,10 @@ abstract interface class AlmacenSeguro {
   Future<void> escribir(String clave, String valor);
 
   Future<void> borrar(String clave);
+
+  /// Las claves guardadas (para barrer las copias locales de una baja, ver
+  /// `limpieza_local.dart`).
+  Future<List<String>> claves();
 }
 
 /// Almacén del dispositivo (Keystore en Android, DPAPI en Windows).
@@ -28,6 +32,9 @@ class AlmacenSeguroDispositivo implements AlmacenSeguro {
 
   @override
   Future<void> borrar(String clave) => _almacen.delete(key: clave);
+
+  @override
+  Future<List<String>> claves() async => [...(await _almacen.readAll()).keys];
 }
 
 /// Almacén en memoria, para pruebas y para el modo demostración.
@@ -45,4 +52,7 @@ class AlmacenSeguroEnMemoria implements AlmacenSeguro {
 
   @override
   Future<void> borrar(String clave) async => datos.remove(clave);
+
+  @override
+  Future<List<String>> claves() async => [...datos.keys];
 }

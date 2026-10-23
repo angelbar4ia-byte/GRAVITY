@@ -379,14 +379,14 @@ class _DialogoConciliarState extends ConsumerState<_DialogoConciliar> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(children: [const Text('Según la app: '), Monto(calculado)]),
+            DatoConMonto('Según la app', calculado),
             CampoMonto(
               key: const ValueKey('conciliar-saldo'),
               controlador: _saldo,
               etiqueta: 'Saldo real',
             ),
             if (diferencia != null && diferencia != 0) ...[
-              Row(children: [const Text('Diferencia: '), Monto(diferencia, signo: true)]),
+              DatoConMonto('Diferencia', diferencia, signo: true),
               TextFormField(
                 key: const ValueKey('conciliar-motivo'),
                 controller: _motivo,

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gravity/diseno/diseno.dart';
 
+import '../ayuda_pruebas.dart' show fijarEscalaDeLetra, recolectarDesbordes;
 import 'ayuda_finanzas.dart';
 
 /// Aplica una secuencia de teclas: dígitos, '.' y '<' (borrar).
@@ -165,6 +166,103 @@ void main() {
         );
         expect(tester.takeException(), isNull);
       }
+    });
+
+    testWidgets('compacto: teclas de 48 dp, 204 dp en total, mismo orden', (
+      tester,
+    ) async {
+      final semantica = tester.ensureSemantics();
+      await montarEnFinanzas(tester, TecladoMonto(alCambiar: (_) {}));
+      final normal = tester.getSize(find.byType(TecladoMonto)).height;
+      final posiciones = {
+        for (final t in ['1', '5', '9', '0'])
+          t: tester.getTopLeft(find.bySemanticsLabel(t)).dy,
+      };
+
+      for (final ancho in [200.0, 360.0, 600.0]) {
+        await montarEnFinanzas(
+          tester,
+          TecladoMonto(alCambiar: (_) {}, compacto: true),
+          ancho: ancho,
+        );
+        expect(tester.takeException(), isNull);
+        revisarZonasTactiles(tester, find.byType(TecladoMonto));
+        final alto = tester.getSize(find.byType(TecladoMonto)).height;
+        expect(alto, TecladoMonto.altoCompacto);
+        expect(alto, 204);
+        expect(alto, lessThan(normal - 30), reason: 'normal: $normal dp');
+        for (final tecla
+            in find
+                .descendant(
+                  of: find.byType(TecladoMonto),
+                  matching: find.byType(InkWell),
+                )
+                .evaluate()) {
+          expect(
+            tester.getSize(find.byWidget(tecla.widget)).height,
+            TecladoMonto.altoTeclaCompacta,
+          );
+        }
+      }
+
+      // Mismo orden de teclas: el 1 arriba, el 0 abajo, de arriba abajo.
+      final y = {
+        for (final t in ['1', '5', '9', '0'])
+          t: tester.getTopLeft(find.bySemanticsLabel(t)).dy,
+      };
+      expect(y['1']!, lessThan(y['5']!));
+      expect(y['5']!, lessThan(y['9']!));
+      expect(y['9']!, lessThan(y['0']!));
+      expect(posiciones['1']!, lessThan(posiciones['0']!));
+      semantica.dispose();
+    });
+
+    testWidgets(
+      'compacto: se comporta igual (centavos, borrar, teclado físico)',
+      (tester) async {
+        final semantica = tester.ensureSemantics();
+        final reportes = <int>[];
+        await montarEnFinanzas(
+          tester,
+          TecladoMonto(
+            alCambiar: reportes.add,
+            compacto: true,
+            autofocus: true,
+          ),
+        );
+        await _tocar(tester, '85.5');
+        expect(reportes, [800, 8500, 8550]);
+        await _tocar(tester, '<');
+        expect(reportes.last, 8500);
+        await tester.longPress(find.bySemanticsLabel('Borrar'));
+        await tester.pump();
+        expect(reportes.last, 0);
+        await tester.sendKeyEvent(LogicalKeyboardKey.digit7);
+        expect(reportes.last, 700);
+        // Las teclas siguen nombradas para el lector de pantalla.
+        for (final etiqueta in ['Punto decimal', 'Borrar']) {
+          expect(
+            tester.getSemantics(find.bySemanticsLabel(etiqueta)),
+            isSemantics(isButton: true, hasTapAction: true),
+            reason: etiqueta,
+          );
+        }
+        semantica.dispose();
+      },
+    );
+
+    testWidgets('compacto con letra al 200 % no desborda en 360 dp', (
+      tester,
+    ) async {
+      fijarEscalaDeLetra(tester, 2);
+      final desbordes = await recolectarDesbordes(() async {
+        await montarEnFinanzas(
+          tester,
+          TecladoMonto(alCambiar: (_) {}, compacto: true),
+          ancho: 360,
+        );
+      });
+      expect(desbordes, isEmpty);
     });
 
     testWidgets('lector de pantalla: nombre de cada tecla y monto actual', (

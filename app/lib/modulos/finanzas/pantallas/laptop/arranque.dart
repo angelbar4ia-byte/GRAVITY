@@ -257,7 +257,8 @@ class _AsistenteState extends ConsumerState<_Asistente> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 const Text('Techo de presupuesto: '),
                 Monto(plan.techo),
@@ -345,7 +346,9 @@ class _AsistenteState extends ConsumerState<_Asistente> {
           onStepCancel: _paso > 0 ? () => setState(() => _paso--) : null,
           controlsBuilder: (context, detalles) => Padding(
             padding: const EdgeInsets.only(top: 12),
-            child: Row(
+            child: Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
               children: [
                 if (detalles.onStepContinue != null)
                   FilledButton(
@@ -353,10 +356,8 @@ class _AsistenteState extends ConsumerState<_Asistente> {
                     onPressed: detalles.onStepContinue,
                     child: const Text('Siguiente'),
                   ),
-                const SizedBox(width: 8),
                 if (detalles.onStepCancel != null)
                   TextButton(onPressed: detalles.onStepCancel, child: const Text('Atrás')),
-                const SizedBox(width: 8),
                 if (detalles.onStepContinue != null)
                   TextButton(
                     onPressed: detalles.onStepContinue,
@@ -395,7 +396,10 @@ class _AsistenteState extends ConsumerState<_Asistente> {
                   ),
                 ],
               ),
-              Row(
+              // Wrap, no Row: en una ventana de ~1100 dp (laptop de 1366 px al
+              // 125 %) o con letra grande, el techo pasa a otra línea (I7).
+              Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   Text(
                     'Remanente ${formatearPuntosBase(plan.tasaRemanentePuntosBase)} '

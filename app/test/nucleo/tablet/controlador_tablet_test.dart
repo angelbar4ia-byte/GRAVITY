@@ -115,6 +115,58 @@ void main() {
     );
   });
 
+  test('M9: no se aceptan PIN triviales al agregar ni al cambiar', () async {
+    final contenedor = crear();
+    final controlador = await listo(contenedor);
+    for (final trivial in [
+      '0000', '1234', '1111', '4321', '0123', '7890', '123456', '654321',
+      '999999', '1212', '4545', '123123',
+    ]) {
+      await expectLater(
+        controlador.agregarConCredenciales(
+          correo: 'ana@ejemplo.test',
+          contrasena: 'clave',
+          pin: trivial,
+        ),
+        throwsA(
+          isA<ArgumentError>().having(
+            (e) => e.message,
+            'motivo',
+            contains('Elige uno menos fácil de adivinar'),
+          ),
+        ),
+        reason: trivial,
+      );
+    }
+    expect(
+      contenedor.read(controladorTabletProvider).usuarios,
+      isEmpty,
+      reason: 'ninguno de los rechazados quedó en la tablet',
+    );
+
+    final usuario = await agregar(controlador, Rol.dueno);
+    for (final trivial in ['0000', '1234', '8888', '3456']) {
+      await expectLater(
+        controlador.cambiarPin(
+          usuario.personaId,
+          pinActual: '1234',
+          pinNuevo: trivial,
+        ),
+        throwsArgumentError,
+        reason: trivial,
+      );
+    }
+    // El PIN de antes sigue valiendo: el rechazo no cambió nada.
+    expect(
+      await controlador.cambiarPin(
+        usuario.personaId,
+        pinActual: '1234',
+        pinNuevo: '7391',
+      ),
+      ResultadoDesbloqueo.abierto,
+    );
+  });
+
   test('credenciales incorrectas, PIN inválido y cuenta Casa se rechazan', () async {
     final controlador = await listo(crear());
     await expectLater(
@@ -137,7 +189,7 @@ void main() {
       controlador.agregarConCredenciales(
         correo: 'casa@ejemplo.test',
         contrasena: 'clave',
-        pin: '1234',
+        pin: '2468',
       ),
       throwsArgumentError,
     );
@@ -376,7 +428,7 @@ void main() {
       await controlador.cambiarPin(
         usuario.personaId,
         pinActual: '0000',
-        pinNuevo: '98765',
+        pinNuevo: '73915',
       ),
       ResultadoDesbloqueo.pinIncorrecto,
     );
@@ -384,18 +436,18 @@ void main() {
       await controlador.cambiarPin(
         usuario.personaId,
         pinActual: '1234',
-        pinNuevo: '98765',
+        pinNuevo: '73915',
       ),
       ResultadoDesbloqueo.abierto,
     );
     expect(await vueltaGuardada(usuario.personaId, '1234'), isNull);
-    expect(await vueltaGuardada(usuario.personaId, '98765'), 0);
+    expect(await vueltaGuardada(usuario.personaId, '73915'), 0);
     expect(
       controlador.desbloquearConPin(usuario.personaId, '1234'),
       ResultadoDesbloqueo.pinIncorrecto,
     );
     expect(
-      await controlador.entrarConPin(usuario.personaId, '98765'),
+      await controlador.entrarConPin(usuario.personaId, '73915'),
       ResultadoDesbloqueo.abierto,
     );
 
@@ -404,7 +456,7 @@ void main() {
     expect(estado.usuarios, isEmpty);
     expect(estado.enModoCasa, isTrue);
     expect(falso().personaEnServidor, casa);
-    expect(await vueltaGuardada(usuario.personaId, '98765'), isNull);
+    expect(await vueltaGuardada(usuario.personaId, '73915'), isNull);
   });
 
   test('tiempo de regreso editable y acotado; contexto guardado', () async {

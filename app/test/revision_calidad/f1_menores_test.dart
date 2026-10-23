@@ -1,6 +1,7 @@
 // Hallazgos MENORES de la revisión de calidad de la Fase 1 y el I11
-// (docs/revisiones/fase-1.md). Cada prueba demuestra uno y FALLA HOY A
-// PROPÓSITO (etiqueta `hallazgo`); pasarán cuando se arreglen.
+// (docs/revisiones/fase-1.md). Cada prueba demuestra uno; las que siguen
+// abiertas llevan la etiqueta `hallazgo` y fallan a propósito. Resueltos (sin
+// etiqueta): M1, M2 y M4 (finanzas) y M8 (diseno).
 //
 // M1  El espejo de la interfaz toma `hasta` como inclusivo y el servidor, como
 //     exclusivo: el día de `hasta` la app ofrece escribir y el servidor niega.
@@ -14,7 +15,6 @@
 // M8  Con letra al 200 % "Hoy" del teléfono (chips de hábitos) se desborda.
 // I11 Sin FLAG_SECURE: la miniatura de "recientes" de Android muestra las
 //     pantallas de Finanzas (pendiente M9 de la Fase 0).
-@Tags(['hallazgo'])
 library;
 
 import 'dart:io';
@@ -62,15 +62,14 @@ void main() {
     );
   });
 
-  test('M2: una coma que no separa miles no se lee como miles', () {
+  test('M2: la coma decimal se lee como decimal ("12,5" = \$12.50)', () {
     expect(centavosDeTexto('1,234.50'), 123450, reason: 'esto sí es válido');
     expect(centavosDeTexto('85'), 8500);
-    expect(
-      centavosDeTexto('12,5'),
-      isNull,
-      reason: '"12,5" se leyó como \$125.00 (la coma se borra sin mirar)',
-    );
-    expect(centavosDeTexto('85,50'), isNull, reason: 'se leyó \$8,550.00');
+    // Decisión del dueño del proyecto: la coma decimal es decimal; el error de
+    // diez veces ("12,5" = $125.00) era lo peligroso.
+    expect(centavosDeTexto('12,5'), 1250, reason: '"12,5" es \$12.50');
+    expect(centavosDeTexto('85,50'), 8550, reason: '"85,50" es \$85.50');
+    expect(centavosDeTexto('1,234'), 123400, reason: 'tres dígitos: miles');
   });
 
   test('M3: la cola no acepta dinero con el origen "tablet de la casa"', () async {
@@ -91,7 +90,7 @@ void main() {
           'se registra con el nombre y sin PIN (D14); el dinero pide nombre y '
           'PIN y sube con la sesión de la persona',
     );
-  });
+  }, tags: ['hallazgo']);
 
   test('M4: dos días fijos que coinciden en un mes corto no pierden un pago', () {
     final CalendarioPago calendario;
@@ -149,5 +148,5 @@ void main() {
           'Sin FLAG_SECURE ni cubierta al pasar a segundo plano, la miniatura '
           'de "recientes" (también en la tablet de la casa) muestra Finanzas',
     );
-  });
+  }, tags: ['hallazgo']);
 }

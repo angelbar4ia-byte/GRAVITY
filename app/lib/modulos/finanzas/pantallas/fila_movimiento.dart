@@ -84,40 +84,90 @@ class FilaMovimiento extends ConsumerWidget {
       if (anulado) 'Anulado',
       if (enCola) 'Por subir',
     ];
-    return ListTile(
-      key: ValueKey('movimiento-${m.id}'),
+    final tema = Theme.of(context);
+    final estiloTitulo = tema.textTheme.bodyLarge?.copyWith(
+      decoration: anulado ? TextDecoration.lineThrough : null,
+    );
+    // Sin ListTile: con letra grande su `trailing` se comía todo el ancho y el
+    // monto no tenía lugar (I6 de la revisión de la Fase 1). El texto toma el
+    // espacio que sobra (hasta 2 líneas) y el monto se encoge a su tope.
+    return Semantics(
+      container: true,
       selected: seleccionada,
-      leading: Icon(iconoDe(m.tipo)),
-      minTileHeight: 56,
-      title: Text(
-        conceptoDe(m, c.datos, vista),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: anulado
-            ? const TextStyle(decoration: TextDecoration.lineThrough)
-            : null,
-      ),
-      subtitle: Text(detalles.join(' · '), maxLines: 1, overflow: TextOverflow.ellipsis),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Monto(
-            efectoEnLibro(m, vista),
-            signo: true,
-            estilo: v.numero(tamano: 15, peso: FontWeight.w600, color: v.textoFuerte),
-          ),
-          if (sePuedeAnular(m, vista, c))
-            PopupMenuButton<String>(
-              key: ValueKey('movimiento-menu-${m.id}'),
-              tooltip: 'Opciones',
-              onSelected: (_) => anularConMotivo(context, ref, m),
-              itemBuilder: (_) => const [
-                PopupMenuItem(value: 'anular', child: Text('Anular…')),
-              ],
+      child: Material(
+        color: seleccionada
+            ? tema.colorScheme.secondaryContainer.withValues(alpha: 0.5)
+            : Colors.transparent,
+        child: InkWell(
+          key: ValueKey('movimiento-${m.id}'),
+          onTap: alTocar,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 56),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Icon(iconoDe(m.tipo)),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          conceptoDe(m, c.datos, vista),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: estiloTitulo,
+                        ),
+                        Text(
+                          detalles.join(' · '),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: tema.textTheme.bodyMedium?.copyWith(
+                            color: tema.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // El monto no pasa de un tercio del ancho: si no cabe, se
+                  // encoge en vez de empujar al resto.
+                  ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: MediaQuery.sizeOf(context).width * 0.38,
+                    ),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: AlignmentDirectional.centerEnd,
+                      child: Monto(
+                        efectoEnLibro(m, vista),
+                        signo: true,
+                        estilo: v.numero(
+                          tamano: 15,
+                          peso: FontWeight.w600,
+                          color: v.textoFuerte,
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (sePuedeAnular(m, vista, c))
+                    PopupMenuButton<String>(
+                      key: ValueKey('movimiento-menu-${m.id}'),
+                      tooltip: 'Opciones',
+                      onSelected: (_) => anularConMotivo(context, ref, m),
+                      itemBuilder: (_) => const [
+                        PopupMenuItem(value: 'anular', child: Text('Anular…')),
+                      ],
+                    ),
+                ],
+              ),
             ),
-        ],
+          ),
+        ),
       ),
-      onTap: alTocar,
     );
   }
 }

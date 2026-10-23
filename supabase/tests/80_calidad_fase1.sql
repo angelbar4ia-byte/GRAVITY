@@ -9,7 +9,9 @@
 --   4. cruce entre libros: solo transferencia y pago de deuda, con permiso en
 --      los dos libros;
 --   5. reenvío de otra persona con el mismo id.
--- Lo que SÍ está abierto vive en hallazgos_fase1.sql (falla a propósito).
+-- Los hallazgos que esta revisión dejó abiertos (I1 a I5, M6) se corrigieron en
+-- 20261023000000_finanzas_salvaguardas.sql y sus pruebas viven en 28 (I2, M6, M10),
+-- 30 (I5), 31 (I3, I4) y 32 (I1); hallazgos_fase1.sql ya no existe.
 -- =============================================================================
 begin;
 

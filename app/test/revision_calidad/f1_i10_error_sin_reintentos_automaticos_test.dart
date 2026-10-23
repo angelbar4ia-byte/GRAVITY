@@ -11,8 +11,7 @@
 // `ErrorFinanzas.conexion` ya dice si se puede reintentar a mano: el botón
 // "Reintentar" existe.
 //
-// FALLA HOY A PROPÓSITO (etiqueta `hallazgo`).
-@Tags(['hallazgo'])
+// Resuelto (sin etiqueta `hallazgo`).
 library;
 
 import 'package:flutter/material.dart';
@@ -63,6 +62,5 @@ void main() {
       );
       expect(repo.intentos, lessThanOrEqualTo(2));
     },
-    tags: ['hallazgo'],
   );
 }

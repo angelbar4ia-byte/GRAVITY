@@ -16,10 +16,26 @@ enum TipoLibro { personal, compartido, representado }
 enum PapelLibro { titular, miembro, albacea, albaceaSuplente }
 
 /// Una persona en un libro, con su vigencia.
+///
+/// **Vigencia (misma regla que el servidor, `fin_libro_miembros`):** vigente
+/// si `desde <= ahora` y (`hasta` es nulo o `hasta > ahora`). Con fechas de
+/// día eso es: [desde] **inclusivo** (el día de `desde` ya es vigente) y
+/// [hasta] **exclusivo** (el día de `hasta` ya no lo es). La app manda ambos
+/// como el inicio del día local, así que el día del cambio de albacea el
+/// espejo de la interfaz y el servidor coinciden (M1 de la revisión de la
+/// Fase 1).
+///
+/// Ojo: es distinto de las fechas `hasta` de `fin_vigencias_ingreso` y
+/// `fin_compromisos`, que son `date` y el servidor trata como inclusivas
+/// (`daterange(…, '[]')`): ver [VigenciaIngreso].
 class MiembroLibro {
   final String personaId;
   final PapelLibro papel;
+
+  /// Primer día en que es vigente (inclusivo).
   final Fecha? desde;
+
+  /// Primer día en que **ya no** es vigente (exclusivo).
   final Fecha? hasta;
 
   const MiembroLibro({
@@ -31,7 +47,7 @@ class MiembroLibro {
 
   bool vigenteEn(Fecha dia) =>
       (desde == null || !dia.antesDe(desde!)) &&
-      (hasta == null || !dia.despuesDe(hasta!));
+      (hasta == null || dia.antesDe(hasta!));
 }
 
 /// Error de configuración de un libro.

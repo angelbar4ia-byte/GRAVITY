@@ -108,6 +108,11 @@ class CapturaMonto {
 ///
 /// - Teclas de 56 dp o más (nunca menos de 48) con su nombre para el lector de
 ///   pantalla ("Punto decimal", "Borrar").
+/// - Con [compacto], teclas de 48 dp (la zona táctil mínima) y 4 dp entre
+///   ellas: 204 dp en total en lugar de ~250. Es para las hojas que deben dejar
+///   a la vista, sin desplazar, la categoría, la cuenta y el botón principal en
+///   un teléfono de 360 × 800 dp (revisión de la Fase 1, I8). Mismas teclas,
+///   mismo orden y mismo comportamiento.
 /// - Mantener presionado *Borrar* deja el monto en cero.
 /// - En la laptop también acepta el teclado físico (dígitos, punto o coma y
 ///   retroceso) cuando tiene el foco; con [autofocus] lo toma al abrir.
@@ -121,11 +126,25 @@ class TecladoMonto extends StatefulWidget {
     required this.alCambiar,
     this.centavosIniciales = 0,
     this.autofocus = false,
+    this.compacto = false,
   });
 
   final ValueChanged<int> alCambiar;
   final int centavosIniciales;
   final bool autofocus;
+
+  /// Variante compacta: teclas de [altoTeclaCompacta] dp y
+  /// [separacionCompacta] dp entre ellas.
+  final bool compacto;
+
+  /// Alto de una tecla en la variante compacta: la zona táctil mínima.
+  static const altoTeclaCompacta = zonaTactilMinima;
+
+  /// Separación entre teclas en la variante compacta.
+  static const separacionCompacta = 4.0;
+
+  /// Alto total de la variante compacta (4 filas y 3 separaciones).
+  static const altoCompacto = 4 * altoTeclaCompacta + 3 * separacionCompacta;
 
   @override
   State<TecladoMonto> createState() => _TecladoMontoState();
@@ -217,12 +236,17 @@ class _TecladoMontoState extends State<TecladoMonto> {
   Widget build(BuildContext context) {
     final v = ValoresDiseno.de(context);
     final e = v.espacio;
-    final alto = switch (v.densidad) {
-      Densidad.compacta => 52.0,
-      Densidad.comoda => 56.0,
-      Densidad.grande => 64.0,
-    };
-    final espacio = e < 6 ? 6.0 : e;
+    final compacto = widget.compacto;
+    final alto = compacto
+        ? TecladoMonto.altoTeclaCompacta
+        : switch (v.densidad) {
+            Densidad.compacta => 52.0,
+            Densidad.comoda => 56.0,
+            Densidad.grande => 64.0,
+          };
+    final espacio = compacto
+        ? TecladoMonto.separacionCompacta
+        : (e < 6 ? 6.0 : e);
 
     Widget digito(int d) => _Tecla(
       alto: alto,

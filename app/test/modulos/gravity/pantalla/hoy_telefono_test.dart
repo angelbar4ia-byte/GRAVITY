@@ -179,12 +179,42 @@ void main() {
       await montar(
         tester,
         const PantallaHoyTelefono(),
-        overrides: [
-          datosResumenGravityProvider.overrideWithValue(const ResumenGravity()),
-        ],
+        datos: const ResumenGravity(),
       );
       expect(find.byKey(const ValueKey('hoy-vacio')), findsOneWidget);
       expect(find.text('Nada pendiente por hoy'), findsOneWidget);
+    });
+
+    testWidgets('sesión real sin módulos conectados: "Sin datos todavía"', (
+      tester,
+    ) async {
+      fijarVentana(tester, const Size(390, 844));
+      await montar(
+        tester,
+        const PantallaHoyTelefono(),
+        datos: ResumenGravity.sinDatosTodavia,
+      );
+      expect(find.byKey(const ValueKey('hoy-sin-datos')), findsOneWidget);
+      expect(find.text('Sin datos todavía'), findsOneWidget);
+      // Nada de cifras ni tarjetas de ejemplo.
+      expect(find.byKey(const ValueKey('hoy-vacio')), findsNothing);
+      for (final llave in [
+        'tarjeta-sigue',
+        'tarjeta-habitos',
+        'tarjeta-finanzas',
+        'tarjeta-cuidados',
+        'monto-quedan',
+      ]) {
+        expect(find.byKey(ValueKey(llave)), findsNothing, reason: llave);
+      }
+      // Sin nombres de módulos: quien no ve uno no debe enterarse.
+      final textos = tester
+          .widgetList<Text>(find.byType(Text))
+          .map((t) => (t.data ?? '').toLowerCase())
+          .join(' · ');
+      for (final nombre in ['finanzas', 'cuidados', 'medicamento']) {
+        expect(textos, isNot(contains(nombre)));
+      }
     });
   });
 }

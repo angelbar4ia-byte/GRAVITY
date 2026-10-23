@@ -34,20 +34,7 @@ enum Alcance {
   /// Un subconjunto que define el módulo para ese rol (su turno, su parte, el
   /// menú y la lista, sus solicitudes…). Siempre con [Permiso.acciones]
   /// explícitas.
-  restringido('restringido'),
-
-  /// **Transición:** `restringido` en el servidor. Casa en Cuidados: solo
-  /// recordatorios genéricos, sin nombres ni medicamentos (D3). Lo distingue
-  /// todavía el resumen de GRAVITY (agente diseno); en su lugar va
-  /// [soloRecordatoriosGenericos], y entonces este valor se quita.
-  generico('restringido'),
-
-  /// **Transición:** `restringido` en el servidor. Coadministrador en
-  /// Cuidados: según el consentimiento de quien representa a la persona (D2,
-  /// D18); sin consentimiento registrado no hay acceso (Fase 5). Lo distingue
-  /// todavía el resumen de GRAVITY (agente diseno); en su lugar va
-  /// [dependeDelConsentimiento], y entonces este valor se quita.
-  consentimiento('restringido');
+  restringido('restringido');
 
   const Alcance(this.enServidor);
 
@@ -102,9 +89,8 @@ class Permiso {
   static Set<Accion> accionesDe(Alcance alcance) => switch (alcance) {
     Alcance.ninguno => const {},
     Alcance.total => const {Accion.leer, Accion.escribir, Accion.administrar},
-    Alcance.restringido || Alcance.generico => const {Accion.leer},
-    Alcance.propio ||
-    Alcance.consentimiento => const {Accion.leer, Accion.escribir},
+    Alcance.restringido => const {Accion.leer},
+    Alcance.propio => const {Accion.leer, Accion.escribir},
   };
 }
 
@@ -178,9 +164,12 @@ const Map<Modulo, Map<Rol, Permiso>> matrizPermisos = {
   },
   Modulo.cuidados: {
     Rol.dueno: Permiso(Alcance.total, 'Total'),
+    // D2 y D18: restringido = según el consentimiento de quien representa a
+    // la persona; sin él no hay acceso (Fase 5).
     Rol.coadministrador: Permiso(
-      Alcance.consentimiento,
+      Alcance.restringido,
       'Según consentimiento (sin acceso hasta registrarlo)',
+      acciones: _leerYEscribir,
       accesoDirecto: false,
       desdeFase: 5,
     ),
@@ -191,7 +180,13 @@ const Map<Modulo, Map<Rol, Permiso>> matrizPermisos = {
       'Su turno',
       acciones: _leerYEscribir,
     ),
-    Rol.casa: Permiso(Alcance.generico, 'Recordatorios genéricos'),
+    // D3: restringido = solo recordatorios genéricos, sin nombres ni
+    // medicamentos.
+    Rol.casa: Permiso(
+      Alcance.restringido,
+      'Recordatorios genéricos',
+      acciones: _leer,
+    ),
   },
   Modulo.alimentacion: {
     Rol.dueno: Permiso(Alcance.total, 'Total'),

@@ -177,6 +177,9 @@ class ControladorBloqueo extends Notifier<EstadoBloqueo> {
     if (!pinValido(pin)) {
       throw ArgumentError('El PIN debe tener de 4 a 6 dígitos.');
     }
+    // M9: nada de 0000, 1234, repetidos ni secuencias.
+    final debil = motivoPinDebil(pin);
+    if (debil != null) throw ArgumentError(debil);
     await listo;
     final actual = state.configuracion;
     final hash = HashPin.crear(pin);

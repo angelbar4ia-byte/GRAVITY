@@ -78,6 +78,14 @@ Widget hojaIngresoExtra() => finanzas.hojaIngresoExtra();
 /// `INSERT … ON CONFLICT (id) DO NOTHING` y la sesión de quien registró.
 const Map<String, String> tablasColaFinanzas = finanzas.tablasColaFinanzas;
 
+/// Lo que cada módulo guarda **en el equipo** por persona y no sigue la
+/// convención del almacén seguro, para que la limpieza de plataforma
+/// (`LimpiezaLocal.registrar`) lo borre al salir, en una baja y al quitar a la
+/// persona de la tablet. Finanzas borra su copia local (`finanzas.copia.<id>`).
+final List<Future<void> Function(String personaId)> ganchosDeLimpieza = [
+  finanzas.limpiarCopiaLocalFinanzas,
+];
+
 /// Tema de la app.
 class TemaExterno {
   const TemaExterno({

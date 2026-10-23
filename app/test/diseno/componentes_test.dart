@@ -221,5 +221,127 @@ void main() {
           .where((c) => c.foregroundPainter is MarcasEsquina);
       expect(pinturas, isEmpty);
     });
+
+    Widget tarjeta({
+      String titulo = 'Semana 43 · 19 al 25 oct',
+      Widget? accion,
+      IconData? icono = Icons.waterfall_chart,
+    }) => Scaffold(
+      body: SizedBox(
+        width: 360,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: TarjetaModulo(
+            titulo: titulo,
+            icono: icono,
+            accion: accion,
+            child: const Text('contenido'),
+          ),
+        ),
+      ),
+    );
+
+    testWidgets('con espacio, la acción va a la derecha en la misma línea', (
+      tester,
+    ) async {
+      fijarVentana(tester, const Size(600, 800));
+      await montar(
+        tester,
+        Scaffold(
+          body: Align(
+            alignment: Alignment.topLeft,
+            child: SizedBox(
+              width: 560,
+              child: TarjetaModulo(
+                titulo: 'Semana',
+                accion: const Semaforo(estado: EstadoSemaforo.verde),
+                child: const Text('contenido'),
+              ),
+            ),
+          ),
+        ),
+      );
+      final titulo = tester.getRect(find.text('SEMANA'));
+      final accion = tester.getRect(find.text('En verde'));
+      final tarjeta = tester.getRect(find.byType(TarjetaModulo));
+      expect((titulo.center.dy - accion.center.dy).abs(), lessThan(8));
+      expect(accion.left, greaterThan(titulo.right));
+      expect(accion.right, greaterThan(tarjeta.right - 60));
+    });
+
+    for (final escala in [1.0, 1.3, 1.5, 2.0]) {
+      testWidgets('letra x$escala en 360 dp: la acción cabe, sin desbordes', (
+        tester,
+      ) async {
+        fijarVentana(tester, const Size(360, 800));
+        fijarEscalaDeLetra(tester, escala);
+        final desbordes = await recolectarDesbordes(() async {
+          await montar(
+            tester,
+            tarjeta(
+              accion: const Semaforo(
+                estado: EstadoSemaforo.ambar,
+                etiqueta: 'Remanente 33.9 %',
+                tamanoTexto: 12,
+              ),
+            ),
+          );
+        });
+        expect(desbordes, isEmpty);
+        // Todo queda dentro de la tarjeta.
+        final tarjetaRect = tester.getRect(find.byType(TarjetaModulo));
+        for (final texto in ['SEMANA 43 · 19 AL 25 OCT', 'Remanente 33.9 %']) {
+          final r = tester.getRect(find.text(texto));
+          expect(r.left, greaterThanOrEqualTo(tarjetaRect.left));
+          expect(r.right, lessThanOrEqualTo(tarjetaRect.right));
+        }
+      });
+    }
+
+    testWidgets('si no caben juntos, la acción baja a su propia línea', (
+      tester,
+    ) async {
+      fijarVentana(tester, const Size(360, 800));
+      fijarEscalaDeLetra(tester, 2);
+      await montar(
+        tester,
+        tarjeta(
+          accion: const Semaforo(
+            estado: EstadoSemaforo.rojo,
+            etiqueta: 'Remanente 33.9 %',
+            tamanoTexto: 12,
+          ),
+        ),
+      );
+      final titulo = tester.getRect(find.textContaining('SEMANA 43'));
+      final accion = tester.getRect(find.text('Remanente 33.9 %'));
+      expect(accion.top, greaterThanOrEqualTo(titulo.bottom - 1));
+    });
+
+    testWidgets('una acción más ancha que la tarjeta se recorta, no desborda', (
+      tester,
+    ) async {
+      fijarVentana(tester, const Size(360, 800));
+      fijarEscalaDeLetra(tester, 2);
+      final desbordes = await recolectarDesbordes(() async {
+        await montar(
+          tester,
+          tarjeta(
+            titulo: 'Un título bastante largo para una tarjeta del teléfono',
+            accion: const Semaforo(
+              estado: EstadoSemaforo.verde,
+              etiqueta: 'Remanente de la semana con un texto larguísimo',
+            ),
+          ),
+        );
+      });
+      expect(desbordes, isEmpty);
+    });
+
+    testWidgets('sin acción ni icono, el título ocupa lo suyo', (tester) async {
+      await montar(tester, tarjeta(icono: null));
+      expect(find.text('SEMANA 43 · 19 AL 25 OCT'), findsOneWidget);
+      expect(find.byType(Icon), findsNothing);
+    });
   });
 }

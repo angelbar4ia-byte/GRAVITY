@@ -4,9 +4,10 @@
 // (+) Ingreso extra y el encabezado de la semana; con la letra más grande (2.0)
 // la fila de un movimiento deja el monto sin lugar.
 //
-// FALLAN HOY A PROPÓSITO las pruebas con la etiqueta `hallazgo` (demuestran el
-// hallazgo y pasarán al arreglarlo). Los controles a letra normal pasan hoy y
-// deben seguir pasando. Línea base: `flutter test --exclude-tags hallazgo`.
+// Estado: las hojas del (+) y la fila de movimiento ya no se desbordan (finanzas,
+// sin etiqueta), ni la tarjeta de la semana (diseno, `TarjetaModulo`: la
+// acción baja a su línea con letra grande). Línea base:
+// `flutter test --exclude-tags hallazgo`.
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gravity/modulos/finanzas/finanzas.dart';
@@ -54,7 +55,6 @@ void main() {
               'un Flexible (tarjeta_modulo.dart)',
         );
       },
-      tags: ['hallazgo'],
     );
 
     for (final opcion in ['Gasto', 'Ingreso extra']) {
@@ -79,7 +79,6 @@ void main() {
                 'hoja_ingreso_extra.dart)',
           );
         },
-        tags: ['hallazgo'],
       );
     }
 
@@ -103,7 +102,6 @@ void main() {
               'ancho del ListTile (fila_movimiento.dart)',
         );
       },
-      tags: ['hallazgo'],
     );
   });
 }

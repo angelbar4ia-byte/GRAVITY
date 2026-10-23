@@ -180,10 +180,15 @@ class _Principal extends StatelessWidget {
             crossAxisAlignment: WrapCrossAlignment.center,
             alignment: WrapAlignment.spaceBetween,
             children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
+              // Wrap, no Row: con letra grande o en una ventana angosta el
+              // título y la marca ("Solo lectura", "En nombre de…") pasan a
+              // otra línea en lugar de desbordarse (I7 y M7).
+              Wrap(
+                spacing: 12,
+                runSpacing: 4,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  if (conMenu) ...[
+                  if (conMenu)
                     PopupMenuButton<SeccionFinanzas>(
                       key: const ValueKey('finanzas-menu-secciones'),
                       tooltip: 'Secciones de Finanzas',
@@ -195,16 +200,11 @@ class _Principal extends StatelessWidget {
                             PopupMenuItem(value: s, child: Text(s.titulo)),
                       ],
                     ),
-                    const SizedBox(width: 4),
-                  ],
                   Text(
                     seccion.titulo,
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
-                  const SizedBox(width: 12),
-                  // La marca ("Solo lectura", "En nombre de…") es flexible:
-                  // en una ventana angosta pasa a dos líneas.
-                  Flexible(child: marcaDe(contexto)),
+                  marcaDe(contexto),
                 ],
               ),
               if (acciones.isNotEmpty)

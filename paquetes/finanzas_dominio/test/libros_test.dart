@@ -199,6 +199,91 @@ void main() {
     });
   });
 
+  group('Vigencia de los miembros: desde inclusivo, hasta exclusivo (M1)', () {
+    final dia = Fecha(2026, 10, 21);
+
+    test('el día de "hasta" ya no es vigente; el de "desde" sí', () {
+      final m = MiembroLibro(
+        personaId: ana,
+        papel: PapelLibro.albacea,
+        desde: Fecha(2026, 10, 1),
+        hasta: dia,
+      );
+      expect(m.vigenteEn(Fecha(2026, 9, 30)), isFalse, reason: 'antes de desde');
+      expect(m.vigenteEn(Fecha(2026, 10, 1)), isTrue, reason: 'día de desde');
+      expect(m.vigenteEn(Fecha(2026, 10, 20)), isTrue);
+      expect(m.vigenteEn(dia), isFalse, reason: 'día de hasta (exclusivo)');
+      expect(m.vigenteEn(Fecha(2026, 10, 22)), isFalse);
+    });
+
+    test('sin hasta sigue vigente; sin desde lo es desde siempre', () {
+      expect(
+        const MiembroLibro(
+          personaId: ana,
+          papel: PapelLibro.miembro,
+        ).vigenteEn(dia),
+        isTrue,
+      );
+    });
+
+    test('coincide con el servidor (hasta > ahora) al mandar el inicio del día',
+        () {
+      // El servidor: vigente si `hasta > ahora`; la app manda `hasta` como el
+      // inicio del día local, así que a cualquier hora del día de `hasta` ya
+      // no es vigente.
+      final inicioDelDia = DateTime(2026, 10, 21);
+      for (final hora in [0, 1, 12, 23]) {
+        final ahora = DateTime(2026, 10, 21, hora, 0, 1);
+        expect(inicioDelDia.isAfter(ahora), isFalse, reason: 'servidor $hora h');
+      }
+      expect(
+        MiembroLibro(
+          personaId: ana,
+          papel: PapelLibro.albacea,
+          hasta: dia,
+        ).vigenteEn(dia),
+        isFalse,
+      );
+    });
+
+    test('el día en que se va el albacea, escribe el suplente (y no él)', () {
+      final libro = Libro(
+        id: 'p3',
+        nombre: 'Papá',
+        tipo: TipoLibro.representado,
+        titularId: papa,
+        miembros: [
+          MiembroLibro(personaId: ana, papel: PapelLibro.albacea, hasta: dia),
+          const MiembroLibro(
+            personaId: alex,
+            papel: PapelLibro.albaceaSuplente,
+          ),
+        ],
+      );
+      final albacea = permisoEnLibro(libro, ana, hoy: dia);
+      final suplente = permisoEnLibro(libro, alex, hoy: dia);
+      expect(albacea.leer, isFalse);
+      expect((suplente.escribir, suplente.administrar), (true, true));
+      // La víspera todavía manda el albacea.
+      final victima = Fecha(2026, 10, 20);
+      expect(permisoEnLibro(libro, ana, hoy: victima).escribir, isTrue);
+      expect(permisoEnLibro(libro, alex, hoy: victima).escribir, isFalse);
+    });
+
+    test('las vigencias de ingreso, en cambio, son inclusivas (date)', () {
+      final v = VigenciaIngreso(
+        id: 'v',
+        ingresoId: 'i',
+        montoNeto: 100,
+        calendario: const CalendarioConfig.quincenal(),
+        desde: Fecha(2026, 1, 1),
+        hasta: dia,
+      );
+      expect(v.vigenteEn(dia), isTrue, reason: 'daterange(…, \'[]\')');
+      expect(v.vigenteEn(Fecha(2026, 10, 22)), isFalse);
+    });
+  });
+
   group('Vista por libro y transferencias entre libros (regla 1 de 4.5)', () {
     final transferencia = Movimiento(
       id: 'aportacion',

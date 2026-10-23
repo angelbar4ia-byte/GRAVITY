@@ -137,6 +137,29 @@ void main() {
     expect(find.byKey(pantallaBloqueo), findsNothing);
   });
 
+  testWidgets('M9: el PIN del teléfono no puede ser trivial', (tester) async {
+    await montarApp(
+      tester,
+      dispositivo: TipoDispositivo.telefono,
+      sesion: sesionCon(Rol.dueno),
+      extras: [relojSeguridadProvider.overrideWithValue(() => ahora)],
+    );
+    await tester.tap(find.text('Más'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Ajustes'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Privacidad'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('bloqueo-activo')));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('bloqueo-pin')), '1234');
+    await tester.enterText(find.byKey(const Key('bloqueo-confirmacion')), '1234');
+    await tester.tap(find.widgetWithText(FilledButton, 'Guardar'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Ese PIN es una secuencia'), findsOneWidget);
+    expect(find.text('Bloquear tras'), findsNothing, reason: 'no se activó');
+  });
+
   testWidgets('se activa en Ajustes › Privacidad', (tester) async {
     await montarApp(
       tester,

@@ -1,4 +1,5 @@
-/// PIN de 4 a 6 dígitos. Nunca se guarda el PIN: solo su hash con sal
+/// PIN de 4 a 6 dígitos, no trivial al elegirlo ([motivoPinDebil]). Nunca se
+/// guarda el PIN: solo su hash con sal
 /// (PBKDF2 con HMAC-SHA256), dentro del almacenamiento seguro.
 library;
 
@@ -12,6 +13,59 @@ final _formatoPin = RegExp(r'^\d{4,6}$');
 
 /// `true` si [pin] tiene de 4 a 6 dígitos.
 bool pinValido(String pin) => _formatoPin.hasMatch(pin);
+
+/// Por qué [pin] (de 4 a 6 dígitos) es **trivial** y no se acepta como PIN
+/// nuevo (M9, revisión de la Fase 1), o `null` si no lo es. Cuenta como
+/// trivial:
+///
+/// - el mismo dígito repetido (`0000`, `1111`, `999999`);
+/// - una secuencia seguida, de subida o de bajada, que da la vuelta del 9 al 0
+///   (`1234`, `4321`, `0123`, `7890`, `123456`, `654321`);
+/// - un bloque que se repite (`1212`, `4545`, `123123`, `686868`).
+///
+/// No cambia el largo del PIN (4 a 6): eso lo decide el dueño. Un PIN que no
+/// pasa [pinValido] no se juzga aquí.
+String? motivoPinDebil(String pin) {
+  if (!pinValido(pin)) return null;
+  final digitos = [for (final c in pin.split('')) int.parse(c)];
+  if (digitos.every((d) => d == digitos.first)) {
+    return 'Ese PIN repite el mismo número. Elige uno menos fácil de adivinar.';
+  }
+  bool conPaso(int paso) {
+    for (var i = 1; i < digitos.length; i++) {
+      if ((digitos[i] - digitos[i - 1]) % 10 != paso % 10) return false;
+    }
+    return true;
+  }
+
+  if (conPaso(1) || conPaso(-1)) {
+    return 'Ese PIN es una secuencia (como 1234). Elige uno menos fácil de '
+        'adivinar.';
+  }
+  for (var periodo = 2; periodo <= digitos.length ~/ 2; periodo++) {
+    if (digitos.length % periodo != 0) continue;
+    var seRepite = true;
+    for (var i = periodo; i < digitos.length; i++) {
+      if (digitos[i] != digitos[i - periodo]) {
+        seRepite = false;
+        break;
+      }
+    }
+    if (seRepite) {
+      return 'Ese PIN repite un mismo bloque (como 1212). Elige uno menos '
+          'fácil de adivinar.';
+    }
+  }
+  return null;
+}
+
+/// `true` si [pin] es trivial (ver [motivoPinDebil]).
+bool pinEsDebil(String pin) => motivoPinDebil(pin) != null;
+
+/// Mensaje para un PIN nuevo que no se puede aceptar (formato o trivial), o
+/// `null` si sirve. Es lo que muestran los formularios.
+String? errorDePinNuevo(String pin) =>
+    pinValido(pin) ? motivoPinDebil(pin) : 'De 4 a 6 dígitos.';
 
 abstract final class HashPin {
   static const version = 'pbkdf2-sha256';

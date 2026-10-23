@@ -272,6 +272,23 @@ class Monto extends ConsumerWidget {
   );
 }
 
+/// "Etiqueta: $monto" que pasa a otra línea si no cabe (con letra grande o en
+/// una ventana angosta un `Row` rígido se desbordaba: M7 de la revisión de la
+/// Fase 1).
+class DatoConMonto extends StatelessWidget {
+  const DatoConMonto(this.etiqueta, this.centavos, {super.key, this.signo = false});
+
+  final String etiqueta;
+  final int centavos;
+  final bool signo;
+
+  @override
+  Widget build(BuildContext context) => Wrap(
+    crossAxisAlignment: WrapCrossAlignment.center,
+    children: [Text('$etiqueta: '), Monto(centavos, signo: signo)],
+  );
+}
+
 /// Botón "Mostrar / Ocultar montos" (los montos se abren ocultos).
 class BotonMontos extends ConsumerWidget {
   const BotonMontos({super.key});
@@ -338,6 +355,8 @@ class ConDatosFinanzas extends ConsumerWidget {
         if (c.permiso.comoMaestra) {
           final consulta = ref.watch(consultaMaestraProvider(libro.id));
           contenido = consulta.when(
+            // La renovación (cada 25 min) no tapa la pantalla con "Cargando".
+            skipLoadingOnReload: true,
             data: (_) => contenido,
             loading: () => const _Cargando(),
             error: (e, _) => EstadoVacio(
@@ -580,16 +599,65 @@ Future<bool> confirmar(
 
 // ------------------------------------------------------- campos de captura
 
-/// Lee pesos escritos por la persona ("1,234.50", "$85", "85.5") en
-/// centavos. `null` si no es un monto.
+/// Lee pesos escritos por la persona en centavos. `null` si no es un monto.
+///
+/// Acepta ("1,234.50", "$85", "85.5", "12,5", "1.234,50"):
+/// - El **punto** es el separador decimal en "85.5"; con coma y punto juntos,
+///   el último de los dos es el decimal y el otro separa miles ("1,234.50" y
+///   "1.234,50").
+/// - La **coma sola** es decimal si la siguen 1 o 2 dígitos ("12,5" = $12.50,
+///   "85,50" = $85.50) y separa miles si la siguen grupos de 3 ("1,234" =
+///   $1,234.00). Cualquier otra cosa ("1,2345") no es un monto: mejor
+///   preguntar que errar por diez veces sin avisar (M2 de la revisión de la
+///   Fase 1).
 int? centavosDeTexto(String texto) {
-  final limpio = texto.replaceAll(RegExp(r'[\s$,]'), '');
+  final limpio = texto.replaceAll(RegExp(r'[\s$]'), '');
   if (limpio.isEmpty) return null;
-  final m = RegExp(r'^(\d{1,9})(?:\.(\d{0,2}))?$').firstMatch(limpio);
-  if (m == null) return null;
-  final pesos = int.parse(m.group(1)!);
-  final cent = (m.group(2) ?? '').padRight(2, '0');
-  return pesos * 100 + int.parse(cent.isEmpty ? '0' : cent);
+  final coma = limpio.lastIndexOf(',');
+  final punto = limpio.lastIndexOf('.');
+
+  String enteros;
+  String decimales = '';
+  String? miles;
+  if (coma >= 0 && punto >= 0) {
+    // Los dos: el último es el decimal, el otro separa miles.
+    final decimal = coma > punto ? ',' : '.';
+    miles = decimal == ',' ? '.' : ',';
+    final i = limpio.lastIndexOf(decimal);
+    enteros = limpio.substring(0, i);
+    decimales = limpio.substring(i + 1);
+    if (enteros.contains(decimal) || decimales.contains(miles)) return null;
+  } else if (coma >= 0) {
+    final despues = limpio.substring(coma + 1);
+    final comas = ','.allMatches(limpio).length;
+    if (comas == 1 && despues.length <= 2) {
+      enteros = limpio.substring(0, coma);
+      decimales = despues;
+    } else {
+      // Solo miles: "1,234" o "12,345,678".
+      miles = ',';
+      enteros = limpio;
+    }
+  } else if (punto >= 0) {
+    if ('.'.allMatches(limpio).length != 1) return null;
+    enteros = limpio.substring(0, punto);
+    decimales = limpio.substring(punto + 1);
+  } else {
+    enteros = limpio;
+  }
+
+  if (miles != null && enteros.contains(miles)) {
+    final separador = RegExp.escape(miles);
+    if (!RegExp('^\\d{1,3}($separador\\d{3})+\$').hasMatch(enteros)) {
+      return null;
+    }
+    enteros = enteros.replaceAll(miles, '');
+  }
+  if (!RegExp(r'^\d{1,9}$').hasMatch(enteros) ||
+      !RegExp(r'^\d{0,2}$').hasMatch(decimales)) {
+    return null;
+  }
+  return int.parse(enteros) * 100 + int.parse(decimales.padRight(2, '0'));
 }
 
 /// Pesos en texto para editar: 123450 → "1234.50".

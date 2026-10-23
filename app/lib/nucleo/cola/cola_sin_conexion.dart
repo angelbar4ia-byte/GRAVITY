@@ -54,6 +54,19 @@ enum ResultadoEnvio {
   sinSesion,
 }
 
+/// Prefijos de los tipos de registro **personales** (dinero, hábitos, datos
+/// clínicos). En la tablet pública de la casa nunca se registran con solo el
+/// nombre: piden nombre y PIN (D14), y suben con la sesión de la persona.
+const List<String> prefijosDeTiposPersonales = [
+  'finanzas.',
+  'habitos.',
+  'cuidados.',
+];
+
+/// `true` si [tipo] es un registro personal (ver [prefijosDeTiposPersonales]).
+bool esTipoPersonal(String tipo) =>
+    prefijosDeTiposPersonales.any(tipo.startsWith);
+
 /// Un registro listo para enviarse.
 class PeticionEnvio {
   const PeticionEnvio({
@@ -261,7 +274,8 @@ class ColaSinConexion {
   /// registro con [id], no se duplica.
   /// [personaId] es quien lo registra; por omisión, [personaQueRegistra].
   /// [origen] dice si la persona entró con su sesión o eligió su nombre en la
-  /// tablet de la casa (entonces [personaId] es obligatorio).
+  /// tablet de la casa (entonces [personaId] es obligatorio y el [tipo] no
+  /// puede ser personal: lanza [ArgumentError], ver [esTipoPersonal]).
   Future<String> encolar({
     required String tipo,
     required Map<String, Object?> carga,
@@ -269,8 +283,19 @@ class ColaSinConexion {
     String? personaId,
     OrigenRegistro origen = OrigenRegistro.propio,
   }) async {
-    if (origen == OrigenRegistro.tabletCasa && personaId == null) {
-      throw ArgumentError.notNull('personaId');
+    if (origen == OrigenRegistro.tabletCasa) {
+      if (personaId == null) throw ArgumentError.notNull('personaId');
+      // D14: solo lo de la casa (lista de compras, recordatorios genéricos)
+      // se registra con el nombre y sin PIN. El dinero, los hábitos y lo de
+      // Cuidados piden nombre y PIN (M3, revisión de la Fase 1).
+      if (esTipoPersonal(tipo)) {
+        throw ArgumentError.value(
+          tipo,
+          'tipo',
+          'Lo personal (dinero, hábitos, Cuidados) pide nombre y PIN: no se '
+              'registra desde la tablet de la casa solo con el nombre (D14).',
+        );
+      }
     }
     final idFinal = id ?? _generarId();
     await _base

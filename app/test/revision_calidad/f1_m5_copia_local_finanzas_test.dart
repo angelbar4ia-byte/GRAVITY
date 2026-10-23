@@ -9,8 +9,7 @@
 // el acceso de inmediato"; en una tablet compartida lo guardado queda en el
 // equipo (y la Fase 0, I3, pedía borrar también "la copia local").
 //
-// FALLAN HOY A PROPÓSITO (etiqueta `hallazgo`).
-@Tags(['hallazgo'])
+// Resuelto (sin etiqueta `hallazgo`).
 library;
 
 import 'dart:convert';

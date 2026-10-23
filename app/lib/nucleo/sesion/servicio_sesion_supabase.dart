@@ -19,6 +19,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../contratos/roles.dart';
 import '../seguridad/almacen_seguro.dart';
+import '../seguridad/limpieza_local.dart';
 import 'errores_red.dart';
 import 'sesion.dart';
 
@@ -140,8 +141,10 @@ class ServicioSesionSupabase extends ServicioSesionEnMemoria
     required this.llavePublica,
     LectorPerfil? lectorPerfil,
     CreadorCliente? crearCliente,
+    LimpiezaLocal? limpieza,
   }) : _lector = lectorPerfil ?? leerPerfilPorOmision,
-       _crearCliente = crearCliente ?? _clienteAparte;
+       _crearCliente = crearCliente ?? _clienteAparte,
+       _limpieza = limpieza ?? LimpiezaLocal(_almacen);
 
   static const claveSesionGuardada = 'sesion.ultima';
 
@@ -149,6 +152,13 @@ class ServicioSesionSupabase extends ServicioSesionEnMemoria
   final AlmacenSeguro _almacen;
   final LectorPerfil _lector;
   final CreadorCliente _crearCliente;
+
+  /// Borra lo guardado en el equipo de quien sale o se da de baja (M5).
+  final LimpiezaLocal _limpieza;
+
+  /// `true` mientras [salir] cierra la sesión: el evento `signedOut` que eso
+  /// provoca no vuelve a limpiar.
+  bool _saliendo = false;
   final String url;
   final String llavePublica;
   StreamSubscription<AuthState>? _suscripcion;
@@ -180,6 +190,9 @@ class ServicioSesionSupabase extends ServicioSesionEnMemoria
       (estado) {
         if (estado.event == AuthChangeEvent.signedOut) {
           unawaited(_almacen.borrar(claveSesionGuardada));
+          // Si es `salir()` quien cierra, ya limpia él (una sola vez).
+          final persona = _saliendo ? null : sesionActual?.persona.id;
+          if (persona != null) unawaited(_limpieza.alQuitarPersona(persona));
           if (sesionActual != null) emitir(null);
         }
       },
@@ -225,8 +238,9 @@ class ServicioSesionSupabase extends ServicioSesionEnMemoria
       return sesion;
     } catch (error) {
       if (error is ErrorSesion && _cliente.auth.currentUser != null) {
-        // Entró pero no tiene rol: no se deja la sesión a medias.
-        await _cerrarEnEsteEquipo();
+        // Entró pero no tiene rol: no se deja la sesión a medias (y no hay
+        // nada suyo que borrar).
+        await _cerrarEnEsteEquipo(limpiar: false);
       }
       throw traducirErrorSesion(error);
     }
@@ -377,20 +391,43 @@ class ServicioSesionSupabase extends ServicioSesionEnMemoria
 
   @override
   Future<void> salir() async {
-    await cerrarSesionDePersona();
+    final persona = sesionActual?.persona.id;
+    _saliendo = true;
     try {
-      await _cliente.auth.signOut();
-    } catch (error) {
-      debugPrint('Salir sin conexión: $error');
+      await cerrarSesionDePersona();
+      try {
+        await _cliente.auth.signOut();
+      } catch (error) {
+        debugPrint('Salir sin conexión: $error');
+      }
+      await _almacen.borrar(claveSesionGuardada);
+      // M5: lo guardado de la persona (copias locales de los módulos) no se
+      // queda en el equipo.
+      if (persona != null) await _limpieza.alQuitarPersona(persona);
+    } finally {
+      _saliendo = false;
     }
-    await _almacen.borrar(claveSesionGuardada);
     emitir(null);
   }
 
   /// Cierra la sesión en este equipo aunque no haya respuesta del servidor.
-  Future<void> _cerrarEnEsteEquipo() async {
+  ///
+  /// Con [limpiar], borra también lo guardado de la persona (M5; D5: la baja
+  /// quita el acceso de inmediato). La persona sale de la sesión abierta o,
+  /// al abrir la app, de la última sesión guardada; si no se sabe de quién
+  /// era, se barren todas las copias locales.
+  Future<void> _cerrarEnEsteEquipo({bool limpiar = true}) async {
+    final guardada = limpiar ? await _leerGuardada() : null;
+    final persona = sesionActual?.persona.id ?? guardada?.$2.persona.id;
     await _salirSinFallar(_cliente);
     await _almacen.borrar(claveSesionGuardada);
+    if (limpiar) {
+      if (persona != null) {
+        await _limpieza.alQuitarPersona(persona);
+      } else {
+        await _limpieza.alQuitarTodas();
+      }
+    }
     if (sesionActual != null) emitir(null);
   }
 

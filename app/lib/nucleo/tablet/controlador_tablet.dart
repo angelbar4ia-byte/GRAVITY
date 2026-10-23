@@ -420,7 +420,9 @@ class ControladorTablet extends Notifier<EstadoTablet> {
 
   /// Agrega (o actualiza) a una persona con su PIN. La [sesion] viene del
   /// servidor, así el rol es real; la [credencial] (su sesión del servidor) se
-  /// guarda cifrada con el PIN.
+  /// guarda cifrada con el PIN. Solo revisa el formato del PIN: que no sea
+  /// trivial se exige donde la persona lo elige ([agregarConCredenciales] y
+  /// [cambiarPin]).
   Future<UsuarioTablet> agregarUsuario(
     Sesion sesion, {
     required String pin,
@@ -463,6 +465,18 @@ class ControladorTablet extends Notifier<EstadoTablet> {
     return usuario;
   }
 
+  /// Un PIN que la persona **elige** debe tener de 4 a 6 dígitos y no ser
+  /// trivial (`0000`, `1234`, repetidos, secuencias: M9). Lanza
+  /// [ArgumentError] con el motivo para mostrar.
+  static void _exigirPinNuevo(String pin) {
+    final error = errorDePinNuevo(pin);
+    if (error != null) {
+      throw ArgumentError(
+        pinValido(pin) ? error : 'El PIN debe tener de 4 a 6 dígitos.',
+      );
+    }
+  }
+
   /// Comprueba correo y contraseña de la persona en el servidor y la agrega
   /// con su PIN (y, con servidor, con su credencial para entrar después).
   Future<UsuarioTablet> agregarConCredenciales({
@@ -470,9 +484,7 @@ class ControladorTablet extends Notifier<EstadoTablet> {
     required String contrasena,
     required String pin,
   }) async {
-    if (!pinValido(pin)) {
-      throw ArgumentError('El PIN debe tener de 4 a 6 dígitos.');
-    }
+    _exigirPinNuevo(pin);
     final servicio = ref.read(servicioSesionProvider);
     if (servicio is SesionesPorPersona) {
       final obtenida = await (servicio as SesionesPorPersona).obtenerCredencial(
@@ -501,6 +513,9 @@ class ControladorTablet extends Notifier<EstadoTablet> {
     }
     await _repositorio.borrarCredencial(personaId);
     _intentos.olvidar(personaId);
+    // M5: lo guardado de la persona (copias locales de los módulos) tampoco
+    // se queda en la tablet.
+    await ref.read(limpiezaLocalProvider).alQuitarPersona(personaId);
     await _guardarUsuarios([
       for (final u in state.usuarios)
         if (u.personaId != personaId) u,
@@ -522,9 +537,7 @@ class ControladorTablet extends Notifier<EstadoTablet> {
     required String pinActual,
     required String pinNuevo,
   }) async {
-    if (!pinValido(pinNuevo)) {
-      throw ArgumentError('El PIN debe tener de 4 a 6 dígitos.');
-    }
+    _exigirPinNuevo(pinNuevo);
     await listo;
     final usuario = _buscar(personaId);
     if (usuario == null) return ResultadoDesbloqueo.noExiste;

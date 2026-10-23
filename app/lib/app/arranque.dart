@@ -22,6 +22,8 @@ import '../nucleo/configuracion/configuracion_entorno.dart';
 import '../nucleo/firebase/firebase.dart';
 import '../nucleo/seguridad/almacen_seguro.dart';
 import '../nucleo/seguridad/biometria.dart';
+import '../nucleo/seguridad/limpieza_local.dart';
+import '../nucleo/seguridad/pantalla_segura.dart';
 import '../nucleo/seguridad/proveedores_seguridad.dart';
 import '../nucleo/sesion/proveedores_sesion.dart';
 import '../nucleo/sesion/servicio_sesion_demostracion.dart';
@@ -67,6 +69,10 @@ Future<List<Override>> prepararArranque({
       : const BiometriaNoDisponible();
 
   AlmacenSeguro almacen = AlmacenSeguroDispositivo();
+  // Lo guardado en el equipo por persona se borra al salir, en una baja y al
+  // quitarla de la tablet (M5); el servicio de sesión y la tablet comparten
+  // la misma instancia, donde los módulos registran sus ganchos.
+  var limpieza = LimpiezaLocal(almacen);
   ServicioSesion? sesion;
   Enviador enviador = const EnviadorSinServidor();
   if (configuracion.tieneSupabase) {
@@ -80,6 +86,7 @@ Future<List<Override>> prepararArranque({
         almacen: almacen,
         url: configuracion.supabaseUrl,
         llavePublica: configuracion.supabaseLlavePublica,
+        limpieza: limpieza,
       );
       sesion = servicio;
       // En la tablet, la cola envía con la sesión de quien entró con su PIN.
@@ -94,6 +101,7 @@ Future<List<Override>> prepararArranque({
   if (sesion == null) {
     // Demostración: nada de lo de ejemplo se guarda en el dispositivo.
     almacen = AlmacenSeguroEnMemoria();
+    limpieza = LimpiezaLocal(almacen);
     sesion = ServicioSesionDemostracion();
   }
   await sesion.iniciar();
@@ -104,6 +112,14 @@ Future<List<Override>> prepararArranque({
     densidadBaseProvider.overrideWithValue(densidadPara(dispositivo)),
     estadoFirebaseProvider.overrideWithValue(firebase),
     almacenSeguroProvider.overrideWithValue(almacen),
+    limpiezaLocalProvider.overrideWithValue(limpieza),
+    // I11: en Android, FLAG_SECURE mientras hay dinero o datos clínicos a la
+    // vista; en Windows no hace falta nada.
+    protectorDePantallaProvider.overrideWithValue(
+      plataforma == TargetPlatform.android
+          ? const ProtectorDePantallaAndroid()
+          : const ProtectorDePantallaNulo(),
+    ),
     biometriaProvider.overrideWithValue(biometria),
     servicioSesionProvider.overrideWithValue(sesion),
     // Demostración: la cola vive en memoria; nada de lo de ejemplo queda en

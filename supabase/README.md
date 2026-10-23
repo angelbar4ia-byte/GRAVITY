@@ -59,11 +59,11 @@ Un módulo o acción mal escrito en una regla **lanza error** en lugar de negar 
 
 **Red de seguridad para lo que se cree después** (hallazgo M1), por si una migración olvida revocar: las funciones nuevas no se pueden ejecutar desde `PUBLIC` ni `anon` (PostgreSQL da `EXECUTE` a `PUBLIC` en todos los esquemas, por eso se revoca sin `in schema`); las tablas nuevas no dan nada a `anon`, ni `TRUNCATE`, `REFERENCES` o `TRIGGER` a `authenticated`, ni `TRUNCATE` a `service_role`. Ojo: una función nueva en `public` **sí** la ejecuta `authenticated` (privilegio de Supabase) y queda expuesta como RPC: revoca si no es para la app.
 
-**Bitácora.** Las entradas automáticas (`insertar`, `actualizar`, `borrar`) solo las escribe `registrar_cambio_en_bitacora()`; la regla de inserción las rechaza para cualquier sesión de la app, también la cuenta Casa (hallazgo M2). El formato de `accion` impide acciones parecidas (`Borrar`, ` borrar`, letras de otro alfabeto) para todos, también `service_role`.
+**Bitácora.** Las entradas automáticas (`insertar`, `actualizar`, `borrar`) solo las escribe `registrar_cambio_en_bitacora()`; la regla de inserción las rechaza para cualquier sesión de la app, también la cuenta Casa (hallazgo M2). El formato de `accion` impide acciones parecidas (`Borrar`, ` borrar`, letras de otro alfabeto) para todos, también `service_role`. Desde la Fase 1 también están reservadas al servidor las acciones `finanzas*` y las entradas de tablas `fin_*` (hallazgo I5 de la revisión de la Fase 1).
 
 ## Finanzas (Fase 1)
 
-Migración `20261021000000_finanzas_mvp1.sql`, según `docs/specs/fase-1-finanzas.md` v0.2 (secciones 4.1 a 4.5), D18 y D19. Todas las tablas `fin_*` llevan `hogar_id`, RLS, privilegios por columna y bitácora automática. Dinero en `bigint` de centavos; porcentajes y tasas en puntos base (`integer`, 2000 = 20 %).
+Migraciones `20261021000000_finanzas_mvp1.sql` (tablas, reglas y triggers), según `docs/specs/fase-1-finanzas.md` v0.2 (secciones 4.1 a 4.5), D18 y D19, y `20261023000000_finanzas_salvaguardas.sql` (hallazgos I1 a I5, M6 y M10 de la revisión de calidad, `docs/revisiones/fase-1.md`). Todas las tablas `fin_*` llevan `hogar_id`, RLS, privilegios por columna y bitácora automática. Dinero en `bigint` de centavos; porcentajes y tasas en puntos base (`integer`, 2000 = 20 %).
 
 ### Libros (D19)
 
@@ -83,7 +83,7 @@ Migración `20261021000000_finanzas_mvp1.sql`, según `docs/specs/fase-1-finanza
 | `fin_categorias` | hogar | `administrar` | Árbol común de 3 niveles; único (`hogar_id`, `padre_id`, `nombre`); se borra solo sin datos, con datos `archivada` |
 | `fin_cuentas` | libro, o **hogar** si es `de_gasto` o `gasto_financiero` | `administrar` | `clase` y `liquida` generadas; único (`hogar_id`, `libro_id`, `nombre`); cerrar o archivar solo con saldo cero (confirmado y con pendientes); borrar solo sin movimientos; las de sistema no cambian de tipo ni de estado. `titular_id` de la v0.1 lo reemplaza `libro_id` |
 | `fin_parametros` | libro (PK `libro_id`) | `administrar` (UPDATE) | Nace con los valores por defecto (5.6 bis, 5.9 bis) y los ids de las cuentas de sistema, que no cambian |
-| `fin_movimientos` | sus **dos** libros | `escribir` en cada libro que toca | **Solo agregar.** Validación de 4.3; `libro_origen_id` y `libro_destino_id` los pone el servidor; `en_nombre_de` (albacea, motivo obligatorio) |
+| `fin_movimientos` | sus **dos** libros | `escribir` en cada libro que toca | **Solo agregar.** Validación de 4.3; `libro_origen_id` y `libro_destino_id` los pone el servidor; en el libro de Papá **todo** movimiento lleva `en_nombre_de` y motivo (I3) |
 | `fin_ingresos`, `fin_vigencias_ingreso` | libro | `administrar` | Vigencias: `forma` `semanal`/`catorcenal`/`quincenal`/`mensual`/`cada_meses` (+ `intervalo_meses`), `dias_mes` con uno o varios días (`{1,11}`; 0 = último); no se traslapan; `libro_id` de la vigencia lo pone el servidor |
 | `fin_compromisos`, `fin_sobres` | libro | `administrar` | Su cuenta es una cuenta de gasto del hogar; `regla_inhabil` por compromiso (por defecto `sin_cambio`) |
 | `fin_deudas` | libro | `administrar` | Cuenta pasivo del mismo libro; tasa > 0 solo en `con_costo`; `grupo_prioritario` + `orden_grupo`; `regla_inhabil` (por defecto `sin_cambio`) |
@@ -101,15 +101,35 @@ Migración `20261021000000_finanzas_mvp1.sql`, según `docs/specs/fase-1-finanza
 
 | Función | Devuelve |
 |---|---|
-| `fin_puede(libro, accion)` | `leer`: miembro vigente o cuenta maestra. `escribir`: titular, miembro o albacea (el suplente solo si no hay albacea vigente), con el libro activo. `administrar`: titular de un personal, miembro de un compartido, albacea de un representado. Siempre exige un rol con Finanzas |
-| `fin_puede_hogar(hogar, accion)` | Lo del hogar (categorías, cuentas de gasto, días inhábiles, importaciones): rol con Finanzas; la maestra además lee |
+| `fin_puede(libro, accion)` | `leer`: miembro vigente, o la cuenta maestra **con una consulta registrada en ese libro en los últimos 30 minutos** (I2). `escribir`: titular, miembro o albacea (el suplente solo si no hay albacea vigente), con el libro activo. `administrar`: titular de un personal, miembro de un compartido, albacea de un representado. Siempre exige un rol con Finanzas. El albacea es **vigente** solo si sigue siendo adulto con Finanzas en el hogar (I4) |
+| `fin_puede_hogar(hogar, accion)` | Lo del hogar (categorías, cuentas de gasto, días inhábiles, importaciones): rol con Finanzas; la maestra además lee, pero **si no es la dueña no cambia la configuración del hogar** (M6) |
 | `fin_es_miembro(libro)` | Miembro vigente del libro |
 | `es_cuenta_maestra(hogar)` | La sesión es la cuenta maestra vigente |
 | `puede_ver_entrada_bitacora(...)` | Regla de lectura de la bitácora (abajo) |
 
 - Dueño y coadministrador: su libro y los compartidos de los que son miembros; la pareja **no** ve el libro personal del dueño, ni al revés. Familiar, cuidador y casa: nada de `fin_*`.
-- **Cuenta maestra** (`membresias.es_maestra`): una por hogar, solo dueño o coadministrador, la asigna el dueño con `asignar_cuenta_maestra(hogar, persona)` (nulo la quita). Lee todo (libros, bitácora, historial de GRAVITY); nunca escribe en lo ajeno. La app llama `fin_registrar_consulta_maestra(libro)` al abrir un libro ajeno (acción `finanzas.consulta_maestra`, visible para quienes llevan ese libro). `cuenta_maestra(hogar)` dice a cualquier miembro si existe y de quién es.
-- **Bitácora:** cada quien ve lo suyo; la maestra todo; las entradas `gravity.*` solo su autor (D18); las de `fin_*` y `finanzas.*`, quien puede leer su libro (o, si son del hogar, quien tiene Finanzas); lo demás (membresías, invitaciones…), el dueño.
+- **Cuenta maestra** (`membresias.es_maestra`): una por hogar, solo dueño o coadministrador, la asigna el dueño con `asignar_cuenta_maestra(hogar, persona)` (nulo la quita; el cambio deja la entrada `finanzas.maestra_asignada`, que ve todo adulto con Finanzas, M10). Nunca escribe en lo ajeno y, si no es la dueña, tampoco cambia lo del hogar (M6).
+  - **Sin consulta ve solo la portada:** los libros y quién los lleva (`fin_libros`, `fin_libro_miembros`), los nombres de las personas, las categorías y las cuentas de gasto del hogar, y lo que no es de Finanzas (historial de GRAVITY, membresías…).
+  - **Para leer el contenido de un libro ajeno** (cuentas, movimientos, plan, cierres, saldos, su bitácora) debe llamar antes `fin_registrar_consulta_maestra(libro)`: deja la entrada `finanzas.consulta_maestra` (visible para quienes llevan ese libro) y **habilita la lectura de ese libro por 30 minutos** (I2). Es por libro y por persona; pasado el tiempo hay que llamarla otra vez (cada llamada queda en la bitácora). Sin consulta vigente el servidor no devuelve filas ajenas (no da error: filtra). Lo propio no se registra (devuelve falso).
+  - `cuenta_maestra(hogar)` dice a cualquier miembro si existe y de quién es.
+- **Bitácora:** cada quien ve lo suyo; las entradas `gravity.*` solo su autor y la maestra (D18); las de `fin_*` y `finanzas*`, quien puede leer su libro (la maestra, solo con consulta vigente) o, si son del hogar, quien tiene Finanzas; lo demás (membresías, invitaciones…), el dueño y la maestra. **Escribir** entradas `finanzas*` o de tablas `fin_*` es solo del servidor (triggers y funciones `SECURITY DEFINER`): un miembro que las inserte directo recibe 42501 (I5). El límite de entradas por persona sigue pendiente (M2, parte 2).
+- **Libro compartido** (I1): solo quien lo creó (`creado_por`) o el dueño del hogar cambia la membresía de **otra** persona; cada quien puede salirse, y nunca quedan menos de **2 miembros vigentes** (adultos con Finanzas) — también para las funciones del servidor. Para dejar de usar un compartido se desactiva el libro.
+- **Libro representado (Papá)** (I3 e I4): todo movimiento que toque su libro (apertura, ingreso, gasto, ajuste de conciliación, reclasificación, aportación o pago de deuda desde otro libro y **también la anulación**) lleva `en_nombre_de` = su titular **y motivo no vacío**; si no, 23514. Una salida hacia un libro personal deja además la entrada `finanzas.salida_libro_representado` (monto, motivo, quién), que ven quienes llevan el libro de Papá. Albacea y suplente cuentan solo si su membresía del hogar sigue activa y con Finanzas: si el albacea se va, el suplente escribe y administra al instante.
+
+### Criterios provisionales de la revisión de la Fase 1 (esperan al dueño; para D17 y D19)
+
+| Hallazgo | Criterio con el que se construyó | Pregunta al dueño |
+|---|---|---|
+| I1 | En un compartido solo quien lo creó o el dueño del hogar cambia la membresía de otra persona; nunca menos de 2 miembros vigentes | ¿Puede un adulto sacar a otro? |
+| I2 | La lectura de un libro ajeno por la cuenta maestra exige una consulta registrada por ella en ese libro, con vigencia de 30 minutos; sin consulta solo ve la portada. El dueño **puede** nombrarse a sí mismo cuenta maestra (queda anotado) | ¿Se prohíbe que la dueña se asigne a sí misma? ¿30 minutos es el tiempo correcto? |
+| I3 | Todo movimiento del libro de Papá lleva `en_nombre_de` y motivo; la salida hacia un libro personal deja una entrada propia en la bitácora que ve el suplente (el aviso con notificación, en la Fase 2) | ¿Toda salida hacia un libro personal debe avisar al suplente? |
+| I4 | Albacea y suplente cuentan solo si su membresía del hogar sigue activa y con Finanzas; si el albacea sale, el suplente escribe | — |
+| I5 | Las acciones `finanzas*` y las tablas `fin_*` de la bitácora son solo del servidor | — |
+| M6 | La cuenta maestra que no es la dueña no cambia la configuración del hogar (categorías, cuentas de gasto, días inhábiles, importaciones); la pareja sí | ¿Solo el dueño configura lo del hogar? |
+
+### Garantía y límites del "solo agregar" (M13)
+
+`impedir_cambios_solo_agregar()` y la falta de permisos impiden editar, borrar o vaciar un libro (movimientos, conciliaciones, cierres, importaciones, bitácora) a **cualquier rol de la API**, incluidos `service_role` y el dueño de la tabla en una sesión normal. No es una barrera contra quien administra la base: el dueño de las tablas (`postgres` o `supabase_admin`) puede deshabilitar los triggers, cambiar el esquema o borrar la tabla. Esa puerta es del dueño del proyecto, no de la app; por eso la copia diaria cifrada (`herramientas/respaldo`) es parte de la garantía: guarda la copia fuera de la base y de la laptop, y no compartas la contraseña de la base ni la llave `service_role`.
 
 ### Contrato para la app (cola sin conexión y repositorios)
 
@@ -120,7 +140,7 @@ Migración `20261021000000_finanzas_mvp1.sql`, según `docs/specs/fase-1-finanza
 - **Movimientos:** `registrado_en` es **obligatorio** (si faltara, cada reenvío sería distinto). No mandes `recibido_en`, `libro_origen_id` ni `libro_destino_id` (no tienen permiso de columna). `registrado_por` y `realizado_por` toman la sesión por omisión.
 - **Columnas que la app puede mandar y el servidor sobrescribe:** `fin_cuentas.creada_por`, `fin_dias_inhabiles.revisado_por/revisado_en`, `fin_semanas.activada_por/activada_en`. `cerrado_en` y `creado_en` de cierres, conciliaciones e importaciones sí se aceptan del dispositivo.
 - **Orden de subida:** cuentas → movimientos; el movimiento de **ajuste** antes que su **conciliación**; **cierre** (y sus partidas y abonos) antes de cambiar la semana a `cerrada`; reabrir = `UPDATE` solo del `estado` (a `activa`, `pendiente_ingreso` o `por_cerrar`).
-- **Errores:** `23503` = falta algo de lo que depende (otra cuenta, el original de una anulación…; la cola reintenta). `23505` = duplicado o mismo id con otro contenido. `23514` = check de la tabla (monto, motivo, lunes, cascada…). `22023` = regla de negocio (combinación de cuentas, libro equivocado, papel…). `55000` = estado (cuenta no activa, semana cerrada). `42501` = sin permiso o columna que no cambia. Ninguno es de las clases que la cola reintenta (08, 40001, 40P01, 53, 57).
+- **Errores:** `23503` = falta algo de lo que depende (otra cuenta, el original de una anulación…; la cola reintenta). `23505` = duplicado o mismo id con otro contenido. `23514` = check de la tabla o falta `en_nombre_de`/motivo en el libro de Papá (monto, motivo, lunes, cascada…). `22023` = regla de negocio (combinación de cuentas, libro equivocado, papel…). `55000` = estado (cuenta no activa, semana cerrada). `42501` = sin permiso o columna que no cambia. Ninguno es de las clases que la cola reintenta (08, 40001, 40P01, 53, 57).
 - **Entre libros:** solo `transferencia` y `pago_deuda` (y su anulación) cruzan de un libro a otro; se ven desde los dos. Ojo para el cuadre por libro: una aportación cambia el patrimonio de cada libro sin pasar por el resultado.
 
 ## Pruebas
@@ -135,7 +155,7 @@ Crea una base desechable, aplica `tests/00_emulacion_supabase.sql` (roles `anon`
 
 | Archivo | Comprueba |
 |---|---|
-| `10_esquema.sql` | RLS en **todas** las tablas de `public` (también las futuras); funciones SECURITY DEFINER con `search_path`; `anon` sin privilegios; nadie con TRUNCATE; matriz (59 filas, D18 y D19) y su alineación con la app (I1); persona automática al registrarse; privilegios por omisión de lo que se cree después (M1); las 21 tablas `fin_*` con `hogar_id` y bitácora, los libros solo agregar sin UPDATE/DELETE/TRUNCATE ni reglas para eso, vistas con `security_invoker`, una cuenta maestra por hogar |
+| `10_esquema.sql` | RLS en **todas** las tablas de `public` (también las futuras); funciones SECURITY DEFINER con `search_path`; `anon` sin privilegios; nadie con TRUNCATE; matriz (59 filas, D18 y D19) y su alineación con la app (I1); persona automática al registrarse; privilegios por omisión de lo que se cree después (M1); las 21 tablas `fin_*` con `hogar_id` y bitácora, los libros solo agregar sin UPDATE/DELETE/TRUNCATE ni reglas para eso, vistas con `security_invoker`, una cuenta maestra por hogar; triggers de las salvaguardas y ayudantes internos que la API no puede ejecutar |
 | `20_finanzas_roles.sql` | **Criterio 26 con D19:** cada quien ve y registra en su libro y en los compartidos; la pareja no ve el libro personal de la dueña (en ninguna tabla ni vista) ni al revés; la aportación al compartido se ve desde los dos libros; familiar, cuidador y casa no ven nada de `fin_*` (tablas, vistas, bitácora) ni escriben; nadie registra a nombre de otro; la baja quita el acceso |
 | `21_finanzas_albacea.sql` | **D19:** el albacea registra en nombre de Papá con motivo (sin motivo falla); con albacea vigente el suplente solo lee; máximo un albacea y un suplente, solo adultos con Finanzas; si el albacea deja el cargo, el suplente escribe; `fin_crear_libro_representado` (solo dueño, idempotente) |
 | `22_finanzas_solo_agregar.sql` | **Criterios 25, 9 y 16:** nadie (ni dueña, ni `service_role`, ni `postgres`) edita, borra ni vacía movimientos, conciliaciones, cierres o importaciones; un gasto de una semana cerrada se corrige con anulación y contraasiento y la semana se recalcula; la foto del cierre no cambia; reglas de la anulación |
@@ -144,15 +164,19 @@ Crea una base desechable, aplica `tests/00_emulacion_supabase.sql` (roles `anon`
 | `25_finanzas_conciliacion.sql` | **Criterio 14:** la conciliación con diferencia exige su ajuste con motivo (dirección, monto y fecha correctos), queda en la bitácora y el ajuste se ve |
 | `26_finanzas_semanas.sql` | **Criterio 24:** cierre con pendientes, la semana cerrada no cambia, se reabre (solo el estado, en la bitácora) y se vuelve a cerrar con la versión 2 del cierre |
 | `27_finanzas_idempotencia.sql` | **Criterio 27:** reenviar el mismo id con el mismo contenido no duplica ni falla (con y sin `ON CONFLICT DO NOTHING`, también anulaciones, aperturas y partidas de semanas ya cerradas); con otro contenido, 23505 |
-| `28_finanzas_maestra.sql` | **D19 y D18:** la cuenta maestra lee todo y no escribe en lo ajeno; sus consultas quedan en la bitácora; cualquier miembro ve que existe; solo el dueño la asigna (nunca familiar ni Casa); la dueña ya no ve el historial de GRAVITY ni las finanzas personales de otros en la bitácora |
+| `28_finanzas_maestra.sql` | **D19, D18, I2, M6 y M10:** la cuenta maestra ve la portada sin consulta y el contenido de un libro ajeno solo con una consulta registrada y vigente (30 minutos, por libro y por persona; vence; la de otra persona no sirve; no se la escribe a mano); nunca escribe en lo ajeno ni cambia la configuración del hogar (la dueña sí); cualquier miembro ve que existe; solo el dueño la asigna (nunca familiar ni Casa) y el cambio queda en la bitácora para todo adulto con Finanzas; la dueña ya no ve el historial de GRAVITY ni las finanzas personales de otros |
 | `29_finanzas_configuracion.sql` | Pensión de Papá (días 1 y 11) y apoyo bimestral; vigencias sin traslape; ingresos, deudas (grupo prioritario, tasas), compromisos y sobres; `regla_inhabil` por defecto `sin_cambio`; parámetros por libro; días inhábiles; libros compartidos e inactivos; libro personal automático |
-| `30_bitacora.sql` | Nadie la actualiza, borra ni vacía (cada rol, `service_role` y el dueño de la tabla); cada quien agrega solo a su nombre y en su hogar; nadie usa las acciones reservadas a los triggers (M2) |
+| `30_bitacora.sql` | Nadie la actualiza, borra ni vacía (cada rol, `service_role` y el dueño de la tabla); cada quien agrega solo a su nombre y en su hogar; nadie usa las acciones reservadas a los triggers (M2); **I5:** las acciones `finanzas*` y las tablas `fin_*` (con mayúsculas, espacios o `public.`) son solo del servidor, para todo rol de la app |
+| `31_finanzas_representado.sql` | **I3 e I4:** todo movimiento del libro de Papá (también ingreso, apertura, reclasificación y anulación) lleva `en_nombre_de` y motivo; la salida hacia un libro personal deja su entrada en la bitácora, que ve el suplente; el albacea dado de baja o sin Finanzas deja de contar y el suplente escribe |
+| `32_finanzas_compartido.sql` | **I1:** la pareja no saca a la dueña del compartido (ni moviendo su fecha de inicio); solo quien lo creó o el dueño cambia la membresía de otra persona; nunca menos de 2 miembros vigentes (las bajas del hogar cuentan como ausencia); cada quien puede salirse si quedan 2; también vale para las funciones del servidor |
 | `40_aislamiento_hogares.sql` | Una persona de otro hogar no ve ni toca nada |
 | `50_invitaciones.sql` | Solo el dueño las ve y crea; token solo en hash; correo confirmado; expiración, revocación y reuso; volver al hogar con la membresía vencida (M3) |
 | `60_anon.sql` | Sin sesión no se ve ni se ejecuta nada, aun con un `sub` falsificado |
 | `70_membresias_personas.sql` | El cuidador no ve a la familia y su GRAVITY es restringido (D18); el coadministrador no entra a Cuidados; el dueño, GRAVITY propio (D18); quien comparte un libro ve a sus miembros (D19); roles, bajas y fechas de fin; lo propio; dispositivos |
 
-Los casos de la revisión de calidad de la Fase 0 (`docs/revisiones/fase-0.md`: I1, M1, M2 y M3) viven en estos archivos con la clave del hallazgo al inicio de su descripción (p. ej. `M2: …`); `hallazgos_fase0.sql` ya no existe.
+| `80_calidad_fase1.sql` | Guardias de la revisión de calidad de la Fase 1: escalada, roles sin Finanzas, solo agregar (con TRUNCATE en cascada), cruce entre libros, reenvío de otra persona |
+
+Los casos de la revisión de calidad de la Fase 0 (`docs/revisiones/fase-0.md`: I1, M1, M2 y M3) y de la Fase 1 (`docs/revisiones/fase-1.md`: I1 a I5, M6 y M10) viven en estos archivos con la clave del hallazgo al inicio de su descripción (p. ej. `M2: …`, `I2: …`); `hallazgos_fase0.sql` y `hallazgos_fase1.sql` ya no existen.
 
 **Requisitos:** PostgreSQL 15 o superior con el servidor (`initdb`, `pg_ctl`). En Ubuntu: `apt-get install postgresql-16`. El script busca los binarios en el PATH, con `pg_config` o en `/usr/lib/postgresql/*/bin` (o usa `PG_BIN`). El clúster temporal solo escucha por un socket en `/tmp/gravity-pg.*` y se borra al terminar; como root corre el servidor con el usuario `postgres`. En Windows, córrelo en WSL.
 
@@ -202,7 +226,7 @@ La CLI guarda el historial en `supabase_migrations.schema_migrations` y aplica c
 
 **Desarrollo con Supabase local** (Docker): `supabase start` y `supabase db reset` (migraciones + seed). `supabase/.branches` y `supabase/.temp` están ignoradas por git.
 
-**Nota:** `20261020000000_base.sql` se corrigió en el mismo archivo tras la revisión de calidad de la Fase 0, y `20261021000000_finanzas_mvp1.sql` se ha ajustado en su archivo durante la Fase 1, porque ninguna se ha aplicado al proyecto real. Si ya la tenías en Supabase local, corre `supabase db reset`. Desde que se aplique al proyecto real, todo cambio va en una migración nueva.
+**Nota:** `20261020000000_base.sql` se corrigió en el mismo archivo tras la revisión de calidad de la Fase 0, y `20261021000000_finanzas_mvp1.sql` se ajustó en su archivo durante la Fase 1, porque ninguna se ha aplicado al proyecto real. Las correcciones de la revisión de calidad de la Fase 1 ya van en una migración nueva (`20261023000000_finanzas_salvaguardas.sql`). Si ya la tenías en Supabase local, corre `supabase db reset`. Desde que se aplique al proyecto real, todo cambio va en una migración nueva.
 
 ## Convenciones para migraciones nuevas
 
@@ -211,11 +235,12 @@ La CLI guarda el historial en `supabase_migrations.schema_migrations` y aplica c
 3. Funciones SECURITY DEFINER con `set search_path = ''` y nombres calificados; `revoke execute … from public, anon, authenticated` y `grant` a quien corresponda (en `public`, `authenticated` las recibe por omisión y quedan como RPC).
 4. Dinero en `bigint` de centavos; fechas `date` / `timestamptz`; UUID que puede generar el dispositivo (cola sin conexión idempotente).
 5. Libros solo-agregar: sin reglas ni privilegios de UPDATE/DELETE y los dos triggers de `impedir_cambios_solo_agregar()` (fila y TRUNCATE), como en `bitacora` y en los libros de Finanzas. Con la cola sin conexión: trigger `fin_una_vez('estricto', <columnas del servidor>)` (o uno propio, como el de `fin_movimientos`) para que un reenvío idéntico no falle.
-9. Los errores de los triggers usan 23xxx, 22xxx, 42501 o 55000; nunca clases que la cola reintenta (08, 40001, 40P01, 53, 57). 23503 solo para "falta algo de lo que depende" (la cola lo reintenta).
-10. Dentro de un `IF` de PL/pgSQL, envuelve cada `CASE` en paréntesis (si no, su `THEN` corta la condición). Un trigger compartido por varias tablas no lee en una misma expresión columnas que solo tiene una de ellas.
-6. Cambios que importan: trigger `registrar_cambio_en_bitacora('hogar_id', <columnas a omitir>)`. Las entradas que agregue la app usan acciones propias en minúsculas (nunca `insertar`, `actualizar` ni `borrar`).
+6. Cambios que importan: trigger `registrar_cambio_en_bitacora('hogar_id', <columnas a omitir>)`. Las entradas que agregue la app usan acciones propias en minúsculas (nunca `insertar`, `actualizar` ni `borrar`, ni un prefijo reservado como `finanzas`, ni una tabla `fin_*`: son del servidor).
 7. Pruebas nuevas en `tests/NN_*.sql`. Las de `10_esquema.sql` y `60_anon.sql` ya revisan solas que toda tabla nueva tenga RLS y que `anon` no la vea.
 8. Si la migración llena una tabla de catálogo, agrégala a `$script:TablasDeMigracion` en `herramientas/respaldo/respaldo_comun.ps1`.
+9. Los errores de los triggers usan 23xxx, 22xxx, 42501 o 55000; nunca clases que la cola reintenta (08, 40001, 40P01, 53, 57). 23503 solo para "falta algo de lo que depende" (la cola lo reintenta).
+10. Dentro de un `IF` de PL/pgSQL, envuelve cada `CASE` en paréntesis (si no, su `THEN` corta la condición). Un trigger compartido por varias tablas no lee en una misma expresión columnas que solo tiene una de ellas.
+11. Corregir una función o regla de una migración ya revisada: migración nueva con `create or replace function` (y `drop policy` + `create policy`), no editar la anterior (así se hizo con `20261023000000_finanzas_salvaguardas.sql`).
 
 ## Pendientes conocidos
 
@@ -226,7 +251,8 @@ La CLI guarda el historial en `supabase_migrations.schema_migrations` y aplica c
 | M13 | Un mismo token de avisos puede quedar a nombre de varias personas (tablet compartida): token único global con una función que lo reasigne, o avisos de la tablet solo a la cuenta Casa | Fase 2 |
 | M15 | Mantener activa la confirmación de correo en Supabase Auth (`aceptar_invitacion` confía en ella) | Al crear el proyecto (dueño) |
 | Fase 1 | Las reglas de `fin_*` llaman `fin_puede()` por fila; con muchos datos conviene cambiarlas por una lista de libros legibles calculada una vez por consulta | Si la pantalla de movimientos pasa de 2 s |
-| Fase 1 | Cualquier miembro puede agregar a la bitácora una entrada con `tabla` `fin_*` y un `libro_id` en el detalle; la verán quienes lean ese libro (con su autor real). Restringir `tabla` en las entradas que agrega la app | Con M2 (parte 2) |
+| Fase 1 | La cuenta maestra lee el **historial de GRAVITY** (entradas `gravity.*`) sin consulta registrada: hoy es solo bitácora. Cuando exista la tabla del historial, debe seguir el mismo patrón que los libros (consulta registrada, vigencia de 30 minutos) | Fase 2 |
+| Fase 1 | En un libro compartido, el dueño del hogar solo puede cambiar la membresía de otra persona si es miembro de ese libro (si no, ni lo ve). Si el dueño no suele ser miembro, hace falta una función `SECURITY DEFINER` para ese caso | Si el dueño responde que sí |
 | Fase 5 | Gastos de cuidado de la cuidadora (`finanzas` × `escribir` restringido) y GRAVITY restringido de la cuidadora: necesitan su regla propia (hoy no escriben) | Fase 5 |
 
 ## Respaldos

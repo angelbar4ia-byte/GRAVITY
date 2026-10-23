@@ -9,8 +9,7 @@
 // lo oculta con `ensureVisible`. (+) Ingreso extra solo lo deja a la vista en
 // pantallas de 850 dp o más.
 //
-// FALLA HOY A PROPÓSITO (etiqueta `hallazgo`).
-@Tags(['hallazgo'])
+// Resuelto (sin etiqueta `hallazgo`).
 library;
 
 import 'package:flutter/material.dart';
@@ -45,7 +44,6 @@ void main() {
                 'dp de una pantalla de ${tamano.height.round()} dp',
           );
         },
-        tags: ['hallazgo'],
       );
     }
   }

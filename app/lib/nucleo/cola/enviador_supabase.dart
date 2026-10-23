@@ -25,6 +25,7 @@ library;
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../base_local/base_local.dart' show OrigenRegistro;
 import '../sesion/errores_red.dart';
 import 'cola_sin_conexion.dart';
 import 'contrato_servidor.dart';
@@ -89,6 +90,16 @@ class EnviadorSupabase implements EnviadorOrdenado {
     if (tabla == null) {
       throw RechazoEnvio(
         'La app no sabe a dónde subir "${peticion.tipo}" (falta su tabla).',
+      );
+    }
+    // D14: el dinero (y lo personal) nunca sale con el origen "tablet de la
+    // casa" (solo el nombre, sin PIN); `encolar` ya lo impide, y esto cubre un
+    // registro viejo o un tipo mal declarado.
+    if (peticion.origen == OrigenRegistro.tabletCasa &&
+        (tabla.startsWith('fin_') || esTipoPersonal(peticion.tipo))) {
+      throw const RechazoEnvio(
+        'Lo personal pide nombre y PIN: no se sube desde la tablet de la casa '
+        'solo con el nombre (D14).',
       );
     }
     try {

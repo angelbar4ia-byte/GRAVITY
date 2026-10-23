@@ -259,6 +259,10 @@ enum TipoIngreso { salario, independiente, prestaciones, pension, otro }
 /// Monto y calendario de un ingreso durante un periodo
 /// (`fin_vigencias_ingreso`). Un cambio de neto crea una vigencia nueva y de
 /// la anterior solo se cierra [hasta] (5.1 bis, punto 2).
+///
+/// Aquí [desde] y [hasta] son **fechas inclusivas** (el servidor compara con
+/// `daterange(desde, hasta, '[]')`): el último día de una vigencia es su
+/// `hasta`. No confundir con `hasta` de [MiembroLibro], que es exclusivo.
 class VigenciaIngreso {
   final String id;
   final String ingresoId;

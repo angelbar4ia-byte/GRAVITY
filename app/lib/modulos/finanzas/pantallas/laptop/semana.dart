@@ -210,10 +210,7 @@ class _Dato extends StatelessWidget {
   final int centavos;
 
   @override
-  Widget build(BuildContext context) => Row(
-    mainAxisSize: MainAxisSize.min,
-    children: [Text('$etiqueta: '), Monto(centavos)],
-  );
+  Widget build(BuildContext context) => DatoConMonto(etiqueta, centavos);
 }
 
 class _TablaPartidas extends StatelessWidget {

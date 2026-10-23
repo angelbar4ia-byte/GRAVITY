@@ -39,8 +39,9 @@ select pruebas.falla($$select pruebas.registrar('gasto', 'c6000000-0000-4000-800
   'en_nombre_de es el titular del libro (Papá), no otra persona', '22023');
 select pruebas.ok(
   pruebas.registrar('transferencia', 'c3000000-0000-4000-8000-000000000001', 'c6000000-0000-4000-8000-000000000001',
-                    50000) is not null,
-  'Ana aporta de su banco a la cuenta de Papá (transferencia entre libros)');
+                    50000, p_motivo => 'Aportación de Ana para las medicinas del mes (ejemplo)',
+                    p_en_nombre_de => 'e0000000-0000-4000-8000-000000000001') is not null,
+  'Ana aporta de su banco a la cuenta de Papá (transferencia entre libros), en su nombre y con motivo (I3)');
 
 -- ---------------------------------------------------------------- el suplente
 select pruebas.como('alex@ejemplo.test');

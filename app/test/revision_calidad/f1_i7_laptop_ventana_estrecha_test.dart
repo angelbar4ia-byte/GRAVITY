@@ -7,8 +7,10 @@
 // - M7: con la letra al 150 % varias secciones (Semana, Ingresos, Categorías,
 //   Compromisos, Ajustes y el propio asistente) se desbordan.
 //
-// FALLAN HOY A PROPÓSITO las pruebas con la etiqueta `hallazgo`. El control
-// (1440 dp, letra normal, todas las secciones) pasa y debe seguir pasando.
+// Estado: I7 resuelto (sin etiqueta). M7 conserva la etiqueta `hallazgo`: las
+// secciones de Finanzas ya caben a 1100 dp con letra 1.5, pero la pantalla
+// principal de GRAVITY (diseno, pantalla_principal.dart) todavía se desborda en
+// ese tamaño y la prueba la arma antes de ir a Finanzas.
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gravity/modulos/finanzas/finanzas.dart';
@@ -60,7 +62,6 @@ void main() {
             'sin Flexible (laptop/arranque.dart, Resumen)',
       );
     },
-    tags: ['hallazgo'],
   );
 
   testWidgets(

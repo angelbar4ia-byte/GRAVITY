@@ -368,8 +368,11 @@ class CalendarioPago {
         var anio = desde.anio;
         var mes = desde.mes;
         while (!Fecha(anio, mes, 1).despuesDe(hasta)) {
-          final delMes = {for (final d in diasDelMes) d.en(anio, mes)}.toList()
-            ..sort();
+          // Una lista, no un conjunto: dos días fijos que caen el mismo día
+          // en un mes corto (30 y último en febrero) se pagan los dos, como
+          // cuenta el equivalente semanal (24 pagos al año; M4 de la revisión
+          // de la Fase 1).
+          final delMes = [for (final d in diasDelMes) d.en(anio, mes)]..sort();
           for (final f in delMes) {
             if (!f.antesDe(desde) && !f.despuesDe(hasta)) fechas.add(f);
           }

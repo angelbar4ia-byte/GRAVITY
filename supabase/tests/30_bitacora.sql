@@ -89,7 +89,7 @@ begin
     loop
       perform pruebas.falla(format($q$
         insert into public.bitacora (hogar_id, accion, tabla, registro_id, detalle)
-        values ('b0000000-0000-4000-8000-000000000001', %L, 'fin_movimientos',
+        values ('b0000000-0000-4000-8000-000000000001', %L, 'membresias',
                 'c0000000-0000-4000-8000-000000000001',
                 '{"antes": {"monto_centavos": 185000, "descripcion": "Despensa semanal (ejemplo)"}}')$q$,
         v_accion),
@@ -101,15 +101,15 @@ $$;
 select pruebas.como('casa@ejemplo.test');
 select pruebas.falla($$
   insert into public.bitacora (hogar_id, accion, tabla)
-  values ('b0000000-0000-4000-8000-000000000001', 'Borrar', 'fin_movimientos')$$,
+  values ('b0000000-0000-4000-8000-000000000001', 'Borrar', 'membresias')$$,
   'M2: tampoco con mayúsculas', '23514');
 select pruebas.falla($$
   insert into public.bitacora (hogar_id, accion, tabla)
-  values ('b0000000-0000-4000-8000-000000000001', ' borrar', 'fin_movimientos')$$,
+  values ('b0000000-0000-4000-8000-000000000001', ' borrar', 'membresias')$$,
   'M2: ni con espacios', '23514');
 select pruebas.falla($$
   insert into public.bitacora (hogar_id, accion, tabla)
-  values ('b0000000-0000-4000-8000-000000000001', 'bоrrar', 'fin_movimientos')$$,
+  values ('b0000000-0000-4000-8000-000000000001', 'bоrrar', 'membresias')$$,
   'M2: ni con letras de otro alfabeto que se parecen', '23514');
 select pruebas.igual(pruebas.afecta($$
   insert into public.bitacora (hogar_id, accion, detalle)
@@ -135,6 +135,66 @@ select pruebas.ok(
   and pruebas.cuenta($$select * from public.bitacora
                        where hogar_id = 'b0000000-0000-4000-8000-000000000002'$$) = 0,
   'El dueño ve la bitácora de su hogar y no la de otro');
+
+-- I5 (revisión de calidad de la Fase 1): las acciones finanzas* y las tablas
+-- fin_* son del servidor (triggers y funciones SECURITY DEFINER). Nadie de la
+-- app, ni el dueño, escribe entradas que parezcan consultas de la cuenta
+-- maestra o cambios de Finanzas con el libro de otra persona.
+do $$
+declare
+  v_correo text;
+  v_caso   record;
+begin
+  foreach v_correo in array array['ana@ejemplo.test', 'alex@ejemplo.test', 'marta@ejemplo.test',
+                                  'carla@ejemplo.test', 'diana@ejemplo.test', 'casa@ejemplo.test']
+  loop
+    perform pruebas.como(v_correo);
+    for v_caso in
+      select * from (values
+        ('finanzas.consulta_maestra', 'fin_libros'),
+        ('finanzas.maestra_asignada', 'membresias'),
+        ('finanzas.salida_libro_representado', 'fin_movimientos'),
+        ('finanzas.otra_cosa', null),
+        ('finanzas_otra_cosa', null),
+        ('finanzas', null),
+        ('consulta_de_la_maestra', 'fin_libros'),
+        ('consulta_de_la_maestra', 'FIN_libros'),
+        ('consulta_de_la_maestra', ' fin_libros'),
+        ('consulta_de_la_maestra', 'public.fin_movimientos'),
+        ('consulta_de_la_maestra', 'fin_v_saldos')) as c (accion, tabla)
+    loop
+      perform pruebas.falla(format($q$
+        insert into public.bitacora (hogar_id, accion, tabla, registro_id, detalle)
+        values ('b0000000-0000-4000-8000-000000000001', %L, %L, 'x',
+                jsonb_build_object('libro_id', pruebas.libro_personal('ana@ejemplo.test')::text))$q$,
+        v_caso.accion, v_caso.tabla),
+        format('I5: %s no agrega accion "%s" con tabla "%s"', v_correo, v_caso.accion, coalesce(v_caso.tabla, '-')),
+        '42501');
+    end loop;
+  end loop;
+end
+$$;
+select pruebas.como('carla@ejemplo.test');
+select pruebas.falla($$insert into public.bitacora (hogar_id, accion, tabla) values
+  ('b0000000-0000-4000-8000-000000000001', 'Finanzas.consulta_maestra', 'fin_libros')$$,
+  'I5: tampoco con mayúsculas', '42501');
+select pruebas.igual(pruebas.afecta($$insert into public.bitacora (hogar_id, accion, tabla, detalle)
+  values ('b0000000-0000-4000-8000-000000000001', 'financiamiento_pedido', 'finanzas_ejemplo', '{}')$$), 1,
+  'I5: una acción que solo se parece (sin el prefijo finanzas) no se confunde');
+select pruebas.como('ana@ejemplo.test');
+select pruebas.igual(pruebas.cuenta($$select * from public.bitacora
+  where accion = 'finanzas.consulta_maestra' and persona_id = pruebas.id_persona('carla@ejemplo.test')$$), 0,
+  'I5: la dueña no ve ninguna consulta falsa a nombre de Carla');
+-- Lo del servidor sí entra: las funciones y triggers escriben con sus propios permisos.
+select pruebas.ok(
+  exists (select 1 from public.bitacora where tabla = 'fin_movimientos' and accion = 'insertar'),
+  'Los triggers siguen escribiendo la bitácora de Finanzas (insertar)');
+-- Ni service_role la falsifica por error: el formato de la acción no cambia, pero su inserción directa sí pasa.
+select pruebas.como_servicio();
+select pruebas.igual(pruebas.afecta($$insert into public.bitacora (hogar_id, accion, tabla)
+  values ('b0000000-0000-4000-8000-000000000001', 'finanzas.mantenimiento', 'fin_libros')$$), 1,
+  'service_role (funciones del servidor) sí puede escribir entradas de Finanzas');
+select pruebas.como('carla@ejemplo.test');
 
 -- La bitácora automática no copia el hash del token de invitaciones.
 select pruebas.igual(

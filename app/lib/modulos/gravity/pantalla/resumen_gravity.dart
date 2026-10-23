@@ -1,8 +1,15 @@
 /// Datos que muestran la pantalla principal de GRAVITY y "Hoy" del teléfono.
 ///
-/// En la Fase 0 son **datos de ejemplo** (nunca datos reales). Cuando existan
-/// las herramientas de cada módulo (`habitos.resumen_hoy`, etc.), se reemplaza
-/// [datosResumenGravityProvider] sin tocar las pantallas:
+/// **Con una sesión real no hay cifras de ejemplo** (revisión de la Fase 1,
+/// I9: "no se inventan datos"): mientras ningún módulo entregue su resumen, los
+/// datos son [ResumenGravity.sinDatosTodavia] y las pantallas muestran un
+/// estado vacío honesto ("Sin datos todavía"). Los **datos de ejemplo** de los
+/// bocetos ([ResumenGravity.ejemplo], nunca datos reales) quedan solo para el
+/// modo demostración (sin servidor) y las pruebas.
+///
+/// Cuando existan las herramientas de cada módulo (`finanzas.resumen_semana`,
+/// `habitos.resumen_hoy`, etc.), se reemplaza [datosResumenGravityProvider] sin
+/// tocar las pantallas:
 /// `datosResumenGravityProvider.overrideWith((ref) => ...)`.
 ///
 /// Las pantallas leen [resumenGravityProvider], que **siempre** pasa los datos
@@ -20,6 +27,7 @@ import '../../../diseno/componentes/nucleo_gravity.dart';
 import '../../../diseno/componentes/semaforo.dart';
 import '../../../nucleo/contratos/roles.dart';
 import '../../../nucleo/permisos/permisos.dart';
+import '../../../nucleo/sesion/proveedores_sesion.dart';
 
 @immutable
 class EventoAgenda {
@@ -212,9 +220,15 @@ class ResumenGravity {
     this.cuidados,
     this.finanzas,
     this.avisos = const [],
+    this.sinDatos = false,
   });
 
   final bool enLinea;
+
+  /// `true` si ningún módulo ha entregado todavía su resumen: las pantallas
+  /// dicen "Sin datos todavía" en lugar de "Nada pendiente". Con datos
+  /// (o de ejemplo), `false`.
+  final bool sinDatos;
   final List<EventoAgenda> agenda;
 
   /// Hábitos de hoy (módulo Hábitos).
@@ -247,6 +261,7 @@ class ResumenGravity {
     final siguiente = this.siguiente;
     return ResumenGravity(
       enLinea: enLinea,
+      sinDatos: sinDatos,
       agenda: [
         for (final evento in agenda)
           if (completo(evento.modulo)) evento,
@@ -268,7 +283,12 @@ class ResumenGravity {
     );
   }
 
-  /// Datos de ejemplo de los bocetos (no son datos reales).
+  /// Lo que se muestra con una sesión real mientras ningún módulo entregue su
+  /// resumen: nada inventado, solo el aviso honesto.
+  static const sinDatosTodavia = ResumenGravity(sinDatos: true);
+
+  /// Datos de ejemplo de los bocetos (no son datos reales). Solo para el modo
+  /// demostración y las pruebas.
   static const ejemplo = ResumenGravity(
     agenda: [
       EventoAgenda('20:00', 'Inglés · lección del día', modulo: Modulo.habitos),
@@ -327,12 +347,17 @@ class ResumenGravity {
   );
 }
 
-/// Datos del resumen **antes** de filtrar por rol. Fase 0: datos de ejemplo.
-/// Las fases siguientes lo reemplazan con lo que entregue cada módulo (y deben
-/// pedir solo lo que el rol puede ver: el filtro de [resumenGravityProvider] es
-/// la última defensa, no la única).
+/// Datos del resumen **antes** de filtrar por rol.
+///
+/// - Modo demostración (sin servidor): los datos de ejemplo de los bocetos.
+/// - Sesión real: [ResumenGravity.sinDatosTodavia] hasta que cada módulo
+///   entregue el suyo (las fases siguientes lo reemplazan y deben pedir solo lo
+///   que el rol puede ver: el filtro de [resumenGravityProvider] es la última
+///   defensa, no la única).
 final datosResumenGravityProvider = Provider<ResumenGravity>(
-  (ref) => ResumenGravity.ejemplo,
+  (ref) => ref.watch(servicioSesionProvider).esDemostracion
+      ? ResumenGravity.ejemplo
+      : ResumenGravity.sinDatosTodavia,
 );
 
 /// Resumen que muestran las pantallas: los datos pasados por el rol efectivo

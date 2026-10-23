@@ -52,6 +52,102 @@ void main() {
     });
   });
 
+  group('Dos días fijos que coinciden en un mes corto (M4)', () {
+    final treintaYUltimo = CalendarioPago.diasFijos([
+      const DiaDelMes(30),
+      DiaDelMes.ultimo,
+    ], regla: ReglaDiaInhabil.sinCambio);
+
+    test('en febrero el 30 y el último día son el 28: se pagan los dos', () {
+      final febrero = treintaYUltimo.fechasNominales(
+        Fecha(2026, 2, 1),
+        Fecha(2026, 2, 28),
+      );
+      expect(febrero, [Fecha(2026, 2, 28), Fecha(2026, 2, 28)]);
+    });
+
+    test('el año completo tiene 24 pagos, como cuenta el equivalente semanal',
+        () {
+      final anio = treintaYUltimo.fechasNominales(
+        Fecha(2026, 1, 1),
+        Fecha(2026, 12, 31),
+      );
+      expect(anio, hasLength(24));
+      expect(treintaYUltimo.vecesAlAnio, 24);
+      expect(anio.where((f) => f.mes == 2), hasLength(2));
+      expect(anio.where((f) => f.mes == 1), hasLength(2),
+          reason: 'enero: el 30 y el 31');
+    });
+
+    test('fechasDePago los deja pasar los dos y respeta el orden', () {
+      final pagos = treintaYUltimo.fechasDePago(
+        Fecha(2026, 2, 1),
+        Fecha(2026, 3, 31),
+        festivos,
+      );
+      expect(pagos.map((p) => p.ajustada.toString()), [
+        '2026-02-28',
+        '2026-02-28',
+        '2026-03-30',
+        '2026-03-31',
+      ]);
+    });
+
+    test('un ingreso con esos dos días cuenta los dos pagos de febrero', () {
+      final ingreso = Ingreso(
+        id: 'ing-dos-dias',
+        libroId: casa,
+        nombre: 'Pago (ejemplo)',
+        cuentaOrigenId: 'sueldo-ana',
+        cuentaDestinoId: 'banco-casa',
+        vigencias: [
+          VigenciaIngreso(
+            id: 'v-dos-dias',
+            ingresoId: 'ing-dos-dias',
+            montoNeto: 100000,
+            calendario: const CalendarioConfig.mensual([
+              30,
+              0,
+            ], regla: ReglaDiaInhabil.sinCambio),
+            desde: Fecha(2026, 1, 1),
+          ),
+        ],
+      );
+      final pagos = ingreso.pagosEntre(
+        Fecha(2026, 2, 1),
+        Fecha(2026, 2, 28),
+        festivos,
+      );
+      expect(pagos, hasLength(2));
+      expect(pagos.fold(0, (t, p) => t + p.$2), 200000);
+      final datos = hogarEjemplo().copiar(ingresos: [ingreso]);
+      final vence = vencimientosEntre(
+        datos,
+        casa,
+        Fecha(2026, 2, 23),
+        Fecha(2026, 3, 1),
+      ).where((v) => v.origenId == 'ing-dos-dias');
+      expect(vence, hasLength(2), reason: 'la semana ve los dos');
+    });
+
+    test('un solo día, o dos que no coinciden, no cambian', () {
+      expect(
+        const CalendarioConfig.mensual([1, 11]).calendario.fechasNominales(
+          Fecha(2026, 2, 1),
+          Fecha(2026, 2, 28),
+        ),
+        [Fecha(2026, 2, 1), Fecha(2026, 2, 11)],
+      );
+      expect(
+        CalendarioPago.mensual(const DiaDelMes(31)).fechasNominales(
+          Fecha(2026, 2, 1),
+          Fecha(2026, 2, 28),
+        ),
+        [Fecha(2026, 2, 28)],
+      );
+    });
+  });
+
   group('Apoyo 60+ cada bimestre (cada_meses, intervalo 2)', () {
     final apoyo = CalendarioConfig.cadaMeses(Fecha(2026, 9, 1), 2);
 
