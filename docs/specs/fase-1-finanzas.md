@@ -4,7 +4,7 @@
 >
 > Las preguntas para el dueño están en la **sección 9**. Lo que el diseño dejó ambiguo se resolvió con la interpretación más conservadora y se marca como **(interpretación)**; cada una tiene su pregunta.
 >
-> La lógica está en `paquetes/finanzas_dominio` (Dart puro, **224 pruebas** en verde con los ejemplos numéricos del diseño, el cuadre por libro, los calendarios de papá y los libros compartidos). La app (`app/lib/modulos/finanzas`) tiene **@APP@ pruebas propias** en `app/test/modulos/finanzas` (casos de uso, contrato con el servidor, pantallas, libros compartidos, hojas del (+) y la revisión de calidad).
+> La lógica está en `paquetes/finanzas_dominio` (Dart puro, **224 pruebas** en verde con los ejemplos numéricos del diseño, el cuadre por libro, los calendarios de papá y los libros compartidos). La app (`app/lib/modulos/finanzas`) tiene **150 pruebas propias** en `app/test/modulos/finanzas` (casos de uso, contrato con el servidor, pantallas, libros compartidos, hojas del (+) y la revisión de calidad).
 >
 > **Qué cambió en la v0.4:** reglas 15, 17, 22, 45, 50, 51, 53, 55 y 56 (reescritas) y 60 a 67 (nuevas); pantallas 6 (marcas del selector, portada de la cuenta maestra, hoja (+) con cuenta existente, importar con selector de archivos, libros y albaceas, regla de día inhábil por deuda), 6.2 y 6.3; criterios 15, 26, 35, 38 y 42 (ajustados) y 45 a 58 (nuevos). Las secciones 4.5, 9.0 y 9.0 bis no cambian.
 >
@@ -315,7 +315,7 @@ Las secciones de la laptop (Cuentas, Ingresos, Gastos y categorías, Compromisos
 
 ## 7. Criterios de aceptación
 
-Las pruebas del dominio están en `paquetes/finanzas_dominio/test/` (`dart test`, 224 en verde hoy) y las de la app en `app/test/modulos/finanzas/` (`flutter test`, @APP@ en verde hoy: `casos_de_uso_test.dart`, `contrato_servidor_test.dart`, `pantallas_test.dart`, `libros_compartidos_test.dart`, `hojas_y_libros_test.dart` y `revision_fase1_test.dart`).
+Las pruebas del dominio están en `paquetes/finanzas_dominio/test/` (`dart test`, 224 en verde hoy) y las de la app en `app/test/modulos/finanzas/` (`flutter test`, 150 en verde hoy: `casos_de_uso_test.dart`, `contrato_servidor_test.dart`, `pantallas_test.dart`, `libros_compartidos_test.dart`, `hojas_y_libros_test.dart` y `revision_fase1_test.dart`).
 
 | # | Criterio (prueba del diseño) | Cómo se comprueba |
 |---|---|---|

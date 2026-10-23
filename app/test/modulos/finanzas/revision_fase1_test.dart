@@ -221,6 +221,89 @@ void main() {
       );
     });
 
+    test('el saldo inicial, la conciliación, la reclasificación y el pago de '
+        'deuda desde otro libro también van en su nombre y con motivo', () async {
+      final repo = repositorioDe(dueno);
+      addTearDown(repo.cerrar);
+      final servicio = servicioDe(repo, dueno);
+
+      // Saldo inicial de una cuenta nueva: motivo por omisión.
+      final cartera = await servicio.crearCuenta(
+        libroId: libroPapa,
+        nombre: 'Cartera de papá',
+        tipo: TipoCuenta.efectivo,
+        saldoInicial: 100000,
+      );
+      final apertura = repo.datos.movimientos.firstWhere(
+        (m) => m.tipo == TipoMovimiento.apertura && m.cuentaDestinoId == cartera.id,
+      );
+      expect(apertura.enNombreDe, IdsDemostracion.papa);
+      expect(apertura.motivo, 'Saldo inicial');
+
+      // Conciliación sin diferencia: no hay ajuste, y no estorba el motivo.
+      final sinDiferencia = await servicio.conciliar(
+        cuentaId: cartera.id,
+        saldoDeclarado: 100000,
+      );
+      expect(sinDiferencia.ajusteMovimientoId, isNull);
+      // Con diferencia pide el motivo y el ajuste va en su nombre.
+      await expectLater(
+        servicio.conciliar(cuentaId: cartera.id, saldoDeclarado: 90000),
+        throwsA(isA<ErrorFinanzas>()),
+        reason: 'hay diferencia sin motivo',
+      );
+      final conDiferencia = await servicio.conciliar(
+        cuentaId: cartera.id,
+        saldoDeclarado: 90000,
+        motivo: 'Se gastó en la farmacia',
+      );
+      final ajuste = repo.datos.movimientos.firstWhere(
+        (m) => m.id == conDiferencia.ajusteMovimientoId,
+      );
+      expect(ajuste.enNombreDe, IdsDemostracion.papa);
+      expect(ajuste.motivo, 'Se gastó en la farmacia');
+
+      // Reclasificación (de "Por clasificar" a una cuenta de gasto del hogar).
+      final porClasificar = repo.datos.parametrosDe(libroPapa).cuentaPorClasificarId!;
+      final deGasto = repo.datos.cuentas.firstWhere((c) => c.tipo == TipoCuenta.deGasto).id;
+      await expectLater(
+        servicio.registrarMovimiento(
+          tipo: TipoMovimiento.reclasificacion,
+          cuentaOrigenId: porClasificar,
+          cuentaDestinoId: deGasto,
+          monto: 100,
+        ),
+        throwsA(isA<ErrorFinanzas>()),
+        reason: 'sin motivo',
+      );
+
+      // Pago de una deuda de papá desde un libro personal.
+      final tarjeta = await servicio.crearCuenta(
+        libroId: libroPapa,
+        nombre: 'Tarjeta de papá',
+        tipo: TipoCuenta.tarjeta,
+      );
+      final miBanco = repo.cuentaDe(libroDueno, 'Mi banco').id;
+      await expectLater(
+        servicio.registrarMovimiento(
+          tipo: TipoMovimiento.pagoDeuda,
+          cuentaOrigenId: miBanco,
+          cuentaDestinoId: tarjeta.id,
+          monto: 5000,
+        ),
+        throwsA(isA<ErrorFinanzas>()),
+        reason: 'sin motivo',
+      );
+      final pago = await servicio.registrarMovimiento(
+        tipo: TipoMovimiento.pagoDeuda,
+        cuentaOrigenId: miBanco,
+        cuentaDestinoId: tarjeta.id,
+        monto: 5000,
+        motivo: 'Abono a la tarjeta de papá',
+      );
+      expect(pago.movimientos.single.enNombreDe, IdsDemostracion.papa);
+    });
+
     testWidgets('la hoja (+) Gasto pide el motivo siempre en el libro de papá',
         (tester) async {
       final sesion = dueno;
