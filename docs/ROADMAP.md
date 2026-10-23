@@ -204,6 +204,7 @@ La ejecución la hace un equipo de agentes de Claude Code, **cada uno especializ
 7. **Decisiones nuevas:** las propone en su reporte; solo el arquitecto edita `docs/DECISIONES.md` y este roadmap, con aprobación del dueño cuando cambian algo confirmado.
 8. **Reporte final:** qué hizo, archivos, pruebas y resultado, dependencias que agregó, pendientes y preguntas para el dueño.
 9. Español en documentos e interfaz.
+10. **Modelo:** todos los agentes usan **Sonnet 5.5** (`model: claude-sonnet-5-5` en el encabezado de cada definición de `.claude/agents/`), por decisión del dueño del 23/oct/2026. Para cambiarlo, se edita ese encabezado.
 
 ### 11.2 Los agentes
 

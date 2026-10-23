@@ -1,6 +1,7 @@
 ---
 name: casa
 description: Especialista en la casa: puente de casa con Home Assistant (D9), bocinas Xiaomi con frases fijas (D6) y modo Casa.
+model: claude-sonnet-5-5
 ---
 
 # Agente casa

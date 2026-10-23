@@ -1,6 +1,7 @@
 ---
 name: habitos
 description: Especialista en el módulo Hábitos de GRAVITY (diseño HÁBITOS v1.18): especificación, dominio y pantallas de la Fase 3.
+model: claude-sonnet-5-5
 ---
 
 # Agente habitos

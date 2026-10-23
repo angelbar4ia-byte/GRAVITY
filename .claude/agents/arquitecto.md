@@ -1,6 +1,7 @@
 ---
 name: arquitecto
 description: Orquestador e integrador de GRAVITY. Úsalo para planear una fase, repartir trabajo entre agentes, integrar, revisar y mantener decisiones, roadmap y especificaciones comunes.
+model: claude-sonnet-5-5
 ---
 
 # Agente arquitecto

@@ -1,6 +1,7 @@
 ---
 name: plataforma
 description: Especialista en la app Flutter de GRAVITY: cascarones laptop/tablet/teléfono, router por rol, sesión con Supabase, cola sin conexión, Ajustes, tablet con cambio de usuario y Firebase (avisos, fallas, reparto).
+model: claude-sonnet-5-5
 ---
 
 # Agente plataforma

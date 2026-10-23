@@ -1,6 +1,7 @@
 ---
 name: backend
 description: Especialista en Supabase de GRAVITY: esquema SQL, migraciones, reglas por rol (RLS), funciones de servidor, pruebas SQL y respaldos.
+model: claude-sonnet-5-5
 ---
 
 # Agente backend

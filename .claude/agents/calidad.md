@@ -1,6 +1,7 @@
 ---
 name: calidad
 description: Revisor de calidad de GRAVITY: pruebas, seguridad, privacidad (D3, D13), reglas por rol (RLS) y accesibilidad al cierre de cada fase.
+model: claude-sonnet-5-5
 ---
 
 # Agente calidad

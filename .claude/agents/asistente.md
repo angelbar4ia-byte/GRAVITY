@@ -1,6 +1,7 @@
 ---
 name: asistente
 description: Especialista en GRAVITY como asistente: herramientas (D1, D3), barra de órdenes, IA y voz, control de la laptop (D8) y APIs documentadas con OpenAPI y Swagger UI (D16).
+model: claude-sonnet-5-5
 ---
 
 # Agente asistente

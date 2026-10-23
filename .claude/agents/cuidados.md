@@ -1,6 +1,7 @@
 ---
 name: cuidados
 description: Especialista en el módulo Cuidados de GRAVITY: turnos, entrega de turno, medicamentos, comidas de papá, bitácora y cambios urgentes (Fase 5).
+model: claude-sonnet-5-5
 ---
 
 # Agente cuidados

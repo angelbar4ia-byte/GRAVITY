@@ -1,6 +1,7 @@
 ---
 name: alimentacion
 description: Especialista en Alimentación de GRAVITY: menús, recetas paso a paso, lista de compras y precios (Fase 7).
+model: claude-sonnet-5-5
 ---
 
 # Agente alimentacion

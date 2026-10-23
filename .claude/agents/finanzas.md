@@ -1,6 +1,7 @@
 ---
 name: finanzas
 description: Especialista en el módulo Finanzas de GRAVITY (diseño FINANZAS v23): especificación, dominio puro en Dart y pantallas de las Fases 1 y 2.
+model: claude-sonnet-5-5
 ---
 
 # Agente finanzas

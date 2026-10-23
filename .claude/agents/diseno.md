@@ -1,6 +1,7 @@
 ---
 name: diseno
 description: Especialista en UX/UI de GRAVITY: sistema de estilos de 4 capas, estilos (Futurista por defecto), personalidad por módulo, componentes, gadgets, pantallas principales y accesibilidad.
+model: claude-sonnet-5-5
 ---
 
 # Agente diseno
