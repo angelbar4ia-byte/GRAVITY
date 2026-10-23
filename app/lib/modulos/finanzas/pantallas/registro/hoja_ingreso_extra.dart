@@ -95,6 +95,20 @@ class _HojaIngresoExtraState extends ConsumerState<HojaIngresoExtra> {
         (!representado || _motivo.text.trim().isNotEmpty);
     return MarcoHojaRegistro(
       titulo: 'Ingreso extra',
+      // El monto comparte línea con el título; se encoge en vez de partirse.
+      tituloDerecha: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          formatearCentavos(_monto),
+          key: const ValueKey('extra-monto'),
+          textAlign: TextAlign.center,
+          style: v.numero(
+            tamano: 32,
+            peso: FontWeight.w600,
+            color: v.textoFuerte,
+          ),
+        ),
+      ),
       barra: BarraAccionesRegistro(
         llaveGuardar: const ValueKey('extra-guardar'),
         alGuardar: puedeGuardar ? () => _guardar(libro) : null,
@@ -123,20 +137,6 @@ class _HojaIngresoExtraState extends ConsumerState<HojaIngresoExtra> {
                 ],
               ),
             ),
-          // Se encoge en vez de partirse en dos líneas con letra grande.
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              formatearCentavos(_monto),
-              key: const ValueKey('extra-monto'),
-              textAlign: TextAlign.center,
-              style: v.numero(
-                tamano: 36,
-                peso: FontWeight.w600,
-                color: v.textoFuerte,
-              ),
-            ),
-          ),
           TecladoMonto(
             alCambiar: (centavos) => setState(() => _monto = centavos),
             autofocus: true,

@@ -383,6 +383,25 @@ Cada pregunta trae la **propuesta por defecto** con la que se construye si no ha
 | **P15** | Nadie tiene ingreso variable. Papá recibe su **pensión los días 1 y 11** (si cae en fin de semana o festivo, el siguiente día hábil) y **apoyo 60+ cada bimestre** | Base prudente fuera del MVP 1; forma `cada_meses` y varios días fijos al mes (regla 6) |
 | **P19** | (Se sigue de P12) La deuda liquidada libera su abono hacia el grupo prioritario y luego a ahorro | Regla 4 de la sección 4.5 |
 
+### 9.0 bis Respuestas del dueño (23/oct/2026)
+
+Detalle y razones en `docs/DECISIONES.md` (D14, D18 y D19).
+
+| Tema | Respuesta | Qué cambia |
+|---|---|---|
+| Cuenta maestra | Login distinto del suyo; no se prohíbe que el dueño sea maestro; solo lectura total | La maestra no registra nada; la crea el dueño como persona propia |
+| Libro compartido | Quien lo crea es el administrador; cualquiera puede salirse; pública o privada a elección del creador; el dueño no entra si no es miembro | Columna `visibilidad` en `fin_libros`; salir con 2 miembros archiva el libro |
+| Libro de papá | Toda salida con motivo y en su nombre | Ya implementado |
+| Configurar el hogar | Dueño y pareja | Sin cambio |
+| Cuentas de gasto | Se archivan al cerrar la cuenta | El saldo cero solo aplica a activos y pasivos |
+| P13, "la caja" | Caja Popular Mexicana, crédito automotriz | Única deuda con siguiente día hábil |
+| Importar | Con selector de archivos | Dependencia `file_picker` |
+| Orden "registrar gasto" | Hay que decir el verbo | "gasto" suelto no abre nada |
+| Gastos y cuentas | Cuenta existente; si no hay, "Crear cuenta nueva"; categoría opcional | La hoja (+) lo ofrece |
+| Tablets | Cuenta del equipo = Casa con nombre "Hogar"; bandeja de salida sin pedir PIN otra vez | D14 |
+| Aprobación de la v0.3 | El dueño pidió que se le explique la pregunta | Pendiente |
+| Cambio de ingreso | El dueño pidió que se le explique | Pendiente |
+
 Las demás preguntas siguen con su propuesta por defecto.
 
 ### 9.1 Roles y permisos financieros entre miembros (5.0 ter → D5)

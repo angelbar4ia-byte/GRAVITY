@@ -28,7 +28,7 @@ Cuando las decisiones confirmadas cambian el contrato, se reescribe `CONTRATO_CO
 | D16 | APIs documentadas con OpenAPI y Swagger UI | Confirmada (detalles propuestos) |
 | D17 | Reglas técnicas del servidor (Fase 0) | Propuesta |
 | D18 | Decisiones de la revisión de la Fase 0 | Confirmada (21/oct; coadministrador y Cuidados hasta la Fase 5) |
-| D19 | Finanzas por persona, cuentas compartidas, albaceas y cuenta maestra | Confirmada (21/oct; detalles propuestos) |
+| D19 | Finanzas por persona, cuentas compartidas, albaceas y cuenta maestra | Confirmada (21/oct; ampliada 23/oct; detalles propuestos) |
 
 ---
 
@@ -322,6 +322,10 @@ GRAVITY/
 - Nunca se muestran saldos ni datos clínicos en el modo Casa; para verlos, la persona entra con su PIN.
 - Solo **PIN** en las dos tablets (la huella queda para el teléfono personal).
 
+**Respuestas del dueño (23/oct/2026).**
+- La cuenta del equipo de las tablets es la cuenta de rol Casa y su **nombre visible es "Hogar"** (el rol sigue llamándose `casa` en el código).
+- **Bandeja de salida:** un gasto registrado en la tablet pública, con nombre y PIN, y sin señal, **queda en la bandeja de salida y se sube solo cuando hay señal**, sin pedir el PIN otra vez. *(Propuesta técnica: la bandeja guarda el permiso de esa persona cifrado con la llave del dispositivo solo mientras haya algo por subir, lo borra al terminar y caduca a los 7 días; calidad lo revisa.)*
+
 **Pendiente.** Qué contextos se agregan; confirmar la propuesta de identidad.
 
 ---
@@ -390,6 +394,10 @@ Tomadas por el arquitecto con el criterio **más seguro** para cerrar los hallaz
 | Historial de GRAVITY | **Cada quien solo lo suyo**, también el dueño; la **cuenta maestra** (D19) ve todo |
 | PIN fallido | Espera de 30 s que se duplica hasta 15 min |
 | Bloqueo del teléfono | Al abrir y tras 1 minuto en segundo plano |
+| Confirmación de correo en Supabase | **Activa** (confirmado 23/oct) |
+| PIN y montos ocultos *(propuesta; el dueño no está seguro)* | El correo y la contraseña se piden **una vez por dispositivo**; la sesión sigue abierta. Tras unos minutos sin uso (2 por omisión, editable en Ajustes › Privacidad) **los montos se ocultan solos**; para volver a verlos se pide el **PIN** (o la huella en el teléfono). En las tablets el PIN además elige a la persona. Se rechazan los PIN triviales; el largo no cambia por ahora |
+| Mediciones en el Galaxy A52 y la laptop | Sí, cuando sea posible; no es prioridad |
+| Propiedades de los archivos `.xlsx` | Quitado el autor de `data/*.xlsx`; **el historial de git se conserva** |
 
 ---
 
@@ -405,4 +413,24 @@ Tomadas por el arquitecto con el criterio **más seguro** para cerrar los hallaz
 - **D3 sigue igual:** nada de esto va a la IA en la nube ni a las bocinas.
 
 **Qué cambia.** Los libros personales, los compartidos, los albaceas del libro de papá y la cuenta maestra entran al **MVP 1** (Fase 1). Las confirmaciones entre miembros, las deudas internas, la aportación proporcional y la auditoría siguen en la Fase 8. El dueño y la pareja pasan de "total" y "leer todo" a **alcance propio** en Finanzas y GRAVITY.
+
+**Respuestas del dueño del 23/oct/2026 (revisión de calidad de la Fase 1).**
+
+- **Cuenta maestra con login propio.** El dueño usa **su cuenta normal** para lo suyo y entra a la maestra con **un login distinto**. Como cada persona tiene un solo login, la maestra es **otra persona con su propia cuenta**, que crea el dueño (rol coadministrador con la marca de maestra). **No se prohíbe** que el dueño sea también la maestra con su propia persona.
+- **La maestra es solo lectura total:** no registra nada, ni propio; lo suyo lo registra el dueño con su cuenta normal. No tiene (+) ni órdenes que abran una hoja de registro.
+- **Consulta registrada:** para leer el libro de otra persona, la maestra debe tener una consulta registrada (dura 30 min y la app la renueva sola mientras el libro está abierto; la persona no nota nada). Sirve para que cada consulta quede en la bitácora y los demás puedan ver quién miró y cuándo. Solo cambia el valor de la vigencia si el dueño lo pide.
+- **Libros compartidos:**
+  - **Quien lo crea es el administrador:** agrega y saca miembros, decide si es **pública o privada** y lo cierra.
+  - **Cualquier miembro puede salirse** cuando quiera. Si al salir quedan menos de 2 miembros, el libro pasa a archivado, solo lectura *(propuesta)*.
+  - **Privada** (por omisión): la ven y escriben sus miembros; la lee también la maestra. **Pública:** además la **leen** (no escriben) los adultos con Finanzas del hogar.
+  - **El dueño no entra a un compartido privado del que no es miembro;** solo la maestra.
+- **Libro de papá:** todo movimiento va **en nombre de papá y con motivo**; las salidas hacia un libro personal avisan al suplente.
+- **Configuración del hogar** (categorías, días inhábiles, importar): la hacen el **dueño y la pareja**.
+- **Cuentas de gasto:** se archivan al cerrar la cuenta o archivar su categoría (las de activos y pasivos siguen pidiendo saldo cero para cerrarse).
+- **"La caja":** es la **Caja Popular Mexicana**, el crédito automotriz del dueño. Es la única deuda cuyo pago pasa al siguiente día hábil (se configura en la app; no se guarda en el repositorio).
+- **Gastos y cuentas:** un gasto sale de una **cuenta existente**; si no hay ninguna, la hoja ofrece **"Crear cuenta nueva"**. La **categoría es opcional** (queda "Por clasificar"; el árbol de categorías viene precargado).
+- **Importar datos:** con **selector de archivos**.
+- **Orden de voz o escrita:** hay que decir **"registrar gasto"**; la palabra "gasto" suelta ya no abre nada.
+- **Pendiente de explicar al dueño:** cómo cambia un ingreso y cómo afecta uno nuevo (vigencias); hasta que responda, la app sigue permitiendo editar una vigencia.
+
 

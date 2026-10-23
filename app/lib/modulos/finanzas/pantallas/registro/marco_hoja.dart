@@ -23,9 +23,15 @@ class MarcoHojaRegistro extends StatelessWidget {
     required this.titulo,
     required this.cuerpo,
     this.barra,
+    this.tituloDerecha,
   });
 
   final String titulo;
+
+  /// Lo que va a la derecha del título (el monto que se teclea): comparte la
+  /// línea con el título si caben y, si no, pasa a la siguiente. Ahorra una
+  /// fila entera de la hoja (I8).
+  final Widget? tituloDerecha;
 
   /// Lo que se desplaza: formulario o mensaje de estado.
   final Widget cuerpo;
@@ -55,7 +61,16 @@ class MarcoHojaRegistro extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(titulo, style: tema.textTheme.titleLarge),
+                        Wrap(
+                          alignment: WrapAlignment.spaceBetween,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: 12,
+                          runSpacing: 4,
+                          children: [
+                            Text(titulo, style: tema.textTheme.titleLarge),
+                            if (tituloDerecha != null) tituloDerecha!,
+                          ],
+                        ),
                         const SizedBox(height: 8),
                         cuerpo,
                       ],

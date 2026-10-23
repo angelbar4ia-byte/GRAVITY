@@ -176,6 +176,20 @@ class _HojaRegistrarGastoState extends ConsumerState<HojaRegistrarGasto> {
     final fecha = _fecha ?? c.hoy;
     return MarcoHojaRegistro(
       titulo: 'Gasto',
+      // El monto comparte línea con el título; se encoge en vez de partirse.
+      tituloDerecha: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          formatearCentavos(_monto),
+          key: const ValueKey('gasto-monto'),
+          textAlign: TextAlign.center,
+          style: v.numero(
+            tamano: 32,
+            peso: FontWeight.w600,
+            color: v.textoFuerte,
+          ),
+        ),
+      ),
       barra: BarraAccionesRegistro(
         llaveGuardar: const ValueKey('gasto-guardar'),
         alGuardar: puedeGuardar ? () => _guardar(c, libro) : null,
@@ -221,21 +235,6 @@ class _HojaRegistrarGastoState extends ConsumerState<HojaRegistrarGasto> {
               ),
             ),
           ],
-          const SizedBox(height: 8),
-          // Se encoge en vez de partirse en dos líneas con letra grande.
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              formatearCentavos(_monto),
-              key: const ValueKey('gasto-monto'),
-              textAlign: TextAlign.center,
-              style: v.numero(
-                tamano: 36,
-                peso: FontWeight.w600,
-                color: v.textoFuerte,
-              ),
-            ),
-          ),
           const SizedBox(height: 8),
           TecladoMonto(
             alCambiar: (centavos) => setState(() => _monto = centavos),
