@@ -12,6 +12,8 @@ import 'package:gravity/nucleo/cola/proveedores_cola.dart';
 import 'package:gravity/nucleo/contratos/roles.dart';
 import 'package:gravity/nucleo/seguridad/almacen_seguro.dart';
 import 'package:gravity/nucleo/seguridad/biometria.dart';
+import 'package:gravity/nucleo/seguridad/cifrado.dart';
+import 'package:gravity/nucleo/seguridad/pin.dart';
 import 'package:gravity/nucleo/seguridad/proveedores_seguridad.dart';
 import 'package:gravity/nucleo/sesion/proveedores_sesion.dart';
 import 'package:gravity/nucleo/sesion/servicio_sesion_demostracion.dart';
@@ -26,7 +28,7 @@ void main() {
   final dueno = sesionDeEjemplo(Rol.dueno);
   final pareja = sesionDeEjemplo(Rol.coadministrador);
   final casa = sesionDeEjemplo(Rol.casa);
-  const pin = '2846';
+  const pin = '284651';
 
   late AlmacenSeguroEnMemoria almacen;
   late ServicioSesionFalso servicio;
@@ -44,15 +46,8 @@ void main() {
     if (hay) ahora = ahora.add(const Duration(minutes: 1));
   }
 
-  setUp(() async {
-    almacen = AlmacenSeguroEnMemoria();
-    servidor = ServidorFalso();
-    base = BaseLocal.enMemoria();
-    ahora = DateTime.utc(2026, 10, 24, 10);
-    servicio = ServicioSesionFalso(
-      cuentas: {'casa@ejemplo.test': CuentaFalsa('clave', casa)},
-      inicial: casa,
-    )..rotacionEstricta = true;
+  /// "Abre la app": un contenedor nuevo sobre el mismo almacén y la misma cola.
+  Future<void> montar() async {
     contenedor = ProviderContainer(
       overrides: [
         almacenSeguroProvider.overrideWithValue(almacen),
@@ -79,13 +74,23 @@ void main() {
         ),
       ],
     );
-    addTearDown(() async {
-      contenedor.dispose();
-      await base.close();
-    });
+    addTearDown(contenedor.dispose);
     tablet = contenedor.read(controladorTabletProvider.notifier);
     await tablet.listo;
     cola = contenedor.read(colaSinConexionProvider);
+  }
+
+  setUp(() async {
+    almacen = AlmacenSeguroEnMemoria();
+    servidor = ServidorFalso();
+    base = BaseLocal.enMemoria();
+    ahora = DateTime.utc(2026, 10, 24, 10);
+    servicio = ServicioSesionFalso(
+      cuentas: {'casa@ejemplo.test': CuentaFalsa('clave', casa)},
+      inicial: casa,
+    )..rotacionEstricta = true;
+    addTearDown(() => base.close());
+    await montar();
     for (final sesion in [dueno, pareja]) {
       await tablet.agregarUsuario(
         sesion,
@@ -235,16 +240,16 @@ void main() {
     expect((await permisoDe(dueno))!.estado, EstadoPermiso.devuelto);
 
     expect(
-      await tablet.cambiarPin(dueno.persona.id, pinActual: pin, pinNuevo: '7391'),
+      await tablet.cambiarPin(dueno.persona.id, pinActual: pin, pinNuevo: '739150'),
       ResultadoDesbloqueo.abierto,
     );
     expect(
       await tablet.entrarConPin(dueno.persona.id, pin),
       ResultadoDesbloqueo.pinIncorrecto,
     );
-    await entrar(dueno, elPin: '7391');
+    await entrar(dueno, elPin: '739150');
     expect(await permisoDe(dueno), isNull);
-    expect(await sobreDelPin(dueno, '7391'), isNotNull);
+    expect(await sobreDelPin(dueno, '739150'), isNotNull);
     expect(servicio.usosDeCredencialVieja, 0);
   });
 
@@ -279,5 +284,242 @@ void main() {
     final todo = almacen.datos.entries.map((e) => '${e.key}=${e.value}').join('\n');
     expect(todo, isNot(contains('falsa:')));
     expect(todo, isNot(contains(pin)));
+  });
+
+  // D18 (23/oct): quien ve dinero usa un PIN de 6 dígitos. Quien ya tenía uno
+  // más corto lo cambia al entrar, sin perder su cuenta guardada ni su bandeja.
+  group('migración del PIN corto de quien ve dinero', () {
+    const corto = '2846';
+    const nuevo = '739150';
+
+    /// Deja a [sesion] como estaba antes de la regla: su PIN y el sobre de su
+    /// credencial son de [corto]. Luego "abre la app" otra vez.
+    Future<void> conPinAnterior(Sesion sesion) async {
+      final repositorio = RepositorioTablet(almacen);
+      final usuarios = await repositorio.leerUsuarios();
+      await repositorio.guardarUsuarios([
+        for (final u in usuarios)
+          u.personaId == sesion.persona.id
+              ? u.copiarCon(hashPin: HashPin.crear(corto))
+              : u,
+      ]);
+      final guardada = (await repositorio.leerCredencial(sesion.persona.id, pin))!;
+      await repositorio.guardarCredencial(
+        sesion.persona.id,
+        LlavePin.derivar(corto),
+        guardada.$2,
+      );
+      contenedor.dispose();
+      await montar();
+    }
+
+    /// Como si hubiera salido con algo por subir antes de la regla: su
+    /// credencial está en la bandeja, protegida con su PIN [corto].
+    Future<String> conCredencialEnLaBandeja(Sesion sesion) async {
+      final repositorio = RepositorioTablet(almacen);
+      final credencial = (await repositorio.leerCredencial(
+        sesion.persona.id,
+        corto,
+      ))!.$2;
+      await contenedor
+          .read(bandejaDeSalidaProvider)
+          .delegar(sesion.persona.id, credencial, LlavePin.derivar(corto));
+      await repositorio.borrarCredencial(sesion.persona.id);
+      await cola.encolar(
+        tipo: 'finanzas.movimiento',
+        carga: const {'monto_centavos': 18500},
+        id: 'pendiente-1',
+        personaId: sesion.persona.id,
+      );
+      return credencial;
+    }
+
+    test('con el PIN corto no entra: pide el nuevo y no cuenta como fallo', () async {
+      await conPinAnterior(dueno);
+      // Cuatro fallos y luego el PIN corto bueno: el contador se reinicia.
+      for (var i = 0; i < 4; i++) {
+        expect(
+          await tablet.entrarConPin(dueno.persona.id, '0000'),
+          ResultadoDesbloqueo.pinIncorrecto,
+        );
+      }
+      expect(
+        await tablet.entrarConPin(dueno.persona.id, corto),
+        ResultadoDesbloqueo.debeCambiarPin,
+      );
+      expect(contenedor.read(controladorTabletProvider).usuarioActivo, isNull);
+      expect(servicio.personaEnServidor, casa.persona.id, reason: 'sigue en Hogar');
+      expect(tablet.esperaRestante(dueno.persona.id), isNull);
+      // Nada cambió: su cuenta guardada sigue abriendo con el PIN de siempre.
+      expect(await sobreDelPin(dueno, corto), isNotNull);
+    });
+
+    test('cambia a 6 dígitos y entra; su cuenta guardada se vuelve a cifrar con '
+        'el PIN nuevo', () async {
+      await conPinAnterior(dueno);
+      final vueltaAntes = ServicioSesionFalso.leerCredencial(
+        (await sobreDelPin(dueno, corto) as (LlavePin, String)).$2,
+      )?.$2;
+      expect(
+        await tablet.cambiarPinYEntrar(
+          dueno.persona.id,
+          pinActual: corto,
+          pinNuevo: nuevo,
+        ),
+        ResultadoDesbloqueo.abierto,
+      );
+      expect(contenedor.read(controladorTabletProvider).usuarioActivo?.personaId,
+          dueno.persona.id);
+      expect(servicio.personaEnServidor, dueno.persona.id);
+      await salir();
+      // El PIN corto ya no abre nada; el nuevo sí, y es la misma cuenta.
+      expect(await sobreDelPin(dueno, corto), isNull);
+      final despues = await sobreDelPin(dueno, nuevo) as (LlavePin, String);
+      expect(ServicioSesionFalso.leerCredencial(despues.$2)?.$2,
+          greaterThanOrEqualTo(vueltaAntes!));
+      expect(
+        await tablet.entrarConPin(dueno.persona.id, corto),
+        ResultadoDesbloqueo.pinIncorrecto,
+      );
+      await entrar(dueno, elPin: nuevo);
+      expect(servicio.usosDeCredencialVieja, 0);
+    });
+
+    test('el PIN nuevo debe ser de 6 dígitos y no trivial: si no, nada cambia',
+        () async {
+      await conPinAnterior(dueno);
+      for (final malo in ['7391', '73915', '123456', '111111', '121212']) {
+        await expectLater(
+          tablet.cambiarPinYEntrar(
+            dueno.persona.id,
+            pinActual: corto,
+            pinNuevo: malo,
+          ),
+          throwsArgumentError,
+          reason: malo,
+        );
+      }
+      expect(contenedor.read(controladorTabletProvider).usuarioActivo, isNull);
+      expect(await sobreDelPin(dueno, corto), isNotNull);
+      expect(
+        await tablet.entrarConPin(dueno.persona.id, corto),
+        ResultadoDesbloqueo.debeCambiarPin,
+      );
+    });
+
+    test('el PIN actual equivocado no cambia nada y cuenta como fallo', () async {
+      await conPinAnterior(dueno);
+      expect(
+        await tablet.cambiarPinYEntrar(
+          dueno.persona.id,
+          pinActual: '0000',
+          pinNuevo: nuevo,
+        ),
+        ResultadoDesbloqueo.pinIncorrecto,
+      );
+      expect(await sobreDelPin(dueno, corto), isNotNull);
+      expect(await sobreDelPin(dueno, nuevo), isNull);
+    });
+
+    test('la pareja (coadministradora) también: 6 dígitos', () async {
+      await conPinAnterior(pareja);
+      expect(
+        await tablet.entrarConPin(pareja.persona.id, corto),
+        ResultadoDesbloqueo.debeCambiarPin,
+      );
+      expect(
+        await tablet.cambiarPinYEntrar(
+          pareja.persona.id,
+          pinActual: corto,
+          pinNuevo: nuevo,
+        ),
+        ResultadoDesbloqueo.abierto,
+      );
+    });
+
+    test('con la credencial EN ESPERA en la bandeja (sin PIN): el cambio no la '
+        'pierde y el pendiente se conserva', () async {
+      await conPinAnterior(dueno);
+      final credencial = await conCredencialEnLaBandeja(dueno);
+      expect((await permisoDe(dueno))!.estado, EstadoPermiso.enEspera);
+
+      expect(
+        await tablet.entrarConPin(dueno.persona.id, corto),
+        ResultadoDesbloqueo.debeCambiarPin,
+      );
+      expect((await permisoDe(dueno))!.estado, EstadoPermiso.enEspera,
+          reason: 'sin entrar, la bandeja sigue como estaba');
+      expect(
+        await tablet.cambiarPinYEntrar(
+          dueno.persona.id,
+          pinActual: corto,
+          pinNuevo: nuevo,
+        ),
+        ResultadoDesbloqueo.abierto,
+      );
+      // La credencial volvió al sobre del PIN nuevo; el permiso se borró.
+      expect(await permisoDe(dueno), isNull);
+      final guardada = await sobreDelPin(dueno, nuevo) as (LlavePin, String)?;
+      expect(guardada, isNotNull);
+      expect(ServicioSesionFalso.leerCredencial(guardada!.$2)?.$1,
+          ServicioSesionFalso.leerCredencial(credencial)?.$1);
+      expect(await cola.hayPendientesDe(dueno.persona.id), isTrue);
+      // Y el pendiente sube con su propia sesión.
+      expect((await cola.procesar()).enviados, 1);
+      expect(servidor.idsDe(dueno.persona.id), ['pendiente-1']);
+    });
+
+    test('con la credencial SELLADA en la bandeja (ya se subió todo): la llave '
+        'privada pasa al PIN nuevo y el sobre se abre al entrar', () async {
+      await conPinAnterior(dueno);
+      final credencial = await conCredencialEnLaBandeja(dueno);
+      await contenedor
+          .read(bandejaDeSalidaProvider)
+          .sellarYDevolver(dueno.persona.id, credencial);
+      expect((await permisoDe(dueno))!.estado, EstadoPermiso.devuelto);
+
+      expect(
+        await tablet.cambiarPinYEntrar(
+          dueno.persona.id,
+          pinActual: corto,
+          pinNuevo: nuevo,
+        ),
+        ResultadoDesbloqueo.abierto,
+      );
+      expect(await permisoDe(dueno), isNull, reason: 'el sobre se abrió con el PIN nuevo');
+      expect(await sobreDelPin(dueno, nuevo), isNotNull);
+      expect(servicio.personaEnServidor, dueno.persona.id);
+    });
+
+    test('el PIN corto del PIN nuevo ya no abre el sobre de la bandeja', () async {
+      await conPinAnterior(dueno);
+      final credencial = await conCredencialEnLaBandeja(dueno);
+      await contenedor
+          .read(bandejaDeSalidaProvider)
+          .sellarYDevolver(dueno.persona.id, credencial);
+      await tablet.cambiarPin(dueno.persona.id, pinActual: corto, pinNuevo: nuevo);
+      final permiso = (await permisoDe(dueno))!;
+      expect(CifradoPin.descifrar(corto, permiso.clavePrivadaCifrada), isNull);
+      expect(CifradoPin.descifrar(nuevo, permiso.clavePrivadaCifrada), isNotNull);
+    });
+
+    test('en la tablet pública, para una sola acción, también pide el PIN nuevo',
+        () async {
+      await conPinAnterior(dueno);
+      expect(
+        await tablet.entrarParaAccion(dueno.persona.id, corto),
+        ResultadoDesbloqueo.debeCambiarPin,
+      );
+      expect(
+        await tablet.cambiarPinYEntrar(
+          dueno.persona.id,
+          pinActual: corto,
+          pinNuevo: nuevo,
+          paraAccion: true,
+        ),
+        ResultadoDesbloqueo.abierto,
+      );
+      expect(contenedor.read(controladorTabletProvider).soloAccion, isTrue);
+    });
   });
 }

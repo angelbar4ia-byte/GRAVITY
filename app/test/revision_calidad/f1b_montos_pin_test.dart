@@ -10,18 +10,21 @@
 //      del bloqueo del teléfono, y también quitando el bloqueo y creando uno
 //      propio. Si se arregla cambiando la firma (`crearPin(pin, actual: …)`),
 //      actualiza las llamadas de aquí: la expectativa no cambia.
-//  P2  Decisión del 23/oct (2.ª ronda), aún sin implementar: PIN de 6 dígitos
-//      para quien ve dinero (dueño y coadministradores, también la cuenta maestra).
+//  P2  Decisión del 23/oct (2.ª ronda): PIN de 6 dígitos para quien ve dinero
+//      (dueño y coadministradores, también la cuenta maestra). Plataforma lo
+//      implementó mientras corría esta revisión: estas pruebas pasan y quedan
+//      como guardias.
 //  P3  Guardia: al volver la tablet al reposo, los montos quedan ocultos. La
 //      regla nueva ("al entrar con su PIN la persona ve sus montos de una vez") no
 //      debe dejar a la vista los de quien acaba de salir.
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gravity/app/app_gravity.dart';
-import 'package:gravity/app/montos/revelar_montos.dart';
+import 'package:gravity/app/arranque.dart' show conexionesDeLaApp;
+import 'package:gravity/app/dispositivo.dart' show tipoDispositivoProvider;
 import 'package:gravity/diseno/proveedores.dart'
-    show montosOcultosProvider, revelarMontosProvider;
+    show montosOcultosProvider, montosVisiblesProvider, personaEnPantallaProvider;
+import 'package:gravity/nucleo/base_local/base_local.dart';
+import 'package:gravity/nucleo/cola/proveedores_cola.dart' show baseLocalProvider;
 import 'package:gravity/nucleo/contratos/dispositivo.dart';
 import 'package:gravity/nucleo/contratos/roles.dart';
 import 'package:gravity/nucleo/seguridad/almacen_seguro.dart';
@@ -34,7 +37,6 @@ import 'package:gravity/nucleo/sesion/servicio_sesion_demostracion.dart';
 import 'package:gravity/nucleo/sesion/servicio_sesion_falso.dart';
 import 'package:gravity/nucleo/tablet/controlador_tablet.dart';
 
-import '../app/ayuda_plataforma.dart';
 
 void main() {
   final dueno = sesionDeEjemplo(Rol.dueno);
@@ -140,21 +142,21 @@ void main() {
     });
   });
 
-  group('P2: PIN de 6 dígitos para quien ve dinero (decisión del 23/oct, 2.ª ronda)', () {
+  group('P2: PIN de 6 dígitos para quien ve dinero (guardia, decisión del 23/oct)', () {
     test('el PIN para ver los montos del dueño debe tener 6 dígitos', () async {
       final contenedor = crear();
       final montos = contenedor.read(controladorMontosProvider.notifier);
       await montos.listo;
       await expectLater(montos.crearPin('7382'), throwsArgumentError);
       await expectLater(montos.crearPin('73829'), throwsArgumentError);
-    }, tags: ['hallazgo']);
+    });
 
     test('el PIN del bloqueo del dueño debe tener 6 dígitos', () async {
       final contenedor = crear();
       final bloqueo = contenedor.read(controladorBloqueoProvider.notifier);
       await bloqueo.listo;
       await expectLater(bloqueo.configurarPin('7382'), throwsArgumentError);
-    }, tags: ['hallazgo']);
+    });
 
     test('el PIN de la tablet del dueño debe tener 6 dígitos (al agregarlo y al cambiarlo)', () async {
       final contenedor = crear();
@@ -169,7 +171,7 @@ void main() {
         tablet.cambiarPin(dueno.persona.id, pinActual: pinDelDueno, pinNuevo: '7382'),
         throwsArgumentError,
       );
-    }, tags: ['hallazgo']);
+    });
 
     test('control: un PIN de 6 dígitos no trivial sí se acepta en los tres sitios', () async {
       final contenedor = crear();
@@ -184,37 +186,45 @@ void main() {
   });
 
   group('P3: al volver al reposo los montos de quien salió quedan ocultos', () {
-    testWidgets('tablet pública: entra el dueño, ve sus montos, regresa a Hogar', (tester) async {
+    test('tablet pública: entra el dueño, ve sus montos, regresa a Hogar', () async {
       final casa = ServicioSesionFalso(inicial: sesionDeEjemplo(Rol.casa));
-      await montarApp(
-        tester,
-        dispositivo: TipoDispositivo.tablet,
-        sesion: casa,
-        almacen: await almacenConPersonas({Rol.dueno: '2846'}),
-        biometria: BiometriaFalsa(),
+      final base = BaseLocal.enMemoria();
+      addTearDown(base.close);
+      final contenedor = ProviderContainer(
+        overrides: [
+          ...conexionesDeLaApp(),
+          tipoDispositivoProvider.overrideWithValue(TipoDispositivo.tablet),
+          servicioSesionProvider.overrideWithValue(casa),
+          almacenSeguroProvider.overrideWithValue(almacen),
+          biometriaProvider.overrideWithValue(BiometriaFalsa()),
+          baseLocalProvider.overrideWithValue(base),
+        ],
       );
-      final contenedor = ProviderScope.containerOf(tester.element(find.byType(AppGravity)));
-      await tester.tap(find.text('Dueño de ejemplo'));
-      await tester.pumpAndSettle();
-      await tester.enterText(find.byKey(const Key('campo-pin')), '2846');
-      await tester.tap(find.widgetWithText(FilledButton, 'Entrar'));
-      await tester.pumpAndSettle();
+      addTearDown(contenedor.dispose);
+      // Se mantienen vivos para ver los cambios, como la pantalla.
+      contenedor.listen(montosOcultosProvider, (_, _) {});
+      contenedor.listen(personaEnPantallaProvider, (_, _) {});
+      final tablet = contenedor.read(controladorTabletProvider.notifier);
+      await tablet.listo;
+      await tablet.agregarUsuario(
+        dueno,
+        pin: pinDelDueno,
+        credencial: ServicioSesionFalso.credencialDe(dueno),
+      );
+      expect(
+        await tablet.entrarConPin(dueno.persona.id, pinDelDueno),
+        ResultadoDesbloqueo.abierto,
+      );
+      expect(contenedor.read(personaEnPantallaProvider), dueno.persona.id);
 
-      // Pide ver los montos con su PIN (hoy hace falta; la regla nueva los muestra
-      // al entrar: esta prueba vale con las dos).
-      if (contenedor.read(montosOcultosProvider)) {
-        final contexto = tester.element(find.byType(Scaffold).first);
-        final futuro = contenedor.read(revelarMontosProvider)(contexto);
-        await tester.pumpAndSettle();
-        await tester.enterText(find.byKey(const Key('revelar-pin')), '2846');
-        await tester.tap(find.byKey(const ValueKey('revelar-aceptar')));
-        await tester.pumpAndSettle();
-        expect(await futuro, isTrue);
-      }
+      // Con la regla nueva los ve al entrar; con la anterior los pediría con el
+      // PIN. Aquí se dejan a la vista de cualquier forma.
+      contenedor.read(montosVisiblesProvider.notifier).fijar(true);
       expect(contenedor.read(montosOcultosProvider), isFalse, reason: 'el dueño ve sus montos');
 
-      contenedor.read(controladorTabletProvider.notifier).volverAlReposo();
-      await tester.pumpAndSettle();
+      tablet.volverAlReposo();
+      await tablet.cambiosEnServidor;
+      expect(contenedor.read(personaEnPantallaProvider), isNot(dueno.persona.id));
       expect(
         contenedor.read(montosOcultosProvider),
         isTrue,
