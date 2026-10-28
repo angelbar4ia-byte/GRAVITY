@@ -1150,13 +1150,19 @@ shadcn/ui es para **web (React)**. Esto afecta decisiones que siguen abiertas:
 
 Propuestas en el lienzo compartido (filas «Móvil · Teléfono» y «Móvil · Tablet»). Son aproximaciones en HTML de lo que se construirá en Flutter; no son código final. Usan los mismos datos de ejemplo y no muestran dinero real (los montos van ocultos).
 
-### 29.1 Teléfono (390 × 844)
+### 29.1 Teléfono (390 × 844), pantalla principal
 
-| Propuesta | Estilo | Idea |
-|---|---|---|
-| 1 | F Bento oscuro | Mosaico de tarjetas: «Sigue» en degradado, Hábitos con anillo, Cuidados, Finanzas con monto oculto y aviso |
-| 2 | K Flat claro | Saludo, pestañas Hoy/Semana/Panorama, tarjetas planas grises, navegación inferior con indicador en píldora |
-| 3 | N Swagger | Fondo negro, verde neón, número grande de hábitos, paneles con borde blanco, botón «+» inclinado |
+Decisión del 28/oct/2026: se descartan las propuestas K (Flat claro) y N (Swagger) y se agregan D, G, H, I, J y L. Cada boceto lleva en el título la letra de su estilo.
+
+| Estilo | Idea |
+|---|---|
+| F Bento oscuro | Mosaico de tarjetas, «Sigue» en degradado, anillo de hábitos |
+| D AI-First | Barra «¿Qué necesitas?» arriba con sugerencias; acento violeta-cian |
+| G Calma | Fondo azul profundo, tipografía ligera, paneles translúcidos y botones en píldora |
+| H Glass noche/día | Capas translúcidas sobre degradado; en teléfono sin esmerilado |
+| I Glassmorphism vivo | Manchas de color vivas con paneles translúcidos; sin esmerilado en teléfono |
+| J Aurora | Fondo oscuro con banda de aurora, bordes y acentos verde menta |
+| L Neumorphism | Claro, relieve suave; texto oscuro para mantener el contraste |
 
 ### 29.2 Tablet en horizontal, Modo Casa (1280 × 800)
 
@@ -1179,3 +1185,4 @@ Sin dinero ni datos clínicos; recordatorios solo genéricos; contextos General,
 |---|---|---|
 | 0.6 | 28/oct/2026 | Se retiran los estilos C y D; catálogo de estilos reasignado A a N (24.0), en una sola línea en el lienzo compartido; O, Q, R, S, T y V retirados; modos VUI y Zero UI (sección 27); shadcn/ui (sección 28); estilos de laptop A, B, C y J; pantallas pendientes de diseño (C01 a C07, sin bocetos); diferencias con el contrato v2.0; preguntas nuevas |
 | 0.7 | 28/oct/2026 | Móvil en Flutter; tokens independientes por app y función; shadcn solo como inspiración de patrones (28.4); sección 29 con 3 propuestas de teléfono (F, K, N) y 3 de tablet (G, I, C) |
+| 0.8 | 28/oct/2026 | Teléfono principal: se descartan K y N; se agregan D, G, H, I, J y L; los bocetos del lienzo llevan la letra del estilo |
