@@ -26,7 +26,7 @@ Las preguntas para definir están en la sección 22.
 (https://claude.ai/artifact/M4y2F9SJJvqXVKXjDJ7rwT). Datos de ejemplo.
 > - **Laptop, pantalla principal:** A futurista (**por defecto**), B
 minimalista y E glass (noche o día). *(C claro y D arquitectónico se retiraron el
-28/oct/2026.)*
+28/oct/2026; las letras de los estilos se reasignaron de la A a la N: ver 24.0.)*
 ```
 
 ```
@@ -992,7 +992,34 @@ Pantallas que los flujos de la sección 14 y el resto del documento mencionan, p
 
 **También sin boceto:** Hábitos (agenda, lector bíblico, revisión semanal), Finanzas fuera de «Semana», Cuidados fuera de «Mi turno» y la bitácora, el asistente de configuración, y los estados vacíos y de error. Dependen de los diseños de cada módulo (FINANZAS sección 8; HÁBITOS Anexo G).
 
-## 24. Estilos: rondas del 28/oct/2026
+## 24. Estilos: catálogo vigente (A a N) y rondas del 28/oct/2026
+
+### 24.0 Catálogo vigente: letras reasignadas el 28/oct/2026
+
+Las letras se reasignaron de la A a la N, **ordenadas por familia**, y los bocetos del lienzo compartido van en **una sola línea** en ese mismo orden. **Desde aquí, las letras de este catálogo son las vigentes.** Las letras de los textos anteriores (secciones 4 a 18 y la historia de las rondas de más abajo) son las **antiguas**; la columna «Antes» da la equivalencia.
+
+| Nueva | Estilo | Familia | Antes | Boceto en el lienzo |
+|---|---|---|---|---|
+| **A** | Futurista (HUD) — **por defecto** | Tecnológico | A | Sí |
+| **B** | Terminal | Tecnológico | G | Sí |
+| **C** | Instrumental | Tecnológico | K | Sí |
+| **D** | AI-First | Tecnológico | P | Sí |
+| **E** | Minimalista oscuro | Oscuro sobrio | B | Sí |
+| **F** | Bento oscuro | Oscuro sobrio | I | Sí |
+| **G** | Calma / Ambient | Oscuro sobrio | U | Sí |
+| **H** | Glass (noche o día) | Cristal | E | Sí |
+| **I** | Glassmorphism vivo | Cristal | M | Sí |
+| **J** | Aurora | Cristal | H | Sí |
+| **K** | Minimalismo / Flat | Claro plano | L | Sí |
+| **L** | Neumorphism / Soft UI | Claro plano | N | Sí |
+| **M** | Neo-brutal | Carácter fuerte | J | Sí |
+| **N** | Swagger (sport, neón) | Carácter fuerte | F | No (se ve en «Bici en vivo» del teléfono) |
+
+**Retirados (sin letra):** Claro sereno (antes C), Arquitectónico (antes D), Bento claro (antes O), Editorial (antes Q), Orbital (antes R), Línea del día (antes S), Paleta de comandos (antes T) y Bento 3D con módulos movibles (antes V).
+
+**Cómo se eligen:** el estilo es una opción de Ajustes › Apariencia (C01, sección 23), global o por módulo (sección 5). Cada estilo debe cumplir las reglas de la sección 4: versión de día y de noche, excepciones de Cuidados y bici, y contraste mínimo.
+
+### 24.1 Historia de las rondas (letras antiguas)
 
 **Decidido:** se retiran **C · Claro sereno** y **D · Arquitectónico** (también quitados del lienzo compartido). Quedan A, B, E y F, más las propuestas siguientes.
 
@@ -1087,4 +1114,4 @@ Dos modos que el diseño debe contemplar además de la pantalla. Bocetos en el l
 
 | Versión | Fecha | Cambio |
 |---|---|---|
-| 0.6 | 28/oct/2026 | Se retiran los estilos C y D; estilos propuestos G a P y U aplicados en el lienzo compartido (O, Q, R, S, T y V retirados); modos VUI y Zero UI (sección 27); pantallas pendientes de diseño (C01 a C07, sin bocetos); diferencias con el contrato v2.0; preguntas nuevas |
+| 0.6 | 28/oct/2026 | Se retiran los estilos C y D; catálogo de estilos reasignado A a N (24.0), en una sola línea en el lienzo compartido; O, Q, R, S, T y V retirados; modos VUI y Zero UI (sección 27); pantallas pendientes de diseño (C01 a C07, sin bocetos); diferencias con el contrato v2.0; preguntas nuevas |
