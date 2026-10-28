@@ -1173,6 +1173,20 @@ Sin dinero ni datos clínicos; recordatorios solo genéricos; contextos General,
 1. ¿Cuál propuesta de teléfono y cuál de tablet se quedan, o se combinan elementos?
 2. ¿Los tokens de Cuidados (siempre claro y de alto contraste) se definen aparte de los del resto del teléfono?
 
+## 30. Teléfono: bicicleta, entrenamiento y running (estilos F, J y N)
+
+Fila nueva del lienzo compartido: tres pantallas en vivo, cada una en los estilos F Bento oscuro, J Aurora y N Swagger (9 bocetos de 390 × 844). Son propuestas de pantalla; el cálculo y el guardado dependen de la fuente de datos que se defina.
+
+| Pantalla | Contenido del boceto |
+|---|---|
+| Bicicleta | Velocidad grande, distancia, tiempo, cadencia, pulso, gráfica de velocidad, Pausa / Vuelta / Terminar. Siempre alto contraste (sección 4) |
+| Entrenamiento | Peso y repeticiones de la serie actual, descanso, siguiente ejercicio, series del ejercicio, Serie hecha / Saltar descanso / Terminar |
+| Running | Ritmo grande, distancia, tiempo, pulso, cadencia, ritmo por kilómetro, Pausa / Vuelta / Terminar |
+
+Notas:
+- Los datos de ejemplo son inventados; no hay datos de salud de terceros.
+- Según el contrato v2.0, el ejercicio y las rutinas son de Hábitos y GRAVITY solo abre pantallas por enlace. Estas pantallas quedan como **propuesta visual**; quién las ofrece (GRAVITY o Hábitos) es una pregunta abierta, sin tocar el contrato.
+
 ## Control de cambios (complemento)
 
 | Versión | Fecha | Cambio |
@@ -1181,3 +1195,4 @@ Sin dinero ni datos clínicos; recordatorios solo genéricos; contextos General,
 | 0.7 | 28/oct/2026 | Móvil en Flutter; tokens independientes por app y función; shadcn solo como inspiración de patrones (28.4); sección 29 con 3 propuestas de teléfono (F, K, N) y 3 de tablet (G, I, C) |
 | 0.8 | 28/oct/2026 | Teléfono principal: se descartan K y N; se agregan D, G, H, I, J y L; los bocetos del lienzo llevan la letra del estilo |
 | 0.9 | 28/oct/2026 | Tablet principal con los mismos estilos que el teléfono (D, F, G, H, I, J, L); filas del lienzo en orden alfabético; se descarta C en tablet |
+| 1.0 | 29/oct/2026 | Sección 30: bicicleta, entrenamiento y running en estilos F, J y N |
