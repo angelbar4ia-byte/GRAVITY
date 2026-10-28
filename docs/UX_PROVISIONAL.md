@@ -1,5 +1,7 @@
 # GRAVITY — UX provisional
 
+> **Nota (28/oct/2026):** para las pantallas manda ahora [`DISENO_UX_UI_GRAVITY.md`](DISENO_UX_UI_GRAVITY.md) (v0.6). Este documento describe el modelo de apps independientes del contrato v2.0 y queda como referencia; ver la sección 25 de ese documento.
+
 > **PROPUESTA — plataforma decidida: Android y escritorio. Las pantallas son propuestas, sujetas a la confirmación de la sección 9 del contrato (propuesta)**
 >
 > **Decisión del usuario:** GRAVITY será para **Android y escritorio**, y las pantallas de este documento son **propuestas**, no diseño final. El stack sigue sin decidirse. Este documento ordena lo que el contrato v2.0 ya fija, lista las pantallas conceptuales que de ahí se derivan y deja el resto al usuario. Todo lo marcado «(propuesto)» necesita su aprobación.

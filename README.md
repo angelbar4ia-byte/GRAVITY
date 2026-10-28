@@ -12,7 +12,7 @@ Fase inicial: definición del proyecto.
 
 Plataforma decidida: **Android y escritorio** (stack aún sin definir).
 
-Pantallas propuestas (no finales): [`docs/UX_PROVISIONAL.md`](docs/UX_PROVISIONAL.md).
+Diseño UX/UI vigente (v0.6, propuesta): [`docs/DISENO_UX_UI_GRAVITY.md`](docs/DISENO_UX_UI_GRAVITY.md). Referencia del modelo de apps independientes: [`docs/UX_PROVISIONAL.md`](docs/UX_PROVISIONAL.md).
 
 ## Hoja de ruta
 
