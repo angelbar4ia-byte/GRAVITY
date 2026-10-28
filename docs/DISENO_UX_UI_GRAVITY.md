@@ -1139,14 +1139,43 @@ shadcn/ui es para **web (React)**. Esto afecta decisiones que siguen abiertas:
 | Apps independientes (Hábitos y Presupuesto) | Su diseño habla de Flutter. No usarían shadcn: la unidad visual se lograría con los **mismos tokens** (color, tipografía, radios), no con los mismos componentes |
 | Stack de GRAVITY | Sigue **sin decidirse**. Esta sección solo registra que shadcn orienta la laptop hacia web con React |
 
-### 28.4 Preguntas
+### 28.4 Decisiones del 28/oct/2026 (sustituyen las preguntas anteriores)
 
-1. ¿El teléfono y la tablet serán la misma app web (PWA o envuelta) o una interfaz móvil aparte?
-2. ¿Aceptas que Hábitos y Presupuesto compartan solo los tokens visuales y no los componentes?
-3. ¿Qué otras pantallas de laptop quieres con shadcn: Finanzas › Semana, APIs (Swagger UI) o todas?
+1. **Teléfono y tablet son Flutter.** shadcn/ui (web) **no se usa como librería** en ellos: solo se toman sus patrones (insignias, pestañas segmentadas, tarjetas, hojas, búsqueda, interruptores) como inspiración.
+2. **Los tokens son independientes por app y cambian según la función.** No hay un conjunto de tokens común obligatorio entre GRAVITY, Hábitos y Presupuesto.
+3. **Se toman elementos de varios estilos** para mejorar la interfaz; no se exige un estilo único por app.
+4. Pendiente: ¿qué otras pantallas de laptop quieres con shadcn (Finanzas › Semana, APIs o todas)?
+
+## 29. Móvil: pantalla principal (3 propuestas de teléfono y 3 de tablet)
+
+Propuestas en el lienzo compartido (filas «Móvil · Teléfono» y «Móvil · Tablet»). Son aproximaciones en HTML de lo que se construirá en Flutter; no son código final. Usan los mismos datos de ejemplo y no muestran dinero real (los montos van ocultos).
+
+### 29.1 Teléfono (390 × 844)
+
+| Propuesta | Estilo | Idea |
+|---|---|---|
+| 1 | F Bento oscuro | Mosaico de tarjetas: «Sigue» en degradado, Hábitos con anillo, Cuidados, Finanzas con monto oculto y aviso |
+| 2 | K Flat claro | Saludo, pestañas Hoy/Semana/Panorama, tarjetas planas grises, navegación inferior con indicador en píldora |
+| 3 | N Swagger | Fondo negro, verde neón, número grande de hábitos, paneles con borde blanco, botón «+» inclinado |
+
+### 29.2 Tablet en horizontal, Modo Casa (1280 × 800)
+
+Sin dinero ni datos clínicos; recordatorios solo genéricos; contextos General, Cocina, Gimnasio y Cuidados; cambio de usuario con PIN o huella; botón «Mantén para hablar».
+
+| Propuesta | Estilo | Idea |
+|---|---|---|
+| 1 | G Calma / Ambient | Reloj grande, agenda, hábitos y recordatorios de la casa con mucho aire |
+| 2 | I Glass | Paneles de cristal con esmerilado real (permitido en tablet) sobre manchas de color |
+| 3 | C Instrumental | Cuadrícula tipo tablero con tipografía de datos y barra de hábitos segmentada |
+
+### 29.3 Preguntas
+
+1. ¿Cuál propuesta de teléfono y cuál de tablet se quedan, o se combinan elementos?
+2. ¿Los tokens de Cuidados (siempre claro y de alto contraste) se definen aparte de los del resto del teléfono?
 
 ## Control de cambios (complemento)
 
 | Versión | Fecha | Cambio |
 |---|---|---|
 | 0.6 | 28/oct/2026 | Se retiran los estilos C y D; catálogo de estilos reasignado A a N (24.0), en una sola línea en el lienzo compartido; O, Q, R, S, T y V retirados; modos VUI y Zero UI (sección 27); shadcn/ui (sección 28); estilos de laptop A, B, C y J; pantallas pendientes de diseño (C01 a C07, sin bocetos); diferencias con el contrato v2.0; preguntas nuevas |
+| 0.7 | 28/oct/2026 | Móvil en Flutter; tokens independientes por app y función; shadcn solo como inspiración de patrones (28.4); sección 29 con 3 propuestas de teléfono (F, K, N) y 3 de tablet (G, I, C) |
