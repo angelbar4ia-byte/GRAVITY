@@ -992,23 +992,35 @@ Pantallas que los flujos de la sección 14 y el resto del documento mencionan, p
 
 **También sin boceto:** Hábitos (agenda, lector bíblico, revisión semanal), Finanzas fuera de «Semana», Cuidados fuera de «Mi turno» y la bitácora, el asistente de configuración, y los estados vacíos y de error. Dependen de los diseños de cada módulo (FINANZAS sección 8; HÁBITOS Anexo G).
 
-## 24. Estilos: ronda del 28/oct/2026
+## 24. Estilos: rondas del 28/oct/2026
 
-**Decidido:** se retiran **C · Claro sereno** y **D · Arquitectónico**. Quedan A, B, E y F.
+**Decidido:** se retiran **C · Claro sereno** y **D · Arquitectónico** (también quitados del lienzo compartido). Quedan A, B, E y F, más las propuestas siguientes.
 
-**Propuesta de cinco estilos nuevos** (letras G a K, para no renumerar; falta que el usuario elija):
+**Ronda 1: cinco estilos propuestos** (letras G a K, aplicados en la pantalla principal de la laptop del lienzo compartido):
 
 | Estilo | Cómo se ve | Dónde luce más | Costo / riesgo |
 |---|---|---|---|
-| **G · Terminal** | Consola: tipografía monoespaciada, verde fósforo o ámbar sobre negro, texto primero, cursor parpadeante, sin adornos | Laptop, Ajustes › Desarrollador, quien vive en el teclado | Menos amable para la cuidadora y la pareja; mejor solo en laptop |
-| **H · Aurora** | Fondo de degradados de malla que se mueven despacio, paneles suaves y cálidos; más color que Glass | Pantalla principal, tablet de la casa | Animación constante: gastar batería en teléfono y tablet |
-| **I · Bento** | Tarjetas grandes y redondeadas, una protagonista con degradado por pantalla, números enormes | Teléfono y tablet, «Hoy» | Pide diseñar la rejilla de cada pantalla |
-| **J · Neo-brutal** | Bordes negros gruesos, sombras duras y color plano; muy legible al sol | Bici, gimnasio, hábitos y rachas | Muy marcado; cansa en lectura larga |
-| **K · Instrumental** | Tablero de cabina: cuadrantes, agujas, horizonte, relojes y medidores analógicos | Gadgets (sección 6), tablet, pulsera | Más trabajo por gadget; hay que cuidar el contraste |
+| **G · Terminal** | Consola: monoespaciada, verde fósforo o ámbar sobre negro, texto primero | Laptop, Ajustes › Desarrollador | Poco amable para la cuidadora y la pareja; mejor solo en laptop |
+| **H · Aurora** | Degradados de malla que se mueven despacio, paneles suaves y cálidos | Pantalla principal, tablet de la casa | Animación constante: gasta batería en teléfono y tablet; se parece a E |
+| **I · Bento** | Tarjetas grandes con una protagonista en degradado, números enormes (oscuro) | Teléfono y tablet, «Hoy» | Pide diseñar la rejilla de cada pantalla |
+| **J · Neo-brutal** | Bordes negros gruesos, sombras duras y color plano | Bici, gimnasio, hábitos y rachas | Cansa en lectura larga; se solapa con F |
+| **K · Instrumental** | Tablero de cabina: medidores, agujas y relojes analógicos | Gadgets (sección 6), tablet, pulsera | Más trabajo por gadget |
 
-**Recomendación:** si la prioridad es *tipo JARVIS* y *gadgets*, **K · Instrumental** y **G · Terminal** son los que más se distinguen de A. Para el día a día en teléfono, **I · Bento**. Para bici y gimnasio, **J · Neo-brutal**, aunque el estilo F ya cubre esa personalidad. **H · Aurora** es la más parecida a E y la que menos aporta.
+**Ronda 2: cinco estilos pedidos por el usuario** (letras L a P, también aplicados en el lienzo):
 
-**Siguiente paso:** elegir cuáles pasan a boceto. Cada estilo nuevo debe cumplir las reglas de la sección 4 (versión de día y de noche, excepciones de Cuidados y bici, contraste mínimo).
+| Estilo | Cómo se ve | Dónde luce más | Costo / riesgo |
+|---|---|---|---|
+| **L · Minimalismo / Flat** | Claro, colores planos, sin bordes ni sombras, mucho espacio y un solo acento | Finanzas, sesiones largas | Parecido a B; poca personalidad por módulo |
+| **M · Glassmorphism** | Paneles translúcidos y esmerilados sobre degradado vivo de día | Laptop y tablet | Parecido a E; esmerilado solo en laptop y tablet (regla de la sección 4); contraste a vigilar |
+| **N · Neumorphism (Soft UI)** | Relieves suaves del mismo color del fondo, botones que se hunden | Tablet de la casa, estado de ánimo calmo | Bajo contraste de bordes: exige texto oscuro y estados con icono; el menos accesible |
+| **O · Bento Grid (claro)** | Mosaico de tarjetas de colores y tamaños distintos | Teléfono, tablet y «Hoy» | Parecido a I; hay que diseñar la rejilla por pantalla |
+| **P · AI-First** | La conversación y lo proactivo van al centro: resumen generado, sugerencias, «lo que hice por ti» y «necesita tu confirmación»; los módulos pasan a una barra lateral | Pantalla principal de la laptop; desde la Fase 6 | Depende de la IA (Fase 6); en Fase 0 solo navega. El dinero nunca pasa por la IA |
+
+**Solapes que conviene decidir:** L con B, M con E, O con I y J con F. Si se eligen ambos de un par, uno debe aportar algo que el otro no.
+
+**Recomendación (propuesta):** A, K y P como candidatos principales para la pantalla principal de la laptop (Futurista, Instrumental y AI-First responden a «tipo JARVIS»); I u O para «Hoy» en teléfono y tablet; F para bici y entrenamiento. Neumorphism (N) solo con variante de alto contraste.
+
+**Siguiente paso:** elegir un estilo global y una personalidad por módulo. Cada estilo debe cumplir las reglas de la sección 4: versión de día y de noche, excepciones de Cuidados y bici, contraste mínimo.
 
 ## 25. Diferencias con el contrato de conexión v2.0 (el contrato no se modifica)
 
@@ -1032,13 +1044,35 @@ Este documento describe **una sola app** (GRAVITY con módulos). El contrato v2.
 ## 26. Preguntas nuevas
 
 1. ¿Los dos modelos (una app con módulos / tres apps del contrato) conviven, o uno reemplaza al otro? Define qué hacer con los documentos de HABITOS y FINNZAS.
-2. ¿Cuáles de los estilos G a K pasan a boceto?
+2. De los estilos G a P, ¿cuáles pasan a ser opciones de la app y cuál es el predeterminado? ¿Qué hacemos con los solapes (L/B, M/E, O/I, J/F)?
 3. Con el modo privado activo, ¿la tarjeta de confirmación (C03) pide «Mostrar para confirmar» o muestra el monto siempre en la confirmación?
 4. En C04, ¿la cuenta atrás del SOS es de 10 minutos (como en Hábitos G.3.7) o editable?
 5. En C07, ¿cuántos intentos de PIN antes de bloquear la tablet?
+6. Zero UI: ¿qué automatizaciones quieres activar primero y cuáles señales tienes disponibles hoy (pulsera, puente de casa)?
+
+## 27. Modos de interacción: voz (VUI) y Zero UI
+
+Dos modos que el diseño debe contemplar además de la pantalla. Bocetos en el lienzo compartido: «VUI · Interfaz por voz» y «Zero UI · Sin pantalla».
+
+### 27.1 VUI: interfaz por voz (propuesta)
+
+- **Flujo en cinco pasos:** activar → escuchar → entender → confirmar → resultado. La pantalla muestra lo que se oyó, lo que se entendió y la tarjeta de confirmación; el resto pasa a segundo plano.
+- **Activación por dispositivo:** laptop (Ctrl + Espacio o la palabra «Gravity»), tablet («Mantén para hablar»), teléfono (botón de micrófono), bocinas («Hey Google», solo frases fijas).
+- **Reglas que ya fija este documento (sección 16):** voces configurables por persona; siempre dice lo que hizo; pide confirmación antes de escribir; **nunca dice montos** con el modo privado, en el modo Casa ni por las bocinas; trato de tú, y textos impersonales en Cuidados; sin conexión, solo órdenes locales.
+- **Estados de la voz:** vacío («Di una orden»), escuchando, no entendí («No te entendí, ¿lo intento otra vez?»), sin permiso de micrófono (explicación y cómo concederlo), error.
+- **Accesibilidad:** toda orden por voz tiene equivalente táctil o por teclado; el texto reconocido se ve antes de actuar; nada obliga a mirar la pantalla al manejar o en la bici.
+
+### 27.2 Zero UI: sin pantalla (propuesta)
+
+- **Idea:** GRAVITY actúa por contexto y automatización y reduce la interfaz a un aviso mínimo (vibración, voz breve o notificación) y a un registro de lo que hizo.
+- **Cadena:** señales (hora, ritmo y GPS en bici, puente de casa, Health Connect, contexto de la tablet) → reglas de contexto → acción silenciosa → aviso mínimo.
+- **Escenarios propuestos:** salida en bici (pasa a alto contraste), hora del medicamento (aviso a la cuidadora de turno, que confirma «Ya se dio»), cambio automático a oscuro por la hora, regreso al modo Casa tras 2 minutos sin uso, transición de dormir por bocina con frase fija, copia de seguridad a las 03:00 (aviso solo si falla).
+- **Límites (obligatorios):** lo que escribe datos siempre pide confirmación (principio 6); dinero y medicamentos nunca se registran solos; el dinero no pasa por la IA; sin montos ni datos clínicos en la pulsera, las bocinas, la pantalla bloqueada ni el modo Casa; los medicamentos y los cambios urgentes suenan aun en horas silenciosas (sección 17).
+- **Control:** cada automatización se enciende o apaga por módulo; una lista «Qué hizo GRAVITY» muestra lo ocurrido y permite deshacer.
+- **Pendiente:** definir qué señales están realmente disponibles (por ejemplo, qué datos comparte la pulsera y qué expone el puente de casa) antes de comprometer escenarios.
 
 ## Control de cambios (complemento)
 
 | Versión | Fecha | Cambio |
 |---|---|---|
-| 0.6 | 28/oct/2026 | Se retiran los estilos C y D; propuesta de cinco estilos nuevos (G a K); pantallas pendientes de diseño (C01 a C07, sin bocetos); diferencias con el contrato v2.0; preguntas nuevas |
+| 0.6 | 28/oct/2026 | Se retiran los estilos C y D; diez estilos propuestos (G a K y L a P) aplicados en el lienzo compartido; modos VUI y Zero UI (sección 27); pantallas pendientes de diseño (C01 a C07, sin bocetos); diferencias con el contrato v2.0; preguntas nuevas |
