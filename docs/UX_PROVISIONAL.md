@@ -1,8 +1,8 @@
 # GRAVITY — UX provisional
 
-> **PROVISIONAL — sujeto a la decisión de plataforma y a la confirmación de la sección 9 del contrato (propuesta)**
+> **PROPUESTA — plataforma decidida: Android y escritorio. Las pantallas son propuestas, sujetas a la confirmación de la sección 9 del contrato (propuesta)**
 >
-> Este documento no define pantallas finales ni elige plataforma ni stack. Ordena lo que el contrato v2.0 ya fija, lista las pantallas conceptuales que de ahí se derivan y deja las decisiones al usuario. Todo lo marcado «(propuesto)» necesita su aprobación.
+> **Decisión del usuario:** GRAVITY será para **Android y escritorio**, y las pantallas de este documento son **propuestas**, no diseño final. El stack sigue sin decidirse. Este documento ordena lo que el contrato v2.0 ya fija, lista las pantallas conceptuales que de ahí se derivan y deja el resto al usuario. Todo lo marcado «(propuesto)» necesita su aprobación.
 
 Fuentes: `docs/CONTRATO_CONEXION_APPS.md` v2.0 (secciones 7, 9, 10 y caso 12 de la 11), `CLAUDE.md` y `README.md` de este repositorio.
 
@@ -127,7 +127,16 @@ Proveedor:   <por definir>
 
 ---
 
-## 4. Variantes por plataforma (sin decidir)
+## 4. Variantes por plataforma (se hacen las dos)
+
+Con la decisión de Android **y** escritorio, las pantallas conceptuales de la sección 2 se mantienen y cada plataforma adapta su presentación. Lo que cambia entre ambas queda en la tabla; el detalle de cada variante sigue siendo propuesta.
+
+| Tema | Android | Escritorio |
+|---|---|---|
+| Invocar | Icono, widget o acceso rápido; `gravity://chat` (propuesto) | Ventana o bandeja; atajo de teclado |
+| Abrir `habitos://` / `presupuesto://` | Directo, en el mismo teléfono | **No definido**: las otras apps son Android (ver B y la pregunta 7) |
+| Estado «sin otras apps» (G04/G08) | Excepción | Estado habitual en escritorio |
+| Voz | Permiso de micrófono al usarla | Permiso del sistema al usarla |
 
 ### A. Android
 
@@ -158,7 +167,7 @@ Proveedor:   <por definir>
 - ¿Los enlaces `habitos://` y `presupuesto://` se envían al teléfono o se omiten? Si se envían, eso es un canal nuevo y habría que proponerlo como cambio al contrato.
 - La frase «Cada app declara su esquema en el manifiesto de Android» no aplicaría a GRAVITY.
 
-Si se eligen **ambos**, G04/G08 y el flujo de enlaces necesitan comportamiento distinto por plataforma.
+Al ser **ambos**, G04/G08 y el flujo de enlaces necesitan comportamiento distinto por plataforma. Como la sección 7 asume Android, estas preguntas se llevan al contrato como **propuesta de cambio** (qué y por qué), sin editarlo desde este repositorio.
 
 ---
 
@@ -199,7 +208,7 @@ Si se eligen **ambos**, G04/G08 y el flujo de enlaces necesitan comportamiento d
 
 ## 7. Preguntas abiertas para el usuario
 
-1. ¿GRAVITY será **Android, escritorio o ambos**? (Cambia los enlaces `gravity://` y la sección 7.)
+1. ~~¿Android, escritorio o ambos?~~ **Decidido: Android y escritorio.** Queda abierto cómo cambian los enlaces `gravity://` y la sección 7 del contrato (preguntas 7 y siguientes).
 2. ¿La voz usará **palabra de activación o botón**?
 3. ¿Qué **proveedor de IA** y **dónde vive la clave** (almacenamiento seguro del teléfono, proxy o plan Blaze)?
 4. ¿Qué cuenta como **sesión** para el consentimiento de archivo?

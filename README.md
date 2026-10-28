@@ -10,10 +10,13 @@ Construir un asistente personal capaz de entender instrucciones en lenguaje natu
 
 Fase inicial: definición del proyecto.
 
-UX provisional (pendiente de decidir plataforma): [`docs/UX_PROVISIONAL.md`](docs/UX_PROVISIONAL.md).
+Plataforma decidida: **Android y escritorio** (stack aún sin definir).
+
+Pantallas propuestas (no finales): [`docs/UX_PROVISIONAL.md`](docs/UX_PROVISIONAL.md).
 
 ## Hoja de ruta
 
+- [x] Decidir plataforma: Android y escritorio
 - [ ] Definir arquitectura y stack
 - [ ] Interfaz de texto (chat)
 - [ ] Entrada y salida por voz
