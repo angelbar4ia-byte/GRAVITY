@@ -25,8 +25,8 @@ Las preguntas para definir están en la sección 22.
 > **Bocetos para comparar** (lienzo privado): [GRAVITY — estilos de pantalla]
 (https://claude.ai/artifact/M4y2F9SJJvqXVKXjDJ7rwT). Datos de ejemplo.
 > - **Laptop, pantalla principal:** A futurista (**por defecto**), B
-minimalista, C claro, D arquitectónico (cianotipo o papel, en *Tweaks*) y E
-glass (noche o día).
+minimalista y E glass (noche o día). *(C claro y D arquitectónico se retiraron el
+28/oct/2026.)*
 ```
 
 ```
@@ -240,14 +240,11 @@ petróleo (ver la tablet en *Tweaks*) | Pantalla principal de GRAVITY, tablet,
 reloj |
 | **B · Minimalista** | Oscuro o claro, tarjetas redondeadas, círculo que
 "respira" | Sesiones largas en los módulos |
-| **C · Claro sereno** | Fondo claro, GRAVITY en una franja superior | Uso de
-día |
+| ~~C · Claro sereno~~ | **Retirado el 28/oct/2026** | — |
 ```
 
 ```
-| **D · Arquitectónico** | Retícula de fondo, ejes con globos (A, B, C), cotas
-como barras de avance, cajetín con proyecto, plano, escala y usuario, flecha de
-norte. Variantes **cianotipo** y **papel** | Laptop |
+| ~~D · Arquitectónico~~ | **Retirado el 28/oct/2026** | — |
 | **E · Glass** | Paneles translúcidos y esmerilados sobre un fondo de color
 difuminado; versión de noche y de día | Laptop y tablet |
 ```
@@ -973,93 +970,49 @@ núcleo con anillos que giran. Ronda cerrada, en espera de nuevas instrucciones 
 
 ---
 
+---
+
 # Complemento v0.6 (28/oct/2026)
 
-> **Qué es.** Secciones 23 a 26 agregadas al documento v0.5, sin cambiar el texto anterior. Decisión del usuario: **este documento manda** para las pantallas. El contrato de conexión v2.0 **no se modifica** (ver sección 25).
->
-> **Bocetos de este complemento** (lienzo privado, datos de ejemplo): «GRAVITY pantallas complementarias»: https://claude.ai/artifact/K8HsjgurZ4XUyt4yBeCdwN
+> **Qué es.** Secciones 23 a 26 agregadas al documento v0.5; además, los estilos C y D se retiraron en la sección 4. Decisión del usuario: **este documento manda** para las pantallas. El contrato de conexión v2.0 **no se modifica** (ver sección 25). **No hay bocetos nuevos en este complemento:** las pantallas de referencia son las del lienzo «GRAVITY — estilos de pantalla» citado al inicio.
 
-## 23. Pantallas complementarias (propuesto)
+## 23. Pantallas pendientes de diseño
 
-Pantallas que el documento ya describe en los flujos de la sección 14 pero que no tenían boceto. Estilo de la laptop: Futurista de noche. Teléfono y tablet: app normal con la personalidad del módulo (sección 5).
+Pantallas que los flujos de la sección 14 y el resto del documento mencionan, pero que **aún no tienen boceto**. Se diseñan después de elegir los estilos (sección 24).
 
-| Id | Pantalla | Flujo | Dispositivo | Boceto |
-|---|---|---|---|---|
-| C01 | Ajustes › Apariencia | F9 | Laptop | `LApariencia` |
-| C02 | Ajustes › Personas y roles (invitar y dar de baja) | F6 | Laptop | `LPersonas` |
-| C03 | Orden a GRAVITY con tarjeta de confirmación y modo privado | F4 | Laptop | `LOrden` |
-| C04 | Hábito a eliminar (panel) y SOS «Tengo un antojo» | F3 | Teléfono | `TelElim` |
-| C05 | Cambio urgente de medicamento (Dueño) | F7 | Teléfono | `TelUrgente` |
-| C06 | Cocina: receta paso a paso | sección 11 | Tablet vertical | `TabCocina` |
-| C07 | Cambio de usuario con PIN o huella | F8 | Tablet | `TabUsuario` |
+| Id | Pantalla | Flujo o sección | Dispositivo |
+|---|---|---|---|
+| C01 | Ajustes › Apariencia (estilo, claro/oscuro, personalidad por módulo) | F9, sección 4 | Laptop |
+| C02 | Ajustes › Personas y roles (invitar y dar de baja) | F6 | Laptop |
+| C03 | Orden a GRAVITY con tarjeta de confirmación y modo privado | F4, secciones 7 y 16 | Laptop |
+| C04 | Hábito a eliminar (panel) y SOS «Tengo un antojo» | F3 | Teléfono |
+| C05 | Cambio urgente de medicamento (Dueño) | F7 | Teléfono |
+| C06 | Cocina: receta paso a paso | Sección 11 | Tablet vertical |
+| C07 | Cambio de usuario con PIN o huella | F8 | Tablet |
 
-### 23.1 C01 · Ajustes › Apariencia
+**También sin boceto:** Hábitos (agenda, lector bíblico, revisión semanal), Finanzas fuera de «Semana», Cuidados fuera de «Mi turno» y la bitácora, el asistente de configuración, y los estados vacíos y de error. Dependen de los diseños de cada módulo (FINANZAS sección 8; HÁBITOS Anexo G).
 
-- **Zonas:** (1) estilo global A a F con el actual marcado; (2) claro/oscuro: automático por hora (por defecto, claro 07:00 a 19:00), seguir al sistema, siempre claro, siempre oscuro; (3) personalidad por módulo con tres modos: Automática, Igual al estilo global, Elegir otro estilo; vista previa en vivo y botones Restablecer y Aplicar.
-- **Reglas:** las excepciones de la sección 4 se muestran como **fijas**, sin interruptor: Cuidados siempre claro y de alto contraste, la bici siempre alto contraste, Glass sin esmerilado en el teléfono. Ningún estilo baja el contraste mínimo.
-- **Estados:** vista previa sin conexión funciona igual (todo es local); si un estilo no cumple contraste en un módulo, se avisa y ese módulo usa su variante de alto contraste.
+## 24. Estilos: ronda del 28/oct/2026
 
-### 23.2 C02 · Ajustes › Personas y roles
+**Decidido:** se retiran **C · Claro sereno** y **D · Arquitectónico**. Quedan A, B, E y F.
 
-- **Zonas:** lista de personas con su rol (Dueño, Pareja, Cuidador, Familiar y la tablet con rol Casa); formulario de invitación (nombre, rol, correo) con la lista de lo que verá esa persona; «Dar de baja» con confirmación.
-- **Reglas:** cada persona ve solo lo de su rol, sin pantallas vacías ni botones bloqueados (principio 3). Dar de baja corta el acceso al instante. Solo el Dueño, solo en la laptop.
-- **Fuera de esta pantalla:** los roles y permisos financieros entre miembros (albacea, confirmaciones) se definen en la especificación de Finanzas.
+**Propuesta de cinco estilos nuevos** (letras G a K, para no renumerar; falta que el usuario elija):
 
-### 23.3 C03 · Orden a GRAVITY con confirmación
+| Estilo | Cómo se ve | Dónde luce más | Costo / riesgo |
+|---|---|---|---|
+| **G · Terminal** | Consola: tipografía monoespaciada, verde fósforo o ámbar sobre negro, texto primero, cursor parpadeante, sin adornos | Laptop, Ajustes › Desarrollador, quien vive en el teclado | Menos amable para la cuidadora y la pareja; mejor solo en laptop |
+| **H · Aurora** | Fondo de degradados de malla que se mueven despacio, paneles suaves y cálidos; más color que Glass | Pantalla principal, tablet de la casa | Animación constante: gastar batería en teléfono y tablet |
+| **I · Bento** | Tarjetas grandes y redondeadas, una protagonista con degradado por pantalla, números enormes | Teléfono y tablet, «Hoy» | Pide diseñar la rejilla de cada pantalla |
+| **J · Neo-brutal** | Bordes negros gruesos, sombras duras y color plano; muy legible al sol | Bici, gimnasio, hábitos y rachas | Muy marcado; cansa en lectura larga |
+| **K · Instrumental** | Tablero de cabina: cuadrantes, agujas, horizonte, relojes y medidores analógicos | Gadgets (sección 6), tablet, pulsera | Más trabajo por gadget; hay que cuidar el contraste |
 
-- **Zonas:** encabezado con modo privado; paneles laterales (Hoy y Cuidados a la izquierda, Finanzas y Avisos a la derecha); núcleo con su estado; conversación; barra de órdenes con atajo; barra de módulos.
-- **Tarjeta de confirmación:** monto, categoría, cuenta y fecha, con **Editar, Cancelar y Confirmar**. Nada se guarda sin confirmar.
-- **Modo privado activo:** montos y datos de cuidados ocultos; para confirmar un monto hay que pulsar «Mostrar para confirmar»; GRAVITY no dice montos en voz alta.
-- **Fase 0:** solo navega («abre presupuesto»); la conversación con IA y las escrituras llegan en la Fase 6.
+**Recomendación:** si la prioridad es *tipo JARVIS* y *gadgets*, **K · Instrumental** y **G · Terminal** son los que más se distinguen de A. Para el día a día en teléfono, **I · Bento**. Para bici y gimnasio, **J · Neo-brutal**, aunque el estilo F ya cubre esa personalidad. **H · Aurora** es la más parecida a E y la que menos aporta.
 
-### 23.4 C04 · Hábito a eliminar y SOS
-
-- **Panel:** días libres en grande, mejor racha, antojos superados, consumos de hoy, ahorro oculto por defecto, y dos acciones siempre visibles: **Registrar** y **Tengo un antojo**. Color terracota; nunca rojo de alarma.
-- **SOS:** respiración de 10 minutos, técnica (respiración, agua, caminar, versículo y oración), intensidad de 1 a 5, y «Superé el antojo» o «Lo consumí», sin culpa.
-- **Privacidad:** notificaciones y vista previa sin nombrar el hábito.
-
-### 23.5 C05 · Cambio urgente de medicamento
-
-- **Flujo F7:** Más › Cuidados › medicamento › suspender, cambiar o agregar › nota › confirmar › aviso al instante a la cuidadora de turno, que marca *Enterada*.
-- **Reglas:** personalidad de Cuidados (rosa oscuro, letra y botones grandes, alto contraste); textos impersonales (sección 16); aviso urgente destacado; en la nota solo lo necesario, **sin diagnósticos**; el aviso suena aun en horas silenciosas (sección 17).
-
-### 23.6 C06 · Cocina: receta paso a paso
-
-- **Tablet vertical, contexto Cocina:** letra enorme, un paso por pantalla, progreso «Paso X de N», ingredientes del paso, «Listo, siguiente», «Paso anterior», «Mantén para hablar» y acceso a la lista de compras.
-- **Voz:** con las manos ocupadas, «Siguiente» y «Repite».
-- **Reglas:** acento ámbar; sin dinero ni datos clínicos (modo Casa).
-
-### 23.7 C07 · Cambio de usuario
-
-- **Zonas:** selector de persona por nombre, «Seguir en modo Casa», teclado de PIN con huella.
-- **Reglas:** regresa al modo Casa tras 2 minutos sin uso (editable); lo personal solo se abre tras PIN o huella; el modo Casa no muestra dinero ni datos clínicos.
-
-## 24. Estados del núcleo y cobertura de pantallas
-
-**Núcleo (laptop):** en espera, escuchando, pensando y hablando, más un estado propio de **esperando confirmación** (C03). Todos tienen versión sin movimiento si el sistema reduce animaciones.
-
-| Sección del documento | Pantalla | Dónde está el boceto |
-|---|---|---|
-| 7 Pantalla principal | Laptop, estilos A a E | Lienzo compartido «GRAVITY — estilos de pantalla» |
-| 8 Dentro de un módulo | Finanzas › Semana | Lienzo compartido |
-| 9 Teléfono | Hoy, Mi turno, Registrar gasto, Bici | Lienzo compartido |
-| 6 Gadgets | Catálogo | Lienzo compartido |
-| 10 Desarrollador | APIs con Swagger UI | Lienzo compartido |
-| 11 Tablet | Modo Casa con contextos | Lienzo compartido |
-| 12 Pulsera | Pantallas de un vistazo | Lienzo compartido |
-| 4 Estilos | Apariencia | C01 (lienzo complementario) |
-| 14 F6 | Personas y roles | C02 |
-| 14 F4 | Orden con confirmación | C03 |
-| 14 F3 | Hábito a eliminar y SOS | C04 |
-| 14 F7 | Cambio urgente de medicamento | C05 |
-| 11 | Cocina | C06 |
-| 14 F8 | Cambio de usuario | C07 |
-
-**Aún sin boceto:** Hábitos (agenda, lector bíblico, revisión semanal), Finanzas fuera de «Semana», Cuidados fuera de «Mi turno» y la bitácora, el asistente de configuración y las pantallas de estados vacíos y de error. Dependen de los diseños de cada módulo (FINANZAS sección 8; HÁBITOS Anexo G).
+**Siguiente paso:** elegir cuáles pasan a boceto. Cada estilo nuevo debe cumplir las reglas de la sección 4 (versión de día y de noche, excepciones de Cuidados y bici, contraste mínimo).
 
 ## 25. Diferencias con el contrato de conexión v2.0 (el contrato no se modifica)
 
-Este documento describe **una sola app** (GRAVITY con módulos). El contrato v2.0 describe **tres apps independientes**. Para que el equipo lo tenga presente, estas son las diferencias de **pantalla** que hoy chocan con el contrato; ninguna se resuelve aquí.
+Este documento describe **una sola app** (GRAVITY con módulos). El contrato v2.0 describe **tres apps independientes**. Estas son las diferencias de **pantalla** que hoy chocan con el contrato; ninguna se resuelve aquí.
 
 | # | Lo que muestra este documento | Lo que dice el contrato v2.0 |
 |---|---|---|
@@ -1079,14 +1032,13 @@ Este documento describe **una sola app** (GRAVITY con módulos). El contrato v2.
 ## 26. Preguntas nuevas
 
 1. ¿Los dos modelos (una app con módulos / tres apps del contrato) conviven, o uno reemplaza al otro? Define qué hacer con los documentos de HABITOS y FINNZAS.
-2. Con el modo privado activo, ¿la tarjeta de confirmación pide «Mostrar para confirmar» (propuesta de C03) o muestra el monto siempre en la confirmación?
-3. En C04, ¿la cuenta atrás del SOS es de 10 minutos (como en Hábitos G.3.7) o editable?
-4. En C06, ¿quién ve la receta: cualquier usuario del contexto Cocina o solo quien inició sesión?
+2. ¿Cuáles de los estilos G a K pasan a boceto?
+3. Con el modo privado activo, ¿la tarjeta de confirmación (C03) pide «Mostrar para confirmar» o muestra el monto siempre en la confirmación?
+4. En C04, ¿la cuenta atrás del SOS es de 10 minutos (como en Hábitos G.3.7) o editable?
 5. En C07, ¿cuántos intentos de PIN antes de bloquear la tablet?
-6. ¿Qué texto lleva el botón de la cuidadora en C05 para el estado «Enterada»?
 
 ## Control de cambios (complemento)
 
 | Versión | Fecha | Cambio |
 |---|---|---|
-| 0.6 | 28/oct/2026 | Secciones 23 a 26: siete pantallas complementarias (C01 a C07), estados del núcleo, mapa de cobertura, diferencias con el contrato v2.0 y preguntas nuevas |
+| 0.6 | 28/oct/2026 | Se retiran los estilos C y D; propuesta de cinco estilos nuevos (G a K); pantallas pendientes de diseño (C01 a C07, sin bocetos); diferencias con el contrato v2.0; preguntas nuevas |
