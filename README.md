@@ -10,6 +10,8 @@ Construir un asistente personal capaz de entender instrucciones en lenguaje natu
 
 Fase inicial: definición del proyecto.
 
+UX provisional (pendiente de decidir plataforma): [`docs/UX_PROVISIONAL.md`](docs/UX_PROVISIONAL.md).
+
 ## Hoja de ruta
 
 - [ ] Definir arquitectura y stack
