@@ -1183,6 +1183,12 @@ Fila nueva del lienzo compartido: tres pantallas en vivo, cada una en los estilo
 | Entrenamiento | Peso y repeticiones de la serie actual, descanso, siguiente ejercicio, series del ejercicio, Serie hecha / Saltar descanso / Terminar |
 | Running | Ritmo grande, distancia, tiempo, pulso, cadencia, ritmo por kilómetro, Pausa / Vuelta / Terminar |
 
+Segunda ronda (29/oct/2026): se conserva como bici N la versión mejorada sobre el diseño `TelBici` (personalidad sport / swagger) y las ocho pantallas restantes se rehacen con el mismo lenguaje:
+- **Indicador principal** en arco con marcas, banda de zona objetivo, valor máximo y comparación con el promedio u objetivo.
+- **Métricas** en tres tarjetas, barra de zonas de pulso y barra de meta.
+- **Gráfica propia de cada pantalla:** perfil de elevación con tu posición (bici), series con esfuerzo 6–10 y siguiente ejercicio (entrenamiento), ritmo por kilómetro e intervalo siguiente (running).
+- **Controles grandes**; «Terminar» exige mantener presionado para evitar toques accidentales.
+
 Notas:
 - Los datos de ejemplo son inventados; no hay datos de salud de terceros.
 - Según el contrato v2.0, el ejercicio y las rutinas son de Hábitos y GRAVITY solo abre pantallas por enlace. Estas pantallas quedan como **propuesta visual**; quién las ofrece (GRAVITY o Hábitos) es una pregunta abierta, sin tocar el contrato.
@@ -1196,3 +1202,4 @@ Notas:
 | 0.8 | 28/oct/2026 | Teléfono principal: se descartan K y N; se agregan D, G, H, I, J y L; los bocetos del lienzo llevan la letra del estilo |
 | 0.9 | 28/oct/2026 | Tablet principal con los mismos estilos que el teléfono (D, F, G, H, I, J, L); filas del lienzo en orden alfabético; se descarta C en tablet |
 | 1.0 | 29/oct/2026 | Sección 30: bicicleta, entrenamiento y running en estilos F, J y N |
+| 1.1 | 29/oct/2026 | Bici N mejorada; pantallas de bici, entrenamiento y running rehechas en F, J y N con indicador en arco, zonas, meta y gráfica propia |
