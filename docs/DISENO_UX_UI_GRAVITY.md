@@ -1193,6 +1193,21 @@ Notas:
 - Los datos de ejemplo son inventados; no hay datos de salud de terceros.
 - Según el contrato v2.0, el ejercicio y las rutinas son de Hábitos y GRAVITY solo abre pantallas por enlace. Estas pantallas quedan como **propuesta visual**; quién las ofrece (GRAVITY o Hábitos) es una pregunta abierta, sin tocar el contrato.
 
+## 31. Teléfono: idiomas (estilos F, J y N)
+
+Fila del lienzo compartido con tres pantallas de inglés, cada una en F Bento oscuro, J Aurora y N Swagger (9 bocetos de 390 × 844). Los estilos son una suposición (los mismos de la fila de deporte) a confirmar.
+
+| Pantalla | Contenido del boceto |
+|---|---|
+| Lección del día | Progreso de 8 ejercicios, frase a traducir con audio normal y lento, respuesta armada con palabras, pista, precisión, XP y meta de minutos |
+| Conversación | Role-play «En el café» por voz: burbujas, corrección marcada con pronunciación, objetivo de la escena, acento y fluidez, botón Hablar |
+| Vocabulario | Tarjeta con palabra, fonética, significado y ejemplo; siguientes palabras, meta diaria y calificación Otra vez / Difícil / Bien / Fácil con intervalos |
+
+Notas:
+- Según el contrato v2.0, el inglés es de Hábitos y GRAVITY solo abre pantallas por enlace: son **propuesta visual**; queda abierto quién las ofrece.
+- La conversación usaría un modelo de lenguaje: solo si el usuario lo activa (se ve en la etiqueta «IA activada por ti»), con lo mínimo necesario, sin nombres ni datos personales y sin la clave dentro de la app.
+- Frases y datos de ejemplo inventados.
+
 ## Control de cambios (complemento)
 
 | Versión | Fecha | Cambio |
@@ -1203,3 +1218,4 @@ Notas:
 | 0.9 | 28/oct/2026 | Tablet principal con los mismos estilos que el teléfono (D, F, G, H, I, J, L); filas del lienzo en orden alfabético; se descarta C en tablet |
 | 1.0 | 29/oct/2026 | Sección 30: bicicleta, entrenamiento y running en estilos F, J y N |
 | 1.1 | 29/oct/2026 | Bici N mejorada; pantallas de bici, entrenamiento y running rehechas en F, J y N con indicador en arco, zonas, meta y gráfica propia |
+| 1.2 | 29/oct/2026 | Sección 31: pantallas de idiomas (lección, conversación y vocabulario) en F, J y N |
