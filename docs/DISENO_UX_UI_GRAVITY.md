@@ -982,9 +982,9 @@ Pantallas que los flujos de la sección 14 y el resto del documento mencionan, p
 
 | Id | Pantalla | Flujo o sección | Dispositivo |
 |---|---|---|---|
-| C01 | Ajustes › Apariencia (estilo, claro/oscuro, personalidad por módulo) | F9, sección 4 | Laptop |
-| C02 | Ajustes › Personas y roles (invitar y dar de baja) | F6 | Laptop |
-| C03 | Orden a GRAVITY con tarjeta de confirmación y modo privado | F4, secciones 7 y 16 | Laptop |
+| C01 | Ajustes › Apariencia (estilo, claro/oscuro, personalidad por módulo) | F9, sección 4 | Laptop · **boceto en el lienzo (shadcn)** |
+| C02 | Ajustes › Personas y roles (invitar y dar de baja) | F6 | Laptop · **boceto en el lienzo (shadcn)** |
+| C03 | Orden a GRAVITY con tarjeta de confirmación y modo privado | F4, secciones 7 y 16 | Laptop · **boceto en el lienzo (shadcn)** |
 | C04 | Hábito a eliminar (panel) y SOS «Tengo un antojo» | F3 | Teléfono |
 | C05 | Cambio urgente de medicamento (Dueño) | F7 | Teléfono |
 | C06 | Cocina: receta paso a paso | Sección 11 | Tablet vertical |
@@ -1013,7 +1013,9 @@ Las letras se reasignaron de la A a la N, **ordenadas por familia**, y los bocet
 | **K** | Minimalismo / Flat | Claro plano | L | Sí |
 | **L** | Neumorphism / Soft UI | Claro plano | N | Sí |
 | **M** | Neo-brutal | Carácter fuerte | J | Sí |
-| **N** | Swagger (sport, neón) | Carácter fuerte | F | No (se ve en «Bici en vivo» del teléfono) |
+| **N** | Swagger (sport, neón) | Carácter fuerte | F | Sí (y en «Bici en vivo» del teléfono) |
+
+**Decidido (28/oct/2026): estilos de la pantalla de la laptop = A, B, C y J** (Futurista, Terminal, Instrumental y Aurora). El resto del catálogo queda disponible para otros dispositivos y para elegir en Apariencia. En el lienzo, la línea **«Estilos»** muestra el catálogo A a N, y la línea de debajo, **«Pantallas de laptop»**, muestra la pantalla principal en esos cuatro estilos junto con las demás pantallas de laptop.
 
 **Retirados (sin letra):** Claro sereno (antes C), Arquitectónico (antes D), Bento claro (antes O), Editorial (antes Q), Orbital (antes R), Línea del día (antes S), Paleta de comandos (antes T) y Bento 3D con módulos movibles (antes V).
 
@@ -1110,8 +1112,41 @@ Dos modos que el diseño debe contemplar además de la pantalla. Bocetos en el l
 - **Control:** cada automatización se enciende o apaga por módulo; una lista «Qué hizo GRAVITY» muestra lo ocurrido y permite deshacer.
 - **Pendiente:** definir qué señales están realmente disponibles (por ejemplo, qué datos comparte la pulsera y qué expone el puente de casa) antes de comprometer escenarios.
 
+## 28. shadcn/ui para complementar las pantallas (propuesta)
+
+**Decisión del usuario (28/oct/2026):** usar **shadcn/ui** para complementar las pantallas.
+
+### 28.1 Qué es y para qué se usa aquí
+
+shadcn/ui no es una librería que se instala: es un conjunto de componentes (Card, Button, Badge, Tabs, Table, Switch, Select, Input, Alert, Dialog, Command, Sheet, Avatar, Separator…) que se **copian al proyecto**, construidos con React, Tailwind CSS y Radix UI, y se tematizan con **variables CSS** (`--background`, `--primary`, `--border`, `--radius`…). Aquí se usa para las pantallas de **laptop** que son formularios, tablas, diálogos y paletas; el núcleo animado y los gadgets siguen siendo propios de cada estilo.
+
+### 28.2 Cómo se combina con los estilos
+
+- Cada estilo (A a N) es un **tema de shadcn**: un juego de variables CSS. Cambiar de estilo cambia el tema, no los componentes.
+- Los bocetos de C01, C02 y C03 usan los componentes de shadcn con el tema del estilo A (Futurista, noche). Para B, C o J basta sustituir las variables.
+- Equivalencias: tarjeta de módulo → `Card`; chips de estado → `Badge`; selector de estilo → `RadioGroup` en tarjetas; Claro/oscuro → `Select` + `Switch`; personas y roles → `Table` + `Dialog`; confirmación de una orden → `Card` o `AlertDialog`; barra de órdenes y Ctrl + K → `Command`; panel lateral → `Sheet`; atajos → `Kbd`.
+- Las reglas de la sección 4 siguen mandando: capas de estilo, excepciones de Cuidados y bici, y contraste mínimo.
+
+### 28.3 Lo que implica para la arquitectura (sin decidir)
+
+shadcn/ui es para **web (React)**. Esto afecta decisiones que siguen abiertas:
+
+| Tema | Implicación |
+|---|---|
+| Laptop (Windows) | Encaja bien: una aplicación web de escritorio (por ejemplo con Tauri o Electron) con React, Tailwind y shadcn/ui |
+| Android | shadcn/ui no corre en nativo. Opciones: la misma web como PWA o envuelta (Capacitor), o una interfaz móvil aparte con otro conjunto de componentes. El 3D y el esmerilado completo se evitan en teléfono (sección 4) |
+| Tablet | Igual que Android |
+| Apps independientes (Hábitos y Presupuesto) | Su diseño habla de Flutter. No usarían shadcn: la unidad visual se lograría con los **mismos tokens** (color, tipografía, radios), no con los mismos componentes |
+| Stack de GRAVITY | Sigue **sin decidirse**. Esta sección solo registra que shadcn orienta la laptop hacia web con React |
+
+### 28.4 Preguntas
+
+1. ¿El teléfono y la tablet serán la misma app web (PWA o envuelta) o una interfaz móvil aparte?
+2. ¿Aceptas que Hábitos y Presupuesto compartan solo los tokens visuales y no los componentes?
+3. ¿Qué otras pantallas de laptop quieres con shadcn: Finanzas › Semana, APIs (Swagger UI) o todas?
+
 ## Control de cambios (complemento)
 
 | Versión | Fecha | Cambio |
 |---|---|---|
-| 0.6 | 28/oct/2026 | Se retiran los estilos C y D; catálogo de estilos reasignado A a N (24.0), en una sola línea en el lienzo compartido; O, Q, R, S, T y V retirados; modos VUI y Zero UI (sección 27); pantallas pendientes de diseño (C01 a C07, sin bocetos); diferencias con el contrato v2.0; preguntas nuevas |
+| 0.6 | 28/oct/2026 | Se retiran los estilos C y D; catálogo de estilos reasignado A a N (24.0), en una sola línea en el lienzo compartido; O, Q, R, S, T y V retirados; modos VUI y Zero UI (sección 27); shadcn/ui (sección 28); estilos de laptop A, B, C y J; pantallas pendientes de diseño (C01 a C07, sin bocetos); diferencias con el contrato v2.0; preguntas nuevas |
