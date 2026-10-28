@@ -1013,22 +1013,24 @@ Pantallas que los flujos de la sección 14 y el resto del documento mencionan, p
 | **L · Minimalismo / Flat** | Claro, colores planos, sin bordes ni sombras, mucho espacio y un solo acento | Finanzas, sesiones largas | Parecido a B; poca personalidad por módulo |
 | **M · Glassmorphism** | Paneles translúcidos y esmerilados sobre degradado vivo de día | Laptop y tablet | Parecido a E; esmerilado solo en laptop y tablet (regla de la sección 4); contraste a vigilar |
 | **N · Neumorphism (Soft UI)** | Relieves suaves del mismo color del fondo, botones que se hunden | Tablet de la casa, estado de ánimo calmo | Bajo contraste de bordes: exige texto oscuro y estados con icono; el menos accesible |
-| **O · Bento Grid (claro)** | Mosaico de tarjetas de colores y tamaños distintos | Teléfono, tablet y «Hoy» | Parecido a I; hay que diseñar la rejilla por pantalla |
+| ~~O · Bento Grid (claro)~~ | **Retirado el 28/oct/2026** | — | — |
 | **P · AI-First** | La conversación y lo proactivo van al centro: resumen generado, sugerencias, «lo que hice por ti» y «necesita tu confirmación»; los módulos pasan a una barra lateral | Pantalla principal de la laptop; desde la Fase 6 | Depende de la IA (Fase 6); en Fase 0 solo navega. El dinero nunca pasa por la IA |
 
-**Ronda 3: cinco estilos con otra estructura** (letras Q a U; cambian la disposición, no solo el color):
+**Ronda 3: cinco estilos con otra estructura** (letras Q a U); el usuario retiró Q, R, S y T el 28/oct/2026 y queda **U**:
 
 | Estilo | Cómo se ve | Dónde luce más | Costo / riesgo |
 |---|---|---|---|
-| **Q · Editorial / Revista** | Cabecera tipo periódico, titular serif enorme, columnas y filetes; el resumen se lee como una portada | Resumen matutino y nocturno, laptop | Poca densidad de gadgets; se parece a un diario, no a un asistente |
-| **R · Orbital** | El núcleo al centro y cada módulo como satélite que muestra su gadget (3/5, medicamento, 62 %) | Pantalla principal de laptop y tablet | Sirve para 6 módulos, no para 12; los satélites deben seguir siendo táctiles y legibles |
-| **S · Línea del día** | La pantalla es una línea de tiempo del día con chips de módulo; lo que viene y lo ya hecho en un solo flujo | Laptop y tablet; reloj en versión corta | Pide que cada módulo aporte eventos con hora; los avisos sin hora se anclan a un día |
-| **T · Paleta de comandos** | Denso y teclado primero: una paleta con órdenes, atajos, acciones que piden confirmación y sugerencias | Laptop, usuario avanzado | Menos amable para la cuidadora y la pareja; mejor como modo alterno (Ctrl + K) |
+| ~~Q · Editorial / Revista~~ | **Retirado el 28/oct/2026** | — | — |
+| ~~R · Orbital~~ | **Retirado el 28/oct/2026** | — | — |
+| ~~S · Línea del día~~ | **Retirado el 28/oct/2026** | — | — |
+| ~~T · Paleta de comandos~~ | **Retirado el 28/oct/2026** | — | — |
 | **U · Calma / Ambient** | Casi sin interfaz: una frase grande, luz ambiental que respira y una línea de estado | Tablet de la casa, modo en reposo y Zero UI | Poca información a la vista; los módulos quedan detrás de «Módulos» |
 
-**Solapes que conviene decidir:** L con B, M con E, O con I, J con F, y T con la barra de órdenes de A. Si se eligen ambos de un par, uno debe aportar algo que el otro no.
+**Retirados el 28/oct/2026 (a petición del usuario):** O (Bento claro), Q (Editorial), R (Orbital), S (Línea del día), T (Paleta de comandos) y V (Bento 3D con módulos movibles). Se quitaron del lienzo compartido. Quedan como candidatos: A, B, E, F, G, H, I, J, K, L, M, N, P y U.
 
-**Recomendación (propuesta):** A, K y P como candidatos principales para la pantalla principal de la laptop (Futurista, Instrumental y AI-First responden a «tipo JARVIS»); I u O para «Hoy» en teléfono y tablet; F para bici y entrenamiento. Neumorphism (N) solo con variante de alto contraste.
+**Solapes que conviene decidir:** L con B, M con E, J con F. Si se eligen ambos de un par, uno debe aportar algo que el otro no.
+
+**Recomendación (propuesta):** A, K y P como candidatos principales para la pantalla principal de la laptop (Futurista, Instrumental y AI-First responden a «tipo JARVIS»); I para «Hoy» en teléfono y tablet; F para bici y entrenamiento. Neumorphism (N) solo con variante de alto contraste.
 
 **Siguiente paso:** elegir un estilo global y una personalidad por módulo. Cada estilo debe cumplir las reglas de la sección 4: versión de día y de noche, excepciones de Cuidados y bici, contraste mínimo.
 
@@ -1085,4 +1087,4 @@ Dos modos que el diseño debe contemplar además de la pantalla. Bocetos en el l
 
 | Versión | Fecha | Cambio |
 |---|---|---|
-| 0.6 | 28/oct/2026 | Se retiran los estilos C y D; quince estilos propuestos (G a K, L a P y Q a U) aplicados en el lienzo compartido; modos VUI y Zero UI (sección 27); pantallas pendientes de diseño (C01 a C07, sin bocetos); diferencias con el contrato v2.0; preguntas nuevas |
+| 0.6 | 28/oct/2026 | Se retiran los estilos C y D; estilos propuestos G a P y U aplicados en el lienzo compartido (O, Q, R, S, T y V retirados); modos VUI y Zero UI (sección 27); pantallas pendientes de diseño (C01 a C07, sin bocetos); diferencias con el contrato v2.0; preguntas nuevas |
