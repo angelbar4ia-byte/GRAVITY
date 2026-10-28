@@ -1156,8 +1156,8 @@ Decisión del 28/oct/2026: se descartan las propuestas K (Flat claro) y N (Swagg
 
 | Estilo | Idea |
 |---|---|
-| F Bento oscuro | Mosaico de tarjetas, «Sigue» en degradado, anillo de hábitos |
 | D AI-First | Barra «¿Qué necesitas?» arriba con sugerencias; acento violeta-cian |
+| F Bento oscuro | Mosaico de tarjetas, «Sigue» en degradado, anillo de hábitos |
 | G Calma | Fondo azul profundo, tipografía ligera, paneles translúcidos y botones en píldora |
 | H Glass noche/día | Capas translúcidas sobre degradado; en teléfono sin esmerilado |
 | I Glassmorphism vivo | Manchas de color vivas con paneles translúcidos; sin esmerilado en teléfono |
@@ -1166,13 +1166,7 @@ Decisión del 28/oct/2026: se descartan las propuestas K (Flat claro) y N (Swagg
 
 ### 29.2 Tablet en horizontal, Modo Casa (1280 × 800)
 
-Sin dinero ni datos clínicos; recordatorios solo genéricos; contextos General, Cocina, Gimnasio y Cuidados; cambio de usuario con PIN o huella; botón «Mantén para hablar».
-
-| Propuesta | Estilo | Idea |
-|---|---|---|
-| 1 | G Calma / Ambient | Reloj grande, agenda, hábitos y recordatorios de la casa con mucho aire |
-| 2 | I Glass | Paneles de cristal con esmerilado real (permitido en tablet) sobre manchas de color |
-| 3 | C Instrumental | Cuadrícula tipo tablero con tipografía de datos y barra de hábitos segmentada |
+Sin dinero ni datos clínicos; recordatorios solo genéricos; contextos General, Cocina, Gimnasio y Cuidados; cambio de usuario con PIN o huella; botón «Mantén para hablar». Mismos estilos que el teléfono, en orden alfabético: **D, F, G, H, I, J y L** (se descarta la propuesta C Instrumental). En tablet sí se permite el esmerilado real (H e I).
 
 ### 29.3 Preguntas
 
@@ -1186,3 +1180,4 @@ Sin dinero ni datos clínicos; recordatorios solo genéricos; contextos General,
 | 0.6 | 28/oct/2026 | Se retiran los estilos C y D; catálogo de estilos reasignado A a N (24.0), en una sola línea en el lienzo compartido; O, Q, R, S, T y V retirados; modos VUI y Zero UI (sección 27); shadcn/ui (sección 28); estilos de laptop A, B, C y J; pantallas pendientes de diseño (C01 a C07, sin bocetos); diferencias con el contrato v2.0; preguntas nuevas |
 | 0.7 | 28/oct/2026 | Móvil en Flutter; tokens independientes por app y función; shadcn solo como inspiración de patrones (28.4); sección 29 con 3 propuestas de teléfono (F, K, N) y 3 de tablet (G, I, C) |
 | 0.8 | 28/oct/2026 | Teléfono principal: se descartan K y N; se agregan D, G, H, I, J y L; los bocetos del lienzo llevan la letra del estilo |
+| 0.9 | 28/oct/2026 | Tablet principal con los mismos estilos que el teléfono (D, F, G, H, I, J, L); filas del lienzo en orden alfabético; se descarta C en tablet |
