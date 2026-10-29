@@ -1193,9 +1193,9 @@ Notas:
 - Los datos de ejemplo son inventados; no hay datos de salud de terceros.
 - Según el contrato v2.0, el ejercicio y las rutinas son de Hábitos y GRAVITY solo abre pantallas por enlace. Estas pantallas quedan como **propuesta visual**; quién las ofrece (GRAVITY o Hábitos) es una pregunta abierta, sin tocar el contrato.
 
-## 31. Teléfono: idiomas (estilos F, J y N)
+## 31. Teléfono: idiomas (estilos D, F, G y M)
 
-Fila del lienzo compartido con tres pantallas de inglés, cada una en F Bento oscuro, J Aurora y N Swagger (9 bocetos de 390 × 844). Los estilos son una suposición (los mismos de la fila de deporte) a confirmar.
+Fila del lienzo compartido con tres pantallas de inglés, cada una en D AI-First, F Bento oscuro, G Calma y M Neo-brutal (12 bocetos de 390 × 844). Decisión del 29/oct/2026: estos cuatro estilos sustituyen a F, J y N de la primera propuesta.
 
 | Pantalla | Contenido del boceto |
 |---|---|
@@ -1219,3 +1219,4 @@ Notas:
 | 1.0 | 29/oct/2026 | Sección 30: bicicleta, entrenamiento y running en estilos F, J y N |
 | 1.1 | 29/oct/2026 | Bici N mejorada; pantallas de bici, entrenamiento y running rehechas en F, J y N con indicador en arco, zonas, meta y gráfica propia |
 | 1.2 | 29/oct/2026 | Sección 31: pantallas de idiomas (lección, conversación y vocabulario) en F, J y N |
+| 1.3 | 29/oct/2026 | Idiomas: estilos D, F, G y M (sustituyen a F, J y N) |
