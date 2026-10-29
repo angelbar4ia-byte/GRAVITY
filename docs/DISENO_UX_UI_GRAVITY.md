@@ -1290,6 +1290,31 @@ Notas:
 - Lenguaje sereno, sin nombres, sin alergias y sin dosis; los datos son inventados. Las pantallas no sustituyen las indicaciones médicas.
 - Nada se envía a GRAVITY ni a IA. Pregunta abierta: cuánto de este contenido debe revisar una persona del área de salud antes de construirlo.
 
+## 37. Teléfono: trabajo y profesión, proyectos, planeador e ideas (estilos D, F, G y M)
+
+Cuatro filas nuevas en el lienzo compartido, cada una con tres pantallas en D AI-First, F Bento oscuro, G Calma y M Neo-brutal (48 bocetos de 390 × 844). Los estilos son una suposición (los mismos de finanzas y salud) a confirmar.
+
+| Línea | Pantalla | Contenido del boceto |
+|---|---|---|
+| Trabajo y profesión | Mi día de trabajo | Siguiente bloque de enfoque, agenda laboral con avisos, tres tareas clave, horas enfocadas y reuniones |
+| | Enfoque | Temporizador de bloques (2 de 4), qué silenciar para no distraerte, siguiente descanso |
+| | Desarrollo profesional | Metas del año con avance y siguiente paso, networking por retomar, horas y racha |
+| Proyectos | Mis proyectos | Lista con estado (en curso, en riesgo, pausa), avance y siguiente hito |
+| | Detalle de proyecto | Avance, días restantes, hitos, próximas tareas, riesgo, horas |
+| | Tablero | Por hacer, en curso y hecho con tarjetas; mantener presionado para mover |
+| Planeador | Semana | Siete días con bloques por área y carga de la semana |
+| | Día por bloques | Línea del día con bloques coloreados por área (trabajo, alimentación, idiomas, entrenamiento) y bloque actual |
+| | Revisión semanal | Logros, pendientes por mover y tres prioridades de la semana siguiente |
+| Ideas | Capturar por voz | Esfera de micrófono, lo que se dijo, etiquetas sugeridas y dónde guardar |
+| | Bandeja | Búsqueda por voz, filtros y tarjetas de ideas con etiqueta y fecha |
+| | Convertir idea | Idea con notas y conversión en proyecto, tarea o recordatorio; ideas relacionadas |
+
+Notas:
+- **Módulos nuevos:** no aparecen en el contrato v2.0 ni en las otras apps. Quedan como propuesta visual; si necesitaran datos de Hábitos o Presupuesto, se propone un cambio al contrato (qué y por qué), sin tocarlo aquí.
+- El planeador muestra bloques de otras áreas (alimentación, idiomas, entrenamiento) solo como recordatorio de horarios; no lee datos de esas apps.
+- Las ideas se capturan con reconocimiento en el teléfono y se guardan solo ahí; no se envían a servicios de IA.
+- Datos de ejemplo inventados; sin información de empresas ni de personas reales.
+
 ## Control de cambios (complemento)
 
 | Versión | Fecha | Cambio |
@@ -1308,3 +1333,4 @@ Notas:
 | 1.7 | 29/oct/2026 | Sección 34: pantallas de finanzas (resumen semanal, registrar gasto y libro) en D, F, G y M |
 | 1.8 | 29/oct/2026 | Secciones 35 y 36: pantallas de salud (D, F, G, M) y de cuidados paliativos (H, K, M, claros) |
 | 1.9 | 29/oct/2026 | Finanzas mejorada: registro por voz con confirmación, reconocimiento en el teléfono, ritmo y gasto por día |
+| 2.0 | 29/oct/2026 | Sección 37: trabajo y profesión, proyectos, planeador e ideas (4 filas, 48 bocetos) |
