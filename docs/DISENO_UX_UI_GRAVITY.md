@@ -1246,9 +1246,15 @@ Fila del lienzo compartido con tres pantallas, cada una en D AI-First, F Bento o
 
 | Pantalla | Contenido del boceto |
 |---|---|
-| Resumen semanal | Disponible de la semana con barra de uso, cascada ingreso → presupuesto → deuda → remanente, gasto por categoría, próximo vencimiento y botón Ocultar |
-| Registrar gasto | Monto con dictado, categoría, cuenta y fecha, teclado numérico y aviso de que el libro solo agrega |
-| Libro de movimientos | Filtros, movimientos con una anulación y su contraasiento, una corrección, totales y botón Ocultar |
+| Resumen semanal | Disponible de la semana con ritmo, cascada ingreso → presupuesto → deuda → remanente, gasto por día contra la meta diaria, próximo vencimiento, franja «Registra con tu voz» y botón Hablar |
+| Registrar por voz | Esfera de micrófono con ondas, lo que se escuchó, lo que se va a guardar (monto, categoría, cuenta, fecha, todo editable), frases de ejemplo, modo privado y botones Confirmar, Repetir y Teclear |
+| Libro de movimientos | Búsqueda por voz, filtros, movimientos con marca de «por voz», una anulación con su contraasiento, una corrección, totales y botón Hablar |
+
+**Mejora del 29/oct/2026: el registro es por voz.** Reglas del flujo:
+- Primero se habla, después se confirma: nada se guarda sin confirmación visible (campos editables).
+- El reconocimiento y la interpretación de la frase ocurren **en el teléfono**; los montos y la voz no se envían a servicios de IA (regla de oro 2 de Presupuesto). Si no hay reconocimiento local disponible, queda el teclado como alternativa.
+- Con el modo privado la respuesta no dice los montos en voz alta.
+- Teclear sigue disponible como respaldo (botón Teclear).
 
 Notas:
 - **Contradicción con el contrato v2.0 (sección 25):** el contrato prohíbe a GRAVITY manejar dinero y cuentas; estas pantallas son de la app de Presupuesto, o del módulo Finanzas de la v0.5. Quedan como propuesta visual, sin cambiar el contrato.
@@ -1301,3 +1307,4 @@ Notas:
 | 1.6 | 29/oct/2026 | Sección 33: pantallas espirituales (devocional, oración y silencio, diario de gratitud) en D, F, G y M |
 | 1.7 | 29/oct/2026 | Sección 34: pantallas de finanzas (resumen semanal, registrar gasto y libro) en D, F, G y M |
 | 1.8 | 29/oct/2026 | Secciones 35 y 36: pantallas de salud (D, F, G, M) y de cuidados paliativos (H, K, M, claros) |
+| 1.9 | 29/oct/2026 | Finanzas mejorada: registro por voz con confirmación, reconocimiento en el teléfono, ritmo y gasto por día |
