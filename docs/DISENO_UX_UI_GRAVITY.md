@@ -1255,6 +1255,35 @@ Notas:
 - Todas las cifras son inventadas. Con el modo privado se ocultan los montos (botón Ocultar).
 - La cascada y el libro solo-agregar (corrección por anulación y contraasiento) siguen las reglas de oro de Presupuesto.
 
+## 35. Teléfono: salud (estilos D, F, G y M)
+
+Fila del lienzo con tres pantallas, cada una en D AI-First, F Bento oscuro, G Calma y M Neo-brutal (12 bocetos de 390 × 844). Los estilos son una suposición (los mismos de finanzas) a confirmar.
+
+| Pantalla | Contenido del boceto |
+|---|---|
+| Salud de hoy | Sueño de anoche con fases, agua, pasos, ejercicio y peso con avance, metas del día y estado de Health Connect |
+| Agua y peso | Vasos de 250 ml, botones rápidos, peso con tendencia de 7 días y aviso de que escribir en Health Connect está desactivado hasta que se permita |
+| Sueño | Siete noches contra la meta de 8 h, hora de dormir y despertar, regularidad y rutina para dormir |
+
+Notas:
+- Según el contrato v2.0, peso, agua, sueño y ejercicio son de Hábitos, se escriben en Health Connect solo con permiso explícito y no viajan en el JSON. Son **propuesta visual**.
+- Datos de ejemplo inventados; no hay datos de salud de terceros.
+
+## 36. Teléfono: cuidados paliativos (estilos H día, K y M)
+
+Fila del lienzo con tres pantallas para la persona cuidadora, en tres estilos **claros y de alto contraste** (regla de la sección 4: Cuidados siempre claro): H Glass día, K Flat claro y M Neo-brutal (9 bocetos de 390 × 844).
+
+| Pantalla | Contenido del boceto |
+|---|---|
+| Mi turno | Tareas del turno con estado, medicamento destacado, confort del día, hechas y relevo a las 20:00, botones Registrar, Nota y Avisar |
+| Dar medicamento | Hoja de indicaciones (sin dosis en la pantalla), tres verificaciones, opciones si no se pudo dar y confirmación manteniendo presionado |
+| Bitácora y relevo | Cómo estuvo y apetito, notas con hora, pendientes para el siguiente turno, aviso de privacidad y botón Entregar relevo |
+
+Notas:
+- El contrato v2.0 (sección 6) deja Cuidados en **borrador** y prohíbe a GRAVITY manejar datos clínicos de la persona cuidada. Estas pantallas son solo propuesta visual de la app de Cuidados; GRAVITY no las ofrece ni lee sus datos.
+- Lenguaje sereno, sin nombres, sin alergias y sin dosis; los datos son inventados. Las pantallas no sustituyen las indicaciones médicas.
+- Nada se envía a GRAVITY ni a IA. Pregunta abierta: cuánto de este contenido debe revisar una persona del área de salud antes de construirlo.
+
 ## Control de cambios (complemento)
 
 | Versión | Fecha | Cambio |
@@ -1271,3 +1300,4 @@ Notas:
 | 1.5 | 29/oct/2026 | Alimentación: pantalla de receta guiada en D, F, G y M |
 | 1.6 | 29/oct/2026 | Sección 33: pantallas espirituales (devocional, oración y silencio, diario de gratitud) en D, F, G y M |
 | 1.7 | 29/oct/2026 | Sección 34: pantallas de finanzas (resumen semanal, registrar gasto y libro) en D, F, G y M |
+| 1.8 | 29/oct/2026 | Secciones 35 y 36: pantallas de salud (D, F, G, M) y de cuidados paliativos (H, K, M, claros) |
