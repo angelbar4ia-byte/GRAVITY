@@ -1203,6 +1203,15 @@ Fila del lienzo compartido con tres pantallas de inglés, cada una en D AI-First
 | Conversación | Role-play «En el café» por voz: burbujas, corrección marcada con pronunciación, objetivo de la escena, acento y fluidez, botón Hablar |
 | Vocabulario | Tarjeta con palabra, fonética, significado y ejemplo; siguientes palabras, meta diaria y calificación Otra vez / Difícil / Bien / Fácil con intervalos |
 
+Pantallas agregadas el 29/oct/2026 (completan la fila, en D, F, G y M):
+
+| Pantalla | Contenido del boceto |
+|---|---|
+| Ruta de aprendizaje | Idiomas (inglés, francés, portugués), unidades hechas, la actual con avance y las bloqueadas, meta de nivel |
+| Pronunciación | Palabra con fonética, intento con la corrección marcada, consejo, acento y fluidez (reconocimiento en el teléfono) |
+| Escucha | Reproductor con velocidad, pregunta de comprensión con opciones, aciertos y veces escuchado |
+| Mi progreso | Nivel estimado A1 a C2, habilidades, minutos por día, palabras y racha |
+
 Notas:
 - Según el contrato v2.0, el inglés es de Hábitos y GRAVITY solo abre pantallas por enlace: son **propuesta visual**; queda abierto quién las ofrece.
 - La conversación usaría un modelo de lenguaje: solo si el usuario lo activa (se ve en la etiqueta «IA activada por ti»), con lo mínimo necesario, sin nombres ni datos personales y sin la clave dentro de la app.
@@ -1315,6 +1324,21 @@ Notas:
 - Las ideas se capturan con reconocimiento en el teléfono y se guardan solo ahí; no se envían a servicios de IA.
 - Datos de ejemplo inventados; sin información de empresas ni de personas reales.
 
+## 38. Teléfono: educación (estilos D, F, G y M)
+
+Fila nueva del lienzo compartido con cuatro pantallas, cada una en D AI-First, F Bento oscuro, G Calma y M Neo-brutal (16 bocetos de 390 × 844). Los estilos son una suposición (los mismos de las filas anteriores) a confirmar.
+
+| Pantalla | Contenido del boceto |
+|---|---|
+| Mis cursos | Cursos activos con avance, siguiente paso y aviso de entrega, horas de la semana y racha |
+| Sesión de estudio | Sección actual, ideas clave, apuntes con dictado y avance por secciones |
+| Tareas y entregas | Tareas por día y curso con aviso de entrega, siguiente bloque de estudio y cumplimiento |
+| Preparar examen | Preparación contra la meta, dominio por tema, plan de repaso del día, simulacros y nota media |
+
+Notas:
+- Educación no está en el contrato v2.0; queda como propuesta visual. El inglés ya cuenta con su propia línea (sección 31) y aquí aparece solo como un curso más.
+- Datos de ejemplo inventados; sin datos de estudiantes ni de instituciones reales.
+
 ## Control de cambios (complemento)
 
 | Versión | Fecha | Cambio |
@@ -1334,3 +1358,4 @@ Notas:
 | 1.8 | 29/oct/2026 | Secciones 35 y 36: pantallas de salud (D, F, G, M) y de cuidados paliativos (H, K, M, claros) |
 | 1.9 | 29/oct/2026 | Finanzas mejorada: registro por voz con confirmación, reconocimiento en el teléfono, ritmo y gasto por día |
 | 2.0 | 29/oct/2026 | Sección 37: trabajo y profesión, proyectos, planeador e ideas (4 filas, 48 bocetos) |
+| 2.1 | 29/oct/2026 | Idiomas completo (ruta, pronunciación, escucha y progreso) y sección 38: educación (4 pantallas) |
