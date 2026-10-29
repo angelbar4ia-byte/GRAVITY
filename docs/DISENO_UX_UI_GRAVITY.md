@@ -1280,6 +1280,23 @@ Fila del lienzo con tres pantallas, cada una en D AI-First, F Bento oscuro, G Ca
 | Agua y peso | Vasos de 250 ml, botones rápidos, peso con tendencia de 7 días y aviso de que escribir en Health Connect está desactivado hasta que se permita |
 | Sueño | Siete noches contra la meta de 8 h, hora de dormir y despertar, regularidad y rutina para dormir |
 
+**Mejoras del 29/oct/2026 a las tres pantallas:** salud de hoy con puntaje de sueño, tarjeta de suplementos y una indicación para el día; agua y peso con recordatorio de agua y meta de peso; sueño con deuda de sueño y magnesio en la rutina.
+
+**Control de suplementos alimenticios (4 pantallas nuevas, en D, F, G y M, 16 bocetos):**
+
+| Pantalla | Contenido del boceto |
+|---|---|
+| Suplementos de hoy | Tomas del día por momento (mañana, con comida, post-entreno y noche) con estado, la siguiente destacada, racha y existencias bajas; botones Marcar tomado, Posponer y Omitir |
+| Mi stack | Lista por tipo (proteína, vitaminas, minerales y otros) con dosis, momento y existencias en días; aviso de reponer |
+| Agregar suplemento | Alta por voz o a mano: nombre, tipo, dosis, existencias, frecuencia, momento y recordatorio |
+| Adherencia semanal | Cuadrícula de 7 días por suplemento, conteos, adherencia y aviso informativo |
+
+Reglas de diseño de suplementos:
+- **GRAVITY no recomienda dosis ni sustituye al médico o al nutriólogo**; la persona define sus dosis y las pantallas lo dicen.
+- Los datos de suplementos son de salud: se guardan solo en el teléfono, sin exportar ni compartir y sin IA.
+- Las existencias se cuentan en días o porciones; no hay precios ni compras.
+- Suplementos no están en el contrato v2.0: **propuesta visual**; si algún dato debiera viajar entre apps (por ejemplo, proteína y plan de comidas), se propone un cambio al contrato sin tocarlo aquí.
+
 Notas:
 - Según el contrato v2.0, peso, agua, sueño y ejercicio son de Hábitos, se escriben en Health Connect solo con permiso explícito y no viajan en el JSON. Son **propuesta visual**.
 - Datos de ejemplo inventados; no hay datos de salud de terceros.
@@ -1396,3 +1413,4 @@ Notas:
 | 2.1 | 29/oct/2026 | Idiomas completo (ruta, pronunciación, escucha y progreso) y sección 38: educación (4 pantallas) |
 | 2.2 | 29/oct/2026 | Sección 39: pantallas de laptop de bicicleta, fuerza y running en A, B, C y J |
 | 2.3 | 29/oct/2026 | Sección 40: deporte en el teléfono mejorado con resumen, y pantalla principal de la laptop mejorada en A, B, C y J |
+| 2.4 | 29/oct/2026 | Salud mejorada y control de suplementos alimenticios (4 pantallas) en D, F, G y M |
