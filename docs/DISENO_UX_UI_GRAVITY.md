@@ -1355,6 +1355,25 @@ Notas:
 - El botón «Exportar al planeador» y los horarios del planeador son recordatorios; no se leen datos de otras apps.
 - Datos de ejemplo inventados.
 
+## 40. Mejoras del 29/oct/2026: deporte en el teléfono y pantalla principal de la laptop
+
+**Deporte en el teléfono (secciones 30 y 39 se conservan).** Las pantallas en vivo de bici, entrenamiento y running (F, J y N) se rehicieron y se agregó una pantalla de **resumen de la actividad** por deporte (9 bocetos nuevos):
+- Bici: mapa del segmento que sigue con cuenta regresiva, y avisos de seguridad (detección de caída, ubicación compartida con la familia, sensores).
+- Entrenamiento: pesos y repeticiones con botones grandes, series con estado, esfuerzo y manos libres por voz («serie hecha»).
+- Running: intervalos con avance y distancia restante, ritmo meta contra ritmo actual, entrenador por voz y auto-pausa.
+- Resumen: mapa o gráfica del volumen, métricas, récord, comparación con la anterior, zonas, nota y cómo te sentiste.
+
+**Pantalla principal de la laptop mejorada (A, B, C y J).** Se conservan las originales y se agregan cuatro versiones nuevas al final de la fila de laptop:
+- Barra lateral con todos los módulos agrupados (cuerpo, mente, trabajo y hogar) e insignias de pendientes.
+- «Ahora»: lo que sigue con Iniciar y Posponer, y línea del día con bloques coloreados por área y marca de la hora actual.
+- Tarjetas de resumen por módulo (hábitos, salud, deporte, alimentación, idiomas, finanzas con monto oculto, proyectos, ideas, avisos y planeador).
+- **Cuidados siempre claro y de alto contraste** dentro del tablero oscuro (regla de la sección 4).
+- Barra de orden con sugerencias de voz.
+
+Notas:
+- El tablero muestra resúmenes de otras áreas; según el contrato v2.0 GRAVITY no lee sus bases de datos ni maneja dinero o datos clínicos. Queda como **propuesta visual**; el contrato no se toca y la diferencia sigue en la sección 25.
+- Datos de ejemplo inventados.
+
 ## Control de cambios (complemento)
 
 | Versión | Fecha | Cambio |
@@ -1376,3 +1395,4 @@ Notas:
 | 2.0 | 29/oct/2026 | Sección 37: trabajo y profesión, proyectos, planeador e ideas (4 filas, 48 bocetos) |
 | 2.1 | 29/oct/2026 | Idiomas completo (ruta, pronunciación, escucha y progreso) y sección 38: educación (4 pantallas) |
 | 2.2 | 29/oct/2026 | Sección 39: pantallas de laptop de bicicleta, fuerza y running en A, B, C y J |
+| 2.3 | 29/oct/2026 | Sección 40: deporte en el teléfono mejorado con resumen, y pantalla principal de la laptop mejorada en A, B, C y J |
