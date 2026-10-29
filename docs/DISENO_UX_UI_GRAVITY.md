@@ -1225,6 +1225,21 @@ Notas:
 - Las recetas no llevan precios, costos ni datos de salud. De dónde salen las recetas (plan exportado, propias o de una fuente verificada) queda por definir.
 - Falta, si se quiere, la pantalla de revisión al importar un plan (validar, vincular integrante y confirmar).
 
+## 33. Teléfono: espiritual (estilos D, F, G y M)
+
+Fila del lienzo compartido con tres pantallas, cada una en D AI-First, F Bento oscuro, G Calma y M Neo-brutal (12 bocetos de 390 × 844). Los estilos son una suposición (los mismos de alimentación) a confirmar.
+
+| Pantalla | Contenido del boceto |
+|---|---|
+| Devocional del día | Pasaje (Salmo 46:10, Reina-Valera 1960), reflexión breve, pregunta para pensar, avance del plan de lectura, tiempo y racha; botones Marcar leído, Audio y Nota |
+| Oración y silencio | Círculo de respiración (inhala 4 s, exhala 6 s), tiempo restante, intención, sonido (silencio, lluvia, piano), sesiones de la semana y racha |
+| Diario de gratitud | Semana con días escritos, tres líneas de gratitud, cómo estuvo el día interior, aviso de privacidad y botones Guardar, Dictar y Cerrar |
+
+Notas:
+- Según el contrato v2.0, lo espiritual es de Hábitos y no se comparte: son **propuesta visual** y GRAVITY solo abriría pantallas por enlace.
+- El diario se guarda solo en el teléfono: sin exportar, sin compartir y sin IA. Ningún dato espiritual viaja en el JSON de seguimiento.
+- El pasaje y la tradición de ejemplo son una suposición; el contenido real y la versión de la Biblia quedan por definir con la persona usuaria.
+
 ## Control de cambios (complemento)
 
 | Versión | Fecha | Cambio |
@@ -1239,3 +1254,4 @@ Notas:
 | 1.3 | 29/oct/2026 | Idiomas: estilos D, F, G y M (sustituyen a F, J y N) |
 | 1.4 | 29/oct/2026 | Sección 32: pantallas de alimentación (plan de hoy, marcar comida y seguimiento semanal) en D, F, G y M |
 | 1.5 | 29/oct/2026 | Alimentación: pantalla de receta guiada en D, F, G y M |
+| 1.6 | 29/oct/2026 | Sección 33: pantallas espirituales (devocional, oración y silencio, diario de gratitud) en D, F, G y M |
