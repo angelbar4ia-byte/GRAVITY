@@ -1339,6 +1339,22 @@ Notas:
 - Educación no está en el contrato v2.0; queda como propuesta visual. El inglés ya cuenta con su propia línea (sección 31) y aquí aparece solo como un curso más.
 - Datos de ejemplo inventados; sin datos de estudiantes ni de instituciones reales.
 
+## 39. Laptop: bicicleta, entrenamiento y running (estilos A, B, C y J)
+
+Fila nueva del lienzo compartido con tres pantallas de análisis y planeación para la laptop, cada una en los estilos de laptop decididos: A Futurista HUD, B Terminal, C Instrumental y J Aurora (12 bocetos de 1440 × 900). En laptop sí se permite el esmerilado real (J).
+
+| Pantalla | Contenido del boceto |
+|---|---|
+| Bici | Mapa de la ruta, perfil y velocidad, parciales, resumen, zonas de pulso, comparación con la salida anterior y próxima salida |
+| Entrenamiento de fuerza | Rutina del día con estado, series del ejercicio actual, progreso del press de banca, volumen por día y por grupo, semana, récords y siguiente sesión |
+| Running | Última salida con ritmo por kilómetro y parciales, zonas de pulso, plan 10K de la semana, kilómetros por semana y cuenta regresiva a la carrera |
+
+Notas:
+- En la laptop el deporte se **revisa y se planea**; la sesión en vivo es del teléfono (secciones 30 y siguientes). Pestañas Bici, Fuerza y Running arriba.
+- Según el contrato v2.0, el ejercicio es de Hábitos y GRAVITY solo abre pantallas por enlace: **propuesta visual**; queda abierto quién las ofrece.
+- El botón «Exportar al planeador» y los horarios del planeador son recordatorios; no se leen datos de otras apps.
+- Datos de ejemplo inventados.
+
 ## Control de cambios (complemento)
 
 | Versión | Fecha | Cambio |
@@ -1359,3 +1375,4 @@ Notas:
 | 1.9 | 29/oct/2026 | Finanzas mejorada: registro por voz con confirmación, reconocimiento en el teléfono, ritmo y gasto por día |
 | 2.0 | 29/oct/2026 | Sección 37: trabajo y profesión, proyectos, planeador e ideas (4 filas, 48 bocetos) |
 | 2.1 | 29/oct/2026 | Idiomas completo (ruta, pronunciación, escucha y progreso) y sección 38: educación (4 pantallas) |
+| 2.2 | 29/oct/2026 | Sección 39: pantallas de laptop de bicicleta, fuerza y running en A, B, C y J |
