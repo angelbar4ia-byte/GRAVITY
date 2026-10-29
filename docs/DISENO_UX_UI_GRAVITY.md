@@ -1240,6 +1240,21 @@ Notas:
 - El diario se guarda solo en el teléfono: sin exportar, sin compartir y sin IA. Ningún dato espiritual viaja en el JSON de seguimiento.
 - El pasaje y la tradición de ejemplo son una suposición; el contenido real y la versión de la Biblia quedan por definir con la persona usuaria.
 
+## 34. Teléfono: finanzas (estilos D, F, G y M)
+
+Fila del lienzo compartido con tres pantallas, cada una en D AI-First, F Bento oscuro, G Calma y M Neo-brutal (12 bocetos de 390 × 844). Los estilos son una suposición (los mismos de espiritual) a confirmar.
+
+| Pantalla | Contenido del boceto |
+|---|---|
+| Resumen semanal | Disponible de la semana con barra de uso, cascada ingreso → presupuesto → deuda → remanente, gasto por categoría, próximo vencimiento y botón Ocultar |
+| Registrar gasto | Monto con dictado, categoría, cuenta y fecha, teclado numérico y aviso de que el libro solo agrega |
+| Libro de movimientos | Filtros, movimientos con una anulación y su contraasiento, una corrección, totales y botón Ocultar |
+
+Notas:
+- **Contradicción con el contrato v2.0 (sección 25):** el contrato prohíbe a GRAVITY manejar dinero y cuentas; estas pantallas son de la app de Presupuesto, o del módulo Finanzas de la v0.5. Quedan como propuesta visual, sin cambiar el contrato.
+- Todas las cifras son inventadas. Con el modo privado se ocultan los montos (botón Ocultar).
+- La cascada y el libro solo-agregar (corrección por anulación y contraasiento) siguen las reglas de oro de Presupuesto.
+
 ## Control de cambios (complemento)
 
 | Versión | Fecha | Cambio |
@@ -1255,3 +1270,4 @@ Notas:
 | 1.4 | 29/oct/2026 | Sección 32: pantallas de alimentación (plan de hoy, marcar comida y seguimiento semanal) en D, F, G y M |
 | 1.5 | 29/oct/2026 | Alimentación: pantalla de receta guiada en D, F, G y M |
 | 1.6 | 29/oct/2026 | Sección 33: pantallas espirituales (devocional, oración y silencio, diario de gratitud) en D, F, G y M |
+| 1.7 | 29/oct/2026 | Sección 34: pantallas de finanzas (resumen semanal, registrar gasto y libro) en D, F, G y M |
