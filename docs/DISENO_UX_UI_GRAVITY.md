@@ -1208,6 +1208,21 @@ Notas:
 - La conversación usaría un modelo de lenguaje: solo si el usuario lo activa (se ve en la etiqueta «IA activada por ti»), con lo mínimo necesario, sin nombres ni datos personales y sin la clave dentro de la app.
 - Frases y datos de ejemplo inventados.
 
+## 32. Teléfono: alimentación (estilos D, F, G y M)
+
+Fila del lienzo compartido con tres pantallas, cada una en D AI-First, F Bento oscuro, G Calma y M Neo-brutal (12 bocetos de 390 × 844). Los estilos son una suposición (los mismos de idiomas) a confirmar.
+
+| Pantalla | Contenido del boceto |
+|---|---|
+| Plan de hoy | Comidas por tiempo (desayuno, colación, comida, cena) con estado, la siguiente destacada, reglas del día, cumplidas, adherencia y racha |
+| Marcar comida | Platillo del plan, alternativas, estado (cumplido, parcial, sustituido, omitido) y campo «platillo real» (máx. 200 caracteres) |
+| Seguimiento semanal | Cuadrícula de 7 días por 4 comidas con estado, conteos, adherencia, aviso de privacidad y botón Compartir |
+
+Notas:
+- Sin dinero, cuentas, precios, peso, agua ni datos clínicos, como en el contrato v2.0 (secciones 4 y 5). Los datos son ejemplos inventados.
+- El plan y el seguimiento pertenecen a Presupuesto y Hábitos; son **propuesta visual** y queda abierto quién las ofrece (GRAVITY solo abre pantallas por enlace).
+- Falta, si se quiere, la pantalla de revisión al importar un plan (validar, vincular integrante y confirmar).
+
 ## Control de cambios (complemento)
 
 | Versión | Fecha | Cambio |
@@ -1220,3 +1235,4 @@ Notas:
 | 1.1 | 29/oct/2026 | Bici N mejorada; pantallas de bici, entrenamiento y running rehechas en F, J y N con indicador en arco, zonas, meta y gráfica propia |
 | 1.2 | 29/oct/2026 | Sección 31: pantallas de idiomas (lección, conversación y vocabulario) en F, J y N |
 | 1.3 | 29/oct/2026 | Idiomas: estilos D, F, G y M (sustituyen a F, J y N) |
+| 1.4 | 29/oct/2026 | Sección 32: pantallas de alimentación (plan de hoy, marcar comida y seguimiento semanal) en D, F, G y M |
