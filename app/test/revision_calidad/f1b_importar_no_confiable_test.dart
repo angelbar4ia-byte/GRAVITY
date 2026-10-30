@@ -90,7 +90,7 @@ void main() {
   group('lo que sí hace bien (guardias)', () {
     test('lee un libro sencillo', () {
       final r = leerPlantillaDeBytes(valido, nombre: 'plantilla.xlsx');
-      expect(r.filas.map((f) => f.toString()), isNotEmpty);
+      expect(r.filas.map((f) => f.nivel1), ['Transporte']);
     });
 
     test('más de 10 MB se rechaza antes de abrirlo', () {
@@ -119,7 +119,7 @@ void main() {
           '<row r="3"><c r="A3" t="inlineStr"><is><t>=cmd|\' /C calc\'!A0</t></is></c></row>'
           '</sheetData></worksheet>';
       final r = leerPlantillaDeBytes(libroConHoja(utf8.encode(hoja)), nombre: 'f.xlsx');
-      final nombres = [for (final f in r.filas) f.toString()].join('|');
+      final nombres = [for (final f in r.filas) f.nivel1].join('|');
       expect(nombres, contains('Valor guardado'));
       expect(nombres, isNot(contains('HYPERLINK')), reason: 'la fórmula no se lee ni se ejecuta');
       expect(nombres, contains('cmd|'), reason: 'el texto con "=" es solo un nombre, no una orden');
