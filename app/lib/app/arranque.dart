@@ -58,6 +58,14 @@ List<Override> conexionesDeLaApp() => [
   montosVisiblesProvider.overrideWith(MontosVisiblesAlEntrar.new),
   // Bandeja de salida (D14, 23/oct/2026): la tablet mueve la credencial de
   // quien sale con algo por subir a su permiso de subida.
+  // Una sola bandeja de salida también en las pruebas que montan la app: la
+  // limpieza del equipo y la subida comparten el candado.
+  limpiezaLocalProvider.overrideWith(
+    (ref) => LimpiezaLocal(
+      ref.watch(almacenSeguroProvider),
+      bandeja: ref.watch(bandejaDeSalidaProvider),
+    ),
+  ),
   bandejaDeLaTabletProvider.overrideWith(
     (ref) => BandejaDeLaTabletConCola(
       ref.watch(bandejaDeSalidaProvider),
@@ -154,6 +162,9 @@ Future<List<Override>> prepararArranque({
     estadoFirebaseProvider.overrideWithValue(firebase),
     almacenSeguroProvider.overrideWithValue(almacen),
     limpiezaLocalProvider.overrideWithValue(limpieza),
+    // Una sola bandeja de salida (un solo candado por persona) para la subida
+    // sin PIN, la tablet y el cierre de sesión de la cuenta del equipo.
+    bandejaDeSalidaProvider.overrideWithValue(limpieza.bandeja),
     // I11: en Android, FLAG_SECURE mientras hay dinero o datos clínicos a la
     // vista; en Windows no hace falta nada.
     protectorDePantallaProvider.overrideWithValue(

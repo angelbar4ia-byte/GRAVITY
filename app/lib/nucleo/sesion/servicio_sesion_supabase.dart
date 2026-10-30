@@ -479,6 +479,9 @@ class ServicioSesionSupabase extends ServicioSesionEnMemoria
       // M5: lo guardado de la persona (copias locales de los módulos) no se
       // queda en el equipo.
       if (persona != null) await _limpieza.alQuitarPersona(persona);
+      // Con la cuenta del equipo cerrada, la credencial en claro de quien dejó
+      // algo por subir se sella (B1, revisión de la Fase 1b).
+      await _limpieza.alCerrarElEquipo();
     } finally {
       _saliendo = false;
     }
@@ -496,6 +499,7 @@ class ServicioSesionSupabase extends ServicioSesionEnMemoria
     final persona = sesionActual?.persona.id ?? guardada?.$2.persona.id;
     await _salirSinFallar(_cliente);
     await _almacen.borrar(claveSesionGuardada);
+    await _limpieza.alCerrarElEquipo();
     if (limpiar) {
       if (persona != null) {
         await _limpieza.alQuitarPersona(persona);
