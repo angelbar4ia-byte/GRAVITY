@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: GRAVITY · APIs del sistema
-  version: 0.5.0
+  version: 0.6.0
   summary: Herramientas de GRAVITY, base de datos, funciones del servidor y puente de casa (D16).
   description: |
     Especificación de las APIs de GRAVITY (decisión D16). Se consulta en la laptop, en
@@ -69,7 +69,8 @@ tags:
       por registro (RLS) del rol: se lee solo lo que el rol puede ver. Esquema en
       `supabase/migrations/20261020000000_base.sql` (Finanzas, en su propio grupo). La
       bitácora solo se agrega, y lo de Finanzas (acciones `finanzas*` y tablas `fin_*`) lo
-      escribe solo el servidor. Nada de esta base va a la IA.
+      escribe solo el servidor. Lo que la app escribe en ella tiene tope: 4 KB por entrada
+      y 500 entradas por persona en 24 horas (54000). Nada de esta base va a la IA.
   - name: Base de datos · Finanzas
     description: |
       Tablas `fin_*`, vistas y funciones de Finanzas (Fase 1, D19), según
@@ -103,7 +104,8 @@ tags:
         `23505` duplicado o mismo `id` con otro contenido → 409; `23514` regla de la tabla
         (monto, motivo, lunes, cascada) → 400; `22023` regla de negocio (combinación de
         cuentas, libro equivocado, papel) → 400; `55000` estado (cuenta no activa, semana
-        cerrada) → 500; `42501` sin permiso o columna que no cambia → 403.
+        cerrada) → 500; `42501` sin permiso o columna que no cambia → 403; `54000` límite
+        (la bitácora: una entrada de más de 4 KB o más de 500 propias en 24 horas) → 500.
       - **Cuenta maestra y consulta registrada (I2):** sin una consulta vigente, la maestra
         solo ve la **portada**: los libros y quién los lleva (`fin_libros`,
         `fin_libro_miembros`), las categorías, las cuentas de gasto del hogar y lo que no es
@@ -119,7 +121,7 @@ tags:
         de 2 miembros deja el libro privado y activo, y el último miembro no puede salirse
         (22023; ver abajo); (I2) la consulta
         registrada de arriba; (I3) todo movimiento del libro de Papá lleva `en_nombre_de` y
-        `motivo` (23514) y las salidas hacia un libro personal dejan la entrada
+        `motivo` (23514) y las salidas hacia cualquier otro libro dejan la entrada
         `finanzas.salida_libro_representado`; (I4) un albacea es vigente solo si sigue siendo
         adulto con Finanzas, y si no, escribe el suplente; (I5) las acciones `finanzas*` y
         las tablas `fin_*` de la bitácora las escribe solo el servidor (42501 si la app las
@@ -138,7 +140,9 @@ tags:
         dispositivo), siempre posible. Si quedan menos de 2 miembros vigentes (también cuando
         el administrador saca a alguien) el libro **no se archiva**: el servidor lo deja
         `activo` y `privada`, y el miembro que queda es el administrador (`creado_por`); si
-        se va el administrador, `creado_por` pasa al miembro vigente más antiguo. El
+        se va el administrador (o deja de ser adulto con Finanzas del hogar por una baja o un
+        cambio de rol, N5), `creado_por` pasa al miembro vigente más antiguo y, con menos de
+        2 vigentes, el libro pasa a `privada` (nunca se archiva solo). El
         **último miembro no puede salirse** (400, 22023: si ya no lo usa, lo archiva).
         **Archivar** es solo la decisión del administrador (`activo` = `false`) y nunca
         ocurre solo: un libro archivado se lee y no registra movimientos (403, 42501);
@@ -149,11 +153,24 @@ tags:
         ellas se puede anular un movimiento aunque estén archivadas. Archivar una
         categoría archiva su cuenta de gasto (si ninguna otra categoría activa la usa) y
         desarchivarla la reactiva.
+      - **Albacea de Papá (N4):** si el cargo de albacea o el de suplente queda vacío (nadie
+        vigente que siga siendo adulto con Finanzas), el dueño del hogar lo vuelve a nombrar
+        con `fin_nombrar_albacea`. Un INSERT directo en `fin_libro_miembros` sigue sin pasar
+        para el dueño (RLS): la función es la única puerta.
+      - **Motivo (N2):** el `motivo` de una anulación, un ajuste, un movimiento en nombre
+        de otra persona, el del libro de Papá y el de una conciliación con diferencia
+        necesita al menos 3 caracteres visibles: no cuentan los espacios, tabuladores,
+        saltos de línea, espacios Unicode ni caracteres invisibles (23514). Lo valida un
+        trigger al agregar y no un CHECK, así que lo ya guardado nunca se rechaza y un
+        reenvío idéntico de la cola no falla. El sentido no se juzga.
       - **Funciones internas:** `fin_vigencia_consulta_maestra`, `fin_adulto_con_finanzas` y
         las de los triggers (`fin_libro_miembros_proteger`, `fin_libros_proteger`,
-        `fin_libro_miembros_sin_maestra`, `fin_categorias_archivar_cuenta`…) no son
+        `fin_libro_miembros_sin_maestra`, `fin_categorias_archivar_cuenta`,
+        `bitacora_tope_por_persona`, `fin_motivo_valido`, `fin_motivo_validar`,
+        `fin_libro_asegurar_administrador`, `fin_membresia_relevo_administrador`…) no son
         llamables desde la API (se les quitó `EXECUTE` a todos los roles); por eso no
-        tienen operación aquí. Sí lo son `fin_solo_lectura` y `fin_puede_salir`, que las
+        tienen operación aquí. De la migración de endurecimiento, la app solo llama
+        `fin_nombrar_albacea`. Sí lo son `fin_solo_lectura` y `fin_puede_salir`, que las
         reglas llaman con el rol de la sesión, y `fin_adultos_con_finanzas` (en plural: la
         que lista a los adultos con Finanzas del hogar; no la confundas con el ayudante
         interno `fin_adulto_con_finanzas`, en singular).
@@ -678,6 +695,9 @@ paths:
         (`activa: false` u `hasta`). La baja quita el acceso de inmediato; las membresías no
         se borran y todo queda en la bitácora. Dar un rol con Finanzas crea el libro
         personal de esa persona. `es_maestra` no se cambia aquí: `asignar_cuenta_maestra`.
+        Si quien cambia de rol o se da de baja administraba un libro compartido y deja de ser
+        adulto con Finanzas, el servidor pasa el cargo de administrador de ese libro al miembro
+        vigente más antiguo y, con menos de 2 vigentes, lo deja privado (N5); nunca lo archiva.
       x-roles: [dueno]
       x-escribe: true
       x-solo-local: true
@@ -1052,9 +1072,11 @@ paths:
         Lo demás (membresías, invitaciones…): el dueño y la cuenta maestra. Las acciones que
         el servidor deja en Finanzas son `finanzas.consulta_maestra` (cada consulta de la
         maestra a un libro ajeno, visible para quienes lo llevan), `finanzas.maestra_asignada`
-        (quién es la maestra, visible para todo adulto con Finanzas) y
-        `finanzas.salida_libro_representado` (una salida del libro de Papá hacia un libro
-        personal, visible para quienes lo llevan).
+        (quién es la maestra, visible para todo adulto con Finanzas),
+        `finanzas.salida_libro_representado` (una salida del libro de Papá hacia cualquier
+        otro libro, personal o compartido, visible para quienes lo llevan) y
+        `finanzas.albacea_nombrado` (el dueño nombró al albacea o al suplente del libro de
+        Papá, visible para quienes lo llevan).
       x-roles: [dueno, coadministrador, familiar, cuidador, casa]
       x-escribe: false
       x-solo-local: true
@@ -1132,7 +1154,13 @@ paths:
         `finanzas.salida_libro_representado`) y cualquier entrada cuya `tabla` sea `fin_*`
         (con o sin `public.`). Esas las escriben solo los triggers y las funciones del
         servidor: así nadie fabrica un cambio automático, una consulta de la cuenta maestra
-        ni un aviso de Finanzas (I5).
+        ni un aviso de Finanzas (I5). Lo que la app escribe aquí tiene tope (N1): el
+        `detalle` de una entrada pesa a lo más 4 KB y cada persona agrega a lo más 500
+        entradas propias en 24 horas (cuentan las que escribe la app: no las automáticas ni
+        las de Finanzas); al excederlo responde 500 con el código 54000 y la sentencia
+        entera se deshace (no se guarda ninguna de sus entradas). No es un error que se
+        reintente: la cola lo deja en "requiere atención". No limita a los triggers ni a las
+        funciones del servidor, y vale igual para familiar, cuidador y la cuenta Hogar.
       x-roles: [dueno, coadministrador, familiar, cuidador, casa]
       x-escribe: true
       x-solo-local: true
@@ -1177,6 +1205,7 @@ paths:
                   maxLength: 200
                 detalle:
                   type: object
+                  description: Hasta 4 KB en texto; si pesa más, 54000 (N1).
                 ocurrido_en:
                   type: string
                   format: date-time
@@ -1214,6 +1243,21 @@ paths:
                 message: new row violates row-level security policy for table "bitacora"
                 details: null
                 hint: null
+        '500':
+          description: >-
+            Pasó el tope de la bitácora (N1, código 54000, `program_limit_exceeded`): una
+            entrada con un `detalle` de más de 4 KB, o más de 500 entradas propias en 24
+            horas. La sentencia entera se deshace. No es de las clases que la cola reintenta:
+            lo rechazado queda en "requiere atención".
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorPostgrest'
+              example:
+                code: '54000'
+                message: 'Demasiadas entradas en la bitácora: el tope es de 500 por persona en 24 horas.'
+                details: null
+                hint: Inténtalo de nuevo mañana; si es un error de la app, avísale a quien la mantiene.
 
   # ---------------------------------------------------------------------------
   # Base de datos · Finanzas (Fase 1, D19): supabase/migrations/20261021000000_finanzas_mvp1.sql
@@ -1410,6 +1454,8 @@ paths:
         agrega quien lo creó, o el dueño del hogar si es miembro (403, 42501). La cuenta
         maestra que no es la dueña no puede ser miembro de ningún libro (400, 22023: es
         solo lectura).
+        Para nombrar al albacea o al suplente del libro de Papá cuando ese cargo quedó vacío, el
+        dueño del hogar usa `finNombrarAlbacea` (N4): el INSERT directo no le pasa.
       x-roles: [dueno, coadministrador]
       x-escribe: true
       x-solo-local: true
@@ -1889,11 +1935,16 @@ paths:
         faltara, cada reenvío sería distinto). No mandes `recibido_en`, `libro_origen_id` ni
         `libro_destino_id`: los pone el servidor (sin permiso de columna, 42501). En el libro
         de Papá (`representado`) **todo** movimiento, también una anulación, lleva
-        `en_nombre_de` (su titular) y `motivo`; si falta alguno, 400 (23514, I3). Lo registra
-        el albacea, que es vigente solo si sigue siendo adulto con Finanzas (I4); si no,
-        escribe el suplente. Una salida del libro de Papá hacia un libro personal deja
-        además la entrada `finanzas.salida_libro_representado` en la bitácora, visible para
-        quienes llevan el libro. Un libro archivado (`fin_libros.activo` = `false`) rechaza
+        `en_nombre_de` (su titular) y `motivo`; si falta alguno, 400 (23514, I3). El `motivo`
+        (el del libro de Papá, el de una anulación, un ajuste o un movimiento en nombre de
+        otra persona) necesita al menos 3 caracteres visibles: los espacios, tabuladores,
+        saltos de línea, espacios Unicode y caracteres invisibles no cuentan (400, 23514,
+        N2). Lo registra el albacea, que es vigente solo si sigue siendo adulto con Finanzas
+        (I4); si no, escribe el suplente. Una salida del libro de Papá hacia cualquier otro
+        libro, personal o compartido (`transferencia` o `pago_deuda`), deja además la
+        entrada `finanzas.salida_libro_representado` en la bitácora, visible para quienes
+        llevan el libro (un gasto de Papá a una cuenta de gasto del hogar no es una salida
+        de libro). Un libro archivado (`fin_libros.activo` = `false`) rechaza
         los movimientos nuevos, y la cuenta maestra que no es la dueña no registra nada: en
         ambos casos 403 (42501). La anulación acepta cuentas de gasto o ingreso archivadas
         (se archivan con saldo); en activos y pasivos cerrados o archivados, no (500, 55000).
@@ -3279,7 +3330,9 @@ paths:
         **Solo agregar.** Si el saldo declarado difiere del calculado, primero se registra
         el movimiento de `ajuste` (contra la cuenta Ajustes del libro, mismo monto, fecha y
         dirección, con motivo) y luego la conciliación que lo referencia con `motivo` (22023
-        si no corresponde). `diferencia` es generada.
+        si no corresponde). El `motivo` de una conciliación con diferencia, como el del
+        ajuste, necesita al menos 3 caracteres visibles (400, 23514, N2). `diferencia` es
+        generada.
       x-roles: [dueno, coadministrador]
       x-escribe: true
       x-solo-local: true
@@ -3896,6 +3949,68 @@ paths:
           $ref: '#/components/responses/Prohibido'
         '401':
           $ref: '#/components/responses/SinSesion'
+  /rest/v1/rpc/fin_nombrar_albacea:
+    post:
+      tags: [Base de datos · Finanzas]
+      operationId: finNombrarAlbacea
+      summary: Nombrar al albacea (o al suplente) del libro de Papá
+      description: >-
+        Solo el dueño del hogar (N4): a cualquier otro responde 403 (42501), exista o no el
+        libro, para no revelar libros. Nombra albacea o suplente de un libro `representado`
+        cuyo cargo quedó vacío (nadie vigente que siga siendo adulto con Finanzas); si ese
+        cargo lo tiene abierto alguien que ya no es adulto con Finanzas, lo cierra. Devuelve
+        el id de la fila nueva de `fin_libro_miembros` y deja la entrada
+        `finanzas.albacea_nombrado` en la bitácora (`libro_id`, `persona_id`, `papel` y
+        `anterior_persona_id`). Responde 400 (22023) si el libro no es representado, el
+        cargo no es `albacea` ni `albacea_suplente`, la persona no es adulto con Finanzas
+        del hogar o es la persona representada, el cargo ya lo ocupa alguien (quien lo tiene
+        debe dejarlo primero), o la persona ya lleva el libro con otro cargo.
+      x-roles: [dueno]
+      x-escribe: true
+      x-solo-local: true
+      x-fase: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [p_libro_id, p_persona_id]
+              properties:
+                p_libro_id:
+                  $ref: '#/components/schemas/Uuid'
+                p_persona_id:
+                  $ref: '#/components/schemas/Uuid'
+                p_papel:
+                  type: string
+                  enum: [albacea, albacea_suplente]
+                  default: albacea
+            examples:
+              suplente:
+                summary: Alex, suplente del libro de Papá
+                value:
+                  p_libro_id: f1000000-0000-4000-8000-000000000002
+                  p_persona_id: e0000000-0000-4000-8000-000000000002
+                  p_papel: albacea_suplente
+              albacea:
+                summary: Ana vuelve a ser la albacea (por omisión, `albacea`)
+                value:
+                  p_libro_id: f1000000-0000-4000-8000-000000000002
+                  p_persona_id: e0000000-0000-4000-8000-000000000001
+      responses:
+        '200':
+          description: Id de la fila nueva de `fin_libro_miembros`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Uuid'
+              example: 7c2e9a40-5b1d-4e8a-9f36-1a4d6b8c0e21
+        '400':
+          $ref: '#/components/responses/ReglaFinanzas'
+        '401':
+          $ref: '#/components/responses/SinSesion'
+        '403':
+          $ref: '#/components/responses/Prohibido'
   /rest/v1/rpc/fin_lunes:
     post:
       tags: [Base de datos · Finanzas]
@@ -4617,13 +4732,17 @@ components:
             consultó un libro ajeno; vale 30 minutos), `finanzas.maestra_asignada` (el dueño
             nombró o quitó la cuenta maestra, o se aceptó una invitación de cuenta maestra;
             `detalle` lleva `anterior_persona_id` y `nueva_persona_id` y, con invitación,
-            `invitada_por`) y `finanzas.salida_libro_representado` (una salida del libro
-            de Papá hacia un libro personal; `detalle` lleva el libro de origen, el de
-            destino, el tipo, la fecha, el monto en centavos, `en_nombre_de` y `motivo`).
+            `invitada_por`), `finanzas.salida_libro_representado` (una salida del libro de
+            Papá hacia cualquier otro libro, personal o compartido; `detalle` lleva el libro
+            de origen, el de destino, el tipo, la fecha, el monto en centavos,
+            `en_nombre_de` y `motivo`) y `finanzas.albacea_nombrado` (el dueño nombró al
+            albacea o al suplente del libro de Papá; `detalle` lleva `libro_id`,
+            `persona_id`, `papel` y `anterior_persona_id`).
           examples:
             - finanzas.consulta_maestra
             - finanzas.maestra_asignada
             - finanzas.salida_libro_representado
+            - finanzas.albacea_nombrado
         tabla:
           type: [string, 'null']
         registro_id:
@@ -4983,7 +5102,10 @@ components:
         motivo:
           type: [string, 'null']
           maxLength: 200
-          description: Obligatorio en `ajuste`, `anulacion` y con `en_nombre_de`.
+          description: >-
+            Obligatorio en `ajuste`, `anulacion` y con `en_nombre_de`, y en todo movimiento
+            del libro de Papá: al menos 3 caracteres visibles, sin contar espacios, saltos de
+            línea ni caracteres invisibles (23514, N2).
         anula_a:
           $ref: '#/components/schemas/UuidONulo'
           description: Solo en `anulacion`; cada movimiento tiene a lo más una.
@@ -5488,7 +5610,9 @@ components:
         motivo:
           type: [string, 'null']
           maxLength: 200
-          description: Obligatorio si hay diferencia.
+          description: >-
+            Obligatorio si hay diferencia: al menos 3 caracteres visibles, sin contar
+            espacios, saltos de línea ni caracteres invisibles (23514, N2).
         persona_id:
           $ref: '#/components/schemas/Uuid'
           description: Por omisión, la sesión (siempre la sesión).

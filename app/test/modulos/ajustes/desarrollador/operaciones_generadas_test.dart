@@ -216,7 +216,11 @@ void main() {
 
     test('nada de Finanzas va a la IA (D3) y solo es de dueño y pareja', () {
       const deTodos = {'esCuentaMaestra', 'cuentaMaestra'};
-      const soloDueno = {'asignarCuentaMaestra', 'finCrearLibroRepresentado'};
+      const soloDueno = {
+        'asignarCuentaMaestra',
+        'finCrearLibroRepresentado',
+        'finNombrarAlbacea',
+      };
       for (final o in finanzas) {
         expect(o.soloLocal, isTrue, reason: o.id);
         expect(o.fase, 1, reason: o.id);
@@ -835,6 +839,7 @@ void main() {
             'fin_solo_lectura',
             'fin_puede_salir',
             'fin_adultos_con_finanzas',
+            'fin_nombrar_albacea',
           }),
         );
         final rutas = operaciones.map((o) => o.ruta).toSet();
@@ -843,6 +848,266 @@ void main() {
         }
       });
     });
+
+    group(
+      'endurecimiento de 20261026000000_finanzas_endurecimiento_1b.sql',
+      () {
+        final endurecimiento = File(
+          '${raiz.path}/supabase/migrations/'
+          '20261026000000_finanzas_endurecimiento_1b.sql',
+        ).readAsStringSync();
+
+        test(
+          'N1: el tope de la bitácora (54000, 4 KB, 500 en 24 horas) coincide '
+          'con la migración',
+          () {
+            expect(endurecimiento, contains("errcode = '54000'"));
+            expect(
+              endurecimiento,
+              contains('c_max_entradas constant integer := 500'),
+            );
+            expect(
+              endurecimiento,
+              contains('c_max_bytes    constant integer := 4096'),
+            );
+            expect(endurecimiento, contains("interval '24 hours'"));
+            expect(
+              endurecimiento,
+              contains("if current_user <> 'authenticated' then"),
+            );
+            final bitacora = _plano(_bloque(yaml, '/rest/v1/bitacora'));
+            expect(bitacora, contains('4 KB'));
+            expect(bitacora, contains('500 entradas propias en 24 horas'));
+            expect(bitacora, contains('54000'));
+            expect(bitacora, contains('la sentencia entera se deshace'));
+            expect(bitacora, contains('lo deja en "requiere atención"'));
+            expect(bitacora, contains('familiar, cuidador y la cuenta Hogar'));
+            expect(bitacora, contains("'500':"));
+            expect(bitacora, contains("code: '54000'"));
+            // Los códigos de error de Finanzas lo mencionan.
+            expect(_plano(yaml), contains('`54000` límite'));
+          },
+        );
+
+        test(
+          'N2: el motivo exige 3 caracteres visibles (23514) en movimientos, '
+          'conciliaciones y esquemas',
+          () {
+            expect(endurecimiento, contains(">= 3"));
+            expect(
+              endurecimiento,
+              contains(
+                'create function public.fin_motivo_valido(p_motivo text)',
+              ),
+            );
+            expect(
+              endurecimiento,
+              contains(
+                'create trigger fin_c_motivo before insert on public.fin_movimientos',
+              ),
+            );
+            expect(
+              endurecimiento,
+              contains(
+                'create trigger fin_c_motivo before insert on public.fin_conciliaciones',
+              ),
+            );
+            expect(endurecimiento, contains("errcode = '23514'"));
+            final movimientos = _plano(
+              _bloque(yaml, '/rest/v1/fin_movimientos'),
+            );
+            expect(
+              movimientos,
+              contains('necesita al menos 3 caracteres visibles'),
+            );
+            expect(
+              movimientos,
+              contains('espacios Unicode y caracteres invisibles no cuentan'),
+            );
+            expect(movimientos, contains('23514'));
+            final conciliaciones = _plano(
+              _bloque(yaml, '/rest/v1/fin_conciliaciones'),
+            );
+            expect(conciliaciones, contains('al menos 3 caracteres visibles'));
+            expect(conciliaciones, contains('23514'));
+            final todo = _plano(yaml);
+            expect(
+              todo,
+              contains(
+                'al menos 3 caracteres visibles, sin contar espacios, saltos de línea ni caracteres invisibles (23514, N2)',
+              ),
+            );
+          },
+        );
+
+        test('N3: toda salida del libro de papá hacia otro libro deja su '
+            'entrada', () {
+          final inicio = endurecimiento.indexOf(
+            'create or replace function public.fin_movimientos_salida_representado()',
+          );
+          final cuerpo = endurecimiento.substring(
+            inicio,
+            endurecimiento.indexOf(
+              r'$$;',
+              endurecimiento.indexOf(r'as $$', inicio),
+            ),
+          );
+          expect(cuerpo, contains("o.tipo = 'representado'"));
+          expect(
+            cuerpo,
+            contains('new.libro_origen_id <> new.libro_destino_id'),
+          );
+          // Ya no se pide que el destino sea un libro personal.
+          expect(cuerpo, isNot(contains("'personal'")));
+          final todo = _plano(yaml);
+          expect(
+            todo,
+            contains('hacia cualquier otro libro, personal o compartido'),
+          );
+          expect(todo, isNot(contains('hacia un libro personal deja')));
+          expect(todo, isNot(contains('hacia un libro personal; `detalle`')));
+          expect(
+            _plano(_bloque(yaml, '/rest/v1/fin_movimientos')),
+            contains('no es una salida de libro'),
+          );
+        });
+
+        test(
+          'N4: fin_nombrar_albacea (solo el dueño) y su entrada de bitácora',
+          () {
+            expect(
+              endurecimiento,
+              contains('create function public.fin_nombrar_albacea('),
+            );
+            expect(endurecimiento, contains("p_papel text default 'albacea'"));
+            expect(endurecimiento, contains('returns uuid'));
+            expect(endurecimiento, contains("'finanzas.albacea_nombrado'"));
+            expect(
+              endurecimiento,
+              contains("'anterior_persona_id', v_anterior"),
+            );
+            expect(
+              endurecimiento,
+              contains(
+                'grant execute on function public.fin_nombrar_albacea(uuid, uuid, text) to authenticated;',
+              ),
+            );
+            final albacea = operaciones.singleWhere(
+              (o) => o.ruta == '/rest/v1/rpc/fin_nombrar_albacea',
+            );
+            expect(albacea.id, 'finNombrarAlbacea');
+            expect(albacea.metodo, MetodoHttp.post);
+            expect(albacea.roles, {Rol.dueno});
+            expect(albacea.escribe, isTrue);
+            expect(albacea.soloLocal, isTrue);
+            expect(albacea.fase, 1);
+            final bloque = _bloque(yaml, '/rest/v1/rpc/fin_nombrar_albacea');
+            final plano = _plano(bloque);
+            expect(plano, contains('required: [p_libro_id, p_persona_id]'));
+            expect(
+              plano,
+              contains('enum: [albacea, albacea_suplente] default: albacea'),
+            );
+            expect(plano, contains('403 (42501), exista o no el libro'));
+            expect(plano, contains('Responde 400 (22023)'));
+            expect(plano, contains('`finanzas.albacea_nombrado`'));
+            expect(plano, contains('`anterior_persona_id`'));
+            expect(plano, contains("'#/components/schemas/Uuid'"));
+            // La acción de bitácora está en el esquema, el ejemplo y la descripción.
+            final bitacora = _plano(_bloque(yaml, '/rest/v1/bitacora'));
+            expect(bitacora, contains('`finanzas.albacea_nombrado`'));
+            expect(_plano(yaml), contains('- finanzas.albacea_nombrado'));
+          },
+        );
+
+        test('N5: el administrador que deja de ser adulto con Finanzas pasa el '
+            'cargo y, con menos de 2, el libro queda privado', () {
+          expect(
+            endurecimiento,
+            contains('create trigger fin_z_relevo_administrador'),
+          );
+          expect(
+            endurecimiento,
+            contains('after update of rol, activa, hasta on public.membresias'),
+          );
+          expect(
+            endurecimiento,
+            contains(
+              "visibilidad = case when cardinality(v_vigentes) < 2 then 'privada'",
+            ),
+          );
+          expect(endurecimiento, isNot(contains('activo = case')));
+          final todo = _plano(yaml);
+          expect(
+            todo,
+            contains(
+              'deja de ser adulto con Finanzas del hogar por una baja o un cambio de rol, N5',
+            ),
+          );
+          expect(
+            _plano(_bloque(yaml, '/rest/v1/membresias')),
+            contains('lo deja privado (N5); nunca lo archiva'),
+          );
+        });
+
+        test('las funciones internas de la migración no tienen operación', () {
+          final retiradas =
+              RegExp(
+                    r'revoke execute on function([^;]*?)from public, anon, authenticated, service_role;',
+                    dotAll: true,
+                  )
+                  .allMatches(endurecimiento)
+                  .expand(
+                    (m) =>
+                        RegExp(r'public\.(\w+)\(')
+                            .allMatches(m.group(1)!)
+                            .map((f) => f.group(1)!),
+                  )
+                  .toSet();
+          // La única que la app llama la concede aparte (grant ... to authenticated).
+          retiradas.remove('fin_nombrar_albacea');
+          expect(retiradas, {
+            'bitacora_tope_por_persona',
+            'fin_motivo_valido',
+            'fin_motivo_validar',
+            'fin_libro_asegurar_administrador',
+            'fin_membresia_relevo_administrador',
+          });
+          for (final nombre in retiradas) {
+            expect(yaml, isNot(contains('/rpc/$nombre')), reason: nombre);
+          }
+        });
+
+        test('toda acción finanzas.* que escriben las migraciones está '
+            'documentada en la bitácora', () {
+          final migraciones = Directory('${raiz.path}/supabase/migrations')
+              .listSync()
+              .whereType<File>()
+              .where((f) => f.path.endsWith('.sql'));
+          final acciones = <String>{
+            for (final f in migraciones)
+              for (final m in RegExp(
+                r"'(finanzas\.[a-z_]+)'",
+              ).allMatches(f.readAsStringSync()))
+                m.group(1)!,
+          };
+          expect(
+            acciones,
+            containsAll(<String>{
+              'finanzas.consulta_maestra',
+              'finanzas.maestra_asignada',
+              'finanzas.salida_libro_representado',
+              'finanzas.albacea_nombrado',
+            }),
+          );
+          final bitacora = _plano(_bloque(yaml, '/rest/v1/bitacora'));
+          for (final accion in acciones) {
+            expect(bitacora, contains(accion), reason: accion);
+            expect(_plano(yaml), contains('- $accion'), reason: accion);
+          }
+        });
+      },
+    );
 
     test('los libros solo-agregar no se cambian ni se borran', () {
       for (final tabla in _soloAgregar) {

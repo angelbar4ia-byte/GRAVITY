@@ -171,7 +171,7 @@ Hallazgos N1 a N5 de la revisión de calidad (`docs/revisiones/fase-1b.md`). Los
 - Código nuevo: **54000** al escribir en `public.bitacora` (tope de N1).
 - `23514` se amplía: el motivo de anulaciones, ajustes, movimientos en nombre de otra persona y conciliaciones con diferencia necesita 3 caracteres visibles.
 
-**Lo que NO cubre el tope de N1 (límites declarados):** las entradas **automáticas** (`insertar`/`actualizar`/`borrar`) no tienen tope: crecen con los cambios reales de datos, pero alguien con una cuenta de la familia que haga cambios en bucle sobre sus propias filas puede engordar la bitácora. Mitigaciones pendientes: el aviso al 80 % de la base (necesita la función de servidor de la Fase 2) y un límite de peticiones en el proyecto de Supabase.
+**Lo que NO cubre el tope de N1 (límites declarados):** las entradas **automáticas** (`insertar`/`actualizar`/`borrar`) no tienen tope: crecen con los cambios reales de datos, pero alguien con una cuenta de la familia que haga cambios en bucle sobre sus propias filas puede engordar la bitácora. Tampoco topa lo que escriben las funciones del servidor a petición de una persona: `fin_registrar_consulta_maestra` deja una entrada por cada llamada (la cuenta maestra podría repetirla en bucle; cada entrada pesa unos 300 bytes). Propuesta, a decidir con el dueño: no repetir la entrada si ya hay una de esa persona y ese libro en el último minuto, o tope diario propio para esa acción. Mitigaciones pendientes: el aviso al 80 % de la base (necesita la función de servidor de la Fase 2) y un límite de peticiones en el proyecto de Supabase.
 
 ### Criterios provisionales de la revisión de la Fase 1 (esperan al dueño; para D17 y D19)
 
