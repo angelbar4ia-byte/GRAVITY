@@ -1,8 +1,8 @@
 // Revisión de calidad de la Fase 1b: Finanzas › Importar datos (selector de
 // archivos, file_picker 13.1.0) trata lo que lee como NO CONFIABLE?
 //
-// Las pruebas con la etiqueta `hallazgo` FALLAN HOY A PROPÓSITO y demuestran un
-// hallazgo; las demás son guardias que pasan. Los archivos hostiles se arman a
+// X1 a X5 fallaban a propósito (etiqueta `hallazgo`) y pasaron al endurecer el
+// lector (finanzas, Fase 1b); hoy son pruebas de regresión. Los archivos hostiles se arman a
 // mano con `ayuda_zip.dart` (Excel nunca los produciría).
 //
 //  X1  Sin tope de lo que se descomprime: un .xlsx de ~100 KB se expande a cientos
@@ -162,7 +162,7 @@ void main() {
             'lector_xlsx.dart:_leerZip) y lee el libro entero: la plantilla pesa '
             'unas decenas de KB, así que un tope de pocos MB descomprimidos basta',
       );
-    }, tags: ['hallazgo']);
+    });
   });
 
   group('X2: un número de fila enorme reserva memoria', () {
@@ -180,7 +180,7 @@ void main() {
             'hasta el número de fila declarado (while (filas.length < numero - 1)) y '
             'con r="2000000000" serían ~16 GB',
       );
-    }, tags: ['hallazgo']);
+    });
   });
 
   group('X3: tiempo cuadrático con celdas sin cerrar', () {
@@ -210,7 +210,7 @@ void main() {
             'cuadrático ×16). La expresión r"<c\\b([^>]*?)(?:/>|>(.*?)</c>)" recorre hasta '
             'el final por cada <c> sin cerrar, y se ejecuta en el hilo de la pantalla',
       );
-    }, tags: ['hallazgo']);
+    });
   });
 
   group('X4: el selector lee el archivo entero antes de mirar su tamaño', () {
@@ -235,7 +235,7 @@ void main() {
             'los bytes en memoria. Debe rechazarlo por su tamaño antes de leerlo',
       );
       expect(error, isA<ErrorArchivo>());
-    }, tags: ['hallazgo']);
+    });
 
     test('control: pide solo .xlsx y .csv', () async {
       final original = FilePickerPlatform.instance;
@@ -273,7 +273,7 @@ void main() {
               'hoy lanza RangeError; la pantalla lo atrapa y muestra "No pude leer el '
               'archivo: RangeError…", pero el lector promete ErrorArchivo',
         );
-      }, tags: ['hallazgo']);
+      });
     }
   });
 }

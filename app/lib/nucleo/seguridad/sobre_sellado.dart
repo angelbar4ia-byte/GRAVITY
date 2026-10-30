@@ -15,6 +15,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:pointycastle/ecc/ecc_fp.dart' as fp;
 import 'package:pointycastle/export.dart';
 
 /// Un par de llaves: la pública (base64 del punto sin comprimir, 65 bytes) y
@@ -61,6 +62,24 @@ abstract final class SobreSellado {
     return valor;
   }
 
+  /// `true` si [punto] es un punto de verdad de P-256: no es el infinito y
+  /// cumple `y² = x³ + ax + b (mod p)`. `decodePoint` de pointycastle no lo
+  /// comprueba. P-256 tiene cofactor 1, así que estar en la curva basta.
+  static bool _estaEnLaCurva(ECPoint? punto) {
+    if (punto == null || punto.isInfinity) return false;
+    final x = punto.x?.toBigInteger();
+    final y = punto.y?.toBigInteger();
+    if (x == null || y == null) return false;
+    final curva = _curva.curve as fp.ECCurve;
+    final p = curva.q!;
+    if (x < BigInt.zero || y < BigInt.zero || x >= p || y >= p) return false;
+    final a = curva.a!.toBigInteger()!;
+    final b = curva.b!.toBigInteger()!;
+    final izquierda = (y * y) % p;
+    final derecha = (x * x * x + a * x + b) % p;
+    return izquierda == derecha;
+  }
+
   static AsymmetricKeyPair<ECPublicKey, ECPrivateKey> _generar() {
     final generador = ECKeyGenerator()
       ..init(ParametersWithRandom(ECKeyGeneratorParameters(_curva), _azar()));
@@ -101,8 +120,16 @@ abstract final class SobreSellado {
   /// Sella [texto] para quien tenga la llave privada de [clavePublica].
   /// Cada llamada usa una llave efímera y un nonce nuevos.
   static String sellar(String clavePublica, String texto) {
-    final punto = _curva.curve.decodePoint(base64Decode(clavePublica));
-    if (punto == null) throw ArgumentError('La llave pública no es válida.');
+    final ECPoint? punto;
+    try {
+      punto = _curva.curve.decodePoint(base64Decode(clavePublica));
+    } catch (_) {
+      throw ArgumentError('La llave pública no es válida.');
+    }
+    // Un punto fuera de la curva no es un destino: no se cifra a ciegas para él.
+    if (!_estaEnLaCurva(punto)) {
+      throw ArgumentError('La llave pública no es válida.');
+    }
     final destino = ECPublicKey(punto, _curva);
     final efimera = _generar();
     final secreto = (ECDHBasicAgreement()..init(efimera.privateKey))
@@ -133,7 +160,7 @@ abstract final class SobreSellado {
       if (json['v'] != version) return null;
       final efimeraPublica = base64Decode(json['e']! as String);
       final punto = _curva.curve.decodePoint(efimeraPublica);
-      if (punto == null) return null;
+      if (!_estaEnLaCurva(punto)) return null;
       final privada = ECPrivateKey(_enNumero(clavePrivada), _curva);
       final secreto = (ECDHBasicAgreement()..init(privada)).calculateAgreement(
         ECPublicKey(punto, _curva),

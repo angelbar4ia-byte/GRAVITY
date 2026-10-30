@@ -57,7 +57,22 @@ Future<ArchivoElegido?> elegirArchivoDelSistema() async {
     allowedExtensions: const ['xlsx', 'csv'],
   );
   if (archivo == null) return null;
-  return ArchivoElegido(archivo.name, await archivo.readAsBytes());
+  // El archivo es NO confiable (viene de un correo o una descarga): se mira su
+  // tamaño ANTES de leerlo, para no cargar en memoria uno de varios GB.
+  final tamano = archivo.lengthSync() ?? await archivo.length();
+  if (tamano != null && tamano > maximoBytesDeImportacion) {
+    throw const ErrorArchivo('El archivo pesa más de 10 MB: no es la plantilla.');
+  }
+  // Y se lee por pedazos con el mismo tope, por si el tamaño no se supo o
+  // mintió.
+  final bytes = BytesBuilder();
+  await for (final pedazo in archivo.readAsByteStream()) {
+    bytes.add(pedazo);
+    if (bytes.length > maximoBytesDeImportacion) {
+      throw const ErrorArchivo('El archivo pesa más de 10 MB: no es la plantilla.');
+    }
+  }
+  return ArchivoElegido(archivo.name, bytes.takeBytes());
 }
 
 /// El selector de archivos de la app; las pruebas lo reemplazan.
@@ -122,11 +137,20 @@ class _ImportarState extends ConsumerState<_Importar> {
     ArchivoElegido? elegido;
     try {
       elegido = await ref.read(selectorArchivoProvider)();
-    } catch (e) {
+    } on ErrorArchivo catch (e) {
+      // Un archivo demasiado grande se explica tal cual.
       if (mounted) {
         setState(() {
           _trabajando = false;
-          _error = 'No pude abrir el selector de archivos: $e';
+          _error = e.mensaje;
+        });
+      }
+      return;
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _trabajando = false;
+          _error = 'No pude abrir el selector de archivos.';
         });
       }
       return;
@@ -168,7 +192,7 @@ class _ImportarState extends ConsumerState<_Importar> {
     } on ErrorArchivo catch (e) {
       setState(() => _error = e.mensaje);
     } catch (e) {
-      setState(() => _error = 'No pude leer el archivo: $e');
+      setState(() => _error = 'No pude leer el archivo: está dañado o no es la plantilla.');
     } finally {
       if (mounted) setState(() => _trabajando = false);
     }

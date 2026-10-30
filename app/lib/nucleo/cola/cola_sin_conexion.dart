@@ -243,6 +243,7 @@ class ColaSinConexion {
     this.personaConSesion,
     this.cuentaDelEquipo,
     this.salida,
+    this.tiempoMaximoDeEnvio = const Duration(seconds: 30),
     DateTime Function()? reloj,
     String Function()? generarId,
   }) : _reloj = reloj ?? DateTime.now,
@@ -286,6 +287,12 @@ class ColaSinConexion {
   /// tablet con su propio token. `null`: sin ella (lo de cada persona espera a
   /// que vuelva a entrar con su PIN).
   final SalidaSinPin? salida;
+
+  /// Cuánto se espera la respuesta de **un** envío. Pasado el tiempo se toma
+  /// como falta de respuesta (se reintenta): un servidor que no contesta no
+  /// puede dejar la ronda, y con ella la bandeja de salida, esperando para
+  /// siempre (B3 de la revisión de la Fase 1b).
+  final Duration tiempoMaximoDeEnvio;
 
   final DateTime Function() _reloj;
   final String Function() _generarId;
@@ -390,10 +397,20 @@ class ColaSinConexion {
     final conSesion = personaConSesion;
     final persona = conSesion?.call();
     if (conSesion != null && persona == null) {
+      // Nada se envía, pero la caducidad de los permisos de subida corre
+      // igual: una credencial sin el PIN no puede quedarse en el equipo más de
+      // sus 7 días porque nadie tenga la sesión abierta (B1 de la revisión de
+      // la Fase 1b).
+      var rechazados = 0;
+      final bandeja = salida;
+      if (bandeja != null) {
+        rechazados = (await _caducarBandeja(bandeja)).rechazados;
+        if (rechazados > 0) _avisar();
+      }
       return ResumenProceso(
         enviados: 0,
         reintentos: 0,
-        rechazados: 0,
+        rechazados: rechazados,
         restantes: await contarPendientes(),
       );
     }
@@ -545,6 +562,27 @@ class ColaSinConexion {
     return cuantos;
   }
 
+  /// Borra los permisos caducados (y sella los que ya no tienen nada por
+  /// subir) sin enviar nada.
+  Future<_Conteo> _caducarBandeja(SalidaSinPin bandeja) async {
+    final preparacion = await bandeja.preparar(hayPendientesDe);
+    return _rechazarCaducadas(preparacion.caducadas);
+  }
+
+  /// Lo pendiente de quien perdió su permiso por caducidad pasa a "requiere
+  /// atención".
+  Future<_Conteo> _rechazarCaducadas(List<String> caducadas) async {
+    var total = const _Conteo(0, 0, 0);
+    for (final caducada in caducadas) {
+      final cuantos = await rechazarPendientesDe(
+        caducada,
+        motivoBandejaCaducada,
+      );
+      total += _Conteo(0, 0, cuantos);
+    }
+    return total;
+  }
+
   /// Sube la bandeja de salida: lo de cada persona con permiso que no es la
   /// que tiene la sesión ahora, con su propio token.
   Future<_Conteo> _subirBandeja(
@@ -553,14 +591,7 @@ class ColaSinConexion {
     DateTime ahora,
   ) async {
     final preparacion = await bandeja.preparar(hayPendientesDe);
-    var total = const _Conteo(0, 0, 0);
-    for (final caducada in preparacion.caducadas) {
-      final cuantos = await rechazarPendientesDe(
-        caducada,
-        motivoBandejaCaducada,
-      );
-      total += _Conteo(0, 0, cuantos);
-    }
+    var total = await _rechazarCaducadas(preparacion.caducadas);
     for (final personaId in preparacion.conPermiso) {
       // Quien está dentro sube con su propia sesión (ronda de arriba).
       if (personaId == persona) continue;
@@ -617,7 +648,7 @@ class ColaSinConexion {
             personaId: registro.personaId,
             origen: registro.origen ?? OrigenRegistro.propio,
           ),
-        );
+        ).timeout(tiempoMaximoDeEnvio);
       } on RechazoEnvio catch (e) {
         resultado = ResultadoEnvio.rechazado;
         error = e.motivo;

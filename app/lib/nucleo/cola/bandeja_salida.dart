@@ -222,29 +222,69 @@ class BandejaDeSalida {
   // ------------------------------------------------------------- candado
 
   final Map<String, Future<void>> _candados = {};
+  final Map<String, int> _urgentes = {};
+  final Map<String, Completer<void>> _senales = {};
 
   /// Toma el candado de [personaId]: quien lo tiene es el único que usa su
   /// credencial. Devuelve cómo soltarlo (una sola vez).
-  Future<void Function()> adquirir(String personaId) async {
+  ///
+  /// Con [urgente] (la persona entró con su PIN, cambió su PIN, la quitan o la
+  /// vuelven a agregar), si otro tiene el candado se le **pide el turno**
+  /// ([turnoPedido]): una subida en curso se interrumpe sin esperar a que el
+  /// servidor conteste (B3 de la revisión de la Fase 1b: una subida colgada no
+  /// puede dejar a la persona sin poder entrar).
+  Future<void Function()> adquirir(
+    String personaId, {
+    bool urgente = false,
+  }) async {
+    final ocupado = _candados[personaId] != null;
     final anterior = _candados[personaId] ?? Future<void>.value();
     final libre = Completer<void>();
     final cola = anterior.then((_) => libre.future);
     _candados[personaId] = cola;
-    await anterior;
+    final pide = urgente && ocupado;
+    if (pide) {
+      _urgentes[personaId] = (_urgentes[personaId] ?? 0) + 1;
+      _senales.remove(personaId)?.complete();
+    }
+    try {
+      await anterior;
+    } finally {
+      if (pide) {
+        final quedan = (_urgentes[personaId] ?? 1) - 1;
+        quedan <= 0 ? _urgentes.remove(personaId) : _urgentes[personaId] = quedan;
+      }
+    }
     return () {
       if (!libre.isCompleted) libre.complete();
-      if (identical(_candados[personaId], cola)) _candados.remove(personaId);
+      if (identical(_candados[personaId], cola)) {
+        _candados.remove(personaId);
+        _senales.remove(personaId);
+      }
     };
   }
 
-  Future<T> conCandado<T>(String personaId, Future<T> Function() tarea) async {
-    final soltar = await adquirir(personaId);
+  Future<T> conCandado<T>(
+    String personaId,
+    Future<T> Function() tarea, {
+    bool urgente = false,
+  }) async {
+    final soltar = await adquirir(personaId, urgente: urgente);
     try {
       return await tarea();
     } finally {
       soltar();
     }
   }
+
+  /// `true` si alguien con urgencia espera el candado de [personaId].
+  bool turnoPedidoYa(String personaId) => (_urgentes[personaId] ?? 0) > 0;
+
+  /// Termina cuando alguien con urgencia pide el candado de [personaId]. Lo usa
+  /// quien lo tiene (la subida sin PIN) para soltarlo en cuanto se lo piden.
+  Future<void> turnoPedido(String personaId) => turnoPedidoYa(personaId)
+      ? Future<void>.value()
+      : (_senales[personaId] ??= Completer<void>()).future;
 
   // ----------------------------------------------------------- lectura
 
@@ -321,7 +361,7 @@ class BandejaDeSalida {
   /// Espera al candado: si la subida sin PIN está usando la credencial,
   /// termina primero.
   Future<String?> tomarParaEntrada(String personaId, String pin) =>
-      conCandado(personaId, () async {
+      conCandado(personaId, urgente: true, () async {
         final permiso = await leer(personaId);
         if (permiso == null) return null;
         // Entrar con el PIN siempre puede tomar la credencial, aunque el permiso
@@ -356,7 +396,7 @@ class BandejaDeSalida {
     String personaId,
     String pinActual,
     String pinNuevo,
-  ) => conCandado(personaId, () async {
+  ) => conCandado(personaId, urgente: true, () async {
     final permiso = await leer(personaId);
     if (permiso == null) return true;
     final privada = CifradoPin.descifrar(pinActual, permiso.clavePrivadaCifrada);
@@ -399,6 +439,31 @@ class BandejaDeSalida {
       ),
     );
   }
+
+  /// Sella todos los permisos que tienen la credencial en claro, sin subir
+  /// nada. Se hace cuando la cuenta del equipo (Hogar) cierra sesión: con
+  /// nadie dentro, no debe quedar en el equipo una credencial sin el PIN (B1
+  /// de la revisión de la Fase 1b). Lo que esas personas tengan por subir
+  /// espera a que vuelvan a entrar con su PIN, que abre el sobre.
+  Future<void> sellarTodos() async {
+    for (final permiso in await todos()) {
+      if (permiso.estado != EstadoPermiso.enEspera) continue;
+      await conCandado(permiso.personaId, () async {
+        final actual = await leer(permiso.personaId);
+        if (actual?.estado == EstadoPermiso.enEspera &&
+            actual!.credencial != null) {
+          await sellarYDevolver(permiso.personaId, actual.credencial!);
+        }
+      }, urgente: true);
+    }
+  }
+
+  /// Borra el permiso de [personaId] (con su credencial), interrumpiendo una
+  /// subida en curso. Es lo que pasa cuando la persona vuelve a agregarse con
+  /// una credencial nueva: la del permiso es de otra cadena y no debe pisarla
+  /// (B5 de la revisión de la Fase 1b).
+  Future<void> descartarPermiso(String personaId) =>
+      conCandado(personaId, () => borrar(personaId), urgente: true);
 
   /// Borra los permisos en espera que ya caducaron y devuelve de quiénes eran.
   /// Los devueltos (sellados) no caducan: solo el PIN los abre.
@@ -506,11 +571,18 @@ class SalidaSinPinConSesiones implements SalidaSinPin {
       } on ErrorSesion catch (error) {
         await guardando;
         soltar();
-        if (error == ErrorSesion.sinConexion) return null;
+        // Solo un error claro (credencial vencida o persona dada de baja) quita
+        // el permiso. Sin señal, con el servidor ocupado (429…) o ante algo
+        // inesperado se reintenta en la siguiente ronda (B2 de la revisión de
+        // la Fase 1b).
+        if (error != ErrorSesion.credencialVencida &&
+            error != ErrorSesion.sinRol) {
+          return null;
+        }
         rethrow;
       }
       return _SesionDeSubida(
-        enviador: _enviadorDe(aparte),
+        enviador: _EnviadorQueCede(_enviadorDe(aparte), bandeja, personaId),
         alCerrar: (quedanPendientes) async {
           try {
             final vigente = await aparte.cerrar() ?? ultima;
@@ -534,6 +606,30 @@ class SalidaSinPinConSesiones implements SalidaSinPin {
   @override
   Future<void> descartar(String personaId) =>
       bandeja.conCandado(personaId, () => bandeja.borrar(personaId));
+}
+
+/// Envía con el [Enviador] real, pero **cede el turno**: si la persona entra
+/// con su PIN (o la quitan) mientras un envío espera al servidor, no espera a
+/// que conteste. Devuelve `sinSesion`, que la cola toma como "detén la ronda"
+/// sin tocar el registro; el envío se vuelve a intentar después y, si el
+/// servidor sí lo recibió, lo ignora por duplicado (`on_conflict`, idempotente).
+class _EnviadorQueCede implements Enviador {
+  _EnviadorQueCede(this._real, this._bandeja, this._personaId);
+
+  final Enviador _real;
+  final BandejaDeSalida _bandeja;
+  final String _personaId;
+
+  @override
+  Future<ResultadoEnvio> enviar(PeticionEnvio peticion) {
+    if (_bandeja.turnoPedidoYa(_personaId)) {
+      return Future.value(ResultadoEnvio.sinSesion);
+    }
+    return Future.any<ResultadoEnvio>([
+      _real.enviar(peticion),
+      _bandeja.turnoPedido(_personaId).then((_) => ResultadoEnvio.sinSesion),
+    ]);
+  }
 }
 
 class _SesionDeSubida implements SesionDeSubida {
@@ -579,6 +675,11 @@ abstract interface class BandejaDeLaTablet {
   /// Quitan a la persona de la tablet: se borra su permiso y lo que tenía por
   /// subir pasa a "requiere atención" ([motivoPersonaQuitada]).
   Future<void> alQuitarPersona(String personaId);
+
+  /// La persona se vuelve a agregar con una credencial nueva: el permiso viejo
+  /// se borra (su credencial es de otra cadena). Lo que tenía por subir se
+  /// conserva y sube con su sesión nueva.
+  Future<void> alAgregarDeNuevo(String personaId);
 }
 
 /// [BandejaDeLaTablet] con la [BandejaDeSalida] y la cola.
@@ -609,9 +710,13 @@ class BandejaDeLaTabletConCola implements BandejaDeLaTablet {
 
   @override
   Future<void> alQuitarPersona(String personaId) async {
-    await bandeja.conCandado(personaId, () => bandeja.borrar(personaId));
+    await bandeja.descartarPermiso(personaId);
     await _cola().rechazarPendientesDe(personaId, motivoPersonaQuitada);
   }
+
+  @override
+  Future<void> alAgregarDeNuevo(String personaId) =>
+      bandeja.descartarPermiso(personaId);
 }
 
 /// Se fija en el arranque y en las pruebas de la app (`conexionesDeLaApp`);

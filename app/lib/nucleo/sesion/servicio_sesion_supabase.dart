@@ -296,6 +296,18 @@ class ServicioSesionSupabase extends ServicioSesionEnMemoria
     }
   }
 
+  /// Qué significa que no se pudo renovar una credencial guardada. Solo un
+  /// error claro del servidor ([credencialYaNoSirve]) la da por vencida; sin
+  /// red es [ErrorSesion.sinConexion] y todo lo demás (límite de peticiones,
+  /// servidor ocupado, algo inesperado) es [ErrorSesion.servidorOcupado]: la
+  /// credencial se conserva y se reintenta (B2 de la revisión de la Fase 1b).
+  static ErrorSesion _errorAlRenovar(Object error) {
+    if (esErrorDeRed(error)) return ErrorSesion.sinConexion;
+    return credencialYaNoSirve(error)
+        ? ErrorSesion.credencialVencida
+        : ErrorSesion.servidorOcupado;
+  }
+
   @override
   Future<AperturaPersona> abrirSesionDePersona(
     String personaId,
@@ -325,7 +337,7 @@ class ServicioSesionSupabase extends ServicioSesionEnMemoria
     } catch (error) {
       if (!esErrorDeRed(error)) {
         await cliente.dispose();
-        throw ErrorSesion.credencialVencida;
+        throw _errorAlRenovar(error);
       }
       // Sin señal: se abre con la credencial guardada; el cliente la renueva
       // cuando vuelva la señal.
@@ -437,8 +449,7 @@ class ServicioSesionSupabase extends ServicioSesionEnMemoria
       );
     } catch (error) {
       await soltar();
-      if (esErrorDeRed(error)) throw ErrorSesion.sinConexion;
-      throw ErrorSesion.credencialVencida;
+      throw _errorAlRenovar(error);
     }
     try {
       final sesion = await _lector(cliente);

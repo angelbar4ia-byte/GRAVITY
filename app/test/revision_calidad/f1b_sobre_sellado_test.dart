@@ -110,10 +110,9 @@ void main() {
     expect(SobreSellado.abrir(par.privada, _con(sobre, 'e', const [])), isNull);
   });
 
-  // Defensa en profundidad (menor): pointycastle decodifica un punto sin
-  // comprobar que está en la curva y `sellar` cifra para él. No es explotable
-  // hoy (la llave pública la genera la propia app y vive en el mismo almacén que
-  // la credencial en claro), pero validar el punto cuesta una línea.
+  // Defensa en profundidad (S1 de fase-1b.md, menor): pointycastle decodifica un
+  // punto sin comprobar que está en la curva y `sellar` cifraba para él. Plataforma
+  // lo corrigió (`_estaEnLaCurva`); queda como guardia.
   test('sellar con una llave pública fuera de la curva lanza, no cifra a ciegas', () {
     final fuera = Uint8List(65)..[0] = 0x04;
     expect(
@@ -121,7 +120,7 @@ void main() {
       throwsA(anything),
       reason: 'un punto fuera de la curva no debe servir como destino',
     );
-  }, tags: ['hallazgo']);
+  });
 
   test('el cifrado con el PIN: 2,000 mensajes con la misma llave, nonces distintos', () {
     final llave = LlavePin.derivar('284651', iteraciones: 10);
