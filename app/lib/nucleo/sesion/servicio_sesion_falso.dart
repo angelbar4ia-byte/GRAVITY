@@ -80,7 +80,10 @@ class ServicioSesionFalso extends ServicioSesionEnMemoria
   void _revisarCadena(String personaId, int vuelta) {
     if (!rotacionEstricta) return;
     final vigente = _vigente[personaId];
-    if (vigente != null && vuelta != vigente) {
+    // Una copia vieja (vuelta menor) ya no sirve. Una credencial de vuelta
+    // mayor es de un inicio de sesión nuevo (la persona se volvió a agregar):
+    // el servidor sí la conoce.
+    if (vigente != null && vuelta < vigente) {
       usosDeCredencialVieja++;
       throw ErrorSesion.credencialVencida;
     }

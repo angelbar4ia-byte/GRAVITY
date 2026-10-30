@@ -160,7 +160,10 @@ void main() {
       await controlador.crearPin('284651');
       await controlador.fijarOcultarTras(const Duration(minutes: 5));
       expect(await controlador.verificar('284651'), ResultadoRevelar.revelado);
-      await controlador.crearPin('739150');
+      expect(
+        await controlador.crearPin('739150', actual: '284651'),
+        ResultadoRevelar.revelado,
+      );
       expect(await controlador.verificar('284651'), ResultadoRevelar.pinIncorrecto);
       expect(await controlador.verificar('739150'), ResultadoRevelar.revelado);
       expect(

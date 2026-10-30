@@ -7,9 +7,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/dispositivo.dart';
+import '../../../app/montos/revelar_montos.dart' show mensajeRevelar;
 import '../../../nucleo/contratos/dispositivo.dart';
 import '../../../nucleo/contratos/roles.dart';
 import '../../../nucleo/seguridad/bloqueo.dart';
+import '../../../nucleo/seguridad/intentos.dart' show textoEspera;
 import '../../../nucleo/seguridad/montos.dart';
 import '../../../nucleo/seguridad/pin.dart';
 import '../../../nucleo/seguridad/proveedores_seguridad.dart';
@@ -132,14 +134,33 @@ class _MontosOcultos extends ConsumerWidget {
                 ),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () async {
-                  final pin = await showDialog<String>(
+                  // Cambiar el PIN pide el actual (P1, revisión de la Fase 1b).
+                  final pines = await showDialog<_PinesElegidos>(
                     context: context,
                     builder: (contexto) => _DialogoPinBloqueo(
                       titulo: 'PIN para ver los montos',
                       rol: controlador.rol,
+                      pedirActual: estado.tienePinPropio,
                     ),
                   );
-                  if (pin != null) await controlador.crearPin(pin);
+                  if (pines == null) return;
+                  final resultado = await controlador.crearPin(
+                    pines.nuevo,
+                    actual: pines.actual,
+                  );
+                  if (resultado != ResultadoRevelar.revelado && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          mensajeRevelar(
+                                resultado,
+                                espera: controlador.esperaRestante(),
+                              ) ??
+                              'No se cambió el PIN.',
+                        ),
+                      ),
+                    );
+                  }
                 },
               ),
             },
@@ -178,13 +199,35 @@ class _BloqueoTelefonoState extends ConsumerState<_BloqueoTelefono> {
   }
 
   Future<void> _elegirPin() async {
-    final pin = await showDialog<String>(
+    // Cambiar un PIN pide el actual, también el de los montos si ya hay uno
+    // propio (P1, revisión de la Fase 1b).
+    final hayPin =
+        ref.read(controladorBloqueoProvider).activo ||
+        ref.read(controladorMontosProvider).tienePinPropio;
+    final pines = await showDialog<_PinesElegidos>(
       context: context,
-      builder: (contexto) =>
-          _DialogoPinBloqueo(rol: ref.read(sesionActualProvider)?.rol),
+      builder: (contexto) => _DialogoPinBloqueo(
+        rol: ref.read(sesionActualProvider)?.rol,
+        pedirActual: hayPin,
+      ),
     );
-    if (pin == null) return;
-    await ref.read(controladorBloqueoProvider.notifier).configurarPin(pin);
+    if (pines == null) return;
+    final controlador = ref.read(controladorBloqueoProvider.notifier);
+    final resultado = await controlador.configurarPin(
+      pines.nuevo,
+      actual: pines.actual,
+    );
+    if (resultado == ResultadoBloqueo.abierto || !mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          resultado == ResultadoBloqueo.bloqueado
+              ? 'Demasiados intentos. Espera '
+                    '${textoEspera(controlador.esperaRestante() ?? const Duration(seconds: 30))}.'
+              : 'PIN actual incorrecto. No se cambió.',
+        ),
+      ),
+    );
   }
 
   @override
@@ -260,25 +303,39 @@ class _BloqueoTelefonoState extends ConsumerState<_BloqueoTelefono> {
   }
 }
 
+/// Lo que devuelve el diálogo de elegir un PIN: el actual (si se pidió) y el
+/// nuevo.
+typedef _PinesElegidos = ({String? actual, String nuevo});
+
 class _DialogoPinBloqueo extends StatefulWidget {
-  const _DialogoPinBloqueo({this.titulo = 'PIN del teléfono', this.rol});
+  const _DialogoPinBloqueo({
+    this.titulo = 'PIN del teléfono',
+    this.rol,
+    this.pedirActual = false,
+  });
 
   final String titulo;
 
   /// De su rol depende el largo del PIN (6 dígitos si ve dinero; D18, 23/oct).
   final Rol? rol;
 
+  /// Ya hay un PIN: para cambiarlo se pide el actual (P1, revisión de la
+  /// Fase 1b).
+  final bool pedirActual;
+
   @override
   State<_DialogoPinBloqueo> createState() => _DialogoPinBloqueoState();
 }
 
 class _DialogoPinBloqueoState extends State<_DialogoPinBloqueo> {
+  final _actual = TextEditingController();
   final _pin = TextEditingController();
   final _confirmacion = TextEditingController();
   String? _error;
 
   @override
   void dispose() {
+    _actual.dispose();
     _pin.dispose();
     _confirmacion.dispose();
     super.dispose();
@@ -296,6 +353,10 @@ class _DialogoPinBloqueoState extends State<_DialogoPinBloqueo> {
       );
 
   void _guardar() {
+    if (widget.pedirActual && _actual.text.isEmpty) {
+      setState(() => _error = 'Escribe tu PIN actual.');
+      return;
+    }
     final error = errorDePinNuevoConfirmado(
       _pin.text,
       _confirmacion.text,
@@ -304,7 +365,10 @@ class _DialogoPinBloqueoState extends State<_DialogoPinBloqueo> {
     if (error != null) {
       setState(() => _error = error);
     } else {
-      Navigator.of(context).pop(_pin.text);
+      Navigator.of(context).pop((
+        actual: widget.pedirActual ? _actual.text : null,
+        nuevo: _pin.text,
+      ));
     }
   }
 
@@ -314,9 +378,13 @@ class _DialogoPinBloqueoState extends State<_DialogoPinBloqueo> {
     content: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        if (widget.pedirActual)
+          _campo(_actual, 'PIN actual', const Key('bloqueo-pin-actual')),
         _campo(
           _pin,
-          'PIN (${textoDelLargoDelPin(widget.rol)})',
+          widget.pedirActual
+              ? 'PIN nuevo (${textoDelLargoDelPin(widget.rol)})'
+              : 'PIN (${textoDelLargoDelPin(widget.rol)})',
           const Key('bloqueo-pin'),
         ),
         _campo(_confirmacion, 'Repite el PIN', const Key('bloqueo-confirmacion')),

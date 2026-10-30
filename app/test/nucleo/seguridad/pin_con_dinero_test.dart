@@ -176,7 +176,7 @@ void main() {
       for (final (rol, pin) in [
         (Rol.familiar, '7382'),
         (Rol.cuidador, '73829'),
-        (Rol.familiar, nuevo),
+        (Rol.casa, nuevo),
       ]) {
         final controlador = await abrir(sesionDeEjemplo(rol));
         await controlador.configurarPin(pin);

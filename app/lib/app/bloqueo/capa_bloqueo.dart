@@ -223,7 +223,9 @@ class _PantallaBloqueoState extends ConsumerState<PantallaBloqueo> {
   /// Olvidó su PIN: se quita el bloqueo y se cierra la sesión; vuelve a
   /// entrar con su correo y contraseña.
   Future<void> _salirSinPin() async {
-    await ref.read(controladorBloqueoProvider.notifier).quitarBloqueo();
+    await ref
+        .read(controladorBloqueoProvider.notifier)
+        .quitarBloqueo(olvido: true);
     await ref.read(servicioSesionProvider).salir();
   }
 

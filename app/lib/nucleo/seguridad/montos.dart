@@ -42,6 +42,7 @@ import '../tablet/controlador_tablet.dart';
 import 'bloqueo.dart';
 import 'intentos.dart';
 import 'pin.dart';
+import 'pin_de_montos.dart';
 import 'proveedores_seguridad.dart';
 
 /// Tiempo sin uso tras el que los montos se ocultan solos.
@@ -117,7 +118,7 @@ final controladorMontosProvider =
 
 class ControladorMontos extends Notifier<EstadoMontos> {
   static String claveConfiguracion(String personaId) =>
-      'montos.config.$personaId';
+      claveConfiguracionMontos(personaId);
   static const claveIntentos = 'montos.intentos_pin';
 
   late LimiteIntentos _intentos;
@@ -139,6 +140,18 @@ class ControladorMontos extends Notifier<EstadoMontos> {
     // La configuración es de cada persona: al cambiar (otra sesión, otra
     // persona en la tablet) se vuelve a leer.
     _persona = ref.watch(personaQueRegistraProvider);
+    // Al quitar el bloqueo del teléfono, su PIN pasa a ser el propio de los
+    // montos (P1 de la revisión de la Fase 1b): así no se puede crear otro sin
+    // conocer el actual. El bloqueo ya lo guardó; aquí solo se entera al
+    // instante.
+    ref.listen(controladorBloqueoProvider.select((e) => e.traspaso), (
+      antes,
+      traspaso,
+    ) {
+      if (traspaso == null || identical(antes, traspaso)) return;
+      _hashPin = traspaso.hash;
+      state = state.copiarCon(tienePinPropio: _hashPin != null);
+    });
     _carga = _cargar(_persona);
     return const EstadoMontos();
   }
@@ -230,16 +243,48 @@ class ControladorMontos extends Notifier<EstadoMontos> {
     return ref.read(sesionActualProvider)?.rol;
   }
 
-  /// Crea (o cambia) el PIN propio para ver los montos. Lanza
-  /// [ArgumentError] con el motivo si no es un PIN que se pueda aceptar
-  /// (largo del rol, o trivial: `0000`, `1234`, repetidos, secuencias).
-  Future<void> crearPin(String pin) async {
+  /// Crea el PIN propio para ver los montos, o lo cambia.
+  ///
+  /// **Cambiar un PIN pide el actual** (P1 de la revisión de la Fase 1b): si ya
+  /// hay uno, hay que pasarlo en [actual]; sin él lanza [StateError], y uno
+  /// equivocado cuenta como fallo (puede dar `bloqueado`) y no cambia nada.
+  /// Crearlo la primera vez no pide nada. `revelado` si quedó guardado.
+  ///
+  /// Lanza [ArgumentError] con el motivo si [pin] no se puede aceptar (largo
+  /// del rol, o trivial: `0000`, `1234`, repetidos, secuencias).
+  Future<ResultadoRevelar> crearPin(String pin, {String? actual}) async {
     final error = errorDePinNuevo(pin, rol: rol);
     if (error != null) throw ArgumentError(error);
     await listo;
+    if (_hashPin != null) {
+      if (actual == null) {
+        throw StateError(
+          'Ya hay un PIN: para cambiarlo hace falta el actual (crearPin con actual).',
+        );
+      }
+      return _cambiarPropio(actual, pin);
+    }
     await _guardar(hashPin: HashPin.crear(pin));
     final persona = _persona;
     if (persona != null) _intentos.olvidar(persona);
+    return ResultadoRevelar.revelado;
+  }
+
+  /// Cambia el PIN propio comprobando el actual.
+  Future<ResultadoRevelar> _cambiarPropio(String actual, String nuevo) async {
+    final persona = _persona;
+    final hash = _hashPin;
+    if (persona == null) return ResultadoRevelar.pinIncorrecto;
+    if (hash == null) return ResultadoRevelar.faltaPin;
+    if (_intentos.bloqueado(persona)) return ResultadoRevelar.bloqueado;
+    if (!HashPin.verificar(actual, hash)) {
+      return _intentos.anotarFallo(persona) == ResultadoFallo.bloqueado
+          ? ResultadoRevelar.bloqueado
+          : ResultadoRevelar.pinIncorrecto;
+    }
+    _intentos.anotarAcierto(persona);
+    await _guardar(hashPin: HashPin.crear(nuevo));
+    return ResultadoRevelar.revelado;
   }
 
   /// Cuánto falta para poder intentar el PIN otra vez, o `null`.
@@ -325,17 +370,7 @@ class ControladorMontos extends Notifier<EstadoMontos> {
           _ => ResultadoRevelar.pinIncorrecto,
         };
       case FuenteDePinMontos.propio:
-        final hash = _hashPin;
-        if (hash == null) return ResultadoRevelar.faltaPin;
-        if (_intentos.bloqueado(persona)) return ResultadoRevelar.bloqueado;
-        if (!HashPin.verificar(pinActual, hash)) {
-          return _intentos.anotarFallo(persona) == ResultadoFallo.bloqueado
-              ? ResultadoRevelar.bloqueado
-              : ResultadoRevelar.pinIncorrecto;
-        }
-        _intentos.anotarAcierto(persona);
-        await _guardar(hashPin: HashPin.crear(pinNuevo));
-        return ResultadoRevelar.revelado;
+        return _cambiarPropio(pinActual, pinNuevo);
     }
   }
 

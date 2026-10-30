@@ -462,7 +462,8 @@ void main() {
       expect((await bandeja.leer(dueno.persona.id))!.estado, EstadoPermiso.devuelto);
     });
 
-    test('mientras la subida usa la credencial, entrar con el PIN espera', () async {
+    test('entrar con el PIN no espera a una subida lenta: la interrumpe, toma la '
+        'credencial más reciente y lo pendiente sigue pendiente', () async {
       await registrar(dueno);
       await delegar(dueno);
       final pausa = Completer<void>();
@@ -482,12 +483,48 @@ void main() {
       String? entrada;
       final entrando = bandeja.tomarParaEntrada(dueno.persona.id, pin).then((c) => entrada = c);
       await pumpEventQueue();
-      expect(entrada, isNull, reason: 'espera: la subida tiene la credencial');
-      pausa.complete();
+      // B3 (revisión de la Fase 1b): el servidor no ha contestado y la persona
+      // ya entró. Tomó la más reciente (la rotada al abrir la sesión aparte).
+      expect(entrada, ServicioSesionFalso.credencialDe(dueno, vuelta: 1));
       await ronda;
       await entrando;
-      // Tomó la más reciente (la rotada al abrir y sellada al terminar).
-      expect(entrada, ServicioSesionFalso.credencialDe(dueno, vuelta: 1));
+      expect(await bandeja.leer(dueno.persona.id), isNull);
+      // El registro no se perdió ni gastó un intento: se vuelve a subir.
+      final registro = (await lenta.registros()).single;
+      expect(registro.estado, EstadoPendiente.pendiente);
+      expect(registro.intentos, 0);
+      pausa.complete(); // el servidor por fin contesta; nadie lo espera
+    });
+
+    test('quien no pide el turno con urgencia sí espera su vez', () async {
+      final soltar = await bandeja.adquirir(dueno.persona.id);
+      var tomado = false;
+      final espera = bandeja.conCandado(dueno.persona.id, () async => tomado = true);
+      await pumpEventQueue();
+      expect(tomado, isFalse);
+      expect(bandeja.turnoPedidoYa(dueno.persona.id), isFalse);
+      soltar();
+      await espera;
+      expect(tomado, isTrue);
+    });
+
+    test('el turno urgente avisa a quien tiene el candado y se reparte en orden', () async {
+      final soltar = await bandeja.adquirir(dueno.persona.id);
+      final avisos = <String>[];
+      unawaited(bandeja.turnoPedido(dueno.persona.id).then((_) => avisos.add('avisado')));
+      final urgente = bandeja.conCandado(
+        dueno.persona.id,
+        urgente: true,
+        () async => avisos.add('urgente'),
+      );
+      final normal = bandeja.conCandado(dueno.persona.id, () async => avisos.add('normal'));
+      await pumpEventQueue();
+      expect(avisos, ['avisado'], reason: 'quien lo tiene se entera, pero no se lo quitan');
+      expect(bandeja.turnoPedidoYa(dueno.persona.id), isTrue);
+      soltar();
+      await Future.wait([urgente, normal]);
+      expect(avisos, ['avisado', 'urgente', 'normal']);
+      expect(bandeja.turnoPedidoYa(dueno.persona.id), isFalse);
     });
   });
 }

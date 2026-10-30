@@ -19,6 +19,7 @@ import '../contratos/roles.dart';
 import '../sesion/proveedores_sesion.dart';
 import 'intentos.dart';
 import 'pin.dart';
+import 'pin_de_montos.dart';
 import 'proveedores_seguridad.dart';
 
 /// Tiempo en segundo plano tras el que se pide el PIN.
@@ -69,11 +70,23 @@ class ConfiguracionBloqueo {
   }
 }
 
+/// Lo que pasa con el PIN del bloqueo al quitarlo: el hash (si no se olvidó)
+/// se conserva como PIN propio de los montos. Solo existe en el estado que
+/// produce [ControladorBloqueo.quitarBloqueo]; el controlador de los montos lo
+/// lee para enterarse al instante (P1 de la revisión de la Fase 1b).
+class TraspasoDePin {
+  const TraspasoDePin(this.hash);
+
+  /// El hash que pasa a los montos; `null` si no pasa nada (olvidó su PIN).
+  final String? hash;
+}
+
 class EstadoBloqueo {
   const EstadoBloqueo({
     this.cargado = false,
     this.configuracion,
     this.bloqueado = false,
+    this.traspaso,
   });
 
   final bool cargado;
@@ -81,6 +94,9 @@ class EstadoBloqueo {
   /// `null` si la persona no activó el bloqueo.
   final ConfiguracionBloqueo? configuracion;
   final bool bloqueado;
+
+  /// Solo en el estado que deja [ControladorBloqueo.quitarBloqueo].
+  final TraspasoDePin? traspaso;
 
   bool get activo => configuracion != null;
 }
@@ -163,7 +179,10 @@ class ControladorBloqueo extends Notifier<EstadoBloqueo> {
     );
   }
 
-  Future<void> _guardar(ConfiguracionBloqueo? configuracion) async {
+  Future<void> _guardar(
+    ConfiguracionBloqueo? configuracion, {
+    TraspasoDePin? traspaso,
+  }) async {
     final persona = _persona;
     if (persona == null) return;
     final almacen = ref.read(almacenSeguroProvider);
@@ -180,6 +199,7 @@ class ControladorBloqueo extends Notifier<EstadoBloqueo> {
         cargado: true,
         configuracion: configuracion,
         bloqueado: state.bloqueado && configuracion != null,
+        traspaso: traspaso,
       );
     }
   }
@@ -187,26 +207,70 @@ class ControladorBloqueo extends Notifier<EstadoBloqueo> {
   /// Rol de la persona de este teléfono (de él depende el largo del PIN).
   Rol? get _rol => ref.read(sesionActualProvider)?.rol;
 
-  /// Activa el bloqueo (o cambia el PIN). El PIN es de 6 dígitos si la persona
-  /// ve dinero y de 4 a 6 si no (D18, 23/oct).
-  Future<void> configurarPin(String pin) async {
+  static const _sinActual =
+      'Ya hay un PIN: para cambiarlo hace falta el actual (configurarPin con actual).';
+
+  /// Activa el bloqueo con [pin], o lo cambia. El PIN es de 6 dígitos si la
+  /// persona ve dinero y de 4 a 6 si no (D18, 23/oct).
+  ///
+  /// **Cambiar un PIN pide el actual** (P1 de la revisión de la Fase 1b): si ya
+  /// hay un PIN en vigor (el del bloqueo o el propio de los montos), hay que
+  /// pasarlo en [actual]; sin él lanza [StateError], y uno equivocado cuenta
+  /// como fallo y no cambia nada. Crearlo, solo cuando no hay ninguno.
+  Future<ResultadoBloqueo> configurarPin(String pin, {String? actual}) async {
     // Largo del rol y M9: nada de 0000, 1234, repetidos ni secuencias.
     final error = errorDePinNuevo(pin, rol: _rol);
     if (error != null) throw ArgumentError(error);
     await listo;
-    final actual = state.configuracion;
-    final hash = HashPin.crear(pin);
-    await _guardar(
-      actual?.copiarCon(hashPin: hash) ?? ConfiguracionBloqueo(hashPin: hash),
-    );
+    final persona = _persona;
+    final existente = state.configuracion;
+    if (existente != null) {
+      if (actual == null) throw StateError(_sinActual);
+      return cambiarPin(actual, pin);
+    }
+    final propio = persona == null
+        ? null
+        : await leerPinPropioDeMontos(ref.read(almacenSeguroProvider), persona);
+    if (propio != null) {
+      // Quitar el bloqueo conserva su PIN como el propio de los montos: poner
+      // otro nuevo sin saber ese sería la misma puerta. Activar el bloqueo con
+      // ese mismo PIN no cambia el secreto: escribirlo ya es conocerlo. Todo
+      // intento, bueno o malo, pasa por el límite de fallos.
+      if (_intentos.bloqueado(persona!)) return ResultadoBloqueo.bloqueado;
+      if (!HashPin.verificar(actual ?? pin, propio)) {
+        final bloqueado =
+            _intentos.anotarFallo(persona) == ResultadoFallo.bloqueado;
+        if (actual == null && !bloqueado) throw StateError(_sinActual);
+        return bloqueado
+            ? ResultadoBloqueo.bloqueado
+            : ResultadoBloqueo.pinIncorrecto;
+      }
+      _intentos.anotarAcierto(persona);
+    }
+    await _guardar(ConfiguracionBloqueo(hashPin: HashPin.crear(pin)));
+    return ResultadoBloqueo.abierto;
   }
 
-  /// Quita el bloqueo del teléfono.
-  Future<void> quitarBloqueo() async {
+  /// Quita el bloqueo del teléfono. **Su PIN se conserva como el PIN propio
+  /// para ver los montos** (P1 de la revisión de la Fase 1b): apagar el
+  /// bloqueo no deja crear otro PIN sin conocer el actual. Con [olvido] (la
+  /// persona olvidó su PIN y va a volver a entrar con su correo y contraseña)
+  /// no se conserva nada: se borran también el PIN propio de los montos.
+  Future<void> quitarBloqueo({bool olvido = false}) async {
     await listo;
     final persona = _persona;
-    if (persona != null) _intentos.olvidar(persona);
-    await _guardar(null);
+    final traspaso = olvido ? null : state.configuracion?.hashPin;
+    if (persona != null) {
+      _intentos.olvidar(persona);
+      if (olvido || traspaso != null) {
+        await guardarPinPropioDeMontos(
+          ref.read(almacenSeguroProvider),
+          persona,
+          traspaso,
+        );
+      }
+    }
+    await _guardar(null, traspaso: TraspasoDePin(traspaso));
   }
 
   Future<void> fijarHuella(bool activa) async {

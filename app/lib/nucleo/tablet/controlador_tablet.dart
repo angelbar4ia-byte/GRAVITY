@@ -528,6 +528,11 @@ class ControladorTablet extends Notifier<EstadoTablet> {
       sesion,
       hashPin: HashPin.crear(pin),
     );
+    // Volver a agregar a alguien trae una credencial nueva (otra cadena de
+    // renovación): el permiso de subida viejo, si lo había, no debe pisarla al
+    // entrar (B5 de la revisión de la Fase 1b). Lo que tenía por subir se
+    // conserva y sube con su sesión nueva.
+    await ref.read(bandejaDeLaTabletProvider)?.alAgregarDeNuevo(usuario.personaId);
     if (credencial != null) {
       final llave = LlavePin.derivar(pin);
       await _repositorio.guardarCredencial(usuario.personaId, llave, credencial);
