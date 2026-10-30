@@ -289,15 +289,13 @@ void main() {
       tester.element(find.byType(AppGravity)),
     );
     final cola = contenedor.read(colaSinConexionProvider);
-    await tester.runAsync(() async {
-      await cola.encolar(
-        tipo: 'finanzas.movimiento',
-        carga: const {'monto_centavos': 98765, 'descripcion': 'Secreto'},
-        id: 'q1',
-        personaId: 'persona-quitada',
-      );
-      await cola.rechazarPendientesDe('persona-quitada', motivoPersonaQuitada);
-    });
+    await cola.encolar(
+      tipo: 'finanzas.movimiento',
+      carga: const {'monto_centavos': 98765, 'descripcion': 'Secreto'},
+      id: 'q1',
+      personaId: 'persona-quitada',
+    );
+    await cola.rechazarPendientesDe('persona-quitada', motivoPersonaQuitada);
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('aviso-purga-quitados')), findsOneWidget);
     expect(find.textContaining('1 registro de una persona quitada'), findsOneWidget);
