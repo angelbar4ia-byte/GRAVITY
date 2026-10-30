@@ -145,7 +145,8 @@ void main() {
     );
 
     final usuario = await agregar(controlador, Rol.dueno);
-    for (final trivial in ['0000', '1234', '8888', '3456']) {
+    for (final trivial in ['0000', '1234', '8888', '3456', '111111', '123456',
+      '654321', '121212', '123123']) {
       await expectLater(
         controlador.cambiarPin(
           usuario.personaId,
@@ -161,7 +162,7 @@ void main() {
       await controlador.cambiarPin(
         usuario.personaId,
         pinActual: '246813',
-        pinNuevo: '7391',
+        pinNuevo: '739150',
       ),
       ResultadoDesbloqueo.abierto,
     );
@@ -428,7 +429,7 @@ void main() {
       await controlador.cambiarPin(
         usuario.personaId,
         pinActual: '0000',
-        pinNuevo: '73915',
+        pinNuevo: '739150',
       ),
       ResultadoDesbloqueo.pinIncorrecto,
     );
@@ -436,18 +437,18 @@ void main() {
       await controlador.cambiarPin(
         usuario.personaId,
         pinActual: '246813',
-        pinNuevo: '73915',
+        pinNuevo: '739150',
       ),
       ResultadoDesbloqueo.abierto,
     );
     expect(await vueltaGuardada(usuario.personaId, '246813'), isNull);
-    expect(await vueltaGuardada(usuario.personaId, '73915'), 0);
+    expect(await vueltaGuardada(usuario.personaId, '739150'), 0);
     expect(
       controlador.desbloquearConPin(usuario.personaId, '246813'),
       ResultadoDesbloqueo.pinIncorrecto,
     );
     expect(
-      await controlador.entrarConPin(usuario.personaId, '73915'),
+      await controlador.entrarConPin(usuario.personaId, '739150'),
       ResultadoDesbloqueo.abierto,
     );
 
@@ -456,7 +457,7 @@ void main() {
     expect(estado.usuarios, isEmpty);
     expect(estado.enModoCasa, isTrue);
     expect(falso().personaEnServidor, casa);
-    expect(await vueltaGuardada(usuario.personaId, '73915'), isNull);
+    expect(await vueltaGuardada(usuario.personaId, '739150'), isNull);
   });
 
   test('tiempo de regreso editable y acotado; contexto guardado', () async {

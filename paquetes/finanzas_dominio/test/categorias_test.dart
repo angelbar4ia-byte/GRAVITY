@@ -180,4 +180,14 @@ void main() {
       expect(plan.nuevas.single.cuentaGastoId, 'g-salud');
     });
   });
+
+  test('una fila de la plantilla se describe con su ruta y sus datos', () {
+    const f = FilaPlantilla(
+      numero: 4,
+      nivel1: 'Vivienda y servicios',
+      nivel2: 'Luz',
+      naturaleza: 'fija',
+    );
+    expect(f.toString(), 'FilaPlantilla(fila 4: Vivienda y servicios > Luz · fija)');
+  });
 }

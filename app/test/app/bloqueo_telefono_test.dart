@@ -15,17 +15,25 @@ import 'ayuda_plataforma.dart';
 
 const pantallaBloqueo = ValueKey('pantalla-bloqueo');
 
-/// Almacén con el bloqueo del Dueño ya configurado (PIN 2468).
+/// Almacén con el bloqueo del Dueño ya configurado (PIN 246813).
 AlmacenSeguroEnMemoria almacenConBloqueo({bool huella = false}) =>
     AlmacenSeguroEnMemoria({
       ControladorBloqueo.claveConfiguracion(
         sesionDeEjemplo(Rol.dueno).persona.id,
       ): jsonEncode(
         ConfiguracionBloqueo(
-          hashPin: hashDePrueba('2468'),
+          hashPin: hashDePrueba('246813'),
           huella: huella,
         ).aJson(),
       ),
+    });
+
+/// Almacén con el bloqueo de [rol] como estaba antes de la regla de 6 dígitos
+/// (D18, 23/oct): PIN de 4 dígitos, 2468.
+AlmacenSeguroEnMemoria almacenConBloqueoAnterior(Rol rol) =>
+    AlmacenSeguroEnMemoria({
+      ControladorBloqueo.claveConfiguracion(sesionDeEjemplo(rol).persona.id):
+          jsonEncode(ConfiguracionBloqueo(hashPin: hashDePrueba('2468')).aJson()),
     });
 
 Future<void> escribirPin(WidgetTester tester, String pin) async {
@@ -56,7 +64,7 @@ void main() {
 
     await escribirPin(tester, '0000');
     expect(find.text('PIN incorrecto.'), findsOneWidget);
-    await escribirPin(tester, '2468');
+    await escribirPin(tester, '246813');
     expect(find.byKey(pantallaBloqueo), findsNothing);
     expect(find.text('Hoy'), findsWidgets);
   });
@@ -69,7 +77,7 @@ void main() {
       almacen: almacenConBloqueo(),
       extras: [relojSeguridadProvider.overrideWithValue(() => ahora)],
     );
-    await escribirPin(tester, '2468');
+    await escribirPin(tester, '246813');
 
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
@@ -152,12 +160,20 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('bloqueo-activo')));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byKey(const Key('bloqueo-pin')), '1234');
-    await tester.enterText(find.byKey(const Key('bloqueo-confirmacion')), '1234');
-    await tester.tap(find.widgetWithText(FilledButton, 'Guardar'));
-    await tester.pumpAndSettle();
-    expect(find.textContaining('Ese PIN es una secuencia'), findsOneWidget);
-    expect(find.text('Bloquear tras'), findsNothing, reason: 'no se activó');
+    // D18 (23/oct): el dueño usa 6 dígitos; uno de 4 no se acepta, trivial o no.
+    for (final (pin, texto) in [
+      ('7382', 'El PIN es de 6 dígitos.'),
+      ('1234', 'El PIN es de 6 dígitos.'),
+      ('123456', 'Ese PIN es una secuencia'),
+      ('777777', 'repite el mismo número'),
+    ]) {
+      await tester.enterText(find.byKey(const Key('bloqueo-pin')), pin);
+      await tester.enterText(find.byKey(const Key('bloqueo-confirmacion')), pin);
+      await tester.tap(find.widgetWithText(FilledButton, 'Guardar'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining(texto), findsOneWidget, reason: pin);
+      expect(find.text('Bloquear tras'), findsNothing, reason: 'no se activó');
+    }
   });
 
   testWidgets('se activa en Ajustes › Privacidad', (tester) async {
@@ -176,8 +192,8 @@ void main() {
     expect(find.text('Bloqueo del teléfono'), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('bloqueo-activo')));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byKey(const Key('bloqueo-pin')), '1357');
-    await tester.enterText(find.byKey(const Key('bloqueo-confirmacion')), '1357');
+    await tester.enterText(find.byKey(const Key('bloqueo-pin')), '135792');
+    await tester.enterText(find.byKey(const Key('bloqueo-confirmacion')), '135792');
     await tester.tap(find.widgetWithText(FilledButton, 'Guardar'));
     await tester.pumpAndSettle();
     expect(find.text('Bloquear tras'), findsOneWidget);
@@ -188,7 +204,82 @@ void main() {
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pumpAndSettle();
     expect(find.byKey(pantallaBloqueo), findsOneWidget);
-    await escribirPin(tester, '1357');
+    await escribirPin(tester, '135792');
     expect(find.text('Bloqueo del teléfono'), findsOneWidget);
+  });
+
+  group('PIN anterior corto de quien ve dinero (D18, 23/oct)', () {
+    Future<void> abrir(WidgetTester tester, Rol rol) => montarApp(
+      tester,
+      dispositivo: TipoDispositivo.telefono,
+      sesion: sesionCon(rol),
+      almacen: almacenConBloqueoAnterior(rol),
+      extras: [relojSeguridadProvider.overrideWithValue(() => ahora)],
+    );
+
+    Future<void> guardar(WidgetTester tester, String pin, String repetido) async {
+      await tester.enterText(find.byKey(const Key('pin-nuevo-cambio')), pin);
+      await tester.enterText(
+        find.byKey(const Key('pin-nuevo-cambio-confirmacion')),
+        repetido,
+      );
+      await tester.tap(find.byKey(const ValueKey('guardar-pin-y-abrir')));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('el dueño escribe su PIN de 4 dígitos, elige uno de 6 y abre', (
+      tester,
+    ) async {
+      await abrir(tester, Rol.dueno);
+      await escribirPin(tester, '2468');
+      // Su PIN era el bueno, pero no abre todavía: pide el nuevo.
+      expect(find.byKey(pantallaBloqueo), findsOneWidget);
+      expect(find.byKey(const ValueKey('aviso-pin-corto')), findsOneWidget);
+      expect(find.byKey(const Key('campo-pin-bloqueo')), findsNothing);
+
+      await guardar(tester, '7391', '7391');
+      expect(find.text('El PIN es de 6 dígitos.'), findsOneWidget);
+      await guardar(tester, '123456', '123456');
+      expect(find.textContaining('secuencia'), findsOneWidget);
+      await guardar(tester, '739150', '739151');
+      expect(find.text('Los PIN no coinciden.'), findsOneWidget);
+      expect(find.byKey(pantallaBloqueo), findsOneWidget);
+
+      await guardar(tester, '739150', '739150');
+      expect(find.byKey(pantallaBloqueo), findsNothing);
+      expect(find.text('Hoy'), findsWidgets);
+    });
+
+    testWidgets('el PIN nuevo queda: al bloquear otra vez, el viejo ya no sirve', (
+      tester,
+    ) async {
+      await abrir(tester, Rol.dueno);
+      await escribirPin(tester, '2468');
+      await guardar(tester, '739150', '739150');
+      expect(find.byKey(pantallaBloqueo), findsNothing);
+
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      ahora = ahora.add(const Duration(minutes: 2));
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpAndSettle();
+      expect(find.byKey(pantallaBloqueo), findsOneWidget);
+      await escribirPin(tester, '2468');
+      expect(find.text('PIN incorrecto.'), findsOneWidget);
+      await escribirPin(tester, '739150');
+      expect(find.byKey(pantallaBloqueo), findsNothing);
+    });
+
+    testWidgets('quien no ve dinero conserva su PIN de 4 dígitos y abre directo', (
+      tester,
+    ) async {
+      await abrir(tester, Rol.familiar);
+      await escribirPin(tester, '2468');
+      expect(find.byKey(pantallaBloqueo), findsNothing);
+      expect(find.byKey(const ValueKey('aviso-pin-corto')), findsNothing);
+    });
   });
 }

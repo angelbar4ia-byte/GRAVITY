@@ -14,15 +14,20 @@
 //      (dueño y coadministradores, también la cuenta maestra). Plataforma lo
 //      implementó mientras corría esta revisión: estas pruebas pasan y quedan
 //      como guardias.
-//  P3  Guardia: al volver la tablet al reposo, los montos quedan ocultos. La
-//      regla nueva ("al entrar con su PIN la persona ve sus montos de una vez") no
-//      debe dejar a la vista los de quien acaba de salir.
+//  P3  Guardia de la regla nueva (2.ª ronda del 23/oct): en la tablet, al entrar
+//      con su PIN la persona ve sus montos de una vez; al volver al reposo (o
+//      entrar otra persona) se ocultan; el modo privado y el tiempo sin uso
+//      siguen mandando. Sin widgets: no puede colgarse.
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gravity/app/arranque.dart' show conexionesDeLaApp;
 import 'package:gravity/app/dispositivo.dart' show tipoDispositivoProvider;
 import 'package:gravity/diseno/proveedores.dart'
-    show montosOcultosProvider, montosVisiblesProvider, personaEnPantallaProvider;
+    show
+        modoPrivadoProvider,
+        montosOcultosProvider,
+        montosVisiblesProvider,
+        personaEnPantallaProvider;
 import 'package:gravity/nucleo/base_local/base_local.dart';
 import 'package:gravity/nucleo/cola/proveedores_cola.dart' show baseLocalProvider;
 import 'package:gravity/nucleo/contratos/dispositivo.dart';
@@ -185,8 +190,11 @@ void main() {
     });
   });
 
-  group('P3: al volver al reposo los montos de quien salió quedan ocultos', () {
-    test('tablet pública: entra el dueño, ve sus montos, regresa a Hogar', () async {
+  group('P3: tablet — entrar con el PIN muestra los montos; volver al reposo los oculta', () {
+    // Sin widgets ni `pumpAndSettle`: solo proveedores, para que no pueda colgarse
+    // esperando una animación o un diálogo. Cada prueba tiene además un tiempo
+    // máximo propio.
+    Future<ProviderContainer> tabletConPersonas() async {
       final casa = ServicioSesionFalso(inicial: sesionDeEjemplo(Rol.casa));
       final base = BaseLocal.enMemoria();
       addTearDown(base.close);
@@ -201,26 +209,36 @@ void main() {
         ],
       );
       addTearDown(contenedor.dispose);
-      // Se mantienen vivos para ver los cambios, como la pantalla.
+      // Se mantienen vivos para ver los cambios, como lo hace la pantalla.
       contenedor.listen(montosOcultosProvider, (_, _) {});
       contenedor.listen(personaEnPantallaProvider, (_, _) {});
       final tablet = contenedor.read(controladorTabletProvider.notifier);
       await tablet.listo;
-      await tablet.agregarUsuario(
-        dueno,
-        pin: pinDelDueno,
-        credencial: ServicioSesionFalso.credencialDe(dueno),
-      );
-      expect(
-        await tablet.entrarConPin(dueno.persona.id, pinDelDueno),
-        ResultadoDesbloqueo.abierto,
-      );
-      expect(contenedor.read(personaEnPantallaProvider), dueno.persona.id);
+      for (final sesion in [dueno, sesionDeEjemplo(Rol.coadministrador)]) {
+        await tablet.agregarUsuario(
+          sesion,
+          pin: pinDelDueno,
+          credencial: ServicioSesionFalso.credencialDe(sesion),
+        );
+      }
+      return contenedor;
+    }
 
-      // Con la regla nueva los ve al entrar; con la anterior los pediría con el
-      // PIN. Aquí se dejan a la vista de cualquier forma.
-      contenedor.read(montosVisiblesProvider.notifier).fijar(true);
-      expect(contenedor.read(montosOcultosProvider), isFalse, reason: 'el dueño ve sus montos');
+    test('en reposo (modo Casa) los montos están ocultos', () async {
+      final contenedor = await tabletConPersonas();
+      expect(contenedor.read(montosOcultosProvider), isTrue);
+    }, timeout: const Timeout(Duration(seconds: 30)));
+
+    test('al entrar con su PIN el dueño ve sus montos de una vez; al volver a Hogar se ocultan', () async {
+      final contenedor = await tabletConPersonas();
+      final tablet = contenedor.read(controladorTabletProvider.notifier);
+      expect(await tablet.entrarConPin(dueno.persona.id, pinDelDueno), ResultadoDesbloqueo.abierto);
+      expect(contenedor.read(personaEnPantallaProvider), dueno.persona.id);
+      expect(
+        contenedor.read(montosOcultosProvider),
+        isFalse,
+        reason: 'decisión del 23/oct (2.ª ronda): entrar con el PIN ya cuenta como pedir verlos',
+      );
 
       tablet.volverAlReposo();
       await tablet.cambiosEnServidor;
@@ -230,6 +248,45 @@ void main() {
         isTrue,
         reason: 'de vuelta en el modo Casa nada de lo que vio el dueño queda visible',
       );
-    });
+    }, timeout: const Timeout(Duration(seconds: 30)));
+
+    test('lo que vio una persona no lo hereda la siguiente, y cada quien ve lo suyo al entrar', () async {
+      final contenedor = await tabletConPersonas();
+      final tablet = contenedor.read(controladorTabletProvider.notifier);
+      final pareja = sesionDeEjemplo(Rol.coadministrador);
+      expect(await tablet.entrarConPin(dueno.persona.id, pinDelDueno), ResultadoDesbloqueo.abierto);
+      expect(contenedor.read(montosOcultosProvider), isFalse);
+
+      tablet.volverAlReposo();
+      await tablet.cambiosEnServidor;
+      expect(contenedor.read(montosOcultosProvider), isTrue, reason: 'en reposo, ocultos');
+
+      expect(await tablet.entrarConPin(pareja.persona.id, pinDelDueno), ResultadoDesbloqueo.abierto);
+      expect(contenedor.read(personaEnPantallaProvider), pareja.persona.id);
+      expect(contenedor.read(montosOcultosProvider), isFalse, reason: 'la pareja entró con SU PIN');
+      tablet.volverAlReposo();
+      await tablet.cambiosEnServidor;
+      expect(contenedor.read(montosOcultosProvider), isTrue);
+    }, timeout: const Timeout(Duration(seconds: 30)));
+
+    test('aunque haya entrado con PIN, el modo privado y el tiempo sin uso los ocultan', () async {
+      final contenedor = await tabletConPersonas();
+      final tablet = contenedor.read(controladorTabletProvider.notifier);
+      expect(await tablet.entrarConPin(dueno.persona.id, pinDelDueno), ResultadoDesbloqueo.abierto);
+      expect(contenedor.read(montosOcultosProvider), isFalse);
+
+      contenedor.read(modoPrivadoProvider.notifier).fijar(true);
+      expect(contenedor.read(montosOcultosProvider), isTrue, reason: 'modo privado');
+      contenedor.read(modoPrivadoProvider.notifier).fijar(false);
+
+      // Lo que hace OcultarMontosPorInactividad al vencer el tiempo.
+      contenedor.read(montosVisiblesProvider.notifier).fijar(false);
+      expect(contenedor.read(montosOcultosProvider), isTrue, reason: 'tras el tiempo sin uso');
+      expect(
+        contenedor.read(modoPrivadoProvider),
+        isFalse,
+        reason: 'salir del modo privado no vuelve a mostrar nada sin pedirlo',
+      );
+    }, timeout: const Timeout(Duration(seconds: 30)));
   });
 }

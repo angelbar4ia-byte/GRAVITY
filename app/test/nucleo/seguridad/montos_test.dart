@@ -123,7 +123,7 @@ void main() {
       final controlador = await listo(contenedor);
       expect(controlador.fuente, FuenteDePinMontos.propio);
       expect(controlador.hayQueCrearPin, isTrue);
-      expect(await controlador.verificar('2846'), ResultadoRevelar.faltaPin);
+      expect(await controlador.verificar('284651'), ResultadoRevelar.faltaPin);
     });
 
     test('no acepta PIN triviales ni mal formados', () async {
@@ -139,30 +139,30 @@ void main() {
     test('se guarda solo su hash y sirve para verlos; otro PIN no', () async {
       final contenedor = crear();
       final controlador = await listo(contenedor);
-      await controlador.crearPin('2846');
+      await controlador.crearPin('284651');
       expect(controlador.hayQueCrearPin, isFalse);
       final guardado = almacen.datos[ControladorMontos.claveConfiguracion(dueno.persona.id)]!;
-      expect(guardado, isNot(contains('2846')));
+      expect(guardado, isNot(contains('284651')));
       expect(guardado, contains('pbkdf2-sha256'));
 
-      expect(await controlador.verificar('2846'), ResultadoRevelar.revelado);
+      expect(await controlador.verificar('284651'), ResultadoRevelar.revelado);
       expect(await controlador.verificar('9999'), ResultadoRevelar.pinIncorrecto);
       // Sobrevive al reinicio.
       final otra = crear();
       final controladorOtra = await listo(otra);
       expect(controladorOtra.hayQueCrearPin, isFalse);
-      expect(await controladorOtra.verificar('2846'), ResultadoRevelar.revelado);
+      expect(await controladorOtra.verificar('284651'), ResultadoRevelar.revelado);
     });
 
     test('cambiar el tiempo no borra el PIN, ni al revés', () async {
       final contenedor = crear();
       final controlador = await listo(contenedor);
-      await controlador.crearPin('2846');
+      await controlador.crearPin('284651');
       await controlador.fijarOcultarTras(const Duration(minutes: 5));
-      expect(await controlador.verificar('2846'), ResultadoRevelar.revelado);
-      await controlador.crearPin('7391');
-      expect(await controlador.verificar('2846'), ResultadoRevelar.pinIncorrecto);
-      expect(await controlador.verificar('7391'), ResultadoRevelar.revelado);
+      expect(await controlador.verificar('284651'), ResultadoRevelar.revelado);
+      await controlador.crearPin('739150');
+      expect(await controlador.verificar('284651'), ResultadoRevelar.pinIncorrecto);
+      expect(await controlador.verificar('739150'), ResultadoRevelar.revelado);
       expect(
         contenedor.read(controladorMontosProvider).ocultarTras,
         const Duration(minutes: 5),
@@ -171,29 +171,29 @@ void main() {
 
     test('tras 5 fallos se bloquea y la espera se duplica (30 s, 1 min…)', () async {
       final controlador = await listo(crear());
-      await controlador.crearPin('2846');
+      await controlador.crearPin('284651');
       for (var i = 0; i < 4; i++) {
         expect(await controlador.verificar('0001'), ResultadoRevelar.pinIncorrecto);
       }
       expect(await controlador.verificar('0001'), ResultadoRevelar.bloqueado);
       expect(controlador.esperaRestante(), const Duration(seconds: 30));
       // Con el PIN bueno tampoco, mientras dure la espera.
-      expect(await controlador.verificar('2846'), ResultadoRevelar.bloqueado);
+      expect(await controlador.verificar('284651'), ResultadoRevelar.bloqueado);
 
       ahora = ahora.add(const Duration(seconds: 31));
       expect(controlador.esperaRestante(), isNull);
-      expect(await controlador.verificar('2846'), ResultadoRevelar.revelado);
+      expect(await controlador.verificar('284651'), ResultadoRevelar.revelado);
     });
 
     test('los fallos sobreviven al reinicio de la app', () async {
       final controlador = await listo(crear());
-      await controlador.crearPin('2846');
+      await controlador.crearPin('284651');
       for (var i = 0; i < 5; i++) {
         await controlador.verificar('0001');
       }
       final otra = crear();
       final controladorOtra = await listo(otra);
-      expect(await controladorOtra.verificar('2846'), ResultadoRevelar.bloqueado);
+      expect(await controladorOtra.verificar('284651'), ResultadoRevelar.bloqueado);
     });
   });
 
@@ -201,12 +201,12 @@ void main() {
     test('se usa el PIN del bloqueo, sin pedir otro', () async {
       final contenedor = crear();
       await contenedor.read(controladorBloqueoProvider.notifier).listo;
-      await contenedor.read(controladorBloqueoProvider.notifier).configurarPin('2468');
+      await contenedor.read(controladorBloqueoProvider.notifier).configurarPin('246813');
       final controlador = await listo(contenedor);
 
       expect(controlador.fuente, FuenteDePinMontos.bloqueo);
       expect(controlador.hayQueCrearPin, isFalse);
-      expect(await controlador.verificar('2468'), ResultadoRevelar.revelado);
+      expect(await controlador.verificar('246813'), ResultadoRevelar.revelado);
       expect(await controlador.verificar('0001'), ResultadoRevelar.pinIncorrecto);
     });
 
@@ -214,9 +214,9 @@ void main() {
       final contenedor = crear();
       final bloqueo = contenedor.read(controladorBloqueoProvider.notifier);
       await bloqueo.listo;
-      await bloqueo.configurarPin('2468');
+      await bloqueo.configurarPin('246813');
       final antes = contenedor.read(controladorBloqueoProvider);
-      expect(bloqueo.comprobarPin('2468'), ResultadoBloqueo.abierto);
+      expect(bloqueo.comprobarPin('246813'), ResultadoBloqueo.abierto);
       expect(bloqueo.comprobarPin('0001'), ResultadoBloqueo.pinIncorrecto);
       final despues = contenedor.read(controladorBloqueoProvider);
       expect(despues.bloqueado, antes.bloqueado);
@@ -227,13 +227,13 @@ void main() {
       final contenedor = crear();
       final bloqueo = contenedor.read(controladorBloqueoProvider.notifier);
       await bloqueo.listo;
-      await bloqueo.configurarPin('2468');
+      await bloqueo.configurarPin('246813');
       final controlador = await listo(contenedor);
       for (var i = 0; i < 5; i++) {
         await controlador.verificar('0001');
       }
       // El mismo contador: el bloqueo del teléfono también espera.
-      expect(bloqueo.desbloquearConPin('2468'), ResultadoBloqueo.bloqueado);
+      expect(bloqueo.desbloquearConPin('246813'), ResultadoBloqueo.bloqueado);
     });
   });
 
@@ -250,10 +250,10 @@ void main() {
       await tablet.listo;
       await tablet.agregarUsuario(
         dueno,
-        pin: '2846',
+        pin: '284651',
         credencial: ServicioSesionFalso.credencialDe(dueno),
       );
-      expect(await tablet.entrarConPin(dueno.persona.id, '2846'), ResultadoDesbloqueo.abierto);
+      expect(await tablet.entrarConPin(dueno.persona.id, '284651'), ResultadoDesbloqueo.abierto);
       return (contenedor, tablet);
     }
 
@@ -262,7 +262,7 @@ void main() {
       final controlador = await listo(contenedor);
       expect(controlador.fuente, FuenteDePinMontos.tablet);
       expect(controlador.hayQueCrearPin, isFalse);
-      expect(await controlador.verificar('2846'), ResultadoRevelar.revelado);
+      expect(await controlador.verificar('284651'), ResultadoRevelar.revelado);
       expect(await controlador.verificar('0001'), ResultadoRevelar.pinIncorrecto);
     });
 
@@ -280,10 +280,10 @@ void main() {
       for (var i = 0; i < 5; i++) {
         await controlador.verificar('0001');
       }
-      expect(await controlador.verificar('2846'), ResultadoRevelar.bloqueado);
+      expect(await controlador.verificar('284651'), ResultadoRevelar.bloqueado);
       expect(tablet.esperaRestante(dueno.persona.id), isNotNull);
       expect(
-        tablet.comprobarPin(dueno.persona.id, '2846'),
+        tablet.comprobarPin(dueno.persona.id, '284651'),
         ResultadoDesbloqueo.bloqueado,
       );
     });

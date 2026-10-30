@@ -34,7 +34,7 @@ List<String> _lecturas(WidgetTester tester) {
     });
   }
 
-  final raiz = tester.binding.pipelineOwner.semanticsOwner?.rootSemanticsNode;
+  final raiz = tester.binding.rootPipelineOwner.semanticsOwner?.rootSemanticsNode;
   if (raiz != null) visitar(raiz);
   return salida;
 }

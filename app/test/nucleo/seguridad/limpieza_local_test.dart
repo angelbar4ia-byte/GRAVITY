@@ -284,7 +284,7 @@ void main() {
       for (final sesion in [dueno, pareja]) {
         await controlador.agregarUsuario(
           sesion,
-          pin: '2846',
+          pin: '284651',
           credencial: ServicioSesionFalso.credencialDe(sesion),
         );
         await llenar(almacen, sesion.persona.id);

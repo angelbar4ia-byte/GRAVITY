@@ -210,4 +210,59 @@ void main() {
       const Duration(minutes: 5),
     );
   });
+
+  testWidgets('tablet: cambiar el PIN de alguien pide el largo de su rol '
+      '(6 dígitos si ve dinero; de 4 a 6 si no)', (tester) async {
+    await montarApp(
+      tester,
+      dispositivo: TipoDispositivo.tablet,
+      sesion: sesionCon(Rol.casa),
+      almacen: await almacenConPersonas({
+        Rol.dueno: '246813',
+        Rol.coadministrador: '739150',
+        Rol.familiar: '4321',
+      }),
+    );
+    await tester.tap(find.text('Dueño de ejemplo'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('campo-pin')), '246813');
+    await tester.tap(find.widgetWithText(FilledButton, 'Entrar'));
+    await tester.pumpAndSettle();
+    routerDe(tester).go('/ajustes/personas');
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('Personas de esta tablet'), 200);
+
+    Future<void> abrirCambioDe(String nombre) async {
+      final tarjeta = find.ancestor(
+        of: find.text(nombre),
+        matching: find.byType(ListTile),
+      );
+      await tester.ensureVisible(tarjeta);
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.descendant(of: tarjeta, matching: find.byType(PopupMenuButton<String>)),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Cambiar PIN'));
+      await tester.pumpAndSettle();
+    }
+
+    await abrirCambioDe('Pareja de ejemplo');
+    expect(find.text('PIN nuevo (6 dígitos)'), findsOneWidget);
+    await tester.enterText(find.byKey(const Key('pin-actual')), '739150');
+    await tester.enterText(find.byKey(const Key('pin-nuevo')), '7391');
+    await tester.tap(find.widgetWithText(FilledButton, 'Guardar'));
+    await tester.pumpAndSettle();
+    expect(find.text('El PIN es de 6 dígitos.'), findsOneWidget);
+    await tester.tap(find.widgetWithText(TextButton, 'Cancelar'));
+    await tester.pumpAndSettle();
+
+    await abrirCambioDe('Familiar de ejemplo');
+    expect(find.text('PIN nuevo (4 a 6 dígitos)'), findsOneWidget);
+    await tester.enterText(find.byKey(const Key('pin-actual')), '4321');
+    await tester.enterText(find.byKey(const Key('pin-nuevo')), '7391');
+    await tester.tap(find.widgetWithText(FilledButton, 'Guardar'));
+    await tester.pumpAndSettle();
+    expect(find.text('PIN cambiado.'), findsOneWidget);
+  });
 }

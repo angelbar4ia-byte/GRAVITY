@@ -10,6 +10,7 @@ import 'package:gravity/nucleo/contratos/rutas.dart';
 import 'package:gravity/nucleo/seguridad/biometria.dart';
 import 'package:gravity/nucleo/sesion/servicio_sesion_demostracion.dart';
 import 'package:gravity/nucleo/sesion/servicio_sesion_falso.dart';
+import 'package:gravity/nucleo/tablet/controlador_tablet.dart';
 import 'package:gravity/nucleo/tablet/usuarios_tablet.dart';
 
 import 'ayuda_plataforma.dart';
@@ -428,5 +429,125 @@ void main() {
     await entrarConPin(tester, nombreDueno, '246813');
     expect(enRiel('Finanzas'), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  // D18 (23/oct/2026): 6 dígitos para quien ve dinero; familiar y cuidador
+  // conservan de 4 a 6. Quien ya tenía un PIN más corto lo cambia al entrar.
+  group('PIN de 6 dígitos para quien ve dinero', () {
+    Future<void> escribirNuevo(
+      WidgetTester tester,
+      String pin,
+      String repetido,
+    ) async {
+      await tester.enterText(find.byKey(const Key('pin-nuevo-cambio')), pin);
+      await tester.enterText(
+        find.byKey(const Key('pin-nuevo-cambio-confirmacion')),
+        repetido,
+      );
+      await tester.tap(find.byKey(const ValueKey('guardar-pin-y-entrar')));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('agregar al dueño con 4 dígitos se avisa; con 6, se agrega', (
+      tester,
+    ) async {
+      final sesion = ServicioSesionFalso(
+        inicial: sesionDeEjemplo(Rol.casa),
+        cuentas: {
+          'dueno@ejemplo.test': CuentaFalsa('clave', sesionDeEjemplo(Rol.dueno)),
+        },
+      );
+      await montarApp(tester, dispositivo: TipoDispositivo.tablet, sesion: sesion);
+      await tester.tap(find.text('Agregar persona'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byKey(const Key('agregar-correo')), 'dueno@ejemplo.test');
+      await tester.enterText(find.byKey(const Key('agregar-contrasena')), 'clave');
+      await tester.enterText(find.byKey(const Key('agregar-pin')), '7382');
+      await tester.enterText(find.byKey(const Key('agregar-confirmacion')), '7382');
+      await tester.tap(find.widgetWithText(FilledButton, 'Agregar'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('6 dígitos'), findsWidgets);
+      expect(find.text(nombreDueno), findsNothing, reason: 'no se agregó');
+
+      await tester.enterText(find.byKey(const Key('agregar-pin')), '739150');
+      await tester.enterText(find.byKey(const Key('agregar-confirmacion')), '739150');
+      await tester.tap(find.widgetWithText(FilledButton, 'Agregar'));
+      await tester.pumpAndSettle();
+      expect(find.text(nombreDueno), findsOneWidget);
+    });
+
+    testWidgets('con un PIN anterior de 4 dígitos, el dueño no entra: elige uno '
+        'de 6 y entra', (tester) async {
+      await montarApp(
+        tester,
+        dispositivo: TipoDispositivo.tablet,
+        sesion: sesionCasa(),
+        almacen: await almacenConPersonas({Rol.dueno: '2468'}),
+      );
+      await entrarConPin(tester, nombreDueno, '2468');
+      expect(find.byKey(const ValueKey('dialogo-cambiar-pin-al-entrar')), findsOneWidget);
+      expect(find.byKey(const ValueKey('aviso-pin-corto')), findsOneWidget);
+      expect(find.text('GRAVITY · Casa'), findsOneWidget, reason: 'sigue en Hogar');
+
+      await escribirNuevo(tester, '7391', '7391');
+      expect(find.text('El PIN es de 6 dígitos.'), findsOneWidget);
+      await escribirNuevo(tester, '123456', '123456');
+      expect(find.textContaining('secuencia'), findsOneWidget);
+      await escribirNuevo(tester, '739150', '739151');
+      expect(find.text('Los PIN no coinciden.'), findsOneWidget);
+      expect(enRiel('Finanzas'), findsNothing);
+
+      await escribirNuevo(tester, '739150', '739150');
+      expect(find.byKey(const ValueKey('dialogo-cambiar-pin-al-entrar')), findsNothing);
+      expect(enRiel('Finanzas'), findsOneWidget, reason: 'entró con su rol');
+
+      // Cierra la sesión de la tablet y vuelve a entrar con el PIN nuevo.
+      ProviderScope.containerOf(tester.element(find.byType(AppGravity)))
+          .read(controladorTabletProvider.notifier)
+          .volverAlReposo();
+      await tester.pumpAndSettle();
+      await entrarConPin(tester, nombreDueno, '2468');
+      expect(find.text('PIN incorrecto.'), findsOneWidget);
+      await tester.enterText(find.byKey(const Key('campo-pin')), '739150');
+      await tester.tap(find.widgetWithText(FilledButton, 'Entrar'));
+      await tester.pumpAndSettle();
+      expect(enRiel('Finanzas'), findsOneWidget);
+    });
+
+    testWidgets('el familiar con 4 dígitos entra directo, sin cambiar nada', (
+      tester,
+    ) async {
+      await montarApp(
+        tester,
+        dispositivo: TipoDispositivo.tablet,
+        sesion: sesionCasa(),
+        almacen: await almacenConPersonas({Rol.familiar: '2468'}),
+      );
+      await entrarConPin(tester, 'Familiar de ejemplo', '2468');
+      expect(find.byKey(const ValueKey('dialogo-cambiar-pin-al-entrar')), findsNothing);
+      expect(find.text('GRAVITY · Casa'), findsNothing);
+    });
+
+    testWidgets('para una sola acción en la tablet pública también se pide el PIN '
+        'de 6 dígitos', (tester) async {
+      await montarApp(
+        tester,
+        dispositivo: TipoDispositivo.tablet,
+        sesion: sesionCasa(),
+        almacen: await almacenConPersonas({Rol.dueno: '2468'}),
+      );
+      final contenedor = ProviderScope.containerOf(
+        tester.element(find.byType(AppGravity)),
+      );
+      final controlador = contenedor.read(controladorTabletProvider.notifier);
+      expect(
+        await controlador.entrarParaAccion(
+          sesionDeEjemplo(Rol.dueno).persona.id,
+          '2468',
+        ),
+        ResultadoDesbloqueo.debeCambiarPin,
+      );
+      expect(contenedor.read(controladorTabletProvider).usuarioActivo, isNull);
+    });
   });
 }

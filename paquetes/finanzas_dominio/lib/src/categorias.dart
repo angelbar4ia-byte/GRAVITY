@@ -265,6 +265,14 @@ class FilaPlantilla {
   ];
 
   String get nombre => ruta.last;
+
+  /// Texto para depurar y para las pruebas: número de fila, ruta y datos.
+  @override
+  String toString() =>
+      'FilaPlantilla(fila $numero: ${ruta.join(' > ')}'
+      '${naturaleza.isEmpty ? '' : ' · $naturaleza'}'
+      '${cuentaGasto.isEmpty ? '' : ' · cuenta $cuentaGasto'}'
+      '${notas.isEmpty ? '' : ' · $notas'})';
 }
 
 /// Una fila que no se importó y por qué.

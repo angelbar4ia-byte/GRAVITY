@@ -39,7 +39,7 @@ void main() {
     almacen.datos[ControladorBloqueo.claveConfiguracion(dueno.persona.id)] =
         jsonEncode(
           ConfiguracionBloqueo(
-            hashPin: HashPin.crear('2468', iteraciones: 50),
+            hashPin: HashPin.crear('246813', iteraciones: 50),
             huella: huella,
             tras: tras ?? bloqueoTrasPorOmision,
           ).aJson(),
@@ -67,14 +67,14 @@ void main() {
     expect(contenedor.read(controladorBloqueoProvider).bloqueado, isTrue);
     expect(controlador.desbloquearConPin('0000'), ResultadoBloqueo.pinIncorrecto);
     expect(contenedor.read(controladorBloqueoProvider).bloqueado, isTrue);
-    expect(controlador.desbloquearConPin('2468'), ResultadoBloqueo.abierto);
+    expect(controlador.desbloquearConPin('246813'), ResultadoBloqueo.abierto);
     expect(contenedor.read(controladorBloqueoProvider).bloqueado, isFalse);
   });
 
   test('tras 1 minuto en segundo plano vuelve a bloquear; antes, no', () async {
     guardarBloqueo();
     final (contenedor, controlador) = await abrir();
-    controlador.desbloquearConPin('2468');
+    controlador.desbloquearConPin('246813');
 
     controlador.alIrASegundoPlano();
     ahora = ahora.add(const Duration(seconds: 59));
@@ -90,7 +90,7 @@ void main() {
   test('el tiempo es configurable', () async {
     guardarBloqueo();
     final (contenedor, controlador) = await abrir();
-    controlador.desbloquearConPin('2468');
+    controlador.desbloquearConPin('246813');
     await controlador.fijarTiempo(const Duration(minutes: 5));
     controlador.alIrASegundoPlano();
     ahora = ahora.add(const Duration(minutes: 2));
@@ -108,11 +108,11 @@ void main() {
     for (var i = 0; i < 5; i++) {
       controlador.desbloquearConPin('0000');
     }
-    expect(controlador.desbloquearConPin('2468'), ResultadoBloqueo.bloqueado);
+    expect(controlador.desbloquearConPin('246813'), ResultadoBloqueo.bloqueado);
     (_, controlador) = await abrir();
-    expect(controlador.desbloquearConPin('2468'), ResultadoBloqueo.bloqueado);
+    expect(controlador.desbloquearConPin('246813'), ResultadoBloqueo.bloqueado);
     ahora = ahora.add(const Duration(seconds: 30));
-    expect(controlador.desbloquearConPin('2468'), ResultadoBloqueo.abierto);
+    expect(controlador.desbloquearConPin('246813'), ResultadoBloqueo.abierto);
   });
 
   test('huella: solo si la persona la activó (teléfono personal)', () async {
@@ -141,13 +141,13 @@ void main() {
     await controlador.listo;
     expect(contenedor.read(controladorBloqueoProvider).activo, isFalse);
 
-    await controlador.configurarPin('1357');
+    await controlador.configurarPin('135792');
     final estado = contenedor.read(controladorBloqueoProvider);
     expect(estado.activo, isTrue);
     expect(estado.bloqueado, isFalse);
     final guardado =
         almacen.datos[ControladorBloqueo.claveConfiguracion(dueno.persona.id)]!;
-    expect(guardado, isNot(contains('1357')));
+    expect(guardado, isNot(contains('135792')));
 
     await controlador.quitarBloqueo();
     expect(contenedor.read(controladorBloqueoProvider).activo, isFalse);
