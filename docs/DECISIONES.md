@@ -396,6 +396,7 @@ Tomadas por el arquitecto con el criterio **más seguro** para cerrar los hallaz
 | Bloqueo del teléfono | Al abrir y tras 1 minuto en segundo plano |
 | Confirmación de correo en Supabase | **Activa** (confirmado 23/oct) |
 | PIN y montos ocultos (confirmado 23/oct) | El correo y la contraseña se piden **una vez por dispositivo**; la sesión sigue abierta. Tras unos minutos sin uso (2 por omisión, editable en Ajustes › Privacidad) **los montos se ocultan solos**; para volver a verlos se pide el **PIN** (o la huella en el teléfono). **PIN de 6 dígitos para quien ve dinero** (dueño y coadministradores, incluida la cuenta maestra); se rechazan los PIN triviales. En las tablets el PIN además elige a la persona, y **al entrar con su PIN la persona ve sus montos de una vez**, sin pedirlo otra vez |
+| Captura de montos *(propuesta del arquitecto, sin confirmar)* | La coma decimal se lee como punto decimal ("12,5" = $12.50), no como separador de miles |
 | Mediciones en el Galaxy A52 y la laptop | Sí, cuando sea posible; no es prioridad |
 | Propiedades de los archivos `.xlsx` | Quitado el autor de `data/*.xlsx`; **el historial de git se conserva** |
 

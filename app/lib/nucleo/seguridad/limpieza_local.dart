@@ -24,6 +24,7 @@ library;
 
 import 'package:flutter/foundation.dart';
 
+import '../cola/bandeja_salida.dart';
 import '../contratos/roles.dart';
 import 'almacen_seguro.dart';
 
@@ -38,10 +39,25 @@ class LimpiezaLocal {
   LimpiezaLocal(
     this._almacen, {
     Iterable<LimpiezaPorPersona> ganchos = const [],
-  }) : _ganchos = [...ganchos];
+    BandejaDeSalida? bandeja,
+  }) : _ganchos = [...ganchos],
+       bandeja = bandeja ?? BandejaDeSalida(_almacen);
 
   final AlmacenSeguro _almacen;
   final List<LimpiezaPorPersona> _ganchos;
+
+  /// Los permisos de subida de la bandeja de salida (D14, 23/oct/2026): se
+  /// comparte la instancia con la subida para que el candado sea uno solo.
+  final BandejaDeSalida bandeja;
+
+  /// La cuenta del equipo (Hogar) cerró sesión: con nadie dentro, no debe
+  /// quedar en el equipo la credencial en claro de quien dejó algo por subir.
+  /// Se **sella** (solo su PIN la abre) y lo pendiente espera a que esa
+  /// persona vuelva a entrar (B1 de la revisión de la Fase 1b).
+  Future<void> alCerrarElEquipo() => _sinFallar(
+    bandeja.sellarTodos,
+    'las credenciales de la bandeja de salida',
+  );
 
   /// Agrega un gancho para lo que el módulo guarda fuera del almacén seguro.
   void registrar(LimpiezaPorPersona gancho) => _ganchos.add(gancho);
