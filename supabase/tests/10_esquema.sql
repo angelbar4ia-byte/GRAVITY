@@ -252,6 +252,36 @@ select pruebas.ok(
   and has_function_privilege('authenticated', 'public.crear_invitacion(uuid, text, text, integer, boolean)', 'execute'),
   '23/oct: anon no ejecuta las funciones nuevas; authenticated sí crea invitaciones');
 
+-- Endurecimiento de la Fase 1b (20261026): tope de la bitácora, motivo, relevo y albacea.
+select pruebas.igual(
+  (select string_agg(g.tgrelid::regclass::text || ':' || g.tgname, ',' order by g.tgrelid::regclass::text, g.tgname)
+     from pg_trigger g
+    where not g.tgisinternal
+      and g.tgname in ('bitacora_tope', 'fin_c_motivo', 'fin_z_relevo_administrador')),
+  'bitacora:bitacora_tope,fin_conciliaciones:fin_c_motivo,fin_movimientos:fin_c_motivo,membresias:fin_z_relevo_administrador',
+  '1b: triggers del tope de la bitácora, del motivo y del relevo del administrador instalados');
+select pruebas.ok(
+  (select g.tgtype & 1 = 0 from pg_trigger g where g.tgname = 'bitacora_tope' and g.tgrelid = 'public.bitacora'::regclass),
+  '1b N1: el tope de la bitácora es un trigger por sentencia (uno por fila no ve las inserciones en lote)');
+select pruebas.igual(
+  (select coalesce(string_agg(p.proname || ':' || r.rol, ', ' order by p.proname, r.rol), '')
+     from pg_proc p join pg_namespace n on n.oid = p.pronamespace,
+          unnest(array['anon', 'authenticated', 'service_role']) as r(rol)
+    where n.nspname = 'public'
+      and p.proname in ('bitacora_tope_por_persona', 'fin_motivo_valido', 'fin_motivo_validar',
+                        'fin_libro_asegurar_administrador', 'fin_membresia_relevo_administrador')
+      and has_function_privilege(r.rol, p.oid, 'execute')),
+  '', '1b: los ayudantes y triggers nuevos no se ejecutan desde la API');
+select pruebas.ok(
+  has_function_privilege('authenticated', 'public.fin_nombrar_albacea(uuid, uuid, text)', 'execute')
+  and not has_function_privilege('anon', 'public.fin_nombrar_albacea(uuid, uuid, text)', 'execute')
+  and not has_function_privilege('service_role', 'public.fin_nombrar_albacea(uuid, uuid, text)', 'execute'),
+  '1b N4: fin_nombrar_albacea solo la ejecuta authenticated (y adentro exige ser el dueño)');
+select pruebas.ok(
+  (select p.prosecdef and exists (select 1 from unnest(p.proconfig) c where c like 'search_path=%') from pg_proc p
+    where p.oid = 'public.fin_nombrar_albacea(uuid, uuid, text)'::regprocedure),
+  '1b N4: fin_nombrar_albacea es SECURITY DEFINER con search_path fijo');
+
 -- puede() rechaza nombres mal escritos en lugar de negar en silencio.
 select pruebas.falla(
   $$select public.puede('b0000000-0000-4000-8000-000000000001', 'finanza', 'leer')$$,

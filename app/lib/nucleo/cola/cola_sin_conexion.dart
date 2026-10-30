@@ -77,7 +77,14 @@ const motivoSesionInservible =
     'Tu sesión en esta tablet ya no sirve para subirlo sola. Entra con tu PIN '
     'para revisarlo.';
 const motivoPersonaQuitada =
-    'Se quitó a la persona de la tablet antes de que se pudiera subir.';
+    'Se quitó a la persona de la tablet antes de que se pudiera subir. Se '
+    'borra de esta tablet a los 7 días.';
+
+/// Cuánto se conserva en la tablet lo que una persona quitada dejó sin subir
+/// (L1 de la revisión de la Fase 1b): ese registro (monto, concepto, cuentas)
+/// está en la base local en claro y, si la persona no vuelve, nadie lo
+/// revisaría nunca.
+const conservarLoDeQuitados = Duration(days: 7);
 
 /// Un registro listo para enviarse.
 class PeticionEnvio {
@@ -209,6 +216,16 @@ abstract interface class SalidaSinPin {
   Future<void> descartar(String personaId);
 }
 
+/// Lo que dejaron sin subir las personas quitadas de la tablet y se borrará.
+class PurgaProgramada {
+  const PurgaProgramada({required this.cuantos, this.primeraEl});
+
+  final int cuantos;
+
+  /// Cuándo se borra el primero (los demás, ese día o después).
+  final DateTime? primeraEl;
+}
+
 /// Resultado de una ronda de envío.
 class ResumenProceso {
   const ResumenProceso({
@@ -244,6 +261,7 @@ class ColaSinConexion {
     this.cuentaDelEquipo,
     this.salida,
     this.tiempoMaximoDeEnvio = const Duration(seconds: 30),
+    this.conservarQuitados = conservarLoDeQuitados,
     DateTime Function()? reloj,
     String Function()? generarId,
   }) : _reloj = reloj ?? DateTime.now,
@@ -293,6 +311,10 @@ class ColaSinConexion {
   /// puede dejar la ronda, y con ella la bandeja de salida, esperando para
   /// siempre (B3 de la revisión de la Fase 1b).
   final Duration tiempoMaximoDeEnvio;
+
+  /// Cuánto se conserva lo que dejó sin subir una persona quitada de la tablet
+  /// antes de borrarlo ([purgarLoDeQuitados]).
+  final Duration conservarQuitados;
 
   final DateTime Function() _reloj;
   final String Function() _generarId;
@@ -393,6 +415,8 @@ class ColaSinConexion {
 
   Future<ResumenProceso> _procesar() async {
     final ahora = _reloj();
+    // Lo de personas quitadas cuyo plazo venció se borra (L1), haya o no sesión.
+    await purgarLoDeQuitados();
     // Sin sesión no se envía nada; con sesión, solo lo de esa persona.
     final conSesion = personaConSesion;
     final persona = conSesion?.call();
@@ -542,7 +566,15 @@ class ColaSinConexion {
   /// Pasa lo pendiente de [personaId] a "requiere atención" con [motivo] (p.
   /// ej. la bandeja caducó). No se pierde: la persona lo ve en "Por revisar".
   /// Devuelve cuántos fueron.
+  ///
+  /// Si [motivo] es [motivoPersonaQuitada], el registro se borra de la base
+  /// local a los [conservarQuitados] (la fecha queda en `siguienteIntento`,
+  /// que un registro rechazado no usa para nada más): L1 de la revisión de la
+  /// Fase 1b.
   Future<int> rechazarPendientesDe(String personaId, String motivo) async {
+    final borrarEl = motivo == motivoPersonaQuitada
+        ? _reloj().add(conservarQuitados)
+        : null;
     final cuantos =
         await (_base.update(_tabla)..where(
               (t) =>
@@ -554,13 +586,55 @@ class ColaSinConexion {
             .write(
               PendientesCompanion(
                 estado: const Value(EstadoPendiente.rechazado),
-                siguienteIntento: const Value(null),
+                siguienteIntento: Value(borrarEl),
                 ultimoError: Value(motivo),
               ),
             );
     if (cuantos > 0) _avisar();
     return cuantos;
   }
+
+  SimpleSelectStatement<$PendientesTable, RegistroPendiente> _deQuitados() =>
+      _base.select(_tabla)..where(
+        (t) =>
+            t.estado.equalsValue(EstadoPendiente.rechazado) &
+            t.ultimoError.equals(motivoPersonaQuitada),
+      );
+
+  /// Borra de la base local lo que dejó sin subir una persona quitada de la
+  /// tablet y ya cumplió su plazo ([conservarQuitados]). Corre sola en cada
+  /// ronda ([procesar]), también sin sesión abierta. Devuelve cuántos borró.
+  Future<int> purgarLoDeQuitados() async {
+    final ahora = _reloj();
+    final borrados =
+        await (_base.delete(_tabla)..where(
+              (t) =>
+                  t.estado.equalsValue(EstadoPendiente.rechazado) &
+                  t.ultimoError.equals(motivoPersonaQuitada) &
+                  t.siguienteIntento.isSmallerOrEqualValue(ahora),
+            ))
+            .go();
+    if (borrados > 0) _avisar();
+    return borrados;
+  }
+
+  /// Lo de personas quitadas que espera su borrado: cuántos son y cuándo se
+  /// borra el primero. Solo números y una fecha (nadie ve montos ni de quién).
+  Future<PurgaProgramada?> purgaProgramada() async {
+    final filas = await _deQuitados().get();
+    if (filas.isEmpty) return null;
+    DateTime? primera;
+    for (final fila in filas) {
+      final cuando = fila.siguienteIntento;
+      if (cuando != null && (primera == null || cuando.isBefore(primera))) {
+        primera = cuando;
+      }
+    }
+    return PurgaProgramada(cuantos: filas.length, primeraEl: primera);
+  }
+
+  /// Lo mismo, en vivo (para el aviso en Ajustes › Personas).
+  Stream<PurgaProgramada?> vigilarPurga() => _vigilar(purgaProgramada);
 
   /// Borra los permisos caducados (y sella los que ya no tienen nada por
   /// subir) sin enviar nada.

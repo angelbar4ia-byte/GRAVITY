@@ -485,6 +485,124 @@ void main() {
       expect(registro.ultimoError, 'Sin permiso para guardarlo (42501).');
     });
   });
+
+  // L1 (revisión de la Fase 1b): lo que dejó sin subir una persona quitada de la
+  // tablet no se queda para siempre en la base local en claro.
+  group('lo de personas quitadas se borra a los 7 días', () {
+    Future<void> registrar(String id, String persona) => cola.encolar(
+      tipo: 'finanzas.gasto',
+      carga: const {'monto_centavos': 18500, 'descripcion': 'Despensa'},
+      id: id,
+      personaId: persona,
+    );
+
+    test('pasa a "requiere atención" con el plazo y el motivo', () async {
+      await registrar('a', 'ana');
+      await registrar('b', 'beto');
+      expect(await cola.rechazarPendientesDe('ana', motivoPersonaQuitada), 1);
+
+      final ana = (await cola.registros()).firstWhere((r) => r.id == 'a');
+      expect(ana.estado, EstadoPendiente.rechazado);
+      expect(ana.ultimoError, motivoPersonaQuitada);
+      expect(ana.ultimoError, contains('7 días'));
+      expect(ana.siguienteIntento, ahora.add(const Duration(days: 7)));
+      // Lo de los demás no se toca.
+      final beto = (await cola.registros()).firstWhere((r) => r.id == 'b');
+      expect(beto.estado, EstadoPendiente.pendiente);
+    });
+
+    test('antes del plazo se conserva, y la persona que vuelve lo puede revisar',
+        () async {
+      await registrar('a', 'ana');
+      await cola.rechazarPendientesDe('ana', motivoPersonaQuitada);
+      ahora = ahora.add(const Duration(days: 6, hours: 23));
+      await cola.procesar();
+      expect(await cola.requierenAtencion(personaId: 'ana'), hasLength(1));
+      expect(await cola.purgarLoDeQuitados(), 0);
+
+      // Reintentar lo saca de la cuenta regresiva: sigue su camino normal.
+      await cola.reintentar('a');
+      final r = (await cola.registros()).single;
+      expect(r.estado, EstadoPendiente.pendiente);
+      expect(r.siguienteIntento, isNull);
+      ahora = ahora.add(const Duration(days: 30));
+      await cola.procesar();
+      expect(await cola.registros(), hasLength(1), reason: 'ya no es de los quitados');
+    });
+
+    test('al cumplirse el plazo se borra de la base local, con y sin sesión', () async {
+      await registrar('a', 'ana');
+      await registrar('b', 'ana');
+      await cola.rechazarPendientesDe('ana', motivoPersonaQuitada);
+      ahora = ahora.add(const Duration(days: 7, minutes: 1));
+      await cola.procesar();
+      expect(await cola.registros(), isEmpty);
+      expect(await cola.purgaProgramada(), isNull);
+
+      final sinSesion = ColaSinConexion(
+        base: base,
+        enviador: enviador,
+        reloj: () => ahora,
+        personaConSesion: () => null,
+      );
+      await registrar('c', 'ana');
+      await cola.rechazarPendientesDe('ana', motivoPersonaQuitada);
+      ahora = ahora.add(const Duration(days: 8));
+      await sinSesion.procesar();
+      expect(await cola.registros(), isEmpty, reason: 'la purga no necesita sesión');
+    });
+
+    test('solo se borra lo de quitados: lo demás que requiere atención se queda',
+        () async {
+      await registrar('a', 'ana');
+      await registrar('b', 'ana');
+      await cola.rechazarPendientesDe('ana', 'Falló 20 veces: sin respuesta');
+      // Uno de ellos sí es de una persona quitada.
+      await registrar('c', 'ana');
+      await cola.rechazarPendientesDe('ana', motivoPersonaQuitada);
+      ahora = ahora.add(const Duration(days: 30));
+      await cola.procesar();
+      final ids = [for (final r in await cola.registros()) r.id];
+      expect(ids, unorderedEquals(['a', 'b']));
+    });
+
+    test('lo ya enviado de una persona quitada no se toca', () async {
+      await registrar('a', 'ana');
+      enviador.conSenal = true;
+      await cola.procesar();
+      await cola.rechazarPendientesDe('ana', motivoPersonaQuitada);
+      expect((await cola.registros()).single.estado, EstadoPendiente.enviado);
+    });
+
+    test('el aviso dice cuántos son y cuándo se borra el primero (sin montos)',
+        () async {
+      expect(await cola.purgaProgramada(), isNull);
+      await registrar('a', 'ana');
+      await cola.rechazarPendientesDe('ana', motivoPersonaQuitada);
+      ahora = ahora.add(const Duration(days: 2));
+      await registrar('b', 'beto');
+      await cola.rechazarPendientesDe('beto', motivoPersonaQuitada);
+
+      final aviso = (await cola.purgaProgramada())!;
+      expect(aviso.cuantos, 2);
+      expect(aviso.primeraEl, DateTime(2026, 10, 27, 8));
+      expect(await cola.vigilarPurga().first, isNotNull);
+    });
+
+    test('el plazo se puede cambiar', () async {
+      final corta = ColaSinConexion(
+        base: base,
+        enviador: enviador,
+        reloj: () => ahora,
+        conservarQuitados: const Duration(days: 1),
+      );
+      await corta.encolar(tipo: 'finanzas.gasto', carga: const {}, id: 'z', personaId: 'ana');
+      await corta.rechazarPendientesDe('ana', motivoPersonaQuitada);
+      ahora = ahora.add(const Duration(days: 1, minutes: 1));
+      await corta.procesar();
+      expect(await corta.registros(), isEmpty);
+    });
+  });
 }
 
 class EnviadorSinSesion implements Enviador {

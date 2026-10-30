@@ -636,6 +636,110 @@ void main() {
       );
     });
 
+    testWidgets('P1: cambiar el PIN propio pide el actual (y uno equivocado no '
+        'cambia nada)', (tester) async {
+      final dueno = sesionDeEjemplo(Rol.dueno);
+      await montarApp(
+        tester,
+        dispositivo: TipoDispositivo.laptop,
+        sesion: sesionCon(Rol.dueno),
+        almacen: AlmacenSeguroEnMemoria({
+          ControladorMontos.claveConfiguracion(dueno.persona.id):
+              jsonEncode({'hash_pin': hashDePrueba('284651')}),
+        }),
+      );
+      await irAPrivacidad(tester);
+      expect(find.text('Cambiar el PIN para ver los montos'), findsOneWidget);
+      final controlador = contenedorDe(tester).read(controladorMontosProvider.notifier);
+
+      Future<void> intentar(String actual, String nuevo) async {
+        await tester.tap(find.byKey(const ValueKey('montos-pin-propio')));
+        await tester.pumpAndSettle();
+        expect(find.byKey(const Key('bloqueo-pin-actual')), findsOneWidget);
+        await tester.enterText(find.byKey(const Key('bloqueo-pin-actual')), actual);
+        await tester.enterText(find.byKey(const Key('bloqueo-pin')), nuevo);
+        await tester.enterText(find.byKey(const Key('bloqueo-confirmacion')), nuevo);
+        await tester.tap(find.widgetWithText(FilledButton, 'Guardar'));
+        await tester.pumpAndSettle();
+      }
+
+      await intentar('000000', '739150');
+      expect(find.text('PIN incorrecto.'), findsOneWidget);
+      expect(await controlador.verificar('284651'), ResultadoRevelar.revelado);
+      expect(await controlador.verificar('739150'), ResultadoRevelar.pinIncorrecto);
+
+      await intentar('284651', '739150');
+      expect(await controlador.verificar('739150'), ResultadoRevelar.revelado);
+      expect(await controlador.verificar('284651'), ResultadoRevelar.pinIncorrecto);
+    });
+
+    testWidgets('P1: el diálogo no deja guardar sin escribir el PIN actual', (
+      tester,
+    ) async {
+      final dueno = sesionDeEjemplo(Rol.dueno);
+      await montarApp(
+        tester,
+        dispositivo: TipoDispositivo.laptop,
+        sesion: sesionCon(Rol.dueno),
+        almacen: AlmacenSeguroEnMemoria({
+          ControladorMontos.claveConfiguracion(dueno.persona.id):
+              jsonEncode({'hash_pin': hashDePrueba('284651')}),
+        }),
+      );
+      await irAPrivacidad(tester);
+      await tester.tap(find.byKey(const ValueKey('montos-pin-propio')));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byKey(const Key('bloqueo-pin')), '739150');
+      await tester.enterText(find.byKey(const Key('bloqueo-confirmacion')), '739150');
+      await tester.tap(find.widgetWithText(FilledButton, 'Guardar'));
+      await tester.pumpAndSettle();
+      expect(find.text('Escribe tu PIN actual.'), findsOneWidget);
+    });
+
+    testWidgets('P1: el PIN del bloqueo también se cambia con el actual; apagar '
+        'el bloqueo conserva su PIN para los montos', (tester) async {
+      final dueno = sesionDeEjemplo(Rol.dueno);
+      await montarApp(
+        tester,
+        dispositivo: TipoDispositivo.telefono,
+        sesion: sesionCon(Rol.dueno),
+        almacen: AlmacenSeguroEnMemoria({
+          ControladorBloqueo.claveConfiguracion(dueno.persona.id): jsonEncode(
+            ConfiguracionBloqueo(
+              hashPin: hashDePrueba('284651'),
+              huella: false,
+            ).aJson(),
+          ),
+        }),
+        biometria: BiometriaFalsa(hayHuella: false),
+      );
+      final bloqueo = contenedorDe(tester).read(controladorBloqueoProvider.notifier);
+      await bloqueo.listo;
+      expect(bloqueo.desbloquearConPin('284651'), ResultadoBloqueo.abierto);
+      await tester.pumpAndSettle();
+      await irAPrivacidad(tester);
+
+      await tester.scrollUntilVisible(find.text('Cambiar PIN'), 200);
+      await tester.tap(find.text('Cambiar PIN'));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('bloqueo-pin-actual')), findsOneWidget);
+      await tester.enterText(find.byKey(const Key('bloqueo-pin-actual')), '111222');
+      await tester.enterText(find.byKey(const Key('bloqueo-pin')), '739150');
+      await tester.enterText(find.byKey(const Key('bloqueo-confirmacion')), '739150');
+      await tester.tap(find.widgetWithText(FilledButton, 'Guardar'));
+      await tester.pumpAndSettle();
+      expect(find.text('PIN actual incorrecto. No se cambió.'), findsOneWidget);
+      expect(bloqueo.comprobarPin('284651'), ResultadoBloqueo.abierto);
+
+      // Apagarlo: el PIN pasa a ser el propio de los montos.
+      await tester.tap(find.byKey(const ValueKey('bloqueo-activo')));
+      await tester.pumpAndSettle();
+      final montos = contenedorDe(tester).read(controladorMontosProvider.notifier);
+      expect(montos.hayQueCrearPin, isFalse);
+      expect(await montos.verificar('284651'), ResultadoRevelar.revelado);
+      await expectLater(montos.crearPin('739150'), throwsStateError);
+    });
+
     testWidgets('el PIN propio dice cuántos dígitos pide según el rol', (
       tester,
     ) async {

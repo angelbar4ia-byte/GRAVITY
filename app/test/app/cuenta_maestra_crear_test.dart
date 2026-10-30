@@ -93,6 +93,60 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('copiar-codigo')));
     await tester.pumpAndSettle();
     expect(copiado, startsWith('token-de-ejemplo-'));
+    expect(find.byKey(const ValueKey('aviso-portapapeles')), findsOneWidget);
+    expect(find.textContaining('60 segundos'), findsWidgets);
+
+    // C1 (revisión de la Fase 1b): el código no se queda en el portapapeles.
+    await tester.pump(const Duration(seconds: 59));
+    expect(copiado, startsWith('token-de-ejemplo-'), reason: 'aún no pasa el minuto');
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pumpAndSettle();
+    expect(copiado, '', reason: 'a los 60 s se vació el portapapeles');
+  });
+
+  testWidgets('C1: si la persona copió otra cosa mientras tanto, no se pisa', (
+    tester,
+  ) async {
+    final repo = RepositorioInvitacionesEnMemoria(reloj: () => ahora);
+    String? portapapeles;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (llamada) async {
+        if (llamada.method == 'Clipboard.setData') {
+          portapapeles = (llamada.arguments as Map)['text'] as String?;
+        }
+        if (llamada.method == 'Clipboard.getData') {
+          return {'text': portapapeles};
+        }
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
+    await montarApp(
+      tester,
+      dispositivo: TipoDispositivo.laptop,
+      sesion: sesionCon(Rol.dueno),
+      extras: [repositorioInvitacionesProvider.overrideWithValue(repo)],
+    );
+    await irAPersonas(tester);
+    await tester.tap(find.text('Crear cuenta maestra'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const ValueKey('correo-maestra')), 'maestra@ejemplo.test');
+    await tester.tap(find.widgetWithText(FilledButton, 'Invitar'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('copiar-codigo')));
+    await tester.pumpAndSettle();
+    expect(portapapeles, startsWith('token-de-ejemplo-'));
+
+    portapapeles = 'otra cosa que copió la persona';
+    await tester.pump(const Duration(seconds: 61));
+    await tester.pumpAndSettle();
+    expect(portapapeles, 'otra cosa que copió la persona');
   });
 
   testWidgets('un correo que ya es del hogar se rechaza con el motivo', (tester) async {

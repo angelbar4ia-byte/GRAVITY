@@ -7,10 +7,10 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../nucleo/invitaciones/invitaciones.dart';
+import '../../../nucleo/seguridad/portapapeles_temporal.dart';
 import '../../../nucleo/sesion/proveedores_sesion.dart';
 
 final _correoValido = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
@@ -248,57 +248,72 @@ class _DialogoCorreoMaestraState extends State<_DialogoCorreoMaestra> {
   );
 }
 
-class _DialogoCodigo extends StatelessWidget {
+class _DialogoCodigo extends ConsumerWidget {
   const _DialogoCodigo({required this.correo, required this.creada});
 
   final String correo;
   final InvitacionCreada creada;
 
   @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: const Text('Invitación creada'),
-    content: SizedBox(
-      width: 420,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Entrégale este código a $correo en persona. Se muestra una sola '
-            'vez y no se manda por correo. Vence el ${_fecha(creada.expira)}.',
-          ),
-          const SizedBox(height: 12),
-          SelectableText(
-            creada.token,
-            key: const ValueKey('codigo-invitacion'),
-            style: const TextStyle(fontFamily: 'monospace'),
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            'Esa persona se registra con ese mismo correo, lo confirma y '
-            'escribe el código al entrar.',
-          ),
-        ],
+  Widget build(BuildContext context, WidgetRef ref) {
+    final portapapeles = ref.read(portapapelesTemporalProvider);
+    return AlertDialog(
+      title: const Text('Invitación creada'),
+      content: SizedBox(
+        width: 420,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Entrégale este código a $correo en persona. Se muestra una sola '
+              'vez y no se manda por correo. Vence el ${_fecha(creada.expira)}.',
+            ),
+            const SizedBox(height: 12),
+            SelectableText(
+              creada.token,
+              key: const ValueKey('codigo-invitacion'),
+              style: const TextStyle(fontFamily: 'monospace'),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Esa persona se registra con ese mismo correo, lo confirma y '
+              'escribe el código al entrar.',
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Si lo copias, se borra del portapapeles a los '
+              '${portapapeles.duracion.inSeconds} segundos.',
+              key: const ValueKey('aviso-portapapeles'),
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+        ),
       ),
-    ),
-    actions: [
-      TextButton.icon(
-        key: const ValueKey('copiar-codigo'),
-        onPressed: () async {
-          await Clipboard.setData(ClipboardData(text: creada.token));
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Código copiado.')),
-            );
-          }
-        },
-        icon: const Icon(Icons.copy),
-        label: const Text('Copiar'),
-      ),
-      FilledButton(
-        onPressed: () => Navigator.of(context).pop(),
-        child: const Text('Listo'),
-      ),
-    ],
-  );
+      actions: [
+        TextButton.icon(
+          key: const ValueKey('copiar-codigo'),
+          onPressed: () async {
+            await portapapeles.copiar(creada.token);
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'Código copiado. Se borra en '
+                    '${portapapeles.duracion.inSeconds} segundos.',
+                  ),
+                ),
+              );
+            }
+          },
+          icon: const Icon(Icons.copy),
+          label: const Text('Copiar'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Listo'),
+        ),
+      ],
+    );
+  }
 }

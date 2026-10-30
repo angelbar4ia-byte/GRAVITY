@@ -88,6 +88,12 @@ final caducadosDeLaBandejaProvider = StreamProvider<int>(
   (ref) => ref.watch(colaSinConexionProvider).vigilarCaducadosDeLaBandeja(),
 );
 
+/// Lo que dejaron sin subir las personas quitadas de la tablet y se borrará
+/// (solo cuántos y cuándo; L1 de la revisión de la Fase 1b).
+final purgaDeQuitadosProvider = StreamProvider<PurgaProgramada?>(
+  (ref) => ref.watch(colaSinConexionProvider).vigilarPurga(),
+);
+
 /// Cómo está la bandeja de salida del equipo (solo números: nada de montos ni
 /// de quién registró qué).
 class EstadoBandeja {

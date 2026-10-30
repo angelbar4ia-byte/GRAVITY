@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/dispositivo.dart';
 import '../../../app/tablet/dialogo_agregar_persona.dart';
 import '../../../app/tablet/dialogo_pin.dart' show mensajeDesbloqueo;
+import '../../../nucleo/cola/proveedores_cola.dart' show purgaDeQuitadosProvider;
 import '../../../nucleo/contratos/dispositivo.dart';
 import '../../../nucleo/contratos/roles.dart';
 import '../../../nucleo/permisos/permisos.dart';
@@ -87,6 +88,12 @@ class _TarjetaRol extends StatelessWidget {
   );
 }
 
+String _fecha(DateTime fecha) {
+  final f = fecha.toLocal();
+  String dos(int n) => n.toString().padLeft(2, '0');
+  return '${dos(f.day)}/${dos(f.month)}/${f.year}';
+}
+
 class _PersonasTablet extends ConsumerWidget {
   const _PersonasTablet();
 
@@ -95,9 +102,28 @@ class _PersonasTablet extends ConsumerWidget {
     final estado = ref.watch(controladorTabletProvider);
     final controlador = ref.read(controladorTabletProvider.notifier);
     final regreso = estado.configuracion.regresoModoCasa;
+    final purga = ref.watch(purgaDeQuitadosProvider).value;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (purga != null)
+          Card(
+            key: const ValueKey('aviso-purga-quitados'),
+            child: ListTile(
+              leading: const Icon(Icons.schedule_outlined),
+              title: Text(
+                purga.cuantos == 1
+                    ? '1 registro de una persona quitada no se subió.'
+                    : '${purga.cuantos} registros de personas quitadas no se '
+                          'subieron.',
+              ),
+              subtitle: Text(
+                'Se borra${purga.cuantos == 1 ? '' : 'n'} de esta tablet'
+                '${purga.primeraEl == null ? '' : ' el ${_fecha(purga.primeraEl!)}'}'
+                '. Si la persona vuelve antes, los ve en "Por revisar".',
+              ),
+            ),
+          ),
         for (final usuario in estado.usuarios)
           Card(
             child: ListTile(

@@ -229,6 +229,29 @@ void main() {
     expect(servidor.recibidos, isEmpty);
   });
 
+  test('quitar a la persona deja su pendiente "por borrar" a los 7 días y la '
+      'purga lo borra', () async {
+    await entrar(dueno);
+    ponerSenal(false);
+    await registrarGasto();
+    await cola.procesar();
+    await salir();
+    await tablet.quitarUsuario(dueno.persona.id);
+
+    final aviso = (await cola.purgaProgramada())!;
+    expect(aviso.cuantos, 1);
+    expect(
+      aviso.primeraEl!.isAtSameMomentAs(ahora.add(const Duration(days: 7))),
+      isTrue,
+    );
+
+    ponerSenal(true);
+    ahora = ahora.add(const Duration(days: 7, minutes: 5));
+    await cola.procesar();
+    expect(await cola.registros(), isEmpty, reason: 'ya no queda nada en claro');
+    expect(await cola.purgaProgramada(), isNull);
+  });
+
   test('cambiar el PIN con la credencial en la bandeja: el PIN nuevo la abre', () async {
     await entrar(dueno);
     ponerSenal(false);

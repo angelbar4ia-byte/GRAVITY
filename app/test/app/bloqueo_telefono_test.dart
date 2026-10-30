@@ -8,6 +8,7 @@ import 'package:gravity/nucleo/contratos/roles.dart';
 import 'package:gravity/nucleo/seguridad/almacen_seguro.dart';
 import 'package:gravity/nucleo/seguridad/biometria.dart';
 import 'package:gravity/nucleo/seguridad/bloqueo.dart';
+import 'package:gravity/nucleo/seguridad/pin_de_montos.dart';
 import 'package:gravity/nucleo/seguridad/proveedores_seguridad.dart';
 import 'package:gravity/nucleo/sesion/servicio_sesion_demostracion.dart';
 
@@ -131,6 +132,25 @@ void main() {
     expect(sesion.sesionActual, isNull);
     expect(find.byKey(pantallaBloqueo), findsNothing);
     expect(almacen.datos.keys.where((k) => k.startsWith('bloqueo.0')), isEmpty);
+  });
+
+  testWidgets('"Olvidé mi PIN" borra también el PIN propio de los montos: quien '
+      'vuelve a entrar con su correo empieza de cero', (tester) async {
+    final dueno = sesionDeEjemplo(Rol.dueno);
+    final almacen = almacenConBloqueo();
+    almacen.datos[claveConfiguracionMontos(dueno.persona.id)] =
+        jsonEncode({'hash_pin': hashDePrueba('246813')});
+    await montarApp(
+      tester,
+      dispositivo: TipoDispositivo.telefono,
+      sesion: sesionCon(Rol.dueno),
+      almacen: almacen,
+    );
+    await tester.tap(find.text('Olvidé mi PIN'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cerrar sesión'));
+    await tester.pumpAndSettle();
+    expect(await leerPinPropioDeMontos(almacen, dueno.persona.id), isNull);
   });
 
   testWidgets('solo en el teléfono: ni la tablet ni la laptop lo muestran', (

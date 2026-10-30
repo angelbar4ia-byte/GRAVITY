@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:gravity/app/app_gravity.dart';
 import 'package:gravity/app/router.dart';
 import 'package:gravity/modulos/ajustes/secciones_ajustes.dart';
+import 'package:gravity/nucleo/cola/cola_sin_conexion.dart' show motivoPersonaQuitada;
+import 'package:gravity/nucleo/cola/proveedores_cola.dart' show colaSinConexionProvider;
 import 'package:gravity/nucleo/contratos/dispositivo.dart';
 import 'package:gravity/nucleo/contratos/roles.dart';
 import 'package:gravity/nucleo/contratos/rutas.dart';
@@ -264,5 +266,43 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'Guardar'));
     await tester.pumpAndSettle();
     expect(find.text('PIN cambiado.'), findsOneWidget);
+  });
+
+  testWidgets('tablet: Personas avisa cuántos registros de personas quitadas se '
+      'borrarán y cuándo (L1), sin montos ni nombres', (tester) async {
+    await montarApp(
+      tester,
+      dispositivo: TipoDispositivo.tablet,
+      sesion: sesionCon(Rol.casa),
+      almacen: await almacenConPersonas({Rol.dueno: '246813'}),
+    );
+    await tester.tap(find.text('Dueño de ejemplo'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('campo-pin')), '246813');
+    await tester.tap(find.widgetWithText(FilledButton, 'Entrar'));
+    await tester.pumpAndSettle();
+    routerDe(tester).go('/ajustes/personas');
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('aviso-purga-quitados')), findsNothing);
+
+    final contenedor = ProviderScope.containerOf(
+      tester.element(find.byType(AppGravity)),
+    );
+    final cola = contenedor.read(colaSinConexionProvider);
+    await tester.runAsync(() async {
+      await cola.encolar(
+        tipo: 'finanzas.movimiento',
+        carga: const {'monto_centavos': 98765, 'descripcion': 'Secreto'},
+        id: 'q1',
+        personaId: 'persona-quitada',
+      );
+      await cola.rechazarPendientesDe('persona-quitada', motivoPersonaQuitada);
+    });
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('aviso-purga-quitados')), findsOneWidget);
+    expect(find.textContaining('1 registro de una persona quitada'), findsOneWidget);
+    expect(find.textContaining('Se borra de esta tablet el '), findsOneWidget);
+    expect(find.textContaining('987'), findsNothing);
+    expect(find.textContaining('Secreto'), findsNothing);
   });
 }
