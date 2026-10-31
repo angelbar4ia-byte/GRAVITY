@@ -443,6 +443,26 @@ void main() {
       expect(find.byKey(const ValueKey('vencimientos-lista')), findsOneWidget);
     });
 
+    testWidgets('las consultas locales de las herramientas dan texto discreto y '
+        'sin cifras con los montos ocultos', (tester) async {
+      await montar(tester, TipoDispositivo.laptop);
+      final c = ProviderScope.containerOf(tester.element(find.byType(AppGravity)));
+      final consulta = c.read(consultaLocalFinanzasProvider);
+      for (final h in [
+        'finanzas.resumen_semana',
+        'finanzas.proximos_pagos',
+        'finanzas.ahorro_avance',
+      ]) {
+        final visible = await consulta(h);
+        expect(visible, isNotNull, reason: h);
+      }
+      expect(await consulta('finanzas.otra'), isNull);
+      c.read(montosVisiblesProvider.notifier).fijar(false);
+      for (final h in ['finanzas.resumen_semana', 'finanzas.proximos_pagos']) {
+        expect(await consulta(h), isNot(contains(r'$')), reason: h);
+      }
+    });
+
     testWidgets('teléfono: Deudas y Ahorro abren', (tester) async {
       await montar(tester, TipoDispositivo.telefono);
       for (final s in [SeccionFinanzas.deudas, SeccionFinanzas.ahorro]) {

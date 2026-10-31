@@ -8,6 +8,7 @@ library;
 import 'package:finanzas_dominio/finanzas_dominio.dart';
 
 import '../datos/repositorio.dart';
+import '../importacion/lector_ficha.dart';
 import 'servicio_finanzas.dart';
 
 /// Se llama al registrar un pago de una ocurrencia: la plataforma retira el
@@ -216,6 +217,7 @@ class ServicioDeudasAhorro {
     required int diaPago,
     String? tarjetaDeudaId,
     int pagadas = 0,
+    String? id,
   }) async {
     base.exigirAdministrar(libroId);
     if (comercio.trim().isEmpty) throw const ErrorFinanzas('Escribe el comercio.');
@@ -228,15 +230,23 @@ class ServicioDeudasAhorro {
     }
     final cuotas = mensualidadesMsi(total, meses);
     final pendiente = pendienteDeMsi(cuotas, pagadas);
+    var nombreCuenta = 'MSI ${comercio.trim()}';
+    for (var n = 2;
+        _d.cuentasDe(libroId).any(
+          (c) => normalizarNombre(c.nombre) == normalizarNombre(nombreCuenta),
+        );
+        n++) {
+      nombreCuenta = 'MSI ${comercio.trim()} ($n)';
+    }
     final pasivo = await base.crearCuenta(
       libroId: libroId,
-      nombre: 'MSI ${comercio.trim()}',
+      nombre: nombreCuenta,
       tipo: TipoCuenta.prestamo,
       saldoInicial: pendiente,
       fechaSaldo: fechaCompra.despuesDe(base.hoy) ? base.hoy : fechaCompra,
     );
     final deuda = Deuda(
-      id: base.nuevoId(),
+      id: id == null ? base.nuevoId() : idEstable('$id:deuda'),
       libroId: libroId,
       nombre: 'MSI ${comercio.trim()}',
       tipo: TipoDeuda.msi,
@@ -254,7 +264,7 @@ class ServicioDeudasAhorro {
     );
     await base.guardarDeuda(deuda);
     final msi = Msi(
-      id: base.nuevoId(),
+      id: id ?? base.nuevoId(),
       libroId: libroId,
       deudaId: deuda.id,
       tarjetaDeudaId: tarjetaDeudaId,
@@ -675,6 +685,148 @@ class ServicioDeudasAhorro {
         registradoEn: base.ahora,
       ),
     );
+  }
+}
+
+/// Resultado de aplicar la ficha.
+class ResultadoFicha {
+  const ResultadoFicha({this.creadas = 0, this.yaExistian = 0});
+
+  final int creadas;
+  final int yaExistian;
+}
+
+extension ImportarFicha on ServicioDeudasAhorro {
+  /// Crea lo de la [lectura] que aún no existe (los ids salen del ID de la
+  /// ficha: reimportar no duplica). Cada tarjeta lleva su cuenta pasivo con el
+  /// saldo como apertura; nada se inventa.
+  Future<ResultadoFicha> aplicarFicha(String libroId, LecturaFicha lectura) async {
+    base.exigirAdministrar(libroId);
+    final datos = base.datos;
+    var creadas = 0;
+    var existian = 0;
+    String idDe(String hoja, String idFicha) =>
+        idEstable(ClavesId.ficha(libroId, hoja, idFicha));
+
+    String nombreLibre(String nombre) {
+      var candidato = nombre;
+      var n = 2;
+      while (base.datos.cuentasDe(libroId).any(
+        (c) => normalizarNombre(c.nombre) == normalizarNombre(candidato),
+      )) {
+        candidato = '$nombre ($n)';
+        n++;
+      }
+      return candidato;
+    }
+
+    for (final t in lectura.tarjetas) {
+      final id = idDe('tarjetas', t.idFicha);
+      if (datos.deudas.any((d) => d.id == id)) {
+        existian++;
+        continue;
+      }
+      final nombre = t.nombre.isEmpty || t.nombre == t.institucion
+          ? t.institucion
+          : '${t.institucion} ${t.nombre}';
+      final cuenta = await base.crearCuenta(
+        libroId: libroId,
+        nombre: nombreLibre(nombre),
+        tipo: TipoCuenta.tarjeta,
+        saldoInicial: t.saldo,
+        limiteCentavos: t.limite,
+      );
+      await base.guardarDeuda(
+        Deuda(
+          id: id,
+          libroId: libroId,
+          nombre: nombre,
+          tipo: TipoDeuda.conCosto,
+          clase: ClaseDeuda.tarjeta,
+          acreedor: t.institucion,
+          cuentaPasivoId: cuenta.id,
+          abono: t.minimo ?? 0,
+          minimo: t.minimo ?? 0,
+          frecuencia: Frecuencia.mensual,
+          calendario: t.limitePagoDia == null || t.limitePagoDia == 0
+              ? null
+              : CalendarioConfig.mensual(
+                  [t.limitePagoDia!],
+                  regla: ReglaDiaInhabil.sinCambio,
+                ),
+          tasaAnualPuntosBase: t.tasaPb ?? 0,
+          catPuntosBase: t.catPb,
+          corteDia: t.corteDia,
+        ),
+      );
+      creadas++;
+    }
+
+    final c = lectura.credito;
+    if (c != null) {
+      final id = idDe('credito', 'auto');
+      if (datos.deudas.any((d) => d.id == id)) {
+        existian++;
+      } else {
+        final cuenta = await base.crearCuenta(
+          libroId: libroId,
+          nombre: nombreLibre(c.institucion),
+          tipo: TipoCuenta.prestamo,
+          saldoInicial: c.saldo,
+        );
+        await base.guardarDeuda(
+          Deuda(
+            id: id,
+            libroId: libroId,
+            nombre: c.institucion,
+            tipo: TipoDeuda.conCosto,
+            clase: ClaseDeuda.credito,
+            acreedor: c.institucion,
+            cuentaPasivoId: cuenta.id,
+            abono: c.mensualidad ?? 0,
+            minimo: c.mensualidad ?? 0,
+            frecuencia: Frecuencia.mensual,
+            calendario: c.diaPago == null || c.diaPago == 0
+                ? null
+                : CalendarioConfig.mensual(
+                    [c.diaPago!],
+                    regla: ReglaDiaInhabil.siguienteDiaHabil,
+                  ),
+            tasaAnualPuntosBase: c.tasaPb ?? 0,
+            montoOriginal: c.montoOriginal,
+            // Nulo = verificar con la caja (regla 12).
+            permitePagoAnticipado: c.permitePagoAnticipado,
+          ),
+        );
+        creadas++;
+      }
+    }
+
+    for (final m in lectura.msi) {
+      final id = idDe('msi', m.idFicha);
+      if (base.datos.msi.any((x) => x.id == id)) {
+        existian++;
+        continue;
+      }
+      await crearMsi(
+        libroId: libroId,
+        comercio: m.comercio,
+        descripcion: m.descripcion,
+        total: m.total,
+        meses: m.meses,
+        fechaCompra: m.fechaCompra,
+        diaPago: m.fechaCompra.dia > 28 ? 28 : m.fechaCompra.dia,
+        pagadas: m.pagadas,
+        id: id,
+        tarjetaDeudaId: m.idTarjeta == null
+            ? null
+            : (base.datos.deudas.any((d) => d.id == idDe('tarjetas', m.idTarjeta!))
+                  ? idDe('tarjetas', m.idTarjeta!)
+                  : null),
+      );
+      creadas++;
+    }
+    return ResultadoFicha(creadas: creadas, yaExistian: existian);
   }
 }
 

@@ -13,7 +13,9 @@ import '../../../nucleo/avisos/aviso.dart';
 import '../../../nucleo/avisos/proveedores_avisos.dart';
 import '../../../nucleo/avisos/recordatorios.dart' as av;
 import '../casos_uso/servicio_fase2.dart';
+import '../../../diseno/proveedores.dart' show montosOcultosProvider;
 import '../datos/ids.dart';
+import '../pantallas/fase2/ayuda_fase2.dart' show proximoPagoDe;
 import '../pantallas/detalle_aviso.dart';
 import 'proveedores.dart';
 
@@ -112,3 +114,70 @@ final List<Override> sobrescriturasAvisosFinanzas = [
         DetalleAvisoFinanzas(aviso: aviso as Aviso),
   ),
 ];
+
+/// Texto de las consultas locales de Finanzas para la barra de órdenes
+/// (`finanzas.resumen_semana`, `finanzas.proximos_pagos`,
+/// `finanzas.ahorro_avance`; D3). Se arma con los datos locales y **nunca**
+/// sale del equipo: ni a la IA en la nube ni a las bocinas. Con los montos
+/// ocultos, el texto no lleva cifras. `null` si no hay libro propio que
+/// leer (la barra solo abre la vista).
+final consultaLocalFinanzasProvider =
+    Provider<Future<String?> Function(String herramienta)>((ref) {
+      return (String herramienta) async {
+        try {
+          // Si Finanzas aún no se carga en este equipo, se carga ahora.
+          await ref.read(cargaFinanzasProvider.future);
+        } catch (_) {
+          return null;
+        }
+        final c = ref.read(contextoFinanzasProvider).value;
+        if (c == null || c.libro == null || !c.esLibroPropio) return null;
+        final ocultos = ref.read(montosOcultosProvider);
+        String monto(int centavos) => dom.formatearCentavos(centavos);
+        final semana = dom.Semana.de(c.hoy);
+        switch (herramienta) {
+          case 'finanzas.resumen_semana':
+            final v = dom.vistaSemana(c.datos, c.libroId, semana, hoy: c.hoy);
+            final ind = v.indicadores;
+            final estado = switch (ind.remanente) {
+              dom.Semaforo.verde => 'en verde',
+              dom.Semaforo.ambar => 'en ámbar',
+              dom.Semaforo.rojo => 'en rojo',
+            };
+            final cifra = ocultos
+                ? ''
+                : ' (${monto(v.planSemanal.remanente)} planeados)';
+            return 'Esta semana el remanente va $estado$cifra. '
+                '${ind.partidasDentro} de ${ind.totalPartidas} partidas '
+                'dentro de su presupuesto.';
+          case 'finanzas.proximos_pagos':
+            final svc = ref.read(servicioFase2Provider);
+            final pagos = <({String nombre, dom.Fecha fecha, int monto})>[];
+            for (final r in svc.deudas(c.libroId)) {
+              final p = proximoPagoDe(c.datos, r.deuda, c.hoy);
+              if (p != null) {
+                pagos.add((nombre: r.deuda.titulo, fecha: p.fecha, monto: p.monto));
+              }
+            }
+            if (pagos.isEmpty) return 'No tienes pagos próximos registrados.';
+            pagos.sort((a, b) => a.fecha.compareTo(b.fecha));
+            final lineas = [
+              for (final p in pagos.take(3))
+                '${p.nombre} el ${p.fecha.dia}/${p.fecha.mes}'
+                    '${ocultos ? '' : ' por ${monto(p.monto)}'}',
+            ];
+            return 'Próximos pagos: ${lineas.join('; ')}.';
+          case 'finanzas.ahorro_avance':
+            final f = ref.read(servicioFase2Provider).fondo(c.libroId, semana);
+            if (f == null) return 'Aún no tienes un fondo de emergencia.';
+            if (f.semanasDecimas == null) {
+              return 'Tu fondo de emergencia aún no tiene un gasto esencial '
+                  'calculado.';
+            }
+            return 'Tu fondo de emergencia cubre '
+                '${dom.textoSemanasCubiertas(f.semanasDecimas!)} semanas'
+                '${ocultos ? '' : ' (${monto(f.saldo)})'}.';
+        }
+        return null;
+      };
+    });

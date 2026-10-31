@@ -86,6 +86,11 @@ const Map<String, String> tablasColaFinanzas = finanzas.tablasColaFinanzas;
 List<Override> get sobrescriturasAvisosFinanzas =>
     finanzas.sobrescriturasAvisosFinanzas;
 
+/// Consultas locales de Finanzas para `ContextoHerramienta.consultaLocal`
+/// (`finanzas.resumen_semana`, `finanzas.proximos_pagos`,
+/// `finanzas.ahorro_avance`): texto discreto que nunca sale del equipo.
+final consultaLocalFinanzasProvider = finanzas.consultaLocalFinanzasProvider;
+
 /// Tema de la app.
 class TemaExterno {
   const TemaExterno({

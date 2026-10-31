@@ -67,6 +67,11 @@ abstract final class ClavesId {
     String fechaProgramada,
   ) => 'ocurrencia:$libroId:$origen:$origenId:$fechaProgramada';
 
+  /// Una fila de la ficha de deudas por su hoja y su ID (reimportar no
+  /// duplica).
+  static String ficha(String libroId, String hoja, String idFicha) =>
+      'ficha:$libroId:$hoja:${idFicha.trim().toLowerCase()}';
+
   /// El movimiento de una aportación de ahorro (reintentar no duplica).
   static String aportacion(String bolsaId, String semanaId) =>
       'aportacion:$bolsaId:$semanaId';

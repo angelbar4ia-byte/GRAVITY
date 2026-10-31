@@ -52,11 +52,13 @@ class VistaDeudas extends ConsumerWidget {
                 ? 'Agrega tus deudas en Compromisos y deudas, o una compra a '
                       'meses aquí.'
                 : null,
-            textoAccion: c.puedeAdministrar ? 'Nueva compra a meses' : null,
-            alAccionar: c.puedeAdministrar
+            textoAccion: c.puedeAdministrar && !telefono
+                ? 'Importar mi ficha'
+                : null,
+            alAccionar: c.puedeAdministrar && !telefono
                 ? () => showDialog<void>(
                     context: context,
-                    builder: (_) => DialogoMsi(contexto: c),
+                    builder: (_) => DialogoImportarFicha(contexto: c),
                   )
                 : null,
           ),
@@ -71,14 +73,28 @@ class VistaDeudas extends ConsumerWidget {
         if (c.puedeAdministrar && !telefono)
           Align(
             alignment: AlignmentDirectional.centerEnd,
-            child: OutlinedButton.icon(
-              key: const ValueKey('deudas-nuevo-msi'),
-              onPressed: () => showDialog<void>(
-                context: context,
-                builder: (_) => DialogoMsi(contexto: c),
-              ),
-              icon: const Icon(Icons.add),
-              label: const Text('Compra a meses'),
+            child: Wrap(
+              spacing: 8,
+              children: [
+                OutlinedButton.icon(
+                  key: const ValueKey('deudas-importar-ficha'),
+                  onPressed: () => showDialog<void>(
+                    context: context,
+                    builder: (_) => DialogoImportarFicha(contexto: c),
+                  ),
+                  icon: const Icon(Icons.upload_file_outlined),
+                  label: const Text('Importar ficha'),
+                ),
+                OutlinedButton.icon(
+                  key: const ValueKey('deudas-nuevo-msi'),
+                  onPressed: () => showDialog<void>(
+                    context: context,
+                    builder: (_) => DialogoMsi(contexto: c),
+                  ),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Compra a meses'),
+                ),
+              ],
             ),
           ),
         TarjetaModulo(
@@ -155,8 +171,7 @@ class _TarjetaDeDeuda extends ConsumerWidget {
     final c = contexto;
     final saldo = resumen.saldo ?? 0;
     final proximo = proximoPagoDe(c.datos, d, c.hoy);
-    final sinTasa =
-        d.tipo == TipoDeuda.conCosto && d.tasaAnualPuntosBase == 0;
+    final sinTasa = d.tipo == TipoDeuda.conCosto && d.tasaAnualPuntosBase == 0;
     final original = d.montoOriginal;
     final avance = original == null || original <= 0
         ? null

@@ -18,9 +18,13 @@ import 'package:finanzas_dominio/finanzas_dominio.dart' as dom
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../casos_uso/servicio_fase2.dart';
+import '../../importacion/lector_ficha.dart';
+import '../../importacion/lector_xlsx.dart' show ErrorArchivo;
 import '../../estado/proveedores.dart';
 import '../../estado/proveedores_fase2.dart';
 import '../comunes.dart';
+import '../laptop/importar.dart' show ArchivoElegido, selectorArchivoProvider;
 
 class _Forma extends StatelessWidget {
   const _Forma({
@@ -638,6 +642,144 @@ class _ConfirmarAportacionState
             cuentaOrigenId: _cuenta!,
             monto: centavosDeTexto(_monto.text),
           ),
+    );
+  }
+}
+
+// ------------------------------------------------------------ importar ficha
+
+/// Importa `FICHA_DEUDAS_Y_TARJETAS.xlsx`: elige el archivo, muestra una vista
+/// previa (lo que se crea y lo que se omite, con su motivo) y pide confirmar.
+class DialogoImportarFicha extends ConsumerStatefulWidget {
+  const DialogoImportarFicha({super.key, required this.contexto});
+
+  final ContextoFinanzas contexto;
+
+  @override
+  ConsumerState<DialogoImportarFicha> createState() => _FichaState();
+}
+
+class _FichaState extends ConsumerState<DialogoImportarFicha> {
+  LecturaFicha? _lectura;
+  String? _error;
+  bool _trabajando = false;
+  ResultadoFicha? _resultado;
+
+  Future<void> _elegir() async {
+    setState(() {
+      _trabajando = true;
+      _error = null;
+      _resultado = null;
+    });
+    try {
+      final ArchivoElegido? a = await ref.read(selectorArchivoProvider)();
+      if (a == null) {
+        setState(() => _trabajando = false);
+        return;
+      }
+      final lectura = leerFichaDeBytes(a.bytes, nombre: a.nombre);
+      setState(() {
+        _lectura = lectura;
+        _trabajando = false;
+      });
+    } on ErrorArchivo catch (e) {
+      setState(() {
+        _error = e.mensaje;
+        _lectura = null;
+        _trabajando = false;
+      });
+    } catch (_) {
+      setState(() {
+        _error = 'No pude abrir el archivo.';
+        _trabajando = false;
+      });
+    }
+  }
+
+  Future<void> _confirmar() async {
+    setState(() => _trabajando = true);
+    try {
+      final r = await ref
+          .read(servicioFase2Provider)
+          .aplicarFicha(widget.contexto.libroId, _lectura!);
+      setState(() {
+        _resultado = r;
+        _trabajando = false;
+      });
+    } catch (e) {
+      setState(() {
+        _trabajando = false;
+        _error = '$e';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = _lectura;
+    return AlertDialog(
+      title: const Text('Importar la ficha de deudas'),
+      content: SizedBox(
+        width: 520,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Elige tu FICHA_DEUDAS_Y_TARJETAS.xlsx. Se importan las hojas '
+                'Tarjetas, Credito_Auto y MSI; lo que no tenga saldo o monto '
+                'se omite y se explica.',
+              ),
+              if (_error != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    _error!,
+                    key: const ValueKey('ficha-error'),
+                    style: TextStyle(color: Theme.of(context).colorScheme.error),
+                  ),
+                ),
+              if (l != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  'Se crearán: ${l.tarjetas.length} tarjetas, '
+                  '${l.credito == null ? 0 : 1} crédito, ${l.msi.length} compras a meses.',
+                  key: const ValueKey('ficha-resumen'),
+                ),
+                for (final o in l.omitidas)
+                  Text('Omitido · ${o.hoja}: ${o.motivo}'),
+              ],
+              if (_resultado != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    'Listo: ${_resultado!.creadas} creadas, '
+                    '${_resultado!.yaExistian} ya estaban.',
+                    key: const ValueKey('ficha-listo'),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(_resultado == null ? 'Cancelar' : 'Cerrar'),
+        ),
+        OutlinedButton(
+          key: const ValueKey('ficha-elegir'),
+          onPressed: _trabajando ? null : _elegir,
+          child: const Text('Elegir archivo'),
+        ),
+        if (l != null && !l.vacia && _resultado == null)
+          FilledButton(
+            key: const ValueKey('ficha-confirmar'),
+            onPressed: _trabajando ? null : _confirmar,
+            child: const Text('Importar'),
+          ),
+      ],
     );
   }
 }

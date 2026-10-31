@@ -32,7 +32,8 @@ import '../../nucleo/permisos/permisos.dart';
 import '../../nucleo/seguridad/almacen_seguro.dart';
 import 'datos/repositorio_supabase.dart' as supabase
     show CopiaLocalFinanzas, tablasDeLaColaFinanzas;
-import 'estado/proveedores_fase2.dart' as fase2 show sobrescriturasAvisosFinanzas;
+import 'estado/proveedores_fase2.dart' as fase2
+    show consultaLocalFinanzasProvider, sobrescriturasAvisosFinanzas;
 import 'pantallas/laptop/ajustes.dart';
 import 'pantallas/laptop/arranque.dart';
 import 'pantallas/laptop/categorias.dart';
@@ -65,6 +66,12 @@ const Map<String, String> tablasColaFinanzas = supabase.tablasDeLaColaFinanzas;
 /// bandeja (montos ocultables). El arranque suma esta lista a los `overrides`
 /// de Riverpod.
 List<Override> get sobrescriturasAvisosFinanzas => fase2.sobrescriturasAvisosFinanzas;
+
+/// Consultas locales de las herramientas `finanzas.resumen_semana`,
+/// `finanzas.proximos_pagos` y `finanzas.ahorro_avance`: texto discreto que no
+/// sale del equipo (D3). La barra de órdenes lo lee para
+/// `ContextoHerramienta.consultaLocal`.
+final consultaLocalFinanzasProvider = fase2.consultaLocalFinanzasProvider;
 
 /// Borra del equipo lo que Finanzas guardó de [personaId] (la copia local para
 /// trabajar sin señal: libros, cuentas, categorías, sobres, nombres). Lo llama
