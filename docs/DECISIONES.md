@@ -28,6 +28,7 @@ Cuando las decisiones confirmadas cambian el contrato, se reescribe `CONTRATO_CO
 | D16 | APIs documentadas con OpenAPI y Swagger UI | Confirmada (detalles propuestos) |
 | D17 | Reglas técnicas del servidor (Fase 0) | Propuesta |
 | D18 | Decisiones de la revisión de la Fase 0 | Confirmada (21/oct; coadministrador y Cuidados hasta la Fase 5) |
+| D20 | Infraestructura de avisos genérica (FCM discreto, bandeja, preferencias) | Propuesta (Fase 2; falta visto bueno del dueño) |
 | D19 | Finanzas por persona, cuentas compartidas, albaceas y cuenta maestra | Confirmada (21/oct; ampliada 23/oct; detalles propuestos) |
 
 ---
@@ -445,4 +446,14 @@ Tomadas por el arquitecto con el criterio **más seguro** para cerrar los hallaz
 - **Pendiente de explicar al dueño:** cómo cambia un ingreso y cómo afecta uno nuevo (vigencias); hasta que responda, la app sigue permitiendo editar una vigencia.
 - **Segunda ronda del 23/oct/2026:** el chip "Cuenta nueva" de la hoja de gasto se ve **siempre**; la hora al salirse de un libro la pone el teléfono (no se pide función de servidor); la pantalla "Tengo una invitación" se construye en la siguiente ronda.
 
+---
+
+## D20. Infraestructura de avisos genérica — propuesta (31/oct/2026)
+
+Propuesta de la especificación de la Fase 2 (`docs/specs/fase-2-finanzas.md`, P13). Se construye con las propuestas por defecto mientras el dueño responde.
+
+- Tablas `avisos`, `avisos_entregas`, `avisos_preferencias` y `avisos_sistema` **sin prefijo `fin_`**, porque Hábitos y Cuidados las reutilizarán; lo específico de Finanzas sí lleva `fin_`.
+- **Por Firebase solo viaja `{v, id}`** (identificador opaco, mensaje de datos de prioridad alta). El dispositivo lee su aviso en Supabase y arma el texto; sin señal o sin sesión muestra "Tienes un aviso de GRAVITY".
+- **Texto discreto:** títulos de un catálogo cerrado de máximo 40 caracteres, sin dígitos, sin "$" y sin nombres; cuerpo vacío. La pulsera (nivel 1) recibe el mismo título corto. Nada de dinero ni datos clínicos en avisos (D3).
+- Los avisos se borran a los 90 días. La laptop no recibe push con la app cerrada. La tablet pública nunca recibe avisos personales.
 
