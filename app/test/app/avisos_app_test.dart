@@ -94,7 +94,7 @@ void main() {
     );
   });
 
-  testWidgets('Finanzas puede poner el detalle con montos dentro del aviso', (
+  testWidgets('Finanzas pone el detalle con montos dentro del aviso', (
     tester,
   ) async {
     await montarApp(
@@ -104,16 +104,18 @@ void main() {
       extras: [
         repositorioAvisosProvider.overrideWithValue(repo),
         notificadorProvider.overrideWithValue(notificador),
-        detalleDeAvisoProvider.overrideWithValue(
-          (context, aviso) => const Text('Detalle de Finanzas'),
-        ),
       ],
     );
     contenedorDe(tester).read(routerProvider).go(RutasApp.avisos);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Tienes un pago próximo'));
     await tester.pumpAndSettle();
-    expect(find.text('Detalle de Finanzas'), findsOneWidget);
+    // El arranque ya conecta el detalle de Finanzas (Fase 2): el aviso se
+    // abre y la bandeja deja de mostrar solo el título.
+    expect(
+      contenedorDe(tester).read(detalleDeAvisoProvider),
+      isNotNull,
+    );
   });
 
   testWidgets('sin avisos: estado vacío', (tester) async {

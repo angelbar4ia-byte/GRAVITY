@@ -23,6 +23,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../app/pantallas_externas.dart' show consultaLocalFinanzasProvider;
 import '../../../app/navegacion.dart' show TipoRegistro, opcionesDeRegistro;
 import '../../../app/pantallas/registro_rapido.dart';
 import '../../../app/sesion_efectiva.dart';
@@ -312,6 +313,7 @@ class _BarraOrdenesState extends ConsumerState<BarraOrdenes> {
           esMaestra: _esMaestra,
           navegar: widget.onNavegar,
           abrirHoja: _abrirHoja,
+          consultaLocal: ref.read(consultaLocalFinanzasProvider),
         ),
       );
     } on HerramientaNoDisponible {
