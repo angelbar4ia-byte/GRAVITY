@@ -60,6 +60,11 @@ abstract final class TablasFinanzas {
 
   /// Función que crea el libro de una persona representada (papá).
   static const crearLibroRepresentado = 'fin_crear_libro_representado';
+
+  /// Función con la que el **dueño** nombra albacea o suplente del libro de
+  /// papá cuando ese cargo está vacío. Es la única puerta: un INSERT directo en
+  /// `fin_libro_miembros` ya no pasa (42501).
+  static const nombrarAlbacea = 'fin_nombrar_albacea';
 }
 
 // ------------------------------------------------------------------ ayudas

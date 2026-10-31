@@ -99,7 +99,7 @@ class _HojaIngresoExtraState extends ConsumerState<HojaIngresoExtra> {
         _monto > 0 &&
         _cuentaId != null &&
         !_guardando &&
-        (!representado || _motivo.text.trim().isNotEmpty);
+        (!representado || motivoValido(_motivo.text));
     return MarcoHojaRegistro(
       titulo: 'Ingreso extra',
       // El monto comparte línea con el título; se encoge en vez de partirse.
@@ -221,7 +221,8 @@ class _HojaIngresoExtraState extends ConsumerState<HojaIngresoExtra> {
               onChanged: (_) => setState(() {}),
               decoration: InputDecoration(
                 labelText: 'Motivo (obligatorio)',
-                helperText: 'Se registra en nombre de ${libro.nombre}.',
+                helperText: '$ayudaDelMotivo Se registra en nombre de ${libro.nombre}.',
+                helperMaxLines: 3,
               ),
             ),
         ],

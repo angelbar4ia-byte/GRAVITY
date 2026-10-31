@@ -140,7 +140,8 @@ class _RevisionSemanalState extends ConsumerState<RevisionSemanal> {
                     controller: _motivos.putIfAbsent(cuenta.id, TextEditingController.new),
                     decoration: const InputDecoration(
                       labelText: 'Motivo si no cuadra',
-                      helperText: 'Suele ser gasto sin capturar',
+                      helperText: 'Suele ser gasto sin capturar. $ayudaDelMotivo',
+                      helperMaxLines: 2,
                     ),
                   ),
                 ),

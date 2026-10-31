@@ -30,6 +30,7 @@ export 'src/frecuencia.dart';
 export 'src/indicadores.dart';
 export 'src/libro.dart';
 export 'src/libros.dart';
+export 'src/motivo.dart';
 export 'src/plan_guardado.dart';
 export 'src/presupuesto.dart';
 export 'src/proyeccion_deuda.dart';

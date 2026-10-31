@@ -543,6 +543,68 @@ class RepositorioFinanzasEnMemoria implements RepositorioFinanzas {
     );
   }
 
+  /// Como `fin_nombrar_albacea`: nombra albacea o suplente del libro de papá
+  /// cuando ese cargo está vacío (nadie vigente que siga siendo adulto con
+  /// Finanzas); el cargo abierto de alguien que ya no lo es se cierra.
+  @override
+  Future<void> nombrarAlbacea({
+    required String libroId,
+    required String personaId,
+    required PapelLibro papel,
+  }) async {
+    _requiereConexion();
+    final libro = _d.libro(libroId);
+    if (libro == null || libro.tipo != TipoLibro.representado) {
+      throw const ErrorFinanzas(
+        'Solo el libro de una persona representada tiene albacea.',
+      );
+    }
+    if (papel != PapelLibro.albacea && papel != PapelLibro.albaceaSuplente) {
+      throw const ErrorFinanzas('El cargo es albacea o suplente.');
+    }
+    final adultos = adultosActivosDelHogar ?? _carga.adultosConFinanzas;
+    if (!adultos.contains(personaId)) {
+      throw const ErrorFinanzas(
+        'Solo un adulto con Finanzas en el hogar (dueño o coadministrador) '
+        'lleva un libro.',
+      );
+    }
+    if (personaId == libro.titularId) {
+      throw const ErrorFinanzas('La persona representada no es miembro de su libro.');
+    }
+    final hoy = Fecha.deDateTime(_reloj());
+    final vigentes = libro.vigentes(hoy);
+    if (vigentes.any((m) => m.papel == papel && adultos.contains(m.personaId))) {
+      throw const ErrorFinanzas(
+        'Ese cargo ya lo ocupa alguien: quien lo tiene debe dejarlo primero.',
+      );
+    }
+    if (vigentes.any((m) => m.personaId == personaId)) {
+      throw const ErrorFinanzas(
+        'Esa persona ya lleva el libro con otro cargo: que lo deje primero.',
+      );
+    }
+    _cambiarLibro(
+      libroId,
+      (l) => l.copiar(
+        miembros: [
+          for (final m in l.miembros)
+            // El cargo abierto de quien ya no es adulto con Finanzas se cierra.
+            if (m.papel == papel && m.vigenteEn(hoy))
+              MiembroLibro(
+                personaId: m.personaId,
+                papel: m.papel,
+                desde: m.desde,
+                hasta: hoy,
+              )
+            else
+              m,
+          MiembroLibro(personaId: personaId, papel: papel, desde: hoy),
+        ],
+      ),
+    );
+  }
+
   // ------------------------------------------------------------------ plan
 
   @override

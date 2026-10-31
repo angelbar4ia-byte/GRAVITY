@@ -223,6 +223,16 @@ abstract interface class RepositorioFinanzas {
     String? suplenteId,
   });
 
+  /// Nombra albacea ([PapelLibro.albacea]) o suplente
+  /// ([PapelLibro.albaceaSuplente]) del libro de papá cuyo cargo quedó vacío
+  /// (`fin_nombrar_albacea`; solo el dueño del hogar). Es la única forma de
+  /// agregar a alguien al libro de papá.
+  Future<void> nombrarAlbacea({
+    required String libroId,
+    required String personaId,
+    required PapelLibro papel,
+  });
+
   // --------------------------------------------------------- plan semanal
 
   /// Guarda la foto de la semana activada con sus partidas y abonos.

@@ -8,7 +8,7 @@ library;
 
 import 'package:finanzas_dominio/finanzas_dominio.dart'
     as dom
-    show Libro, TipoLibro, VisibilidadLibro;
+    show Libro, PapelLibro, TipoLibro, VisibilidadLibro;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -202,7 +202,8 @@ class _DialogoMiembrosLibroState extends ConsumerState<DialogoMiembrosLibro> {
                                   if (avisoPrivado) {
                                     final ok = await confirmar(
                                       context,
-                                      titulo: 'Sacar a ${c.carga.nombreDe(m.personaId)}',
+                                      titulo:
+                                          'Sacar a ${c.carga.nombreDe(m.personaId)}',
                                       mensaje:
                                           'Quedará menos de 2 miembros: el '
                                           'presupuesto pasa a privado y sigue '
@@ -305,6 +306,119 @@ class _DialogoMiembrosLibroState extends ConsumerState<DialogoMiembrosLibro> {
           key: const ValueKey('libro-miembros-cerrar'),
           onPressed: () => Navigator.pop(context),
           child: const Text('Cerrar'),
+        ),
+      ],
+    );
+  }
+}
+
+/// El **dueño** nombra albacea o suplente del libro de papá cuando ese cargo
+/// quedó vacío (`fin_nombrar_albacea`). Se ofrecen los adultos con Finanzas del
+/// hogar que todavía no llevan el libro.
+class DialogoNombrarAlbacea extends ConsumerStatefulWidget {
+  const DialogoNombrarAlbacea({
+    super.key,
+    required this.libroId,
+    required this.papel,
+  });
+
+  final String libroId;
+  final dom.PapelLibro papel;
+
+  @override
+  ConsumerState<DialogoNombrarAlbacea> createState() =>
+      _DialogoNombrarAlbaceaState();
+}
+
+class _DialogoNombrarAlbaceaState extends ConsumerState<DialogoNombrarAlbacea> {
+  String? _persona;
+  bool _guardando = false;
+
+  String get _cargo =>
+      widget.papel == dom.PapelLibro.albacea ? 'albacea' : 'suplente';
+
+  @override
+  Widget build(BuildContext context) {
+    final c = ref.watch(contextoFinanzasProvider).value;
+    final libro = c?.datos.libro(widget.libroId);
+    if (c == null || libro == null) {
+      return const AlertDialog(
+        content: Text('Ese libro ya no está disponible.'),
+      );
+    }
+    final candidatos = [
+      for (final p in c.carga.adultosConFinanzas)
+        if (p != libro.titularId && libro.papelDe(p, c.hoy) == null) p,
+    ];
+    return AlertDialog(
+      title: Text('Nombrar $_cargo de ${libro.nombre}'),
+      content: SizedBox(
+        width: 420,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              widget.papel == dom.PapelLibro.albacea
+                  ? 'El albacea registra en nombre de la persona representada, '
+                        'siempre con motivo.'
+                  : 'El suplente lee siempre y escribe solo si no hay albacea '
+                        'vigente.',
+            ),
+            const SizedBox(height: 8),
+            if (candidatos.isEmpty)
+              const Text(
+                'No hay otro adulto con Finanzas en el hogar a quien nombrar.',
+                key: ValueKey('nombrar-sin-candidatos'),
+              )
+            else
+              DropdownButtonFormField<String>(
+                key: const ValueKey('nombrar-persona'),
+                initialValue: _persona,
+                isExpanded: true,
+                decoration: InputDecoration(labelText: 'Persona ($_cargo)'),
+                items: [
+                  for (final p in candidatos)
+                    DropdownMenuItem(
+                      value: p,
+                      child: Text(c.carga.nombreDe(p)),
+                    ),
+                ],
+                onChanged: (p) => setState(() => _persona = p),
+              ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          key: const ValueKey('nombrar-confirmar'),
+          onPressed: _persona == null || _guardando
+              ? null
+              : () async {
+                  setState(() => _guardando = true);
+                  final navegador = Navigator.of(context);
+                  final ok = await intentar(
+                    context,
+                    () => ref
+                        .read(servicioFinanzasProvider)
+                        .nombrarAlbacea(
+                          widget.libroId,
+                          _persona!,
+                          papel: widget.papel,
+                        ),
+                  );
+                  if (!mounted) return;
+                  if (ok) {
+                    navegador.pop();
+                  } else {
+                    setState(() => _guardando = false);
+                  }
+                },
+          child: const Text('Nombrar'),
         ),
       ],
     );

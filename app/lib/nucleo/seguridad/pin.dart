@@ -11,12 +11,9 @@ library;
 
 import 'dart:convert';
 import 'dart:math';
-import 'dart:typed_data';
-
-import 'package:crypto/crypto.dart';
-
 import '../contratos/roles.dart';
 import '../permisos/permisos.dart';
+import 'pbkdf2.dart';
 
 final _formatoPin = RegExp(r'^\d{4,6}$');
 
@@ -122,26 +119,57 @@ String? errorDePinNuevoConfirmado(
 
 abstract final class HashPin {
   static const version = 'pbkdf2-sha256';
-  static const iteracionesPorDefecto = 10000;
+
+  /// Vueltas de PBKDF2 con las que se hacen los hashes y los sobres **nuevos**
+  /// (M9' de la revisión de la Fase 1b: eran 10 000; con un PIN de 6 dígitos
+  /// ese costo no frena a quien extraiga el almacenamiento). 100 000 con la
+  /// implementación de `pbkdf2.dart` tardan unos 0.3 s en una computadora y se
+  /// estima ~1 s en un teléfono medio.
+  static const iteracionesActuales = 100000;
+
+  /// Las de los hashes y sobres anteriores: siguen verificándose (la cuenta de
+  /// vueltas viaja en cada hash y en cada sobre) y se rehacen con
+  /// [iteracionesPorDefecto] la próxima vez que su dueño escribe el PIN.
+  static const iteracionesAnteriores = 10000;
+
+  /// Con las que se hace lo nuevo. Es [iteracionesActuales]; las pruebas lo
+  /// bajan (`test/flutter_test_config.dart`) para no esperar 0.3 s por PIN.
+  static int iteracionesPorDefecto = iteracionesActuales;
   static const _bytesSal = 16;
 
   /// Hash con sal aleatoria: `pbkdf2-sha256$iteraciones$sal$hash` (base64).
   static String crear(
     String pin, {
-    int iteraciones = iteracionesPorDefecto,
+    int? iteraciones,
     List<int>? sal,
   }) {
     if (!pinValido(pin)) {
       throw ArgumentError.value(pin, 'pin', 'Debe tener de 4 a 6 dígitos');
     }
+    final vueltas = iteraciones ?? iteracionesPorDefecto;
     final salUsada = sal ?? _salAleatoria();
-    final hash = _pbkdf2(utf8.encode(pin), salUsada, iteraciones);
+    final hash = pbkdf2HmacSha256(utf8.encode(pin), salUsada, vueltas);
     return [
       version,
-      '$iteraciones',
+      '$vueltas',
       base64Encode(salUsada),
       base64Encode(hash),
     ].join(r'$');
+  }
+
+  /// Cuántas vueltas tiene un hash guardado, o `null` si no se entiende.
+  static int? iteracionesDe(String guardado) {
+    final partes = guardado.split(r'$');
+    if (partes.length != 4 || partes[0] != version) return null;
+    return int.tryParse(partes[1]);
+  }
+
+  /// `true` si [guardado] se hizo con menos vueltas que las de hoy: hay que
+  /// rehacerlo cuando su dueño escriba el PIN (es el único momento en que se
+  /// tiene).
+  static bool necesitaActualizarse(String guardado) {
+    final vueltas = iteracionesDe(guardado);
+    return vueltas != null && vueltas < iteracionesPorDefecto;
   }
 
   /// Compara [pin] con un hash guardado, en tiempo constante.
@@ -158,7 +186,7 @@ abstract final class HashPin {
     } on FormatException {
       return false;
     }
-    final calculado = _pbkdf2(utf8.encode(pin), sal, iteraciones);
+    final calculado = pbkdf2HmacSha256(utf8.encode(pin), sal, iteraciones);
     if (calculado.length != esperado.length) return false;
     var diferencia = 0;
     for (var i = 0; i < calculado.length; i++) {
@@ -173,8 +201,12 @@ abstract final class HashPin {
   static List<int> derivarLlave(
     String pin,
     List<int> sal, {
-    int iteraciones = iteracionesPorDefecto,
-  }) => _pbkdf2(utf8.encode(pin), sal, iteraciones);
+    int? iteraciones,
+  }) => pbkdf2HmacSha256(
+    utf8.encode(pin),
+    sal,
+    iteraciones ?? iteracionesPorDefecto,
+  );
 
   /// Sal aleatoria de 16 bytes.
   static List<int> salAleatoria() => _salAleatoria();
@@ -182,20 +214,5 @@ abstract final class HashPin {
   static List<int> _salAleatoria() {
     final azar = Random.secure();
     return List<int>.generate(_bytesSal, (_) => azar.nextInt(256));
-  }
-
-  /// PBKDF2-HMAC-SHA256 con un solo bloque de 32 bytes (RFC 8018).
-  static List<int> _pbkdf2(List<int> clave, List<int> sal, int iteraciones) {
-    final hmac = Hmac(sha256, clave);
-    final bloque = Uint8List.fromList([...sal, 0, 0, 0, 1]);
-    var u = hmac.convert(bloque).bytes;
-    final resultado = Uint8List.fromList(u);
-    for (var i = 1; i < iteraciones; i++) {
-      u = hmac.convert(u).bytes;
-      for (var j = 0; j < resultado.length; j++) {
-        resultado[j] ^= u[j];
-      }
-    }
-    return resultado;
   }
 }

@@ -39,14 +39,32 @@ class PantallaAjustesFinanzas extends StatelessWidget {
   );
 }
 
-class _Ajustes extends StatelessWidget {
+class _Ajustes extends ConsumerStatefulWidget {
   const _Ajustes({required this.contexto});
 
   final ContextoFinanzas contexto;
 
   @override
+  ConsumerState<_Ajustes> createState() => _AjustesState();
+}
+
+class _AjustesState extends ConsumerState<_Ajustes> {
+  @override
+  void initState() {
+    super.initState();
+    // Al abrir Ajustes se vuelve a pedir lo del servidor: tras una baja del
+    // hogar o un cambio de rol pudo cambiar el administrador, la visibilidad
+    // de los compartidos o el cargo de albacea.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        refrescarFinanzas(ProviderScope.containerOf(context, listen: false));
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final c = contexto;
+    final c = widget.contexto;
     return ContenidoLaptop(
       children: [
         _Parametros(
@@ -552,7 +570,31 @@ class _FilaLibro extends ConsumerWidget {
                       'usarlo, archívalo.'
                 : ''),
       ),
-      trailing: compartido && (c.administraMiembrosDe(l) || c.puedeSalirDe(l))
+      trailing: l.tipo == dom.TipoLibro.representado &&
+              (c.puedeNombrarAlbaceaEn(l, PapelLibro.albacea) ||
+                  c.puedeNombrarAlbaceaEn(l, PapelLibro.albaceaSuplente))
+          ? Wrap(
+              spacing: 4,
+              children: [
+                for (final (papel, etiqueta) in [
+                  (PapelLibro.albacea, 'Nombrar albacea'),
+                  (PapelLibro.albaceaSuplente, 'Nombrar suplente'),
+                ])
+                  if (c.puedeNombrarAlbaceaEn(l, papel))
+                    TextButton(
+                      key: ValueKey(
+                        'libro-nombrar-${papel == PapelLibro.albacea ? 'albacea' : 'suplente'}-${l.id}',
+                      ),
+                      onPressed: () => showDialog<void>(
+                        context: context,
+                        builder: (_) =>
+                            DialogoNombrarAlbacea(libroId: l.id, papel: papel),
+                      ),
+                      child: Text(etiqueta),
+                    ),
+              ],
+            )
+          : compartido && (c.administraMiembrosDe(l) || c.puedeSalirDe(l))
           ? Wrap(
               spacing: 4,
               children: [

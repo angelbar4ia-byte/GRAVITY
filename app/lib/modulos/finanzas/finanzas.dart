@@ -12,6 +12,9 @@
 /// - [hojaRegistrarGasto] y [hojaIngresoExtra]: las hojas del (+) (flujo F1).
 /// - [tablasColaFinanzas]: tabla de Supabase de cada tipo de registro de la
 ///   cola sin conexión (solo los libros "solo agregar").
+/// - [refrescarFinanzas]: vuelve a pedir lo de Finanzas tras una baja del
+///   hogar o un cambio de rol (el servidor puede cambiar el administrador y la
+///   visibilidad de los compartidos).
 /// - [limpiarCopiaLocalFinanzas]: borra del equipo la copia local de una
 ///   persona (salir, baja y quitarla de la tablet).
 library;
@@ -44,6 +47,7 @@ import 'pantallas/registro/hoja_ingreso_extra.dart';
 import 'pantallas/telefono/pantallas_telefono.dart';
 
 export 'datos/repositorio_supabase.dart' show TiposCola;
+export 'estado/proveedores.dart' show refrescarFinanzas;
 export 'pantallas/laptop/marco_laptop.dart' show SeccionFinanzas;
 
 /// Tabla de Supabase de cada tipo de registro de la cola sin conexión

@@ -683,6 +683,7 @@ Future<String?> pedirTexto(
   String textoAccion = 'Aceptar',
   String inicial = '',
   bool obligatorio = true,
+  int minimoVisibles = 0,
 }) => showDialog<String>(
   context: context,
   builder: (_) => _DialogoTexto(
@@ -692,6 +693,7 @@ Future<String?> pedirTexto(
     textoAccion: textoAccion,
     inicial: inicial,
     obligatorio: obligatorio,
+    minimoVisibles: minimoVisibles,
   ),
 );
 
@@ -703,6 +705,7 @@ class _DialogoTexto extends StatefulWidget {
     required this.textoAccion,
     required this.inicial,
     required this.obligatorio,
+    required this.minimoVisibles,
   });
 
   final String titulo;
@@ -711,6 +714,10 @@ class _DialogoTexto extends StatefulWidget {
   final String textoAccion;
   final String inicial;
   final bool obligatorio;
+
+  /// Caracteres visibles que debe tener lo escrito (0: basta con no estar en
+  /// blanco). Los motivos piden 3 (`motivoValido`).
+  final int minimoVisibles;
 
   @override
   State<_DialogoTexto> createState() => _DialogoTextoState();
@@ -725,7 +732,11 @@ class _DialogoTextoState extends State<_DialogoTexto> {
     super.dispose();
   }
 
-  bool get _valido => !widget.obligatorio || _control.text.trim().isNotEmpty;
+  bool get _valido {
+    if (!widget.obligatorio) return true;
+    final minimo = widget.minimoVisibles > 0 ? widget.minimoVisibles : 1;
+    return caracteresVisibles(_control.text) >= minimo;
+  }
 
   @override
   Widget build(BuildContext context) => AlertDialog(

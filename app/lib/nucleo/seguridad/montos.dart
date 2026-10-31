@@ -31,6 +31,7 @@
 /// `app/montos/`.
 library;
 
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -336,9 +337,12 @@ class ControladorMontos extends Notifier<EstadoMontos> {
               : ResultadoRevelar.pinIncorrecto;
         }
         _intentos.anotarAcierto(persona);
-        return pinEsCortoParaSuRol(rol, pin)
-            ? ResultadoRevelar.debeCambiarPin
-            : ResultadoRevelar.revelado;
+        if (pinEsCortoParaSuRol(rol, pin)) return ResultadoRevelar.debeCambiarPin;
+        // M9': el hash de antes (menos vueltas) se rehace al escribir el PIN.
+        if (HashPin.necesitaActualizarse(hash)) {
+          unawaited(_guardar(hashPin: HashPin.crear(pin)));
+        }
+        return ResultadoRevelar.revelado;
     }
   }
 

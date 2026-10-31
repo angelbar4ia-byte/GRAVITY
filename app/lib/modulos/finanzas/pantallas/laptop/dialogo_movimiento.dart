@@ -401,10 +401,11 @@ class _DialogoMovimientoState extends ConsumerState<DialogoMovimiento> {
                 maxLength: 200,
                 decoration: InputDecoration(
                   labelText: 'Motivo (obligatorio)',
-                  helperText: 'Se registra en nombre de ${representadoLibro.nombre}.',
+                  helperText:
+                      '$ayudaDelMotivo Se registra en nombre de ${representadoLibro.nombre}.',
+                  helperMaxLines: 3,
                 ),
-                validator: (v) =>
-                    (v ?? '').trim().isEmpty ? 'Escribe el motivo' : null,
+                validator: (v) => motivoValido(v) ? null : mensajeMotivoCorto,
               ),
             const SizedBox(height: 16),
             Wrap(

@@ -11,6 +11,7 @@
 /// - Es de cada persona: la configuración va con su id.
 library;
 
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -307,6 +308,7 @@ class ControladorBloqueo extends Notifier<EstadoBloqueo> {
     }
     _intentos.anotarAcierto(persona);
     if (pinEsCortoParaSuRol(_rol, pin)) return ResultadoBloqueo.debeCambiarPin;
+    _actualizarHash(pin, configuracion);
     return ResultadoBloqueo.abierto;
   }
 
@@ -351,7 +353,18 @@ class ControladorBloqueo extends Notifier<EstadoBloqueo> {
     // D18 (23/oct): con un PIN corto, quien ve dinero no entra todavía.
     if (pinEsCortoParaSuRol(_rol, pin)) return ResultadoBloqueo.debeCambiarPin;
     _desbloquear();
+    _actualizarHash(pin, configuracion);
     return ResultadoBloqueo.abierto;
+  }
+
+  /// M9': un hash hecho con menos vueltas de PBKDF2 (los de antes) se rehace
+  /// con las de hoy en cuanto se escribe el PIN, el único momento en que se
+  /// tiene.
+  void _actualizarHash(String pin, ConfiguracionBloqueo configuracion) {
+    if (!HashPin.necesitaActualizarse(configuracion.hashPin)) return;
+    unawaited(
+      _guardar(configuracion.copiarCon(hashPin: HashPin.crear(pin))),
+    );
   }
 
   /// Desbloquea con la huella del teléfono, si la persona la activó.

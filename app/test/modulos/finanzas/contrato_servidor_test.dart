@@ -504,8 +504,8 @@ void main() {
   });
 
   group('RPC', () {
-    test('el libro de papá se crea con la RPC y el suplente entra por miembros',
-        () async {
+    test('el libro de papá se crea con la RPC y el suplente entra por '
+        'fin_nombrar_albacea (el INSERT directo ya no pasa)', () async {
       await repo.cargar();
       await repo.crearLibroRepresentado(
         id: 'libro-papa-nuevo',
@@ -522,11 +522,70 @@ void main() {
         'p_nombre_libro': 'Libro de papá',
         'p_libro_id': 'libro-papa-nuevo',
       });
-      final suplente = memoria
-          .tabla(TablasFinanzas.miembros)
-          .firstWhere((m) => m['papel'] == 'albacea_suplente' && m['libro_id'] == 'libro-papa-nuevo');
-      expect(suplente['persona_id'], IdsDemostracion.pareja);
-      expect(suplente.containsKey('desde'), isFalse);
+      final nombrar = memoria.llamadas.singleWhere((l) => l.$1 == 'fin_nombrar_albacea');
+      expect(nombrar.$2, {
+        'p_libro_id': 'libro-papa-nuevo',
+        'p_persona_id': IdsDemostracion.pareja,
+        'p_papel': 'albacea_suplente',
+      });
+      expect(
+        memoria.tabla(TablasFinanzas.miembros).where(
+          (m) => m['libro_id'] == 'libro-papa-nuevo',
+        ),
+        isEmpty,
+        reason: 'la app no inserta en fin_libro_miembros para papá',
+      );
+    });
+
+    test('nombrar albacea o suplente llama a la función con el cargo en '
+        'snake_case', () async {
+      await repo.cargar();
+      await repo.nombrarAlbacea(
+        libroId: IdsDemostracion.libroPapa,
+        personaId: IdsDemostracion.pareja,
+        papel: PapelLibro.albacea,
+      );
+      await repo.nombrarAlbacea(
+        libroId: IdsDemostracion.libroPapa,
+        personaId: IdsDemostracion.dueno,
+        papel: PapelLibro.albaceaSuplente,
+      );
+      final llamadas = memoria.llamadas.where((l) => l.$1 == 'fin_nombrar_albacea').toList();
+      expect(llamadas.map((l) => l.$2['p_papel']), ['albacea', 'albacea_suplente']);
+      expect(llamadas.first.$2['p_libro_id'], IdsDemostracion.libroPapa);
+      expect(llamadas.first.$2.keys, unorderedEquals(['p_libro_id', 'p_persona_id', 'p_papel']));
+    });
+
+    test('un movimiento del libro de papá con motivo corto no entra a la cola '
+        '(el servidor lo rechazaría con 23514)', () async {
+      final carga = await repo.cargar();
+      final banco = carga.datos.cuentasDe(IdsDemostracion.libroPapa).firstWhere(
+        (c) => c.tipo == TipoCuenta.banco,
+      );
+      final gasto = carga.datos.cuentas.firstWhere((c) => c.tipo == TipoCuenta.deGasto);
+      Movimiento con(String motivo) => Movimiento(
+        id: 'm-${motivo.length}',
+        tipo: TipoMovimiento.gasto,
+        fecha: hoyDePrueba,
+        registradoEn: DateTime(2026, 10, 20, 10),
+        cuentaOrigenId: banco.id,
+        cuentaDestinoId: gasto.id,
+        monto: 500,
+        realizadoPor: IdsDemostracion.papa,
+        registradoPor: dueno.persona.id,
+        enNombreDe: IdsDemostracion.papa,
+        motivo: motivo,
+      );
+      for (final corto in ['', '  ', 'ab', ' a \u200B b ']) {
+        await expectLater(
+          repo.agregarMovimientos([con(corto)]),
+          throwsA(isA<ErrorFinanzas>()),
+          reason: '"$corto"',
+        );
+      }
+      expect(await cola.registros(), isEmpty);
+      await repo.agregarMovimientos([con('Farmacia')]);
+      expect((await cola.registros()).length, 1);
     });
 
     test('la consulta de la cuenta maestra llama a fin_registrar_consulta_maestra',

@@ -148,9 +148,10 @@ class ServicioFinanzas {
     if (libro.tipo != TipoLibro.representado) {
       return (realizadoPor: personaId, enNombreDe: null);
     }
-    if (motivo == null || motivo.trim().isEmpty) {
+    if (!motivoValido(motivo)) {
       throw ErrorFinanzas(
-        'En el libro de ${libro.nombre} cada movimiento lleva un motivo.',
+        'En el libro de ${libro.nombre} cada movimiento lleva un motivo. '
+        '$mensajeMotivoCorto',
       );
     }
     return (realizadoPor: libro.titularId!, enNombreDe: libro.titularId);
@@ -240,8 +241,10 @@ class ServicioFinanzas {
   /// Anula un movimiento con un contraasiento (motivo obligatorio). Lleva la
   /// misma fecha económica: la semana del original se recalcula (P14).
   Future<Movimiento> anular(String movimientoId, {required String motivo}) async {
-    if (motivo.trim().isEmpty) {
-      throw const ErrorFinanzas('Escribe el motivo de la anulación.');
+    if (!motivoValido(motivo)) {
+      throw const ErrorFinanzas(
+        'Escribe el motivo de la anulación: $mensajeMotivoCorto',
+      );
     }
     final original = _d.movimientos
         .where((m) => m.id == movimientoId)
@@ -573,8 +576,10 @@ class ServicioFinanzas {
     }
     final libro = _d.nuevoLibroHogar();
     final calculado = libro.saldo(cuentaId, hasta: dia);
-    if (saldoDeclarado != calculado && (motivo == null || motivo.trim().isEmpty)) {
-      throw const ErrorFinanzas('Hay diferencia: escribe el motivo del ajuste.');
+    if (saldoDeclarado != calculado && !motivoValido(motivo)) {
+      throw const ErrorFinanzas(
+        'Hay diferencia: escribe el motivo del ajuste. $mensajeMotivoCorto',
+      );
     }
     final quien = _quien(
       libroId,
@@ -1056,6 +1061,70 @@ class ServicioFinanzas {
       );
     }
     await repositorio.salirDelLibro(libroId);
+  }
+
+  /// `true` si el cargo [papel] del libro de papá [libroId] está vacío (se
+  /// puede nombrar con [nombrarAlbacea]).
+  bool cargoVacio(String libroId, PapelLibro papel) {
+    final libro = _d.libro(libroId);
+    if (libro == null) return false;
+    return cargoVacioEnLibro(
+      libro,
+      papel,
+      repositorio.actual?.adultosConFinanzas ?? const {},
+      hoy,
+    );
+  }
+
+  /// El **dueño** del hogar nombra albacea o suplente del libro de papá cuando
+  /// ese cargo quedó vacío (o lo ocupa alguien que ya no es adulto con
+  /// Finanzas): `fin_nombrar_albacea`, la única puerta (un INSERT directo ya no
+  /// pasa).
+  Future<void> nombrarAlbacea(
+    String libroId,
+    String persona, {
+    PapelLibro papel = PapelLibro.albacea,
+  }) async {
+    if (soloLectura || !esDueno) {
+      throw const ErrorFinanzas(
+        'Solo el dueño del hogar nombra al albacea del libro de papá.',
+      );
+    }
+    final libro = _libro(libroId);
+    if (libro.tipo != TipoLibro.representado) {
+      throw const ErrorFinanzas(
+        'Solo el libro de una persona representada tiene albacea.',
+      );
+    }
+    if (papel != PapelLibro.albacea && papel != PapelLibro.albaceaSuplente) {
+      throw const ErrorFinanzas('El cargo es albacea o suplente.');
+    }
+    final adultos = repositorio.actual?.adultosConFinanzas ?? const <String>{};
+    if (adultos.isNotEmpty && !adultos.contains(persona)) {
+      throw const ErrorFinanzas(
+        'Solo un adulto con Finanzas del hogar lleva un libro.',
+      );
+    }
+    if (persona == libro.titularId) {
+      throw const ErrorFinanzas(
+        'La persona representada no es miembro de su libro.',
+      );
+    }
+    if (!cargoVacio(libroId, papel)) {
+      throw const ErrorFinanzas(
+        'Ese cargo ya lo ocupa alguien: quien lo tiene debe dejarlo primero.',
+      );
+    }
+    if (libro.papelDe(persona, hoy) != null) {
+      throw const ErrorFinanzas(
+        'Esa persona ya lleva el libro con otro cargo: que lo deje primero.',
+      );
+    }
+    await repositorio.nombrarAlbacea(
+      libroId: libroId,
+      personaId: persona,
+      papel: papel,
+    );
   }
 
   /// Crea el libro de una persona representada (papá, sin cuenta; D19):

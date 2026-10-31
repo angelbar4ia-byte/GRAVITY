@@ -564,7 +564,7 @@ void main() {
       final c = libro.anular(
         g.id,
         nuevoId: 'an',
-        motivo: 'm',
+        motivo: 'Error de captura',
         registradoPor: yo,
         registradoEn: ahora,
         estado: EstadoMovimiento.pendiente,

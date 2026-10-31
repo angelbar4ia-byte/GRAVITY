@@ -393,8 +393,9 @@ class _DialogoConciliarState extends ConsumerState<_DialogoConciliar> {
                 maxLength: 200,
                 decoration: const InputDecoration(
                   labelText: 'Motivo del ajuste (obligatorio)',
+                  helperText: ayudaDelMotivo,
                 ),
-                validator: (v) => (v ?? '').trim().isEmpty ? 'Escribe el motivo' : null,
+                validator: (v) => motivoValido(v) ? null : mensajeMotivoCorto,
               ),
             ],
             const Text(

@@ -883,16 +883,40 @@ class RepositorioFinanzasSupabase implements RepositorioFinanzas {
       'p_nombre_libro': nombreLibro,
       'p_libro_id': id,
     });
-    if (suplenteId != null) {
-      await fuente.guardar(TablasFinanzas.miembros, [
-        filaMiembro(
-          id,
-          MiembroLibro(personaId: suplenteId, papel: PapelLibro.albaceaSuplente),
-          hogarId: hogarId,
-          id: idEstable(ClavesId.miembro(id, suplenteId, 'albacea_suplente')),
-        ),
-      ], ignorarDuplicados: true);
+    final carga = await cargar();
+    if (suplenteId == null) return;
+    // El suplente entra por la función (el INSERT directo ya no pasa). Si un
+    // intento anterior ya lo nombró, no se repite.
+    final yaEs =
+        carga.datos
+            .libro(id)
+            ?.vigentes(Fecha.deDateTime(_reloj()))
+            .any(
+              (m) =>
+                  m.personaId == suplenteId &&
+                  m.papel == PapelLibro.albaceaSuplente,
+            ) ??
+        false;
+    if (!yaEs) {
+      await nombrarAlbacea(
+        libroId: id,
+        personaId: suplenteId,
+        papel: PapelLibro.albaceaSuplente,
+      );
     }
+  }
+
+  @override
+  Future<void> nombrarAlbacea({
+    required String libroId,
+    required String personaId,
+    required PapelLibro papel,
+  }) async {
+    await fuente.rpc(TablasFinanzas.nombrarAlbacea, {
+      'p_libro_id': libroId,
+      'p_persona_id': personaId,
+      'p_papel': nombreEnum(papel),
+    });
     await cargar();
   }
 

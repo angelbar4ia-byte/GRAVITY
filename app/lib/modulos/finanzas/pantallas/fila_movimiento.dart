@@ -41,9 +41,10 @@ Future<bool> anularConMotivo(
     titulo: 'Anular movimiento',
     etiqueta: 'Motivo (obligatorio)',
     ayuda:
-        'No se borra: se registra un contraasiento con el mismo monto y la '
-        'misma fecha, y queda en la bitácora.',
+        '$ayudaDelMotivo No se borra: se registra un contraasiento con el '
+        'mismo monto y la misma fecha, y queda en la bitácora.',
     textoAccion: 'Anular',
+    minimoVisibles: minimoCaracteresDeMotivo,
   );
   if (motivo == null || !context.mounted) return false;
   final ok = await intentar(

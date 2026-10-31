@@ -96,6 +96,21 @@ final cargaFinanzasProvider =
       retry: sinReintentosAutomaticos,
     );
 
+/// Vuelve a pedir lo de Finanzas al servidor si el módulo ya estaba abierto
+/// (si no, la próxima apertura lo carga). Llámala **tras una baja del hogar o
+/// un cambio de rol**: el servidor puede haber cambiado `creado_por` y
+/// `visibilidad` de los compartidos (el administrador que deja de ser adulto
+/// con Finanzas pasa el cargo al miembro más antiguo; con menos de 2 miembros
+/// el libro queda privado) y el cargo de albacea. Nunca lanza.
+Future<void> refrescarFinanzas(ProviderContainer contenedor) async {
+  if (!contenedor.exists(cargaFinanzasProvider)) return;
+  try {
+    await contenedor.read(cargaFinanzasProvider.notifier).recargar();
+  } catch (_) {
+    // Sin señal se queda con lo último que se cargó.
+  }
+}
+
 /// `retry` de Riverpod que nunca reintenta (el error se muestra y la persona
 /// decide).
 Duration? sinReintentosAutomaticos(int intentos, Object error) => null;
@@ -272,6 +287,13 @@ class ContextoFinanzas {
   /// `true` si la persona puede salirse de [l].
   bool puedeSalirDe(Libro l) =>
       !soloLecturaTotal && l.puedeSalir(personaId, hoy);
+
+  /// El dueño del hogar puede nombrar albacea o suplente de [l] (el libro de
+  /// papá) si ese cargo [papel] está vacío (`fin_nombrar_albacea`).
+  bool puedeNombrarAlbaceaEn(Libro l, PapelLibro papel) =>
+      rol == Rol.dueno &&
+      !soloLecturaTotal &&
+      cargoVacioEnLibro(l, papel, carga.adultosConFinanzas, hoy);
 
   static PermisoLibro _permisoDe(
     CargaFinanzas carga,

@@ -1,3 +1,4 @@
+import 'motivo.dart';
 import 'fecha.dart';
 import 'semana.dart';
 
@@ -1015,9 +1016,10 @@ class LibroMovimientos {
     if (m.monto <= 0) {
       throw ErrorLibro('El monto debe ser mayor que cero (${m.id})');
     }
-    if (m.enNombreDe != null && _vacio(m.motivo)) {
+    if (m.enNombreDe != null && !motivoValido(m.motivo)) {
       throw ErrorLibro(
-        'Registrar en nombre de otra persona exige un motivo (${m.id})',
+        'Registrar en nombre de otra persona exige un motivo de al menos 3 '
+        'caracteres visibles (${m.id})',
       );
     }
     if (m.cuentaOrigenId == m.cuentaDestinoId) {
@@ -1067,7 +1069,11 @@ class LibroMovimientos {
     }
     switch (m.tipo) {
       case TipoMovimiento.ajuste:
-        if (_vacio(m.motivo)) throw const ErrorLibro('Un ajuste exige motivo');
+        if (!motivoValido(m.motivo)) {
+          throw const ErrorLibro(
+            'Un ajuste exige un motivo de al menos 3 caracteres visibles',
+          );
+        }
       case TipoMovimiento.reclasificacion:
         if (origen.tipo != TipoCuenta.porClasificar) {
           throw const ErrorLibro(
@@ -1126,8 +1132,10 @@ class LibroMovimientos {
         'invertidos',
       );
     }
-    if (_vacio(c.motivo)) {
-      throw const ErrorLibro('Una anulación exige motivo');
+    if (!motivoValido(c.motivo)) {
+      throw const ErrorLibro(
+        'Una anulación exige un motivo de al menos 3 caracteres visibles',
+      );
     }
     // Una cuenta cerrada o archivada no admite movimientos nuevos; la
     // anulación de uno anterior sí si la cuenta es de **gasto o ingreso**

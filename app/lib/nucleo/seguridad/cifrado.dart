@@ -22,8 +22,9 @@ class LlavePin {
   factory LlavePin.derivar(
     String pin, {
     List<int>? sal,
-    int iteraciones = HashPin.iteracionesPorDefecto,
+    int? iteraciones,
   }) {
+    iteraciones ??= HashPin.iteracionesPorDefecto;
     final salUsada = sal ?? HashPin.salAleatoria();
     return LlavePin._(
       List.unmodifiable(salUsada),

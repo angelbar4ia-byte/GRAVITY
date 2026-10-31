@@ -41,3 +41,24 @@ PermisoLibro permisoDeCarga(
     comoLector: p.comoLector,
   );
 }
+
+/// `true` si el cargo [papel] (albacea o suplente) del libro de papá [libro] está
+/// **vacío**: nadie vigente que siga siendo adulto con Finanzas del hogar
+/// ([adultos], lo que dice `fin_adultos_con_finanzas`). Si el cargo lo ocupa
+/// alguien que ya se fue o perdió el rol, también cuenta como vacío y el dueño
+/// puede volver a nombrarlo (`fin_nombrar_albacea`). Con [adultos] vacío (no se
+/// sabe) se da por ocupado.
+bool cargoVacioEnLibro(
+  Libro libro,
+  PapelLibro papel,
+  Set<String> adultos,
+  Fecha hoy,
+) =>
+    libro.tipo == TipoLibro.representado &&
+    !libro
+        .vigentes(hoy)
+        .any(
+          (m) =>
+              m.papel == papel &&
+              (adultos.isEmpty || adultos.contains(m.personaId)),
+        );

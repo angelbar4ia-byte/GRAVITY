@@ -179,7 +179,7 @@ class _HojaRegistrarGastoState extends ConsumerState<HojaRegistrarGasto> {
         _monto > 0 &&
         _cuentaId != null &&
         !_guardando &&
-        (!representado || _motivo.text.trim().isNotEmpty);
+        (!representado || motivoValido(_motivo.text));
     final v = ValoresDiseno.de(context);
     final fecha = _fecha ?? c.hoy;
     return MarcoHojaRegistro(
@@ -362,7 +362,8 @@ class _HojaRegistrarGastoState extends ConsumerState<HojaRegistrarGasto> {
               onChanged: (_) => setState(() {}),
               decoration: InputDecoration(
                 labelText: 'Motivo (obligatorio)',
-                helperText: 'Se registra en nombre de ${libro.nombre}.',
+                helperText: '$ayudaDelMotivo Se registra en nombre de ${libro.nombre}.',
+                helperMaxLines: 3,
               ),
             ),
         ],

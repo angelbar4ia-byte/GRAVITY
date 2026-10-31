@@ -367,7 +367,15 @@ class ControladorTablet extends Notifier<EstadoTablet> {
       guardada = await _repositorio.leerCredencial(usuario.personaId, pin);
     }
     if (guardada == null) return ResultadoDesbloqueo.faltaCuenta;
-    final (llave, credencial) = guardada;
+    var (llave, credencial) = guardada;
+    // M9': un sobre hecho con menos vueltas de PBKDF2 (los de antes, de 10 000)
+    // se vuelve a cifrar con las de hoy; es el único momento en que se tiene el
+    // PIN. La credencial es la misma; solo cambia la llave que la protege.
+    if (llave.iteraciones < HashPin.iteracionesPorDefecto) {
+      final nueva = LlavePin.derivar(pin);
+      llave.olvidar();
+      llave = nueva;
+    }
 
     final AperturaPersona apertura;
     try {
@@ -422,6 +430,14 @@ class ControladorTablet extends Notifier<EstadoTablet> {
       // (se regresa a la cuenta Hogar) hasta que lo cambie.
       await _enSerie(() => _cerrarEnServidor(sesiones, usuario.personaId, llave));
       return ResultadoDesbloqueo.debeCambiarPin;
+    }
+    // Lo mismo con el hash del PIN guardado (verifica sin abrir el sobre).
+    if (HashPin.necesitaActualizarse(usuario.hashPin)) {
+      final rehecho = activo.copiarCon(hashPin: HashPin.crear(pin));
+      activo = rehecho;
+      await _guardarUsuarios([
+        for (final u in state.usuarios) u.personaId == rehecho.personaId ? rehecho : u,
+      ]);
     }
     _llave = llave;
     _personaConLlave = usuario.personaId;
