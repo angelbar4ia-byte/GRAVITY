@@ -19,10 +19,12 @@
 ///   y seguimiento de la semana ([vistaSemana]).
 library;
 
+export 'src/ahorro.dart';
 export 'src/calendario.dart';
 export 'src/categorias.dart';
 export 'src/configuracion.dart';
 export 'src/datos_finanzas.dart';
+export 'src/deudas_detalle.dart';
 export 'src/dinero.dart';
 export 'src/fecha.dart';
 export 'src/flujo.dart';
