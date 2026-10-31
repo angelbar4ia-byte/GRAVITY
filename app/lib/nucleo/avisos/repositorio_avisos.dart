@@ -196,7 +196,11 @@ class RepositorioAvisosEnMemoria implements RepositorioAvisos {
   }
 
   @override
-  Stream<List<Aviso>> enVivo() => _cambios.stream;
+  Stream<List<Aviso>> enVivo() async* {
+    // Como Supabase Realtime: primero lo que hay, luego los cambios.
+    yield _ordenados();
+    yield* _cambios.stream;
+  }
 
   @override
   Future<void> marcar(String avisoId, AccionAviso accion) async {

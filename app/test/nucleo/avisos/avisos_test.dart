@@ -543,7 +543,7 @@ void main() {
         ahora: ahora,
         vencimientos: [
           Vencimiento(objetoId: 'lejos', fecha: DateTime(2026, 12, 30)),
-          Vencimiento(objetoId: 't', fecha: DateTime(2026, 11, 20), esLimiteDeTarjeta: true),
+          Vencimiento(objetoId: 't', fecha: DateTime(2026, 11, 15), esLimiteDeTarjeta: true),
         ],
       );
       expect(lista.any((r) => r.clave.contains('lejos')), isFalse);

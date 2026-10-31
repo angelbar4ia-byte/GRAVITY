@@ -1,0 +1,4 @@
+{
+  "tasks": { "probar": "deno test --allow-none enviar_test.ts" },
+  "compilerOptions": { "strict": true }
+}

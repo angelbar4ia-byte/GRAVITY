@@ -109,14 +109,18 @@ List<RecordatorioLocal> calcularRecordatorios({
     }
   }
 
-  // Resumen del lunes y cierre de la semana.
+  // Resumen del lunes y cierre de la semana (próximas ocurrencias).
   for (var s = 0; s < semanas + 1 && s < 8; s++) {
     final lunes = hoy.add(
       Duration(days: ((DateTime.monday - hoy.weekday) % 7) + 7 * s),
     );
     agregar('resumen_lunes:${_dia(lunes)}', 'resumen_lunes',
         _a(lunes, preferencias.resumenLunes));
-    final cierre = lunes.add(Duration(days: preferencias.recordatorioCierreDia - 1));
+    final cierre = hoy.add(
+      Duration(
+        days: ((preferencias.recordatorioCierreDia - hoy.weekday) % 7) + 7 * s,
+      ),
+    );
     agregar('recordatorio_cierre:${_dia(cierre)}', 'recordatorio_cierre',
         _a(cierre, preferencias.recordatorioCierreHora));
   }
