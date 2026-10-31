@@ -136,4 +136,79 @@ void main() {
       expect(reposicionTrasRetiro(saldoAntes: 100, saldoAhora: 200), 0);
     });
   });
+
+  group('Simulación semana a semana (criterios 20 y 21)', () {
+    // Remanente \$1,520 por semana; esencial \$3,500; colchón \$7,000; reservas
+    // \$250; celular \$9,000 con \$1,500 ya ahorrados; fondo de \$45,500. Las
+    // semanas del celular se cuentan desde la semana 5 (observación 4).
+    ({int? colchon, int? celular, int? fondo, int fondo17, int celular17}) simular(
+      int semanasCelular,
+    ) {
+      var fondo = 0;
+      var celular = 150000;
+      int? semColchon, semCelular, semFondo;
+      var fondo17 = 0;
+      var celular17 = 0;
+      for (var w = 1; w <= 60; w++) {
+        final restantes = w <= 5 ? semanasCelular : semanasCelular - (w - 5);
+        final enFondo = fondo > 700000 ? fondo : 700000;
+        final r = repartirAhorro(
+          remanente: 152000,
+          pasos: [
+            PasoDeAhorro('fondo', EtapaAhorro.colchon, fondo >= 700000 ? 0 : 700000 - fondo),
+            const PasoDeAhorro('reserva', EtapaAhorro.reservas, 25000),
+            PasoDeAhorro(
+              'celular',
+              EtapaAhorro.metasConFecha,
+              aportacionDeMetaConFecha(
+                meta: 900000,
+                saldo: celular,
+                semanasRestantes: restantes < 1 ? 1 : restantes,
+              ),
+            ),
+            PasoDeAhorro(
+              'fondo',
+              EtapaAhorro.fondoHastaLaMeta,
+              4550000 > enFondo ? 4550000 - enFondo : 0,
+            ),
+          ],
+        );
+        fondo += r.aportadoA('fondo');
+        celular += r.aportadoA('celular');
+        if (semColchon == null && fondo >= 700000) semColchon = w;
+        if (semCelular == null && celular >= 900000) semCelular = w;
+        if (semFondo == null && fondo >= 4550000) semFondo = w;
+        if (w == 17) {
+          fondo17 = fondo;
+          celular17 = celular;
+        }
+      }
+      return (
+        colchon: semColchon,
+        celular: semCelular,
+        fondo: semFondo,
+        fondo17: fondo17,
+        celular17: celular17,
+      );
+    }
+
+    test('A1: colchón en la semana 5, celular en la 34, fondo en la 41 y '
+        '\$19,340 en la 17', () {
+      final r = simular(30);
+      expect(r.colchon, 5);
+      expect(r.celular, 34);
+      expect(r.fondo, 41);
+      expect(r.fondo17, 1934000);
+    });
+
+    test('A2: celular en 12 semanas; el fondo se completa en la misma semana 41 '
+        'con \$15,090 en la 17', () {
+      final r = simular(12);
+      expect(r.colchon, 5);
+      expect(r.fondo, 41);
+      expect(r.fondo17, 1509000);
+      // 12 semanas de \$625 desde la semana 5 terminan en la 16 (obs. 4).
+      expect(r.celular, 16);
+    });
+  });
 }

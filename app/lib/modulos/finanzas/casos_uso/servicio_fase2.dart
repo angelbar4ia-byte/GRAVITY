@@ -147,6 +147,29 @@ class ServicioDeudasAhorro {
     }
   }
 
+  /// "¿Y si abono \$X extra por semana?" (regla 13): compara el plan de la
+  /// semana con abonar [extraSemanal] más. Ilustrativo. `null` si no hay
+  /// deudas con saldo en el plan.
+  ComparacionAbonoExtra? abonoExtra(
+    String libroId,
+    Semana semana,
+    int extraSemanal,
+  ) {
+    try {
+      final v = vistaSemana(_d, libroId, semana, hoy: base.hoy);
+      final abonos = v.planSemanal.abonos;
+      if (abonos.isEmpty) return null;
+      return compararAbonoExtra(
+        abonos: abonos,
+        remanenteSemanal: v.planSemanal.remanente < 0 ? 0 : v.planSemanal.remanente,
+        extraSemanal: extraSemanal,
+        semanas: 156,
+      );
+    } on ArgumentError {
+      return null;
+    }
+  }
+
   /// Captura la tasa de una deuda (la app no la inventa; regla 5).
   Future<void> capturarTasa(String deudaId, int puntosBase, {int? catPb}) async {
     final d = _deuda(deudaId);

@@ -118,3 +118,62 @@ ProyeccionDeuda proyectarSalidaDeDeuda({
   }
   return ProyeccionDeuda(List.unmodifiable(resultado));
 }
+
+/// Resultado de "¿Y si abono $X extra por semana?" (Fase 2, regla 13):
+/// ilustrativo, nunca una promesa.
+class ComparacionAbonoExtra {
+  const ComparacionAbonoExtra({
+    required this.base,
+    required this.conExtra,
+    required this.extraSemanal,
+  });
+
+  final ProyeccionDeuda base;
+  final ProyeccionDeuda conExtra;
+  final int extraSemanal;
+
+  int? get semanaLibreBase => base.semanaLibreDeDeuda;
+  int? get semanaLibreConExtra => conExtra.semanaLibreDeDeuda;
+
+  /// Semanas que se adelanta la salida de deuda; `null` si alguna de las dos
+  /// no sale dentro del horizonte.
+  int? get semanasAdelantadas => semanaLibreBase == null || semanaLibreConExtra == null
+      ? null
+      : semanaLibreBase! - semanaLibreConExtra!;
+
+  /// Intereses estimados que se ahorran dentro del horizonte (nunca negativo).
+  int get interesesAhorrados {
+    final d = base.interesesTotales - conExtra.interesesTotales;
+    return d < 0 ? 0 : d;
+  }
+}
+
+/// Compara el plan base con abonar [extraSemanal] más cada semana (se suma al
+/// remanente que ya va a deuda). Reutiliza [proyectarSalidaDeDeuda]; no es el
+/// simulador de 5.3 ter.
+ComparacionAbonoExtra compararAbonoExtra({
+  required List<Renglon<DeudaPlan>> abonos,
+  required int remanenteSemanal,
+  required int extraSemanal,
+  int semanas = 260,
+  ParametrosPlan parametros = const ParametrosPlan(),
+}) {
+  if (extraSemanal < 0) {
+    throw ArgumentError.value(extraSemanal, 'extraSemanal', 'no puede ser negativo');
+  }
+  return ComparacionAbonoExtra(
+    base: proyectarSalidaDeDeuda(
+      abonos: abonos,
+      remanenteSemanal: remanenteSemanal,
+      semanas: semanas,
+      parametros: parametros,
+    ),
+    conExtra: proyectarSalidaDeDeuda(
+      abonos: abonos,
+      remanenteSemanal: remanenteSemanal + extraSemanal,
+      semanas: semanas,
+      parametros: parametros,
+    ),
+    extraSemanal: extraSemanal,
+  );
+}

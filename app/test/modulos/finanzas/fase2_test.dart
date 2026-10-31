@@ -2,6 +2,8 @@
 // con retiro de avisos), ahorro y fondo (bolsas, reparto, aportación, retiro),
 // vencimientos para los recordatorios locales y las pantallas de laptop y
 // teléfono. Datos de ejemplo inventados.
+import 'dart:async';
+
 import 'package:finanzas_dominio/finanzas_dominio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,6 +22,9 @@ import 'package:gravity/modulos/finanzas/datos/repositorio_memoria.dart';
 import 'package:gravity/modulos/finanzas/estado/proveedores.dart';
 import 'package:gravity/modulos/finanzas/estado/proveedores_fase2.dart';
 import 'package:gravity/modulos/finanzas/finanzas.dart' show SeccionFinanzas;
+import 'package:gravity/modulos/finanzas/pantallas/detalle_aviso.dart';
+import 'package:gravity/modulos/finanzas/pantallas/fase2/hoja_pago.dart';
+import 'package:gravity/nucleo/avisos/aviso.dart';
 import 'package:gravity/nucleo/avisos/recordatorios.dart' as av;
 import 'package:gravity/nucleo/contratos/dispositivo.dart';
 import 'package:gravity/nucleo/contratos/roles.dart';
@@ -461,6 +466,83 @@ void main() {
       for (final h in ['finanzas.resumen_semana', 'finanzas.proximos_pagos']) {
         expect(await consulta(h), isNot(contains(r'$')), reason: h);
       }
+    });
+
+    testWidgets('el detalle del aviso muestra el acreedor y el monto dentro de '
+        'la app', (tester) async {
+      final r = repositorioDe(dueno);
+      final b = servicioDe(r, dueno);
+      final tarjeta = await _nuevaTarjeta(b, r, saldo: 300000);
+      final e = await ServicioDeudasAhorro(b).registrarEstadoDeCuenta(
+        deudaId: tarjeta.id,
+        corte: Fecha(2026, 10, 10),
+        limitePago: Fecha(2026, 10, 30),
+        saldoAlCorte: 300000,
+        pagoMinimo: 15000,
+        pagoSinIntereses: 290000,
+      );
+      await montarApp(
+        tester,
+        dispositivo: TipoDispositivo.laptop,
+        sesion: ServicioSesionDemostracion(inicial: dueno),
+        extras: [repositorioFinanzasProvider.overrideWithValue(r)],
+      );
+      addTearDown(r.cerrar);
+      final c = ProviderScope.containerOf(tester.element(find.byType(AppGravity)));
+      c.read(montosVisiblesProvider.notifier).fijar(true);
+      await c.read(cargaFinanzasProvider.future);
+      final aviso = Aviso(
+        id: 'a1',
+        tipo: 'limite_tarjeta',
+        clave: 'limite_tarjeta:${e.id}:2026-10-30:1',
+        estado: EstadoAviso.pendiente,
+        creadoEn: DateTime(2026, 10, 27),
+        objetoId: e.id,
+      );
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: c,
+          child: MaterialApp(
+            home: Scaffold(body: DetalleAvisoFinanzas(aviso: aviso)),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Tarjeta de ejemplo'), findsOneWidget);
+      expect(find.textContaining(r'2,900'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('la hoja corta de pago registra el pago y retira los avisos',
+        (tester) async {
+      final r = repositorioDe(dueno);
+      final b = servicioDe(r, dueno);
+      final tarjeta = await _nuevaTarjeta(b, r, saldo: 300000);
+      await montarApp(
+        tester,
+        dispositivo: TipoDispositivo.telefono,
+        sesion: ServicioSesionDemostracion(inicial: dueno),
+        extras: [repositorioFinanzasProvider.overrideWithValue(r)],
+      );
+      addTearDown(r.cerrar);
+      final c = ProviderScope.containerOf(tester.element(find.byType(AppGravity)));
+      await c.read(cargaFinanzasProvider.future);
+      unawaited(
+        mostrarHojaPago(
+          tester.element(find.byType(Scaffold).first),
+          deuda: tarjeta,
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('pago-sug-15000')));
+      await tester.pump();
+      final banco = r.cuentaDe(libro, 'Mi banco');
+      await tester.tap(find.byKey(ValueKey('pago-cuenta-${banco.id}')));
+      await tester.pump();
+      await tester.tap(find.byKey(const ValueKey('pago-guardar')));
+      await tester.pumpAndSettle();
+      expect(saldoDeDeuda(r.datos, tarjeta), 285000);
+      expect(tester.takeException(), isNull);
     });
 
     testWidgets('teléfono: Deudas y Ahorro abren', (tester) async {

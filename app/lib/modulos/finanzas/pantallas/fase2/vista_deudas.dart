@@ -118,6 +118,10 @@ class VistaDeudas extends ConsumerWidget {
                 ),
         ),
         hueco,
+        if (resumenes.any((r) => (r.saldo ?? 0) > 0)) ...[
+          _TarjetaAbonoExtra(contexto: c),
+          hueco,
+        ],
         if (orden.isNotEmpty)
           TarjetaModulo(
             key: const ValueKey('deudas-orden'),
@@ -240,6 +244,76 @@ class _TarjetaDeDeuda extends ConsumerWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+/// "¿Y si abono \$X extra por semana?": ilustrativo (regla 13).
+class _TarjetaAbonoExtra extends ConsumerStatefulWidget {
+  const _TarjetaAbonoExtra({required this.contexto});
+
+  final ContextoFinanzas contexto;
+
+  @override
+  ConsumerState<_TarjetaAbonoExtra> createState() => _AbonoExtraState();
+}
+
+class _AbonoExtraState extends ConsumerState<_TarjetaAbonoExtra> {
+  final _monto = TextEditingController();
+
+  @override
+  void dispose() {
+    _monto.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = widget.contexto;
+    final extra = centavosDeTexto(_monto.text);
+    final comparacion = extra == null || extra <= 0
+        ? null
+        : ref
+              .read(servicioFase2Provider)
+              .abonoExtra(c.libroId, Semana.de(c.hoy), extra);
+    return TarjetaModulo(
+      key: const ValueKey('deudas-abono-extra'),
+      titulo: '¿Y si abono más cada semana?',
+      icono: Icons.trending_down,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextField(
+            key: const ValueKey('abono-extra-monto'),
+            controller: _monto,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: const InputDecoration(
+              labelText: 'Extra por semana',
+              prefixText: r'$ ',
+            ),
+            onChanged: (_) => setState(() {}),
+          ),
+          if (comparacion != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              comparacion.semanasAdelantadas == null
+                  ? 'Con ese extra la salida de deuda cambia, pero queda '
+                        'fuera de la proyección.'
+                  : 'Saldrías de deuda ${comparacion.semanasAdelantadas} '
+                        'semanas antes.',
+              key: const ValueKey('abono-extra-semanas'),
+            ),
+            DatoConMonto(
+              'Intereses estimados que ahorras',
+              comparacion.interesesAhorrados,
+            ),
+            Text(
+              'Ilustrativo: no es una promesa ni el simulador de estrategias.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

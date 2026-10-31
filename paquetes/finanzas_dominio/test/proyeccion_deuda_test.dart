@@ -99,4 +99,41 @@ void main() {
       throwsArgumentError,
     );
   });
+
+  group('Fase 2, regla 13: ¿y si abono \$X extra por semana?', () {
+    test('adelanta la semana libre de deuda y baja los intereses', () {
+      final plan = planEjemplo();
+      // Sin remanente, solo con los abonos planeados, para ver el efecto.
+      final c = compararAbonoExtra(
+        abonos: plan.abonos,
+        remanenteSemanal: 0,
+        extraSemanal: 50000,
+        semanas: 120,
+      );
+      expect(c.semanaLibreBase, isNotNull);
+      expect(c.semanaLibreConExtra, lessThan(c.semanaLibreBase!));
+      expect(c.semanasAdelantadas, c.semanaLibreBase! - c.semanaLibreConExtra!);
+      expect(c.interesesAhorrados, greaterThan(0));
+    });
+
+    test('con extra cero no cambia nada y un extra negativo se rechaza', () {
+      final plan = planEjemplo();
+      final c = compararAbonoExtra(
+        abonos: plan.abonos,
+        remanenteSemanal: plan.remanente,
+        extraSemanal: 0,
+        semanas: 20,
+      );
+      expect(c.semanasAdelantadas, 0);
+      expect(c.interesesAhorrados, 0);
+      expect(
+        () => compararAbonoExtra(
+          abonos: plan.abonos,
+          remanenteSemanal: 0,
+          extraSemanal: -1,
+        ),
+        throwsArgumentError,
+      );
+    });
+  });
 }

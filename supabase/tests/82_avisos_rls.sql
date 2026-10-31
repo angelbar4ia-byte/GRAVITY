@@ -139,10 +139,10 @@ select pruebas.falla($$select public.registrar_dispositivo('tok-anon', 'android'
 
 -- ---------------------------------------------------------------- fin_emitir_aviso
 select pruebas.como('ana@ejemplo.test');
-select pruebas.igual(public.fin_emitir_aviso(pruebas.libro_personal('ana@ejemplo.test'), 'partida_100', 'partida',
-  'e4000000-0000-4000-8000-000000000001', 'partida_100:p1:2026-w43'), 1, 'Ana emite partida_100 en su libro: 1 destinatario');
-select pruebas.igual(public.fin_emitir_aviso(pruebas.libro_personal('ana@ejemplo.test'), 'partida_100', 'partida',
-  'e4000000-0000-4000-8000-000000000001', 'partida_100:p1:2026-w43'), 0, 'La misma clave no se inserta dos veces');
+select pruebas.igual(public.fin_emitir_aviso(pruebas.libro_personal('ana@ejemplo.test'), 'partida_100', null,
+  null, 'partida_100:p1:2026-w43'), 1, 'Ana emite partida_100 en su libro: 1 destinatario');
+select pruebas.igual(public.fin_emitir_aviso(pruebas.libro_personal('ana@ejemplo.test'), 'partida_100', null,
+  null, 'partida_100:p1:2026-w43'), 0, 'La misma clave no se inserta dos veces');
 select pruebas.igual((select severidad || '/' || estado from public.avisos where clave = 'partida_100:p1:2026-w43'),
   'importante/pendiente', 'Severidad fija del catálogo');
 select pruebas.falla($$select public.fin_emitir_aviso(pruebas.libro_personal('ana@ejemplo.test'), 'pago_proximo', null, null, 'k1')$$,
@@ -165,10 +165,10 @@ select pruebas.falla($$select public.fin_emitir_aviso('f1000000-0000-4000-8000-0
 
 -- Destinatarios: compartido = todos los miembros; partida_80 = quien registró; papá = el albacea.
 select pruebas.como('alex@ejemplo.test');
-select pruebas.igual(public.fin_emitir_aviso('f1000000-0000-4000-8000-000000000001', 'flujo_negativo', 'semana',
-  'e6000000-0000-4000-8000-000000000002', 'flujo_negativo:c1:2026-w43'), 2, 'Compartido: avisa a sus 2 miembros');
-select pruebas.igual(public.fin_emitir_aviso('f1000000-0000-4000-8000-000000000001', 'partida_80', 'partida',
-  'e4000000-0000-4000-8000-000000000001', 'partida_80:c1:2026-w43'), 1, 'partida_80: solo a quien registró');
+select pruebas.igual(public.fin_emitir_aviso('f1000000-0000-4000-8000-000000000001', 'flujo_negativo', 'libro',
+  'f1000000-0000-4000-8000-000000000001', 'flujo_negativo:c1:2026-w43'), 2, 'Compartido: avisa a sus 2 miembros');
+select pruebas.igual(public.fin_emitir_aviso('f1000000-0000-4000-8000-000000000001', 'partida_80', null,
+  null, 'partida_80:c1:2026-w43'), 1, 'partida_80: solo a quien registró');
 select pruebas.igual((select persona_id from public.avisos where clave = 'partida_80:c1:2026-w43'),
   pruebas.id_persona('alex@ejemplo.test'), '… que es Alex');
 select pruebas.como('ana@ejemplo.test');

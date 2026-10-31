@@ -52,13 +52,13 @@ select pruebas.como_postgres();
 update public.avisos set reclamado_hasta = null;
 select public.avisos_registrar_entrega(
   (select id from public.avisos where clave = 'fondo_bajo:ejemplo:2026-w43'),
-  (select id from public.dispositivos where token_avisos = 'tok-publica-ana'), 'error', '503');
-select pruebas.igual((select fallos from public.dispositivos where token_avisos = 'tok-publica-ana'), 1::smallint, 'Un error suma un fallo');
+  (select id from public.dispositivos where token_avisos = 'tok-publica-ana'), 'rechazado', '403');
+select pruebas.igual((select fallos from public.dispositivos where token_avisos = 'tok-publica-ana'), 1::smallint, 'Un rechazo definitivo suma un fallo');
 select public.avisos_registrar_entrega((select id from public.avisos where clave = 'fondo_bajo:ejemplo:2026-w43'),
   (select id from public.dispositivos where token_avisos = 'tok-publica-ana'), 'ok', '200');
 select pruebas.igual((select fallos from public.dispositivos where token_avisos = 'tok-publica-ana'), 0::smallint, 'Un envío bueno los reinicia');
 select public.avisos_registrar_entrega((select id from public.avisos where clave = 'fondo_bajo:ejemplo:2026-w43'),
-  (select id from public.dispositivos where token_avisos = 'tok-publica-ana'), 'error', '500')
+  (select id from public.dispositivos where token_avisos = 'tok-publica-ana'), 'rechazado', '403')
   from generate_series(1, 5);
 select pruebas.ok(not (select recibe_avisos from public.dispositivos where token_avisos = 'tok-publica-ana'),
   'Tras 5 fallos seguidos el dispositivo se desactiva');
