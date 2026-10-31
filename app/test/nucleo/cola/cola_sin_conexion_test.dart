@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gravity/nucleo/base_local/base_local.dart';
 import 'package:gravity/nucleo/cola/cola_sin_conexion.dart';
@@ -599,6 +600,136 @@ void main() {
       await corta.encolar(tipo: 'finanzas.gasto', carga: const {}, id: 'z', personaId: 'ana');
       await corta.rechazarPendientesDe('ana', motivoPersonaQuitada);
       ahora = ahora.add(const Duration(days: 1, minutes: 1));
+      await corta.procesar();
+      expect(await corta.registros(), isEmpty);
+    });
+  });
+
+  // L1 (revisión de la Fase 1b): lo enviado y lo descartado no se quedan en claro
+  // en la base local.
+  group('lo enviado y lo descartado se borran de la base local', () {
+    Future<void> registrar(String id, {String persona = 'ana'}) => cola.encolar(
+      tipo: 'finanzas.gasto',
+      carga: const {'monto_centavos': 18500, 'descripcion': 'Despensa'},
+      id: id,
+      personaId: persona,
+    );
+
+    test('lo enviado se borra tras 1 día, no antes', () async {
+      await registrar('a');
+      enviador.conSenal = true;
+      await cola.procesar();
+      expect((await cola.registros()).single.estado, EstadoPendiente.enviado);
+
+      ahora = ahora.add(const Duration(hours: 23));
+      await cola.procesar();
+      expect(await cola.registros(), hasLength(1), reason: 'aún no pasa el día');
+
+      ahora = ahora.add(const Duration(hours: 2));
+      await cola.procesar();
+      expect(await cola.registros(), isEmpty);
+    });
+
+    test('lo descartado se borra a los 7 días, no antes', () async {
+      await registrar('a');
+      await cola.rechazarPendientesDe('ana', 'Falló 20 veces: sin respuesta');
+      await cola.descartar('a');
+      final r = (await cola.registros()).single;
+      expect(r.estado, EstadoPendiente.descartado);
+      expect(r.siguienteIntento, ahora.add(const Duration(days: 7)));
+
+      ahora = ahora.add(const Duration(days: 6, hours: 23));
+      await cola.procesar();
+      expect(await cola.registros(), hasLength(1));
+
+      ahora = ahora.add(const Duration(hours: 2));
+      await cola.procesar();
+      expect(await cola.registros(), isEmpty);
+    });
+
+    test('un descartado de antes de este cambio (sin fecha) cuenta desde su '
+        'creación: no hace falta migrar', () async {
+      await registrar('viejo');
+      await cola.rechazarPendientesDe('ana', 'x');
+      // Como quedaba antes: descartado y sin fecha de borrado.
+      await (base.update(base.pendientes)..where((t) => t.id.equals('viejo'))).write(
+        const PendientesCompanion(
+          estado: Value(EstadoPendiente.descartado),
+          siguienteIntento: Value(null),
+        ),
+      );
+      ahora = ahora.add(const Duration(days: 6));
+      await cola.procesar();
+      expect(await cola.registros(), hasLength(1));
+      ahora = ahora.add(const Duration(days: 2));
+      await cola.procesar();
+      expect(await cola.registros(), isEmpty);
+    });
+
+    test('no toca lo pendiente, ni lo que requiere atención por caducidad, ni '
+        'la cuenta regresiva de los quitados', () async {
+      await registrar('pendiente');
+      await registrar('rechazado');
+      await registrar('caducado');
+      await registrar('quitado');
+      // 'rechazado' (error) y 'caducado' (bandeja) siguen mucho tiempo.
+      await (base.update(base.pendientes)..where((t) => t.id.equals('rechazado'))).write(
+        const PendientesCompanion(
+          estado: Value(EstadoPendiente.rechazado),
+          ultimoError: Value('Falló 20 veces: sin respuesta'),
+        ),
+      );
+      await (base.update(base.pendientes)..where((t) => t.id.equals('caducado'))).write(
+        const PendientesCompanion(
+          estado: Value(EstadoPendiente.rechazado),
+          ultimoError: Value(motivoBandejaCaducada),
+        ),
+      );
+      await (base.update(base.pendientes)..where((t) => t.id.equals('quitado'))).write(
+        PendientesCompanion(
+          estado: const Value(EstadoPendiente.rechazado),
+          ultimoError: const Value(motivoPersonaQuitada),
+          siguienteIntento: Value(ahora.add(const Duration(days: 7))),
+        ),
+      );
+      ahora = ahora.add(const Duration(days: 3));
+      await cola.procesar();
+      final ids = [for (final r in await cola.registros()) r.id];
+      expect(ids, unorderedEquals(['pendiente', 'rechazado', 'caducado', 'quitado']));
+    });
+
+    test('corre también sin sesión y se puede llamar a mano', () async {
+      await registrar('a');
+      enviador.conSenal = true;
+      await cola.procesar();
+      ahora = ahora.add(const Duration(days: 2));
+      final sinSesion = ColaSinConexion(
+        base: base,
+        enviador: enviador,
+        reloj: () => ahora,
+        personaConSesion: () => null,
+      );
+      await sinSesion.procesar();
+      expect(await cola.registros(), isEmpty);
+
+      await registrar('b');
+      await cola.procesar();
+      ahora = ahora.add(const Duration(days: 2));
+      expect(await cola.purgarEnviadosYDescartados(), 1);
+    });
+
+    test('los plazos se pueden cambiar', () async {
+      final corta = ColaSinConexion(
+        base: base,
+        enviador: enviador,
+        reloj: () => ahora,
+        conservarEnviados: const Duration(minutes: 5),
+        conservarDescartados: const Duration(minutes: 5),
+      );
+      await corta.encolar(tipo: 'finanzas.gasto', carga: const {}, id: 'e', personaId: 'ana');
+      enviador.conSenal = true;
+      await corta.procesar();
+      ahora = ahora.add(const Duration(minutes: 6));
       await corta.procesar();
       expect(await corta.registros(), isEmpty);
     });

@@ -86,6 +86,13 @@ const motivoPersonaQuitada =
 /// revisaría nunca.
 const conservarLoDeQuitados = Duration(days: 7);
 
+/// Cuánto se conserva en la base local lo ya **enviado** (para revisar un
+/// envío reciente) y lo **descartado** por la persona. Pasado el plazo se
+/// borra: ese registro (monto, concepto, cuentas) está en claro y ya no hace
+/// falta (L1 de la revisión de la Fase 1b).
+const conservarLoEnviado = Duration(days: 1);
+const conservarLoDescartado = Duration(days: 7);
+
 /// Un registro listo para enviarse.
 class PeticionEnvio {
   const PeticionEnvio({
@@ -262,6 +269,8 @@ class ColaSinConexion {
     this.salida,
     this.tiempoMaximoDeEnvio = const Duration(seconds: 30),
     this.conservarQuitados = conservarLoDeQuitados,
+    this.conservarEnviados = conservarLoEnviado,
+    this.conservarDescartados = conservarLoDescartado,
     DateTime Function()? reloj,
     String Function()? generarId,
   }) : _reloj = reloj ?? DateTime.now,
@@ -315,6 +324,11 @@ class ColaSinConexion {
   /// Cuánto se conserva lo que dejó sin subir una persona quitada de la tablet
   /// antes de borrarlo ([purgarLoDeQuitados]).
   final Duration conservarQuitados;
+
+  /// Cuánto se conserva lo ya enviado y lo descartado antes de borrarlo de la
+  /// base local ([purgarEnviadosYDescartados]).
+  final Duration conservarEnviados;
+  final Duration conservarDescartados;
 
   final DateTime Function() _reloj;
   final String Function() _generarId;
@@ -415,8 +429,10 @@ class ColaSinConexion {
 
   Future<ResumenProceso> _procesar() async {
     final ahora = _reloj();
-    // Lo de personas quitadas cuyo plazo venció se borra (L1), haya o no sesión.
+    // Lo de personas quitadas, lo enviado y lo descartado cuyo plazo venció se
+    // borra de la base local (L1), haya o no sesión.
     await purgarLoDeQuitados();
+    await purgarEnviadosYDescartados();
     // Sin sesión no se envía nada; con sesión, solo lo de esa persona.
     final conSesion = personaConSesion;
     final persona = conSesion?.call();
@@ -616,6 +632,31 @@ class ColaSinConexion {
             .go();
     if (borrados > 0) _avisar();
     return borrados;
+  }
+
+  /// Borra de la base local lo **enviado** hace más de [conservarEnviados] y lo
+  /// **descartado** hace más de [conservarDescartados]: ya no hacen falta y
+  /// llevan el monto y el concepto en claro. Corre sola en cada ronda
+  /// ([procesar]). Devuelve cuántos borró.
+  ///
+  /// Un descartado guarda en `siguienteIntento` el día en que se borra (como lo
+  /// de los quitados); los que se descartaron antes de este cambio no lo tienen
+  /// y cuentan desde su creación, así que no hace falta migrar nada.
+  Future<int> purgarEnviadosYDescartados() async {
+    final ahora = _reloj();
+    final enviados = await limpiarEnviados(antiguedad: conservarEnviados);
+    final descartados =
+        await (_base.delete(_tabla)..where(
+              (t) =>
+                  t.estado.equalsValue(EstadoPendiente.descartado) &
+                  (t.siguienteIntento.isSmallerOrEqualValue(ahora) |
+                      (t.siguienteIntento.isNull() &
+                          t.creadoEn.isSmallerThanValue(
+                            ahora.subtract(conservarDescartados),
+                          ))),
+            ))
+            .go();
+    return enviados + descartados;
   }
 
   /// Lo de personas quitadas que espera su borrado: cuántos son y cuándo se
@@ -858,12 +899,13 @@ class ColaSinConexion {
     ),
   );
 
-  /// La persona decide no subir un registro que requería atención.
+  /// La persona decide no subir un registro que requería atención. Se conserva
+  /// [conservarDescartados] y luego se borra de la base local.
   Future<void> descartar(String id) => _cambiarAtencion(
     id,
-    const PendientesCompanion(
-      estado: Value(EstadoPendiente.descartado),
-      siguienteIntento: Value(null),
+    PendientesCompanion(
+      estado: const Value(EstadoPendiente.descartado),
+      siguienteIntento: Value(_reloj().add(conservarDescartados)),
     ),
   );
 

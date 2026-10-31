@@ -7,6 +7,18 @@
 /// corto sigue abriendo la cuenta una última vez, pero su dueño debe cambiarlo
 /// en ese momento ([pinEsCortoParaSuRol]); cada lugar donde se escribe un PIN
 /// lo maneja con un resultado `debeCambiarPin`.
+///
+/// ## Pendiente (siguiente ronda): costo del PIN en el teléfono
+///
+/// El PIN se estira con 100 000 vueltas de PBKDF2 ([HashPin.iteracionesActuales],
+/// M9' de la revisión de la Fase 1b): ~0.3 s en una computadora. Entrar con el
+/// PIN en la tablet hace 2 o 3 derivaciones (verificar el hash, abrir el sobre y,
+/// la primera vez tras la actualización, rehacerlo), y todas corren hoy en el
+/// hilo de la interfaz. Decisión del dueño (31/oct): se dejan 100 000, sin subir
+/// ni bajar. Queda para la siguiente ronda (1) mover la derivación a un hilo
+/// aparte (`Isolate`), lo que vuelve asíncrono `desbloquearConPin`/`verificar`,
+/// y (2) **medirla en el Galaxy A52**. Calidad pide ≥ 600 000 vueltas o Argon2:
+/// la decisión depende de esa medición.
 library;
 
 import 'dart:convert';
