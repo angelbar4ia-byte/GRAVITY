@@ -487,3 +487,9 @@ Cada pregunta trae la **propuesta por defecto** con la que se construye si no ha
 - **App**: repositorios (memoria y Supabase) y `ServicioDeudasAhorro` (`servicio_fase2.dart`); pantallas Deudas, Ahorro y fondo y Vencimientos (laptop y teléfono), hoja corta de pago, formularios (estado de cuenta, MSI, tasa, bolsa, aportación, retiro), importador de la ficha (`lector_ficha.dart`, con ficha ficticia en las pruebas), detalle de avisos para la bandeja, fuente de vencimientos para los recordatorios locales y consultas locales de las herramientas `finanzas.resumen_semana`, `finanzas.proximos_pagos` y `finanzas.ahorro_avance`.
 - **Decisiones de implementación (para aprobar)**: (a) los estados de cuenta, aportaciones y retiros **necesitan señal** (el servidor liga cada uno a su movimiento; no van por la cola sin conexión); (b) el gasto esencial sale "según tu plan" hasta que el cierre guarde la marca de esencial por partida; (c) del ahorro, la app propone con montoFijo, reto de 52 semanas y los montos de reserva, meta con fecha y fondo; redondeo, sobrante, sobre y porcentaje de extras están en el dominio y se conectan al cierre en la siguiente ronda; (d) las columnas de la ficha se leen por posición según el encabezado de la ficha de ejemplo; una celda `0.18` sin "%" se toma como 18 %.
 - **Pendiente**: simulación semana a semana de los ejemplos A1/A2 (criterios 20 a 24), proyección "¿y si abono $X extra?" en pantalla (criterio 14), preferencias de avisos en Ajustes › Notificaciones (la hospeda plataforma), el aviso emitido por la app (`fin_emitir_aviso`) y el conector de `consultaLocal` en la barra de órdenes.
+
+---
+
+## Aprobación del dueño (31/oct/2026)
+
+El dueño aprobó las propuestas por defecto de la sección 9 (P1 a P16), la infraestructura de avisos como **D20** y que los estados de cuenta, aportaciones y retiros de ahorro pidan señal (sección 11).

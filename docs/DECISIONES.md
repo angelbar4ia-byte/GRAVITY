@@ -28,7 +28,7 @@ Cuando las decisiones confirmadas cambian el contrato, se reescribe `CONTRATO_CO
 | D16 | APIs documentadas con OpenAPI y Swagger UI | Confirmada (detalles propuestos) |
 | D17 | Reglas técnicas del servidor (Fase 0) | Propuesta |
 | D18 | Decisiones de la revisión de la Fase 0 | Confirmada (21/oct; coadministrador y Cuidados hasta la Fase 5) |
-| D20 | Infraestructura de avisos genérica (FCM discreto, bandeja, preferencias) | Propuesta (Fase 2; falta visto bueno del dueño) |
+| D20 | Infraestructura de avisos genérica (FCM discreto, bandeja, preferencias) | Confirmada (31/oct/2026) |
 | D19 | Finanzas por persona, cuentas compartidas, albaceas y cuenta maestra | Confirmada (21/oct; ampliada 23/oct; detalles propuestos) |
 
 ---
@@ -448,9 +448,9 @@ Tomadas por el arquitecto con el criterio **más seguro** para cerrar los hallaz
 
 ---
 
-## D20. Infraestructura de avisos genérica — propuesta (31/oct/2026)
+## D20. Infraestructura de avisos genérica — confirmada (31/oct/2026)
 
-Propuesta de la especificación de la Fase 2 (`docs/specs/fase-2-finanzas.md`, P13). Se construye con las propuestas por defecto mientras el dueño responde.
+Propuesta de la especificación de la Fase 2 (`docs/specs/fase-2-finanzas.md`, P13), **aprobada por el dueño el 31/oct/2026** junto con las propuestas por defecto de la sección 9 de esa especificación (3 y 1 días antes a las 9:00, sin molestar de 22:00 a 07:00, críticas en silencio de noche, tope de 3 avisos no críticos al día, crítica = lo que cuesta dinero) y con que los estados de cuenta, aportaciones y retiros de ahorro pidan señal.
 
 - Tablas `avisos`, `avisos_entregas`, `avisos_preferencias` y `avisos_sistema` **sin prefijo `fin_`**, porque Hábitos y Cuidados las reutilizarán; lo específico de Finanzas sí lleva `fin_`.
 - **Por Firebase solo viaja `{v, id}`** (identificador opaco, mensaje de datos de prioridad alta). El dispositivo lee su aviso en Supabase y arma el texto; sin señal o sin sesión muestra "Tienes un aviso de GRAVITY".
