@@ -76,7 +76,7 @@ class LineaVencimientos extends StatelessWidget {
     required this.semanas,
     this.totalesMsi = const [],
     this.alTocarEvento,
-  }) : assert(semanas.length <= 8, 'Como máximo 8 semanas');
+  });
 
   final List<SemanaVencimientos> semanas;
   final List<TotalMsiDelMes> totalesMsi;
@@ -84,6 +84,7 @@ class LineaVencimientos extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    assert(semanas.length <= 8, 'Como máximo 8 semanas');
     final v = ValoresDiseno.de(context);
     final e = v.espacio;
     final hayEventos = semanas.any((s) => s.eventos.isNotEmpty);

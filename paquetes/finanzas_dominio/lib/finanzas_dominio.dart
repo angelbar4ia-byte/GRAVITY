@@ -20,6 +20,7 @@
 library;
 
 export 'src/ahorro.dart';
+export 'src/alertas.dart';
 export 'src/calendario.dart';
 export 'src/categorias.dart';
 export 'src/configuracion.dart';
