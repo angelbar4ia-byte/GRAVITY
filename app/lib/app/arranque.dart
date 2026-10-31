@@ -58,14 +58,6 @@ List<Override> conexionesDeLaApp() => [
   montosVisiblesProvider.overrideWith(MontosVisiblesAlEntrar.new),
   // Bandeja de salida (D14, 23/oct/2026): la tablet mueve la credencial de
   // quien sale con algo por subir a su permiso de subida.
-  // Una sola bandeja de salida también en las pruebas que montan la app: la
-  // limpieza del equipo y la subida comparten el candado.
-  limpiezaLocalProvider.overrideWith(
-    (ref) => LimpiezaLocal(
-      ref.watch(almacenSeguroProvider),
-      bandeja: ref.watch(bandejaDeSalidaProvider),
-    ),
-  ),
   bandejaDeLaTabletProvider.overrideWith(
     (ref) => BandejaDeLaTabletConCola(
       ref.watch(bandejaDeSalidaProvider),

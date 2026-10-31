@@ -128,12 +128,25 @@ class ServicioSesionFalso extends ServicioSesionEnMemoria
     return CredencialPersona(sesion, credencialDe(sesion));
   }
 
+  /// Hace que la **siguiente** apertura de una sesión de persona (o aparte)
+  /// falle con este error y luego vuelva a funcionar (p. ej.
+  /// [ErrorSesion.servidorOcupado], el límite de peticiones).
+  ErrorSesion? fallarSiguienteApertura;
+
+  void _fallarSiHaceFalta() {
+    final error = fallarSiguienteApertura;
+    if (error == null) return;
+    fallarSiguienteApertura = null;
+    throw error;
+  }
+
   @override
   Future<AperturaPersona> abrirSesionDePersona(
     String personaId,
     String credencial,
   ) async {
     vecesAbrirPersona++;
+    _fallarSiHaceFalta();
     await cerrarSesionDePersona();
     final leida = leerCredencial(credencial);
     if (leida == null || leida.$1.persona.id != personaId) {
@@ -177,6 +190,7 @@ class ServicioSesionFalso extends ServicioSesionEnMemoria
     required void Function(String credencial) alRenovar,
   }) async {
     vecesAbrirAparte++;
+    _fallarSiHaceFalta();
     if (sinConexion) throw ErrorSesion.sinConexion;
     final leida = leerCredencial(credencial);
     if (leida == null || leida.$1.persona.id != personaId) {

@@ -87,7 +87,7 @@ void main() {
             'el PIN nuevo se aceptó sin pedir el actual (montos.dart crearPin y '
             'pantalla_privacidad.dart:121-137) y con él se ven los montos',
       );
-    }, tags: ['hallazgo']);
+    });
 
     test('PIN del bloqueo del teléfono: configurarPin pisa el vigente', () async {
       final contenedor = crear();
@@ -105,7 +105,7 @@ void main() {
             'la app desbloqueada pone el suyo y con él vuelve a ver los montos '
             '(el PIN de los montos del teléfono es el del bloqueo)',
       );
-    }, tags: ['hallazgo']);
+    });
 
     test('quitar el bloqueo y crear un PIN propio también abre los montos', () async {
       final contenedor = crear();
@@ -131,7 +131,7 @@ void main() {
             'ofrece CREAR un PIN nuevo: quien tiene la app abierta lo crea y ve '
             'todo',
       );
-    }, tags: ['hallazgo']);
+    });
 
     test('control: con el PIN equivocado no se ven (y se acumulan los fallos)', () async {
       final contenedor = crear();

@@ -125,7 +125,6 @@ void main() {
               'sigue en el almacén seguro sin el PIN',
         );
       },
-      tags: ['hallazgo'],
     );
 
     test(
@@ -164,7 +163,6 @@ void main() {
               'en claro) se queda en el equipo',
         );
       },
-      tags: ['hallazgo'],
     );
   });
 
@@ -241,7 +239,6 @@ void main() {
         await cola.procesar();
         expect(servidor.idsDe(dueno.persona.id), ['gasto-1']);
       },
-      tags: ['hallazgo'],
     );
 
     test('control: un refresh token realmente revocado sí es credencial vencida',
@@ -340,7 +337,6 @@ void main() {
             'cambiar el PIN, ni quitarla de la tablet avanzan',
       );
     },
-    tags: ['hallazgo'],
   );
 
   // ---------------------------------------------------------------- B5
@@ -433,7 +429,6 @@ void main() {
             .leerCredencial(dueno.persona.id, pinNuevo);
         expect(guardada?.$2, ServicioSesionFalso.credencialDe(dueno, vuelta: 10));
       },
-      tags: ['hallazgo'],
     );
   });
 }

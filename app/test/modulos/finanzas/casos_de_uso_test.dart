@@ -97,7 +97,7 @@ void main() {
             m.tipo == TipoMovimiento.gasto &&
             repo.datos.cuenta(m.cuentaOrigenId)?.libroId == libroDueno,
       );
-      final contra = await servicioDe(repo, dueno).anular(original.id, motivo: 'x');
+      final contra = await servicioDe(repo, dueno).anular(original.id, motivo: 'Dup');
       final antes = repo.datos.movimientos.length;
       await repo.agregarMovimientos([contra]);
       expect(repo.datos.movimientos, hasLength(antes));

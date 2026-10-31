@@ -619,7 +619,7 @@ class SalidaSinPinConSesiones implements SalidaSinPin {
         rethrow;
       }
       return _SesionDeSubida(
-        enviador: _EnviadorQueCede(_enviadorDe(aparte), bandeja, personaId),
+        enviador: EnviadorQueCede(_enviadorDe(aparte), bandeja, personaId),
         alCerrar: (quedanPendientes) async {
           try {
             final vigente = await aparte.cerrar() ?? ultima;
@@ -650,8 +650,8 @@ class SalidaSinPinConSesiones implements SalidaSinPin {
 /// que conteste. Devuelve `sinSesion`, que la cola toma como "detén la ronda"
 /// sin tocar el registro; el envío se vuelve a intentar después y, si el
 /// servidor sí lo recibió, lo ignora por duplicado (`on_conflict`, idempotente).
-class _EnviadorQueCede implements Enviador {
-  _EnviadorQueCede(this._real, this._bandeja, this._personaId);
+class EnviadorQueCede implements Enviador {
+  const EnviadorQueCede(this._real, this._bandeja, this._personaId);
 
   final Enviador _real;
   final BandejaDeSalida _bandeja;

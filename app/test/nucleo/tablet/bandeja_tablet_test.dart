@@ -252,6 +252,59 @@ void main() {
     expect(await cola.purgaProgramada(), isNull);
   });
 
+  test('B5: volver a agregar a la persona con un permiso sellado: entra con la '
+      'credencial nueva y lo pendiente sube con su sesión', () async {
+    await entrar(dueno);
+    ponerSenal(false);
+    await registrarGasto();
+    await cola.procesar();
+    await salir();
+    ponerSenal(true);
+    await cola.procesar(); // sube sola y sella
+    // Algo más de la persona, ya sin permiso en espera (queda sin subir).
+    ponerSenal(false);
+    await cola.encolar(
+      tipo: 'finanzas.movimiento',
+      carga: const {'monto_centavos': 200},
+      id: 'gasto-2',
+      personaId: dueno.persona.id,
+    );
+    ponerSenal(true);
+    expect((await permisoDe(dueno))!.estado, EstadoPermiso.devuelto);
+
+    // Se vuelve a agregar (correo y contraseña de nuevo, PIN nuevo).
+    await tablet.agregarUsuario(
+      dueno,
+      pin: '739150',
+      credencial: ServicioSesionFalso.credencialDe(dueno, vuelta: 20),
+    );
+    expect(await permisoDe(dueno), isNull, reason: 'el permiso viejo no sirve');
+    expect(await cola.hayPendientesDe(dueno.persona.id), isTrue,
+        reason: 'lo que tenía por subir se conserva');
+
+    expect(
+      await tablet.entrarConPin(dueno.persona.id, '739150'),
+      ResultadoDesbloqueo.abierto,
+    );
+    expect(servicio.usosDeCredencialVieja, 0);
+    expect((await cola.procesar()).enviados, 1);
+    expect(servidor.idsDe(dueno.persona.id), contains('gasto-2'));
+  });
+
+  test('B2: un error pasajero del servidor al entrar no borra la cuenta guardada',
+      () async {
+    // Abrir la sesión de la persona falla una vez (límite de peticiones) y luego sirve.
+    servicio.fallarSiguienteApertura = ErrorSesion.servidorOcupado;
+    expect(
+      await tablet.entrarConPin(dueno.persona.id, pin),
+      ResultadoDesbloqueo.error,
+    );
+    expect(await sobreDelPin(dueno), isNotNull, reason: 'la credencial sigue ahí');
+    expect(contenedor.read(controladorTabletProvider).usuarios, hasLength(2));
+    // Pasó el límite de peticiones: entra con el mismo PIN.
+    await entrar(dueno);
+  });
+
   test('cambiar el PIN con la credencial en la bandeja: el PIN nuevo la abre', () async {
     await entrar(dueno);
     ponerSenal(false);

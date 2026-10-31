@@ -77,7 +77,10 @@ void main() {
   test('el hash no contiene el PIN y se verifica', () {
     final hash = HashPin.crear('482915');
     expect(hash, isNot(contains('482915')));
-    expect(hash, startsWith('pbkdf2-sha256\$10000\$'));
+    expect(
+      hash,
+      startsWith('pbkdf2-sha256\$${HashPin.iteracionesPorDefecto}\$'),
+    );
     expect(HashPin.verificar('482915', hash), isTrue);
     expect(HashPin.verificar('482914', hash), isFalse);
     expect(HashPin.verificar('', hash), isFalse);

@@ -3,6 +3,7 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../cola/proveedores_cola.dart' show bandejaDeSalidaProvider;
 import 'almacen_seguro.dart';
 import 'biometria.dart';
 import 'limpieza_local.dart';
@@ -19,7 +20,12 @@ final almacenSeguroProvider = Provider<AlmacenSeguro>(
 /// (`ref.read(limpiezaLocalProvider).registrar(...)`). El arranque fija la
 /// misma instancia que usa el servicio de sesión.
 final limpiezaLocalProvider = Provider<LimpiezaLocal>(
-  (ref) => LimpiezaLocal(ref.watch(almacenSeguroProvider)),
+  // Comparte la bandeja de salida con la subida y la tablet: un solo candado
+  // por persona (B1 de la revisión de la Fase 1b).
+  (ref) => LimpiezaLocal(
+    ref.watch(almacenSeguroProvider),
+    bandeja: ref.watch(bandejaDeSalidaProvider),
+  ),
 );
 
 /// Huella: en Android se usa la del dispositivo (bloqueo del teléfono); en lo
