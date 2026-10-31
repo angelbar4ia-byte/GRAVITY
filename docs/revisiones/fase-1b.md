@@ -257,3 +257,34 @@ Borré mi archivo de exploración (`x_explora_xlsx_test.dart`). `flutter analyze
 - **Criptografía de la bandeja:** bien usada (llave efímera y nonce nuevos en cada sellado, HKDF con contexto, GCM).
 - **Cola y contrato:** la identidad de quien sube, el origen `tabletCasa` y el aviso solo con números.
 - **Pruebas:** los casos adversariales del propio equipo (`bandeja_salida_test`, `sobre_sellado_test`, `pin_con_dinero_test`) son buenos; mantuvieron la suite honesta.
+
+---
+
+## 14. Estado de los hallazgos al cierre de la Fase 1 (31/oct/2026)
+
+Corrección hecha por los agentes y verificada por el arquitecto con la suite completa (ver el roadmap, sección 11.4).
+
+| Hallazgo | Estado | Quién | Nota |
+|---|---|---|---|
+| P1 (cambiar PIN sin conocer el actual) | Cerrado | plataforma | `crearPin` y `configurarPin` exigen el PIN actual; `quitarBloqueo` conserva el hash como PIN de montos |
+| B1 (permiso en claro al cerrar Hogar; caducidad sin sesión) | Cerrado | plataforma | Decisión: los permisos se **sellan** al cerrar Hogar (no se borran) y la caducidad corre sin sesión |
+| B2 (429 tomado como credencial vencida) | Cerrado | plataforma | Solo un 4xx claro (salvo 408 y 429) vence la credencial |
+| B3 (candado de subida retenido) | Cerrado | plataforma | Tiempo máximo de 30 s y la entrada con PIN pasa primero |
+| B5 (permiso viejo al volver a agregar) | Cerrado | plataforma | |
+| S1 (punto fuera de la curva) | Cerrado | plataforma | |
+| X1 a X5 (importador de archivos no confiables) | Cerrado | finanzas | Topes y descompresión por pedazos; semilla real sigue importando |
+| N1 / N1b (bitácora llenable) | Cerrado | backend | 500 entradas por 24 h y 4 KB por entrada para lo que escribe la app; sentencia entera rechazada con 54000 |
+| N2 (motivo con tabulador o salto de línea) | Cerrado | backend + finanzas | 3 caracteres visibles; validado también en los formularios |
+| N3 (salida de papá a un compartido sin aviso) | Cerrado | backend | Toda salida a otro libro avisa al suplente |
+| N4 (dueña sin poder renombrar albacea) | Cerrado | backend + finanzas | `fin_nombrar_albacea` (solo dueño) y portada del libro de papá visible para el dueño |
+| N5 (administrador dado de baja) | Cerrado | backend | Relevo automático al más antiguo; con menos de 2, privado |
+| C1 (token de invitación en el portapapeles) | Cerrado | plataforma | Se borra a los 60 s |
+| L1 (pendientes de personas quitadas en claro) | Cerrado | plataforma | Requiere atención 7 días y luego se borran; enviados a 1 día y descartados a 7 |
+| G1 (`ganchosDeLimpieza` muerto) | Cerrado | plataforma | |
+| M9' (vueltas de PBKDF2) | Parcial | plataforma | 100 000 vueltas (antes 10 000). Pendiente: derivación en `Isolate`, medir en el Galaxy A52 y decidir si ≥ 600 000 o Argon2 |
+| B4 (cerrar la sesión en el servidor al caducar) | **Abierto** | plataforma + backend | Prueba `hallazgo` que falla a propósito; se resuelve con el permiso de subida acotado |
+| W1 (bloqueo de capturas en Windows) | **Abierto** | dueño | Pregunta 9 |
+| M12 | Fase 6 | asistente | |
+
+**Veredicto de cierre:** 0 bloqueantes y 0 importantes abiertos. Quedan abiertos B4 (a propósito), W1 (decisión del dueño) y M9' (medición en dispositivo). La bandeja de salida se prueba con el permiso actual; calidad recomienda acotarla antes de la Fase 5 o si la bandeja sale de la tablet de la casa.
+

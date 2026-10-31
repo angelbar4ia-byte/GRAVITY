@@ -379,6 +379,13 @@ Propuestas por el agente backend al construir el esquema base; no cambian ningun
 - **Suplente del albacea:** escribe solo si no hay albacea vigente.
 - **Alcances:** solo `total`, `propio` y `restringido`; lo particular de cada rol (p. ej. la bandeja de la cuidadora en GRAVITY) se resuelve por rol, no con alcances nuevos.
 
+**Fase 1b (28–31/oct/2026), criterios provisionales** (en revisión del dueño):
+- **Tope de la bitácora:** lo que la app escribe directo se limita a 500 entradas por persona cada 24 h y 4 KB por entrada; no limita a los triggers, a las funciones del servidor ni al vaciado normal de la cola.
+- **Motivo válido:** al menos 3 caracteres visibles (sin contar espacios, tabuladores, saltos de línea ni caracteres invisibles); se valida con triggers, no con CHECK, para poder restaurar copias viejas.
+- **Libro de papá:** toda salida hacia cualquier otro libro avisa al suplente; el dueño del hogar puede **nombrar** albacea o suplente cuando el cargo está vacío (solo con `fin_nombrar_albacea`, no reemplaza a uno vigente) y **ve siempre su portada** (libro y quiénes lo llevan, sin cuentas ni movimientos).
+- **Administrador de un compartido:** si deja de ser adulto con Finanzas, el cargo pasa al miembro vigente más antiguo; con menos de 2 miembros, el libro queda privado.
+- **Bandeja de salida (D14):** probada con el permiso actual por decisión del dueño; calidad recomienda acotarla antes de la Fase 5.
+
 ---
 
 ## D18. Decisiones de la revisión de la Fase 0 — confirmada (21/oct/2026)
