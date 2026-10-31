@@ -340,6 +340,48 @@ class RepositorioFinanzasEnMemoria implements RepositorioFinanzas {
   }
 
   @override
+  Future<void> guardarMsi(Msi msi) async {
+    _requiereConexion();
+    _publicar(_d.copiar(msi: _reemplazar(_d.msi, msi, (x) => x.id == msi.id)));
+  }
+
+  @override
+  Future<void> agregarEstadoDeCuenta(EstadoDeCuenta estado) async {
+    _requiereConexion();
+    if (_d.estadosDeCuenta.any((x) => x.id == estado.id)) return;
+    _publicar(_d.copiar(estadosDeCuenta: [..._d.estadosDeCuenta, estado]));
+  }
+
+  @override
+  Future<void> guardarBolsa(BolsaAhorro bolsa) async {
+    _requiereConexion();
+    _publicar(
+      _d.copiar(bolsas: _reemplazar(_d.bolsas, bolsa, (x) => x.id == bolsa.id)),
+    );
+  }
+
+  @override
+  Future<void> guardarAportacion(AportacionAhorro aportacion) async {
+    _requiereConexion();
+    _publicar(
+      _d.copiar(
+        aportaciones: _reemplazar(
+          _d.aportaciones,
+          aportacion,
+          (x) => x.id == aportacion.id,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Future<void> agregarRetiro(RetiroAhorro retiro) async {
+    _requiereConexion();
+    if (_d.retiros.any((x) => x.id == retiro.id)) return;
+    _publicar(_d.copiar(retiros: [..._d.retiros, retiro]));
+  }
+
+  @override
   Future<void> guardarDeuda(Deuda deuda) async {
     _requiereConexion();
     _publicar(

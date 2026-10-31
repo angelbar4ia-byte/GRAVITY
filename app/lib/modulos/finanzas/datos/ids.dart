@@ -67,6 +67,15 @@ abstract final class ClavesId {
     String fechaProgramada,
   ) => 'ocurrencia:$libroId:$origen:$origenId:$fechaProgramada';
 
+  /// El movimiento de una aportación de ahorro (reintentar no duplica).
+  static String aportacion(String bolsaId, String semanaId) =>
+      'aportacion:$bolsaId:$semanaId';
+
+  /// La aportación propuesta de una bolsa en una semana (único
+  /// `(semana_id, bolsa_id)`).
+  static String aportacionFila(String bolsaId, String semanaId) =>
+      'aportacion-fila:$bolsaId:$semanaId';
+
   /// Un día inhábil del hogar (único `(hogar_id, fecha)`).
   static String diaInhabil(String hogarId, String fecha) =>
       '$hogarId:dia-inhabil:$fecha';

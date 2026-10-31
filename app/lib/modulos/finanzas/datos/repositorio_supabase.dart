@@ -23,6 +23,7 @@ import '../../../nucleo/contratos/roles.dart' show Modulo;
 import '../../../nucleo/seguridad/limpieza_local.dart' show claveCopiaLocal;
 import '../../../nucleo/seguridad/almacen_seguro.dart';
 import 'filas.dart';
+import 'filas_fase2.dart';
 import 'fuente_tablas.dart';
 import 'ids.dart';
 import 'repositorio.dart';
@@ -80,6 +81,12 @@ class CopiaLocalFinanzas {
     TablasFinanzas.categorias,
     TablasFinanzas.parametros,
     TablasFinanzas.sobres,
+    // Fase 2: los recordatorios locales de vencimientos (regla 45) necesitan
+    // las deudas, sus ocurrencias y los días inhábiles sin señal.
+    TablasFinanzas.deudas,
+    TablasFinanzas.ocurrencias,
+    TablasFinanzas.diasInhabiles,
+    TablasFinanzas.estadosCuenta,
   ];
 
   Future<Map<String, dynamic>?> leer() async {
@@ -165,6 +172,11 @@ class RepositorioFinanzasSupabase implements RepositorioFinanzas {
     TablasFinanzas.conciliaciones,
     TablasFinanzas.importaciones,
     TablasFinanzas.movimientos,
+    TablasFinanzas.msi,
+    TablasFinanzas.estadosCuenta,
+    TablasFinanzas.bolsasAhorro,
+    TablasFinanzas.aportacionesAhorro,
+    TablasFinanzas.retirosAhorro,
   ];
 
   static List<Map<String, dynamic>> _de(
@@ -215,6 +227,21 @@ class RepositorioFinanzasSupabase implements RepositorioFinanzas {
       ],
       sobres: [for (final s in _de(f, TablasFinanzas.sobres)) sobreDeFila(s)],
       deudas: [for (final d in _de(f, TablasFinanzas.deudas)) deudaDeFila(d)],
+      msi: [for (final m in _de(f, TablasFinanzas.msi)) msiDeFila(m)],
+      estadosDeCuenta: [
+        for (final e in _de(f, TablasFinanzas.estadosCuenta))
+          estadoDeCuentaDeFila(e),
+      ],
+      bolsas: [
+        for (final b in _de(f, TablasFinanzas.bolsasAhorro)) bolsaDeFila(b),
+      ],
+      aportaciones: [
+        for (final a in _de(f, TablasFinanzas.aportacionesAhorro))
+          aportacionDeFila(a),
+      ],
+      retiros: [
+        for (final r in _de(f, TablasFinanzas.retirosAhorro)) retiroDeFila(r),
+      ],
       diasInhabiles: [
         for (final d in _de(f, TablasFinanzas.diasInhabiles))
           diaInhabilDeFila(d),
@@ -695,6 +722,62 @@ class RepositorioFinanzasSupabase implements RepositorioFinanzas {
     ]);
     _local(
       (d) => d.copiar(sobres: _reemplazar(d.sobres, sobre, (s) => s.id == sobre.id)),
+    );
+  }
+
+  @override
+  Future<void> guardarMsi(Msi msi) async {
+    await fuente.guardar(TablasFinanzas.msi, [filaMsi(msi, hogarId: hogarId)]);
+    _local((d) => d.copiar(msi: _reemplazar(d.msi, msi, (x) => x.id == msi.id)));
+  }
+
+  @override
+  Future<void> agregarEstadoDeCuenta(EstadoDeCuenta estado) async {
+    await fuente.guardar(TablasFinanzas.estadosCuenta, [
+      filaEstadoDeCuenta(estado, hogarId: hogarId),
+    ], ignorarDuplicados: true);
+    _local(
+      (d) => d.estadosDeCuenta.any((x) => x.id == estado.id)
+          ? d
+          : d.copiar(estadosDeCuenta: [...d.estadosDeCuenta, estado]),
+    );
+  }
+
+  @override
+  Future<void> guardarBolsa(BolsaAhorro bolsa) async {
+    await fuente.guardar(TablasFinanzas.bolsasAhorro, [
+      filaBolsa(bolsa, hogarId: hogarId),
+    ]);
+    _local(
+      (d) => d.copiar(bolsas: _reemplazar(d.bolsas, bolsa, (x) => x.id == bolsa.id)),
+    );
+  }
+
+  @override
+  Future<void> guardarAportacion(AportacionAhorro aportacion) async {
+    await fuente.guardar(TablasFinanzas.aportacionesAhorro, [
+      filaAportacion(aportacion, hogarId: hogarId),
+    ]);
+    _local(
+      (d) => d.copiar(
+        aportaciones: _reemplazar(
+          d.aportaciones,
+          aportacion,
+          (x) => x.id == aportacion.id,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Future<void> agregarRetiro(RetiroAhorro retiro) async {
+    await fuente.guardar(TablasFinanzas.retirosAhorro, [
+      filaRetiro(retiro, hogarId: hogarId),
+    ], ignorarDuplicados: true);
+    _local(
+      (d) => d.retiros.any((x) => x.id == retiro.id)
+          ? d
+          : d.copiar(retiros: [...d.retiros, retiro]),
     );
   }
 

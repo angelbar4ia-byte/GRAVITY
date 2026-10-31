@@ -77,6 +77,22 @@ class ServicioFinanzas {
   DateTime get _ahora => _reloj();
   Fecha get hoy => Fecha.deDateTime(_reloj());
 
+  // --------------------------------------- ayudas para los casos de uso de
+  // la Fase 2 (`servicio_fase2.dart`)
+
+  DatosFinanzas get datos => _d;
+  DateTime get ahora => _ahora;
+  String nuevoId() => _generarId();
+  void exigirEscribir(String libroId) => _exigirEscribir(libroId);
+  void exigirAdministrar(String libroId) => _exigirAdministrar(libroId);
+
+  /// Quién realiza (y en nombre de quién) un movimiento del libro; en el de
+  /// papá exige el motivo.
+  ({String realizadoPor, String? enNombreDe}) quienDe(
+    String libroId,
+    String? motivo,
+  ) => _quien(libroId, motivo);
+
   // ---------------------------------------------------------------- permisos
 
   Libro _libro(String libroId) =>

@@ -66,6 +66,10 @@ abstract interface class RepositorioAvisos {
   });
 
   Future<void> quitarDispositivo(String token);
+
+  /// Enciende o apaga `dispositivos.recibe_avisos` de este equipo (la tablet
+  /// personal y la laptop vienen apagadas; la pública nunca).
+  Future<void> fijarRecepcion(String token, {required bool recibe});
 }
 
 /// Con Supabase. No se puede probar sin servidor: las pruebas usan
@@ -132,7 +136,9 @@ class RepositorioAvisosSupabase implements RepositorioAvisos {
     await _cliente().rpc(
       'avisos_actualizar_preferencias',
       params: {
-        for (final e in preferencias.aJson().entries) 'p_${e.key}': e.value,
+        // `dias_aviso_deuda` es por libro (`fin_parametros`), no de aquí.
+        for (final e in preferencias.aJson().entries)
+          if (e.key != 'dias_aviso_deuda') 'p_${e.key}': e.value,
       },
     );
   }
@@ -156,6 +162,14 @@ class RepositorioAvisosSupabase implements RepositorioAvisos {
   @override
   Future<void> quitarDispositivo(String token) =>
       _cliente().rpc('quitar_dispositivo', params: {'p_token': token});
+
+  @override
+  Future<void> fijarRecepcion(String token, {required bool recibe}) async {
+    await _cliente()
+        .from('dispositivos')
+        .update({'recibe_avisos': recibe})
+        .eq('token_avisos', token);
+  }
 }
 
 /// En memoria: pruebas y modo demostración.
@@ -238,4 +252,10 @@ class RepositorioAvisosEnMemoria implements RepositorioAvisos {
   @override
   Future<void> quitarDispositivo(String token) async =>
       dispositivos.remove(token);
+
+  final Map<String, bool> recepcion = {};
+
+  @override
+  Future<void> fijarRecepcion(String token, {required bool recibe}) async =>
+      recepcion[token] = recibe;
 }

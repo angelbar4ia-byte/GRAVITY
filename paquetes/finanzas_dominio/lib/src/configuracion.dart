@@ -1,3 +1,4 @@
+import 'deudas_detalle.dart' show ClaseDeuda;
 import 'calendario.dart';
 import 'fecha.dart';
 import 'frecuencia.dart';
@@ -624,6 +625,22 @@ class Deuda {
   final int? ordenGrupo;
   final bool activa;
 
+  // Fase 2 (deudas a detalle). Todos opcionales: una deuda de la Fase 1 sigue
+  // siendo válida y el servidor deduce la clase.
+  final ClaseDeuda? clase;
+  final String? acreedor;
+  final int? montoOriginal;
+  final int? catPuntosBase;
+
+  /// Día del mes del corte de una tarjeta (0 = último día).
+  final int? corteDia;
+
+  /// `null` = "verificar con la caja": no se propone extra a capital (regla 12).
+  final bool? permitePagoAnticipado;
+
+  /// `plazo` o `cuota`: qué reduce un abono extra.
+  final String? extraReduce;
+
   const Deuda({
     required this.id,
     required this.libroId,
@@ -639,7 +656,17 @@ class Deuda {
     this.grupoPrioritario = false,
     this.ordenGrupo,
     this.activa = true,
+    this.clase,
+    this.acreedor,
+    this.montoOriginal,
+    this.catPuntosBase,
+    this.corteDia,
+    this.permitePagoAnticipado,
+    this.extraReduce,
   });
+
+  /// Nombre para mostrar: el acreedor si lo hay, si no el nombre.
+  String get titulo => acreedor ?? nombre;
 
   /// La deuda para el motor, con su [saldo] actual (si se conoce).
   /// Lanza [ArgumentError] si falta la tasa de una deuda con costo.
@@ -697,9 +724,23 @@ class Deuda {
     bool? grupoPrioritario,
     int? ordenGrupo,
     bool? activa,
+    ClaseDeuda? clase,
+    String? acreedor,
+    int? montoOriginal,
+    int? catPuntosBase,
+    int? corteDia,
+    bool? permitePagoAnticipado,
+    String? extraReduce,
   }) => Deuda(
     id: id,
     libroId: libroId,
+    clase: clase ?? this.clase,
+    acreedor: acreedor ?? this.acreedor,
+    montoOriginal: montoOriginal ?? this.montoOriginal,
+    catPuntosBase: catPuntosBase ?? this.catPuntosBase,
+    corteDia: corteDia ?? this.corteDia,
+    permitePagoAnticipado: permitePagoAnticipado ?? this.permitePagoAnticipado,
+    extraReduce: extraReduce ?? this.extraReduce,
     nombre: nombre ?? this.nombre,
     tipo: tipo,
     cuentaPasivoId: cuentaPasivoId,

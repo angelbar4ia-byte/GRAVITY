@@ -182,14 +182,26 @@ int aportacionDeFondo({required int meta, required int saldo, int? semanas}) {
 
 /// Los 8 métodos de ahorro (regla 25).
 enum MetodoAhorro {
-  pagatePrimero,
-  montoFijo,
-  metaConFecha,
-  reto52Semanas,
-  redondeo,
-  sobranteSemanal,
-  sobrePorCategoria,
-  porcentajeDeExtras,
+  pagatePrimero('pagate_primero'),
+  montoFijo('monto_fijo'),
+  metaConFecha('meta_fecha'),
+  reto52Semanas('reto_52_semanas'),
+  redondeo('redondeo'),
+  sobranteSemanal('sobrante_semanal'),
+  sobrePorCategoria('sobre_categoria'),
+  porcentajeDeExtras('porcentaje_extras');
+
+  const MetodoAhorro(this.clave);
+
+  /// Valor guardado en `fin_bolsas_ahorro.metodos`.
+  final String clave;
+
+  static MetodoAhorro? deClave(String c) {
+    for (final m in values) {
+      if (m.clave == c) return m;
+    }
+    return null;
+  }
 }
 
 /// Reto de 52 semanas: la semana *k* aporta `k × base`. Con base $10 suma

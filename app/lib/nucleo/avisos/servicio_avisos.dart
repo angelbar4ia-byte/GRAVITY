@@ -292,6 +292,11 @@ class ServicioAvisos {
         tipo: c.tipo,
       );
       _tokenRegistrado = token;
+      // Registrar otra vez no apaga la elección; la tablet personal viene
+      // apagada en el servidor y la persona la enciende aquí.
+      if (c.tipo == TipoEquipoAvisos.tabletPersonal) {
+        await repo.fijarRecepcion(token, recibe: true);
+      }
     } catch (error) {
       debugPrint('No se pudo registrar el equipo para avisos: $error');
     }

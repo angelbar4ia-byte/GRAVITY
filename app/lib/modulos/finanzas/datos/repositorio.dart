@@ -181,6 +181,24 @@ abstract interface class RepositorioFinanzas {
 
   Future<void> guardarDiasInhabiles(List<DiaInhabil> dias);
 
+  // ------------------------------------------------ deudas y ahorro (Fase 2)
+
+  /// Guarda una compra a meses sin intereses (su deuda y su cuenta pasivo ya
+  /// existen).
+  Future<void> guardarMsi(Msi msi);
+
+  /// Agrega un estado de cuenta (solo agregar; se corrige con otro).
+  Future<void> agregarEstadoDeCuenta(EstadoDeCuenta estado);
+
+  Future<void> guardarBolsa(BolsaAhorro bolsa);
+
+  /// Guarda la aportación de una bolsa en una semana (propuesta, confirmada,
+  /// pospuesta u omitida). Una confirmada exige su movimiento ya guardado.
+  Future<void> guardarAportacion(AportacionAhorro aportacion);
+
+  /// Agrega un retiro de bolsa (solo agregar); su movimiento ya está guardado.
+  Future<void> agregarRetiro(RetiroAhorro retiro);
+
   /// Crea un libro compartido con sus miembros (quien lo crea es miembro y su
   /// **administrador**). [visibilidad]: privada por omisión; pública = los
   /// adultos con Finanzas del hogar la leen.

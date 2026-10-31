@@ -42,6 +42,11 @@ abstract final class TablasFinanzas {
   static const ocurrencias = 'fin_ocurrencias';
   static const conciliaciones = 'fin_conciliaciones';
   static const importaciones = 'fin_importaciones';
+  static const msi = 'fin_msi';
+  static const estadosCuenta = 'fin_estados_cuenta';
+  static const bolsasAhorro = 'fin_bolsas_ahorro';
+  static const aportacionesAhorro = 'fin_aportaciones_ahorro';
+  static const retirosAhorro = 'fin_retiros_ahorro';
 
   /// Función que deja en la bitácora la consulta de la cuenta maestra.
   static const consultaMaestra = 'fin_registrar_consulta_maestra';
@@ -578,6 +583,14 @@ Map<String, Object?> filaDeuda(Deuda d, {required String hogarId}) => {
   'grupo_prioritario': d.grupoPrioritario,
   'orden_grupo': d.ordenGrupo,
   'activa': d.activa,
+  // Fase 2: la clase nula la deduce el servidor.
+  'clase': d.clase == null ? null : nombreEnum(d.clase!),
+  'acreedor': d.acreedor,
+  'monto_original_centavos': d.montoOriginal,
+  'cat_pb': d.catPuntosBase,
+  'corte_dia': d.corteDia,
+  'permite_pago_anticipado': d.permitePagoAnticipado,
+  'extra_reduce': d.extraReduce,
 };
 
 Deuda deudaDeFila(Map<String, dynamic> f) => Deuda(
@@ -595,6 +608,15 @@ Deuda deudaDeFila(Map<String, dynamic> f) => Deuda(
   grupoPrioritario: booleano(f['grupo_prioritario']),
   ordenGrupo: enteroONulo(f['orden_grupo']),
   activa: booleano(f['activa'], true),
+  clase: enumONulo(ClaseDeuda.values, f['clase']),
+  acreedor: texto(f['acreedor']),
+  montoOriginal: enteroONulo(f['monto_original_centavos']),
+  catPuntosBase: enteroONulo(f['cat_pb']),
+  corteDia: enteroONulo(f['corte_dia']),
+  permitePagoAnticipado: f['permite_pago_anticipado'] == null
+      ? null
+      : booleano(f['permite_pago_anticipado']),
+  extraReduce: texto(f['extra_reduce']),
 );
 
 // --------------------------------------------------------- días inhábiles

@@ -172,7 +172,7 @@ Hallazgos N1 a N5 de la revisión de calidad (`docs/revisiones/fase-1b.md`). Los
 - Código nuevo: **54000** al escribir en `public.bitacora` (tope de N1).
 - `23514` se amplía: el motivo de anulaciones, ajustes, movimientos en nombre de otra persona y conciliaciones con diferencia necesita 3 caracteres visibles.
 
-**Lo que NO cubre el tope de N1 (límites declarados):** las entradas **automáticas** (`insertar`/`actualizar`/`borrar`) no tienen tope: crecen con los cambios reales de datos, pero alguien con una cuenta de la familia que haga cambios en bucle sobre sus propias filas puede engordar la bitácora. Tampoco topa lo que escriben las funciones del servidor a petición de una persona: `fin_registrar_consulta_maestra` deja una entrada por cada llamada (la cuenta maestra podría repetirla en bucle; cada entrada pesa unos 300 bytes). Propuesta, a decidir con el dueño: no repetir la entrada si ya hay una de esa persona y ese libro en el último minuto, o tope diario propio para esa acción. Mitigaciones pendientes: el aviso al 80 % de la base (necesita la función de servidor de la Fase 2) y un límite de peticiones en el proyecto de Supabase.
+**Lo que NO cubre el tope de N1 (límites declarados):** las entradas **automáticas** (`insertar`/`actualizar`/`borrar`) no tienen tope: crecen con los cambios reales de datos, pero alguien con una cuenta de la familia que haga cambios en bucle sobre sus propias filas puede engordar la bitácora. Tampoco topa lo que escriben las funciones del servidor a petición de una persona; en `fin_registrar_consulta_maestra` ya se resolvió en la Fase 2 (una entrada por minuto y libro). Mitigaciones pendientes: el aviso al 80 % de la base (necesita la función de servidor de la Fase 2) y un límite de peticiones en el proyecto de Supabase.
 
 ### Portada del libro de papá para el dueño (migración `20261027000000_finanzas_portada_representado.sql`)
 
@@ -222,6 +222,75 @@ Hallazgos N1 a N5 de la revisión de calidad (`docs/revisiones/fase-1b.md`). Los
 - **Errores:** `23503` = falta algo de lo que depende (otra cuenta, el original de una anulación…; la cola reintenta). `23505` = duplicado o mismo id con otro contenido. `23514` = check de la tabla o falta `en_nombre_de`/motivo en el libro de Papá (monto, motivo de 3 o más caracteres visibles, lunes, cascada…). `22023` = regla de negocio (combinación de cuentas, libro equivocado, papel…). `55000` = estado (cuenta no activa, semana cerrada). `42501` = sin permiso o columna que no cambia. `54000` = tope de la bitácora (solo al escribir directo en `public.bitacora`). Ninguno es de las clases que la cola reintenta (08, 40001, 40P01, 53, 57).
 - **Entre libros:** solo `transferencia` y `pago_deuda` (y su anulación) cruzan de un libro a otro; se ven desde los dos. Ojo para el cuadre por libro: una aportación cambia el patrimonio de cada libro sin pasar por el resultado.
 
+## Fase 2: deudas, ahorro y avisos (D20, propuesta)
+
+Migraciones `20261101000000_finanzas_fase2.sql` (deudas ampliadas, MSI, estados de cuenta, ahorro) y `20261102000000_avisos.sql` (infraestructura de avisos), y la Edge Function `functions/enviar-avisos/`. Especificación: `docs/specs/fase-2-finanzas.md` (secciones 4 y 5). Se construyó con las **propuestas por defecto** de la sección 9 mientras el dueño responde.
+
+### Deudas y ahorro (`20261101000000`)
+
+| Objeto | Qué es |
+|---|---|
+| `fin_deudas` (columnas nuevas) | `clase` (`tarjeta`/`prestamo`/`credito`/`msi`/`familiar`, obligatoria), `acreedor`, `monto_original_centavos`, `cat_pb`, `corte_dia` (0 = último día; solo tarjetas), `permite_pago_anticipado` (nulo = verificar), `extra_reduce` (`plazo`/`cuota`). Checks: `msi` <=> tipo `msi`, `familiar` <=> tipo `familiar` (23514). Las filas de la Fase 1 se rellenaron. Si el INSERT no trae `clase` (cola vieja) el servidor la deduce (con_costo en cuenta `tarjeta` = tarjeta, si no credito) |
+| `fin_parametros` (columnas nuevas) | `orden_ahorro`, `dependientes_cuidados`, `esenciales_incluyen_minimos`, `dias_aviso_deuda` (0 a 3 días entre 0 y 14, sin repetir) |
+| `fin_msi` | Compra a MSI: su deuda (`clase msi`), su tarjeta opcional, su cuenta pasivo **propia** (tipo `prestamo`, única), comercio y descripción (datos del libro: jamás salen en un aviso), 2 a 48 mensualidades |
+| `fin_estados_cuenta` | **Solo agregar.** Estado de cuenta capturado a mano de una tarjeta; para un mismo corte vale el más reciente (`fin_v_estados_cuenta_vigentes`). `registrado_por` a nombre propio, `registrado_en` lo manda el dispositivo, `recibido_en` lo pone el servidor |
+| `fin_bolsas_ahorro` | Bolsa = cuenta de tipo `ahorro` del libro (única). Un solo fondo de emergencia activo por libro. Tipo, cuenta y libro no cambian. Métodos: `pagate_primero`, `monto_fijo`, `meta_fecha`, `reto_52_semanas`, `redondeo`, `sobrante_semanal`, `sobre_categoria`, `porcentaje_extras` |
+| `fin_aportaciones_ahorro` | Reparto semanal por bolsa. `pendiente_centavos` es **generada** (no se manda). `confirmada` <=> lleva `movimiento_id` (una transferencia hacia la cuenta de la bolsa) y `aportado > 0`; `confirmada_por/en` los pone el servidor; `movimiento_id` y `aportado` no se tocan una vez puestos (42501); en una semana cerrada solo se confirma (55000 para lo demás) |
+| `fin_retiros_ahorro` | **Solo agregar.** Retiro de una bolsa (`uso_previsto`/`emergencia`/`cambio_destino`), un retiro por movimiento (una transferencia **desde** la cuenta de la bolsa); motivo con 3 caracteres visibles (23514) |
+| Vistas | `fin_v_deuda_resumen` (saldo por deuda y MSI pendiente por tarjeta), `fin_v_bolsa_saldo`, `fin_v_estados_cuenta_vigentes`; todas `security_invoker`, no guardan saldos |
+
+RLS: todo con `fin_puede(libro, …)` (leer; las tablas de configuración, administrar; estados y retiros, escribir a nombre propio). Libro archivado: solo lectura. Maestra: lee con consulta registrada y nunca escribe. Familiar, cuidador y Casa no ven nada. Convención 12: los `grant insert` de `fin_deudas` y `fin_parametros` repiten la lista completa.
+
+### Avisos (`20261102000000`)
+
+| Objeto | Qué es |
+|---|---|
+| `avisos` | Sin columnas de monto, nombre ni texto libre. `tipo` de catálogo cerrado (19 tipos), `severidad` fija por tipo (`avisos_severidad`), `clave` (minúsculas, dígitos y `_ : . -`, ≤ 120, única con `persona_id`: idempotencia), `libro_id` solo en `finanzas`, `estado`, `enviar_en`. El `id` se deriva de (persona, clave). La persona solo lee los suyos (RLS); **nadie escribe directo**: solo las funciones. Entra a Realtime si el proyecto lo tiene |
+| `avisos_preferencias` | Una fila por persona con Finanzas (la crea y la quita el servidor al cambiar su rol; la cuenta maestra que no es la dueña no tiene). Zona horaria, silencio (22:00 a 07:00), `criticas_en_silencio`, tope de no críticas (3), `hora_vencimientos` (09:00), resumen del lunes, recordatorio de cierre, `tipos_silenciados`, `pulsera_texto_corto` |
+| `avisos_entregas`, `avisos_sistema` | Solo `service_role`. `avisos_sistema`: `limite_base_bytes` (500 MB), `umbral_aviso_pct` (80), `umbral_critico_pct` (90); la restauración la deja como la migración (está en `TablasDeMigracion` del respaldo) |
+| `dispositivos` (cambios) | `tipo` (`telefono`/`tablet_personal`/`tablet_publica`/`laptop`), `recibe_avisos` (teléfono sí por omisión; tablet personal y laptop no; **tablet pública nunca**, trigger), `ultimo_envio_en`, `fallos`. **Token único global** (cierra M13). Ya no se inserta directo ni se cambia el token: solo `registrar_dispositivo` |
+
+**Funciones para la app (`authenticated`)**
+
+| Función | Qué hace / errores |
+|---|---|
+| `registrar_dispositivo(p_token, p_plataforma, p_nombre default null, p_tipo default 'telefono') -> uuid` | Da de alta o **reasigna** el token a la persona de la sesión (id derivado del token); registrar de nuevo no apaga la elección de la persona. 42501 sin sesión; 22023 si el token, la plataforma o el tipo no valen |
+| `quitar_dispositivo(p_token) -> boolean` | Borra el token de la persona (cerrar sesión, quitar de la tablet, baja) |
+| `fin_emitir_aviso(p_libro_id, p_tipo, p_objeto_tipo, p_objeto_id, p_clave) -> integer` | Para lo que solo el motor sabe: `protegido_riesgo`, `flujo_negativo`, `abono_bajo_minimo`, `partida_100`, `partida_80`, `fondo_bajo`, `uso_limite`, `aportacion_pendiente`, `conciliacion_pendiente`. Exige `escribir` en el libro (42501); tipo no emitible, clave o más de **60 al día** por persona: 22023. Calcula los destinatarios y devuelve cuántos avisos creó (idempotente por clave: 0 si ya existía) |
+| `avisos_marcar(p_aviso_id, p_accion)` | `leida`, `resuelta`, `posponer_1h`, `posponer_manana` (vuelve a salir a esa hora). El aviso ajeno: 42501 |
+| `avisos_actualizar_preferencias(…)` | Parámetros nombrados, nulos = no cambia. Tope 0 a 10, zona real, día 1 a 7, tipos del catálogo: 22023. Sin preferencias (maestra, familiar…): 42501 |
+
+**Destinatarios (los calcula el servidor, regla 41):** libro personal = su titular; compartido = todos los miembros vigentes; papá = el albacea vigente y, sin él, el suplente. `partida_80` = quien registró; `partida_100` = quien registró y el titular. **Nunca** la cuenta maestra que no es la dueña, ni familiar, cuidador o Casa. Aviso `salida_libro_representado` = el suplente vigente (no a quien hizo el movimiento), dentro de la misma función que deja la entrada N3 de la bitácora. `retiro_bolsa_compartida` = los otros miembros. `base_80`/`base_90` = el dueño de cada hogar.
+
+**Silencio y tope:** las críticas y las demás no suenan de 22:00 a 07:00 (hora de la persona) salvo `criticas_en_silencio` (solo críticas); esperan a las 07:00. Del 4.º aviso no crítico del día (por zona de la persona) en adelante, el aviso queda `agrupada` (visible en la bandeja, no suena); las críticas y los recordatorios fijos no cuentan. Un tipo silenciado también queda `agrupada`.
+
+**Tareas (pg_cron, solo si el proyecto lo tiene; la migración las programa y, si no hay pg_cron, avisa con un NOTICE):**
+
+| Tarea | Cuándo | Qué hace |
+|---|---|---|
+| `avisos-vencimientos` | cada hora | `avisos_generar_vencimientos()`: retrasa los pagos de deuda cuyo día pasó; avisos de 3 y 1 días antes (`dias_aviso_deuda`) a la hora de cada persona, **solo los que aún no pasaron**; vencidos: al día siguiente y a los 3 días; ingreso sin llegar al siguiente día hábil; cancela los de una fecha vieja; un pago con monto cero no avisa. Tipo `limite_tarjeta` si la deuda es tarjeta, si no `pago_proximo` |
+| `avisos-base` | diaria, 12:00 UTC (06:00 de México) | `avisos_revisar_base()`: 80 % importante, 90 % crítico, solo al dueño, uno por día |
+| `avisos-limpieza` | diaria, 09:30 UTC | `avisos_limpiar()`: borra avisos de más de 90 días y entregas de más de 30 (única excepción al "nadie borra"; la bitácora no se toca, y no crece por cada aviso) |
+| `avisos-enviar` | cada 5 minutos | `avisos_invocar_enviar()` llama (pg_net) a la Edge Function con la clave de servicio **del Vault**. Sin esos secretos no hace nada |
+
+Cuando se resuelve el pago (la ocurrencia deja de estar `esperada`/`retrasada`) o cambia su fecha, un trigger cancela los avisos pendientes de esa ocurrencia (regla 38).
+
+**Consultas repetidas de la maestra (P12 por defecto):** `fin_registrar_consulta_maestra` no repite la entrada de bitácora si ya hay una de esa persona y ese libro en el último minuto (la consulta sigue vigente).
+
+### Edge Function `enviar-avisos`
+
+`supabase/functions/enviar-avisos/` (TypeScript, Deno): reclama con `avisos_reclamar` (`select … for update skip locked`, hasta **200** por corrida, marca el lote 3 minutos: dos corridas a la vez no duplican), manda por **FCM HTTP v1** un mensaje **solo de datos** `{ "v": "1", "id": "<uuid del aviso>" }` con prioridad alta (sin `notification`, sin tipo, libro, persona ni texto), registra cada entrega y el resultado. Nunca incluye `tablet_publica`, equipos con `recibe_avisos = false` ni personas dadas de baja. `UNREGISTERED` borra el token; 5 fallos seguidos lo desactivan; un error del servidor reintenta a los 5, 15 y 60 minutos y luego se da por enviado sin entrega (queda en la bandeja). **Desviación de la especificación:** `collapse_key` es el `id` del aviso (opaco), no la `clave`, porque la clave dice el tipo y la fecha y no debe verla Google.
+
+**Lo que debe poner el dueño (nada de esto va al repositorio):**
+
+1. Proyecto de Firebase con una app Android y su **cuenta de servicio**: `supabase secrets set FCM_SERVICE_ACCOUNT='<JSON>'`. Sin ese secreto la función no envía y no falla; la app sigue con recordatorios locales y bandeja.
+2. `supabase functions deploy enviar-avisos`.
+3. En el Vault de Supabase: `select vault.create_secret('https://<ref>.supabase.co', 'gravity_project_url');` y `select vault.create_secret('<clave service_role>', 'gravity_service_role_key');` (la tarea `avisos-enviar` los lee).
+4. Activar las extensiones `pg_cron` y `pg_net` (Database › Extensions) **antes** de aplicar `20261102…`, o volver a correr el bloque final de esa migración después.
+5. Verificar el cupo vigente de la base y de las funciones del plan gratuito (`avisos_sistema.limite_base_bytes`).
+
+**Probar la función sin Deno:** `node --experimental-strip-types --test supabase/functions/enviar-avisos/enviar_test.ts` (Node 22 o superior; las pruebas usan solo `node:test` y un FCM simulado) o `deno test supabase/functions/enviar-avisos/enviar_test.ts`. 9 pruebas: cuerpo exactamente `{v, id}`, prioridad alta, sin `notification`, entregas, `UNREGISTERED`, errores, red caída, sin avisos no pide token, tope de 200, JWT RS256. (El archivo `index.ts`, que usa `Deno.serve`, solo se comprueba con Deno.)
+
 ## Pruebas
 
 ```bash
@@ -252,6 +321,11 @@ Crea una base desechable, aplica `tests/00_emulacion_supabase.sql` (roles `anon`
 | `35_finanzas_adultos.sql` | **`fin_adultos_con_finanzas`:** la ven el dueño, el coadministrador y la maestra (que no aparece); devuelve dueño y coadministradores con su nombre y rol; nunca la maestra no dueña, familiar, cuidador, casa ni Papá; cero filas para familiar, cuidador, casa, otro hogar, sin hogar y hogar nulo; anon y `service_role` no la ejecutan; las bajas y los cambios de rol la actualizan; la dueña que además es maestra aparece |
 | `36_finanzas_endurecimiento_1b.sql` | **N1 a N5 de la revisión 1b:** el tope de la bitácora (4 KB y 500 por persona en 24 horas; familiar y Hogar; por persona; las de más de 24 h no cuentan; las automáticas no cuentan ni se limitan; `service_role` sin tope; I5 sigue); el motivo con tabuladores, saltos, espacios Unicode e invisibles en gasto de papá, anulación, ajuste y conciliación (y los controles: un gasto normal con motivo corto, un reenvío idéntico); toda salida del libro de papá avisa al suplente, también hacia un compartido; `fin_nombrar_albacea` (solo el dueño, cargo vacío, cargo de quien se fue, errores, sin sesión ni `service_role`); el relevo del administrador por baja o cambio de rol, el paso a privado y la baja sin nadie a quien pasar el cargo |
 | `37_finanzas_portada_representado.sql` | **Portada del libro de papá:** el dueño que no es miembro ve la fila del libro representado y las de sus miembros (y los nombres de esas personas) y **nada más** (ni cuentas, movimientos, saldos, plan, cierres, conciliaciones ni bitácora del libro); no escribe (0 filas; el insert directo da 42501) y `fin_puede` sigue negando; no ve compartidos privados ni libros personales de otros; la dueña de otro hogar no ve el libro de este ni al revés; coadministrador no miembro, familiar, cuidador y Hogar no ven nada; la maestra no cambia (portada sí, contenido solo con consulta); sin sesión no se lee; con la portada la dueña se nombra albacea y lee todo; la dueña-maestra ve la portada pero no el contenido sin consulta |
+| `82_avisos_rls.sql` | **D20, criterios 32 (esquema), 39, 41, 42, 47:** `avisos` sin columnas de monto, nombre ni texto libre; tipo y clave de catálogo cerrado; nadie inserta, cambia ni borra directo; la pareja, otro hogar y una familiar no ven avisos; quién tiene preferencias (no la maestra, ni familiar, cuidador o Casa) y que se crean y se quitan con el rol; cambiar las propias con rangos (tope, zona, día, tipos); dispositivos: teléfono sí, tablet personal y laptop no, tablet pública nunca, reasignación del token (M13), sin insert directo; `fin_emitir_aviso` (permisos, tipos emitibles, clave, objeto, idempotencia, destinatarios de compartido, de papá y de `partida_80`, tope de 60 al día) |
+| `83_avisos_generacion.sql` | **Criterios 34 a 38:** 3 y 1 días antes a las 9:00; una deuda dada de alta el 11/nov solo crea el del 11; idempotencia; cambiar la fecha cancela y recrea; registrar el pago cancela; pago vencido (retrasada, aviso al día siguiente y a los 3 días, luego se calla); monto cero no avisa; ingreso retrasado; compartido = todos y cada quien a su hora; horas silenciosas (críticas, `criticas_en_silencio`, no críticas, madrugada); tope diario (4.º agrupado, críticas y recordatorios no cuentan, día en la zona de la persona); tipo silenciado; `avisos_marcar` |
+| `84_avisos_base_80.sql` | **Criterio 48:** al 79 % no avisa; al 80 % avisa solo a los dueños (importante); al 90 % crítico; uno al día; límite configurable (y en cero no falla); sale a las 07:00 por el silencio; dueño de baja no recibe; la app no ejecuta estas funciones |
+| `85_finanzas_fase2.sql` | **Criterios 1, 2, 12, 26, 27, 28, 57:** clases de deuda y sus checks (clase por omisión), parámetros nuevos, MSI, estados de cuenta solo agregar (vigente, idempotencia, 23505), bolsas (un fondo, cuenta de ahorro, campos por tipo, métodos, tipo fijo), aportaciones (pendiente generada, confirmar, semana cerrada, inmutables), retiros (motivo de 3 caracteres, desde la bolsa, uno por movimiento, solo agregar), saldos desde el libro; la pareja, familiar, cuidadora, Casa y otro hogar no ven nada; la maestra con consulta lee y nunca escribe; columnas que pone el servidor |
+| `86_avisos_envio.sql` | **Criterios 27, 40, 42, 49, 50:** `avisos_reclamar` (un renglón por aviso y dispositivo, no se reclama dos veces, se libera a los 3 minutos, tablet pública y tablet personal apagada nunca, baja no recibe, solo `service_role`), entregas (token inválido se borra, 5 fallos desactivan), reintentos a los 5, 15 y 60 minutos, retención de 90 y 30 días sin tocar la bitácora, aviso al suplente de papá (no a quien hizo el movimiento; sin suplente nada), aviso del retiro de una bolsa compartida, una consulta de la maestra por minuto y libro |
 | `34_finanzas_maestra_login.sql` | **Cuenta maestra con login propio (23/oct):** la invitación del dueño con `es_maestra` (solo el dueño la crea, solo con rol coadministrador, con un correo de fuera del hogar; se revoca al reinvitar; la vencida no sirve); al aceptarla no se crea libro personal, es solo lectura total, no es miembro de nada, no ve Cuidados ni Hábitos y sigue necesitando la consulta de 30 minutos; reemplaza a la anterior con su entrada en la bitácora |
 | `40_aislamiento_hogares.sql` | Una persona de otro hogar no ve ni toca nada |
 | `50_invitaciones.sql` | Solo el dueño las ve y crea; token solo en hash; correo confirmado; expiración, revocación y reuso; volver al hogar con la membresía vencida (M3) |
@@ -332,9 +406,9 @@ La CLI guarda el historial en `supabase_migrations.schema_migrations` y aplica c
 
 | De la revisión | Qué | Cuándo |
 |---|---|---|
-| M2 (parte 2) | **Hecho para lo que la app escribe directo** (N1, migración `20261026`): 4 KB por entrada y 500 por persona en 24 horas, con trigger por sentencia. Falta: el aviso al llegar al 80 % de la base (Fase 2, función de servidor) y valorar un tope para las entradas automáticas | Fase 2 |
+| M2 (parte 2) | **Hecho para lo que la app escribe directo** (N1, migración `20261026`): 4 KB por entrada y 500 por persona en 24 horas, con trigger por sentencia. El aviso al 80 % y al 90 % de la base ya existe (`avisos_revisar_base`, Fase 2). Falta valorar un tope para las entradas automáticas | Decisión del dueño |
 | M4 | Hogar preferido o función `mi_perfil()` para que la app no elija al azar entre dos hogares | Con plataforma |
-| M13 | Un mismo token de avisos puede quedar a nombre de varias personas (tablet compartida): token único global con una función que lo reasigne, o avisos de la tablet solo a la cuenta Casa | Fase 2 |
+| M13 | **Cerrado en la Fase 2:** token único global y `registrar_dispositivo` lo reasigna; la tablet pública nunca recibe avisos | — |
 | M15 | Mantener activa la confirmación de correo en Supabase Auth (`aceptar_invitacion` confía en ella) | Al crear el proyecto (dueño) |
 | Fase 1 | Las reglas de `fin_*` llaman `fin_puede()` por fila; con muchos datos conviene cambiarlas por una lista de libros legibles calculada una vez por consulta | Si la pantalla de movimientos pasa de 2 s |
 | Fase 1 | La cuenta maestra lee el **historial de GRAVITY** (entradas `gravity.*`) sin consulta registrada: hoy es solo bitácora. Cuando exista la tabla del historial, debe seguir el mismo patrón que los libros (consulta registrada, vigencia de 30 minutos) | Fase 2 |

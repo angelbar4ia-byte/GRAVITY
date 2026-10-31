@@ -10,7 +10,7 @@ $OutputEncoding = New-Object System.Text.UTF8Encoding $false
 
 # Tablas que llenan las migraciones (no son datos del usuario): no se respaldan
 # sus filas, porque la base destino ya las tiene al aplicar las migraciones.
-$script:TablasDeMigracion = @('public.permisos_rol')
+$script:TablasDeMigracion = @('public.permisos_rol', 'public.avisos_sistema')
 
 $script:Secretos = New-Object System.Collections.Generic.List[string]
 $script:ArchivoLog = $null

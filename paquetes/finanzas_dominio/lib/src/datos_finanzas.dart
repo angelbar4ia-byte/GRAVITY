@@ -1,3 +1,4 @@
+import 'ahorro_datos.dart';
 import 'calendario.dart';
 import 'categorias.dart';
 import 'configuracion.dart';
@@ -25,6 +26,11 @@ class DatosFinanzas {
   final List<ConciliacionGuardada> conciliaciones;
   final List<ImportacionGuardada> importaciones;
   final List<Movimiento> movimientos;
+  final List<Msi> msi;
+  final List<EstadoDeCuenta> estadosDeCuenta;
+  final List<BolsaAhorro> bolsas;
+  final List<AportacionAhorro> aportaciones;
+  final List<RetiroAhorro> retiros;
 
   DatosFinanzas({
     List<Libro> libros = const [],
@@ -42,7 +48,17 @@ class DatosFinanzas {
     List<ConciliacionGuardada> conciliaciones = const [],
     List<ImportacionGuardada> importaciones = const [],
     List<Movimiento> movimientos = const [],
-  }) : libros = List.unmodifiable(libros),
+    List<Msi> msi = const [],
+    List<EstadoDeCuenta> estadosDeCuenta = const [],
+    List<BolsaAhorro> bolsas = const [],
+    List<AportacionAhorro> aportaciones = const [],
+    List<RetiroAhorro> retiros = const [],
+  }) : msi = List.unmodifiable(msi),
+       estadosDeCuenta = List.unmodifiable(estadosDeCuenta),
+       bolsas = List.unmodifiable(bolsas),
+       aportaciones = List.unmodifiable(aportaciones),
+       retiros = List.unmodifiable(retiros),
+       libros = List.unmodifiable(libros),
        parametros = List.unmodifiable(parametros),
        cuentas = List.unmodifiable(cuentas),
        categorias = List.unmodifiable(categorias),
@@ -76,7 +92,17 @@ class DatosFinanzas {
     List<ConciliacionGuardada>? conciliaciones,
     List<ImportacionGuardada>? importaciones,
     List<Movimiento>? movimientos,
+    List<Msi>? msi,
+    List<EstadoDeCuenta>? estadosDeCuenta,
+    List<BolsaAhorro>? bolsas,
+    List<AportacionAhorro>? aportaciones,
+    List<RetiroAhorro>? retiros,
   }) => DatosFinanzas(
+    msi: msi ?? this.msi,
+    estadosDeCuenta: estadosDeCuenta ?? this.estadosDeCuenta,
+    bolsas: bolsas ?? this.bolsas,
+    aportaciones: aportaciones ?? this.aportaciones,
+    retiros: retiros ?? this.retiros,
     libros: libros ?? this.libros,
     parametros: parametros ?? this.parametros,
     cuentas: cuentas ?? this.cuentas,
@@ -188,6 +214,28 @@ class DatosFinanzas {
 
   List<Sobre> sobresDe(String libroId) =>
       sobres.where((s) => s.libroId == libroId).toList();
+
+  List<BolsaAhorro> bolsasDe(String libroId) =>
+      bolsas.where((b) => b.libroId == libroId && b.activa).toList();
+
+  List<Msi> msiDe(String libroId) =>
+      msi.where((m) => m.libroId == libroId && m.activo).toList();
+
+  /// Último estado de cuenta de una deuda (el corte más reciente; a igual
+  /// corte, el registrado después).
+  EstadoDeCuenta? ultimoEstadoDeCuenta(String deudaId) {
+    EstadoDeCuenta? mejor;
+    for (final e in estadosDeCuenta) {
+      if (e.deudaId != deudaId) continue;
+      if (mejor == null ||
+          e.fechaCorte.compareTo(mejor.fechaCorte) > 0 ||
+          (e.fechaCorte == mejor.fechaCorte &&
+              e.registradoEn.isAfter(mejor.registradoEn))) {
+        mejor = e;
+      }
+    }
+    return mejor;
+  }
 
   List<Deuda> deudasDe(String libroId) =>
       deudas.where((d) => d.libroId == libroId).toList();
