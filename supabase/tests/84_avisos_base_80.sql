@@ -37,6 +37,11 @@ select pruebas.ok(public.avisos_revisar_base() >= 0, 'Sin tamaño simulado lee p
 update public.membresias set activa = false, hasta = now() where persona_id = pruebas.id_persona('elena@ejemplo.test');
 select pruebas.igual(public.avisos_revisar_base(419430400, '2026-11-20 12:00+00'), 1, 'Elena, de baja, ya no recibe: solo Ana');
 
+select pruebas.como('ana@ejemplo.test');
+select pruebas.ok((select limite_bytes = 524288000 and bytes > 0 and porcentaje >= 0 from public.avisos_estado_base()), 'El dueño ve el estado de la base');
+select pruebas.como('alex@ejemplo.test');
+select pruebas.falla($$select * from public.avisos_estado_base()$$, 'La pareja no', '42501');
+select pruebas.como('ana@ejemplo.test');
 -- La app no llama a estas funciones.
 select pruebas.como('ana@ejemplo.test');
 select pruebas.falla($$select public.avisos_revisar_base(1, now())$$, 'La app no ejecuta avisos_revisar_base', '42501');

@@ -868,6 +868,26 @@ comment on function public.avisos_revisar_base(bigint, timestamptz) is
   'Diaria (06:00 hora de México). Con la base al 80 % avisa (importante) y al 90 % (crítico) SOLO al dueño de cada hogar; uno '
   'por día. p_bytes y p_ahora son solo para pruebas.';
 
+create function public.avisos_estado_base()
+returns table (bytes bigint, limite_bytes bigint, porcentaje numeric)
+language plpgsql stable security definer
+set search_path = ''
+as $$
+declare
+  v_limite bigint;
+begin
+  if not exists (select 1 from public.membresias m where m.persona_id = public.persona_actual() and m.rol = 'dueno'
+                  and m.activa and m.desde <= now() and (m.hasta is null or m.hasta > now())) then
+    raise exception using errcode = '42501', message = 'Solo el dueño ve el estado de la base.';
+  end if;
+  select (valor #>> '{}')::bigint into v_limite from public.avisos_sistema where clave = 'limite_base_bytes';
+  return query select pg_catalog.pg_database_size(pg_catalog.current_database()), v_limite,
+                      round(pg_catalog.pg_database_size(pg_catalog.current_database())::numeric * 100 / nullif(v_limite, 0), 1);
+end
+$$;
+comment on function public.avisos_estado_base() is
+  'Solo el dueño: tamaño de la base, su límite y el porcentaje (Ajustes › Copias de seguridad). Solo lectura.';
+
 create function public.avisos_limpiar(p_ahora timestamptz default now())
 returns integer
 language plpgsql volatile security definer
@@ -1041,13 +1061,13 @@ revoke execute on function
   public.avisos_generar_vencimientos(timestamptz), public.avisos_revisar_base(bigint, timestamptz),
   public.avisos_limpiar(timestamptz), public.avisos_reclamar(integer, timestamptz),
   public.avisos_registrar_entrega(uuid, uuid, text, text), public.avisos_resultado_envio(uuid, boolean, timestamptz),
-  public.avisos_invocar_enviar()
+  public.avisos_invocar_enviar(), public.avisos_estado_base()
   from public, anon, authenticated, service_role;
 
 -- Para la app (con sesión).
 grant execute on function
   public.registrar_dispositivo(text, text, text, text), public.quitar_dispositivo(text),
-  public.fin_emitir_aviso(uuid, text, text, uuid, text), public.avisos_marcar(uuid, text),
+  public.fin_emitir_aviso(uuid, text, text, uuid, text), public.avisos_marcar(uuid, text), public.avisos_estado_base(),
   public.avisos_actualizar_preferencias(text, time, time, boolean, integer, time, time, integer, time, text[], boolean)
   to authenticated;
 -- Para la Edge Function y las tareas.
