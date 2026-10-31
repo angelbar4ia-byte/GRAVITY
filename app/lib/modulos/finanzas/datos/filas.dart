@@ -222,6 +222,10 @@ Map<String, Object?> cambiosParametros(ParametrosFinanzas p) => {
   'cumplimiento_verde_pb': p.umbrales.cumplimientoVerdeDesde,
   'cumplimiento_ambar_pb': p.umbrales.cumplimientoAmbarDesde,
   'cierre_automatico_dias': p.cierreAutomaticoDias,
+  'orden_ahorro': p.ordenAhorro,
+  'dependientes_cuidados': p.dependientesCuidados,
+  'esenciales_incluyen_minimos': p.esencialesIncluyenMinimos,
+  'dias_aviso_deuda': p.diasAvisoDeuda,
 };
 
 Map<String, Object?> filaParametros(
@@ -245,6 +249,10 @@ Map<String, Object?> filaParametros(
   'cuenta_ajustes_id': p.cuentaAjustesId,
   'cuenta_apertura_id': p.cuentaAperturaId,
   'cuenta_por_clasificar_id': p.cuentaPorClasificarId,
+  'orden_ahorro': p.ordenAhorro,
+  'dependientes_cuidados': p.dependientesCuidados,
+  'esenciales_incluyen_minimos': p.esencialesIncluyenMinimos,
+  'dias_aviso_deuda': p.diasAvisoDeuda,
 };
 
 ParametrosFinanzas parametrosDeFila(Map<String, dynamic> f) =>
@@ -267,6 +275,14 @@ ParametrosFinanzas parametrosDeFila(Map<String, dynamic> f) =>
       cuentaAjustesId: texto(f['cuenta_ajustes_id']),
       cuentaAperturaId: texto(f['cuenta_apertura_id']),
       cuentaPorClasificarId: texto(f['cuenta_por_clasificar_id']),
+      ordenAhorro: f['orden_ahorro'] == null
+          ? const ParametrosFinanzas(libroId: '').ordenAhorro
+          : [for (final x in (f['orden_ahorro'] as List)) '$x'],
+      dependientesCuidados: booleano(f['dependientes_cuidados']),
+      esencialesIncluyenMinimos: booleano(f['esenciales_incluyen_minimos'], true),
+      diasAvisoDeuda: f['dias_aviso_deuda'] == null
+          ? const [3, 1]
+          : enteros(f['dias_aviso_deuda']),
     );
 
 // -------------------------------------------------------------- categorías

@@ -29,6 +29,19 @@ class ParametrosFinanzas {
   final String? cuentaAperturaId;
   final String? cuentaPorClasificarId;
 
+  // Fase 2 (`fin_parametros`): ahorro y avisos.
+  /// Orden del reparto del ahorro (regla 22).
+  final List<String> ordenAhorro;
+
+  /// Lo declara la persona (nivel 4 del fondo sugerido, regla 20).
+  final bool dependientesCuidados;
+
+  /// El gasto esencial suma los mínimos de deuda (regla 18).
+  final bool esencialesIncluyenMinimos;
+
+  /// Días antes del vencimiento en que avisa (por omisión 3 y 1).
+  final List<int> diasAvisoDeuda;
+
   const ParametrosFinanzas({
     required this.libroId,
     this.metaRemanentePuntosBase = 2000,
@@ -39,6 +52,16 @@ class ParametrosFinanzas {
     this.cuentaAjustesId,
     this.cuentaAperturaId,
     this.cuentaPorClasificarId,
+    this.ordenAhorro = const [
+      'fondo_n1',
+      'reservas',
+      'metas_fecha',
+      'fondo_meta',
+      'metas_libres',
+    ],
+    this.dependientesCuidados = false,
+    this.esencialesIncluyenMinimos = true,
+    this.diasAvisoDeuda = const [3, 1],
   });
 
   ParametrosPlan get plan => ParametrosPlan(
@@ -57,8 +80,17 @@ class ParametrosFinanzas {
     String? cuentaAjustesId,
     String? cuentaAperturaId,
     String? cuentaPorClasificarId,
+    List<String>? ordenAhorro,
+    bool? dependientesCuidados,
+    bool? esencialesIncluyenMinimos,
+    List<int>? diasAvisoDeuda,
   }) => ParametrosFinanzas(
     libroId: libroId,
+    ordenAhorro: ordenAhorro ?? this.ordenAhorro,
+    dependientesCuidados: dependientesCuidados ?? this.dependientesCuidados,
+    esencialesIncluyenMinimos:
+        esencialesIncluyenMinimos ?? this.esencialesIncluyenMinimos,
+    diasAvisoDeuda: diasAvisoDeuda ?? this.diasAvisoDeuda,
     metaRemanentePuntosBase:
         metaRemanentePuntosBase ?? this.metaRemanentePuntosBase,
     ahorroMinimoConDeudaPuntosBase:

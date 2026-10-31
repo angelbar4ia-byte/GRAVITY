@@ -533,7 +533,7 @@ void main() {
         vencimientos: [Vencimiento(objetoId: 'o2', fecha: DateTime(2026, 11, 5))],
       ).where((r) => r.tipo == 'pago_proximo');
       expect(cerca.single.cuando, DateTime(2026, 11, 4, 9));
-      expect(cerca.single.clave, 'pago_proximo:o2:2026-11-05:2');
+      expect(cerca.single.clave, 'pago_proximo:o2:2026-11-05:1');
     });
 
     test('lo que vence pasado el horizonte de 14 días no se programa; una tarjeta '
@@ -594,7 +594,7 @@ void main() {
       final lista = await r.reprogramar(preferencias: p, ahora: ahora);
       expect(n.programadas.containsKey(7), isFalse);
       expect(n.programadas, hasLength(lista.length));
-      final pago = n.programadas[idDeNotificacion('pago_proximo:o1:2026-11-12:1')]!;
+      final pago = n.programadas[idDeNotificacion('pago_proximo:o1:2026-11-12:3')]!;
       expect(pago.notificacion.titulo, 'Tienes un pago próximo');
       expect(pago.notificacion.cuerpo, isEmpty);
       for (final e in n.programadas.values) {

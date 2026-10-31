@@ -73,7 +73,7 @@ DateTime _a(DateTime dia, HoraDelDia hora) =>
 /// Calcula qué recordatorios hay que tener programados. Pura.
 ///
 /// [ahora] es la hora de pared de la persona. La `clave` de un vencimiento es
-/// `tipo:objeto_id:fecha:n`, con `n` = el paso (1 = el aviso más lejano),
+/// `tipo:ocurrencia_id:fecha:n`, con `n` = los días antes (3 y 1),
 /// igual que la del servidor, para que uno reemplace al otro.
 List<RecordatorioLocal> calcularRecordatorios({
   required PreferenciasAvisos preferencias,
@@ -103,7 +103,7 @@ List<RecordatorioLocal> calcularRecordatorios({
         preferencias.horaVencimientos,
       );
       if (cuando.isAfter(ahora)) {
-        agregar('$tipo:${v.objetoId}:${_dia(dia)}:${paso + 1}', tipo, cuando);
+        agregar('$tipo:${v.objetoId}:${_dia(dia)}:${dias[paso]}', tipo, cuando);
         break;
       }
     }

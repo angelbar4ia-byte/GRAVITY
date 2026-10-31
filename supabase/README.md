@@ -250,6 +250,8 @@ RLS: todo con `fin_puede(libro, …)` (leer; las tablas de configuración, admin
 | `avisos_entregas`, `avisos_sistema` | Solo `service_role`. `avisos_sistema`: `limite_base_bytes` (500 MB), `umbral_aviso_pct` (80), `umbral_critico_pct` (90); la restauración la deja como la migración (está en `TablasDeMigracion` del respaldo) |
 | `dispositivos` (cambios) | `tipo` (`telefono`/`tablet_personal`/`tablet_publica`/`laptop`), `recibe_avisos` (teléfono sí por omisión; tablet personal y laptop no; **tablet pública nunca**, trigger), `ultimo_envio_en`, `fallos`. **Token único global** (cierra M13). Ya no se inserta directo ni se cambia el token: solo `registrar_dispositivo` |
 
+**Claves de los avisos de vencimiento** (`tipo:objeto_id:fecha_ajustada:n`; `objeto_id` = id de la ocurrencia): en los avisos previos (`pago_proximo` o `limite_tarjeta`) **`n` = los días antes** (con 3 y 1: `…:3` y `…:1`, no el paso 1, 2); en `pago_vencido`, `n` = los días después (`1` y `3`); en `ingreso_retrasado`, `1`. El `id` del aviso es `md5('aviso:'||persona_id||':'||clave)::uuid`. `dispositivos.recibe_avisos` se cambia con `UPDATE … WHERE token_avisos = …` (solo `nombre`, `ultimo_uso` y `recibe_avisos` tienen permiso de UPDATE, solo de los propios; en tablet pública el trigger lo deja en falso).
+
 **Funciones para la app (`authenticated`)**
 
 | Función | Qué hace / errores |
@@ -258,7 +260,7 @@ RLS: todo con `fin_puede(libro, …)` (leer; las tablas de configuración, admin
 | `quitar_dispositivo(p_token) -> boolean` | Borra el token de la persona (cerrar sesión, quitar de la tablet, baja) |
 | `fin_emitir_aviso(p_libro_id, p_tipo, p_objeto_tipo, p_objeto_id, p_clave) -> integer` | Para lo que solo el motor sabe: `protegido_riesgo`, `flujo_negativo`, `abono_bajo_minimo`, `partida_100`, `partida_80`, `fondo_bajo`, `uso_limite`, `aportacion_pendiente`, `conciliacion_pendiente`. Exige `escribir` en el libro (42501); tipo no emitible, clave o más de **60 al día** por persona: 22023. Calcula los destinatarios y devuelve cuántos avisos creó (idempotente por clave: 0 si ya existía) |
 | `avisos_marcar(p_aviso_id, p_accion)` | `leida`, `resuelta`, `posponer_1h`, `posponer_manana` (vuelve a salir a esa hora). El aviso ajeno: 42501 |
-| `avisos_estado_base() -> (bytes, limite_bytes, porcentaje)` | Solo el dueño (42501 a otros): estado de la base para Ajustes › Copias de seguridad |
+| `avisos_porcentaje_base() -> numeric` (`20261103`) | Solo el dueño (42501 a otros): porcentaje de la base usado (1 decimal), y nada más de `avisos_sistema`. Para Ajustes › Copias de seguridad |
 | `avisos_actualizar_preferencias(…)` | Parámetros nombrados, nulos = no cambia. Tope 0 a 10, zona real, día 1 a 7, tipos del catálogo: 22023. Sin preferencias (maestra, familiar…): 42501 |
 
 **Destinatarios (los calcula el servidor, regla 41):** libro personal = su titular; compartido = todos los miembros vigentes; papá = el albacea vigente y, sin él, el suplente. `partida_80` = quien registró; `partida_100` = quien registró y el titular. **Nunca** la cuenta maestra que no es la dueña, ni familiar, cuidador o Casa. Aviso `salida_libro_representado` = el suplente vigente (no a quien hizo el movimiento), dentro de la misma función que deja la entrada N3 de la bitácora. `retiro_bolsa_compartida` = los otros miembros. `base_80`/`base_90` = el dueño de cada hogar.
