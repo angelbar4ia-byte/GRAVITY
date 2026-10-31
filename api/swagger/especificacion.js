@@ -1,7 +1,7 @@
 // GENERADO por api/generar_dart.mjs a partir de api/openapi.yaml. No se edita a mano.
 // Permite abrir Swagger UI con doble clic (file://), donde el navegador no deja leer
 // ../openapi.yaml. Servida por http, la página lee openapi.yaml directamente.
-// huella: fnv1a32:4fe1d2ec
+// huella: fnv1a32:9523891a
 window.ESPECIFICACION_GRAVITY = {
   "openapi": "3.1.0",
   "info": {
@@ -332,6 +332,123 @@ window.ESPECIFICACION_GRAVITY = {
         "x-escribe": false,
         "x-solo-local": true,
         "x-fase": 1,
+        "requestBody": {
+          "$ref": "#/components/requestBodies/PeticionHerramienta"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ResultadoHerramienta"
+          },
+          "404": {
+            "$ref": "#/components/responses/HerramientaNoDisponible"
+          }
+        }
+      }
+    },
+    "/herramientas/finanzas.resumen_semana": {
+      "servers": [
+        {
+          "url": "http://127.0.0.1:{puerto}",
+          "description": "Propuesta para la Fase 6: GRAVITY en la laptop atiende las herramientas para el puente de casa. En la Fase 0 se ejecutan dentro de la app, sin red.",
+          "variables": {
+            "puerto": {
+              "default": "8787"
+            }
+          }
+        }
+      ],
+      "post": {
+        "tags": [
+          "Herramientas de GRAVITY"
+        ],
+        "operationId": "herramientaFinanzasResumenSemana",
+        "summary": "finanzas.resumen_semana · Resumen de la semana",
+        "description": "Da el resumen de la semana de Finanzas (cascada, partidas y remanente); sin contenido, abre Finanzas › Semana. Órdenes: \"resumen de la semana\", \"resumen semanal\", \"cómo voy esta semana\". Solo lectura y solo local (D3): el contenido lo entrega Finanzas desde sus datos locales a la pantalla o a la voz local; `para_ia` siempre es nulo y nunca va a las bocinas (D6). Si Finanzas aún no entrega contenido, abre la vista. Es del libro propio: la cuenta maestra de solo lectura total (que no es la dueña) no la recibe.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 2,
+        "requestBody": {
+          "$ref": "#/components/requestBodies/PeticionHerramienta"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ResultadoHerramienta"
+          },
+          "404": {
+            "$ref": "#/components/responses/HerramientaNoDisponible"
+          }
+        }
+      }
+    },
+    "/herramientas/finanzas.proximos_pagos": {
+      "servers": [
+        {
+          "url": "http://127.0.0.1:{puerto}",
+          "description": "Propuesta para la Fase 6: GRAVITY en la laptop atiende las herramientas para el puente de casa. En la Fase 0 se ejecutan dentro de la app, sin red.",
+          "variables": {
+            "puerto": {
+              "default": "8787"
+            }
+          }
+        }
+      ],
+      "post": {
+        "tags": [
+          "Herramientas de GRAVITY"
+        ],
+        "operationId": "herramientaFinanzasProximosPagos",
+        "summary": "finanzas.proximos_pagos · Próximos pagos",
+        "description": "Da los próximos pagos y vencimientos; sin contenido, abre Finanzas › Compromisos y deudas. Órdenes: \"próximos pagos\", \"qué vence\", \"vencimientos\". Solo lectura y solo local (D3): el contenido lo entrega Finanzas desde sus datos locales a la pantalla o a la voz local; `para_ia` siempre es nulo y nunca va a las bocinas (D6). Si Finanzas aún no entrega contenido, abre la vista. Es del libro propio: la cuenta maestra de solo lectura total (que no es la dueña) no la recibe.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 2,
+        "requestBody": {
+          "$ref": "#/components/requestBodies/PeticionHerramienta"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ResultadoHerramienta"
+          },
+          "404": {
+            "$ref": "#/components/responses/HerramientaNoDisponible"
+          }
+        }
+      }
+    },
+    "/herramientas/finanzas.ahorro_avance": {
+      "servers": [
+        {
+          "url": "http://127.0.0.1:{puerto}",
+          "description": "Propuesta para la Fase 6: GRAVITY en la laptop atiende las herramientas para el puente de casa. En la Fase 0 se ejecutan dentro de la app, sin red.",
+          "variables": {
+            "puerto": {
+              "default": "8787"
+            }
+          }
+        }
+      ],
+      "post": {
+        "tags": [
+          "Herramientas de GRAVITY"
+        ],
+        "operationId": "herramientaFinanzasAhorroAvance",
+        "summary": "finanzas.ahorro_avance · Avance del ahorro",
+        "description": "Da el avance de las bolsas de ahorro; sin contenido, abre el Tablero de Finanzas (aún no hay pantalla de ahorro propia). Órdenes: \"avance del ahorro\", \"cómo va mi ahorro\", \"mis ahorros\". Solo lectura y solo local (D3): el contenido lo entrega Finanzas desde sus datos locales a la pantalla o a la voz local; `para_ia` siempre es nulo y nunca va a las bocinas (D6). Si Finanzas aún no entrega contenido, abre la vista. Es del libro propio: la cuenta maestra de solo lectura total (que no es la dueña) no la recibe.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 2,
         "requestBody": {
           "$ref": "#/components/requestBodies/PeticionHerramienta"
         },
@@ -11242,4 +11359,4 @@ window.ESPECIFICACION_GRAVITY = {
     }
   }
 };
-window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:4fe1d2ec';
+window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:9523891a';

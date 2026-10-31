@@ -21,6 +21,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:go_router/go_router.dart';
 
 import '../../app/dispositivo.dart' show tipoDispositivoProvider;
@@ -31,11 +32,13 @@ import '../../nucleo/permisos/permisos.dart';
 import '../../nucleo/seguridad/almacen_seguro.dart';
 import 'datos/repositorio_supabase.dart' as supabase
     show CopiaLocalFinanzas, tablasDeLaColaFinanzas;
+import 'estado/proveedores_fase2.dart' as fase2 show sobrescriturasAvisosFinanzas;
 import 'pantallas/laptop/ajustes.dart';
 import 'pantallas/laptop/arranque.dart';
 import 'pantallas/laptop/categorias.dart';
 import 'pantallas/laptop/compromisos.dart';
 import 'pantallas/laptop/cuentas.dart';
+import 'pantallas/laptop/fase2.dart';
 import 'pantallas/laptop/importar.dart';
 import 'pantallas/laptop/ingresos.dart';
 import 'pantallas/laptop/marco_laptop.dart';
@@ -44,6 +47,7 @@ import 'pantallas/laptop/semana.dart';
 import 'pantallas/laptop/tablero.dart';
 import 'pantallas/registro/hoja_gasto.dart';
 import 'pantallas/registro/hoja_ingreso_extra.dart';
+import 'pantallas/telefono/fase2_telefono.dart';
 import 'pantallas/telefono/pantallas_telefono.dart';
 
 export 'datos/repositorio_supabase.dart' show TiposCola;
@@ -54,6 +58,13 @@ export 'pantallas/laptop/marco_laptop.dart' show SeccionFinanzas;
 /// (`'finanzas.movimiento': 'fin_movimientos'`, conciliaciones e
 /// importaciones). La cola sube con `INSERT … ON CONFLICT (id) DO NOTHING`.
 const Map<String, String> tablasColaFinanzas = supabase.tablasDeLaColaFinanzas;
+
+/// Lo que Finanzas pone en los avisos de la plataforma (Fase 2, D20): la
+/// fuente de vencimientos de los recordatorios locales (pagos de deudas de los
+/// próximos 14 días con la copia local) y el detalle de cada aviso en la
+/// bandeja (montos ocultables). El arranque suma esta lista a los `overrides`
+/// de Riverpod.
+List<Override> get sobrescriturasAvisosFinanzas => fase2.sobrescriturasAvisosFinanzas;
 
 /// Borra del equipo lo que Finanzas guardó de [personaId] (la copia local para
 /// trabajar sin señal: libros, cuentas, categorías, sobres, nombres). Lo llama
@@ -113,6 +124,33 @@ List<RouteBase> rutasFinanzas() => [
   _soloLaptop(SeccionFinanzas.ingresos, (_) => const PantallaIngresos()),
   _soloLaptop(SeccionFinanzas.categorias, (_) => const PantallaCategorias()),
   _soloLaptop(SeccionFinanzas.compromisos, (_) => const PantallaCompromisos()),
+  GoRoute(
+    path: SeccionFinanzas.deudas.segmento,
+    pageBuilder: _pagina(
+      (_) => const _SegunDispositivo(
+        laptop: PantallaDeudas(),
+        telefono: PantallaDeudasTelefono(),
+      ),
+    ),
+  ),
+  GoRoute(
+    path: SeccionFinanzas.ahorro.segmento,
+    pageBuilder: _pagina(
+      (_) => const _SegunDispositivo(
+        laptop: PantallaAhorro(),
+        telefono: PantallaAhorroTelefono(),
+      ),
+    ),
+  ),
+  GoRoute(
+    path: SeccionFinanzas.vencimientos.segmento,
+    pageBuilder: _pagina(
+      (_) => const _SegunDispositivo(
+        laptop: PantallaVencimientos(),
+        telefono: PantallaVencimientosTelefono(),
+      ),
+    ),
+  ),
   _soloLaptop(SeccionFinanzas.arranque, (_) => const PantallaArranque()),
   _soloLaptop(SeccionFinanzas.importar, (_) => const PantallaImportar()),
   _soloLaptop(SeccionFinanzas.ajustes, (_) => const PantallaAjustesFinanzas()),

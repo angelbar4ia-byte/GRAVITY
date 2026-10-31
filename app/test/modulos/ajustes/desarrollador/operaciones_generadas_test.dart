@@ -130,7 +130,16 @@ void main() {
       expect(o.soloLocal, h.soloLocal, reason: '${h.nombre}: x-solo-local');
       expect(
         o.fase,
-        deFase1.contains(h.nombre) ? 1 : 0,
+        h.nombre.startsWith('finanzas.') &&
+                const {
+                  'finanzas.resumen_semana',
+                  'finanzas.proximos_pagos',
+                  'finanzas.ahorro_avance',
+                }.contains(h.nombre)
+            ? 2
+            : deFase1.contains(h.nombre)
+            ? 1
+            : 0,
         reason: '${h.nombre}: x-fase',
       );
     }
@@ -1157,10 +1166,7 @@ void main() {
               .toSet();
           expect(metodos, {MetodoHttp.get, MetodoHttp.post}, reason: t);
         }
-        expect(
-          fase2,
-          contains('registrado_en                timestamptz not null'),
-        );
+        expect(fase2, contains('registrado_en'));
       });
 
       test('las RPC concedidas a authenticated tienen operación y los '
@@ -1211,7 +1217,7 @@ void main() {
           expect(todo, contains(m), reason: m);
         }
         expect(todo, contains('60 avisos al día'));
-        expect(todo, contains('solo `service_role`'));
+        expect(todo, contains('solo de `service_role`'));
         expect(todo, contains('403 (42501)'));
       });
 

@@ -100,6 +100,12 @@ abstract class Herramienta {
   /// Para qué parte de GRAVITY es (D18). Por omisión, [AmbitoHerramienta.general].
   AmbitoHerramienta get ambito => AmbitoHerramienta.general;
 
+  /// `false` si la cuenta maestra de solo lectura total (D19, 23/oct) no la
+  /// recibe aunque solo lea: las consultas del libro propio (resumen de la
+  /// semana, próximos pagos, avance del ahorro) son de quien lleva su libro,
+  /// y esa cuenta no lleva ninguno. Por omisión, `true`.
+  bool get ofreceASoloLectura => true;
+
   /// Texto de la tarjeta de confirmación (solo se usa si [escribe]).
   String resumenConfirmacion(Map<String, Object?> parametros) =>
       '¿Confirmas? $descripcion';
@@ -167,6 +173,7 @@ final class ContextoHerramienta {
     this.modulosActivos,
     this.navegar,
     this.abrirHoja,
+    this.consultaLocal,
   });
 
   /// Rol de la sesión (D5).
@@ -193,6 +200,12 @@ final class ContextoHerramienta {
   /// `null` si no hay pantalla: la herramienta abre la ruta de su módulo.
   final void Function(HojaDeRegistro hoja)? abrirHoja;
 
+  /// Contenido de las herramientas de consulta (p. ej. `finanzas.resumen_semana`),
+  /// que entrega el módulo desde sus datos locales. Devuelve el texto para la
+  /// pantalla o la voz local, o `null` si no hay datos. Nunca va a la IA en la
+  /// nube ni a las bocinas (D3, D6). `null`: la herramienta solo abre la vista.
+  final Future<String?> Function(String herramienta)? consultaLocal;
+
   /// El mismo contexto, ya confirmado por la persona.
   ContextoHerramienta confirmar() => ContextoHerramienta(
     rol: rol,
@@ -201,6 +214,7 @@ final class ContextoHerramienta {
     modulosActivos: modulosActivos,
     navegar: navegar,
     abrirHoja: abrirHoja,
+    consultaLocal: consultaLocal,
   );
 }
 

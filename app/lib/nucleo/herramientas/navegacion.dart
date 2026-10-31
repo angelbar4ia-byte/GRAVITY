@@ -25,6 +25,9 @@ abstract final class RutasDeHerramientas {
   /// agente finanzas con `GoRoute(path: 'semana')` bajo la raíz del módulo.
   static const semanaFinanzas = '${Rutas.finanzas}/semana';
 
+  /// Compromisos y deudas de Finanzas (pantalla "Compromisos y deudas").
+  static const compromisosFinanzas = '${Rutas.finanzas}/compromisos';
+
   /// Bandeja de solicitudes y recordatorios de GRAVITY (D18; plataforma:
   /// `RutasApp.solicitudes`).
   static const solicitudes = '/solicitudes';
@@ -44,6 +47,7 @@ final class HerramientaNavegacion extends Herramienta {
     this.pertenencia = Pertenencia.propia,
     this.ambito = AmbitoHerramienta.general,
     this.hoja,
+    this.consulta = false,
     this._descripcion,
   });
 
@@ -87,6 +91,15 @@ final class HerramientaNavegacion extends Herramienta {
   /// confirmación: sin que la persona guarde en ella, no se escribe nada.
   final HojaDeRegistro? hoja;
 
+  /// `true` si es una consulta de solo lectura del libro propio: si el módulo
+  /// entrega su contenido ([ContextoHerramienta.consultaLocal]) se muestra o
+  /// se dice en local; si no, solo abre la vista. No la recibe la cuenta
+  /// maestra de solo lectura total (no lleva libro propio, D19).
+  final bool consulta;
+
+  @override
+  bool get ofreceASoloLectura => !consulta;
+
   final String? _descripcion;
 
   /// `true` si se ofrece en [dispositivo]. Si no se sabe en qué dispositivo
@@ -129,6 +142,11 @@ final class HerramientaNavegacion extends Herramienta {
       );
     }
     final navegar = ctx.navegar;
+    final texto = consulta ? await ctx.consultaLocal?.call(nombre) : null;
+    if (texto != null) {
+      navegar?.call(ruta);
+      return ResultadoHerramienta(this, contenido: texto);
+    }
     if (navegar == null) {
       return ResultadoHerramienta(
         this,
@@ -301,6 +319,70 @@ final herramientaAbrirSemanaFinanzas = HerramientaNavegacion(
       'Solo navega: los montos se ven en la pantalla, nunca van a la IA.',
 );
 
+/// Consulta: resumen de la semana (cascada, partidas, remanente). Solo lectura
+/// y solo local (D3): el contenido lo entrega Finanzas desde sus datos locales
+/// ([ContextoHerramienta.consultaLocal]) y nunca llega a la IA ni a las bocinas.
+/// Sin contenido, abre la Semana.
+final herramientaResumenSemana = HerramientaNavegacion(
+  nombre: 'finanzas.resumen_semana',
+  modulo: Modulo.finanzas,
+  roles: rolesParaNavegar(Modulo.finanzas),
+  ruta: RutasDeHerramientas.semanaFinanzas,
+  etiqueta: 'Resumen de la semana',
+  palabrasClave: const [
+    'resumen de la semana',
+    'resumen semanal',
+    'cómo voy esta semana',
+    'cómo va la semana',
+  ],
+  consulta: true,
+  descripcion:
+      'Da el resumen de la semana de Finanzas en pantalla o por voz local. '
+      'Solo lectura; nunca va a la IA en la nube ni a las bocinas.',
+);
+
+/// Consulta: próximos pagos y vencimientos. Sin contenido, abre Compromisos y
+/// deudas.
+final herramientaProximosPagos = HerramientaNavegacion(
+  nombre: 'finanzas.proximos_pagos',
+  modulo: Modulo.finanzas,
+  roles: rolesParaNavegar(Modulo.finanzas),
+  ruta: RutasDeHerramientas.compromisosFinanzas,
+  etiqueta: 'Próximos pagos',
+  palabrasClave: const [
+    'próximos pagos',
+    'pagos próximos',
+    'qué pagos vienen',
+    'qué vence',
+    'vencimientos',
+  ],
+  consulta: true,
+  descripcion:
+      'Da los próximos pagos y vencimientos de Finanzas en pantalla o por voz '
+      'local. Solo lectura; nunca va a la IA en la nube ni a las bocinas.',
+);
+
+/// Consulta: avance del ahorro. Sin contenido, abre el Tablero de Finanzas
+/// (aún no hay una pantalla de ahorro propia).
+final herramientaAhorroAvance = HerramientaNavegacion(
+  nombre: 'finanzas.ahorro_avance',
+  modulo: Modulo.finanzas,
+  roles: rolesParaNavegar(Modulo.finanzas),
+  ruta: Rutas.finanzas,
+  etiqueta: 'Avance del ahorro',
+  palabrasClave: const [
+    'avance del ahorro',
+    'cómo va mi ahorro',
+    'mis ahorros',
+    'metas de ahorro',
+    'ahorro',
+  ],
+  consulta: true,
+  descripcion:
+      'Da el avance de las bolsas de ahorro en pantalla o por voz local. Solo '
+      'lectura; nunca va a la IA en la nube ni a las bocinas.',
+);
+
 /// Bandeja de solicitudes y recordatorios de GRAVITY: lo único de GRAVITY
 /// que usa la cuidadora (D18). No es de conversación libre ni de la familia.
 final herramientaAbrirSolicitudes = HerramientaNavegacion(
@@ -338,6 +420,9 @@ final List<HerramientaNavegacion> navegacionFase0 = List.unmodifiable([
 final List<HerramientaNavegacion> navegacionFase1 = List.unmodifiable([
   herramientaRegistrarGasto,
   herramientaAbrirSemanaFinanzas,
+  herramientaResumenSemana,
+  herramientaProximosPagos,
+  herramientaAhorroAvance,
   herramientaAbrirSolicitudes,
 ]);
 
@@ -347,6 +432,9 @@ final List<HerramientaNavegacion> herramientasNavegacion = List.unmodifiable([
   herramientaAbrirFinanzas,
   herramientaRegistrarGasto,
   herramientaAbrirSemanaFinanzas,
+  herramientaResumenSemana,
+  herramientaProximosPagos,
+  herramientaAhorroAvance,
   herramientaAbrirHabitos,
   herramientaAbrirCuidados,
   herramientaAbrirAlimentacion,

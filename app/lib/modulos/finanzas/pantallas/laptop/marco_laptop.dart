@@ -28,6 +28,13 @@ enum SeccionFinanzas {
     'Compromisos y deudas',
     Icons.event_repeat_outlined,
   ),
+  deudas('deudas', 'Deudas', Icons.credit_card_outlined),
+  ahorro('ahorro', 'Ahorro y fondo', Icons.savings_outlined),
+  vencimientos(
+    'vencimientos',
+    'Vencimientos',
+    Icons.calendar_month_outlined,
+  ),
   arranque('arranque', 'Asistente de arranque', Icons.rocket_launch_outlined),
   importar('importar', 'Importar datos', Icons.upload_file_outlined),
   ajustes('ajustes', 'Ajustes de Finanzas', Icons.tune);

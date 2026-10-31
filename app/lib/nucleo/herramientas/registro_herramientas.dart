@@ -121,6 +121,10 @@ final class RegistroHerramientas {
             (h is HerramientaNavegacion && h.hoja != null))) {
       return false;
     }
+    // Las consultas del libro propio no son para quien no lleva libro.
+    if (esSoloLectura(rol, esMaestra: maestra) && !h.ofreceASoloLectura) {
+      return false;
+    }
     final deBandeja = h.ambito == AmbitoHerramienta.solicitudes;
     if (soloBandejaEnGravity(rol) &&
         (!deBandeja || h.modulo == Modulo.finanzas)) {

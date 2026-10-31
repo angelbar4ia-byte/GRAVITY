@@ -134,6 +134,9 @@ void main() {
           'finanzas.abrir',
           'finanzas.registrar_gasto',
           'finanzas.abrir_semana',
+          'finanzas.resumen_semana',
+          'finanzas.proximos_pagos',
+          'finanzas.ahorro_avance',
         ]) {
           expect(
             registro.buscar(nombre, rol: rol),
@@ -366,6 +369,9 @@ void main() {
         'finanzas.abrir',
         'finanzas.registrar_gasto',
         'finanzas.abrir_semana',
+        'finanzas.resumen_semana',
+        'finanzas.proximos_pagos',
+        'finanzas.ahorro_avance',
       ]);
       for (final h in deFinanzas) {
         expect(h.soloLocal, isTrue, reason: h.nombre);
@@ -773,7 +779,12 @@ void main() {
         );
         expect(
           maestra.map((h) => h.nombre).toSet(),
-          {...normal}..remove('finanzas.registrar_gasto'),
+          {...normal}..removeAll(const {
+            'finanzas.registrar_gasto',
+            'finanzas.resumen_semana',
+            'finanzas.proximos_pagos',
+            'finanzas.ahorro_avance',
+          }),
         );
         // Lo de Finanzas que conserva es navegación y lectura.
         expect(
@@ -1043,6 +1054,9 @@ void main() {
       'finanzas.abrir',
       'finanzas.registrar_gasto',
       'finanzas.abrir_semana',
+      'finanzas.resumen_semana',
+      'finanzas.proximos_pagos',
+      'finanzas.ahorro_avance',
     };
 
     test('exactamente las herramientas de cada rol', () {
@@ -1091,7 +1105,12 @@ void main() {
       // total (23/oct): sin la hoja de registro.
       expect(
         nombres(Rol.coadministrador, esMaestra: true),
-        nombres(Rol.coadministrador)..remove('finanzas.registrar_gasto'),
+        nombres(Rol.coadministrador)..removeAll(const {
+          'finanzas.registrar_gasto',
+          'finanzas.resumen_semana',
+          'finanzas.proximos_pagos',
+          'finanzas.ahorro_avance',
+        }),
       );
       // La marca no amplía nada a quien no puede ser cuenta maestra.
       for (final rol in [Rol.familiar, Rol.cuidador, Rol.casa]) {
@@ -1254,6 +1273,149 @@ void main() {
     });
   });
 
+  group('Consultas de Finanzas (resumen, próximos pagos, ahorro)', () {
+    final registro = registroDeGravity();
+    const consultas = [
+      'finanzas.resumen_semana',
+      'finanzas.proximos_pagos',
+      'finanzas.ahorro_avance',
+    ];
+
+    test(
+      'son solo locales, de solo lectura y para dueño y coadministrador',
+      () {
+        for (final nombre in consultas) {
+          final h = registro.todas.singleWhere((h) => h.nombre == nombre);
+          expect(h.soloLocal, isTrue, reason: nombre);
+          expect(h.escribe, isFalse, reason: nombre);
+          expect(h.accion, Accion.leer, reason: nombre);
+          expect(h.roles, {Rol.dueno, Rol.coadministrador}, reason: nombre);
+          expect((h as HerramientaNavegacion).hoja, isNull);
+          for (final rol in Rol.values) {
+            expect(
+              registro.buscar(nombre, rol: rol) != null,
+              rol == Rol.dueno || rol == Rol.coadministrador,
+              reason: '$nombre / ${rol.name}',
+            );
+          }
+        }
+      },
+    );
+
+    test(
+      'la maestra que no es la dueña no las recibe; el dueño maestro sí',
+      () async {
+        for (final nombre in consultas) {
+          expect(
+            registro.buscar(nombre, rol: Rol.coadministrador, esMaestra: true),
+            isNull,
+            reason: nombre,
+          );
+          expect(
+            registro.buscar(nombre, rol: Rol.dueno, esMaestra: true),
+            isNotNull,
+            reason: nombre,
+          );
+          await expectLater(
+            registro.ejecutar(
+              nombre,
+              const {},
+              const ContextoHerramienta(
+                rol: Rol.coadministrador,
+                esMaestra: true,
+              ),
+            ),
+            _noDisponiblePor(MotivoNoDisponible.cuentaMaestra),
+          );
+        }
+      },
+    );
+
+    test(
+      'con contenido local lo entregan solo en local, sin nada para la IA',
+      () async {
+        for (final nombre in consultas) {
+          final rutas = <String>[];
+          final pedidas = <String>[];
+          final r = await registro.ejecutar(
+            nombre,
+            const {},
+            ContextoHerramienta(
+              rol: Rol.dueno,
+              navegar: rutas.add,
+              consultaLocal: (n) async {
+                pedidas.add(n);
+                return r'Resumen local: $1,234.50';
+              },
+            ),
+          );
+          expect(pedidas, [nombre]);
+          expect(r.contenido, contains(r'$1,234.50'));
+          expect(r.paraIa, isNull);
+          expect(r.soloLocal, isTrue);
+          expect(r.requiereConfirmacion, isFalse);
+          expect(rutas, hasLength(1));
+        }
+      },
+    );
+
+    test(
+      'sin contenido (o sin proveedor) abren su vista y no dicen cifras',
+      () async {
+        final rutas = <String>[];
+        for (final (nombre, ruta) in [
+          ('finanzas.resumen_semana', RutasDeHerramientas.semanaFinanzas),
+          ('finanzas.proximos_pagos', RutasDeHerramientas.compromisosFinanzas),
+          ('finanzas.ahorro_avance', Rutas.finanzas),
+        ]) {
+          final r = await registro.ejecutar(
+            nombre,
+            const {},
+            ContextoHerramienta(
+              rol: Rol.coadministrador,
+              navegar: rutas.add,
+              consultaLocal: (_) async => null,
+            ),
+          );
+          expect(rutas.last, ruta, reason: nombre);
+          expect(r.paraIa, isNull);
+          expect(r.contenido, isNot(contains(r'$')));
+        }
+      },
+    );
+
+    test(
+      'si el proveedor falla, el error no lleva el mensaje original (D3)',
+      () async {
+        await expectLater(
+          registro.ejecutar(
+            'finanzas.resumen_semana',
+            const {},
+            ContextoHerramienta(
+              rol: Rol.dueno,
+              consultaLocal: (_) async => throw StateError(r'Saldo $5,000.00'),
+            ),
+          ),
+          throwsA(
+            isA<FalloHerramienta>().having(
+              (e) => e.mensaje,
+              'mensaje',
+              isNot(contains('5,000')),
+            ),
+          ),
+        );
+      },
+    );
+
+    test('ni la cuidadora, la familia ni Casa las reciben', () {
+      for (final rol in [Rol.familiar, Rol.cuidador, Rol.casa]) {
+        for (final nombre in consultas) {
+          expect(registro.buscar(nombre, rol: rol), isNull);
+        }
+      }
+    });
+  });
+
   group('Confirmación', () {
     test('las que escriben piden confirmación y no se ejecutan', () async {
       final h = _Falsa.deFinanzas(
@@ -1354,7 +1516,7 @@ void main() {
         ...herramientasFase1().map((h) => h.nombre),
       });
       expect(registroFase0().todas, hasLength(8));
-      expect(registroDeGravity().todas, hasLength(11));
+      expect(registroDeGravity().todas, hasLength(14));
     });
   });
 
@@ -1379,6 +1541,10 @@ void main() {
         // Registrar gasto sin dónde mostrar la hoja: abre Finanzas.
         Rutas.finanzas,
         RutasDeHerramientas.semanaFinanzas,
+        // Las consultas, sin contenido local, abren su vista.
+        RutasDeHerramientas.semanaFinanzas,
+        RutasDeHerramientas.compromisosFinanzas,
+        Rutas.finanzas,
         Rutas.habitos,
         Rutas.cuidados,
         Rutas.alimentacion,

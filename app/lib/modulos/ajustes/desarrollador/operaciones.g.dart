@@ -5,7 +5,7 @@ import '../../../nucleo/contratos/roles.dart';
 import 'operacion_api.dart';
 
 /// Huella de api/openapi.yaml con la que se generó este archivo.
-const huellaEspecificacion = 'fnv1a32:4fe1d2ec';
+const huellaEspecificacion = 'fnv1a32:9523891a';
 
 /// Versión de la especificación (info.version).
 const versionEspecificacion = '0.6.0';
@@ -81,6 +81,39 @@ const gruposOperaciones = <GrupoOperaciones>[
         escribe: false,
         soloLocal: true,
         fase: 1,
+      ),
+      OperacionApi(
+        id: 'herramientaFinanzasResumenSemana',
+        metodo: MetodoHttp.post,
+        ruta: '/herramientas/finanzas.resumen_semana',
+        resumen: 'finanzas.resumen_semana · Resumen de la semana',
+        descripcion: 'Da el resumen de la semana de Finanzas (cascada, partidas y remanente); sin contenido, abre Finanzas › Semana. Órdenes: "resumen de la semana", "resumen semanal", "cómo voy esta semana". Solo lectura y solo local (D3): el contenido lo entrega Finanzas desde sus datos locales a la pantalla o a la voz local; `para_ia` siempre es nulo y nunca va a las bocinas (D6). Si Finanzas aún no entrega contenido, abre la vista. Es del libro propio: la cuenta maestra de solo lectura total (que no es la dueña) no la recibe.',
+        roles: {Rol.dueno, Rol.coadministrador},
+        escribe: false,
+        soloLocal: true,
+        fase: 2,
+      ),
+      OperacionApi(
+        id: 'herramientaFinanzasProximosPagos',
+        metodo: MetodoHttp.post,
+        ruta: '/herramientas/finanzas.proximos_pagos',
+        resumen: 'finanzas.proximos_pagos · Próximos pagos',
+        descripcion: 'Da los próximos pagos y vencimientos; sin contenido, abre Finanzas › Compromisos y deudas. Órdenes: "próximos pagos", "qué vence", "vencimientos". Solo lectura y solo local (D3): el contenido lo entrega Finanzas desde sus datos locales a la pantalla o a la voz local; `para_ia` siempre es nulo y nunca va a las bocinas (D6). Si Finanzas aún no entrega contenido, abre la vista. Es del libro propio: la cuenta maestra de solo lectura total (que no es la dueña) no la recibe.',
+        roles: {Rol.dueno, Rol.coadministrador},
+        escribe: false,
+        soloLocal: true,
+        fase: 2,
+      ),
+      OperacionApi(
+        id: 'herramientaFinanzasAhorroAvance',
+        metodo: MetodoHttp.post,
+        ruta: '/herramientas/finanzas.ahorro_avance',
+        resumen: 'finanzas.ahorro_avance · Avance del ahorro',
+        descripcion: 'Da el avance de las bolsas de ahorro; sin contenido, abre el Tablero de Finanzas (aún no hay pantalla de ahorro propia). Órdenes: "avance del ahorro", "cómo va mi ahorro", "mis ahorros". Solo lectura y solo local (D3): el contenido lo entrega Finanzas desde sus datos locales a la pantalla o a la voz local; `para_ia` siempre es nulo y nunca va a las bocinas (D6). Si Finanzas aún no entrega contenido, abre la vista. Es del libro propio: la cuenta maestra de solo lectura total (que no es la dueña) no la recibe.',
+        roles: {Rol.dueno, Rol.coadministrador},
+        escribe: false,
+        soloLocal: true,
+        fase: 2,
       ),
       OperacionApi(
         id: 'herramientaHabitosAbrir',

@@ -8,6 +8,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:go_router/go_router.dart';
 
 import '../diseno/diseno.dart';
@@ -77,6 +78,13 @@ Widget hojaIngresoExtra() => finanzas.hojaIngresoExtra();
 /// `'finanzas.movimiento': 'fin_movimientos'`). La cola sube con
 /// `INSERT … ON CONFLICT (id) DO NOTHING` y la sesión de quien registró.
 const Map<String, String> tablasColaFinanzas = finanzas.tablasColaFinanzas;
+
+/// Fase 2 (D20): lo que Finanzas pone en los avisos de la plataforma, que el
+/// arranque suma a los `overrides` de Riverpod: la fuente de vencimientos de
+/// los recordatorios locales (`fuenteDeVencimientosProvider`) y el detalle de
+/// cada aviso en la bandeja (`detalleDeAvisoProvider`).
+List<Override> get sobrescriturasAvisosFinanzas =>
+    finanzas.sobrescriturasAvisosFinanzas;
 
 /// Tema de la app.
 class TemaExterno {
