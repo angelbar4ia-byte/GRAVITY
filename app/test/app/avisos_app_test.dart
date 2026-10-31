@@ -262,6 +262,16 @@ void main() {
     });
   });
 
+  testWidgets('Copias de seguridad muestra el porcentaje de la base al dueño', (
+    tester,
+  ) async {
+    repo.porcentaje = 82.5;
+    await montar(tester, Rol.dueno, dispositivo: TipoDispositivo.laptop);
+    contenedorDe(tester).read(routerProvider).go('/ajustes/copias');
+    await tester.pumpAndSettle();
+    expect(find.textContaining('82.5 %'), findsOneWidget);
+  });
+
   testWidgets('push con la app abierta en el teléfono: notificación discreta y '
       'se registra el equipo al entrar', (tester) async {
     await montar(tester, Rol.dueno);

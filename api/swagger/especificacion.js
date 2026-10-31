@@ -1,7 +1,7 @@
 // GENERADO por api/generar_dart.mjs a partir de api/openapi.yaml. No se edita a mano.
 // Permite abrir Swagger UI con doble clic (file://), donde el navegador no deja leer
 // ../openapi.yaml. Servida por http, la página lee openapi.yaml directamente.
-// huella: fnv1a32:f7eaed1d
+// huella: fnv1a32:4fe1d2ec
 window.ESPECIFICACION_GRAVITY = {
   "openapi": "3.1.0",
   "info": {
@@ -46,11 +46,11 @@ window.ESPECIFICACION_GRAVITY = {
     },
     {
       "name": "Base de datos · Finanzas",
-      "description": "Tablas `fin_*`, vistas y funciones de Finanzas (Fase 1, D19), según\n`supabase/migrations/20261021000000_finanzas_mvp1.sql`,\n`supabase/migrations/20261023000000_finanzas_salvaguardas.sql`,\n`supabase/migrations/20261024000000_finanzas_respuestas_dueno.sql` y\n`supabase/README.md` (\"Finanzas (Fase 1)\"). Solo dueño y coadministrador, cada quien\n**su libro** y los compartidos de los que es miembro, más los compartidos públicos\n(`fin_puede`); familiar, cuidador y Casa no ven nada. La **cuenta maestra** es otra\npersona con su propio login: el dueño la invita con `crear_invitacion` y\n`p_es_maestra`, y queda como coadministrador con la marca de maestra, sin libro\npersonal ni membresía en ningún libro. Si no es la dueña es de **solo lectura\ntotal**: lee con una consulta registrada y toda escritura suya (movimientos,\nconfiguración del hogar, crear libros) responde 403 (42501). El dueño también puede\nser la maestra con su propia persona, y en lo suyo sigue escribiendo. Nada de esto va\na la IA en la nube ni a las bocinas (D3, D6).\n\n- **Dinero** en centavos (entero); porcentajes y tasas en puntos base (2000 = 20 %);\n  semana en lunes; identificadores UUID generados en el dispositivo.\n- **Solo agregar:** `fin_movimientos`, `fin_conciliaciones`, `fin_cierres`,\n  `fin_cierre_partidas`, `fin_cierre_abonos` y `fin_importaciones` solo aceptan\n  INSERT; un error se corrige con una anulación (contraasiento) o una versión nueva.\n- **Cola sin conexión (idempotente):** se sube con `on_conflict=id` y\n  `Prefer: resolution=ignore-duplicates`. El mismo `id` con el mismo contenido no hace\n  nada y no falla; con otro contenido, en los libros solo agregar, 409 (23505).\n- **Lo que pone el servidor** (marcado como de solo lectura; no se manda):\n  `recibido_en`, `libro_origen_id` y `libro_destino_id` de los movimientos, las\n  columnas generadas y `reaperturas`.\n- **Errores** (código de PostgreSQL → HTTP de PostgREST): `23503` falta algo de lo\n  que depende (otra cuenta, el original de una anulación; la cola reintenta) → 409;\n  `23505` duplicado o mismo `id` con otro contenido → 409; `23514` regla de la tabla\n  (monto, motivo, lunes, cascada) → 400; `22023` regla de negocio (combinación de\n  cuentas, libro equivocado, papel) → 400; `55000` estado (cuenta no activa, semana\n  cerrada) → 500; `42501` sin permiso o columna que no cambia → 403; `54000` límite\n  (la bitácora: una entrada de más de 4 KB o más de 500 propias en 24 horas) → 500.\n- **Cuenta maestra y consulta registrada (I2):** sin una consulta vigente, la maestra\n  solo ve la **portada**: los libros y quién los lleva (`fin_libros`,\n  `fin_libro_miembros`), las categorías, las cuentas de gasto del hogar y lo que no es\n  de Finanzas. El contenido de un libro ajeno (cuentas, movimientos, plan, cierres,\n  saldos y su bitácora) llega **vacío, sin error**, hasta que llama\n  `fin_registrar_consulta_maestra(libro)`, que deja la entrada\n  `finanzas.consulta_maestra` y habilita la lectura de ese libro por **30 minutos**\n  (por libro y por persona; pasado el tiempo hay que llamarla otra vez, y la app la\n  renueva sola mientras el libro está abierto).\n- **Salvaguardas en el servidor** (hallazgos I1 a I5, M6 y M10 de la revisión de\n  calidad): (I1) en un libro compartido solo quien lo creó, o el dueño del hogar si es\n  miembro, agrega o cambia a otra persona (42501); salirse, o que te saquen, con menos\n  de 2 miembros deja el libro privado y activo, y el último miembro no puede salirse\n  (22023; ver abajo); (I2) la consulta\n  registrada de arriba; (I3) todo movimiento del libro de Papá lleva `en_nombre_de` y\n  `motivo` (23514) y las salidas hacia cualquier otro libro dejan la entrada\n  `finanzas.salida_libro_representado`; (I4) un albacea es vigente solo si sigue siendo\n  adulto con Finanzas, y si no, escribe el suplente; (I5) las acciones `finanzas*` y\n  las tablas `fin_*` de la bitácora las escribe solo el servidor (42501 si la app las\n  inserta); (M6) la maestra que no es la dueña no escribe nada, tampoco la\n  configuración del hogar (42501); (M10) asignar o quitar la maestra deja\n  `finanzas.maestra_asignada`.\n- **Libros compartidos (respuestas del dueño del 23/oct):** quien crea el libro\n  (`creado_por`) es su administrador: agrega y saca miembros, cambia la `visibilidad`\n  y lo archiva. La API no manda ni cambia `creado_por` (42501): solo el servidor, que\n  lo pasa al miembro vigente más antiguo si el creador se sale. `visibilidad` solo\n  existe en los compartidos: `privada` (por omisión; todo nace privado) o `publica`.\n  Privada: leen y escriben sus miembros, y la maestra lee con consulta; el dueño no\n  entra a un compartido privado del que no es miembro. Pública: además la **leen**\n  (no la escriben) los adultos con Finanzas del hogar. **Salirse** es un `PATCH` a la\n  propia fila de `fin_libro_miembros` con `hasta` = ahora (la hora la pone el\n  dispositivo), siempre posible. Si quedan menos de 2 miembros vigentes (también cuando\n  el administrador saca a alguien) el libro **no se archiva**: el servidor lo deja\n  `activo` y `privada`, y el miembro que queda es el administrador (`creado_por`); si\n  se va el administrador (o deja de ser adulto con Finanzas del hogar por una baja o un\n  cambio de rol, N5), `creado_por` pasa al miembro vigente más antiguo y, con menos de\n  2 vigentes, el libro pasa a `privada` (nunca se archiva solo). El\n  **último miembro no puede salirse** (400, 22023: si ya no lo usa, lo archiva).\n  **Archivar** es solo la decisión del administrador (`activo` = `false`) y nunca\n  ocurre solo: un libro archivado se lee y no registra movimientos (403, 42501);\n  reactivarlo (`activo` = `true`) no exige 2 miembros, y mientras está archivado solo su\n  administrador lo administra.\n- **Cuentas de periodo:** solo las de activo y pasivo piden saldo cero para cerrarse\n  o archivarse (22023); las de gasto e ingreso se cierran o archivan con saldo, y en\n  ellas se puede anular un movimiento aunque estén archivadas. Archivar una\n  categoría archiva su cuenta de gasto (si ninguna otra categoría activa la usa) y\n  desarchivarla la reactiva.\n- **Albacea de Papá (N4):** si el cargo de albacea o el de suplente queda vacío (nadie\n  vigente que siga siendo adulto con Finanzas), el dueño del hogar lo vuelve a nombrar\n  con `fin_nombrar_albacea`. Un INSERT directo en `fin_libro_miembros` sigue sin pasar\n  para el dueño (RLS): la función es la única puerta.\n- **Motivo (N2):** el `motivo` de una anulación, un ajuste, un movimiento en nombre\n  de otra persona, el del libro de Papá y el de una conciliación con diferencia\n  necesita al menos 3 caracteres visibles: no cuentan los espacios, tabuladores,\n  saltos de línea, espacios Unicode ni caracteres invisibles (23514). Lo valida un\n  trigger al agregar y no un CHECK, así que lo ya guardado nunca se rechaza y un\n  reenvío idéntico de la cola no falla. El sentido no se juzga.\n- **Funciones internas:** `fin_vigencia_consulta_maestra`, `fin_adulto_con_finanzas` y\n  las de los triggers (`fin_libro_miembros_proteger`, `fin_libros_proteger`,\n  `fin_libro_miembros_sin_maestra`, `fin_categorias_archivar_cuenta`,\n  `bitacora_tope_por_persona`, `fin_motivo_valido`, `fin_motivo_validar`,\n  `fin_libro_asegurar_administrador`, `fin_membresia_relevo_administrador`…) no son\n  llamables desde la API (se les quitó `EXECUTE` a todos los roles); por eso no\n  tienen operación aquí. De la migración de endurecimiento, la app solo llama\n  `fin_nombrar_albacea`. Sí lo son `fin_solo_lectura` y `fin_puede_salir`, que las\n  reglas llaman con el rol de la sesión, y `fin_adultos_con_finanzas` (en plural: la\n  que lista a los adultos con Finanzas del hogar; no la confundas con el ayudante\n  interno `fin_adulto_con_finanzas`, en singular).\n"
+      "description": "Tablas `fin_*`, vistas y funciones de Finanzas (Fase 1, D19), según\n`supabase/migrations/20261021000000_finanzas_mvp1.sql`,\n`supabase/migrations/20261023000000_finanzas_salvaguardas.sql`,\n`supabase/migrations/20261024000000_finanzas_respuestas_dueno.sql` y\n`supabase/README.md` (\"Finanzas (Fase 1)\"). Solo dueño y coadministrador, cada quien\n**su libro** y los compartidos de los que es miembro, más los compartidos públicos\n(`fin_puede`); familiar, cuidador y Casa no ven nada. La **cuenta maestra** es otra\npersona con su propio login: el dueño la invita con `crear_invitacion` y\n`p_es_maestra`, y queda como coadministrador con la marca de maestra, sin libro\npersonal ni membresía en ningún libro. Si no es la dueña es de **solo lectura\ntotal**: lee con una consulta registrada y toda escritura suya (movimientos,\nconfiguración del hogar, crear libros) responde 403 (42501). El dueño también puede\nser la maestra con su propia persona, y en lo suyo sigue escribiendo. Nada de esto va\na la IA en la nube ni a las bocinas (D3, D6).\n\n- **Dinero** en centavos (entero); porcentajes y tasas en puntos base (2000 = 20 %);\n  semana en lunes; identificadores UUID generados en el dispositivo.\n- **Solo agregar:** `fin_movimientos`, `fin_conciliaciones`, `fin_cierres`,\n  `fin_cierre_partidas`, `fin_cierre_abonos` y `fin_importaciones` solo aceptan\n  INSERT; un error se corrige con una anulación (contraasiento) o una versión nueva.\n- **Cola sin conexión (idempotente):** se sube con `on_conflict=id` y\n  `Prefer: resolution=ignore-duplicates`. El mismo `id` con el mismo contenido no hace\n  nada y no falla; con otro contenido, en los libros solo agregar, 409 (23505).\n- **Lo que pone el servidor** (marcado como de solo lectura; no se manda):\n  `recibido_en`, `libro_origen_id` y `libro_destino_id` de los movimientos, las\n  columnas generadas y `reaperturas`.\n- **Errores** (código de PostgreSQL → HTTP de PostgREST): `23503` falta algo de lo\n  que depende (otra cuenta, el original de una anulación; la cola reintenta) → 409;\n  `23505` duplicado o mismo `id` con otro contenido → 409; `23514` regla de la tabla\n  (monto, motivo, lunes, cascada) → 400; `22023` regla de negocio (combinación de\n  cuentas, libro equivocado, papel) → 400; `55000` estado (cuenta no activa, semana\n  cerrada) → 500; `42501` sin permiso o columna que no cambia → 403; `54000` límite\n  (la bitácora: una entrada de más de 4 KB o más de 500 propias en 24 horas) → 500.\n- **Cuenta maestra y consulta registrada (I2):** sin una consulta vigente, la maestra\n  solo ve la **portada**: los libros y quién los lleva (`fin_libros`,\n  `fin_libro_miembros`), las categorías, las cuentas de gasto del hogar y lo que no es\n  de Finanzas. El contenido de un libro ajeno (cuentas, movimientos, plan, cierres,\n  saldos y su bitácora) llega **vacío, sin error**, hasta que llama\n  `fin_registrar_consulta_maestra(libro)`, que deja la entrada\n  `finanzas.consulta_maestra` y habilita la lectura de ese libro por **30 minutos**\n  (por libro y por persona; pasado el tiempo hay que llamarla otra vez, y la app la\n  renueva sola mientras el libro está abierto).\n- **Salvaguardas en el servidor** (hallazgos I1 a I5, M6 y M10 de la revisión de\n  calidad): (I1) en un libro compartido solo quien lo creó, o el dueño del hogar si es\n  miembro, agrega o cambia a otra persona (42501); salirse, o que te saquen, con menos\n  de 2 miembros deja el libro privado y activo, y el último miembro no puede salirse\n  (22023; ver abajo); (I2) la consulta\n  registrada de arriba; (I3) todo movimiento del libro de Papá lleva `en_nombre_de` y\n  `motivo` (23514) y las salidas hacia cualquier otro libro dejan la entrada\n  `finanzas.salida_libro_representado`; (I4) un albacea es vigente solo si sigue siendo\n  adulto con Finanzas, y si no, escribe el suplente; (I5) las acciones `finanzas*` y\n  las tablas `fin_*` de la bitácora las escribe solo el servidor (42501 si la app las\n  inserta); (M6) la maestra que no es la dueña no escribe nada, tampoco la\n  configuración del hogar (42501); (M10) asignar o quitar la maestra deja\n  `finanzas.maestra_asignada`.\n- **Libros compartidos (respuestas del dueño del 23/oct):** quien crea el libro\n  (`creado_por`) es su administrador: agrega y saca miembros, cambia la `visibilidad`\n  y lo archiva. La API no manda ni cambia `creado_por` (42501): solo el servidor, que\n  lo pasa al miembro vigente más antiguo si el creador se sale. `visibilidad` solo\n  existe en los compartidos: `privada` (por omisión; todo nace privado) o `publica`.\n  Privada: leen y escriben sus miembros, y la maestra lee con consulta; el dueño no\n  entra a un compartido privado del que no es miembro. Pública: además la **leen**\n  (no la escriben) los adultos con Finanzas del hogar. **Salirse** es un `PATCH` a la\n  propia fila de `fin_libro_miembros` con `hasta` = ahora (la hora la pone el\n  dispositivo), siempre posible. Si quedan menos de 2 miembros vigentes (también cuando\n  el administrador saca a alguien) el libro **no se archiva**: el servidor lo deja\n  `activo` y `privada`, y el miembro que queda es el administrador (`creado_por`); si\n  se va el administrador (o deja de ser adulto con Finanzas del hogar por una baja o un\n  cambio de rol, N5), `creado_por` pasa al miembro vigente más antiguo y, con menos de\n  2 vigentes, el libro pasa a `privada` (nunca se archiva solo). El\n  **último miembro no puede salirse** (400, 22023: si ya no lo usa, lo archiva).\n  **Archivar** es solo la decisión del administrador (`activo` = `false`) y nunca\n  ocurre solo: un libro archivado se lee y no registra movimientos (403, 42501);\n  reactivarlo (`activo` = `true`) no exige 2 miembros, y mientras está archivado solo su\n  administrador lo administra.\n- **Cuentas de periodo:** solo las de activo y pasivo piden saldo cero para cerrarse\n  o archivarse (22023); las de gasto e ingreso se cierran o archivan con saldo, y en\n  ellas se puede anular un movimiento aunque estén archivadas. Archivar una\n  categoría archiva su cuenta de gasto (si ninguna otra categoría activa la usa) y\n  desarchivarla la reactiva.\n- **Albacea de Papá (N4):** si el cargo de albacea o el de suplente queda vacío (nadie\n  vigente que siga siendo adulto con Finanzas), el dueño del hogar lo vuelve a nombrar\n  con `fin_nombrar_albacea`. Un INSERT directo en `fin_libro_miembros` sigue sin pasar\n  para el dueño (RLS): la función es la única puerta.\n- **Motivo (N2):** el `motivo` de una anulación, un ajuste, un movimiento en nombre\n  de otra persona, el del libro de Papá y el de una conciliación con diferencia\n  necesita al menos 3 caracteres visibles: no cuentan los espacios, tabuladores,\n  saltos de línea, espacios Unicode ni caracteres invisibles (23514). Lo valida un\n  trigger al agregar y no un CHECK, así que lo ya guardado nunca se rechaza y un\n  reenvío idéntico de la cola no falla. El sentido no se juzga.\n- **Fase 2 (deudas y ahorro, D20):** `fin_deudas` suma `clase` (`tarjeta`, `prestamo`,\n  `credito`, `msi`, `familiar`), `acreedor`, `monto_original_centavos`, `cat_pb`,\n  `corte_dia` (solo tarjetas), `permite_pago_anticipado` (nulo = verificar con la caja)\n  y `extra_reduce`; `fin_parametros` suma `orden_ahorro`, `dependientes_cuidados`,\n  `esenciales_incluyen_minimos` y `dias_aviso_deuda`. Tablas nuevas: `fin_msi`,\n  `fin_estados_cuenta` y `fin_retiros_ahorro` (estas dos, solo agregar),\n  `fin_bolsas_ahorro` y `fin_aportaciones_ahorro`; vistas `fin_v_deuda_resumen`,\n  `fin_v_bolsa_saldo` y `fin_v_estados_cuenta_vigentes`. El saldo siempre sale del\n  libro: no se guardan saldos. Los checks de las tablas nuevas responden 23514 y\n  escribir una aportación en una semana cerrada, 55000.\n- **Funciones internas:** `fin_vigencia_consulta_maestra`, `fin_adulto_con_finanzas` y\n  las de los triggers (`fin_libro_miembros_proteger`, `fin_libros_proteger`,\n  `fin_libro_miembros_sin_maestra`, `fin_categorias_archivar_cuenta`,\n  `bitacora_tope_por_persona`, `fin_motivo_valido`, `fin_motivo_validar`,\n  `fin_libro_asegurar_administrador`, `fin_membresia_relevo_administrador`,\n  `avisos_insertar`, `avisos_generar_vencimientos`, `avisos_reclamar`…) no son\n  llamables desde la API (se les quitó `EXECUTE` a todos los roles); por eso no\n  tienen operación aquí. De la migración de endurecimiento, la app solo llama\n  `fin_nombrar_albacea`. Sí lo son `fin_solo_lectura` y `fin_puede_salir`, que las\n  reglas llaman con el rol de la sesión, y `fin_adultos_con_finanzas` (en plural: la\n  que lista a los adultos con Finanzas del hogar; no la confundas con el ayudante\n  interno `fin_adulto_con_finanzas`, en singular).\n"
     },
     {
       "name": "Funciones del servidor",
-      "description": "Funciones de Supabase (`/functions/v1/<nombre>`) desde la Fase 2: avisos al instante\ny, en la Fase 6, el intermediario de la IA, que guarda la clave de la API en el\nservidor (nunca en la app).\n"
+      "description": "Funciones de Supabase (`/functions/v1/<nombre>`). En la Fase 6, el intermediario de la\nIA, que guarda la clave de la API en el servidor (nunca en la app). Los avisos (Fase 2)\nno son una operación de la app: `pg_cron` programa los vencimientos y la Edge Function\n`enviar-avisos` los manda por FCM con la clave de servicio, con un mensaje solo de datos\n`{v, id}`; las funciones `avisos_reclamar`, `avisos_registrar_entrega` y\n`avisos_resultado_envio` son solo de `service_role`. La app lee `avisos` y se apoya en\n`avisosMarcar`, `finEmitirAviso` y `registrarDispositivoRpc`.\n"
     },
     {
       "name": "Puente de casa",
@@ -1335,7 +1335,7 @@ window.ESPECIFICACION_GRAVITY = {
         ],
         "operationId": "leerDispositivos",
         "summary": "Leer mis dispositivos",
-        "description": "Cada quien ve solo los suyos. La función de avisos (Fase 2) los lee desde el servidor.",
+        "description": "Cada quien ve solo los suyos. Para darse de alta o cambiar el token se usa `registrarDispositivoRpc`; la función de avisos los lee desde el servidor.",
         "x-roles": [
           "dueno",
           "coadministrador",
@@ -1373,84 +1373,13 @@ window.ESPECIFICACION_GRAVITY = {
           }
         }
       },
-      "post": {
-        "tags": [
-          "Base de datos"
-        ],
-        "operationId": "registrarDispositivo",
-        "summary": "Registrar este dispositivo",
-        "description": "Agrega un dispositivo a tu nombre, con su token de avisos (FCM, solo Android).",
-        "x-roles": [
-          "dueno",
-          "coadministrador",
-          "familiar",
-          "cuidador",
-          "casa"
-        ],
-        "x-escribe": true,
-        "x-solo-local": true,
-        "x-fase": 0,
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/preferir"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "plataforma"
-                ],
-                "additionalProperties": false,
-                "properties": {
-                  "id": {
-                    "$ref": "#/components/schemas/Uuid"
-                  },
-                  "plataforma": {
-                    "type": "string",
-                    "enum": [
-                      "android",
-                      "windows"
-                    ]
-                  },
-                  "token_avisos": {
-                    "type": [
-                      "string",
-                      "null"
-                    ],
-                    "maxLength": 4096
-                  },
-                  "nombre": {
-                    "type": [
-                      "string",
-                      "null"
-                    ],
-                    "maxLength": 80
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Registrado."
-          },
-          "403": {
-            "$ref": "#/components/responses/Prohibido"
-          }
-        }
-      },
       "patch": {
         "tags": [
           "Base de datos"
         ],
         "operationId": "actualizarDispositivo",
         "summary": "Actualizar mi dispositivo",
-        "description": "Token de avisos, nombre o último uso; solo los tuyos.",
+        "description": "Solo `nombre`, `ultimo_uso` y `recibe_avisos` (si el equipo recibe avisos; una tablet pública nunca, 400); el token no se cambia por aquí (403, 42501): usa `registrarDispositivoRpc`. Solo los tuyos; se puede filtrar por `id` o por `token_avisos` (`?token_avisos=eq.<token>`).",
         "x-roles": [
           "dueno",
           "coadministrador",
@@ -1478,13 +1407,6 @@ window.ESPECIFICACION_GRAVITY = {
                 "additionalProperties": false,
                 "minProperties": 1,
                 "properties": {
-                  "token_avisos": {
-                    "type": [
-                      "string",
-                      "null"
-                    ],
-                    "maxLength": 4096
-                  },
                   "nombre": {
                     "type": [
                       "string",
@@ -1495,6 +1417,9 @@ window.ESPECIFICACION_GRAVITY = {
                   "ultimo_uso": {
                     "type": "string",
                     "format": "date-time"
+                  },
+                  "recibe_avisos": {
+                    "type": "boolean"
                   }
                 }
               }
@@ -1519,7 +1444,7 @@ window.ESPECIFICACION_GRAVITY = {
         ],
         "operationId": "quitarDispositivo",
         "summary": "Quitar mi dispositivo",
-        "description": "Deja de recibir avisos en ese dispositivo; solo los tuyos.",
+        "description": "Deja de recibir avisos en ese dispositivo; solo los tuyos. Por token: `quitarDispositivoRpc`.",
         "x-roles": [
           "dueno",
           "coadministrador",
@@ -1538,6 +1463,479 @@ window.ESPECIFICACION_GRAVITY = {
         "responses": {
           "204": {
             "description": "Quitado."
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/avisos": {
+      "get": {
+        "tags": [
+          "Base de datos"
+        ],
+        "operationId": "leerAvisos",
+        "summary": "Leer mis avisos",
+        "description": "Cada persona lee solo los suyos; nadie escribe directo (solo las funciones del servidor y `avisos_marcar`). El aviso no lleva columnas de monto, de nombre ni de texto libre (D3, D20): el texto sale de un catálogo cerrado en la app y por Firebase solo viaja `{v, id}`. `clave` es única por persona (idempotencia). Se borran a los 90 días. La tabla `avisos_entregas` (qué dispositivo recibió qué) y `avisos_sistema` (umbrales) son solo del servidor y la app no las lee.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 2,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/orden"
+          },
+          {
+            "$ref": "#/components/parameters/limite"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Mis avisos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AvisoPersona"
+                  }
+                },
+                "example": [
+                  {
+                    "id": "9b000000-0000-4000-8000-000000000001",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "persona_id": "e0000000-0000-4000-8000-000000000001",
+                    "modulo": "finanzas",
+                    "tipo": "pago_proximo",
+                    "severidad": "critica",
+                    "clave": "pago_proximo:2026-11-04:1e000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000001",
+                    "objeto_tipo": "deuda",
+                    "objeto_id": "1e000000-0000-4000-8000-000000000001",
+                    "programado_para": "2026-11-02T09:00:00-06:00",
+                    "enviar_en": "2026-11-02T09:00:00-06:00",
+                    "estado": "enviada",
+                    "creado_en": "2026-11-02T08:00:00-06:00"
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/avisos_preferencias": {
+      "get": {
+        "tags": [
+          "Base de datos"
+        ],
+        "operationId": "leerPreferenciasAvisos",
+        "summary": "Leer mis preferencias de avisos",
+        "description": "Una fila por persona con Finanzas (la crea y la quita el servidor al cambiar su rol; la cuenta maestra que no es la dueña no tiene). Silencio por omisión de 22:00 a 07:00, tope de 3 avisos no críticos al día, vencimientos a las 09:00, resumen del lunes a las 08:00. Se cambian con `avisosActualizarPreferencias`.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 2,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Mis preferencias.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AvisosPreferencias"
+                  }
+                },
+                "example": [
+                  {
+                    "persona_id": "e0000000-0000-4000-8000-000000000001",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "zona_horaria": "America/Mexico_City",
+                    "silencio_desde": "22:00:00",
+                    "silencio_hasta": "07:00:00",
+                    "criticas_en_silencio": false,
+                    "tope_no_criticas": 3,
+                    "hora_vencimientos": "09:00:00",
+                    "resumen_lunes": "08:00:00",
+                    "recordatorio_cierre_dia": 7,
+                    "recordatorio_cierre_hora": "19:00:00",
+                    "tipos_silenciados": [],
+                    "pulsera_texto_corto": true
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/avisos_marcar": {
+      "post": {
+        "tags": [
+          "Base de datos"
+        ],
+        "operationId": "avisosMarcar",
+        "summary": "Marcar un aviso mío",
+        "description": "La persona marca SU aviso: `leida`, `resuelta`, `posponer_1h` o `posponer_manana` (vuelve a salir a esa hora, respetando el silencio). Un aviso ajeno o inexistente responde 403 (42501); otra acción, 400 (22023).",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 2,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_aviso_id",
+                  "p_accion"
+                ],
+                "properties": {
+                  "p_aviso_id": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_accion": {
+                    "type": "string",
+                    "enum": [
+                      "leida",
+                      "resuelta",
+                      "posponer_1h",
+                      "posponer_manana"
+                    ]
+                  }
+                }
+              },
+              "example": {
+                "p_aviso_id": "9b000000-0000-4000-8000-000000000001",
+                "p_accion": "posponer_1h"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Marcado."
+          },
+          "400": {
+            "$ref": "#/components/responses/Invalido"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/avisos_actualizar_preferencias": {
+      "post": {
+        "tags": [
+          "Base de datos"
+        ],
+        "operationId": "avisosActualizarPreferencias",
+        "summary": "Cambiar mis preferencias de avisos",
+        "description": "La persona cambia SUS preferencias; los parámetros omitidos o nulos no cambian. Valida rangos: tope de 0 a 10, zona horaria real, día del recordatorio de 1 (lunes) a 7 (domingo) y tipos del catálogo (400, 22023). Sin preferencias (la cuenta maestra que no es la dueña, familiar, cuidador, Casa): 403 (42501).",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 2,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "p_zona_horaria": {
+                    "type": "string"
+                  },
+                  "p_silencio_desde": {
+                    "type": "string",
+                    "pattern": "^[0-9]{2}:[0-9]{2}(:[0-9]{2})?$"
+                  },
+                  "p_silencio_hasta": {
+                    "type": "string",
+                    "pattern": "^[0-9]{2}:[0-9]{2}(:[0-9]{2})?$"
+                  },
+                  "p_criticas_en_silencio": {
+                    "type": "boolean"
+                  },
+                  "p_tope_no_criticas": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 10
+                  },
+                  "p_hora_vencimientos": {
+                    "type": "string",
+                    "pattern": "^[0-9]{2}:[0-9]{2}(:[0-9]{2})?$"
+                  },
+                  "p_resumen_lunes": {
+                    "type": "string",
+                    "pattern": "^[0-9]{2}:[0-9]{2}(:[0-9]{2})?$"
+                  },
+                  "p_recordatorio_cierre_dia": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 7
+                  },
+                  "p_recordatorio_cierre_hora": {
+                    "type": "string",
+                    "pattern": "^[0-9]{2}:[0-9]{2}(:[0-9]{2})?$"
+                  },
+                  "p_tipos_silenciados": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/TipoAviso"
+                    }
+                  },
+                  "p_pulsera_texto_corto": {
+                    "type": "boolean"
+                  }
+                }
+              },
+              "example": {
+                "p_tope_no_criticas": 5,
+                "p_tipos_silenciados": [
+                  "partida_80"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Guardadas."
+          },
+          "400": {
+            "$ref": "#/components/responses/Invalido"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/registrar_dispositivo": {
+      "post": {
+        "tags": [
+          "Base de datos"
+        ],
+        "operationId": "registrarDispositivoRpc",
+        "summary": "Registrar este dispositivo",
+        "description": "Da de alta o **reasigna** el token a la persona de la sesión (el id sale del token, así que es idempotente); entrar con otra cuenta en el mismo equipo reasigna el token (el token es único global). Un teléfono recibe avisos por omisión; tablet personal y laptop, no; una tablet pública nunca. Registrar de nuevo no apaga la elección de la persona. Sin sesión: 403 (42501); token, plataforma o tipo inválidos: 400 (22023). Reemplaza al POST directo sobre `dispositivos`, que ya no existe.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar",
+          "cuidador",
+          "casa"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 2,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_token",
+                  "p_plataforma"
+                ],
+                "properties": {
+                  "p_token": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4096
+                  },
+                  "p_plataforma": {
+                    "type": "string",
+                    "enum": [
+                      "android",
+                      "windows"
+                    ]
+                  },
+                  "p_nombre": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 80
+                  },
+                  "p_tipo": {
+                    "type": "string",
+                    "enum": [
+                      "telefono",
+                      "tablet_personal",
+                      "tablet_publica",
+                      "laptop"
+                    ],
+                    "default": "telefono"
+                  }
+                }
+              },
+              "example": {
+                "p_token": "token-fcm-de-ejemplo-ana",
+                "p_plataforma": "android",
+                "p_nombre": "Teléfono de Ana (ejemplo)",
+                "p_tipo": "telefono"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Id del dispositivo (derivado del token).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Uuid"
+                },
+                "example": "6f1c2a8e-3b7d-4c55-9e0a-2d4b8f1e7a90"
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Invalido"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/quitar_dispositivo": {
+      "post": {
+        "tags": [
+          "Base de datos"
+        ],
+        "operationId": "quitarDispositivoRpc",
+        "summary": "Quitar un dispositivo mío por su token",
+        "description": "Deja de recibir avisos en ese dispositivo (se usa al cerrar sesión). Devuelve `true` si había un dispositivo tuyo con ese token y `false` si no.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar",
+          "cuidador",
+          "casa"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 2,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_token"
+                ],
+                "properties": {
+                  "p_token": {
+                    "type": "string"
+                  }
+                }
+              },
+              "example": {
+                "p_token": "token-fcm-de-ejemplo-ana"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Si había un dispositivo suyo con ese token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                },
+                "example": true
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/avisos_porcentaje_base": {
+      "post": {
+        "tags": [
+          "Base de datos"
+        ],
+        "operationId": "avisosPorcentajeBase",
+        "summary": "Porcentaje usado de la base de datos",
+        "description": "Solo el dueño (Ajustes > Copias de seguridad): porcentaje de la base usado respecto del límite del plan, con un decimal, o nulo si no hay límite. Solo lectura y no revela nada más de `avisos_sistema`. A cualquier otro rol responde 403 (42501). Sin parámetros.",
+        "x-roles": [
+          "dueno"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 2,
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Porcentaje usado (nulo si no hay límite).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "example": 12.4
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
           },
           "403": {
             "$ref": "#/components/responses/Prohibido"
@@ -5431,6 +5829,1193 @@ window.ESPECIFICACION_GRAVITY = {
         }
       }
     },
+    "/rest/v1/fin_msi": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerMsi",
+        "summary": "Leer compras a meses sin intereses",
+        "description": "Compras a MSI de cada libro: su deuda (clase `msi`), su tarjeta opcional, su cuenta pasivo propia y las mensualidades. El comercio y la descripción son datos del libro: jamás salen en un aviso. Las mensualidades pagadas salen de las ocurrencias de su deuda y el saldo, de su cuenta pasivo (`fin_v_deuda_resumen`). La cuenta maestra ve vacío el libro de otra persona mientras no tenga una consulta vigente (`fin_registrar_consulta_maestra`, 30 minutos): no da error, no devuelve filas.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 2,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/filtroLibro"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas visibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinMsi"
+                  }
+                },
+                "example": [
+                  {
+                    "id": "5a000000-0000-4000-8000-000000000001",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000001",
+                    "deuda_id": "1e000000-0000-4000-8000-000000000002",
+                    "tarjeta_deuda_id": "1e000000-0000-4000-8000-000000000001",
+                    "cuenta_pasivo_id": "c3000000-0000-4000-8000-000000000022",
+                    "comercio": "Tienda (ejemplo)",
+                    "fecha_compra": "2026-09-15",
+                    "monto_total_centavos": 360000,
+                    "mensualidades": 12,
+                    "activo": true
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "agregarMsi",
+        "summary": "Agregar una compra a MSI",
+        "description": "Su deuda es de clase `msi` y su cuenta pasivo es propia (tipo `prestamo`, única). De 2 a 48 mensualidades; los montos van en centavos (23514 si no cumplen). La cuenta maestra que no es la dueña es de solo lectura total: toda escritura suya responde 403 (42501).",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 2,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/alConflicto"
+          },
+          {
+            "$ref": "#/components/parameters/preferirAlSubir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/FinMsi"
+                  },
+                  {
+                    "required": [
+                      "id",
+                      "hogar_id",
+                      "libro_id",
+                      "deuda_id",
+                      "cuenta_pasivo_id",
+                      "fecha_compra",
+                      "monto_total_centavos",
+                      "mensualidades"
+                    ]
+                  }
+                ]
+              },
+              "examples": {
+                "msi": {
+                  "summary": "Compra a 12 meses sin intereses (monto inventado)",
+                  "value": {
+                    "id": "5a000000-0000-4000-8000-000000000001",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000001",
+                    "deuda_id": "1e000000-0000-4000-8000-000000000002",
+                    "tarjeta_deuda_id": "1e000000-0000-4000-8000-000000000001",
+                    "cuenta_pasivo_id": "c3000000-0000-4000-8000-000000000022",
+                    "comercio": "Tienda (ejemplo)",
+                    "fecha_compra": "2026-09-15",
+                    "monto_total_centavos": 360000,
+                    "mensualidades": 12
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/Agregado"
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          },
+          "500": {
+            "$ref": "#/components/responses/EstadoFinanzas"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "cambiarMsi",
+        "summary": "Cambiar o desactivar una compra a MSI",
+        "description": "Datos de la compra o `activo`. Las llaves (libro, deuda, cuenta pasivo) no cambian (42501).",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 2,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filtroIdObligatorio"
+          },
+          {
+            "$ref": "#/components/parameters/preferir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/FinMsi"
+                  },
+                  {
+                    "minProperties": 1
+                  }
+                ]
+              },
+              "example": {
+                "activo": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Actualizado"
+          },
+          "204": {
+            "description": "Actualizado (sin cuerpo)."
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          },
+          "500": {
+            "$ref": "#/components/responses/EstadoFinanzas"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_estados_cuenta": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerEstadosCuenta",
+        "summary": "Leer estados de cuenta",
+        "description": "**Solo agregar.** Estados de cuenta capturados a mano de cada deuda: para un mismo corte vale el registro más reciente (`registrado_en`, luego `id`); el historial son los demás (`fin_v_estados_cuenta_vigentes` trae lo vigente). La cuenta maestra ve vacío el libro de otra persona mientras no tenga una consulta vigente (`fin_registrar_consulta_maestra`, 30 minutos): no da error, no devuelve filas.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 2,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/filtroLibro"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas visibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinEstadoCuenta"
+                  }
+                },
+                "example": [
+                  {
+                    "id": "5b000000-0000-4000-8000-000000000001",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000001",
+                    "deuda_id": "1e000000-0000-4000-8000-000000000001",
+                    "fecha_corte": "2026-10-15",
+                    "fecha_limite_pago": "2026-11-04",
+                    "saldo_al_corte_centavos": 1250000,
+                    "pago_minimo_centavos": 62500,
+                    "pago_sin_intereses_centavos": 1250000,
+                    "via": "manual",
+                    "registrado_en": "2026-10-16T09:00:00-06:00"
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "registrarEstadoCuenta",
+        "summary": "Registrar un estado de cuenta (solo agregar)",
+        "description": "**Solo agregar:** no se edita ni se borra; se corrige agregando otro del mismo corte (el más reciente vale). `registrado_en` es obligatorio (cuándo se capturó) y `recibido_en` lo pone el servidor. `via` solo vale `manual` (no hay estimador). La fecha límite no es anterior al corte (23514). Reenviar el mismo `id` con el mismo contenido no hace nada; con otro contenido, 409 (23505). La cuenta maestra que no es la dueña es de solo lectura total: toda escritura suya responde 403 (42501).",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 2,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/alConflicto"
+          },
+          {
+            "$ref": "#/components/parameters/preferirAlSubir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/FinEstadoCuenta"
+                  },
+                  {
+                    "required": [
+                      "id",
+                      "hogar_id",
+                      "libro_id",
+                      "deuda_id",
+                      "fecha_corte",
+                      "fecha_limite_pago",
+                      "saldo_al_corte_centavos",
+                      "pago_minimo_centavos",
+                      "pago_sin_intereses_centavos",
+                      "registrado_en"
+                    ]
+                  }
+                ]
+              },
+              "examples": {
+                "corte": {
+                  "summary": "Corte de la tarjeta (montos inventados)",
+                  "value": {
+                    "id": "5b000000-0000-4000-8000-000000000001",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000001",
+                    "deuda_id": "1e000000-0000-4000-8000-000000000001",
+                    "fecha_corte": "2026-10-15",
+                    "fecha_limite_pago": "2026-11-04",
+                    "saldo_al_corte_centavos": 1250000,
+                    "pago_minimo_centavos": 62500,
+                    "pago_sin_intereses_centavos": 1250000,
+                    "registrado_en": "2026-10-16T09:00:00-06:00"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/Agregado"
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          },
+          "500": {
+            "$ref": "#/components/responses/EstadoFinanzas"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_bolsas_ahorro": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerBolsasAhorro",
+        "summary": "Leer bolsas de ahorro",
+        "description": "Una bolsa es una cuenta de tipo `ahorro` del libro: fondo de emergencia (uno activo por libro), reserva, meta con fecha o meta libre. Métodos de ahorro: `pagate_primero`, `monto_fijo`, `meta_fecha`, `reto_52_semanas`, `redondeo`, `sobrante_semanal`, `sobre_categoria` y `porcentaje_extras`. El saldo sale del libro (`fin_v_bolsa_saldo`). La cuenta maestra ve vacío el libro de otra persona mientras no tenga una consulta vigente (`fin_registrar_consulta_maestra`, 30 minutos): no da error, no devuelve filas.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 2,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/filtroLibro"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas visibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinBolsaAhorro"
+                  }
+                },
+                "example": [
+                  {
+                    "id": "5c000000-0000-4000-8000-000000000001",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000001",
+                    "nombre": "Fondo de emergencia",
+                    "tipo": "fondo_emergencia",
+                    "cuenta_id": "c3000000-0000-4000-8000-000000000040",
+                    "nivel_meta": 1,
+                    "metodos": [
+                      "pagate_primero"
+                    ],
+                    "redondeo_multiplo_centavos": 1000,
+                    "prioridad": 1,
+                    "activa": true
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "agregarBolsaAhorro",
+        "summary": "Agregar una bolsa de ahorro",
+        "description": "Su cuenta es de tipo `ahorro` del mismo libro y única. El fondo de emergencia lleva `nivel_meta` (1 a 5) y no `meta_centavos`; la reserva lleva `monto_anual_centavos`; la meta con fecha lleva `fecha_meta` y `meta_centavos` (23514 si no cumplen). Máximo 8 métodos, de la lista cerrada. La cuenta maestra que no es la dueña es de solo lectura total: toda escritura suya responde 403 (42501).",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 2,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/alConflicto"
+          },
+          {
+            "$ref": "#/components/parameters/preferirAlSubir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/FinBolsaAhorro"
+                  },
+                  {
+                    "required": [
+                      "id",
+                      "hogar_id",
+                      "libro_id",
+                      "nombre",
+                      "tipo",
+                      "cuenta_id"
+                    ]
+                  }
+                ]
+              },
+              "examples": {
+                "fondo": {
+                  "summary": "Fondo de emergencia nivel 1",
+                  "value": {
+                    "id": "5c000000-0000-4000-8000-000000000001",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000001",
+                    "nombre": "Fondo de emergencia",
+                    "tipo": "fondo_emergencia",
+                    "cuenta_id": "c3000000-0000-4000-8000-000000000040",
+                    "nivel_meta": 1,
+                    "metodos": [
+                      "pagate_primero"
+                    ]
+                  }
+                },
+                "meta": {
+                  "summary": "Meta con fecha (monto inventado)",
+                  "value": {
+                    "id": "5c000000-0000-4000-8000-000000000002",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000001",
+                    "nombre": "Vacaciones (ejemplo)",
+                    "tipo": "meta_fecha",
+                    "cuenta_id": "c3000000-0000-4000-8000-000000000041",
+                    "meta_centavos": 600000,
+                    "fecha_meta": "2027-07-01",
+                    "metodos": [
+                      "monto_fijo",
+                      "redondeo"
+                    ],
+                    "aporte_fijo_centavos": 20000
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/Agregado"
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          },
+          "500": {
+            "$ref": "#/components/responses/EstadoFinanzas"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "cambiarBolsaAhorro",
+        "summary": "Cambiar o desactivar una bolsa de ahorro",
+        "description": "Cambiar la configuración vale de ahí en adelante; el historial son los movimientos. Tipo, cuenta y libro no cambian (42501).",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 2,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filtroIdObligatorio"
+          },
+          {
+            "$ref": "#/components/parameters/preferir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/FinBolsaAhorro"
+                  },
+                  {
+                    "minProperties": 1
+                  }
+                ]
+              },
+              "example": {
+                "activa": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Actualizado"
+          },
+          "204": {
+            "description": "Actualizado (sin cuerpo)."
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          },
+          "500": {
+            "$ref": "#/components/responses/EstadoFinanzas"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_aportaciones_ahorro": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerAportacionesAhorro",
+        "summary": "Leer aportaciones de ahorro de la semana",
+        "description": "Reparto semanal del ahorro por bolsa: lo sugerido, lo aportado y lo pendiente (generado). Lo no aportado queda como pendiente sin castigo. La cuenta maestra ve vacío el libro de otra persona mientras no tenga una consulta vigente (`fin_registrar_consulta_maestra`, 30 minutos): no da error, no devuelve filas.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 2,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/filtroLibro"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas visibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinAportacionAhorro"
+                  }
+                },
+                "example": [
+                  {
+                    "id": "5d000000-0000-4000-8000-000000000001",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000001",
+                    "semana_id": "2a000000-0000-4000-8000-000000000001",
+                    "bolsa_id": "5c000000-0000-4000-8000-000000000001",
+                    "sugerido_centavos": 30000,
+                    "aportado_centavos": 0,
+                    "pendiente_centavos": 30000,
+                    "estado": "propuesta"
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "agregarAportacionAhorro",
+        "summary": "Agregar la aportación sugerida de una semana",
+        "description": "Una por bolsa y semana. No se agrega en una semana cerrada (55000). `pendiente_centavos` es generada: no se manda. La cuenta maestra que no es la dueña es de solo lectura total: toda escritura suya responde 403 (42501).",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 2,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/alConflicto"
+          },
+          {
+            "$ref": "#/components/parameters/preferirAlSubir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/FinAportacionAhorro"
+                  },
+                  {
+                    "required": [
+                      "id",
+                      "hogar_id",
+                      "libro_id",
+                      "semana_id",
+                      "bolsa_id",
+                      "sugerido_centavos"
+                    ]
+                  }
+                ]
+              },
+              "examples": {
+                "propuesta": {
+                  "summary": "Aportación propuesta (monto inventado)",
+                  "value": {
+                    "id": "5d000000-0000-4000-8000-000000000001",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000001",
+                    "semana_id": "2a000000-0000-4000-8000-000000000001",
+                    "bolsa_id": "5c000000-0000-4000-8000-000000000001",
+                    "sugerido_centavos": 30000
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/Agregado"
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          },
+          "500": {
+            "$ref": "#/components/responses/EstadoFinanzas"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "cambiarAportacionAhorro",
+        "summary": "Confirmar, posponer u omitir una aportación",
+        "description": "Al confirmar (`estado: confirmada`) lleva `movimiento_id` (la transferencia a la bolsa) y `aportado_centavos` mayor que 0; el resto de estados, aportado 0 (23514). Solo cambia mientras la semana no esté cerrada, salvo confirmar la de la semana recién cerrada; una vez puestos, `movimiento_id` y el monto aportado no se tocan (55000 en semana cerrada).",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 2,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filtroIdObligatorio"
+          },
+          {
+            "$ref": "#/components/parameters/preferir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/FinAportacionAhorro"
+                  },
+                  {
+                    "minProperties": 1
+                  }
+                ]
+              },
+              "example": {
+                "estado": "pospuesta"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Actualizado"
+          },
+          "204": {
+            "description": "Actualizado (sin cuerpo)."
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          },
+          "500": {
+            "$ref": "#/components/responses/EstadoFinanzas"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_retiros_ahorro": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerRetirosAhorro",
+        "summary": "Leer retiros de ahorro",
+        "description": "**Solo agregar.** Retiros de las bolsas: uso previsto, emergencia o cambio de destino. La cuenta maestra ve vacío el libro de otra persona mientras no tenga una consulta vigente (`fin_registrar_consulta_maestra`, 30 minutos): no da error, no devuelve filas.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 2,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/filtroLibro"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas visibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinRetiroAhorro"
+                  }
+                },
+                "example": [
+                  {
+                    "id": "5e000000-0000-4000-8000-000000000001",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000001",
+                    "bolsa_id": "5c000000-0000-4000-8000-000000000001",
+                    "movimiento_id": "3d0c2f5e-8a41-4b7e-9c1d-5f2a6b8e9a06",
+                    "tipo": "emergencia",
+                    "motivo": "Reparación del boiler (ejemplo)",
+                    "registrado_en": "2026-10-20T18:30:00-06:00"
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "registrarRetiroAhorro",
+        "summary": "Registrar un retiro de ahorro (solo agregar)",
+        "description": "**Solo agregar.** Acompaña al movimiento de retiro (`movimiento_id`, único). El `motivo` necesita al menos 3 caracteres visibles (23514, N2); `cambio_destino` lleva `bolsa_destino_id` y los demás tipos no (23514). Si la bolsa es de un libro compartido, avisa a los demás miembros (`retiro_bolsa_compartida`). La cuenta maestra que no es la dueña es de solo lectura total: toda escritura suya responde 403 (42501).",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 2,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/alConflicto"
+          },
+          {
+            "$ref": "#/components/parameters/preferirAlSubir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/FinRetiroAhorro"
+                  },
+                  {
+                    "required": [
+                      "id",
+                      "hogar_id",
+                      "libro_id",
+                      "bolsa_id",
+                      "movimiento_id",
+                      "tipo",
+                      "registrado_en"
+                    ]
+                  }
+                ]
+              },
+              "examples": {
+                "emergencia": {
+                  "summary": "Retiro por emergencia",
+                  "value": {
+                    "id": "5e000000-0000-4000-8000-000000000001",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000001",
+                    "bolsa_id": "5c000000-0000-4000-8000-000000000001",
+                    "movimiento_id": "3d0c2f5e-8a41-4b7e-9c1d-5f2a6b8e9a06",
+                    "tipo": "emergencia",
+                    "motivo": "Reparación del boiler (ejemplo)",
+                    "registrado_en": "2026-10-20T18:30:00-06:00"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/Agregado"
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          },
+          "500": {
+            "$ref": "#/components/responses/EstadoFinanzas"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_v_deuda_resumen": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerResumenDeudas",
+        "summary": "Leer el resumen de deudas (vista)",
+        "description": "Saldo de cada deuda (desde el libro) y, en una tarjeta, el saldo pendiente de sus MSI activos. No guarda nada; respeta la RLS (`security_invoker`). La cuenta maestra ve vacío el libro de otra persona mientras no tenga una consulta vigente (`fin_registrar_consulta_maestra`, 30 minutos): no da error, no devuelve filas.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 2,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/filtroLibro"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas visibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinDeudaResumen"
+                  }
+                },
+                "example": [
+                  {
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000001",
+                    "deuda_id": "1e000000-0000-4000-8000-000000000001",
+                    "nombre": "Tarjeta de la casa (ejemplo)",
+                    "clase": "tarjeta",
+                    "tipo": "con_costo",
+                    "cuenta_pasivo_id": "c3000000-0000-4000-8000-000000000021",
+                    "saldo_centavos": 1250000,
+                    "msi_pendiente_centavos": 330000
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_v_bolsa_saldo": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerSaldoBolsas",
+        "summary": "Leer el saldo de las bolsas de ahorro (vista)",
+        "description": "Saldo de cada bolsa, desde su cuenta del libro. La cuenta maestra ve vacío el libro de otra persona mientras no tenga una consulta vigente (`fin_registrar_consulta_maestra`, 30 minutos): no da error, no devuelve filas.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 2,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/filtroLibro"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas visibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinBolsaSaldo"
+                  }
+                },
+                "example": [
+                  {
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000001",
+                    "bolsa_id": "5c000000-0000-4000-8000-000000000001",
+                    "nombre": "Fondo de emergencia",
+                    "tipo": "fondo_emergencia",
+                    "cuenta_id": "c3000000-0000-4000-8000-000000000040",
+                    "activa": true,
+                    "saldo_centavos": 450000
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_v_estados_cuenta_vigentes": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerEstadosCuentaVigentes",
+        "summary": "Leer los estados de cuenta vigentes (vista)",
+        "description": "El registro más reciente de cada corte de cada deuda (lo vigente; los demás son el historial). La cuenta maestra ve vacío el libro de otra persona mientras no tenga una consulta vigente (`fin_registrar_consulta_maestra`, 30 minutos): no da error, no devuelve filas.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 2,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/filtroLibro"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas visibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinEstadoCuenta"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/fin_emitir_aviso": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finEmitirAviso",
+        "summary": "Emitir un aviso que solo el motor calcula",
+        "description": "La app emite los avisos que solo el motor de Finanzas sabe calcular: `protegido_riesgo`, `flujo_negativo`, `abono_bajo_minimo`, `partida_100`, `partida_80`, `fondo_bajo`, `uso_limite`, `aportacion_pendiente` y `conciliacion_pendiente`. Exige poder escribir en el libro (403, 42501). Los destinatarios los calcula el servidor (el libro personal, el compartido o el de Papá; nunca la cuenta maestra que no es la dueña, ni familiar, cuidador o Casa). Idempotente por `clave` (minúsculas, dígitos y `_ : . -`, hasta 120). Responde 400 (22023) si el tipo no es emitible, la clave o el objeto no valen, o se llegó al tope de 60 avisos al día por persona. Devuelve cuántos avisos creó. El aviso no lleva montos, nombres ni texto libre (D3, D20).",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 2,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_libro_id",
+                  "p_tipo",
+                  "p_clave"
+                ],
+                "properties": {
+                  "p_libro_id": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_tipo": {
+                    "$ref": "#/components/schemas/TipoAvisoEmitible"
+                  },
+                  "p_objeto_tipo": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "enum": [
+                      "deuda",
+                      "ocurrencia",
+                      "partida",
+                      "bolsa",
+                      "semana",
+                      "libro",
+                      "movimiento",
+                      null
+                    ]
+                  },
+                  "p_objeto_id": {
+                    "$ref": "#/components/schemas/UuidONulo"
+                  },
+                  "p_clave": {
+                    "type": "string",
+                    "maxLength": 120,
+                    "pattern": "^[a-z0-9_:.-]+$"
+                  }
+                }
+              },
+              "example": {
+                "p_libro_id": "f1000000-0000-4000-8000-000000000001",
+                "p_tipo": "partida_80",
+                "p_objeto_tipo": "partida",
+                "p_objeto_id": "2b000000-0000-4000-8000-000000000001",
+                "p_clave": "partida_80:2026-10-19:2b000000-0000-4000-8000-000000000001"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cuántos avisos creó (0 si la clave ya existía para todos).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "example": 2
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
     "/rest/v1/rpc/fin_puede": {
       "post": {
         "tags": [
@@ -5974,7 +7559,7 @@ window.ESPECIFICACION_GRAVITY = {
         ],
         "operationId": "finRegistrarConsultaMaestra",
         "summary": "Registrar una consulta de la cuenta maestra a un libro ajeno",
-        "description": "La cuenta maestra la llama **antes** de abrir un libro ajeno. Deja la consulta en la bitácora (`finanzas.consulta_maestra`, visible para quienes llevan ese libro) y habilita la lectura de ese libro por **30 minutos** (I2): es por libro y por persona, y pasado el tiempo hay que llamarla otra vez (cada llamada queda en la bitácora; la app la renueva sola mientras el libro está abierto). Sin una consulta vigente, el servidor no devuelve filas del contenido de un libro ajeno (cuentas, movimientos, plan, cierres, saldos): llega vacío, **sin error**; los libros y sus miembros sí se ven (la portada). Devuelve `true` si registró la consulta y `false` si el libro es propio (no se registra ni hace falta). Si la sesión no es la cuenta maestra del hogar, o el libro no existe, 403 (42501).",
+        "description": "La cuenta maestra la llama **antes** de abrir un libro ajeno. Deja la consulta en la bitácora (`finanzas.consulta_maestra`, visible para quienes llevan ese libro) y habilita la lectura de ese libro por **30 minutos** (I2): es por libro y por persona, y pasado el tiempo hay que llamarla otra vez (cada llamada queda en la bitácora; la app la renueva sola mientras el libro está abierto). Sin una consulta vigente, el servidor no devuelve filas del contenido de un libro ajeno (cuentas, movimientos, plan, cierres, saldos): llega vacío, **sin error**; los libros y sus miembros sí se ven (la portada). Devuelve `true` si registró la consulta y `false` si el libro es propio (no se registra ni hace falta). Si ya hay una entrada del último minuto para ese libro y esa persona, devuelve `true` sin repetirla (no engorda la bitácora; la renovación automática de la app no la llena). Si la sesión no es la cuenta maestra del hogar, o el libro no existe, 403 (42501).",
         "x-roles": [
           "dueno",
           "coadministrador"
@@ -6254,40 +7839,6 @@ window.ESPECIFICACION_GRAVITY = {
           },
           "401": {
             "$ref": "#/components/responses/SinSesion"
-          }
-        }
-      }
-    },
-    "/functions/v1/avisos": {
-      "post": {
-        "tags": [
-          "Funciones del servidor"
-        ],
-        "operationId": "enviarAviso",
-        "summary": "Enviar un aviso al instante (Fase 2)",
-        "description": "Propuesta. Envía una notificación (FCM) a los dispositivos de las personas indicadas, p. ej. una alerta de vencimiento o, en la Fase 5, un cambio urgente de medicamento a la cuidadora de turno. El texto es discreto: sin montos ni nombres de medicamentos.",
-        "x-roles": [
-          "dueno"
-        ],
-        "x-escribe": true,
-        "x-solo-local": true,
-        "x-fase": 2,
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Aviso"
-              }
-            }
-          }
-        },
-        "responses": {
-          "202": {
-            "description": "Aviso en camino."
-          },
-          "403": {
-            "$ref": "#/components/responses/Prohibido"
           }
         }
       }
@@ -7272,13 +8823,27 @@ window.ESPECIFICACION_GRAVITY = {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "description": "Token único global; se cambia solo con `registrarDispositivoRpc`."
           },
           "nombre": {
             "type": [
               "string",
               "null"
             ]
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "telefono",
+              "tablet_personal",
+              "tablet_publica",
+              "laptop"
+            ]
+          },
+          "recibe_avisos": {
+            "type": "boolean",
+            "description": "El teléfono sí por omisión; tablet personal y laptop no; una tablet pública nunca."
           },
           "creado_en": {
             "type": "string",
@@ -7776,6 +9341,39 @@ window.ESPECIFICACION_GRAVITY = {
             "minimum": 1,
             "maximum": 30
           },
+          "orden_ahorro": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "fondo_n1",
+                "reservas",
+                "metas_fecha",
+                "fondo_meta",
+                "metas_libres"
+              ]
+            },
+            "description": "Orden en que se reparte el ahorro (23514 si no es una permutación válida)."
+          },
+          "dependientes_cuidados": {
+            "type": "boolean",
+            "default": false
+          },
+          "esenciales_incluyen_minimos": {
+            "type": "boolean",
+            "default": true
+          },
+          "dias_aviso_deuda": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "default": [
+              3,
+              1
+            ],
+            "description": "Días antes del vencimiento en que avisa un pago próximo."
+          },
           "cuenta_ajustes_id": {
             "$ref": "#/components/schemas/Uuid",
             "readOnly": true
@@ -8240,6 +9838,68 @@ window.ESPECIFICACION_GRAVITY = {
           "activa": {
             "type": "boolean",
             "default": true
+          },
+          "clase": {
+            "type": "string",
+            "enum": [
+              "tarjeta",
+              "prestamo",
+              "credito",
+              "msi",
+              "familiar"
+            ],
+            "description": "`msi` si y solo si `tipo` = `msi`; `familiar` si y solo si `tipo` = `familiar`; las demás son `con_costo` (23514). Si el INSERT no la trae, el servidor la deduce."
+          },
+          "acreedor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 80
+          },
+          "monto_original_centavos": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "minimum": 1
+          },
+          "cat_pb": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "description": "CAT en puntos base."
+          },
+          "corte_dia": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 31,
+            "description": "Día de corte (0 = último día del mes). Solo en tarjetas (23514)."
+          },
+          "permite_pago_anticipado": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Nulo = verificar con la caja: la app no propone extra a capital mientras sea nulo."
+          },
+          "extra_reduce": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "plazo",
+              "cuota",
+              null
+            ],
+            "description": "Qué reduce un abono extra."
           }
         }
       },
@@ -8862,34 +10522,652 @@ window.ESPECIFICACION_GRAVITY = {
           }
         }
       },
-      "Aviso": {
+      "TipoAviso": {
+        "type": "string",
+        "description": "Catálogo cerrado de 19 tipos; la severidad es fija por tipo. Críticas: `pago_proximo`, `limite_tarjeta`, `pago_vencido`, `protegido_riesgo`, `flujo_negativo`, `abono_bajo_minimo`, `base_90`. Importantes: `partida_100`, `ingreso_retrasado`, `fondo_bajo`, `salida_libro_representado`, `base_80`. Informativas: `partida_80`, `uso_limite`, `aportacion_pendiente`, `conciliacion_pendiente`, `retiro_bolsa_compartida`, `resumen_lunes`, `recordatorio_cierre`.",
+        "enum": [
+          "pago_proximo",
+          "limite_tarjeta",
+          "pago_vencido",
+          "protegido_riesgo",
+          "flujo_negativo",
+          "abono_bajo_minimo",
+          "partida_100",
+          "partida_80",
+          "ingreso_retrasado",
+          "fondo_bajo",
+          "uso_limite",
+          "aportacion_pendiente",
+          "conciliacion_pendiente",
+          "salida_libro_representado",
+          "retiro_bolsa_compartida",
+          "resumen_lunes",
+          "recordatorio_cierre",
+          "base_80",
+          "base_90"
+        ]
+      },
+      "TipoAvisoEmitible": {
+        "type": "string",
+        "description": "Los que la app puede emitir con `finEmitirAviso` (los que solo el motor sabe calcular).",
+        "enum": [
+          "protegido_riesgo",
+          "flujo_negativo",
+          "abono_bajo_minimo",
+          "partida_100",
+          "partida_80",
+          "fondo_bajo",
+          "uso_limite",
+          "aportacion_pendiente",
+          "conciliacion_pendiente"
+        ]
+      },
+      "AvisoPersona": {
         "type": "object",
-        "description": "Propuesta (Fase 2).",
-        "required": [
-          "personas",
-          "titulo"
-        ],
+        "description": "Un aviso dirigido a una persona. Sin montos, nombres ni texto libre (D3, D20).",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "persona_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "modulo": {
+            "type": "string",
+            "enum": [
+              "finanzas",
+              "sistema"
+            ]
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoAviso"
+          },
+          "severidad": {
+            "type": "string",
+            "enum": [
+              "critica",
+              "importante",
+              "informativa"
+            ]
+          },
+          "clave": {
+            "type": "string",
+            "maxLength": 120,
+            "description": "Idempotencia; única con `persona_id`."
+          },
+          "libro_id": {
+            "$ref": "#/components/schemas/UuidONulo"
+          },
+          "objeto_tipo": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "deuda",
+              "ocurrencia",
+              "partida",
+              "bolsa",
+              "semana",
+              "libro",
+              "movimiento",
+              null
+            ]
+          },
+          "objeto_id": {
+            "$ref": "#/components/schemas/UuidONulo"
+          },
+          "programado_para": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "enviar_en": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Cuándo sale, ya ajustado al silencio y al tope diario."
+          },
+          "estado": {
+            "type": "string",
+            "enum": [
+              "pendiente",
+              "enviada",
+              "agrupada",
+              "cancelada",
+              "leida",
+              "resuelta",
+              "pospuesta"
+            ]
+          },
+          "enviada_en": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "leida_en": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "resuelta_en": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "creado_en": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "emitido_por": {
+            "$ref": "#/components/schemas/UuidONulo"
+          }
+        }
+      },
+      "AvisosPreferencias": {
+        "type": "object",
+        "description": "Preferencias de avisos de una persona.",
+        "properties": {
+          "persona_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "zona_horaria": {
+            "type": "string",
+            "default": "America/Mexico_City"
+          },
+          "silencio_desde": {
+            "type": "string",
+            "pattern": "^[0-9]{2}:[0-9]{2}(:[0-9]{2})?$"
+          },
+          "silencio_hasta": {
+            "type": "string",
+            "pattern": "^[0-9]{2}:[0-9]{2}(:[0-9]{2})?$"
+          },
+          "criticas_en_silencio": {
+            "type": "boolean"
+          },
+          "tope_no_criticas": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10
+          },
+          "hora_vencimientos": {
+            "type": "string",
+            "pattern": "^[0-9]{2}:[0-9]{2}(:[0-9]{2})?$"
+          },
+          "resumen_lunes": {
+            "type": "string",
+            "pattern": "^[0-9]{2}:[0-9]{2}(:[0-9]{2})?$"
+          },
+          "recordatorio_cierre_dia": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 7
+          },
+          "recordatorio_cierre_hora": {
+            "type": "string",
+            "pattern": "^[0-9]{2}:[0-9]{2}(:[0-9]{2})?$"
+          },
+          "tipos_silenciados": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TipoAviso"
+            }
+          },
+          "pulsera_texto_corto": {
+            "type": "boolean"
+          }
+        }
+      },
+      "FinMsi": {
+        "type": "object",
+        "description": "Compra a meses sin intereses de un libro. Comercio y descripción nunca salen en un aviso.",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "libro_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "deuda_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "tarjeta_deuda_id": {
+            "$ref": "#/components/schemas/UuidONulo"
+          },
+          "cuenta_pasivo_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "comercio": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 80
+          },
+          "descripcion": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 120
+          },
+          "fecha_compra": {
+            "type": "string",
+            "format": "date"
+          },
+          "monto_total_centavos": {
+            "$ref": "#/components/schemas/CentavosPositivos"
+          },
+          "mensualidades": {
+            "type": "integer",
+            "minimum": 2,
+            "maximum": 48
+          },
+          "activo": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "FinEstadoCuenta": {
+        "type": "object",
+        "description": "Estado de cuenta capturado a mano (**solo agregar**); para un corte vale el más reciente.",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "libro_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "deuda_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "fecha_corte": {
+            "type": "string",
+            "format": "date"
+          },
+          "fecha_limite_pago": {
+            "type": "string",
+            "format": "date"
+          },
+          "saldo_al_corte_centavos": {
+            "$ref": "#/components/schemas/Centavos"
+          },
+          "pago_minimo_centavos": {
+            "$ref": "#/components/schemas/CentavosNoNegativos"
+          },
+          "pago_sin_intereses_centavos": {
+            "$ref": "#/components/schemas/CentavosNoNegativos"
+          },
+          "intereses_centavos": {
+            "$ref": "#/components/schemas/CentavosNoNegativos"
+          },
+          "cargos_centavos": {
+            "$ref": "#/components/schemas/CentavosNoNegativos"
+          },
+          "tasa_declarada_pb": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "cat_pb": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "via": {
+            "type": "string",
+            "enum": [
+              "manual"
+            ],
+            "default": "manual"
+          },
+          "registrado_por": {
+            "$ref": "#/components/schemas/Uuid",
+            "description": "Por omisión, la sesión (siempre la sesión)."
+          },
+          "registrado_en": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Cuándo se capturó, en el dispositivo. **Obligatorio.**"
+          },
+          "recibido_en": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        }
+      },
+      "FinBolsaAhorro": {
+        "type": "object",
+        "description": "Bolsa de ahorro = cuenta de tipo `ahorro` del libro.",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "libro_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "nombre": {
+            "$ref": "#/components/schemas/FinNombre"
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "fondo_emergencia",
+              "reserva",
+              "meta_fecha",
+              "meta_libre"
+            ]
+          },
+          "cuenta_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "meta_centavos": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "minimum": 1
+          },
+          "monto_anual_centavos": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "minimum": 1,
+            "description": "Solo en `reserva`."
+          },
+          "fecha_meta": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "Solo en `meta_fecha`."
+          },
+          "nivel_meta": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 5,
+            "description": "Solo en `fondo_emergencia`."
+          },
+          "aporte_fijo_centavos": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "minimum": 0
+          },
+          "aporte_pb": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 10000
+          },
+          "metodos": {
+            "type": "array",
+            "maxItems": 8,
+            "items": {
+              "type": "string",
+              "enum": [
+                "pagate_primero",
+                "monto_fijo",
+                "meta_fecha",
+                "reto_52_semanas",
+                "redondeo",
+                "sobrante_semanal",
+                "sobre_categoria",
+                "porcentaje_extras"
+              ]
+            }
+          },
+          "redondeo_multiplo_centavos": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "default": 1000
+          },
+          "reto_base_centavos": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "minimum": 1
+          },
+          "prioridad": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 1
+          },
+          "activa": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "FinAportacionAhorro": {
+        "type": "object",
+        "description": "Reparto semanal del ahorro por bolsa; lo no aportado queda pendiente sin castigo.",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "libro_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "semana_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "bolsa_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "sugerido_centavos": {
+            "$ref": "#/components/schemas/CentavosNoNegativos"
+          },
+          "aportado_centavos": {
+            "$ref": "#/components/schemas/CentavosNoNegativos"
+          },
+          "pendiente_centavos": {
+            "$ref": "#/components/schemas/CentavosNoNegativos",
+            "readOnly": true,
+            "description": "Generada; sugerido − aportado, no menos de cero. No se manda."
+          },
+          "estado": {
+            "type": "string",
+            "enum": [
+              "propuesta",
+              "confirmada",
+              "pospuesta",
+              "omitida"
+            ],
+            "default": "propuesta"
+          },
+          "movimiento_id": {
+            "$ref": "#/components/schemas/UuidONulo",
+            "description": "Obligatorio si y solo si `estado` = `confirmada`."
+          },
+          "confirmada_por": {
+            "$ref": "#/components/schemas/UuidONulo"
+          },
+          "confirmada_en": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "FinRetiroAhorro": {
+        "type": "object",
+        "description": "Retiro de una bolsa (**solo agregar**).",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "libro_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "bolsa_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "movimiento_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "uso_previsto",
+              "emergencia",
+              "cambio_destino"
+            ]
+          },
+          "motivo": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 200,
+            "description": "Al menos 3 caracteres visibles (23514, N2)."
+          },
+          "bolsa_destino_id": {
+            "$ref": "#/components/schemas/UuidONulo",
+            "description": "Obligatorio si y solo si `tipo` = `cambio_destino`."
+          },
+          "registrado_por": {
+            "$ref": "#/components/schemas/Uuid",
+            "description": "Por omisión, la sesión (siempre la sesión)."
+          },
+          "registrado_en": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "recibido_en": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        }
+      },
+      "FinDeudaResumen": {
+        "type": "object",
+        "description": "Fila de la vista `fin_v_deuda_resumen`.",
         "properties": {
           "hogar_id": {
             "$ref": "#/components/schemas/Uuid"
           },
-          "personas": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Uuid"
-            }
+          "libro_id": {
+            "$ref": "#/components/schemas/Uuid"
           },
-          "titulo": {
-            "type": "string",
-            "maxLength": 80
+          "deuda_id": {
+            "$ref": "#/components/schemas/Uuid"
           },
-          "cuerpo": {
-            "type": "string",
-            "maxLength": 200
+          "nombre": {
+            "type": "string"
           },
-          "ruta": {
+          "clase": {
             "type": "string",
-            "description": "Ruta de la app que abre al tocar el aviso."
+            "enum": [
+              "tarjeta",
+              "prestamo",
+              "credito",
+              "msi",
+              "familiar"
+            ]
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "con_costo",
+              "familiar",
+              "msi"
+            ]
+          },
+          "cuenta_pasivo_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "saldo_centavos": {
+            "$ref": "#/components/schemas/Centavos"
+          },
+          "msi_pendiente_centavos": {
+            "$ref": "#/components/schemas/Centavos",
+            "description": "En una tarjeta, el saldo pendiente de sus MSI activos."
+          }
+        }
+      },
+      "FinBolsaSaldo": {
+        "type": "object",
+        "description": "Fila de la vista `fin_v_bolsa_saldo`.",
+        "properties": {
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "libro_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "bolsa_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "nombre": {
+            "$ref": "#/components/schemas/FinNombre"
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "fondo_emergencia",
+              "reserva",
+              "meta_fecha",
+              "meta_libre"
+            ]
+          },
+          "cuenta_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "activa": {
+            "type": "boolean"
+          },
+          "saldo_centavos": {
+            "$ref": "#/components/schemas/Centavos"
           }
         }
       },
@@ -8964,4 +11242,4 @@ window.ESPECIFICACION_GRAVITY = {
     }
   }
 };
-window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:f7eaed1d';
+window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:4fe1d2ec';

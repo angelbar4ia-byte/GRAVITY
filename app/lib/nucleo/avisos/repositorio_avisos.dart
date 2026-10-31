@@ -67,6 +67,10 @@ abstract interface class RepositorioAvisos {
 
   Future<void> quitarDispositivo(String token);
 
+  /// Porcentaje usado de la base (1 decimal; `null` sin límite). Solo el dueño
+  /// (`avisos_porcentaje_base`); a los demás el servidor responde 42501.
+  Future<double?> porcentajeBase();
+
   /// Enciende o apaga `dispositivos.recibe_avisos` de este equipo (la tablet
   /// personal y la laptop vienen apagadas; la pública nunca).
   Future<void> fijarRecepcion(String token, {required bool recibe});
@@ -164,6 +168,12 @@ class RepositorioAvisosSupabase implements RepositorioAvisos {
       _cliente().rpc('quitar_dispositivo', params: {'p_token': token});
 
   @override
+  Future<double?> porcentajeBase() async {
+    final valor = await _cliente().rpc('avisos_porcentaje_base');
+    return valor == null ? null : (valor as num).toDouble();
+  }
+
+  @override
   Future<void> fijarRecepcion(String token, {required bool recibe}) async {
     await _cliente()
         .from('dispositivos')
@@ -254,6 +264,13 @@ class RepositorioAvisosEnMemoria implements RepositorioAvisos {
       dispositivos.remove(token);
 
   final Map<String, bool> recepcion = {};
+  double? porcentaje;
+
+  @override
+  Future<double?> porcentajeBase() async {
+    if (falla != null) throw falla!;
+    return porcentaje;
+  }
 
   @override
   Future<void> fijarRecepcion(String token, {required bool recibe}) async =>

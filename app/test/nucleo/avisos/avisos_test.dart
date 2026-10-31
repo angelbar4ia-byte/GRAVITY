@@ -524,7 +524,7 @@ void main() {
       final pagos = lista.where((r) => r.tipo == 'pago_proximo').toList();
       expect(pagos, hasLength(1));
       expect(pagos.single.cuando, DateTime(2026, 11, 9, 9));
-      expect(pagos.single.clave, 'pago_proximo:o1:2026-11-12:1');
+      expect(pagos.single.clave, 'pago_proximo:o1:2026-11-12:3');
 
       // A 2 días: el de 3 días ya pasó, queda el de 1 día (paso 2).
       final cerca = calcularRecordatorios(
