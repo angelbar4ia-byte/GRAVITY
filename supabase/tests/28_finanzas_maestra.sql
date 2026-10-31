@@ -105,8 +105,8 @@ select pruebas.ok(public.fin_puede(pruebas.libro_personal('ana@ejemplo.test'), '
   'fin_puede(): con la consulta vigente lee el libro de Ana; no escribe ni administra');
 select pruebas.igual(pruebas.cuenta($$select * from public.fin_movimientos
   where libro_origen_id = pruebas.libro_personal('ana@ejemplo.test')
-     or libro_destino_id = pruebas.libro_personal('ana@ejemplo.test')$$), 11,
-  'Con la consulta ve los 11 movimientos que tocan el libro de Ana');
+     or libro_destino_id = pruebas.libro_personal('ana@ejemplo.test')$$), 13,
+  'Con la consulta ve los 13 movimientos que tocan el libro de Ana');
 select pruebas.igual((select saldo_centavos from public.fin_v_saldos where cuenta_id = 'c3000000-0000-4000-8000-000000000001'),
   1780000::bigint, '… y el saldo del banco de Ana');
 select pruebas.ok(not public.fin_puede(pruebas.libro_personal('alex@ejemplo.test'), 'leer')
@@ -116,8 +116,8 @@ select pruebas.ok(public.fin_registrar_consulta_maestra(pruebas.libro_personal('
                   and public.fin_registrar_consulta_maestra('f1000000-0000-4000-8000-000000000001')
                   and public.fin_registrar_consulta_maestra('f1000000-0000-4000-8000-000000000002'),
   'Consulta los otros tres libros (cada una queda en la bitácora; renovar una vigente es válido)');
-select pruebas.igual(pruebas.cuenta('select * from public.fin_movimientos'), 21,
-  'Con las cuatro consultas vigentes ve los 21 movimientos del hogar');
+select pruebas.igual(pruebas.cuenta('select * from public.fin_movimientos'), 23,
+  'Con las cuatro consultas vigentes ve los 23 movimientos del hogar');
 select pruebas.igual((select saldo_centavos from public.fin_v_saldos where cuenta_id = 'c4000000-0000-4000-8000-000000000001'),
   1500000::bigint, 'Y el saldo del banco de Alex');
 select pruebas.igual(pruebas.cuenta($$select * from public.fin_movimientos

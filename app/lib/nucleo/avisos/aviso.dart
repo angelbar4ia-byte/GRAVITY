@@ -20,9 +20,14 @@ enum EstadoAviso {
     orElse: () => EstadoAviso.pendiente,
   );
 
-  /// Lo que aún pide atención.
-  bool get abierto =>
-      this == pendiente || this == enviada || this == agrupada || this == pospuesta;
+  /// Lo que aún pide atención (en la bandeja): todo menos lo cancelado y lo
+  /// resuelto. Leído no es resuelto.
+  bool get abierto => this != cancelada && this != resuelta;
+
+  /// Lo que todavía puede salir como notificación: ni leído, ni agrupado (solo
+  /// bandeja), ni resuelto o cancelado.
+  bool get notificable =>
+      this == pendiente || this == enviada || this == pospuesta;
 }
 
 @immutable

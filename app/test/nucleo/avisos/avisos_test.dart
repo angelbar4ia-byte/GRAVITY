@@ -556,7 +556,8 @@ void main() {
       expect(resumen.cuando, DateTime(2026, 11, 9, 8));
       final cierre = lista.where((r) => r.tipo == 'recordatorio_cierre').first;
       expect(cierre.cuando, DateTime(2026, 11, 8, 19));
-      expect(lista.map((r) => r.cuando), isSorted);
+      final cuandos = lista.map((r) => r.cuando).toList();
+      expect(cuandos, [...cuandos]..sort());
     });
 
     test('un tipo silenciado no se programa; nada en el pasado', () {

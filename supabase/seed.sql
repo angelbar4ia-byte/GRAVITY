@@ -506,9 +506,9 @@ insert into public.fin_bolsas_ahorro (id, hogar_id, libro_id, nombre, tipo, cuen
    'c3000000-0000-4000-8000-000000000011', 900000, '2027-03-01', null, '{meta_fecha}', 2);
 insert into public.fin_movimientos (id, hogar_id, tipo, fecha, registrado_en, cuenta_origen_id, cuenta_destino_id,
                                     monto_centavos, nota) values
-  ('d1000000-0000-4000-8000-000000000041', 'b0000000-0000-4000-8000-000000000001', 'transferencia', '2026-10-12',
-   '2026-10-12 12:00-06', 'c3000000-0000-4000-8000-000000000001', 'c3000000-0000-4000-8000-000000000010',
-   150000, 'Aportación al fondo (ejemplo)');
+  ('d1000000-0000-4000-8000-000000000041', 'b0000000-0000-4000-8000-000000000001', 'apertura', '2026-10-12',
+   '2026-10-12 12:00-06', pg_temp.cuenta_sistema(pg_temp.libro_personal('a0000000-0000-4000-8000-000000000001'), 'apertura'),
+   'c3000000-0000-4000-8000-000000000010', 150000, 'Saldo inicial del fondo (ejemplo)');
 
 -- Un aviso de ejemplo (lo emite la app para Ana; sin montos ni nombres).
 select public.fin_emitir_aviso(pg_temp.libro_personal('a0000000-0000-4000-8000-000000000001'), 'fondo_bajo',

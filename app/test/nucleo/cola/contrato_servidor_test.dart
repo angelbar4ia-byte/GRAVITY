@@ -91,8 +91,8 @@ void main() {
   final tablas = _cuerposDeTablas(sql);
   final conInsert = _conInsert(sql);
 
-  test('se leyeron las 21 tablas de Finanzas y sus permisos de INSERT', () {
-    expect(tablas, hasLength(21));
+  test('se leyeron las 26 tablas de Finanzas y sus permisos de INSERT', () {
+    expect(tablas, hasLength(26));
     expect(conInsert.keys.toSet(), tablas.keys.toSet());
   });
 

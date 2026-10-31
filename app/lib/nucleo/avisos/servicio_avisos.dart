@@ -346,8 +346,8 @@ class ServicioAvisos {
 
   /// Muestra un aviso ya leído, con el texto del catálogo.
   Future<void> _mostrar(Aviso aviso, String persona) async {
-    if (!aviso.estado.abierto) {
-      // Ya se atendió o se canceló: se retira si seguía ahí.
+    if (!aviso.estado.notificable) {
+      // Ya se atendió, se leyó, se agrupó o se canceló: se retira si seguía ahí.
       await notificador.cancelar(idDeNotificacion(aviso.clave));
       return;
     }

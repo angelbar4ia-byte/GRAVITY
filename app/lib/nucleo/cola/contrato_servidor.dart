@@ -23,6 +23,15 @@ const Map<String, Set<String>> columnasQuePoneElServidor = {
   'fin_cuentas': {'clase', 'liquida', 'creada_en'},
   'fin_movimientos': {'recibido_en', 'libro_origen_id', 'libro_destino_id'},
   'fin_semanas': {'reaperturas'},
+  // Fase 2: la pendiente de la aportación es generada; quién y cuándo la
+  // confirma y cuándo llegó un estado de cuenta o un retiro los pone el servidor.
+  'fin_aportaciones_ahorro': {
+    'pendiente_centavos',
+    'confirmada_por',
+    'confirmada_en',
+  },
+  'fin_estados_cuenta': {'recibido_en'},
+  'fin_retiros_ahorro': {'recibido_en'},
   'fin_cierre_abonos': {'diferido'},
   'fin_conciliaciones': {'diferencia'},
 };
@@ -73,12 +82,16 @@ const Map<String, int> nivelesDeSubidaFinanzas = {
   'fin_compromisos': 3,
   'fin_sobres': 3,
   'fin_deudas': 3,
+  'fin_bolsas_ahorro': 3,
   'fin_dias_inhabiles': 3,
   'fin_semanas': 3,
   // Dependen de lo anterior.
   'fin_vigencias_ingreso': 4,
   'fin_partidas_semana': 4,
   'fin_abonos_semana': 4,
+  // Fase 2: dependen de deudas y cuentas.
+  'fin_msi': 4,
+  'fin_estados_cuenta': 4,
   // El libro de movimientos.
   'fin_movimientos': 5,
   // Dependen de movimientos, semanas o partidas.
@@ -86,6 +99,9 @@ const Map<String, int> nivelesDeSubidaFinanzas = {
   'fin_conciliaciones': 6,
   'fin_cierres': 6,
   'fin_importaciones': 6,
+  // Fase 2: dependen de la semana, la bolsa y el movimiento.
+  'fin_aportaciones_ahorro': 6,
+  'fin_retiros_ahorro': 6,
   // Dependen del cierre.
   'fin_cierre_partidas': 7,
   'fin_cierre_abonos': 7,

@@ -54,8 +54,9 @@ export async function clasificar(r: Response): Promise<{ resultado: Resultado; c
   }
   const estado = String(cuerpo?.error?.status ?? "");
   const detalle = JSON.stringify(cuerpo?.error?.details ?? []);
-  if (r.status === 404 || estado === "NOT_FOUND" || detalle.includes("UNREGISTERED")
-      || (r.status === 400 && detalle.includes("INVALID_ARGUMENT") === false && estado === "INVALID_ARGUMENT")) {
+  // UNREGISTERED / NOT_FOUND: el token ya no existe. INVALID_ARGUMENT: el token es inválido
+  // (el cuerpo que mandamos es fijo, así que el único argumento variable es el token).
+  if (r.status === 404 || estado === "NOT_FOUND" || estado === "INVALID_ARGUMENT" || detalle.includes("UNREGISTERED")) {
     return { resultado: "token_invalido", codigo: (estado || String(r.status)).slice(0, 60) };
   }
   return { resultado: "error", codigo: (estado || String(r.status)).slice(0, 60) };

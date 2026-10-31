@@ -14,8 +14,8 @@ select pruebas.ok(
   'D19: el dueño tiene Finanzas con alcance propio, ya no total');
 select pruebas.igual(pruebas.cuenta('select * from public.fin_libros'), 3,
   'Ana ve 3 libros: el suyo, "Gastos de la casa" y el de Papá (es su albacea)');
-select pruebas.igual(pruebas.cuenta('select * from public.fin_movimientos'), 18,
-  'Ana ve sus movimientos, los del compartido y los de Papá (18)');
+select pruebas.igual(pruebas.cuenta('select * from public.fin_movimientos'), 20,
+  'Ana ve sus movimientos, los del compartido y los de Papá (20)');
 select pruebas.igual(pruebas.cuenta($$select * from public.fin_libros
   where id = pruebas.libro_personal('alex@ejemplo.test')$$), 0, 'Ana no ve el libro personal de Alex');
 select pruebas.ok(not public.fin_puede(pruebas.libro_personal('alex@ejemplo.test'), 'leer'),
