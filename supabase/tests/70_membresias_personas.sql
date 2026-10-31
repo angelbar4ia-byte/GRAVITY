@@ -203,17 +203,16 @@ select pruebas.como('ana@ejemplo.test');
 select pruebas.igual(pruebas.cuenta('select * from public.dispositivos'), 2, 'Ana ve sus 2 dispositivos');
 select pruebas.como('carla@ejemplo.test');
 select pruebas.igual(pruebas.cuenta('select * from public.dispositivos'), 0, 'Carla no ve dispositivos ajenos');
-select pruebas.igual(pruebas.afecta($$insert into public.dispositivos (plataforma, token_avisos, nombre)
-  values ('android', 'token-fcm-de-prueba-carla', 'Teléfono de Carla')$$), 1,
-  'Carla registra su teléfono');
+select pruebas.falla($$insert into public.dispositivos (plataforma, token_avisos, nombre)
+  values ('android', 'token-fcm-de-prueba-carla', 'Teléfono de Carla')$$,
+  'Fase 2: un dispositivo ya no se inserta directo (solo con registrar_dispositivo)', '42501');
+select pruebas.ok(public.registrar_dispositivo('token-fcm-de-prueba-carla', 'android', 'Teléfono de Carla') is not null,
+  'Carla registra su teléfono con registrar_dispositivo');
 select pruebas.igual(
   (select persona_id from public.dispositivos where token_avisos = 'token-fcm-de-prueba-carla'),
   pruebas.id_persona('carla@ejemplo.test'), 'El dispositivo queda a su nombre');
-select pruebas.falla($$insert into public.dispositivos (persona_id, plataforma, token_avisos)
-  values (pruebas.id_persona('ana@ejemplo.test'), 'android', 'token-robado')$$,
-  'Nadie registra un dispositivo a nombre de otra persona', '42501');
-select pruebas.falla($$insert into public.dispositivos (plataforma, token_avisos)
-  values ('ios', 'token-x')$$, 'Plataforma desconocida rechazada', '23514');
+select pruebas.falla($$select public.registrar_dispositivo('token-x', 'ios')$$,
+  'Plataforma desconocida rechazada', '22023');
 select pruebas.igual(pruebas.afecta('delete from public.dispositivos'), 1,
   'Carla solo puede borrar su propio dispositivo');
 select pruebas.como('ana@ejemplo.test');

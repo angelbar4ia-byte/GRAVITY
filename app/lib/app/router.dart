@@ -15,6 +15,7 @@ import 'cascarones/cascaron.dart';
 import 'dispositivo.dart';
 import 'navegacion.dart';
 import 'pantalla_segura.dart';
+import 'avisos/pantalla_bandeja_avisos.dart';
 import 'pantallas/pantalla_entrar.dart';
 import 'pantallas/pantalla_inicio.dart';
 import 'pantallas/pantalla_mas.dart';
@@ -205,6 +206,11 @@ List<RouteBase> rutasDeGravity({required List<RouteBase> finanzas}) => [
         path: RutasApp.solicitudes,
         pageBuilder: (context, estado) =>
             _sinAnimacion(estado, const PantallaSolicitudes()),
+      ),
+      GoRoute(
+        path: RutasApp.avisos,
+        pageBuilder: (context, estado) =>
+            _sinAnimacion(estado, const PantallaBandejaAvisos()),
       ),
       GoRoute(
         path: RutasApp.mas,

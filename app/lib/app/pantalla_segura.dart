@@ -40,6 +40,8 @@ bool esPantallaSensible(String ubicacion, Rol? rol) {
   if (ubicacion == Rutas.inicio) return veDinero(rol) || veDatosClinicos(rol);
   // Bandeja de solicitudes de la cuidadora (medicamentos, citas…).
   if (_bajoRuta(ubicacion, RutasApp.solicitudes)) return veDatosClinicos(rol);
+  // Bandeja de avisos: el detalle trae montos.
+  if (_bajoRuta(ubicacion, RutasApp.avisos)) return veDinero(rol);
   // Registros que el servidor no aceptó: pueden ser gastos.
   if (_bajoRuta(ubicacion, RutasApp.pendientes)) {
     return veDinero(rol) || veDatosClinicos(rol);

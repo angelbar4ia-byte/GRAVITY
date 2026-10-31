@@ -22,6 +22,13 @@ import '../nucleo/base_local/base_local.dart';
 import '../nucleo/cola/bandeja_salida.dart';
 import '../nucleo/cola/cola_sin_conexion.dart';
 import '../nucleo/cola/enviador_supabase.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+
+import '../nucleo/avisos/fuente_push.dart';
+import '../nucleo/avisos/notificador_plugin.dart';
+import '../nucleo/avisos/proveedores_avisos.dart';
+import '../nucleo/avisos/push_segundo_plano.dart';
+import '../nucleo/avisos/repositorio_avisos.dart';
 import '../nucleo/cola/proveedores_cola.dart';
 import '../nucleo/configuracion/configuracion_entorno.dart';
 import '../nucleo/firebase/firebase.dart';
@@ -87,6 +94,10 @@ Future<List<Override>> prepararArranque({
   await initializeDateFormatting('es_MX');
 
   final firebase = await prepararFirebase(plataforma: plataforma);
+  if (firebase == EstadoFirebase.activo) {
+    // Mensajes con la app cerrada: solo el aviso genérico (ver el archivo).
+    FirebaseMessaging.onBackgroundMessage(manejadorPushSegundoPlano);
+  }
   final biometria = plataforma == TargetPlatform.android
       ? BiometriaDispositivo()
       : const BiometriaNoDisponible();
@@ -100,6 +111,7 @@ Future<List<Override>> prepararArranque({
   Enviador enviador = const EnviadorSinServidor();
   RepositorioInvitaciones? invitaciones;
   Override? salidaSinPin;
+  RepositorioAvisos? avisos;
   if (configuracion.tieneSupabase) {
     try {
       await Supabase.initialize(
@@ -114,6 +126,8 @@ Future<List<Override>> prepararArranque({
         limpieza: limpieza,
       );
       sesion = servicio;
+      // Avisos (Fase 2, D20): se leen con la sesión de quien está dentro.
+      avisos = RepositorioAvisosSupabase(() => servicio.clienteActivo);
       // Invitaciones (cuenta maestra): con la sesión de quien está dentro.
       invitaciones = RepositorioInvitacionesSupabase(
         () => servicio.clienteActivo,
@@ -175,5 +189,16 @@ Future<List<Override>> prepararArranque({
     if (invitaciones != null)
       repositorioInvitacionesProvider.overrideWithValue(invitaciones),
     ?salidaSinPin,
+    // Avisos (Fase 2, D20): notificaciones del sistema en Android (teléfono y
+    // tablets) y Windows (laptop, con la app abierta) y push solo en Android
+    // con Firebase configurado. Sin servidor, todo queda en memoria.
+    if (avisos != null) ...[
+      repositorioAvisosProvider.overrideWithValue(avisos),
+      if (plataforma == TargetPlatform.android ||
+          plataforma == TargetPlatform.windows)
+        notificadorProvider.overrideWithValue(NotificadorPlugin()),
+      if (firebase == EstadoFirebase.activo)
+        fuentePushProvider.overrideWithValue(FuentePushFirebase()),
+    ],
   ];
 }

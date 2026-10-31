@@ -551,7 +551,7 @@ void main() {
             // Nada se sale por la derecha.
             for (final elemento in find.byType(Text).evaluate()) {
               final r = tester.getRect(find.byWidget(elemento.widget));
-              expect(r.right, lessThanOrEqualTo(360.5), reason: '$nombre');
+              expect(r.right, lessThanOrEqualTo(360.5), reason: nombre);
             }
           });
         }

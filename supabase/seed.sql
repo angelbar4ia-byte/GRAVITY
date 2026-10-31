@@ -447,3 +447,72 @@ insert into public.fin_movimientos (id, hogar_id, tipo, fecha, registrado_en, cu
    900000, 'Renta (ejemplo del hogar vecino)');
 
 select pg_temp.como(null);
+
+-- ------------------------------------------------------------ Fase 2 (datos inventados)
+-- Dispositivos: el teléfono recibe avisos; la laptop no; la tablet pública de la casa nunca.
+select pg_temp.como(null);
+update public.dispositivos set tipo = 'laptop' where plataforma = 'windows';
+update public.dispositivos set tipo = 'telefono', recibe_avisos = true where plataforma = 'android';
+insert into public.dispositivos (persona_id, plataforma, token_avisos, nombre, tipo)
+select p.id, 'android', 'token-fcm-de-ejemplo-tablet-casa', 'Tablet de la casa (ejemplo)', 'tablet_publica'
+from public.personas p where p.usuario_id = 'a0000000-0000-4000-8000-000000000005';
+
+select pg_temp.como('a0000000-0000-4000-8000-000000000001');
+
+-- Tarjeta de Ana: acreedor, día de corte y su estado de cuenta capturado a mano.
+update public.fin_deudas set acreedor = 'Banco de ejemplo', corte_dia = 20, cat_pb = 7500
+ where id = 'e5000000-0000-4000-8000-000000000001';
+insert into public.fin_estados_cuenta (id, hogar_id, libro_id, deuda_id, fecha_corte, fecha_limite_pago,
+    saldo_al_corte_centavos, pago_minimo_centavos, pago_sin_intereses_centavos, intereses_centavos, cargos_centavos,
+    tasa_declarada_pb, registrado_en) values
+  ('e8000000-0000-4000-8000-000000000001', 'b0000000-0000-4000-8000-000000000001',
+   pg_temp.libro_personal('a0000000-0000-4000-8000-000000000001'), 'e5000000-0000-4000-8000-000000000001',
+   '2026-10-20', '2026-11-09', 600000, 45000, 600000, 0, 0, 4800, '2026-10-21 10:00-06');
+
+-- Un MSI inventado: una lavadora a 12 meses, con su cuenta pasivo propia.
+insert into public.fin_cuentas (id, hogar_id, libro_id, nombre, tipo) values
+  ('c3000000-0000-4000-8000-000000000012', 'b0000000-0000-4000-8000-000000000001',
+   pg_temp.libro_personal('a0000000-0000-4000-8000-000000000001'), 'MSI Lavadora (ejemplo)', 'prestamo');
+insert into public.fin_deudas (id, hogar_id, libro_id, nombre, tipo, clase, cuenta_pasivo_id, abono_centavos,
+                               frecuencia, forma, dias_mes, minimo_centavos, tasa_anual_pb) values
+  ('e5000000-0000-4000-8000-000000000003', 'b0000000-0000-4000-8000-000000000001',
+   pg_temp.libro_personal('a0000000-0000-4000-8000-000000000001'), 'MSI Lavadora (ejemplo)', 'msi', 'msi',
+   'c3000000-0000-4000-8000-000000000012', 50000, 'mensual', 'mensual', '{20}', 50000, 0);
+insert into public.fin_msi (id, hogar_id, libro_id, deuda_id, tarjeta_deuda_id, cuenta_pasivo_id, comercio,
+                            descripcion, fecha_compra, monto_total_centavos, mensualidades) values
+  ('e9000000-0000-4000-8000-000000000001', 'b0000000-0000-4000-8000-000000000001',
+   pg_temp.libro_personal('a0000000-0000-4000-8000-000000000001'), 'e5000000-0000-4000-8000-000000000003',
+   'e5000000-0000-4000-8000-000000000001', 'c3000000-0000-4000-8000-000000000012', 'Tienda de ejemplo',
+   'Lavadora (ejemplo)', '2026-10-05', 600000, 12);
+insert into public.fin_movimientos (id, hogar_id, tipo, fecha, registrado_en, cuenta_origen_id, cuenta_destino_id,
+                                    monto_centavos, nota) values
+  ('d1000000-0000-4000-8000-000000000040', 'b0000000-0000-4000-8000-000000000001', 'gasto', '2026-10-05',
+   '2026-10-05 12:00-06', 'c3000000-0000-4000-8000-000000000012', 'c2000000-0000-4000-8000-000000000002',
+   600000, 'Compra a 12 meses sin intereses (ejemplo)');
+
+-- Bolsas de ahorro: fondo de emergencia (nivel 3) y una meta con fecha.
+insert into public.fin_cuentas (id, hogar_id, libro_id, nombre, tipo) values
+  ('c3000000-0000-4000-8000-000000000010', 'b0000000-0000-4000-8000-000000000001',
+   pg_temp.libro_personal('a0000000-0000-4000-8000-000000000001'), 'Fondo de emergencia', 'ahorro'),
+  ('c3000000-0000-4000-8000-000000000011', 'b0000000-0000-4000-8000-000000000001',
+   pg_temp.libro_personal('a0000000-0000-4000-8000-000000000001'), 'Celular nuevo', 'ahorro');
+insert into public.fin_bolsas_ahorro (id, hogar_id, libro_id, nombre, tipo, cuenta_id, meta_centavos, fecha_meta,
+                                      nivel_meta, metodos, prioridad) values
+  ('ea000000-0000-4000-8000-000000000001', 'b0000000-0000-4000-8000-000000000001',
+   pg_temp.libro_personal('a0000000-0000-4000-8000-000000000001'), 'Fondo de emergencia', 'fondo_emergencia',
+   'c3000000-0000-4000-8000-000000000010', null, null, 3, '{monto_fijo}', 1),
+  ('ea000000-0000-4000-8000-000000000002', 'b0000000-0000-4000-8000-000000000001',
+   pg_temp.libro_personal('a0000000-0000-4000-8000-000000000001'), 'Celular nuevo', 'meta_fecha',
+   'c3000000-0000-4000-8000-000000000011', 900000, '2027-03-01', null, '{meta_fecha}', 2);
+insert into public.fin_movimientos (id, hogar_id, tipo, fecha, registrado_en, cuenta_origen_id, cuenta_destino_id,
+                                    monto_centavos, nota) values
+  ('d1000000-0000-4000-8000-000000000041', 'b0000000-0000-4000-8000-000000000001', 'transferencia', '2026-10-12',
+   '2026-10-12 12:00-06', 'c3000000-0000-4000-8000-000000000001', 'c3000000-0000-4000-8000-000000000010',
+   150000, 'Aportación al fondo (ejemplo)');
+
+-- Un aviso de ejemplo (lo emite la app para Ana; sin montos ni nombres).
+select public.fin_emitir_aviso(pg_temp.libro_personal('a0000000-0000-4000-8000-000000000001'), 'fondo_bajo',
+                               'libro', pg_temp.libro_personal('a0000000-0000-4000-8000-000000000001'),
+                               'fondo_bajo:ejemplo:2026-w43');
+
+select pg_temp.como(null);

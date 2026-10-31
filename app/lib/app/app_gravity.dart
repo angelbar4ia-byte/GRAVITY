@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'avisos/con_avisos.dart';
 import 'bloqueo/capa_bloqueo.dart';
 import 'montos/ocultar_montos_por_inactividad.dart';
 import 'pantallas_externas.dart';
@@ -31,8 +32,10 @@ class AppGravity extends ConsumerWidget {
       supportedLocales: localesSoportados,
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
       // Bloqueo del teléfono con PIN o huella (I8), encima de todo.
-      builder: (context, child) => OcultarMontosPorInactividad(
-        child: CapaBloqueo(child: child ?? const SizedBox.shrink()),
+      builder: (context, child) => ConAvisos(
+        child: OcultarMontosPorInactividad(
+          child: CapaBloqueo(child: child ?? const SizedBox.shrink()),
+        ),
       ),
     );
   }

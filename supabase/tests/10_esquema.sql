@@ -139,7 +139,7 @@ select pruebas.igual(
 select pruebas.igual(
   (select coalesce(string_agg(r.rol || ':' || t.tabla || ':' || p.priv, ', '), '')
      from unnest(array['fin_movimientos', 'fin_conciliaciones', 'fin_cierres', 'fin_cierre_partidas',
-                       'fin_cierre_abonos', 'fin_importaciones']) as t(tabla),
+                       'fin_cierre_abonos', 'fin_importaciones', 'fin_estados_cuenta', 'fin_retiros_ahorro']) as t(tabla),
           unnest(array['anon', 'authenticated', 'service_role']) as r(rol),
           unnest(array['UPDATE', 'DELETE', 'TRUNCATE']) as p(priv)
     where (p.priv = 'UPDATE' and has_any_column_privilege(r.rol, 'public.' || t.tabla, 'UPDATE'))
@@ -149,7 +149,8 @@ select pruebas.igual(
   (select count(*)::int from pg_policy
     where polrelid in ('public.fin_movimientos'::regclass, 'public.fin_conciliaciones'::regclass,
                        'public.fin_cierres'::regclass, 'public.fin_cierre_partidas'::regclass,
-                       'public.fin_cierre_abonos'::regclass, 'public.fin_importaciones'::regclass)
+                       'public.fin_cierre_abonos'::regclass, 'public.fin_importaciones'::regclass,
+                       'public.fin_estados_cuenta'::regclass, 'public.fin_retiros_ahorro'::regclass)
       and polcmd in ('w', 'd')),
   0, 'Libros solo agregar de Finanzas sin reglas de UPDATE ni DELETE');
 select pruebas.igual(
@@ -161,7 +162,7 @@ select pruebas.igual(
 select pruebas.igual(
   (select count(*)::int from pg_class c join pg_namespace n on n.oid = c.relnamespace
     where n.nspname = 'public' and c.relkind = 'v' and c.relname like 'fin\_v\_%'),
-  2, 'Existen fin_v_saldos y fin_v_gasto_semana');
+  5, 'Existen fin_v_saldos, fin_v_gasto_semana y las tres de la Fase 2 (deuda_resumen, bolsa_saldo, estados_cuenta_vigentes)');
 select pruebas.igual(
   (select coalesce(string_agg(c.relname, ', ' order by c.relname), '')
      from pg_class c join pg_namespace n on n.oid = c.relnamespace
@@ -173,7 +174,7 @@ select pruebas.igual(
 select pruebas.igual(
   (select count(*)::int from pg_class c join pg_namespace n on n.oid = c.relnamespace
     where n.nspname = 'public' and c.relkind = 'r' and c.relname like 'fin\_%'),
-  21, 'Las 21 tablas de Finanzas (4.1 y 4.5)');
+  26, 'Las 26 tablas de Finanzas (21 de la Fase 1 y 5 de la Fase 2)');
 select pruebas.igual(
   (select coalesce(string_agg(c.relname, ', ' order by c.relname), '')
      from pg_class c join pg_namespace n on n.oid = c.relnamespace

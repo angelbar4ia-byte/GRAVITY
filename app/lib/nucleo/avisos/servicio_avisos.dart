@@ -25,6 +25,7 @@ import 'aviso.dart';
 import 'catalogo_avisos.dart';
 import 'fuente_push.dart';
 import 'notificador.dart';
+import 'recordatorios.dart';
 import 'repositorio_avisos.dart';
 
 /// Quién usa el equipo ahora y qué clase de equipo es.
@@ -34,6 +35,7 @@ class ContextoAvisos {
     required this.tipo,
     this.personaId,
     this.esMaestra = false,
+    this.puedeRecibir = true,
   });
 
   final TipoEquipoAvisos tipo;
@@ -41,6 +43,10 @@ class ContextoAvisos {
   /// `null` si nadie ha entrado (o en la tablet solo está la cuenta Hogar).
   final String? personaId;
   final bool esMaestra;
+
+  /// `false` para quien no ve dinero (familiar, cuidador, Casa): no recibe
+  /// avisos de Finanzas (regla 41).
+  final bool puedeRecibir;
 }
 
 /// Cómo se presenta un aviso (reglas 35 y 36).
@@ -113,6 +119,7 @@ class ServicioAvisos {
     required this.almacen,
     required this.contexto,
     this.alAbrirAviso,
+    this.recordatorios,
     RelojLocal? reloj,
     this.esperaMaximaDeLectura = const Duration(seconds: 8),
   }) : _reloj = reloj ?? relojLocalPorOmision(DateTime.now);
@@ -127,6 +134,7 @@ class ServicioAvisos {
 
   /// Qué hacer al tocar una notificación (la app abre la bandeja).
   final void Function(String? avisoId)? alAbrirAviso;
+  final RecordatoriosLocales? recordatorios;
   final RelojLocal _reloj;
   final Duration esperaMaximaDeLectura;
 
@@ -171,7 +179,11 @@ class ServicioAvisos {
   /// nunca; la laptop recibe por la bandeja en vivo, no por push.
   Future<bool> recibeEnEsteEquipo({bool porPush = true}) async {
     final c = contexto();
-    if (c.tipo == TipoEquipoAvisos.tabletPublica || c.esMaestra) return false;
+    if (c.tipo == TipoEquipoAvisos.tabletPublica ||
+        c.esMaestra ||
+        !c.puedeRecibir) {
+      return false;
+    }
     if (c.tipo == TipoEquipoAvisos.laptop) return !porPush;
     if (c.tipo == TipoEquipoAvisos.telefono) {
       final persona = c.personaId;
@@ -201,7 +213,8 @@ class ServicioAvisos {
     final persona = c.personaId;
     if (persona == null ||
         c.tipo == TipoEquipoAvisos.tabletPublica ||
-        c.esMaestra) {
+        c.esMaestra ||
+        !c.puedeRecibir) {
       return false;
     }
     await almacen.escribir(_claveActivado(persona), activar ? '1' : '0');
@@ -223,7 +236,8 @@ class ServicioAvisos {
     final c = contexto();
     if (c.personaId == null ||
         c.tipo == TipoEquipoAvisos.tabletPublica ||
-        c.esMaestra) {
+        c.esMaestra ||
+        !c.puedeRecibir) {
       return;
     }
     _preferencias = null;
@@ -234,6 +248,31 @@ class ServicioAvisos {
     if (!await activado()) return;
     final token = await fuentePush.token();
     if (token != null) await _registrar(token);
+    await reprogramarRecordatorios();
+  }
+
+  /// Vuelve a programar los recordatorios locales (al abrir la app, al
+  /// sincronizar, al cambiar las preferencias). Sin permiso o sin avisos
+  /// activados, deja todo cancelado.
+  Future<void> reprogramarRecordatorios() async {
+    final r = recordatorios;
+    if (r == null) return;
+    if (!await recibeEnEsteEquipo() || contexto().personaId == null) {
+      await notificador.cancelarProgramadas();
+      return;
+    }
+    final preferencias = await _leerPreferencias();
+    final reloj = _reloj(preferencias.zonaHoraria);
+    await r.reprogramar(
+      preferencias: preferencias,
+      ahora: DateTime(
+        reloj.fecha.year,
+        reloj.fecha.month,
+        reloj.fecha.day,
+        reloj.hora.hora,
+        reloj.hora.minuto,
+      ),
+    );
   }
 
   Future<void> _registrar(String token) async {
@@ -397,7 +436,10 @@ class ServicioAvisos {
   }
 
   /// Después de guardar preferencias en el servidor.
-  void preferenciasCambiaron(PreferenciasAvisos nuevas) => _preferencias = nuevas;
+  void preferenciasCambiaron(PreferenciasAvisos nuevas) {
+    _preferencias = nuevas;
+    unawaited(reprogramarRecordatorios());
+  }
 
   Future<int> _contador(String persona, DateTime dia) async {
     final texto = await almacen.leer(_claveContador(persona));

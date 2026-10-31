@@ -24,6 +24,10 @@ abstract final class RutasApp {
   /// Bandeja de solicitudes y recordatorios de GRAVITY (D18: la cuidadora
   /// los confirma; no conversa con GRAVITY).
   static const solicitudes = '/solicitudes';
+
+  /// Bandeja de avisos de Finanzas (Fase 2, D20): solo para quien ve dinero y
+  /// no es la cuenta maestra.
+  static const avisos = '/avisos';
 }
 
 /// Una pestaña de la barra inferior (teléfono) o del riel lateral (tablet).
@@ -316,6 +320,12 @@ String? calcularRedireccion({
   if (ubicacion == RutasApp.solicitudes ||
       ubicacion.startsWith('${RutasApp.solicitudes}/')) {
     return puede(rol, Modulo.gravity, Accion.leer) ? null : inicio;
+  }
+  if (ubicacion == RutasApp.avisos ||
+      ubicacion.startsWith('${RutasApp.avisos}/')) {
+    // La maestra nunca recibe avisos de dinero (regla 41); familiar, cuidador
+    // y Casa tampoco ven nada de Finanzas.
+    return puedeAbrir(rol, Modulo.finanzas) && !esMaestra ? null : inicio;
   }
   final modulo = moduloDeRuta(ubicacion);
   if (modulo != null && !puedeAbrir(rol, modulo)) return inicio;
