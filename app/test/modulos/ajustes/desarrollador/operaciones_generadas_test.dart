@@ -40,6 +40,7 @@ const _rpcDeLectura = {
   'finSoloLectura',
   'finPuedeSalir',
   'finAdultosConFinanzas',
+  'avisosPorcentajeBase',
 };
 
 /// Libros solo-agregar de Finanzas: no tienen PATCH ni DELETE.
@@ -223,7 +224,7 @@ void main() {
       };
       for (final o in finanzas) {
         expect(o.soloLocal, isTrue, reason: o.id);
-        expect(o.fase, 1, reason: o.id);
+        expect(o.fase, anyOf(1, 2), reason: o.id);
         if (deTodos.contains(o.id)) {
           expect(o.roles, Rol.values.toSet(), reason: o.id);
         } else if (soloDueno.contains(o.id)) {
@@ -840,6 +841,7 @@ void main() {
             'fin_puede_salir',
             'fin_adultos_con_finanzas',
             'fin_nombrar_albacea',
+            'fin_emitir_aviso',
           }),
         );
         final rutas = operaciones.map((o) => o.ruta).toSet();
@@ -1108,6 +1110,140 @@ void main() {
         });
       },
     );
+
+    group('Fase 2: finanzas_fase2, avisos y avisos_ajustes', () {
+      String leer(String n) =>
+          File('${raiz.path}/supabase/migrations/$n').readAsStringSync();
+      final fase2 = leer('20261101000000_finanzas_fase2.sql');
+      final avisos = leer('20261102000000_avisos.sql');
+      final ajustes = leer('20261103000000_avisos_ajustes.sql');
+      final todo = _plano(yaml);
+
+      test('las tablas y vistas que lee la app están documentadas; las del '
+          'servidor, no', () {
+        final rutas = operaciones.map((o) => o.ruta).toSet();
+        for (final t in [
+          'fin_msi',
+          'fin_estados_cuenta',
+          'fin_bolsas_ahorro',
+          'fin_aportaciones_ahorro',
+          'fin_retiros_ahorro',
+          'fin_v_deuda_resumen',
+          'fin_v_bolsa_saldo',
+          'fin_v_estados_cuenta_vigentes',
+          'avisos',
+          'avisos_preferencias',
+        ]) {
+          expect(rutas, contains('/rest/v1/$t'), reason: t);
+        }
+        // Lo que la app no lee (solo service_role): sin operación.
+        for (final t in ['avisos_entregas', 'avisos_sistema']) {
+          expect(rutas, isNot(contains('/rest/v1/$t')), reason: t);
+        }
+        expect(
+          avisos,
+          contains(
+            'grant select on public.avisos_preferencias, public.avisos to authenticated;',
+          ),
+        );
+      });
+
+      test('solo agregar: estados de cuenta y retiros no tienen PATCH ni '
+          'DELETE', () {
+        for (final t in ['fin_estados_cuenta', 'fin_retiros_ahorro']) {
+          final metodos = operaciones
+              .where((o) => o.ruta == '/rest/v1/$t')
+              .map((o) => o.metodo)
+              .toSet();
+          expect(metodos, {MetodoHttp.get, MetodoHttp.post}, reason: t);
+        }
+        expect(
+          fase2,
+          contains('registrado_en                timestamptz not null'),
+        );
+      });
+
+      test('las RPC concedidas a authenticated tienen operación y los '
+          'códigos y catálogos coinciden', () {
+        final rutas = operaciones.map((o) => o.ruta).toSet();
+        for (final f in [
+          'fin_emitir_aviso',
+          'avisos_marcar',
+          'avisos_actualizar_preferencias',
+          'registrar_dispositivo',
+          'quitar_dispositivo',
+          'avisos_porcentaje_base',
+        ]) {
+          expect(rutas, contains('/rest/v1/rpc/$f'), reason: f);
+        }
+        expect(avisos, contains('grant execute on function'));
+        expect(
+          ajustes,
+          contains(
+            'grant execute on function public.avisos_porcentaje_base() to authenticated;',
+          ),
+        );
+        // Catálogo cerrado de 19 tipos y los 8 métodos de ahorro.
+        final tipos = RegExp(r"'([a-z_0-9]+)'")
+            .allMatches(
+              avisos.substring(
+                avisos.indexOf('tipo           text not null check (tipo in ('),
+                avisos.indexOf('severidad      text not null'),
+              ),
+            )
+            .map((m) => m.group(1)!)
+            .toSet();
+        expect(tipos, hasLength(19));
+        for (final t in tipos) {
+          expect(todo, contains(t), reason: t);
+        }
+        for (final m in [
+          'pagate_primero',
+          'monto_fijo',
+          'meta_fecha',
+          'reto_52_semanas',
+          'redondeo',
+          'sobrante_semanal',
+          'sobre_categoria',
+          'porcentaje_extras',
+        ]) {
+          expect(fase2, contains("'$m'"), reason: m);
+          expect(todo, contains(m), reason: m);
+        }
+        expect(todo, contains('60 avisos al día'));
+        expect(todo, contains('solo `service_role`'));
+        expect(todo, contains('403 (42501)'));
+      });
+
+      test('dispositivos: ya no hay POST ni token por PATCH; el porcentaje de '
+          'la base es solo del dueño', () {
+        expect(
+          avisos,
+          contains('revoke insert on public.dispositivos from authenticated;'),
+        );
+        expect(
+          avisos,
+          contains(
+            'grant update (nombre, ultimo_uso, recibe_avisos) on public.dispositivos to authenticated;',
+          ),
+        );
+        final disp = operaciones
+            .where((o) => o.ruta == '/rest/v1/dispositivos')
+            .map((o) => o.metodo)
+            .toSet();
+        expect(disp, {MetodoHttp.get, MetodoHttp.patch, MetodoHttp.delete});
+        final base = operaciones.singleWhere(
+          (o) => o.ruta == '/rest/v1/rpc/avisos_porcentaje_base',
+        );
+        expect(base.roles, {Rol.dueno});
+        expect(base.escribe, isFalse);
+        expect(ajustes, contains("errcode = '42501'"));
+        expect(
+          operaciones.map((o) => o.ruta),
+          isNot(contains('/functions/v1/avisos')),
+        );
+      });
+    });
 
     test('los libros solo-agregar no se cambian ni se borran', () {
       for (final tabla in _soloAgregar) {

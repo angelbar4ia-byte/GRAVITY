@@ -14,7 +14,7 @@ import 'package:finanzas_dominio/finanzas_dominio.dart'
         NivelFondo,
         NivelAlerta;
 import 'package:finanzas_dominio/finanzas_dominio.dart' as dom
-    show BolsaAhorro, NivelFondo;
+    show BolsaAhorro;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
