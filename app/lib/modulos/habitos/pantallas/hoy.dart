@@ -104,6 +104,16 @@ class _CuerpoHoy extends ConsumerWidget {
               ),
           ],
           ListTile(
+            leading: const Icon(Icons.auto_stories_outlined),
+            title: const Text('Espiritual'),
+            onTap: () => context.go('${Rutas.habitos}/espiritual'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.insights_outlined),
+            title: const Text('Progreso'),
+            onTap: () => context.go('${Rutas.habitos}/progreso'),
+          ),
+          ListTile(
             leading: const Icon(Icons.calendar_today_outlined),
             title: const Text('Agenda'),
             onTap: () => context.go('${Rutas.habitos}/agenda'),

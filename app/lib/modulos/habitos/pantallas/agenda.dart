@@ -3,6 +3,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 import 'package:go_router/go_router.dart';
 import 'package:habitos_dominio/habitos_dominio.dart';
 
@@ -11,7 +12,6 @@ import '../../../diseno/diseno.dart';
 import '../../../nucleo/contratos/roles.dart';
 import '../../../nucleo/contratos/rutas.dart';
 import '../casos_uso/servicio_agenda.dart';
-import '../datos/modelos.dart';
 import '../estado/proveedores.dart';
 
 String horaTexto(int min) =>

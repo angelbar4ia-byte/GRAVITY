@@ -89,4 +89,19 @@ class DocumentosSensibles {
         for (final e in (await leer(t, clave)).elementos.values)
           if (!e.eliminado && e.clase == clase) e
       ];
+
+  /// Todos los documentos de un tipo, abiertos en memoria (exportar mis
+  /// datos, revisión). Los que no abren se omiten.
+  Future<Map<String, DocumentoSensible>> todos(TipoSensible t) async {
+    final k = await _llaves(t);
+    if (k == null) return {};
+    final r = <String, DocumentoSensible>{};
+    for (final s in await sobres.todos(persona, tipo: t)) {
+      final m = descifrarDocumento(llaveDeTipo: Uint8List.fromList(k.$1), persona: persona, sobre: s);
+      if (m == null) continue;
+      r[m['clave']! as String] =
+          DocumentoSensible.deJson((m['doc']! as Map).cast<String, Object?>());
+    }
+    return r;
+  }
 }

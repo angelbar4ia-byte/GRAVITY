@@ -12,6 +12,11 @@ import '../../../app/sensibles/sensibles.dart';
 import '../casos_uso/servicio_eliminar.dart';
 import '../casos_uso/servicio_habitos.dart';
 import '../casos_uso/servicio_agenda.dart';
+import '../casos_uso/servicio_diario.dart';
+import '../casos_uso/servicio_lectura.dart';
+import '../casos_uso/servicio_progreso.dart';
+import '../datos/modelos_agenda.dart';
+import '../datos/biblia.dart';
 import '../datos/documentos_sensibles.dart';
 import '../datos/repositorio_agenda.dart';
 import '../datos/repositorio.dart';
@@ -89,3 +94,32 @@ final bloquesDelDiaProvider = FutureProvider.family<List<OcurrenciaBloque>, Date
   ref.watch(versionHabitosProvider);
   return ref.watch(servicioAgendaProvider).bloquesDe(f);
 });
+
+/// Versiones de la Biblia instaladas (vacío mientras no haya texto, P10).
+final bibliasProvider = FutureProvider<List<ProveedorBiblia>>((ref) => cargarBiblias());
+
+final servicioLecturaProvider = Provider<ServicioLectura>((ref) =>
+    ServicioLectura(ref.watch(repositorioAgendaProvider), ahora: ref.watch(relojProvider).ahora));
+
+final planesProvider = FutureProvider<List<PlanGuardado>>((ref) {
+  ref.watch(versionHabitosProvider);
+  return ref.watch(servicioLecturaProvider).activos();
+});
+
+final servicioDiarioProvider = Provider<ServicioDiario?>((ref) {
+  final d = ref.watch(documentosSensiblesProvider);
+  return d == null ? null : ServicioDiario(d, ahora: ref.watch(relojProvider).ahora);
+});
+
+final ajustesProvider = FutureProvider<AjustesHab>((ref) {
+  ref.watch(versionHabitosProvider);
+  return ref.watch(repositorioAgendaProvider).ajustes();
+});
+
+final servicioProgresoProvider = Provider<ServicioProgreso>((ref) => ServicioProgreso(
+    ref.watch(repositorioHabitosProvider), ref.watch(repositorioAgendaProvider),
+    ahora: ref.watch(relojProvider).ahora));
+
+final servicioRevisionProvider = Provider<ServicioRevision>((ref) => ServicioRevision(
+    ref.watch(repositorioAgendaProvider), ref.watch(servicioProgresoProvider), ref.watch(servicioDiarioProvider),
+    ahora: ref.watch(relojProvider).ahora));
