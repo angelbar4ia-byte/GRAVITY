@@ -5,7 +5,6 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:habitos_dominio/habitos_dominio.dart';
 
 import '../../../app/pantallas/marco_pantalla.dart';
 import '../../../diseno/diseno.dart';
