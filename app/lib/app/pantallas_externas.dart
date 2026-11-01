@@ -90,6 +90,9 @@ const Map<String, String> tablasColaFinanzas = finanzas.tablasColaFinanzas;
 List<Override> get sobrescriturasAvisosFinanzas =>
     finanzas.sobrescriturasAvisosFinanzas;
 
+/// Exportar mis datos y recordatorios locales de Hábitos.
+List<Override> get sobrescriturasHabitos => habitos.sobrescriturasHabitos;
+
 /// Consultas locales de Finanzas para `ContextoHerramienta.consultaLocal`
 /// (`finanzas.resumen_semana`, `finanzas.proximos_pagos`,
 /// `finanzas.ahorro_avance`): texto discreto que nunca sale del equipo.

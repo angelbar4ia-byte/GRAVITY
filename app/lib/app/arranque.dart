@@ -51,7 +51,10 @@ import '../nucleo/tablet/controlador_tablet.dart' show alEntrarConPinProvider, a
 import 'montos/montos_al_entrar.dart';
 import 'montos/revelar_montos.dart';
 import 'pantallas_externas.dart'
-    show sobrescriturasAvisosFinanzas, tablasColaFinanzas;
+    show
+        sobrescriturasAvisosFinanzas,
+        sobrescriturasHabitos,
+        tablasColaFinanzas;
 import 'sesion_efectiva.dart';
 
 /// Conexiones entre áreas que la app hace siempre (en el arranque y en las
@@ -60,6 +63,7 @@ List<Override> conexionesDeLaApp() => [
   // Finanzas alimenta los recordatorios de vencimiento y el detalle de cada
   // aviso de la bandeja (Fase 2).
   ...sobrescriturasAvisosFinanzas,
+  ...sobrescriturasHabitos,
   // Al cambiar la persona frente a la pantalla (sesión o PIN en la tablet),
   // diseno vuelve a ocultar los montos y quita el modo privado (M8).
   personaEnPantallaProvider.overrideWith(
