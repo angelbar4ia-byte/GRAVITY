@@ -245,10 +245,10 @@ void main() {
   test('CargaDia: ligero, lleno y cargado', () {
     EstadoSemaforo e(int p) =>
         CargaDia(planeadosMin: p, disponiblesMin: 400).estado;
-    expect(e(300), EstadoSemaforo.verde);
-    expect(e(301), EstadoSemaforo.ambar);
-    expect(e(400), EstadoSemaforo.ambar);
-    expect(e(401), EstadoSemaforo.rojo);
+    expect(e(200), EstadoSemaforo.verde);
+    expect(e(201), EstadoSemaforo.ambar);
+    expect(e(340), EstadoSemaforo.ambar);
+    expect(e(341), EstadoSemaforo.rojo);
   });
 
   group('contenido y accesibilidad', () {

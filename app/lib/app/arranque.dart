@@ -45,7 +45,9 @@ import '../nucleo/sesion/servicio_sesion_supabase.dart';
 import '../nucleo/sesion/sesion.dart';
 import 'avisos/con_avisos.dart' show tipoEquipoAvisosProvider;
 import 'dispositivo.dart';
+import '../nucleo/sensibles/nube_habitos.dart';
 import 'sensibles/sensibles.dart';
+import '../nucleo/tablet/controlador_tablet.dart' show alEntrarConPinProvider, alSalirDeLaTabletProvider;
 import 'montos/montos_al_entrar.dart';
 import 'montos/revelar_montos.dart';
 import 'pantallas_externas.dart'
@@ -217,6 +219,9 @@ Future<List<Override>> prepararArranque({
       if (plataforma == TargetPlatform.android ||
           plataforma == TargetPlatform.windows)
         notificadorProvider.overrideWithValue(NotificadorPlugin()),
+      nubeDeHabitosProvider.overrideWithValue(
+        NubeDeHabitosSupabase(() => (sesion! as ServicioSesionSupabase).clienteActivo),
+      ),
       if (firebase == EstadoFirebase.activo)
         fuentePushProvider.overrideWithValue(FuentePushFirebase()),
     ],

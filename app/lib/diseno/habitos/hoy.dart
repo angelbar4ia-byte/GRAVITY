@@ -142,10 +142,11 @@ class CargaDia {
       ? (planeadosMin > 0 ? 1 : 0)
       : planeadosMin / disponiblesMin;
 
-  /// Ligero hasta 75 %, lleno hasta 100 %, cargado arriba (sin rojo).
+  /// Ligero hasta 50 %, lleno hasta 85 %, cargado arriba: los umbrales del
+  /// dominio (regla 25 de la Fase 3).
   EstadoSemaforo get estado {
-    if (planeadosMin * 4 <= disponiblesMin * 3) return EstadoSemaforo.verde;
-    if (planeadosMin <= disponiblesMin) return EstadoSemaforo.ambar;
+    if (planeadosMin * 2 <= disponiblesMin) return EstadoSemaforo.verde;
+    if (planeadosMin * 100 <= disponiblesMin * 85) return EstadoSemaforo.ambar;
     return EstadoSemaforo.rojo;
   }
 

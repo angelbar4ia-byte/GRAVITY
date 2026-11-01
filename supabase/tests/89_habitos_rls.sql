@@ -53,9 +53,16 @@ select pruebas.falla($$select * from public.hab_objetivos$$, 'Sin sesión no se 
 
 -- ---------------------------------------------------------------- escribir lo propio
 select pruebas.como('alex@ejemplo.test');
-select pruebas.igual(pruebas.afecta($$insert into public.hab_objetivos (id, persona_id, hogar_id, titulo, area, tipo, fecha_inicio, modificado_en)
-  values ('f5000000-0000-4000-8000-0000000000a1', pruebas.id_persona('ana@ejemplo.test'), 'b0000000-0000-4000-8000-000000000002',
-          'Caminar (ejemplo)', 'salud', 'construir', '2026-11-01', now())$$), 1, 'Alex inserta mandando la persona y el hogar de otro…');
+select pruebas.falla($$insert into public.hab_objetivos (id, persona_id, titulo, area, tipo, fecha_inicio, modificado_en)
+  values (gen_random_uuid(), pruebas.id_persona('ana@ejemplo.test'), 'X', 'salud', 'construir', '2026-11-01', now())$$,
+  'La app no manda persona_id (sin permiso de columna)', '42501');
+select pruebas.falla($$insert into public.hab_objetivos (id, hogar_id, titulo, area, tipo, fecha_inicio, modificado_en)
+  values (gen_random_uuid(), 'b0000000-0000-4000-8000-000000000002', 'X', 'salud', 'construir', '2026-11-01', now())$$,
+  'ni hogar_id', '42501');
+select pruebas.falla($$insert into public.hab_objetivos (id, titulo, area, tipo, fecha_inicio, modificado_en, actualizado_en)
+  values (gen_random_uuid(), 'X', 'salud', 'construir', '2026-11-01', now(), now())$$, 'ni actualizado_en', '42501');
+select pruebas.igual(pruebas.afecta($$insert into public.hab_objetivos (id, titulo, area, tipo, fecha_inicio, modificado_en)
+  values ('f5000000-0000-4000-8000-0000000000a1', 'Caminar (ejemplo)', 'salud', 'construir', '2026-11-01', now())$$), 1, 'Alex inserta lo suyo…');
 select pruebas.igual((select persona_id || '/' || hogar_id from public.hab_objetivos where id = 'f5000000-0000-4000-8000-0000000000a1'),
   pruebas.id_persona('alex@ejemplo.test') || '/b0000000-0000-4000-8000-000000000001',
   '… el servidor lo deja a su nombre y en su hogar');
@@ -86,7 +93,7 @@ select pruebas.falla($$insert into public.hab_ajustes (persona_id, hogar_id) val
   'Los ajustes los crea el servidor', '42501');
 select pruebas.falla($$update public.hab_modos set modo = 'nube_cifrada'$$, 'El modo solo cambia con hab_cambiar_modo', '42501');
 select pruebas.igual(pruebas.afecta($$delete from public.hab_objetivos where id = 'f5000000-0000-4000-8000-0000000000a1'$$), 1, 'Borra lo suyo');
-select pruebas.igual(pruebas.afecta($$delete from public.hab_objetivos$$), 0, '… pero ya no queda nada más que borrar (lo de otros no es suyo)');
+select pruebas.igual(pruebas.afecta($$delete from public.hab_objetivos$$), 1, 'Un DELETE sin filtro solo alcanza lo suyo (1 fila: su objetivo del seed)');
 select pruebas.como_postgres();
 select pruebas.igual((select count(*)::int from public.hab_objetivos where persona_id = pruebas.id_persona('ana@ejemplo.test')), 2, 'Lo de Ana sigue intacto');
 select pruebas.igual((select count(*)::int from public.hab_registros where id = 'f5200000-0000-4000-8000-0000000000a1'), 0, 'El registro se fue en cascada con su objetivo');
@@ -117,7 +124,9 @@ select pruebas.igual((select count(*)::int from public.hab_modos where persona_i
   'Cada uno nace con los dos modos en solo teléfono');
 select pruebas.ok(not public.hab_miembro_activo('b0000000-0000-4000-8000-000000000001', pruebas.id_persona('marta@ejemplo.test')),
   'La cuenta maestra que no es la dueña queda fuera');
+select pruebas.como('ana@ejemplo.test');
 select public.asignar_cuenta_maestra('b0000000-0000-4000-8000-000000000001', pruebas.id_persona('ana@ejemplo.test'));
+select pruebas.como_postgres();
 select pruebas.ok(public.hab_miembro_activo('b0000000-0000-4000-8000-000000000001', pruebas.id_persona('ana@ejemplo.test')),
   'La dueña que además es maestra conserva su Hábitos');
 update public.membresias set rol = 'cuidador' where persona_id = pruebas.id_persona('teo@ejemplo.test');
