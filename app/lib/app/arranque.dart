@@ -34,6 +34,7 @@ import '../nucleo/configuracion/configuracion_entorno.dart';
 import '../nucleo/firebase/firebase.dart';
 import '../nucleo/invitaciones/invitaciones.dart';
 import '../nucleo/seguridad/almacen_seguro.dart';
+import '../nucleo/sensibles/subida_diferida.dart' show funcionSubirSobres, tipoColaSobres;
 import '../nucleo/seguridad/biometria.dart';
 import '../nucleo/seguridad/limpieza_local.dart';
 import '../nucleo/seguridad/pantalla_segura.dart';
@@ -42,7 +43,9 @@ import '../nucleo/sesion/proveedores_sesion.dart';
 import '../nucleo/sesion/servicio_sesion_demostracion.dart';
 import '../nucleo/sesion/servicio_sesion_supabase.dart';
 import '../nucleo/sesion/sesion.dart';
+import 'avisos/con_avisos.dart' show tipoEquipoAvisosProvider;
 import 'dispositivo.dart';
+import 'sensibles/sensibles.dart';
 import 'montos/montos_al_entrar.dart';
 import 'montos/revelar_montos.dart';
 import 'pantallas_externas.dart'
@@ -69,6 +72,17 @@ List<Override> conexionesDeLaApp() => [
   montosVisiblesProvider.overrideWith(MontosVisiblesAlEntrar.new),
   // Bandeja de salida (D14, 23/oct/2026): la tablet mueve la credencial de
   // quien sale con algo por subir a su permiso de subida.
+  // Tablet personal (D21): al entrar con el PIN se abren las llaves de
+  // Hábitos; al salir se olvidan. En el teléfono y la laptop no hacen nada.
+  alEntrarConPinProvider.overrideWith(
+    (ref) => (persona, pin) async {
+      if (!llavesVanConPin(ref.read(tipoEquipoAvisosProvider))) return;
+      await ref.read(llavesHabitosProvider).liberarConPin(persona, pin);
+    },
+  ),
+  alSalirDeLaTabletProvider.overrideWith(
+    (ref) => (persona) => ref.read(llavesHabitosProvider).olvidarEnMemoria(),
+  ),
   bandejaDeLaTabletProvider.overrideWith(
     (ref) => BandejaDeLaTabletConCola(
       ref.watch(bandejaDeSalidaProvider),
@@ -152,6 +166,8 @@ Future<List<Override>> prepararArranque({
       enviador = EnviadorSupabase.dinamico(
         () => servicio.clienteActivo,
         tablas: tablasDeLaCola,
+        // Hábitos (Fase 3): sobres ya cifrados, por la función del servidor.
+        funciones: const {tipoColaSobres: funcionSubirSobres},
       );
     } catch (error) {
       debugPrint('No se pudo preparar Supabase; modo demostración: $error');

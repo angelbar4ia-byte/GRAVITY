@@ -516,3 +516,39 @@ select public.fin_emitir_aviso(pg_temp.libro_personal('a0000000-0000-4000-8000-0
                                'fondo_bajo:ejemplo:2026-w43');
 
 select pg_temp.como(null);
+
+-- ------------------------------------------------------------ Fase 3: Hábitos (datos inventados)
+-- Cada persona ve solo lo suyo. Los sobres son bytes aleatorios, nunca texto de hábitos reales.
+select pg_temp.como('a0000000-0000-4000-8000-000000000001');
+insert into public.hab_objetivos (id, titulo, area, tipo, unidad, meta_valor, frecuencia, fecha_inicio, prioridad, minimo, modificado_en) values
+  ('f5000000-0000-4000-8000-000000000001', 'Leer 20 minutos al día (ejemplo)', 'espiritual', 'construir', 'minutos', 20, 'diaria', '2026-10-19', 2, true, '2026-10-19 08:00-06'),
+  ('f5000000-0000-4000-8000-000000000002', 'Caminar tres veces por semana (ejemplo)', 'salud', 'construir', 'veces', 3, 'n_por_semana', '2026-10-19', 3, false, '2026-10-19 08:00-06');
+insert into public.hab_bloques (id, titulo, area, tipo, objetivo_id, inicio, duracion_min, dias, desde, minimo, recordar_min, modificado_en) values
+  ('f5100000-0000-4000-8000-000000000001', 'Lectura de la mañana (ejemplo)', 'espiritual', 'actividad', 'f5000000-0000-4000-8000-000000000001', '07:30', 20, 127, '2026-10-19', true, 10, '2026-10-19 08:00-06');
+insert into public.hab_registros (id, objetivo_id, fecha, estado, valor, modificado_en) values
+  ('f5200000-0000-4000-8000-000000000001', 'f5000000-0000-4000-8000-000000000001', '2026-10-26', 'hecho', 20, '2026-10-26 08:00-06'),
+  ('f5200000-0000-4000-8000-000000000002', 'f5000000-0000-4000-8000-000000000001', '2026-10-27', 'parcial', 10, '2026-10-27 08:00-06');
+select public.hab_crear_plan_lectura(
+  '{"id": "f5300000-0000-4000-8000-000000000001", "tipo": "ruta_inicio", "nombre": "Ruta de inicio (ejemplo)", "fecha_inicio": "2026-10-26", "version_biblica": "rvr1909"}'::jsonb,
+  '[{"dia": 1, "fecha": "2026-10-26", "segmentos": [{"libro": 43, "cap_ini": 1, "cap_fin": 1}]},
+    {"dia": 2, "fecha": "2026-10-27", "segmentos": [{"libro": 43, "cap_ini": 2, "cap_fin": 2}]}]'::jsonb);
+insert into public.hab_marcas_biblia (id, tipo, referencia, color, modificado_en) values
+  ('f5400000-0000-4000-8000-000000000001', 'subrayado', '43:3:16', 'amarillo', '2026-10-27 08:20-06');
+insert into public.hab_revisiones (id, semana, estado, resumen, modificado_en) values
+  ('f5500000-0000-4000-8000-000000000001', '2026-10-19', 'completada', '{"espiritual": 8000}'::jsonb, '2026-10-26 14:40-06');
+-- Nube cifrada del diario de oración de Ana (llave envuelta y sobres inventados: bytes aleatorios).
+select public.hab_guardar_llave(1, 'pbkdf2-hmac-sha256', '{"vueltas": 600000}'::jsonb,
+  translate(encode(decode(md5('sal-de-ejemplo'), 'hex'), 'base64'), '+/=', '-_'),
+  translate(encode(decode(md5('a') || md5('b') || md5('c'), 'hex'), 'base64'), '+/=', '-_'));
+select public.hab_cambiar_modo('diario_oracion', 'nube_cifrada');
+select public.hab_subir_sobres(jsonb_build_array(
+  jsonb_build_object('id', 'f5600000-0000-4000-8000-000000000001', 'tipo', 'diario_oracion', 'revision', 1, 'llave_version', 1,
+    'cifrado', translate(encode(decode(md5('s1') || md5('s2') || md5('s3'), 'hex'), 'base64'), '+/=\n', '-_'))));
+
+select pg_temp.como('a0000000-0000-4000-8000-000000000002');
+insert into public.hab_objetivos (id, titulo, area, tipo, unidad, meta_valor, frecuencia, fecha_inicio, modificado_en) values
+  ('f5000000-0000-4000-8000-000000000003', 'Estudiar inglés 15 minutos (ejemplo)', 'educacion', 'construir', 'minutos', 15, 'diaria', '2026-10-19', '2026-10-19 08:00-06');
+select pg_temp.como('a0000000-0000-4000-8000-000000000003');
+insert into public.hab_objetivos (id, titulo, area, tipo, unidad, meta_valor, frecuencia, fecha_inicio, modificado_en) values
+  ('f5000000-0000-4000-8000-000000000004', 'Orar cada noche (ejemplo)', 'espiritual', 'construir', null, null, 'diaria', '2026-10-19', '2026-10-19 08:00-06');
+select pg_temp.como(null);

@@ -36,6 +36,8 @@ class EnviadorSupabase implements EnviadorOrdenado {
     SupabaseClient cliente, {
     required this.tablas,
     this.actualizaciones = const {},
+    this.funciones = const {},
+    this.alResponderFuncion,
     this.niveles = nivelesDeSubidaFinanzas,
     this.columnasDelServidor = columnasQuePoneElServidor,
   }) : _cliente = (() => cliente);
@@ -46,6 +48,8 @@ class EnviadorSupabase implements EnviadorOrdenado {
     SupabaseClient Function() cliente, {
     required this.tablas,
     this.actualizaciones = const {},
+    this.funciones = const {},
+    this.alResponderFuncion,
     this.niveles = nivelesDeSubidaFinanzas,
     this.columnasDelServidor = columnasQuePoneElServidor,
   }) : _cliente = cliente;
@@ -64,6 +68,16 @@ class EnviadorSupabase implements EnviadorOrdenado {
   /// de la fila. Es idempotente: si la fila ya está así, no hace nada; si la
   /// fila aún no existe en el servidor, se reintenta (falta una dependencia).
   final Map<String, String> actualizaciones;
+
+  /// Tipos que llaman a una **función** del servidor en lugar de escribir una
+  /// tabla: tipo → función, p. ej. `{'habitos.sobres': 'hab_subir_sobres'}`. La
+  /// carga son los parámetros de la función (`{'p_sobres': […]}`); deben ser
+  /// idempotentes. Lo que responde la función (p. ej. los conflictos de
+  /// `hab_subir_sobres`) va a [alResponderFuncion].
+  final Map<String, String> funciones;
+
+  /// Recibe lo que respondió una función de [funciones] (tipo y respuesta).
+  final void Function(String tipo, Object? respuesta)? alResponderFuncion;
 
   /// Nivel de subida por tabla (ver [nivelesDeSubidaFinanzas]).
   final Map<String, int> niveles;
@@ -85,6 +99,8 @@ class EnviadorSupabase implements EnviadorOrdenado {
   Future<ResultadoEnvio> enviar(PeticionEnvio peticion) async {
     final cliente = _cliente();
     if (cliente.auth.currentSession == null) return ResultadoEnvio.sinSesion;
+    final funcion = funciones[peticion.tipo];
+    if (funcion != null) return _llamarFuncion(cliente, funcion, peticion);
     final cambia = actualizaciones[peticion.tipo];
     final tabla = cambia ?? tablas[peticion.tipo];
     if (tabla == null) {
@@ -127,6 +143,38 @@ class EnviadorSupabase implements EnviadorOrdenado {
       // (no es de red) requiere atención.
       if (esErrorDeRed(error)) rethrow;
       throw RechazoEnvio('Error al subir: $error');
+    }
+  }
+
+  /// Llama a una función del servidor (`rpc`) con la carga como parámetros.
+  /// Los datos de Hábitos jamás se tratan como filas del libro, y nada de la
+  /// carga se escribe en los mensajes de error.
+  Future<ResultadoEnvio> _llamarFuncion(
+    SupabaseClient cliente,
+    String funcion,
+    PeticionEnvio peticion,
+  ) async {
+    if (peticion.origen == OrigenRegistro.tabletCasa) {
+      throw const RechazoEnvio(
+        'Lo personal pide nombre y PIN: no se sube desde la tablet de la casa '
+        'solo con el nombre (D14).',
+      );
+    }
+    try {
+      final respuesta = await cliente.rpc(funcion, params: peticion.carga);
+      alResponderFuncion?.call(peticion.tipo, respuesta);
+      return ResultadoEnvio.enviado;
+    } on PostgrestException catch (error) {
+      final resultado = clasificarErrorPostgrest(error.code);
+      if (resultado == ResultadoEnvio.rechazado) {
+        throw RechazoEnvio(
+          'El servidor no aceptó el lote (${error.code ?? 'sin código'}).',
+        );
+      }
+      return resultado;
+    } catch (error) {
+      if (esErrorDeRed(error)) rethrow;
+      throw const RechazoEnvio('No se pudo subir el lote.');
     }
   }
 

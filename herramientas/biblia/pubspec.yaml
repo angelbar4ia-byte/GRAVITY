@@ -1,0 +1,15 @@
+name: importar_biblia
+description: Convierte un texto bíblico de dominio público al formato de GRAVITY y valida el canon.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.13.5
+
+dependencies:
+  habitos_dominio:
+    path: ../../paquetes/habitos_dominio
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.25.6

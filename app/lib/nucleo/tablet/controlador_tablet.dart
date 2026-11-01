@@ -135,6 +135,18 @@ class EstadoTablet {
   );
 }
 
+/// Ganchos de la entrada y la salida de una persona con su PIN en la tablet.
+/// La app los conecta con lo que necesita el PIN en memoria: abrir las llaves
+/// de los datos sensibles de Hábitos en la tablet personal (D21) y cerrarlas al
+/// salir. Sin conexión, no pasa nada.
+final alEntrarConPinProvider =
+    Provider<Future<void> Function(String personaId, String pin)?>(
+      (ref) => null,
+    );
+final alSalirDeLaTabletProvider = Provider<void Function(String personaId)?>(
+  (ref) => null,
+);
+
 final controladorTabletProvider =
     NotifierProvider<ControladorTablet, EstadoTablet>(ControladorTablet.new);
 
@@ -439,6 +451,11 @@ class ControladorTablet extends Notifier<EstadoTablet> {
         for (final u in state.usuarios) u.personaId == rehecho.personaId ? rehecho : u,
       ]);
     }
+    try {
+      await ref.read(alEntrarConPinProvider)?.call(usuario.personaId, pin);
+    } catch (_) {
+      // Las llaves de Hábitos no se abrieron: lo reservado pedirá el PIN.
+    }
     _llave = llave;
     _personaConLlave = usuario.personaId;
     _renovaciones = sesiones.credencialesDePersona.listen(_alRenovar);
@@ -508,6 +525,7 @@ class ControladorTablet extends Notifier<EstadoTablet> {
     if (state.usuarioActivo != null) state = state.conUsuarioActivo(null);
     final persona = _personaConLlave;
     final llave = _llave;
+    if (persona != null) ref.read(alSalirDeLaTabletProvider)?.call(persona);
     _personaConLlave = null;
     _llave = null;
     unawaited(_renovaciones?.cancel());

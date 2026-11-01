@@ -41,8 +41,9 @@ select pruebas.igual(pruebas.cuenta($$select * from public.avisos_preferencias$$
 select pruebas.como('elena@ejemplo.test');
 select pruebas.igual(pruebas.cuenta($$select * from public.avisos$$), 0, 'Otro hogar no ve nada');
 select pruebas.como('carla@ejemplo.test');
-select pruebas.igual(pruebas.cuenta($$select * from public.avisos$$) + pruebas.cuenta($$select * from public.avisos_preferencias$$), 0,
-  'Una familiar no ve avisos ni preferencias');
+select pruebas.igual(pruebas.cuenta($$select * from public.avisos$$), 0, 'Una familiar no ve avisos de dinero');
+select pruebas.igual(pruebas.cuenta($$select * from public.avisos_preferencias$$), 1,
+  'pero tiene sus preferencias (solo Hábitos, Fase 3): únicamente las suyas');
 select pruebas.como_anon();
 select pruebas.falla($$select * from public.avisos$$, 'Sin sesión no se lee nada', '42501');
 
@@ -51,16 +52,16 @@ select pruebas.como_postgres();
 select pruebas.igual(
   (select string_agg(u.email, ',' order by u.email) from public.avisos_preferencias p
      join public.personas pe on pe.id = p.persona_id join auth.users u on u.id = pe.usuario_id),
-  'alex@ejemplo.test,ana@ejemplo.test,elena@ejemplo.test,teo@ejemplo.test',
-  'Tienen preferencias los adultos con Finanzas; no la maestra, ni familiar, cuidador o Casa');
+  'alex@ejemplo.test,ana@ejemplo.test,carla@ejemplo.test,elena@ejemplo.test,teo@ejemplo.test',
+  'Tienen preferencias quienes tienen Finanzas o Hábitos (la familiar, solo Hábitos); no la maestra, ni cuidador o Casa');
 select pruebas.igual((select tope_no_criticas from public.avisos_preferencias where persona_id = pruebas.id_persona('ana@ejemplo.test')),
   3::smallint, 'Por omisión: tope de 3 no críticos');
 select pruebas.igual((select silencio_desde::text || '-' || silencio_hasta::text || ' ' || hora_vencimientos::text
   from public.avisos_preferencias where persona_id = pruebas.id_persona('ana@ejemplo.test')),
   '22:00:00-07:00:00 09:00:00', '… silencio de 22:00 a 07:00 y avisos a las 9:00');
-update public.membresias set rol = 'familiar' where persona_id = pruebas.id_persona('teo@ejemplo.test');
+update public.membresias set rol = 'cuidador' where persona_id = pruebas.id_persona('teo@ejemplo.test');
 select pruebas.igual(pruebas.cuenta($$select * from public.avisos_preferencias where persona_id = pruebas.id_persona('teo@ejemplo.test')$$), 0,
-  'Quien pierde Finanzas pierde sus preferencias');
+  'Quien pierde Finanzas y Hábitos (pasa a cuidador) pierde sus preferencias');
 update public.membresias set rol = 'coadministrador' where persona_id = pruebas.id_persona('teo@ejemplo.test');
 select pruebas.igual((select count(*)::int from public.avisos_preferencias where persona_id = pruebas.id_persona('teo@ejemplo.test')), 1,
   'y las recupera al volver a tenerla');
@@ -82,8 +83,11 @@ select pruebas.igual((select tope_no_criticas from public.avisos_preferencias), 
 select pruebas.como('marta@ejemplo.test');
 select pruebas.falla($$select public.avisos_actualizar_preferencias(p_tope_no_criticas => 2)$$,
   'La maestra no tiene preferencias de dinero', '42501');
+select pruebas.como('diana@ejemplo.test');
+select pruebas.falla($$select public.avisos_actualizar_preferencias(p_tope_no_criticas => 2)$$, 'La cuidadora tampoco', '42501');
 select pruebas.como('carla@ejemplo.test');
-select pruebas.falla($$select public.avisos_actualizar_preferencias(p_tope_no_criticas => 2)$$, 'Una familiar tampoco', '42501');
+select public.avisos_actualizar_preferencias(p_tipos_silenciados => array['hab_reservado', 'hab_lectura']);
+select pruebas.igual((select cardinality(tipos_silenciados) from public.avisos_preferencias), 2, 'La familiar silencia tipos locales de Hábitos (hab_*)');
 
 -- ---------------------------------------------------------------- dispositivos (M13)
 select pruebas.como('carla@ejemplo.test');
