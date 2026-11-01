@@ -38,7 +38,11 @@ void main() {
   test('bloques de actividad suman a la carga; saturan', () async {
     await s.aplicarAsistente(trabajoEntradaMin: 480, trabajoSalidaMin: 1080, trasladoIdaMin: 35, trasladoVueltaMin: 60);
     await s.crearBloque(titulo: 'Inglés', area: 'educacion', inicioMin: 1140, duracionMin: 120);
-    expect((await s.carga(lunes)).nivel, NivelCarga.equilibrado); // 120/265 = 45 % -> ligero? comprobar
+    expect((await s.carga(lunes)).nivel, NivelCarga.ligero); // 120/265 = 45 %
+    await s.crearBloque(titulo: 'Lectura', area: 'personal', inicioMin: 1300, duracionMin: 100);
+    expect((await s.carga(lunes)).nivel, NivelCarga.equilibrado); // 220/265 = 83 %
+    await s.crearBloque(titulo: 'Otro', area: 'salud', inicioMin: 400, duracionMin: 30);
+    expect((await s.carga(lunes)).nivel, NivelCarga.saturado); // 250/265 = 94 %
   });
 
   test('conflicto y huecos', () async {
