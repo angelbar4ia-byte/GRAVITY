@@ -476,6 +476,109 @@ void main() {
     });
   });
 
+  group('Hábitos (Fase 3, D13)', () {
+    HerramientaNavegacion? destino(
+      String texto, {
+      Rol rol = Rol.familiar,
+      bool esMaestra = false,
+    }) => switch (InterpreteOrdenes(
+      rol: rol,
+      dispositivo: TipoDispositivo.telefono,
+      esMaestra: esMaestra,
+    ).interpretar(texto)) {
+      OrdenEntendida(:final destino) => destino,
+      _ => null,
+    };
+
+    test('las órdenes de hoy, agenda, espiritual y SOS', () {
+      for (final rol in [Rol.dueno, Rol.coadministrador, Rol.familiar]) {
+        for (final (orden, nombre) in [
+          ('abre hoy', 'habitos.abrir_hoy'),
+          ('Abre Hoy', 'habitos.abrir_hoy'),
+          ('mi agenda', 'habitos.abrir_agenda'),
+          ('abre mi agenda', 'habitos.abrir_agenda'),
+          ('abre espiritual', 'habitos.abrir_espiritual'),
+          ('tengo un antojo', 'habitos.sos'),
+          ('Tengo un antojo', 'habitos.sos'),
+          ('abre hábitos', 'habitos.abrir'),
+        ]) {
+          expect(
+            destino(orden, rol: rol)?.nombre,
+            nombre,
+            reason: '$orden / ${rol.name}',
+          );
+        }
+      }
+    });
+
+    test('no se pisan con las de Finanzas ("mi semana" sigue siendo la de '
+        'Finanzas)', () {
+      expect(
+        destino('mi semana', rol: Rol.dueno)?.nombre,
+        'finanzas.abrir_semana',
+      );
+      expect(
+        destino('abre presupuesto', rol: Rol.dueno)?.nombre,
+        'finanzas.abrir',
+      );
+    });
+
+    test('cuidador, Casa y la maestra que no es la dueña no las ven', () {
+      for (final orden in [
+        'abre hoy',
+        'mi agenda',
+        'abre espiritual',
+        'tengo un antojo',
+      ]) {
+        for (final (rol, maestra) in [
+          (Rol.cuidador, false),
+          (Rol.casa, false),
+          (Rol.coadministrador, true),
+        ]) {
+          final interprete = InterpreteOrdenes(
+            rol: rol,
+            dispositivo: TipoDispositivo.telefono,
+            esMaestra: maestra,
+          );
+          final r = interprete.interpretar(orden);
+          expect(
+            r,
+            isNot(isA<OrdenEntendida>()),
+            reason: '$orden / ${rol.name}',
+          );
+          expect(
+            destinosDe(r).where((d) => d.modulo == Modulo.habitos),
+            isEmpty,
+            reason: '$orden / ${rol.name}',
+          );
+          expect(
+            interprete
+                .sugerir(orden)
+                .where((x) => x.destino.modulo == Modulo.habitos),
+            isEmpty,
+            reason: '$orden / ${rol.name}',
+          );
+        }
+      }
+    });
+
+    test('el dueño que además es maestro conserva Hábitos', () {
+      expect(
+        destino('tengo un antojo', rol: Rol.dueno, esMaestra: true)?.nombre,
+        'habitos.sos',
+      );
+    });
+
+    test('ninguna se guarda en historial', () {
+      final interprete = InterpreteOrdenes(rol: Rol.familiar);
+      for (final d in interprete.destinos.where(
+        (d) => d.modulo == Modulo.habitos,
+      )) {
+        expect(d.guardaEnHistorial, isFalse, reason: d.nombre);
+      }
+    });
+  });
+
   group('Cuenta maestra (D19)', () {
     test('no recibe nada que escriba o administre lo ajeno', () {
       for (final rol in [Rol.dueno, Rol.coadministrador]) {
@@ -665,6 +768,10 @@ void main() {
       expect(rutas('abre ', rol: Rol.familiar, maximo: 10), [
         Rutas.inicio,
         Rutas.habitos,
+        RutasDeHerramientas.hoyHabitos,
+        RutasDeHerramientas.agendaHabitos,
+        RutasDeHerramientas.espiritualHabitos,
+        RutasDeHerramientas.sosHabitos,
         Rutas.alimentacion,
         Rutas.casa,
         Rutas.ajustes,

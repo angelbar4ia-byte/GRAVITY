@@ -17,6 +17,7 @@ import '../modulos/gravity/ordenes/barra_ordenes.dart';
 import '../modulos/gravity/pantalla/hoy_telefono.dart';
 import '../modulos/gravity/pantalla/pantalla_principal.dart';
 import '../modulos/finanzas/finanzas.dart' as finanzas;
+import '../modulos/habitos/habitos.dart' as habitos;
 import '../nucleo/contratos/dispositivo.dart';
 import '../nucleo/contratos/roles.dart';
 
@@ -62,6 +63,9 @@ Widget? seccionApariencia() => const SeccionApariencia();
 /// `puedeSobre`. Las secciones de la laptop regresan al inicio del módulo en
 /// el teléfono (D4).
 List<RouteBase> rutasFinanzas() => finanzas.rutasFinanzas();
+
+/// Rutas de Hábitos: Hoy en la raíz, más objetivos y pausa (SOS).
+List<RouteBase> rutasHabitos() => habitos.rutasHabitos();
 
 /// Registro rápido de un gasto (F1). La plataforma lo muestra en una hoja
 /// inferior desde el (+) del teléfono y de la tablet, y en un diálogo con

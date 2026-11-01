@@ -18,6 +18,10 @@ List<Herramienta> herramientasFase0() => [...navegacionFase0];
 /// escribe ni lee montos.
 List<Herramienta> herramientasFase1() => [...navegacionFase1];
 
+/// Herramientas que agrega la Fase 3: Hábitos (hoy, agenda, espiritual y SOS).
+/// Solo abren la vista; son solo locales (D13) y no se guardan en historial.
+List<Herramienta> herramientasFase3() => [...navegacionFase3];
+
 /// Todas las herramientas vigentes, en el orden en que se sugieren.
 List<Herramienta> herramientasDeGravity() => [...herramientasNavegacion];
 

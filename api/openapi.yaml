@@ -492,11 +492,103 @@ paths:
       operationId: herramientaHabitosAbrir
       summary: habitos.abrir · Abrir Hábitos
       description: >-
-        Abre Hábitos (lo propio de cada persona).
+        Abre Hábitos (lo propio de cada persona). Hábitos es un módulo solo local (D13): nada
+        llega a la IA en la nube ni a las bocinas, y la orden no se guarda en ningún historial.
+        No la recibe la cuenta maestra que no es la dueña, ni el cuidador, ni Casa.
       x-roles: [dueno, coadministrador, familiar]
       x-escribe: false
-      x-solo-local: false
+      x-solo-local: true
       x-fase: 0
+      requestBody:
+        $ref: '#/components/requestBodies/PeticionHerramienta'
+      responses:
+        '200':
+          $ref: '#/components/responses/ResultadoHerramienta'
+        '404':
+          $ref: '#/components/responses/HerramientaNoDisponible'
+  /herramientas/habitos.abrir_hoy:
+    servers: *servidorHerramientas
+    post:
+      tags: [Herramientas de GRAVITY]
+      operationId: herramientaHabitosAbrirHoy
+      summary: habitos.abrir_hoy · Abrir Hoy
+      description: >-
+        Abre Hábitos › Hoy (`/habitos`). Órdenes: "abre hoy", "mi día", "plan de hoy". Solo
+        abre la vista (D13): nunca lee ni registra nada de Hábitos, `para_ia` siempre es
+        nulo y la orden no se guarda en ningún historial. Es solo local y no la recibe la
+        cuenta maestra que no es la dueña, ni el cuidador, ni Casa.
+      x-roles: [dueno, coadministrador, familiar]
+      x-escribe: false
+      x-solo-local: true
+      x-fase: 3
+      requestBody:
+        $ref: '#/components/requestBodies/PeticionHerramienta'
+      responses:
+        '200':
+          $ref: '#/components/responses/ResultadoHerramienta'
+        '404':
+          $ref: '#/components/responses/HerramientaNoDisponible'
+  /herramientas/habitos.abrir_agenda:
+    servers: *servidorHerramientas
+    post:
+      tags: [Herramientas de GRAVITY]
+      operationId: herramientaHabitosAbrirAgenda
+      summary: habitos.abrir_agenda · Abrir Agenda
+      description: >-
+        Abre Hábitos › Agenda (`/habitos/agenda`). Órdenes: "mi agenda", "agenda". Solo abre
+        la vista (D13): nunca lee ni registra nada de Hábitos, `para_ia` siempre es nulo y
+        la orden no se guarda en ningún historial. Es solo local y no la recibe la cuenta
+        maestra que no es la dueña, ni el cuidador, ni Casa.
+      x-roles: [dueno, coadministrador, familiar]
+      x-escribe: false
+      x-solo-local: true
+      x-fase: 3
+      requestBody:
+        $ref: '#/components/requestBodies/PeticionHerramienta'
+      responses:
+        '200':
+          $ref: '#/components/responses/ResultadoHerramienta'
+        '404':
+          $ref: '#/components/responses/HerramientaNoDisponible'
+  /herramientas/habitos.abrir_espiritual:
+    servers: *servidorHerramientas
+    post:
+      tags: [Herramientas de GRAVITY]
+      operationId: herramientaHabitosAbrirEspiritual
+      summary: habitos.abrir_espiritual · Abrir Espiritual
+      description: >-
+        Abre Hábitos › Espiritual (`/habitos/espiritual`). Órdenes: "abre espiritual",
+        "lectura bíblica", "biblia". Solo abre la vista (D13): nunca lee ni registra nada de
+        Hábitos, `para_ia` siempre es nulo y la orden no se guarda en ningún historial. Es
+        solo local y no la recibe la cuenta maestra que no es la dueña, ni el cuidador, ni
+        Casa.
+      x-roles: [dueno, coadministrador, familiar]
+      x-escribe: false
+      x-solo-local: true
+      x-fase: 3
+      requestBody:
+        $ref: '#/components/requestBodies/PeticionHerramienta'
+      responses:
+        '200':
+          $ref: '#/components/responses/ResultadoHerramienta'
+        '404':
+          $ref: '#/components/responses/HerramientaNoDisponible'
+  /herramientas/habitos.sos:
+    servers: *servidorHerramientas
+    post:
+      tags: [Herramientas de GRAVITY]
+      operationId: herramientaHabitosSos
+      summary: habitos.sos · SOS: tengo un antojo
+      description: >-
+        Abre el SOS de Hábitos (`/habitos/sos`), una sección reservada que pide PIN o huella
+        y no se muestra en la tablet pública. Órdenes: "tengo un antojo", "antojo", "sos".
+        Solo abre la vista (D13): nunca lee ni registra nada de Hábitos, `para_ia` siempre
+        es nulo y la orden no se guarda en ningún historial. Es solo local y no la recibe la
+        cuenta maestra que no es la dueña, ni el cuidador, ni Casa.
+      x-roles: [dueno, coadministrador, familiar]
+      x-escribe: false
+      x-solo-local: true
+      x-fase: 3
       requestBody:
         $ref: '#/components/requestBodies/PeticionHerramienta'
       responses:

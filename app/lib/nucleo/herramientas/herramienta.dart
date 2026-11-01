@@ -22,10 +22,14 @@ final RegExp formatoNombreHerramienta = RegExp(
   r'^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$',
 );
 
-/// Módulos con dinero o datos clínicos (D3): **todas** sus herramientas son
+/// Módulos con dinero, datos clínicos o hábitos sensibles (D3, D13): **todas** sus herramientas son
 /// solo locales, también las de navegación. El registro rechaza una que no lo
 /// sea.
-const Set<Modulo> modulosSoloLocal = {Modulo.finanzas, Modulo.cuidados};
+const Set<Modulo> modulosSoloLocal = {
+  Modulo.finanzas,
+  Modulo.cuidados,
+  Modulo.habitos,
+};
 
 /// Para qué parte de GRAVITY es una herramienta (D18).
 enum AmbitoHerramienta {
@@ -105,6 +109,11 @@ abstract class Herramienta {
   /// semana, próximos pagos, avance del ahorro) son de quien lleva su libro,
   /// y esa cuenta no lleva ninguno. Por omisión, `true`.
   bool get ofreceASoloLectura => true;
+
+  /// `false` si la orden que la invoca no se guarda en ningún historial (ni
+  /// de la barra, ni de GRAVITY, ni en la bitácora): las de Hábitos pueden
+  /// nombrar hábitos sensibles (D13). Por omisión, `true`.
+  bool get guardaEnHistorial => true;
 
   /// Texto de la tarjeta de confirmación (solo se usa si [escribe]).
   String resumenConfirmacion(Map<String, Object?> parametros) =>

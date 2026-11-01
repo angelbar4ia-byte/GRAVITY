@@ -28,6 +28,19 @@ abstract final class RutasDeHerramientas {
   /// Compromisos y deudas de Finanzas (pantalla "Compromisos y deudas").
   static const compromisosFinanzas = '${Rutas.finanzas}/compromisos';
 
+  /// Hoy de Hábitos (la raíz del módulo).
+  static const hoyHabitos = Rutas.habitos;
+
+  /// Agenda de Hábitos.
+  static const agendaHabitos = '${Rutas.habitos}/agenda';
+
+  /// Hábitos › Espiritual (lectura, oración, devocional).
+  static const espiritualHabitos = '${Rutas.habitos}/espiritual';
+
+  /// SOS de Hábitos ("tengo un antojo"): sección reservada, pide PIN o huella
+  /// (`segmentosReservadosDeHabitos`).
+  static const sosHabitos = '${Rutas.habitos}/sos';
+
   /// Bandeja de solicitudes y recordatorios de GRAVITY (D18; plataforma:
   /// `RutasApp.solicitudes`).
   static const solicitudes = '/solicitudes';
@@ -48,6 +61,8 @@ final class HerramientaNavegacion extends Herramienta {
     this.ambito = AmbitoHerramienta.general,
     this.hoja,
     this.consulta = false,
+    this.paraSoloLectura = true,
+    this.historial = true,
     this._descripcion,
   });
 
@@ -97,8 +112,19 @@ final class HerramientaNavegacion extends Herramienta {
   /// maestra de solo lectura total (no lleva libro propio, D19).
   final bool consulta;
 
+  /// `false` si la cuenta maestra de solo lectura total no la recibe aunque
+  /// solo abra una vista: Hábitos es de cada quien y esa cuenta no lo tiene
+  /// (`hab_activa`).
+  final bool paraSoloLectura;
+
+  /// `false` si la orden no se guarda en ningún historial (Hábitos, D13).
+  final bool historial;
+
   @override
-  bool get ofreceASoloLectura => !consulta;
+  bool get ofreceASoloLectura => paraSoloLectura && !consulta;
+
+  @override
+  bool get guardaEnHistorial => historial;
 
   final String? _descripcion;
 
@@ -200,6 +226,64 @@ final herramientaAbrirHabitos = HerramientaNavegacion(
   ruta: Rutas.habitos,
   etiqueta: 'Hábitos',
   palabrasClave: const ['hábitos', 'hábito'],
+  paraSoloLectura: false,
+  historial: false,
+);
+
+/// Hábitos › Hoy. Solo abre la vista (D13): nada de lo que hay en Hábitos se
+/// lee en voz alta ni se manda a la IA, y la orden no se guarda en ningún
+/// historial. No la recibe la cuenta maestra que no es la dueña.
+final herramientaAbrirHoyHabitos = HerramientaNavegacion(
+  nombre: 'habitos.abrir_hoy',
+  modulo: Modulo.habitos,
+  roles: rolesParaNavegar(Modulo.habitos),
+  ruta: RutasDeHerramientas.hoyHabitos,
+  etiqueta: 'Hoy',
+  palabrasClave: const ['hoy', 'mi día', 'mis hábitos de hoy', 'plan de hoy'],
+  paraSoloLectura: false,
+  historial: false,
+  descripcion: 'Abre Hábitos › Hoy. Solo abre la vista; no se guarda en ningún historial.',
+);
+
+/// Hábitos › Agenda.
+final herramientaAbrirAgendaHabitos = HerramientaNavegacion(
+  nombre: 'habitos.abrir_agenda',
+  modulo: Modulo.habitos,
+  roles: rolesParaNavegar(Modulo.habitos),
+  ruta: RutasDeHerramientas.agendaHabitos,
+  etiqueta: 'Agenda',
+  palabrasClave: const ['agenda', 'mi agenda', 'mi semana de hábitos'],
+  paraSoloLectura: false,
+  historial: false,
+  descripcion: 'Abre Hábitos › Agenda. Solo abre la vista; no se guarda en ningún historial.',
+);
+
+/// Hábitos › Espiritual.
+final herramientaAbrirEspiritualHabitos = HerramientaNavegacion(
+  nombre: 'habitos.abrir_espiritual',
+  modulo: Modulo.habitos,
+  roles: rolesParaNavegar(Modulo.habitos),
+  ruta: RutasDeHerramientas.espiritualHabitos,
+  etiqueta: 'Espiritual',
+  palabrasClave: const ['espiritual', 'lectura bíblica', 'biblia', 'devocional'],
+  paraSoloLectura: false,
+  historial: false,
+  descripcion: 'Abre Hábitos › Espiritual. Solo abre la vista; no se guarda en ningún historial.',
+);
+
+/// SOS de Hábitos ("tengo un antojo"). Solo abre la vista del SOS, que es una
+/// sección reservada (pide PIN o huella y no se muestra en la tablet pública):
+/// la orden nunca registra nada ni se guarda en ningún historial.
+final herramientaSosHabitos = HerramientaNavegacion(
+  nombre: 'habitos.sos',
+  modulo: Modulo.habitos,
+  roles: rolesParaNavegar(Modulo.habitos),
+  ruta: RutasDeHerramientas.sosHabitos,
+  etiqueta: 'SOS: tengo un antojo',
+  palabrasClave: const ['tengo un antojo', 'antojo', 'sos'],
+  paraSoloLectura: false,
+  historial: false,
+  descripcion: 'Abre el SOS de Hábitos. Solo abre la vista reservada; no registra nada ni se guarda en ningún historial.',
 );
 
 /// Cuidados (solo local, D3). La cuidadora lo abre desde su navegación, no
@@ -426,6 +510,14 @@ final List<HerramientaNavegacion> navegacionFase1 = List.unmodifiable([
   herramientaAbrirSolicitudes,
 ]);
 
+/// Navegación de la Fase 3: Hábitos (solo abren la vista; solo locales, D13).
+final List<HerramientaNavegacion> navegacionFase3 = List.unmodifiable([
+  herramientaAbrirHoyHabitos,
+  herramientaAbrirAgendaHabitos,
+  herramientaAbrirEspiritualHabitos,
+  herramientaSosHabitos,
+]);
+
 /// Todo el catálogo de navegación, en el orden en que se sugiere.
 final List<HerramientaNavegacion> herramientasNavegacion = List.unmodifiable([
   herramientaAbrirInicio,
@@ -436,6 +528,10 @@ final List<HerramientaNavegacion> herramientasNavegacion = List.unmodifiable([
   herramientaProximosPagos,
   herramientaAhorroAvance,
   herramientaAbrirHabitos,
+  herramientaAbrirHoyHabitos,
+  herramientaAbrirAgendaHabitos,
+  herramientaAbrirEspiritualHabitos,
+  herramientaSosHabitos,
   herramientaAbrirCuidados,
   herramientaAbrirAlimentacion,
   herramientaAbrirCasa,

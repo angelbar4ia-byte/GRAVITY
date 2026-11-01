@@ -31,6 +31,11 @@ final rutasFinanzasProvider = Provider<List<RouteBase>>(
   (ref) => rutasFinanzas(),
 );
 
+/// Rutas de Hábitos (agente habitos, `pantallas_externas.dart`).
+final rutasHabitosProvider = Provider<List<RouteBase>>(
+  (ref) => rutasHabitos(),
+);
+
 final routerProvider = Provider<GoRouter>((ref) {
   // Cada cambio de rol (entrar, salir, PIN en la tablet) vuelve a evaluar
   // las redirecciones.
@@ -48,7 +53,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       esMaestra: ref.read(esCuentaMaestraProvider),
       enAccionDeTabletCasa: ref.read(enAccionDeTabletCasaProvider),
     ),
-    routes: rutasDeGravity(finanzas: ref.read(rutasFinanzasProvider)),
+    routes: rutasDeGravity(
+      finanzas: ref.read(rutasFinanzasProvider),
+      habitos: ref.read(rutasHabitosProvider),
+    ),
     errorBuilder: (context, estado) => const _PantallaNoEncontrada(),
   );
   ref.onDispose(() {
@@ -153,7 +161,10 @@ void cerrarLoQueEstaEncima(BuildContext context) {
 
 /// Todas las rutas de la app. [finanzas] son las del módulo (relativas a
 /// `Rutas.finanzas`, ver [montarRutasDeModulo]).
-List<RouteBase> rutasDeGravity({required List<RouteBase> finanzas}) => [
+List<RouteBase> rutasDeGravity({
+  required List<RouteBase> finanzas,
+  List<RouteBase> habitos = const [],
+}) => [
   GoRoute(
     path: Rutas.entrar,
     builder: (context, estado) => const PantallaEntrar(),
@@ -175,7 +186,10 @@ List<RouteBase> rutasDeGravity({required List<RouteBase> finanzas}) => [
         finanzas,
         modulo: Modulo.finanzas,
       ),
-      _modulo(Rutas.habitos, Modulo.habitos),
+      if (habitos.isEmpty)
+        _modulo(Rutas.habitos, Modulo.habitos)
+      else
+        ...montarRutasDeModulo(Rutas.habitos, habitos, modulo: Modulo.habitos),
       GoRoute(
         path: Rutas.cuidados,
         pageBuilder: (context, estado) => _sinAnimacion(

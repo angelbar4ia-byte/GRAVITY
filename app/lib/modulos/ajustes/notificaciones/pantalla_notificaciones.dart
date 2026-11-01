@@ -198,6 +198,7 @@ class _Preferencias extends ConsumerWidget {
             ],
           ),
         ),
+        const _RecordatoriosDeHabitos(),
         Card(
           child: Column(
             children: [
@@ -312,3 +313,49 @@ String textoSeveridadAviso(SeveridadAviso s) => switch (s) {
   SeveridadAviso.importante => 'Importante',
   SeveridadAviso.informativa => 'Informativa',
 };
+
+/// Recordatorios locales de Hábitos (Fase 3): solo donde Hábitos es de la
+/// persona y el equipo los programa (teléfono y tablet personal).
+class _RecordatoriosDeHabitos extends ConsumerStatefulWidget {
+  const _RecordatoriosDeHabitos();
+
+  @override
+  ConsumerState<_RecordatoriosDeHabitos> createState() =>
+      _RecordatoriosDeHabitosState();
+}
+
+class _RecordatoriosDeHabitosState
+    extends ConsumerState<_RecordatoriosDeHabitos> {
+  bool? _activado;
+
+  @override
+  void initState() {
+    super.initState();
+    ref.read(recordatoriosHabitosProvider).activado().then((v) {
+      if (mounted) setState(() => _activado = v);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final servicio = ref.watch(recordatoriosHabitosProvider);
+    if (!servicio.recibe()) return const SizedBox.shrink();
+    return Card(
+      child: SwitchListTile(
+        key: const ValueKey('recordatorios-habitos'),
+        title: const Text('Recordatorios de Hábitos'),
+        subtitle: const Text(
+          'Se programan en este equipo, sin internet. Los reservados salen '
+          'solo como "Recordatorio".',
+        ),
+        value: _activado ?? true,
+        onChanged: _activado == null
+            ? null
+            : (valor) async {
+                setState(() => _activado = valor);
+                await servicio.fijarActivado(valor);
+              },
+      ),
+    );
+  }
+}

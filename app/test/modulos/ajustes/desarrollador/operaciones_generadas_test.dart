@@ -140,6 +140,8 @@ void main() {
                   'finanzas.ahorro_avance',
                 }.contains(h.nombre)
             ? 2
+            : herramientasFase3().any((x) => x.nombre == h.nombre)
+            ? 3
             : deFase1.contains(h.nombre)
             ? 1
             : 0,

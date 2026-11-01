@@ -1,5 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gravity/app/navegacion.dart' show RutasApp, calcularRedireccion;
+import 'package:gravity/app/navegacion.dart'
+    show
+        RutasApp,
+        calcularRedireccion,
+        esRutaReservadaDeHabitos,
+        segmentosReservadosDeHabitos;
 import 'package:gravity/modulos/finanzas/pantallas/laptop/marco_laptop.dart'
     show SeccionFinanzas;
 import 'package:gravity/nucleo/contratos/dispositivo.dart';
@@ -11,8 +16,8 @@ import 'package:gravity/nucleo/permisos/permisos.dart';
 /// Herramienta de prueba con contador de ejecuciones.
 final class _Falsa extends Herramienta {
   _Falsa({
-    this.nombre = 'habitos.resumen_hoy',
-    this.modulo = Modulo.habitos,
+    this.nombre = 'alimentacion.resumen_hoy',
+    this.modulo = Modulo.alimentacion,
     this.roles = const {Rol.dueno, Rol.coadministrador, Rol.familiar},
     this.escribe = false,
     this.soloLocal = false,
@@ -247,7 +252,7 @@ void main() {
     });
 
     test('ni si intenta devolver el resultado de otra herramienta', () async {
-      final ajena = _Falsa(nombre: 'habitos.resumen');
+      final ajena = _Falsa(nombre: 'alimentacion.resumen');
       final tramposa = _Falsa.deFinanzas(
         resultadoAjeno: ResultadoHerramienta(
           ajena,
@@ -784,6 +789,11 @@ void main() {
             'finanzas.resumen_semana',
             'finanzas.proximos_pagos',
             'finanzas.ahorro_avance',
+            'habitos.abrir',
+            'habitos.abrir_hoy',
+            'habitos.abrir_agenda',
+            'habitos.abrir_espiritual',
+            'habitos.sos',
           }),
         );
         // Lo de Finanzas que conserva es navegación y lectura.
@@ -838,8 +848,8 @@ void main() {
         'tampoco para lo propio', () {
       final propias = [
         _Falsa(
-          nombre: 'habitos.marcar_hecho',
-          modulo: Modulo.habitos,
+          nombre: 'casa.marcar_hecho',
+          modulo: Modulo.casa,
           roles: const {Rol.dueno, Rol.coadministrador},
           escribe: true,
         ),
@@ -868,7 +878,7 @@ void main() {
       );
       expect(
         nombres(Rol.coadministrador, true),
-        isNot(contains('habitos.marcar_hecho')),
+        isNot(contains('casa.marcar_hecho')),
       );
       expect(
         nombres(Rol.coadministrador, true),
@@ -877,19 +887,19 @@ void main() {
       // Sin la marca, la pareja escribe lo suyo.
       expect(
         nombres(Rol.coadministrador, false),
-        contains('habitos.marcar_hecho'),
+        contains('casa.marcar_hecho'),
       );
       expect(
         nombres(Rol.coadministrador, false),
         contains('finanzas.anular_propio'),
       );
       // El dueño maestro conserva lo suyo.
-      expect(nombres(Rol.dueno, true), contains('habitos.marcar_hecho'));
+      expect(nombres(Rol.dueno, true), contains('casa.marcar_hecho'));
       expect(nombres(Rol.dueno, true), contains('finanzas.anular_propio'));
       // Ni ejecutando directo con la confirmación ya dada.
       expect(
         r.ejecutar(
-          'habitos.marcar_hecho',
+          'casa.marcar_hecho',
           const {},
           const ContextoHerramienta(
             rol: Rol.coadministrador,
@@ -1059,11 +1069,19 @@ void main() {
       'finanzas.ahorro_avance',
     };
 
+    const habitosTodas = {
+      'habitos.abrir',
+      'habitos.abrir_hoy',
+      'habitos.abrir_agenda',
+      'habitos.abrir_espiritual',
+      'habitos.sos',
+    };
+
     test('exactamente las herramientas de cada rol', () {
       expect(nombres(Rol.dueno), {
         'gravity.abrir',
         ...finanzas,
-        'habitos.abrir',
+        ...habitosTodas,
         'cuidados.abrir',
         'alimentacion.abrir',
         'casa.abrir',
@@ -1073,14 +1091,14 @@ void main() {
       expect(nombres(Rol.coadministrador), {
         'gravity.abrir',
         ...finanzas,
-        'habitos.abrir',
+        ...habitosTodas,
         'alimentacion.abrir',
         'casa.abrir',
         'ajustes.abrir',
       });
       expect(nombres(Rol.familiar), {
         'gravity.abrir',
-        'habitos.abrir',
+        ...habitosTodas,
         'alimentacion.abrir',
         'casa.abrir',
         'ajustes.abrir',
@@ -1110,6 +1128,11 @@ void main() {
           'finanzas.resumen_semana',
           'finanzas.proximos_pagos',
           'finanzas.ahorro_avance',
+          'habitos.abrir',
+          'habitos.abrir_hoy',
+          'habitos.abrir_agenda',
+          'habitos.abrir_espiritual',
+          'habitos.sos',
         }),
       );
       // La marca no amplía nada a quien no puede ser cuenta maestra.
@@ -1416,6 +1439,125 @@ void main() {
     });
   });
 
+  group('Hábitos (Fase 3, D13): hoy, agenda, espiritual y SOS', () {
+    final registro = registroDeGravity();
+    const nombres = [
+      'habitos.abrir_hoy',
+      'habitos.abrir_agenda',
+      'habitos.abrir_espiritual',
+      'habitos.sos',
+    ];
+    final rutas = {
+      'habitos.abrir_hoy': RutasDeHerramientas.hoyHabitos,
+      'habitos.abrir_agenda': RutasDeHerramientas.agendaHabitos,
+      'habitos.abrir_espiritual': RutasDeHerramientas.espiritualHabitos,
+      'habitos.sos': RutasDeHerramientas.sosHabitos,
+    };
+
+    test('Hábitos es un módulo solo local (D13) y todas sus herramientas lo '
+        'son', () {
+      expect(modulosSoloLocal, contains(Modulo.habitos));
+      final deHabitos = registro.todas.where((h) => h.modulo == Modulo.habitos);
+      expect(deHabitos.map((h) => h.nombre), ['habitos.abrir', ...nombres]);
+      for (final h in deHabitos) {
+        expect(h.soloLocal, isTrue, reason: h.nombre);
+        expect(h.escribe, isFalse, reason: h.nombre);
+        expect(h.guardaEnHistorial, isFalse, reason: h.nombre);
+      }
+      // Una de Hábitos que no sea solo local no entra al registro.
+      expect(
+        () => RegistroHerramientas([
+          _Falsa(nombre: 'habitos.resumen', modulo: Modulo.habitos),
+        ]),
+        throwsA(
+          isA<ArgumentError>().having((e) => e.name, 'name', 'soloLocal'),
+        ),
+      );
+    });
+
+    test('por rol: dueño, coadministrador y familiar; nadie más', () {
+      for (final n in nombres) {
+        for (final rol in Rol.values) {
+          expect(
+            registro.buscar(n, rol: rol) != null,
+            rol == Rol.dueno ||
+                rol == Rol.coadministrador ||
+                rol == Rol.familiar,
+            reason: '$n / ${rol.name}',
+          );
+        }
+      }
+    });
+
+    test('la cuenta maestra que no es la dueña no las recibe; el dueño '
+        'maestro sí', () async {
+      for (final n in ['habitos.abrir', ...nombres]) {
+        expect(
+          registro.buscar(n, rol: Rol.coadministrador, esMaestra: true),
+          isNull,
+          reason: n,
+        );
+        expect(
+          registro.buscar(n, rol: Rol.dueno, esMaestra: true),
+          isNotNull,
+          reason: n,
+        );
+        await expectLater(
+          registro.ejecutar(
+            n,
+            const {},
+            const ContextoHerramienta(
+              rol: Rol.coadministrador,
+              esMaestra: true,
+            ),
+          ),
+          _noDisponiblePor(MotivoNoDisponible.cuentaMaestra),
+        );
+      }
+    });
+
+    test('solo abren su vista: nada para la IA, nada que registrar', () async {
+      for (final n in nombres) {
+        final abiertas = <String>[];
+        final hojas = <HojaDeRegistro>[];
+        final r = await registro.ejecutar(
+          n,
+          const {'monto': 5, 'cantidad': 3},
+          ContextoHerramienta(
+            rol: Rol.familiar,
+            navegar: abiertas.add,
+            abrirHoja: hojas.add,
+          ),
+        );
+        expect(abiertas, [rutas[n]], reason: n);
+        expect(hojas, isEmpty, reason: n);
+        expect(r.paraIa, isNull, reason: n);
+        expect(r.soloLocal, isTrue, reason: n);
+        expect(r.requiereConfirmacion, isFalse, reason: n);
+      }
+    });
+
+    test('el SOS abre la sección reservada (pide PIN)', () {
+      expect(RutasDeHerramientas.sosHabitos, '${Rutas.habitos}/sos');
+      expect(segmentosReservadosDeHabitos, contains('sos'));
+      expect(esRutaReservadaDeHabitos(RutasDeHerramientas.sosHabitos), isTrue);
+      // Hoy, agenda y espiritual no son secciones reservadas.
+      for (final n in nombres.where((n) => n != 'habitos.sos')) {
+        expect(esRutaReservadaDeHabitos(rutas[n]!), isFalse, reason: n);
+      }
+    });
+
+    test('nombres, descripciones y palabras clave no llevan datos sensibles '
+        'ni cifras', () {
+      final cifras = RegExp(r'[\d$]');
+      for (final n in nombres) {
+        final h = registro.todas.singleWhere((h) => h.nombre == n);
+        expect(cifras.hasMatch(h.nombre), isFalse);
+        expect(cifras.hasMatch(h.descripcion), isFalse);
+      }
+    });
+  });
+
   group('Confirmación', () {
     test('las que escriben piden confirmación y no se ejecutan', () async {
       final h = _Falsa.deFinanzas(
@@ -1510,13 +1652,14 @@ void main() {
       );
     });
 
-    test('el catálogo vigente es el de la Fase 0 más el de la Fase 1', () {
+    test('el catálogo vigente es el de las Fases 0, 1 y 3', () {
       expect(herramientasDeGravity().map((h) => h.nombre).toSet(), {
         ...herramientasFase0().map((h) => h.nombre),
         ...herramientasFase1().map((h) => h.nombre),
+        ...herramientasFase3().map((h) => h.nombre),
       });
       expect(registroFase0().todas, hasLength(8));
-      expect(registroDeGravity().todas, hasLength(14));
+      expect(registroDeGravity().todas, hasLength(18));
     });
   });
 
@@ -1546,6 +1689,11 @@ void main() {
         RutasDeHerramientas.compromisosFinanzas,
         Rutas.finanzas,
         Rutas.habitos,
+        // Hoy, agenda, espiritual y SOS de Hábitos: solo abren su vista.
+        RutasDeHerramientas.hoyHabitos,
+        RutasDeHerramientas.agendaHabitos,
+        RutasDeHerramientas.espiritualHabitos,
+        RutasDeHerramientas.sosHabitos,
         Rutas.cuidados,
         Rutas.alimentacion,
         Rutas.casa,

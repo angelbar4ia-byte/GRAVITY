@@ -19,6 +19,7 @@ import '../../../nucleo/sesion/proveedores_sesion.dart';
 import '../../../nucleo/tablet/controlador_tablet.dart';
 import '../marco_seccion.dart';
 import '../secciones_ajustes.dart';
+import 'mis_datos_habitos.dart';
 
 class PantallaPrivacidad extends ConsumerWidget {
   const PantallaPrivacidad({super.key});
@@ -47,9 +48,10 @@ class PantallaPrivacidad extends ConsumerWidget {
           'laptop, Ctrl + Shift + O).',
           icono: Icons.visibility_off_outlined,
         ),
+        const MisDatosDeHabitos(),
         const NotaAjustes(
-          'Datos sensibles de Hábitos: cifrados en la nube o solo en el '
-          'teléfono, a elegir (llega en la Fase 3).',
+          'Datos sensibles de Hábitos: se cifran en este equipo antes de '
+          'guardarse; por ahora se quedan solo aquí.',
           icono: Icons.lock_outline,
         ),
       ],
