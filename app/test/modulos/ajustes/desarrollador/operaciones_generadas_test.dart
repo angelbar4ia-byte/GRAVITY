@@ -41,6 +41,8 @@ const _rpcDeLectura = {
   'finPuedeSalir',
   'finAdultosConFinanzas',
   'avisosPorcentajeBase',
+  'habActiva',
+  'habHogarDe',
 };
 
 /// Libros solo-agregar de Finanzas: no tienen PATCH ni DELETE.
@@ -1248,6 +1250,131 @@ void main() {
           operaciones.map((o) => o.ruta),
           isNot(contains('/functions/v1/avisos')),
         );
+      });
+    });
+
+    group('Fase 3: Hábitos (habitos y habitos_sensibles)', () {
+      String leer(String n) =>
+          File('${raiz.path}/supabase/migrations/$n').readAsStringSync();
+      final habitos = leer('20261105000000_habitos.sql');
+      final sensibles = leer('20261106000000_habitos_sensibles.sql');
+      final grupoHab = gruposOperaciones.firstWhere(
+        (g) => g.nombre == 'Base de datos · Hábitos',
+      );
+
+      test('todas las tablas hab_* que lee la app están documentadas, solo '
+          'para dueño, coadministrador y familiar, y solo locales', () {
+        final tablas = RegExp(r'create table public\.(hab_\w+)')
+            .allMatches('$habitos$sensibles')
+            .map((m) => m.group(1)!)
+            .toSet();
+        expect(tablas, hasLength(13));
+        final rutas = operaciones.map((o) => o.ruta).toSet();
+        for (final t in tablas) {
+          expect(rutas, contains('/rest/v1/$t'), reason: t);
+        }
+        for (final o in grupoHab.operaciones) {
+          expect(o.soloLocal, isTrue, reason: o.id);
+          expect(o.fase, 3, reason: o.id);
+          expect(o.roles, {
+            Rol.dueno,
+            Rol.coadministrador,
+            Rol.familiar,
+          }, reason: o.id);
+        }
+      });
+
+      test('sobres y llaves: solo se leen; se escriben con las RPC', () {
+        for (final t in ['hab_sobres', 'hab_llaves', 'hab_modos']) {
+          final metodos = operaciones
+              .where((o) => o.ruta == '/rest/v1/$t')
+              .map((o) => o.metodo)
+              .toSet();
+          expect(metodos, {MetodoHttp.get}, reason: t);
+        }
+        expect(
+          sensibles,
+          contains(
+            'grant select on public.hab_sobres, public.hab_llaves to authenticated;',
+          ),
+        );
+        expect(sensibles, contains('AES-256-GCM'));
+      });
+
+      test('toda función hab_* concedida a authenticated tiene operación y '
+          'las internas no', () {
+        final llamables = <String>{
+          for (final f in [habitos, sensibles])
+            for (final m in RegExp(
+              r'grant execute on function([^;]*?)\bto authenticated',
+              dotAll: true,
+            ).allMatches(f))
+              for (final fn in RegExp(
+                r'public\.(hab_\w+)\(',
+              ).allMatches(m.group(1)!))
+                fn.group(1)!,
+        };
+        expect(llamables, {
+          'hab_activa',
+          'hab_hogar_de',
+          'hab_crear_plan_lectura',
+          'hab_guardar_llave',
+          'hab_cambiar_modo',
+          'hab_subir_sobres',
+          'hab_reiniciar_nube',
+          'hab_borrar_mis_datos',
+        });
+        final rutas = operaciones.map((o) => o.ruta).toSet();
+        for (final f in llamables) {
+          expect(rutas, contains('/rest/v1/rpc/$f'), reason: f);
+        }
+        for (final f in [
+          'hab_nota',
+          'hab_exigir_activa',
+          'hab_borrar_datos_de',
+          'hab_limpiar',
+          'hab_propio',
+          'hab_iniciar_persona',
+          'hab_iniciar',
+          'hab_miembro_activo',
+        ]) {
+          expect(rutas, isNot(contains('/rest/v1/rpc/$f')), reason: f);
+        }
+      });
+
+      test('constancias sin contenido: el prefijo habitos* es del servidor y '
+          'está documentado', () {
+        final acciones = RegExp(r"'(habitos\.[a-z_]+)'")
+            .allMatches('$habitos$sensibles')
+            .map((m) => m.group(1)!)
+            .toSet();
+        expect(acciones, {
+          'habitos.activar_cifrado',
+          'habitos.cambiar_modo',
+          'habitos.reiniciar_nube',
+          'habitos.borrar_datos',
+        });
+        final etiqueta = _plano(yaml);
+        for (final a in acciones) {
+          expect(etiqueta, contains('`$a`'), reason: a);
+        }
+        expect(habitos, contains("accion !~* '^\\s*habitos'"));
+        final bitacora = _plano(_bloque(yaml, '/rest/v1/bitacora'));
+        expect(bitacora, contains("pattern: '^habitos'"));
+        expect(bitacora, contains('`habitos`'));
+      });
+
+      test('códigos y límites coinciden con la migración', () {
+        expect(sensibles, contains("errcode = '55000'"));
+        expect(sensibles, contains('Hasta 50 sobres por llamada.'));
+        expect(sensibles, contains('26214400'));
+        final todo = _plano(yaml);
+        expect(todo, contains('Hasta 50 sobres por llamada'));
+        expect(todo, contains('25 MB por persona'));
+        expect(todo, contains('exige la llave guardada (500, 55000)'));
+        final sub = _plano(_bloque(yaml, '/rest/v1/rpc/hab_subir_sobres'));
+        expect(sub, contains('64 KB (23514)'));
+        expect(sub, contains('conflicto que se devuelve'));
       });
     });
 

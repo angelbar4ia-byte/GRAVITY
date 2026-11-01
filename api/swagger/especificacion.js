@@ -1,7 +1,7 @@
 // GENERADO por api/generar_dart.mjs a partir de api/openapi.yaml. No se edita a mano.
 // Permite abrir Swagger UI con doble clic (file://), donde el navegador no deja leer
 // ../openapi.yaml. Servida por http, la página lee openapi.yaml directamente.
-// huella: fnv1a32:9523891a
+// huella: fnv1a32:8c6febd9
 window.ESPECIFICACION_GRAVITY = {
   "openapi": "3.1.0",
   "info": {
@@ -47,6 +47,10 @@ window.ESPECIFICACION_GRAVITY = {
     {
       "name": "Base de datos · Finanzas",
       "description": "Tablas `fin_*`, vistas y funciones de Finanzas (Fase 1, D19), según\n`supabase/migrations/20261021000000_finanzas_mvp1.sql`,\n`supabase/migrations/20261023000000_finanzas_salvaguardas.sql`,\n`supabase/migrations/20261024000000_finanzas_respuestas_dueno.sql` y\n`supabase/README.md` (\"Finanzas (Fase 1)\"). Solo dueño y coadministrador, cada quien\n**su libro** y los compartidos de los que es miembro, más los compartidos públicos\n(`fin_puede`); familiar, cuidador y Casa no ven nada. La **cuenta maestra** es otra\npersona con su propio login: el dueño la invita con `crear_invitacion` y\n`p_es_maestra`, y queda como coadministrador con la marca de maestra, sin libro\npersonal ni membresía en ningún libro. Si no es la dueña es de **solo lectura\ntotal**: lee con una consulta registrada y toda escritura suya (movimientos,\nconfiguración del hogar, crear libros) responde 403 (42501). El dueño también puede\nser la maestra con su propia persona, y en lo suyo sigue escribiendo. Nada de esto va\na la IA en la nube ni a las bocinas (D3, D6).\n\n- **Dinero** en centavos (entero); porcentajes y tasas en puntos base (2000 = 20 %);\n  semana en lunes; identificadores UUID generados en el dispositivo.\n- **Solo agregar:** `fin_movimientos`, `fin_conciliaciones`, `fin_cierres`,\n  `fin_cierre_partidas`, `fin_cierre_abonos` y `fin_importaciones` solo aceptan\n  INSERT; un error se corrige con una anulación (contraasiento) o una versión nueva.\n- **Cola sin conexión (idempotente):** se sube con `on_conflict=id` y\n  `Prefer: resolution=ignore-duplicates`. El mismo `id` con el mismo contenido no hace\n  nada y no falla; con otro contenido, en los libros solo agregar, 409 (23505).\n- **Lo que pone el servidor** (marcado como de solo lectura; no se manda):\n  `recibido_en`, `libro_origen_id` y `libro_destino_id` de los movimientos, las\n  columnas generadas y `reaperturas`.\n- **Errores** (código de PostgreSQL → HTTP de PostgREST): `23503` falta algo de lo\n  que depende (otra cuenta, el original de una anulación; la cola reintenta) → 409;\n  `23505` duplicado o mismo `id` con otro contenido → 409; `23514` regla de la tabla\n  (monto, motivo, lunes, cascada) → 400; `22023` regla de negocio (combinación de\n  cuentas, libro equivocado, papel) → 400; `55000` estado (cuenta no activa, semana\n  cerrada) → 500; `42501` sin permiso o columna que no cambia → 403; `54000` límite\n  (la bitácora: una entrada de más de 4 KB o más de 500 propias en 24 horas) → 500.\n- **Cuenta maestra y consulta registrada (I2):** sin una consulta vigente, la maestra\n  solo ve la **portada**: los libros y quién los lleva (`fin_libros`,\n  `fin_libro_miembros`), las categorías, las cuentas de gasto del hogar y lo que no es\n  de Finanzas. El contenido de un libro ajeno (cuentas, movimientos, plan, cierres,\n  saldos y su bitácora) llega **vacío, sin error**, hasta que llama\n  `fin_registrar_consulta_maestra(libro)`, que deja la entrada\n  `finanzas.consulta_maestra` y habilita la lectura de ese libro por **30 minutos**\n  (por libro y por persona; pasado el tiempo hay que llamarla otra vez, y la app la\n  renueva sola mientras el libro está abierto).\n- **Salvaguardas en el servidor** (hallazgos I1 a I5, M6 y M10 de la revisión de\n  calidad): (I1) en un libro compartido solo quien lo creó, o el dueño del hogar si es\n  miembro, agrega o cambia a otra persona (42501); salirse, o que te saquen, con menos\n  de 2 miembros deja el libro privado y activo, y el último miembro no puede salirse\n  (22023; ver abajo); (I2) la consulta\n  registrada de arriba; (I3) todo movimiento del libro de Papá lleva `en_nombre_de` y\n  `motivo` (23514) y las salidas hacia cualquier otro libro dejan la entrada\n  `finanzas.salida_libro_representado`; (I4) un albacea es vigente solo si sigue siendo\n  adulto con Finanzas, y si no, escribe el suplente; (I5) las acciones `finanzas*` y\n  las tablas `fin_*` de la bitácora las escribe solo el servidor (42501 si la app las\n  inserta); (M6) la maestra que no es la dueña no escribe nada, tampoco la\n  configuración del hogar (42501); (M10) asignar o quitar la maestra deja\n  `finanzas.maestra_asignada`.\n- **Libros compartidos (respuestas del dueño del 23/oct):** quien crea el libro\n  (`creado_por`) es su administrador: agrega y saca miembros, cambia la `visibilidad`\n  y lo archiva. La API no manda ni cambia `creado_por` (42501): solo el servidor, que\n  lo pasa al miembro vigente más antiguo si el creador se sale. `visibilidad` solo\n  existe en los compartidos: `privada` (por omisión; todo nace privado) o `publica`.\n  Privada: leen y escriben sus miembros, y la maestra lee con consulta; el dueño no\n  entra a un compartido privado del que no es miembro. Pública: además la **leen**\n  (no la escriben) los adultos con Finanzas del hogar. **Salirse** es un `PATCH` a la\n  propia fila de `fin_libro_miembros` con `hasta` = ahora (la hora la pone el\n  dispositivo), siempre posible. Si quedan menos de 2 miembros vigentes (también cuando\n  el administrador saca a alguien) el libro **no se archiva**: el servidor lo deja\n  `activo` y `privada`, y el miembro que queda es el administrador (`creado_por`); si\n  se va el administrador (o deja de ser adulto con Finanzas del hogar por una baja o un\n  cambio de rol, N5), `creado_por` pasa al miembro vigente más antiguo y, con menos de\n  2 vigentes, el libro pasa a `privada` (nunca se archiva solo). El\n  **último miembro no puede salirse** (400, 22023: si ya no lo usa, lo archiva).\n  **Archivar** es solo la decisión del administrador (`activo` = `false`) y nunca\n  ocurre solo: un libro archivado se lee y no registra movimientos (403, 42501);\n  reactivarlo (`activo` = `true`) no exige 2 miembros, y mientras está archivado solo su\n  administrador lo administra.\n- **Cuentas de periodo:** solo las de activo y pasivo piden saldo cero para cerrarse\n  o archivarse (22023); las de gasto e ingreso se cierran o archivan con saldo, y en\n  ellas se puede anular un movimiento aunque estén archivadas. Archivar una\n  categoría archiva su cuenta de gasto (si ninguna otra categoría activa la usa) y\n  desarchivarla la reactiva.\n- **Albacea de Papá (N4):** si el cargo de albacea o el de suplente queda vacío (nadie\n  vigente que siga siendo adulto con Finanzas), el dueño del hogar lo vuelve a nombrar\n  con `fin_nombrar_albacea`. Un INSERT directo en `fin_libro_miembros` sigue sin pasar\n  para el dueño (RLS): la función es la única puerta.\n- **Motivo (N2):** el `motivo` de una anulación, un ajuste, un movimiento en nombre\n  de otra persona, el del libro de Papá y el de una conciliación con diferencia\n  necesita al menos 3 caracteres visibles: no cuentan los espacios, tabuladores,\n  saltos de línea, espacios Unicode ni caracteres invisibles (23514). Lo valida un\n  trigger al agregar y no un CHECK, así que lo ya guardado nunca se rechaza y un\n  reenvío idéntico de la cola no falla. El sentido no se juzga.\n- **Fase 2 (deudas y ahorro, D20):** `fin_deudas` suma `clase` (`tarjeta`, `prestamo`,\n  `credito`, `msi`, `familiar`), `acreedor`, `monto_original_centavos`, `cat_pb`,\n  `corte_dia` (solo tarjetas), `permite_pago_anticipado` (nulo = verificar con la caja)\n  y `extra_reduce`; `fin_parametros` suma `orden_ahorro`, `dependientes_cuidados`,\n  `esenciales_incluyen_minimos` y `dias_aviso_deuda`. Tablas nuevas: `fin_msi`,\n  `fin_estados_cuenta` y `fin_retiros_ahorro` (estas dos, solo agregar),\n  `fin_bolsas_ahorro` y `fin_aportaciones_ahorro`; vistas `fin_v_deuda_resumen`,\n  `fin_v_bolsa_saldo` y `fin_v_estados_cuenta_vigentes`. El saldo siempre sale del\n  libro: no se guardan saldos. Los checks de las tablas nuevas responden 23514 y\n  escribir una aportación en una semana cerrada, 55000.\n- **Funciones internas:** `fin_vigencia_consulta_maestra`, `fin_adulto_con_finanzas` y\n  las de los triggers (`fin_libro_miembros_proteger`, `fin_libros_proteger`,\n  `fin_libro_miembros_sin_maestra`, `fin_categorias_archivar_cuenta`,\n  `bitacora_tope_por_persona`, `fin_motivo_valido`, `fin_motivo_validar`,\n  `fin_libro_asegurar_administrador`, `fin_membresia_relevo_administrador`,\n  `avisos_insertar`, `avisos_generar_vencimientos`, `avisos_reclamar`…) no son\n  llamables desde la API (se les quitó `EXECUTE` a todos los roles); por eso no\n  tienen operación aquí. De la migración de endurecimiento, la app solo llama\n  `fin_nombrar_albacea`. Sí lo son `fin_solo_lectura` y `fin_puede_salir`, que las\n  reglas llaman con el rol de la sesión, y `fin_adultos_con_finanzas` (en plural: la\n  que lista a los adultos con Finanzas del hogar; no la confundas con el ayudante\n  interno `fin_adulto_con_finanzas`, en singular).\n"
+    },
+    {
+      "name": "Base de datos · Hábitos",
+      "description": "Tablas `hab_*` y funciones de Hábitos (Fase 3, D13), según\n`supabase/migrations/20261105000000_habitos.sql` y\n`supabase/migrations/20261106000000_habitos_sensibles.sql`. Lo ven y lo escriben solo dueño,\ncoadministrador y familiar, y **solo lo propio** (RLS por persona): ni el dueño ve lo del\nfamiliar. La cuenta maestra, el cuidador y la cuenta Hogar no tienen Hábitos (403 / filas\nvacías). Nada de esto va a la IA en la nube ni a las bocinas (D3, D6, D13).\n\n- **Dos modos para lo sensible (D13):** `habitos_sensibles` y `diario_oracion` nacen\n  `solo_telefono` (nada sale del teléfono). Solo con `habCambiarModo` pasan a\n  `nube_cifrada`, y entonces el servidor guarda **solo sobres cifrados** (AES-256-GCM hecho\n  en el teléfono, un sobre por día y tipo, id opaco): nunca ve texto claro, ni la hora de\n  cada registro, ni la llave maestra, que viaja envuelta con una frase de 12 palabras\n  (`hab_llaves`). La tablet personal funciona como el teléfono; la pública nunca recibe\n  la llave.\n- **Lo no sensible** (objetivos, bloques, registros, pausas, planes y lecturas de la\n  Biblia, marcas, revisiones y ajustes) está en claro. No existe el tipo \"eliminar\":\n  vive en el documento cifrado. No mandes `persona_id`, `hogar_id` ni `actualizado_en`:\n  los pone el servidor.\n- **El último cambio gana** por `modificado_en`: un UPDATE con una marca más vieja se\n  ignora sin error y una a más de 5 minutos en el futuro se ajusta a la hora del servidor.\n- **Sin bitácora de contenido:** las tablas `hab_*` no tienen trigger de bitácora y el\n  prefijo `habitos*` está reservado al servidor (42501 si la app lo escribe). Las\n  constancias (`habitos.activar_cifrado`, `habitos.cambiar_modo`,\n  `habitos.reiniciar_nube`, `habitos.borrar_datos`) no llevan contenido y solo las ve\n  quien las hizo: ni el dueño ni la maestra.\n- **Errores:** `23514` check de la tabla (rangos, días, referencias) → 400; `22023` regla\n  de negocio (modo, revisión, cuota, alcance) → 400; `23503` y `23505` como en Finanzas\n  → 409; `55000` llave no guardada → 500; `42501` sin Hábitos en el hogar o columna que\n  no se manda → 403.\n- Lo de quien se da de baja se conserva sin acceso y se borra a los 90 días\n  (`hab_limpiar`, interna).\n- **Funciones internas:** `hab_nota`, `hab_exigir_activa`, `hab_borrar_datos_de`,\n  `hab_limpiar`, `hab_propio`, `hab_iniciar_persona`, `hab_iniciar` y `hab_miembro_activo`\n  no son llamables desde la API; sí `hab_activa` y `hab_hogar_de`, que usan las reglas.\n"
     },
     {
       "name": "Funciones del servidor",
@@ -2060,6 +2064,2864 @@ window.ESPECIFICACION_GRAVITY = {
         }
       }
     },
+    "/rest/v1/hab_ajustes": {
+      "get": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "leerAjustesHabitos",
+        "summary": "Leer mis ajustes de Hábitos",
+        "description": "Una fila por persona con Hábitos: áreas activas, mínimos, gracia semanal, revisión semanal, versiones de la Biblia, etiqueta del atajo y época de la nube (`epoca_nube`, la sube el servidor al borrar sobres). Sin ninguna palabra clave sensible: los hábitos a eliminar no aparecen aquí. Solo lo tuyo (RLS): quien no tiene Hábitos en el hogar (la cuenta maestra, el cuidador, la cuenta Hogar) no lee ni escribe nada.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas tuyas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HabAjustes"
+                  }
+                },
+                "example": [
+                  {
+                    "persona_id": "e0000000-0000-4000-8000-000000000001",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "areas_activas": [
+                      "espiritual",
+                      "salud",
+                      "educacion",
+                      "personal",
+                      "laboral",
+                      "proyectos"
+                    ],
+                    "minimos_modo": "por_area",
+                    "gracia_semanal": 1,
+                    "revision_dia": 6,
+                    "revision_hora": "14:30:00",
+                    "revision_aviso_min": 15,
+                    "dar_activo": false,
+                    "versiones_biblia": [
+                      "rvr1909",
+                      "kjv"
+                    ],
+                    "etiqueta_atajo": "Pausa",
+                    "bloqueo_reservado_min": 2,
+                    "umbral_carga_pb": [
+                      5000,
+                      8500
+                    ],
+                    "epoca_nube": 0,
+                    "modificado_en": "2026-11-01T08:00:00-06:00"
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "cambiarAjustesHabitos",
+        "summary": "Cambiar mis ajustes de Hábitos",
+        "description": "La fila la crea el servidor al dar un rol con Hábitos; la app solo hace UPDATE de sus columnas permitidas. El último cambio gana por `modificado_en`.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/preferir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/HabAjustes"
+                  },
+                  {
+                    "minProperties": 1
+                  }
+                ]
+              },
+              "example": {
+                "gracia_semanal": 2,
+                "modificado_en": "2026-11-01T09:00:00-06:00"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Actualizado"
+          },
+          "204": {
+            "description": "Actualizado (sin cuerpo)."
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaHabitos"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoHabitos"
+          }
+        }
+      }
+    },
+    "/rest/v1/hab_modos": {
+      "get": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "leerModosHabitos",
+        "summary": "Leer el modo de lo sensible",
+        "description": "Modo de cada tipo sensible (`habitos_sensibles`, `diario_oracion`): ambos nacen `solo_telefono` (nada sale del teléfono). Solo cambia con `habCambiarModo`. Solo lo tuyo (RLS): quien no tiene Hábitos en el hogar (la cuenta maestra, el cuidador, la cuenta Hogar) no lee ni escribe nada.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas tuyas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HabModo"
+                  }
+                },
+                "example": [
+                  {
+                    "persona_id": "e0000000-0000-4000-8000-000000000001",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "tipo": "habitos_sensibles",
+                    "modo": "solo_telefono",
+                    "cambiado_en": "2026-11-01T08:00:00-06:00"
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/hab_objetivos": {
+      "get": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "leerObjetivos",
+        "summary": "Leer objetivos",
+        "description": "Objetivos no sensibles. No existe el tipo eliminar: vive en el documento cifrado. Solo lo tuyo (RLS): quien no tiene Hábitos en el hogar (la cuenta maestra, el cuidador, la cuenta Hogar) no lee ni escribe nada.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/orden"
+          },
+          {
+            "$ref": "#/components/parameters/limite"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas tuyas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HabObjetivo"
+                  }
+                },
+                "example": [
+                  {
+                    "id": "8a000000-0000-4000-8000-000000000001",
+                    "titulo": "Caminar 30 minutos",
+                    "area": "salud",
+                    "tipo": "construir",
+                    "unidad": "min",
+                    "meta_valor": 30,
+                    "frecuencia": "diaria",
+                    "fecha_inicio": "2026-11-01",
+                    "prioridad": 3,
+                    "minimo": true,
+                    "esencial": false,
+                    "estado": "activo",
+                    "modificado_en": "2026-11-01T08:00:00-06:00"
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "agregarObjetivos",
+        "summary": "Agregar objetivos",
+        "description": "Objetivos no sensibles. No existe el tipo eliminar: vive en el documento cifrado. No mandes `persona_id`, `hogar_id` ni `actualizado_en`: los pone el servidor (sin permiso de columna, 42501). El último cambio gana por `modificado_en`. Un check que no se cumple responde 400 (23514).",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/alConflicto"
+          },
+          {
+            "$ref": "#/components/parameters/preferirAlSubir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/HabObjetivo"
+                  },
+                  {
+                    "required": [
+                      "id",
+                      "titulo",
+                      "area",
+                      "tipo",
+                      "fecha_inicio",
+                      "modificado_en"
+                    ]
+                  }
+                ]
+              },
+              "example": {
+                "id": "8a000000-0000-4000-8000-000000000001",
+                "titulo": "Caminar 30 minutos",
+                "area": "salud",
+                "tipo": "construir",
+                "unidad": "min",
+                "meta_valor": 30,
+                "frecuencia": "diaria",
+                "fecha_inicio": "2026-11-01",
+                "minimo": true,
+                "modificado_en": "2026-11-01T08:00:00-06:00"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/Agregado"
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaHabitos"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoHabitos"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "cambiarObjetivos",
+        "summary": "Cambiar objetivos",
+        "description": "No mandes `persona_id`, `hogar_id` ni `actualizado_en`: los pone el servidor (sin permiso de columna, 42501). El último cambio gana por `modificado_en`. Se archivan (`estado: archivado`) más que se borran.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filtroIdObligatorio"
+          },
+          {
+            "$ref": "#/components/parameters/preferir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/HabObjetivo"
+                  },
+                  {
+                    "minProperties": 1
+                  }
+                ]
+              },
+              "example": {
+                "estado": "pausado",
+                "modificado_en": "2026-11-02T08:00:00-06:00"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Actualizado"
+          },
+          "204": {
+            "description": "Actualizado (sin cuerpo)."
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaHabitos"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoHabitos"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "borrarObjetivos",
+        "summary": "Borrar objetivos",
+        "description": "Borra un objetivo tuyo (en cascada sus bloques, registros y pausas). Lo normal es archivarlo con `cambiarObjetivos`. Solo lo tuyo (RLS): quien no tiene Hábitos en el hogar (la cuenta maestra, el cuidador, la cuenta Hogar) no lee ni escribe nada.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filtroIdObligatorio"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Borrado."
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/hab_bloques": {
+      "get": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "leerBloques",
+        "summary": "Leer bloques de agenda",
+        "description": "Bloques de la agenda semanal: actividad, trabajo, traslado, revisión o cita, con días como máscara de 7 bits. Solo lo tuyo (RLS): quien no tiene Hábitos en el hogar (la cuenta maestra, el cuidador, la cuenta Hogar) no lee ni escribe nada.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/orden"
+          },
+          {
+            "$ref": "#/components/parameters/limite"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas tuyas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HabBloque"
+                  }
+                },
+                "example": [
+                  {
+                    "id": "8b000000-0000-4000-8000-000000000001",
+                    "titulo": "Caminata",
+                    "area": "salud",
+                    "tipo": "actividad",
+                    "inicio": "07:00:00",
+                    "duracion_min": 30,
+                    "dias": 31,
+                    "cada_semanas": 1,
+                    "desde": "2026-11-01",
+                    "minimo": true,
+                    "activo": true,
+                    "modificado_en": "2026-11-01T08:00:00-06:00"
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "agregarBloques",
+        "summary": "Agregar bloques de agenda",
+        "description": "Bloques de la agenda semanal: actividad, trabajo, traslado, revisión o cita, con días como máscara de 7 bits. No mandes `persona_id`, `hogar_id` ni `actualizado_en`: los pone el servidor (sin permiso de columna, 42501). El último cambio gana por `modificado_en`. El objetivo, si lo lleva, es tuyo (23503 si no existe aún; la cola reintenta).",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/alConflicto"
+          },
+          {
+            "$ref": "#/components/parameters/preferirAlSubir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/HabBloque"
+                  },
+                  {
+                    "required": [
+                      "id",
+                      "titulo",
+                      "area",
+                      "tipo",
+                      "inicio",
+                      "duracion_min",
+                      "dias",
+                      "desde",
+                      "modificado_en"
+                    ]
+                  }
+                ]
+              },
+              "example": {
+                "id": "8b000000-0000-4000-8000-000000000001",
+                "titulo": "Caminata",
+                "area": "salud",
+                "tipo": "actividad",
+                "inicio": "07:00:00",
+                "duracion_min": 30,
+                "dias": 31,
+                "desde": "2026-11-01",
+                "modificado_en": "2026-11-01T08:00:00-06:00"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/Agregado"
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaHabitos"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoHabitos"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "cambiarBloques",
+        "summary": "Cambiar bloques de agenda",
+        "description": "No mandes `persona_id`, `hogar_id` ni `actualizado_en`: los pone el servidor (sin permiso de columna, 42501). El último cambio gana por `modificado_en`.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filtroIdObligatorio"
+          },
+          {
+            "$ref": "#/components/parameters/preferir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/HabBloque"
+                  },
+                  {
+                    "minProperties": 1
+                  }
+                ]
+              },
+              "example": {
+                "activo": false,
+                "modificado_en": "2026-11-02T08:00:00-06:00"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Actualizado"
+          },
+          "204": {
+            "description": "Actualizado (sin cuerpo)."
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaHabitos"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoHabitos"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "borrarBloques",
+        "summary": "Borrar bloques de agenda",
+        "description": "Borra un bloque tuyo (en cascada sus registros). Solo lo tuyo (RLS): quien no tiene Hábitos en el hogar (la cuenta maestra, el cuidador, la cuenta Hogar) no lee ni escribe nada.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filtroIdObligatorio"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Borrado."
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/hab_registros": {
+      "get": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "leerRegistros",
+        "summary": "Leer registros del día",
+        "description": "Cómo salió cada objetivo o bloque en un día: hecho, parcial, omitido o pospuesto. Uno por elemento y día. Solo lo tuyo (RLS): quien no tiene Hábitos en el hogar (la cuenta maestra, el cuidador, la cuenta Hogar) no lee ni escribe nada.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/orden"
+          },
+          {
+            "$ref": "#/components/parameters/limite"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas tuyas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HabRegistro"
+                  }
+                },
+                "example": [
+                  {
+                    "id": "8c000000-0000-4000-8000-000000000001",
+                    "objetivo_id": "8a000000-0000-4000-8000-000000000001",
+                    "fecha": "2026-11-01",
+                    "estado": "hecho",
+                    "valor": 30,
+                    "modificado_en": "2026-11-01T19:00:00-06:00"
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "agregarRegistros",
+        "summary": "Agregar registros del día",
+        "description": "Cómo salió cada objetivo o bloque en un día: hecho, parcial, omitido o pospuesto. Uno por elemento y día. No mandes `persona_id`, `hogar_id` ni `actualizado_en`: los pone el servidor (sin permiso de columna, 42501). El último cambio gana por `modificado_en`. Lleva `objetivo_id`, `bloque_id` o ambos (23514 si ninguno); un segundo registro del mismo elemento y día es 409 (23505).",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/alConflicto"
+          },
+          {
+            "$ref": "#/components/parameters/preferirAlSubir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/HabRegistro"
+                  },
+                  {
+                    "required": [
+                      "id",
+                      "fecha",
+                      "modificado_en"
+                    ]
+                  }
+                ]
+              },
+              "example": {
+                "id": "8c000000-0000-4000-8000-000000000001",
+                "objetivo_id": "8a000000-0000-4000-8000-000000000001",
+                "fecha": "2026-11-01",
+                "estado": "hecho",
+                "valor": 30,
+                "modificado_en": "2026-11-01T19:00:00-06:00"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/Agregado"
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaHabitos"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoHabitos"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "cambiarRegistros",
+        "summary": "Cambiar registros del día",
+        "description": "No mandes `persona_id`, `hogar_id` ni `actualizado_en`: los pone el servidor (sin permiso de columna, 42501). El último cambio gana por `modificado_en`.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filtroIdObligatorio"
+          },
+          {
+            "$ref": "#/components/parameters/preferir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/HabRegistro"
+                  },
+                  {
+                    "minProperties": 1
+                  }
+                ]
+              },
+              "example": {
+                "estado": "parcial",
+                "valor": 15,
+                "modificado_en": "2026-11-01T20:00:00-06:00"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Actualizado"
+          },
+          "204": {
+            "description": "Actualizado (sin cuerpo)."
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaHabitos"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoHabitos"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "borrarRegistros",
+        "summary": "Borrar registros del día",
+        "description": "Borra un registro tuyo. Solo lo tuyo (RLS): quien no tiene Hábitos en el hogar (la cuenta maestra, el cuidador, la cuenta Hogar) no lee ni escribe nada.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filtroIdObligatorio"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Borrado."
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/hab_pausas": {
+      "get": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "leerPausas",
+        "summary": "Leer pausas",
+        "description": "Pausas (descanso, viaje, salud) de un objetivo o de todo. Solo lo tuyo (RLS): quien no tiene Hábitos en el hogar (la cuenta maestra, el cuidador, la cuenta Hogar) no lee ni escribe nada.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/orden"
+          },
+          {
+            "$ref": "#/components/parameters/limite"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas tuyas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HabPausa"
+                  }
+                },
+                "example": [
+                  {
+                    "id": "8d000000-0000-4000-8000-000000000001",
+                    "desde": "2026-12-20",
+                    "hasta": "2026-12-27",
+                    "motivo": "viaje",
+                    "modificado_en": "2026-11-01T08:00:00-06:00"
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "agregarPausas",
+        "summary": "Agregar pausas",
+        "description": "Pausas (descanso, viaje, salud) de un objetivo o de todo. No mandes `persona_id`, `hogar_id` ni `actualizado_en`: los pone el servidor (sin permiso de columna, 42501). El último cambio gana por `modificado_en`. `hasta` no es anterior a `desde` (23514).",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/alConflicto"
+          },
+          {
+            "$ref": "#/components/parameters/preferirAlSubir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/HabPausa"
+                  },
+                  {
+                    "required": [
+                      "id",
+                      "desde",
+                      "hasta",
+                      "motivo",
+                      "modificado_en"
+                    ]
+                  }
+                ]
+              },
+              "example": {
+                "id": "8d000000-0000-4000-8000-000000000001",
+                "desde": "2026-12-20",
+                "hasta": "2026-12-27",
+                "motivo": "viaje",
+                "modificado_en": "2026-11-01T08:00:00-06:00"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/Agregado"
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaHabitos"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoHabitos"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "cambiarPausas",
+        "summary": "Cambiar pausas",
+        "description": "No mandes `persona_id`, `hogar_id` ni `actualizado_en`: los pone el servidor (sin permiso de columna, 42501). El último cambio gana por `modificado_en`.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filtroIdObligatorio"
+          },
+          {
+            "$ref": "#/components/parameters/preferir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/HabPausa"
+                  },
+                  {
+                    "minProperties": 1
+                  }
+                ]
+              },
+              "example": {
+                "hasta": "2026-12-30",
+                "modificado_en": "2026-11-02T08:00:00-06:00"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Actualizado"
+          },
+          "204": {
+            "description": "Actualizado (sin cuerpo)."
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaHabitos"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoHabitos"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "borrarPausas",
+        "summary": "Borrar pausas",
+        "description": "Borra una pausa tuya. Solo lo tuyo (RLS): quien no tiene Hábitos en el hogar (la cuenta maestra, el cuidador, la cuenta Hogar) no lee ni escribe nada.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filtroIdObligatorio"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Borrado."
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/hab_planes_lectura": {
+      "get": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "leerPlanesLectura",
+        "summary": "Leer planes de lectura",
+        "description": "Planes de lectura de la Biblia (ruta de inicio, Nuevo Testamento en 90 días, Salmos y Proverbios, un año, un libro). Para crear un plan con sus días en una sola transacción usa `habCrearPlanLectura`. Solo lo tuyo (RLS): quien no tiene Hábitos en el hogar (la cuenta maestra, el cuidador, la cuenta Hogar) no lee ni escribe nada.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/orden"
+          },
+          {
+            "$ref": "#/components/parameters/limite"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas tuyas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HabPlanLectura"
+                  }
+                },
+                "example": [
+                  {
+                    "id": "8e000000-0000-4000-8000-000000000001",
+                    "tipo": "nt_90",
+                    "nombre": "Nuevo Testamento en 90 días",
+                    "fecha_inicio": "2026-11-02",
+                    "dias_semana": 127,
+                    "version_biblica": "rvr1909",
+                    "estado": "activo",
+                    "modificado_en": "2026-11-01T08:00:00-06:00"
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "agregarPlanesLectura",
+        "summary": "Agregar planes de lectura",
+        "description": "Planes de lectura de la Biblia (ruta de inicio, Nuevo Testamento en 90 días, Salmos y Proverbios, un año, un libro). Para crear un plan con sus días en una sola transacción usa `habCrearPlanLectura`. No mandes `persona_id`, `hogar_id` ni `actualizado_en`: los pone el servidor (sin permiso de columna, 42501). El último cambio gana por `modificado_en`. Un plan de tipo `libro` lleva `libro` (1 a 66) y los demás no (23514).",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/alConflicto"
+          },
+          {
+            "$ref": "#/components/parameters/preferirAlSubir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/HabPlanLectura"
+                  },
+                  {
+                    "required": [
+                      "id",
+                      "tipo",
+                      "nombre",
+                      "fecha_inicio",
+                      "version_biblica",
+                      "modificado_en"
+                    ]
+                  }
+                ]
+              },
+              "example": {
+                "id": "8e000000-0000-4000-8000-000000000001",
+                "tipo": "nt_90",
+                "nombre": "Nuevo Testamento en 90 días",
+                "fecha_inicio": "2026-11-02",
+                "version_biblica": "rvr1909",
+                "modificado_en": "2026-11-01T08:00:00-06:00"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/Agregado"
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaHabitos"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoHabitos"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "cambiarPlanesLectura",
+        "summary": "Cambiar planes de lectura",
+        "description": "No mandes `persona_id`, `hogar_id` ni `actualizado_en`: los pone el servidor (sin permiso de columna, 42501). El último cambio gana por `modificado_en`.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filtroIdObligatorio"
+          },
+          {
+            "$ref": "#/components/parameters/preferir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/HabPlanLectura"
+                  },
+                  {
+                    "minProperties": 1
+                  }
+                ]
+              },
+              "example": {
+                "estado": "pausado",
+                "modificado_en": "2026-11-02T08:00:00-06:00"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Actualizado"
+          },
+          "204": {
+            "description": "Actualizado (sin cuerpo)."
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaHabitos"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoHabitos"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "borrarPlanesLectura",
+        "summary": "Borrar planes de lectura",
+        "description": "Borra un plan tuyo (en cascada sus días y lecturas). Solo lo tuyo (RLS): quien no tiene Hábitos en el hogar (la cuenta maestra, el cuidador, la cuenta Hogar) no lee ni escribe nada.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filtroIdObligatorio"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Borrado."
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/hab_plan_dias": {
+      "get": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "leerPlanDias",
+        "summary": "Leer los días de un plan de lectura",
+        "description": "Los días de un plan (hasta 400): fecha, segmentos de lectura y estado. Solo lo tuyo (RLS): quien no tiene Hábitos en el hogar (la cuenta maestra, el cuidador, la cuenta Hogar) no lee ni escribe nada.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroPlanHab"
+          },
+          {
+            "$ref": "#/components/parameters/filtroDiaHab"
+          },
+          {
+            "$ref": "#/components/parameters/limite"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas tuyas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HabPlanDia"
+                  }
+                },
+                "example": [
+                  {
+                    "plan_id": "8e000000-0000-4000-8000-000000000001",
+                    "dia": 1,
+                    "fecha": "2026-11-02",
+                    "segmentos": [
+                      {
+                        "libro": 40,
+                        "cap_ini": 1,
+                        "cap_fin": 4
+                      }
+                    ],
+                    "estado": "pendiente",
+                    "modificado_en": "2026-11-01T08:00:00-06:00"
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "agregarPlanDias",
+        "summary": "Agregar días a un plan de lectura",
+        "description": "No mandes `persona_id`, `hogar_id` ni `actualizado_en`: los pone el servidor (sin permiso de columna, 42501). El último cambio gana por `modificado_en`. La llave es (`plan_id`, `dia`). Para crear un plan entero usa `habCrearPlanLectura`.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/preferirAlSubir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/HabPlanDia"
+                  },
+                  {
+                    "required": [
+                      "plan_id",
+                      "dia",
+                      "fecha",
+                      "segmentos",
+                      "modificado_en"
+                    ]
+                  }
+                ]
+              },
+              "example": {
+                "plan_id": "8e000000-0000-4000-8000-000000000001",
+                "dia": 2,
+                "fecha": "2026-11-03",
+                "segmentos": [
+                  {
+                    "libro": 40,
+                    "cap_ini": 5,
+                    "cap_fin": 7
+                  }
+                ],
+                "modificado_en": "2026-11-01T08:00:00-06:00"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/Agregado"
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaHabitos"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoHabitos"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "cambiarPlanDias",
+        "summary": "Marcar un día de un plan de lectura",
+        "description": "No mandes `persona_id`, `hogar_id` ni `actualizado_en`: los pone el servidor (sin permiso de columna, 42501). El último cambio gana por `modificado_en`. Se filtra por `plan_id` y `dia`.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filtroPlanHabObligatorio"
+          },
+          {
+            "$ref": "#/components/parameters/filtroDiaHab"
+          },
+          {
+            "$ref": "#/components/parameters/preferir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/HabPlanDia"
+                  },
+                  {
+                    "minProperties": 1
+                  }
+                ]
+              },
+              "example": {
+                "estado": "hecho",
+                "hecho_en": "2026-11-02T07:30:00-06:00",
+                "modificado_en": "2026-11-02T07:30:00-06:00"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Actualizado"
+          },
+          "204": {
+            "description": "Actualizado (sin cuerpo)."
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaHabitos"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoHabitos"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "borrarPlanDias",
+        "summary": "Borrar días de un plan",
+        "description": "Borra los días de un plan tuyo. Solo lo tuyo (RLS): quien no tiene Hábitos en el hogar (la cuenta maestra, el cuidador, la cuenta Hogar) no lee ni escribe nada.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filtroPlanHabObligatorio"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Borrado."
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/hab_lecturas": {
+      "get": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "leerLecturas",
+        "summary": "Leer lecturas",
+        "description": "Lo leído en un día: libro (1 a 66), capítulos y minutos. Solo lo tuyo (RLS): quien no tiene Hábitos en el hogar (la cuenta maestra, el cuidador, la cuenta Hogar) no lee ni escribe nada.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/orden"
+          },
+          {
+            "$ref": "#/components/parameters/limite"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas tuyas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HabLectura"
+                  }
+                },
+                "example": [
+                  {
+                    "id": "8f000000-0000-4000-8000-000000000001",
+                    "fecha": "2026-11-02",
+                    "libro": 40,
+                    "cap_ini": 1,
+                    "cap_fin": 4,
+                    "minutos": 20,
+                    "modificado_en": "2026-11-02T07:30:00-06:00"
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "agregarLecturas",
+        "summary": "Agregar lecturas",
+        "description": "Lo leído en un día: libro (1 a 66), capítulos y minutos. No mandes `persona_id`, `hogar_id` ni `actualizado_en`: los pone el servidor (sin permiso de columna, 42501). El último cambio gana por `modificado_en`. `cap_fin` no es menor que `cap_ini` (23514).",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/alConflicto"
+          },
+          {
+            "$ref": "#/components/parameters/preferirAlSubir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/HabLectura"
+                  },
+                  {
+                    "required": [
+                      "id",
+                      "fecha",
+                      "libro",
+                      "cap_ini",
+                      "cap_fin",
+                      "modificado_en"
+                    ]
+                  }
+                ]
+              },
+              "example": {
+                "id": "8f000000-0000-4000-8000-000000000001",
+                "fecha": "2026-11-02",
+                "libro": 40,
+                "cap_ini": 1,
+                "cap_fin": 4,
+                "minutos": 20,
+                "modificado_en": "2026-11-02T07:30:00-06:00"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/Agregado"
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaHabitos"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoHabitos"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "cambiarLecturas",
+        "summary": "Cambiar lecturas",
+        "description": "No mandes `persona_id`, `hogar_id` ni `actualizado_en`: los pone el servidor (sin permiso de columna, 42501). El último cambio gana por `modificado_en`.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filtroIdObligatorio"
+          },
+          {
+            "$ref": "#/components/parameters/preferir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/HabLectura"
+                  },
+                  {
+                    "minProperties": 1
+                  }
+                ]
+              },
+              "example": {
+                "minutos": 25,
+                "modificado_en": "2026-11-02T08:00:00-06:00"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Actualizado"
+          },
+          "204": {
+            "description": "Actualizado (sin cuerpo)."
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaHabitos"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoHabitos"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "borrarLecturas",
+        "summary": "Borrar lecturas",
+        "description": "Borra una lectura tuya. Solo lo tuyo (RLS): quien no tiene Hábitos en el hogar (la cuenta maestra, el cuidador, la cuenta Hogar) no lee ni escribe nada.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filtroIdObligatorio"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Borrado."
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/hab_marcas_biblia": {
+      "get": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "leerMarcasBiblia",
+        "summary": "Leer marcas de la Biblia",
+        "description": "Subrayados y marcadores. Sin texto libre: las notas del lector son sensibles y van en el documento cifrado. Solo lo tuyo (RLS): quien no tiene Hábitos en el hogar (la cuenta maestra, el cuidador, la cuenta Hogar) no lee ni escribe nada.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/orden"
+          },
+          {
+            "$ref": "#/components/parameters/limite"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas tuyas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HabMarcaBiblia"
+                  }
+                },
+                "example": [
+                  {
+                    "id": "9a000000-0000-4000-8000-000000000001",
+                    "tipo": "subrayado",
+                    "referencia": "43:3:16",
+                    "color": "amarillo",
+                    "modificado_en": "2026-11-02T07:40:00-06:00"
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "agregarMarcasBiblia",
+        "summary": "Agregar marcas de la Biblia",
+        "description": "Subrayados y marcadores. Sin texto libre: las notas del lector son sensibles y van en el documento cifrado. No mandes `persona_id`, `hogar_id` ni `actualizado_en`: los pone el servidor (sin permiso de columna, 42501). El último cambio gana por `modificado_en`. `referencia` es `libro:capitulo:versiculo` (o con rango); el subrayado lleva color y el marcador no (23514).",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/alConflicto"
+          },
+          {
+            "$ref": "#/components/parameters/preferirAlSubir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/HabMarcaBiblia"
+                  },
+                  {
+                    "required": [
+                      "id",
+                      "tipo",
+                      "referencia",
+                      "modificado_en"
+                    ]
+                  }
+                ]
+              },
+              "example": {
+                "id": "9a000000-0000-4000-8000-000000000001",
+                "tipo": "subrayado",
+                "referencia": "43:3:16",
+                "color": "amarillo",
+                "modificado_en": "2026-11-02T07:40:00-06:00"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/Agregado"
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaHabitos"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoHabitos"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "cambiarMarcasBiblia",
+        "summary": "Cambiar marcas de la Biblia",
+        "description": "No mandes `persona_id`, `hogar_id` ni `actualizado_en`: los pone el servidor (sin permiso de columna, 42501). El último cambio gana por `modificado_en`.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filtroIdObligatorio"
+          },
+          {
+            "$ref": "#/components/parameters/preferir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/HabMarcaBiblia"
+                  },
+                  {
+                    "minProperties": 1
+                  }
+                ]
+              },
+              "example": {
+                "color": "verde",
+                "modificado_en": "2026-11-02T08:00:00-06:00"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Actualizado"
+          },
+          "204": {
+            "description": "Actualizado (sin cuerpo)."
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaHabitos"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoHabitos"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "borrarMarcasBiblia",
+        "summary": "Borrar marcas de la Biblia",
+        "description": "Borra una marca tuya. Solo lo tuyo (RLS): quien no tiene Hábitos en el hogar (la cuenta maestra, el cuidador, la cuenta Hogar) no lee ni escribe nada.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filtroIdObligatorio"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Borrado."
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/hab_revisiones": {
+      "get": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "leerRevisiones",
+        "summary": "Leer revisiones semanales",
+        "description": "La revisión semanal (una por persona y semana en lunes). Solo lo tuyo (RLS): quien no tiene Hábitos en el hogar (la cuenta maestra, el cuidador, la cuenta Hogar) no lee ni escribe nada.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/orden"
+          },
+          {
+            "$ref": "#/components/parameters/limite"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas tuyas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HabRevision"
+                  }
+                },
+                "example": [
+                  {
+                    "id": "9b000000-0000-4000-8000-000000000001",
+                    "semana": "2026-10-26",
+                    "estado": "completada",
+                    "completada_en": "2026-10-31T14:45:00-06:00",
+                    "modificado_en": "2026-10-31T14:45:00-06:00"
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "agregarRevisiones",
+        "summary": "Agregar revisiones semanales",
+        "description": "La revisión semanal (una por persona y semana en lunes). No mandes `persona_id`, `hogar_id` ni `actualizado_en`: los pone el servidor (sin permiso de columna, 42501). El último cambio gana por `modificado_en`. `semana` es lunes (23514) y hay una por semana (409, 23505).",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/alConflicto"
+          },
+          {
+            "$ref": "#/components/parameters/preferirAlSubir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/HabRevision"
+                  },
+                  {
+                    "required": [
+                      "id",
+                      "semana",
+                      "modificado_en"
+                    ]
+                  }
+                ]
+              },
+              "example": {
+                "id": "9b000000-0000-4000-8000-000000000001",
+                "semana": "2026-10-26",
+                "estado": "pendiente",
+                "modificado_en": "2026-10-26T08:00:00-06:00"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/Agregado"
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaHabitos"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoHabitos"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "cambiarRevisiones",
+        "summary": "Cambiar revisiones semanales",
+        "description": "No mandes `persona_id`, `hogar_id` ni `actualizado_en`: los pone el servidor (sin permiso de columna, 42501). El último cambio gana por `modificado_en`.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filtroIdObligatorio"
+          },
+          {
+            "$ref": "#/components/parameters/preferir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/HabRevision"
+                  },
+                  {
+                    "minProperties": 1
+                  }
+                ]
+              },
+              "example": {
+                "estado": "completada",
+                "completada_en": "2026-10-31T14:45:00-06:00",
+                "modificado_en": "2026-10-31T14:45:00-06:00"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Actualizado"
+          },
+          "204": {
+            "description": "Actualizado (sin cuerpo)."
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaHabitos"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoHabitos"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "borrarRevisiones",
+        "summary": "Borrar revisiones semanales",
+        "description": "Borra una revisión tuya. Solo lo tuyo (RLS): quien no tiene Hábitos en el hogar (la cuenta maestra, el cuidador, la cuenta Hogar) no lee ni escribe nada.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filtroIdObligatorio"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Borrado."
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/hab_sobres": {
+      "get": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "leerSobresHabitos",
+        "summary": "Leer mis sobres cifrados",
+        "description": "Los documentos cifrados de Hábitos (un sobre por día y tipo). El servidor solo guarda el texto cifrado (AES-256-GCM hecho en el teléfono): nunca ve texto claro, ni la hora de cada registro, ni la llave maestra. Solo los lees si el tipo está en `nube_cifrada`; no se escriben directo: se suben con `habSubirSobres`. Solo lo tuyo (RLS): quien no tiene Hábitos en el hogar (la cuenta maestra, el cuidador, la cuenta Hogar) no lee ni escribe nada.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/orden"
+          },
+          {
+            "$ref": "#/components/parameters/limite"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas tuyas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HabSobre"
+                  }
+                },
+                "example": [
+                  {
+                    "id": "9c000000-0000-4000-8000-000000000001",
+                    "tipo": "habitos_sensibles",
+                    "revision": 3,
+                    "cifrado": "dGV4dG8tY2lmcmFkby1kZS1lamVtcGxv",
+                    "llave_version": 1,
+                    "eliminado": false,
+                    "creado_en": "2026-11-01T08:00:00-06:00",
+                    "actualizado_en": "2026-11-02T08:00:00-06:00"
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/hab_llaves": {
+      "get": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "leerLlaveHabitos",
+        "summary": "Leer mi llave envuelta",
+        "description": "La llave maestra ENVUELTA con una llave derivada de la frase de recuperación de 12 palabras: el servidor no puede abrirla. Se crea o rota con `habGuardarLlave`. Solo lo tuyo (RLS): quien no tiene Hábitos en el hogar (la cuenta maestra, el cuidador, la cuenta Hogar) no lee ni escribe nada.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas tuyas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HabLlave"
+                  }
+                },
+                "example": [
+                  {
+                    "persona_id": "e0000000-0000-4000-8000-000000000001",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "version": 1,
+                    "kdf": "argon2id",
+                    "kdf_params": {
+                      "m": 19456,
+                      "t": 2,
+                      "p": 1
+                    },
+                    "sal": "c2FsLWRlLWVqZW1wbG8",
+                    "llave_envuelta": "bGxhdmUtZW52dWVsdGEtZGUtZWplbXBsbw",
+                    "creado_en": "2026-11-01T08:00:00-06:00"
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/hab_crear_plan_lectura": {
+      "post": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "habCrearPlanLectura",
+        "summary": "Crear un plan de lectura con sus días",
+        "description": "Crea el plan y hasta 400 días en una sola transacción. Idempotente por el `id` del plan: repetirlo devuelve el mismo id. Responde 400 (22023) si hay más de 400 días o falta el id. Exige Hábitos en el hogar: a la cuenta maestra, al cuidador, a la cuenta Hogar y a quien no tiene sesión, 403 (42501).",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_plan",
+                  "p_dias"
+                ],
+                "properties": {
+                  "p_plan": {
+                    "type": "object"
+                  },
+                  "p_dias": {
+                    "type": "array",
+                    "maxItems": 400,
+                    "items": {
+                      "type": "object"
+                    }
+                  }
+                }
+              },
+              "example": {
+                "p_plan": {
+                  "id": "8e000000-0000-4000-8000-000000000001",
+                  "tipo": "nt_90",
+                  "nombre": "Nuevo Testamento en 90 días",
+                  "fecha_inicio": "2026-11-02",
+                  "version_biblica": "rvr1909",
+                  "modificado_en": "2026-11-01T08:00:00-06:00"
+                },
+                "p_dias": [
+                  {
+                    "dia": 1,
+                    "fecha": "2026-11-02",
+                    "segmentos": [
+                      {
+                        "libro": 40,
+                        "cap_ini": 1,
+                        "cap_fin": 4
+                      }
+                    ]
+                  },
+                  {
+                    "dia": 2,
+                    "fecha": "2026-11-03",
+                    "segmentos": [
+                      {
+                        "libro": 40,
+                        "cap_ini": 5,
+                        "cap_fin": 7
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Id del plan.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Uuid"
+                },
+                "example": "8e000000-0000-4000-8000-000000000001"
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaHabitos"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/hab_guardar_llave": {
+      "post": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "habGuardarLlave",
+        "summary": "Guardar la llave maestra envuelta",
+        "description": "Crea la llave (versión 1) o la reemplaza (versión actual + 1); repetir lo mismo no hace nada; cualquier otra versión responde 400 (22023). Al crearla deja la constancia `habitos.activar_cifrado` sin contenido. Exige Hábitos en el hogar: a la cuenta maestra, al cuidador, a la cuenta Hogar y a quien no tiene sesión, 403 (42501).",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_version",
+                  "p_kdf",
+                  "p_kdf_params",
+                  "p_sal",
+                  "p_llave_envuelta"
+                ],
+                "properties": {
+                  "p_version": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "p_kdf": {
+                    "type": "string",
+                    "enum": [
+                      "pbkdf2-hmac-sha256",
+                      "argon2id"
+                    ]
+                  },
+                  "p_kdf_params": {
+                    "type": "object"
+                  },
+                  "p_sal": {
+                    "type": "string",
+                    "minLength": 8,
+                    "maxLength": 128,
+                    "pattern": "^[A-Za-z0-9_=+/-]+$"
+                  },
+                  "p_llave_envuelta": {
+                    "type": "string",
+                    "minLength": 16,
+                    "maxLength": 512,
+                    "pattern": "^[A-Za-z0-9_=+/-]+$"
+                  }
+                }
+              },
+              "example": {
+                "p_version": 1,
+                "p_kdf": "argon2id",
+                "p_kdf_params": {
+                  "m": 19456,
+                  "t": 2,
+                  "p": 1
+                },
+                "p_sal": "c2FsLWRlLWVqZW1wbG8",
+                "p_llave_envuelta": "bGxhdmUtZW52dWVsdGEtZGUtZWplbXBsbw"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Hecho."
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaHabitos"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/hab_cambiar_modo": {
+      "post": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "habCambiarModo",
+        "summary": "Cambiar el modo de lo sensible",
+        "description": "Pasar a `nube_cifrada` exige la llave guardada (500, 55000); volver a `solo_telefono` borra físicamente los sobres de ese tipo, exige `p_confirmar_borrado: true` (400, 22023) y sube `epoca_nube`. Un tipo desconocido, 400 (22023). Deja la constancia `habitos.cambiar_modo` sin contenido. Exige Hábitos en el hogar: a la cuenta maestra, al cuidador, a la cuenta Hogar y a quien no tiene sesión, 403 (42501).",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_tipo",
+                  "p_modo"
+                ],
+                "properties": {
+                  "p_tipo": {
+                    "type": "string",
+                    "enum": [
+                      "habitos_sensibles",
+                      "diario_oracion"
+                    ]
+                  },
+                  "p_modo": {
+                    "type": "string",
+                    "enum": [
+                      "solo_telefono",
+                      "nube_cifrada"
+                    ]
+                  },
+                  "p_confirmar_borrado": {
+                    "type": "boolean",
+                    "default": false
+                  }
+                }
+              },
+              "example": {
+                "p_tipo": "diario_oracion",
+                "p_modo": "nube_cifrada"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Hecho."
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaHabitos"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "500": {
+            "$ref": "#/components/responses/EstadoFinanzas"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/hab_subir_sobres": {
+      "post": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "habSubirSobres",
+        "summary": "Subir sobres cifrados",
+        "description": "Hasta 50 sobres por llamada, cada uno con `id` (opaco), `tipo`, `revision`, `cifrado`, `llave_version` y `eliminado`. Solo de tipos en `nube_cifrada` (400, 22023); la revisión es nueva o la siguiente (si salta, 22023; si es igual o menor es un conflicto que se devuelve, no un error); el sobre pesa a lo más 64 KB (23514) y la cuota es de 25 MB por persona (22023). Idempotente. La hora que queda es la del servidor. Devuelve cuántos aceptó y los conflictos. Exige Hábitos en el hogar: a la cuenta maestra, al cuidador, a la cuenta Hogar y a quien no tiene sesión, 403 (42501).",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_sobres"
+                ],
+                "properties": {
+                  "p_sobres": {
+                    "type": "array",
+                    "maxItems": 50,
+                    "items": {
+                      "$ref": "#/components/schemas/HabSobreSubida"
+                    }
+                  }
+                }
+              },
+              "example": {
+                "p_sobres": [
+                  {
+                    "id": "9c000000-0000-4000-8000-000000000001",
+                    "tipo": "habitos_sensibles",
+                    "revision": 1,
+                    "cifrado": "dGV4dG8tY2lmcmFkby1kZS1lamVtcGxv",
+                    "llave_version": 1,
+                    "eliminado": false
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cuántos aceptó y los conflictos de revisión.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HabResultadoSubida"
+                },
+                "example": {
+                  "aceptados": 1,
+                  "conflictos": []
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaHabitos"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/hab_reiniciar_nube": {
+      "post": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "habReiniciarNube",
+        "summary": "Reiniciar lo que está en la nube",
+        "description": "Borra físicamente los sobres de un tipo (o de todos) y sube `epoca_nube`; no toca lo que hay en el teléfono. Tipo desconocido, 400 (22023). Deja la constancia `habitos.reiniciar_nube` sin contenido. Exige Hábitos en el hogar: a la cuenta maestra, al cuidador, a la cuenta Hogar y a quien no tiene sesión, 403 (42501).",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "p_tipo": {
+                    "type": "string",
+                    "enum": [
+                      "habitos_sensibles",
+                      "diario_oracion",
+                      "todos"
+                    ],
+                    "default": "todos"
+                  }
+                }
+              },
+              "example": {
+                "p_tipo": "todos"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Hecho."
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaHabitos"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/hab_borrar_mis_datos": {
+      "post": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "habBorrarMisDatos",
+        "summary": "Borrar mis datos de Hábitos",
+        "description": "Borrado físico de lo propio: `sensibles`, `diario` o `todo` (con `todo`, también la llave y las tablas en claro; deja `hab_ajustes`). Alcance desconocido, 400 (22023). Deja la constancia `habitos.borrar_datos` sin contenido. No es un libro contable: se puede borrar. Exige Hábitos en el hogar: a la cuenta maestra, al cuidador, a la cuenta Hogar y a quien no tiene sesión, 403 (42501).",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_alcance"
+                ],
+                "properties": {
+                  "p_alcance": {
+                    "type": "string",
+                    "enum": [
+                      "sensibles",
+                      "diario",
+                      "todo"
+                    ]
+                  }
+                }
+              },
+              "example": {
+                "p_alcance": "sensibles"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Hecho."
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaHabitos"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/hab_activa": {
+      "post": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "habActiva",
+        "summary": "¿Tengo Hábitos en este hogar?",
+        "description": "Verdadero si la sesión es un miembro vigente del hogar con un rol con Hábitos. La cuenta maestra, el cuidador y la cuenta Hogar reciben `false`. Es la regla que usan las políticas de las tablas `hab_*`.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_hogar_id"
+                ],
+                "properties": {
+                  "p_hogar_id": {
+                    "$ref": "#/components/schemas/Uuid"
+                  }
+                }
+              },
+              "example": {
+                "p_hogar_id": "b0000000-0000-4000-8000-000000000001"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Si tiene Hábitos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                },
+                "example": true
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/hab_hogar_de": {
+      "post": {
+        "tags": [
+          "Base de datos · Hábitos"
+        ],
+        "operationId": "habHogarDe",
+        "summary": "¿En qué hogar tiene Hábitos una persona?",
+        "description": "El hogar donde la persona tiene Hábitos (el más reciente), o nulo si no tiene. La app lo usa con su propia persona.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_persona_id"
+                ],
+                "properties": {
+                  "p_persona_id": {
+                    "$ref": "#/components/schemas/Uuid"
+                  }
+                }
+              },
+              "example": {
+                "p_persona_id": "e0000000-0000-4000-8000-000000000001"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Hogar o nulo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UuidONulo"
+                },
+                "example": "b0000000-0000-4000-8000-000000000001"
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
     "/rest/v1/bitacora": {
       "get": {
         "tags": [
@@ -2168,7 +5030,7 @@ window.ESPECIFICACION_GRAVITY = {
         ],
         "operationId": "agregarABitacora",
         "summary": "Agregar a la bitácora",
-        "description": "Cualquier miembro agrega a su nombre (p. ej. acciones de GRAVITY en la laptop, D8). No se edita ni se borra: se corrige con una entrada nueva. `accion` es un identificador en minúsculas (`^[a-z][a-z0-9_.]*$`, hasta 60 caracteres), p. ej. `entrega_de_turno` o `gravity.abrir`; si no cumple, responde 400 (código 23514). Hay entradas reservadas al servidor, **para todo rol de la app**, y responden 403 (código 42501): las acciones `insertar`, `actualizar` y `borrar` (las de los triggers que registran los cambios de las tablas), cualquier acción que empiece por `finanzas` (p. ej. `finanzas.consulta_maestra`, `finanzas.maestra_asignada` y `finanzas.salida_libro_representado`) y cualquier entrada cuya `tabla` sea `fin_*` (con o sin `public.`). Esas las escriben solo los triggers y las funciones del servidor: así nadie fabrica un cambio automático, una consulta de la cuenta maestra ni un aviso de Finanzas (I5). Lo que la app escribe aquí tiene tope (N1): el `detalle` de una entrada pesa a lo más 4 KB y cada persona agrega a lo más 500 entradas propias en 24 horas (cuentan las que escribe la app: no las automáticas ni las de Finanzas); al excederlo responde 500 con el código 54000 y la sentencia entera se deshace (no se guarda ninguna de sus entradas). No es un error que se reintente: la cola lo deja en \"requiere atención\". No limita a los triggers ni a las funciones del servidor, y vale igual para familiar, cuidador y la cuenta Hogar.",
+        "description": "Cualquier miembro agrega a su nombre (p. ej. acciones de GRAVITY en la laptop, D8). No se edita ni se borra: se corrige con una entrada nueva. `accion` es un identificador en minúsculas (`^[a-z][a-z0-9_.]*$`, hasta 60 caracteres), p. ej. `entrega_de_turno` o `gravity.abrir`; si no cumple, responde 400 (código 23514). Hay entradas reservadas al servidor, **para todo rol de la app**, y responden 403 (código 42501): las acciones `insertar`, `actualizar` y `borrar` (las de los triggers que registran los cambios de las tablas), cualquier acción que empiece por `finanzas` (p. ej. `finanzas.consulta_maestra`, `finanzas.maestra_asignada` y `finanzas.salida_libro_representado`) y cualquier entrada cuya `tabla` sea `fin_*` (con o sin `public.`). Esas las escriben solo los triggers y las funciones del servidor: así nadie fabrica un cambio automático, una consulta de la cuenta maestra ni un aviso de Finanzas (I5). Lo mismo con las acciones que empiezan por `habitos` y las tablas `hab_*`: son constancias sin contenido del servidor que solo ve quien las hizo. Lo que la app escribe aquí tiene tope (N1): el `detalle` de una entrada pesa a lo más 4 KB y cada persona agrega a lo más 500 entradas propias en 24 horas (cuentan las que escribe la app: no las automáticas ni las de Finanzas); al excederlo responde 500 con el código 54000 y la sentencia entera se deshace (no se guarda ninguna de sus entradas). No es un error que se reintente: la cola lo deja en \"requiere atención\". No limita a los triggers ni a las funciones del servidor, y vale igual para familiar, cuidador y la cuenta Hogar.",
         "x-roles": [
           "dueno",
           "coadministrador",
@@ -2217,10 +5079,13 @@ window.ESPECIFICACION_GRAVITY = {
                         },
                         {
                           "pattern": "^finanzas"
+                        },
+                        {
+                          "pattern": "^habitos"
                         }
                       ]
                     },
-                    "description": "Identificador en minúsculas (letras, dígitos, `_` y `.`). `insertar`, `actualizar` y `borrar`, y toda acción que empiece por `finanzas`, están reservadas al servidor (403, código 42501).",
+                    "description": "Identificador en minúsculas (letras, dígitos, `_` y `.`). `insertar`, `actualizar` y `borrar`, y toda acción que empiece por `finanzas` o `habitos`, están reservadas al servidor (403, código 42501).",
                     "examples": [
                       "entrega_de_turno",
                       "gravity.abrir"
@@ -2230,9 +5095,9 @@ window.ESPECIFICACION_GRAVITY = {
                     "type": "string",
                     "maxLength": 63,
                     "not": {
-                      "pattern": "^\\s*(public\\.)?[fF][iI][nN]_"
+                      "pattern": "^\\s*(public\\.)?([fF][iI][nN]|[hH][aA][bB])_"
                     },
-                    "description": "Las tablas `fin_*` están reservadas al servidor (403, código 42501)."
+                    "description": "Las tablas `fin_*` y `hab_*` están reservadas al servidor (403, código 42501)."
                   },
                   "registro_id": {
                     "type": "string",
@@ -8277,6 +11142,32 @@ window.ESPECIFICACION_GRAVITY = {
           "maximum": 1000
         }
       },
+      "filtroPlanHab": {
+        "name": "plan_id",
+        "in": "query",
+        "description": "Filtro por plan de lectura, p. ej. `eq.<uuid>`.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "filtroPlanHabObligatorio": {
+        "name": "plan_id",
+        "in": "query",
+        "required": true,
+        "description": "Plan a cambiar: `eq.<uuid>`.",
+        "schema": {
+          "type": "string",
+          "pattern": "^eq\\.[0-9a-f-]{36}$"
+        }
+      },
+      "filtroDiaHab": {
+        "name": "dia",
+        "in": "query",
+        "description": "Día del plan, p. ej. `eq.3`.",
+        "schema": {
+          "type": "string"
+        }
+      },
       "preferir": {
         "name": "Prefer",
         "in": "header",
@@ -8477,6 +11368,38 @@ window.ESPECIFICACION_GRAVITY = {
             "example": {
               "code": "55000",
               "message": "Una de las cuentas no está activa (congelada, cerrada o archivada): no admite movimientos nuevos.",
+              "details": null,
+              "hint": null
+            }
+          }
+        }
+      },
+      "ReglaHabitos": {
+        "description": "No cumple una regla: de la tabla (23514: rangos, días, referencias, un tipo con su dato) o de negocio (22023: modo, revisión, cuota, alcance, versión de la llave).",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorPostgrest"
+            },
+            "example": {
+              "code": "22023",
+              "message": "Volver a solo teléfono borra lo de la nube, pide confirmación.",
+              "details": null,
+              "hint": null
+            }
+          }
+        }
+      },
+      "ConflictoHabitos": {
+        "description": "23503: falta algo de lo que depende (un objetivo o bloque que aún no se sube; la cola reintenta). 23505: duplicado (un registro del mismo elemento y día, una revisión de la semana).",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorPostgrest"
+            },
+            "example": {
+              "code": "23505",
+              "message": "duplicate key value violates unique constraint \"hab_registros_un_elemento_por_dia\"",
               "details": null,
               "hint": null
             }
@@ -11288,6 +14211,1097 @@ window.ESPECIFICACION_GRAVITY = {
           }
         }
       },
+      "AreaHabitos": {
+        "type": "string",
+        "enum": [
+          "espiritual",
+          "salud",
+          "educacion",
+          "personal",
+          "laboral",
+          "proyectos"
+        ]
+      },
+      "HabAjustes": {
+        "type": "object",
+        "description": "Ajustes de Hábitos de una persona (una fila; la crea el servidor).",
+        "properties": {
+          "persona_id": {
+            "$ref": "#/components/schemas/Uuid",
+            "readOnly": true,
+            "description": "La pone el servidor: es tu persona."
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid",
+            "readOnly": true,
+            "description": "Lo pone el servidor."
+          },
+          "areas_activas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AreaHabitos"
+            }
+          },
+          "minimos_modo": {
+            "type": "string",
+            "enum": [
+              "por_area",
+              "marcados"
+            ]
+          },
+          "gracia_semanal": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2
+          },
+          "despertar": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[0-9]{2}:[0-9]{2}(:[0-9]{2})?$"
+          },
+          "dormir": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[0-9]{2}:[0-9]{2}(:[0-9]{2})?$"
+          },
+          "franjas": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Hasta 4 KB."
+          },
+          "revision_dia": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 7,
+            "description": "1 = lunes … 7 = domingo."
+          },
+          "revision_hora": {
+            "type": "string",
+            "pattern": "^[0-9]{2}:[0-9]{2}(:[0-9]{2})?$"
+          },
+          "revision_aviso_min": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 120
+          },
+          "dar_activo": {
+            "type": "boolean"
+          },
+          "dar_dia": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 7
+          },
+          "dar_hora": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[0-9]{2}:[0-9]{2}(:[0-9]{2})?$"
+          },
+          "versiones_biblia": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "version_principal": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 20
+          },
+          "version_secundaria": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 20
+          },
+          "aviso_nombre_objetivos": {
+            "type": "boolean"
+          },
+          "etiqueta_atajo": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20
+          },
+          "bloqueo_reservado_min": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 60
+          },
+          "umbral_carga_pb": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "type": "integer"
+            }
+          },
+          "asistente": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Hasta 8 KB."
+          },
+          "epoca_nube": {
+            "type": "integer",
+            "minimum": 0,
+            "readOnly": true,
+            "description": "La sube el servidor al borrar sobres."
+          },
+          "modificado_en": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Último cambio gana: un UPDATE con modificado_en más viejo se ignora sin error; uno a más de 5 minutos en el futuro se ajusta a la hora del servidor."
+          },
+          "actualizado_en": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "description": "Lo pone el servidor."
+          }
+        }
+      },
+      "HabModo": {
+        "type": "object",
+        "description": "Modo de cada tipo sensible. Solo cambia con `habCambiarModo`.",
+        "properties": {
+          "persona_id": {
+            "$ref": "#/components/schemas/Uuid",
+            "readOnly": true,
+            "description": "La pone el servidor: es tu persona."
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid",
+            "readOnly": true,
+            "description": "Lo pone el servidor."
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "habitos_sensibles",
+              "diario_oracion"
+            ]
+          },
+          "modo": {
+            "type": "string",
+            "enum": [
+              "solo_telefono",
+              "nube_cifrada"
+            ],
+            "default": "solo_telefono"
+          },
+          "cambiado_en": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "description": "Lo pone el servidor."
+          }
+        }
+      },
+      "HabObjetivo": {
+        "type": "object",
+        "description": "Objetivo no sensible. No existe el tipo eliminar.",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid",
+            "readOnly": true,
+            "description": "Lo pone el servidor."
+          },
+          "persona_id": {
+            "$ref": "#/components/schemas/Uuid",
+            "readOnly": true,
+            "description": "La pone el servidor: es tu persona."
+          },
+          "titulo": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "area": {
+            "$ref": "#/components/schemas/AreaHabitos"
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "construir",
+              "meta",
+              "proyecto"
+            ]
+          },
+          "unidad": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 20
+          },
+          "meta_valor": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1
+          },
+          "frecuencia": {
+            "type": "string",
+            "enum": [
+              "diaria",
+              "dias_semana",
+              "n_por_semana",
+              "semanal",
+              "total"
+            ],
+            "default": "diaria"
+          },
+          "dias_semana": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 127,
+            "description": "Máscara de 7 bits."
+          },
+          "veces_por_semana": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 7
+          },
+          "fecha_inicio": {
+            "type": "string",
+            "format": "date"
+          },
+          "fecha_objetivo": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "No anterior a fecha_inicio (23514)."
+          },
+          "prioridad": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5,
+            "default": 3
+          },
+          "minimo": {
+            "type": "boolean"
+          },
+          "esencial": {
+            "type": "boolean"
+          },
+          "motivo": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 200
+          },
+          "nombre_en_aviso": {
+            "type": "boolean",
+            "default": false
+          },
+          "plantilla": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 60
+          },
+          "estado": {
+            "type": "string",
+            "enum": [
+              "activo",
+              "pausado",
+              "logrado",
+              "archivado"
+            ],
+            "default": "activo"
+          },
+          "hitos": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "description": "Solo en proyectos; hasta 16 KB."
+          },
+          "modificado_en": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Último cambio gana: un UPDATE con modificado_en más viejo se ignora sin error; uno a más de 5 minutos en el futuro se ajusta a la hora del servidor."
+          },
+          "actualizado_en": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "description": "Lo pone el servidor."
+          }
+        }
+      },
+      "HabBloque": {
+        "type": "object",
+        "description": "Bloque de la agenda semanal.",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid",
+            "readOnly": true,
+            "description": "Lo pone el servidor."
+          },
+          "persona_id": {
+            "$ref": "#/components/schemas/Uuid",
+            "readOnly": true,
+            "description": "La pone el servidor: es tu persona."
+          },
+          "titulo": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "area": {
+            "$ref": "#/components/schemas/AreaHabitos"
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "actividad",
+              "trabajo",
+              "traslado",
+              "revision",
+              "cita"
+            ]
+          },
+          "objetivo_id": {
+            "$ref": "#/components/schemas/UuidONulo"
+          },
+          "inicio": {
+            "type": "string",
+            "pattern": "^[0-9]{2}:[0-9]{2}(:[0-9]{2})?$"
+          },
+          "duracion_min": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1440
+          },
+          "dias": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 127,
+            "description": "Máscara de 7 bits (1 = lunes)."
+          },
+          "cada_semanas": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 52,
+            "default": 1
+          },
+          "desde": {
+            "type": "string",
+            "format": "date"
+          },
+          "hasta": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "No anterior a desde (23514)."
+          },
+          "minimo": {
+            "type": "boolean"
+          },
+          "esencial": {
+            "type": "boolean"
+          },
+          "recordar_min": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 1440
+          },
+          "activo": {
+            "type": "boolean",
+            "default": true
+          },
+          "modificado_en": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Último cambio gana: un UPDATE con modificado_en más viejo se ignora sin error; uno a más de 5 minutos en el futuro se ajusta a la hora del servidor."
+          },
+          "actualizado_en": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "description": "Lo pone el servidor."
+          }
+        }
+      },
+      "HabRegistro": {
+        "type": "object",
+        "description": "Cómo salió un objetivo o bloque en un día (uno por elemento y día).",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid",
+            "readOnly": true,
+            "description": "Lo pone el servidor."
+          },
+          "persona_id": {
+            "$ref": "#/components/schemas/Uuid",
+            "readOnly": true,
+            "description": "La pone el servidor: es tu persona."
+          },
+          "objetivo_id": {
+            "$ref": "#/components/schemas/UuidONulo"
+          },
+          "bloque_id": {
+            "$ref": "#/components/schemas/UuidONulo"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date"
+          },
+          "estado": {
+            "type": "string",
+            "enum": [
+              "pendiente",
+              "hecho",
+              "parcial",
+              "omitido",
+              "pospuesto"
+            ],
+            "default": "pendiente"
+          },
+          "valor": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "movido_a": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[0-9]{2}:[0-9]{2}(:[0-9]{2})?$"
+          },
+          "motivo_omision": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "cansancio",
+              "sin_tiempo",
+              "imprevisto",
+              "otro",
+              null
+            ]
+          },
+          "modificado_en": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Último cambio gana: un UPDATE con modificado_en más viejo se ignora sin error; uno a más de 5 minutos en el futuro se ajusta a la hora del servidor."
+          },
+          "actualizado_en": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "description": "Lo pone el servidor."
+          }
+        }
+      },
+      "HabPausa": {
+        "type": "object",
+        "description": "Pausa de un objetivo (o de todo).",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid",
+            "readOnly": true,
+            "description": "Lo pone el servidor."
+          },
+          "persona_id": {
+            "$ref": "#/components/schemas/Uuid",
+            "readOnly": true,
+            "description": "La pone el servidor: es tu persona."
+          },
+          "objetivo_id": {
+            "$ref": "#/components/schemas/UuidONulo"
+          },
+          "desde": {
+            "type": "string",
+            "format": "date"
+          },
+          "hasta": {
+            "type": "string",
+            "format": "date"
+          },
+          "motivo": {
+            "type": "string",
+            "enum": [
+              "descanso",
+              "viaje",
+              "salud",
+              "otra"
+            ]
+          },
+          "modificado_en": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Último cambio gana: un UPDATE con modificado_en más viejo se ignora sin error; uno a más de 5 minutos en el futuro se ajusta a la hora del servidor."
+          },
+          "actualizado_en": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "description": "Lo pone el servidor."
+          }
+        }
+      },
+      "HabPlanLectura": {
+        "type": "object",
+        "description": "Plan de lectura de la Biblia.",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid",
+            "readOnly": true,
+            "description": "Lo pone el servidor."
+          },
+          "persona_id": {
+            "$ref": "#/components/schemas/Uuid",
+            "readOnly": true,
+            "description": "La pone el servidor: es tu persona."
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "ruta_inicio",
+              "nt_90",
+              "salmos_proverbios_30",
+              "biblia_1_ano",
+              "libro"
+            ]
+          },
+          "nombre": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "fecha_inicio": {
+            "type": "string",
+            "format": "date"
+          },
+          "dias_semana": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 127,
+            "default": 127
+          },
+          "version_biblica": {
+            "type": "string",
+            "enum": [
+              "rvr1909",
+              "kjv"
+            ]
+          },
+          "estado": {
+            "type": "string",
+            "enum": [
+              "activo",
+              "pausado",
+              "terminado",
+              "archivado"
+            ],
+            "default": "activo"
+          },
+          "libro": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 66,
+            "description": "Solo en el tipo libro."
+          },
+          "modificado_en": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Último cambio gana: un UPDATE con modificado_en más viejo se ignora sin error; uno a más de 5 minutos en el futuro se ajusta a la hora del servidor."
+          },
+          "actualizado_en": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "description": "Lo pone el servidor."
+          }
+        }
+      },
+      "HabPlanDia": {
+        "type": "object",
+        "description": "Un día de un plan de lectura (la llave es plan_id y dia).",
+        "properties": {
+          "plan_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "dia": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 400
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid",
+            "readOnly": true,
+            "description": "Lo pone el servidor."
+          },
+          "persona_id": {
+            "$ref": "#/components/schemas/Uuid",
+            "readOnly": true,
+            "description": "La pone el servidor: es tu persona."
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date"
+          },
+          "segmentos": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Hasta 4 KB."
+          },
+          "estado": {
+            "type": "string",
+            "enum": [
+              "pendiente",
+              "hecho",
+              "parcial",
+              "saltado"
+            ],
+            "default": "pendiente"
+          },
+          "hecho_en": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "modificado_en": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Último cambio gana: un UPDATE con modificado_en más viejo se ignora sin error; uno a más de 5 minutos en el futuro se ajusta a la hora del servidor."
+          },
+          "actualizado_en": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "description": "Lo pone el servidor."
+          }
+        }
+      },
+      "HabLectura": {
+        "type": "object",
+        "description": "Lo leído en un día.",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid",
+            "readOnly": true,
+            "description": "Lo pone el servidor."
+          },
+          "persona_id": {
+            "$ref": "#/components/schemas/Uuid",
+            "readOnly": true,
+            "description": "La pone el servidor: es tu persona."
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date"
+          },
+          "libro": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 66
+          },
+          "cap_ini": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 150
+          },
+          "cap_fin": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 150,
+            "description": "No menor que cap_ini (23514)."
+          },
+          "minutos": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 1440
+          },
+          "plan_id": {
+            "$ref": "#/components/schemas/UuidONulo"
+          },
+          "modificado_en": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Último cambio gana: un UPDATE con modificado_en más viejo se ignora sin error; uno a más de 5 minutos en el futuro se ajusta a la hora del servidor."
+          },
+          "actualizado_en": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "description": "Lo pone el servidor."
+          }
+        }
+      },
+      "HabMarcaBiblia": {
+        "type": "object",
+        "description": "Subrayado o marcador, sin texto libre.",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid",
+            "readOnly": true,
+            "description": "Lo pone el servidor."
+          },
+          "persona_id": {
+            "$ref": "#/components/schemas/Uuid",
+            "readOnly": true,
+            "description": "La pone el servidor: es tu persona."
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "subrayado",
+              "marcador"
+            ]
+          },
+          "referencia": {
+            "type": "string",
+            "pattern": "^[0-9]{1,2}:[0-9]{1,3}:[0-9]{1,3}(-[0-9]{1,3})?$",
+            "description": "libro:capitulo:versiculo."
+          },
+          "color": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[a-z]{1,20}$",
+            "description": "Solo en el subrayado."
+          },
+          "modificado_en": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Último cambio gana: un UPDATE con modificado_en más viejo se ignora sin error; uno a más de 5 minutos en el futuro se ajusta a la hora del servidor."
+          },
+          "actualizado_en": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "description": "Lo pone el servidor."
+          }
+        }
+      },
+      "HabRevision": {
+        "type": "object",
+        "description": "Revisión semanal (una por semana en lunes).",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid",
+            "readOnly": true,
+            "description": "Lo pone el servidor."
+          },
+          "persona_id": {
+            "$ref": "#/components/schemas/Uuid",
+            "readOnly": true,
+            "description": "La pone el servidor: es tu persona."
+          },
+          "semana": {
+            "type": "string",
+            "format": "date",
+            "description": "Lunes."
+          },
+          "estado": {
+            "type": "string",
+            "enum": [
+              "pendiente",
+              "en_curso",
+              "completada",
+              "omitida"
+            ],
+            "default": "pendiente"
+          },
+          "programada_para": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "completada_en": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "resumen": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Hasta 8 KB."
+          },
+          "ajustes": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Hasta 8 KB."
+          },
+          "dar_cumplido": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "modificado_en": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Último cambio gana: un UPDATE con modificado_en más viejo se ignora sin error; uno a más de 5 minutos en el futuro se ajusta a la hora del servidor."
+          },
+          "actualizado_en": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "description": "Lo pone el servidor."
+          }
+        }
+      },
+      "HabSobre": {
+        "type": "object",
+        "description": "Sobre cifrado (AES-256-GCM hecho en el teléfono). El servidor solo ve el tipo, la revisión y el tamaño.",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid",
+            "description": "Opaco (HMAC en el teléfono)."
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid",
+            "readOnly": true,
+            "description": "Lo pone el servidor."
+          },
+          "persona_id": {
+            "$ref": "#/components/schemas/Uuid",
+            "readOnly": true,
+            "description": "La pone el servidor: es tu persona."
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "habitos_sensibles",
+              "diario_oracion"
+            ]
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "cifrado": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 87400,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "description": "Hasta 64 KB."
+          },
+          "llave_version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "eliminado": {
+            "type": "boolean"
+          },
+          "creado_en": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "description": "Lo pone el servidor."
+          },
+          "actualizado_en": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "description": "Lo pone el servidor."
+          }
+        }
+      },
+      "HabSobreSubida": {
+        "type": "object",
+        "description": "Un sobre al subirlo con `habSubirSobres`.",
+        "required": [
+          "id",
+          "tipo",
+          "revision",
+          "cifrado",
+          "llave_version"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "habitos_sensibles",
+              "diario_oracion"
+            ]
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "cifrado": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 87400,
+            "pattern": "^[A-Za-z0-9_-]+$"
+          },
+          "llave_version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "eliminado": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
+      "HabResultadoSubida": {
+        "type": "object",
+        "description": "Resultado de `habSubirSobres`.",
+        "properties": {
+          "aceptados": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "conflictos": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "$ref": "#/components/schemas/Uuid"
+                },
+                "revision": {
+                  "type": "integer",
+                  "description": "La revisión que ya tiene el servidor."
+                }
+              }
+            }
+          }
+        }
+      },
+      "HabLlave": {
+        "type": "object",
+        "description": "La llave maestra envuelta con la frase de recuperación; el servidor no puede abrirla.",
+        "properties": {
+          "persona_id": {
+            "$ref": "#/components/schemas/Uuid",
+            "readOnly": true,
+            "description": "La pone el servidor: es tu persona."
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid",
+            "readOnly": true,
+            "description": "Lo pone el servidor."
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "kdf": {
+            "type": "string",
+            "enum": [
+              "pbkdf2-hmac-sha256",
+              "argon2id"
+            ]
+          },
+          "kdf_params": {
+            "type": "object",
+            "description": "Hasta 1 KB."
+          },
+          "sal": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 128,
+            "pattern": "^[A-Za-z0-9_=+/-]+$"
+          },
+          "llave_envuelta": {
+            "type": "string",
+            "minLength": 16,
+            "maxLength": 512,
+            "pattern": "^[A-Za-z0-9_=+/-]+$"
+          },
+          "creado_en": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "description": "Lo pone el servidor."
+          },
+          "rotada_en": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
       "PreguntaIa": {
         "type": "object",
         "description": "Propuesta (Fase 6). Sin nombres, montos ni datos clínicos.",
@@ -11359,4 +15373,4 @@ window.ESPECIFICACION_GRAVITY = {
     }
   }
 };
-window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:9523891a';
+window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:8c6febd9';
