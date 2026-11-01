@@ -28,7 +28,7 @@ Cuando las decisiones confirmadas cambian el contrato, se reescribe `CONTRATO_CO
 | D16 | APIs documentadas con OpenAPI y Swagger UI | Confirmada (detalles propuestos) |
 | D17 | Reglas técnicas del servidor (Fase 0) | Propuesta |
 | D18 | Decisiones de la revisión de la Fase 0 | Confirmada (21/oct; coadministrador y Cuidados hasta la Fase 5) |
-| D21 | Datos sensibles de Hábitos: llaves, frase de recuperación y modos | Propuesta (Fase 3; falta visto bueno del dueño) |
+| D21 | Datos sensibles de Hábitos: llaves, frase de recuperación y modos | Confirmada (1/nov/2026; tablet personal como el teléfono) |
 | D20 | Infraestructura de avisos genérica (FCM discreto, bandeja, preferencias) | Confirmada (31/oct/2026) |
 | D19 | Finanzas por persona, cuentas compartidas, albaceas y cuenta maestra | Confirmada (21/oct; ampliada 23/oct; detalles propuestos) |
 
@@ -462,13 +462,15 @@ Propuesta de la especificación de la Fase 2 (`docs/specs/fase-2-finanzas.md`, P
 
 ---
 
-## D21. Datos sensibles de Hábitos: llaves, frase de recuperación y modos — propuesta (1/nov/2026)
+## D21. Datos sensibles de Hábitos: llaves, frase de recuperación y modos — confirmada (1/nov/2026)
 
 Desarrolla D13 con la especificación de la Fase 3 (`docs/specs/fase-3-habitos.md`, P1 a P3). Se construye con las propuestas por defecto mientras el dueño responde.
 
 - **Dos tipos sensibles:** `habitos_sensibles` y `diario_oracion` (peticiones, devocionales escritos, notas del lector y respuestas de la revisión). Valor por defecto de ambos: **solo teléfono**; nada sale hasta que la persona active la nube.
 - **Nube cifrada:** AES-256-GCM en el teléfono, un sobre por día y tipo con ids opacos y subida en lote (el servidor no ve la hora de cada registro). La llave maestra queda envuelta con PBKDF2 de 600 000 vueltas.
 - **Recuperación:** frase de 12 palabras en papel, confirmada con 3 palabras al azar; verificación cada 90 días; añadir la laptop con la frase; si se pierde la frase y todos los equipos, "Reiniciar la nube" (se pierde lo cifrado). En modo solo teléfono hay respaldo local cifrado.
-- **Tablets:** nunca reciben la llave ni lo sensible; la tablet pública no muestra nada de Hábitos en modo Casa.
+- **Tablets (respuesta del dueño, 1/nov/2026):** la **tablet personal funciona como el teléfono** (puede tener la llave y lo sensible, con PIN, FLAG_SECURE y almacén seguro); la **tablet pública de la casa no** recibe la llave ni muestra nada de Hábitos en modo Casa.
 - **Privacidad:** Hábitos es personal; la cuenta maestra no lo ve; las tablas `hab_*` no escriben en la bitácora y el prefijo `habitos.*` queda reservado al servidor y oculto al dueño y a la maestra. Recordatorios locales discretos, sin acciones que escriban desde la pantalla bloqueada.
+
+**Respuestas del dueño a la Fase 3 (1/nov/2026):** datos sensibles **solo en el teléfono por ahora**; **frase de 12 palabras** aprobada; la **fecha de inicio** de los planes de cigarrillo y azúcar la fija **cada miembro** cuando quiera; el arquitecto y el agente de hábitos **proponen** el SOS y los versículos de ánimo (el dueño los revisa); la **copia diaria de la laptop incluye las tablas en claro** de toda la familia, con aviso a la pareja; los **datos de una persona dada de baja se conservan sin acceso y se borran a los 90 días**.
 

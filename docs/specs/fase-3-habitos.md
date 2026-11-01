@@ -635,3 +635,10 @@ Cada pregunta trae la **propuesta por defecto** con la que se construye si no ha
 3. **Decidir los valores de tu plan** de cigarrillo y azúcar (P5, P7, P9) cuando uses la app; no hacen falta para programar.
 4. **Dar una fuente oficial** para los hitos de salud y **verificar la línea de ayuda** (P16); sin eso se muestran solo hitos de constancia.
 5. Para la medición final: un **Galaxy A52 con la pulsera enlazada** (criterios 21, 47 a 49 y 56) y anotar el modelo de la pulsera (D15).
+
+---
+
+## Respuestas del dueño (1/nov/2026)
+
+P1: sensibles solo en el teléfono por ahora (nube desactivada por omisión). P2: frase de 12 palabras. P3: **cambia** — la tablet **personal** funciona como el teléfono; la **pública** no. P5: la fecha de inicio la fija cada miembro. P8/P9: se propone el SOS y los versículos para su revisión. P20: la copia incluye las tablas en claro, con aviso a la pareja. P21: datos de una persona dada de baja se conservan sin acceso y se borran a los **90 días**. Detalle en D21.
+

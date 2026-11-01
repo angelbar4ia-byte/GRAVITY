@@ -1,0 +1,16 @@
+name: habitos_dominio
+description: >-
+  Lógica pura del módulo Hábitos de GRAVITY (Dart sin Flutter): rachas con día
+  de gracia, carga del día, hábitos a eliminar, agenda, planes de lectura,
+  documentos cifrados y avisos discretos.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.13.5
+
+dependencies:
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.25.6
