@@ -114,6 +114,7 @@ void main() {
       'Herramientas de GRAVITY',
       'Base de datos',
       'Base de datos · Finanzas',
+      'Base de datos · Hábitos',
       'Funciones del servidor',
       'Puente de casa',
     ]);
@@ -163,7 +164,7 @@ void main() {
       final base = gruposOperaciones.where(
         (g) => g.nombre.startsWith('Base de datos'),
       );
-      expect(base, hasLength(2));
+      expect(base, hasLength(3));
       for (final o in base.expand((g) => g.operaciones)) {
         expect(o.soloLocal, isTrue, reason: o.id);
         final esLectura =
