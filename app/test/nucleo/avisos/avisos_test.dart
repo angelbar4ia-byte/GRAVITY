@@ -55,6 +55,9 @@ void main() {
         'Finanzas · Avisos',
         'Finanzas · Informativos',
         'Finanzas · Resumen',
+        'Hábitos · Recordatorios',
+        'Hábitos · Reservados',
+        'Hábitos · Revisión',
       ]);
     });
 

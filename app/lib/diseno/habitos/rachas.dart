@@ -119,6 +119,7 @@ class CalendarioConstancia extends StatelessWidget {
     final v = ValoresDiseno.de(context);
     return Semantics(
       container: true,
+      explicitChildNodes: true,
       label: 'Calendario de constancia',
       child: Wrap(
         spacing: v.espacio * 0.5,

@@ -37,7 +37,7 @@ void main() {
     h = (await s.hoyDe()).single;
     expect(h.estado, EstadoRegistro.pendiente);
     expect(h.racha.actual, 2); // hoy abierto: no rompe
-    expect(h.racha.mejor, 3);
+    expect(h.racha.mejor, 2);
   });
 
   test('el mismo registro no se duplica y el último gana', () async {

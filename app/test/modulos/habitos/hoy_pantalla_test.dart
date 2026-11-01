@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gravity/nucleo/sesion/proveedores_sesion.dart';
+import 'package:gravity/nucleo/sesion/servicio_sesion_falso.dart';
 import 'package:gravity/modulos/habitos/casos_uso/servicio_habitos.dart';
 import 'package:gravity/modulos/habitos/datos/repositorio.dart';
 import 'package:gravity/modulos/habitos/estado/proveedores.dart';
@@ -11,10 +13,11 @@ void main() {
     final repo = RepositorioHabitosEnMemoria();
     await t.pumpWidget(ProviderScope(
       overrides: [
+        servicioSesionProvider.overrideWithValue(ServicioSesionFalso()),
         repositorioHabitosProvider.overrideWithValue(repo),
         servicioHabitosProvider.overrideWithValue(ServicioHabitos(repo)),
       ],
-      child: const MaterialApp(home: Scaffold(body: SizedBox(width: 400, height: 800, child: _Cuerpo()))),
+      child: const MaterialApp(home: _Cuerpo()),
     ));
     await t.pumpAndSettle();
     expect(find.text('Pausa'), findsWidgets);
