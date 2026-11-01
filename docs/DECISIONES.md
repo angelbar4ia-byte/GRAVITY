@@ -457,3 +457,5 @@ Propuesta de la especificación de la Fase 2 (`docs/specs/fase-2-finanzas.md`, P
 - **Texto discreto:** títulos de un catálogo cerrado de máximo 40 caracteres, sin dígitos, sin "$" y sin nombres; cuerpo vacío. La pulsera (nivel 1) recibe el mismo título corto. Nada de dinero ni datos clínicos en avisos (D3).
 - Los avisos se borran a los 90 días. La laptop no recibe push con la app cerrada. La tablet pública nunca recibe avisos personales.
 
+**Respuestas del dueño (1/nov/2026, cierre de la Fase 2):** los miembros de un libro compartido **sí pueden** emitirse avisos críticos entre sí (con los límites de la migración 20261104: 5 por día y libro); para el teléfono sin señal **bastan los recordatorios locales que hay**. Lo demás que depende del dueño (Firebase, Vault, builds, pulsera, ficha) queda para la siguiente ronda.
+
