@@ -84,6 +84,7 @@ class _CuerpoHoy extends ConsumerWidget {
               alAccionar: () => context.go('${Rutas.habitos}/objetivos'),
             )
           else ...[
+            const _CargaHoy(),
             _Sigue(items: items),
             for (final i in items)
               FilaHabito(
@@ -102,6 +103,11 @@ class _CuerpoHoy extends ConsumerWidget {
                     context, ref, i, (s) => s.omitir(i.objetivo), 'Omitido'),
               ),
           ],
+          ListTile(
+            leading: const Icon(Icons.calendar_today_outlined),
+            title: const Text('Agenda'),
+            onTap: () => context.go('${Rutas.habitos}/agenda'),
+          ),
           ListTile(
             leading: const Icon(Icons.lock_outline),
             title: const Text('Reservado'),
@@ -133,5 +139,15 @@ class _Sigue extends StatelessWidget {
     if (pend.isEmpty) return const SizedBox.shrink();
     final i = pend.first;
     return TarjetaSigue(titulo: i.objetivo.titulo, horaTexto: 'Hoy');
+  }
+}
+
+class _CargaHoy extends ConsumerWidget {
+  const _CargaHoy();
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = ref.watch(cargaHoyProvider).value;
+    if (c == null || c.programados == 0) return const SizedBox.shrink();
+    return MedidorCarga(planeadosMin: c.programados, disponiblesMin: c.libres);
   }
 }

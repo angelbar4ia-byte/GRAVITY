@@ -17,6 +17,8 @@ import 'package:go_router/go_router.dart';
 
 import 'estado/proveedores.dart';
 import 'casos_uso/servicio_eliminar.dart';
+import 'pantallas/agenda.dart';
+import 'pantallas/asistente.dart';
 import 'pantallas/eliminar.dart';
 import 'pantallas/hoy.dart';
 import 'pantallas/objetivos.dart';
@@ -32,6 +34,8 @@ Page<void> Function(BuildContext, GoRouterState) _pagina(
 List<RouteBase> rutasHabitos() => [
       GoRoute(path: '/', pageBuilder: _pagina((_) => const PantallaHoyHabitos())),
       GoRoute(path: 'objetivos', pageBuilder: _pagina((_) => const PantallaObjetivos())),
+      GoRoute(path: 'agenda', pageBuilder: _pagina((_) => const PantallaAgenda())),
+      GoRoute(path: 'asistente', pageBuilder: _pagina((_) => const PantallaAsistente())),
       GoRoute(path: 'sos', pageBuilder: _pagina((_) => const PantallaPausa())),
       GoRoute(path: 'reservado', pageBuilder: _pagina((_) => const PantallaReservado())),
       GoRoute(

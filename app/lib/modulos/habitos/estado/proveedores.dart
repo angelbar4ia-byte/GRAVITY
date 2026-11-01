@@ -11,7 +11,9 @@ import '../../../nucleo/sesion/servicio_sesion_supabase.dart';
 import '../../../app/sensibles/sensibles.dart';
 import '../casos_uso/servicio_eliminar.dart';
 import '../casos_uso/servicio_habitos.dart';
+import '../casos_uso/servicio_agenda.dart';
 import '../datos/documentos_sensibles.dart';
+import '../datos/repositorio_agenda.dart';
 import '../datos/repositorio.dart';
 
 /// Repositorio de la persona que usa la app (en la tablet, la que entró con
@@ -60,4 +62,30 @@ final estadoEliminarProvider =
     FutureProvider.family<EstadoHabito?, TipoHabito>((ref, tipo) async {
   ref.watch(versionHabitosProvider);
   return ref.watch(servicioEliminarProvider)?.estado(tipo);
+});
+
+/// Agenda, ajustes, revisiones y planes de la persona activa.
+final repositorioAgendaProvider = Provider<RepositorioAgenda>((ref) {
+  final sesion = ref.watch(sesionEfectivaProvider);
+  final servicio = ref.watch(servicioSesionProvider);
+  if (sesion != null && servicio is ServicioSesionSupabase) {
+    return RepositorioAgendaSupabase(() => servicio.clienteActivo);
+  }
+  return RepositorioAgendaEnMemoria();
+});
+
+final servicioAgendaProvider = Provider<ServicioAgenda>((ref) => ServicioAgenda(
+      ref.watch(repositorioAgendaProvider),
+      ref.watch(repositorioHabitosProvider),
+      ahora: ref.watch(relojProvider).ahora,
+    ));
+
+final cargaHoyProvider = FutureProvider<CargaDelDia>((ref) {
+  ref.watch(versionHabitosProvider);
+  return ref.watch(servicioAgendaProvider).carga();
+});
+
+final bloquesDelDiaProvider = FutureProvider.family<List<OcurrenciaBloque>, DateTime>((ref, f) {
+  ref.watch(versionHabitosProvider);
+  return ref.watch(servicioAgendaProvider).bloquesDe(f);
 });
