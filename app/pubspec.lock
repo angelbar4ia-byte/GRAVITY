@@ -588,6 +588,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.3.2"
+  habitos_dominio:
+    dependency: "direct main"
+    description:
+      path: "../paquetes/habitos_dominio"
+      relative: true
+    source: path
+    version: "0.1.0"
   hooks:
     dependency: transitive
     description:

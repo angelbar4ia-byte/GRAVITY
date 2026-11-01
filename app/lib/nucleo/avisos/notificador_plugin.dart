@@ -25,7 +25,10 @@ class NotificadorPlugin implements NotificadorLocal {
   bool _listo = false;
 
   @override
-  Future<void> iniciar({void Function(String? carga)? alTocar}) async {
+  Future<void> iniciar({
+    void Function(String? carga)? alTocar,
+    void Function(String? carga, AccionDeNotificacion accion)? alAccion,
+  }) async {
     if (_listo) return;
     tzdatos.initializeTimeZones();
     await _plugin.initialize(
@@ -37,8 +40,12 @@ class NotificadorPlugin implements NotificadorLocal {
           guid: _guidWindows,
         ),
       ),
-      onDidReceiveNotificationResponse: (respuesta) =>
-          alTocar?.call(respuesta.payload),
+      onDidReceiveNotificationResponse: (respuesta) {
+        final accion = AccionDeNotificacion.desdeId(respuesta.actionId);
+        accion == null
+            ? alTocar?.call(respuesta.payload)
+            : alAccion?.call(respuesta.payload, accion);
+      },
     );
     final android = _plugin
         .resolvePlatformSpecificImplementation<
@@ -51,18 +58,26 @@ class NotificadorPlugin implements NotificadorLocal {
             canal.id,
             canal.nombre,
             importance: switch (canal) {
-              CanalAviso.urgentes || CanalAviso.avisos => Importance.high,
-              CanalAviso.informativos => Importance.defaultImportance,
+              CanalAviso.urgentes ||
+              CanalAviso.avisos ||
+              CanalAviso.habitosRecordatorios ||
+              CanalAviso.habitosReservados => Importance.high,
+              CanalAviso.informativos ||
+              CanalAviso.habitosRevision => Importance.defaultImportance,
               CanalAviso.resumen => Importance.low,
             },
             playSound: canal != CanalAviso.informativos &&
-                canal != CanalAviso.resumen,
-            enableVibration: canal == CanalAviso.urgentes ||
-                canal == CanalAviso.avisos,
-            // Vibración doble larga (urgentes) y corta (avisos).
+                canal != CanalAviso.resumen &&
+                canal != CanalAviso.habitosRevision,
+            enableVibration: canal != CanalAviso.informativos &&
+                canal != CanalAviso.resumen &&
+                canal != CanalAviso.habitosRevision,
+            // Vibración doble larga (urgentes) y corta (avisos y hábitos).
             vibrationPattern: switch (canal) {
               CanalAviso.urgentes => Int64List.fromList([0, 600, 200, 600]),
-              CanalAviso.avisos => Int64List.fromList([0, 250]),
+              CanalAviso.avisos ||
+              CanalAviso.habitosRecordatorios ||
+              CanalAviso.habitosReservados => Int64List.fromList([0, 250]),
               _ => null,
             },
           ),
@@ -97,6 +112,9 @@ class NotificadorPlugin implements NotificadorLocal {
       n.canal.nombre,
       importance: n.canal == CanalAviso.resumen
           ? Importance.low
+          : n.canal == CanalAviso.habitosRevision ||
+                n.canal == CanalAviso.informativos
+          ? Importance.defaultImportance
           : Importance.high,
       priority: Priority.high,
       playSound: n.sonar,
@@ -104,7 +122,19 @@ class NotificadorPlugin implements NotificadorLocal {
       // Pantalla bloqueada PRIVATE: los equipos que la respetan ven la versión
       // pública y no el título (regla 46).
       visibility: NotificationVisibility.private,
-      ticker: textoAvisoPublico,
+      ticker: n.canal == CanalAviso.habitosReservados
+          ? 'Recordatorio'
+          : textoAvisoPublico,
+      actions: [
+        for (final a in n.acciones)
+          AndroidNotificationAction(
+            a.id,
+            a.etiqueta,
+            // Sin abrir la app: funcionan con la app cerrada y sin señal.
+            showsUserInterface: false,
+            cancelNotification: a != AccionDeNotificacion.posponer10,
+          ),
+      ],
     ),
     windows: const WindowsNotificationDetails(),
   );

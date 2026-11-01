@@ -8,7 +8,11 @@
 /// después por Firebase, **reemplaza** al recordatorio y se ve una sola.
 library;
 
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
+
+import '../seguridad/almacen_seguro.dart';
 
 import 'aviso.dart';
 import 'catalogo_avisos.dart';
@@ -152,10 +156,31 @@ class RecordatoriosLocales {
   RecordatoriosLocales({
     required this.notificador,
     this.vencimientos = const SinVencimientos(),
+    this.almacen,
   });
 
   final NotificadorLocal notificador;
   final FuenteDeVencimientos vencimientos;
+
+  /// Donde se recuerdan los ids programados, para cancelar **solo los de
+  /// Finanzas** y no los recordatorios de Hábitos (que comparten el sistema).
+  final AlmacenSeguro? almacen;
+  final Set<int> _propios = {};
+  static const _clave = 'avisos.recordatorios.finanzas.ids';
+
+  Future<void> _cancelarPropios() async {
+    final ids = {..._propios};
+    final texto = await almacen?.leer(_clave);
+    if (texto != null) {
+      try {
+        ids.addAll([for (final i in jsonDecode(texto) as List) i as int]);
+      } catch (_) {}
+    }
+    for (final id in ids) {
+      await notificador.cancelar(id);
+    }
+    _propios.clear();
+  }
 
   /// Cancela lo programado y vuelve a programar desde cero. Devuelve lo que
   /// quedó programado.
@@ -163,8 +188,11 @@ class RecordatoriosLocales {
     required PreferenciasAvisos preferencias,
     required DateTime ahora,
   }) async {
-    await notificador.cancelarProgramadas();
-    if (!await notificador.permisoConcedido()) return const [];
+    await _cancelarPropios();
+    if (!await notificador.permisoConcedido()) {
+      await almacen?.borrar(_clave);
+      return const [];
+    }
     List<Vencimiento> proximos;
     try {
       proximos = await vencimientos.proximos(desde: ahora, dias: 14);
@@ -186,7 +214,9 @@ class RecordatoriosLocales {
         r.cuando,
         zona: preferencias.zonaHoraria,
       );
+      _propios.add(idDeNotificacion(r.clave));
     }
+    await almacen?.escribir(_clave, jsonEncode(_propios.toList()));
     return lista;
   }
 }

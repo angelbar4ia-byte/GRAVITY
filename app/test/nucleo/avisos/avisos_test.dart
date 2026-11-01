@@ -581,25 +581,35 @@ void main() {
       expect(pago.cuando, DateTime(2026, 11, 10, 7));
     });
 
-    test('reprogramar cancela lo anterior y programa con el texto del catálogo',
-        () async {
+    test('reprogramar cancela lo propio (no lo de otros) y programa con el texto '
+        'del catálogo', () async {
       final n = NotificadorEnMemoria();
       final r = RecordatoriosLocales(
         notificador: n,
         vencimientos: _Fijos([Vencimiento(objetoId: 'o1', fecha: DateTime(2026, 11, 12))]),
       );
+      // Algo programado por otro (p. ej. los recordatorios de Hábitos).
       await n.programar(
-        const NotificacionLocal(id: 7, titulo: 'viejo', canal: CanalAviso.avisos),
+        const NotificacionLocal(id: 7, titulo: 'ajeno', canal: CanalAviso.avisos),
         DateTime(2027),
         zona: 'America/Mexico_City',
       );
-      final lista = await r.reprogramar(preferencias: p, ahora: ahora);
-      expect(n.programadas.containsKey(7), isFalse);
-      expect(n.programadas, hasLength(lista.length));
+      await r.reprogramar(preferencias: p, ahora: ahora);
+      final lista = await r.reprogramar(
+        preferencias: p.copiarCon(tiposSilenciados: {'resumen_lunes'}),
+        ahora: ahora,
+      );
+      expect(n.programadas.containsKey(7), isTrue, reason: 'lo ajeno se respeta');
+      expect(n.programadas, hasLength(lista.length + 1));
+      expect(
+        n.programadas.values.any((e) => e.notificacion.titulo == 'Tu resumen de la semana está listo'),
+        isFalse,
+        reason: 'lo anterior se canceló',
+      );
       final pago = n.programadas[idDeNotificacion('pago_proximo:o1:2026-11-12:3')]!;
       expect(pago.notificacion.titulo, 'Tienes un pago próximo');
       expect(pago.notificacion.cuerpo, isEmpty);
-      for (final e in n.programadas.values) {
+      for (final e in n.programadas.values.where((e) => e.notificacion.id != 7)) {
         expect(textoDeAvisoEsDiscreto(e.notificacion.titulo), isTrue);
       }
     });

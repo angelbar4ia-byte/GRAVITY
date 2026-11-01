@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'fuente_push.dart';
 import 'notificador.dart';
 import 'recordatorios.dart';
+import 'recordatorios_habitos.dart';
 import 'repositorio_avisos.dart';
 
 final notificadorProvider = Provider<NotificadorLocal>(
@@ -30,3 +31,9 @@ final fuenteDeVencimientosProvider = Provider<FuenteDeVencimientos>(
 typedef ConstructorDetalleAviso = Widget Function(BuildContext context, Object aviso);
 
 final detalleDeAvisoProvider = Provider<ConstructorDetalleAviso?>((ref) => null);
+
+/// Hábitos lo sustituye con su copia local: qué recordar en los próximos 7 días.
+final fuenteDeRecordatoriosHabitosProvider =
+    Provider<FuenteDeRecordatoriosHabitos>(
+      (ref) => const SinRecordatoriosDeHabitos(),
+    );

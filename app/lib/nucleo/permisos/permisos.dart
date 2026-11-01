@@ -237,6 +237,13 @@ Permiso permisoDe(Rol rol, Modulo modulo) =>
 bool puede(Rol rol, Modulo modulo, Accion accion) =>
     permisoDe(rol, modulo).acciones.contains(accion);
 
+/// `true` si la sesión usa Hábitos (Fase 3, `hab_activa` del servidor): el
+/// rol lo abre (dueño, coadministrador, familiar: lo propio) y **no es la
+/// cuenta maestra**, que es solo lectura total (D19) y no tiene Hábitos.
+/// Cuidador y Hogar (Casa) tampoco.
+bool puedeUsarHabitos(Rol rol, {required bool esMaestra}) =>
+    puedeAbrir(rol, Modulo.habitos) && !esMaestra;
+
 /// `true` si [rol] abre las pantallas propias de [modulo] (rutas y menús).
 bool puedeAbrir(Rol rol, Modulo modulo) {
   final permiso = permisoDe(rol, modulo);

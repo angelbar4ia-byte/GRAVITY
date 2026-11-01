@@ -62,6 +62,9 @@ dependencies:
   # Lógica pura de Finanzas (agente finanzas).
   finanzas_dominio:
     path: ../paquetes/finanzas_dominio
+  # Lógica pura de Hábitos (agente habitos, Fase 3).
+  habitos_dominio:
+    path: ../paquetes/habitos_dominio
   # Selector de archivos nativo (Android y Windows) para Finanzas › Importar
   # datos (decisión del dueño, 23/oct/2026).
   file_picker: ^13.1.0

@@ -310,6 +310,45 @@ comment on function public.hab_borrar_mis_datos(text) is
   'Borrado físico de lo propio: sensibles, diario o todo (con todo también la llave y las tablas en claro; deja hab_ajustes). '
   'Deja una constancia sin contenido. No es un libro contable: se puede borrar.';
 
+-- ---------------------------------------------------------------- tope de la bitácora: habitos* no cuenta (lo escribe el servidor)
+create or replace function public.bitacora_tope_por_persona()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+declare
+  c_max_entradas constant integer := 500;     -- por persona, en 24 horas
+  c_max_bytes    constant integer := 4096;    -- por entrada (el detalle en texto)
+  v_persona uuid;
+  v_n       integer;
+begin
+  if current_user <> 'authenticated' then
+    return null;
+  end if;
+  if exists (select 1 from nuevas n where octet_length(n.detalle::text) > c_max_bytes) then
+    raise exception using errcode = '54000',
+      message = 'Una entrada de la bitácora pesa más de 4 KB.',
+      hint    = 'La bitácora guarda hechos breves, no archivos ni listas largas.';
+  end if;
+  for v_persona in select distinct n.persona_id from nuevas n where n.persona_id is not null loop
+    select count(*)::integer into v_n
+    from public.bitacora b
+    where b.persona_id = v_persona
+      and b.registrado_en > now() - interval '24 hours'
+      and b.accion not in ('insertar', 'actualizar', 'borrar')
+      and b.accion !~* '^\s*finanzas'
+      and b.accion !~* '^\s*habitos'
+      and lower(coalesce(b.tabla, '')) !~ '^\s*(public\.)?fin_';
+    if v_n > c_max_entradas then
+      raise exception using errcode = '54000',
+        message = 'Demasiadas entradas en la bitácora: el tope es de 500 por persona en 24 horas.',
+        hint    = 'Inténtalo de nuevo mañana; si es un error de la app, avísale a quien la mantiene.';
+    end if;
+  end loop;
+  return null;
+end
+$$;
+
 -- ---------------------------------------------------------------- limpieza
 -- Tumbas de sobres de más de 30 días y datos de quien se dio de baja hace más de 90 días (sin ninguna membresía vigente).
 create function public.hab_limpiar(p_ahora timestamptz default now())

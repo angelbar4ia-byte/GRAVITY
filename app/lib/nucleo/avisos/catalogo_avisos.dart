@@ -29,7 +29,11 @@ enum CanalAviso {
   urgentes('finanzas_urgentes', 'Finanzas · Urgentes'),
   avisos('finanzas_avisos', 'Finanzas · Avisos'),
   informativos('finanzas_informativos', 'Finanzas · Informativos'),
-  resumen('finanzas_resumen', 'Finanzas · Resumen');
+  resumen('finanzas_resumen', 'Finanzas · Resumen'),
+  // Hábitos (Fase 3, regla 115): tres canales propios con nombres discretos.
+  habitosRecordatorios('habitos_recordatorios', 'Hábitos · Recordatorios'),
+  habitosReservados('habitos_reservados', 'Hábitos · Reservados'),
+  habitosRevision('habitos_revision', 'Hábitos · Revisión');
 
   const CanalAviso(this.id, this.nombre);
 

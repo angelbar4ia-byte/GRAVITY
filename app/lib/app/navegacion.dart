@@ -30,6 +30,32 @@ abstract final class RutasApp {
   static const avisos = '/avisos';
 }
 
+/// Pantallas de Hábitos que son **sección reservada** (Fase 3, regla 100): el
+/// panel de hábitos a eliminar, el SOS, el registro de consumo, el diario de
+/// oración, el devocional escrito, las notas y *Mis datos*. Son el primer
+/// segmento de la ruta bajo `/habitos/`: Hábitos las monta con esos nombres.
+/// Piden PIN o huella, se abren con FLAG_SECURE y la tablet pública no las
+/// muestra nunca.
+const segmentosReservadosDeHabitos = {
+  'reservado',
+  'eliminar',
+  'sos',
+  'consumo',
+  'diario',
+  'oracion',
+  'devocional',
+  'notas',
+  'mis-datos',
+};
+
+/// `true` si [ubicacion] es una pantalla reservada de Hábitos.
+bool esRutaReservadaDeHabitos(String ubicacion) {
+  final base = '${Rutas.habitos}/';
+  if (!ubicacion.startsWith(base)) return false;
+  final primero = ubicacion.substring(base.length).split('/').first;
+  return segmentosReservadosDeHabitos.contains(primero);
+}
+
 /// Una pestaña de la barra inferior (teléfono) o del riel lateral (tablet).
 class Destino {
   const Destino({
@@ -140,6 +166,9 @@ List<Destino> destinosDe(Rol rol, {bool esMaestra = false}) => [
     if (destino.esRegistrar
         ? opcionesRegistrar(rol, esMaestra: esMaestra).isNotEmpty
         : (destino.modulo == null || puedeAbrir(rol, destino.modulo!)) &&
+              // La cuenta maestra no tiene Hábitos (hab_activa).
+              (destino.modulo != Modulo.habitos ||
+                  puedeUsarHabitos(rol, esMaestra: esMaestra)) &&
               (destino.requiereLeer == null ||
                   puede(rol, destino.requiereLeer!, Accion.leer)))
       destino,
@@ -329,6 +358,14 @@ String? calcularRedireccion({
   }
   final modulo = moduloDeRuta(ubicacion);
   if (modulo != null && !puedeAbrir(rol, modulo)) return inicio;
+  if (modulo == Modulo.habitos) {
+    // La cuenta maestra no entra a Hábitos (hab_activa); la tablet pública no
+    // muestra nunca lo reservado, ni siquiera durante una acción con PIN.
+    if (!puedeUsarHabitos(rol, esMaestra: esMaestra)) return inicio;
+    if (enAccionDeTabletCasa && esRutaReservadaDeHabitos(ubicacion)) {
+      return Rutas.habitos;
+    }
+  }
   if (modulo != null &&
       accion != null &&
       !puedeConSesion(rol, modulo, accion, esMaestra: esMaestra)) {

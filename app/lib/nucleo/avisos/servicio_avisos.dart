@@ -36,6 +36,7 @@ class ContextoAvisos {
     this.personaId,
     this.esMaestra = false,
     this.puedeRecibir = true,
+    this.usaHabitos = false,
   });
 
   final TipoEquipoAvisos tipo;
@@ -47,6 +48,10 @@ class ContextoAvisos {
   /// `false` para quien no ve dinero (familiar, cuidador, Casa): no recibe
   /// avisos de Finanzas (regla 41).
   final bool puedeRecibir;
+
+  /// `true` si la sesión usa Hábitos (dueño, coadministrador o familiar que no
+  /// son la cuenta maestra): recibe sus recordatorios locales.
+  final bool usaHabitos;
 }
 
 /// Cómo se presenta un aviso (reglas 35 y 36).
@@ -119,6 +124,7 @@ class ServicioAvisos {
     required this.almacen,
     required this.contexto,
     this.alAbrirAviso,
+    this.alAccion,
     this.recordatorios,
     RelojLocal? reloj,
     this.esperaMaximaDeLectura = const Duration(seconds: 8),
@@ -134,6 +140,9 @@ class ServicioAvisos {
 
   /// Qué hacer al tocar una notificación (la app abre la bandeja).
   final void Function(String? avisoId)? alAbrirAviso;
+
+  /// Un botón de una notificación (recordatorios de Hábitos).
+  final void Function(String? carga, AccionDeNotificacion accion)? alAccion;
   final RecordatoriosLocales? recordatorios;
   final RelojLocal _reloj;
   final Duration esperaMaximaDeLectura;
@@ -154,6 +163,7 @@ class ServicioAvisos {
   Future<void> iniciar() async {
     await notificador.iniciar(
       alTocar: (carga) => alAbrirAviso?.call(carga),
+      alAccion: alAccion,
     );
     _mensajes ??= fuentePush.mensajes.listen(
       (mensaje) => unawaited(alRecibirPush(mensaje)),
