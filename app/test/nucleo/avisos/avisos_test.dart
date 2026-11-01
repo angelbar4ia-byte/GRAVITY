@@ -515,16 +515,18 @@ void main() {
     // Martes 3 de noviembre de 2026, 10:00.
     final ahora = DateTime(2026, 11, 3, 10);
 
-    test('el aviso más próximo de cada vencimiento, sin avalancha', () {
+    test('3 y 1 día antes de cada vencimiento, sin más', () {
       final lista = calcularRecordatorios(
         preferencias: p,
         ahora: ahora,
         vencimientos: [Vencimiento(objetoId: 'o1', fecha: DateTime(2026, 11, 12))],
       );
       final pagos = lista.where((r) => r.tipo == 'pago_proximo').toList();
-      expect(pagos, hasLength(1));
-      expect(pagos.single.cuando, DateTime(2026, 11, 9, 9));
-      expect(pagos.single.clave, 'pago_proximo:o1:2026-11-12:3');
+      expect(pagos, hasLength(2));
+      expect(pagos.first.cuando, DateTime(2026, 11, 9, 9));
+      expect(pagos.first.clave, 'pago_proximo:o1:2026-11-12:3');
+      expect(pagos.last.cuando, DateTime(2026, 11, 11, 9));
+      expect(pagos.last.clave, 'pago_proximo:o1:2026-11-12:1');
 
       // A 2 días: el de 3 días ya pasó, queda el de 1 día (paso 2).
       final cerca = calcularRecordatorios(
@@ -547,7 +549,7 @@ void main() {
         ],
       );
       expect(lista.any((r) => r.clave.contains('lejos')), isFalse);
-      expect(lista.where((r) => r.tipo == 'limite_tarjeta'), hasLength(1));
+      expect(lista.where((r) => r.tipo == 'limite_tarjeta'), hasLength(2));
     });
 
     test('resumen del lunes 8:00 y cierre el domingo 19:00', () {

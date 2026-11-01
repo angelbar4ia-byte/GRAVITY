@@ -493,3 +493,5 @@ Cada pregunta trae la **propuesta por defecto** con la que se construye si no ha
 ## Aprobación del dueño (31/oct/2026)
 
 El dueño aprobó las propuestas por defecto de la sección 9 (P1 a P16), la infraestructura de avisos como **D20** y que los estados de cuenta, aportaciones y retiros de ahorro pidan señal (sección 11).
+
+**Actualización 1/nov/2026:** la simulación semana a semana de A1/A2 (colchón en la semana 5, celular en la 34 y fondo en la 41) y la proyección "¿y si abono $X extra?" ya están hechas y probadas (criterios 14 y 20 a 24). Siguen pendientes: preferencias de avisos de Finanzas en Ajustes, emitir avisos desde la app con `fin_emitir_aviso`, y conectar redondeo, sobrante, sobre y extras al cierre de semana.

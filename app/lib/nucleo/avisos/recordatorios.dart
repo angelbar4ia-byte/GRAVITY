@@ -104,7 +104,6 @@ List<RecordatorioLocal> calcularRecordatorios({
       );
       if (cuando.isAfter(ahora)) {
         agregar('$tipo:${v.objetoId}:${_dia(dia)}:${dias[paso]}', tipo, cuando);
-        break;
       }
     }
   }

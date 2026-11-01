@@ -69,3 +69,20 @@ Ninguno.
 ## 10. Pendientes de esta revisión
 
 No verificados por mí: simulación semana por semana A1/A2 y la pantalla "¿y si pago $X extra?" (la spec sección 11 los marca pendientes: criterios parciales); límites 30/60 %, regla 16 y husos con cambio de horario (solo vía las pruebas existentes); pantallas a letra 2.0 en 360 dp y 900 dp; importador de la ficha con archivo hostil (hay prueba heredada `f1b_importar_no_confiable`); estados de cuenta, aportaciones y retiros sin señal (decisión del dueño: piden señal, no se pierde nada porque no se guardan); suites de Deno. Criterios manuales: notificación real en Android con Firebase, ocultar montos con lector de pantalla en dispositivo físico.
+
+---
+
+## Estado de los hallazgos al cierre de la Fase 2 (1/nov/2026)
+
+| Hallazgo | Estado | Quién | Nota |
+|---|---|---|---|
+| F2-1 (el push se apagaba solo) | Cerrado | backend | Solo los rechazos definitivos suman (5 apagan); los errores pasajeros reintentan; abrir la app en el teléfono reactiva. La función `enviar-avisos` manda hoy los 4xx distintos del token como `error` (pasajero): pendiente ajustarla para anotar `rechazado` |
+| F2-3 (avisos críticos falsos) | Mitigado | backend | Objeto del libro, emisor miembro con permiso de escribir, críticas de la app limitadas a 5 por día y libro; lo ideal es que solo las emita el servidor (decisión del dueño, siguiente ronda) |
+| F2-4 (horas de silencio iguales) | Cerrado | backend | |
+| F2-5 (FK de retiros sin libro) | Cerrado | backend | Clave compuesta (libro, bolsa) y destino distinto del origen |
+| F2-6 (recordatorio de 1 día antes) | Cerrado | arquitecto | Se quitó el `break` de `calcularRecordatorios`; ahora 3 y 1 día antes |
+
+**Sin verificar por calidad (queda para la siguiente ronda):** la Edge Function con Deno real, pg_net y Vault en un Supabase real; pruebas diferenciales del dominio de deudas y ahorro; el importador de la ficha con un archivo hostil; letra 2.0 en 360 dp y 900 dp en las vistas nuevas de Fase 2 (incluida la tarjeta de abono extra); y la tabla de los 57 criterios.
+
+**Veredicto de cierre:** 0 bloqueantes y 0 importantes abiertos.
+

@@ -3,7 +3,7 @@
 // F2-6  Los recordatorios locales de un vencimiento programan SOLO el aviso más
 //       próximo (3 días antes). El de 1 día antes no existe hasta que la app se
 //       vuelva a abrir o sincronice; sin señal ni Firebase puede no llegar nunca.
-//       Abierto: lleva la etiqueta `hallazgo` y falla a propósito.
+//       Cerrado el 1/nov/2026: se quitó el `break` de calcularRecordatorios.
 // Guardias (pasan): el texto de la notificación local nunca lleva cifras.
 library;
 
@@ -17,7 +17,7 @@ import 'package:gravity/nucleo/avisos/recordatorios.dart';
 
 void main() {
   test('F2-6: se programan los avisos de 3 y de 1 día antes del vencimiento',
-      tags: 'hallazgo', () {
+      () {
     final r = calcularRecordatorios(
       preferencias: const PreferenciasAvisos(),
       ahora: DateTime(2026, 11, 1, 8),
