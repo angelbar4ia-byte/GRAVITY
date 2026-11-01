@@ -102,10 +102,15 @@ class _CuerpoHoy extends ConsumerWidget {
                     context, ref, i, (s) => s.omitir(i.objetivo), 'Omitido'),
               ),
           ],
+          ListTile(
+            leading: const Icon(Icons.lock_outline),
+            title: const Text('Reservado'),
+            onTap: () => context.go('${Rutas.habitos}/reservado'),
+          ),
           const SizedBox(height: 16),
           BotonPausa(
             expandido: true,
-            alTocar: () => context.go('${Rutas.habitos}/pausa'),
+            alTocar: () => context.go('${Rutas.habitos}/sos'),
           ),
         ],
       ),

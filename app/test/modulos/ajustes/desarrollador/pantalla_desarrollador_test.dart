@@ -149,17 +149,17 @@ void main() {
       expect(enFinanzas(find.text('Nunca pasa por la IA')), findsOneWidget);
 
       // Una de otro módulo: no escribe y sí puede verla la IA.
-      final habitos = find.byKey(
-        const ValueKey('operacion-herramientaHabitosAbrir'),
+      final alimentacion = find.byKey(
+        const ValueKey('operacion-herramientaAlimentacionAbrir'),
       );
       await tester.scrollUntilVisible(
-        habitos,
+        alimentacion,
         300,
         scrollable: find.byType(Scrollable).first,
       );
-      Finder enHabitos(Finder f) => find.descendant(of: habitos, matching: f);
-      expect(enHabitos(find.text('Pide confirmación')), findsNothing);
-      expect(enHabitos(find.text('Nunca pasa por la IA')), findsNothing);
+      Finder enAlimentacion(Finder f) => find.descendant(of: alimentacion, matching: f);
+      expect(enAlimentacion(find.text('Pide confirmación')), findsNothing);
+      expect(enAlimentacion(find.text('Nunca pasa por la IA')), findsNothing);
 
       // La bandeja de la cuidadora (D18), de la Fase 1.
       final bandeja = find.byKey(

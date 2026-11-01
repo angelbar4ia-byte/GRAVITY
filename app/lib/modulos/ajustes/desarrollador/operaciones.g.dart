@@ -5,7 +5,7 @@ import '../../../nucleo/contratos/roles.dart';
 import 'operacion_api.dart';
 
 /// Huella de api/openapi.yaml con la que se generó este archivo.
-const huellaEspecificacion = 'fnv1a32:8c6febd9';
+const huellaEspecificacion = 'fnv1a32:50a33ac5';
 
 /// Versión de la especificación (info.version).
 const versionEspecificacion = '0.6.0';
@@ -120,11 +120,55 @@ const gruposOperaciones = <GrupoOperaciones>[
         metodo: MetodoHttp.post,
         ruta: '/herramientas/habitos.abrir',
         resumen: 'habitos.abrir · Abrir Hábitos',
-        descripcion: 'Abre Hábitos (lo propio de cada persona).',
+        descripcion: 'Abre Hábitos (lo propio de cada persona). Hábitos es un módulo solo local (D13): nada llega a la IA en la nube ni a las bocinas, y la orden no se guarda en ningún historial. No la recibe la cuenta maestra que no es la dueña, ni el cuidador, ni Casa.',
         roles: {Rol.dueno, Rol.coadministrador, Rol.familiar},
         escribe: false,
-        soloLocal: false,
+        soloLocal: true,
         fase: 0,
+      ),
+      OperacionApi(
+        id: 'herramientaHabitosAbrirHoy',
+        metodo: MetodoHttp.post,
+        ruta: '/herramientas/habitos.abrir_hoy',
+        resumen: 'habitos.abrir_hoy · Abrir Hoy',
+        descripcion: 'Abre Hábitos › Hoy (`/habitos`). Órdenes: "abre hoy", "mi día", "plan de hoy". Solo abre la vista (D13): nunca lee ni registra nada de Hábitos, `para_ia` siempre es nulo y la orden no se guarda en ningún historial. Es solo local y no la recibe la cuenta maestra que no es la dueña, ni el cuidador, ni Casa.',
+        roles: {Rol.dueno, Rol.coadministrador, Rol.familiar},
+        escribe: false,
+        soloLocal: true,
+        fase: 3,
+      ),
+      OperacionApi(
+        id: 'herramientaHabitosAbrirAgenda',
+        metodo: MetodoHttp.post,
+        ruta: '/herramientas/habitos.abrir_agenda',
+        resumen: 'habitos.abrir_agenda · Abrir Agenda',
+        descripcion: 'Abre Hábitos › Agenda (`/habitos/agenda`). Órdenes: "mi agenda", "agenda". Solo abre la vista (D13): nunca lee ni registra nada de Hábitos, `para_ia` siempre es nulo y la orden no se guarda en ningún historial. Es solo local y no la recibe la cuenta maestra que no es la dueña, ni el cuidador, ni Casa.',
+        roles: {Rol.dueno, Rol.coadministrador, Rol.familiar},
+        escribe: false,
+        soloLocal: true,
+        fase: 3,
+      ),
+      OperacionApi(
+        id: 'herramientaHabitosAbrirEspiritual',
+        metodo: MetodoHttp.post,
+        ruta: '/herramientas/habitos.abrir_espiritual',
+        resumen: 'habitos.abrir_espiritual · Abrir Espiritual',
+        descripcion: 'Abre Hábitos › Espiritual (`/habitos/espiritual`). Órdenes: "abre espiritual", "lectura bíblica", "biblia". Solo abre la vista (D13): nunca lee ni registra nada de Hábitos, `para_ia` siempre es nulo y la orden no se guarda en ningún historial. Es solo local y no la recibe la cuenta maestra que no es la dueña, ni el cuidador, ni Casa.',
+        roles: {Rol.dueno, Rol.coadministrador, Rol.familiar},
+        escribe: false,
+        soloLocal: true,
+        fase: 3,
+      ),
+      OperacionApi(
+        id: 'herramientaHabitosSos',
+        metodo: MetodoHttp.post,
+        ruta: '/herramientas/habitos.sos',
+        resumen: 'habitos.sos · SOS: tengo un antojo',
+        descripcion: 'Abre el SOS de Hábitos (`/habitos/sos`), una sección reservada que pide PIN o huella y no se muestra en la tablet pública. Órdenes: "tengo un antojo", "antojo", "sos". Solo abre la vista (D13): nunca lee ni registra nada de Hábitos, `para_ia` siempre es nulo y la orden no se guarda en ningún historial. Es solo local y no la recibe la cuenta maestra que no es la dueña, ni el cuidador, ni Casa.',
+        roles: {Rol.dueno, Rol.coadministrador, Rol.familiar},
+        escribe: false,
+        soloLocal: true,
+        fase: 3,
       ),
       OperacionApi(
         id: 'herramientaCuidadosAbrir',

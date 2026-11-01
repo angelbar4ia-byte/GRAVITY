@@ -578,7 +578,7 @@ paths:
     post:
       tags: [Herramientas de GRAVITY]
       operationId: herramientaHabitosSos
-      summary: habitos.sos · SOS: tengo un antojo
+      summary: 'habitos.sos · SOS: tengo un antojo'
       description: >-
         Abre el SOS de Hábitos (`/habitos/sos`), una sección reservada que pide PIN o huella
         y no se muestra en la tablet pública. Órdenes: "tengo un antojo", "antojo", "sos".

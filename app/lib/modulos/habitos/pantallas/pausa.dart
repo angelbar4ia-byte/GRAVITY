@@ -1,63 +1,116 @@
-/// SOS "Pausa / Tengo un antojo" (reglas 58 a 62). Los pasos y textos salen
-/// del dominio. El registro del antojo se guarda en el documento cifrado de
-/// `habitos_sensibles` (pendiente: almacén de documentos, ver reporte).
+/// SOS "Pausa / Tengo un antojo" (reglas 58 a 62). Pasos y textos del
+/// dominio. El antojo se guarda cifrado en `habitos_sensibles`.
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:habitos_dominio/habitos_dominio.dart';
 
-import '../../../diseno/diseno.dart';
+import '../../../app/sensibles/puerta_reservada.dart';
+import '../../../diseno/diseno.dart' as dis;
 import '../../../nucleo/contratos/roles.dart';
 import '../../../nucleo/contratos/rutas.dart';
+import '../casos_uso/servicio_eliminar.dart';
+import '../estado/proveedores.dart';
 
-class PantallaPausa extends StatefulWidget {
+class PantallaPausa extends ConsumerStatefulWidget {
   const PantallaPausa({super.key});
   @override
-  State<PantallaPausa> createState() => _PantallaPausaEstado();
+  ConsumerState<PantallaPausa> createState() => _PantallaPausaEstado();
 }
 
-class _PantallaPausaEstado extends State<PantallaPausa> {
+class _PantallaPausaEstado extends ConsumerState<PantallaPausa> {
   final sesion = SesionSos();
+  TipoHabito habito = TipoHabito.cigarrillo;
   String? tecnica;
+  int intensidad = 3;
+  bool guardado = false;
 
   void _ir() => setState(sesion.avanzar);
+
+  Future<void> _guardar() async {
+    if (guardado) return;
+    guardado = true;
+    try {
+      await ref.read(servicioEliminarProvider)?.guardarAntojo(habito,
+          resultado: sesion.resultado ?? ResultadoAntojo.superado,
+          tecnica: tecnica,
+          intensidad: intensidad);
+    } catch (_) {
+      // Sin llave en este equipo: el SOS igual cumplió su papel.
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final cuerpo = switch (sesion.paso) {
-      PasoSos.pausa => _Paso(TextosSos.pausa, const RespiracionGuiada(), 'Seguir', _ir),
-      PasoSos.queEs => _Paso(TextosSos.queEs, const SizedBox.shrink(), 'Seguir', _ir),
+      PasoSos.pausa => _Paso(TextosSos.pausa, const dis.RespiracionGuiada(), 'Seguir', _ir),
+      PasoSos.queEs => Column(mainAxisSize: MainAxisSize.min, children: [
+          Text(TextosSos.queEs, style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 12),
+          for (final t in TipoHabito.values)
+            ListTile(
+              title: Text(nombreHabitoSos(t)),
+              selected: habito == t,
+              trailing: habito == t ? const Icon(Icons.check) : null,
+              onTap: () => setState(() => habito = t),
+            ),
+          FilledButton(onPressed: _ir, child: const Text('Seguir')),
+        ]),
       PasoSos.tecnica => _Tecnicas(
           elegida: tecnica,
           alElegir: (t) => setState(() => tecnica = t),
           alSeguir: _ir),
       PasoSos.temporizador => Column(children: [
           Text(TextosSos.temporizador),
-          TemporizadorSos(
+          dis.TemporizadorSos(
             duracion: Duration(minutes: sesion.minutos),
             alSigue: () => setState(() => sesion.terminarTiempo(sigue: true)),
             alYaPaso: () => setState(() => sesion.terminarTiempo(sigue: false)),
           ),
+          TextButton(
+            onPressed: () => setState(sesion.registrarConsumo),
+            child: const Text('Terminé consumiendo'),
+          ),
         ]),
-      PasoSos.registro => _Paso(TextosSos.registro, const SizedBox.shrink(), 'Cerrar', _ir),
+      PasoSos.registro => Column(mainAxisSize: MainAxisSize.min, children: [
+          Text(TextosSos.registro, style: Theme.of(context).textTheme.titleLarge),
+          Slider(
+            value: intensidad.toDouble(),
+            min: 1,
+            max: 5,
+            divisions: 4,
+            label: '$intensidad',
+            onChanged: (v) => setState(() => intensidad = v.round()),
+          ),
+          FilledButton(onPressed: _ir, child: const Text('Cerrar')),
+        ]),
       PasoSos.cierre => _Paso(
           sesion.resultado == ResultadoAntojo.superado
               ? TextosSos.cierreSuperado
               : TextosSos.cierreConsumo,
           const SizedBox.shrink(),
           'Listo',
-          () => context.go(Rutas.habitos)),
+          () async {
+            await _guardar();
+            if (context.mounted) context.go(Rutas.habitos);
+          }),
     };
-    return TemaModulo(
+    return dis.TemaModulo(
       modulo: Modulo.habitos,
-      child: Scaffold(
-        appBar: AppBar(title: const Text('Pausa')),
-        body: Padding(padding: const EdgeInsets.all(20), child: Center(child: cuerpo)),
+      submodulo: dis.Submodulo.habitosEliminar,
+      child: PuertaReservada(
+        child: Scaffold(
+          appBar: AppBar(title: const Text('Pausa')),
+          body: Padding(padding: const EdgeInsets.all(20), child: Center(child: cuerpo)),
+        ),
       ),
     );
   }
 }
+
+String nombreHabitoSos(TipoHabito t) => t == TipoHabito.cigarrillo ? 'Cigarrillo' : 'Azúcar';
 
 class _Paso extends StatelessWidget {
   const _Paso(this.texto, this.extra, this.boton, this.alTocar);

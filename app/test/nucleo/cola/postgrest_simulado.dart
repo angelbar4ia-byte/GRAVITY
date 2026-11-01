@@ -247,6 +247,7 @@ class PostgrestSimulado {
 
     try {
       final resultado = switch (peticion.method) {
+        'POST' when peticion.uri.path.contains('/rpc/') => _funcion(recibida),
         'POST' => _insertar(recibida, encabezados),
         'PATCH' => _actualizar(recibida),
         'GET' => _leer(recibida),
@@ -271,6 +272,13 @@ class PostgrestSimulado {
       });
     }
   }
+
+  /// Funciones (`/rest/v1/rpc/<nombre>`): responden con [respuestasDeFunciones]
+  /// y guardan lo que recibieron en [llamadas].
+  final Map<String, Object?> respuestasDeFunciones = {};
+
+  (int, Object?) _funcion(PeticionRecibida p) =>
+      (HttpStatus.ok, respuestasDeFunciones[p.tabla] ?? <String, Object?>{});
 
   (int, Object?) _insertar(PeticionRecibida p, Map<String, String> cabeceras) {
     final fila = p.cuerpo;

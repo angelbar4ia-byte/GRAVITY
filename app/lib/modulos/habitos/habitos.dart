@@ -2,8 +2,8 @@
 ///
 /// Lo que la plataforma conecta en `app/lib/app/pantallas_externas.dart`:
 ///
-/// - [rutasHabitos]: rutas **relativas** a `/habitos` (raíz = Hoy; `objetivos`
-///   y `pausa`).
+/// - [rutasHabitos]: rutas **relativas** a `/habitos` (raíz = Hoy; `objetivos`,
+///   `sos`, `reservado` y `eliminar/:tipo`; las tres últimas reservadas).
 /// - [hojaPausa]: el SOS como pantalla completa (atajo y botón del (+)).
 /// - [servicioHabitosProvider], [hoyHabitosProvider] y
 ///   [repositorioHabitosProvider]: estado.
@@ -16,6 +16,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'estado/proveedores.dart';
+import 'casos_uso/servicio_eliminar.dart';
+import 'pantallas/eliminar.dart';
 import 'pantallas/hoy.dart';
 import 'pantallas/objetivos.dart';
 import 'pantallas/pausa.dart';
@@ -33,7 +35,17 @@ Page<void> Function(BuildContext, GoRouterState) _pagina(
 List<RouteBase> rutasHabitos() => [
       GoRoute(path: '/', pageBuilder: _pagina((_) => const PantallaHoyHabitos())),
       GoRoute(path: 'objetivos', pageBuilder: _pagina((_) => const PantallaObjetivos())),
-      GoRoute(path: 'pausa', pageBuilder: _pagina((_) => const PantallaPausa())),
+      GoRoute(path: 'sos', pageBuilder: _pagina((_) => const PantallaPausa())),
+      GoRoute(path: 'reservado', pageBuilder: _pagina((_) => const PantallaReservado())),
+      GoRoute(
+        path: 'eliminar/:tipo',
+        pageBuilder: (context, state) => NoTransitionPage<void>(
+          key: state.pageKey,
+          child: PantallaHabitoEliminar(
+              tipo: TipoHabito.values.firstWhere((t) => t.name == state.pathParameters['tipo'],
+                  orElse: () => TipoHabito.cigarrillo)),
+        ),
+      ),
     ];
 
 Widget hojaPausa() => const PantallaPausa();

@@ -1,7 +1,7 @@
 // GENERADO por api/generar_dart.mjs a partir de api/openapi.yaml. No se edita a mano.
 // Permite abrir Swagger UI con doble clic (file://), donde el navegador no deja leer
 // ../openapi.yaml. Servida por http, la página lee openapi.yaml directamente.
-// huella: fnv1a32:8c6febd9
+// huella: fnv1a32:50a33ac5
 window.ESPECIFICACION_GRAVITY = {
   "openapi": "3.1.0",
   "info": {
@@ -484,15 +484,175 @@ window.ESPECIFICACION_GRAVITY = {
         ],
         "operationId": "herramientaHabitosAbrir",
         "summary": "habitos.abrir · Abrir Hábitos",
-        "description": "Abre Hábitos (lo propio de cada persona).",
+        "description": "Abre Hábitos (lo propio de cada persona). Hábitos es un módulo solo local (D13): nada llega a la IA en la nube ni a las bocinas, y la orden no se guarda en ningún historial. No la recibe la cuenta maestra que no es la dueña, ni el cuidador, ni Casa.",
         "x-roles": [
           "dueno",
           "coadministrador",
           "familiar"
         ],
         "x-escribe": false,
-        "x-solo-local": false,
+        "x-solo-local": true,
         "x-fase": 0,
+        "requestBody": {
+          "$ref": "#/components/requestBodies/PeticionHerramienta"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ResultadoHerramienta"
+          },
+          "404": {
+            "$ref": "#/components/responses/HerramientaNoDisponible"
+          }
+        }
+      }
+    },
+    "/herramientas/habitos.abrir_hoy": {
+      "servers": [
+        {
+          "url": "http://127.0.0.1:{puerto}",
+          "description": "Propuesta para la Fase 6: GRAVITY en la laptop atiende las herramientas para el puente de casa. En la Fase 0 se ejecutan dentro de la app, sin red.",
+          "variables": {
+            "puerto": {
+              "default": "8787"
+            }
+          }
+        }
+      ],
+      "post": {
+        "tags": [
+          "Herramientas de GRAVITY"
+        ],
+        "operationId": "herramientaHabitosAbrirHoy",
+        "summary": "habitos.abrir_hoy · Abrir Hoy",
+        "description": "Abre Hábitos › Hoy (`/habitos`). Órdenes: \"abre hoy\", \"mi día\", \"plan de hoy\". Solo abre la vista (D13): nunca lee ni registra nada de Hábitos, `para_ia` siempre es nulo y la orden no se guarda en ningún historial. Es solo local y no la recibe la cuenta maestra que no es la dueña, ni el cuidador, ni Casa.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "requestBody": {
+          "$ref": "#/components/requestBodies/PeticionHerramienta"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ResultadoHerramienta"
+          },
+          "404": {
+            "$ref": "#/components/responses/HerramientaNoDisponible"
+          }
+        }
+      }
+    },
+    "/herramientas/habitos.abrir_agenda": {
+      "servers": [
+        {
+          "url": "http://127.0.0.1:{puerto}",
+          "description": "Propuesta para la Fase 6: GRAVITY en la laptop atiende las herramientas para el puente de casa. En la Fase 0 se ejecutan dentro de la app, sin red.",
+          "variables": {
+            "puerto": {
+              "default": "8787"
+            }
+          }
+        }
+      ],
+      "post": {
+        "tags": [
+          "Herramientas de GRAVITY"
+        ],
+        "operationId": "herramientaHabitosAbrirAgenda",
+        "summary": "habitos.abrir_agenda · Abrir Agenda",
+        "description": "Abre Hábitos › Agenda (`/habitos/agenda`). Órdenes: \"mi agenda\", \"agenda\". Solo abre la vista (D13): nunca lee ni registra nada de Hábitos, `para_ia` siempre es nulo y la orden no se guarda en ningún historial. Es solo local y no la recibe la cuenta maestra que no es la dueña, ni el cuidador, ni Casa.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "requestBody": {
+          "$ref": "#/components/requestBodies/PeticionHerramienta"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ResultadoHerramienta"
+          },
+          "404": {
+            "$ref": "#/components/responses/HerramientaNoDisponible"
+          }
+        }
+      }
+    },
+    "/herramientas/habitos.abrir_espiritual": {
+      "servers": [
+        {
+          "url": "http://127.0.0.1:{puerto}",
+          "description": "Propuesta para la Fase 6: GRAVITY en la laptop atiende las herramientas para el puente de casa. En la Fase 0 se ejecutan dentro de la app, sin red.",
+          "variables": {
+            "puerto": {
+              "default": "8787"
+            }
+          }
+        }
+      ],
+      "post": {
+        "tags": [
+          "Herramientas de GRAVITY"
+        ],
+        "operationId": "herramientaHabitosAbrirEspiritual",
+        "summary": "habitos.abrir_espiritual · Abrir Espiritual",
+        "description": "Abre Hábitos › Espiritual (`/habitos/espiritual`). Órdenes: \"abre espiritual\", \"lectura bíblica\", \"biblia\". Solo abre la vista (D13): nunca lee ni registra nada de Hábitos, `para_ia` siempre es nulo y la orden no se guarda en ningún historial. Es solo local y no la recibe la cuenta maestra que no es la dueña, ni el cuidador, ni Casa.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 3,
+        "requestBody": {
+          "$ref": "#/components/requestBodies/PeticionHerramienta"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ResultadoHerramienta"
+          },
+          "404": {
+            "$ref": "#/components/responses/HerramientaNoDisponible"
+          }
+        }
+      }
+    },
+    "/herramientas/habitos.sos": {
+      "servers": [
+        {
+          "url": "http://127.0.0.1:{puerto}",
+          "description": "Propuesta para la Fase 6: GRAVITY en la laptop atiende las herramientas para el puente de casa. En la Fase 0 se ejecutan dentro de la app, sin red.",
+          "variables": {
+            "puerto": {
+              "default": "8787"
+            }
+          }
+        }
+      ],
+      "post": {
+        "tags": [
+          "Herramientas de GRAVITY"
+        ],
+        "operationId": "herramientaHabitosSos",
+        "summary": "habitos.sos · SOS: tengo un antojo",
+        "description": "Abre el SOS de Hábitos (`/habitos/sos`), una sección reservada que pide PIN o huella y no se muestra en la tablet pública. Órdenes: \"tengo un antojo\", \"antojo\", \"sos\". Solo abre la vista (D13): nunca lee ni registra nada de Hábitos, `para_ia` siempre es nulo y la orden no se guarda en ningún historial. Es solo local y no la recibe la cuenta maestra que no es la dueña, ni el cuidador, ni Casa.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 3,
         "requestBody": {
           "$ref": "#/components/requestBodies/PeticionHerramienta"
         },
@@ -15373,4 +15533,4 @@ window.ESPECIFICACION_GRAVITY = {
     }
   }
 };
-window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:8c6febd9';
+window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:50a33ac5';
