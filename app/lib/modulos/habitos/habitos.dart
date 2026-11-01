@@ -22,9 +22,6 @@ import 'pantallas/hoy.dart';
 import 'pantallas/objetivos.dart';
 import 'pantallas/pausa.dart';
 
-export 'cifrado/cifrador_real.dart' show CifradorReal;
-export 'cifrado/frase.dart' show fraseValida, generarFrase, listaDePalabras;
-export 'cifrado/llaves.dart' show desenvolverLlave, envolverLlave;
 export 'estado/proveedores.dart'
     show hoyHabitosProvider, repositorioHabitosProvider, servicioHabitosProvider;
 

@@ -129,7 +129,8 @@ class ObjetivoHab {
 class RegistroHab {
   const RegistroHab({
     required this.id,
-    required this.objetivoId,
+    this.objetivoId,
+    this.bloqueId,
     required this.fecha,
     required this.estado,
     required this.modificadoEn,
@@ -139,7 +140,8 @@ class RegistroHab {
   });
 
   final String id;
-  final String objetivoId;
+  final String? objetivoId;
+  final String? bloqueId;
   final DateTime fecha;
   final EstadoRegistro estado;
   final DateTime modificadoEn;
@@ -150,6 +152,7 @@ class RegistroHab {
   Map<String, Object?> aFila() => {
         'id': id,
         'objetivo_id': objetivoId,
+        'bloque_id': bloqueId,
         'fecha': _fecha(fecha),
         'estado': estado.name,
         'valor': valor,
@@ -162,7 +165,8 @@ class RegistroHab {
     final m = f['movido_a'] as String?;
     return RegistroHab(
       id: f['id'] as String,
-      objetivoId: f['objetivo_id'] as String,
+      objetivoId: f['objetivo_id'] as String?,
+      bloqueId: f['bloque_id'] as String?,
       fecha: DateTime.parse(f['fecha'] as String),
       estado: EstadoRegistro.values.byName(f['estado'] as String),
       valor: f['valor'] as int?,

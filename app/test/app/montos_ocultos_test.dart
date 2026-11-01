@@ -732,6 +732,8 @@ void main() {
       expect(bloqueo.comprobarPin('284651'), ResultadoBloqueo.abierto);
 
       // Apagarlo: el PIN pasa a ser el propio de los montos.
+      await tester.ensureVisible(find.byKey(const ValueKey('bloqueo-activo')));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('bloqueo-activo')));
       await tester.pumpAndSettle();
       final montos = contenedorDe(tester).read(controladorMontosProvider.notifier);
