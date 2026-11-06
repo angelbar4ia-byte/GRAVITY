@@ -10,7 +10,7 @@ import 'package:gravity/app/app_gravity.dart';
 import 'package:gravity/app/router.dart';
 import 'package:gravity/modulos/finanzas/estado/proveedores.dart'
     show CargaFinanzasNotifier, cargaFinanzasProvider;
-import 'package:gravity/modulos/finanzas/estado/carga_finanzas.dart'
+import 'package:gravity/modulos/finanzas/datos/repositorio.dart'
     show CargaFinanzas;
 import 'package:gravity/nucleo/contratos/dispositivo.dart';
 import 'package:gravity/nucleo/contratos/roles.dart';
