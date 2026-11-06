@@ -33,13 +33,33 @@ class PantallaHoyTelefono extends ConsumerWidget {
           children: [
             const _EncabezadoHoy(),
             SizedBox(height: e * 2),
-            if (r.siguiente != null) ...[
-              _TarjetaSigue(siguiente: r.siguiente!),
-              hueco,
+            if (v.cuadricula)
+              // Estilo Bento: las tarjetas van en cuadrícula (2 columnas en el
+              // teléfono, 4 desde 600 dp), cada una del tamaño de su contenido.
+              CuadriculaBento(
+                teselas: [
+                  if (r.siguiente != null)
+                    TeselaBento(
+                      columnas: 4,
+                      child: _TarjetaSigue(siguiente: r.siguiente!),
+                    ),
+                  if (r.habitos.isNotEmpty)
+                    const TeselaBento(child: _TarjetaHabitos()),
+                  if (r.finanzas != null)
+                    const TeselaBento(child: _TarjetaFinanzas()),
+                  if (r.cuidados != null)
+                    const TeselaBento(child: _TarjetaCuidados()),
+                ],
+              )
+            else ...[
+              if (r.siguiente != null) ...[
+                _TarjetaSigue(siguiente: r.siguiente!),
+                hueco,
+              ],
+              if (r.habitos.isNotEmpty) ...[const _TarjetaHabitos(), hueco],
+              if (r.finanzas != null) ...[const _TarjetaFinanzas(), hueco],
+              if (r.cuidados != null) const _TarjetaCuidados(),
             ],
-            if (r.habitos.isNotEmpty) ...[const _TarjetaHabitos(), hueco],
-            if (r.finanzas != null) ...[const _TarjetaFinanzas(), hueco],
-            if (r.cuidados != null) const _TarjetaCuidados(),
             if (sinNada && r.sinDatos)
               const EstadoVacio(
                 key: ValueKey('hoy-sin-datos'),

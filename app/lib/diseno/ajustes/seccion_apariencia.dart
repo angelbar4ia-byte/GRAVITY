@@ -7,7 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../nucleo/contratos/roles.dart';
+import '../componentes/cuadricula_bento.dart';
 import '../componentes/etiqueta_panel.dart';
+import '../componentes/indicador_conexion.dart';
 import '../componentes/monto_ocultable.dart';
 import '../componentes/semaforo.dart';
 import '../componentes/tarjeta_modulo.dart';
@@ -302,7 +304,7 @@ class _VistaPrevia extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final v = ValoresDiseno.de(context);
-    return TarjetaModulo(
+    final finanzas = TarjetaModulo(
       key: const ValueKey('vista-previa'),
       titulo: 'Finanzas · semana',
       accion: const Semaforo(estado: EstadoSemaforo.verde),
@@ -323,6 +325,25 @@ class _VistaPrevia extends StatelessWidget {
           ),
         ],
       ),
+    );
+    // Con un estilo de cuadrícula, la vista previa muestra tres teselas.
+    if (!v.cuadricula) return finanzas;
+    return CuadriculaBento(
+      teselas: [
+        TeselaBento(columnas: 4, child: finanzas),
+        TeselaBento(
+          child: TarjetaModulo(
+            titulo: 'Hábitos',
+            child: Text('3 de 5 hoy', style: v.lectura(tamano: 16)),
+          ),
+        ),
+        TeselaBento(
+          child: TarjetaModulo(
+            titulo: 'Conexión',
+            child: const IndicadorConexion(estado: EstadoConexion.enLinea),
+          ),
+        ),
+      ],
     );
   }
 }

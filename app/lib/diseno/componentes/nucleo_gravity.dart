@@ -135,6 +135,8 @@ class PintorNucleo extends CustomPainter {
     switch (variante) {
       case VarianteNucleo.pulso:
         _pintarPulso(canvas, size);
+      case VarianteNucleo.orbe:
+        _pintarOrbe(canvas, size);
       case VarianteNucleo.anillos:
       case VarianteNucleo.cristal:
         _pintarAnillos(canvas, size);
@@ -184,6 +186,38 @@ class PintorNucleo extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = 3 * s.clamp(0.6, 2.0),
     );
+  }
+
+  /// Bento: tres círculos rellenos y suaves que respiran, uno dentro de otro.
+  void _pintarOrbe(Canvas canvas, Size size) {
+    final t = animacion.value;
+    final c = size.center(Offset.zero);
+    final s = size.shortestSide / 320;
+    final respiro = (1 + math.sin(2 * math.pi * 80 * t)) / 2;
+    final amplitud = 0.04 + 0.06 * pulso;
+    for (var i = 0; i < 3; i++) {
+      final base = (140 - 44 * i) * s;
+      final radio = base * (1 + amplitud * respiro * (1 - i * 0.3));
+      canvas.drawCircle(
+        c,
+        radio,
+        Paint()
+          ..color = Color.lerp(
+            panel,
+            acento,
+            0.10 + 0.14 * i,
+          )!.withValues(alpha: 0.9),
+      );
+    }
+    canvas.drawCircle(
+      c,
+      150 * s,
+      Paint()
+        ..color = borde
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5 * s.clamp(0.6, 2.0),
+    );
+    canvas.drawCircle(c, 22 * s, Paint()..color = acento);
   }
 
   void _pintarAnillos(Canvas canvas, Size size) {

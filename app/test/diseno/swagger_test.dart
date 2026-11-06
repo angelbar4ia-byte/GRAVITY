@@ -9,9 +9,12 @@ import 'ayuda_pruebas.dart';
 
 void main() {
   group('Estilo Swagger: valores', () {
-    test('está en el catálogo con día y noche y su id estable', () {
-      expect(estilosIncluidos.map((e) => e.id), contains('swagger'));
-      expect(estiloPorId('swagger'), estiloSwagger);
+    test('se conserva en el código pero no se ofrece (D26)', () {
+      expect(estilosIncluidos.map((e) => e.id), isNot(contains('swagger')));
+      expect(estilosSinUsar, contains(estiloSwagger));
+      // Quien lo había elegido vuelve al estilo por omisión.
+      expect(estiloPorId('swagger'), estiloPorDefecto);
+      expect(estiloPorId('swagger', catalogo: estilosSinUsar), estiloSwagger);
       expect(estiloSwagger.dia.brillo, Brightness.light);
       expect(estiloSwagger.noche.brillo, Brightness.dark);
       expect(estiloPorId('inexistente'), estiloPorDefecto);

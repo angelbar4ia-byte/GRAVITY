@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../valores_diseno.dart';
+import 'cuadricula_bento.dart';
 import 'etiqueta_panel.dart';
 
 /// Tarjeta de resumen de un módulo (sección 19): etiqueta, acción opcional y
@@ -40,6 +41,8 @@ class TarjetaModulo extends StatelessWidget {
     final e = v.espacio;
     final radio = BorderRadius.circular(v.radioMediano);
 
+    // Dentro de una tesela bento, la tarjeta llena el alto de su tesela.
+    final alto = AlturaTesela.de(context);
     Widget contenido = Padding(
       padding: EdgeInsets.symmetric(horizontal: e * 2 + 2, vertical: e * 2),
       child: Column(
@@ -57,6 +60,13 @@ class TarjetaModulo extends StatelessWidget {
         ],
       ),
     );
+
+    if (alto > 0) {
+      contenido = ConstrainedBox(
+        constraints: BoxConstraints(minHeight: alto),
+        child: contenido,
+      );
+    }
 
     if (alTocar != null) {
       contenido = InkWell(

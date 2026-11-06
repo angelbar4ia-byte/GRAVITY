@@ -30,28 +30,28 @@ void main() {
   group('Apariencia por persona (P3)', () {
     test('cada persona tiene su estilo y no pisa el de otra', () {
       final c = _contenedor();
-      c.read(estiloProvider.notifier).elegir(estiloSwagger);
-      expect(c.read(estiloProvider), estiloSwagger);
+      c.read(estiloProvider.notifier).elegir(estiloBento);
+      expect(c.read(estiloProvider), estiloBento);
 
       c.read(_personaFalsa.notifier).cambiar('beto');
       expect(c.read(estiloProvider), estiloFuturista);
       c.read(estiloProvider.notifier).elegir(estiloFuturista);
 
       c.read(_personaFalsa.notifier).cambiar('ana');
-      expect(c.read(estiloProvider), estiloSwagger);
+      expect(c.read(estiloProvider), estiloBento);
     });
 
     test('la tablet de la casa (sin persona) tiene el suyo', () {
       final c = _contenedor();
-      c.read(estiloProvider.notifier).elegir(estiloSwagger);
+      c.read(estiloProvider.notifier).elegir(estiloBento);
       c.read(_personaFalsa.notifier).cambiar(null);
       expect(c.read(claveAparienciaProvider), claveHogar);
       expect(c.read(estiloProvider), estiloFuturista);
-      c.read(estiloProvider.notifier).elegirPorId('swagger');
+      c.read(estiloProvider.notifier).elegirPorId('bento');
       c.read(_personaFalsa.notifier).cambiar('ana');
       c.read(estiloProvider.notifier).elegir(estiloFuturista);
       c.read(_personaFalsa.notifier).cambiar(null);
-      expect(c.read(estiloProvider), estiloSwagger);
+      expect(c.read(estiloProvider), estiloBento);
     });
 
     test('claro/oscuro, lugar y alto contraste también son por persona', () {
@@ -90,11 +90,9 @@ void main() {
       'lo guardado sobrevive a un contenedor nuevo con el mismo almacén',
       () {
         final almacen = AlmacenAparienciaMemoria();
-        _contenedor(almacen)
-            .read(estiloProvider.notifier)
-            .elegir(estiloSwagger);
+        _contenedor(almacen).read(estiloProvider.notifier).elegir(estiloBento);
         final otro = _contenedor(almacen);
-        expect(otro.read(estiloProvider), estiloSwagger);
+        expect(otro.read(estiloProvider), estiloBento);
       },
     );
 
@@ -115,18 +113,18 @@ void main() {
     test('el almacén no guarda nada sensible: solo estas claves', () {
       final almacen = AlmacenAparienciaMemoria();
       final c = _contenedor(almacen);
-      c.read(estiloProvider.notifier).elegir(estiloSwagger);
+      c.read(estiloProvider.notifier).elegir(estiloBento);
       c.read(altoContrasteProvider.notifier).fijar(true);
       c
           .read(preferenciaClaroOscuroProvider.notifier)
           .cambiarModo(ModoClaroOscuro.oscuro);
-      expect(almacen.leer('ana', CampoApariencia.estilo), 'swagger');
+      expect(almacen.leer('ana', CampoApariencia.estilo), 'bento');
       expect(almacen.leer('ana', CampoApariencia.altoContraste), 'true');
       expect(almacen.leer('ana', CampoApariencia.modo), 'oscuro');
     });
   });
 
-  testWidgets('Configuración: elegir Swagger cambia el tema en vivo y el '
+  testWidgets('Configuración: elegir Bento cambia el tema en vivo y el '
       'cambio queda para esa persona', (tester) async {
     fijarVentana(tester, const Size(1000, 1200));
     await montar(
@@ -138,10 +136,10 @@ void main() {
     expect(find.byKey(const ValueKey('apariencia-por-persona')), findsOne);
     expect(valores().fuenteTitulos, FuentesGravity.titulos);
 
-    await tester.tap(find.byKey(const ValueKey('estilo-swagger')));
+    await tester.tap(find.byKey(const ValueKey('estilo-bento')));
     await tester.pump();
     await tester.pump(duracionCambioTema);
-    expect(valores().fuenteTitulos, 'Anton');
+    expect(valores().radioMediano, 20);
 
     await tester.ensureVisible(find.byKey(const ValueKey('alto-contraste')));
     await tester.tap(find.byKey(const ValueKey('alto-contraste')));
@@ -152,7 +150,7 @@ void main() {
       contenedorDe(tester, find.byType(SeccionApariencia))
           .read(almacenAparienciaProvider)
           .leer(claveHogar, CampoApariencia.estilo),
-      'swagger',
+      'bento',
     );
   });
 }

@@ -47,6 +47,24 @@ Widget muestraDeGadgets() => SingleChildScrollView(
         const SizedBox(height: 12),
         const IndicadorConexion(estado: EstadoConexion.enLinea, pendientes: 3),
         const SizedBox(height: 12),
+        CuadriculaBento(
+          teselas: [
+            TeselaBento(
+              columnas: 4,
+              child: TarjetaModulo(
+                titulo: 'Hoy',
+                child: Text('Nada pendiente'),
+              ),
+            ),
+            const TeselaBento(
+              child: TarjetaModulo(titulo: 'Hábitos', child: Text('3 de 5')),
+            ),
+            const TeselaBento(
+              child: TarjetaModulo(titulo: 'Finanzas', child: Text('Bien')),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
         RelojDelTurno.ejemplo(),
         const SizedBox(height: 12),
         CronometroCuidados.ejemplo(),

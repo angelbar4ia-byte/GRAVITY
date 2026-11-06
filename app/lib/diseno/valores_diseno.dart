@@ -36,6 +36,9 @@ enum VarianteNucleo {
 
   /// Glass: orbes translúcidos que flotan.
   cristal,
+
+  /// Bento: orbes suaves que respiran.
+  orbe,
 }
 
 /// Densidad de la interfaz. La laptop es compacta, el teléfono cómodo y la
@@ -121,6 +124,7 @@ class ValoresDiseno extends ThemeExtension<ValoresDiseno> {
     this.etiquetaSticker = false,
     this.marcasEsquina = true,
     this.nucleo = VarianteNucleo.anillos,
+    this.cuadricula = false,
   });
 
   /// Claro u oscuro.
@@ -207,6 +211,10 @@ class ValoresDiseno extends ThemeExtension<ValoresDiseno> {
 
   /// Variante del núcleo animado de GRAVITY.
   final VarianteNucleo nucleo;
+
+  /// Si las pantallas de resumen acomodan sus tarjetas en cuadrícula tipo
+  /// bento ([CuadriculaBento]) en lugar de una sola columna.
+  final bool cuadricula;
 
   /// Los valores de diseño del tema más cercano.
   ///
@@ -315,6 +323,7 @@ class ValoresDiseno extends ThemeExtension<ValoresDiseno> {
     bool? etiquetaSticker,
     bool? marcasEsquina,
     VarianteNucleo? nucleo,
+    bool? cuadricula,
   }) {
     return ValoresDiseno(
       brillo: brillo ?? this.brillo,
@@ -345,6 +354,7 @@ class ValoresDiseno extends ThemeExtension<ValoresDiseno> {
       etiquetaSticker: etiquetaSticker ?? this.etiquetaSticker,
       marcasEsquina: marcasEsquina ?? this.marcasEsquina,
       nucleo: nucleo ?? this.nucleo,
+      cuadricula: cuadricula ?? this.cuadricula,
     );
   }
 
@@ -385,6 +395,7 @@ class ValoresDiseno extends ThemeExtension<ValoresDiseno> {
       etiquetaSticker: mitad(etiquetaSticker, other.etiquetaSticker),
       marcasEsquina: mitad(marcasEsquina, other.marcasEsquina),
       nucleo: mitad(nucleo, other.nucleo),
+      cuadricula: mitad(cuadricula, other.cuadricula),
     );
   }
 
@@ -419,7 +430,8 @@ class ValoresDiseno extends ThemeExtension<ValoresDiseno> {
           other.grosorBorde == grosorBorde &&
           other.etiquetaSticker == etiquetaSticker &&
           other.marcasEsquina == marcasEsquina &&
-          other.nucleo == nucleo;
+          other.nucleo == nucleo &&
+          other.cuadricula == cuadricula;
 
   @override
   int get hashCode => Object.hashAll([
@@ -451,6 +463,7 @@ class ValoresDiseno extends ThemeExtension<ValoresDiseno> {
     etiquetaSticker,
     marcasEsquina,
     nucleo,
+    cuadricula,
   ]);
 }
 

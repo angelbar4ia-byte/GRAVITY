@@ -38,7 +38,12 @@ void main() {
         .toSet();
     expect(
       estilos,
-      containsAll({'catalogo.dart', 'futurista.dart', 'swagger.dart'}),
+      containsAll({
+        'catalogo.dart',
+        'futurista.dart',
+        'bento.dart',
+        'swagger.dart',
+      }),
     );
   });
 }
