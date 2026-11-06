@@ -60,8 +60,9 @@ abstract final class FraseDeRecuperacion {
 
   /// La frase de [entropia] (16 bytes). Pública para los vectores de prueba.
   static List<String> desdeEntropia(List<int> entropia) {
-    if (entropia.length != 16)
+    if (entropia.length != 16) {
       throw ArgumentError('La entropía es de 16 bytes.');
+    }
     final bits = StringBuffer();
     for (final b in entropia) {
       bits.write(b.toRadixString(2).padLeft(8, '0'));

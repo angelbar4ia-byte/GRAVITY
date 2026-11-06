@@ -33,16 +33,18 @@ import 'package:gravity/modulos/finanzas/datos/repositorio_memoria.dart';
 import 'package:gravity/modulos/finanzas/estado/proveedores.dart';
 import 'package:gravity/modulos/finanzas/estado/resumen_hoy.dart';
 import 'package:gravity/modulos/finanzas/finanzas.dart'
-    show
-        SeccionAvisosFinanzas,
-        TarjetaFinanzasHoy,
-        refrescarFinanzas;
+    show SeccionAvisosFinanzas, TarjetaFinanzasHoy, refrescarFinanzas;
 import 'package:gravity/modulos/finanzas/pantallas/comunes.dart'
     show errorDeMotivo, escalonesDe, pedirTexto;
 import 'package:gravity/modulos/finanzas/pantallas/ajustes_avisos.dart'
     show mensajeSilencioIgual;
 import 'package:gravity/nucleo/avisos/aviso.dart';
 import 'package:gravity/nucleo/avisos/catalogo_avisos.dart';
+import 'package:gravity/nucleo/avisos/recordatorios.dart'
+    as av
+    show Vencimiento, calcularRecordatorios;
+import 'package:gravity/modulos/finanzas/pantallas/fase2/dialogos_fase2.dart'
+    show DialogoBolsa;
 import 'package:gravity/nucleo/avisos/proveedores_avisos.dart';
 import 'package:gravity/nucleo/avisos/repositorio_avisos.dart'
     show RepositorioAvisosEnMemoria;
@@ -1123,5 +1125,122 @@ void main() {
           .map((l) => l.libroId);
       expect(despues, isNot(contains(compartido.id)));
     });
+  });
+
+  group('D25: extras 20 %, prioridad de bolsas y varios días antes', () {
+    test(
+      'una bolsa con extras sin porcentaje aparta el 20 % y es editable',
+      () async {
+        final sesion = sesionDe(Rol.dueno);
+        final repo = repositorioDe(sesion);
+        addTearDown(repo.cerrar);
+        final svc = ServicioDeudasAhorro(servicioDe(repo, sesion));
+        final a = await svc.crearBolsa(
+          libroId: _libroDueno,
+          nombre: 'Por omisión',
+          tipo: TipoBolsaAhorro.metaLibre,
+          metodos: const [MetodoAhorro.porcentajeDeExtras],
+        );
+        final b = await svc.crearBolsa(
+          libroId: _libroDueno,
+          nombre: 'Editada',
+          tipo: TipoBolsaAhorro.metaLibre,
+          metodos: const [MetodoAhorro.porcentajeDeExtras],
+          aportePb: 500,
+        );
+        final plan = planearAhorroDeCierre(
+          remanente: 100000,
+          extras: 50000,
+          bolsas: [
+            a,
+            repo.datos.bolsasDe(_libroDueno).firstWhere((x) => x.id == b.id),
+          ],
+        );
+        expect(plan.aportadoA(a.id), 10000);
+        expect(plan.aportadoA(b.id), 2500);
+      },
+    );
+
+    testWidgets('el formulario de bolsa ofrece los métodos y el % de extras '
+        '(20 por omisión)', (tester) async {
+      final repo = await montarFinanzasConTamano(
+        tester,
+        dispositivo: TipoDispositivo.telefono,
+        tamano: _telefono,
+      );
+      final c = await _cargado(tester);
+      unawaited(
+        showDialog<void>(
+          context: tester.element(find.byType(Scaffold).first),
+          builder: (_) =>
+              DialogoBolsa(contexto: c.read(contextoFinanzasProvider).value!),
+        ),
+      );
+      await avanzar(tester);
+      await tester.enterText(
+        find.byKey(const ValueKey('bolsa-nombre')),
+        'Viaje',
+      );
+      await tester.tap(
+        find.byKey(const ValueKey('bolsa-metodo-porcentaje_extras')),
+      );
+      await tester.tap(find.byKey(const ValueKey('bolsa-metodo-redondeo')));
+      await tester.pump();
+      expect(find.byKey(const ValueKey('bolsa-extras-pct')), findsOneWidget);
+      expect(find.text('20'), findsOneWidget);
+      await tester.ensureVisible(find.byKey(const ValueKey('dialogo-guardar')));
+      await tester.tap(find.byKey(const ValueKey('dialogo-guardar')));
+      await avanzar(tester);
+      final bolsa = repo.datos
+          .bolsasDe(_libroDueno)
+          .firstWhere((x) => x.nombre == 'Viaje');
+      expect(
+        bolsa.metodos,
+        containsAll([MetodoAhorro.porcentajeDeExtras, MetodoAhorro.redondeo]),
+      );
+      expect(bolsa.aportePb, 2000);
+    });
+
+    test('la prioridad arrastrada llega al plan del servicio', () async {
+      final sesion = sesionDe(Rol.dueno);
+      final repo = repositorioDe(sesion);
+      addTearDown(repo.cerrar);
+      final base = servicioDe(repo, sesion);
+      final svc = ServicioDeudasAhorro(base);
+      const casa = IdsDemostracion.libroCasa;
+      final sem = semana.siguiente;
+      await base.guardarParametros(
+        repo.datos
+            .parametrosDe(casa)
+            .copiar(ahorroMinimoConDeudaPuntosBase: 5000),
+      );
+      await svc.crearBolsa(
+        libroId: casa,
+        nombre: 'Fondo',
+        tipo: TipoBolsaAhorro.fondoEmergencia,
+        metodos: const [MetodoAhorro.sobranteSemanal],
+      );
+      await base.activarSemana(casa, sem);
+      final plan = svc.planAhorroDeCierre(casa, sem, orden: const ['x']);
+      expect(plan.aportes, isNotEmpty);
+    });
+
+    test(
+      'varios "días antes" por vencimiento: uno por cada día configurado',
+      () {
+        final ahora = DateTime(2026, 10, 20, 8);
+        final vence = DateTime(2026, 10, 30);
+        final r = av.calcularRecordatorios(
+          preferencias: const PreferenciasAvisos(diasAvisoDeuda: [7, 3, 1]),
+          ahora: ahora,
+          vencimientos: [av.Vencimiento(objetoId: 'o1', fecha: vence)],
+        ).where((x) => x.tipo == 'pago_proximo').toList();
+        expect(r, hasLength(3));
+        expect(r.map((x) => x.clave.split(':').last), ['7', '3', '1']);
+        for (final x in r) {
+          expect(x.clave.contains(r'$'), isFalse);
+        }
+      },
+    );
   });
 }

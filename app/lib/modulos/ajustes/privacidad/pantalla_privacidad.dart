@@ -138,8 +138,9 @@ class _MontosOcultos extends ConsumerWidget {
                 onChanged: !estado.cargado
                     ? null
                     : (opcion) {
-                        if (opcion != null)
+                        if (opcion != null) {
                           controlador.fijarOcultarTras(opcion);
+                        }
                       },
               ),
             ),

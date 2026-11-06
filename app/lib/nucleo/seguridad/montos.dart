@@ -343,8 +343,9 @@ class ControladorMontos extends Notifier<EstadoMontos> {
               : ResultadoRevelar.pinIncorrecto;
         }
         _intentos.anotarAcierto(persona);
-        if (pinEsCortoParaSuRol(rol, pin))
+        if (pinEsCortoParaSuRol(rol, pin)) {
           return ResultadoRevelar.debeCambiarPin;
+        }
         // M9': el hash de antes (menos vueltas) se rehace al escribir el PIN.
         if (HashPin.necesitaActualizarse(hash)) {
           unawaited(() async {

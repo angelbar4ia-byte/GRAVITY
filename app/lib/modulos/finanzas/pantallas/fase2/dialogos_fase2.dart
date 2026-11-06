@@ -471,12 +471,23 @@ class _BolsaState extends ConsumerState<DialogoBolsa> {
   final _nombre = TextEditingController();
   final _monto = TextEditingController();
   final _saldo = TextEditingController();
+  // Porcentaje de los extras que se aparta (D25: 20 % por omisión).
+  final _extrasPct = TextEditingController(text: '20');
+  final Set<MetodoAhorro> _metodos = {};
   TipoBolsaAhorro _tipo = TipoBolsaAhorro.metaLibre;
   Fecha? _fecha;
 
+  /// Los métodos que alimentan la bolsa solos al cerrar la semana.
+  static const _metodosDeCierre = {
+    MetodoAhorro.porcentajeDeExtras: 'Extras',
+    MetodoAhorro.sobrePorCategoria: 'Sobre',
+    MetodoAhorro.sobranteSemanal: 'Sobrante',
+    MetodoAhorro.redondeo: 'Redondeo',
+  };
+
   @override
   void dispose() {
-    for (final c in [_nombre, _monto, _saldo]) {
+    for (final c in [_nombre, _monto, _saldo, _extrasPct]) {
       c.dispose();
     }
     super.dispose();
@@ -545,6 +556,36 @@ class _BolsaState extends ConsumerState<DialogoBolsa> {
           etiqueta: 'Lo que ya tienes ahorrado',
           obligatorio: false,
         ),
+        Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: Text(
+            'Aparta solo al cerrar la semana',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ),
+        Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          children: [
+            for (final e in _metodosDeCierre.entries)
+              FilterChip(
+                key: ValueKey('bolsa-metodo-${e.key.clave}'),
+                label: Text(e.value),
+                selected: _metodos.contains(e.key),
+                onSelected: (sel) => setState(
+                  () => sel ? _metodos.add(e.key) : _metodos.remove(e.key),
+                ),
+              ),
+          ],
+        ),
+        if (_metodos.contains(MetodoAhorro.porcentajeDeExtras))
+          KeyedSubtree(
+            key: const ValueKey('bolsa-extras-pct'),
+            child: CampoPorcentaje(
+              controlador: _extrasPct,
+              etiqueta: '% de tus ingresos extra que se aparta',
+            ),
+          ),
       ],
       alGuardar: () async {
         final monto = centavosDeTexto(_monto.text);
@@ -560,6 +601,10 @@ class _BolsaState extends ConsumerState<DialogoBolsa> {
                   ? (_fecha ?? ref.read(hoyFinanzasProvider).sumarDias(365))
                   : null,
               saldoInicial: centavosDeTexto(_saldo.text) ?? 0,
+              metodos: _metodos.toList(),
+              aportePb: _metodos.contains(MetodoAhorro.porcentajeDeExtras)
+                  ? CampoPorcentaje.puntosBase(_extrasPct.text)
+                  : null,
             );
       },
     );

@@ -227,8 +227,9 @@ class _Preferencias extends ConsumerWidget {
                       DropdownMenuItem(value: n, child: Text('$n')),
                   ],
                   onChanged: (n) {
-                    if (n != null)
+                    if (n != null) {
                       _guardar(ref, p.copiarCon(topeNoCriticas: n));
+                    }
                   },
                 ),
               ),

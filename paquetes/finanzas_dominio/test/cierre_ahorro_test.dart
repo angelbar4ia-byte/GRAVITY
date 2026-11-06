@@ -108,13 +108,43 @@ void main() {
       expect(plan.aportes, isEmpty);
     });
 
-    test('extras sin porcentaje configurado no aparta nada (no se inventa)', () {
+    test('extras sin porcentaje configurado aparta el 20 % por omisión', () {
       final plan = planearAhorroDeCierre(
         remanente: 100000,
         extras: 50000,
         bolsas: [bolsa('a', [MetodoAhorro.porcentajeDeExtras])],
       );
-      expect(plan.aportes, isEmpty);
+      expect(porcentajeDeExtrasPorOmision, 2000);
+      expect(plan.deOrigen(OrigenAporte.extras), 10000);
+    });
+
+    test('la prioridad arrastrada manda: el sobre llena primero la bolsa de '
+        'arriba y el sobrante va solo a la primera', () {
+      final bolsas = [
+        bolsa('a', [MetodoAhorro.sobrePorCategoria, MetodoAhorro.sobranteSemanal],
+            prioridad: 1),
+        bolsa('b', [MetodoAhorro.sobrePorCategoria, MetodoAhorro.sobranteSemanal],
+            prioridad: 2),
+      ];
+      final normal = planearAhorroDeCierre(
+        remanente: 30000,
+        sobre: 5000,
+        bolsas: bolsas,
+      );
+      expect(normal.aportadoA('a'), 30000, reason: 'sobre 5000 + sobrante 25000');
+      expect(normal.aportadoA('b'), 0);
+      final arrastrada = planearAhorroDeCierre(
+        remanente: 30000,
+        sobre: 5000,
+        bolsas: bolsas,
+        orden: const ['b', 'a'],
+      );
+      expect(arrastrada.aportadoA('b'), 30000);
+      expect(arrastrada.aportadoA('a'), 0);
+      expect(
+        arrastrada.aportes.where((x) => x.origen == OrigenAporte.sobrante),
+        hasLength(1),
+      );
     });
 
     test('con varias bolsas el sobre y el sobrante no se cuentan dos veces', () {

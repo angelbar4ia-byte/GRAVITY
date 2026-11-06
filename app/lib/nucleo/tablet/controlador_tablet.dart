@@ -267,8 +267,9 @@ class ControladorTablet extends Notifier<EstadoTablet> {
       _serie.correr(() async {
         final usuario = _buscar(personaId);
         if (usuario == null) return ResultadoDesbloqueo.noExiste;
-        if (_intentos.bloqueado(personaId))
+        if (_intentos.bloqueado(personaId)) {
           return ResultadoDesbloqueo.bloqueado;
+        }
         if (!await HashPin.verificarAsync(pin, usuario.hashPin)) {
           return _intentos.anotarFallo(personaId) == ResultadoFallo.bloqueado
               ? ResultadoDesbloqueo.bloqueado

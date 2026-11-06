@@ -41,8 +41,9 @@ bool esPantallaSensible(String ubicacion, Rol? rol) {
   // Bandeja de solicitudes de la cuidadora (medicamentos, citas…).
   if (_bajoRuta(ubicacion, RutasApp.solicitudes)) return veDatosClinicos(rol);
   // Sección reservada de Hábitos (regla 100): salud y oración.
-  if (esRutaReservadaDeHabitos(ubicacion))
+  if (esRutaReservadaDeHabitos(ubicacion)) {
     return puedeAbrir(rol, Modulo.habitos);
+  }
   // Bandeja de avisos: el detalle trae montos.
   if (_bajoRuta(ubicacion, RutasApp.avisos)) return veDinero(rol);
   // Registros que el servidor no aceptó: pueden ser gastos.

@@ -48,8 +48,9 @@ class _PantallaEntrarState extends ConsumerState<PantallaEntrar> {
     } on ErrorSesion catch (error) {
       if (mounted) setState(() => _error = error.mensaje);
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         setState(() => _error = 'No se pudo entrar. Intenta de nuevo.');
+      }
     } finally {
       if (mounted) setState(() => _cargando = false);
     }

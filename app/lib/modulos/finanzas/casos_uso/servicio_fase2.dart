@@ -472,6 +472,7 @@ class ServicioDeudasAhorro {
     int? nivel,
     int? aporteFijo,
     List<MetodoAhorro> metodos = const [],
+    int? aportePb,
     int saldoInicial = 0,
   }) async {
     base.exigirAdministrar(libroId);
@@ -506,6 +507,7 @@ class ServicioDeudasAhorro {
           ? (nivel ?? NivelFondo.porDefecto.numero)
           : null,
       aporteFijo: aporteFijo,
+      aportePb: aportePb,
       metodos: metodos,
     );
     await base.repositorio.guardarBolsa(b);
@@ -711,9 +713,14 @@ class ServicioDeudasAhorro {
   /// sobrante y redondeo (Fase 4, E16). Sale del ahorro que el motor ya
   /// propone para el remanente (`destino.ahorro`), así que no se aparta dos
   /// veces; mientras una deuda reciba abono extra solo cuenta el fondo de
-  /// emergencia (regla 16). Vacío si la semana tiene déficit o no hay bolsas
+  /// emergencia (regla 16). [orden] es la prioridad que la persona arrastró
+  /// al cerrar (D25). Vacío si la semana tiene déficit o no hay bolsas
   /// con esos métodos.
-  PlanAhorroDeCierre planAhorroDeCierre(String libroId, Semana semana) {
+  PlanAhorroDeCierre planAhorroDeCierre(
+    String libroId,
+    Semana semana, {
+    List<String> orden = const [],
+  }) {
     final v = base.vista(libroId, semana);
     final destino = v.real.destino;
     if (destino.ahorro <= 0) return PlanAhorroDeCierre.vacio;
@@ -727,6 +734,7 @@ class ServicioDeudasAhorro {
       extras: extrasDeLaSemana(_d, libroId, semana),
       sobre: sobreDeLaSemana(v),
       gastos: gastosDeLaSemana(_d, libroId, semana),
+      orden: orden,
     );
   }
 

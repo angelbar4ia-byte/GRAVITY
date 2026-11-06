@@ -5,8 +5,8 @@
 /// El cierre aplica, **en este orden**, los cuatro métodos que alimentan una
 /// bolsa sin que la persona los capture (regla 25):
 ///
-/// 1. **extras:** el porcentaje (`aportePb`) de los ingresos extra de la
-///    semana;
+/// 1. **extras:** el porcentaje (`aportePb`, 20 % por omisión) de los
+///    ingresos extra de la semana;
 /// 2. **sobre:** lo no gastado de los sobres que no se arrastra (el excedente
 ///    sobre el tope de arrastre de 2 semanas de su monto, regla 32);
 /// 3. **sobrante:** lo que queda del remanente real de la semana;
@@ -85,7 +85,16 @@ class PlanAhorroDeCierre {
       .fold(0, (t, a) => t + a.monto);
 }
 
+/// Porcentaje de los ingresos extra que se aparta por omisión (D25): 20 %.
+/// Cada bolsa lo cambia con su `aportePb`.
+const porcentajeDeExtrasPorOmision = 2000;
+
 /// Planea el ahorro automático del cierre.
+///
+/// - [orden]: los ids de las bolsas en el orden de **prioridad** que eligió la
+///   persona al cerrar (D25: se arrastran las bolsas para darles prioridad).
+///   Las que no estén en la lista van después, por su `prioridad` y su id. El
+///   **sobrante va a la primera** bolsa de la lista que tenga ese método.
 ///
 /// - [remanente]: el remanente real de la semana (si es cero o negativo, no
 ///   hay nada que apartar: el plan queda vacío).
@@ -101,6 +110,7 @@ PlanAhorroDeCierre planearAhorroDeCierre({
   int extras = 0,
   int sobre = 0,
   Iterable<int> gastos = const [],
+  List<String> orden = const [],
   bool hayDeudaConExtra = false,
   int ahorroMinimoConDeudaPuntosBase = 0,
 }) {
@@ -114,6 +124,13 @@ PlanAhorroDeCierre planearAhorroDeCierre({
           (!hayDeudaConExtra || b.tipo == TipoBolsaAhorro.fondoEmergencia))
         b,
   ]..sort((a, b) {
+    final ia = orden.indexOf(a.id);
+    final ib = orden.indexOf(b.id);
+    if (ia >= 0 || ib >= 0) {
+      if (ia < 0) return 1;
+      if (ib < 0) return -1;
+      return ia.compareTo(ib);
+    }
     final c = a.prioridad.compareTo(b.prioridad);
     return c != 0 ? c : a.id.compareTo(b.id);
   });
@@ -125,7 +142,10 @@ PlanAhorroDeCierre planearAhorroDeCierre({
       if (disponible <= 0) break;
       if (!b.metodos.contains(origen.metodo)) continue;
       final deseado = switch (origen) {
-        OrigenAporte.extras => porcentajeDeExtras(extras, b.aportePb ?? 0),
+        OrigenAporte.extras => porcentajeDeExtras(
+          extras,
+          b.aportePb ?? porcentajeDeExtrasPorOmision,
+        ),
         OrigenAporte.sobre => sobreRestante,
         OrigenAporte.sobrante => sobranteSemanal(disponible),
         OrigenAporte.redondeo => redondeoDeGastos(
@@ -138,6 +158,8 @@ PlanAhorroDeCierre planearAhorroDeCierre({
       if (origen == OrigenAporte.sobre) sobreRestante -= aporta;
       disponible -= aporta;
       aportes.add(AporteDeCierre(origen, b.id, aporta));
+      // El sobrante va a la primera de la lista (D25).
+      if (origen == OrigenAporte.sobrante) break;
     }
   }
   return PlanAhorroDeCierre(aportes, disponible);

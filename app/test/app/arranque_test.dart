@@ -11,9 +11,12 @@ import 'package:gravity/nucleo/seguridad/almacen_seguro.dart';
 import 'package:gravity/nucleo/seguridad/proveedores_seguridad.dart';
 import 'package:gravity/nucleo/sesion/proveedores_sesion.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  // La apariencia persistente usa shared_preferences; en la prueba, en memoria.
+  setUp(() => SharedPreferences.setMockInitialValues({}));
 
   test(
     'sin llaves de Supabase arranca en modo demostración y en es_MX',

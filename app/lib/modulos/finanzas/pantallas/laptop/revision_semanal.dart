@@ -52,6 +52,9 @@ class _RevisionSemanalState extends ConsumerState<RevisionSemanal> {
   String? _origen;
   String? _ahorro;
   bool _cerrando = false;
+
+  /// Prioridad de las bolsas de ahorro que la persona arrastró (D25).
+  List<String>? _orden;
   final _saldos = <String, TextEditingController>{};
   final _motivos = <String, TextEditingController>{};
 
@@ -72,7 +75,11 @@ class _RevisionSemanalState extends ConsumerState<RevisionSemanal> {
     final destino = v.real.destino;
     // Ahorro automático (Fase 4): extras → sobre → sobrante → redondeo. Sale
     // del ahorro que el motor ya propone, así que no se aparta dos veces.
-    final auto = fase2.planAhorroDeCierre(widget.libroId, widget.semana);
+    final auto = fase2.planAhorroDeCierre(
+      widget.libroId,
+      widget.semana,
+      orden: _orden ?? const [],
+    );
     final restoAhorro = destino.ahorro - auto.total;
     final destinoManual = DestinoRemanente(
       destino.abonosExtra,
@@ -435,7 +442,24 @@ class _RevisionSemanalState extends ConsumerState<RevisionSemanal> {
     final hayQueAplicar = destino.totalAbonoExtra > 0 || destino.ahorro > 0;
     final auto = ref
         .read(servicioFase2Provider)
-        .planAhorroDeCierre(widget.libroId, widget.semana);
+        .planAhorroDeCierre(
+          widget.libroId,
+          widget.semana,
+          orden: _orden ?? const [],
+        );
+    final conMetodos = [
+      for (final b in c.datos.bolsasDe(widget.libroId))
+        if (b.activa &&
+            b.metodos.any(
+              (m) => OrigenAporte.values.any((o) => o.metodo == m),
+            ))
+          b,
+    ];
+    if (_orden != null) {
+      conMetodos.sort(
+        (a, b) => _orden!.indexOf(a.id).compareTo(_orden!.indexOf(b.id)),
+      );
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -458,6 +482,40 @@ class _RevisionSemanalState extends ConsumerState<RevisionSemanal> {
               const Expanded(child: Text('A ahorro')),
               Monto(destino.ahorro),
             ],
+          ),
+        // Prioridad de las bolsas: se arrastran; el sobrante va a la primera.
+        if (conMetodos.length > 1)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Prioridad de tus bolsas: arrastra para ordenarlas. El '
+                  'sobrante va a la primera.',
+                ),
+                ReorderableListView(
+                  key: const ValueKey('revision-orden-bolsas'),
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  onReorderItem: (de, a) => setState(() {
+                    final ids = [for (final b in conMetodos) b.id];
+                    ids.insert(a, ids.removeAt(de));
+                    _orden = ids;
+                  }),
+                  children: [
+                    for (final b in conMetodos)
+                      ListTile(
+                        key: ValueKey('revision-orden-${b.id}'),
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        leading: const Icon(Icons.drag_handle),
+                        title: Text(b.nombre),
+                      ),
+                  ],
+                ),
+              ],
+            ),
           ),
         // Ahorro automático (extras → sobre → sobrante → redondeo): sale de
         // ese mismo ahorro, con su origen a la vista.

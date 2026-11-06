@@ -170,8 +170,9 @@ class AlmacenDeSobres {
         persona,
         clave.substring(_prefijo(persona).length),
       );
-      if (sobre != null && (tipo == null || sobre.tipo == tipo))
+      if (sobre != null && (tipo == null || sobre.tipo == tipo)) {
         lista.add(sobre);
+      }
     }
     return lista..sort((a, b) => a.id.compareTo(b.id));
   }

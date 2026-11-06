@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:gravity/app/avisos/con_avisos.dart'
     show tipoEquipoAvisosProvider;
 import 'package:gravity/app/sensibles/puerta_reservada.dart';
+import 'package:gravity/modulos/ajustes/privacidad/mis_datos_habitos.dart' show guardarArchivoProvider;
 import 'package:gravity/app/sensibles/sensibles.dart';
 import 'package:gravity/nucleo/sesion/proveedores_sesion.dart';
 import 'package:gravity/nucleo/sesion/servicio_sesion_falso.dart';
@@ -32,6 +33,8 @@ class _Fuente implements FuenteDeDatosHabitos {
   Future<Map<String, Object?>> datosSensibles(tipo) async => {};
 }
 
+final archivosGuardados = <String>[];
+
 Future<void> montar(
   WidgetTester tester, {
   required Rol rol,
@@ -51,6 +54,11 @@ Future<void> montar(
     almacenSeguroProvider.overrideWithValue(AlmacenSeguroEnMemoria()),
     servicioSesionProvider.overrideWithValue(ServicioSesionFalso.con(rol)),
     reservadoAbiertoProvider.overrideWith(_Abierto.new),
+    // Sin diálogo del sistema: el archivo "se guarda" y queda a la vista.
+    guardarArchivoProvider.overrideWithValue((nombre, bytes) async {
+      archivosGuardados.add(nombre);
+      return true;
+    }),
     if (conFuente) fuenteDeDatosHabitosProvider.overrideWithValue(_Fuente()),
   ];
   await tester.pumpWidget(
@@ -64,6 +72,7 @@ Future<void> montar(
 }
 
 void main() {
+  setUp(archivosGuardados.clear);
   final tarjeta = find.byKey(const ValueKey('privacidad-mis-datos-habitos'));
 
   testWidgets('aparece para dueño, coadministrador y familiar', (tester) async {
@@ -139,6 +148,7 @@ void main() {
     await tester.tap(find.text('Sin lo reservado'));
     await tester.pumpAndSettle();
     expect(find.text('Tu PIN'), findsNothing);
+    expect(archivosGuardados, ['mis-datos-habitos.json']);
   });
 
   testWidgets(

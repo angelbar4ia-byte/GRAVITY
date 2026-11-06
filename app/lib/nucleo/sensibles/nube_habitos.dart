@@ -136,8 +136,7 @@ class AdministracionNubeHabitosSupabase implements AdministracionNubeHabitos {
         .eq('tipo', tipo.valor);
     return [
       for (final fila in filas)
-        if (Sobre.desdeJson(fila.cast<String, Object?>()) case final sobre?)
-          sobre,
+        ?Sobre.desdeJson(fila.cast<String, Object?>()),
     ];
   });
 }
