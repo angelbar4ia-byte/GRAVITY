@@ -40,14 +40,21 @@ void main() {
 
   test('un lote de sobres llama a hab_subir_sobres con p_sobres y entrega la '
       'respuesta (conflictos)', () async {
-    servidor.respuestasDeFunciones['hab_subir_sobres'] = {'conflictos': <Object?>[]};
+    servidor.respuestasDeFunciones['hab_subir_sobres'] = {
+      'conflictos': <Object?>[],
+    };
     final c = cola();
     await c.encolar(
       tipo: tipoColaSobres,
       personaId: 'ana',
       carga: {
         'p_sobres': [
-          {'id': 'a', 'tipo': 'diario_oracion', 'revision': 1, 'cifrado': 'AAAA'},
+          {
+            'id': 'a',
+            'tipo': 'diario_oracion',
+            'revision': 1,
+            'cifrado': 'AAAA',
+          },
         ],
       },
     );
@@ -60,26 +67,37 @@ void main() {
     expect(respuestas.single.$2, {'conflictos': <Object?>[]});
   });
 
-  test('un rechazo del servidor no deja el contenido en el mensaje de error',
-      () async {
-    servidor.fallar(
-      'hab_subir_sobres',
-      const ErrorForzado('42501', 'permiso denegado AAAA-secreto', estado: 403),
-    );
-    final c = cola();
-    await c.encolar(
-      tipo: tipoColaSobres,
-      personaId: 'ana',
-      carga: {
-        'p_sobres': [
-          {'id': 'a', 'tipo': 'diario_oracion', 'revision': 1, 'cifrado': 'AAAA-secreto'},
-        ],
-      },
-    );
-    final r = await c.procesar();
-    expect(r.rechazados, 1);
-    for (final reg in await c.registros()) {
-      expect('${reg.ultimoError}', isNot(contains('secreto')));
-    }
-  });
+  test(
+    'un rechazo del servidor no deja el contenido en el mensaje de error',
+    () async {
+      servidor.fallar(
+        'hab_subir_sobres',
+        const ErrorForzado(
+          '42501',
+          'permiso denegado AAAA-secreto',
+          estado: 403,
+        ),
+      );
+      final c = cola();
+      await c.encolar(
+        tipo: tipoColaSobres,
+        personaId: 'ana',
+        carga: {
+          'p_sobres': [
+            {
+              'id': 'a',
+              'tipo': 'diario_oracion',
+              'revision': 1,
+              'cifrado': 'AAAA-secreto',
+            },
+          ],
+        },
+      );
+      final r = await c.procesar();
+      expect(r.rechazados, 1);
+      for (final reg in await c.registros()) {
+        expect('${reg.ultimoError}', isNot(contains('secreto')));
+      }
+    },
+  );
 }

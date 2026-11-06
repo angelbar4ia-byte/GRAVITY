@@ -24,56 +24,63 @@ import 'package:gravity/nucleo/cola/enviador_supabase.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() {
-  test('sin sesión, un gasto pendiente no se pierde (no queda rechazado)', () async {
-    // PostgREST con la llave pública y sin sesión: 401 + 42501.
-    final servidor = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
-    addTearDown(() => servidor.close(force: true));
-    servidor.listen((peticion) async {
-      await peticion.drain<void>();
-      peticion.response
-        ..statusCode = HttpStatus.unauthorized
-        ..headers.contentType = ContentType.json
-        ..write(
-          jsonEncode({
-            'code': '42501',
-            'details': null,
-            'hint': null,
-            'message': 'permission denied for table movimientos',
-          }),
-        );
-      await peticion.response.close();
-    });
+  test(
+    'sin sesión, un gasto pendiente no se pierde (no queda rechazado)',
+    () async {
+      // PostgREST con la llave pública y sin sesión: 401 + 42501.
+      final servidor = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      addTearDown(() => servidor.close(force: true));
+      servidor.listen((peticion) async {
+        await peticion.drain<void>();
+        peticion.response
+          ..statusCode = HttpStatus.unauthorized
+          ..headers.contentType = ContentType.json
+          ..write(
+            jsonEncode({
+              'code': '42501',
+              'details': null,
+              'hint': null,
+              'message': 'permission denied for table movimientos',
+            }),
+          );
+        await peticion.response.close();
+      });
 
-    final url = 'http://127.0.0.1:${servidor.port}';
-    final cliente = SupabaseClient(
-      url,
-      'llave-publica-de-prueba',
-      authOptions: const AuthClientOptions(autoRefreshToken: false),
-    );
-    addTearDown(cliente.dispose);
-    expect(cliente.auth.currentSession, isNull, reason: 'nadie ha entrado');
+      final url = 'http://127.0.0.1:${servidor.port}';
+      final cliente = SupabaseClient(
+        url,
+        'llave-publica-de-prueba',
+        authOptions: const AuthClientOptions(autoRefreshToken: false),
+      );
+      addTearDown(cliente.dispose);
+      expect(cliente.auth.currentSession, isNull, reason: 'nadie ha entrado');
 
-    final base = BaseLocal.enMemoria();
-    addTearDown(base.close);
-    final cola = ColaSinConexion(
-      base: base,
-      enviador: EnviadorSupabase(
-        cliente,
-        tablas: const {'finanzas.gasto': 'movimientos'},
-      ),
-    );
-    await cola.encolar(
-      tipo: 'finanzas.gasto',
-      carga: const {'descripcion': 'Despensa (ejemplo)', 'monto_centavos': 18500},
-    );
+      final base = BaseLocal.enMemoria();
+      addTearDown(base.close);
+      final cola = ColaSinConexion(
+        base: base,
+        enviador: EnviadorSupabase(
+          cliente,
+          tablas: const {'finanzas.gasto': 'movimientos'},
+        ),
+      );
+      await cola.encolar(
+        tipo: 'finanzas.gasto',
+        carga: const {
+          'descripcion': 'Despensa (ejemplo)',
+          'monto_centavos': 18500,
+        },
+      );
 
-    await cola.procesar();
+      await cola.procesar();
 
-    final registro = (await cola.registros()).single;
-    expect(
-      registro.estado,
-      isNot(EstadoPendiente.rechazado),
-      reason: 'el gasto quedó rechazado para siempre: ${registro.ultimoError}',
-    );
-  });
+      final registro = (await cola.registros()).single;
+      expect(
+        registro.estado,
+        isNot(EstadoPendiente.rechazado),
+        reason:
+            'el gasto quedó rechazado para siempre: ${registro.ultimoError}',
+      );
+    },
+  );
 }

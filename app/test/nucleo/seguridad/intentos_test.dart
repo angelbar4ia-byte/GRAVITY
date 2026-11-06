@@ -38,27 +38,30 @@ void main() {
     );
   });
 
-  test('5 fallos bloquean; sobrevive al reinicio; un acierto reinicia', () async {
-    var limite = await abrir();
-    for (var i = 0; i < 4; i++) {
-      expect(limite.anotarFallo('ana'), ResultadoFallo.otraVez);
-    }
-    expect(limite.anotarFallo('ana'), ResultadoFallo.bloqueado);
-    expect(limite.esperaRestante('ana'), const Duration(seconds: 30));
-    expect(limite.bloqueado('beto'), isFalse, reason: 'cada quien lo suyo');
+  test(
+    '5 fallos bloquean; sobrevive al reinicio; un acierto reinicia',
+    () async {
+      var limite = await abrir();
+      for (var i = 0; i < 4; i++) {
+        expect(limite.anotarFallo('ana'), ResultadoFallo.otraVez);
+      }
+      expect(limite.anotarFallo('ana'), ResultadoFallo.bloqueado);
+      expect(limite.esperaRestante('ana'), const Duration(seconds: 30));
+      expect(limite.bloqueado('beto'), isFalse, reason: 'cada quien lo suyo');
 
-    limite = await abrir(); // la app se cerró y se abrió
-    expect(limite.bloqueado('ana'), isTrue);
-    expect(limite.estadoDe('ana').bloqueos, 1);
+      limite = await abrir(); // la app se cerró y se abrió
+      expect(limite.bloqueado('ana'), isTrue);
+      expect(limite.estadoDe('ana').bloqueos, 1);
 
-    ahora = ahora.add(const Duration(seconds: 30));
-    expect(limite.bloqueado('ana'), isFalse);
-    limite.anotarAcierto('ana');
-    expect(limite.estadoDe('ana').vacio, isTrue);
-    limite = await abrir();
-    expect(limite.estadoDe('ana').vacio, isTrue);
-    expect(almacen.datos.containsKey('prueba.intentos'), isFalse);
-  });
+      ahora = ahora.add(const Duration(seconds: 30));
+      expect(limite.bloqueado('ana'), isFalse);
+      limite.anotarAcierto('ana');
+      expect(limite.estadoDe('ana').vacio, isTrue);
+      limite = await abrir();
+      expect(limite.estadoDe('ana').vacio, isTrue);
+      expect(almacen.datos.containsKey('prueba.intentos'), isFalse);
+    },
+  );
 
   test('dato dañado: se empieza de cero sin fallar', () async {
     almacen.datos['prueba.intentos'] = '{no es json';

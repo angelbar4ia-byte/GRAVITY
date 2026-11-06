@@ -11,7 +11,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:gravity/app/app_gravity.dart';
 import 'package:gravity/app/arranque.dart';
 import 'package:gravity/app/dispositivo.dart';
-import 'package:gravity/diseno/proveedores.dart' show Reloj, RelojFijo, relojProvider;
+import 'package:gravity/diseno/proveedores.dart'
+    show Reloj, RelojFijo, relojProvider;
 import 'package:gravity/nucleo/base_local/base_local.dart';
 import 'package:gravity/nucleo/cola/proveedores_cola.dart';
 import 'package:gravity/nucleo/contratos/dispositivo.dart';

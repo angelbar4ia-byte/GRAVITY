@@ -124,44 +124,62 @@ void main() {
   Future<Object?> sobreDelPin(Sesion sesion, [String elPin = pin]) =>
       RepositorioTablet(almacen).leerCredencial(sesion.persona.id, elPin);
 
-  test('registra sin señal, sale, y sube solo con su token; vuelve a entrar sin '
-      'que nada se pierda', () async {
-    await entrar(dueno);
-    ponerSenal(false);
-    await registrarGasto();
-    expect((await cola.procesar()).reintentos, 1);
-    await salir();
+  test(
+    'registra sin señal, sale, y sube solo con su token; vuelve a entrar sin '
+    'que nada se pierda',
+    () async {
+      await entrar(dueno);
+      ponerSenal(false);
+      await registrarGasto();
+      expect((await cola.procesar()).reintentos, 1);
+      await salir();
 
-    // Salió con algo por subir: la credencial pasó a la bandeja (se mueve).
-    final permiso = (await permisoDe(dueno))!;
-    expect(permiso.estado, EstadoPermiso.enEspera);
-    expect(await sobreDelPin(dueno), isNull, reason: 'una sola copia viva');
-    expect(servicio.personaEnServidor, casa.persona.id, reason: 'de vuelta a Hogar');
+      // Salió con algo por subir: la credencial pasó a la bandeja (se mueve).
+      final permiso = (await permisoDe(dueno))!;
+      expect(permiso.estado, EstadoPermiso.enEspera);
+      expect(await sobreDelPin(dueno), isNull, reason: 'una sola copia viva');
+      expect(
+        servicio.personaEnServidor,
+        casa.persona.id,
+        reason: 'de vuelta a Hogar',
+      );
 
-    // Vuelve la señal: lo sube la cola SOLA, sin PIN, con el token del dueño.
-    ponerSenal(true);
-    final resumen = await cola.procesar();
-    expect(resumen.enviados, 1);
-    expect(servidor.idsDe(dueno.persona.id), ['gasto-1']);
-    expect(servidor.idsDe(casa.persona.id), isEmpty, reason: 'nunca con la cuenta Hogar');
-    expect((await permisoDe(dueno))!.estado, EstadoPermiso.devuelto);
-    expect(await cola.hayPendientesDe(dueno.persona.id), isFalse);
+      // Vuelve la señal: lo sube la cola SOLA, sin PIN, con el token del dueño.
+      ponerSenal(true);
+      final resumen = await cola.procesar();
+      expect(resumen.enviados, 1);
+      expect(servidor.idsDe(dueno.persona.id), ['gasto-1']);
+      expect(
+        servidor.idsDe(casa.persona.id),
+        isEmpty,
+        reason: 'nunca con la cuenta Hogar',
+      );
+      expect((await permisoDe(dueno))!.estado, EstadoPermiso.devuelto);
+      expect(await cola.hayPendientesDe(dueno.persona.id), isFalse);
 
-    // La próxima vez que entre con su PIN, todo vuelve al sobre del PIN.
-    await entrar(dueno);
-    expect(await permisoDe(dueno), isNull, reason: 'el permiso se borra al terminar');
-    expect(await sobreDelPin(dueno), isNotNull);
-    expect(servicio.usosDeCredencialVieja, 0, reason: 'nunca se usó una copia vieja');
-    // Y puede seguir como siempre: salir sin pendientes deja la credencial en su sobre.
-    await salir();
-    expect(await permisoDe(dueno), isNull);
-    expect(await sobreDelPin(dueno), isNotNull);
-    await entrar(dueno);
-    expect(servicio.usosDeCredencialVieja, 0);
-  });
+      // La próxima vez que entre con su PIN, todo vuelve al sobre del PIN.
+      await entrar(dueno);
+      expect(
+        await permisoDe(dueno),
+        isNull,
+        reason: 'el permiso se borra al terminar',
+      );
+      expect(await sobreDelPin(dueno), isNotNull);
+      expect(
+        servicio.usosDeCredencialVieja,
+        0,
+        reason: 'nunca se usó una copia vieja',
+      );
+      // Y puede seguir como siempre: salir sin pendientes deja la credencial en su sobre.
+      await salir();
+      expect(await permisoDe(dueno), isNull);
+      expect(await sobreDelPin(dueno), isNotNull);
+      await entrar(dueno);
+      expect(servicio.usosDeCredencialVieja, 0);
+    },
+  );
 
-  test('sin nada pendiente no hay permiso: la credencial queda en el sobre del PIN',
-      () async {
+  test('sin nada pendiente no hay permiso: la credencial queda en el sobre del PIN', () async {
     await entrar(dueno);
     await registrarGasto();
     await cola.procesar(); // hay señal: sube con su propia sesión
@@ -191,24 +209,35 @@ void main() {
     expect(servidor.idsDe(casa.persona.id), isEmpty);
   });
 
-  test('si vuelve a entrar antes de que haya señal, no pierde nada y sube con su '
-      'propia sesión', () async {
-    await entrar(dueno);
-    ponerSenal(false);
-    await registrarGasto();
-    await cola.procesar();
-    await salir();
-    expect(await permisoDe(dueno), isNotNull);
+  test(
+    'si vuelve a entrar antes de que haya señal, no pierde nada y sube con su '
+    'propia sesión',
+    () async {
+      await entrar(dueno);
+      ponerSenal(false);
+      await registrarGasto();
+      await cola.procesar();
+      await salir();
+      expect(await permisoDe(dueno), isNotNull);
 
-    await entrar(dueno); // sigue sin señal
-    expect(await permisoDe(dueno), isNull, reason: 'la credencial volvió al sobre del PIN');
-    expect(await sobreDelPin(dueno), isNotNull);
-    ponerSenal(true);
-    expect((await cola.procesar()).enviados, 1);
-    expect(servidor.idsDe(dueno.persona.id), ['gasto-1']);
-    expect(servicio.vecesAbrirAparte, 0, reason: 'dentro, sube con su sesión');
-    expect(servicio.usosDeCredencialVieja, 0);
-  });
+      await entrar(dueno); // sigue sin señal
+      expect(
+        await permisoDe(dueno),
+        isNull,
+        reason: 'la credencial volvió al sobre del PIN',
+      );
+      expect(await sobreDelPin(dueno), isNotNull);
+      ponerSenal(true);
+      expect((await cola.procesar()).enviados, 1);
+      expect(servidor.idsDe(dueno.persona.id), ['gasto-1']);
+      expect(
+        servicio.vecesAbrirAparte,
+        0,
+        reason: 'dentro, sube con su sesión',
+      );
+      expect(servicio.usosDeCredencialVieja, 0);
+    },
+  );
 
   test('quitar a la persona con algo por subir: se borra su permiso y lo pendiente '
       'queda en "requiere atención"', () async {
@@ -248,7 +277,11 @@ void main() {
     ponerSenal(true);
     ahora = ahora.add(const Duration(days: 7, minutes: 5));
     await cola.procesar();
-    expect(await cola.registros(), isEmpty, reason: 'ya no queda nada en claro');
+    expect(
+      await cola.registros(),
+      isEmpty,
+      reason: 'ya no queda nada en claro',
+    );
     expect(await cola.purgaProgramada(), isNull);
   });
 
@@ -279,8 +312,11 @@ void main() {
       credencial: ServicioSesionFalso.credencialDe(dueno, vuelta: 20),
     );
     expect(await permisoDe(dueno), isNull, reason: 'el permiso viejo no sirve');
-    expect(await cola.hayPendientesDe(dueno.persona.id), isTrue,
-        reason: 'lo que tenía por subir se conserva');
+    expect(
+      await cola.hayPendientesDe(dueno.persona.id),
+      isTrue,
+      reason: 'lo que tenía por subir se conserva',
+    );
 
     expect(
       await tablet.entrarConPin(dueno.persona.id, '739150'),
@@ -291,76 +327,96 @@ void main() {
     expect(servidor.idsDe(dueno.persona.id), contains('gasto-2'));
   });
 
-  test('B2: un error pasajero del servidor al entrar no borra la cuenta guardada',
-      () async {
-    // Abrir la sesión de la persona falla una vez (límite de peticiones) y luego sirve.
-    servicio.fallarSiguienteApertura = ErrorSesion.servidorOcupado;
-    expect(
-      await tablet.entrarConPin(dueno.persona.id, pin),
-      ResultadoDesbloqueo.error,
-    );
-    expect(await sobreDelPin(dueno), isNotNull, reason: 'la credencial sigue ahí');
-    expect(contenedor.read(controladorTabletProvider).usuarios, hasLength(2));
-    // Pasó el límite de peticiones: entra con el mismo PIN.
-    await entrar(dueno);
-  });
+  test(
+    'B2: un error pasajero del servidor al entrar no borra la cuenta guardada',
+    () async {
+      // Abrir la sesión de la persona falla una vez (límite de peticiones) y luego sirve.
+      servicio.fallarSiguienteApertura = ErrorSesion.servidorOcupado;
+      expect(
+        await tablet.entrarConPin(dueno.persona.id, pin),
+        ResultadoDesbloqueo.error,
+      );
+      expect(
+        await sobreDelPin(dueno),
+        isNotNull,
+        reason: 'la credencial sigue ahí',
+      );
+      expect(contenedor.read(controladorTabletProvider).usuarios, hasLength(2));
+      // Pasó el límite de peticiones: entra con el mismo PIN.
+      await entrar(dueno);
+    },
+  );
 
-  test('cambiar el PIN con la credencial en la bandeja: el PIN nuevo la abre', () async {
-    await entrar(dueno);
-    ponerSenal(false);
-    await registrarGasto();
-    await cola.procesar();
-    await salir();
-    ponerSenal(true);
-    await cola.procesar(); // sube y sella
-    expect((await permisoDe(dueno))!.estado, EstadoPermiso.devuelto);
+  test(
+    'cambiar el PIN con la credencial en la bandeja: el PIN nuevo la abre',
+    () async {
+      await entrar(dueno);
+      ponerSenal(false);
+      await registrarGasto();
+      await cola.procesar();
+      await salir();
+      ponerSenal(true);
+      await cola.procesar(); // sube y sella
+      expect((await permisoDe(dueno))!.estado, EstadoPermiso.devuelto);
 
-    expect(
-      await tablet.cambiarPin(dueno.persona.id, pinActual: pin, pinNuevo: '739150'),
-      ResultadoDesbloqueo.abierto,
-    );
-    expect(
-      await tablet.entrarConPin(dueno.persona.id, pin),
-      ResultadoDesbloqueo.pinIncorrecto,
-    );
-    await entrar(dueno, elPin: '739150');
-    expect(await permisoDe(dueno), isNull);
-    expect(await sobreDelPin(dueno, '739150'), isNotNull);
-    expect(servicio.usosDeCredencialVieja, 0);
-  });
+      expect(
+        await tablet.cambiarPin(
+          dueno.persona.id,
+          pinActual: pin,
+          pinNuevo: '739150',
+        ),
+        ResultadoDesbloqueo.abierto,
+      );
+      expect(
+        await tablet.entrarConPin(dueno.persona.id, pin),
+        ResultadoDesbloqueo.pinIncorrecto,
+      );
+      await entrar(dueno, elPin: '739150');
+      expect(await permisoDe(dueno), isNull);
+      expect(await sobreDelPin(dueno, '739150'), isNotNull);
+      expect(servicio.usosDeCredencialVieja, 0);
+    },
+  );
 
-  test('a los 7 días sin señal caduca: aviso, nada se pierde y la persona tendrá '
-      'que volver a agregarse', () async {
-    await entrar(dueno);
-    ponerSenal(false);
-    await registrarGasto();
-    await cola.procesar();
-    await salir();
+  test(
+    'a los 7 días sin señal caduca: aviso, nada se pierde y la persona tendrá '
+    'que volver a agregarse',
+    () async {
+      await entrar(dueno);
+      ponerSenal(false);
+      await registrarGasto();
+      await cola.procesar();
+      await salir();
 
-    ahora = ahora.add(const Duration(days: 7, minutes: 1));
-    await cola.procesar();
-    expect(await permisoDe(dueno), isNull);
-    expect(await cola.contarCaducadosDeLaBandeja(), 1);
-    expect(
-      await cola.requierenAtencion(personaId: dueno.persona.id),
-      hasLength(1),
-      reason: 'el gasto sigue ahí, para revisarlo',
-    );
-    // Su credencial ya no existe en ninguna parte: tendrá que agregarse otra vez.
-    expect(
-      await tablet.entrarConPin(dueno.persona.id, pin),
-      ResultadoDesbloqueo.faltaCuenta,
-    );
-  });
+      ahora = ahora.add(const Duration(days: 7, minutes: 1));
+      await cola.procesar();
+      expect(await permisoDe(dueno), isNull);
+      expect(await cola.contarCaducadosDeLaBandeja(), 1);
+      expect(
+        await cola.requierenAtencion(personaId: dueno.persona.id),
+        hasLength(1),
+        reason: 'el gasto sigue ahí, para revisarlo',
+      );
+      // Su credencial ya no existe en ninguna parte: tendrá que agregarse otra vez.
+      expect(
+        await tablet.entrarConPin(dueno.persona.id, pin),
+        ResultadoDesbloqueo.faltaCuenta,
+      );
+    },
+  );
 
-  test('la credencial nunca está en claro en el almacén al salir sin pendientes',
-      () async {
-    await entrar(dueno);
-    await salir();
-    final todo = almacen.datos.entries.map((e) => '${e.key}=${e.value}').join('\n');
-    expect(todo, isNot(contains('falsa:')));
-    expect(todo, isNot(contains(pin)));
-  });
+  test(
+    'la credencial nunca está en claro en el almacén al salir sin pendientes',
+    () async {
+      await entrar(dueno);
+      await salir();
+      final todo = almacen.datos.entries
+          .map((e) => '${e.key}=${e.value}')
+          .join('\n');
+      expect(todo, isNot(contains('falsa:')));
+      expect(todo, isNot(contains(pin)));
+    },
+  );
 
   // D18 (23/oct): quien ve dinero usa un PIN de 6 dígitos. Quien ya tenía uno
   // más corto lo cambia al entrar, sin perder su cuenta guardada ni su bandeja.
@@ -379,7 +435,10 @@ void main() {
               ? u.copiarCon(hashPin: HashPin.crear(corto))
               : u,
       ]);
-      final guardada = (await repositorio.leerCredencial(sesion.persona.id, pin))!;
+      final guardada = (await repositorio.leerCredencial(
+        sesion.persona.id,
+        pin,
+      ))!;
       await repositorio.guardarCredencial(
         sesion.persona.id,
         LlavePin.derivar(corto),
@@ -410,92 +469,117 @@ void main() {
       return credencial;
     }
 
-    test('con el PIN corto no entra: pide el nuevo y no cuenta como fallo', () async {
-      await conPinAnterior(dueno);
-      // Cuatro fallos y luego el PIN corto bueno: el contador se reinicia.
-      for (var i = 0; i < 4; i++) {
+    test(
+      'con el PIN corto no entra: pide el nuevo y no cuenta como fallo',
+      () async {
+        await conPinAnterior(dueno);
+        // Cuatro fallos y luego el PIN corto bueno: el contador se reinicia.
+        for (var i = 0; i < 4; i++) {
+          expect(
+            await tablet.entrarConPin(dueno.persona.id, '0000'),
+            ResultadoDesbloqueo.pinIncorrecto,
+          );
+        }
         expect(
-          await tablet.entrarConPin(dueno.persona.id, '0000'),
-          ResultadoDesbloqueo.pinIncorrecto,
+          await tablet.entrarConPin(dueno.persona.id, corto),
+          ResultadoDesbloqueo.debeCambiarPin,
         );
-      }
-      expect(
-        await tablet.entrarConPin(dueno.persona.id, corto),
-        ResultadoDesbloqueo.debeCambiarPin,
-      );
-      expect(contenedor.read(controladorTabletProvider).usuarioActivo, isNull);
-      expect(servicio.personaEnServidor, casa.persona.id, reason: 'sigue en Hogar');
-      expect(tablet.esperaRestante(dueno.persona.id), isNull);
-      // Nada cambió: su cuenta guardada sigue abriendo con el PIN de siempre.
-      expect(await sobreDelPin(dueno, corto), isNotNull);
-    });
+        expect(
+          contenedor.read(controladorTabletProvider).usuarioActivo,
+          isNull,
+        );
+        expect(
+          servicio.personaEnServidor,
+          casa.persona.id,
+          reason: 'sigue en Hogar',
+        );
+        expect(tablet.esperaRestante(dueno.persona.id), isNull);
+        // Nada cambió: su cuenta guardada sigue abriendo con el PIN de siempre.
+        expect(await sobreDelPin(dueno, corto), isNotNull);
+      },
+    );
 
-    test('cambia a 6 dígitos y entra; su cuenta guardada se vuelve a cifrar con '
-        'el PIN nuevo', () async {
-      await conPinAnterior(dueno);
-      final vueltaAntes = ServicioSesionFalso.leerCredencial(
-        (await sobreDelPin(dueno, corto) as (LlavePin, String)).$2,
-      )?.$2;
-      expect(
-        await tablet.cambiarPinYEntrar(
-          dueno.persona.id,
-          pinActual: corto,
-          pinNuevo: nuevo,
-        ),
-        ResultadoDesbloqueo.abierto,
-      );
-      expect(contenedor.read(controladorTabletProvider).usuarioActivo?.personaId,
-          dueno.persona.id);
-      expect(servicio.personaEnServidor, dueno.persona.id);
-      await salir();
-      // El PIN corto ya no abre nada; el nuevo sí, y es la misma cuenta.
-      expect(await sobreDelPin(dueno, corto), isNull);
-      final despues = await sobreDelPin(dueno, nuevo) as (LlavePin, String);
-      expect(ServicioSesionFalso.leerCredencial(despues.$2)?.$2,
-          greaterThanOrEqualTo(vueltaAntes!));
-      expect(
-        await tablet.entrarConPin(dueno.persona.id, corto),
-        ResultadoDesbloqueo.pinIncorrecto,
-      );
-      await entrar(dueno, elPin: nuevo);
-      expect(servicio.usosDeCredencialVieja, 0);
-    });
-
-    test('el PIN nuevo debe ser de 6 dígitos y no trivial: si no, nada cambia',
-        () async {
-      await conPinAnterior(dueno);
-      for (final malo in ['7391', '73915', '123456', '111111', '121212']) {
-        await expectLater(
-          tablet.cambiarPinYEntrar(
+    test(
+      'cambia a 6 dígitos y entra; su cuenta guardada se vuelve a cifrar con '
+      'el PIN nuevo',
+      () async {
+        await conPinAnterior(dueno);
+        final vueltaAntes = ServicioSesionFalso.leerCredencial(
+          (await sobreDelPin(dueno, corto) as (LlavePin, String)).$2,
+        )?.$2;
+        expect(
+          await tablet.cambiarPinYEntrar(
             dueno.persona.id,
             pinActual: corto,
-            pinNuevo: malo,
+            pinNuevo: nuevo,
           ),
-          throwsArgumentError,
-          reason: malo,
+          ResultadoDesbloqueo.abierto,
         );
-      }
-      expect(contenedor.read(controladorTabletProvider).usuarioActivo, isNull);
-      expect(await sobreDelPin(dueno, corto), isNotNull);
-      expect(
-        await tablet.entrarConPin(dueno.persona.id, corto),
-        ResultadoDesbloqueo.debeCambiarPin,
-      );
-    });
-
-    test('el PIN actual equivocado no cambia nada y cuenta como fallo', () async {
-      await conPinAnterior(dueno);
-      expect(
-        await tablet.cambiarPinYEntrar(
+        expect(
+          contenedor.read(controladorTabletProvider).usuarioActivo?.personaId,
           dueno.persona.id,
-          pinActual: '0000',
-          pinNuevo: nuevo,
-        ),
-        ResultadoDesbloqueo.pinIncorrecto,
-      );
-      expect(await sobreDelPin(dueno, corto), isNotNull);
-      expect(await sobreDelPin(dueno, nuevo), isNull);
-    });
+        );
+        expect(servicio.personaEnServidor, dueno.persona.id);
+        await salir();
+        // El PIN corto ya no abre nada; el nuevo sí, y es la misma cuenta.
+        expect(await sobreDelPin(dueno, corto), isNull);
+        final despues = await sobreDelPin(dueno, nuevo) as (LlavePin, String);
+        expect(
+          ServicioSesionFalso.leerCredencial(despues.$2)?.$2,
+          greaterThanOrEqualTo(vueltaAntes!),
+        );
+        expect(
+          await tablet.entrarConPin(dueno.persona.id, corto),
+          ResultadoDesbloqueo.pinIncorrecto,
+        );
+        await entrar(dueno, elPin: nuevo);
+        expect(servicio.usosDeCredencialVieja, 0);
+      },
+    );
+
+    test(
+      'el PIN nuevo debe ser de 6 dígitos y no trivial: si no, nada cambia',
+      () async {
+        await conPinAnterior(dueno);
+        for (final malo in ['7391', '73915', '123456', '111111', '121212']) {
+          await expectLater(
+            tablet.cambiarPinYEntrar(
+              dueno.persona.id,
+              pinActual: corto,
+              pinNuevo: malo,
+            ),
+            throwsArgumentError,
+            reason: malo,
+          );
+        }
+        expect(
+          contenedor.read(controladorTabletProvider).usuarioActivo,
+          isNull,
+        );
+        expect(await sobreDelPin(dueno, corto), isNotNull);
+        expect(
+          await tablet.entrarConPin(dueno.persona.id, corto),
+          ResultadoDesbloqueo.debeCambiarPin,
+        );
+      },
+    );
+
+    test(
+      'el PIN actual equivocado no cambia nada y cuenta como fallo',
+      () async {
+        await conPinAnterior(dueno);
+        expect(
+          await tablet.cambiarPinYEntrar(
+            dueno.persona.id,
+            pinActual: '0000',
+            pinNuevo: nuevo,
+          ),
+          ResultadoDesbloqueo.pinIncorrecto,
+        );
+        expect(await sobreDelPin(dueno, corto), isNotNull);
+        expect(await sobreDelPin(dueno, nuevo), isNull);
+      },
+    );
 
     test('la pareja (coadministradora) también: 6 dígitos', () async {
       await conPinAnterior(pareja);
@@ -523,8 +607,11 @@ void main() {
         await tablet.entrarConPin(dueno.persona.id, corto),
         ResultadoDesbloqueo.debeCambiarPin,
       );
-      expect((await permisoDe(dueno))!.estado, EstadoPermiso.enEspera,
-          reason: 'sin entrar, la bandeja sigue como estaba');
+      expect(
+        (await permisoDe(dueno))!.estado,
+        EstadoPermiso.enEspera,
+        reason: 'sin entrar, la bandeja sigue como estaba',
+      );
       expect(
         await tablet.cambiarPinYEntrar(
           dueno.persona.id,
@@ -537,8 +624,10 @@ void main() {
       expect(await permisoDe(dueno), isNull);
       final guardada = await sobreDelPin(dueno, nuevo) as (LlavePin, String)?;
       expect(guardada, isNotNull);
-      expect(ServicioSesionFalso.leerCredencial(guardada!.$2)?.$1,
-          ServicioSesionFalso.leerCredencial(credencial)?.$1);
+      expect(
+        ServicioSesionFalso.leerCredencial(guardada!.$2)?.$1,
+        ServicioSesionFalso.leerCredencial(credencial)?.$1,
+      );
       expect(await cola.hayPendientesDe(dueno.persona.id), isTrue);
       // Y el pendiente sube con su propia sesión.
       expect((await cola.procesar()).enviados, 1);
@@ -562,40 +651,59 @@ void main() {
         ),
         ResultadoDesbloqueo.abierto,
       );
-      expect(await permisoDe(dueno), isNull, reason: 'el sobre se abrió con el PIN nuevo');
+      expect(
+        await permisoDe(dueno),
+        isNull,
+        reason: 'el sobre se abrió con el PIN nuevo',
+      );
       expect(await sobreDelPin(dueno, nuevo), isNotNull);
       expect(servicio.personaEnServidor, dueno.persona.id);
     });
 
-    test('el PIN corto del PIN nuevo ya no abre el sobre de la bandeja', () async {
-      await conPinAnterior(dueno);
-      final credencial = await conCredencialEnLaBandeja(dueno);
-      await contenedor
-          .read(bandejaDeSalidaProvider)
-          .sellarYDevolver(dueno.persona.id, credencial);
-      await tablet.cambiarPin(dueno.persona.id, pinActual: corto, pinNuevo: nuevo);
-      final permiso = (await permisoDe(dueno))!;
-      expect(CifradoPin.descifrar(corto, permiso.clavePrivadaCifrada), isNull);
-      expect(CifradoPin.descifrar(nuevo, permiso.clavePrivadaCifrada), isNotNull);
-    });
-
-    test('en la tablet pública, para una sola acción, también pide el PIN nuevo',
-        () async {
-      await conPinAnterior(dueno);
-      expect(
-        await tablet.entrarParaAccion(dueno.persona.id, corto),
-        ResultadoDesbloqueo.debeCambiarPin,
-      );
-      expect(
-        await tablet.cambiarPinYEntrar(
+    test(
+      'el PIN corto del PIN nuevo ya no abre el sobre de la bandeja',
+      () async {
+        await conPinAnterior(dueno);
+        final credencial = await conCredencialEnLaBandeja(dueno);
+        await contenedor
+            .read(bandejaDeSalidaProvider)
+            .sellarYDevolver(dueno.persona.id, credencial);
+        await tablet.cambiarPin(
           dueno.persona.id,
           pinActual: corto,
           pinNuevo: nuevo,
-          paraAccion: true,
-        ),
-        ResultadoDesbloqueo.abierto,
-      );
-      expect(contenedor.read(controladorTabletProvider).soloAccion, isTrue);
-    });
+        );
+        final permiso = (await permisoDe(dueno))!;
+        expect(
+          CifradoPin.descifrar(corto, permiso.clavePrivadaCifrada),
+          isNull,
+        );
+        expect(
+          CifradoPin.descifrar(nuevo, permiso.clavePrivadaCifrada),
+          isNotNull,
+        );
+      },
+    );
+
+    test(
+      'en la tablet pública, para una sola acción, también pide el PIN nuevo',
+      () async {
+        await conPinAnterior(dueno);
+        expect(
+          await tablet.entrarParaAccion(dueno.persona.id, corto),
+          ResultadoDesbloqueo.debeCambiarPin,
+        );
+        expect(
+          await tablet.cambiarPinYEntrar(
+            dueno.persona.id,
+            pinActual: corto,
+            pinNuevo: nuevo,
+            paraAccion: true,
+          ),
+          ResultadoDesbloqueo.abierto,
+        );
+        expect(contenedor.read(controladorTabletProvider).soloAccion, isTrue);
+      },
+    );
   });
 }

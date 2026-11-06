@@ -16,15 +16,27 @@ void main() {
   });
 
   test('crear valida y guarda; archivar lo saca de Hoy', () async {
-    expect(() => s.crearObjetivo(titulo: '', area: 'personal'), throwsArgumentError);
-    final o = await s.crearObjetivo(titulo: 'Leer', area: 'personal', unidad: 'páginas', metaValor: 10);
+    expect(
+      () => s.crearObjetivo(titulo: '', area: 'personal'),
+      throwsArgumentError,
+    );
+    final o = await s.crearObjetivo(
+      titulo: 'Leer',
+      area: 'personal',
+      unidad: 'páginas',
+      metaValor: 10,
+    );
     expect((await s.hoyDe()).length, 1);
     await s.archivar(o);
     expect(await s.hoyDe(), isEmpty);
   });
 
   test('hecho, deshacer y racha con gracia', () async {
-    final o = await s.crearObjetivo(titulo: 'Orar', area: 'espiritual', inicio: DateTime.utc(2026, 11, 2));
+    final o = await s.crearObjetivo(
+      titulo: 'Orar',
+      area: 'espiritual',
+      inicio: DateTime.utc(2026, 11, 2),
+    );
     await s.marcarHecho(o, fecha: DateTime.utc(2026, 11, 2));
     await s.marcarHecho(o, fecha: DateTime.utc(2026, 11, 3));
     // miércoles sin cumplir (gracia); jueves hecho
@@ -44,14 +56,25 @@ void main() {
     final o = await s.crearObjetivo(titulo: 'x', area: 'salud');
     await s.marcarHecho(o);
     await s.omitir(o, motivo: 'cansancio');
-    final regs = await repo.registros(DateTime.utc(2026, 11, 1), DateTime.utc(2026, 11, 3));
+    final regs = await repo.registros(
+      DateTime.utc(2026, 11, 1),
+      DateTime.utc(2026, 11, 3),
+    );
     expect(regs.length, 1);
     expect(regs.single.estado, EstadoRegistro.omitido);
-    expect(idRegistro(o.id, DateTime.utc(2026, 11, 2)), idRegistro(o.id, DateTime.utc(2026, 11, 2)));
+    expect(
+      idRegistro(o.id, DateTime.utc(2026, 11, 2)),
+      idRegistro(o.id, DateTime.utc(2026, 11, 2)),
+    );
   });
 
   test('objetivo por días de la semana y fila del servidor', () async {
-    final o = await s.crearObjetivo(titulo: 'Gym', area: 'salud', frecuencia: Frecuencia.diasSemana, diasSemana: 1 | 4);
+    final o = await s.crearObjetivo(
+      titulo: 'Gym',
+      area: 'salud',
+      frecuencia: Frecuencia.diasSemana,
+      diasSemana: 1 | 4,
+    );
     expect(o.programadoEn(DateTime.utc(2026, 11, 2)), isTrue);
     expect(o.programadoEn(DateTime.utc(2026, 11, 3)), isFalse);
     final f = o.aFila();

@@ -36,14 +36,15 @@ void main() {
   }
 
   void guardarBloqueo({bool huella = false, Duration? tras}) {
-    almacen.datos[ControladorBloqueo.claveConfiguracion(dueno.persona.id)] =
-        jsonEncode(
-          ConfiguracionBloqueo(
-            hashPin: HashPin.crear('246813', iteraciones: 50),
-            huella: huella,
-            tras: tras ?? bloqueoTrasPorOmision,
-          ).aJson(),
-        );
+    almacen.datos[ControladorBloqueo.claveConfiguracion(
+      dueno.persona.id,
+    )] = jsonEncode(
+      ConfiguracionBloqueo(
+        hashPin: HashPin.crear('246813', iteraciones: 50),
+        huella: huella,
+        tras: tras ?? bloqueoTrasPorOmision,
+      ).aJson(),
+    );
   }
 
   setUp(() {
@@ -65,7 +66,10 @@ void main() {
     guardarBloqueo();
     final (contenedor, controlador) = await abrir();
     expect(contenedor.read(controladorBloqueoProvider).bloqueado, isTrue);
-    expect(controlador.desbloquearConPin('0000'), ResultadoBloqueo.pinIncorrecto);
+    expect(
+      controlador.desbloquearConPin('0000'),
+      ResultadoBloqueo.pinIncorrecto,
+    );
     expect(contenedor.read(controladorBloqueoProvider).bloqueado, isTrue);
     expect(controlador.desbloquearConPin('246813'), ResultadoBloqueo.abierto);
     expect(contenedor.read(controladorBloqueoProvider).bloqueado, isFalse);

@@ -56,49 +56,59 @@ void main() {
 
   tearDown(() => base.close());
 
-  test('encolar guarda con UUID, tipo, carga JSON y estado pendiente', () async {
-    final real = ColaSinConexion(base: base, enviador: enviador);
-    final id = await real.encolar(
-      tipo: 'finanzas.gasto',
-      carga: {'monto_centavos': 12550, 'nota': 'súper'},
-    );
-    expect(
-      id,
-      matches(RegExp(r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$')),
-    );
-    final registros = await real.registros();
-    expect(registros, hasLength(1));
-    expect(registros.single.tipo, 'finanzas.gasto');
-    expect(registros.single.carga, '{"monto_centavos":12550,"nota":"súper"}');
-    expect(registros.single.estado, EstadoPendiente.pendiente);
-    expect(registros.single.intentos, 0);
-  });
+  test(
+    'encolar guarda con UUID, tipo, carga JSON y estado pendiente',
+    () async {
+      final real = ColaSinConexion(base: base, enviador: enviador);
+      final id = await real.encolar(
+        tipo: 'finanzas.gasto',
+        carga: {'monto_centavos': 12550, 'nota': 'súper'},
+      );
+      expect(
+        id,
+        matches(
+          RegExp(
+            r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
+          ),
+        ),
+      );
+      final registros = await real.registros();
+      expect(registros, hasLength(1));
+      expect(registros.single.tipo, 'finanzas.gasto');
+      expect(registros.single.carga, '{"monto_centavos":12550,"nota":"súper"}');
+      expect(registros.single.estado, EstadoPendiente.pendiente);
+      expect(registros.single.intentos, 0);
+    },
+  );
 
-  test('sin señal falla, y al volver la señal se sube (servidor simulado)', () async {
-    await cola.encolar(tipo: 'habitos.marca', carga: {'hecho': true});
+  test(
+    'sin señal falla, y al volver la señal se sube (servidor simulado)',
+    () async {
+      await cola.encolar(tipo: 'habitos.marca', carga: {'hecho': true});
 
-    final sinSenal = await cola.procesar();
-    expect(sinSenal.enviados, 0);
-    expect(sinSenal.reintentos, 1);
-    expect(sinSenal.restantes, 1);
-    expect(enviador.servidor, isEmpty);
+      final sinSenal = await cola.procesar();
+      expect(sinSenal.enviados, 0);
+      expect(sinSenal.reintentos, 1);
+      expect(sinSenal.restantes, 1);
+      expect(enviador.servidor, isEmpty);
 
-    // Vuelve la señal, pero aún no pasa la espera: no se intenta.
-    enviador.conSenal = true;
-    final antes = await cola.procesar();
-    expect(antes.enviados, 0);
-    expect(enviador.intentos, hasLength(1));
+      // Vuelve la señal, pero aún no pasa la espera: no se intenta.
+      enviador.conSenal = true;
+      final antes = await cola.procesar();
+      expect(antes.enviados, 0);
+      expect(enviador.intentos, hasLength(1));
 
-    ahora = ahora.add(const Duration(seconds: 5));
-    final despues = await cola.procesar();
-    expect(despues.enviados, 1);
-    expect(despues.restantes, 0);
-    expect(enviador.servidor.keys, ['id-0']);
-    final registro = (await cola.registros()).single;
-    expect(registro.estado, EstadoPendiente.enviado);
-    expect(registro.intentos, 2);
-    expect(registro.ultimoError, isNull);
-  });
+      ahora = ahora.add(const Duration(seconds: 5));
+      final despues = await cola.procesar();
+      expect(despues.enviados, 1);
+      expect(despues.restantes, 0);
+      expect(enviador.servidor.keys, ['id-0']);
+      final registro = (await cola.registros()).single;
+      expect(registro.estado, EstadoPendiente.enviado);
+      expect(registro.intentos, 2);
+      expect(registro.ultimoError, isNull);
+    },
+  );
 
   test('la espera crece con cada intento fallido', () async {
     await cola.encolar(tipo: 't', carga: {});
@@ -144,20 +154,23 @@ void main() {
     expect(enviador.intentos, ['uuid-fijo']);
   });
 
-  test('envía en orden de creación y detiene la ronda si falla la red', () async {
-    for (var i = 0; i < 3; i++) {
-      await cola.encolar(tipo: 't', carga: {'n': i});
-    }
-    final resumen = await cola.procesar();
-    expect(enviador.intentos, ['id-0']);
-    expect(resumen.restantes, 3);
+  test(
+    'envía en orden de creación y detiene la ronda si falla la red',
+    () async {
+      for (var i = 0; i < 3; i++) {
+        await cola.encolar(tipo: 't', carga: {'n': i});
+      }
+      final resumen = await cola.procesar();
+      expect(enviador.intentos, ['id-0']);
+      expect(resumen.restantes, 3);
 
-    enviador.conSenal = true;
-    ahora = ahora.add(const Duration(minutes: 1));
-    final segundo = await cola.procesar();
-    expect(segundo.enviados, 3);
-    expect(enviador.intentos, ['id-0', 'id-0', 'id-1', 'id-2']);
-  });
+      enviador.conSenal = true;
+      ahora = ahora.add(const Duration(minutes: 1));
+      final segundo = await cola.procesar();
+      expect(segundo.enviados, 3);
+      expect(enviador.intentos, ['id-0', 'id-0', 'id-1', 'id-2']);
+    },
+  );
 
   test('una excepción del enviador cuenta como reintento', () async {
     enviador.lanzarExcepcion = true;
@@ -229,24 +242,41 @@ void main() {
     // servidor es permanente (requiere atención).
     expect(clasificarErrorPostgrest('23503'), ResultadoEnvio.reintentar);
     for (final codigo in ['23505', '23514', '22023', '55000', '42501']) {
-      expect(clasificarErrorPostgrest(codigo), ResultadoEnvio.rechazado,
-          reason: codigo);
+      expect(
+        clasificarErrorPostgrest(codigo),
+        ResultadoEnvio.rechazado,
+        reason: codigo,
+      );
     }
     expect(clasificarErrorPostgrest('22P02'), ResultadoEnvio.rechazado);
     expect(clasificarErrorPostgrest('PGRST301'), ResultadoEnvio.reintentar);
     expect(clasificarErrorPostgrest(null), ResultadoEnvio.reintentar);
     // Pasajeros: servidor caído u ocupado, conexión con la base, tiempo.
     for (final codigo in [
-      '503', '502', '429', 'PGRST000', '57014', '57P01', '40001', '40P01',
-      '08006', '53300',
+      '503',
+      '502',
+      '429',
+      'PGRST000',
+      '57014',
+      '57P01',
+      '40001',
+      '40P01',
+      '08006',
+      '53300',
     ]) {
-      expect(clasificarErrorPostgrest(codigo), ResultadoEnvio.reintentar,
-          reason: codigo);
+      expect(
+        clasificarErrorPostgrest(codigo),
+        ResultadoEnvio.reintentar,
+        reason: codigo,
+      );
     }
     // Permanentes: requieren atención (no se reintentan sin fin, M16).
     for (final codigo in ['PGRST204', '42703', '42P01', 'P0001', '400']) {
-      expect(clasificarErrorPostgrest(codigo), ResultadoEnvio.rechazado,
-          reason: codigo);
+      expect(
+        clasificarErrorPostgrest(codigo),
+        ResultadoEnvio.rechazado,
+        reason: codigo,
+      );
     }
   });
 
@@ -264,19 +294,23 @@ void main() {
       final registros = await cola.registros();
       expect(registros.first.estado, EstadoPendiente.pendiente);
       expect(registros.first.ultimoError, 'Falta la cuenta c1');
-      expect(registros.first.siguienteIntento,
-          ahora.add(const Duration(seconds: 5)));
+      expect(
+        registros.first.siguienteIntento,
+        ahora.add(const Duration(seconds: 5)),
+      );
       expect(registros.last.estado, EstadoPendiente.enviado);
     });
 
-    test('un fallo de red sí detiene la ronda (a diferencia de la dependencia)',
-        () async {
-      enviador.lanzarExcepcion = true;
-      await cola.encolar(tipo: 'a', carga: {});
-      await cola.encolar(tipo: 'b', carga: {});
-      await cola.procesar();
-      expect(enviador.intentos, ['id-0']);
-    });
+    test(
+      'un fallo de red sí detiene la ronda (a diferencia de la dependencia)',
+      () async {
+        enviador.lanzarExcepcion = true;
+        await cola.encolar(tipo: 'a', carga: {});
+        await cola.encolar(tipo: 'b', carga: {});
+        await cola.procesar();
+        expect(enviador.intentos, ['id-0']);
+      },
+    );
 
     test('la dependencia tiene su propio límite de intentos', () async {
       final limitada = ColaSinConexion(
@@ -294,8 +328,10 @@ void main() {
         await limitada.procesar();
         ahora = ahora.add(const Duration(hours: 1));
       }
-      expect((await limitada.registros()).single.estado,
-          EstadoPendiente.pendiente);
+      expect(
+        (await limitada.registros()).single.estado,
+        EstadoPendiente.pendiente,
+      );
       await limitada.procesar();
       final registro = (await limitada.registros()).single;
       expect(registro.estado, EstadoPendiente.rechazado);
@@ -303,25 +339,28 @@ void main() {
       expect(registro.ultimoError, contains('Falta la cuenta c1'));
     });
 
-    test('sube primero el nivel menor y, dentro del nivel, por creación',
-        () async {
-      final ordenada = ColaSinConexion(
-        base: base,
-        enviador: enviador,
-        reloj: () => ahora,
-        generarId: () => 'id-${siguienteId++}',
-        nivelDeSubida: (tipo) =>
-            const {'cuenta': 0, 'movimiento': 1, 'conciliacion': 2}[tipo] ?? 0,
-      );
-      enviador.conSenal = true;
-      await ordenada.encolar(tipo: 'conciliacion', carga: {}); // id-0
-      await ordenada.encolar(tipo: 'movimiento', carga: {}); // id-1
-      await ordenada.encolar(tipo: 'cuenta', carga: {}); // id-2
-      await ordenada.encolar(tipo: 'movimiento', carga: {}); // id-3
-      await ordenada.encolar(tipo: 'cuenta', carga: {}); // id-4
-      await ordenada.procesar();
-      expect(enviador.intentos, ['id-2', 'id-4', 'id-1', 'id-3', 'id-0']);
-    });
+    test(
+      'sube primero el nivel menor y, dentro del nivel, por creación',
+      () async {
+        final ordenada = ColaSinConexion(
+          base: base,
+          enviador: enviador,
+          reloj: () => ahora,
+          generarId: () => 'id-${siguienteId++}',
+          nivelDeSubida: (tipo) =>
+              const {'cuenta': 0, 'movimiento': 1, 'conciliacion': 2}[tipo] ??
+              0,
+        );
+        enviador.conSenal = true;
+        await ordenada.encolar(tipo: 'conciliacion', carga: {}); // id-0
+        await ordenada.encolar(tipo: 'movimiento', carga: {}); // id-1
+        await ordenada.encolar(tipo: 'cuenta', carga: {}); // id-2
+        await ordenada.encolar(tipo: 'movimiento', carga: {}); // id-3
+        await ordenada.encolar(tipo: 'cuenta', carga: {}); // id-4
+        await ordenada.procesar();
+        expect(enviador.intentos, ['id-2', 'id-4', 'id-1', 'id-3', 'id-0']);
+      },
+    );
 
     test('el nivel sale del enviador si es un EnviadorOrdenado', () async {
       final conNiveles = EnviadorConNiveles({'b': 0, 'a': 1});
@@ -370,10 +409,10 @@ void main() {
     test('cada registro guarda quién lo hizo', () async {
       await ligada.encolar(tipo: 't', carga: {});
       await ligada.encolar(tipo: 't', carga: {}, personaId: 'persona-b');
-      expect([for (final r in await ligada.registros()) r.personaId], [
-        'persona-a',
-        'persona-b',
-      ]);
+      expect(
+        [for (final r in await ligada.registros()) r.personaId],
+        ['persona-a', 'persona-b'],
+      );
     });
 
     test('sin sesión no envía nada ni cuenta intentos', () async {
@@ -413,65 +452,69 @@ void main() {
       expect(registro.siguienteIntento, isNull);
     });
 
-    test('lo rechazado requiere atención: se ve, se reintenta o se descarta',
-        () async {
-      conSesion = 'persona-a';
-      enviador.rechazarTipos.add('malo');
-      await ligada.encolar(tipo: 'malo', carga: {'descripcion': 'Despensa'});
-      await ligada.encolar(tipo: 'malo', carga: {}, personaId: 'persona-b');
-      final avisos = <int>[];
-      final suscripcion = ligada
-          .vigilarAtencion(personaId: 'persona-a')
-          .listen((lista) => avisos.add(lista.length));
-      await pumpEventQueue();
-      await ligada.procesar();
-      await pumpEventQueue();
-      expect(avisos.last, 1);
-      // Cada quien ve solo lo suyo (D5).
-      final deA = await ligada.requierenAtencion(personaId: 'persona-a');
-      expect(deA.single.id, 'id-0');
-      expect(deA.single.ultimoError, isNotNull);
+    test(
+      'lo rechazado requiere atención: se ve, se reintenta o se descarta',
+      () async {
+        conSesion = 'persona-a';
+        enviador.rechazarTipos.add('malo');
+        await ligada.encolar(tipo: 'malo', carga: {'descripcion': 'Despensa'});
+        await ligada.encolar(tipo: 'malo', carga: {}, personaId: 'persona-b');
+        final avisos = <int>[];
+        final suscripcion = ligada
+            .vigilarAtencion(personaId: 'persona-a')
+            .listen((lista) => avisos.add(lista.length));
+        await pumpEventQueue();
+        await ligada.procesar();
+        await pumpEventQueue();
+        expect(avisos.last, 1);
+        // Cada quien ve solo lo suyo (D5).
+        final deA = await ligada.requierenAtencion(personaId: 'persona-a');
+        expect(deA.single.id, 'id-0');
+        expect(deA.single.ultimoError, isNotNull);
 
-      // Reintentar: vuelve a la cola y, si el servidor ya lo acepta, sube.
-      enviador.rechazarTipos.clear();
-      await ligada.reintentar('id-0');
-      await ligada.procesar();
-      expect(enviador.servidor.keys, contains('id-0'));
-      await pumpEventQueue();
-      expect(avisos.last, 0);
+        // Reintentar: vuelve a la cola y, si el servidor ya lo acepta, sube.
+        enviador.rechazarTipos.clear();
+        await ligada.reintentar('id-0');
+        await ligada.procesar();
+        expect(enviador.servidor.keys, contains('id-0'));
+        await pumpEventQueue();
+        expect(avisos.last, 0);
 
-      // Descartar: deja de requerir atención y no se sube.
-      registra = 'persona-a';
-      enviador.rechazarTipos.add('malo');
-      await ligada.encolar(tipo: 'malo', carga: {});
-      await ligada.procesar();
-      await ligada.descartar('id-2');
-      expect(await ligada.requierenAtencion(personaId: 'persona-a'), isEmpty);
-      expect(
-        (await ligada.registros()).firstWhere((r) => r.id == 'id-2').estado,
-        EstadoPendiente.descartado,
-      );
-      await suscripcion.cancel();
-    });
+        // Descartar: deja de requerir atención y no se sube.
+        registra = 'persona-a';
+        enviador.rechazarTipos.add('malo');
+        await ligada.encolar(tipo: 'malo', carga: {});
+        await ligada.procesar();
+        await ligada.descartar('id-2');
+        expect(await ligada.requierenAtencion(personaId: 'persona-a'), isEmpty);
+        expect(
+          (await ligada.registros()).firstWhere((r) => r.id == 'id-2').estado,
+          EstadoPendiente.descartado,
+        );
+        await suscripcion.cancel();
+      },
+    );
 
-    test('M16: tras muchos fallos sin respuesta clara, requiere atención',
-        () async {
-      final limitada = ColaSinConexion(
-        base: base,
-        enviador: enviador,
-        reloj: () => ahora,
-        intentosMaximos: 3,
-      );
-      enviador.lanzarExcepcion = true;
-      await limitada.encolar(tipo: 't', carga: {});
-      for (var i = 0; i < 3; i++) {
-        await limitada.procesar();
-        ahora = ahora.add(const Duration(hours: 1));
-      }
-      final registro = (await limitada.registros()).single;
-      expect(registro.estado, EstadoPendiente.rechazado);
-      expect(registro.ultimoError, contains('Falló 3 veces'));
-    });
+    test(
+      'M16: tras muchos fallos sin respuesta clara, requiere atención',
+      () async {
+        final limitada = ColaSinConexion(
+          base: base,
+          enviador: enviador,
+          reloj: () => ahora,
+          intentosMaximos: 3,
+        );
+        enviador.lanzarExcepcion = true;
+        await limitada.encolar(tipo: 't', carga: {});
+        for (var i = 0; i < 3; i++) {
+          await limitada.procesar();
+          ahora = ahora.add(const Duration(hours: 1));
+        }
+        final registro = (await limitada.registros()).single;
+        expect(registro.estado, EstadoPendiente.rechazado);
+        expect(registro.ultimoError, contains('Falló 3 veces'));
+      },
+    );
 
     test('un enviador puede rechazar diciendo por qué', () async {
       final conMotivo = ColaSinConexion(
@@ -512,60 +555,75 @@ void main() {
       expect(beto.estado, EstadoPendiente.pendiente);
     });
 
-    test('antes del plazo se conserva, y la persona que vuelve lo puede revisar',
-        () async {
-      await registrar('a', 'ana');
-      await cola.rechazarPendientesDe('ana', motivoPersonaQuitada);
-      ahora = ahora.add(const Duration(days: 6, hours: 23));
-      await cola.procesar();
-      expect(await cola.requierenAtencion(personaId: 'ana'), hasLength(1));
-      expect(await cola.purgarLoDeQuitados(), 0);
+    test(
+      'antes del plazo se conserva, y la persona que vuelve lo puede revisar',
+      () async {
+        await registrar('a', 'ana');
+        await cola.rechazarPendientesDe('ana', motivoPersonaQuitada);
+        ahora = ahora.add(const Duration(days: 6, hours: 23));
+        await cola.procesar();
+        expect(await cola.requierenAtencion(personaId: 'ana'), hasLength(1));
+        expect(await cola.purgarLoDeQuitados(), 0);
 
-      // Reintentar lo saca de la cuenta regresiva: sigue su camino normal.
-      await cola.reintentar('a');
-      final r = (await cola.registros()).single;
-      expect(r.estado, EstadoPendiente.pendiente);
-      expect(r.siguienteIntento, isNull);
-      ahora = ahora.add(const Duration(days: 30));
-      await cola.procesar();
-      expect(await cola.registros(), hasLength(1), reason: 'ya no es de los quitados');
-    });
+        // Reintentar lo saca de la cuenta regresiva: sigue su camino normal.
+        await cola.reintentar('a');
+        final r = (await cola.registros()).single;
+        expect(r.estado, EstadoPendiente.pendiente);
+        expect(r.siguienteIntento, isNull);
+        ahora = ahora.add(const Duration(days: 30));
+        await cola.procesar();
+        expect(
+          await cola.registros(),
+          hasLength(1),
+          reason: 'ya no es de los quitados',
+        );
+      },
+    );
 
-    test('al cumplirse el plazo se borra de la base local, con y sin sesión', () async {
-      await registrar('a', 'ana');
-      await registrar('b', 'ana');
-      await cola.rechazarPendientesDe('ana', motivoPersonaQuitada);
-      ahora = ahora.add(const Duration(days: 7, minutes: 1));
-      await cola.procesar();
-      expect(await cola.registros(), isEmpty);
-      expect(await cola.purgaProgramada(), isNull);
+    test(
+      'al cumplirse el plazo se borra de la base local, con y sin sesión',
+      () async {
+        await registrar('a', 'ana');
+        await registrar('b', 'ana');
+        await cola.rechazarPendientesDe('ana', motivoPersonaQuitada);
+        ahora = ahora.add(const Duration(days: 7, minutes: 1));
+        await cola.procesar();
+        expect(await cola.registros(), isEmpty);
+        expect(await cola.purgaProgramada(), isNull);
 
-      final sinSesion = ColaSinConexion(
-        base: base,
-        enviador: enviador,
-        reloj: () => ahora,
-        personaConSesion: () => null,
-      );
-      await registrar('c', 'ana');
-      await cola.rechazarPendientesDe('ana', motivoPersonaQuitada);
-      ahora = ahora.add(const Duration(days: 8));
-      await sinSesion.procesar();
-      expect(await cola.registros(), isEmpty, reason: 'la purga no necesita sesión');
-    });
+        final sinSesion = ColaSinConexion(
+          base: base,
+          enviador: enviador,
+          reloj: () => ahora,
+          personaConSesion: () => null,
+        );
+        await registrar('c', 'ana');
+        await cola.rechazarPendientesDe('ana', motivoPersonaQuitada);
+        ahora = ahora.add(const Duration(days: 8));
+        await sinSesion.procesar();
+        expect(
+          await cola.registros(),
+          isEmpty,
+          reason: 'la purga no necesita sesión',
+        );
+      },
+    );
 
-    test('solo se borra lo de quitados: lo demás que requiere atención se queda',
-        () async {
-      await registrar('a', 'ana');
-      await registrar('b', 'ana');
-      await cola.rechazarPendientesDe('ana', 'Falló 20 veces: sin respuesta');
-      // Uno de ellos sí es de una persona quitada.
-      await registrar('c', 'ana');
-      await cola.rechazarPendientesDe('ana', motivoPersonaQuitada);
-      ahora = ahora.add(const Duration(days: 30));
-      await cola.procesar();
-      final ids = [for (final r in await cola.registros()) r.id];
-      expect(ids, unorderedEquals(['a', 'b']));
-    });
+    test(
+      'solo se borra lo de quitados: lo demás que requiere atención se queda',
+      () async {
+        await registrar('a', 'ana');
+        await registrar('b', 'ana');
+        await cola.rechazarPendientesDe('ana', 'Falló 20 veces: sin respuesta');
+        // Uno de ellos sí es de una persona quitada.
+        await registrar('c', 'ana');
+        await cola.rechazarPendientesDe('ana', motivoPersonaQuitada);
+        ahora = ahora.add(const Duration(days: 30));
+        await cola.procesar();
+        final ids = [for (final r in await cola.registros()) r.id];
+        expect(ids, unorderedEquals(['a', 'b']));
+      },
+    );
 
     test('lo ya enviado de una persona quitada no se toca', () async {
       await registrar('a', 'ana');
@@ -575,20 +633,22 @@ void main() {
       expect((await cola.registros()).single.estado, EstadoPendiente.enviado);
     });
 
-    test('el aviso dice cuántos son y cuándo se borra el primero (sin montos)',
-        () async {
-      expect(await cola.purgaProgramada(), isNull);
-      await registrar('a', 'ana');
-      await cola.rechazarPendientesDe('ana', motivoPersonaQuitada);
-      ahora = ahora.add(const Duration(days: 2));
-      await registrar('b', 'beto');
-      await cola.rechazarPendientesDe('beto', motivoPersonaQuitada);
+    test(
+      'el aviso dice cuántos son y cuándo se borra el primero (sin montos)',
+      () async {
+        expect(await cola.purgaProgramada(), isNull);
+        await registrar('a', 'ana');
+        await cola.rechazarPendientesDe('ana', motivoPersonaQuitada);
+        ahora = ahora.add(const Duration(days: 2));
+        await registrar('b', 'beto');
+        await cola.rechazarPendientesDe('beto', motivoPersonaQuitada);
 
-      final aviso = (await cola.purgaProgramada())!;
-      expect(aviso.cuantos, 2);
-      expect(aviso.primeraEl, DateTime(2026, 10, 27, 8));
-      expect(await cola.vigilarPurga().first, isNotNull);
-    });
+        final aviso = (await cola.purgaProgramada())!;
+        expect(aviso.cuantos, 2);
+        expect(aviso.primeraEl, DateTime(2026, 10, 27, 8));
+        expect(await cola.vigilarPurga().first, isNotNull);
+      },
+    );
 
     test('el plazo se puede cambiar', () async {
       final corta = ColaSinConexion(
@@ -597,7 +657,12 @@ void main() {
         reloj: () => ahora,
         conservarQuitados: const Duration(days: 1),
       );
-      await corta.encolar(tipo: 'finanzas.gasto', carga: const {}, id: 'z', personaId: 'ana');
+      await corta.encolar(
+        tipo: 'finanzas.gasto',
+        carga: const {},
+        id: 'z',
+        personaId: 'ana',
+      );
       await corta.rechazarPendientesDe('ana', motivoPersonaQuitada);
       ahora = ahora.add(const Duration(days: 1, minutes: 1));
       await corta.procesar();
@@ -623,7 +688,11 @@ void main() {
 
       ahora = ahora.add(const Duration(hours: 23));
       await cola.procesar();
-      expect(await cola.registros(), hasLength(1), reason: 'aún no pasa el día');
+      expect(
+        await cola.registros(),
+        hasLength(1),
+        reason: 'aún no pasa el día',
+      );
 
       ahora = ahora.add(const Duration(hours: 2));
       await cola.procesar();
@@ -652,7 +721,9 @@ void main() {
       await registrar('viejo');
       await cola.rechazarPendientesDe('ana', 'x');
       // Como quedaba antes: descartado y sin fecha de borrado.
-      await (base.update(base.pendientes)..where((t) => t.id.equals('viejo'))).write(
+      await (base.update(
+        base.pendientes,
+      )..where((t) => t.id.equals('viejo'))).write(
         const PendientesCompanion(
           estado: Value(EstadoPendiente.descartado),
           siguienteIntento: Value(null),
@@ -673,19 +744,25 @@ void main() {
       await registrar('caducado');
       await registrar('quitado');
       // 'rechazado' (error) y 'caducado' (bandeja) siguen mucho tiempo.
-      await (base.update(base.pendientes)..where((t) => t.id.equals('rechazado'))).write(
+      await (base.update(
+        base.pendientes,
+      )..where((t) => t.id.equals('rechazado'))).write(
         const PendientesCompanion(
           estado: Value(EstadoPendiente.rechazado),
           ultimoError: Value('Falló 20 veces: sin respuesta'),
         ),
       );
-      await (base.update(base.pendientes)..where((t) => t.id.equals('caducado'))).write(
+      await (base.update(
+        base.pendientes,
+      )..where((t) => t.id.equals('caducado'))).write(
         const PendientesCompanion(
           estado: Value(EstadoPendiente.rechazado),
           ultimoError: Value(motivoBandejaCaducada),
         ),
       );
-      await (base.update(base.pendientes)..where((t) => t.id.equals('quitado'))).write(
+      await (base.update(
+        base.pendientes,
+      )..where((t) => t.id.equals('quitado'))).write(
         PendientesCompanion(
           estado: const Value(EstadoPendiente.rechazado),
           ultimoError: const Value(motivoPersonaQuitada),
@@ -695,7 +772,10 @@ void main() {
       ahora = ahora.add(const Duration(days: 3));
       await cola.procesar();
       final ids = [for (final r in await cola.registros()) r.id];
-      expect(ids, unorderedEquals(['pendiente', 'rechazado', 'caducado', 'quitado']));
+      expect(
+        ids,
+        unorderedEquals(['pendiente', 'rechazado', 'caducado', 'quitado']),
+      );
     });
 
     test('corre también sin sesión y se puede llamar a mano', () async {
@@ -726,7 +806,12 @@ void main() {
         conservarEnviados: const Duration(minutes: 5),
         conservarDescartados: const Duration(minutes: 5),
       );
-      await corta.encolar(tipo: 'finanzas.gasto', carga: const {}, id: 'e', personaId: 'ana');
+      await corta.encolar(
+        tipo: 'finanzas.gasto',
+        carga: const {},
+        id: 'e',
+        personaId: 'ana',
+      );
       enviador.conSenal = true;
       await corta.procesar();
       ahora = ahora.add(const Duration(minutes: 6));

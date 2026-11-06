@@ -11,7 +11,11 @@ import 'package:gravity/app/app_gravity.dart';
 import 'package:gravity/app/montos/revelar_montos.dart';
 import 'package:gravity/app/router.dart';
 import 'package:gravity/diseno/proveedores.dart'
-    show modoPrivadoProvider, montosOcultosProvider, montosVisiblesProvider, revelarMontosProvider;
+    show
+        modoPrivadoProvider,
+        montosOcultosProvider,
+        montosVisiblesProvider,
+        revelarMontosProvider;
 import 'package:gravity/nucleo/contratos/dispositivo.dart';
 import 'package:gravity/nucleo/contratos/roles.dart';
 import 'package:gravity/nucleo/seguridad/almacen_seguro.dart';
@@ -112,7 +116,9 @@ void main() {
   group('se ocultan solos tras unos minutos sin uso', () {
     Future<void> conPinCreado(WidgetTester tester) async {
       await contenedorDe(tester).read(controladorMontosProvider.notifier).listo;
-      await contenedorDe(tester).read(controladorMontosProvider.notifier).crearPin('284651');
+      await contenedorDe(tester)
+          .read(controladorMontosProvider.notifier)
+          .crearPin('284651');
     }
 
     testWidgets('a los 2 minutos; luego pide el PIN', (tester) async {
@@ -165,7 +171,9 @@ void main() {
       expect(visibles(tester), isFalse);
     });
 
-    testWidgets('el tiempo es el elegido en Privacidad (1 minuto)', (tester) async {
+    testWidgets('el tiempo es el elegido en Privacidad (1 minuto)', (
+      tester,
+    ) async {
       await montarApp(
         tester,
         dispositivo: TipoDispositivo.laptop,
@@ -191,7 +199,9 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('el modo privado no se quita pidiendo ver los montos', (tester) async {
+    testWidgets('el modo privado no se quita pidiendo ver los montos', (
+      tester,
+    ) async {
       await montarApp(
         tester,
         dispositivo: TipoDispositivo.laptop,
@@ -202,13 +212,22 @@ void main() {
       final resultado = pedirVer(tester);
       await tester.pumpAndSettle();
       expect(await resultado(), isFalse);
-      expect(find.byKey(const ValueKey('dialogo-revelar-montos')), findsNothing);
+      expect(
+        find.byKey(const ValueKey('dialogo-revelar-montos')),
+        findsNothing,
+      );
       expect(ocultos(tester), isTrue);
     });
 
-    testWidgets('al salir de la sesión los montos vuelven a ocultarse', (tester) async {
+    testWidgets('al salir de la sesión los montos vuelven a ocultarse', (
+      tester,
+    ) async {
       final sesion = sesionCon(Rol.dueno);
-      await montarApp(tester, dispositivo: TipoDispositivo.laptop, sesion: sesion);
+      await montarApp(
+        tester,
+        dispositivo: TipoDispositivo.laptop,
+        sesion: sesion,
+      );
       contenedorDe(tester).read(montosVisiblesProvider.notifier).fijar(true);
       await tester.pump();
       expect(ocultos(tester), isFalse);
@@ -231,7 +250,8 @@ void main() {
         sesion: sesionCon(Rol.dueno),
         biometria: biometria,
       );
-      final bloqueo = contenedorDe(tester).read(controladorBloqueoProvider.notifier);
+      final bloqueo = contenedorDe(tester)
+          .read(controladorBloqueoProvider.notifier);
       await bloqueo.listo;
       await bloqueo.configurarPin('246813');
       await tester.pumpAndSettle();
@@ -267,7 +287,8 @@ void main() {
         sesion: sesionCon(Rol.dueno),
         biometria: biometria,
       );
-      final bloqueo = contenedorDe(tester).read(controladorBloqueoProvider.notifier);
+      final bloqueo = contenedorDe(tester)
+          .read(controladorBloqueoProvider.notifier);
       await bloqueo.listo;
       await bloqueo.configurarPin('246813');
       pedirVer(tester);
@@ -278,14 +299,17 @@ void main() {
       expect(ocultos(tester), isTrue);
     });
 
-    testWidgets('5 PIN incorrectos: espera, y el mensaje lo dice', (tester) async {
+    testWidgets('5 PIN incorrectos: espera, y el mensaje lo dice', (
+      tester,
+    ) async {
       await montarApp(
         tester,
         dispositivo: TipoDispositivo.telefono,
         sesion: sesionCon(Rol.dueno),
         biometria: BiometriaFalsa(hayHuella: false),
       );
-      final bloqueo = contenedorDe(tester).read(controladorBloqueoProvider.notifier);
+      final bloqueo = contenedorDe(tester)
+          .read(controladorBloqueoProvider.notifier);
       await bloqueo.listo;
       await bloqueo.configurarPin('246813');
       pedirVer(tester);
@@ -295,7 +319,10 @@ void main() {
         await tester.tap(aceptar);
         await tester.pumpAndSettle();
       }
-      expect(find.textContaining('Demasiados intentos. Espera 30 segundos'), findsOneWidget);
+      expect(
+        find.textContaining('Demasiados intentos. Espera 30 segundos'),
+        findsOneWidget,
+      );
       expect(ocultos(tester), isTrue);
     });
   });
@@ -327,7 +354,10 @@ void main() {
       await entrarComoDueno(tester);
       expect(visibles(tester), isTrue);
       expect(ocultos(tester), isFalse);
-      expect(find.byKey(const ValueKey('dialogo-revelar-montos')), findsNothing);
+      expect(
+        find.byKey(const ValueKey('dialogo-revelar-montos')),
+        findsNothing,
+      );
     });
 
     /// Cambiar el tiempo en Privacidad es tocar la pantalla: la cuenta empieza
@@ -340,38 +370,39 @@ void main() {
       await tester.pump();
     }
 
-    testWidgets('las reglas de ocultar por inactividad siguen: tras el tiempo sin '
-        'uso se ocultan y volver a verlos pide el PIN de la tablet, sin huella', (
-      tester,
-    ) async {
-      await entrarComoDueno(tester);
-      // Menos que el regreso al modo Casa (2 min): la persona sigue dentro.
-      await fijarTiempo(tester, const Duration(minutes: 1));
-      await tester.pump(const Duration(seconds: 59));
-      expect(visibles(tester), isTrue, reason: 'aún no pasa el minuto');
-      await tester.pump(const Duration(seconds: 2));
-      expect(visibles(tester), isFalse);
-      expect(
-        contenedorDe(tester).read(controladorTabletProvider).usuarioActivo,
-        isNotNull,
-        reason: 'la persona sigue dentro de la tablet',
-      );
+    testWidgets(
+      'las reglas de ocultar por inactividad siguen: tras el tiempo sin '
+      'uso se ocultan y volver a verlos pide el PIN de la tablet, sin huella',
+      (tester) async {
+        await entrarComoDueno(tester);
+        // Menos que el regreso al modo Casa (2 min): la persona sigue dentro.
+        await fijarTiempo(tester, const Duration(minutes: 1));
+        await tester.pump(const Duration(seconds: 59));
+        expect(visibles(tester), isTrue, reason: 'aún no pasa el minuto');
+        await tester.pump(const Duration(seconds: 2));
+        expect(visibles(tester), isFalse);
+        expect(
+          contenedorDe(tester).read(controladorTabletProvider).usuarioActivo,
+          isNotNull,
+          reason: 'la persona sigue dentro de la tablet',
+        );
 
-      final resultado = pedirVer(tester);
-      await tester.pumpAndSettle();
-      expect(find.text('Ver los montos'), findsOneWidget);
-      expect(find.byKey(const ValueKey('revelar-huella')), findsNothing);
-      await escribir(tester, campoPin, '0001');
-      await tester.tap(aceptar);
-      await tester.pumpAndSettle();
-      expect(find.text('PIN incorrecto.'), findsOneWidget);
-      expect(ocultos(tester), isTrue);
-      await escribir(tester, campoPin, '284651');
-      await tester.tap(aceptar);
-      await tester.pumpAndSettle();
-      expect(await resultado(), isTrue);
-      expect(ocultos(tester), isFalse);
-    });
+        final resultado = pedirVer(tester);
+        await tester.pumpAndSettle();
+        expect(find.text('Ver los montos'), findsOneWidget);
+        expect(find.byKey(const ValueKey('revelar-huella')), findsNothing);
+        await escribir(tester, campoPin, '0001');
+        await tester.tap(aceptar);
+        await tester.pumpAndSettle();
+        expect(find.text('PIN incorrecto.'), findsOneWidget);
+        expect(ocultos(tester), isTrue);
+        await escribir(tester, campoPin, '284651');
+        await tester.tap(aceptar);
+        await tester.pumpAndSettle();
+        expect(await resultado(), isTrue);
+        expect(ocultos(tester), isFalse);
+      },
+    );
 
     testWidgets('el tiempo elegido en Privacidad también rige en la tablet', (
       tester,
@@ -395,56 +426,78 @@ void main() {
       expect(ocultos(tester), isTrue);
       final resultado = pedirVer(tester);
       await tester.pumpAndSettle();
-      expect(await resultado(), isFalse, reason: 'el modo privado no se quita así');
-    });
-
-    testWidgets('al volver al modo Casa no queda a la vista nada de quien salió, y '
-        'el siguiente en entrar ve lo suyo', (tester) async {
-      await entrarComoDueno(
-        tester,
-        personas: {Rol.dueno: '284651', Rol.coadministrador: '739150'},
-      );
-      expect(ocultos(tester), isFalse);
-      contenedorDe(tester).read(controladorTabletProvider.notifier).volverAlReposo();
-      await tester.pumpAndSettle();
-      expect(ocultos(tester), isTrue, reason: 'de vuelta en el modo Casa');
-      expect(visibles(tester), isFalse);
-
-      await tester.tap(find.text('Pareja de ejemplo'));
-      await tester.pumpAndSettle();
-      await tester.enterText(find.byKey(const Key('campo-pin')), '739150');
-      await tester.tap(find.widgetWithText(FilledButton, 'Entrar'));
-      await tester.pumpAndSettle();
-      expect(ocultos(tester), isFalse, reason: 'la pareja entró con su PIN');
-    });
-
-    testWidgets('quien tiene un PIN anterior corto lo cambia al entrar y entonces '
-        've sus montos', (tester) async {
-      await entrarComoDueno(tester, pin: '2468');
-      expect(find.byKey(const ValueKey('dialogo-cambiar-pin-al-entrar')),
-          findsOneWidget);
-      expect(find.byKey(const ValueKey('aviso-pin-corto')), findsOneWidget);
-      expect(ocultos(tester), isTrue, reason: 'todavía no entró');
-
-      await tester.enterText(find.byKey(const Key('pin-nuevo-cambio')), '739150');
-      await tester.enterText(
-        find.byKey(const Key('pin-nuevo-cambio-confirmacion')),
-        '739150',
-      );
-      await tester.tap(find.byKey(const ValueKey('guardar-pin-y-entrar')));
-      await tester.pumpAndSettle();
-      expect(find.byKey(const ValueKey('dialogo-cambiar-pin-al-entrar')),
-          findsNothing);
       expect(
-        contenedorDe(tester).read(controladorTabletProvider).usuarioActivo,
-        isNotNull,
+        await resultado(),
+        isFalse,
+        reason: 'el modo privado no se quita así',
       );
-      expect(ocultos(tester), isFalse);
     });
+
+    testWidgets(
+      'al volver al modo Casa no queda a la vista nada de quien salió, y '
+      'el siguiente en entrar ve lo suyo',
+      (tester) async {
+        await entrarComoDueno(
+          tester,
+          personas: {Rol.dueno: '284651', Rol.coadministrador: '739150'},
+        );
+        expect(ocultos(tester), isFalse);
+        contenedorDe(tester)
+            .read(controladorTabletProvider.notifier)
+            .volverAlReposo();
+        await tester.pumpAndSettle();
+        expect(ocultos(tester), isTrue, reason: 'de vuelta en el modo Casa');
+        expect(visibles(tester), isFalse);
+
+        await tester.tap(find.text('Pareja de ejemplo'));
+        await tester.pumpAndSettle();
+        await tester.enterText(find.byKey(const Key('campo-pin')), '739150');
+        await tester.tap(find.widgetWithText(FilledButton, 'Entrar'));
+        await tester.pumpAndSettle();
+        expect(ocultos(tester), isFalse, reason: 'la pareja entró con su PIN');
+      },
+    );
+
+    testWidgets(
+      'quien tiene un PIN anterior corto lo cambia al entrar y entonces '
+      've sus montos',
+      (tester) async {
+        await entrarComoDueno(tester, pin: '2468');
+        expect(
+          find.byKey(const ValueKey('dialogo-cambiar-pin-al-entrar')),
+          findsOneWidget,
+        );
+        expect(find.byKey(const ValueKey('aviso-pin-corto')), findsOneWidget);
+        expect(ocultos(tester), isTrue, reason: 'todavía no entró');
+
+        await tester.enterText(
+          find.byKey(const Key('pin-nuevo-cambio')),
+          '739150',
+        );
+        await tester.enterText(
+          find.byKey(const Key('pin-nuevo-cambio-confirmacion')),
+          '739150',
+        );
+        await tester.tap(find.byKey(const ValueKey('guardar-pin-y-entrar')));
+        await tester.pumpAndSettle();
+        expect(
+          find.byKey(const ValueKey('dialogo-cambiar-pin-al-entrar')),
+          findsNothing,
+        );
+        expect(
+          contenedorDe(tester).read(controladorTabletProvider).usuarioActivo,
+          isNotNull,
+        );
+        expect(ocultos(tester), isFalse);
+      },
+    );
   });
 
   group('teléfono y laptop: no cambia nada, los montos se abren ocultos', () {
-    for (final dispositivo in [TipoDispositivo.telefono, TipoDispositivo.laptop]) {
+    for (final dispositivo in [
+      TipoDispositivo.telefono,
+      TipoDispositivo.laptop,
+    ]) {
       testWidgets('${dispositivo.name}: ocultos al abrir', (tester) async {
         await montarApp(
           tester,
@@ -458,7 +511,11 @@ void main() {
   });
 
   group('PIN anterior corto de quien ve dinero (D18, 23/oct)', () {
-    Future<void> cambiar(WidgetTester tester, String pin, String repetido) async {
+    Future<void> cambiar(
+      WidgetTester tester,
+      String pin,
+      String repetido,
+    ) async {
       await escribir(tester, campoPin, pin);
       await escribir(tester, campoConfirmacion, repetido);
       await tester.tap(aceptar);
@@ -473,8 +530,9 @@ void main() {
         dispositivo: TipoDispositivo.laptop,
         sesion: sesionCon(Rol.dueno),
         almacen: AlmacenSeguroEnMemoria({
-          ControladorMontos.claveConfiguracion(dueno.persona.id):
-              jsonEncode({'hash_pin': hashDePrueba('2468')}),
+          ControladorMontos.claveConfiguracion(dueno.persona.id): jsonEncode({
+            'hash_pin': hashDePrueba('2468'),
+          }),
         }),
       );
       final resultado = pedirVer(tester);
@@ -508,21 +566,24 @@ void main() {
       );
     });
 
-    testWidgets('crear el PIN propio del dueño pide 6 dígitos desde el principio', (
+    testWidgets(
+      'crear el PIN propio del dueño pide 6 dígitos desde el principio',
+      (tester) async {
+        await montarApp(
+          tester,
+          dispositivo: TipoDispositivo.laptop,
+          sesion: sesionCon(Rol.dueno),
+        );
+        pedirVer(tester);
+        await tester.pumpAndSettle();
+        expect(find.textContaining('PIN de 6 dígitos'), findsOneWidget);
+        expect(find.text('PIN nuevo (6 dígitos)'), findsOneWidget);
+      },
+    );
+
+    testWidgets('quien no ve dinero crea un PIN de 4 a 6 dígitos', (
       tester,
     ) async {
-      await montarApp(
-        tester,
-        dispositivo: TipoDispositivo.laptop,
-        sesion: sesionCon(Rol.dueno),
-      );
-      pedirVer(tester);
-      await tester.pumpAndSettle();
-      expect(find.textContaining('PIN de 6 dígitos'), findsOneWidget);
-      expect(find.text('PIN nuevo (6 dígitos)'), findsOneWidget);
-    });
-
-    testWidgets('quien no ve dinero crea un PIN de 4 a 6 dígitos', (tester) async {
       await montarApp(
         tester,
         dispositivo: TipoDispositivo.laptop,
@@ -555,7 +616,8 @@ void main() {
         }),
         biometria: BiometriaFalsa(),
       );
-      final bloqueo = contenedorDe(tester).read(controladorBloqueoProvider.notifier);
+      final bloqueo = contenedorDe(tester)
+          .read(controladorBloqueoProvider.notifier);
       await bloqueo.listo;
       // Entró con la huella sin escribir su PIN: el bloqueo sigue con el PIN
       // de 4 dígitos hasta que lo use.
@@ -621,17 +683,25 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('montos-pin-propio')));
       await tester.pumpAndSettle();
       await tester.enterText(find.byKey(const Key('bloqueo-pin')), '123456');
-      await tester.enterText(find.byKey(const Key('bloqueo-confirmacion')), '123456');
+      await tester.enterText(
+        find.byKey(const Key('bloqueo-confirmacion')),
+        '123456',
+      );
       await tester.tap(find.widgetWithText(FilledButton, 'Guardar'));
       await tester.pumpAndSettle();
       expect(find.textContaining('Ese PIN es una secuencia'), findsOneWidget);
       await tester.enterText(find.byKey(const Key('bloqueo-pin')), '284651');
-      await tester.enterText(find.byKey(const Key('bloqueo-confirmacion')), '284651');
+      await tester.enterText(
+        find.byKey(const Key('bloqueo-confirmacion')),
+        '284651',
+      );
       await tester.tap(find.widgetWithText(FilledButton, 'Guardar'));
       await tester.pumpAndSettle();
       expect(find.text('Cambiar el PIN para ver los montos'), findsOneWidget);
       expect(
-        await contenedorDe(tester).read(controladorMontosProvider.notifier).verificar('284651'),
+        await contenedorDe(tester)
+            .read(controladorMontosProvider.notifier)
+            .verificar('284651'),
         ResultadoRevelar.revelado,
       );
     });
@@ -644,21 +714,29 @@ void main() {
         dispositivo: TipoDispositivo.laptop,
         sesion: sesionCon(Rol.dueno),
         almacen: AlmacenSeguroEnMemoria({
-          ControladorMontos.claveConfiguracion(dueno.persona.id):
-              jsonEncode({'hash_pin': hashDePrueba('284651')}),
+          ControladorMontos.claveConfiguracion(dueno.persona.id): jsonEncode({
+            'hash_pin': hashDePrueba('284651'),
+          }),
         }),
       );
       await irAPrivacidad(tester);
       expect(find.text('Cambiar el PIN para ver los montos'), findsOneWidget);
-      final controlador = contenedorDe(tester).read(controladorMontosProvider.notifier);
+      final controlador = contenedorDe(tester)
+          .read(controladorMontosProvider.notifier);
 
       Future<void> intentar(String actual, String nuevo) async {
         await tester.tap(find.byKey(const ValueKey('montos-pin-propio')));
         await tester.pumpAndSettle();
         expect(find.byKey(const Key('bloqueo-pin-actual')), findsOneWidget);
-        await tester.enterText(find.byKey(const Key('bloqueo-pin-actual')), actual);
+        await tester.enterText(
+          find.byKey(const Key('bloqueo-pin-actual')),
+          actual,
+        );
         await tester.enterText(find.byKey(const Key('bloqueo-pin')), nuevo);
-        await tester.enterText(find.byKey(const Key('bloqueo-confirmacion')), nuevo);
+        await tester.enterText(
+          find.byKey(const Key('bloqueo-confirmacion')),
+          nuevo,
+        );
         await tester.tap(find.widgetWithText(FilledButton, 'Guardar'));
         await tester.pumpAndSettle();
       }
@@ -666,11 +744,17 @@ void main() {
       await intentar('000000', '739150');
       expect(find.text('PIN incorrecto.'), findsOneWidget);
       expect(await controlador.verificar('284651'), ResultadoRevelar.revelado);
-      expect(await controlador.verificar('739150'), ResultadoRevelar.pinIncorrecto);
+      expect(
+        await controlador.verificar('739150'),
+        ResultadoRevelar.pinIncorrecto,
+      );
 
       await intentar('284651', '739150');
       expect(await controlador.verificar('739150'), ResultadoRevelar.revelado);
-      expect(await controlador.verificar('284651'), ResultadoRevelar.pinIncorrecto);
+      expect(
+        await controlador.verificar('284651'),
+        ResultadoRevelar.pinIncorrecto,
+      );
     });
 
     testWidgets('P1: el diálogo no deja guardar sin escribir el PIN actual', (
@@ -682,65 +766,85 @@ void main() {
         dispositivo: TipoDispositivo.laptop,
         sesion: sesionCon(Rol.dueno),
         almacen: AlmacenSeguroEnMemoria({
-          ControladorMontos.claveConfiguracion(dueno.persona.id):
-              jsonEncode({'hash_pin': hashDePrueba('284651')}),
+          ControladorMontos.claveConfiguracion(dueno.persona.id): jsonEncode({
+            'hash_pin': hashDePrueba('284651'),
+          }),
         }),
       );
       await irAPrivacidad(tester);
       await tester.tap(find.byKey(const ValueKey('montos-pin-propio')));
       await tester.pumpAndSettle();
       await tester.enterText(find.byKey(const Key('bloqueo-pin')), '739150');
-      await tester.enterText(find.byKey(const Key('bloqueo-confirmacion')), '739150');
+      await tester.enterText(
+        find.byKey(const Key('bloqueo-confirmacion')),
+        '739150',
+      );
       await tester.tap(find.widgetWithText(FilledButton, 'Guardar'));
       await tester.pumpAndSettle();
       expect(find.text('Escribe tu PIN actual.'), findsOneWidget);
     });
 
-    testWidgets('P1: el PIN del bloqueo también se cambia con el actual; apagar '
-        'el bloqueo conserva su PIN para los montos', (tester) async {
-      final dueno = sesionDeEjemplo(Rol.dueno);
-      await montarApp(
-        tester,
-        dispositivo: TipoDispositivo.telefono,
-        sesion: sesionCon(Rol.dueno),
-        almacen: AlmacenSeguroEnMemoria({
-          ControladorBloqueo.claveConfiguracion(dueno.persona.id): jsonEncode(
-            ConfiguracionBloqueo(
-              hashPin: hashDePrueba('284651'),
-              huella: false,
-            ).aJson(),
-          ),
-        }),
-        biometria: BiometriaFalsa(hayHuella: false),
-      );
-      final bloqueo = contenedorDe(tester).read(controladorBloqueoProvider.notifier);
-      await bloqueo.listo;
-      expect(bloqueo.desbloquearConPin('284651'), ResultadoBloqueo.abierto);
-      await tester.pumpAndSettle();
-      await irAPrivacidad(tester);
+    testWidgets(
+      'P1: el PIN del bloqueo también se cambia con el actual; apagar '
+      'el bloqueo conserva su PIN para los montos',
+      (tester) async {
+        final dueno = sesionDeEjemplo(Rol.dueno);
+        await montarApp(
+          tester,
+          dispositivo: TipoDispositivo.telefono,
+          sesion: sesionCon(Rol.dueno),
+          almacen: AlmacenSeguroEnMemoria({
+            ControladorBloqueo.claveConfiguracion(dueno.persona.id): jsonEncode(
+              ConfiguracionBloqueo(
+                hashPin: hashDePrueba('284651'),
+                huella: false,
+              ).aJson(),
+            ),
+          }),
+          biometria: BiometriaFalsa(hayHuella: false),
+        );
+        final bloqueo = contenedorDe(tester)
+            .read(controladorBloqueoProvider.notifier);
+        await bloqueo.listo;
+        expect(bloqueo.desbloquearConPin('284651'), ResultadoBloqueo.abierto);
+        await tester.pumpAndSettle();
+        await irAPrivacidad(tester);
 
-      await tester.scrollUntilVisible(find.text('Cambiar PIN'), 200);
-      await tester.tap(find.text('Cambiar PIN'));
-      await tester.pumpAndSettle();
-      expect(find.byKey(const Key('bloqueo-pin-actual')), findsOneWidget);
-      await tester.enterText(find.byKey(const Key('bloqueo-pin-actual')), '111222');
-      await tester.enterText(find.byKey(const Key('bloqueo-pin')), '739150');
-      await tester.enterText(find.byKey(const Key('bloqueo-confirmacion')), '739150');
-      await tester.tap(find.widgetWithText(FilledButton, 'Guardar'));
-      await tester.pumpAndSettle();
-      expect(find.text('PIN actual incorrecto. No se cambió.'), findsOneWidget);
-      expect(bloqueo.comprobarPin('284651'), ResultadoBloqueo.abierto);
+        await tester.scrollUntilVisible(find.text('Cambiar PIN'), 200);
+        await tester.tap(find.text('Cambiar PIN'));
+        await tester.pumpAndSettle();
+        expect(find.byKey(const Key('bloqueo-pin-actual')), findsOneWidget);
+        await tester.enterText(
+          find.byKey(const Key('bloqueo-pin-actual')),
+          '111222',
+        );
+        await tester.enterText(find.byKey(const Key('bloqueo-pin')), '739150');
+        await tester.enterText(
+          find.byKey(const Key('bloqueo-confirmacion')),
+          '739150',
+        );
+        await tester.tap(find.widgetWithText(FilledButton, 'Guardar'));
+        await tester.pumpAndSettle();
+        expect(
+          find.text('PIN actual incorrecto. No se cambió.'),
+          findsOneWidget,
+        );
+        expect(bloqueo.comprobarPin('284651'), ResultadoBloqueo.abierto);
 
-      // Apagarlo: el PIN pasa a ser el propio de los montos.
-      await tester.ensureVisible(find.byKey(const ValueKey('bloqueo-activo')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const ValueKey('bloqueo-activo')));
-      await tester.pumpAndSettle();
-      final montos = contenedorDe(tester).read(controladorMontosProvider.notifier);
-      expect(montos.hayQueCrearPin, isFalse);
-      expect(await montos.verificar('284651'), ResultadoRevelar.revelado);
-      await expectLater(montos.crearPin('739150'), throwsStateError);
-    });
+        // Apagarlo: el PIN pasa a ser el propio de los montos.
+        await tester.ensureVisible(
+          find.byKey(const ValueKey('bloqueo-activo')),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const ValueKey('bloqueo-activo')));
+        await tester.pumpAndSettle();
+        final montos = contenedorDe(tester)
+            .read(controladorMontosProvider.notifier);
+        expect(montos.hayQueCrearPin, isFalse);
+        expect(await montos.verificar('284651'), ResultadoRevelar.revelado);
+        await expectLater(montos.crearPin('739150'), throwsStateError);
+      },
+    );
 
     testWidgets('el PIN propio dice cuántos dígitos pide según el rol', (
       tester,
@@ -768,17 +872,23 @@ void main() {
       }
     });
 
-    testWidgets('en el teléfono con bloqueo dice que usa ese PIN', (tester) async {
+    testWidgets('en el teléfono con bloqueo dice que usa ese PIN', (
+      tester,
+    ) async {
       await montarApp(
         tester,
         dispositivo: TipoDispositivo.telefono,
         sesion: sesionCon(Rol.dueno),
       );
-      final bloqueo = contenedorDe(tester).read(controladorBloqueoProvider.notifier);
+      final bloqueo = contenedorDe(tester)
+          .read(controladorBloqueoProvider.notifier);
       await bloqueo.listo;
       await bloqueo.configurarPin('246813');
       await irAPrivacidad(tester);
-      expect(find.text('Se usa el PIN del bloqueo del teléfono.'), findsOneWidget);
+      expect(
+        find.text('Se usa el PIN del bloqueo del teléfono.'),
+        findsOneWidget,
+      );
       expect(find.byKey(const ValueKey('montos-pin-propio')), findsNothing);
     });
   });

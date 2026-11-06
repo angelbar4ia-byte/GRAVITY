@@ -4,15 +4,22 @@
 // Pública o Privada al crear, deja salirse y administra los miembros.
 // Datos de ejemplo inventados (hogar de Ana y Alex).
 import 'package:finanzas_dominio/finanzas_dominio.dart'
-    hide Semaforo, formatearCentavos, TipoLibro, VisibilidadLibro, puntosBaseEnCien;
-import 'package:finanzas_dominio/finanzas_dominio.dart' as dom
+    hide
+        Semaforo,
+        formatearCentavos,
+        TipoLibro,
+        VisibilidadLibro,
+        puntosBaseEnCien;
+import 'package:finanzas_dominio/finanzas_dominio.dart'
+    as dom
     show TipoLibro, VisibilidadLibro;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gravity/app/app_gravity.dart';
 import 'package:gravity/app/router.dart';
-import 'package:gravity/diseno/diseno.dart' as dis
+import 'package:gravity/diseno/diseno.dart'
+    as dis
     show AccesoLibro, TecladoMonto, VisibilidadLibro, montosVisiblesProvider;
 import 'package:gravity/modulos/finanzas/casos_uso/sugerencias.dart';
 import 'package:gravity/modulos/finanzas/datos/demostracion.dart';
@@ -35,7 +42,10 @@ ProviderContainer _contenedor(WidgetTester tester) =>
 Future<void> _teclear(WidgetTester tester, String digitos) async {
   for (final d in digitos.split('')) {
     await tester.tap(
-      find.descendant(of: find.byType(dis.TecladoMonto), matching: find.text(d)),
+      find.descendant(
+        of: find.byType(dis.TecladoMonto),
+        matching: find.text(d),
+      ),
     );
   }
   await tester.pump();
@@ -123,21 +133,33 @@ void main() {
   final pareja = sesionDe(Rol.coadministrador);
 
   group('(+) Gasto: sale de una cuenta existente del libro activo', () {
-    testWidgets('ofrece las cuentas del libro activo, no las de otros libros',
-        (tester) async {
+    testWidgets('ofrece las cuentas del libro activo, no las de otros libros', (
+      tester,
+    ) async {
       final repo = repositorioDe(dueno);
       await _montarTelefono(tester, repo, dueno);
       await abrirRegistroDelTelefono(tester, 'Gasto');
       final esperadas = cuentasParaPagar(repo.datos, libroDueno);
       expect(esperadas, isNotEmpty);
       for (final c in esperadas) {
-        expect(find.byKey(ValueKey('gasto-cuenta-${c.id}')), findsOneWidget, reason: c.nombre);
+        expect(
+          find.byKey(ValueKey('gasto-cuenta-${c.id}')),
+          findsOneWidget,
+          reason: c.nombre,
+        );
       }
       final deOtros = repo.datos.cuentas.where(
-        (c) => c.libroId != null && c.libroId != libroDueno && cuentasParaPagar(repo.datos, c.libroId!).contains(c),
+        (c) =>
+            c.libroId != null &&
+            c.libroId != libroDueno &&
+            cuentasParaPagar(repo.datos, c.libroId!).contains(c),
       );
       for (final c in deOtros) {
-        expect(find.byKey(ValueKey('gasto-cuenta-${c.id}')), findsNothing, reason: c.nombre);
+        expect(
+          find.byKey(ValueKey('gasto-cuenta-${c.id}')),
+          findsNothing,
+          reason: c.nombre,
+        );
       }
       // El formulario de cuenta nueva no estorba hasta que se pide.
       expect(find.byKey(const ValueKey('cuenta-nueva')), findsNothing);
@@ -157,9 +179,14 @@ void main() {
         find.byKey(const ValueKey('cuenta-nueva-nombre')),
         'Efectivo de la cartera',
       );
-      await tester.enterText(find.byKey(const ValueKey('cuenta-nueva-saldo')), '200');
+      await tester.enterText(
+        find.byKey(const ValueKey('cuenta-nueva-saldo')),
+        '200',
+      );
       await tester.pump();
-      await tester.ensureVisible(find.byKey(const ValueKey('cuenta-nueva-crear')));
+      await tester.ensureVisible(
+        find.byKey(const ValueKey('cuenta-nueva-crear')),
+      );
       await tester.tap(find.byKey(const ValueKey('cuenta-nueva-crear')));
       await tester.pump(const Duration(milliseconds: 600));
 
@@ -174,7 +201,11 @@ void main() {
       // Quedó elegida: el formulario se cierra y la cuenta se ve como chip.
       expect(find.byKey(const ValueKey('cuenta-nueva')), findsNothing);
       expect(
-        tester.widget<ChoiceChip>(find.byKey(ValueKey('gasto-cuenta-${cuenta.id}'))).selected,
+        tester
+            .widget<ChoiceChip>(
+              find.byKey(ValueKey('gasto-cuenta-${cuenta.id}')),
+            )
+            .selected,
         isTrue,
       );
 
@@ -188,24 +219,38 @@ void main() {
       expect(gasto.monto, 8500);
     });
 
-    testWidgets('el tipo de la cuenta nueva puede ser tarjeta (lo que debes)',
-        (tester) async {
+    testWidgets('el tipo de la cuenta nueva puede ser tarjeta (lo que debes)', (
+      tester,
+    ) async {
       final repo = _sinCuentasParaPagar(dueno);
       await _montarTelefono(tester, repo, dueno);
       await abrirRegistroDelTelefono(tester, 'Gasto');
-      await tester.enterText(find.byKey(const ValueKey('cuenta-nueva-nombre')), 'Tarjeta A');
+      await tester.enterText(
+        find.byKey(const ValueKey('cuenta-nueva-nombre')),
+        'Tarjeta A',
+      );
       await tester.ensureVisible(find.text('Tarjeta'));
       await tester.pump();
       await tester.tap(find.text('Tarjeta'));
       await tester.pump();
       expect(find.text('Lo que debes hoy (opcional)'), findsOneWidget);
-      await tester.ensureVisible(find.byKey(const ValueKey('cuenta-nueva-crear')));
+      await tester.ensureVisible(
+        find.byKey(const ValueKey('cuenta-nueva-crear')),
+      );
       await tester.tap(find.byKey(const ValueKey('cuenta-nueva-crear')));
       await tester.pump(const Duration(milliseconds: 600));
-      final cuenta = repo.datos.cuentasDe(libroDueno).firstWhere((c) => c.nombre == 'Tarjeta A');
+      final cuenta = repo.datos
+          .cuentasDe(libroDueno)
+          .firstWhere((c) => c.nombre == 'Tarjeta A');
       expect(cuenta.tipo, TipoCuenta.tarjeta);
-      expect(repo.datos.movimientos.where((m) => m.cuentaOrigenId == cuenta.id || m.cuentaDestinoId == cuenta.id), isEmpty,
-          reason: 'sin saldo, sin saldo inicial');
+      expect(
+        repo.datos.movimientos.where(
+          (m) =>
+              m.cuentaOrigenId == cuenta.id || m.cuentaDestinoId == cuenta.id,
+        ),
+        isEmpty,
+        reason: 'sin saldo, sin saldo inicial',
+      );
     });
 
     testWidgets('un nombre repetido se explica y no crea nada', (tester) async {
@@ -213,13 +258,20 @@ void main() {
       await _montarTelefono(tester, repo, dueno);
       await abrirRegistroDelTelefono(tester, 'Gasto');
       final existente = cuentasParaPagar(repo.datos, libroDueno).first;
-      await tester.ensureVisible(find.byKey(const ValueKey('gasto-cuenta-nueva')));
+      await tester.ensureVisible(
+        find.byKey(const ValueKey('gasto-cuenta-nueva')),
+      );
       await tester.tap(find.byKey(const ValueKey('gasto-cuenta-nueva')));
       await tester.pump(const Duration(milliseconds: 300));
-      await tester.enterText(find.byKey(const ValueKey('cuenta-nueva-nombre')), existente.nombre);
+      await tester.enterText(
+        find.byKey(const ValueKey('cuenta-nueva-nombre')),
+        existente.nombre,
+      );
       await tester.pump();
       final antes = repo.datos.cuentas.length;
-      await tester.ensureVisible(find.byKey(const ValueKey('cuenta-nueva-crear')));
+      await tester.ensureVisible(
+        find.byKey(const ValueKey('cuenta-nueva-crear')),
+      );
       await tester.tap(find.byKey(const ValueKey('cuenta-nueva-crear')));
       await tester.pump(const Duration(milliseconds: 600));
       expect(find.text('Ya hay una cuenta con ese nombre.'), findsOneWidget);
@@ -235,9 +287,11 @@ void main() {
       await abrirRegistroDelTelefono(tester, 'Gasto');
       expect(find.text('CATEGORÍA (OPCIONAL)'), findsOneWidget);
       final elegidas = tester
-          .widgetList<ChoiceChip>(find.byWidgetPredicate(
-            (w) => w is ChoiceChip && '${w.key}'.contains('gasto-categoria-'),
-          ))
+          .widgetList<ChoiceChip>(
+            find.byWidgetPredicate(
+              (w) => w is ChoiceChip && '${w.key}'.contains('gasto-categoria-'),
+            ),
+          )
           .where((c) => c.selected);
       expect(elegidas, isEmpty, reason: 'no se adivina una categoría');
       await _teclear(tester, '40');
@@ -246,7 +300,9 @@ void main() {
       final gasto = repo.datos.movimientos.last;
       expect(gasto.tipo, TipoMovimiento.gasto);
       expect(gasto.categoriaId, isNull);
-      final porClasificar = repo.datos.parametrosDe(libroDueno).cuentaPorClasificarId;
+      final porClasificar = repo.datos
+          .parametrosDe(libroDueno)
+          .cuentaPorClasificarId;
       expect(gasto.cuentaDestinoId, porClasificar);
     });
 
@@ -257,10 +313,15 @@ void main() {
       final chips = find.byWidgetPredicate(
         (w) => w is ChoiceChip && '${w.key}'.contains('gasto-categoria-'),
       );
-      final elegida = tester.widgetList<ChoiceChip>(chips).firstWhere((c) => c.selected);
+      final elegida = tester
+          .widgetList<ChoiceChip>(chips)
+          .firstWhere((c) => c.selected);
       await tester.tap(find.byKey(elegida.key!));
       await tester.pump();
-      expect(tester.widgetList<ChoiceChip>(chips).where((c) => c.selected), isEmpty);
+      expect(
+        tester.widgetList<ChoiceChip>(chips).where((c) => c.selected),
+        isEmpty,
+      );
       await _teclear(tester, '15');
       await tester.tap(find.byKey(const ValueKey('gasto-guardar')));
       await tester.pump(const Duration(milliseconds: 600));
@@ -269,18 +330,31 @@ void main() {
   });
 
   group('(+) Ingreso extra: cuenta existente o crear la primera', () {
-    testWidgets('sin cuentas donde entre el dinero, ofrece crearla', (tester) async {
+    testWidgets('sin cuentas donde entre el dinero, ofrece crearla', (
+      tester,
+    ) async {
       final repo = _sinCuentasParaPagar(dueno);
       await _montarTelefono(tester, repo, dueno);
       await abrirRegistroDelTelefono(tester, 'Ingreso extra');
       expect(find.byKey(const ValueKey('extra-sin-cuentas')), findsOneWidget);
-      await tester.enterText(find.byKey(const ValueKey('cuenta-nueva-nombre')), 'Banco de ejemplo');
+      await tester.enterText(
+        find.byKey(const ValueKey('cuenta-nueva-nombre')),
+        'Banco de ejemplo',
+      );
       await tester.pump();
-      await tester.ensureVisible(find.byKey(const ValueKey('cuenta-nueva-crear')));
+      await tester.ensureVisible(
+        find.byKey(const ValueKey('cuenta-nueva-crear')),
+      );
       await tester.tap(find.byKey(const ValueKey('cuenta-nueva-crear')));
       await tester.pump(const Duration(milliseconds: 600));
-      final cuenta = repo.datos.cuentasDe(libroDueno).firstWhere((c) => c.nombre == 'Banco de ejemplo');
-      expect(cuenta.tipo, TipoCuenta.efectivo, reason: 'el primero de los tipos ofrecidos');
+      final cuenta = repo.datos
+          .cuentasDe(libroDueno)
+          .firstWhere((c) => c.nombre == 'Banco de ejemplo');
+      expect(
+        cuenta.tipo,
+        TipoCuenta.efectivo,
+        reason: 'el primero de los tipos ofrecidos',
+      );
       await _teclear(tester, '300');
       await tester.tap(find.byKey(const ValueKey('extra-guardar')));
       await tester.pump(const Duration(milliseconds: 600));
@@ -304,7 +378,10 @@ void main() {
       visibilidad: v,
       activo: activo,
       miembros: [
-        MiembroLibro(personaId: IdsDemostracion.dueno, papel: PapelLibro.miembro),
+        MiembroLibro(
+          personaId: IdsDemostracion.dueno,
+          papel: PapelLibro.miembro,
+        ),
         MiembroLibro(personaId: 'otra', papel: PapelLibro.miembro),
       ],
     );
@@ -395,30 +472,49 @@ void main() {
         find.byKey(const ValueKey('libro-visibilidad')),
       );
       expect(selector.selected, {dom.VisibilidadLibro.privada});
-      expect(find.textContaining('El dueño no entra si no es miembro'), findsOneWidget);
+      expect(
+        find.textContaining('El dueño no entra si no es miembro'),
+        findsOneWidget,
+      );
 
       await tester.tap(find.text('Pública'));
       await tester.pump();
-      expect(find.textContaining('Además la leen, sin escribir'), findsOneWidget);
-      await tester.enterText(find.byKey(const ValueKey('compartido-nombre')), 'Gastos abiertos');
-      await tester.tap(find.byKey(ValueKey('compartido-miembro-${IdsDemostracion.pareja}')));
+      expect(
+        find.textContaining('Además la leen, sin escribir'),
+        findsOneWidget,
+      );
+      await tester.enterText(
+        find.byKey(const ValueKey('compartido-nombre')),
+        'Gastos abiertos',
+      );
+      await tester.tap(
+        find.byKey(ValueKey('compartido-miembro-${IdsDemostracion.pareja}')),
+      );
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('compartido-crear')));
       await tester.pumpAndSettle();
-      final nuevo = repo.datos.libros.firstWhere((l) => l.nombre == 'Gastos abiertos');
+      final nuevo = repo.datos.libros.firstWhere(
+        (l) => l.nombre == 'Gastos abiertos',
+      );
       expect(nuevo.visibilidad, dom.VisibilidadLibro.publica);
       expect(nuevo.esAdministrador(IdsDemostracion.dueno), isTrue);
     });
 
-    testWidgets('un compartido nuevo sin tocar la visibilidad queda privado',
-        (tester) async {
+    testWidgets('un compartido nuevo sin tocar la visibilidad queda privado', (
+      tester,
+    ) async {
       final repo = await montarAjustes(tester, dueno);
       final boton = find.byKey(const ValueKey('ajustes-nuevo-compartido'));
       await tester.ensureVisible(boton);
       await tester.tap(boton);
       await tester.pumpAndSettle();
-      await tester.enterText(find.byKey(const ValueKey('compartido-nombre')), 'Cerrado');
-      await tester.tap(find.byKey(ValueKey('compartido-miembro-${IdsDemostracion.pareja}')));
+      await tester.enterText(
+        find.byKey(const ValueKey('compartido-nombre')),
+        'Cerrado',
+      );
+      await tester.tap(
+        find.byKey(ValueKey('compartido-miembro-${IdsDemostracion.pareja}')),
+      );
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('compartido-crear')));
       await tester.pumpAndSettle();
@@ -428,19 +524,35 @@ void main() {
       );
     });
 
-    testWidgets('el administrador ve "Administrar" y la visibilidad en la fila; '
-        'quien no lo es, solo "Salir del libro"', (tester) async {
-      await montarAjustes(tester, dueno);
-      final fila = find.byKey(const ValueKey('ajustes-libro-$casa'));
-      await tester.ensureVisible(fila);
-      expect(find.descendant(of: fila, matching: find.textContaining('Privada')), findsOneWidget);
-      expect(find.descendant(of: fila, matching: find.textContaining('administrador')), findsOneWidget);
-      expect(find.byKey(const ValueKey('libro-miembros-$casa')), findsOneWidget);
-      expect(find.byKey(const ValueKey('libro-salir-$casa')), findsOneWidget);
-    });
+    testWidgets(
+      'el administrador ve "Administrar" y la visibilidad en la fila; '
+      'quien no lo es, solo "Salir del libro"',
+      (tester) async {
+        await montarAjustes(tester, dueno);
+        final fila = find.byKey(const ValueKey('ajustes-libro-$casa'));
+        await tester.ensureVisible(fila);
+        expect(
+          find.descendant(of: fila, matching: find.textContaining('Privada')),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(
+            of: fila,
+            matching: find.textContaining('administrador'),
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const ValueKey('libro-miembros-$casa')),
+          findsOneWidget,
+        );
+        expect(find.byKey(const ValueKey('libro-salir-$casa')), findsOneWidget);
+      },
+    );
 
-    testWidgets('la pareja no administra el compartido que creó el dueño',
-        (tester) async {
+    testWidgets('la pareja no administra el compartido que creó el dueño', (
+      tester,
+    ) async {
       await montarAjustes(tester, pareja);
       final fila = find.byKey(const ValueKey('ajustes-libro-$casa'));
       await tester.ensureVisible(fila);
@@ -448,48 +560,71 @@ void main() {
       expect(find.byKey(const ValueKey('libro-salir-$casa')), findsOneWidget);
     });
 
-    testWidgets('salirse avisa que el presupuesto queda privado si quedan menos '
-        'de 2, informa el saldo y lo deja privado y activo', (tester) async {
-      final repo = await montarAjustes(tester, pareja);
-      final casaAntes = repo.datos.libro(casa)!;
-      final saldo = repo.datos.vista(casa).balance().patrimonio;
-      expect(saldo, isNot(0), reason: 'el ejemplo tiene dinero en la casa');
-      final salir = find.byKey(const ValueKey('libro-salir-$casa'));
-      await tester.ensureVisible(salir);
-      await tester.tap(salir);
-      await tester.pumpAndSettle();
-      expect(find.textContaining('el presupuesto queda privado'), findsOneWidget);
-      expect(find.textContaining('archivado'), findsNothing, reason: 'ya no se archiva');
-      expect(find.textContaining('El presupuesto tiene'), findsOneWidget);
-      expect(find.textContaining('lo que aportaste se queda aquí'), findsOneWidget);
-      await tester.tap(find.text('Salir del libro').last);
-      await tester.pumpAndSettle();
-      final libro = repo.datos.libro(casa)!;
-      expect(casaAntes.visibilidad, dom.VisibilidadLibro.privada);
-      expect(libro.archivado, isFalse);
-      expect(libro.visibilidad, dom.VisibilidadLibro.privada);
-      expect(libro.papelDe(IdsDemostracion.pareja, hoyDePrueba), isNull);
-      expect(libro.esAdministrador(IdsDemostracion.dueno), isTrue);
-    });
+    testWidgets(
+      'salirse avisa que el presupuesto queda privado si quedan menos '
+      'de 2, informa el saldo y lo deja privado y activo',
+      (tester) async {
+        final repo = await montarAjustes(tester, pareja);
+        final casaAntes = repo.datos.libro(casa)!;
+        final saldo = repo.datos.vista(casa).balance().patrimonio;
+        expect(saldo, isNot(0), reason: 'el ejemplo tiene dinero en la casa');
+        final salir = find.byKey(const ValueKey('libro-salir-$casa'));
+        await tester.ensureVisible(salir);
+        await tester.tap(salir);
+        await tester.pumpAndSettle();
+        expect(
+          find.textContaining('el presupuesto queda privado'),
+          findsOneWidget,
+        );
+        expect(
+          find.textContaining('archivado'),
+          findsNothing,
+          reason: 'ya no se archiva',
+        );
+        expect(find.textContaining('El presupuesto tiene'), findsOneWidget);
+        expect(
+          find.textContaining('lo que aportaste se queda aquí'),
+          findsOneWidget,
+        );
+        await tester.tap(find.text('Salir del libro').last);
+        await tester.pumpAndSettle();
+        final libro = repo.datos.libro(casa)!;
+        expect(casaAntes.visibilidad, dom.VisibilidadLibro.privada);
+        expect(libro.archivado, isFalse);
+        expect(libro.visibilidad, dom.VisibilidadLibro.privada);
+        expect(libro.papelDe(IdsDemostracion.pareja, hoyDePrueba), isNull);
+        expect(libro.esAdministrador(IdsDemostracion.dueno), isTrue);
+      },
+    );
 
-    testWidgets('el último miembro no ve "Salir del libro" y se le explica',
-        (tester) async {
+    testWidgets('el último miembro no ve "Salir del libro" y se le explica', (
+      tester,
+    ) async {
       final repo = await montarAjustes(tester, dueno);
-      await servicioDe(repo, dueno).quitarMiembroLibro(casa, IdsDemostracion.pareja);
+      await servicioDe(
+        repo,
+        dueno,
+      ).quitarMiembroLibro(casa, IdsDemostracion.pareja);
       await tester.pumpAndSettle();
       final fila = find.byKey(const ValueKey('ajustes-libro-$casa'));
       await tester.ensureVisible(fila);
       expect(find.byKey(const ValueKey('libro-salir-$casa')), findsNothing);
       expect(find.textContaining('Eres el último miembro'), findsOneWidget);
-      expect(find.byKey(const ValueKey('libro-miembros-$casa')), findsOneWidget,
-          reason: 'el administrador sigue pudiendo archivarlo');
+      expect(
+        find.byKey(const ValueKey('libro-miembros-$casa')),
+        findsOneWidget,
+        reason: 'el administrador sigue pudiendo archivarlo',
+      );
     });
 
     testWidgets('quien administra elige a quién agregar entre los adultos con '
         'Finanzas del hogar, aunque no sea el dueño', (tester) async {
       final repo = await montarAjustes(tester, pareja);
       // La pareja crea su propio compartido con otra persona de ejemplo.
-      await servicioDe(repo, pareja).crearLibroCompartido('Viaje', ['otra-persona']);
+      await servicioDe(
+        repo,
+        pareja,
+      ).crearLibroCompartido('Viaje', ['otra-persona']);
       final id = repo.datos.libros.firstWhere((l) => l.nombre == 'Viaje').id;
       await tester.pumpAndSettle();
       final admin = find.byKey(ValueKey('libro-miembros-$id'));
@@ -499,7 +634,10 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('miembro-agregar')));
       await tester.pumpAndSettle();
       // El dueño aparece aunque la pareja no pueda leer sus membresías.
-      expect(find.text(repo.actual.nombreDe(IdsDemostracion.dueno)).last, findsOneWidget);
+      expect(
+        find.text(repo.actual.nombreDe(IdsDemostracion.dueno)).last,
+        findsOneWidget,
+      );
     });
 
     testWidgets('el administrador cambia la visibilidad, saca y agrega '
@@ -518,14 +656,24 @@ void main() {
       await tester.pumpAndSettle();
       expect(repo.datos.libro(casa)!.visibilidad, dom.VisibilidadLibro.publica);
 
-      await tester.tap(find.byKey(const ValueKey('miembro-quitar-persona-extra')));
+      await tester.tap(
+        find.byKey(const ValueKey('miembro-quitar-persona-extra')),
+      );
       await tester.pumpAndSettle();
-      expect(repo.datos.libro(casa)!.papelDe('persona-extra', hoyDePrueba), isNull);
+      expect(
+        repo.datos.libro(casa)!.papelDe('persona-extra', hoyDePrueba),
+        isNull,
+      );
       // Con 2 miembros también se puede sacar a uno: avisa que el presupuesto
       // queda privado para quien se queda.
-      await tester.tap(find.byKey(ValueKey('miembro-quitar-${IdsDemostracion.pareja}')));
+      await tester.tap(
+        find.byKey(ValueKey('miembro-quitar-${IdsDemostracion.pareja}')),
+      );
       await tester.pumpAndSettle();
-      expect(find.textContaining('Quedará menos de 2 miembros'), findsOneWidget);
+      expect(
+        find.textContaining('Quedará menos de 2 miembros'),
+        findsOneWidget,
+      );
       await tester.tap(find.text('Sacar').last);
       await tester.pumpAndSettle();
       final solo = repo.datos.libro(casa)!;
@@ -540,7 +688,10 @@ void main() {
       await tester.tap(find.text('Archivar').last);
       await tester.pumpAndSettle();
       expect(repo.datos.libro(casa)!.archivado, isTrue);
-      expect(find.byKey(const ValueKey('libro-archivado-aviso')), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('libro-archivado-aviso')),
+        findsOneWidget,
+      );
       // Y lo reactiva.
       await tester.ensureVisible(find.byKey(const ValueKey('libro-reactivar')));
       await tester.tap(find.byKey(const ValueKey('libro-reactivar')));
@@ -567,14 +718,18 @@ void main() {
       );
       tester.view.physicalSize = const Size(1440, 4000);
       _contenedor(tester).read(dis.montosVisiblesProvider.notifier).fijar(true);
-      _contenedor(tester).read(routerProvider).go(SeccionFinanzas.compromisos.ruta);
+      _contenedor(tester)
+          .read(routerProvider)
+          .go(SeccionFinanzas.compromisos.ruta);
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('compromisos-nueva-deuda')));
       await tester.pumpAndSettle();
       final regla = find.byKey(const ValueKey('calendario-regla'));
       expect(regla, findsOneWidget);
       expect(
-        tester.widget<DropdownButtonFormField<ReglaDiaInhabil>>(regla).initialValue,
+        tester
+            .widget<DropdownButtonFormField<ReglaDiaInhabil>>(regla)
+            .initialValue,
         ReglaDiaInhabil.sinCambio,
         reason: 'los pagos que salen se quedan en su fecha',
       );
@@ -584,7 +739,10 @@ void main() {
       await tester.tap(find.text('Siguiente día hábil').last);
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byKey(const ValueKey('deuda-nombre')), 'Crédito de ejemplo');
+      await tester.enterText(
+        find.byKey(const ValueKey('deuda-nombre')),
+        'Crédito de ejemplo',
+      );
       await tester.enterText(find.byKey(const ValueKey('deuda-abono')), '1500');
       await tester.enterText(
         find.widgetWithText(TextFormField, 'Tasa anual (del estado de cuenta)'),
@@ -601,32 +759,38 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('dialogo-guardar')));
       await tester.pumpAndSettle();
-      final deuda = repo.datos.deudas.firstWhere((d) => d.nombre == 'Crédito de ejemplo');
+      final deuda = repo.datos.deudas.firstWhere(
+        (d) => d.nombre == 'Crédito de ejemplo',
+      );
       expect(deuda.calendario!.regla, ReglaDiaInhabil.siguienteDiaHabil);
       expect(deuda.reglaInhabil, ReglaDiaInhabil.siguienteDiaHabil);
     });
 
-    test('una deuda "en su fecha" no se mueve y la del siguiente día hábil sí',
-        () {
-      // El lunes 2 de noviembre es un día inhábil propio de este ejemplo.
-      final inhabiles = CalendarioFijo([Fecha(2026, 11, 2)]);
-      Deuda deuda(ReglaDiaInhabil r) => Deuda(
-        id: 'd',
-        libroId: 'l',
-        nombre: 'Crédito de ejemplo',
-        tipo: TipoDeuda.conCosto,
-        abono: 150000,
-        frecuencia: Frecuencia.mensual,
-        calendario: CalendarioConfig.mensual(const [2], regla: r),
-        tasaAnualPuntosBase: 1500,
-      );
-      final desde = Fecha(2026, 11, 1);
-      final hasta = Fecha(2026, 11, 30);
-      final enSuFecha = deuda(ReglaDiaInhabil.sinCambio).pagosEntre(desde, hasta, inhabiles);
-      final siguiente = deuda(ReglaDiaInhabil.siguienteDiaHabil).pagosEntre(desde, hasta, inhabiles);
-      expect(enSuFecha.single.ajustada, Fecha(2026, 11, 2));
-      expect(siguiente.single.programada, Fecha(2026, 11, 2));
-      expect(siguiente.single.ajustada, Fecha(2026, 11, 3));
-    });
+    test(
+      'una deuda "en su fecha" no se mueve y la del siguiente día hábil sí',
+      () {
+        // El lunes 2 de noviembre es un día inhábil propio de este ejemplo.
+        final inhabiles = CalendarioFijo([Fecha(2026, 11, 2)]);
+        Deuda deuda(ReglaDiaInhabil r) => Deuda(
+          id: 'd',
+          libroId: 'l',
+          nombre: 'Crédito de ejemplo',
+          tipo: TipoDeuda.conCosto,
+          abono: 150000,
+          frecuencia: Frecuencia.mensual,
+          calendario: CalendarioConfig.mensual(const [2], regla: r),
+          tasaAnualPuntosBase: 1500,
+        );
+        final desde = Fecha(2026, 11, 1);
+        final hasta = Fecha(2026, 11, 30);
+        final enSuFecha = deuda(ReglaDiaInhabil.sinCambio)
+            .pagosEntre(desde, hasta, inhabiles);
+        final siguiente = deuda(ReglaDiaInhabil.siguienteDiaHabil)
+            .pagosEntre(desde, hasta, inhabiles);
+        expect(enSuFecha.single.ajustada, Fecha(2026, 11, 2));
+        expect(siguiente.single.programada, Fecha(2026, 11, 2));
+        expect(siguiente.single.ajustada, Fecha(2026, 11, 3));
+      },
+    );
   });
 }

@@ -29,7 +29,10 @@ void main() {
   group('reglas de largo', () {
     test('ven dinero el dueño y el coadministrador; los demás no', () {
       expect(
-        [for (final rol in Rol.values) if (rolVeDinero(rol)) rol],
+        [
+          for (final rol in Rol.values)
+            if (rolVeDinero(rol)) rol,
+        ],
         [Rol.dueno, Rol.coadministrador],
       );
     });
@@ -69,14 +72,25 @@ void main() {
     });
 
     test('mensajes: el largo del rol y lo trivial', () {
-      expect(errorDePinNuevo('7382', rol: Rol.dueno), 'El PIN es de 6 dígitos.');
-      expect(errorDePinNuevo('73829', rol: Rol.coadministrador),
-          'El PIN es de 6 dígitos.');
-      expect(errorDePinNuevo('7382a', rol: Rol.dueno), 'El PIN es de 6 dígitos.');
+      expect(
+        errorDePinNuevo('7382', rol: Rol.dueno),
+        'El PIN es de 6 dígitos.',
+      );
+      expect(
+        errorDePinNuevo('73829', rol: Rol.coadministrador),
+        'El PIN es de 6 dígitos.',
+      );
+      expect(
+        errorDePinNuevo('7382a', rol: Rol.dueno),
+        'El PIN es de 6 dígitos.',
+      );
       expect(errorDePinNuevo(nuevo, rol: Rol.dueno), isNull);
       // Los triviales se siguen rechazando, también de 6 dígitos.
       expect(errorDePinNuevo('123456', rol: Rol.dueno), contains('secuencia'));
-      expect(errorDePinNuevo('111111', rol: Rol.dueno), contains('mismo número'));
+      expect(
+        errorDePinNuevo('111111', rol: Rol.dueno),
+        contains('mismo número'),
+      );
       expect(errorDePinNuevo('121212', rol: Rol.dueno), contains('bloque'));
       // Los demás conservan el mensaje y el largo de siempre.
       expect(errorDePinNuevo('7382', rol: Rol.familiar), isNull);
@@ -142,12 +156,12 @@ void main() {
 
     /// El bloqueo como estaba antes de la regla: con un PIN de 4 dígitos.
     void bloqueoAnterior(Sesion sesion) {
-      almacen.datos[ControladorBloqueo.claveConfiguracion(sesion.persona.id)] =
-          jsonEncode(
-            ConfiguracionBloqueo(
-              hashPin: HashPin.crear(corto, iteraciones: 50),
-            ).aJson(),
-          );
+      almacen.datos[ControladorBloqueo.claveConfiguracion(
+        sesion.persona.id,
+      )] = jsonEncode(
+        ConfiguracionBloqueo(hashPin: HashPin.crear(corto, iteraciones: 50))
+            .aJson(),
+      );
     }
 
     test('el dueño y la pareja configuran su bloqueo con 6 dígitos', () async {
@@ -166,7 +180,10 @@ void main() {
             reason: '$rol $malo',
           );
         }
-        await expectLater(controlador.configurarPin('123456'), throwsArgumentError);
+        await expectLater(
+          controlador.configurarPin('123456'),
+          throwsArgumentError,
+        );
         await controlador.configurarPin(nuevo);
         expect(controlador.comprobarPin(nuevo), ResultadoBloqueo.abierto);
       }
@@ -184,76 +201,128 @@ void main() {
       }
     });
 
-    test('PIN anterior corto: lo reconoce pero no abre; pide uno nuevo', () async {
-      final dueno = sesionDeEjemplo(Rol.dueno);
-      bloqueoAnterior(dueno);
-      final controlador = await abrir(dueno);
-      expect(controlador.state.bloqueado, isTrue);
+    test(
+      'PIN anterior corto: lo reconoce pero no abre; pide uno nuevo',
+      () async {
+        final dueno = sesionDeEjemplo(Rol.dueno);
+        bloqueoAnterior(dueno);
+        final controlador = await abrir(dueno);
+        expect(controlador.state.bloqueado, isTrue);
 
-      expect(controlador.desbloquearConPin(corto), ResultadoBloqueo.debeCambiarPin);
-      expect(controlador.state.bloqueado, isTrue, reason: 'sigue bloqueado');
-      expect(controlador.comprobarPin(corto), ResultadoBloqueo.debeCambiarPin);
-      expect(controlador.esperaRestante(), isNull, reason: 'no cuenta como fallo');
-    });
-
-    test('un PIN equivocado sigue siendo un fallo (y el contador sigue)', () async {
-      final dueno = sesionDeEjemplo(Rol.dueno);
-      bloqueoAnterior(dueno);
-      final controlador = await abrir(dueno);
-      for (var i = 0; i < 4; i++) {
-        expect(controlador.desbloquearConPin('0001'), ResultadoBloqueo.pinIncorrecto);
-      }
-      // El PIN corto bueno reinicia el contador.
-      expect(controlador.desbloquearConPin(corto), ResultadoBloqueo.debeCambiarPin);
-      for (var i = 0; i < 4; i++) {
-        expect(controlador.desbloquearConPin('0001'), ResultadoBloqueo.pinIncorrecto);
-      }
-      expect(controlador.desbloquearConPin('0001'), ResultadoBloqueo.bloqueado);
-    });
-
-    test('cambiar el PIN corto por uno de 6: abre y el viejo ya no sirve', () async {
-      final dueno = sesionDeEjemplo(Rol.dueno);
-      bloqueoAnterior(dueno);
-      final controlador = await abrir(dueno);
-      expect(controlador.desbloquearConPin(corto), ResultadoBloqueo.debeCambiarPin);
-
-      expect(await controlador.cambiarPin(corto, nuevo), ResultadoBloqueo.abierto);
-      expect(controlador.state.bloqueado, isFalse);
-      expect(controlador.comprobarPin(corto), ResultadoBloqueo.pinIncorrecto);
-      expect(controlador.comprobarPin(nuevo), ResultadoBloqueo.abierto);
-      // Se guardó: la próxima vez que abra la app pide el nuevo.
-      final otra = await abrir(dueno);
-      expect(otra.state.bloqueado, isTrue);
-      expect(otra.desbloquearConPin(nuevo), ResultadoBloqueo.abierto);
-      // El resto de su configuración se conserva.
-      expect(otra.state.configuracion!.tras, bloqueoTrasPorOmision);
-    });
-
-    test('el cambio pide el PIN actual y el nuevo de 6 dígitos no trivial', () async {
-      final dueno = sesionDeEjemplo(Rol.dueno);
-      bloqueoAnterior(dueno);
-      final controlador = await abrir(dueno);
-      expect(await controlador.cambiarPin('0001', nuevo), ResultadoBloqueo.pinIncorrecto);
-      for (final malo in ['7391', '73915', '123456', '111111', '121212']) {
-        await expectLater(
-          controlador.cambiarPin(corto, malo),
-          throwsArgumentError,
-          reason: malo,
+        expect(
+          controlador.desbloquearConPin(corto),
+          ResultadoBloqueo.debeCambiarPin,
         );
-      }
-      // Nada cambió: el PIN de antes sigue reconocido.
-      expect(controlador.comprobarPin(corto), ResultadoBloqueo.debeCambiarPin);
-      expect(controlador.state.bloqueado, isTrue);
-    });
+        expect(controlador.state.bloqueado, isTrue, reason: 'sigue bloqueado');
+        expect(
+          controlador.comprobarPin(corto),
+          ResultadoBloqueo.debeCambiarPin,
+        );
+        expect(
+          controlador.esperaRestante(),
+          isNull,
+          reason: 'no cuenta como fallo',
+        );
+      },
+    );
 
-    test('quien no ve dinero conserva su PIN corto y entra sin cambiarlo', () async {
-      for (final rol in [Rol.familiar, Rol.cuidador]) {
-        final sesion = sesionDeEjemplo(rol);
-        bloqueoAnterior(sesion);
-        final controlador = await abrir(sesion);
-        expect(controlador.desbloquearConPin(corto), ResultadoBloqueo.abierto);
-      }
-    });
+    test(
+      'un PIN equivocado sigue siendo un fallo (y el contador sigue)',
+      () async {
+        final dueno = sesionDeEjemplo(Rol.dueno);
+        bloqueoAnterior(dueno);
+        final controlador = await abrir(dueno);
+        for (var i = 0; i < 4; i++) {
+          expect(
+            controlador.desbloquearConPin('0001'),
+            ResultadoBloqueo.pinIncorrecto,
+          );
+        }
+        // El PIN corto bueno reinicia el contador.
+        expect(
+          controlador.desbloquearConPin(corto),
+          ResultadoBloqueo.debeCambiarPin,
+        );
+        for (var i = 0; i < 4; i++) {
+          expect(
+            controlador.desbloquearConPin('0001'),
+            ResultadoBloqueo.pinIncorrecto,
+          );
+        }
+        expect(
+          controlador.desbloquearConPin('0001'),
+          ResultadoBloqueo.bloqueado,
+        );
+      },
+    );
+
+    test(
+      'cambiar el PIN corto por uno de 6: abre y el viejo ya no sirve',
+      () async {
+        final dueno = sesionDeEjemplo(Rol.dueno);
+        bloqueoAnterior(dueno);
+        final controlador = await abrir(dueno);
+        expect(
+          controlador.desbloquearConPin(corto),
+          ResultadoBloqueo.debeCambiarPin,
+        );
+
+        expect(
+          await controlador.cambiarPin(corto, nuevo),
+          ResultadoBloqueo.abierto,
+        );
+        expect(controlador.state.bloqueado, isFalse);
+        expect(controlador.comprobarPin(corto), ResultadoBloqueo.pinIncorrecto);
+        expect(controlador.comprobarPin(nuevo), ResultadoBloqueo.abierto);
+        // Se guardó: la próxima vez que abra la app pide el nuevo.
+        final otra = await abrir(dueno);
+        expect(otra.state.bloqueado, isTrue);
+        expect(otra.desbloquearConPin(nuevo), ResultadoBloqueo.abierto);
+        // El resto de su configuración se conserva.
+        expect(otra.state.configuracion!.tras, bloqueoTrasPorOmision);
+      },
+    );
+
+    test(
+      'el cambio pide el PIN actual y el nuevo de 6 dígitos no trivial',
+      () async {
+        final dueno = sesionDeEjemplo(Rol.dueno);
+        bloqueoAnterior(dueno);
+        final controlador = await abrir(dueno);
+        expect(
+          await controlador.cambiarPin('0001', nuevo),
+          ResultadoBloqueo.pinIncorrecto,
+        );
+        for (final malo in ['7391', '73915', '123456', '111111', '121212']) {
+          await expectLater(
+            controlador.cambiarPin(corto, malo),
+            throwsArgumentError,
+            reason: malo,
+          );
+        }
+        // Nada cambió: el PIN de antes sigue reconocido.
+        expect(
+          controlador.comprobarPin(corto),
+          ResultadoBloqueo.debeCambiarPin,
+        );
+        expect(controlador.state.bloqueado, isTrue);
+      },
+    );
+
+    test(
+      'quien no ve dinero conserva su PIN corto y entra sin cambiarlo',
+      () async {
+        for (final rol in [Rol.familiar, Rol.cuidador]) {
+          final sesion = sesionDeEjemplo(rol);
+          bloqueoAnterior(sesion);
+          final controlador = await abrir(sesion);
+          expect(
+            controlador.desbloquearConPin(corto),
+            ResultadoBloqueo.abierto,
+          );
+        }
+      },
+    );
   });
 
   group('ver los montos', () {
@@ -297,8 +366,11 @@ void main() {
         final controlador = await montos(crear(sesionDeEjemplo(rol)));
         expect(controlador.rol, rol);
         for (final malo in ['7382', '73829', '123456']) {
-          await expectLater(controlador.crearPin(malo), throwsArgumentError,
-              reason: '$rol $malo');
+          await expectLater(
+            controlador.crearPin(malo),
+            throwsArgumentError,
+            reason: '$rol $malo',
+          );
         }
         await controlador.crearPin(nuevo);
         expect(await controlador.verificar(nuevo), ResultadoRevelar.revelado);
@@ -318,9 +390,19 @@ void main() {
       pinPropioAnterior(dueno);
       final controlador = await montos(crear(dueno));
       expect(controlador.fuente, FuenteDePinMontos.propio);
-      expect(await controlador.verificar(corto), ResultadoRevelar.debeCambiarPin);
-      expect(controlador.esperaRestante(), isNull, reason: 'no cuenta como fallo');
-      expect(await controlador.verificar('0001'), ResultadoRevelar.pinIncorrecto);
+      expect(
+        await controlador.verificar(corto),
+        ResultadoRevelar.debeCambiarPin,
+      );
+      expect(
+        controlador.esperaRestante(),
+        isNull,
+        reason: 'no cuenta como fallo',
+      );
+      expect(
+        await controlador.verificar('0001'),
+        ResultadoRevelar.pinIncorrecto,
+      );
     });
 
     test('cambiar el PIN propio corto por uno de 6 y ver los montos', () async {
@@ -328,60 +410,90 @@ void main() {
       pinPropioAnterior(dueno);
       final contenedor = crear(dueno);
       final controlador = await montos(contenedor);
-      expect(await controlador.verificar(corto), ResultadoRevelar.debeCambiarPin);
+      expect(
+        await controlador.verificar(corto),
+        ResultadoRevelar.debeCambiarPin,
+      );
 
-      expect(await controlador.cambiarPin(corto, nuevo), ResultadoRevelar.revelado);
-      expect(await controlador.verificar(corto), ResultadoRevelar.pinIncorrecto);
+      expect(
+        await controlador.cambiarPin(corto, nuevo),
+        ResultadoRevelar.revelado,
+      );
+      expect(
+        await controlador.verificar(corto),
+        ResultadoRevelar.pinIncorrecto,
+      );
       expect(await controlador.verificar(nuevo), ResultadoRevelar.revelado);
       // Se guardó, con el resto de su configuración, y solo como hash.
-      final guardado = almacen.datos[
-          ControladorMontos.claveConfiguracion(dueno.persona.id)]!;
+      final guardado = almacen
+          .datos[ControladorMontos.claveConfiguracion(dueno.persona.id)]!;
       expect(guardado, isNot(contains(nuevo)));
       final otra = await montos(crear(dueno));
       expect(await otra.verificar(nuevo), ResultadoRevelar.revelado);
     });
 
-    test('el cambio pide el PIN actual (los fallos cuentan) y un nuevo válido',
-        () async {
-      final dueno = sesionDeEjemplo(Rol.dueno);
-      pinPropioAnterior(dueno);
-      final controlador = await montos(crear(dueno));
-      expect(await controlador.cambiarPin('0001', nuevo),
-          ResultadoRevelar.pinIncorrecto);
-      for (final malo in ['7391', '123456']) {
-        await expectLater(controlador.cambiarPin(corto, malo), throwsArgumentError,
-            reason: malo);
-      }
-      expect(await controlador.verificar(corto), ResultadoRevelar.debeCambiarPin,
-          reason: 'nada cambió');
-      for (var i = 0; i < 4; i++) {
-        await controlador.cambiarPin('0001', nuevo);
-      }
-      expect(await controlador.cambiarPin('0001', nuevo),
-          ResultadoRevelar.bloqueado);
-    });
-
-    test('con el bloqueo del teléfono, el PIN corto del bloqueo se cambia desde '
-        'aquí y cambia el del bloqueo', () async {
-      final dueno = sesionDeEjemplo(Rol.dueno);
-      almacen.datos[ControladorBloqueo.claveConfiguracion(dueno.persona.id)] =
-          jsonEncode(
-            ConfiguracionBloqueo(
-              hashPin: HashPin.crear(corto, iteraciones: 50),
-            ).aJson(),
+    test(
+      'el cambio pide el PIN actual (los fallos cuentan) y un nuevo válido',
+      () async {
+        final dueno = sesionDeEjemplo(Rol.dueno);
+        pinPropioAnterior(dueno);
+        final controlador = await montos(crear(dueno));
+        expect(
+          await controlador.cambiarPin('0001', nuevo),
+          ResultadoRevelar.pinIncorrecto,
+        );
+        for (final malo in ['7391', '123456']) {
+          await expectLater(
+            controlador.cambiarPin(corto, malo),
+            throwsArgumentError,
+            reason: malo,
           );
-      final contenedor = crear(dueno);
-      final bloqueo = contenedor.read(controladorBloqueoProvider.notifier);
-      await bloqueo.listo;
-      final controlador = await montos(contenedor);
-      expect(controlador.fuente, FuenteDePinMontos.bloqueo);
-      expect(await controlador.verificar(corto), ResultadoRevelar.debeCambiarPin);
+        }
+        expect(
+          await controlador.verificar(corto),
+          ResultadoRevelar.debeCambiarPin,
+          reason: 'nada cambió',
+        );
+        for (var i = 0; i < 4; i++) {
+          await controlador.cambiarPin('0001', nuevo);
+        }
+        expect(
+          await controlador.cambiarPin('0001', nuevo),
+          ResultadoRevelar.bloqueado,
+        );
+      },
+    );
 
-      expect(await controlador.cambiarPin(corto, nuevo), ResultadoRevelar.revelado);
-      expect(bloqueo.comprobarPin(nuevo), ResultadoBloqueo.abierto);
-      expect(bloqueo.comprobarPin(corto), ResultadoBloqueo.pinIncorrecto);
-      expect(await controlador.verificar(nuevo), ResultadoRevelar.revelado);
-    });
+    test(
+      'con el bloqueo del teléfono, el PIN corto del bloqueo se cambia desde '
+      'aquí y cambia el del bloqueo',
+      () async {
+        final dueno = sesionDeEjemplo(Rol.dueno);
+        almacen.datos[ControladorBloqueo.claveConfiguracion(
+          dueno.persona.id,
+        )] = jsonEncode(
+          ConfiguracionBloqueo(hashPin: HashPin.crear(corto, iteraciones: 50))
+              .aJson(),
+        );
+        final contenedor = crear(dueno);
+        final bloqueo = contenedor.read(controladorBloqueoProvider.notifier);
+        await bloqueo.listo;
+        final controlador = await montos(contenedor);
+        expect(controlador.fuente, FuenteDePinMontos.bloqueo);
+        expect(
+          await controlador.verificar(corto),
+          ResultadoRevelar.debeCambiarPin,
+        );
+
+        expect(
+          await controlador.cambiarPin(corto, nuevo),
+          ResultadoRevelar.revelado,
+        );
+        expect(bloqueo.comprobarPin(nuevo), ResultadoBloqueo.abierto);
+        expect(bloqueo.comprobarPin(corto), ResultadoBloqueo.pinIncorrecto);
+        expect(await controlador.verificar(nuevo), ResultadoRevelar.revelado);
+      },
+    );
 
     test('quien no ve dinero con PIN corto no tiene que cambiarlo', () async {
       final familiar = sesionDeEjemplo(Rol.familiar);
@@ -401,14 +513,22 @@ void main() {
       almacen = AlmacenSeguroEnMemoria();
       servicio = ServicioSesionFalso(
         cuentas: {
-          'dueno@ejemplo.test':
-              CuentaFalsa('clave', sesionDeEjemplo(Rol.dueno)),
-          'pareja@ejemplo.test':
-              CuentaFalsa('clave', sesionDeEjemplo(Rol.coadministrador)),
-          'tia@ejemplo.test':
-              CuentaFalsa('clave', sesionDeEjemplo(Rol.familiar)),
-          'ana@ejemplo.test':
-              CuentaFalsa('clave', sesionDeEjemplo(Rol.cuidador)),
+          'dueno@ejemplo.test': CuentaFalsa(
+            'clave',
+            sesionDeEjemplo(Rol.dueno),
+          ),
+          'pareja@ejemplo.test': CuentaFalsa(
+            'clave',
+            sesionDeEjemplo(Rol.coadministrador),
+          ),
+          'tia@ejemplo.test': CuentaFalsa(
+            'clave',
+            sesionDeEjemplo(Rol.familiar),
+          ),
+          'ana@ejemplo.test': CuentaFalsa(
+            'clave',
+            sesionDeEjemplo(Rol.cuidador),
+          ),
         },
         inicial: casa,
       );
@@ -430,37 +550,42 @@ void main() {
       return (contenedor, controlador);
     }
 
-    test('agregar al dueño o a la pareja pide 6 dígitos (al conocer su rol)',
-        () async {
-      final (contenedor, controlador) = await abrir();
-      for (final correo in ['dueno@ejemplo.test', 'pareja@ejemplo.test']) {
-        for (final malo in ['7382', '73829']) {
-          await expectLater(
-            controlador.agregarConCredenciales(
-              correo: correo,
-              contrasena: 'clave',
-              pin: malo,
-            ),
-            throwsA(
-              isA<ArgumentError>().having(
-                (e) => e.message,
-                'mensaje',
-                contains('6 dígitos'),
+    test(
+      'agregar al dueño o a la pareja pide 6 dígitos (al conocer su rol)',
+      () async {
+        final (contenedor, controlador) = await abrir();
+        for (final correo in ['dueno@ejemplo.test', 'pareja@ejemplo.test']) {
+          for (final malo in ['7382', '73829']) {
+            await expectLater(
+              controlador.agregarConCredenciales(
+                correo: correo,
+                contrasena: 'clave',
+                pin: malo,
               ),
-            ),
-            reason: '$correo $malo',
-          );
+              throwsA(
+                isA<ArgumentError>().having(
+                  (e) => e.message,
+                  'mensaje',
+                  contains('6 dígitos'),
+                ),
+              ),
+              reason: '$correo $malo',
+            );
+          }
         }
-      }
-      expect(contenedor.read(controladorTabletProvider).usuarios, isEmpty,
-          reason: 'ninguno quedó en la tablet');
-      final usuario = await controlador.agregarConCredenciales(
-        correo: 'dueno@ejemplo.test',
-        contrasena: 'clave',
-        pin: nuevo,
-      );
-      expect(usuario.rol, Rol.dueno);
-    });
+        expect(
+          contenedor.read(controladorTabletProvider).usuarios,
+          isEmpty,
+          reason: 'ninguno quedó en la tablet',
+        );
+        final usuario = await controlador.agregarConCredenciales(
+          correo: 'dueno@ejemplo.test',
+          contrasena: 'clave',
+          pin: nuevo,
+        );
+        expect(usuario.rol, Rol.dueno);
+      },
+    );
 
     test('agregar con agregarUsuario aplica el mismo largo por rol', () async {
       final (_, controlador) = await abrir();
@@ -497,34 +622,44 @@ void main() {
       }
     });
 
-    test('cambiar el PIN del dueño o la pareja: 6 dígitos; del familiar, de 4 a 6',
-        () async {
-      final (_, controlador) = await abrir();
-      final dueno = await controlador.agregarUsuario(
-        sesionDeEjemplo(Rol.dueno),
-        pin: nuevo,
-      );
-      final familiar = await controlador.agregarUsuario(
-        sesionDeEjemplo(Rol.familiar),
-        pin: corto,
-      );
-      await expectLater(
-        controlador.cambiarPin(dueno.personaId, pinActual: nuevo, pinNuevo: '7391'),
-        throwsArgumentError,
-      );
-      await expectLater(
-        controlador.cambiarPin(dueno.personaId, pinActual: nuevo, pinNuevo: '73915'),
-        throwsArgumentError,
-      );
-      expect(
-        await controlador.cambiarPin(
-          familiar.personaId,
-          pinActual: corto,
-          pinNuevo: '7391',
-        ),
-        ResultadoDesbloqueo.abierto,
-      );
-    });
+    test(
+      'cambiar el PIN del dueño o la pareja: 6 dígitos; del familiar, de 4 a 6',
+      () async {
+        final (_, controlador) = await abrir();
+        final dueno = await controlador.agregarUsuario(
+          sesionDeEjemplo(Rol.dueno),
+          pin: nuevo,
+        );
+        final familiar = await controlador.agregarUsuario(
+          sesionDeEjemplo(Rol.familiar),
+          pin: corto,
+        );
+        await expectLater(
+          controlador.cambiarPin(
+            dueno.personaId,
+            pinActual: nuevo,
+            pinNuevo: '7391',
+          ),
+          throwsArgumentError,
+        );
+        await expectLater(
+          controlador.cambiarPin(
+            dueno.personaId,
+            pinActual: nuevo,
+            pinNuevo: '73915',
+          ),
+          throwsArgumentError,
+        );
+        expect(
+          await controlador.cambiarPin(
+            familiar.personaId,
+            pinActual: corto,
+            pinNuevo: '7391',
+          ),
+          ResultadoDesbloqueo.abierto,
+        );
+      },
+    );
 
     test('un PIN anterior corto del dueño no abre la tablet pública ni la '
         'personal: pide cambiarlo', () async {
@@ -542,16 +677,32 @@ void main() {
       final (otro, nuevaApp) = await abrir();
       final id = dueno.persona.id;
 
-      expect(nuevaApp.comprobarPin(id, corto), ResultadoDesbloqueo.debeCambiarPin);
-      expect(nuevaApp.desbloquearConPin(id, corto), ResultadoDesbloqueo.debeCambiarPin);
-      expect(nuevaApp.desbloquearConPin(id, corto, soloAccion: true),
-          ResultadoDesbloqueo.debeCambiarPin);
-      expect(await nuevaApp.entrarParaAccion(id, corto),
-          ResultadoDesbloqueo.debeCambiarPin);
+      expect(
+        nuevaApp.comprobarPin(id, corto),
+        ResultadoDesbloqueo.debeCambiarPin,
+      );
+      expect(
+        nuevaApp.desbloquearConPin(id, corto),
+        ResultadoDesbloqueo.debeCambiarPin,
+      );
+      expect(
+        nuevaApp.desbloquearConPin(id, corto, soloAccion: true),
+        ResultadoDesbloqueo.debeCambiarPin,
+      );
+      expect(
+        await nuevaApp.entrarParaAccion(id, corto),
+        ResultadoDesbloqueo.debeCambiarPin,
+      );
       expect(otro.read(controladorTabletProvider).usuarioActivo, isNull);
-      expect(nuevaApp.esperaRestante(id), isNull, reason: 'no cuenta como fallo');
-      expect(nuevaApp.desbloquearConPin(id, '0001'),
-          ResultadoDesbloqueo.pinIncorrecto);
+      expect(
+        nuevaApp.esperaRestante(id),
+        isNull,
+        reason: 'no cuenta como fallo',
+      );
+      expect(
+        nuevaApp.desbloquearConPin(id, '0001'),
+        ResultadoDesbloqueo.pinIncorrecto,
+      );
     });
 
     test('el servidor lo ascendió a un rol que ve dinero con un PIN corto: no '
@@ -578,11 +729,7 @@ void main() {
       expect(servicio.personaEnServidor, casa.persona.id);
       // El rol nuevo quedó guardado: ahora el cambio pide 6 dígitos.
       expect(
-        contenedor
-            .read(controladorTabletProvider)
-            .usuarios
-            .single
-            .rol,
+        contenedor.read(controladorTabletProvider).usuarios.single.rol,
         Rol.coadministrador,
       );
       await expectLater(

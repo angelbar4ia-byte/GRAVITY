@@ -14,11 +14,13 @@ import 'package:gravity/nucleo/sensibles/nube_habitos.dart';
 import 'package:gravity/nucleo/sensibles/palabras_es.dart';
 import 'package:gravity/nucleo/sensibles/sobres.dart';
 import 'package:gravity/nucleo/sensibles/subida_diferida.dart';
+
 import 'dart:math';
 
 class _EnviadorNulo implements Enviador {
   @override
-  Future<ResultadoEnvio> enviar(PeticionEnvio peticion) async => ResultadoEnvio.enviado;
+  Future<ResultadoEnvio> enviar(PeticionEnvio peticion) async =>
+      ResultadoEnvio.enviado;
 }
 
 void main() {
@@ -48,7 +50,8 @@ void main() {
 
     test('detecta una palabra cambiada, de otra lista o de menos', () {
       final frase = FraseDeRecuperacion.generar();
-      final cambiada = [...frase]..[3] = frase[3] == 'ábaco' ? 'abdomen' : 'ábaco';
+      final cambiada = [...frase]
+        ..[3] = frase[3] == 'ábaco' ? 'abdomen' : 'ábaco';
       // Cambiar una palabra casi siempre rompe la verificación de 4 bits.
       var rotas = 0;
       for (final reemplazo in palabrasEs.take(64)) {
@@ -62,15 +65,26 @@ void main() {
     });
 
     test('normalizar y confirmar con 3 palabras al azar', () {
-      expect(FraseDeRecuperacion.normalizar('  ÁBACO   Abdomen\nabeja '), ['ábaco', 'abdomen', 'abeja']);
+      expect(FraseDeRecuperacion.normalizar('  ÁBACO   Abdomen\nabeja '), [
+        'ábaco',
+        'abdomen',
+        'abeja',
+      ]);
       final frase = FraseDeRecuperacion.generar();
       final pos = FraseDeRecuperacion.posicionesDeConfirmacion(azar: Random(1));
       expect(pos, hasLength(3));
       expect(pos.toSet(), hasLength(3));
       expect(pos, [...pos]..sort());
-      expect(FraseDeRecuperacion.confirma(frase, pos, [for (final p in pos) frase[p]]), isTrue);
       expect(
-        FraseDeRecuperacion.confirma(frase, pos, [for (final p in pos) frase[(p + 1) % 12]]),
+        FraseDeRecuperacion.confirma(frase, pos, [
+          for (final p in pos) frase[p],
+        ]),
+        isTrue,
+      );
+      expect(
+        FraseDeRecuperacion.confirma(frase, pos, [
+          for (final p in pos) frase[(p + 1) % 12],
+        ]),
         isFalse,
       );
       expect(FraseDeRecuperacion.confirma(frase, pos, ['a']), isFalse);
@@ -78,99 +92,160 @@ void main() {
   });
 
   group('frase sin acentos, mayúsculas o descompuesta (F3-6)', () {
-    test('las 2048 palabras son distintas aun sin acentos (nada se confunde)', () {
-      expect(palabrasEs.map(FraseDeRecuperacion.claveDePalabra).toSet(), hasLength(2048));
-    });
+    test(
+      'las 2048 palabras son distintas aun sin acentos (nada se confunde)',
+      () {
+        expect(
+          palabrasEs.map(FraseDeRecuperacion.claveDePalabra).toSet(),
+          hasLength(2048),
+        );
+      },
+    );
 
     test('se reconoce con la á descompuesta, sin acentos y en mayúsculas', () {
       final frase = FraseDeRecuperacion.desdeEntropia(List.filled(16, 0));
-      final descompuesta = frase.map((p) => p.replaceAll('á', 'a\u0301')).join(' ');
-      final sinAcentos = frase.map(FraseDeRecuperacion.claveDePalabra).join(' ');
+      final descompuesta = frase
+          .map((p) => p.replaceAll('á', 'a\u0301'))
+          .join(' ');
+      final sinAcentos = frase
+          .map(FraseDeRecuperacion.claveDePalabra)
+          .join(' ');
       final mayusculas = frase.join(' ').toUpperCase();
-      for (final tecleada in [descompuesta, sinAcentos, mayusculas, '  ${frase.join('   ')} \n']) {
+      for (final tecleada in [
+        descompuesta,
+        sinAcentos,
+        mayusculas,
+        '  ${frase.join('   ')} \n',
+      ]) {
         final n = FraseDeRecuperacion.normalizar(tecleada);
         expect(n, frase, reason: tecleada);
         expect(FraseDeRecuperacion.esValida(n), isTrue);
       }
     });
 
-    test('la ñ descompuesta o sin tilde también, y la clave sale igual', () async {
-      final conEnie = palabrasEs.firstWhere((p) => p.contains('ñ'));
-      expect(FraseDeRecuperacion.canonica(conEnie.replaceAll('ñ', 'n\u0303')), conEnie);
-      expect(FraseDeRecuperacion.canonica(conEnie.replaceAll('ñ', 'n')), conEnie);
-      final frase = FraseDeRecuperacion.generar();
-      final env = await LlaveEnvuelta.envolver(bytesAleatorios(32), frase, vueltas: 20);
-      final escrita = FraseDeRecuperacion.normalizar(
-        frase.map(FraseDeRecuperacion.claveDePalabra).join(' ').toUpperCase(),
-      );
-      expect(await env.desenvolver(escrita, minimo: 1), isNotNull);
-    });
+    test(
+      'la ñ descompuesta o sin tilde también, y la clave sale igual',
+      () async {
+        final conEnie = palabrasEs.firstWhere((p) => p.contains('ñ'));
+        expect(
+          FraseDeRecuperacion.canonica(conEnie.replaceAll('ñ', 'n\u0303')),
+          conEnie,
+        );
+        expect(
+          FraseDeRecuperacion.canonica(conEnie.replaceAll('ñ', 'n')),
+          conEnie,
+        );
+        final frase = FraseDeRecuperacion.generar();
+        final env = await LlaveEnvuelta.envolver(
+          bytesAleatorios(32),
+          frase,
+          vueltas: 20,
+        );
+        final escrita = FraseDeRecuperacion.normalizar(
+          frase.map(FraseDeRecuperacion.claveDePalabra).join(' ').toUpperCase(),
+        );
+        expect(await env.desenvolver(escrita, minimo: 1), isNotNull);
+      },
+    );
 
     test('lo que no es de la lista sigue sin validar', () {
       final frase = FraseDeRecuperacion.generar();
-      expect(FraseDeRecuperacion.esValida(FraseDeRecuperacion.normalizar('${frase.take(11).join(' ')} zzzz')), isFalse);
+      expect(
+        FraseDeRecuperacion.esValida(
+          FraseDeRecuperacion.normalizar('${frase.take(11).join(' ')} zzzz'),
+        ),
+        isFalse,
+      );
     });
   });
 
   group('llave maestra envuelta', () {
-    test('vueltas fuera de rango (100 000 a 2 000 000) se rechazan al abrir', () async {
-      final maestra = bytesAleatorios(32);
-      final frase = FraseDeRecuperacion.generar();
-      final env = await LlaveEnvuelta.envolver(maestra, frase, vueltas: 100000);
-      expect(await env.desenvolver(frase), maestra);
-      for (final v in [0, 1, 99999, 2000001, 1 << 40]) {
-        final mala = LlaveEnvuelta(
+    test(
+      'vueltas fuera de rango (100 000 a 2 000 000) se rechazan al abrir',
+      () async {
+        final maestra = bytesAleatorios(32);
+        final frase = FraseDeRecuperacion.generar();
+        final env = await LlaveEnvuelta.envolver(
+          maestra,
+          frase,
+          vueltas: 100000,
+        );
+        expect(await env.desenvolver(frase), maestra);
+        for (final v in [0, 1, 99999, 2000001, 1 << 40]) {
+          final mala = LlaveEnvuelta(
+            version: env.version,
+            kdf: env.kdf,
+            vueltas: v,
+            sal: env.sal,
+            llaveEnvuelta: env.llaveEnvuelta,
+          );
+          expect(await mala.desenvolver(frase), isNull, reason: '$v');
+        }
+        expect(LlaveEnvuelta.vueltasEnRango(2000000), isTrue);
+        expect(LlaveEnvuelta.vueltasEnRango(2000001), isFalse);
+      },
+    );
+
+    test(
+      'el nombre antiguo del KDF solo se lee; uno desconocido no abre',
+      () async {
+        final maestra = bytesAleatorios(32);
+        final frase = FraseDeRecuperacion.generar();
+        final env = await LlaveEnvuelta.envolver(maestra, frase, vueltas: 20);
+        LlaveEnvuelta con(String kdf) => LlaveEnvuelta(
           version: env.version,
-          kdf: env.kdf,
-          vueltas: v,
+          kdf: kdf,
+          vueltas: env.vueltas,
           sal: env.sal,
           llaveEnvuelta: env.llaveEnvuelta,
         );
-        expect(await mala.desenvolver(frase), isNull, reason: '$v');
-      }
-      expect(LlaveEnvuelta.vueltasEnRango(2000000), isTrue);
-      expect(LlaveEnvuelta.vueltasEnRango(2000001), isFalse);
-    });
+        expect(
+          await con(LlaveEnvuelta.kdfPbkdf2Antiguo)
+              .desenvolver(frase, minimo: 1),
+          maestra,
+        );
+        expect(await con('argon2id').desenvolver(frase, minimo: 1), isNull);
+      },
+    );
 
-    test('el nombre antiguo del KDF solo se lee; uno desconocido no abre', () async {
-      final maestra = bytesAleatorios(32);
-      final frase = FraseDeRecuperacion.generar();
-      final env = await LlaveEnvuelta.envolver(maestra, frase, vueltas: 20);
-      LlaveEnvuelta con(String kdf) => LlaveEnvuelta(
-        version: env.version,
-        kdf: kdf,
-        vueltas: env.vueltas,
-        sal: env.sal,
-        llaveEnvuelta: env.llaveEnvuelta,
-      );
-      expect(await con(LlaveEnvuelta.kdfPbkdf2Antiguo).desenvolver(frase, minimo: 1), maestra);
-      expect(await con('argon2id').desenvolver(frase, minimo: 1), isNull);
-    });
+    test(
+      'se abre con su frase y no con otra; la llave no sale en claro',
+      () async {
+        final maestra = bytesAleatorios(32);
+        final frase = FraseDeRecuperacion.generar();
+        final env = await LlaveEnvuelta.envolver(maestra, frase, vueltas: 50);
+        expect(env.kdf, 'pbkdf2-hmac-sha256'); // el que admite el servidor
+        expect(env.vueltas, 50);
+        expect(env.llaveEnvuelta, isNot(contains(aBase64Url(maestra))));
+        expect(await env.desenvolver(frase, minimo: 1), maestra);
+        expect(
+          await env.desenvolver(FraseDeRecuperacion.generar(), minimo: 1),
+          isNull,
+        );
+        final v = LlaveEnvuelta.desdeJson(
+          (jsonDecode(jsonEncode(env.aJson())) as Map).cast<String, Object?>(),
+        )!;
+        expect(await v.desenvolver(frase, minimo: 1), maestra);
+        expect(LlaveEnvuelta.desdeJson({'x': 1}), isNull);
+      },
+    );
 
-    test('se abre con su frase y no con otra; la llave no sale en claro', () async {
-      final maestra = bytesAleatorios(32);
-      final frase = FraseDeRecuperacion.generar();
-      final env = await LlaveEnvuelta.envolver(maestra, frase, vueltas: 50);
-      expect(env.kdf, 'pbkdf2-hmac-sha256'); // el que admite el servidor
-      expect(env.vueltas, 50);
-      expect(env.llaveEnvuelta, isNot(contains(aBase64Url(maestra))));
-      expect(await env.desenvolver(frase, minimo: 1), maestra);
-      expect(await env.desenvolver(FraseDeRecuperacion.generar(), minimo: 1), isNull);
-      final v = LlaveEnvuelta.desdeJson(
-        (jsonDecode(jsonEncode(env.aJson())) as Map).cast<String, Object?>(),
-      )!;
-      expect(await v.desenvolver(frase, minimo: 1), maestra);
-      expect(LlaveEnvuelta.desdeJson({'x': 1}), isNull);
-    });
-
-    test('por omisión son 600 000 vueltas (parámetros guardados para subirlas)', () {
-      expect(LlaveEnvuelta.vueltasPorOmision, 600000);
-    });
+    test(
+      'por omisión son 600 000 vueltas (parámetros guardados para subirlas)',
+      () {
+        expect(LlaveEnvuelta.vueltasPorOmision, 600000);
+      },
+    );
 
     test('la versión de la envoltura va en los datos asociados', () async {
       final maestra = bytesAleatorios(32);
       final frase = FraseDeRecuperacion.generar();
-      final env = await LlaveEnvuelta.envolver(maestra, frase, vueltas: 20, version: 2);
+      final env = await LlaveEnvuelta.envolver(
+        maestra,
+        frase,
+        vueltas: 20,
+        version: 2,
+      );
       final cambiada = LlaveEnvuelta(
         version: 1,
         kdf: env.kdf,
@@ -183,36 +258,68 @@ void main() {
   });
 
   group('almacén de llaves', () {
-    test('llave local: se crea una vez y se conserva; cada tipo tiene la suya', () async {
-      final llaves = LlavesHabitos(almacen);
-      final a = await llaves.llaveLocal('ana');
-      expect(await llaves.llaveLocal('ana'), a);
-      expect(await llaves.llaveLocal('beto'), isNot(a));
-      final t1 = await llaves.llaveDeTipo('ana', TipoSensible.habitosSensibles, ModoSensible.soloTelefono);
-      final t2 = await llaves.llaveDeTipo('ana', TipoSensible.diarioOracion, ModoSensible.soloTelefono);
-      expect(t1, isNot(t2));
-      expect(t1, isNot(a));
-      // Persistida: otro objeto la lee igual.
-      expect(await LlavesHabitos(almacen).llaveLocal('ana'), a);
-    });
+    test(
+      'llave local: se crea una vez y se conserva; cada tipo tiene la suya',
+      () async {
+        final llaves = LlavesHabitos(almacen);
+        final a = await llaves.llaveLocal('ana');
+        expect(await llaves.llaveLocal('ana'), a);
+        expect(await llaves.llaveLocal('beto'), isNot(a));
+        final t1 = await llaves.llaveDeTipo(
+          'ana',
+          TipoSensible.habitosSensibles,
+          ModoSensible.soloTelefono,
+        );
+        final t2 = await llaves.llaveDeTipo(
+          'ana',
+          TipoSensible.diarioOracion,
+          ModoSensible.soloTelefono,
+        );
+        expect(t1, isNot(t2));
+        expect(t1, isNot(a));
+        // Persistida: otro objeto la lee igual.
+        expect(await LlavesHabitos(almacen).llaveLocal('ana'), a);
+      },
+    );
 
     test('en nube cifrada usa la llave maestra; sin ella, null', () async {
       final llaves = LlavesHabitos(almacen);
-      expect(await llaves.llaveDeTipo('ana', TipoSensible.diarioOracion, ModoSensible.nubeCifrada), isNull);
+      expect(
+        await llaves.llaveDeTipo(
+          'ana',
+          TipoSensible.diarioOracion,
+          ModoSensible.nubeCifrada,
+        ),
+        isNull,
+      );
       expect(await llaves.tieneLlaveMaestra('ana'), isFalse);
       final maestra = bytesAleatorios(32);
       await llaves.guardarLlaveMaestra('ana', maestra);
       expect(await llaves.tieneLlaveMaestra('ana'), isTrue);
-      final nube = await llaves.llaveDeTipo('ana', TipoSensible.diarioOracion, ModoSensible.nubeCifrada);
-      final local = await llaves.llaveDeTipo('ana', TipoSensible.diarioOracion, ModoSensible.soloTelefono);
+      final nube = await llaves.llaveDeTipo(
+        'ana',
+        TipoSensible.diarioOracion,
+        ModoSensible.nubeCifrada,
+      );
+      final local = await llaves.llaveDeTipo(
+        'ana',
+        TipoSensible.diarioOracion,
+        ModoSensible.soloTelefono,
+      );
       expect(nube, hkdfSha256(maestra, info: 'gravity-hab/v1/diario_oracion'));
       expect(nube, isNot(local));
     });
 
     test('la tablet pública nunca guarda ni usa llaves', () async {
       final llaves = LlavesHabitos(almacen, permitido: () => false);
-      await expectLater(llaves.llaveLocal('ana'), throwsA(isA<LlaveNoPermitida>()));
-      await expectLater(llaves.llaveMaestra('ana'), throwsA(isA<LlaveNoPermitida>()));
+      await expectLater(
+        llaves.llaveLocal('ana'),
+        throwsA(isA<LlaveNoPermitida>()),
+      );
+      await expectLater(
+        llaves.llaveMaestra('ana'),
+        throwsA(isA<LlaveNoPermitida>()),
+      );
       await expectLater(
         llaves.guardarLlaveMaestra('ana', bytesAleatorios(32)),
         throwsA(isA<LlaveNoPermitida>()),
@@ -220,22 +327,39 @@ void main() {
       expect(almacen.datos, isEmpty);
     });
 
-    test('tablet personal: con el PIN; sin él no abre, en el almacén no está en '
-        'claro y al salir se olvida', () async {
-      final llaves = LlavesHabitos(almacen, protegidaConPin: true);
-      await expectLater(llaves.llaveLocal('ana'), throwsA(isA<LlaveBloqueada>()));
-      // Copia: olvidarEnMemoria borra con ceros los bytes que guarda en memoria.
-      final local = List<int>.of(await llaves.llaveLocal('ana', pin: '284651'));
-      expect(almacen.datos.values.join(), isNot(contains(aBase64Url(Uint8List.fromList(local)))));
-      // Dentro (en memoria) no pide más.
-      expect(await llaves.llaveLocal('ana'), local);
-      llaves.olvidarEnMemoria();
-      await expectLater(llaves.llaveLocal('ana'), throwsA(isA<LlaveBloqueada>()));
-      await expectLater(llaves.llaveLocal('ana', pin: '000000'), throwsA(isA<LlaveBloqueada>()));
-      expect(await llaves.liberarConPin('ana', '000000'), isFalse);
-      expect(await llaves.liberarConPin('ana', '284651'), isTrue);
-      expect(await llaves.llaveLocal('ana'), local);
-    });
+    test(
+      'tablet personal: con el PIN; sin él no abre, en el almacén no está en '
+      'claro y al salir se olvida',
+      () async {
+        final llaves = LlavesHabitos(almacen, protegidaConPin: true);
+        await expectLater(
+          llaves.llaveLocal('ana'),
+          throwsA(isA<LlaveBloqueada>()),
+        );
+        // Copia: olvidarEnMemoria borra con ceros los bytes que guarda en memoria.
+        final local = List<int>.of(
+          await llaves.llaveLocal('ana', pin: '284651'),
+        );
+        expect(
+          almacen.datos.values.join(),
+          isNot(contains(aBase64Url(Uint8List.fromList(local)))),
+        );
+        // Dentro (en memoria) no pide más.
+        expect(await llaves.llaveLocal('ana'), local);
+        llaves.olvidarEnMemoria();
+        await expectLater(
+          llaves.llaveLocal('ana'),
+          throwsA(isA<LlaveBloqueada>()),
+        );
+        await expectLater(
+          llaves.llaveLocal('ana', pin: '000000'),
+          throwsA(isA<LlaveBloqueada>()),
+        );
+        expect(await llaves.liberarConPin('ana', '000000'), isFalse);
+        expect(await llaves.liberarConPin('ana', '284651'), isTrue);
+        expect(await llaves.llaveLocal('ana'), local);
+      },
+    );
 
     test('borrar quita las llaves del equipo', () async {
       final llaves = LlavesHabitos(almacen);
@@ -247,11 +371,47 @@ void main() {
 
     test('id opaco: estable por llave y clave, y no revela la fecha', () {
       final ids = bytesAleatorios(32);
-      final a = LlavesHabitos.idOpaco(ids, TipoSensible.habitosSensibles, 'dia:2026-11-01');
-      expect(a, LlavesHabitos.idOpaco(ids, TipoSensible.habitosSensibles, 'dia:2026-11-01'));
-      expect(a, isNot(LlavesHabitos.idOpaco(ids, TipoSensible.habitosSensibles, 'dia:2026-11-02')));
-      expect(a, isNot(LlavesHabitos.idOpaco(ids, TipoSensible.diarioOracion, 'dia:2026-11-01')));
-      expect(a, matches(RegExp(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$')));
+      final a = LlavesHabitos.idOpaco(
+        ids,
+        TipoSensible.habitosSensibles,
+        'dia:2026-11-01',
+      );
+      expect(
+        a,
+        LlavesHabitos.idOpaco(
+          ids,
+          TipoSensible.habitosSensibles,
+          'dia:2026-11-01',
+        ),
+      );
+      expect(
+        a,
+        isNot(
+          LlavesHabitos.idOpaco(
+            ids,
+            TipoSensible.habitosSensibles,
+            'dia:2026-11-02',
+          ),
+        ),
+      );
+      expect(
+        a,
+        isNot(
+          LlavesHabitos.idOpaco(
+            ids,
+            TipoSensible.diarioOracion,
+            'dia:2026-11-01',
+          ),
+        ),
+      );
+      expect(
+        a,
+        matches(
+          RegExp(
+            r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+          ),
+        ),
+      );
       expect(a, isNot(contains('2026')));
     });
   });
@@ -260,10 +420,18 @@ void main() {
     late LlavesHabitos llaves;
     setUp(() => llaves = LlavesHabitos(almacen));
 
-    Future<Sobre> sobreDe(String dia, Map<String, Object?> doc, {int anterior = 0}) async {
+    Future<Sobre> sobreDe(
+      String dia,
+      Map<String, Object?> doc, {
+      int anterior = 0,
+    }) async {
       final tipo = TipoSensible.habitosSensibles;
       return cifrarDocumento(
-        llaveDeTipo: (await llaves.llaveDeTipo('ana', tipo, ModoSensible.nubeCifrada))!,
+        llaveDeTipo: (await llaves.llaveDeTipo(
+          'ana',
+          tipo,
+          ModoSensible.nubeCifrada,
+        ))!,
         llaveDeIds: (await llaves.llaveDeIds('ana', ModoSensible.nubeCifrada))!,
         persona: 'ana',
         tipo: tipo,
@@ -275,18 +443,45 @@ void main() {
 
     setUp(() async => llaves.guardarLlaveMaestra('ana', bytesAleatorios(32)));
 
-    test('cifrar y descifrar un documento; el texto claro no aparece', () async {
-      final s = await sobreDe('2026-11-01', {'v': 1, 'elementos': {'a': {'clase': 'consumo', 'datos': 'cigarrillo x3'}}});
-      expect(s.revision, 1);
-      expect(jsonEncode(s.aJson()), isNot(contains('cigarrillo')));
-      final llave = (await llaves.llaveDeTipo('ana', TipoSensible.habitosSensibles, ModoSensible.nubeCifrada))!;
-      final doc = descifrarDocumento(llaveDeTipo: llave, persona: 'ana', sobre: s)!;
-      expect((doc['elementos']! as Map)['a'], isNotNull);
-      // Otra persona, otra revisión o un id distinto no lo abren.
-      expect(descifrarDocumento(llaveDeTipo: llave, persona: 'beto', sobre: s), isNull);
-      final movido = Sobre(id: s.id, tipo: s.tipo, revision: 2, cifrado: s.cifrado);
-      expect(descifrarDocumento(llaveDeTipo: llave, persona: 'ana', sobre: movido), isNull);
-    });
+    test(
+      'cifrar y descifrar un documento; el texto claro no aparece',
+      () async {
+        final s = await sobreDe('2026-11-01', {
+          'v': 1,
+          'elementos': {
+            'a': {'clase': 'consumo', 'datos': 'cigarrillo x3'},
+          },
+        });
+        expect(s.revision, 1);
+        expect(jsonEncode(s.aJson()), isNot(contains('cigarrillo')));
+        final llave = (await llaves.llaveDeTipo(
+          'ana',
+          TipoSensible.habitosSensibles,
+          ModoSensible.nubeCifrada,
+        ))!;
+        final doc = descifrarDocumento(
+          llaveDeTipo: llave,
+          persona: 'ana',
+          sobre: s,
+        )!;
+        expect((doc['elementos']! as Map)['a'], isNotNull);
+        // Otra persona, otra revisión o un id distinto no lo abren.
+        expect(
+          descifrarDocumento(llaveDeTipo: llave, persona: 'beto', sobre: s),
+          isNull,
+        );
+        final movido = Sobre(
+          id: s.id,
+          tipo: s.tipo,
+          revision: 2,
+          cifrado: s.cifrado,
+        );
+        expect(
+          descifrarDocumento(llaveDeTipo: llave, persona: 'ana', sobre: movido),
+          isNull,
+        );
+      },
+    );
 
     test('la revisión sube de 1 en 1 y el tamaño tiene tope', () async {
       final s1 = await sobreDe('2026-11-01', {'x': 1});
@@ -298,19 +493,28 @@ void main() {
       );
     });
 
-    test('el almacén guarda solo sobres, por persona y por tipo, y borra', () async {
-      final store = AlmacenDeSobres(almacen);
-      final s = await sobreDe('2026-11-01', {'secreto': 'sí'});
-      await store.guardar('ana', s);
-      expect((await store.leer('ana', s.id))!.cifrado, s.cifrado);
-      expect(await store.leer('beto', s.id), isNull);
-      expect(almacen.datos.values.join(), isNot(contains('secreto')));
-      expect(await store.todos('ana'), hasLength(1));
-      expect(await store.todos('ana', tipo: TipoSensible.diarioOracion), isEmpty);
-      expect(await store.borrar('ana', tipo: TipoSensible.diarioOracion), 0);
-      expect(await store.borrar('ana', tipo: TipoSensible.habitosSensibles), 1);
-      expect(await store.todos('ana'), isEmpty);
-    });
+    test(
+      'el almacén guarda solo sobres, por persona y por tipo, y borra',
+      () async {
+        final store = AlmacenDeSobres(almacen);
+        final s = await sobreDe('2026-11-01', {'secreto': 'sí'});
+        await store.guardar('ana', s);
+        expect((await store.leer('ana', s.id))!.cifrado, s.cifrado);
+        expect(await store.leer('beto', s.id), isNull);
+        expect(almacen.datos.values.join(), isNot(contains('secreto')));
+        expect(await store.todos('ana'), hasLength(1));
+        expect(
+          await store.todos('ana', tipo: TipoSensible.diarioOracion),
+          isEmpty,
+        );
+        expect(await store.borrar('ana', tipo: TipoSensible.diarioOracion), 0);
+        expect(
+          await store.borrar('ana', tipo: TipoSensible.habitosSensibles),
+          1,
+        );
+        expect(await store.todos('ana'), isEmpty);
+      },
+    );
   });
 
   group('subida diferida por la cola', () {
@@ -325,7 +529,11 @@ void main() {
     setUp(() async {
       base = BaseLocal.enMemoria();
       ahora = DateTime.utc(2026, 11, 1, 20);
-      cola = ColaSinConexion(base: base, enviador: _EnviadorNulo(), reloj: () => ahora);
+      cola = ColaSinConexion(
+        base: base,
+        enviador: _EnviadorNulo(),
+        reloj: () => ahora,
+      );
       store = AlmacenDeSobres(almacen);
       modos = ModosLocales(almacen);
       llaves = LlavesHabitos(almacen);
@@ -341,9 +549,16 @@ void main() {
 
     tearDown(() => base.close());
 
-    Future<void> dia(int n, {TipoSensible tipo = TipoSensible.habitosSensibles}) async {
+    Future<void> dia(
+      int n, {
+      TipoSensible tipo = TipoSensible.habitosSensibles,
+    }) async {
       final s = cifrarDocumento(
-        llaveDeTipo: (await llaves.llaveDeTipo('ana', tipo, ModoSensible.nubeCifrada))!,
+        llaveDeTipo: (await llaves.llaveDeTipo(
+          'ana',
+          tipo,
+          ModoSensible.nubeCifrada,
+        ))!,
         llaveDeIds: (await llaves.llaveDeIds('ana', ModoSensible.nubeCifrada))!,
         persona: 'ana',
         tipo: tipo,
@@ -355,53 +570,92 @@ void main() {
 
     test('solo teléfono (por omisión): nada se encola, nunca', () async {
       await dia(1);
-      expect(await modos.modo('ana', TipoSensible.habitosSensibles), ModoSensible.soloTelefono);
+      expect(
+        await modos.modo('ana', TipoSensible.habitosSensibles),
+        ModoSensible.soloTelefono,
+      );
       expect(await subida.encolarPendientes('ana', forzar: true), 0);
       expect(await cola.registros(), isEmpty);
     });
 
-    test('nube cifrada: encola sobres YA cifrados, sin texto claro, con el tipo '
-        'de lo personal', () async {
-      await modos.fijar('ana', TipoSensible.habitosSensibles, ModoSensible.nubeCifrada);
-      await dia(1);
-      await dia(2);
-      expect(await subida.encolarPendientes('ana'), 2);
-      final r = (await cola.registros()).single;
-      expect(r.tipo, tipoColaSobres);
-      expect(r.tipo, startsWith('habitos.'));
-      expect(r.personaId, 'ana');
-      expect(r.carga, isNot(contains('secreto')));
-      expect(r.carga, isNot(contains('consumo')));
-      final sobres = SubidaDiferidaDeSobres.sobresDeCarga(
-        (jsonDecode(r.carga) as Map).cast<String, Object?>(),
-      );
-      expect(sobres, hasLength(2));
-      expect(sobres.first.keys, containsAll(['id', 'tipo', 'revision', 'cifrado']));
-      expect(funcionSubirSobres, 'hab_subir_sobres');
-    });
+    test(
+      'nube cifrada: encola sobres YA cifrados, sin texto claro, con el tipo '
+      'de lo personal',
+      () async {
+        await modos.fijar(
+          'ana',
+          TipoSensible.habitosSensibles,
+          ModoSensible.nubeCifrada,
+        );
+        await dia(1);
+        await dia(2);
+        expect(await subida.encolarPendientes('ana'), 2);
+        final r = (await cola.registros()).single;
+        expect(r.tipo, tipoColaSobres);
+        expect(r.tipo, startsWith('habitos.'));
+        expect(r.personaId, 'ana');
+        expect(r.carga, isNot(contains('secreto')));
+        expect(r.carga, isNot(contains('consumo')));
+        final sobres = SubidaDiferidaDeSobres.sobresDeCarga(
+          (jsonDecode(r.carga) as Map).cast<String, Object?>(),
+        );
+        expect(sobres, hasLength(2));
+        expect(
+          sobres.first.keys,
+          containsAll(['id', 'tipo', 'revision', 'cifrado']),
+        );
+        expect(funcionSubirSobres, 'hab_subir_sobres');
+      },
+    );
 
-    test('máximo una vez cada 6 horas; Sincronizar lo salta; no repite lo encolado',
-        () async {
-      await modos.fijar('ana', TipoSensible.habitosSensibles, ModoSensible.nubeCifrada);
+    test('máximo una vez cada 6 horas; Sincronizar lo salta; no repite lo encolado', () async {
+      await modos.fijar(
+        'ana',
+        TipoSensible.habitosSensibles,
+        ModoSensible.nubeCifrada,
+      );
       await dia(1);
       expect(await subida.encolarPendientes('ana'), 1);
       await dia(2);
       ahora = ahora.add(const Duration(hours: 5, minutes: 59));
-      expect(await subida.encolarPendientes('ana'), 0, reason: 'aún no pasan 6 horas');
-      expect(await subida.encolarPendientes('ana', forzar: true), 1, reason: 'Sincronizar');
+      expect(
+        await subida.encolarPendientes('ana'),
+        0,
+        reason: 'aún no pasan 6 horas',
+      );
+      expect(
+        await subida.encolarPendientes('ana', forzar: true),
+        1,
+        reason: 'Sincronizar',
+      );
       await dia(3);
       ahora = ahora.add(const Duration(hours: 6));
       expect(await subida.encolarPendientes('ana'), 1);
       ahora = ahora.add(const Duration(hours: 7));
-      expect(await subida.encolarPendientes('ana'), 0, reason: 'no hay nada nuevo');
+      expect(
+        await subida.encolarPendientes('ana'),
+        0,
+        reason: 'no hay nada nuevo',
+      );
     });
 
     test('lotes de máximo 50 sobres', () async {
-      await modos.fijar('ana', TipoSensible.diarioOracion, ModoSensible.nubeCifrada);
+      await modos.fijar(
+        'ana',
+        TipoSensible.diarioOracion,
+        ModoSensible.nubeCifrada,
+      );
       for (var i = 1; i <= 120; i++) {
         final s = cifrarDocumento(
-          llaveDeTipo: (await llaves.llaveDeTipo('ana', TipoSensible.diarioOracion, ModoSensible.nubeCifrada))!,
-          llaveDeIds: (await llaves.llaveDeIds('ana', ModoSensible.nubeCifrada))!,
+          llaveDeTipo: (await llaves.llaveDeTipo(
+            'ana',
+            TipoSensible.diarioOracion,
+            ModoSensible.nubeCifrada,
+          ))!,
+          llaveDeIds: (await llaves.llaveDeIds(
+            'ana',
+            ModoSensible.nubeCifrada,
+          ))!,
           persona: 'ana',
           tipo: TipoSensible.diarioOracion,
           claveDoc: 'dia:$i',
@@ -412,7 +666,9 @@ void main() {
       expect(await subida.encolarPendientes('ana', forzar: true), 120);
       final tamanos = [
         for (final r in await cola.registros())
-          SubidaDiferidaDeSobres.sobresDeCarga((jsonDecode(r.carga) as Map).cast<String, Object?>()).length,
+          SubidaDiferidaDeSobres.sobresDeCarga(
+            (jsonDecode(r.carga) as Map).cast<String, Object?>(),
+          ).length,
       ]..sort();
       expect(tamanos, [20, 50, 50]);
     });
@@ -420,17 +676,39 @@ void main() {
     test('tocaSubir', () {
       final t = DateTime.utc(2026, 11, 1, 12);
       expect(tocaSubir(ahora: t, ultimaSubida: null), isTrue);
-      expect(tocaSubir(ahora: t, ultimaSubida: t.subtract(const Duration(hours: 5))), isFalse);
-      expect(tocaSubir(ahora: t, ultimaSubida: t.subtract(const Duration(hours: 6))), isTrue);
+      expect(
+        tocaSubir(ahora: t, ultimaSubida: t.subtract(const Duration(hours: 5))),
+        isFalse,
+      );
+      expect(
+        tocaSubir(ahora: t, ultimaSubida: t.subtract(const Duration(hours: 6))),
+        isTrue,
+      );
       expect(tocaSubir(ahora: t, ultimaSubida: t, forzar: true), isTrue);
     });
 
-    test('modos: por omisión solo teléfono; se fija por persona y tipo', () async {
-      await modos.fijar('ana', TipoSensible.diarioOracion, ModoSensible.nubeCifrada);
-      expect(await modos.modo('ana', TipoSensible.diarioOracion), ModoSensible.nubeCifrada);
-      expect(await modos.modo('ana', TipoSensible.habitosSensibles), ModoSensible.soloTelefono);
-      expect(await modos.modo('beto', TipoSensible.diarioOracion), ModoSensible.soloTelefono);
-    });
+    test(
+      'modos: por omisión solo teléfono; se fija por persona y tipo',
+      () async {
+        await modos.fijar(
+          'ana',
+          TipoSensible.diarioOracion,
+          ModoSensible.nubeCifrada,
+        );
+        expect(
+          await modos.modo('ana', TipoSensible.diarioOracion),
+          ModoSensible.nubeCifrada,
+        );
+        expect(
+          await modos.modo('ana', TipoSensible.habitosSensibles),
+          ModoSensible.soloTelefono,
+        );
+        expect(
+          await modos.modo('beto', TipoSensible.diarioOracion),
+          ModoSensible.soloTelefono,
+        );
+      },
+    );
   });
 
   group('respaldo local cifrado', () {
@@ -440,8 +718,15 @@ void main() {
       final llaves = LlavesHabitos(almacen);
       final local = await llaves.llaveLocal('ana');
       final s = cifrarDocumento(
-        llaveDeTipo: (await llaves.llaveDeTipo('ana', TipoSensible.diarioOracion, ModoSensible.soloTelefono))!,
-        llaveDeIds: (await llaves.llaveDeIds('ana', ModoSensible.soloTelefono))!,
+        llaveDeTipo: (await llaves.llaveDeTipo(
+          'ana',
+          TipoSensible.diarioOracion,
+          ModoSensible.soloTelefono,
+        ))!,
+        llaveDeIds: (await llaves.llaveDeIds(
+          'ana',
+          ModoSensible.soloTelefono,
+        ))!,
         persona: 'ana',
         tipo: TipoSensible.diarioOracion,
         claveDoc: 'dia:2026-11-01',
@@ -454,37 +739,79 @@ void main() {
         vueltas: 50,
       );
       expect(archivo, isNot(contains('familia')));
-      final leido = await RespaldoLocal.importar(archivo, frase, minimoVueltas: 1);
+      final leido = await RespaldoLocal.importar(
+        archivo,
+        frase,
+        minimoVueltas: 1,
+      );
       expect(leido.sobres.single.cifrado, s.cifrado);
       expect(leido.llaveLocal, local);
       // Con la llave local recuperada se abre el sobre en otro teléfono.
-      final llave = hkdfSha256(leido.llaveLocal, info: 'gravity-hab/v1/diario_oracion');
-      expect(descifrarDocumento(llaveDeTipo: llave, persona: 'ana', sobre: leido.sobres.single), isNotNull);
+      final llave = hkdfSha256(
+        leido.llaveLocal,
+        info: 'gravity-hab/v1/diario_oracion',
+      );
+      expect(
+        descifrarDocumento(
+          llaveDeTipo: llave,
+          persona: 'ana',
+          sobre: leido.sobres.single,
+        ),
+        isNotNull,
+      );
       await expectLater(
-        RespaldoLocal.importar(archivo, FraseDeRecuperacion.generar(), minimoVueltas: 1),
+        RespaldoLocal.importar(
+          archivo,
+          FraseDeRecuperacion.generar(),
+          minimoVueltas: 1,
+        ),
         throwsA(isA<FormatException>()),
       );
     });
 
-    test('un archivo hostil se rechaza con un motivo, sin lanzar otra cosa', () async {
-      for (final malo in [
-        '',
-        'no es json',
-        '[]',
-        '{}',
-        jsonEncode({'formato': 'otro', 'v': 1}),
-        jsonEncode({'formato': RespaldoLocal.formato, 'v': 1, 'vueltas': -5, 'sal': 'a', 'llave_local': 'b', 'cifrado': 'c'}),
-        jsonEncode({'formato': RespaldoLocal.formato, 'v': 1, 'vueltas': 999999999, 'sal': 'a', 'llave_local': 'b', 'cifrado': 'c'}),
-        jsonEncode({'formato': RespaldoLocal.formato, 'v': 1, 'vueltas': 10, 'sal': 'a', 'llave_local': 'b', 'cifrado': 'c'}),
-        'x' * (maximoBytesDeArchivo + 1),
-      ]) {
-        await expectLater(
-          RespaldoLocal.importar(malo, frase),
-          throwsA(isA<FormatException>()),
-          reason: malo.length > 50 ? 'grande' : malo,
-        );
-      }
-    });
+    test(
+      'un archivo hostil se rechaza con un motivo, sin lanzar otra cosa',
+      () async {
+        for (final malo in [
+          '',
+          'no es json',
+          '[]',
+          '{}',
+          jsonEncode({'formato': 'otro', 'v': 1}),
+          jsonEncode({
+            'formato': RespaldoLocal.formato,
+            'v': 1,
+            'vueltas': -5,
+            'sal': 'a',
+            'llave_local': 'b',
+            'cifrado': 'c',
+          }),
+          jsonEncode({
+            'formato': RespaldoLocal.formato,
+            'v': 1,
+            'vueltas': 999999999,
+            'sal': 'a',
+            'llave_local': 'b',
+            'cifrado': 'c',
+          }),
+          jsonEncode({
+            'formato': RespaldoLocal.formato,
+            'v': 1,
+            'vueltas': 10,
+            'sal': 'a',
+            'llave_local': 'b',
+            'cifrado': 'c',
+          }),
+          'x' * (maximoBytesDeArchivo + 1),
+        ]) {
+          await expectLater(
+            RespaldoLocal.importar(malo, frase),
+            throwsA(isA<FormatException>()),
+            reason: malo.length > 50 ? 'grande' : malo,
+          );
+        }
+      },
+    );
   });
 
   group('exportar mis datos', () {
@@ -492,7 +819,10 @@ void main() {
     final fuente = _Fuente();
 
     test('sin sensibles: esquema propio y datos en claro, sin aviso', () async {
-      final texto = await ExportacionHabitos.generar(fuente: fuente, ahora: ahora);
+      final texto = await ExportacionHabitos.generar(
+        fuente: fuente,
+        ahora: ahora,
+      );
       final json = jsonDecode(texto) as Map;
       expect(json['esquema'], 'gravity-habitos');
       expect(json['v'], 1);
@@ -513,32 +843,35 @@ void main() {
       expect(texto, isNot(contains('oración secreta')));
     });
 
-    test('con la frase: la parte sensible va cifrada y se recupera con ella', () async {
-      final frase = FraseDeRecuperacion.generar();
-      final texto = await ExportacionHabitos.generar(
-        fuente: fuente,
-        ahora: ahora,
-        incluirSensibles: TipoSensible.values.toSet(),
-        frase: frase,
-        vueltas: 50,
-      );
-      expect(texto, isNot(contains('oración secreta')));
-      expect(texto, isNot(contains('consumo secreto')));
-      final json = jsonDecode(texto) as Map;
-      expect(json.containsKey('sensibles'), isFalse);
-      final p = (json['sensibles_protegidos'] as Map).cast<String, Object?>();
-      final llave = await pbkdf2EnAislado(
-        utf8.encode(frase.join(' ')),
-        desdeBase64Url(p['sal']! as String),
-        p['vueltas']! as int,
-      );
-      final claro = SobreAes.descifrar(
-        llave,
-        p['cifrado']! as String,
-        datosAsociados: utf8.encode('gravity-habitos-exportacion-v1'),
-      );
-      expect(utf8.decode(claro!), contains('oración secreta'));
-    });
+    test(
+      'con la frase: la parte sensible va cifrada y se recupera con ella',
+      () async {
+        final frase = FraseDeRecuperacion.generar();
+        final texto = await ExportacionHabitos.generar(
+          fuente: fuente,
+          ahora: ahora,
+          incluirSensibles: TipoSensible.values.toSet(),
+          frase: frase,
+          vueltas: 50,
+        );
+        expect(texto, isNot(contains('oración secreta')));
+        expect(texto, isNot(contains('consumo secreto')));
+        final json = jsonDecode(texto) as Map;
+        expect(json.containsKey('sensibles'), isFalse);
+        final p = (json['sensibles_protegidos'] as Map).cast<String, Object?>();
+        final llave = await pbkdf2EnAislado(
+          utf8.encode(frase.join(' ')),
+          desdeBase64Url(p['sal']! as String),
+          p['vueltas']! as int,
+        );
+        final claro = SobreAes.descifrar(
+          llave,
+          p['cifrado']! as String,
+          datosAsociados: utf8.encode('gravity-habitos-exportacion-v1'),
+        );
+        expect(utf8.decode(claro!), contains('oración secreta'));
+      },
+    );
   });
 
   group('borrar mis datos', () {
@@ -550,8 +883,15 @@ void main() {
 
     Future<void> sobre(TipoSensible tipo, String dia) async {
       final s = cifrarDocumento(
-        llaveDeTipo: (await llaves.llaveDeTipo('ana', tipo, ModoSensible.soloTelefono))!,
-        llaveDeIds: (await llaves.llaveDeIds('ana', ModoSensible.soloTelefono))!,
+        llaveDeTipo: (await llaves.llaveDeTipo(
+          'ana',
+          tipo,
+          ModoSensible.soloTelefono,
+        ))!,
+        llaveDeIds: (await llaves.llaveDeIds(
+          'ana',
+          ModoSensible.soloTelefono,
+        ))!,
         persona: 'ana',
         tipo: tipo,
         claveDoc: 'dia:$dia',
@@ -565,10 +905,20 @@ void main() {
       store = AlmacenDeSobres(almacen);
       modos = ModosLocales(almacen);
       nube = NubeDeHabitosEnMemoria();
-      borrado = BorradoDeMisDatos(sobres: store, llaves: llaves, modos: modos, almacen: almacen, nube: nube);
+      borrado = BorradoDeMisDatos(
+        sobres: store,
+        llaves: llaves,
+        modos: modos,
+        almacen: almacen,
+        nube: nube,
+      );
       await sobre(TipoSensible.habitosSensibles, '1');
       await sobre(TipoSensible.diarioOracion, '2');
-      await modos.fijar('ana', TipoSensible.diarioOracion, ModoSensible.nubeCifrada);
+      await modos.fijar(
+        'ana',
+        TipoSensible.diarioOracion,
+        ModoSensible.nubeCifrada,
+      );
     });
 
     test('la palabra de confirmación', () {
@@ -580,15 +930,23 @@ void main() {
 
     test('sensibles borra solo ese tipo, en el equipo y en la nube', () async {
       await borrado.borrar('ana', AlcanceDeBorrado.sensibles);
-      expect((await store.todos('ana')).map((s) => s.tipo), [TipoSensible.diarioOracion]);
+      expect((await store.todos('ana')).map((s) => s.tipo), [
+        TipoSensible.diarioOracion,
+      ]);
       expect(nube.borrados, [AlcanceDeBorrado.sensibles]);
       expect(await llaves.tieneLlaveMaestra('ana'), isFalse);
-      expect(almacen.datos.keys.any((k) => k.contains('llave_local')), isTrue, reason: 'la llave se queda');
+      expect(
+        almacen.datos.keys.any((k) => k.contains('llave_local')),
+        isTrue,
+        reason: 'la llave se queda',
+      );
     });
 
     test('diario borra el otro tipo', () async {
       await borrado.borrar('ana', AlcanceDeBorrado.diario);
-      expect((await store.todos('ana')).map((s) => s.tipo), [TipoSensible.habitosSensibles]);
+      expect((await store.todos('ana')).map((s) => s.tipo), [
+        TipoSensible.habitosSensibles,
+      ]);
       expect(nube.borrados, [AlcanceDeBorrado.diario]);
     });
 
@@ -597,14 +955,23 @@ void main() {
       expect(await store.todos('ana'), isEmpty);
       expect(almacen.datos.keys.where((k) => k.startsWith('hab.')), isEmpty);
       expect(nube.borrados, [AlcanceDeBorrado.todo]);
-      expect(await modos.modo('ana', TipoSensible.diarioOracion), ModoSensible.soloTelefono);
+      expect(
+        await modos.modo('ana', TipoSensible.diarioOracion),
+        ModoSensible.soloTelefono,
+      );
     });
 
-    test('sin señal: lo local ya se borró y el error avisa que falta la nube', () async {
-      nube.falla = Exception('sin red');
-      await expectLater(borrado.borrar('ana', AlcanceDeBorrado.todo), throwsException);
-      expect(await store.todos('ana'), isEmpty);
-    });
+    test(
+      'sin señal: lo local ya se borró y el error avisa que falta la nube',
+      () async {
+        nube.falla = Exception('sin red');
+        await expectLater(
+          borrado.borrar('ana', AlcanceDeBorrado.todo),
+          throwsException,
+        );
+        expect(await store.todos('ana'), isEmpty);
+      },
+    );
 
     test('con cola: el borrado en la nube se encola, persiste y reintenta (sin '
         'señal no se pierde)', () async {
@@ -621,13 +988,19 @@ void main() {
       );
       nube.falla = Exception('sin red'); // la cola no depende de esto
       await conCola.borrar('ana', AlcanceDeBorrado.diario);
-      expect((await store.todos('ana')).map((s) => s.tipo), [TipoSensible.habitosSensibles]);
+      expect((await store.todos('ana')).map((s) => s.tipo), [
+        TipoSensible.habitosSensibles,
+      ]);
       final r = (await cola.registros()).single;
       expect(r.tipo, tipoColaBorrado);
       expect(r.personaId, 'ana');
       expect(jsonDecode(r.carga), {'p_alcance': 'diario'});
       expect(funcionBorrarMisDatos, 'hab_borrar_mis_datos');
-      expect(nube.borrados, isEmpty, reason: 'lo llama la cola, no la pantalla');
+      expect(
+        nube.borrados,
+        isEmpty,
+        reason: 'lo llama la cola, no la pantalla',
+      );
     });
 
     test('lo de otra persona no se toca', () async {

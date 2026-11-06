@@ -140,7 +140,7 @@ class ServicioHabitos {
         final d = sumarDias(hoy, -i);
         if (!o.programadoEn(d)) continue;
         prog++;
-        if (mios.any((x) => x.fecha == d)) ok++;
+        if (mios.any((x) => soloDia(x.fecha) == d)) ok++;
       }
       final pct = cumplimientoSemanal(ok, prog);
       r[o.id] = pct == null ? 0 : pct / 100;

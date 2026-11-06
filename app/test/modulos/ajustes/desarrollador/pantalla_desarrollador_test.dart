@@ -157,7 +157,8 @@ void main() {
         300,
         scrollable: find.byType(Scrollable).first,
       );
-      Finder enAlimentacion(Finder f) => find.descendant(of: alimentacion, matching: f);
+      Finder enAlimentacion(Finder f) =>
+          find.descendant(of: alimentacion, matching: f);
       expect(enAlimentacion(find.text('Pide confirmación')), findsNothing);
       expect(enAlimentacion(find.text('Nunca pasa por la IA')), findsNothing);
 

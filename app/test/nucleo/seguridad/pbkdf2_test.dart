@@ -55,14 +55,23 @@ void main() {
 
     test('"password" / "salt", 4096 vueltas', () {
       expect(
-        _hex(pbkdf2HmacSha256(utf8.encode('password'), utf8.encode('salt'), 4096)),
+        _hex(
+          pbkdf2HmacSha256(utf8.encode('password'), utf8.encode('salt'), 4096),
+        ),
         'c5e478d59288c841aa530db6845c4c8d962893a001ce4e11a4963873aa98134a',
       );
     });
 
     test('RFC 7914: "passwd" / "salt", 1 vuelta, 64 bytes (dos bloques)', () {
       expect(
-        _hex(pbkdf2HmacSha256(utf8.encode('passwd'), utf8.encode('salt'), 1, largo: 64)),
+        _hex(
+          pbkdf2HmacSha256(
+            utf8.encode('passwd'),
+            utf8.encode('salt'),
+            1,
+            largo: 64,
+          ),
+        ),
         '55ac046e56e3089fec1691c22544b605f94185216dde0465e68b9d57c20dacbc'
         '49ca9cccf179b645991664b39d77ef317c71b845b1e30bd509112041d3a19783',
       );
@@ -76,7 +85,23 @@ void main() {
           Uint8List.fromList(List<int>.generate(n, (_) => azar.nextInt(256)));
       // Largos que cruzan los bordes del relleno de SHA-256 (55, 56, 63, 64) y
       // el de la llave del HMAC (64, 65).
-      final largos = [0, 1, 6, 16, 52, 55, 56, 57, 59, 60, 63, 64, 65, 100, 130];
+      final largos = [
+        0,
+        1,
+        6,
+        16,
+        52,
+        55,
+        56,
+        57,
+        59,
+        60,
+        63,
+        64,
+        65,
+        100,
+        130,
+      ];
       for (final largoClave in largos) {
         for (final largoSal in largos) {
           final clave = bytes(largoClave);
@@ -86,7 +111,8 @@ void main() {
           expect(
             _hex(pbkdf2HmacSha256(clave, sal, vueltas, largo: largo)),
             _hex(_referencia(clave, sal, vueltas, largo)),
-            reason: 'clave $largoClave, sal $largoSal, $vueltas vueltas, $largo bytes',
+            reason:
+                'clave $largoClave, sal $largoSal, $vueltas vueltas, $largo bytes',
           );
         }
       }
@@ -121,7 +147,10 @@ void main() {
     test('las vueltas de hoy son 100 000 y las de antes 10 000', () {
       expect(HashPin.iteracionesActuales, 100000);
       expect(HashPin.iteracionesAnteriores, 10000);
-      expect(HashPin.iteracionesActuales, greaterThan(HashPin.iteracionesAnteriores));
+      expect(
+        HashPin.iteracionesActuales,
+        greaterThan(HashPin.iteracionesAnteriores),
+      );
     });
 
     test('con las vueltas de verdad, crear y verificar un PIN es razonable', () {

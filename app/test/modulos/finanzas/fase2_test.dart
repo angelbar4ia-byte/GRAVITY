@@ -90,22 +90,25 @@ void main() {
       );
     });
 
-    test('la fila viaja con sus columnas y no manda las del servidor', () async {
-      final tarjeta = await _nuevaTarjeta(base, repo);
-      final e = await svc.registrarEstadoDeCuenta(
-        deudaId: tarjeta.id,
-        corte: Fecha(2026, 10, 10),
-        limitePago: Fecha(2026, 10, 30),
-        saldoAlCorte: 100,
-        pagoMinimo: 10,
-        pagoSinIntereses: 90,
-      );
-      final fila = filaEstadoDeCuenta(e, hogarId: hogarDeEjemplo);
-      expect(fila['via'], 'manual');
-      expect(fila.containsKey('recibido_en'), isFalse);
-      expect(fila.containsKey('registrado_por'), isFalse);
-      expect(estadoDeCuentaDeFila(fila).pagoSinIntereses, 90);
-    });
+    test(
+      'la fila viaja con sus columnas y no manda las del servidor',
+      () async {
+        final tarjeta = await _nuevaTarjeta(base, repo);
+        final e = await svc.registrarEstadoDeCuenta(
+          deudaId: tarjeta.id,
+          corte: Fecha(2026, 10, 10),
+          limitePago: Fecha(2026, 10, 30),
+          saldoAlCorte: 100,
+          pagoMinimo: 10,
+          pagoSinIntereses: 90,
+        );
+        final fila = filaEstadoDeCuenta(e, hogarId: hogarDeEjemplo);
+        expect(fila['via'], 'manual');
+        expect(fila.containsKey('recibido_en'), isFalse);
+        expect(fila.containsKey('registrado_por'), isFalse);
+        expect(estadoDeCuentaDeFila(fila).pagoSinIntereses, 90);
+      },
+    );
   });
 
   group('Compras a meses (MSI)', () {
@@ -170,60 +173,73 @@ void main() {
       expect(saldoDeDeuda(repo.datos, tarjeta), 200000);
       expect(
         repo.datos.ocurrencias.any(
-          (o) => o.origenId == tarjeta.id && o.estado == EstadoOcurrencia.cumplida,
+          (o) =>
+              o.origenId == tarjeta.id && o.estado == EstadoOcurrencia.cumplida,
         ),
         isTrue,
       );
       final objeto = idEstable(
         ClavesId.ocurrencia(libro, 'deuda', tarjeta.id, '2026-10-25'),
       );
-      expect(retirados, containsAll(['pago_proximo:$objeto:2026-10-25:1', 'pago_proximo:$objeto:2026-10-25:2']));
+      expect(
+        retirados,
+        containsAll([
+          'pago_proximo:$objeto:2026-10-25:1',
+          'pago_proximo:$objeto:2026-10-25:2',
+        ]),
+      );
       expect(retirados, hasLength(9));
     });
   });
 
   group('Bolsas, reparto y retiros', () {
-    test('un solo fondo por libro y la bolsa lleva su cuenta de ahorro', () async {
-      final fondo = await svc.crearBolsa(
-        libroId: libro,
-        nombre: 'Fondo de emergencia',
-        tipo: TipoBolsaAhorro.fondoEmergencia,
-        saldoInicial: 200000,
-      );
-      expect(fondo.nivelMeta, 3);
-      expect(repo.datos.cuenta(fondo.cuentaId)!.tipo, TipoCuenta.ahorro);
-      expect(svc.saldoDeBolsa(fondo), 200000);
-      await expectLater(
-        svc.crearBolsa(
+    test(
+      'un solo fondo por libro y la bolsa lleva su cuenta de ahorro',
+      () async {
+        final fondo = await svc.crearBolsa(
           libroId: libro,
-          nombre: 'Otro fondo',
+          nombre: 'Fondo de emergencia',
           tipo: TipoBolsaAhorro.fondoEmergencia,
-        ),
-        throwsA(isA<ErrorFinanzas>()),
-      );
-      final fila = filaBolsa(fondo, hogarId: hogarDeEjemplo);
-      expect(fila['tipo'], 'fondo_emergencia');
-      expect(bolsaDeFila(fila).nivelMeta, 3);
-    });
+          saldoInicial: 200000,
+        );
+        expect(fondo.nivelMeta, 3);
+        expect(repo.datos.cuenta(fondo.cuentaId)!.tipo, TipoCuenta.ahorro);
+        expect(svc.saldoDeBolsa(fondo), 200000);
+        await expectLater(
+          svc.crearBolsa(
+            libroId: libro,
+            nombre: 'Otro fondo',
+            tipo: TipoBolsaAhorro.fondoEmergencia,
+          ),
+          throwsA(isA<ErrorFinanzas>()),
+        );
+        final fila = filaBolsa(fondo, hogarId: hogarDeEjemplo);
+        expect(fila['tipo'], 'fondo_emergencia');
+        expect(bolsaDeFila(fila).nivelMeta, 3);
+      },
+    );
 
-    test('la meta con fecha exige monto y fecha; la reserva, su monto anual', () async {
-      await expectLater(
-        svc.crearBolsa(
-          libroId: libro,
-          nombre: 'Viaje',
-          tipo: TipoBolsaAhorro.metaFecha,
-        ),
-        throwsA(isA<ErrorFinanzas>()),
-      );
-      await expectLater(
-        svc.crearBolsa(
-          libroId: libro,
-          nombre: 'Seguro',
-          tipo: TipoBolsaAhorro.reserva,
-        ),
-        throwsA(isA<ErrorFinanzas>()),
-      );
-    });
+    test(
+      'la meta con fecha exige monto y fecha; la reserva, su monto anual',
+      () async {
+        await expectLater(
+          svc.crearBolsa(
+            libroId: libro,
+            nombre: 'Viaje',
+            tipo: TipoBolsaAhorro.metaFecha,
+          ),
+          throwsA(isA<ErrorFinanzas>()),
+        );
+        await expectLater(
+          svc.crearBolsa(
+            libroId: libro,
+            nombre: 'Seguro',
+            tipo: TipoBolsaAhorro.reserva,
+          ),
+          throwsA(isA<ErrorFinanzas>()),
+        );
+      },
+    );
 
     test('proponer, confirmar y retirar no cambian el patrimonio', () async {
       final banco = repo.cuentaDe(libro, 'Mi banco');
@@ -315,7 +331,11 @@ void main() {
       if (repo.datos.semanaGuardada(libro, semana) == null) {
         await base.activarSemana(libro, semana);
       }
-      await svc.proponerReparto(libroId: libro, semana: semana, remanente: 100000);
+      await svc.proponerReparto(
+        libroId: libro,
+        semana: semana,
+        remanente: 100000,
+      );
       final a = repo.datos.aportaciones.single;
       await svc.posponerAportacion(a.id);
       final despues = repo.datos.aportaciones.single;
@@ -363,10 +383,8 @@ void main() {
       expect([...fechas]..sort(), fechas);
       // Sin datos, nada.
       expect(
-        await FuenteVencimientosFinanzas(() => null).proximos(
-          desde: ahoraDePrueba,
-          dias: 14,
-        ),
+        await FuenteVencimientosFinanzas(() => null)
+            .proximos(desde: ahoraDePrueba, dias: 14),
         isEmpty,
       );
     });
@@ -380,7 +398,12 @@ void main() {
         repo.datos.calendario,
       );
       final objeto = idEstable(
-        ClavesId.ocurrencia(libro, 'deuda', tarjeta.id, '${pagos.first.programada}'),
+        ClavesId.ocurrencia(
+          libro,
+          'deuda',
+          tarjeta.id,
+          '${pagos.first.programada}',
+        ),
       );
       final antes = await fuente.proximos(desde: ahoraDePrueba, dias: 14);
       expect(antes.where((v) => v.objetoId == objeto), hasLength(1));
@@ -418,12 +441,13 @@ void main() {
       await tester.pump();
     }
 
-    GoRouter router(WidgetTester t) => ProviderScope.containerOf(
-      t.element(find.byType(AppGravity)),
-    ).read(routerProvider);
+    GoRouter router(WidgetTester t) =>
+        ProviderScope.containerOf(t.element(find.byType(AppGravity)))
+            .read(routerProvider);
 
-    testWidgets('laptop: Deudas muestra el costo de deber y el orden de pago',
-        (tester) async {
+    testWidgets('laptop: Deudas muestra el costo de deber y el orden de pago', (
+      tester,
+    ) async {
       await montar(tester, TipoDispositivo.laptop);
       router(tester).go(SeccionFinanzas.deudas.ruta);
       await tester.pumpAndSettle();
@@ -448,25 +472,33 @@ void main() {
       expect(find.byKey(const ValueKey('vencimientos-lista')), findsOneWidget);
     });
 
-    testWidgets('las consultas locales de las herramientas dan texto discreto y '
-        'sin cifras con los montos ocultos', (tester) async {
-      await montar(tester, TipoDispositivo.laptop);
-      final c = ProviderScope.containerOf(tester.element(find.byType(AppGravity)));
-      final consulta = c.read(consultaLocalFinanzasProvider);
-      for (final h in [
-        'finanzas.resumen_semana',
-        'finanzas.proximos_pagos',
-        'finanzas.ahorro_avance',
-      ]) {
-        final visible = await consulta(h);
-        expect(visible, isNotNull, reason: h);
-      }
-      expect(await consulta('finanzas.otra'), isNull);
-      c.read(montosVisiblesProvider.notifier).fijar(false);
-      for (final h in ['finanzas.resumen_semana', 'finanzas.proximos_pagos']) {
-        expect(await consulta(h), isNot(contains(r'$')), reason: h);
-      }
-    });
+    testWidgets(
+      'las consultas locales de las herramientas dan texto discreto y '
+      'sin cifras con los montos ocultos',
+      (tester) async {
+        await montar(tester, TipoDispositivo.laptop);
+        final c = ProviderScope.containerOf(
+          tester.element(find.byType(AppGravity)),
+        );
+        final consulta = c.read(consultaLocalFinanzasProvider);
+        for (final h in [
+          'finanzas.resumen_semana',
+          'finanzas.proximos_pagos',
+          'finanzas.ahorro_avance',
+        ]) {
+          final visible = await consulta(h);
+          expect(visible, isNotNull, reason: h);
+        }
+        expect(await consulta('finanzas.otra'), isNull);
+        c.read(montosVisiblesProvider.notifier).fijar(false);
+        for (final h in [
+          'finanzas.resumen_semana',
+          'finanzas.proximos_pagos',
+        ]) {
+          expect(await consulta(h), isNot(contains(r'$')), reason: h);
+        }
+      },
+    );
 
     testWidgets('el detalle del aviso muestra el acreedor y el monto dentro de '
         'la app', (tester) async {
@@ -488,7 +520,9 @@ void main() {
         extras: [repositorioFinanzasProvider.overrideWithValue(r)],
       );
       addTearDown(r.cerrar);
-      final c = ProviderScope.containerOf(tester.element(find.byType(AppGravity)));
+      final c = ProviderScope.containerOf(
+        tester.element(find.byType(AppGravity)),
+      );
       c.read(montosVisiblesProvider.notifier).fijar(true);
       await c.read(cargaFinanzasProvider.future);
       final aviso = Aviso(
@@ -513,8 +547,9 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('la hoja corta de pago registra el pago y retira los avisos',
-        (tester) async {
+    testWidgets('la hoja corta de pago registra el pago y retira los avisos', (
+      tester,
+    ) async {
       final r = repositorioDe(dueno);
       final b = servicioDe(r, dueno);
       final tarjeta = await _nuevaTarjeta(b, r, saldo: 300000);
@@ -525,7 +560,9 @@ void main() {
         extras: [repositorioFinanzasProvider.overrideWithValue(r)],
       );
       addTearDown(r.cerrar);
-      final c = ProviderScope.containerOf(tester.element(find.byType(AppGravity)));
+      final c = ProviderScope.containerOf(
+        tester.element(find.byType(AppGravity)),
+      );
       await c.read(cargaFinanzasProvider.future);
       unawaited(
         mostrarHojaPago(
@@ -590,10 +627,9 @@ Future<Deuda> _nuevaTarjeta(
     abono: 50000,
     minimo: 15000,
     frecuencia: Frecuencia.mensual,
-    calendario: const CalendarioConfig.mensual(
-      [25],
-      regla: ReglaDiaInhabil.sinCambio,
-    ),
+    calendario: const CalendarioConfig.mensual([
+      25,
+    ], regla: ReglaDiaInhabil.sinCambio),
     tasaAnualPuntosBase: 4500,
   );
   await base.guardarDeuda(d);

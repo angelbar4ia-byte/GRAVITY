@@ -9,16 +9,20 @@ import 'package:gravity/modulos/habitos/estado/proveedores.dart';
 import 'package:gravity/modulos/habitos/pantallas/hoy.dart';
 
 void main() {
-  testWidgets('Hoy vacío ofrece crear un objetivo y siempre hay Pausa', (t) async {
+  testWidgets('Hoy vacío ofrece crear un objetivo y siempre hay Pausa', (
+    t,
+  ) async {
     final repo = RepositorioHabitosEnMemoria();
-    await t.pumpWidget(ProviderScope(
-      overrides: [
-        servicioSesionProvider.overrideWithValue(ServicioSesionFalso()),
-        repositorioHabitosProvider.overrideWithValue(repo),
-        servicioHabitosProvider.overrideWithValue(ServicioHabitos(repo)),
-      ],
-      child: const MaterialApp(home: _Cuerpo()),
-    ));
+    await t.pumpWidget(
+      ProviderScope(
+        overrides: [
+          servicioSesionProvider.overrideWithValue(ServicioSesionFalso()),
+          repositorioHabitosProvider.overrideWithValue(repo),
+          servicioHabitosProvider.overrideWithValue(ServicioHabitos(repo)),
+        ],
+        child: const MaterialApp(home: _Cuerpo()),
+      ),
+    );
     await t.pumpAndSettle();
     expect(find.text('Pausa'), findsWidgets);
   });

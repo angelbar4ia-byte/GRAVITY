@@ -50,7 +50,11 @@ void main() {
           numeradores.fold<int>(0, (a, b) => a + b),
           52,
         );
-        expect(partes.fold<int>(0, (a, b) => a + b), total, reason: '$numeradores');
+        expect(
+          partes.fold<int>(0, (a, b) => a + b),
+          total,
+          reason: '$numeradores',
+        );
         for (var i = 0; i < n; i++) {
           expect((partes[i] - numeradores[i] / 52).abs(), lessThan(1.0));
         }
@@ -158,55 +162,70 @@ void main() {
 
     test('quincenal del 15 y último día, también en febrero', () {
       final q = CalendarioPago.quincenal();
-      expect(
-        q.fechasNominales(Fecha(2026, 2, 1), Fecha(2026, 2, 28)),
-        [Fecha(2026, 2, 15), Fecha(2026, 2, 28)],
-      );
-      expect(
-        q.fechasNominales(Fecha(2028, 2, 1), Fecha(2028, 2, 29)),
-        [Fecha(2028, 2, 15), Fecha(2028, 2, 29)],
-      );
+      expect(q.fechasNominales(Fecha(2026, 2, 1), Fecha(2026, 2, 28)), [
+        Fecha(2026, 2, 15),
+        Fecha(2026, 2, 28),
+      ]);
+      expect(q.fechasNominales(Fecha(2028, 2, 1), Fecha(2028, 2, 29)), [
+        Fecha(2028, 2, 15),
+        Fecha(2028, 2, 29),
+      ]);
     });
 
-    test('cada N meses: ancla en día 31, en febrero y catorcenal con ancla futura', () {
-      expect(
-        CalendarioPago.cadaMeses(Fecha(2026, 1, 31), 2)
-            .fechasNominales(Fecha(2026, 1, 1), Fecha(2026, 12, 31))
-            .map((f) => f.toString()),
-        [
-          '2026-01-31',
-          '2026-03-31',
-          '2026-05-31',
-          '2026-07-31',
-          '2026-09-30',
-          '2026-11-30',
-        ],
-      );
-      expect(
-        CalendarioPago.cadaMeses(Fecha(2026, 12, 31), 2)
-            .fechasNominales(Fecha(2026, 12, 1), Fecha(2027, 6, 30))
-            .map((f) => f.toString()),
-        ['2026-12-31', '2027-02-28', '2027-04-30', '2027-06-30'],
-      );
-      expect(
-        CalendarioPago.catorcenal(Fecha(2026, 11, 6))
-            .fechasNominales(Fecha(2026, 10, 1), Fecha(2026, 11, 30))
-            .map((f) => f.toString()),
-        ['2026-10-09', '2026-10-23', '2026-11-06', '2026-11-20'],
-      );
-    });
+    test(
+      'cada N meses: ancla en día 31, en febrero y catorcenal con ancla futura',
+      () {
+        expect(
+          CalendarioPago.cadaMeses(Fecha(2026, 1, 31), 2)
+              .fechasNominales(Fecha(2026, 1, 1), Fecha(2026, 12, 31))
+              .map((f) => f.toString()),
+          [
+            '2026-01-31',
+            '2026-03-31',
+            '2026-05-31',
+            '2026-07-31',
+            '2026-09-30',
+            '2026-11-30',
+          ],
+        );
+        expect(
+          CalendarioPago.cadaMeses(Fecha(2026, 12, 31), 2)
+              .fechasNominales(Fecha(2026, 12, 1), Fecha(2027, 6, 30))
+              .map((f) => f.toString()),
+          ['2026-12-31', '2027-02-28', '2027-04-30', '2027-06-30'],
+        );
+        expect(
+          CalendarioPago.catorcenal(Fecha(2026, 11, 6))
+              .fechasNominales(Fecha(2026, 10, 1), Fecha(2026, 11, 30))
+              .map((f) => f.toString()),
+          ['2026-10-09', '2026-10-23', '2026-11-06', '2026-11-20'],
+        );
+      },
+    );
 
     test('regla por origen: la salida se queda en su fecha; "sin cambio" y "anterior"', () {
       expect(
-        ajustarADiaHabil(Fecha(2026, 12, 26), ReglaDiaInhabil.siguienteDiaHabil, festivos),
+        ajustarADiaHabil(
+          Fecha(2026, 12, 26),
+          ReglaDiaInhabil.siguienteDiaHabil,
+          festivos,
+        ),
         Fecha(2026, 12, 28),
       );
       expect(
-        ajustarADiaHabil(Fecha(2027, 1, 1), ReglaDiaInhabil.diaHabilAnterior, festivos),
+        ajustarADiaHabil(
+          Fecha(2027, 1, 1),
+          ReglaDiaInhabil.diaHabilAnterior,
+          festivos,
+        ),
         Fecha(2026, 12, 31),
       );
       expect(
-        ajustarADiaHabil(Fecha(2026, 11, 1), ReglaDiaInhabil.sinCambio, festivos),
+        ajustarADiaHabil(
+          Fecha(2026, 11, 1),
+          ReglaDiaInhabil.sinCambio,
+          festivos,
+        ),
         Fecha(2026, 11, 1),
       );
     });
@@ -222,16 +241,19 @@ void main() {
       expect(semaforoPartida(1, 0), Semaforo.rojo);
     });
 
-    test('remanente y carga de deuda con ingreso cero o negativo no fallan', () {
-      expect(semaforoRemanente(2000, 10000), Semaforo.verde);
-      expect(semaforoRemanente(1999, 10000), Semaforo.ambar);
-      expect(semaforoRemanente(999, 10000), Semaforo.rojo);
-      expect(semaforoRemanente(-5, 10000), Semaforo.rojo);
-      expect(semaforoRemanente(100, 0), Semaforo.rojo);
-      expect(semaforoCargaDeuda(0, 0), Semaforo.verde);
-      expect(semaforoCargaDeuda(1, 0), Semaforo.rojo);
-      expect(semaforoCumplimiento(0, 0), Semaforo.verde);
-    });
+    test(
+      'remanente y carga de deuda con ingreso cero o negativo no fallan',
+      () {
+        expect(semaforoRemanente(2000, 10000), Semaforo.verde);
+        expect(semaforoRemanente(1999, 10000), Semaforo.ambar);
+        expect(semaforoRemanente(999, 10000), Semaforo.rojo);
+        expect(semaforoRemanente(-5, 10000), Semaforo.rojo);
+        expect(semaforoRemanente(100, 0), Semaforo.rojo);
+        expect(semaforoCargaDeuda(0, 0), Semaforo.verde);
+        expect(semaforoCargaDeuda(1, 0), Semaforo.rojo);
+        expect(semaforoCumplimiento(0, 0), Semaforo.verde);
+      },
+    );
   });
 
   group('Grupo de deudas prioritarias: bordes', () {
@@ -253,13 +275,19 @@ void main() {
       ordenGrupo: orden,
     );
 
-    test('una deuda ya liquidada (saldo 0) no recibe extra y pasa a la siguiente', () {
-      final a = deuda('a', saldo: 0, orden: 1);
-      final b = deuda('b', saldo: 500000, orden: 2);
-      final destino = repartirRemanente(300000, {a: 0, b: 0});
-      expect([for (final x in destino.abonosExtra) (x.deuda.id, x.monto)], [('b', 300000)]);
-      expect(destino.ahorro, 0);
-    });
+    test(
+      'una deuda ya liquidada (saldo 0) no recibe extra y pasa a la siguiente',
+      () {
+        final a = deuda('a', saldo: 0, orden: 1);
+        final b = deuda('b', saldo: 500000, orden: 2);
+        final destino = repartirRemanente(300000, {a: 0, b: 0});
+        expect(
+          [for (final x in destino.abonosExtra) (x.deuda.id, x.monto)],
+          [('b', 300000)],
+        );
+        expect(destino.ahorro, 0);
+      },
+    );
 
     test('remanente cero o negativo no reparte nada ni inventa ahorro', () {
       final a = deuda('a', saldo: 500000, orden: 1);
@@ -284,14 +312,16 @@ void main() {
       final x1 = deuda('x1', saldo: 100000, orden: 1);
       final x2 = deuda('x2', saldo: 100000, orden: 1);
       final destino = repartirRemanente(150000, {x2: 0, x1: 0});
-      expect([for (final e in destino.abonosExtra) (e.deuda.id, e.monto)], [
-        ('x1', 100000),
-        ('x2', 50000),
-      ]);
+      expect(
+        [for (final e in destino.abonosExtra) (e.deuda.id, e.monto)],
+        [('x1', 100000), ('x2', 50000)],
+      );
       final sin = deuda('y1', saldo: 100000);
       final con = deuda('y2', saldo: 100000, orden: 1);
       expect(
-        [for (final d in ordenDeAbonoExtra([sin, con])) d.id],
+        [
+          for (final d in ordenDeAbonoExtra([sin, con])) d.id,
+        ],
         ['y2', 'y1'],
       );
     });

@@ -106,36 +106,45 @@ void main() {
   });
 
   group('M5: la copia local de Finanzas', () {
-    test('limpiarCopiaLocalFinanzas borra la de esa persona y no la de otra',
-        () async {
-      final almacen = AlmacenSeguroEnMemoria();
-      final deDueno = CopiaLocalFinanzas(almacen, personaId: dueno.persona.id);
-      final deOtra = CopiaLocalFinanzas(almacen, personaId: 'otra-persona');
-      await deDueno.guardar({'fin_libros': <Object>[]});
-      await deOtra.guardar({'fin_libros': <Object>[]});
-      await limpiarCopiaLocalFinanzas(dueno.persona.id, almacen: almacen);
-      expect(await deDueno.leer(), isNull);
-      expect(await deOtra.leer(), isNotNull);
-    });
+    test(
+      'limpiarCopiaLocalFinanzas borra la de esa persona y no la de otra',
+      () async {
+        final almacen = AlmacenSeguroEnMemoria();
+        final deDueno = CopiaLocalFinanzas(
+          almacen,
+          personaId: dueno.persona.id,
+        );
+        final deOtra = CopiaLocalFinanzas(almacen, personaId: 'otra-persona');
+        await deDueno.guardar({'fin_libros': <Object>[]});
+        await deOtra.guardar({'fin_libros': <Object>[]});
+        await limpiarCopiaLocalFinanzas(dueno.persona.id, almacen: almacen);
+        expect(await deDueno.leer(), isNull);
+        expect(await deOtra.leer(), isNotNull);
+      },
+    );
 
-    test('la clave es la convención de plataforma (finanzas.copia.<persona>)',
-        () async {
-      final almacen = AlmacenSeguroEnMemoria();
-      await CopiaLocalFinanzas(
-        almacen,
-        personaId: 'p1',
-      ).guardar({'fin_libros': <Object>[]});
-      expect(almacen.datos.keys, [claveCopiaLocal(Modulo.finanzas, 'p1')]);
-      expect(almacen.datos.keys.single, 'finanzas.copia.p1');
-    });
+    test(
+      'la clave es la convención de plataforma (finanzas.copia.<persona>)',
+      () async {
+        final almacen = AlmacenSeguroEnMemoria();
+        await CopiaLocalFinanzas(
+          almacen,
+          personaId: 'p1',
+        ).guardar({'fin_libros': <Object>[]});
+        expect(almacen.datos.keys, [claveCopiaLocal(Modulo.finanzas, 'p1')]);
+        expect(almacen.datos.keys.single, 'finanzas.copia.p1');
+      },
+    );
 
-    test('un almacén que no deja borrar no impide salir ni quitar a nadie',
-        () async {
-      await expectLater(
-        limpiarCopiaLocalFinanzas('p1', almacen: _AlmacenQueFalla()),
-        completes,
-      );
-    });
+    test(
+      'un almacén que no deja borrar no impide salir ni quitar a nadie',
+      () async {
+        await expectLater(
+          limpiarCopiaLocalFinanzas('p1', almacen: _AlmacenQueFalla()),
+          completes,
+        );
+      },
+    );
 
     test('la limpieza de plataforma la borra al quitar a la persona', () async {
       final almacen = AlmacenSeguroEnMemoria();
@@ -174,19 +183,24 @@ void main() {
       expect(r.movimientos.single.motivo, 'Para las medicinas');
     });
 
-    test('la anulación de un movimiento de papá también va en su nombre',
-        () async {
-      final repo = repositorioDe(dueno);
-      final servicio = servicioDe(repo, dueno);
-      final original = repo.datos.movimientos.firstWhere(
-        (m) =>
-            m.tipo == TipoMovimiento.gasto &&
-            repo.datos.cuenta(m.cuentaOrigenId)?.libroId == libroPapa,
-      );
-      final contra = await servicio.anular(original.id, motivo: 'Se capturó mal');
-      expect(contra.enNombreDe, IdsDemostracion.papa);
-      expect(contra.motivo, 'Se capturó mal');
-    });
+    test(
+      'la anulación de un movimiento de papá también va en su nombre',
+      () async {
+        final repo = repositorioDe(dueno);
+        final servicio = servicioDe(repo, dueno);
+        final original = repo.datos.movimientos.firstWhere(
+          (m) =>
+              m.tipo == TipoMovimiento.gasto &&
+              repo.datos.cuenta(m.cuentaOrigenId)?.libroId == libroPapa,
+        );
+        final contra = await servicio.anular(
+          original.id,
+          motivo: 'Se capturó mal',
+        );
+        expect(contra.enNombreDe, IdsDemostracion.papa);
+        expect(contra.motivo, 'Se capturó mal');
+      },
+    );
 
     test('las salidas y los demás movimientos del libro sin motivo se rechazan '
         '(gasto, ingreso extra, remanente)', () async {
@@ -235,7 +249,9 @@ void main() {
         saldoInicial: 100000,
       );
       final apertura = repo.datos.movimientos.firstWhere(
-        (m) => m.tipo == TipoMovimiento.apertura && m.cuentaDestinoId == cartera.id,
+        (m) =>
+            m.tipo == TipoMovimiento.apertura &&
+            m.cuentaDestinoId == cartera.id,
       );
       expect(apertura.enNombreDe, IdsDemostracion.papa);
       expect(apertura.motivo, 'Saldo inicial');
@@ -264,8 +280,12 @@ void main() {
       expect(ajuste.motivo, 'Se gastó en la farmacia');
 
       // Reclasificación (de "Por clasificar" a una cuenta de gasto del hogar).
-      final porClasificar = repo.datos.parametrosDe(libroPapa).cuentaPorClasificarId!;
-      final deGasto = repo.datos.cuentas.firstWhere((c) => c.tipo == TipoCuenta.deGasto).id;
+      final porClasificar = repo.datos
+          .parametrosDe(libroPapa)
+          .cuentaPorClasificarId!;
+      final deGasto = repo.datos.cuentas
+          .firstWhere((c) => c.tipo == TipoCuenta.deGasto)
+          .id;
       await expectLater(
         servicio.registrarMovimiento(
           tipo: TipoMovimiento.reclasificacion,
@@ -304,37 +324,39 @@ void main() {
       expect(pago.movimientos.single.enNombreDe, IdsDemostracion.papa);
     });
 
-    testWidgets('la hoja (+) Gasto pide el motivo siempre en el libro de papá',
-        (tester) async {
-      final sesion = dueno;
-      final repo = repositorioDe(sesion);
-      addTearDown(repo.cerrar);
-      await montarApp(
-        tester,
-        dispositivo: TipoDispositivo.telefono,
-        sesion: ServicioSesionDemostracion(inicial: sesion),
-        extras: [repositorioFinanzasProvider.overrideWithValue(repo)],
-      );
-      await abrirRegistroDelTelefono(tester, 'Gasto');
-      // Los libros van en una sola línea que se desliza.
-      final chipPapa = find.byKey(const ValueKey('gasto-libro-$libroPapa'));
-      await tester.ensureVisible(chipPapa);
-      await tester.pump(const Duration(milliseconds: 300));
-      await tester.tap(chipPapa);
-      await tester.pump(const Duration(milliseconds: 300));
-      expect(find.byKey(const ValueKey('gasto-motivo')), findsOneWidget);
-      // Con monto y cuenta, Guardar sigue inactivo mientras falte el motivo.
-      final teclas = find.descendant(
-        of: find.byKey(const ValueKey('registro-gasto')),
-        matching: find.text('5'),
-      );
-      await tester.tap(teclas.first);
-      await tester.pump();
-      FilledButton guardar() => tester.widget<FilledButton>(
-        find.byKey(const ValueKey('gasto-guardar')),
-      );
-      expect(guardar().onPressed, isNull);
-    });
+    testWidgets(
+      'la hoja (+) Gasto pide el motivo siempre en el libro de papá',
+      (tester) async {
+        final sesion = dueno;
+        final repo = repositorioDe(sesion);
+        addTearDown(repo.cerrar);
+        await montarApp(
+          tester,
+          dispositivo: TipoDispositivo.telefono,
+          sesion: ServicioSesionDemostracion(inicial: sesion),
+          extras: [repositorioFinanzasProvider.overrideWithValue(repo)],
+        );
+        await abrirRegistroDelTelefono(tester, 'Gasto');
+        // Los libros van en una sola línea que se desliza.
+        final chipPapa = find.byKey(const ValueKey('gasto-libro-$libroPapa'));
+        await tester.ensureVisible(chipPapa);
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.tap(chipPapa);
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(find.byKey(const ValueKey('gasto-motivo')), findsOneWidget);
+        // Con monto y cuenta, Guardar sigue inactivo mientras falte el motivo.
+        final teclas = find.descendant(
+          of: find.byKey(const ValueKey('registro-gasto')),
+          matching: find.text('5'),
+        );
+        await tester.tap(teclas.first);
+        await tester.pump();
+        FilledButton guardar() => tester.widget<FilledButton>(
+          find.byKey(const ValueKey('gasto-guardar')),
+        );
+        expect(guardar().onPressed, isNull);
+      },
+    );
   });
 
   group('Cuenta maestra: la consulta (vigencia de 30 min)', () {
@@ -373,7 +395,11 @@ void main() {
     test('sin consulta el servidor devuelve la portada y el libro vacío; con '
         'consulta, el contenido', () async {
       var ahora = hora0;
-      final repo = repositorioDe(maestra, exigeConsulta: true, reloj: () => ahora);
+      final repo = repositorioDe(
+        maestra,
+        exigeConsulta: true,
+        reloj: () => ahora,
+      );
       addTearDown(repo.cerrar);
       final sin = await repo.cargar();
       expect(sin.datos.libros, hasLength(4), reason: 'la portada se ve');
@@ -382,37 +408,59 @@ void main() {
       expect(await repo.registrarConsultaMaestra(libroDueno), isTrue);
       final con = await repo.cargar();
       expect(con.libroSinContenido(libroDueno), isFalse);
-      expect(con.libroSinContenido(IdsDemostracion.libroPareja), isTrue,
-          reason: 'la consulta es por libro');
+      expect(
+        con.libroSinContenido(IdsDemostracion.libroPareja),
+        isTrue,
+        reason: 'la consulta es por libro',
+      );
       ahora = ahora.add(const Duration(minutes: 31));
-      expect((await repo.cargar()).libroSinContenido(libroDueno), isTrue,
-          reason: 'a los 30 minutos vence');
+      expect(
+        (await repo.cargar()).libroSinContenido(libroDueno),
+        isTrue,
+        reason: 'a los 30 minutos vence',
+      );
     });
 
-    test('lo propio no se registra: devuelve falso y no deja consulta',
-        () async {
-      final duenoMaestro = sesionDuenoMaestro();
-      final repo = repositorioDe(duenoMaestro, exigeConsulta: true);
-      addTearDown(repo.cerrar);
-      expect(await repo.registrarConsultaMaestra(libroDueno), isFalse);
-      expect(repo.consultasMaestra, isEmpty);
-      expect(await repo.registrarConsultaMaestra(IdsDemostracion.libroPareja), isTrue);
-    });
+    test(
+      'lo propio no se registra: devuelve falso y no deja consulta',
+      () async {
+        final duenoMaestro = sesionDuenoMaestro();
+        final repo = repositorioDe(duenoMaestro, exigeConsulta: true);
+        addTearDown(repo.cerrar);
+        expect(await repo.registrarConsultaMaestra(libroDueno), isFalse);
+        expect(repo.consultasMaestra, isEmpty);
+        expect(
+          await repo.registrarConsultaMaestra(IdsDemostracion.libroPareja),
+          isTrue,
+        );
+      },
+    );
 
-    testWidgets('registra la consulta ANTES de pedir los datos del libro ajeno',
-        (tester) async {
-      final repo = await montarMaestra(tester, () => hora0);
-      expect(find.byKey(const ValueKey('finanzas-portada')), findsOneWidget);
-      repo.eventos.clear();
-      await abrirLibro(tester, libroDueno);
-      expect(repo.eventos.first, 'consulta:$libroDueno',
-          reason: 'primero la consulta');
-      expect(repo.eventos.skip(1), contains('carga'),
-          reason: 'después se vuelven a pedir los datos');
-      final c = contenedor(tester).read(contextoFinanzasProvider).value!;
-      expect(c.carga.libroSinContenido(libroDueno), isFalse);
-      expect(find.byKey(const ValueKey('finanzas-consultando')), findsNothing);
-    });
+    testWidgets(
+      'registra la consulta ANTES de pedir los datos del libro ajeno',
+      (tester) async {
+        final repo = await montarMaestra(tester, () => hora0);
+        expect(find.byKey(const ValueKey('finanzas-portada')), findsOneWidget);
+        repo.eventos.clear();
+        await abrirLibro(tester, libroDueno);
+        expect(
+          repo.eventos.first,
+          'consulta:$libroDueno',
+          reason: 'primero la consulta',
+        );
+        expect(
+          repo.eventos.skip(1),
+          contains('carga'),
+          reason: 'después se vuelven a pedir los datos',
+        );
+        final c = contenedor(tester).read(contextoFinanzasProvider).value!;
+        expect(c.carga.libroSinContenido(libroDueno), isFalse);
+        expect(
+          find.byKey(const ValueKey('finanzas-consultando')),
+          findsNothing,
+        );
+      },
+    );
 
     testWidgets('se renueva a los 25 minutos mientras el libro sigue abierto y '
         'la pantalla no se tapa con "Cargando"', (tester) async {
@@ -438,8 +486,11 @@ void main() {
       expect(find.byType(CircularProgressIndicator), findsNothing);
       expect(repo.vecesCargado, greaterThan(cargas));
       final c = contenedor(tester).read(contextoFinanzasProvider).value!;
-      expect(c.carga.libroSinContenido(libroDueno), isFalse,
-          reason: 'sigue leyendo con la consulta renovada');
+      expect(
+        c.carga.libroSinContenido(libroDueno),
+        isFalse,
+        reason: 'sigue leyendo con la consulta renovada',
+      );
 
       await pasa(const Duration(minutes: 25));
       expect(repo.consultasMaestra, hasLength(3));
@@ -467,23 +518,35 @@ void main() {
       );
     });
 
-    testWidgets('un resultado vacío de un libro ajeno ya consultado quiere decir '
-        'que venció: se registra otra vez y se recarga sola', (tester) async {
-      var ahora = hora0;
-      final repo = await montarMaestra(tester, () => ahora);
-      await abrirLibro(tester, libroDueno);
-      expect(repo.consultasMaestra, hasLength(1));
-      // El equipo estuvo dormido: el reloj del servidor avanzó y el
-      // temporizador de la renovación no corrió.
-      ahora = ahora.add(const Duration(minutes: 31));
-      await contenedor(tester).read(cargaFinanzasProvider.notifier).recargar();
-      await tester.pump(const Duration(milliseconds: 300));
-      await tester.pump(const Duration(milliseconds: 300));
-      expect(repo.consultasMaestra, hasLength(2), reason: 'renovó sin avisar');
-      final c = contenedor(tester).read(contextoFinanzasProvider).value!;
-      expect(c.carga.libroSinContenido(libroDueno), isFalse);
-      expect(find.byKey(const ValueKey('finanzas-consulta-error')), findsNothing);
-    });
+    testWidgets(
+      'un resultado vacío de un libro ajeno ya consultado quiere decir '
+      'que venció: se registra otra vez y se recarga sola',
+      (tester) async {
+        var ahora = hora0;
+        final repo = await montarMaestra(tester, () => ahora);
+        await abrirLibro(tester, libroDueno);
+        expect(repo.consultasMaestra, hasLength(1));
+        // El equipo estuvo dormido: el reloj del servidor avanzó y el
+        // temporizador de la renovación no corrió.
+        ahora = ahora.add(const Duration(minutes: 31));
+        await contenedor(tester)
+            .read(cargaFinanzasProvider.notifier)
+            .recargar();
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(
+          repo.consultasMaestra,
+          hasLength(2),
+          reason: 'renovó sin avisar',
+        );
+        final c = contenedor(tester).read(contextoFinanzasProvider).value!;
+        expect(c.carga.libroSinContenido(libroDueno), isFalse);
+        expect(
+          find.byKey(const ValueKey('finanzas-consulta-error')),
+          findsNothing,
+        );
+      },
+    );
 
     testWidgets('si no se puede registrar, no se muestra el libro y se puede '
         'reintentar a mano', (tester) async {
@@ -509,75 +572,89 @@ void main() {
       expect(repo.consultasMaestra, hasLength(1));
     });
 
-    testWidgets('si la consulta no vale (el servidor sigue devolviendo vacío) se '
-        'explica y se puede reintentar, sin ciclos', (tester) async {
-      final repo = _ConsultaQueNoVale(maestra);
-      addTearDown(repo.cerrar);
-      await montarApp(
-        tester,
-        dispositivo: TipoDispositivo.laptop,
-        sesion: ServicioSesionDemostracion(inicial: maestra),
-        extras: [repositorioFinanzasProvider.overrideWithValue(repo)],
-      );
-      await irA(tester, Rutas.finanzas);
-      await abrirLibro(tester, libroDueno);
-      await tester.pump(const Duration(seconds: 10));
-      expect(find.byKey(const ValueKey('finanzas-consulta-error')), findsOneWidget);
-      expect(repo.intentos, 2, reason: 'un segundo intento y se detiene');
-      expect(find.text('Reintentar'), findsWidgets);
-    });
+    testWidgets(
+      'si la consulta no vale (el servidor sigue devolviendo vacío) se '
+      'explica y se puede reintentar, sin ciclos',
+      (tester) async {
+        final repo = _ConsultaQueNoVale(maestra);
+        addTearDown(repo.cerrar);
+        await montarApp(
+          tester,
+          dispositivo: TipoDispositivo.laptop,
+          sesion: ServicioSesionDemostracion(inicial: maestra),
+          extras: [repositorioFinanzasProvider.overrideWithValue(repo)],
+        );
+        await irA(tester, Rutas.finanzas);
+        await abrirLibro(tester, libroDueno);
+        await tester.pump(const Duration(seconds: 10));
+        expect(
+          find.byKey(const ValueKey('finanzas-consulta-error')),
+          findsOneWidget,
+        );
+        expect(repo.intentos, 2, reason: 'un segundo intento y se detiene');
+        expect(find.text('Reintentar'), findsWidgets);
+      },
+    );
   });
 
   group('I10: sin reintentos automáticos', () {
-    test('la carga que falla queda en error al instante y se reintenta a mano',
-        () async {
-      final repo = _RepoQueFalla(datosDeDemostracion(hoy: hoyDePrueba));
-      addTearDown(repo.cerrar);
-      final contenedor = ProviderContainer(
-        overrides: [
-          repositorioFinanzasProvider.overrideWithValue(repo),
-        ],
-      );
-      addTearDown(contenedor.dispose);
-      await expectLater(
-        contenedor.read(cargaFinanzasProvider.future),
-        throwsA(isA<ErrorFinanzas>()),
-      );
-      await Future<void>.delayed(const Duration(seconds: 1));
-      expect(repo.intentos, 1, reason: 'sin reintentos automáticos');
-      expect(contenedor.read(cargaFinanzasProvider).hasError, isTrue);
-      repo.falla = false;
-      await contenedor.read(cargaFinanzasProvider.notifier).recargar();
-      expect(contenedor.read(cargaFinanzasProvider).hasValue, isTrue);
-      expect(repo.intentos, 2);
-    });
+    test(
+      'la carga que falla queda en error al instante y se reintenta a mano',
+      () async {
+        final repo = _RepoQueFalla(datosDeDemostracion(hoy: hoyDePrueba));
+        addTearDown(repo.cerrar);
+        final contenedor = ProviderContainer(
+          overrides: [repositorioFinanzasProvider.overrideWithValue(repo)],
+        );
+        addTearDown(contenedor.dispose);
+        await expectLater(
+          contenedor.read(cargaFinanzasProvider.future),
+          throwsA(isA<ErrorFinanzas>()),
+        );
+        await Future<void>.delayed(const Duration(seconds: 1));
+        expect(repo.intentos, 1, reason: 'sin reintentos automáticos');
+        expect(contenedor.read(cargaFinanzasProvider).hasError, isTrue);
+        repo.falla = false;
+        await contenedor.read(cargaFinanzasProvider.notifier).recargar();
+        expect(contenedor.read(cargaFinanzasProvider).hasValue, isTrue);
+        expect(repo.intentos, 2);
+      },
+    );
   });
 
   group('I6 e I8: las hojas del (+) con letra grande', () {
-    testWidgets('con letra 2.0 en 360 dp, Guardar se ve, cabe y queda arriba de '
-        'Cancelar (apilados)', (tester) async {
-      await montarFinanzasConTamano(
-        tester,
-        dispositivo: TipoDispositivo.telefono,
-        tamano: const Size(360, 800),
-        escalaDeLetra: 2.0,
-      );
-      final errores = await recolectar(
-        () => abrirRegistroDelTelefono(tester, 'Gasto'),
-      );
-      expect(errores.desbordes, isEmpty);
-      final guardar = find.byKey(const ValueKey('gasto-guardar'));
-      expect(guardar.hitTestable(), findsOneWidget);
-      final cancelar = find.text('Cancelar');
-      expect(cancelar.hitTestable(), findsOneWidget);
-      final g = tester.getRect(guardar);
-      final c = tester.getRect(cancelar);
-      expect(g.right, lessThanOrEqualTo(360), reason: 'no se corta');
-      expect(g.bottom, lessThanOrEqualTo(c.top + 1), reason: 'Guardar arriba');
-    });
+    testWidgets(
+      'con letra 2.0 en 360 dp, Guardar se ve, cabe y queda arriba de '
+      'Cancelar (apilados)',
+      (tester) async {
+        await montarFinanzasConTamano(
+          tester,
+          dispositivo: TipoDispositivo.telefono,
+          tamano: const Size(360, 800),
+          escalaDeLetra: 2.0,
+        );
+        final errores = await recolectar(
+          () => abrirRegistroDelTelefono(tester, 'Gasto'),
+        );
+        expect(errores.desbordes, isEmpty);
+        final guardar = find.byKey(const ValueKey('gasto-guardar'));
+        expect(guardar.hitTestable(), findsOneWidget);
+        final cancelar = find.text('Cancelar');
+        expect(cancelar.hitTestable(), findsOneWidget);
+        final g = tester.getRect(guardar);
+        final c = tester.getRect(cancelar);
+        expect(g.right, lessThanOrEqualTo(360), reason: 'no se corta');
+        expect(
+          g.bottom,
+          lessThanOrEqualTo(c.top + 1),
+          reason: 'Guardar arriba',
+        );
+      },
+    );
 
-    testWidgets('con letra normal Cancelar y Guardar van en una sola fila',
-        (tester) async {
+    testWidgets('con letra normal Cancelar y Guardar van en una sola fila', (
+      tester,
+    ) async {
       await montarFinanzasConTamano(
         tester,
         dispositivo: TipoDispositivo.telefono,
@@ -590,8 +667,9 @@ void main() {
       expect(c.right, lessThan(g.left));
     });
 
-    testWidgets('con el teclado del sistema abierto, la barra queda encima',
-        (tester) async {
+    testWidgets('con el teclado del sistema abierto, la barra queda encima', (
+      tester,
+    ) async {
       await montarFinanzasConTamano(
         tester,
         dispositivo: TipoDispositivo.telefono,
@@ -601,9 +679,14 @@ void main() {
       addTearDown(tester.view.resetViewInsets);
       await abrirRegistroDelTelefono(tester, 'Gasto');
       await tester.pump(const Duration(milliseconds: 500));
-      final guardar = tester.getRect(find.byKey(const ValueKey('gasto-guardar')));
+      final guardar = tester.getRect(
+        find.byKey(const ValueKey('gasto-guardar')),
+      );
       expect(guardar.bottom, lessThanOrEqualTo(800 - 300 + 1));
-      expect(find.byKey(const ValueKey('gasto-guardar')).hitTestable(), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('gasto-guardar')).hitTestable(),
+        findsOneWidget,
+      );
     });
 
     testWidgets('la fila de un movimiento con letra 2.0 muestra el monto sin '
@@ -634,8 +717,9 @@ void main() {
       expect(tester.getRect(montos.first).right, lessThanOrEqualTo(360));
     });
 
-    testWidgets('anular sigue disponible desde la fila (menú con su llave)',
-        (tester) async {
+    testWidgets('anular sigue disponible desde la fila (menú con su llave)', (
+      tester,
+    ) async {
       final repo = await montarFinanzasConTamano(
         tester,
         dispositivo: TipoDispositivo.telefono,
@@ -653,46 +737,52 @@ void main() {
   });
 
   group('M4: dos pagos el mismo día se marcan juntos', () {
-    test('la ocurrencia de un ingreso con dos pagos el 28/feb vale los dos',
-        () async {
-      final repo = repositorioDe(dueno);
-      final febrero = DateTime(2026, 2, 24, 10);
-      final servicio = servicioDe(repo, dueno, ahora: febrero);
-      final banco = repo.cuentaDe(libroDueno, 'Mi banco');
-      final origen = repo.cuentaDe(libroDueno, 'Honorarios');
-      await repo.guardarIngreso(
-        Ingreso(
-          id: 'ing-dos-dias',
-          libroId: libroDueno,
-          nombre: 'Pago de ejemplo',
-          cuentaOrigenId: origen.id,
-          cuentaDestinoId: banco.id,
-          vigencias: [
-            VigenciaIngreso(
-              id: 'vig-dos-dias',
-              ingresoId: 'ing-dos-dias',
-              montoNeto: 100000,
-              calendario: const CalendarioConfig.mensual([
-                30,
-                0,
-              ], regla: ReglaDiaInhabil.sinCambio),
-              desde: Fecha(2026, 1, 1),
-            ),
-          ],
-        ),
-      );
-      final vence = vencimientosEntre(
-        repo.datos,
-        libroDueno,
-        Fecha(2026, 2, 23),
-        Fecha(2026, 3, 1),
-      ).where((v) => v.origenId == 'ing-dos-dias').toList();
-      expect(vence, hasLength(2));
-      await servicio.marcarIngreso(libroDueno, vence.first, EstadoOcurrencia.noLlegara);
-      final o = repo.datos.ocurrencias.single;
-      expect(o.montoEsperado, 200000, reason: 'los dos pagos del día');
-      expect(o.fechaProgramada, Fecha(2026, 2, 28));
-    });
+    test(
+      'la ocurrencia de un ingreso con dos pagos el 28/feb vale los dos',
+      () async {
+        final repo = repositorioDe(dueno);
+        final febrero = DateTime(2026, 2, 24, 10);
+        final servicio = servicioDe(repo, dueno, ahora: febrero);
+        final banco = repo.cuentaDe(libroDueno, 'Mi banco');
+        final origen = repo.cuentaDe(libroDueno, 'Honorarios');
+        await repo.guardarIngreso(
+          Ingreso(
+            id: 'ing-dos-dias',
+            libroId: libroDueno,
+            nombre: 'Pago de ejemplo',
+            cuentaOrigenId: origen.id,
+            cuentaDestinoId: banco.id,
+            vigencias: [
+              VigenciaIngreso(
+                id: 'vig-dos-dias',
+                ingresoId: 'ing-dos-dias',
+                montoNeto: 100000,
+                calendario: const CalendarioConfig.mensual([
+                  30,
+                  0,
+                ], regla: ReglaDiaInhabil.sinCambio),
+                desde: Fecha(2026, 1, 1),
+              ),
+            ],
+          ),
+        );
+        final vence = vencimientosEntre(
+          repo.datos,
+          libroDueno,
+          Fecha(2026, 2, 23),
+          Fecha(2026, 3, 1),
+        ).where((v) => v.origenId == 'ing-dos-dias').toList();
+        expect(vence, hasLength(2));
+        await servicio.marcarIngreso(
+          libroDueno,
+          vence.first,
+          EstadoOcurrencia.noLlegara,
+        );
+        final o = repo.datos.ocurrencias.single;
+        expect(o.montoEsperado, 200000, reason: 'los dos pagos del día');
+        expect(o.fechaProgramada, Fecha(2026, 2, 28));
+      },
+    );
   });
 }
 

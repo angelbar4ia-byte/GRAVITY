@@ -22,7 +22,8 @@ void main() {
   group('Finanzas en la cola', () {
     test('tablasDeLaCola incluye las de Finanzas, con sus prefijos', () {
       expect(tablasColaFinanzas, isNotEmpty);
-      for (final MapEntry(key: tipo, value: tabla) in tablasColaFinanzas.entries) {
+      for (final MapEntry(key: tipo, value: tabla)
+          in tablasColaFinanzas.entries) {
         expect(tablasDeLaCola[tipo], tabla, reason: tipo);
         expect(tipo, startsWith('finanzas.'), reason: tipo);
         expect(tabla, startsWith('fin_'), reason: tipo);
@@ -68,72 +69,66 @@ void main() {
       return cliente;
     }
 
-    test(
-      'cada tipo de Finanzas va a su tabla, sin duplicar y con el cliente '
-      'de la persona activa',
-      () async {
-        final ana = await clienteDe('uid-ana');
-        final beto = await clienteDe('uid-beto');
-        var activo = ana;
-        final base = BaseLocal.enMemoria();
-        addTearDown(base.close);
-        final cola = ColaSinConexion(
-          base: base,
-          enviador: EnviadorSupabase.dinamico(
-            () => activo,
-            tablas: tablasDeLaCola,
-          ),
+    test('cada tipo de Finanzas va a su tabla, sin duplicar y con el cliente '
+        'de la persona activa', () async {
+      final ana = await clienteDe('uid-ana');
+      final beto = await clienteDe('uid-beto');
+      var activo = ana;
+      final base = BaseLocal.enMemoria();
+      addTearDown(base.close);
+      final cola = ColaSinConexion(
+        base: base,
+        enviador: EnviadorSupabase.dinamico(
+          () => activo,
+          tablas: tablasDeLaCola,
+        ),
+      );
+
+      final tipos = tablasColaFinanzas.keys.toList();
+      for (final tipo in tipos) {
+        await cola.encolar(
+          tipo: tipo,
+          carga: {'monto_centavos': 18500, 'nota': 'Ejemplo'},
         );
-
-        final tipos = tablasColaFinanzas.keys.toList();
-        for (final tipo in tipos) {
-          await cola.encolar(
-            tipo: tipo,
-            carga: {'monto_centavos': 18500, 'nota': 'Ejemplo'},
-          );
-        }
-        expect((await cola.procesar()).enviados, tipos.length);
-        for (var i = 0; i < tipos.length; i++) {
-          final peticion = recibidas[i];
-          expect(peticion.metodo, 'POST');
-          expect(
-            peticion.uri.path,
-            '/rest/v1/${tablasColaFinanzas[tipos[i]]}',
-          );
-          expect(peticion.uri.queryParameters['on_conflict'], 'id');
-          expect(
-            peticion.encabezados['prefer'],
-            contains('resolution=ignore-duplicates'),
-          );
-          expect(peticion.sujeto, 'uid-ana');
-        }
-
-        // El mismo id no se vuelve a enviar.
-        expect((await cola.procesar()).enviados, 0);
-        expect(recibidas, hasLength(tipos.length));
-
-        // Reenviar a mano el mismo id (p. ej. tras perder la respuesta) no
-        // duplica en el servidor: la llave es el UUID del dispositivo.
-        final id = (await cola.registros()).first.id;
-        final enviador = EnviadorSupabase(ana, tablas: tablasDeLaCola);
-        await enviador.enviar(
-          PeticionEnvio(
-            id: id,
-            tipo: tipos.first,
-            carga: const {'monto_centavos': 18500},
-            creadoEn: DateTime(2026, 10, 21),
-            intento: 2,
-          ),
+      }
+      expect((await cola.procesar()).enviados, tipos.length);
+      for (var i = 0; i < tipos.length; i++) {
+        final peticion = recibidas[i];
+        expect(peticion.metodo, 'POST');
+        expect(peticion.uri.path, '/rest/v1/${tablasColaFinanzas[tipos[i]]}');
+        expect(peticion.uri.queryParameters['on_conflict'], 'id');
+        expect(
+          peticion.encabezados['prefer'],
+          contains('resolution=ignore-duplicates'),
         );
-        expect(guardados, hasLength(tipos.length));
+        expect(peticion.sujeto, 'uid-ana');
+      }
 
-        // Cambia la persona activa (tablet): sale con su cliente.
-        activo = beto;
-        await cola.encolar(tipo: tipos.first, carga: const {'nota': 'Beto'});
-        await cola.procesar();
-        expect(recibidas.last.sujeto, 'uid-beto');
-      },
-    );
+      // El mismo id no se vuelve a enviar.
+      expect((await cola.procesar()).enviados, 0);
+      expect(recibidas, hasLength(tipos.length));
+
+      // Reenviar a mano el mismo id (p. ej. tras perder la respuesta) no
+      // duplica en el servidor: la llave es el UUID del dispositivo.
+      final id = (await cola.registros()).first.id;
+      final enviador = EnviadorSupabase(ana, tablas: tablasDeLaCola);
+      await enviador.enviar(
+        PeticionEnvio(
+          id: id,
+          tipo: tipos.first,
+          carga: const {'monto_centavos': 18500},
+          creadoEn: DateTime(2026, 10, 21),
+          intento: 2,
+        ),
+      );
+      expect(guardados, hasLength(tipos.length));
+
+      // Cambia la persona activa (tablet): sale con su cliente.
+      activo = beto;
+      await cola.encolar(tipo: tipos.first, carga: const {'nota': 'Beto'});
+      await cola.procesar();
+      expect(recibidas.last.sujeto, 'uid-beto');
+    });
   });
 
   group('tablet pública: lo de la casa sin PIN (D14)', () {
@@ -186,64 +181,74 @@ void main() {
       expect(registro.origen, OrigenRegistro.tabletCasa);
     });
 
-    test('sale solo con la cuenta del equipo, nunca con la sesión de Ana', () async {
-      await cola.encolar(
-        tipo: 'casa.lista',
-        carga: const {},
-        personaId: ana,
-        origen: OrigenRegistro.tabletCasa,
-      );
-      await cola.encolar(tipo: 'finanzas.movimiento', carga: const {}, personaId: ana);
-
-      // Ana entró con su PIN: sube su gasto, no lo que registró sin PIN.
-      conSesion = ana;
-      expect((await cola.procesar()).enviados, 1);
-      expect(enviadas.single.tipo, 'finanzas.movimiento');
-      expect(enviadas.single.origen, OrigenRegistro.propio);
-
-      // De vuelta en el modo Casa: sube lo de la casa, con quién dijo ser.
-      conSesion = casa;
-      expect((await cola.procesar()).enviados, 1);
-      expect(enviadas.last.tipo, 'casa.lista');
-      expect(enviadas.last.personaId, ana);
-      expect(enviadas.last.origen, OrigenRegistro.tabletCasa);
-    });
-
-    test('M3: el dinero no se registra con el origen "tablet de la casa"', () async {
-      for (final tipo in [
-        'finanzas.movimiento',
-        'finanzas.conciliacion',
-        'habitos.marca',
-        'cuidados.medicamento',
-      ]) {
-        await expectLater(
-          cola.encolar(
-            tipo: tipo,
-            carga: const {'monto_centavos': 5000},
-            personaId: ana,
-            origen: OrigenRegistro.tabletCasa,
-          ),
-          throwsArgumentError,
-          reason: tipo,
+    test(
+      'sale solo con la cuenta del equipo, nunca con la sesión de Ana',
+      () async {
+        await cola.encolar(
+          tipo: 'casa.lista',
+          carga: const {},
+          personaId: ana,
+          origen: OrigenRegistro.tabletCasa,
         );
-      }
-      expect(await cola.registros(), isEmpty, reason: 'nada quedó guardado');
+        await cola.encolar(
+          tipo: 'finanzas.movimiento',
+          carga: const {},
+          personaId: ana,
+        );
 
-      // Con nombre y PIN (la sesión de la persona) sí se registra.
-      await cola.encolar(
-        tipo: 'finanzas.movimiento',
-        carga: const {'monto_centavos': 5000},
-        personaId: ana,
-      );
-      // Y lo de la casa, con solo el nombre.
-      await cola.encolar(
-        tipo: 'casa.lista',
-        carga: const {'texto': 'Tortillas'},
-        personaId: ana,
-        origen: OrigenRegistro.tabletCasa,
-      );
-      expect(await cola.registros(), hasLength(2));
-    });
+        // Ana entró con su PIN: sube su gasto, no lo que registró sin PIN.
+        conSesion = ana;
+        expect((await cola.procesar()).enviados, 1);
+        expect(enviadas.single.tipo, 'finanzas.movimiento');
+        expect(enviadas.single.origen, OrigenRegistro.propio);
+
+        // De vuelta en el modo Casa: sube lo de la casa, con quién dijo ser.
+        conSesion = casa;
+        expect((await cola.procesar()).enviados, 1);
+        expect(enviadas.last.tipo, 'casa.lista');
+        expect(enviadas.last.personaId, ana);
+        expect(enviadas.last.origen, OrigenRegistro.tabletCasa);
+      },
+    );
+
+    test(
+      'M3: el dinero no se registra con el origen "tablet de la casa"',
+      () async {
+        for (final tipo in [
+          'finanzas.movimiento',
+          'finanzas.conciliacion',
+          'habitos.marca',
+          'cuidados.medicamento',
+        ]) {
+          await expectLater(
+            cola.encolar(
+              tipo: tipo,
+              carga: const {'monto_centavos': 5000},
+              personaId: ana,
+              origen: OrigenRegistro.tabletCasa,
+            ),
+            throwsArgumentError,
+            reason: tipo,
+          );
+        }
+        expect(await cola.registros(), isEmpty, reason: 'nada quedó guardado');
+
+        // Con nombre y PIN (la sesión de la persona) sí se registra.
+        await cola.encolar(
+          tipo: 'finanzas.movimiento',
+          carga: const {'monto_centavos': 5000},
+          personaId: ana,
+        );
+        // Y lo de la casa, con solo el nombre.
+        await cola.encolar(
+          tipo: 'casa.lista',
+          carga: const {'texto': 'Tortillas'},
+          personaId: ana,
+          origen: OrigenRegistro.tabletCasa,
+        );
+        expect(await cola.registros(), hasLength(2));
+      },
+    );
 
     test('M3: un registro viejo de dinero con ese origen no sube', () async {
       final servidor = await PostgrestSimulado.iniciar();
@@ -251,17 +256,19 @@ void main() {
       final cliente = await servidor.cliente('uid-casa');
       addTearDown(cliente.dispose);
       // Como si quedara de antes de la regla: se guarda directo en la base.
-      await base.into(base.pendientes).insert(
-        PendientesCompanion.insert(
-          id: 'viejo-1',
-          tipo: 'finanzas.movimiento',
-          carga: '{"monto_centavos": 5000}',
-          creadoEn: DateTime(2026, 10, 22),
-          estado: EstadoPendiente.pendiente,
-          personaId: const Value(ana),
-          origen: const Value(OrigenRegistro.tabletCasa),
-        ),
-      );
+      await base
+          .into(base.pendientes)
+          .insert(
+            PendientesCompanion.insert(
+              id: 'viejo-1',
+              tipo: 'finanzas.movimiento',
+              carga: '{"monto_centavos": 5000}',
+              creadoEn: DateTime(2026, 10, 22),
+              estado: EstadoPendiente.pendiente,
+              personaId: const Value(ana),
+              origen: const Value(OrigenRegistro.tabletCasa),
+            ),
+          );
       final deLaCasa = ColaSinConexion(
         base: base,
         enviador: EnviadorSupabase(cliente, tablas: tablasDeLaCola),

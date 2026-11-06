@@ -18,9 +18,9 @@ import 'ayuda_plataforma.dart';
 const nombreDueno = 'Dueño de ejemplo';
 const nombreCuidadora = 'Cuidadora de ejemplo';
 
-GoRouter routerDe(WidgetTester tester) => ProviderScope.containerOf(
-  tester.element(find.byType(AppGravity)),
-).read(routerProvider);
+GoRouter routerDe(WidgetTester tester) =>
+    ProviderScope.containerOf(tester.element(find.byType(AppGravity)))
+        .read(routerProvider);
 
 String ubicacion(WidgetTester tester) =>
     routerDe(tester).routerDelegate.currentConfiguration.uri.path;
@@ -126,18 +126,22 @@ void main() {
     expect(sesion.personaEnServidor, casa);
   });
 
-  testWidgets('I6: sin su cuenta guardada, la persona no entra', (tester) async {
+  testWidgets('I6: sin su cuenta guardada, la persona no entra', (
+    tester,
+  ) async {
     await montarApp(
       tester,
       dispositivo: TipoDispositivo.tablet,
       sesion: sesionCasa(),
-      almacen: await almacenConPersonas(
-        {Rol.dueno: '246813'},
-        conCredencial: false,
-      ),
+      almacen: await almacenConPersonas({
+        Rol.dueno: '246813',
+      }, conCredencial: false),
     );
     await entrarConPin(tester, nombreDueno, '246813');
-    expect(find.textContaining('Falta tu cuenta en esta tablet'), findsOneWidget);
+    expect(
+      find.textContaining('Falta tu cuenta en esta tablet'),
+      findsOneWidget,
+    );
     await tester.tap(find.text('Cancelar'));
     await tester.pumpAndSettle();
     expect(find.text('GRAVITY · Casa'), findsOneWidget);
@@ -360,15 +364,24 @@ void main() {
     expect(find.text('Aún no hay personas en esta tablet.'), findsOneWidget);
     await tester.tap(find.text('Agregar persona'));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byKey(const Key('agregar-correo')), 'ana@ejemplo.test');
+    await tester.enterText(
+      find.byKey(const Key('agregar-correo')),
+      'ana@ejemplo.test',
+    );
     await tester.enterText(find.byKey(const Key('agregar-contrasena')), 'mala');
     await tester.enterText(find.byKey(const Key('agregar-pin')), '2468');
-    await tester.enterText(find.byKey(const Key('agregar-confirmacion')), '2468');
+    await tester.enterText(
+      find.byKey(const Key('agregar-confirmacion')),
+      '2468',
+    );
     await tester.tap(find.widgetWithText(FilledButton, 'Agregar'));
     await tester.pumpAndSettle();
     expect(find.text('Correo o contraseña incorrectos.'), findsOneWidget);
 
-    await tester.enterText(find.byKey(const Key('agregar-contrasena')), 'clave');
+    await tester.enterText(
+      find.byKey(const Key('agregar-contrasena')),
+      'clave',
+    );
     await tester.tap(find.widgetWithText(FilledButton, 'Agregar'));
     await tester.pumpAndSettle();
     expect(find.text(nombreCuidadora), findsOneWidget);
@@ -392,25 +405,41 @@ void main() {
     );
     await tester.tap(find.text('Agregar persona'));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byKey(const Key('agregar-correo')), 'ana@ejemplo.test');
-    await tester.enterText(find.byKey(const Key('agregar-contrasena')), 'clave');
+    await tester.enterText(
+      find.byKey(const Key('agregar-correo')),
+      'ana@ejemplo.test',
+    );
+    await tester.enterText(
+      find.byKey(const Key('agregar-contrasena')),
+      'clave',
+    );
     for (final (pin, texto) in [
       ('1234', 'Ese PIN es una secuencia'),
       ('0000', 'Ese PIN repite el mismo número'),
       ('1212', 'Ese PIN repite un mismo bloque'),
     ]) {
       await tester.enterText(find.byKey(const Key('agregar-pin')), pin);
-      await tester.enterText(find.byKey(const Key('agregar-confirmacion')), pin);
+      await tester.enterText(
+        find.byKey(const Key('agregar-confirmacion')),
+        pin,
+      );
       await tester.tap(find.widgetWithText(FilledButton, 'Agregar'));
       await tester.pumpAndSettle();
       expect(find.textContaining(texto), findsOneWidget, reason: pin);
       expect(find.text(nombreCuidadora), findsNothing, reason: 'no se agregó');
     }
-    expect(sesion.vecesVerificar, 0, reason: 'ni siquiera se consultó al servidor');
+    expect(
+      sesion.vecesVerificar,
+      0,
+      reason: 'ni siquiera se consultó al servidor',
+    );
 
     // Con un PIN que no es trivial, sí.
     await tester.enterText(find.byKey(const Key('agregar-pin')), '2846');
-    await tester.enterText(find.byKey(const Key('agregar-confirmacion')), '2846');
+    await tester.enterText(
+      find.byKey(const Key('agregar-confirmacion')),
+      '2846',
+    );
     await tester.tap(find.widgetWithText(FilledButton, 'Agregar'));
     await tester.pumpAndSettle();
     expect(find.text(nombreCuidadora), findsOneWidget);
@@ -454,65 +483,97 @@ void main() {
       final sesion = ServicioSesionFalso(
         inicial: sesionDeEjemplo(Rol.casa),
         cuentas: {
-          'dueno@ejemplo.test': CuentaFalsa('clave', sesionDeEjemplo(Rol.dueno)),
+          'dueno@ejemplo.test': CuentaFalsa(
+            'clave',
+            sesionDeEjemplo(Rol.dueno),
+          ),
         },
       );
-      await montarApp(tester, dispositivo: TipoDispositivo.tablet, sesion: sesion);
+      await montarApp(
+        tester,
+        dispositivo: TipoDispositivo.tablet,
+        sesion: sesion,
+      );
       await tester.tap(find.text('Agregar persona'));
       await tester.pumpAndSettle();
-      await tester.enterText(find.byKey(const Key('agregar-correo')), 'dueno@ejemplo.test');
-      await tester.enterText(find.byKey(const Key('agregar-contrasena')), 'clave');
+      await tester.enterText(
+        find.byKey(const Key('agregar-correo')),
+        'dueno@ejemplo.test',
+      );
+      await tester.enterText(
+        find.byKey(const Key('agregar-contrasena')),
+        'clave',
+      );
       await tester.enterText(find.byKey(const Key('agregar-pin')), '7382');
-      await tester.enterText(find.byKey(const Key('agregar-confirmacion')), '7382');
+      await tester.enterText(
+        find.byKey(const Key('agregar-confirmacion')),
+        '7382',
+      );
       await tester.tap(find.widgetWithText(FilledButton, 'Agregar'));
       await tester.pumpAndSettle();
       expect(find.textContaining('6 dígitos'), findsWidgets);
       expect(find.text(nombreDueno), findsNothing, reason: 'no se agregó');
 
       await tester.enterText(find.byKey(const Key('agregar-pin')), '739150');
-      await tester.enterText(find.byKey(const Key('agregar-confirmacion')), '739150');
+      await tester.enterText(
+        find.byKey(const Key('agregar-confirmacion')),
+        '739150',
+      );
       await tester.tap(find.widgetWithText(FilledButton, 'Agregar'));
       await tester.pumpAndSettle();
       expect(find.text(nombreDueno), findsOneWidget);
     });
 
-    testWidgets('con un PIN anterior de 4 dígitos, el dueño no entra: elige uno '
-        'de 6 y entra', (tester) async {
-      await montarApp(
-        tester,
-        dispositivo: TipoDispositivo.tablet,
-        sesion: sesionCasa(),
-        almacen: await almacenConPersonas({Rol.dueno: '2468'}),
-      );
-      await entrarConPin(tester, nombreDueno, '2468');
-      expect(find.byKey(const ValueKey('dialogo-cambiar-pin-al-entrar')), findsOneWidget);
-      expect(find.byKey(const ValueKey('aviso-pin-corto')), findsOneWidget);
-      expect(find.text('GRAVITY · Casa'), findsOneWidget, reason: 'sigue en Hogar');
+    testWidgets(
+      'con un PIN anterior de 4 dígitos, el dueño no entra: elige uno '
+      'de 6 y entra',
+      (tester) async {
+        await montarApp(
+          tester,
+          dispositivo: TipoDispositivo.tablet,
+          sesion: sesionCasa(),
+          almacen: await almacenConPersonas({Rol.dueno: '2468'}),
+        );
+        await entrarConPin(tester, nombreDueno, '2468');
+        expect(
+          find.byKey(const ValueKey('dialogo-cambiar-pin-al-entrar')),
+          findsOneWidget,
+        );
+        expect(find.byKey(const ValueKey('aviso-pin-corto')), findsOneWidget);
+        expect(
+          find.text('GRAVITY · Casa'),
+          findsOneWidget,
+          reason: 'sigue en Hogar',
+        );
 
-      await escribirNuevo(tester, '7391', '7391');
-      expect(find.text('El PIN es de 6 dígitos.'), findsOneWidget);
-      await escribirNuevo(tester, '123456', '123456');
-      expect(find.textContaining('secuencia'), findsOneWidget);
-      await escribirNuevo(tester, '739150', '739151');
-      expect(find.text('Los PIN no coinciden.'), findsOneWidget);
-      expect(enRiel('Finanzas'), findsNothing);
+        await escribirNuevo(tester, '7391', '7391');
+        expect(find.text('El PIN es de 6 dígitos.'), findsOneWidget);
+        await escribirNuevo(tester, '123456', '123456');
+        expect(find.textContaining('secuencia'), findsOneWidget);
+        await escribirNuevo(tester, '739150', '739151');
+        expect(find.text('Los PIN no coinciden.'), findsOneWidget);
+        expect(enRiel('Finanzas'), findsNothing);
 
-      await escribirNuevo(tester, '739150', '739150');
-      expect(find.byKey(const ValueKey('dialogo-cambiar-pin-al-entrar')), findsNothing);
-      expect(enRiel('Finanzas'), findsOneWidget, reason: 'entró con su rol');
+        await escribirNuevo(tester, '739150', '739150');
+        expect(
+          find.byKey(const ValueKey('dialogo-cambiar-pin-al-entrar')),
+          findsNothing,
+        );
+        expect(enRiel('Finanzas'), findsOneWidget, reason: 'entró con su rol');
 
-      // Cierra la sesión de la tablet y vuelve a entrar con el PIN nuevo.
-      ProviderScope.containerOf(tester.element(find.byType(AppGravity)))
-          .read(controladorTabletProvider.notifier)
-          .volverAlReposo();
-      await tester.pumpAndSettle();
-      await entrarConPin(tester, nombreDueno, '2468');
-      expect(find.text('PIN incorrecto.'), findsOneWidget);
-      await tester.enterText(find.byKey(const Key('campo-pin')), '739150');
-      await tester.tap(find.widgetWithText(FilledButton, 'Entrar'));
-      await tester.pumpAndSettle();
-      expect(enRiel('Finanzas'), findsOneWidget);
-    });
+        // Cierra la sesión de la tablet y vuelve a entrar con el PIN nuevo.
+        ProviderScope.containerOf(tester.element(find.byType(AppGravity)))
+            .read(controladorTabletProvider.notifier)
+            .volverAlReposo();
+        await tester.pumpAndSettle();
+        await entrarConPin(tester, nombreDueno, '2468');
+        expect(find.text('PIN incorrecto.'), findsOneWidget);
+        await tester.enterText(find.byKey(const Key('campo-pin')), '739150');
+        await tester.tap(find.widgetWithText(FilledButton, 'Entrar'));
+        await tester.pumpAndSettle();
+        expect(enRiel('Finanzas'), findsOneWidget);
+      },
+    );
 
     testWidgets('el familiar con 4 dígitos entra directo, sin cambiar nada', (
       tester,
@@ -524,30 +585,39 @@ void main() {
         almacen: await almacenConPersonas({Rol.familiar: '2468'}),
       );
       await entrarConPin(tester, 'Familiar de ejemplo', '2468');
-      expect(find.byKey(const ValueKey('dialogo-cambiar-pin-al-entrar')), findsNothing);
+      expect(
+        find.byKey(const ValueKey('dialogo-cambiar-pin-al-entrar')),
+        findsNothing,
+      );
       expect(find.text('GRAVITY · Casa'), findsNothing);
     });
 
-    testWidgets('para una sola acción en la tablet pública también se pide el PIN '
-        'de 6 dígitos', (tester) async {
-      await montarApp(
-        tester,
-        dispositivo: TipoDispositivo.tablet,
-        sesion: sesionCasa(),
-        almacen: await almacenConPersonas({Rol.dueno: '2468'}),
-      );
-      final contenedor = ProviderScope.containerOf(
-        tester.element(find.byType(AppGravity)),
-      );
-      final controlador = contenedor.read(controladorTabletProvider.notifier);
-      expect(
-        await controlador.entrarParaAccion(
-          sesionDeEjemplo(Rol.dueno).persona.id,
-          '2468',
-        ),
-        ResultadoDesbloqueo.debeCambiarPin,
-      );
-      expect(contenedor.read(controladorTabletProvider).usuarioActivo, isNull);
-    });
+    testWidgets(
+      'para una sola acción en la tablet pública también se pide el PIN '
+      'de 6 dígitos',
+      (tester) async {
+        await montarApp(
+          tester,
+          dispositivo: TipoDispositivo.tablet,
+          sesion: sesionCasa(),
+          almacen: await almacenConPersonas({Rol.dueno: '2468'}),
+        );
+        final contenedor = ProviderScope.containerOf(
+          tester.element(find.byType(AppGravity)),
+        );
+        final controlador = contenedor.read(controladorTabletProvider.notifier);
+        expect(
+          await controlador.entrarParaAccion(
+            sesionDeEjemplo(Rol.dueno).persona.id,
+            '2468',
+          ),
+          ResultadoDesbloqueo.debeCambiarPin,
+        );
+        expect(
+          contenedor.read(controladorTabletProvider).usuarioActivo,
+          isNull,
+        );
+      },
+    );
   });
 }

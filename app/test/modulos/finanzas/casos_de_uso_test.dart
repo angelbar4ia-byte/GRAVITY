@@ -11,11 +11,13 @@ import 'package:gravity/modulos/finanzas/datos/demostracion.dart';
 import 'package:gravity/modulos/finanzas/datos/repositorio.dart';
 import 'package:gravity/modulos/finanzas/importacion/lector_xlsx.dart';
 import 'package:gravity/nucleo/contratos/roles.dart';
-import 'package:gravity/nucleo/sesion/servicio_sesion_demostracion.dart' show hogarDeEjemplo;
+import 'package:gravity/nucleo/sesion/servicio_sesion_demostracion.dart'
+    show hogarDeEjemplo;
 
 import 'ayuda_finanzas.dart';
 
-const _uuidV5 = r'^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$';
+const _uuidV5 =
+    r'^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$';
 
 String _rutaSemilla() {
   for (final r in [
@@ -36,11 +38,14 @@ void main() {
   final semana = Semana.de(hoyDePrueba);
 
   group('Ids estables (UUID v5)', () {
-    test('la misma clave da siempre el mismo id y distintas claves, distintos', () {
-      expect(idEstable('a'), idEstable('a'));
-      expect(idEstable('a'), isNot(idEstable('b')));
-      expect(idEstable('a'), matches(RegExp(_uuidV5)));
-    });
+    test(
+      'la misma clave da siempre el mismo id y distintas claves, distintos',
+      () {
+        expect(idEstable('a'), idEstable('a'));
+        expect(idEstable('a'), isNot(idEstable('b')));
+        expect(idEstable('a'), matches(RegExp(_uuidV5)));
+      },
+    );
 
     test('la anulación sale del id del original', () {
       expect(
@@ -65,8 +70,14 @@ void main() {
             m.tipo == TipoMovimiento.gasto &&
             repoA.datos.cuenta(m.cuentaOrigenId)?.libroId == libroDueno,
       );
-      final a = await servicioDe(repoA, dueno).anular(original.id, motivo: 'Error');
-      final b = await servicioDe(repoB, dueno).anular(original.id, motivo: 'Error');
+      final a = await servicioDe(
+        repoA,
+        dueno,
+      ).anular(original.id, motivo: 'Error');
+      final b = await servicioDe(
+        repoB,
+        dueno,
+      ).anular(original.id, motivo: 'Error');
       expect(a.id, ServicioFinanzas.idAnulacionDe(original.id));
       expect(b.id, a.id, reason: 'otro dispositivo, mismo id');
       expect(a.fecha, original.fecha, reason: 'misma fecha económica (P14)');
@@ -89,19 +100,24 @@ void main() {
       expect(anulaciones.single.motivo, motivoDeshacer);
     });
 
-    test('reenviar el mismo contraasiento no hace nada (mismo id y contenido)',
-        () async {
-      final repo = repositorioDe(dueno);
-      final original = repo.datos.movimientos.firstWhere(
-        (m) =>
-            m.tipo == TipoMovimiento.gasto &&
-            repo.datos.cuenta(m.cuentaOrigenId)?.libroId == libroDueno,
-      );
-      final contra = await servicioDe(repo, dueno).anular(original.id, motivo: 'Dup');
-      final antes = repo.datos.movimientos.length;
-      await repo.agregarMovimientos([contra]);
-      expect(repo.datos.movimientos, hasLength(antes));
-    });
+    test(
+      'reenviar el mismo contraasiento no hace nada (mismo id y contenido)',
+      () async {
+        final repo = repositorioDe(dueno);
+        final original = repo.datos.movimientos.firstWhere(
+          (m) =>
+              m.tipo == TipoMovimiento.gasto &&
+              repo.datos.cuenta(m.cuentaOrigenId)?.libroId == libroDueno,
+        );
+        final contra = await servicioDe(
+          repo,
+          dueno,
+        ).anular(original.id, motivo: 'Dup');
+        final antes = repo.datos.movimientos.length;
+        await repo.agregarMovimientos([contra]);
+        expect(repo.datos.movimientos, hasLength(antes));
+      },
+    );
 
     test('anular exige motivo', () async {
       final repo = repositorioDe(dueno);
@@ -148,7 +164,10 @@ void main() {
       final repo = repositorioDe(pareja);
       final servicio = servicioDe(repo, pareja);
       final papa = repo.datos.libro(libroPapa)!;
-      expect(papa.papelDe(pareja.persona.id, hoyDePrueba), PapelLibro.albaceaSuplente);
+      expect(
+        papa.papelDe(pareja.persona.id, hoyDePrueba),
+        PapelLibro.albaceaSuplente,
+      );
       expect(servicio.permiso(libroPapa).leer, isTrue);
       expect(servicio.permiso(libroPapa).escribir, isFalse);
     });
@@ -195,8 +214,11 @@ void main() {
       final deDueno = repo.datos.vista(libroDueno).balance();
       final deCasa = repo.datos.vista(libroCasa).balance();
       expect(deDueno.aportacionesEntregadas, 20000);
-      expect(deCasa.aportacionesRecibidas, 20000 + 50000,
-          reason: 'la de la pareja (ejemplo) y esta');
+      expect(
+        deCasa.aportacionesRecibidas,
+        20000 + 50000,
+        reason: 'la de la pareja (ejemplo) y esta',
+      );
       expect(deDueno.cuadra, isTrue);
       expect(deCasa.cuadra, isTrue);
       await expectLater(
@@ -218,27 +240,32 @@ void main() {
       lectura = await leerPlantillaDeRuta(_rutaSemilla());
     });
 
-    test('crea el árbol con su naturaleza y la cuenta de gasto de cada rubro',
-        () async {
-      final repo = repositorioVacio();
-      final plan = await servicioDe(repo, dueno).importarCategorias(
-        lectura,
-        archivo: 'DATOS_SEMILLA_PRESUPUESTO.xlsx',
-      );
-      expect(plan.nuevas, isNotEmpty);
-      expect(repo.datos.categorias, hasLength(plan.nuevas.length));
-      final principales = repo.datos.categorias.where((c) => c.nivel == 1);
-      expect(principales, isNotEmpty);
-      for (final c in principales) {
-        final cuenta = repo.datos.cuenta(c.cuentaGastoId!);
-        expect(cuenta, isNotNull, reason: c.nombre);
-        expect(cuenta!.tipo, anyOf(TipoCuenta.deGasto, TipoCuenta.gastoFinanciero));
-        expect(cuenta.libroId, isNull, reason: 'las de gasto son del hogar');
-      }
-      expect(repo.datos.categorias.map((c) => c.nivel).toSet(), contains(2));
-      expect(repo.datos.importaciones, hasLength(1));
-      expect(repo.datos.importaciones.single.filasCreadas, plan.filasCreadas);
-    });
+    test(
+      'crea el árbol con su naturaleza y la cuenta de gasto de cada rubro',
+      () async {
+        final repo = repositorioVacio();
+        final plan = await servicioDe(repo, dueno).importarCategorias(
+          lectura,
+          archivo: 'DATOS_SEMILLA_PRESUPUESTO.xlsx',
+        );
+        expect(plan.nuevas, isNotEmpty);
+        expect(repo.datos.categorias, hasLength(plan.nuevas.length));
+        final principales = repo.datos.categorias.where((c) => c.nivel == 1);
+        expect(principales, isNotEmpty);
+        for (final c in principales) {
+          final cuenta = repo.datos.cuenta(c.cuentaGastoId!);
+          expect(cuenta, isNotNull, reason: c.nombre);
+          expect(
+            cuenta!.tipo,
+            anyOf(TipoCuenta.deGasto, TipoCuenta.gastoFinanciero),
+          );
+          expect(cuenta.libroId, isNull, reason: 'las de gasto son del hogar');
+        }
+        expect(repo.datos.categorias.map((c) => c.nivel).toSet(), contains(2));
+        expect(repo.datos.importaciones, hasLength(1));
+        expect(repo.datos.importaciones.single.filasCreadas, plan.filasCreadas);
+      },
+    );
 
     test('reimportar no duplica nada', () async {
       final repo = repositorioVacio();
@@ -246,7 +273,10 @@ void main() {
       await servicio.importarCategorias(lectura, archivo: 'a.xlsx');
       final categorias = repo.datos.categorias.length;
       final cuentas = repo.datos.cuentas.length;
-      final otra = await servicio.importarCategorias(lectura, archivo: 'a.xlsx');
+      final otra = await servicio.importarCategorias(
+        lectura,
+        archivo: 'a.xlsx',
+      );
       expect(otra.nuevas, isEmpty);
       expect(otra.cuentasNuevas, isEmpty);
       expect(repo.datos.categorias, hasLength(categorias));
@@ -282,7 +312,10 @@ void main() {
         personaId: dueno.persona.id,
         hogarId: 'otro-hogar',
       ).importarCategorias(lectura, archivo: 'a.xlsx');
-      final deAqui = servicioDe(repositorioVacio(), dueno).previsualizarImportacion(lectura);
+      final deAqui = servicioDe(
+        repositorioVacio(),
+        dueno,
+      ).previsualizarImportacion(lectura);
       expect(plan.nuevas.first.id, isNot(deAqui.nuevas.first.id));
     });
   });
@@ -297,7 +330,10 @@ void main() {
       expect(fa.id, idEstable(ClavesId.semana(libroDueno, '${semana.inicio}')));
       expect(fb.id, fa.id);
       expect(fa.partidas.map((p) => p.id), fb.partidas.map((p) => p.id));
-      expect(fa.partidas.map((p) => p.id).toSet(), hasLength(fa.partidas.length));
+      expect(
+        fa.partidas.map((p) => p.id).toSet(),
+        hasLength(fa.partidas.length),
+      );
       await expectLater(
         servicioDe(a, dueno).activarSemana(libroDueno, semana),
         throwsA(isA<ErrorFinanzas>()),
@@ -327,13 +363,12 @@ void main() {
       expect(c2.id, idEstable(ClavesId.cierre(foto.id, 2)));
     });
 
-    test('aplicar el remanente dos veces no duplica los movimientos',
-        () async {
+    test('aplicar el remanente dos veces no duplica los movimientos', () async {
       final repo = repositorioDe(dueno);
       final servicio = servicioDe(repo, dueno);
-      final tarjeta = repo.datos.deudasDe(libroCasa).firstWhere(
-        (d) => d.nombre == 'Tarjeta de crédito',
-      );
+      final tarjeta = repo.datos
+          .deudasDe(libroCasa)
+          .firstWhere((d) => d.nombre == 'Tarjeta de crédito');
       final destino = DestinoRemanente([
         AbonoExtra(tarjeta.plan(saldo: 600000), 15000),
       ], 0);
@@ -381,59 +416,76 @@ void main() {
       expect(repo.datos.cuentasDe(libroDueno), hasLength(antes));
     });
 
-    test('un ingreso nuevo con el nombre de una cuenta existente avisa', () async {
-      final repo = repositorioDe(dueno);
-      await expectLater(
-        servicioDe(repo, dueno).crearIngreso(
-          libroId: libroDueno,
-          nombre: 'Mi banco',
-          montoNeto: 100000,
-          calendario: const CalendarioConfig.quincenal(),
-          cuentaDestinoId: repo.cuentaDe(libroDueno, 'Mi banco').id,
-        ),
-        throwsA(isA<ErrorFinanzas>()),
-      );
-    });
+    test(
+      'un ingreso nuevo con el nombre de una cuenta existente avisa',
+      () async {
+        final repo = repositorioDe(dueno);
+        await expectLater(
+          servicioDe(repo, dueno).crearIngreso(
+            libroId: libroDueno,
+            nombre: 'Mi banco',
+            montoNeto: 100000,
+            calendario: const CalendarioConfig.quincenal(),
+            cuentaDestinoId: repo.cuentaDe(libroDueno, 'Mi banco').id,
+          ),
+          throwsA(isA<ErrorFinanzas>()),
+        );
+      },
+    );
 
-    test('la categoría principal nueva usa una cuenta de gasto con id estable',
-        () async {
-      final repo = repositorioDe(dueno);
-      final servicio = servicioDe(repo, dueno);
-      final c = await servicio.crearCategoria(nombre: 'Mascotas');
-      final cuenta = repo.datos.cuenta(c.cuentaGastoId!)!;
-      expect(cuenta.id, idEstable(ClavesId.cuentaDeGasto(hogarDeEjemplo, 'Mascotas')));
-      expect(cuenta.libroId, isNull);
-      expect(cuenta.tipo, TipoCuenta.deGasto);
-    });
+    test(
+      'la categoría principal nueva usa una cuenta de gasto con id estable',
+      () async {
+        final repo = repositorioDe(dueno);
+        final servicio = servicioDe(repo, dueno);
+        final c = await servicio.crearCategoria(nombre: 'Mascotas');
+        final cuenta = repo.datos.cuenta(c.cuentaGastoId!)!;
+        expect(
+          cuenta.id,
+          idEstable(ClavesId.cuentaDeGasto(hogarDeEjemplo, 'Mascotas')),
+        );
+        expect(cuenta.libroId, isNull);
+        expect(cuenta.tipo, TipoCuenta.deGasto);
+      },
+    );
 
-    test('un libro compartido y el de papá se crean con id del nombre',
-        () async {
-      final repo = repositorioVacio();
-      final servicio = servicioDe(repo, dueno);
-      final id = await servicio.crearLibroCompartido(
-        'Vacaciones',
-        [IdsDemostracion.pareja],
-      );
-      expect(id, idEstable(ClavesId.libroCompartido(hogarDeEjemplo, 'Vacaciones')));
-      await servicio.crearLibroCompartido('Vacaciones', [IdsDemostracion.pareja]);
-      expect(repo.datos.libros.where((l) => l.id == id), hasLength(1));
-      final papa = await servicio.crearLibroRepresentado(
-        'Papá (ejemplo)',
-        suplenteId: IdsDemostracion.pareja,
-      );
-      await servicio.crearLibroRepresentado('Papá (ejemplo)');
-      final libro = repo.datos.libro(papa)!;
-      expect(libro.tipo, TipoLibro.representado);
-      expect(libro.papelDe(dueno.persona.id, hoyDePrueba), PapelLibro.albacea);
-      expect(
-        libro.papelDe(IdsDemostracion.pareja, hoyDePrueba),
-        PapelLibro.albaceaSuplente,
-      );
-      expect(repo.datos.libros.where((l) => l.id == papa), hasLength(1));
-      await expectLater(
-        servicio.crearLibroCompartido('Solo yo', const []),
-        throwsA(isA<ErrorFinanzas>()),
-      );
-    });
+    test(
+      'un libro compartido y el de papá se crean con id del nombre',
+      () async {
+        final repo = repositorioVacio();
+        final servicio = servicioDe(repo, dueno);
+        final id = await servicio.crearLibroCompartido('Vacaciones', [
+          IdsDemostracion.pareja,
+        ]);
+        expect(
+          id,
+          idEstable(ClavesId.libroCompartido(hogarDeEjemplo, 'Vacaciones')),
+        );
+        await servicio.crearLibroCompartido('Vacaciones', [
+          IdsDemostracion.pareja,
+        ]);
+        expect(repo.datos.libros.where((l) => l.id == id), hasLength(1));
+        final papa = await servicio.crearLibroRepresentado(
+          'Papá (ejemplo)',
+          suplenteId: IdsDemostracion.pareja,
+        );
+        await servicio.crearLibroRepresentado('Papá (ejemplo)');
+        final libro = repo.datos.libro(papa)!;
+        expect(libro.tipo, TipoLibro.representado);
+        expect(
+          libro.papelDe(dueno.persona.id, hoyDePrueba),
+          PapelLibro.albacea,
+        );
+        expect(
+          libro.papelDe(IdsDemostracion.pareja, hoyDePrueba),
+          PapelLibro.albaceaSuplente,
+        );
+        expect(repo.datos.libros.where((l) => l.id == papa), hasLength(1));
+        await expectLater(
+          servicio.crearLibroCompartido('Solo yo', const []),
+          throwsA(isA<ErrorFinanzas>()),
+        );
+      },
+    );
   });
 }

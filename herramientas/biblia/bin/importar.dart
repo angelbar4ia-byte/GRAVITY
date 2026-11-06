@@ -11,11 +11,15 @@ void main(List<String> a) {
     stderr.writeln('Uso: importar <entrada> <salida.gz> <version> <nombre> <licencia> <origen>');
     exit(64);
   }
-  final texto = utf8.decode(File(a[0]).readAsBytesSync(), allowMalformed: false)
-      .replaceFirst('﻿', '');
-  final m = convertir(
-      entrada: jsonDecode(texto) as List<Object?>,
-      version: a[2], nombre: a[3], licencia: a[4], origen: a[5]);
-  File(a[1]).writeAsBytesSync(gzip.encode(utf8.encode(serializar(m))));
+  try {
+    final texto = utf8.decode(File(a[0]).readAsBytesSync()).replaceFirst('\uFEFF', '');
+    final d = jsonDecode(texto);
+    if (d is! List) throw const FormatException('La entrada debe ser una lista de 66 libros.');
+    final m = convertir(entrada: d, version: a[2], nombre: a[3], licencia: a[4], origen: a[5]);
+    File(a[1]).writeAsBytesSync(gzip.encode(utf8.encode(serializar(m))));
+  } on FormatException catch (e) {
+    stderr.writeln('Entrada rechazada: ${e.message}');
+    exit(65);
+  }
   stdout.writeln('Listo: ${a[1]}');
 }

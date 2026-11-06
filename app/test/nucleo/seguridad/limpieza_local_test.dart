@@ -91,8 +91,14 @@ void main() {
     test('la clave de la convención es la de CopiaLocalFinanzas', () async {
       final copia = CopiaLocalFinanzas(almacen, personaId: idDueno);
       await copia.guardar({'fin_libros': <Object>[]});
-      expect(almacen.datos.keys, contains(claveCopiaLocal(Modulo.finanzas, idDueno)));
-      expect(claveCopiaLocal(Modulo.finanzas, idDueno), 'finanzas.copia.$idDueno');
+      expect(
+        almacen.datos.keys,
+        contains(claveCopiaLocal(Modulo.finanzas, idDueno)),
+      );
+      expect(
+        claveCopiaLocal(Modulo.finanzas, idDueno),
+        'finanzas.copia.$idDueno',
+      );
     });
 
     test('alQuitarPersona borra las copias de la persona y nada más', () async {
@@ -116,7 +122,10 @@ void main() {
     });
 
     test('una limpieza que falla no impide las demás ni lanza', () async {
-      final fallido = _AlmacenQueFalla(claveCopiaLocal(Modulo.cuidados, idDueno), {});
+      final fallido = _AlmacenQueFalla(
+        claveCopiaLocal(Modulo.cuidados, idDueno),
+        {},
+      );
       await llenar(fallido, idDueno);
       final llamadas = <String>[];
       final conFalla = LimpiezaLocal(
@@ -130,11 +139,9 @@ void main() {
       await conFalla.alQuitarPersona(idDueno);
 
       expect(llamadas, [idDueno], reason: 'el gancho siguiente sí corre');
-      expect(
-        copiasDe(fallido, idDueno),
-        [claveCopiaLocal(Modulo.cuidados, idDueno)],
-        reason: 'solo queda la que no se pudo borrar',
-      );
+      expect(copiasDe(fallido, idDueno), [
+        claveCopiaLocal(Modulo.cuidados, idDueno),
+      ], reason: 'solo queda la que no se pudo borrar');
     });
 
     test('alQuitarTodas barre las copias de cualquier persona', () async {
@@ -147,10 +154,11 @@ void main() {
 
       expect(copiasDe(almacen, idDueno), isEmpty);
       expect(copiasDe(almacen, idPareja), isEmpty);
-      expect(
-        almacen.datos.keys.toSet(),
-        {'sesion.ultima', 'tablet.pin', 'copia.suelta'},
-      );
+      expect(almacen.datos.keys.toSet(), {
+        'sesion.ultima',
+        'tablet.pin',
+        'copia.suelta',
+      });
     });
   });
 
@@ -214,35 +222,40 @@ void main() {
       expect(copiasDe(almacen, idDueno), hasLength(Modulo.values.length));
     });
 
-    test('una baja al abrir borra la persona de la última sesión guardada',
-        () async {
-      await almacen.escribir(
-        ServicioSesionSupabase.claveSesionGuardada,
-        jsonEncode({'usuario_id': _usuarioId, 'sesion': dueno.aJson()}),
-      );
-      final s = await servicio(lector: (_) async => throw ErrorSesion.sinRol);
+    test(
+      'una baja al abrir borra la persona de la última sesión guardada',
+      () async {
+        await almacen.escribir(
+          ServicioSesionSupabase.claveSesionGuardada,
+          jsonEncode({'usuario_id': _usuarioId, 'sesion': dueno.aJson()}),
+        );
+        final s = await servicio(lector: (_) async => throw ErrorSesion.sinRol);
 
-      await s.iniciar();
+        await s.iniciar();
 
-      expect(s.sesionActual, isNull);
-      expect(copiasDe(almacen, idDueno), isEmpty);
-      expect(
-        copiasDe(almacen, idPareja),
-        hasLength(Modulo.values.length),
-        reason: 'se sabe de quién era: solo se borra lo suyo',
-      );
-      expect(
-        almacen.datos.containsKey(ServicioSesionSupabase.claveSesionGuardada),
-        isFalse,
-      );
-    });
+        expect(s.sesionActual, isNull);
+        expect(copiasDe(almacen, idDueno), isEmpty);
+        expect(
+          copiasDe(almacen, idPareja),
+          hasLength(Modulo.values.length),
+          reason: 'se sabe de quién era: solo se borra lo suyo',
+        );
+        expect(
+          almacen.datos.containsKey(ServicioSesionSupabase.claveSesionGuardada),
+          isFalse,
+        );
+      },
+    );
 
-    test('una baja al abrir sin sesión guardada barre todas las copias', () async {
-      final s = await servicio(lector: (_) async => throw ErrorSesion.sinRol);
-      await s.iniciar();
-      expect(copiasDe(almacen, idDueno), isEmpty);
-      expect(copiasDe(almacen, idPareja), isEmpty);
-    });
+    test(
+      'una baja al abrir sin sesión guardada barre todas las copias',
+      () async {
+        final s = await servicio(lector: (_) async => throw ErrorSesion.sinRol);
+        await s.iniciar();
+        expect(copiasDe(almacen, idDueno), isEmpty);
+        expect(copiasDe(almacen, idPareja), isEmpty);
+      },
+    );
 
     test('sin señal al abrir no se borra nada (se usa la copia)', () async {
       await almacen.escribir(
@@ -304,13 +317,16 @@ void main() {
       );
     });
 
-    test('quitarUsuario corre los ganchos registrados por los módulos', () async {
-      final llamadas = <String>[];
-      contenedor
-          .read(limpiezaLocalProvider)
-          .registrar((id) async => llamadas.add(id));
-      await controlador.quitarUsuario(idPareja);
-      expect(llamadas, [idPareja]);
-    });
+    test(
+      'quitarUsuario corre los ganchos registrados por los módulos',
+      () async {
+        final llamadas = <String>[];
+        contenedor
+            .read(limpiezaLocalProvider)
+            .registrar((id) async => llamadas.add(id));
+        await controlador.quitarUsuario(idPareja);
+        expect(llamadas, [idPareja]);
+      },
+    );
   });
 }

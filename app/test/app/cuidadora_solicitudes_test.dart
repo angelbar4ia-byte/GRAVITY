@@ -18,9 +18,13 @@ import 'ayuda_plataforma.dart';
 ProviderContainer contenedorDe(WidgetTester tester) =>
     ProviderScope.containerOf(tester.element(find.byType(AppGravity)));
 
-String ubicacion(WidgetTester tester) => contenedorDe(
-  tester,
-).read(routerProvider).routerDelegate.currentConfiguration.uri.path;
+String ubicacion(WidgetTester tester) =>
+    contenedorDe(tester)
+        .read(routerProvider)
+        .routerDelegate
+        .currentConfiguration
+        .uri
+        .path;
 
 Future<void> ir(WidgetTester tester, String ruta) async {
   contenedorDe(tester).read(routerProvider).go(ruta);
@@ -55,8 +59,10 @@ void main() {
     final en = DateTime(2026, 10, 21, 9, 5);
 
     test('Hecho no pide nota; No se pudo sí', () {
-      expect(base.confirmar(EstadoSolicitud.hecha, en: en).estado,
-          EstadoSolicitud.hecha);
+      expect(
+        base.confirmar(EstadoSolicitud.hecha, en: en).estado,
+        EstadoSolicitud.hecha,
+      );
       expect(
         () => base.confirmar(EstadoSolicitud.noSePudo, nota: '  ', en: en),
         throwsArgumentError,
@@ -118,7 +124,9 @@ void main() {
     expect(find.text('3 pendientes', skipOffstage: false), findsOneWidget);
 
     // No se pudo: pide la nota.
-    await tester.ensureVisible(find.byKey(const ValueKey('no-se-pudo-ejemplo-2')));
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('no-se-pudo-ejemplo-2')),
+    );
     await tester.tap(find.byKey(const ValueKey('no-se-pudo-ejemplo-2')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Guardar'));

@@ -28,12 +28,13 @@ Map<String, Set<String>> _conInsert(String sql) => {
 
 void main() {
   test('cada fila de la app cabe en los permisos de INSERT de su tabla', () {
-    final archivos = _migraciones()
-        .listSync()
-        .whereType<File>()
-        .where((f) => f.path.endsWith('.sql'))
-        .toList()
-      ..sort((a, b) => a.path.compareTo(b.path));
+    final archivos =
+        _migraciones()
+            .listSync()
+            .whereType<File>()
+            .where((f) => f.path.endsWith('.sql'))
+            .toList()
+          ..sort((a, b) => a.path.compareTo(b.path));
     final sql = archivos
         .map((f) => f.readAsStringSync())
         .join('\n')
@@ -49,16 +50,25 @@ void main() {
         for (final l in d.libros)
           for (final m in l.miembros) filaMiembro(l.id, m, hogarId: h, id: 'x'),
       ],
-      'fin_categorias': [for (final c in d.categorias) filaCategoria(c, hogarId: h)],
+      'fin_categorias': [
+        for (final c in d.categorias) filaCategoria(c, hogarId: h),
+      ],
       'fin_cuentas': [for (final c in d.cuentas) filaCuenta(c, hogarId: h)],
-      'fin_parametros': [for (final p in d.parametros) filaParametros(p, hogarId: h)],
-      'fin_movimientos': [for (final m in d.movimientos) filaMovimiento(m, hogarId: h)],
+      'fin_parametros': [
+        for (final p in d.parametros) filaParametros(p, hogarId: h),
+      ],
+      'fin_movimientos': [
+        for (final m in d.movimientos) filaMovimiento(m, hogarId: h),
+      ],
       'fin_ingresos': [for (final i in d.ingresos) filaIngreso(i, hogarId: h)],
       'fin_vigencias_ingreso': [
         for (final i in d.ingresos)
-          for (final v in i.vigencias) filaVigencia(v, hogarId: h, libroId: i.libroId),
+          for (final v in i.vigencias)
+            filaVigencia(v, hogarId: h, libroId: i.libroId),
       ],
-      'fin_compromisos': [for (final c in d.compromisos) filaCompromiso(c, hogarId: h)],
+      'fin_compromisos': [
+        for (final c in d.compromisos) filaCompromiso(c, hogarId: h),
+      ],
       'fin_sobres': [for (final s in d.sobres) filaSobre(s, hogarId: h)],
       'fin_deudas': [for (final x in d.deudas) filaDeuda(x, hogarId: h)],
       'fin_dias_inhabiles': [
@@ -68,11 +78,13 @@ void main() {
       'fin_semanas': [for (final s in d.semanas) filaSemana(s, hogarId: h)],
       'fin_partidas_semana': [
         for (final s in d.semanas)
-          for (final p in s.partidas) filaPartidaSemana(p, hogarId: h, libroId: s.libroId),
+          for (final p in s.partidas)
+            filaPartidaSemana(p, hogarId: h, libroId: s.libroId),
       ],
       'fin_abonos_semana': [
         for (final s in d.semanas)
-          for (final p in s.abonos) filaAbonoSemana(p, hogarId: h, libroId: s.libroId),
+          for (final p in s.abonos)
+            filaAbonoSemana(p, hogarId: h, libroId: s.libroId),
       ],
       'fin_ocurrencias': [
         filaOcurrencia(

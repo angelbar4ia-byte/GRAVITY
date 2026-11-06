@@ -48,9 +48,13 @@ Sesion duenaYMaestra() => Sesion(
 ProviderContainer contenedorDe(WidgetTester tester) =>
     ProviderScope.containerOf(tester.element(find.byType(AppGravity)));
 
-String ubicacion(WidgetTester tester) => contenedorDe(
-  tester,
-).read(routerProvider).routerDelegate.currentConfiguration.uri.path;
+String ubicacion(WidgetTester tester) =>
+    contenedorDe(tester)
+        .read(routerProvider)
+        .routerDelegate
+        .currentConfiguration
+        .uri
+        .path;
 
 Future<void> ir(WidgetTester tester, String ruta) async {
   contenedorDe(tester).read(routerProvider).go(ruta);
@@ -78,7 +82,10 @@ void main() {
         'hogar_id': 'h1',
       };
       expect(sesionDesdeFila({...fila, 'es_maestra': true}).esMaestra, isTrue);
-      expect(sesionDesdeFila({...fila, 'es_maestra': false}).esMaestra, isFalse);
+      expect(
+        sesionDesdeFila({...fila, 'es_maestra': false}).esMaestra,
+        isFalse,
+      );
       // Servidor sin la columna todavía: nadie es maestra.
       expect(sesionDesdeFila(fila).esMaestra, isFalse);
     });
@@ -86,42 +93,48 @@ void main() {
     test('en la tablet la persona guarda si es la cuenta maestra', () {
       final usuario = UsuarioTablet.desdeSesion(maestra(), hashPin: 'hash');
       final copia = UsuarioTablet.desdeJson(
-        (jsonDecode(jsonEncode(usuario.aJson())) as Map).cast<String, Object?>(),
+        (jsonDecode(jsonEncode(usuario.aJson())) as Map)
+            .cast<String, Object?>(),
       );
       expect(copia.esMaestra, isTrue);
       expect(copia.sesion.esMaestra, isTrue);
     });
   });
 
-  testWidgets('laptop: Ajustes de solo lectura, sin lo que administra el hogar', (
-    tester,
-  ) async {
-    await montarApp(
-      tester,
-      dispositivo: TipoDispositivo.laptop,
-      sesion: ServicioSesionFalso(inicial: maestra()),
-    );
-    expect(contenedorDe(tester).read(esCuentaMaestraProvider), isTrue);
+  testWidgets(
+    'laptop: Ajustes de solo lectura, sin lo que administra el hogar',
+    (tester) async {
+      await montarApp(
+        tester,
+        dispositivo: TipoDispositivo.laptop,
+        sesion: ServicioSesionFalso(inicial: maestra()),
+      );
+      expect(contenedorDe(tester).read(esCuentaMaestraProvider), isTrue);
 
-    await ir(tester, Rutas.ajustes);
-    expect(
-      find.text('Coadministrador · cuenta maestra (solo lectura)'),
-      findsOneWidget,
-    );
-    for (final titulo in ['Personas y roles', 'Copias de seguridad', 'Desarrollador']) {
-      expect(find.text(titulo), findsNothing, reason: titulo);
-    }
-    expect(find.text('Apariencia'), findsOneWidget);
+      await ir(tester, Rutas.ajustes);
+      expect(
+        find.text('Coadministrador · cuenta maestra (solo lectura)'),
+        findsOneWidget,
+      );
+      for (final titulo in [
+        'Personas y roles',
+        'Copias de seguridad',
+        'Desarrollador',
+      ]) {
+        expect(find.text(titulo), findsNothing, reason: titulo);
+      }
+      expect(find.text('Apariencia'), findsOneWidget);
 
-    for (final ruta in [
-      '/ajustes/personas',
-      '/ajustes/copias',
-      Rutas.desarrollador,
-    ]) {
-      await ir(tester, ruta);
-      expect(ubicacion(tester), Rutas.ajustes, reason: ruta);
-    }
-  });
+      for (final ruta in [
+        '/ajustes/personas',
+        '/ajustes/copias',
+        Rutas.desarrollador,
+      ]) {
+        await ir(tester, ruta);
+        expect(ubicacion(tester), Rutas.ajustes, reason: ruta);
+      }
+    },
+  );
 
   testWidgets('la dueña que también es maestra sigue administrando el hogar', (
     tester,
@@ -200,158 +213,213 @@ void main() {
     );
   });
 
-  group('D19 (23/oct): la maestra que no es la dueña es de solo lectura total', () {
-    test('esSoloLectura y puedeConSesion', () {
-      expect(esSoloLectura(Rol.coadministrador, esMaestra: true), isTrue);
-      expect(esSoloLectura(Rol.coadministrador, esMaestra: false), isFalse);
-      expect(esSoloLectura(Rol.dueno, esMaestra: true), isFalse);
-      for (final accion in [Accion.escribir, Accion.administrar]) {
-        expect(
-          puedeConSesion(Rol.coadministrador, Modulo.finanzas, accion, esMaestra: true),
-          isFalse,
-          reason: '$accion',
-        );
-        expect(
-          puedeConSesion(Rol.coadministrador, Modulo.finanzas, accion),
-          isTrue,
-          reason: 'sin la marca, la pareja sí lo hace: $accion',
-        );
-        expect(
-          puedeConSesion(Rol.dueno, Modulo.finanzas, accion, esMaestra: true),
-          isTrue,
-          reason: 'la dueña conserva lo suyo: $accion',
-        );
-      }
-      expect(
-        puedeConSesion(Rol.coadministrador, Modulo.finanzas, Accion.leer, esMaestra: true),
-        isTrue,
-      );
-    });
-
-    test('ni lo suyo: puedeSobre le niega escribir y administrar siempre', () {
-      for (final modulo in [Modulo.finanzas, Modulo.gravity, Modulo.alimentacion]) {
-        for (final propio in [true, false]) {
-          for (final accion in [Accion.escribir, Accion.administrar]) {
-            expect(
-              puedeSobre(
-                Rol.coadministrador,
-                modulo,
-                accion,
-                esDeLaPersona: propio,
-                esMaestra: true,
-              ),
-              isFalse,
-              reason: '$modulo propio=$propio $accion',
-            );
-          }
-        }
-      }
-      // Lee lo suyo y lo ajeno de Finanzas y GRAVITY.
-      for (final modulo in [Modulo.finanzas, Modulo.gravity]) {
-        for (final propio in [true, false]) {
+  group(
+    'D19 (23/oct): la maestra que no es la dueña es de solo lectura total',
+    () {
+      test('esSoloLectura y puedeConSesion', () {
+        expect(esSoloLectura(Rol.coadministrador, esMaestra: true), isTrue);
+        expect(esSoloLectura(Rol.coadministrador, esMaestra: false), isFalse);
+        expect(esSoloLectura(Rol.dueno, esMaestra: true), isFalse);
+        for (final accion in [Accion.escribir, Accion.administrar]) {
           expect(
-            puedeSobre(
+            puedeConSesion(
               Rol.coadministrador,
-              modulo,
-              Accion.leer,
-              esDeLaPersona: propio,
+              Modulo.finanzas,
+              accion,
               esMaestra: true,
             ),
+            isFalse,
+            reason: '$accion',
+          );
+          expect(
+            puedeConSesion(Rol.coadministrador, Modulo.finanzas, accion),
             isTrue,
-            reason: '$modulo propio=$propio',
+            reason: 'sin la marca, la pareja sí lo hace: $accion',
+          );
+          expect(
+            puedeConSesion(Rol.dueno, Modulo.finanzas, accion, esMaestra: true),
+            isTrue,
+            reason: 'la dueña conserva lo suyo: $accion',
           );
         }
-      }
-    });
-
-    test('la dueña maestra escribe en lo suyo y en lo ajeno solo lee', () {
-      expect(
-        puedeSobre(Rol.dueno, Modulo.finanzas, Accion.escribir,
-            esDeLaPersona: true, esMaestra: true),
-        isTrue,
-      );
-      expect(
-        puedeSobre(Rol.dueno, Modulo.finanzas, Accion.escribir,
-            esDeLaPersona: false, esMaestra: true),
-        isFalse,
-      );
-      expect(
-        puedeSobre(Rol.dueno, Modulo.finanzas, Accion.leer,
-            esDeLaPersona: false, esMaestra: true),
-        isTrue,
-      );
-    });
-
-    test('sin (+): ni pestaña, ni opciones, ni Ctrl + N', () {
-      final conMaestra = destinosDe(Rol.coadministrador, esMaestra: true);
-      expect(conMaestra.where((d) => d.esRegistrar), isEmpty);
-      expect(opcionesRegistrar(Rol.coadministrador, esMaestra: true), isEmpty);
-      expect(
-        puedeRegistrarEn(Rol.coadministrador, Modulo.finanzas, esMaestra: true),
-        isFalse,
-      );
-      // Sin la marca, la pareja sí; y la dueña maestra también.
-      expect(destinosDe(Rol.coadministrador).any((d) => d.esRegistrar), isTrue);
-      expect(destinosDe(Rol.dueno, esMaestra: true).any((d) => d.esRegistrar), isTrue);
-    });
-
-    test('las rutas que exigen escribir la regresan al inicio del módulo', () {
-      for (final accion in [Accion.escribir, Accion.administrar]) {
         expect(
-          calcularRedireccion(
-            ubicacion: '${Rutas.finanzas}/asistente',
-            rol: Rol.coadministrador,
-            dispositivo: TipoDispositivo.laptop,
-            accion: accion,
+          puedeConSesion(
+            Rol.coadministrador,
+            Modulo.finanzas,
+            Accion.leer,
             esMaestra: true,
           ),
-          Rutas.finanzas,
-          reason: '$accion',
+          isTrue,
+        );
+      });
+
+      test(
+        'ni lo suyo: puedeSobre le niega escribir y administrar siempre',
+        () {
+          for (final modulo in [
+            Modulo.finanzas,
+            Modulo.gravity,
+            Modulo.alimentacion,
+          ]) {
+            for (final propio in [true, false]) {
+              for (final accion in [Accion.escribir, Accion.administrar]) {
+                expect(
+                  puedeSobre(
+                    Rol.coadministrador,
+                    modulo,
+                    accion,
+                    esDeLaPersona: propio,
+                    esMaestra: true,
+                  ),
+                  isFalse,
+                  reason: '$modulo propio=$propio $accion',
+                );
+              }
+            }
+          }
+          // Lee lo suyo y lo ajeno de Finanzas y GRAVITY.
+          for (final modulo in [Modulo.finanzas, Modulo.gravity]) {
+            for (final propio in [true, false]) {
+              expect(
+                puedeSobre(
+                  Rol.coadministrador,
+                  modulo,
+                  Accion.leer,
+                  esDeLaPersona: propio,
+                  esMaestra: true,
+                ),
+                isTrue,
+                reason: '$modulo propio=$propio',
+              );
+            }
+          }
+        },
+      );
+
+      test('la dueña maestra escribe en lo suyo y en lo ajeno solo lee', () {
+        expect(
+          puedeSobre(
+            Rol.dueno,
+            Modulo.finanzas,
+            Accion.escribir,
+            esDeLaPersona: true,
+            esMaestra: true,
+          ),
+          isTrue,
         );
         expect(
-          calcularRedireccion(
-            ubicacion: '${Rutas.finanzas}/asistente',
-            rol: Rol.coadministrador,
-            dispositivo: TipoDispositivo.laptop,
-            accion: accion,
+          puedeSobre(
+            Rol.dueno,
+            Modulo.finanzas,
+            Accion.escribir,
+            esDeLaPersona: false,
+            esMaestra: true,
           ),
-          isNull,
-          reason: 'sin la marca la pareja sí entra: $accion',
+          isFalse,
         );
-      }
-    });
+        expect(
+          puedeSobre(
+            Rol.dueno,
+            Modulo.finanzas,
+            Accion.leer,
+            esDeLaPersona: false,
+            esMaestra: true,
+          ),
+          isTrue,
+        );
+      });
 
-    testWidgets('teléfono: la maestra no tiene el botón (+)', (tester) async {
-      await montarApp(
-        tester,
-        dispositivo: TipoDispositivo.telefono,
-        sesion: ServicioSesionFalso(inicial: maestra()),
-      );
-      expect(find.text('Registrar'), findsNothing);
-      expect(find.byIcon(Icons.add_circle), findsNothing);
-    });
+      test('sin (+): ni pestaña, ni opciones, ni Ctrl + N', () {
+        final conMaestra = destinosDe(Rol.coadministrador, esMaestra: true);
+        expect(conMaestra.where((d) => d.esRegistrar), isEmpty);
+        expect(
+          opcionesRegistrar(Rol.coadministrador, esMaestra: true),
+          isEmpty,
+        );
+        expect(
+          puedeRegistrarEn(
+            Rol.coadministrador,
+            Modulo.finanzas,
+            esMaestra: true,
+          ),
+          isFalse,
+        );
+        // Sin la marca, la pareja sí; y la dueña maestra también.
+        expect(
+          destinosDe(Rol.coadministrador).any((d) => d.esRegistrar),
+          isTrue,
+        );
+        expect(
+          destinosDe(Rol.dueno, esMaestra: true).any((d) => d.esRegistrar),
+          isTrue,
+        );
+      });
 
-    testWidgets('teléfono: la pareja sin la marca sí lo tiene', (tester) async {
-      await montarApp(
-        tester,
-        dispositivo: TipoDispositivo.telefono,
-        sesion: sesionCon(Rol.coadministrador),
+      test(
+        'las rutas que exigen escribir la regresan al inicio del módulo',
+        () {
+          for (final accion in [Accion.escribir, Accion.administrar]) {
+            expect(
+              calcularRedireccion(
+                ubicacion: '${Rutas.finanzas}/asistente',
+                rol: Rol.coadministrador,
+                dispositivo: TipoDispositivo.laptop,
+                accion: accion,
+                esMaestra: true,
+              ),
+              Rutas.finanzas,
+              reason: '$accion',
+            );
+            expect(
+              calcularRedireccion(
+                ubicacion: '${Rutas.finanzas}/asistente',
+                rol: Rol.coadministrador,
+                dispositivo: TipoDispositivo.laptop,
+                accion: accion,
+              ),
+              isNull,
+              reason: 'sin la marca la pareja sí entra: $accion',
+            );
+          }
+        },
       );
-      expect(find.text('Registrar'), findsOneWidget);
-    });
 
-    testWidgets('laptop: Ctrl + N no abre el registro a la maestra', (tester) async {
-      await montarApp(
+      testWidgets('teléfono: la maestra no tiene el botón (+)', (tester) async {
+        await montarApp(
+          tester,
+          dispositivo: TipoDispositivo.telefono,
+          sesion: ServicioSesionFalso(inicial: maestra()),
+        );
+        expect(find.text('Registrar'), findsNothing);
+        expect(find.byIcon(Icons.add_circle), findsNothing);
+      });
+
+      testWidgets('teléfono: la pareja sin la marca sí lo tiene', (
         tester,
-        dispositivo: TipoDispositivo.laptop,
-        sesion: ServicioSesionFalso(inicial: maestra()),
-      );
-      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
-      await tester.sendKeyEvent(LogicalKeyboardKey.keyN);
-      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
-      await tester.pumpAndSettle();
-      expect(find.byType(Dialog), findsNothing);
-      expect(find.byKey(llaveRegistro(TipoRegistro.gasto)), findsNothing);
-    });
-  });
+      ) async {
+        await montarApp(
+          tester,
+          dispositivo: TipoDispositivo.telefono,
+          sesion: sesionCon(Rol.coadministrador),
+        );
+        expect(find.text('Registrar'), findsOneWidget);
+      });
+
+      testWidgets('laptop: Ctrl + N no abre el registro a la maestra', (
+        tester,
+      ) async {
+        await montarApp(
+          tester,
+          dispositivo: TipoDispositivo.laptop,
+          sesion: ServicioSesionFalso(inicial: maestra()),
+        );
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        await tester.sendKeyEvent(LogicalKeyboardKey.keyN);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await tester.pumpAndSettle();
+        expect(find.byType(Dialog), findsNothing);
+        expect(find.byKey(llaveRegistro(TipoRegistro.gasto)), findsNothing);
+      });
+    },
+  );
 }

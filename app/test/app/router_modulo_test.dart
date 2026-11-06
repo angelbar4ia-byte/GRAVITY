@@ -97,7 +97,11 @@ void main() {
   });
 
   testWidgets('sin rutas, "Próximamente"', (tester) async {
-    final rutas = montarRutasDeModulo(Rutas.casa, const [], modulo: Modulo.casa);
+    final rutas = montarRutasDeModulo(
+      Rutas.casa,
+      const [],
+      modulo: Modulo.casa,
+    );
     expect(rutas, hasLength(1));
     expect((rutas.single as GoRoute).path, Rutas.casa);
   });
@@ -152,11 +156,21 @@ void main() {
       enAccionDeTabletCasa: enAccion,
     );
 
-    expect(redirigir('/casa/editar', Rol.familiar, accion: Accion.escribir), '/casa');
-    expect(redirigir('/casa/editar', Rol.dueno, accion: Accion.escribir), isNull);
+    expect(
+      redirigir('/casa/editar', Rol.familiar, accion: Accion.escribir),
+      '/casa',
+    );
+    expect(
+      redirigir('/casa/editar', Rol.dueno, accion: Accion.escribir),
+      isNull,
+    );
     // D19: la pareja administra su libro de Finanzas.
     expect(
-      redirigir('/finanzas/asistente', Rol.coadministrador, accion: Accion.administrar),
+      redirigir(
+        '/finanzas/asistente',
+        Rol.coadministrador,
+        accion: Accion.administrar,
+      ),
       isNull,
     );
     // D19 (23/oct): la cuenta maestra que no es la dueña es de solo lectura:
@@ -194,7 +208,12 @@ void main() {
     // La dueña que además es maestra conserva sus permisos de dueña.
     expect(redirigir('/ajustes/personas', Rol.dueno, esMaestra: true), isNull);
     expect(
-      redirigir('/casa/editar', Rol.dueno, accion: Accion.escribir, esMaestra: true),
+      redirigir(
+        '/casa/editar',
+        Rol.dueno,
+        accion: Accion.escribir,
+        esMaestra: true,
+      ),
       isNull,
     );
     // Durante una acción personal en la tablet pública, la pantalla sigue en

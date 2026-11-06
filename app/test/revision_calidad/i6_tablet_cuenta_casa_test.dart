@@ -24,15 +24,16 @@ import 'package:gravity/nucleo/contratos/roles.dart';
 import '../app/ayuda_plataforma.dart';
 
 void main() {
-  testWidgets('con la cuenta del Dueño la tablet no se presenta como modo Casa', (
-    tester,
-  ) async {
-    await montarApp(
-      tester,
-      dispositivo: TipoDispositivo.tablet,
-      sesion: sesionCon(Rol.dueno),
-      almacen: await almacenConPersonas({Rol.cuidador: '5678'}),
-    );
-    expect(find.text('GRAVITY · Casa'), findsNothing);
-  });
+  testWidgets(
+    'con la cuenta del Dueño la tablet no se presenta como modo Casa',
+    (tester) async {
+      await montarApp(
+        tester,
+        dispositivo: TipoDispositivo.tablet,
+        sesion: sesionCon(Rol.dueno),
+        almacen: await almacenConPersonas({Rol.cuidador: '5678'}),
+      );
+      expect(find.text('GRAVITY · Casa'), findsNothing);
+    },
+  );
 }

@@ -18,9 +18,9 @@ Finder pestana(String etiqueta) => find.descendant(
   matching: find.text(etiqueta),
 );
 
-GoRouter routerDe(WidgetTester tester) => ProviderScope.containerOf(
-  tester.element(find.byType(AppGravity)),
-).read(routerProvider);
+GoRouter routerDe(WidgetTester tester) =>
+    ProviderScope.containerOf(tester.element(find.byType(AppGravity)))
+        .read(routerProvider);
 
 String ubicacion(WidgetTester tester) =>
     routerDe(tester).routerDelegate.currentConfiguration.uri.path;
@@ -32,7 +32,10 @@ void main() {
     ) async {
       final sesion = ServicioSesionFalso(
         cuentas: {
-          'ana@ejemplo.test': CuentaFalsa('secreta', sesionDeEjemplo(Rol.cuidador)),
+          'ana@ejemplo.test': CuentaFalsa(
+            'secreta',
+            sesionDeEjemplo(Rol.cuidador),
+          ),
         },
       );
       await montarApp(
@@ -47,7 +50,10 @@ void main() {
       await tester.pump();
       expect(find.text('Escribe tu correo.'), findsOneWidget);
 
-      await tester.enterText(find.byType(TextFormField).at(0), 'ana@ejemplo.test');
+      await tester.enterText(
+        find.byType(TextFormField).at(0),
+        'ana@ejemplo.test',
+      );
       await tester.enterText(find.byType(TextFormField).at(1), 'mala');
       await tester.tap(find.text('Entrar'));
       await tester.pumpAndSettle();
@@ -96,7 +102,13 @@ void main() {
         dispositivo: TipoDispositivo.telefono,
         sesion: sesionCon(Rol.dueno),
       );
-      for (final etiqueta in ['Hoy', 'Finanzas', 'Registrar', 'Hábitos', 'Más']) {
+      for (final etiqueta in [
+        'Hoy',
+        'Finanzas',
+        'Registrar',
+        'Hábitos',
+        'Más',
+      ]) {
         expect(pestana(etiqueta), findsOneWidget, reason: etiqueta);
       }
       await tester.tap(pestana('Finanzas'));
@@ -109,7 +121,10 @@ void main() {
       expect(find.text('SOS: tengo un antojo'), findsOneWidget);
       await tester.tap(find.text('SOS: tengo un antojo'));
       await tester.pumpAndSettle();
-      expect(find.text('SOS: tengo un antojo: llega en la Fase 3.'), findsOneWidget);
+      expect(
+        find.text('SOS: tengo un antojo: llega en la Fase 3.'),
+        findsOneWidget,
+      );
 
       await tester.tap(pestana('Más'));
       await tester.pumpAndSettle();
@@ -198,32 +213,33 @@ void main() {
   });
 
   group('laptop', () {
-    testWidgets('Dueño: pantalla principal a pantalla completa y Desarrollador', (
-      tester,
-    ) async {
-      await montarApp(
-        tester,
-        dispositivo: TipoDispositivo.laptop,
-        sesion: sesionCon(Rol.dueno),
-      );
-      expect(find.byType(NavigationBar), findsNothing);
-      expect(find.text('GRAVITY'), findsOneWidget);
+    testWidgets(
+      'Dueño: pantalla principal a pantalla completa y Desarrollador',
+      (tester) async {
+        await montarApp(
+          tester,
+          dispositivo: TipoDispositivo.laptop,
+          sesion: sesionCon(Rol.dueno),
+        );
+        expect(find.byType(NavigationBar), findsNothing);
+        expect(find.text('GRAVITY'), findsOneWidget);
 
-      // Ctrl + 1 abre Finanzas; Esc vuelve a GRAVITY.
-      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
-      await tester.sendKeyEvent(LogicalKeyboardKey.digit1);
-      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
-      await tester.pumpAndSettle();
-      expect(ubicacion(tester), Rutas.finanzas);
-      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
-      await tester.pumpAndSettle();
-      expect(ubicacion(tester), Rutas.inicio);
+        // Ctrl + 1 abre Finanzas; Esc vuelve a GRAVITY.
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        await tester.sendKeyEvent(LogicalKeyboardKey.digit1);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await tester.pumpAndSettle();
+        expect(ubicacion(tester), Rutas.finanzas);
+        await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        await tester.pumpAndSettle();
+        expect(ubicacion(tester), Rutas.inicio);
 
-      routerDe(tester).go(Rutas.desarrollador);
-      await tester.pumpAndSettle();
-      expect(ubicacion(tester), Rutas.desarrollador);
-      expect(find.text('Desarrollador'), findsWidgets);
-    });
+        routerDe(tester).go(Rutas.desarrollador);
+        await tester.pumpAndSettle();
+        expect(ubicacion(tester), Rutas.desarrollador);
+        expect(find.text('Desarrollador'), findsWidgets);
+      },
+    );
 
     testWidgets('la barra de órdenes navega', (tester) async {
       await montarApp(

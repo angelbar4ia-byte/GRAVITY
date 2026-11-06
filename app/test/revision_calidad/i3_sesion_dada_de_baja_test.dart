@@ -57,38 +57,48 @@ AlmacenSeguroEnMemoria almacenConSesionGuardada() => AlmacenSeguroEnMemoria({
 });
 
 void main() {
-  test('dada de baja (el servidor dice "sin rol"): no entra con el rol guardado', () async {
-    final cliente = await clienteConSesion();
-    addTearDown(cliente.dispose);
-    final servicio = ServicioSesionSupabase(
-      cliente: cliente,
-      almacen: almacenConSesionGuardada(),
-      url: 'http://127.0.0.1:9',
-      llavePublica: 'llave-publica-de-prueba',
-      lectorPerfil: (_) async => throw ErrorSesion.sinRol,
-    );
-    addTearDown(servicio.cerrar);
+  test(
+    'dada de baja (el servidor dice "sin rol"): no entra con el rol guardado',
+    () async {
+      final cliente = await clienteConSesion();
+      addTearDown(cliente.dispose);
+      final servicio = ServicioSesionSupabase(
+        cliente: cliente,
+        almacen: almacenConSesionGuardada(),
+        url: 'http://127.0.0.1:9',
+        llavePublica: 'llave-publica-de-prueba',
+        lectorPerfil: (_) async => throw ErrorSesion.sinRol,
+      );
+      addTearDown(servicio.cerrar);
 
-    await servicio.iniciar();
+      await servicio.iniciar();
 
-    expect(servicio.sesionActual, isNull, reason: 'abrió con el rol de antes de la baja');
-  });
+      expect(
+        servicio.sesionActual,
+        isNull,
+        reason: 'abrió con el rol de antes de la baja',
+      );
+    },
+  );
 
-  test('sin señal sí usa la sesión guardada (lo que hay que conservar)', () async {
-    final cliente = await clienteConSesion();
-    addTearDown(cliente.dispose);
-    final servicio = ServicioSesionSupabase(
-      cliente: cliente,
-      almacen: almacenConSesionGuardada(),
-      url: 'http://127.0.0.1:9',
-      llavePublica: 'llave-publica-de-prueba',
-      lectorPerfil: (_) async =>
-          throw const SocketException('Sin conexión (simulada)'),
-    );
-    addTearDown(servicio.cerrar);
+  test(
+    'sin señal sí usa la sesión guardada (lo que hay que conservar)',
+    () async {
+      final cliente = await clienteConSesion();
+      addTearDown(cliente.dispose);
+      final servicio = ServicioSesionSupabase(
+        cliente: cliente,
+        almacen: almacenConSesionGuardada(),
+        url: 'http://127.0.0.1:9',
+        llavePublica: 'llave-publica-de-prueba',
+        lectorPerfil: (_) async =>
+            throw const SocketException('Sin conexión (simulada)'),
+      );
+      addTearDown(servicio.cerrar);
 
-    await servicio.iniciar();
+      await servicio.iniciar();
 
-    expect(servicio.sesionActual?.rol, Rol.cuidador);
-  });
+      expect(servicio.sesionActual?.rol, Rol.cuidador);
+    },
+  );
 }

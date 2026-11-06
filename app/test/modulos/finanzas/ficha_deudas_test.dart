@@ -29,15 +29,28 @@ Uint8List _ficha({bool sinHojas = false}) {
   final tarjetas = _hoja([
     _fila(1, [('A', 'Tarjetas de crédito')]),
     _fila(4, [
-      ('A', 'ID'), ('B', 'Institución'), ('C', 'Tarjeta'), ('F', 'Límite de crédito'),
-      ('G', 'Saldo actual'), ('H', 'Tasa anual (%)'), ('J', 'Día de corte'),
-      ('K', 'Día límite de pago'), ('L', 'Pago mínimo'),
+      ('A', 'ID'),
+      ('B', 'Institución'),
+      ('C', 'Tarjeta'),
+      ('F', 'Límite de crédito'),
+      ('G', 'Saldo actual'),
+      ('H', 'Tasa anual (%)'),
+      ('J', 'Día de corte'),
+      ('K', 'Día límite de pago'),
+      ('L', 'Pago mínimo'),
     ]),
     _fila(5, [('A', 'EJEMPLO'), ('B', 'Banco Ejemplo'), ('G', '#99999')]),
     _fila(6, [('A', 'T01'), ('B', 'Banco Sin Saldo'), ('C', 'Clásica')]),
     _fila(7, [
-      ('A', 'T02'), ('B', 'Banco Uno'), ('C', 'Oro'), ('F', '#50000'),
-      ('G', '#12000.50'), ('H', '#45'), ('J', '#10'), ('K', '#28'), ('L', '#600'),
+      ('A', 'T02'),
+      ('B', 'Banco Uno'),
+      ('C', 'Oro'),
+      ('F', '#50000'),
+      ('G', '#12000.50'),
+      ('H', '#45'),
+      ('J', '#10'),
+      ('K', '#28'),
+      ('L', '#600'),
     ]),
   ]);
   final credito = _hoja([
@@ -49,19 +62,37 @@ Uint8List _ficha({bool sinHojas = false}) {
   ]);
   final msi = _hoja([
     _fila(4, [
-      ('A', 'ID'), ('B', 'ID de tarjeta'), ('C', 'Comercio'), ('D', 'Descripción'),
-      ('E', 'Fecha de compra'), ('F', 'Monto total'), ('G', 'No. de mensualidades'),
+      ('A', 'ID'),
+      ('B', 'ID de tarjeta'),
+      ('C', 'Comercio'),
+      ('D', 'Descripción'),
+      ('E', 'Fecha de compra'),
+      ('F', 'Monto total'),
+      ('G', 'No. de mensualidades'),
       ('I', 'Mensualidades pagadas'),
     ]),
     _fila(5, [('A', 'EJEMPLO'), ('C', 'Tienda Ejemplo')]),
     _fila(6, [
-      ('A', 'M01'), ('B', 'T02'), ('C', 'Tienda Uno'), ('D', 'Televisión'),
-      ('E', '15/09/2026'), ('F', '#12000'), ('G', '#12'), ('I', '#2'),
+      ('A', 'M01'),
+      ('B', 'T02'),
+      ('C', 'Tienda Uno'),
+      ('D', 'Televisión'),
+      ('E', '15/09/2026'),
+      ('F', '#12000'),
+      ('G', '#12'),
+      ('I', '#2'),
     ]),
     _fila(7, [('A', 'M02'), ('C', 'Tienda Dos')]),
   ]);
   final hojas = sinHojas
-      ? [('Otra', _hoja([_fila(1, [('A', 'x')])]))]
+      ? [
+          (
+            'Otra',
+            _hoja([
+              _fila(1, [('A', 'x')]),
+            ]),
+          ),
+        ]
       : [('Tarjetas', tarjetas), ('Credito_Auto', credito), ('MSI', msi)];
   final wb =
       '<workbook xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>'
@@ -101,27 +132,33 @@ void main() {
     expect(l.omitidas.any((o) => o.motivo.contains('T01')), isTrue);
   });
 
-  test('un archivo que no es la ficha, o no es .xlsx, se rechaza sin detalles', () {
-    expect(
-      () => leerFichaDeBytes(_ficha(sinHojas: true), nombre: 'ficha.xlsx'),
-      throwsA(isA<ErrorArchivo>()),
-    );
-    expect(
-      () => leerFichaDeBytes(Uint8List.fromList([1, 2, 3]), nombre: 'ficha.xlsx'),
-      throwsA(isA<ErrorArchivo>()),
-    );
-    expect(
-      () => leerFichaDeBytes(_ficha(), nombre: 'ficha.csv'),
-      throwsA(isA<ErrorArchivo>()),
-    );
-    expect(
-      () => leerFichaDeBytes(
-        Uint8List(maximoBytesDeImportacion + 1),
-        nombre: 'ficha.xlsx',
-      ),
-      throwsA(isA<ErrorArchivo>()),
-    );
-  });
+  test(
+    'un archivo que no es la ficha, o no es .xlsx, se rechaza sin detalles',
+    () {
+      expect(
+        () => leerFichaDeBytes(_ficha(sinHojas: true), nombre: 'ficha.xlsx'),
+        throwsA(isA<ErrorArchivo>()),
+      );
+      expect(
+        () => leerFichaDeBytes(
+          Uint8List.fromList([1, 2, 3]),
+          nombre: 'ficha.xlsx',
+        ),
+        throwsA(isA<ErrorArchivo>()),
+      );
+      expect(
+        () => leerFichaDeBytes(_ficha(), nombre: 'ficha.csv'),
+        throwsA(isA<ErrorArchivo>()),
+      );
+      expect(
+        () => leerFichaDeBytes(
+          Uint8List(maximoBytesDeImportacion + 1),
+          nombre: 'ficha.xlsx',
+        ),
+        throwsA(isA<ErrorArchivo>()),
+      );
+    },
+  );
 
   test('montos y porcentajes de celda', () {
     expect(centavosDeCelda(r'$1,500.50'), 150050);
@@ -146,7 +183,10 @@ void main() {
     final r1 = await svc.aplicarFicha(libro, l);
     expect(r1.creadas, 3);
     final nuevas = repo.datos.deudasDe(libro).skip(deudasAntes).toList();
-    expect(nuevas.map((d) => d.clase), unorderedEquals([ClaseDeuda.tarjeta, ClaseDeuda.credito, ClaseDeuda.msi]));
+    expect(
+      nuevas.map((d) => d.clase),
+      unorderedEquals([ClaseDeuda.tarjeta, ClaseDeuda.credito, ClaseDeuda.msi]),
+    );
     final tarjeta = nuevas.firstWhere((d) => d.clase == ClaseDeuda.tarjeta);
     expect(saldoDeDeuda(repo.datos, tarjeta), 1200050);
     expect(repo.datos.cuenta(tarjeta.cuentaPasivoId!)!.limiteCentavos, 5000000);
@@ -155,7 +195,13 @@ void main() {
     final msi = repo.datos.msiDe(libro).single;
     expect(msi.tarjetaDeudaId, tarjeta.id);
     // 12 meses de $1,000 y 2 pagadas: quedan $10,000.
-    expect(saldoDeDeuda(repo.datos, nuevas.firstWhere((d) => d.clase == ClaseDeuda.msi)), 1000000);
+    expect(
+      saldoDeDeuda(
+        repo.datos,
+        nuevas.firstWhere((d) => d.clase == ClaseDeuda.msi),
+      ),
+      1000000,
+    );
 
     final cuentas = repo.datos.cuentas.length;
     final r2 = await svc.aplicarFicha(libro, l);

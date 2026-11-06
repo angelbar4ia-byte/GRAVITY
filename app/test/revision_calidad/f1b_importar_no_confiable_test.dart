@@ -95,21 +95,38 @@ void main() {
 
     test('más de 10 MB se rechaza antes de abrirlo', () {
       expect(
-        () => leerPlantillaDeBytes(Uint8List(maximoBytesDeImportacion + 1), nombre: 'a.xlsx'),
+        () => leerPlantillaDeBytes(
+          Uint8List(maximoBytesDeImportacion + 1),
+          nombre: 'a.xlsx',
+        ),
         throwsA(isA<ErrorArchivo>()),
       );
     });
 
-    test('otras extensiones y archivos que no son ZIP se rechazan con un mensaje', () {
-      for (final nombre in ['virus.exe', 'plantilla.xlsm', 'datos', 'a.xls']) {
-        expect(() => leerPlantillaDeBytes(valido, nombre: nombre), throwsA(isA<ErrorArchivo>()),
-            reason: nombre);
-      }
-      expect(
-        () => leerPlantillaDeBytes(Uint8List.fromList(utf8.encode('esto no es un zip')), nombre: 'a.xlsx'),
-        throwsA(isA<ErrorArchivo>()),
-      );
-    });
+    test(
+      'otras extensiones y archivos que no son ZIP se rechazan con un mensaje',
+      () {
+        for (final nombre in [
+          'virus.exe',
+          'plantilla.xlsm',
+          'datos',
+          'a.xls',
+        ]) {
+          expect(
+            () => leerPlantillaDeBytes(valido, nombre: nombre),
+            throwsA(isA<ErrorArchivo>()),
+            reason: nombre,
+          );
+        }
+        expect(
+          () => leerPlantillaDeBytes(
+            Uint8List.fromList(utf8.encode('esto no es un zip')),
+            nombre: 'a.xlsx',
+          ),
+          throwsA(isA<ErrorArchivo>()),
+        );
+      },
+    );
 
     test('las fórmulas no se evalúan: se lee el valor guardado, o el texto tal cual', () {
       final hoja =
@@ -118,11 +135,22 @@ void main() {
           '<row r="2"><c r="A2" t="str"><f>HYPERLINK("http://malo","x")</f><v>Valor guardado</v></c></row>'
           '<row r="3"><c r="A3" t="inlineStr"><is><t>=cmd|\' /C calc\'!A0</t></is></c></row>'
           '</sheetData></worksheet>';
-      final r = leerPlantillaDeBytes(libroConHoja(utf8.encode(hoja)), nombre: 'f.xlsx');
+      final r = leerPlantillaDeBytes(
+        libroConHoja(utf8.encode(hoja)),
+        nombre: 'f.xlsx',
+      );
       final nombres = [for (final f in r.filas) f.nivel1].join('|');
       expect(nombres, contains('Valor guardado'));
-      expect(nombres, isNot(contains('HYPERLINK')), reason: 'la fórmula no se lee ni se ejecuta');
-      expect(nombres, contains('cmd|'), reason: 'el texto con "=" es solo un nombre, no una orden');
+      expect(
+        nombres,
+        isNot(contains('HYPERLINK')),
+        reason: 'la fórmula no se lee ni se ejecuta',
+      );
+      expect(
+        nombres,
+        contains('cmd|'),
+        reason: 'el texto con "=" es solo un nombre, no una orden',
+      );
     });
 
     test('los nombres de entradas del ZIP (../, rutas absolutas) no tocan el disco', () {
@@ -138,22 +166,32 @@ void main() {
       expect(leerPlantillaDeBytes(zip, nombre: 'z.xlsx').filas, isNotEmpty);
     });
 
-    test('un CSV de decenas de miles de filas se lee en un tiempo razonable', () {
-      final b = StringBuffer('Categoría (nivel 1)\n');
-      for (var i = 0; i < 50000; i++) {
-        b.writeln('Categoría $i');
-      }
-      final reloj = Stopwatch()..start();
-      final r = leerPlantillaDeBytes(Uint8List.fromList(utf8.encode(b.toString())), nombre: 'c.csv');
-      expect(r.filasLeidas, 50000);
-      expect(reloj.elapsed, lessThan(const Duration(seconds: 15)));
-    });
+    test(
+      'un CSV de decenas de miles de filas se lee en un tiempo razonable',
+      () {
+        final b = StringBuffer('Categoría (nivel 1)\n');
+        for (var i = 0; i < 50000; i++) {
+          b.writeln('Categoría $i');
+        }
+        final reloj = Stopwatch()..start();
+        final r = leerPlantillaDeBytes(
+          Uint8List.fromList(utf8.encode(b.toString())),
+          nombre: 'c.csv',
+        );
+        expect(r.filasLeidas, 50000);
+        expect(reloj.elapsed, lessThan(const Duration(seconds: 15)));
+      },
+    );
   });
 
   group('X1: sin tope de lo que se descomprime', () {
     test('un .xlsx de ~64 KB que se expande a 64 MB se rechaza', () {
       final zip = libroConHoja(utf8.encode(_hojaConRelleno(64 * 1024 * 1024)));
-      expect(zip.length, lessThan(256 * 1024), reason: 'pesa unos KB, pasa el tope de 10 MB');
+      expect(
+        zip.length,
+        lessThan(256 * 1024),
+        reason: 'pesa unos KB, pasa el tope de 10 MB',
+      );
       expect(
         () => leerPlantillaDeBytes(zip, nombre: 'bomba.xlsx'),
         throwsA(isA<ErrorArchivo>()),
@@ -173,7 +211,10 @@ void main() {
           '<row r="50000000"><c r="A1" t="inlineStr"><is><t>x</t></is></c></row>'
           '</sheetData></worksheet>';
       expect(
-        () => leerPlantillaDeBytes(libroConHoja(utf8.encode(hoja)), nombre: 'filas.xlsx'),
+        () => leerPlantillaDeBytes(
+          libroConHoja(utf8.encode(hoja)),
+          nombre: 'filas.xlsx',
+        ),
         throwsA(isA<ErrorArchivo>()),
         reason:
             'Excel tiene a lo más 1,048,576 filas; el lector rellena con filas vacías '
@@ -200,7 +241,9 @@ void main() {
 
       final chico = medir(10000);
       final grande = medir(40000);
-      final razon = grande.inMicroseconds / (chico.inMicroseconds == 0 ? 1 : chico.inMicroseconds);
+      final razon =
+          grande.inMicroseconds /
+          (chico.inMicroseconds == 0 ? 1 : chico.inMicroseconds);
       expect(
         grande < const Duration(milliseconds: 500) || razon < 9,
         isTrue,
@@ -250,7 +293,11 @@ void main() {
   group('X5: un archivo dañado se explica, no lanza RangeError', () {
     final danados = <String, Uint8List>{
       'tamaño comprimido que miente': construirZip([
-        EntradaZip('xl/workbook.xml', utf8.encode('<workbook/>'), tamanoDeclarado: 5000000),
+        EntradaZip(
+          'xl/workbook.xml',
+          utf8.encode('<workbook/>'),
+          tamanoDeclarado: 5000000,
+        ),
       ]),
       'cadena compartida fuera de rango': libroConHoja(
         utf8.encode(

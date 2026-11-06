@@ -12,15 +12,22 @@
 import 'dart:io';
 
 import 'package:finanzas_dominio/finanzas_dominio.dart'
-    hide Semaforo, formatearCentavos, TipoLibro, VisibilidadLibro, puntosBaseEnCien;
-import 'package:finanzas_dominio/finanzas_dominio.dart' as dom
+    hide
+        Semaforo,
+        formatearCentavos,
+        TipoLibro,
+        VisibilidadLibro,
+        puntosBaseEnCien;
+import 'package:finanzas_dominio/finanzas_dominio.dart'
+    as dom
     show VisibilidadLibro;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gravity/app/app_gravity.dart';
 import 'package:gravity/app/router.dart';
-import 'package:gravity/diseno/diseno.dart' show TecladoMonto, montosVisiblesProvider;
+import 'package:gravity/diseno/diseno.dart'
+    show TecladoMonto, montosVisiblesProvider;
 import 'package:gravity/modulos/finanzas/casos_uso/servicio_finanzas.dart';
 import 'package:gravity/modulos/finanzas/datos/demostracion.dart';
 import 'package:gravity/modulos/finanzas/datos/repositorio.dart';
@@ -28,7 +35,8 @@ import 'package:gravity/modulos/finanzas/datos/repositorio_memoria.dart';
 import 'package:gravity/modulos/finanzas/datos/repositorio_supabase.dart'
     show tablasDeLaColaFinanzas;
 import 'package:gravity/modulos/finanzas/estado/proveedores.dart';
-import 'package:gravity/modulos/finanzas/finanzas.dart' show SeccionFinanzas, refrescarFinanzas;
+import 'package:gravity/modulos/finanzas/finanzas.dart'
+    show SeccionFinanzas, refrescarFinanzas;
 import 'package:gravity/nucleo/contratos/dispositivo.dart';
 import 'package:gravity/nucleo/contratos/roles.dart';
 import 'package:gravity/nucleo/sesion/servicio_sesion_demostracion.dart';
@@ -53,68 +61,88 @@ void main() {
   final idPareja = IdsDemostracion.pareja;
 
   group('1. El motivo necesita 3 caracteres visibles', () {
-    test('el libro de papá rechaza un motivo corto en todas sus rutas', () async {
-      final repo = repositorioDe(dueno);
-      addTearDown(repo.cerrar);
-      final servicio = servicioDe(repo, dueno);
-      final banco = repo.cuentaDe(libroPapa, 'Cuenta de la pensión').id;
-      final miBanco = repo.cuentaDe(libroDueno, 'Mi banco').id;
-      for (final corto in _cortos) {
-        await expectLater(
-          servicio.registrarGasto(
-            libroId: libroPapa,
-            cuentaOrigenId: banco,
-            lineas: const [LineaGasto(monto: 100)],
-            motivo: corto,
-          ),
-          throwsA(isA<ErrorFinanzas>().having((e) => e.mensaje, 'mensaje', contains('3 caracteres'))),
-          reason: 'gasto "$corto"',
+    test(
+      'el libro de papá rechaza un motivo corto en todas sus rutas',
+      () async {
+        final repo = repositorioDe(dueno);
+        addTearDown(repo.cerrar);
+        final servicio = servicioDe(repo, dueno);
+        final banco = repo.cuentaDe(libroPapa, 'Cuenta de la pensión').id;
+        final miBanco = repo.cuentaDe(libroDueno, 'Mi banco').id;
+        for (final corto in _cortos) {
+          await expectLater(
+            servicio.registrarGasto(
+              libroId: libroPapa,
+              cuentaOrigenId: banco,
+              lineas: const [LineaGasto(monto: 100)],
+              motivo: corto,
+            ),
+            throwsA(
+              isA<ErrorFinanzas>().having(
+                (e) => e.mensaje,
+                'mensaje',
+                contains('3 caracteres'),
+              ),
+            ),
+            reason: 'gasto "$corto"',
+          );
+          await expectLater(
+            servicio.registrarIngresoExtra(
+              libroId: libroPapa,
+              monto: 100,
+              cuentaDestinoId: banco,
+              motivo: corto,
+            ),
+            throwsA(isA<ErrorFinanzas>()),
+            reason: 'ingreso "$corto"',
+          );
+          await expectLater(
+            servicio.registrarMovimiento(
+              tipo: TipoMovimiento.transferencia,
+              cuentaOrigenId: miBanco,
+              cuentaDestinoId: banco,
+              monto: 100,
+              motivo: corto,
+            ),
+            throwsA(isA<ErrorFinanzas>()),
+            reason: 'aportación "$corto"',
+          );
+        }
+        // Con 3 visibles pasa, aunque lleve espacios alrededor.
+        final r = await servicio.registrarGasto(
+          libroId: libroPapa,
+          cuentaOrigenId: banco,
+          lineas: const [LineaGasto(monto: 100)],
+          motivo: '  Pan  ',
         );
-        await expectLater(
-          servicio.registrarIngresoExtra(
-            libroId: libroPapa,
-            monto: 100,
-            cuentaDestinoId: banco,
-            motivo: corto,
-          ),
-          throwsA(isA<ErrorFinanzas>()),
-          reason: 'ingreso "$corto"',
-        );
-        await expectLater(
-          servicio.registrarMovimiento(
-            tipo: TipoMovimiento.transferencia,
-            cuentaOrigenId: miBanco,
-            cuentaDestinoId: banco,
-            monto: 100,
-            motivo: corto,
-          ),
-          throwsA(isA<ErrorFinanzas>()),
-          reason: 'aportación "$corto"',
-        );
-      }
-      // Con 3 visibles pasa, aunque lleve espacios alrededor.
-      final r = await servicio.registrarGasto(
-        libroId: libroPapa,
-        cuentaOrigenId: banco,
-        lineas: const [LineaGasto(monto: 100)],
-        motivo: '  Pan  ',
-      );
-      expect(r.movimientos.single.motivo, '  Pan  '.trim());
-    });
+        expect(r.movimientos.single.motivo, '  Pan  '.trim());
+      },
+    );
 
     test('la anulación pide 3 caracteres visibles', () async {
       final repo = repositorioDe(dueno);
       addTearDown(repo.cerrar);
       final servicio = servicioDe(repo, dueno);
-      final original = repo.datos.movimientos.firstWhere((m) => m.tipo == TipoMovimiento.gasto);
+      final original = repo.datos.movimientos.firstWhere(
+        (m) => m.tipo == TipoMovimiento.gasto,
+      );
       for (final corto in _cortos) {
         await expectLater(
           servicio.anular(original.id, motivo: corto),
-          throwsA(isA<ErrorFinanzas>().having((e) => e.mensaje, 'mensaje', contains('3 caracteres'))),
+          throwsA(
+            isA<ErrorFinanzas>().having(
+              (e) => e.mensaje,
+              'mensaje',
+              contains('3 caracteres'),
+            ),
+          ),
           reason: '"$corto"',
         );
       }
-      expect(repo.datos.movimientos.where((m) => m.anulaA == original.id), isEmpty);
+      expect(
+        repo.datos.movimientos.where((m) => m.anulaA == original.id),
+        isEmpty,
+      );
       final contra = await servicio.anular(original.id, motivo: 'Dup');
       expect(contra.motivo, 'Dup');
     });
@@ -125,12 +153,25 @@ void main() {
       addTearDown(repo.cerrar);
       final servicio = servicioDe(repo, dueno);
       final cuenta = repo.cuentaDe(libroDueno, 'Mi banco');
-      final saldo = repo.datos.nuevoLibroHogar().saldo(cuenta.id, hasta: hoyDePrueba);
+      final saldo = repo.datos.nuevoLibroHogar().saldo(
+        cuenta.id,
+        hasta: hoyDePrueba,
+      );
       await servicio.conciliar(cuentaId: cuenta.id, saldoDeclarado: saldo);
       for (final corto in _cortos) {
         await expectLater(
-          servicio.conciliar(cuentaId: cuenta.id, saldoDeclarado: saldo - 500, motivo: corto),
-          throwsA(isA<ErrorFinanzas>().having((e) => e.mensaje, 'mensaje', contains('3 caracteres'))),
+          servicio.conciliar(
+            cuentaId: cuenta.id,
+            saldoDeclarado: saldo - 500,
+            motivo: corto,
+          ),
+          throwsA(
+            isA<ErrorFinanzas>().having(
+              (e) => e.mensaje,
+              'mensaje',
+              contains('3 caracteres'),
+            ),
+          ),
           reason: '"$corto"',
         );
       }
@@ -142,44 +183,55 @@ void main() {
       expect(c.ajusteMovimientoId, isNotNull);
     });
 
-    testWidgets('la hoja (+) en el libro de papá no guarda con un motivo corto',
-        (tester) async {
-      final repo = repositorioDe(dueno);
-      addTearDown(repo.cerrar);
-      await montarApp(
-        tester,
-        dispositivo: TipoDispositivo.telefono,
-        sesion: ServicioSesionDemostracion(inicial: dueno),
-        extras: [repositorioFinanzasProvider.overrideWithValue(repo)],
-      );
-      tester.view.physicalSize = const Size(411, 850);
-      _contenedor(tester).read(montosVisiblesProvider.notifier).fijar(true);
-      await abrirRegistroDelTelefono(tester, 'Gasto');
-      final chipPapa = find.byKey(const ValueKey('gasto-libro-$libroPapa'));
-      await tester.ensureVisible(chipPapa);
-      await tester.pump(const Duration(milliseconds: 200));
-      await tester.tap(chipPapa);
-      await tester.pump(const Duration(milliseconds: 300));
-      await tester.tap(
-        find.descendant(of: find.byType(TecladoMonto), matching: find.text('5')),
-      );
-      await tester.pump();
-      FilledButton guardar() =>
-          tester.widget<FilledButton>(find.byKey(const ValueKey('gasto-guardar')));
-      final motivo = find.byKey(const ValueKey('gasto-motivo'));
-      await tester.ensureVisible(motivo);
-      expect(find.textContaining('Al menos 3 letras o números'), findsOneWidget);
-      for (final corto in ['ab', '   a   ', '​​​​']) {
-        await tester.enterText(motivo, corto);
+    testWidgets(
+      'la hoja (+) en el libro de papá no guarda con un motivo corto',
+      (tester) async {
+        final repo = repositorioDe(dueno);
+        addTearDown(repo.cerrar);
+        await montarApp(
+          tester,
+          dispositivo: TipoDispositivo.telefono,
+          sesion: ServicioSesionDemostracion(inicial: dueno),
+          extras: [repositorioFinanzasProvider.overrideWithValue(repo)],
+        );
+        tester.view.physicalSize = const Size(411, 850);
+        _contenedor(tester).read(montosVisiblesProvider.notifier).fijar(true);
+        await abrirRegistroDelTelefono(tester, 'Gasto');
+        final chipPapa = find.byKey(const ValueKey('gasto-libro-$libroPapa'));
+        await tester.ensureVisible(chipPapa);
+        await tester.pump(const Duration(milliseconds: 200));
+        await tester.tap(chipPapa);
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.tap(
+          find.descendant(
+            of: find.byType(TecladoMonto),
+            matching: find.text('5'),
+          ),
+        );
         await tester.pump();
-        expect(guardar().onPressed, isNull, reason: '"$corto"');
-      }
-      await tester.enterText(motivo, 'Pan');
-      await tester.pump();
-      expect(guardar().onPressed, isNotNull);
-    });
+        FilledButton guardar() => tester.widget<FilledButton>(
+          find.byKey(const ValueKey('gasto-guardar')),
+        );
+        final motivo = find.byKey(const ValueKey('gasto-motivo'));
+        await tester.ensureVisible(motivo);
+        expect(
+          find.textContaining('Al menos 3 letras o números'),
+          findsOneWidget,
+        );
+        for (final corto in ['ab', '   a   ', '​​​​']) {
+          await tester.enterText(motivo, corto);
+          await tester.pump();
+          expect(guardar().onPressed, isNull, reason: '"$corto"');
+        }
+        await tester.enterText(motivo, 'Pan');
+        await tester.pump();
+        expect(guardar().onPressed, isNotNull);
+      },
+    );
 
-    testWidgets('anular desde la fila pide 3 caracteres visibles', (tester) async {
+    testWidgets('anular desde la fila pide 3 caracteres visibles', (
+      tester,
+    ) async {
       final repo = repositorioDe(dueno);
       addTearDown(repo.cerrar);
       await montarApp(
@@ -190,12 +242,16 @@ void main() {
       );
       tester.view.physicalSize = const Size(411, 850);
       _contenedor(tester).read(montosVisiblesProvider.notifier).fijar(true);
-      _contenedor(tester).read(routerProvider).go(SeccionFinanzas.movimientos.ruta);
+      _contenedor(tester)
+          .read(routerProvider)
+          .go(SeccionFinanzas.movimientos.ruta);
       await tester.pump(const Duration(milliseconds: 600));
       await tester.pump(const Duration(milliseconds: 600));
       final menu = find
           .byWidgetPredicate(
-            (w) => w.key is ValueKey && '${(w.key! as ValueKey).value}'.startsWith('movimiento-menu-'),
+            (w) =>
+                w.key is ValueKey &&
+                '${(w.key! as ValueKey).value}'.startsWith('movimiento-menu-'),
           )
           .first;
       final antes = repo.datos.movimientos.length;
@@ -204,8 +260,13 @@ void main() {
       await tester.tap(find.text('Anular…'));
       await tester.pumpAndSettle();
       final campo = find.byKey(const ValueKey('finanzas-dialogo-texto'));
-      expect(find.textContaining('Al menos 3 letras o números'), findsOneWidget);
-      FilledButton anular() => tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Anular'));
+      expect(
+        find.textContaining('Al menos 3 letras o números'),
+        findsOneWidget,
+      );
+      FilledButton anular() => tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, 'Anular'),
+      );
       for (final corto in ['x', 'ab', '  a  ', '​​​']) {
         await tester.enterText(campo, corto);
         await tester.pump();
@@ -225,7 +286,10 @@ void main() {
     /// Un libro de papá recién creado (sin suplente) en el hogar de ejemplo.
     Future<(RepositorioFinanzasEnMemoria, String)> conLibroNuevo() async {
       final repo = repositorioDe(dueno);
-      final id = await servicioDe(repo, dueno).crearLibroRepresentado('Tío (ejemplo)');
+      final id = await servicioDe(
+        repo,
+        dueno,
+      ).crearLibroRepresentado('Tío (ejemplo)');
       return (repo, id);
     }
 
@@ -234,20 +298,35 @@ void main() {
       addTearDown(repo.cerrar);
       final servicio = servicioDe(repo, dueno);
       expect(servicio.cargoVacio(id, PapelLibro.albaceaSuplente), isTrue);
-      expect(servicio.cargoVacio(id, PapelLibro.albacea), isFalse, reason: 'lo tiene el dueño');
-      await servicio.nombrarAlbacea(id, idPareja, papel: PapelLibro.albaceaSuplente);
+      expect(
+        servicio.cargoVacio(id, PapelLibro.albacea),
+        isFalse,
+        reason: 'lo tiene el dueño',
+      );
+      await servicio.nombrarAlbacea(
+        id,
+        idPareja,
+        papel: PapelLibro.albaceaSuplente,
+      );
       final libro = repo.datos.libro(id)!;
       expect(libro.papelDe(idPareja, hoyDePrueba), PapelLibro.albaceaSuplente);
       expect(servicio.cargoVacio(id, PapelLibro.albaceaSuplente), isFalse);
       await expectLater(
-        servicio.nombrarAlbacea(id, idPareja, papel: PapelLibro.albaceaSuplente),
+        servicio.nombrarAlbacea(
+          id,
+          idPareja,
+          papel: PapelLibro.albaceaSuplente,
+        ),
         throwsA(isA<ErrorFinanzas>()),
         reason: 'el cargo ya lo ocupa alguien',
       );
     });
 
     test('solo el dueño; la pareja y la maestra no', () async {
-      for (final sesion in [pareja, sesionDe(Rol.coadministrador, maestra: true)]) {
+      for (final sesion in [
+        pareja,
+        sesionDe(Rol.coadministrador, maestra: true),
+      ]) {
         final repo = repositorioDe(sesion);
         addTearDown(repo.cerrar);
         await expectLater(
@@ -256,7 +335,13 @@ void main() {
             idPareja,
             papel: PapelLibro.albaceaSuplente,
           ),
-          throwsA(isA<ErrorFinanzas>().having((e) => e.mensaje, 'mensaje', contains('dueño'))),
+          throwsA(
+            isA<ErrorFinanzas>().having(
+              (e) => e.mensaje,
+              'mensaje',
+              contains('dueño'),
+            ),
+          ),
           reason: sesion.persona.nombre,
         );
       }
@@ -274,7 +359,11 @@ void main() {
         reason: 'la persona representada no lleva su libro',
       );
       await expectLater(
-        servicio.nombrarAlbacea(id, 'persona-que-no-existe', papel: PapelLibro.albaceaSuplente),
+        servicio.nombrarAlbacea(
+          id,
+          'persona-que-no-existe',
+          papel: PapelLibro.albaceaSuplente,
+        ),
         throwsA(isA<ErrorFinanzas>()),
         reason: 'no es adulto con Finanzas',
       );
@@ -306,20 +395,35 @@ void main() {
       );
       addTearDown(repo.cerrar);
       final servicio = servicioDe(repo, dueno);
-      expect(servicio.cargoVacio(libroPapa, PapelLibro.albaceaSuplente), isTrue,
-          reason: 'la pareja ya no es adulto con Finanzas');
-      await servicio.nombrarAlbacea(libroPapa, tercera, papel: PapelLibro.albaceaSuplente);
+      expect(
+        servicio.cargoVacio(libroPapa, PapelLibro.albaceaSuplente),
+        isTrue,
+        reason: 'la pareja ya no es adulto con Finanzas',
+      );
+      await servicio.nombrarAlbacea(
+        libroPapa,
+        tercera,
+        papel: PapelLibro.albaceaSuplente,
+      );
       final libro = repo.datos.libro(libroPapa)!;
       expect(libro.papelDe(tercera, hoyDePrueba), PapelLibro.albaceaSuplente);
-      expect(libro.papelDe(idPareja, hoyDePrueba), isNull, reason: 'el cargo viejo se cerró');
+      expect(
+        libro.papelDe(idPareja, hoyDePrueba),
+        isNull,
+        reason: 'el cargo viejo se cerró',
+      );
     });
 
-    testWidgets('Ajustes ofrece "Nombrar suplente" al dueño y lo nombra',
-        (tester) async {
+    testWidgets('Ajustes ofrece "Nombrar suplente" al dueño y lo nombra', (
+      tester,
+    ) async {
       final base = repositorioDe(dueno);
       final repo = base;
       addTearDown(repo.cerrar);
-      final id = await servicioDe(repo, dueno).crearLibroRepresentado('Tío (ejemplo)');
+      final id = await servicioDe(
+        repo,
+        dueno,
+      ).crearLibroRepresentado('Tío (ejemplo)');
       await montarApp(
         tester,
         dispositivo: TipoDispositivo.laptop,
@@ -332,24 +436,43 @@ void main() {
       await tester.pumpAndSettle();
       final boton = find.byKey(ValueKey('libro-nombrar-suplente-$id'));
       expect(boton, findsOneWidget);
-      expect(find.byKey(ValueKey('libro-nombrar-albacea-$id')), findsNothing,
-          reason: 'el albacea es el dueño');
+      expect(
+        find.byKey(ValueKey('libro-nombrar-albacea-$id')),
+        findsNothing,
+        reason: 'el albacea es el dueño',
+      );
       // El libro de papá del ejemplo tiene albacea y suplente: sin botones.
-      expect(find.byKey(const ValueKey('libro-nombrar-suplente-$libroPapa')), findsNothing);
+      expect(
+        find.byKey(const ValueKey('libro-nombrar-suplente-$libroPapa')),
+        findsNothing,
+      );
       await tester.ensureVisible(boton);
       await tester.tap(boton);
       await tester.pumpAndSettle();
       expect(find.byKey(const ValueKey('nombrar-confirmar')), findsOneWidget);
-      expect(tester.widget<FilledButton>(find.byKey(const ValueKey('nombrar-confirmar'))).onPressed, isNull);
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.byKey(const ValueKey('nombrar-confirmar')),
+            )
+            .onPressed,
+        isNull,
+      );
       await tester.tap(find.byKey(const ValueKey('nombrar-persona')));
       await tester.pumpAndSettle();
       await tester.tap(find.text(repo.actual.nombreDe(idPareja)).last);
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('nombrar-confirmar')));
       await tester.pumpAndSettle();
-      expect(repo.datos.libro(id)!.papelDe(idPareja, hoyDePrueba), PapelLibro.albaceaSuplente);
-      expect(find.byKey(ValueKey('libro-nombrar-suplente-$id')), findsNothing,
-          reason: 'el cargo ya está ocupado');
+      expect(
+        repo.datos.libro(id)!.papelDe(idPareja, hoyDePrueba),
+        PapelLibro.albaceaSuplente,
+      );
+      expect(
+        find.byKey(ValueKey('libro-nombrar-suplente-$id')),
+        findsNothing,
+        reason: 'el cargo ya está ocupado',
+      );
     });
 
     testWidgets('la pareja no ve los botones de nombrar', (tester) async {
@@ -367,7 +490,9 @@ void main() {
       await tester.pumpAndSettle();
       expect(
         find.byWidgetPredicate(
-          (w) => w.key is ValueKey && '${(w.key! as ValueKey).value}'.startsWith('libro-nombrar-'),
+          (w) =>
+              w.key is ValueKey &&
+              '${(w.key! as ValueKey).value}'.startsWith('libro-nombrar-'),
         ),
         findsNothing,
       );
@@ -390,7 +515,11 @@ void main() {
       contenedor.listen(cargaFinanzasProvider, (_, _) {});
       await contenedor.read(cargaFinanzasProvider.future);
       expect(repo.cargas, 1);
-      var casaAntes = contenedor.read(cargaFinanzasProvider).requireValue.datos.libro(casa)!;
+      var casaAntes = contenedor
+          .read(cargaFinanzasProvider)
+          .requireValue
+          .datos
+          .libro(casa)!;
       expect(casaAntes.esAdministrador(idDueno), isTrue);
       expect(casaAntes.vigentes(hoyDePrueba), hasLength(2));
 
@@ -398,7 +527,11 @@ void main() {
       repo.hayBaja = true;
       await refrescarFinanzas(contenedor);
       expect(repo.cargas, 2);
-      casaAntes = contenedor.read(cargaFinanzasProvider).requireValue.datos.libro(casa)!;
+      casaAntes = contenedor
+          .read(cargaFinanzasProvider)
+          .requireValue
+          .datos
+          .libro(casa)!;
       expect(casaAntes.vigentes(hoyDePrueba), hasLength(1));
       expect(casaAntes.visibilidad, dom.VisibilidadLibro.privada);
       expect(casaAntes.esAdministrador(idDueno), isTrue);
@@ -415,11 +548,16 @@ void main() {
       await contenedor.read(cargaFinanzasProvider.future);
       repo.sinSenal = true;
       await refrescarFinanzas(contenedor);
-      expect(contenedor.read(cargaFinanzasProvider).hasValue || contenedor.read(cargaFinanzasProvider).hasError, isTrue);
+      expect(
+        contenedor.read(cargaFinanzasProvider).hasValue ||
+            contenedor.read(cargaFinanzasProvider).hasError,
+        isTrue,
+      );
     });
 
-    testWidgets('al abrir Ajustes se vuelve a pedir y se ve quién administra',
-        (tester) async {
+    testWidgets('al abrir Ajustes se vuelve a pedir y se ve quién administra', (
+      tester,
+    ) async {
       final repo = _RepoQueCambiaAlRecargar(pareja);
       addTearDown(repo.cerrar);
       await montarApp(
@@ -438,9 +576,16 @@ void main() {
       repo.administradorNuevo = idPareja;
       _contenedor(tester).read(routerProvider).go(SeccionFinanzas.ajustes.ruta);
       await tester.pumpAndSettle();
-      expect(repo.cargas, greaterThan(cargasAntes), reason: 'Ajustes recarga al abrirse');
-      expect(find.byKey(const ValueKey('libro-miembros-$casa')), findsOneWidget,
-          reason: 'ahora la pareja es la administradora');
+      expect(
+        repo.cargas,
+        greaterThan(cargasAntes),
+        reason: 'Ajustes recarga al abrirse',
+      );
+      expect(
+        find.byKey(const ValueKey('libro-miembros-$casa')),
+        findsOneWidget,
+        reason: 'ahora la pareja es la administradora',
+      );
     });
   });
 
@@ -460,7 +605,8 @@ void main() {
         expect(
           RegExp(r'''['"]bitacora['"]''').hasMatch(codigo),
           isFalse,
-          reason: '${f.path} no debe escribir en public.bitacora (tope de 500 por día y 4 KB; 54000)',
+          reason:
+              '${f.path} no debe escribir en public.bitacora (tope de 500 por día y 4 KB; 54000)',
         );
       }
     });
@@ -512,7 +658,9 @@ class _RepoQueCambiaAlRecargar extends RepositorioFinanzasEnMemoria {
     );
     return carga.copiar(
       datos: datos.copiar(
-        libros: [for (final l in datos.libros) l.id == casa.id ? actualizada : l],
+        libros: [
+          for (final l in datos.libros) l.id == casa.id ? actualizada : l,
+        ],
       ),
     );
   }

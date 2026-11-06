@@ -29,7 +29,8 @@ import 'package:gravity/diseno/proveedores.dart'
         montosVisiblesProvider,
         personaEnPantallaProvider;
 import 'package:gravity/nucleo/base_local/base_local.dart';
-import 'package:gravity/nucleo/cola/proveedores_cola.dart' show baseLocalProvider;
+import 'package:gravity/nucleo/cola/proveedores_cola.dart'
+    show baseLocalProvider;
 import 'package:gravity/nucleo/contratos/dispositivo.dart';
 import 'package:gravity/nucleo/contratos/roles.dart';
 import 'package:gravity/nucleo/seguridad/almacen_seguro.dart';
@@ -41,7 +42,6 @@ import 'package:gravity/nucleo/sesion/proveedores_sesion.dart';
 import 'package:gravity/nucleo/sesion/servicio_sesion_demostracion.dart';
 import 'package:gravity/nucleo/sesion/servicio_sesion_falso.dart';
 import 'package:gravity/nucleo/tablet/controlador_tablet.dart';
-
 
 void main() {
   final dueno = sesionDeEjemplo(Rol.dueno);
@@ -56,9 +56,13 @@ void main() {
     final contenedor = ProviderContainer(
       overrides: [
         almacenSeguroProvider.overrideWithValue(almacen),
-        servicioSesionProvider.overrideWithValue(ServicioSesionFalso(inicial: dueno)),
+        servicioSesionProvider.overrideWithValue(
+          ServicioSesionFalso(inicial: dueno),
+        ),
         biometriaProvider.overrideWithValue(BiometriaFalsa()),
-        relojSeguridadProvider.overrideWithValue(() => DateTime(2026, 10, 24, 10)),
+        relojSeguridadProvider.overrideWithValue(
+          () => DateTime(2026, 10, 24, 10),
+        ),
       ],
     );
     addTearDown(contenedor.dispose);
@@ -121,7 +125,8 @@ void main() {
       var revelado = false;
       if (montos.fuente == FuenteDePinMontos.propio && montos.hayQueCrearPin) {
         await montos.crearPin(pinDelCurioso);
-        revelado = await montos.verificar(pinDelCurioso) == ResultadoRevelar.revelado;
+        revelado =
+            await montos.verificar(pinDelCurioso) == ResultadoRevelar.revelado;
       }
       expect(
         revelado,
@@ -133,18 +138,30 @@ void main() {
       );
     });
 
-    test('control: con el PIN equivocado no se ven (y se acumulan los fallos)', () async {
-      final contenedor = crear();
-      final montos = contenedor.read(controladorMontosProvider.notifier);
-      await montos.listo;
-      await montos.crearPin(pinDelDueno);
-      for (var i = 0; i < 4; i++) {
-        expect(await montos.verificar(pinDelCurioso), ResultadoRevelar.pinIncorrecto);
-      }
-      expect(await montos.verificar(pinDelCurioso), ResultadoRevelar.bloqueado);
-      expect(await montos.verificar(pinDelDueno), ResultadoRevelar.bloqueado,
-          reason: 'durante la espera ni el PIN bueno entra');
-    });
+    test(
+      'control: con el PIN equivocado no se ven (y se acumulan los fallos)',
+      () async {
+        final contenedor = crear();
+        final montos = contenedor.read(controladorMontosProvider.notifier);
+        await montos.listo;
+        await montos.crearPin(pinDelDueno);
+        for (var i = 0; i < 4; i++) {
+          expect(
+            await montos.verificar(pinDelCurioso),
+            ResultadoRevelar.pinIncorrecto,
+          );
+        }
+        expect(
+          await montos.verificar(pinDelCurioso),
+          ResultadoRevelar.bloqueado,
+        );
+        expect(
+          await montos.verificar(pinDelDueno),
+          ResultadoRevelar.bloqueado,
+          reason: 'durante la espera ni el PIN bueno entra',
+        );
+      },
+    );
   });
 
   group('P2: PIN de 6 dígitos para quien ve dinero (guardia, decisión del 23/oct)', () {
@@ -173,21 +190,28 @@ void main() {
         credencial: ServicioSesionFalso.credencialDe(dueno),
       );
       await expectLater(
-        tablet.cambiarPin(dueno.persona.id, pinActual: pinDelDueno, pinNuevo: '7382'),
+        tablet.cambiarPin(
+          dueno.persona.id,
+          pinActual: pinDelDueno,
+          pinNuevo: '7382',
+        ),
         throwsArgumentError,
       );
     });
 
-    test('control: un PIN de 6 dígitos no trivial sí se acepta en los tres sitios', () async {
-      final contenedor = crear();
-      final montos = contenedor.read(controladorMontosProvider.notifier);
-      await montos.listo;
-      await montos.crearPin(pinDelDueno);
-      final bloqueo = contenedor.read(controladorBloqueoProvider.notifier);
-      await bloqueo.listo;
-      await bloqueo.configurarPin(pinDelDueno);
-      expect(bloqueo.comprobarPin(pinDelDueno), ResultadoBloqueo.abierto);
-    });
+    test(
+      'control: un PIN de 6 dígitos no trivial sí se acepta en los tres sitios',
+      () async {
+        final contenedor = crear();
+        final montos = contenedor.read(controladorMontosProvider.notifier);
+        await montos.listo;
+        await montos.crearPin(pinDelDueno);
+        final bloqueo = contenedor.read(controladorBloqueoProvider.notifier);
+        await bloqueo.listo;
+        await bloqueo.configurarPin(pinDelDueno);
+        expect(bloqueo.comprobarPin(pinDelDueno), ResultadoBloqueo.abierto);
+      },
+    );
   });
 
   group('P3: tablet — entrar con el PIN muestra los montos; volver al reposo los oculta', () {
@@ -232,7 +256,10 @@ void main() {
     test('al entrar con su PIN el dueño ve sus montos de una vez; al volver a Hogar se ocultan', () async {
       final contenedor = await tabletConPersonas();
       final tablet = contenedor.read(controladorTabletProvider.notifier);
-      expect(await tablet.entrarConPin(dueno.persona.id, pinDelDueno), ResultadoDesbloqueo.abierto);
+      expect(
+        await tablet.entrarConPin(dueno.persona.id, pinDelDueno),
+        ResultadoDesbloqueo.abierto,
+      );
       expect(contenedor.read(personaEnPantallaProvider), dueno.persona.id);
       expect(
         contenedor.read(montosOcultosProvider),
@@ -242,7 +269,10 @@ void main() {
 
       tablet.volverAlReposo();
       await tablet.cambiosEnServidor;
-      expect(contenedor.read(personaEnPantallaProvider), isNot(dueno.persona.id));
+      expect(
+        contenedor.read(personaEnPantallaProvider),
+        isNot(dueno.persona.id),
+      );
       expect(
         contenedor.read(montosOcultosProvider),
         isTrue,
@@ -254,16 +284,30 @@ void main() {
       final contenedor = await tabletConPersonas();
       final tablet = contenedor.read(controladorTabletProvider.notifier);
       final pareja = sesionDeEjemplo(Rol.coadministrador);
-      expect(await tablet.entrarConPin(dueno.persona.id, pinDelDueno), ResultadoDesbloqueo.abierto);
+      expect(
+        await tablet.entrarConPin(dueno.persona.id, pinDelDueno),
+        ResultadoDesbloqueo.abierto,
+      );
       expect(contenedor.read(montosOcultosProvider), isFalse);
 
       tablet.volverAlReposo();
       await tablet.cambiosEnServidor;
-      expect(contenedor.read(montosOcultosProvider), isTrue, reason: 'en reposo, ocultos');
+      expect(
+        contenedor.read(montosOcultosProvider),
+        isTrue,
+        reason: 'en reposo, ocultos',
+      );
 
-      expect(await tablet.entrarConPin(pareja.persona.id, pinDelDueno), ResultadoDesbloqueo.abierto);
+      expect(
+        await tablet.entrarConPin(pareja.persona.id, pinDelDueno),
+        ResultadoDesbloqueo.abierto,
+      );
       expect(contenedor.read(personaEnPantallaProvider), pareja.persona.id);
-      expect(contenedor.read(montosOcultosProvider), isFalse, reason: 'la pareja entró con SU PIN');
+      expect(
+        contenedor.read(montosOcultosProvider),
+        isFalse,
+        reason: 'la pareja entró con SU PIN',
+      );
       tablet.volverAlReposo();
       await tablet.cambiosEnServidor;
       expect(contenedor.read(montosOcultosProvider), isTrue);
@@ -272,16 +316,27 @@ void main() {
     test('aunque haya entrado con PIN, el modo privado y el tiempo sin uso los ocultan', () async {
       final contenedor = await tabletConPersonas();
       final tablet = contenedor.read(controladorTabletProvider.notifier);
-      expect(await tablet.entrarConPin(dueno.persona.id, pinDelDueno), ResultadoDesbloqueo.abierto);
+      expect(
+        await tablet.entrarConPin(dueno.persona.id, pinDelDueno),
+        ResultadoDesbloqueo.abierto,
+      );
       expect(contenedor.read(montosOcultosProvider), isFalse);
 
       contenedor.read(modoPrivadoProvider.notifier).fijar(true);
-      expect(contenedor.read(montosOcultosProvider), isTrue, reason: 'modo privado');
+      expect(
+        contenedor.read(montosOcultosProvider),
+        isTrue,
+        reason: 'modo privado',
+      );
       contenedor.read(modoPrivadoProvider.notifier).fijar(false);
 
       // Lo que hace OcultarMontosPorInactividad al vencer el tiempo.
       contenedor.read(montosVisiblesProvider.notifier).fijar(false);
-      expect(contenedor.read(montosOcultosProvider), isTrue, reason: 'tras el tiempo sin uso');
+      expect(
+        contenedor.read(montosOcultosProvider),
+        isTrue,
+        reason: 'tras el tiempo sin uso',
+      );
       expect(
         contenedor.read(modoPrivadoProvider),
         isFalse,

@@ -20,7 +20,9 @@ class _Servidor {
         peticion.uri,
         texto.isEmpty ? null : jsonDecode(texto),
       ));
-      final respuesta = respuestas.isEmpty ? (200, <Object>[]) : respuestas.removeAt(0);
+      final respuesta = respuestas.isEmpty
+          ? (200, <Object>[])
+          : respuestas.removeAt(0);
       peticion.response.statusCode = respuesta.$1;
       peticion.response.headers.contentType = ContentType.json;
       peticion.response.write(jsonEncode(respuesta.$2));
@@ -59,7 +61,10 @@ void main() {
   setUp(() async {
     servidor = await _Servidor.iniciar();
     cliente = await servidor.cliente();
-    repositorio = RepositorioInvitacionesSupabase(() => cliente, reloj: () => ahora);
+    repositorio = RepositorioInvitacionesSupabase(
+      () => cliente,
+      reloj: () => ahora,
+    );
   });
 
   tearDown(() async {
@@ -68,37 +73,39 @@ void main() {
   });
 
   group('con servidor (Supabase)', () {
-    test('crear: llama crear_invitacion con la firma acordada y lee el token',
-        () async {
-      servidor.respuestas.add((
-        200,
-        [
-          {
-            'invitacion_id': 'inv-1',
-            'token': 'abc123',
-            'expira': '2026-10-31T12:00:00+00:00',
-          },
-        ],
-      ));
-      final creada = await repositorio.crearCuentaMaestra(
-        hogarId: 'hogar-1',
-        correo: '  Maestra@Ejemplo.test ',
-      );
-      expect(creada.id, 'inv-1');
-      expect(creada.token, 'abc123');
-      expect(creada.expira, DateTime.utc(2026, 10, 31, 12));
+    test(
+      'crear: llama crear_invitacion con la firma acordada y lee el token',
+      () async {
+        servidor.respuestas.add((
+          200,
+          [
+            {
+              'invitacion_id': 'inv-1',
+              'token': 'abc123',
+              'expira': '2026-10-31T12:00:00+00:00',
+            },
+          ],
+        ));
+        final creada = await repositorio.crearCuentaMaestra(
+          hogarId: 'hogar-1',
+          correo: '  Maestra@Ejemplo.test ',
+        );
+        expect(creada.id, 'inv-1');
+        expect(creada.token, 'abc123');
+        expect(creada.expira, DateTime.utc(2026, 10, 31, 12));
 
-      final (metodo, uri, cuerpo) = servidor.recibidas.single;
-      expect(metodo, 'POST');
-      expect(uri.path, '/rest/v1/rpc/crear_invitacion');
-      expect(cuerpo, {
-        'p_hogar_id': 'hogar-1',
-        'p_correo': 'Maestra@Ejemplo.test',
-        'p_rol': 'coadministrador',
-        'p_vigencia_dias': 7,
-        'p_es_maestra': true,
-      });
-    });
+        final (metodo, uri, cuerpo) = servidor.recibidas.single;
+        expect(metodo, 'POST');
+        expect(uri.path, '/rest/v1/rpc/crear_invitacion');
+        expect(cuerpo, {
+          'p_hogar_id': 'hogar-1',
+          'p_correo': 'Maestra@Ejemplo.test',
+          'p_rol': 'coadministrador',
+          'p_vigencia_dias': 7,
+          'p_es_maestra': true,
+        });
+      },
+    );
 
     test('42501: solo el dueño invita', () async {
       servidor.respuestas.add((403, {'code': '42501', 'message': 'no'}));
@@ -201,7 +208,10 @@ void main() {
       final lista = await repositorio.pendientes('h');
       expect(lista.single.esMaestra, isFalse);
       expect(servidor.recibidas, hasLength(2));
-      expect(servidor.recibidas.last.$2.queryParameters['select'], isNot(contains('es_maestra')));
+      expect(
+        servidor.recibidas.last.$2.queryParameters['select'],
+        isNot(contains('es_maestra')),
+      );
     });
 
     test('revocar llama revocar_invitacion', () async {
@@ -231,26 +241,33 @@ void main() {
   });
 
   group('en memoria (demostración y pruebas)', () {
-    test('una sola invitación pendiente por correo; la anterior se revoca',
-        () async {
-      final repo = RepositorioInvitacionesEnMemoria(reloj: () => ahora);
-      final a = await repo.crearCuentaMaestra(hogarId: 'h', correo: 'M@x.co');
-      final b = await repo.crearCuentaMaestra(hogarId: 'h', correo: ' m@x.co ');
-      expect(a.id, isNot(b.id));
-      expect([for (final i in await repo.pendientes('h')) i.id], [b.id]);
-    });
+    test(
+      'una sola invitación pendiente por correo; la anterior se revoca',
+      () async {
+        final repo = RepositorioInvitacionesEnMemoria(reloj: () => ahora);
+        final a = await repo.crearCuentaMaestra(hogarId: 'h', correo: 'M@x.co');
+        final b = await repo.crearCuentaMaestra(
+          hogarId: 'h',
+          correo: ' m@x.co ',
+        );
+        expect(a.id, isNot(b.id));
+        expect([for (final i in await repo.pendientes('h')) i.id], [b.id]);
+      },
+    );
 
-    test('la maestra es otra persona: no se invita a un miembro del hogar',
-        () async {
-      final repo = RepositorioInvitacionesEnMemoria(
-        reloj: () => ahora,
-        correosDeMiembros: {'dueno@ejemplo.test'},
-      );
-      await expectLater(
-        repo.crearCuentaMaestra(hogarId: 'h', correo: 'Dueno@Ejemplo.test'),
-        throwsA(isA<ErrorInvitacion>()),
-      );
-    });
+    test(
+      'la maestra es otra persona: no se invita a un miembro del hogar',
+      () async {
+        final repo = RepositorioInvitacionesEnMemoria(
+          reloj: () => ahora,
+          correosDeMiembros: {'dueno@ejemplo.test'},
+        );
+        await expectLater(
+          repo.crearCuentaMaestra(hogarId: 'h', correo: 'Dueno@Ejemplo.test'),
+          throwsA(isA<ErrorInvitacion>()),
+        );
+      },
+    );
 
     test('vencen a los 7 días', () async {
       var reloj = ahora;

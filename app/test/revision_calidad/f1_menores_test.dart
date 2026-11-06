@@ -49,9 +49,8 @@ void main() {
     final fila = filaMiembro('l1', miembro, hogarId: 'h1', id: 'x');
     // El servidor: vigente si `hasta > now()`. `hasta` viaja como el inicio del
     // día local; a mediodía de ese mismo día ya no es vigente.
-    final servidorVigente = DateTime.parse(
-      '${fila['hasta']}',
-    ).isAfter(DateTime(2026, 10, 21, 12));
+    final servidorVigente = DateTime.parse('${fila['hasta']}')
+        .isAfter(DateTime(2026, 10, 21, 12));
     expect(
       miembro.vigenteEn(hoy),
       servidorVigente,

@@ -102,15 +102,15 @@ Future<RepositorioFinanzasEnMemoria> montarFinanzasConTamano(
 
 /// Va a [ruta] dentro de la app.
 Future<void> irA(WidgetTester tester, String ruta) async {
-  ProviderScope.containerOf(
-    tester.element(find.byType(AppGravity)),
-  ).read(routerProvider).go(ruta);
+  ProviderScope.containerOf(tester.element(find.byType(AppGravity)))
+      .read(routerProvider)
+      .go(ruta);
   await avanzar(tester);
 }
 
-GoRouter routerDe(WidgetTester tester) => ProviderScope.containerOf(
-  tester.element(find.byType(AppGravity)),
-).read(routerProvider);
+GoRouter routerDe(WidgetTester tester) =>
+    ProviderScope.containerOf(tester.element(find.byType(AppGravity)))
+        .read(routerProvider);
 
 /// Abre la hoja del (+) del teléfono y elige [opcion] ("Gasto", "Ingreso
 /// extra").

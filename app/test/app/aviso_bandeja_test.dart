@@ -85,7 +85,10 @@ void main() {
   ) async {
     await montar(tester, caducados: 2);
     expect(find.byKey(aviso), findsOneWidget);
-    expect(find.textContaining('2 caducaron (7 días sin señal)'), findsOneWidget);
+    expect(
+      find.textContaining('2 caducaron (7 días sin señal)'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('solo cuenta: no muestra montos ni nombres', (tester) async {
@@ -94,10 +97,9 @@ void main() {
       estado: const EstadoBandeja(porSubir: 2, seSubenSolos: 2),
     );
     final textos = tester
-        .widgetList<Text>(find.descendant(
-          of: find.byKey(aviso),
-          matching: find.byType(Text),
-        ))
+        .widgetList<Text>(
+          find.descendant(of: find.byKey(aviso), matching: find.byType(Text)),
+        )
         .map((t) => t.data ?? '')
         .join(' ');
     expect(textos, isNot(contains(r'$')));

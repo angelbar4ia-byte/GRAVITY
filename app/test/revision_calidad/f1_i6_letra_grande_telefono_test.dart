@@ -36,50 +36,48 @@ void main() {
   });
 
   group('I6: con letra grande (hallazgo)', () {
-    testWidgets(
-      'la semana del teléfono (360 dp, letra 1.3) no se desborda',
-      (tester) async {
+    testWidgets('la semana del teléfono (360 dp, letra 1.3) no se desborda', (
+      tester,
+    ) async {
+      await montarFinanzasConTamano(
+        tester,
+        dispositivo: TipoDispositivo.telefono,
+        tamano: _telefono360,
+        escalaDeLetra: 1.3,
+      );
+      final errores = await recolectar(() => irA(tester, Rutas.finanzas));
+      expect(
+        errores.desbordes,
+        isEmpty,
+        reason:
+            'El encabezado de la tarjeta de la semana (título + semáforo '
+            '"Remanente …") no cabe: TarjetaModulo pone la acción fuera de '
+            'un Flexible (tarjeta_modulo.dart)',
+      );
+    });
+
+    for (final opcion in ['Gasto', 'Ingreso extra']) {
+      testWidgets('(+) $opcion (360 dp, letra 1.3): Cancelar y Guardar caben', (
+        tester,
+      ) async {
         await montarFinanzasConTamano(
           tester,
           dispositivo: TipoDispositivo.telefono,
           tamano: _telefono360,
           escalaDeLetra: 1.3,
         );
-        final errores = await recolectar(() => irA(tester, Rutas.finanzas));
+        final errores = await recolectar(
+          () => abrirRegistroDelTelefono(tester, opcion),
+        );
         expect(
           errores.desbordes,
           isEmpty,
           reason:
-              'El encabezado de la tarjeta de la semana (título + semáforo '
-              '"Remanente …") no cabe: TarjetaModulo pone la acción fuera de '
-              'un Flexible (tarjeta_modulo.dart)',
+              'La fila Cancelar · Spacer · Guardar es un Row rígido; con '
+              'letra grande Guardar queda cortado (hoja_gasto.dart, '
+              'hoja_ingreso_extra.dart)',
         );
-      },
-    );
-
-    for (final opcion in ['Gasto', 'Ingreso extra']) {
-      testWidgets(
-        '(+) $opcion (360 dp, letra 1.3): Cancelar y Guardar caben',
-        (tester) async {
-          await montarFinanzasConTamano(
-            tester,
-            dispositivo: TipoDispositivo.telefono,
-            tamano: _telefono360,
-            escalaDeLetra: 1.3,
-          );
-          final errores = await recolectar(
-            () => abrirRegistroDelTelefono(tester, opcion),
-          );
-          expect(
-            errores.desbordes,
-            isEmpty,
-            reason:
-                'La fila Cancelar · Spacer · Guardar es un Row rígido; con '
-                'letra grande Guardar queda cortado (hoja_gasto.dart, '
-                'hoja_ingreso_extra.dart)',
-          );
-        },
-      );
+      });
     }
 
     testWidgets(

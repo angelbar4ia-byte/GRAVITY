@@ -4,7 +4,9 @@ import 'package:gravity/nucleo/contratos/dispositivo.dart';
 import 'package:gravity/nucleo/contratos/roles.dart';
 import 'package:gravity/nucleo/contratos/rutas.dart';
 
-List<String> etiquetas(Rol rol) => [for (final d in destinosDe(rol)) d.etiqueta];
+List<String> etiquetas(Rol rol) => [
+  for (final d in destinosDe(rol)) d.etiqueta,
+];
 
 void main() {
   group('pestañas del teléfono (sección 9)', () {
@@ -14,24 +16,27 @@ void main() {
       expect(etiquetas(Rol.coadministrador), esperadas);
     });
 
-    test('Cuidador: Mi turno · Solicitudes · Medicamentos · Comidas · Bitácora', () {
-      expect(etiquetas(Rol.cuidador), [
-        'Mi turno',
-        'Solicitudes',
-        'Medicamentos',
-        'Comidas',
-        'Bitácora',
-      ]);
-      // Solo Cuidados y su bandeja de solicitudes de GRAVITY (D18).
-      expect(
-        destinosDe(Rol.cuidador).every(
-          (d) =>
-              d.ruta!.startsWith(Rutas.cuidados) ||
-              d.ruta == RutasApp.solicitudes,
-        ),
-        isTrue,
-      );
-    });
+    test(
+      'Cuidador: Mi turno · Solicitudes · Medicamentos · Comidas · Bitácora',
+      () {
+        expect(etiquetas(Rol.cuidador), [
+          'Mi turno',
+          'Solicitudes',
+          'Medicamentos',
+          'Comidas',
+          'Bitácora',
+        ]);
+        // Solo Cuidados y su bandeja de solicitudes de GRAVITY (D18).
+        expect(
+          destinosDe(Rol.cuidador).every(
+            (d) =>
+                d.ruta!.startsWith(Rutas.cuidados) ||
+                d.ruta == RutasApp.solicitudes,
+          ),
+          isTrue,
+        );
+      },
+    );
 
     test('Familiar: Hoy · Hábitos · Más (sin dinero)', () {
       expect(etiquetas(Rol.familiar), ['Hoy', 'Hábitos', 'Más']);
@@ -51,10 +56,9 @@ void main() {
       for (final o in opcionesRegistrar(Rol.coadministrador)) o.etiqueta,
     ];
     expect(pareja, containsAll(['Gasto', 'Ingreso extra', 'Hábito']));
-    expect(
-      [for (final o in opcionesRegistrar(Rol.familiar)) o.etiqueta],
-      isNot(contains('Gasto')),
-    );
+    expect([
+      for (final o in opcionesRegistrar(Rol.familiar)) o.etiqueta,
+    ], isNot(contains('Gasto')));
     expect(opcionesRegistrar(Rol.cuidador), isEmpty);
     expect(opcionesRegistrar(Rol.casa), isEmpty);
   });

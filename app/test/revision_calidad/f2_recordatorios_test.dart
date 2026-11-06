@@ -16,26 +16,37 @@ import 'package:gravity/nucleo/avisos/catalogo_avisos.dart';
 import 'package:gravity/nucleo/avisos/recordatorios.dart';
 
 void main() {
-  test('F2-6: se programan los avisos de 3 y de 1 día antes del vencimiento',
-      () {
-    final r = calcularRecordatorios(
-      preferencias: const PreferenciasAvisos(),
-      ahora: DateTime(2026, 11, 1, 8),
-      vencimientos: [
-        Vencimiento(objetoId: 'oc-1', fecha: DateTime(2026, 11, 10)),
-      ],
-    ).where((x) => x.tipo == 'pago_proximo').toList();
-    expect(r.length, 2, reason: 'hoy solo queda: $r');
-  });
+  test(
+    'F2-6: se programan los avisos de 3 y de 1 día antes del vencimiento',
+    () {
+      final r = calcularRecordatorios(
+        preferencias: const PreferenciasAvisos(),
+        ahora: DateTime(2026, 11, 1, 8),
+        vencimientos: [
+          Vencimiento(objetoId: 'oc-1', fecha: DateTime(2026, 11, 10)),
+        ],
+      ).where((x) => x.tipo == 'pago_proximo').toList();
+      expect(r.length, 2, reason: 'hoy solo queda: $r');
+    },
+  );
 
-  test('guardia: ningún título del catálogo lleva cifras ni signo de dinero', () {
-    for (final e in {...titulosDeAviso, 'generico': textoAvisoGenerico,
-        'publico': textoAvisoPublico}.entries) {
-      expect(e.value.length <= largoMaximoTituloAviso, isTrue, reason: e.key);
-      expect(RegExp(r'[0-9$]').hasMatch(e.value), isFalse,
-          reason: '${e.key}: ${e.value}');
-    }
-  });
+  test(
+    'guardia: ningún título del catálogo lleva cifras ni signo de dinero',
+    () {
+      for (final e in {
+        ...titulosDeAviso,
+        'generico': textoAvisoGenerico,
+        'publico': textoAvisoPublico,
+      }.entries) {
+        expect(e.value.length <= largoMaximoTituloAviso, isTrue, reason: e.key);
+        expect(
+          RegExp(r'[0-9$]').hasMatch(e.value),
+          isFalse,
+          reason: '${e.key}: ${e.value}',
+        );
+      }
+    },
+  );
 
   test('guardia: FLAG_SECURE en deudas, ahorro y vencimientos (dinero)', () {
     for (final seccion in [

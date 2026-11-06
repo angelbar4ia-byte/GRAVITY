@@ -13,9 +13,9 @@ import 'package:gravity/nucleo/invitaciones/invitaciones.dart';
 import 'ayuda_plataforma.dart';
 
 Future<void> irAPersonas(WidgetTester tester) async {
-  ProviderScope.containerOf(
-    tester.element(find.byType(AppGravity)),
-  ).read(routerProvider).go('/ajustes/personas');
+  ProviderScope.containerOf(tester.element(find.byType(AppGravity)))
+      .read(routerProvider)
+      .go('/ajustes/personas');
   await tester.pumpAndSettle();
 }
 
@@ -31,19 +31,28 @@ void main() {
       extras: [repositorioInvitacionesProvider.overrideWithValue(repo)],
     );
     await irAPersonas(tester);
-    expect(find.byKey(const ValueKey('seccion-cuenta-maestra')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('seccion-cuenta-maestra')),
+      findsOneWidget,
+    );
     expect(find.text('Aún no hay cuenta maestra'), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('crear-cuenta-maestra')));
     await tester.pumpAndSettle();
     // Un correo mal escrito no se manda.
-    await tester.enterText(find.byKey(const ValueKey('correo-maestra')), 'no-es-un-correo');
+    await tester.enterText(
+      find.byKey(const ValueKey('correo-maestra')),
+      'no-es-un-correo',
+    );
     await tester.tap(find.widgetWithText(FilledButton, 'Invitar'));
     await tester.pumpAndSettle();
     expect(find.text('Escribe un correo válido.'), findsOneWidget);
     expect(await repo.pendientes('x'), isEmpty);
 
-    await tester.enterText(find.byKey(const ValueKey('correo-maestra')), 'maestra@ejemplo.test');
+    await tester.enterText(
+      find.byKey(const ValueKey('correo-maestra')),
+      'maestra@ejemplo.test',
+    );
     await tester.tap(find.widgetWithText(FilledButton, 'Invitar'));
     await tester.pumpAndSettle();
     // El código se ve una vez, con lo que hay que hacer.
@@ -87,7 +96,10 @@ void main() {
     await irAPersonas(tester);
     await tester.tap(find.byKey(const ValueKey('crear-cuenta-maestra')));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byKey(const ValueKey('correo-maestra')), 'maestra@ejemplo.test');
+    await tester.enterText(
+      find.byKey(const ValueKey('correo-maestra')),
+      'maestra@ejemplo.test',
+    );
     await tester.tap(find.widgetWithText(FilledButton, 'Invitar'));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('copiar-codigo')));
@@ -98,7 +110,11 @@ void main() {
 
     // C1 (revisión de la Fase 1b): el código no se queda en el portapapeles.
     await tester.pump(const Duration(seconds: 59));
-    expect(copiado, startsWith('token-de-ejemplo-'), reason: 'aún no pasa el minuto');
+    expect(
+      copiado,
+      startsWith('token-de-ejemplo-'),
+      reason: 'aún no pasa el minuto',
+    );
     await tester.pump(const Duration(seconds: 2));
     await tester.pumpAndSettle();
     expect(copiado, '', reason: 'a los 60 s se vació el portapapeles');
@@ -136,7 +152,10 @@ void main() {
     await irAPersonas(tester);
     await tester.tap(find.text('Crear cuenta maestra'));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byKey(const ValueKey('correo-maestra')), 'maestra@ejemplo.test');
+    await tester.enterText(
+      find.byKey(const ValueKey('correo-maestra')),
+      'maestra@ejemplo.test',
+    );
     await tester.tap(find.widgetWithText(FilledButton, 'Invitar'));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('copiar-codigo')));
@@ -149,7 +168,9 @@ void main() {
     expect(portapapeles, 'otra cosa que copió la persona');
   });
 
-  testWidgets('un correo que ya es del hogar se rechaza con el motivo', (tester) async {
+  testWidgets('un correo que ya es del hogar se rechaza con el motivo', (
+    tester,
+  ) async {
     final repo = RepositorioInvitacionesEnMemoria(
       reloj: () => ahora,
       correosDeMiembros: {'dueno@ejemplo.test'},
@@ -163,7 +184,10 @@ void main() {
     await irAPersonas(tester);
     await tester.tap(find.byKey(const ValueKey('crear-cuenta-maestra')));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byKey(const ValueKey('correo-maestra')), 'dueno@ejemplo.test');
+    await tester.enterText(
+      find.byKey(const ValueKey('correo-maestra')),
+      'dueno@ejemplo.test',
+    );
     await tester.tap(find.widgetWithText(FilledButton, 'Invitar'));
     await tester.pumpAndSettle();
     expect(find.textContaining('es otra persona'), findsOneWidget);
@@ -175,7 +199,10 @@ void main() {
   ) async {
     final repo = RepositorioInvitacionesEnMemoria(
       reloj: () => ahora,
-      maestra: const CuentaMaestraActual(personaId: 'p', nombre: 'Marta (ejemplo)'),
+      maestra: const CuentaMaestraActual(
+        personaId: 'p',
+        nombre: 'Marta (ejemplo)',
+      ),
     );
     await repo.crearCuentaMaestra(hogarId: 'h', correo: 'otra@ejemplo.test');
     await montarApp(
@@ -208,7 +235,9 @@ void main() {
     expect(find.textContaining('Sin conexión'), findsOneWidget);
   });
 
-  testWidgets('quien no es el dueño no ve Personas (ni la cuenta maestra)', (tester) async {
+  testWidgets('quien no es el dueño no ve Personas (ni la cuenta maestra)', (
+    tester,
+  ) async {
     await montarApp(
       tester,
       dispositivo: TipoDispositivo.laptop,

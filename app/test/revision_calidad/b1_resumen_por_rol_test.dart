@@ -63,21 +63,27 @@ void revisarSinCuidados(WidgetTester tester, String donde) {
 }
 
 void main() {
-  for (final dispositivo in [TipoDispositivo.telefono, TipoDispositivo.laptop]) {
-    testWidgets('Familiar en ${dispositivo.name}: inicio sin dinero ni cuidados', (
+  for (final dispositivo in [
+    TipoDispositivo.telefono,
+    TipoDispositivo.laptop,
+  ]) {
+    testWidgets(
+      'Familiar en ${dispositivo.name}: inicio sin dinero ni cuidados',
+      (tester) async {
+        await montarApp(
+          tester,
+          dispositivo: dispositivo,
+          sesion: sesionCon(Rol.familiar),
+        );
+        await construirTodo(tester, dispositivo);
+        revisarSinDinero(tester, 'Familiar/${dispositivo.name}');
+        revisarSinCuidados(tester, 'Familiar/${dispositivo.name}');
+      },
+    );
+
+    testWidgets('Casa en ${dispositivo.name}: inicio sin dinero', (
       tester,
     ) async {
-      await montarApp(
-        tester,
-        dispositivo: dispositivo,
-        sesion: sesionCon(Rol.familiar),
-      );
-      await construirTodo(tester, dispositivo);
-      revisarSinDinero(tester, 'Familiar/${dispositivo.name}');
-      revisarSinCuidados(tester, 'Familiar/${dispositivo.name}');
-    });
-
-    testWidgets('Casa en ${dispositivo.name}: inicio sin dinero', (tester) async {
       await montarApp(
         tester,
         dispositivo: dispositivo,

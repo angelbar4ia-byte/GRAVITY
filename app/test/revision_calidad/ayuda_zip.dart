@@ -26,8 +26,7 @@ class EntradaZip {
 Uint8List construirZip(List<EntradaZip> entradas) {
   final salida = BytesBuilder();
   final central = BytesBuilder();
-  void u16(BytesBuilder b, int v) =>
-      b.add([v & 0xff, (v >> 8) & 0xff]);
+  void u16(BytesBuilder b, int v) => b.add([v & 0xff, (v >> 8) & 0xff]);
   void u32(BytesBuilder b, int v) =>
       b.add([v & 0xff, (v >> 8) & 0xff, (v >> 16) & 0xff, (v >> 24) & 0xff]);
 

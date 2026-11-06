@@ -18,9 +18,9 @@ import 'package:gravity/nucleo/permisos/permisos.dart';
 
 import 'ayuda_plataforma.dart';
 
-GoRouter routerDe(WidgetTester tester) => ProviderScope.containerOf(
-  tester.element(find.byType(AppGravity)),
-).read(routerProvider);
+GoRouter routerDe(WidgetTester tester) =>
+    ProviderScope.containerOf(tester.element(find.byType(AppGravity)))
+        .read(routerProvider);
 
 String ubicacion(WidgetTester tester) =>
     routerDe(tester).routerDelegate.currentConfiguration.uri.path;
@@ -206,7 +206,10 @@ void main() {
           dispositivo: TipoDispositivo.telefono,
           sesion: sesionCon(rol),
         );
-        expect(opcionesRegistrar(rol).map((o) => o.modulo), isNot(contains(Modulo.finanzas)));
+        expect(
+          opcionesRegistrar(rol).map((o) => o.modulo),
+          isNot(contains(Modulo.finanzas)),
+        );
         if (pestana('Registrar').evaluate().isNotEmpty) {
           await tester.tap(pestana('Registrar'));
           await tester.pumpAndSettle();

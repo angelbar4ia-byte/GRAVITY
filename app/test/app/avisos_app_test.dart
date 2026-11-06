@@ -21,14 +21,17 @@ import 'ayuda_plataforma.dart';
 
 const id1 = '3f2b8a52-6f0e-4b1b-9c52-1d7d5a2b9e10';
 
-Aviso aviso(String id, String tipo, {EstadoAviso estado = EstadoAviso.pendiente}) =>
-    Aviso(
-      id: id,
-      tipo: tipo,
-      clave: '$tipo:$id',
-      estado: estado,
-      creadoEn: DateTime.utc(2026, 11, 2, 15),
-    );
+Aviso aviso(
+  String id,
+  String tipo, {
+  EstadoAviso estado = EstadoAviso.pendiente,
+}) => Aviso(
+  id: id,
+  tipo: tipo,
+  clave: '$tipo:$id',
+  estado: estado,
+  creadoEn: DateTime.utc(2026, 11, 2, 15),
+);
 
 ProviderContainer contenedorDe(WidgetTester t) =>
     ProviderScope.containerOf(t.element(find.byType(AppGravity)));
@@ -75,24 +78,25 @@ void main() {
     expect(find.byKey(const ValueKey('aviso-$id1')), findsOneWidget);
   });
 
-  testWidgets('abrir un aviso lo marca leído; Hecho lo resuelve; posponer 1 hora', (
-    tester,
-  ) async {
-    await montar(tester, Rol.dueno);
-    contenedorDe(tester).read(routerProvider).go(RutasApp.avisos);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Tienes un pago próximo'));
-    await tester.pumpAndSettle();
-    expect(repo.marcados.single.accion, AccionAviso.leida);
-    await tester.tap(find.text('Posponer 1 hora'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Hecho').first);
-    await tester.pumpAndSettle();
-    expect(
-      repo.marcados.map((m) => m.accion),
-      containsAll([AccionAviso.posponerUnaHora, AccionAviso.resuelta]),
-    );
-  });
+  testWidgets(
+    'abrir un aviso lo marca leído; Hecho lo resuelve; posponer 1 hora',
+    (tester) async {
+      await montar(tester, Rol.dueno);
+      contenedorDe(tester).read(routerProvider).go(RutasApp.avisos);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Tienes un pago próximo'));
+      await tester.pumpAndSettle();
+      expect(repo.marcados.single.accion, AccionAviso.leida);
+      await tester.tap(find.text('Posponer 1 hora'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Hecho').first);
+      await tester.pumpAndSettle();
+      expect(
+        repo.marcados.map((m) => m.accion),
+        containsAll([AccionAviso.posponerUnaHora, AccionAviso.resuelta]),
+      );
+    },
+  );
 
   testWidgets('Finanzas pone el detalle con montos dentro del aviso', (
     tester,
@@ -112,10 +116,7 @@ void main() {
     await tester.pumpAndSettle();
     // El arranque ya conecta el detalle de Finanzas (Fase 2): el aviso se
     // abre y la bandeja deja de mostrar solo el título.
-    expect(
-      contenedorDe(tester).read(detalleDeAvisoProvider),
-      isNotNull,
-    );
+    expect(contenedorDe(tester).read(detalleDeAvisoProvider), isNotNull);
   });
 
   testWidgets('sin avisos: estado vacío', (tester) async {
@@ -158,26 +159,42 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    testWidgets('teléfono: activar pide el permiso (tras explicarlo) y registra el '
-        'equipo; apagar lo da de baja', (tester) async {
-      notificador.permiso = false;
-      await montar(tester, Rol.dueno);
-      await ir(tester);
-      expect(find.byKey(const ValueKey('avisos-activar')), findsOneWidget);
-      expect(find.byKey(const ValueKey('avisos-vista-previa')), findsOneWidget);
-      expect(find.byKey(const ValueKey('avisos-guia-pulsera')), findsOneWidget);
+    testWidgets(
+      'teléfono: activar pide el permiso (tras explicarlo) y registra el '
+      'equipo; apagar lo da de baja',
+      (tester) async {
+        notificador.permiso = false;
+        await montar(tester, Rol.dueno);
+        await ir(tester);
+        expect(find.byKey(const ValueKey('avisos-activar')), findsOneWidget);
+        expect(
+          find.byKey(const ValueKey('avisos-vista-previa')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const ValueKey('avisos-guia-pulsera')),
+          findsOneWidget,
+        );
 
-      // En el teléfono vienen activados, pero sin el permiso del sistema.
-      expect(find.byKey(const ValueKey('avisos-sin-permiso')), findsOneWidget);
-      notificador.permiso = true;
-      await tester.tap(find.byKey(const ValueKey('avisos-activar')));
-      await tester.pumpAndSettle(); // apagar
-      expect(repo.dispositivos, isEmpty);
-      await tester.tap(find.byKey(const ValueKey('avisos-activar')));
-      await tester.pumpAndSettle(); // encender: explica antes
-      expect(find.text('Permitir avisos'), findsNothing, reason: 'ya había permiso');
-      expect(repo.dispositivos, isNotEmpty);
-    });
+        // En el teléfono vienen activados, pero sin el permiso del sistema.
+        expect(
+          find.byKey(const ValueKey('avisos-sin-permiso')),
+          findsOneWidget,
+        );
+        notificador.permiso = true;
+        await tester.tap(find.byKey(const ValueKey('avisos-activar')));
+        await tester.pumpAndSettle(); // apagar
+        expect(repo.dispositivos, isEmpty);
+        await tester.tap(find.byKey(const ValueKey('avisos-activar')));
+        await tester.pumpAndSettle(); // encender: explica antes
+        expect(
+          find.text('Permitir avisos'),
+          findsNothing,
+          reason: 'ya había permiso',
+        );
+        expect(repo.dispositivos, isNotEmpty);
+      },
+    );
 
     testWidgets('explica antes de pedir el permiso de Android', (tester) async {
       notificador.permiso = false;
@@ -208,7 +225,9 @@ void main() {
       expect(notificador.visibles.values.single.titulo, textoAvisoGenerico);
     });
 
-    testWidgets('el tope y los tipos se guardan en el servidor', (tester) async {
+    testWidgets('el tope y los tipos se guardan en el servidor', (
+      tester,
+    ) async {
       await montar(tester, Rol.dueno);
       await ir(tester);
       await tester.tap(find.byKey(const ValueKey('avisos-tope')));
@@ -256,7 +275,10 @@ void main() {
       );
       await montar(tester, Rol.coadministrador, sesion: maestra);
       await ir(tester);
-      expect(find.text('Esta cuenta no recibe avisos de dinero.'), findsOneWidget);
+      expect(
+        find.text('Esta cuenta no recibe avisos de dinero.'),
+        findsOneWidget,
+      );
       push.recibir({'v': '1', 'id': id1});
       await tester.pumpAndSettle();
       expect(notificador.historial, isEmpty);

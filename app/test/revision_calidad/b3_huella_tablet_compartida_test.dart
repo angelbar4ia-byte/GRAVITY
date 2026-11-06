@@ -28,31 +28,34 @@ import 'package:gravity/nucleo/tablet/controlador_tablet.dart';
 import '../app/ayuda_plataforma.dart';
 
 void main() {
-  test('una huella cualquiera no abre la sesión del Dueño en la tablet', () async {
-    // La cuidadora registró su dedo en la tablet para su propio turno; el
-    // Dueño activó la huella para sí.
-    final almacen = await almacenConPersonas(
-      {Rol.dueno: '246813', Rol.cuidador: '5678'},
-      conHuella: {Rol.dueno, Rol.cuidador},
-    );
-    final dedoDeLaCuidadora = BiometriaFalsa(acepta: true);
-    final contenedor = ProviderContainer(
-      overrides: [
-        almacenSeguroProvider.overrideWithValue(almacen),
-        servicioSesionProvider.overrideWithValue(
-          ServicioSesionFalso(inicial: sesionDeEjemplo(Rol.casa)),
-        ),
-        biometriaProvider.overrideWithValue(dedoDeLaCuidadora),
-      ],
-    );
-    addTearDown(contenedor.dispose);
-    final controlador = contenedor.read(controladorTabletProvider.notifier);
-    await controlador.listo;
+  test(
+    'una huella cualquiera no abre la sesión del Dueño en la tablet',
+    () async {
+      // La cuidadora registró su dedo en la tablet para su propio turno; el
+      // Dueño activó la huella para sí.
+      final almacen = await almacenConPersonas(
+        {Rol.dueno: '246813', Rol.cuidador: '5678'},
+        conHuella: {Rol.dueno, Rol.cuidador},
+      );
+      final dedoDeLaCuidadora = BiometriaFalsa(acepta: true);
+      final contenedor = ProviderContainer(
+        overrides: [
+          almacenSeguroProvider.overrideWithValue(almacen),
+          servicioSesionProvider.overrideWithValue(
+            ServicioSesionFalso(inicial: sesionDeEjemplo(Rol.casa)),
+          ),
+          biometriaProvider.overrideWithValue(dedoDeLaCuidadora),
+        ],
+      );
+      addTearDown(contenedor.dispose);
+      final controlador = contenedor.read(controladorTabletProvider.notifier);
+      await controlador.listo;
 
-    final dueno = sesionDeEjemplo(Rol.dueno).persona.id;
-    final resultado = await controlador.desbloquearConHuella(dueno);
+      final dueno = sesionDeEjemplo(Rol.dueno).persona.id;
+      final resultado = await controlador.desbloquearConHuella(dueno);
 
-    expect(resultado, isNot(ResultadoDesbloqueo.abierto));
-    expect(contenedor.read(controladorTabletProvider).usuarioActivo, isNull);
-  });
+      expect(resultado, isNot(ResultadoDesbloqueo.abierto));
+      expect(contenedor.read(controladorTabletProvider).usuarioActivo, isNull);
+    },
+  );
 }

@@ -36,7 +36,14 @@ void main() {
     });
 
     test('se rechaza un bloque que se repite', () {
-      for (final pin in ['1212', '4545', '6969', '123123', '686868', '121212']) {
+      for (final pin in [
+        '1212',
+        '4545',
+        '6969',
+        '123123',
+        '686868',
+        '121212',
+      ]) {
         expect(pinEsDebil(pin), isTrue, reason: pin);
         expect(motivoPinDebil(pin), contains('bloque'), reason: pin);
       }
@@ -44,8 +51,17 @@ void main() {
 
     test('un PIN que no es trivial pasa, del largo que sea', () {
       for (final pin in [
-        '2846', '7391', '1357', '2580', '1223', '5019', '28461', '73915',
-        '482915', '135792', '120934',
+        '2846',
+        '7391',
+        '1357',
+        '2580',
+        '1223',
+        '5019',
+        '28461',
+        '73915',
+        '482915',
+        '135792',
+        '120934',
       ]) {
         expect(pinEsDebil(pin), isFalse, reason: pin);
         expect(motivoPinDebil(pin), isNull, reason: pin);
@@ -109,12 +125,12 @@ void main() {
   test('hash dañado o de otro formato no se acepta', () {
     final hash = HashPin.crear('1234', iteraciones: 10);
     expect(HashPin.verificar('1234', 'texto'), isFalse);
-    expect(HashPin.verificar('1234', hash.replaceFirst('pbkdf2', 'md5')), isFalse);
-    expect(HashPin.verificar('1234', '${hash}x'), isFalse);
     expect(
-      HashPin.verificar('1234', r'pbkdf2-sha256$0$AAAA$AAAA'),
+      HashPin.verificar('1234', hash.replaceFirst('pbkdf2', 'md5')),
       isFalse,
     );
+    expect(HashPin.verificar('1234', '${hash}x'), isFalse);
+    expect(HashPin.verificar('1234', r'pbkdf2-sha256$0$AAAA$AAAA'), isFalse);
   });
 
   test('crear rechaza un PIN inválido', () {

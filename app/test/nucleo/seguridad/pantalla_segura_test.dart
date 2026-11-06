@@ -82,7 +82,8 @@ void main() {
 
   group('ProtectorDePantallaAndroid (MethodChannel)', () {
     const canal = MethodChannel(ProtectorDePantallaAndroid.canalDelSistema);
-    final mensajero = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    final mensajero =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
 
     tearDown(() => mensajero.setMockMethodCallHandler(canal, null));
 
@@ -95,11 +96,17 @@ void main() {
       const protector = ProtectorDePantallaAndroid();
       await protector.establecer(segura: true);
       await protector.establecer(segura: false);
-      expect([for (final l in llamadas) l.method], ['establecer', 'establecer']);
-      expect([for (final l in llamadas) l.arguments], [
-        {'segura': true},
-        {'segura': false},
-      ]);
+      expect(
+        [for (final l in llamadas) l.method],
+        ['establecer', 'establecer'],
+      );
+      expect(
+        [for (final l in llamadas) l.arguments],
+        [
+          {'segura': true},
+          {'segura': false},
+        ],
+      );
     });
 
     test('sin la parte nativa no falla', () async {

@@ -21,19 +21,18 @@ import 'package:gravity/nucleo/herramientas/herramientas.dart';
 import 'package:gravity/nucleo/permisos/permisos.dart';
 
 Iterable<File> _archivos(String carpeta, {String extension = '.dart'}) {
-  final dir = [Directory(carpeta), Directory('app/$carpeta')].firstWhere(
-    (d) => d.existsSync(),
-  );
+  final dir = [
+    Directory(carpeta),
+    Directory('app/$carpeta'),
+  ].firstWhere((d) => d.existsSync());
   return dir
       .listSync(recursive: true)
       .whereType<File>()
       .where((f) => f.path.endsWith(extension));
 }
 
-String _sinComentarios(String codigo) => codigo
-    .split('\n')
-    .where((l) => !l.trimLeft().startsWith('//'))
-    .join('\n');
+String _sinComentarios(String codigo) =>
+    codigo.split('\n').where((l) => !l.trimLeft().startsWith('//')).join('\n');
 
 void main() {
   test('1. el código de la app no tiene un cliente de IA en la nube', () {
@@ -72,25 +71,36 @@ void main() {
       }
     });
 
-    test('ningún resultado de esas herramientas lleva texto para la IA', () async {
-      final registro = registroDeGravity();
-      for (final rol in [Rol.dueno, Rol.coadministrador]) {
-        for (final esMaestra in [false, true]) {
-          final contexto = ContextoHerramienta(
-            rol: rol,
-            esMaestra: esMaestra,
-            navegar: (_) {},
-            abrirHoja: (_) {},
-          );
-          for (final h in registro.disponibles(rol: rol, esMaestra: esMaestra)) {
-            if (h.modulo != Modulo.finanzas && h.modulo != Modulo.cuidados) continue;
-            final resultado = await registro.ejecutar(h.nombre, const {}, contexto);
-            expect(resultado.paraIa, isNull, reason: '${h.nombre} ($rol)');
-            expect(resultado.soloLocal, isTrue, reason: '${h.nombre} ($rol)');
+    test(
+      'ningún resultado de esas herramientas lleva texto para la IA',
+      () async {
+        final registro = registroDeGravity();
+        for (final rol in [Rol.dueno, Rol.coadministrador]) {
+          for (final esMaestra in [false, true]) {
+            final contexto = ContextoHerramienta(
+              rol: rol,
+              esMaestra: esMaestra,
+              navegar: (_) {},
+              abrirHoja: (_) {},
+            );
+            for (final h in registro.disponibles(
+              rol: rol,
+              esMaestra: esMaestra,
+            )) {
+              if (h.modulo != Modulo.finanzas && h.modulo != Modulo.cuidados)
+                continue;
+              final resultado = await registro.ejecutar(
+                h.nombre,
+                const {},
+                contexto,
+              );
+              expect(resultado.paraIa, isNull, reason: '${h.nombre} ($rol)');
+              expect(resultado.soloLocal, isTrue, reason: '${h.nombre} ($rol)');
+            }
           }
         }
-      }
-    });
+      },
+    );
 
     test('nombre, descripción y palabras clave no llevan cifras ni montos', () {
       final cifras = RegExp(r'[\d$]');
@@ -123,8 +133,10 @@ void main() {
   });
 
   test('5. OpenAPI marca como solo local todo lo que toca Finanzas', () {
-    final archivo = [File('../api/openapi.yaml'), File('api/openapi.yaml')]
-        .firstWhere((f) => f.existsSync());
+    final archivo = [
+      File('../api/openapi.yaml'),
+      File('api/openapi.yaml'),
+    ].firstWhere((f) => f.existsSync());
     final texto = archivo.readAsStringSync();
     final bloques = RegExp(
       r'\n  (/[^\n:]+):\n(.*?)(?=\n  /[^\n:]+:\n|\ncomponents:|$)',
@@ -143,7 +155,11 @@ void main() {
           .map((m) => m.group(1))
           .toList();
       expect(valores, isNotEmpty, reason: ruta);
-      expect(valores.every((v) => v == 'true'), isTrue, reason: '$ruta: $valores');
+      expect(
+        valores.every((v) => v == 'true'),
+        isTrue,
+        reason: '$ruta: $valores',
+      );
     }
     expect(revisados, greaterThan(30));
   });
@@ -172,10 +188,18 @@ void main() {
             OrdenVacia() => const <HerramientaNavegacion>[],
           };
           for (final d in destinos) {
-            expect(d.modulo, isNot(Modulo.finanzas), reason: '$rol: "$p" → ${d.nombre}');
+            expect(
+              d.modulo,
+              isNot(Modulo.finanzas),
+              reason: '$rol: "$p" → ${d.nombre}',
+            );
           }
           for (final s in interprete.sugerir(p)) {
-            expect(s.destino.modulo, isNot(Modulo.finanzas), reason: '$rol: "$p"');
+            expect(
+              s.destino.modulo,
+              isNot(Modulo.finanzas),
+              reason: '$rol: "$p"',
+            );
           }
         }
       }
@@ -197,11 +221,19 @@ void main() {
       // D19 (23/oct): la maestra con login propio solo lee; el dueño que además
       // es maestro conserva "registrar gasto" para lo suyo.
       expect(
-        registro.buscar('finanzas.registrar_gasto', rol: Rol.coadministrador, esMaestra: true),
+        registro.buscar(
+          'finanzas.registrar_gasto',
+          rol: Rol.coadministrador,
+          esMaestra: true,
+        ),
         isNull,
       );
       expect(
-        registro.buscar('finanzas.registrar_gasto', rol: Rol.dueno, esMaestra: true),
+        registro.buscar(
+          'finanzas.registrar_gasto',
+          rol: Rol.dueno,
+          esMaestra: true,
+        ),
         isNotNull,
       );
     });

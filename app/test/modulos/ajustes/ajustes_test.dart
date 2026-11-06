@@ -5,8 +5,10 @@ import 'package:go_router/go_router.dart';
 import 'package:gravity/app/app_gravity.dart';
 import 'package:gravity/app/router.dart';
 import 'package:gravity/modulos/ajustes/secciones_ajustes.dart';
-import 'package:gravity/nucleo/cola/cola_sin_conexion.dart' show motivoPersonaQuitada;
-import 'package:gravity/nucleo/cola/proveedores_cola.dart' show colaSinConexionProvider;
+import 'package:gravity/nucleo/cola/cola_sin_conexion.dart'
+    show motivoPersonaQuitada;
+import 'package:gravity/nucleo/cola/proveedores_cola.dart'
+    show colaSinConexionProvider;
 import 'package:gravity/nucleo/contratos/dispositivo.dart';
 import 'package:gravity/nucleo/contratos/roles.dart';
 import 'package:gravity/nucleo/contratos/rutas.dart';
@@ -15,21 +17,24 @@ import 'package:gravity/nucleo/tablet/controlador_tablet.dart';
 
 import '../../app/ayuda_plataforma.dart';
 
-GoRouter routerDe(WidgetTester tester) => ProviderScope.containerOf(
-  tester.element(find.byType(AppGravity)),
-).read(routerProvider);
+GoRouter routerDe(WidgetTester tester) =>
+    ProviderScope.containerOf(tester.element(find.byType(AppGravity)))
+        .read(routerProvider);
 
 String ubicacion(WidgetTester tester) =>
     routerDe(tester).routerDelegate.currentConfiguration.uri.path;
 
 void main() {
   group('secciones visibles', () {
-    test('Dueño en la laptop ve todas, con Desarrollador y sin Dispositivos', () {
-      expect(seccionesVisibles(Rol.dueno, TipoDispositivo.laptop), [
-        for (final seccion in SeccionAjustes.values)
-          if (seccion != SeccionAjustes.dispositivos) seccion,
-      ]);
-    });
+    test(
+      'Dueño en la laptop ve todas, con Desarrollador y sin Dispositivos',
+      () {
+        expect(seccionesVisibles(Rol.dueno, TipoDispositivo.laptop), [
+          for (final seccion in SeccionAjustes.values)
+            if (seccion != SeccionAjustes.dispositivos) seccion,
+        ]);
+      },
+    );
 
     test('Dispositivos: solo el Dueño y solo en la tablet', () {
       expect(
@@ -44,21 +49,24 @@ void main() {
       }
     });
 
-    test('cuenta maestra (D19, solo lectura): sin lo que administra el hogar', () {
-      expect(
-        seccionesVisibles(
-          Rol.coadministrador,
-          TipoDispositivo.laptop,
-          esMaestra: true,
-        ),
-        [
-          SeccionAjustes.apariencia,
-          SeccionAjustes.voz,
-          SeccionAjustes.privacidad,
-          SeccionAjustes.notificaciones,
-        ],
-      );
-    });
+    test(
+      'cuenta maestra (D19, solo lectura): sin lo que administra el hogar',
+      () {
+        expect(
+          seccionesVisibles(
+            Rol.coadministrador,
+            TipoDispositivo.laptop,
+            esMaestra: true,
+          ),
+          [
+            SeccionAjustes.apariencia,
+            SeccionAjustes.voz,
+            SeccionAjustes.privacidad,
+            SeccionAjustes.notificaciones,
+          ],
+        );
+      },
+    );
 
     test('la dueña que además es maestra conserva todas sus secciones', () {
       expect(
@@ -107,7 +115,9 @@ void main() {
       dispositivo: TipoDispositivo.telefono,
       sesion: sesionCon(Rol.dueno),
       extras: [
-        estadoFirebaseProvider.overrideWithValue(EstadoFirebase.sinConfiguracion),
+        estadoFirebaseProvider.overrideWithValue(
+          EstadoFirebase.sinConfiguracion,
+        ),
       ],
     );
     await tester.tap(find.text('Más'));
@@ -128,7 +138,10 @@ void main() {
 
     await tester.tap(find.text('Notificaciones'));
     await tester.pumpAndSettle();
-    expect(find.textContaining('falta la configuración de Firebase'), findsOneWidget);
+    expect(
+      find.textContaining('falta la configuración de Firebase'),
+      findsOneWidget,
+    );
     await tester.tap(find.byTooltip('Regresar'));
     await tester.pumpAndSettle();
     expect(ubicacion(tester), Rutas.ajustes);
@@ -242,7 +255,10 @@ void main() {
       await tester.ensureVisible(tarjeta);
       await tester.pumpAndSettle();
       await tester.tap(
-        find.descendant(of: tarjeta, matching: find.byType(PopupMenuButton<String>)),
+        find.descendant(
+          of: tarjeta,
+          matching: find.byType(PopupMenuButton<String>),
+        ),
       );
       await tester.pumpAndSettle();
       await tester.tap(find.text('Cambiar PIN'));
@@ -268,39 +284,51 @@ void main() {
     expect(find.text('PIN cambiado.'), findsOneWidget);
   });
 
-  testWidgets('tablet: Personas avisa cuántos registros de personas quitadas se '
-      'borrarán y cuándo (L1), sin montos ni nombres', (tester) async {
-    await montarApp(
-      tester,
-      dispositivo: TipoDispositivo.tablet,
-      sesion: sesionCon(Rol.casa),
-      almacen: await almacenConPersonas({Rol.dueno: '246813'}),
-    );
-    await tester.tap(find.text('Dueño de ejemplo'));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byKey(const Key('campo-pin')), '246813');
-    await tester.tap(find.widgetWithText(FilledButton, 'Entrar'));
-    await tester.pumpAndSettle();
-    routerDe(tester).go('/ajustes/personas');
-    await tester.pumpAndSettle();
-    expect(find.byKey(const ValueKey('aviso-purga-quitados')), findsNothing);
+  testWidgets(
+    'tablet: Personas avisa cuántos registros de personas quitadas se '
+    'borrarán y cuándo (L1), sin montos ni nombres',
+    (tester) async {
+      await montarApp(
+        tester,
+        dispositivo: TipoDispositivo.tablet,
+        sesion: sesionCon(Rol.casa),
+        almacen: await almacenConPersonas({Rol.dueno: '246813'}),
+      );
+      await tester.tap(find.text('Dueño de ejemplo'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byKey(const Key('campo-pin')), '246813');
+      await tester.tap(find.widgetWithText(FilledButton, 'Entrar'));
+      await tester.pumpAndSettle();
+      routerDe(tester).go('/ajustes/personas');
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('aviso-purga-quitados')), findsNothing);
 
-    final contenedor = ProviderScope.containerOf(
-      tester.element(find.byType(AppGravity)),
-    );
-    final cola = contenedor.read(colaSinConexionProvider);
-    await cola.encolar(
-      tipo: 'finanzas.movimiento',
-      carga: const {'monto_centavos': 98765, 'descripcion': 'Secreto'},
-      id: 'q1',
-      personaId: 'persona-quitada',
-    );
-    await cola.rechazarPendientesDe('persona-quitada', motivoPersonaQuitada);
-    await tester.pumpAndSettle();
-    expect(find.byKey(const ValueKey('aviso-purga-quitados')), findsOneWidget);
-    expect(find.textContaining('1 registro de una persona quitada'), findsOneWidget);
-    expect(find.textContaining('Se borra de esta tablet el '), findsOneWidget);
-    expect(find.textContaining('987'), findsNothing);
-    expect(find.textContaining('Secreto'), findsNothing);
-  });
+      final contenedor = ProviderScope.containerOf(
+        tester.element(find.byType(AppGravity)),
+      );
+      final cola = contenedor.read(colaSinConexionProvider);
+      await cola.encolar(
+        tipo: 'finanzas.movimiento',
+        carga: const {'monto_centavos': 98765, 'descripcion': 'Secreto'},
+        id: 'q1',
+        personaId: 'persona-quitada',
+      );
+      await cola.rechazarPendientesDe('persona-quitada', motivoPersonaQuitada);
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey('aviso-purga-quitados')),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('1 registro de una persona quitada'),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('Se borra de esta tablet el '),
+        findsOneWidget,
+      );
+      expect(find.textContaining('987'), findsNothing);
+      expect(find.textContaining('Secreto'), findsNothing);
+    },
+  );
 }

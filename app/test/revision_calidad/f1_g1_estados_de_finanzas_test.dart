@@ -45,7 +45,10 @@ Future<void> _montar(
 void main() {
   final sesion = sesionDe(Rol.dueno);
 
-  for (final dispositivo in [TipoDispositivo.telefono, TipoDispositivo.laptop]) {
+  for (final dispositivo in [
+    TipoDispositivo.telefono,
+    TipoDispositivo.laptop,
+  ]) {
     group('Finanzas en $dispositivo', () {
       testWidgets('cargando: muestra el indicador y su texto', (tester) async {
         final pendiente = Completer<CargaFinanzas>();
@@ -77,7 +80,10 @@ void main() {
         // Riverpod reintenta solo una carga fallida (11 veces, ~40 s) y mientras
         // tanto muestra "Cargando": ver f1_i10_error_sin_reintentos_automaticos_test.
         await tester.pump(const Duration(seconds: 60));
-        expect(find.byKey(const ValueKey('finanzas-sin-conexion')), findsOneWidget);
+        expect(
+          find.byKey(const ValueKey('finanzas-sin-conexion')),
+          findsOneWidget,
+        );
         expect(
           find.text('Sin conexión y sin datos guardados en este equipo.'),
           findsOneWidget,
@@ -94,7 +100,9 @@ void main() {
         addTearDown(repo.cerrar);
         await _montar(tester, repo, dispositivo: dispositivo);
         await irA(tester, Rutas.finanzas);
-        await tester.pump(const Duration(seconds: 60)); // ver el comentario de arriba
+        await tester.pump(
+          const Duration(seconds: 60),
+        ); // ver el comentario de arriba
         expect(find.byKey(const ValueKey('finanzas-error')), findsOneWidget);
         expect(find.text('No se pudo cargar Finanzas.'), findsOneWidget);
         expect(find.text('Falla de prueba'), findsOneWidget);
@@ -108,7 +116,10 @@ void main() {
         addTearDown(repo.cerrar);
         await _montar(tester, repo, dispositivo: dispositivo);
         await irA(tester, Rutas.finanzas);
-        expect(find.text('Aún no tienes un libro de Finanzas.'), findsOneWidget);
+        expect(
+          find.text('Aún no tienes un libro de Finanzas.'),
+          findsOneWidget,
+        );
       });
 
       testWidgets('con lo último cargado y sin señal: aviso y lo guardado', (
@@ -124,8 +135,14 @@ void main() {
         addTearDown(base.cerrar);
         await _montar(tester, repo, dispositivo: dispositivo);
         await irA(tester, Rutas.finanzas);
-        expect(find.byKey(const ValueKey('finanzas-sin-conexion')), findsOneWidget);
-        expect(find.textContaining('Sin conexión: ves lo último que se cargó'), findsOneWidget);
+        expect(
+          find.byKey(const ValueKey('finanzas-sin-conexion')),
+          findsOneWidget,
+        );
+        expect(
+          find.textContaining('Sin conexión: ves lo último que se cargó'),
+          findsOneWidget,
+        );
       });
     });
   }

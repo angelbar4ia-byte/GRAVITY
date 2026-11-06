@@ -18,39 +18,37 @@ Future<void> _guias(WidgetTester tester, String donde) async {
     ('botones con etiqueta', labeledTapTargetGuideline),
     ('contraste del texto', textContrastGuideline),
   ]) {
-    await expectLater(
-      tester,
-      meetsGuideline(guia),
-      reason: '$donde: $nombre',
-    );
+    await expectLater(tester, meetsGuideline(guia), reason: '$donde: $nombre');
   }
 }
 
 void main() {
   for (final hora in [10, 22]) {
-    for (final dispositivo in [TipoDispositivo.telefono, TipoDispositivo.laptop]) {
-      testWidgets(
-        'pantallas de Finanzas en $dispositivo a las $hora h',
-        (tester) async {
-          final semantica = tester.ensureSemantics();
-          await montarFinanzasConTamano(
-            tester,
-            dispositivo: dispositivo,
-            tamano: dispositivo == TipoDispositivo.laptop
-                ? const Size(1440, 900)
-                : const Size(412, 840),
-            reloj: RelojFijo(DateTime(2026, 10, 20, hora)),
-          );
-          final rutas = dispositivo == TipoDispositivo.laptop
-              ? [for (final s in SeccionFinanzas.values) s.ruta]
-              : [Rutas.finanzas, SeccionFinanzas.movimientos.ruta];
-          for (final ruta in rutas) {
-            await irA(tester, ruta);
-            await _guias(tester, ruta);
-          }
-          semantica.dispose();
-        },
-      );
+    for (final dispositivo in [
+      TipoDispositivo.telefono,
+      TipoDispositivo.laptop,
+    ]) {
+      testWidgets('pantallas de Finanzas en $dispositivo a las $hora h', (
+        tester,
+      ) async {
+        final semantica = tester.ensureSemantics();
+        await montarFinanzasConTamano(
+          tester,
+          dispositivo: dispositivo,
+          tamano: dispositivo == TipoDispositivo.laptop
+              ? const Size(1440, 900)
+              : const Size(412, 840),
+          reloj: RelojFijo(DateTime(2026, 10, 20, hora)),
+        );
+        final rutas = dispositivo == TipoDispositivo.laptop
+            ? [for (final s in SeccionFinanzas.values) s.ruta]
+            : [Rutas.finanzas, SeccionFinanzas.movimientos.ruta];
+        for (final ruta in rutas) {
+          await irA(tester, ruta);
+          await _guias(tester, ruta);
+        }
+        semantica.dispose();
+      });
     }
   }
 

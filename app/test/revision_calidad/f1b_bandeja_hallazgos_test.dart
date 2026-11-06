@@ -87,45 +87,44 @@ void main() {
 
   // ---------------------------------------------------------------- B1
   group('B1: sin sesión de la tablet no hay caducidad', () {
-    test(
-      'cerrada la sesión de Hogar, a los 8 días la credencial sigue en claro',
-      () async {
-        final servicio = ServicioSesionFalso(inicial: casa)..rotacionEstricta = true;
-        final servidor = ServidorFalso();
-        // Hogar salió (o su sesión se cerró): nadie tiene la sesión del servidor.
-        String? sesionDelServidor = casa.persona.id;
-        final cola = ColaSinConexion(
-          base: base,
-          enviador: EnviadorDeSesion(servidor, () => sesionDelServidor),
-          reloj: () => ahora,
-          personaConSesion: () => sesionDelServidor,
-          cuentaDelEquipo: () => casa.persona.id,
-          salida: SalidaSinPinConSesiones(
-            bandeja: bandeja,
-            abrir: servicio.abrirSesionAparte,
-            enviadorDe: (aparte) => EnviadorDeSesion(servidor, () => aparte.personaId),
-          ),
-        );
-        await pendiente(cola);
-        await delegar(ServicioSesionFalso.credencialDe(dueno));
-        expect((await bandeja.leer(dueno.persona.id))!.credencial, isNotNull);
+    test('cerrada la sesión de Hogar, a los 8 días la credencial sigue en claro', () async {
+      final servicio = ServicioSesionFalso(inicial: casa)
+        ..rotacionEstricta = true;
+      final servidor = ServidorFalso();
+      // Hogar salió (o su sesión se cerró): nadie tiene la sesión del servidor.
+      String? sesionDelServidor = casa.persona.id;
+      final cola = ColaSinConexion(
+        base: base,
+        enviador: EnviadorDeSesion(servidor, () => sesionDelServidor),
+        reloj: () => ahora,
+        personaConSesion: () => sesionDelServidor,
+        cuentaDelEquipo: () => casa.persona.id,
+        salida: SalidaSinPinConSesiones(
+          bandeja: bandeja,
+          abrir: servicio.abrirSesionAparte,
+          enviadorDe: (aparte) =>
+              EnviadorDeSesion(servidor, () => aparte.personaId),
+        ),
+      );
+      await pendiente(cola);
+      await delegar(ServicioSesionFalso.credencialDe(dueno));
+      expect((await bandeja.leer(dueno.persona.id))!.credencial, isNotNull);
 
-        sesionDelServidor = null; // salir() de la cuenta del equipo
-        ahora = ahora.add(const Duration(days: 8));
-        await cola.procesar();
+      sesionDelServidor = null; // salir() de la cuenta del equipo
+      ahora = ahora.add(const Duration(days: 8));
+      await cola.procesar();
 
-        final permiso = await bandeja.leer(dueno.persona.id);
-        expect(
-          permiso?.credencial,
-          isNull,
-          reason:
-              'a los 8 días (7 de vigencia) la credencial en claro debería '
-              'haberse borrado, pero como la caducidad solo corre dentro de '
-              'procesar() con una sesión abierta (cola_sin_conexion.dart:431), '
-              'sigue en el almacén seguro sin el PIN',
-        );
-      },
-    );
+      final permiso = await bandeja.leer(dueno.persona.id);
+      expect(
+        permiso?.credencial,
+        isNull,
+        reason:
+            'a los 8 días (7 de vigencia) la credencial en claro debería '
+            'haberse borrado, pero como la caducidad solo corre dentro de '
+            'procesar() con una sesión abierta (cola_sin_conexion.dart:431), '
+            'sigue en el almacén seguro sin el PIN',
+      );
+    });
 
     test(
       'salir() de la cuenta del equipo no deja credenciales en claro de otros',
@@ -139,13 +138,16 @@ void main() {
           authOptions: const AuthClientOptions(autoRefreshToken: false),
         );
         addTearDown(equipo.dispose);
-        await equipo.auth.setInitialSession(jsonEncode(sesionJson(uidCasa, 'casa-0')));
+        await equipo.auth.setInitialSession(
+          jsonEncode(sesionJson(uidCasa, 'casa-0')),
+        );
         final servicio = ServicioSesionSupabase(
           cliente: equipo,
           almacen: almacen,
           url: gotrue.url,
           llavePublica: 'llave-publica-de-prueba',
-          lectorPerfil: (cliente) async => cliente.auth.currentUser?.id == uidCasa ? casa : dueno,
+          lectorPerfil: (cliente) async =>
+              cliente.auth.currentUser?.id == uidCasa ? casa : dueno,
         );
         addTearDown(servicio.cerrar);
         await servicio.iniciar();
@@ -180,13 +182,16 @@ void main() {
         'llave-publica-de-prueba',
         authOptions: const AuthClientOptions(autoRefreshToken: false),
       );
-      await equipo.auth.setInitialSession(jsonEncode(sesionJson(uidCasa, 'casa-0')));
+      await equipo.auth.setInitialSession(
+        jsonEncode(sesionJson(uidCasa, 'casa-0')),
+      );
       servicio = ServicioSesionSupabase(
         cliente: equipo,
         almacen: almacen,
         url: gotrue.url,
         llavePublica: 'llave-publica-de-prueba',
-        lectorPerfil: (cliente) async => cliente.auth.currentUser?.id == uidCasa ? casa : dueno,
+        lectorPerfil: (cliente) async =>
+            cliente.auth.currentUser?.id == uidCasa ? casa : dueno,
       );
       await servicio.iniciar();
     });
@@ -197,107 +202,109 @@ void main() {
       await gotrue.cerrar();
     });
 
-    test(
-      'el límite de peticiones (429) no destruye el permiso ni manda lo pendiente '
-      'a "requiere atención"',
-      () async {
-        final servidor = ServidorFalso();
-        final cola = ColaSinConexion(
-          base: base,
-          enviador: EnviadorDeSesion(servidor, () => servicio.personaEnServidor),
-          reloj: () => ahora,
-          personaConSesion: () => casa.persona.id,
-          cuentaDelEquipo: () => casa.persona.id,
-          salida: SalidaSinPinConSesiones(
-            bandeja: bandeja,
-            abrir: servicio.abrirSesionAparte,
-            enviadorDe: (aparte) => EnviadorDeSesion(servidor, () => aparte.personaId),
-          ),
-        );
-        await pendiente(cola);
-        await delegar(jsonEncode(sesionJson(uidDueno, 'r0', vencida: true)));
-
-        gotrue.estadoFijoAlRenovar = 429; // "Request rate limit reached"
-        await cola.procesar();
-
-        final permiso = await bandeja.leer(dueno.persona.id);
-        final registro = (await cola.registros()).single;
-        expect(
-          (permiso?.estado, registro.estado),
-          (EstadoPermiso.enEspera, EstadoPendiente.pendiente),
-          reason:
-              'con un 429 el servidor sigue ahí y la credencial sirve: debe '
-              'reintentarse. Hoy abrirSesionAparte lo traduce a '
-              'credencialVencida (servicio_sesion_supabase.dart:439-441), la '
-              'cola borra el permiso y lo pendiente queda en "requiere '
-              'atención" (${registro.ultimoError})',
-        );
-
-        // Cuando el límite se levanta, sube sola.
-        gotrue.estadoFijoAlRenovar = null;
-        ahora = ahora.add(const Duration(minutes: 5));
-        await cola.procesar();
-        expect(servidor.idsDe(dueno.persona.id), ['gasto-1']);
-      },
-    );
-
-    test('control: un refresh token realmente revocado sí es credencial vencida',
-        () async {
-      gotrue.revocados.add('r0');
-      await expectLater(
-        servicio.abrirSesionAparte(
-          dueno.persona.id,
-          jsonEncode(sesionJson(uidDueno, 'r0', vencida: true)),
-          alRenovar: (_) {},
+    test('el límite de peticiones (429) no destruye el permiso ni manda lo pendiente '
+        'a "requiere atención"', () async {
+      final servidor = ServidorFalso();
+      final cola = ColaSinConexion(
+        base: base,
+        enviador: EnviadorDeSesion(servidor, () => servicio.personaEnServidor),
+        reloj: () => ahora,
+        personaConSesion: () => casa.persona.id,
+        cuentaDelEquipo: () => casa.persona.id,
+        salida: SalidaSinPinConSesiones(
+          bandeja: bandeja,
+          abrir: servicio.abrirSesionAparte,
+          enviadorDe: (aparte) =>
+              EnviadorDeSesion(servidor, () => aparte.personaId),
         ),
-        throwsA(ErrorSesion.credencialVencida),
       );
+      await pendiente(cola);
+      await delegar(jsonEncode(sesionJson(uidDueno, 'r0', vencida: true)));
+
+      gotrue.estadoFijoAlRenovar = 429; // "Request rate limit reached"
+      await cola.procesar();
+
+      final permiso = await bandeja.leer(dueno.persona.id);
+      final registro = (await cola.registros()).single;
+      expect(
+        (permiso?.estado, registro.estado),
+        (EstadoPermiso.enEspera, EstadoPendiente.pendiente),
+        reason:
+            'con un 429 el servidor sigue ahí y la credencial sirve: debe '
+            'reintentarse. Hoy abrirSesionAparte lo traduce a '
+            'credencialVencida (servicio_sesion_supabase.dart:439-441), la '
+            'cola borra el permiso y lo pendiente queda en "requiere '
+            'atención" (${registro.ultimoError})',
+      );
+
+      // Cuando el límite se levanta, sube sola.
+      gotrue.estadoFijoAlRenovar = null;
+      ahora = ahora.add(const Duration(minutes: 5));
+      await cola.procesar();
+      expect(servidor.idsDe(dueno.persona.id), ['gasto-1']);
     });
 
-    // ------------------------------------------------------------ B4
     test(
-      'al caducar el permiso se revoca también la sesión en el servidor',
+      'control: un refresh token realmente revocado sí es credencial vencida',
       () async {
-        final servidor = ServidorFalso();
-        final cola = ColaSinConexion(
-          base: base,
-          enviador: EnviadorDeSesion(servidor, () => servicio.personaEnServidor),
-          reloj: () => ahora,
-          personaConSesion: () => casa.persona.id,
-          cuentaDelEquipo: () => casa.persona.id,
-          salida: SalidaSinPinConSesiones(
-            bandeja: bandeja,
-            abrir: servicio.abrirSesionAparte,
-            enviadorDe: (aparte) => EnviadorDeSesion(servidor, () => aparte.personaId),
+        gotrue.revocados.add('r0');
+        await expectLater(
+          servicio.abrirSesionAparte(
+            dueno.persona.id,
+            jsonEncode(sesionJson(uidDueno, 'r0', vencida: true)),
+            alRenovar: (_) {},
           ),
-        );
-        await pendiente(cola);
-        await delegar(jsonEncode(sesionJson(uidDueno, 'r0', vencida: true)));
-        servidor.conSenal = false;
-        ahora = ahora.add(const Duration(days: 7, minutes: 1));
-        await cola.procesar();
-
-        expect(await bandeja.leer(dueno.persona.id), isNull, reason: 'la copia local sí se borró');
-        expect(
-          gotrue.rutas,
-          contains('POST /auth/v1/logout'),
-          reason:
-              'caducar borra la copia local, pero la sesión del dueño sigue '
-              'viva en el servidor (los refresh tokens de Supabase no caducan '
-              'por tiempo en el plan gratis): quien se hubiera llevado una copia '
-              'en esos 7 días la conserva para siempre. Con señal, la app '
-              'debería cerrar esa sesión al caducar o al descartar el permiso',
+          throwsA(ErrorSesion.credencialVencida),
         );
       },
-      tags: ['hallazgo'],
     );
+
+    // ------------------------------------------------------------ B4
+    test('al caducar el permiso se revoca también la sesión en el servidor', () async {
+      final servidor = ServidorFalso();
+      final cola = ColaSinConexion(
+        base: base,
+        enviador: EnviadorDeSesion(servidor, () => servicio.personaEnServidor),
+        reloj: () => ahora,
+        personaConSesion: () => casa.persona.id,
+        cuentaDelEquipo: () => casa.persona.id,
+        salida: SalidaSinPinConSesiones(
+          bandeja: bandeja,
+          abrir: servicio.abrirSesionAparte,
+          enviadorDe: (aparte) =>
+              EnviadorDeSesion(servidor, () => aparte.personaId),
+        ),
+      );
+      await pendiente(cola);
+      await delegar(jsonEncode(sesionJson(uidDueno, 'r0', vencida: true)));
+      servidor.conSenal = false;
+      ahora = ahora.add(const Duration(days: 7, minutes: 1));
+      await cola.procesar();
+
+      expect(
+        await bandeja.leer(dueno.persona.id),
+        isNull,
+        reason: 'la copia local sí se borró',
+      );
+      expect(
+        gotrue.rutas,
+        contains('POST /auth/v1/logout'),
+        reason:
+            'caducar borra la copia local, pero la sesión del dueño sigue '
+            'viva en el servidor (los refresh tokens de Supabase no caducan '
+            'por tiempo en el plan gratis): quien se hubiera llevado una copia '
+            'en esos 7 días la conserva para siempre. Con señal, la app '
+            'debería cerrar esa sesión al caducar o al descartar el permiso',
+      );
+    }, tags: ['hallazgo']);
   });
 
   // ---------------------------------------------------------------- B3
   test(
     'B3: una subida colgada no deja entrar a la persona con su PIN',
     () async {
-      final servicio = ServicioSesionFalso(inicial: casa)..rotacionEstricta = true;
+      final servicio = ServicioSesionFalso(inicial: casa)
+        ..rotacionEstricta = true;
       final colgado = Completer<ResultadoEnvio>();
       final cola = ColaSinConexion(
         base: base,
@@ -376,7 +383,8 @@ void main() {
             (ref) => SalidaSinPinConSesiones(
               bandeja: ref.watch(bandejaDeSalidaProvider),
               abrir: servicio.abrirSesionAparte,
-              enviadorDe: (aparte) => EnviadorDeSesion(servidor, () => aparte.personaId),
+              enviadorDe: (aparte) =>
+                  EnviadorDeSesion(servidor, () => aparte.personaId),
             ),
           ),
         ],
@@ -395,15 +403,28 @@ void main() {
     test(
       'el permiso viejo no pisa la credencial nueva al entrar con el PIN nuevo',
       () async {
-        expect(await tablet.entrarConPin(dueno.persona.id, pinViejo), ResultadoDesbloqueo.abierto);
+        expect(
+          await tablet.entrarConPin(dueno.persona.id, pinViejo),
+          ResultadoDesbloqueo.abierto,
+        );
         servicio.sinConexion = true;
         servidor.conSenal = false;
-        await cola.encolar(tipo: 'finanzas.movimiento', carga: const {'monto_centavos': 100}, id: 'g1');
+        await cola.encolar(
+          tipo: 'finanzas.movimiento',
+          carga: const {'monto_centavos': 100},
+          id: 'g1',
+        );
         await cola.procesar();
         tablet.volverAlReposo();
         await tablet.cambiosEnServidor;
-        final permiso = await contenedor.read(bandejaDeSalidaProvider).leer(dueno.persona.id);
-        expect(permiso?.estado, EstadoPermiso.enEspera, reason: 'salió con algo por subir');
+        final permiso = await contenedor
+            .read(bandejaDeSalidaProvider)
+            .leer(dueno.persona.id);
+        expect(
+          permiso?.estado,
+          EstadoPermiso.enEspera,
+          reason: 'salió con algo por subir',
+        );
 
         // La persona vuelve a registrarse en la tablet (correo y contraseña de
         // nuevo, PIN nuevo): hay una credencial nueva, de otra cadena.
@@ -427,7 +448,10 @@ void main() {
         );
         final guardada = await RepositorioTablet(almacenTablet)
             .leerCredencial(dueno.persona.id, pinNuevo);
-        expect(guardada?.$2, ServicioSesionFalso.credencialDe(dueno, vuelta: 10));
+        expect(
+          guardada?.$2,
+          ServicioSesionFalso.credencialDe(dueno, vuelta: 10),
+        );
       },
     );
   });

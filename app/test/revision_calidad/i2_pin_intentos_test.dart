@@ -53,7 +53,10 @@ void main() {
     for (var i = 0; i < ControladorTablet.intentosAntesDeBloquear; i++) {
       antes.desbloquearConPin(dueno, '0000');
     }
-    expect(antes.desbloquearConPin(dueno, '1234'), ResultadoDesbloqueo.bloqueado);
+    expect(
+      antes.desbloquearConPin(dueno, '1234'),
+      ResultadoDesbloqueo.bloqueado,
+    );
 
     final despues = await abrirApp(); // misma tablet, app reiniciada
     expect(

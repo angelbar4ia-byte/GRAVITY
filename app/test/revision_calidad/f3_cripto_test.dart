@@ -31,60 +31,80 @@ import 'package:habitos_dominio/habitos_dominio.dart';
 
 class _Enviador implements Enviador {
   @override
-  Future<ResultadoEnvio> enviar(PeticionEnvio peticion) async => ResultadoEnvio.enviado;
+  Future<ResultadoEnvio> enviar(PeticionEnvio peticion) async =>
+      ResultadoEnvio.enviado;
 }
 
 void main() {
-  test('F3-2: dos subidas seguidas llevan revisiones contiguas (el servidor exige +1)',
-      tags: 'hallazgo', () async {
-    final almacen = AlmacenSeguroEnMemoria();
-    final base = BaseLocal.enMemoria();
-    addTearDown(base.close);
-    var ahora = DateTime.utc(2026, 11, 2, 20);
-    final cola = ColaSinConexion(base: base, enviador: _Enviador(), reloj: () => ahora);
-    final modos = ModosLocales(almacen);
-    final llaves = LlavesHabitos(almacen);
-    await llaves.guardarLlaveMaestra('ana', bytesAleatorios(32));
-    await modos.fijar('ana', TipoSensible.habitosSensibles, ModoSensible.nubeCifrada);
-    final docs = DocumentosSensibles(
-      llaves: llaves,
-      sobres: AlmacenDeSobres(almacen),
-      modos: modos,
-      persona: 'ana',
-      ahora: () => ahora,
-    );
-    final subida = SubidaDiferidaDeSobres(
-      sobres: AlmacenDeSobres(almacen),
-      modos: modos,
-      cola: cola,
-      almacen: almacen,
-      reloj: () => ahora,
-    );
-    Future<void> registrar(int n) => docs.poner(
-      TipoSensible.habitosSensibles,
-      'dia:2026-11-02',
-      ElementoDoc(id: 'e$n', clase: 'consumo', modificadoEn: n, datos: const {'x': 1}),
-    );
-    await registrar(1);
-    expect(await subida.encolarPendientes('ana', forzar: true), 1);
-    // Durante el día la persona registra tres consumos más (cada uno sube la revisión).
-    await registrar(2);
-    await registrar(3);
-    await registrar(4);
-    ahora = ahora.add(const Duration(hours: 7));
-    expect(await subida.encolarPendientes('ana'), 1);
-    final revisiones = <int>[];
-    for (final r in await cola.registros()) {
-      final carga = (jsonDecode(r.carga) as Map).cast<String, Object?>();
-      for (final s in SubidaDiferidaDeSobres.sobresDeCarga(carga)) {
-        revisiones.add(s['revision']! as int);
+  test(
+    'F3-2: dos subidas seguidas llevan revisiones contiguas (el servidor exige +1)',
+    tags: 'hallazgo',
+    () async {
+      final almacen = AlmacenSeguroEnMemoria();
+      final base = BaseLocal.enMemoria();
+      addTearDown(base.close);
+      var ahora = DateTime.utc(2026, 11, 2, 20);
+      final cola = ColaSinConexion(
+        base: base,
+        enviador: _Enviador(),
+        reloj: () => ahora,
+      );
+      final modos = ModosLocales(almacen);
+      final llaves = LlavesHabitos(almacen);
+      await llaves.guardarLlaveMaestra('ana', bytesAleatorios(32));
+      await modos.fijar(
+        'ana',
+        TipoSensible.habitosSensibles,
+        ModoSensible.nubeCifrada,
+      );
+      final docs = DocumentosSensibles(
+        llaves: llaves,
+        sobres: AlmacenDeSobres(almacen),
+        modos: modos,
+        persona: 'ana',
+        ahora: () => ahora,
+      );
+      final subida = SubidaDiferidaDeSobres(
+        sobres: AlmacenDeSobres(almacen),
+        modos: modos,
+        cola: cola,
+        almacen: almacen,
+        reloj: () => ahora,
+      );
+      Future<void> registrar(int n) => docs.poner(
+        TipoSensible.habitosSensibles,
+        'dia:2026-11-02',
+        ElementoDoc(
+          id: 'e$n',
+          clase: 'consumo',
+          modificadoEn: n,
+          datos: const {'x': 1},
+        ),
+      );
+      await registrar(1);
+      expect(await subida.encolarPendientes('ana', forzar: true), 1);
+      // Durante el día la persona registra tres consumos más (cada uno sube la revisión).
+      await registrar(2);
+      await registrar(3);
+      await registrar(4);
+      ahora = ahora.add(const Duration(hours: 7));
+      expect(await subida.encolarPendientes('ana'), 1);
+      final revisiones = <int>[];
+      for (final r in await cola.registros()) {
+        final carga = (jsonDecode(r.carga) as Map).cast<String, Object?>();
+        for (final s in SubidaDiferidaDeSobres.sobresDeCarga(carga)) {
+          revisiones.add(s['revision']! as int);
+        }
       }
-    }
-    revisiones.sort();
-    expect(revisiones.length, 2);
-    expect(revisiones.last - revisiones.first, 1,
-        reason: 'revisiones subidas: $revisiones (el servidor acepta solo +1)');
-  });
+      revisiones.sort();
+      expect(revisiones.length, 2);
+      expect(
+        revisiones.last - revisiones.first,
+        1,
+        reason: 'revisiones subidas: $revisiones (el servidor acepta solo +1)',
+      );
+    },
+  );
 
   test('F3-3: el KDF que manda el cliente está en la lista del servidor', () {
     const aceptados = {'pbkdf2-hmac-sha256', 'argon2id'};
@@ -95,44 +115,82 @@ void main() {
     final frase = FraseDeRecuperacion.desdeEntropia(List.filled(16, 0));
     // ábaco ×11 + abierto, escrito con a + U+0301 (teclados que no normalizan).
     final tecleada = frase.map((p) => p.replaceAll('á', 'á')).join(' ');
-    expect(FraseDeRecuperacion.esValida(FraseDeRecuperacion.normalizar(tecleada)), isTrue);
+    expect(
+      FraseDeRecuperacion.esValida(FraseDeRecuperacion.normalizar(tecleada)),
+      isTrue,
+    );
   });
 
   group('guardias', () {
-    test('3 000 cifrados del mismo texto: ni un nonce repetido ni un texto igual', () {
-      final llave = bytesAleatorios(32);
-      final nonces = <String>{};
-      final textos = <String>{};
-      for (var i = 0; i < 3000; i++) {
-        final s = SobreAes.cifrarBytes(llave, utf8.encode('igual'));
-        nonces.add(aBase64Url(s.sublist(1, 13)));
-        textos.add(aBase64Url(s));
-      }
-      expect(nonces.length, 3000);
-      expect(textos.length, 3000);
-    });
+    test(
+      '3 000 cifrados del mismo texto: ni un nonce repetido ni un texto igual',
+      () {
+        final llave = bytesAleatorios(32);
+        final nonces = <String>{};
+        final textos = <String>{};
+        for (var i = 0; i < 3000; i++) {
+          final s = SobreAes.cifrarBytes(llave, utf8.encode('igual'));
+          nonces.add(aBase64Url(s.sublist(1, 13)));
+          textos.add(aBase64Url(s));
+        }
+        expect(nonces.length, 3000);
+        expect(textos.length, 3000);
+      },
+    );
 
-    test('alterar cualquier byte del sobre, o moverlo de lugar, impide abrirlo', () {
-      final llave = bytesAleatorios(32);
-      final aad = datosAsociadosDeSobre(persona: 'p', tipo: 't', id: 'i', revision: 1);
-      final sobre = SobreAes.cifrarBytes(llave, utf8.encode('secreto'), datosAsociados: aad);
-      expect(SobreAes.descifrarBytes(llave, sobre, datosAsociados: aad), isNotNull);
-      for (var i = 0; i < sobre.length; i++) {
-        final malo = sobre.sublist(0)..[i] ^= 0x01;
-        expect(SobreAes.descifrarBytes(llave, malo, datosAsociados: aad), isNull, reason: 'byte $i');
-      }
-      for (final otro in [
-        datosAsociadosDeSobre(persona: 'q', tipo: 't', id: 'i', revision: 1),
-        datosAsociadosDeSobre(persona: 'p', tipo: 'u', id: 'i', revision: 1),
-        datosAsociadosDeSobre(persona: 'p', tipo: 't', id: 'j', revision: 1),
-        datosAsociadosDeSobre(persona: 'p', tipo: 't', id: 'i', revision: 2),
-        <int>[],
-      ]) {
-        expect(SobreAes.descifrarBytes(llave, sobre, datosAsociados: otro), isNull);
-      }
-      expect(SobreAes.descifrarBytes(llave, sobre.sublist(0, 20), datosAsociados: aad), isNull);
-      expect(SobreAes.descifrarBytes(llave, Uint8List(0), datosAsociados: aad), isNull);
-    });
+    test(
+      'alterar cualquier byte del sobre, o moverlo de lugar, impide abrirlo',
+      () {
+        final llave = bytesAleatorios(32);
+        final aad = datosAsociadosDeSobre(
+          persona: 'p',
+          tipo: 't',
+          id: 'i',
+          revision: 1,
+        );
+        final sobre = SobreAes.cifrarBytes(
+          llave,
+          utf8.encode('secreto'),
+          datosAsociados: aad,
+        );
+        expect(
+          SobreAes.descifrarBytes(llave, sobre, datosAsociados: aad),
+          isNotNull,
+        );
+        for (var i = 0; i < sobre.length; i++) {
+          final malo = sobre.sublist(0)..[i] ^= 0x01;
+          expect(
+            SobreAes.descifrarBytes(llave, malo, datosAsociados: aad),
+            isNull,
+            reason: 'byte $i',
+          );
+        }
+        for (final otro in [
+          datosAsociadosDeSobre(persona: 'q', tipo: 't', id: 'i', revision: 1),
+          datosAsociadosDeSobre(persona: 'p', tipo: 'u', id: 'i', revision: 1),
+          datosAsociadosDeSobre(persona: 'p', tipo: 't', id: 'j', revision: 1),
+          datosAsociadosDeSobre(persona: 'p', tipo: 't', id: 'i', revision: 2),
+          <int>[],
+        ]) {
+          expect(
+            SobreAes.descifrarBytes(llave, sobre, datosAsociados: otro),
+            isNull,
+          );
+        }
+        expect(
+          SobreAes.descifrarBytes(
+            llave,
+            sobre.sublist(0, 20),
+            datosAsociados: aad,
+          ),
+          isNull,
+        );
+        expect(
+          SobreAes.descifrarBytes(llave, Uint8List(0), datosAsociados: aad),
+          isNull,
+        );
+      },
+    );
 
     test('la lista de palabras no lleva espacios ni marcas combinantes y la frase tiene 12', () {
       for (final p in palabrasEs) {

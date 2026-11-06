@@ -56,33 +56,33 @@ void main() {
     );
   });
 
-  test('rechaza una herramienta de Finanzas que lee datos sin soloLocal (D3)', () {
-    expect(
-      () => RegistroHerramientas([
-        const _Lectora(
-          'finanzas.resumen_semana',
-          Modulo.finanzas,
-          {Rol.dueno},
-          soloLocal: false,
-        ),
-      ]),
-      throwsArgumentError,
-    );
-  });
+  test(
+    'rechaza una herramienta de Finanzas que lee datos sin soloLocal (D3)',
+    () {
+      expect(
+        () => RegistroHerramientas([
+          const _Lectora('finanzas.resumen_semana', Modulo.finanzas, {
+            Rol.dueno,
+          }, soloLocal: false),
+        ]),
+        throwsArgumentError,
+      );
+    },
+  );
 
-  test('rechaza una herramienta de Cuidados que lee datos sin soloLocal (D3)', () {
-    expect(
-      () => RegistroHerramientas([
-        const _Lectora(
-          'cuidados.siguiente_medicamento',
-          Modulo.cuidados,
-          {Rol.dueno},
-          soloLocal: false,
-        ),
-      ]),
-      throwsArgumentError,
-    );
-  });
+  test(
+    'rechaza una herramienta de Cuidados que lee datos sin soloLocal (D3)',
+    () {
+      expect(
+        () => RegistroHerramientas([
+          const _Lectora('cuidados.siguiente_medicamento', Modulo.cuidados, {
+            Rol.dueno,
+          }, soloLocal: false),
+        ]),
+        throwsArgumentError,
+      );
+    },
+  );
 
   test('las de navegación de la Fase 0 siguen permitidas', () {
     expect(registroFase0().todas, isNotEmpty);

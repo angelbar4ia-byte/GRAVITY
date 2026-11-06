@@ -54,99 +54,124 @@ void main() {
   );
 
   group('B1: nada en claro con la cuenta del equipo cerrada', () {
-    test('sellarTodos sella lo que está en claro y deja lo sellado como estaba', () async {
-      await delegar(dueno, vuelta: 3);
-      await delegar(pareja, vuelta: 1);
-      await bandeja.sellarYDevolver(
-        pareja.persona.id,
-        ServicioSesionFalso.credencialDe(pareja, vuelta: 1),
-      );
-      final sobreDePareja = (await bandeja.leer(pareja.persona.id))!.sobre;
+    test(
+      'sellarTodos sella lo que está en claro y deja lo sellado como estaba',
+      () async {
+        await delegar(dueno, vuelta: 3);
+        await delegar(pareja, vuelta: 1);
+        await bandeja.sellarYDevolver(
+          pareja.persona.id,
+          ServicioSesionFalso.credencialDe(pareja, vuelta: 1),
+        );
+        final sobreDePareja = (await bandeja.leer(pareja.persona.id))!.sobre;
 
-      await bandeja.sellarTodos();
+        await bandeja.sellarTodos();
 
-      for (final permiso in await bandeja.todos()) {
-        expect(permiso.estado, EstadoPermiso.devuelto);
-        expect(permiso.credencial, isNull);
-      }
-      expect((await bandeja.leer(pareja.persona.id))!.sobre, sobreDePareja);
-      expect(
-        almacen.datos.values.join('\n'),
-        isNot(contains('falsa:3')),
-        reason: 'la credencial del dueño ya no está en claro',
-      );
-      // Solo el PIN la recupera, y es la más reciente.
-      expect(await bandeja.tomarParaEntrada(dueno.persona.id, '000000'), isNull);
-      expect(
-        await bandeja.tomarParaEntrada(dueno.persona.id, pin),
-        ServicioSesionFalso.credencialDe(dueno, vuelta: 3),
-      );
-    });
+        for (final permiso in await bandeja.todos()) {
+          expect(permiso.estado, EstadoPermiso.devuelto);
+          expect(permiso.credencial, isNull);
+        }
+        expect((await bandeja.leer(pareja.persona.id))!.sobre, sobreDePareja);
+        expect(
+          almacen.datos.values.join('\n'),
+          isNot(contains('falsa:3')),
+          reason: 'la credencial del dueño ya no está en claro',
+        );
+        // Solo el PIN la recupera, y es la más reciente.
+        expect(
+          await bandeja.tomarParaEntrada(dueno.persona.id, '000000'),
+          isNull,
+        );
+        expect(
+          await bandeja.tomarParaEntrada(dueno.persona.id, pin),
+          ServicioSesionFalso.credencialDe(dueno, vuelta: 3),
+        );
+      },
+    );
 
     test('sin permisos no hace nada', () async {
       await bandeja.sellarTodos();
       expect(await bandeja.todos(), isEmpty);
     });
 
-    test('LimpiezaLocal.alCerrarElEquipo sella y no lanza aunque el almacén falle',
-        () async {
-      await delegar(dueno);
-      final limpieza = LimpiezaLocal(almacen, bandeja: bandeja);
-      await limpieza.alCerrarElEquipo();
-      expect((await bandeja.leer(dueno.persona.id))!.estado, EstadoPermiso.devuelto);
+    test(
+      'LimpiezaLocal.alCerrarElEquipo sella y no lanza aunque el almacén falle',
+      () async {
+        await delegar(dueno);
+        final limpieza = LimpiezaLocal(almacen, bandeja: bandeja);
+        await limpieza.alCerrarElEquipo();
+        expect(
+          (await bandeja.leer(dueno.persona.id))!.estado,
+          EstadoPermiso.devuelto,
+        );
 
-      final rota = LimpiezaLocal(_AlmacenQueFalla());
-      await rota.alCerrarElEquipo();
-    });
+        final rota = LimpiezaLocal(_AlmacenQueFalla());
+        await rota.alCerrarElEquipo();
+      },
+    );
 
-    test('la limpieza y la subida comparten la misma bandeja (un solo candado)', () {
-      final contenedor = ProviderContainer(
-        overrides: [almacenSeguroProvider.overrideWithValue(almacen)],
-      );
-      addTearDown(contenedor.dispose);
-      expect(
-        identical(
-          contenedor.read(limpiezaLocalProvider).bandeja,
-          contenedor.read(bandejaDeSalidaProvider),
-        ),
-        isTrue,
-      );
-    });
+    test(
+      'la limpieza y la subida comparten la misma bandeja (un solo candado)',
+      () {
+        final contenedor = ProviderContainer(
+          overrides: [almacenSeguroProvider.overrideWithValue(almacen)],
+        );
+        addTearDown(contenedor.dispose);
+        expect(
+          identical(
+            contenedor.read(limpiezaLocalProvider).bandeja,
+            contenedor.read(bandejaDeSalidaProvider),
+          ),
+          isTrue,
+        );
+      },
+    );
 
-    test('la caducidad corre aunque nadie tenga la sesión abierta; lo pendiente '
-        'pasa a "requiere atención"', () async {
-      final cola = ColaSinConexion(
-        base: base,
-        enviador: EnviadorDeSesion(servidor, () => null),
-        reloj: () => ahora,
-        personaConSesion: () => null,
-        salida: SalidaSinPinConSesiones(
-          bandeja: bandeja,
-          abrir: ServicioSesionFalso(inicial: casa).abrirSesionAparte,
-          enviadorDe: (_) => EnviadorDeSesion(servidor, () => null),
-        ),
-      );
-      await cola.encolar(
-        tipo: 'finanzas.movimiento',
-        carga: const {'monto_centavos': 100},
-        id: 'g1',
-        personaId: dueno.persona.id,
-      );
-      await delegar(dueno);
+    test(
+      'la caducidad corre aunque nadie tenga la sesión abierta; lo pendiente '
+      'pasa a "requiere atención"',
+      () async {
+        final cola = ColaSinConexion(
+          base: base,
+          enviador: EnviadorDeSesion(servidor, () => null),
+          reloj: () => ahora,
+          personaConSesion: () => null,
+          salida: SalidaSinPinConSesiones(
+            bandeja: bandeja,
+            abrir: ServicioSesionFalso(inicial: casa).abrirSesionAparte,
+            enviadorDe: (_) => EnviadorDeSesion(servidor, () => null),
+          ),
+        );
+        await cola.encolar(
+          tipo: 'finanzas.movimiento',
+          carga: const {'monto_centavos': 100},
+          id: 'g1',
+          personaId: dueno.persona.id,
+        );
+        await delegar(dueno);
 
-      ahora = ahora.add(const Duration(days: 6));
-      await cola.procesar();
-      expect(await bandeja.leer(dueno.persona.id), isNotNull, reason: 'aún no vence');
+        ahora = ahora.add(const Duration(days: 6));
+        await cola.procesar();
+        expect(
+          await bandeja.leer(dueno.persona.id),
+          isNotNull,
+          reason: 'aún no vence',
+        );
 
-      ahora = ahora.add(const Duration(days: 2));
-      final resumen = await cola.procesar();
-      expect(await bandeja.leer(dueno.persona.id), isNull);
-      expect(resumen.rechazados, 1);
-      final registro = (await cola.registros()).single;
-      expect(registro.estado, EstadoPendiente.rechazado);
-      expect(registro.ultimoError, motivoBandejaCaducada);
-      expect(servidor.recibidos, isEmpty, reason: 'sin sesión no se sube nada');
-    });
+        ahora = ahora.add(const Duration(days: 2));
+        final resumen = await cola.procesar();
+        expect(await bandeja.leer(dueno.persona.id), isNull);
+        expect(resumen.rechazados, 1);
+        final registro = (await cola.registros()).single;
+        expect(registro.estado, EstadoPendiente.rechazado);
+        expect(registro.ultimoError, motivoBandejaCaducada);
+        expect(
+          servidor.recibidos,
+          isEmpty,
+          reason: 'sin sesión no se sube nada',
+        );
+      },
+    );
   });
 
   group('B2: solo un error claro destruye la credencial', () {
@@ -158,12 +183,18 @@ void main() {
         expect(credencialYaNoSirve(api(estado)), isTrue, reason: '$estado');
       }
       expect(credencialYaNoSirve(api(400, 'refresh_token_not_found')), isTrue);
-      expect(credencialYaNoSirve(api(400, 'refresh_token_already_used')), isTrue);
+      expect(
+        credencialYaNoSirve(api(400, 'refresh_token_already_used')),
+        isTrue,
+      );
       for (final estado in [408, 429]) {
         expect(credencialYaNoSirve(api(estado)), isFalse, reason: '$estado');
       }
       expect(credencialYaNoSirve(api(429, 'over_request_rate_limit')), isFalse);
-      expect(credencialYaNoSirve(AuthRetryableFetchException(statusCode: '503')), isFalse);
+      expect(
+        credencialYaNoSirve(AuthRetryableFetchException(statusCode: '503')),
+        isFalse,
+      );
       expect(credencialYaNoSirve(api(500)), isFalse);
       expect(credencialYaNoSirve(const AuthApiException('x')), isFalse);
       expect(credencialYaNoSirve(TimeoutException('x')), isFalse);
@@ -192,30 +223,33 @@ void main() {
         final permiso = await bandeja.leer(dueno.persona.id);
         expect(permiso?.estado, EstadoPermiso.enEspera, reason: error.mensaje);
         // Y el candado quedó libre.
-        await bandeja.conCandado(dueno.persona.id, () async {}).timeout(
-          const Duration(seconds: 2),
-        );
+        await bandeja
+            .conCandado(dueno.persona.id, () async {})
+            .timeout(const Duration(seconds: 2));
       }
     });
 
-    test('credencial vencida o dada de baja: sí lanza (la cola descarta el permiso)',
-        () async {
+    test('credencial vencida o dada de baja: sí lanza (la cola descarta el permiso)', () async {
       for (final error in [ErrorSesion.credencialVencida, ErrorSesion.sinRol]) {
         await expectLater(abrirConError(error), throwsA(error));
       }
     });
 
-    test('la cola no descarta el permiso con un error pasajero y reintenta después',
-        () async {
+    test('la cola no descarta el permiso con un error pasajero y reintenta después', () async {
       var falla = true;
       final servicio = ServicioSesionFalso(inicial: casa);
       final salida = SalidaSinPinConSesiones(
         bandeja: bandeja,
         abrir: (persona, credencial, {required alRenovar}) async {
           if (falla) throw ErrorSesion.servidorOcupado;
-          return servicio.abrirSesionAparte(persona, credencial, alRenovar: alRenovar);
+          return servicio.abrirSesionAparte(
+            persona,
+            credencial,
+            alRenovar: alRenovar,
+          );
         },
-        enviadorDe: (aparte) => EnviadorDeSesion(servidor, () => aparte.personaId),
+        enviadorDe: (aparte) =>
+            EnviadorDeSesion(servidor, () => aparte.personaId),
       );
       final cola = ColaSinConexion(
         base: base,
@@ -233,7 +267,10 @@ void main() {
       await delegar(dueno);
 
       await cola.procesar();
-      expect((await bandeja.leer(dueno.persona.id))?.estado, EstadoPermiso.enEspera);
+      expect(
+        (await bandeja.leer(dueno.persona.id))?.estado,
+        EstadoPermiso.enEspera,
+      );
       expect((await cola.registros()).single.estado, EstadoPendiente.pendiente);
 
       falla = false;
@@ -243,8 +280,7 @@ void main() {
   });
 
   group('B3: una subida colgada no bloquea', () {
-    test('un envío que no contesta se toma como falta de respuesta y la ronda sigue',
-        () async {
+    test('un envío que no contesta se toma como falta de respuesta y la ronda sigue', () async {
       final colgado = Completer<ResultadoEnvio>();
       final cola = ColaSinConexion(
         base: base,
@@ -252,7 +288,11 @@ void main() {
         reloj: () => ahora,
         tiempoMaximoDeEnvio: const Duration(milliseconds: 50),
       );
-      await cola.encolar(tipo: 'finanzas.movimiento', carga: const {}, id: 'g1');
+      await cola.encolar(
+        tipo: 'finanzas.movimiento',
+        carga: const {},
+        id: 'g1',
+      );
       final resumen = await cola.procesar().timeout(const Duration(seconds: 5));
       expect(resumen.reintentos, 1);
       final registro = (await cola.registros()).single;
@@ -263,7 +303,8 @@ void main() {
 
     test('entrar con el PIN interrumpe la subida; la siguiente ronda la reanuda sin '
         'duplicar', () async {
-      final servicio = ServicioSesionFalso(inicial: casa)..rotacionEstricta = true;
+      final servicio = ServicioSesionFalso(inicial: casa)
+        ..rotacionEstricta = true;
       final espera = Completer<void>();
       final cola = ColaSinConexion(
         base: base,
@@ -300,35 +341,51 @@ void main() {
       espera.complete();
       await pumpEventQueue();
       servidor.recibidos.clear();
-      await bandeja.delegar(dueno.persona.id, credencial!, LlavePin.derivar(pin, iteraciones: 10));
+      await bandeja.delegar(
+        dueno.persona.id,
+        credencial!,
+        LlavePin.derivar(pin, iteraciones: 10),
+      );
       await cola.procesar();
-      expect(servidor.idsDe(dueno.persona.id).where((id) => id == 'g1'), hasLength(1));
+      expect(
+        servidor.idsDe(dueno.persona.id).where((id) => id == 'g1'),
+        hasLength(1),
+      );
     });
 
-    test('quitar o cambiar el PIN también piden el turno con urgencia', () async {
-      await delegar(dueno);
-      final soltar = await bandeja.adquirir(dueno.persona.id);
-      var pedido = false;
-      unawaited(bandeja.turnoPedido(dueno.persona.id).then((_) => pedido = true));
-      final cambio = bandeja.cambiarPin(dueno.persona.id, pin, '739150');
-      await pumpEventQueue();
-      expect(pedido, isTrue);
-      soltar();
-      expect(await cambio, isTrue);
+    test(
+      'quitar o cambiar el PIN también piden el turno con urgencia',
+      () async {
+        await delegar(dueno);
+        final soltar = await bandeja.adquirir(dueno.persona.id);
+        var pedido = false;
+        unawaited(
+          bandeja.turnoPedido(dueno.persona.id).then((_) => pedido = true),
+        );
+        final cambio = bandeja.cambiarPin(dueno.persona.id, pin, '739150');
+        await pumpEventQueue();
+        expect(pedido, isTrue);
+        soltar();
+        expect(await cambio, isTrue);
 
-      final soltar2 = await bandeja.adquirir(dueno.persona.id);
-      pedido = false;
-      final borrar = bandeja.descartarPermiso(dueno.persona.id);
-      await pumpEventQueue();
-      expect(bandeja.turnoPedidoYa(dueno.persona.id), isTrue);
-      soltar2();
-      await borrar;
-      expect(await bandeja.leer(dueno.persona.id), isNull);
-    });
+        final soltar2 = await bandeja.adquirir(dueno.persona.id);
+        pedido = false;
+        final borrar = bandeja.descartarPermiso(dueno.persona.id);
+        await pumpEventQueue();
+        expect(bandeja.turnoPedidoYa(dueno.persona.id), isTrue);
+        soltar2();
+        await borrar;
+        expect(await bandeja.leer(dueno.persona.id), isNull);
+      },
+    );
 
     test('un turno ya pedido: la subida no empieza otro envío', () async {
       final soltar = await bandeja.adquirir(dueno.persona.id);
-      final urgente = bandeja.conCandado(dueno.persona.id, urgente: true, () async {});
+      final urgente = bandeja.conCandado(
+        dueno.persona.id,
+        urgente: true,
+        () async {},
+      );
       await pumpEventQueue();
       final envio = _EnviadorContador();
       final cede = EnviadorQueCede(envio, bandeja, dueno.persona.id);
@@ -363,28 +420,37 @@ void main() {
       await bandeja.descartarPermiso(dueno.persona.id);
     });
 
-    test('alAgregarDeNuevo borra el permiso y deja lo pendiente en su sitio', () async {
-      final cola = ColaSinConexion(
-        base: base,
-        enviador: EnviadorDeSesion(servidor, () => casa.persona.id),
-        reloj: () => ahora,
-      );
-      final tablet = BandejaDeLaTabletConCola(bandeja, () => cola);
-      await cola.encolar(
-        tipo: 'finanzas.movimiento',
-        carga: const {'monto_centavos': 100},
-        id: 'g1',
-        personaId: dueno.persona.id,
-      );
-      await delegar(dueno);
-      await tablet.alAgregarDeNuevo(dueno.persona.id);
-      expect(await bandeja.leer(dueno.persona.id), isNull);
-      expect((await cola.registros()).single.estado, EstadoPendiente.pendiente);
-      // Quitar, en cambio, sí manda lo pendiente a "requiere atención".
-      await delegar(dueno);
-      await tablet.alQuitarPersona(dueno.persona.id);
-      expect((await cola.registros()).single.estado, EstadoPendiente.rechazado);
-    });
+    test(
+      'alAgregarDeNuevo borra el permiso y deja lo pendiente en su sitio',
+      () async {
+        final cola = ColaSinConexion(
+          base: base,
+          enviador: EnviadorDeSesion(servidor, () => casa.persona.id),
+          reloj: () => ahora,
+        );
+        final tablet = BandejaDeLaTabletConCola(bandeja, () => cola);
+        await cola.encolar(
+          tipo: 'finanzas.movimiento',
+          carga: const {'monto_centavos': 100},
+          id: 'g1',
+          personaId: dueno.persona.id,
+        );
+        await delegar(dueno);
+        await tablet.alAgregarDeNuevo(dueno.persona.id);
+        expect(await bandeja.leer(dueno.persona.id), isNull);
+        expect(
+          (await cola.registros()).single.estado,
+          EstadoPendiente.pendiente,
+        );
+        // Quitar, en cambio, sí manda lo pendiente a "requiere atención".
+        await delegar(dueno);
+        await tablet.alQuitarPersona(dueno.persona.id);
+        expect(
+          (await cola.registros()).single.estado,
+          EstadoPendiente.rechazado,
+        );
+      },
+    );
   });
 }
 

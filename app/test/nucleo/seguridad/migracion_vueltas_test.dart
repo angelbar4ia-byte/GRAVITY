@@ -36,7 +36,10 @@ void main() {
 
   group('el hash', () {
     test('un hash de antes sigue verificando y se reconoce como viejo', () {
-      final viejo = HashPin.crear(pin, iteraciones: HashPin.iteracionesAnteriores);
+      final viejo = HashPin.crear(
+        pin,
+        iteraciones: HashPin.iteracionesAnteriores,
+      );
       expect(HashPin.verificar(pin, viejo), isTrue);
       expect(HashPin.verificar('738290', viejo), isFalse);
       expect(HashPin.iteracionesDe(viejo), 10000);
@@ -44,22 +47,29 @@ void main() {
       expect(HashPin.iteracionesDe(nuevo), HashPin.iteracionesPorDefecto);
     });
 
-    test('necesitaActualizarse: solo si tiene menos vueltas que las de hoy', () {
-      expect(HashPin.necesitaActualizarse(HashPin.crear(pin, iteraciones: vueltasViejas)), isTrue);
-      expect(HashPin.necesitaActualizarse(HashPin.crear(pin)), isFalse);
-      expect(
-        HashPin.necesitaActualizarse(
-          HashPin.crear(pin, iteraciones: HashPin.iteracionesPorDefecto + 1),
-        ),
-        isFalse,
-      );
-      // Lo que no se entiende no se "actualiza".
-      expect(HashPin.necesitaActualizarse('basura'), isFalse);
-      expect(HashPin.iteracionesDe('basura'), isNull);
-    });
+    test(
+      'necesitaActualizarse: solo si tiene menos vueltas que las de hoy',
+      () {
+        expect(
+          HashPin.necesitaActualizarse(
+            HashPin.crear(pin, iteraciones: vueltasViejas),
+          ),
+          isTrue,
+        );
+        expect(HashPin.necesitaActualizarse(HashPin.crear(pin)), isFalse);
+        expect(
+          HashPin.necesitaActualizarse(
+            HashPin.crear(pin, iteraciones: HashPin.iteracionesPorDefecto + 1),
+          ),
+          isFalse,
+        );
+        // Lo que no se entiende no se "actualiza".
+        expect(HashPin.necesitaActualizarse('basura'), isFalse);
+        expect(HashPin.iteracionesDe('basura'), isNull);
+      },
+    );
 
-    test('el sobre guarda sus vueltas: uno de antes se abre y uno nuevo lleva las de hoy',
-        () {
+    test('el sobre guarda sus vueltas: uno de antes se abre y uno nuevo lleva las de hoy', () {
       final viejo = CifradoPin.cifrar(
         LlavePin.derivar(pin, iteraciones: vueltasViejas),
         'credencial',
@@ -76,9 +86,13 @@ void main() {
       final contenedor = ProviderContainer(
         overrides: [
           almacenSeguroProvider.overrideWithValue(almacen),
-          servicioSesionProvider.overrideWithValue(ServicioSesionFalso(inicial: casa)),
+          servicioSesionProvider.overrideWithValue(
+            ServicioSesionFalso(inicial: casa),
+          ),
           biometriaProvider.overrideWithValue(BiometriaFalsa()),
-          relojSeguridadProvider.overrideWithValue(() => DateTime(2026, 10, 30, 9)),
+          relojSeguridadProvider.overrideWithValue(
+            () => DateTime(2026, 10, 30, 9),
+          ),
         ],
       );
       addTearDown(contenedor.dispose);
@@ -103,39 +117,60 @@ void main() {
       );
     }
 
-    test('entra con el PIN de antes y deja hash y sobre con las vueltas de hoy', () async {
-      await tabletDeAntes();
-      final sobreAntes = almacen.datos[RepositorioTablet.claveCredencial(dueno.persona.id)];
-      expect(jsonDecode(sobreAntes!)['it'], vueltasViejas);
+    test(
+      'entra con el PIN de antes y deja hash y sobre con las vueltas de hoy',
+      () async {
+        await tabletDeAntes();
+        final sobreAntes =
+            almacen.datos[RepositorioTablet.claveCredencial(dueno.persona.id)];
+        expect(jsonDecode(sobreAntes!)['it'], vueltasViejas);
 
-      final (contenedor, tablet) = await abrir();
-      expect(
-        await tablet.entrarConPin(dueno.persona.id, pin),
-        ResultadoDesbloqueo.abierto,
-      );
-      tablet.volverAlReposo();
-      await tablet.cambiosEnServidor;
+        final (contenedor, tablet) = await abrir();
+        expect(
+          await tablet.entrarConPin(dueno.persona.id, pin),
+          ResultadoDesbloqueo.abierto,
+        );
+        tablet.volverAlReposo();
+        await tablet.cambiosEnServidor;
 
-      final usuario = contenedor.read(controladorTabletProvider).usuarios.single;
-      expect(HashPin.iteracionesDe(usuario.hashPin), HashPin.iteracionesPorDefecto);
-      expect(HashPin.verificar(pin, usuario.hashPin), isTrue);
-      // Lo guardado en el almacén también: sobrevive al reinicio.
-      final otro = await abrir();
-      final guardado = otro.$1.read(controladorTabletProvider).usuarios.single;
-      expect(HashPin.iteracionesDe(guardado.hashPin), HashPin.iteracionesPorDefecto);
+        final usuario = contenedor
+            .read(controladorTabletProvider)
+            .usuarios
+            .single;
+        expect(
+          HashPin.iteracionesDe(usuario.hashPin),
+          HashPin.iteracionesPorDefecto,
+        );
+        expect(HashPin.verificar(pin, usuario.hashPin), isTrue);
+        // Lo guardado en el almacén también: sobrevive al reinicio.
+        final otro = await abrir();
+        final guardado = otro.$1
+            .read(controladorTabletProvider)
+            .usuarios
+            .single;
+        expect(
+          HashPin.iteracionesDe(guardado.hashPin),
+          HashPin.iteracionesPorDefecto,
+        );
 
-      final sobre = almacen.datos[RepositorioTablet.claveCredencial(dueno.persona.id)]!;
-      expect(jsonDecode(sobre)['it'], HashPin.iteracionesPorDefecto);
-      final abierto = await RepositorioTablet(almacen).leerCredencial(dueno.persona.id, pin);
-      expect(abierto, isNotNull, reason: 'la credencial no se perdió');
-      expect(ServicioSesionFalso.leerCredencial(abierto!.$2)?.$1.persona.id, dueno.persona.id);
+        final sobre =
+            almacen.datos[RepositorioTablet.claveCredencial(dueno.persona.id)]!;
+        expect(jsonDecode(sobre)['it'], HashPin.iteracionesPorDefecto);
+        final abierto = await RepositorioTablet(almacen)
+            .leerCredencial(dueno.persona.id, pin);
+        expect(abierto, isNotNull, reason: 'la credencial no se perdió');
+        expect(
+          ServicioSesionFalso.leerCredencial(abierto!.$2)?.$1.persona.id,
+          dueno.persona.id,
+        );
 
-      // Y con el hash y el sobre nuevos se vuelve a entrar.
-      expect(
-        await otro.$2.entrarConPin(dueno.persona.id, pin),
-        ResultadoDesbloqueo.abierto,
-      );
-    });
+        // Y con el hash y el sobre nuevos se vuelve a entrar.
+        expect(
+          await otro.$2.entrarConPin(dueno.persona.id, pin),
+          ResultadoDesbloqueo.abierto,
+        );
+      },
+    );
 
     test('un PIN equivocado no cambia nada de lo guardado', () async {
       await tabletDeAntes();
@@ -153,8 +188,11 @@ void main() {
 
     test('si ya tienen las vueltas de hoy no se reescriben', () async {
       await tabletDeAntes(vueltas: HashPin.iteracionesPorDefecto);
-      final hashAntes = (await RepositorioTablet(almacen).leerUsuarios()).single.hashPin;
-      final sobreAntes = almacen.datos[RepositorioTablet.claveCredencial(dueno.persona.id)];
+      final hashAntes = (await RepositorioTablet(
+        almacen,
+      ).leerUsuarios()).single.hashPin;
+      final sobreAntes =
+          almacen.datos[RepositorioTablet.claveCredencial(dueno.persona.id)];
       final (_, tablet) = await abrir();
       expect(
         await tablet.entrarConPin(dueno.persona.id, pin),
@@ -162,10 +200,15 @@ void main() {
       );
       tablet.volverAlReposo();
       await tablet.cambiosEnServidor;
-      expect((await RepositorioTablet(almacen).leerUsuarios()).single.hashPin, hashAntes);
+      expect(
+        (await RepositorioTablet(almacen).leerUsuarios()).single.hashPin,
+        hashAntes,
+      );
       // El sobre se vuelve a cifrar al salir (nonce nuevo), pero con las mismas vueltas.
       expect(
-        jsonDecode(almacen.datos[RepositorioTablet.claveCredencial(dueno.persona.id)]!)['it'],
+        jsonDecode(
+          almacen.datos[RepositorioTablet.claveCredencial(dueno.persona.id)]!,
+        )['it'],
         jsonDecode(sobreAntes!)['it'],
       );
     });
@@ -176,9 +219,13 @@ void main() {
       final contenedor = ProviderContainer(
         overrides: [
           almacenSeguroProvider.overrideWithValue(almacen),
-          servicioSesionProvider.overrideWithValue(ServicioSesionFalso(inicial: dueno)),
+          servicioSesionProvider.overrideWithValue(
+            ServicioSesionFalso(inicial: dueno),
+          ),
           biometriaProvider.overrideWithValue(BiometriaFalsa()),
-          relojSeguridadProvider.overrideWithValue(() => DateTime(2026, 10, 30, 9)),
+          relojSeguridadProvider.overrideWithValue(
+            () => DateTime(2026, 10, 30, 9),
+          ),
         ],
       );
       addTearDown(contenedor.dispose);
@@ -189,12 +236,15 @@ void main() {
     }
 
     String? hashGuardado() {
-      final texto = almacen.datos[ControladorBloqueo.claveConfiguracion(dueno.persona.id)];
+      final texto = almacen
+          .datos[ControladorBloqueo.claveConfiguracion(dueno.persona.id)];
       return texto == null ? null : jsonDecode(texto)['hash_pin'] as String?;
     }
 
     test('al desbloquear con el PIN de antes se rehace el hash', () async {
-      almacen.datos[ControladorBloqueo.claveConfiguracion(dueno.persona.id)] = jsonEncode(
+      almacen.datos[ControladorBloqueo.claveConfiguracion(
+        dueno.persona.id,
+      )] = jsonEncode(
         ConfiguracionBloqueo(
           hashPin: HashPin.crear(pin, iteraciones: vueltasViejas),
           huella: true,
@@ -203,9 +253,16 @@ void main() {
       final controlador = await abrir();
       expect(controlador.desbloquearConPin(pin), ResultadoBloqueo.abierto);
       await pumpEventQueue();
-      expect(HashPin.iteracionesDe(hashGuardado()!), HashPin.iteracionesPorDefecto);
+      expect(
+        HashPin.iteracionesDe(hashGuardado()!),
+        HashPin.iteracionesPorDefecto,
+      );
       expect(controlador.comprobarPin(pin), ResultadoBloqueo.abierto);
-      expect(controlador.state.configuracion!.huella, isTrue, reason: 'el resto se conserva');
+      expect(
+        controlador.state.configuracion!.huella,
+        isTrue,
+        reason: 'el resto se conserva',
+      );
       expect(controlador.state.bloqueado, isFalse);
     });
 
@@ -214,7 +271,10 @@ void main() {
       almacen.datos[ControladorBloqueo.claveConfiguracion(dueno.persona.id)] =
           jsonEncode(ConfiguracionBloqueo(hashPin: viejo).aJson());
       final controlador = await abrir();
-      expect(controlador.desbloquearConPin('000000'), ResultadoBloqueo.pinIncorrecto);
+      expect(
+        controlador.desbloquearConPin('000000'),
+        ResultadoBloqueo.pinIncorrecto,
+      );
       await pumpEventQueue();
       expect(hashGuardado(), viejo);
     });
@@ -222,16 +282,22 @@ void main() {
 
   group('PIN propio de los montos', () {
     test('al ver los montos con el PIN de antes se rehace el hash', () async {
-      almacen.datos[ControladorMontos.claveConfiguracion(dueno.persona.id)] = jsonEncode({
+      almacen.datos[ControladorMontos.claveConfiguracion(
+        dueno.persona.id,
+      )] = jsonEncode({
         'hash_pin': HashPin.crear(pin, iteraciones: vueltasViejas),
         'ocultar_tras_segundos': 600,
       });
       final contenedor = ProviderContainer(
         overrides: [
           almacenSeguroProvider.overrideWithValue(almacen),
-          servicioSesionProvider.overrideWithValue(ServicioSesionFalso(inicial: dueno)),
+          servicioSesionProvider.overrideWithValue(
+            ServicioSesionFalso(inicial: dueno),
+          ),
           biometriaProvider.overrideWithValue(BiometriaFalsa()),
-          relojSeguridadProvider.overrideWithValue(() => DateTime(2026, 10, 30, 9)),
+          relojSeguridadProvider.overrideWithValue(
+            () => DateTime(2026, 10, 30, 9),
+          ),
         ],
       );
       addTearDown(contenedor.dispose);
@@ -243,8 +309,15 @@ void main() {
       final guardado = jsonDecode(
         almacen.datos[ControladorMontos.claveConfiguracion(dueno.persona.id)]!,
       ) as Map;
-      expect(HashPin.iteracionesDe(guardado['hash_pin'] as String), HashPin.iteracionesPorDefecto);
-      expect(guardado['ocultar_tras_segundos'], 600, reason: 'el tiempo se conserva');
+      expect(
+        HashPin.iteracionesDe(guardado['hash_pin'] as String),
+        HashPin.iteracionesPorDefecto,
+      );
+      expect(
+        guardado['ocultar_tras_segundos'],
+        600,
+        reason: 'el tiempo se conserva',
+      );
       expect(await montos.verificar(pin), ResultadoRevelar.revelado);
     });
   });

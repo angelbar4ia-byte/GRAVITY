@@ -1561,8 +1561,11 @@ void main() {
       expect(RutasDeHerramientas.sosHabitos, '${Rutas.habitos}/sos');
       expect(segmentosReservadosDeHabitos, contains('sos'));
       expect(esRutaReservadaDeHabitos(RutasDeHerramientas.sosHabitos), isTrue);
-      // Hoy, agenda y espiritual no son secciones reservadas.
-      for (final n in nombres.where((n) => n != 'habitos.sos')) {
+      expect(esRutaReservadaDeHabitos(rutas['habitos.abrir_pausa']!), isTrue);
+      // Hoy, agenda, lector, revisión y espiritual no son reservadas.
+      for (final n in nombres.where(
+        (n) => n != 'habitos.sos' && n != 'habitos.abrir_pausa',
+      )) {
         expect(esRutaReservadaDeHabitos(rutas[n]!), isFalse, reason: n);
       }
     });

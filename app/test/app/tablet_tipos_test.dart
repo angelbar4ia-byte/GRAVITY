@@ -39,16 +39,20 @@ String id(Rol rol) => sesionDeEjemplo(rol).persona.id;
 ProviderContainer contenedorDe(WidgetTester tester) =>
     ProviderScope.containerOf(tester.element(find.byType(AppGravity)));
 
-String ubicacion(WidgetTester tester) => contenedorDe(
-  tester,
-).read(routerProvider).routerDelegate.currentConfiguration.uri.path;
+String ubicacion(WidgetTester tester) =>
+    contenedorDe(tester)
+        .read(routerProvider)
+        .routerDelegate
+        .currentConfiguration
+        .uri
+        .path;
 
 EstadoTablet estadoTablet(WidgetTester tester) =>
     contenedorDe(tester).read(controladorTabletProvider);
 
-String? personaEnServidor(WidgetTester tester) =>
-    (contenedorDe(tester).read(servicioSesionProvider) as SesionesPorPersona)
-        .personaEnServidor;
+String? personaEnServidor(WidgetTester tester) => (contenedorDe(
+  tester,
+).read(servicioSesionProvider) as SesionesPorPersona).personaEnServidor;
 
 Finder enRiel(String etiqueta) => find.descendant(
   of: find.byType(NavigationRail),
@@ -198,7 +202,9 @@ void main() {
         find.byKey(ValueKey('permitida-${id(Rol.familiar)}')),
       );
       expect(familiar.onChanged, isNull);
-      await tester.tap(find.byKey(ValueKey('permitida-${id(Rol.coadministrador)}')));
+      await tester.tap(
+        find.byKey(ValueKey('permitida-${id(Rol.coadministrador)}')),
+      );
       await tester.pumpAndSettle();
 
       await tester.tap(find.byTooltip('Bloquear la tablet'));
@@ -239,9 +245,9 @@ void main() {
       expect(ubicacion(tester), Rutas.inicio);
       expect(contenedorDe(tester).read(rolEfectivoProvider), Rol.dueno);
       expect(estadoTablet(tester).soloAccion, isTrue);
-      await contenedorDe(
-        tester,
-      ).read(controladorTabletProvider.notifier).cambiosEnServidor;
+      await contenedorDe(tester)
+          .read(controladorTabletProvider.notifier)
+          .cambiosEnServidor;
       expect(personaEnServidor(tester), id(Rol.dueno));
 
       // Al terminar la acción, de vuelta a la cuenta Casa.
@@ -251,9 +257,9 @@ void main() {
       await tester.pumpAndSettle();
       expect(estadoTablet(tester).usuarioActivo, isNull);
       expect(contenedorDe(tester).read(rolEfectivoProvider), Rol.casa);
-      await contenedorDe(
-        tester,
-      ).read(controladorTabletProvider.notifier).cambiosEnServidor;
+      await contenedorDe(tester)
+          .read(controladorTabletProvider.notifier)
+          .cambiosEnServidor;
       expect(personaEnServidor(tester), id(Rol.casa));
       expect(find.text('GRAVITY · Casa'), findsOneWidget);
       revisarSinDinero(tester);
@@ -307,7 +313,10 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byKey(const ValueKey('elegir-nombre')), findsOneWidget);
       // Cualquiera de la tablet puede decir quién es.
-      expect(find.byKey(ValueKey('nombre-${id(Rol.familiar)}')), findsOneWidget);
+      expect(
+        find.byKey(ValueKey('nombre-${id(Rol.familiar)}')),
+        findsOneWidget,
+      );
       await tester.tap(find.byKey(ValueKey('nombre-${id(Rol.familiar)}')));
       await tester.pumpAndSettle();
       // Sin PIN y sin salir del modo Casa.

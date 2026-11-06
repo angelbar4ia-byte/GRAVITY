@@ -41,19 +41,22 @@ Map<String, Object?> usuario(String uid) => {
   'user_metadata': <String, Object?>{},
 };
 
-Map<String, Object?> sesionJson(String uid, String renovar, {bool vencida = false}) =>
-    {
-      'access_token': jwt(
-        uid,
-        vence: DateTime.now().add(
-          vencida ? const Duration(hours: -1) : const Duration(hours: 1),
-        ),
-      ),
-      'token_type': 'bearer',
-      'expires_in': 3600,
-      'refresh_token': renovar,
-      'user': usuario(uid),
-    };
+Map<String, Object?> sesionJson(
+  String uid,
+  String renovar, {
+  bool vencida = false,
+}) => {
+  'access_token': jwt(
+    uid,
+    vence: DateTime.now().add(
+      vencida ? const Duration(hours: -1) : const Duration(hours: 1),
+    ),
+  ),
+  'token_type': 'bearer',
+  'expires_in': 3600,
+  'refresh_token': renovar,
+  'user': usuario(uid),
+};
 
 /// Servidor de autenticación simulado (GoTrue).
 class GoTrueSimulado {
@@ -69,7 +72,8 @@ class GoTrueSimulado {
     _servidor.listen((peticion) async {
       final cuerpo = await utf8.decodeStream(peticion);
       rutas.add('${peticion.method} ${peticion.uri.path}');
-      final respuesta = peticion.response..headers.contentType = ContentType.json;
+      final respuesta = peticion.response
+        ..headers.contentType = ContentType.json;
       final tipo = peticion.uri.queryParameters['grant_type'];
       if (peticion.uri.path == '/auth/v1/token' && tipo == 'refresh_token') {
         final token = (jsonDecode(cuerpo) as Map)['refresh_token'] as String;
@@ -126,7 +130,9 @@ void main() {
       'llave-publica-de-prueba',
       authOptions: const AuthClientOptions(autoRefreshToken: false),
     );
-    await equipo.auth.setInitialSession(jsonEncode(sesionJson(uidCasa, 'casa-0')));
+    await equipo.auth.setInitialSession(
+      jsonEncode(sesionJson(uidCasa, 'casa-0')),
+    );
     servicio = ServicioSesionSupabase(
       cliente: equipo,
       almacen: AlmacenSeguroEnMemoria(),
@@ -150,32 +156,35 @@ void main() {
     await gotrue.cerrar();
   });
 
-  test('entra con la credencial de la persona y regresa a la cuenta Casa', () async {
-    await preparar();
-    expect(servicio.personaEnServidor, casa.persona.id);
+  test(
+    'entra con la credencial de la persona y regresa a la cuenta Casa',
+    () async {
+      await preparar();
+      expect(servicio.personaEnServidor, casa.persona.id);
 
-    final credencial = jsonEncode(sesionJson(uidDueno, 'r0', vencida: true));
-    final apertura = await servicio.abrirSesionDePersona(
-      dueno.persona.id,
-      credencial,
-    );
-    expect(apertura.sesion, dueno);
-    // Se renovó: hay que guardar la nueva.
-    expect(apertura.credencial, contains('renovado-1'));
-    expect(servicio.personaEnServidor, dueno.persona.id);
-    expect(servicio.clienteActivo, isNot(same(equipo)));
-    expect(servicio.clienteActivo.auth.currentUser?.id, uidDueno);
-    // La cuenta del equipo no cambió.
-    expect(servicio.sesionActual, casa);
-    expect(equipo.auth.currentUser?.id, uidCasa);
+      final credencial = jsonEncode(sesionJson(uidDueno, 'r0', vencida: true));
+      final apertura = await servicio.abrirSesionDePersona(
+        dueno.persona.id,
+        credencial,
+      );
+      expect(apertura.sesion, dueno);
+      // Se renovó: hay que guardar la nueva.
+      expect(apertura.credencial, contains('renovado-1'));
+      expect(servicio.personaEnServidor, dueno.persona.id);
+      expect(servicio.clienteActivo, isNot(same(equipo)));
+      expect(servicio.clienteActivo.auth.currentUser?.id, uidDueno);
+      // La cuenta del equipo no cambió.
+      expect(servicio.sesionActual, casa);
+      expect(equipo.auth.currentUser?.id, uidCasa);
 
-    final vigente = await servicio.cerrarSesionDePersona();
-    expect(vigente, contains('renovado-1'));
-    expect(servicio.personaEnServidor, casa.persona.id);
-    expect(servicio.clienteActivo, same(equipo));
-    // Sin revocar la sesión de la persona: su credencial sigue sirviendo.
-    expect(gotrue.rutas, isNot(contains('POST /auth/v1/logout')));
-  });
+      final vigente = await servicio.cerrarSesionDePersona();
+      expect(vigente, contains('renovado-1'));
+      expect(servicio.personaEnServidor, casa.persona.id);
+      expect(servicio.clienteActivo, same(equipo));
+      // Sin revocar la sesión de la persona: su credencial sigue sirviendo.
+      expect(gotrue.rutas, isNot(contains('POST /auth/v1/logout')));
+    },
+  );
 
   test('dada de baja: no entra (ErrorSesion.sinRol)', () async {
     await preparar();
@@ -191,35 +200,41 @@ void main() {
     expect(servicio.clienteActivo, same(equipo));
   });
 
-  test('credencial revocada en el servidor: hay que volver a agregarla', () async {
-    await preparar();
-    gotrue.revocados.add('r0');
-    await expectLater(
-      servicio.abrirSesionDePersona(
+  test(
+    'credencial revocada en el servidor: hay que volver a agregarla',
+    () async {
+      await preparar();
+      gotrue.revocados.add('r0');
+      await expectLater(
+        servicio.abrirSesionDePersona(
+          dueno.persona.id,
+          jsonEncode(sesionJson(uidDueno, 'r0', vencida: true)),
+        ),
+        throwsA(ErrorSesion.credencialVencida),
+      );
+      expect(servicio.personaEnServidor, casa.persona.id);
+      await expectLater(
+        servicio.abrirSesionDePersona(dueno.persona.id, 'no es una credencial'),
+        throwsA(ErrorSesion.credencialVencida),
+      );
+    },
+  );
+
+  test(
+    'sin señal: entra con la credencial guardada (sin rol del servidor)',
+    () async {
+      await preparar(url: 'http://127.0.0.1:9');
+      final apertura = await servicio.abrirSesionDePersona(
         dueno.persona.id,
         jsonEncode(sesionJson(uidDueno, 'r0', vencida: true)),
-      ),
-      throwsA(ErrorSesion.credencialVencida),
-    );
-    expect(servicio.personaEnServidor, casa.persona.id);
-    await expectLater(
-      servicio.abrirSesionDePersona(dueno.persona.id, 'no es una credencial'),
-      throwsA(ErrorSesion.credencialVencida),
-    );
-  });
-
-  test('sin señal: entra con la credencial guardada (sin rol del servidor)', () async {
-    await preparar(url: 'http://127.0.0.1:9');
-    final apertura = await servicio.abrirSesionDePersona(
-      dueno.persona.id,
-      jsonEncode(sesionJson(uidDueno, 'r0', vencida: true)),
-    );
-    expect(apertura.sinConexion, isTrue);
-    expect(servicio.personaEnServidor, dueno.persona.id);
-    expect(servicio.clienteActivo.auth.currentUser?.id, uidDueno);
-    await servicio.cerrarSesionDePersona();
-    expect(servicio.personaEnServidor, casa.persona.id);
-  });
+      );
+      expect(apertura.sinConexion, isTrue);
+      expect(servicio.personaEnServidor, dueno.persona.id);
+      expect(servicio.clienteActivo.auth.currentUser?.id, uidDueno);
+      await servicio.cerrarSesionDePersona();
+      expect(servicio.personaEnServidor, casa.persona.id);
+    },
+  );
 
   test('obtenerCredencial no revoca la sesión de la persona', () async {
     await preparar();
@@ -248,44 +263,50 @@ void main() {
     String credencialDelDueno(String renovar) =>
         jsonEncode(sesionJson(uidDueno, renovar, vencida: true));
 
-    test('abre aparte, entrega la credencial renovada y no toca al equipo', () async {
-      await preparar();
-      final entregadas = <String>[];
-      final aparte = await servicio.abrirSesionAparte(
-        dueno.persona.id,
-        credencialDelDueno('r0'),
-        alRenovar: entregadas.add,
-      );
-      expect(aparte.personaId, dueno.persona.id);
-      // El servidor rotó el refresh token: la nueva se entregó, no se perdió.
-      expect(entregadas, isNotEmpty);
-      expect(entregadas.last, contains('renovado-1'));
-      // La cuenta del equipo y la persona en pantalla no cambiaron.
-      expect(servicio.sesionActual, casa);
-      expect(servicio.personaEnServidor, casa.persona.id);
-      expect(servicio.clienteActivo, same(equipo));
-      expect(equipo.auth.currentUser?.id, uidCasa);
-
-      await aparte.cerrar();
-      // Cerrar no revoca la credencial: sigue sirviendo para la próxima vez.
-      expect(gotrue.rutas, isNot(contains('POST /auth/v1/logout')));
-    });
-
-    test('credencial revocada: no entrega nada y pide volver a agregarla', () async {
-      await preparar();
-      gotrue.revocados.add('r0');
-      final entregadas = <String>[];
-      await expectLater(
-        servicio.abrirSesionAparte(
+    test(
+      'abre aparte, entrega la credencial renovada y no toca al equipo',
+      () async {
+        await preparar();
+        final entregadas = <String>[];
+        final aparte = await servicio.abrirSesionAparte(
           dueno.persona.id,
           credencialDelDueno('r0'),
           alRenovar: entregadas.add,
-        ),
-        throwsA(ErrorSesion.credencialVencida),
-      );
-      expect(entregadas, isEmpty);
-      expect(servicio.clienteActivo, same(equipo));
-    });
+        );
+        expect(aparte.personaId, dueno.persona.id);
+        // El servidor rotó el refresh token: la nueva se entregó, no se perdió.
+        expect(entregadas, isNotEmpty);
+        expect(entregadas.last, contains('renovado-1'));
+        // La cuenta del equipo y la persona en pantalla no cambiaron.
+        expect(servicio.sesionActual, casa);
+        expect(servicio.personaEnServidor, casa.persona.id);
+        expect(servicio.clienteActivo, same(equipo));
+        expect(equipo.auth.currentUser?.id, uidCasa);
+
+        await aparte.cerrar();
+        // Cerrar no revoca la credencial: sigue sirviendo para la próxima vez.
+        expect(gotrue.rutas, isNot(contains('POST /auth/v1/logout')));
+      },
+    );
+
+    test(
+      'credencial revocada: no entrega nada y pide volver a agregarla',
+      () async {
+        await preparar();
+        gotrue.revocados.add('r0');
+        final entregadas = <String>[];
+        await expectLater(
+          servicio.abrirSesionAparte(
+            dueno.persona.id,
+            credencialDelDueno('r0'),
+            alRenovar: entregadas.add,
+          ),
+          throwsA(ErrorSesion.credencialVencida),
+        );
+        expect(entregadas, isEmpty);
+        expect(servicio.clienteActivo, same(equipo));
+      },
+    );
 
     test('credencial ilegible o sin refresh token: vencida', () async {
       await preparar();
@@ -316,19 +337,22 @@ void main() {
       );
     });
 
-    test('dada de baja: sin rol, y se cierra su sesión en el servidor', () async {
-      await preparar();
-      bajas.add(uidDueno);
-      await expectLater(
-        servicio.abrirSesionAparte(
-          dueno.persona.id,
-          credencialDelDueno('r0'),
-          alRenovar: (_) {},
-        ),
-        throwsA(ErrorSesion.sinRol),
-      );
-      expect(gotrue.rutas, contains('POST /auth/v1/logout'));
-    });
+    test(
+      'dada de baja: sin rol, y se cierra su sesión en el servidor',
+      () async {
+        await preparar();
+        bajas.add(uidDueno);
+        await expectLater(
+          servicio.abrirSesionAparte(
+            dueno.persona.id,
+            credencialDelDueno('r0'),
+            alRenovar: (_) {},
+          ),
+          throwsA(ErrorSesion.sinRol),
+        );
+        expect(gotrue.rutas, contains('POST /auth/v1/logout'));
+      },
+    );
 
     test('sin señal: sinConexion (la credencial no se descarta)', () async {
       await preparar(url: 'http://127.0.0.1:9');

@@ -129,37 +129,41 @@ void main() {
     );
   });
 
-  test('quitar a una persona de la tablet borra su copia de Finanzas', () async {
-    final almacen = AlmacenSeguroEnMemoria();
-    final servicio = ServicioSesionFalso(
-      cuentas: {
-        'casa@ejemplo.test': CuentaFalsa('clave', sesionDeEjemplo(Rol.casa)),
-      },
-      inicial: sesionDeEjemplo(Rol.casa),
-    );
-    final contenedor = ProviderContainer(
-      overrides: [
-        almacenSeguroProvider.overrideWithValue(almacen),
-        servicioSesionProvider.overrideWithValue(servicio),
-        biometriaProvider.overrideWithValue(BiometriaFalsa()),
-      ],
-    );
-    addTearDown(contenedor.dispose);
-    final controlador = contenedor.read(controladorTabletProvider.notifier);
-    await controlador.listo;
-    await controlador.agregarUsuario(
-      dueno,
-      pin: '246813',
-      credencial: ServicioSesionFalso.credencialDe(dueno),
-    );
-    final copia = await _conCopia(almacen, dueno.persona.id);
+  test(
+    'quitar a una persona de la tablet borra su copia de Finanzas',
+    () async {
+      final almacen = AlmacenSeguroEnMemoria();
+      final servicio = ServicioSesionFalso(
+        cuentas: {
+          'casa@ejemplo.test': CuentaFalsa('clave', sesionDeEjemplo(Rol.casa)),
+        },
+        inicial: sesionDeEjemplo(Rol.casa),
+      );
+      final contenedor = ProviderContainer(
+        overrides: [
+          almacenSeguroProvider.overrideWithValue(almacen),
+          servicioSesionProvider.overrideWithValue(servicio),
+          biometriaProvider.overrideWithValue(BiometriaFalsa()),
+        ],
+      );
+      addTearDown(contenedor.dispose);
+      final controlador = contenedor.read(controladorTabletProvider.notifier);
+      await controlador.listo;
+      await controlador.agregarUsuario(
+        dueno,
+        pin: '246813',
+        credencial: ServicioSesionFalso.credencialDe(dueno),
+      );
+      final copia = await _conCopia(almacen, dueno.persona.id);
 
-    await controlador.quitarUsuario(dueno.persona.id);
+      await controlador.quitarUsuario(dueno.persona.id);
 
-    expect(
-      await copia.leer(),
-      isNull,
-      reason: 'lo de Finanzas de quien ya no está en la tablet no debe quedar',
-    );
-  });
+      expect(
+        await copia.leer(),
+        isNull,
+        reason:
+            'lo de Finanzas de quien ya no está en la tablet no debe quedar',
+      );
+    },
+  );
 }

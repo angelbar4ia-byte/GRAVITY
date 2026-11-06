@@ -29,7 +29,10 @@ void main() {
     final sobre = SobreSellado.sellar(par.publica, 'refresh_token_secreto');
     expect(sobre, isNot(contains('refresh_token_secreto')));
     expect(
-      utf8.decode(base64Decode(jsonDecode(sobre)['datos'] as String), allowMalformed: true),
+      utf8.decode(
+        base64Decode(jsonDecode(sobre)['datos'] as String),
+        allowMalformed: true,
+      ),
       isNot(contains('secreto')),
     );
   });
@@ -52,11 +55,16 @@ void main() {
 
   test('un sobre alterado no se abre', () {
     final par = SobreSellado.generar();
-    final json = jsonDecode(SobreSellado.sellar(par.publica, 'secreto')) as Map<String, dynamic>;
+    final json = jsonDecode(
+      SobreSellado.sellar(par.publica, 'secreto'),
+    ) as Map<String, dynamic>;
     final datos = base64Decode(json['datos'] as String);
     datos[0] ^= 1;
     expect(
-      SobreSellado.abrir(par.privada, jsonEncode({...json, 'datos': base64Encode(datos)})),
+      SobreSellado.abrir(
+        par.privada,
+        jsonEncode({...json, 'datos': base64Encode(datos)}),
+      ),
       isNull,
     );
     // Ni cambiando la llave efímera.
@@ -72,7 +80,10 @@ void main() {
     expect(SobreSellado.abrir(par.privada, 'no es json'), isNull);
     expect(SobreSellado.abrir(par.privada, '{}'), isNull);
     expect(SobreSellado.abrir(par.privada, '{"v":2}'), isNull);
-    expect(SobreSellado.abrir(Uint8List(0), SobreSellado.sellar(par.publica, 'x')), isNull);
+    expect(
+      SobreSellado.abrir(Uint8List(0), SobreSellado.sellar(par.publica, 'x')),
+      isNull,
+    );
   });
 
   test('sellar con una llave pública mal formada lanza', () {

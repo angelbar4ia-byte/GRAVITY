@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gravity/app/avisos/con_avisos.dart' show tipoEquipoAvisosProvider;
+import 'package:gravity/app/avisos/con_avisos.dart'
+    show tipoEquipoAvisosProvider;
 import 'package:gravity/app/sensibles/puerta_reservada.dart';
 import 'package:gravity/app/sensibles/sensibles.dart';
 import 'package:gravity/nucleo/sesion/proveedores_sesion.dart';
@@ -40,7 +41,11 @@ Future<void> montar(
 }) async {
   final List<Override> overrides = [
     sesionEfectivaProvider.overrideWithValue(
-      Sesion(persona: const Persona(id: 'ana', nombre: 'Ana'), rol: rol, esMaestra: maestra),
+      Sesion(
+        persona: const Persona(id: 'ana', nombre: 'Ana'),
+        rol: rol,
+        esMaestra: maestra,
+      ),
     ),
     tipoEquipoAvisosProvider.overrideWithValue(equipo),
     almacenSeguroProvider.overrideWithValue(AlmacenSeguroEnMemoria()),
@@ -51,7 +56,9 @@ Future<void> montar(
   await tester.pumpWidget(
     ProviderScope(
       overrides: overrides,
-      child: const MaterialApp(home: Scaffold(body: SingleChildScrollView(child: MisDatosDeHabitos()))),
+      child: const MaterialApp(
+        home: Scaffold(body: SingleChildScrollView(child: MisDatosDeHabitos())),
+      ),
     ),
   );
 }
@@ -66,29 +73,46 @@ void main() {
     }
   });
 
-  testWidgets('no aparece para la maestra, cuidador, Casa ni en la tablet pública', (tester) async {
-    await montar(tester, rol: Rol.dueno, maestra: true);
-    expect(tarjeta, findsNothing);
-    await montar(tester, rol: Rol.cuidador);
-    expect(tarjeta, findsNothing);
-    await montar(tester, rol: Rol.casa);
-    expect(tarjeta, findsNothing);
-    await montar(tester, rol: Rol.dueno, equipo: TipoEquipoAvisos.tabletPublica);
-    expect(tarjeta, findsNothing);
-  });
+  testWidgets(
+    'no aparece para la maestra, cuidador, Casa ni en la tablet pública',
+    (tester) async {
+      await montar(tester, rol: Rol.dueno, maestra: true);
+      expect(tarjeta, findsNothing);
+      await montar(tester, rol: Rol.cuidador);
+      expect(tarjeta, findsNothing);
+      await montar(tester, rol: Rol.casa);
+      expect(tarjeta, findsNothing);
+      await montar(
+        tester,
+        rol: Rol.dueno,
+        equipo: TipoEquipoAvisos.tabletPublica,
+      );
+      expect(tarjeta, findsNothing);
+    },
+  );
 
   testWidgets('la tablet personal sí (D21)', (tester) async {
-    await montar(tester, rol: Rol.dueno, equipo: TipoEquipoAvisos.tabletPersonal);
+    await montar(
+      tester,
+      rol: Rol.dueno,
+      equipo: TipoEquipoAvisos.tabletPersonal,
+    );
     expect(tarjeta, findsOneWidget);
   });
 
-  testWidgets('exportar está apagado mientras Hábitos no entregue sus datos', (tester) async {
+  testWidgets('exportar está apagado mientras Hábitos no entregue sus datos', (
+    tester,
+  ) async {
     await montar(tester, rol: Rol.dueno, conFuente: false);
-    final lista = tester.widget<ListTile>(find.byKey(const ValueKey('mis-datos-exportar')));
+    final lista = tester.widget<ListTile>(
+      find.byKey(const ValueKey('mis-datos-exportar')),
+    );
     expect(lista.enabled, isFalse);
   });
 
-  testWidgets('borrar: elige qué, pide el PIN y, sin él, no borra nada', (tester) async {
+  testWidgets('borrar: elige qué, pide el PIN y, sin él, no borra nada', (
+    tester,
+  ) async {
     await montar(tester, rol: Rol.dueno);
     await tester.tap(find.byKey(const ValueKey('mis-datos-borrar')));
     await tester.pumpAndSettle();

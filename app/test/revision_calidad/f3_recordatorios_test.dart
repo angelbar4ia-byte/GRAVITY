@@ -23,55 +23,78 @@ import 'package:gravity/nucleo/avisos/notificador.dart';
 import 'package:gravity/nucleo/avisos/recordatorios_habitos.dart';
 
 void main() {
-  test('F3-7: un bloque de las 00:10 con aviso a 30 min se recuerda ANTES de empezar',
-      () async {
+  test('F3-7: un bloque de las 00:10 con aviso a 30 min se recuerda ANTES de empezar', () async {
     final agenda = RepositorioAgendaEnMemoria();
-    await agenda.guardarBloque(BloqueHab(
-      id: 'b1',
-      titulo: 'Bloque',
-      area: 'personal',
-      inicioMin: 10,
-      duracionMin: 30,
-      dias: 127,
-      desde: DateTime(2026, 11, 1),
-      modificadoEn: DateTime(2026, 11, 1),
-      recordarMin: 30,
-    ));
-    final r = await FuenteDeRecordatoriosDeHabitos(agenda, null)
-        .proximos(desde: DateTime(2026, 11, 2, 12), dias: 3);
+    await agenda.guardarBloque(
+      BloqueHab(
+        id: 'b1',
+        titulo: 'Bloque',
+        area: 'personal',
+        inicioMin: 10,
+        duracionMin: 30,
+        dias: 127,
+        desde: DateTime(2026, 11, 1),
+        modificadoEn: DateTime(2026, 11, 1),
+        recordarMin: 30,
+      ),
+    );
+    final r = await FuenteDeRecordatoriosDeHabitos(
+      agenda,
+      null,
+    ).proximos(desde: DateTime(2026, 11, 2, 12), dias: 3);
     final bloques = r.where((x) => x.tipo == TipoRecordatorioHabito.bloque);
     expect(bloques, isNotEmpty);
     for (final x in bloques) {
-      expect(x.cuando.hour, 23, reason: 'recordatorio a las ${x.cuando} (el bloque empieza 00:10)');
+      expect(
+        x.cuando.hour,
+        23,
+        reason: 'recordatorio a las ${x.cuando} (el bloque empieza 00:10)',
+      );
     }
   });
 
-  test('F3-8: el título con nombre recortado no deja un sustituto UTF-16 suelto',
-      tags: 'hallazgo', () {
-    final nombre = '${'a' * 39}😀 resto';
-    final t = tituloDeRecordatorio(RecordatorioHabito(
-      tipo: TipoRecordatorioHabito.bloque,
-      objetoId: 'o',
-      cuando: DateTime(2026, 11, 3, 9),
-      nombreEnAviso: nombre,
-    ));
-    final ultimo = t.codeUnits.last;
-    expect(ultimo >= 0xD800 && ultimo <= 0xDBFF, isFalse, reason: 'termina en medio de un emoji');
-  });
+  test(
+    'F3-8: el título con nombre recortado no deja un sustituto UTF-16 suelto',
+    () {
+      final nombre = '${'a' * 39}😀 resto';
+      final t = tituloDeRecordatorio(
+        RecordatorioHabito(
+          tipo: TipoRecordatorioHabito.bloque,
+          objetoId: 'o',
+          cuando: DateTime(2026, 11, 3, 9),
+          nombreEnAviso: nombre,
+        ),
+      );
+      final ultimo = t.codeUnits.last;
+      expect(
+        ultimo >= 0xD800 && ultimo <= 0xDBFF,
+        isFalse,
+        reason: 'termina en medio de un emoji',
+      );
+    },
+  );
 
   group('guardias', () {
     final ahora = DateTime(2026, 11, 2, 12);
-    RecordatorioHabito rec({bool sensible = false, String? nombre, String tipo = TipoRecordatorioHabito.reservado, DateTime? cuando}) =>
-        RecordatorioHabito(
-          tipo: tipo,
-          objetoId: 'obj-1',
-          cuando: cuando ?? DateTime(2026, 11, 3, 21),
-          sensible: sensible,
-          nombreEnAviso: nombre,
-        );
+    RecordatorioHabito rec({
+      bool sensible = false,
+      String? nombre,
+      String tipo = TipoRecordatorioHabito.reservado,
+      DateTime? cuando,
+    }) => RecordatorioHabito(
+      tipo: tipo,
+      objetoId: 'obj-1',
+      cuando: cuando ?? DateTime(2026, 11, 3, 21),
+      sensible: sensible,
+      nombreEnAviso: nombre,
+    );
 
     test('lo sensible: "Recordatorio", canal reservado, solo Posponer, aunque traiga nombre', () {
-      final r = rec(sensible: true, nombre: 'Dejar de fumar', tipo: TipoRecordatorioHabito.cierreDia);
+      final r = rec(
+        sensible: true,
+        nombre: 'Dejar de fumar',
+        tipo: TipoRecordatorioHabito.cierreDia,
+      );
       final n = notificacionDeRecordatorio(r, const PreferenciasAvisos());
       expect(n.titulo, 'Recordatorio');
       expect(n.canal, CanalAviso.habitosReservados);
@@ -108,9 +131,14 @@ void main() {
           rec(cuando: DateTime(2026, 11, 2, 11, 59)),
           rec(cuando: DateTime(2026, 11, 9, 12)),
           rec(cuando: DateTime(2026, 11, 9, 12, 1)),
-          rec(tipo: TipoRecordatorioHabito.lectura, cuando: DateTime(2026, 11, 3, 8)),
+          rec(
+            tipo: TipoRecordatorioHabito.lectura,
+            cuando: DateTime(2026, 11, 3, 8),
+          ),
         ],
-        preferencias: const PreferenciasAvisos(tiposSilenciados: {TipoRecordatorioHabito.lectura}),
+        preferencias: const PreferenciasAvisos(
+          tiposSilenciados: {TipoRecordatorioHabito.lectura},
+        ),
         ahora: ahora,
       );
       expect([for (final r in lista) r.cuando], [DateTime(2026, 11, 9, 12)]);

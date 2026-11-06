@@ -41,7 +41,11 @@ Map<String, Object?> usuario(String uid) => {
 };
 
 /// Una sesión de Supabase como la guarda la app (`Session.toJson`).
-Map<String, Object?> sesionJson(String uid, String renovar, {bool vencida = false}) => {
+Map<String, Object?> sesionJson(
+  String uid,
+  String renovar, {
+  bool vencida = false,
+}) => {
   'access_token': jwt(
     uid,
     vence: DateTime.now().add(
@@ -73,7 +77,8 @@ class GoTrueSimulado {
     _servidor.listen((peticion) async {
       final cuerpo = await utf8.decodeStream(peticion);
       rutas.add('${peticion.method} ${peticion.uri.path}');
-      final respuesta = peticion.response..headers.contentType = ContentType.json;
+      final respuesta = peticion.response
+        ..headers.contentType = ContentType.json;
       final tipo = peticion.uri.queryParameters['grant_type'];
       if (peticion.uri.path == '/auth/v1/token' && tipo == 'refresh_token') {
         final token = (jsonDecode(cuerpo) as Map)['refresh_token'] as String;

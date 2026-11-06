@@ -52,9 +52,8 @@ void main() {
 
   /// Credencial guardada (descifrada con [pin]) y su vuelta de renovación.
   Future<int?> vueltaGuardada(String personaId, String pin) async {
-    final guardada = await RepositorioTablet(
-      almacen,
-    ).leerCredencial(personaId, pin);
+    final guardada = await RepositorioTablet(almacen)
+        .leerCredencial(personaId, pin);
     return guardada == null
         ? null
         : ServicioSesionFalso.leerCredencial(guardada.$2)?.$2;
@@ -85,42 +84,55 @@ void main() {
     expect(estado.configuracion.regresoModoCasa, const Duration(minutes: 2));
   });
 
-  test('agregar con credenciales: hash del PIN y credencial cifrada con él', () async {
-    final contenedor = crear();
-    final controlador = await listo(contenedor);
-    final usuario = await controlador.agregarConCredenciales(
-      correo: 'ana@ejemplo.test',
-      contrasena: 'clave',
-      pin: '2468',
-    );
-    expect(usuario.rol, Rol.cuidador);
-    expect(contenedor.read(controladorTabletProvider).usuarios, [usuario]);
-    final guardado = almacen.datos[RepositorioTablet.claveUsuarios]!;
-    expect(guardado, isNot(contains('2468')));
-    expect(guardado, contains('pbkdf2-sha256'));
+  test(
+    'agregar con credenciales: hash del PIN y credencial cifrada con él',
+    () async {
+      final contenedor = crear();
+      final controlador = await listo(contenedor);
+      final usuario = await controlador.agregarConCredenciales(
+        correo: 'ana@ejemplo.test',
+        contrasena: 'clave',
+        pin: '2468',
+      );
+      expect(usuario.rol, Rol.cuidador);
+      expect(contenedor.read(controladorTabletProvider).usuarios, [usuario]);
+      final guardado = almacen.datos[RepositorioTablet.claveUsuarios]!;
+      expect(guardado, isNot(contains('2468')));
+      expect(guardado, contains('pbkdf2-sha256'));
 
-    // La credencial no se guarda en claro y solo el PIN la abre.
-    final sobre =
-        almacen.datos[RepositorioTablet.claveCredencial(usuario.personaId)]!;
-    expect(sobre, isNot(contains('falsa:')));
-    expect(CifradoPin.descifrar('0000', sobre), isNull);
-    expect(await vueltaGuardada(usuario.personaId, '2468'), 0);
+      // La credencial no se guarda en claro y solo el PIN la abre.
+      final sobre =
+          almacen.datos[RepositorioTablet.claveCredencial(usuario.personaId)]!;
+      expect(sobre, isNot(contains('falsa:')));
+      expect(CifradoPin.descifrar('0000', sobre), isNull);
+      expect(await vueltaGuardada(usuario.personaId, '2468'), 0);
 
-    // Otra instancia lee lo guardado.
-    final otro = crear();
-    await listo(otro);
-    expect(
-      otro.read(controladorTabletProvider).usuarios.single.nombre,
-      usuario.nombre,
-    );
-  });
+      // Otra instancia lee lo guardado.
+      final otro = crear();
+      await listo(otro);
+      expect(
+        otro.read(controladorTabletProvider).usuarios.single.nombre,
+        usuario.nombre,
+      );
+    },
+  );
 
   test('M9: no se aceptan PIN triviales al agregar ni al cambiar', () async {
     final contenedor = crear();
     final controlador = await listo(contenedor);
     for (final trivial in [
-      '0000', '1234', '1111', '4321', '0123', '7890', '123456', '654321',
-      '999999', '1212', '4545', '123123',
+      '0000',
+      '1234',
+      '1111',
+      '4321',
+      '0123',
+      '7890',
+      '123456',
+      '654321',
+      '999999',
+      '1212',
+      '4545',
+      '123123',
     ]) {
       await expectLater(
         controlador.agregarConCredenciales(
@@ -145,8 +157,17 @@ void main() {
     );
 
     final usuario = await agregar(controlador, Rol.dueno);
-    for (final trivial in ['0000', '1234', '8888', '3456', '111111', '123456',
-      '654321', '121212', '123123']) {
+    for (final trivial in [
+      '0000',
+      '1234',
+      '8888',
+      '3456',
+      '111111',
+      '123456',
+      '654321',
+      '121212',
+      '123123',
+    ]) {
       await expectLater(
         controlador.cambiarPin(
           usuario.personaId,
@@ -168,33 +189,36 @@ void main() {
     );
   });
 
-  test('credenciales incorrectas, PIN inválido y cuenta Casa se rechazan', () async {
-    final controlador = await listo(crear());
-    await expectLater(
-      controlador.agregarConCredenciales(
-        correo: 'ana@ejemplo.test',
-        contrasena: 'mal',
-        pin: '2468',
-      ),
-      throwsA(isA<ErrorSesion>()),
-    );
-    await expectLater(
-      controlador.agregarConCredenciales(
-        correo: 'ana@ejemplo.test',
-        contrasena: 'clave',
-        pin: '12',
-      ),
-      throwsArgumentError,
-    );
-    await expectLater(
-      controlador.agregarConCredenciales(
-        correo: 'casa@ejemplo.test',
-        contrasena: 'clave',
-        pin: '2468',
-      ),
-      throwsArgumentError,
-    );
-  });
+  test(
+    'credenciales incorrectas, PIN inválido y cuenta Casa se rechazan',
+    () async {
+      final controlador = await listo(crear());
+      await expectLater(
+        controlador.agregarConCredenciales(
+          correo: 'ana@ejemplo.test',
+          contrasena: 'mal',
+          pin: '2468',
+        ),
+        throwsA(isA<ErrorSesion>()),
+      );
+      await expectLater(
+        controlador.agregarConCredenciales(
+          correo: 'ana@ejemplo.test',
+          contrasena: 'clave',
+          pin: '12',
+        ),
+        throwsArgumentError,
+      );
+      await expectLater(
+        controlador.agregarConCredenciales(
+          correo: 'casa@ejemplo.test',
+          contrasena: 'clave',
+          pin: '2468',
+        ),
+        throwsArgumentError,
+      );
+    },
+  );
 
   test('I6: con el PIN la sesión del servidor es la de la persona; al volver, '
       'la de Casa', () async {
@@ -303,20 +327,23 @@ void main() {
     expect(falso().personaEnServidor, usuario.personaId);
   });
 
-  test('I6: sin credencial guardada no entra (hay que volver a agregarla)', () async {
-    final contenedor = crear();
-    final controlador = await listo(contenedor);
-    final usuario = await controlador.agregarUsuario(
-      sesionDeEjemplo(Rol.dueno),
-      pin: '246813',
-    );
-    expect(
-      await controlador.entrarConPin(usuario.personaId, '246813'),
-      ResultadoDesbloqueo.faltaCuenta,
-    );
-    expect(contenedor.read(controladorTabletProvider).enModoCasa, isTrue);
-    expect(falso().personaEnServidor, casa);
-  });
+  test(
+    'I6: sin credencial guardada no entra (hay que volver a agregarla)',
+    () async {
+      final contenedor = crear();
+      final controlador = await listo(contenedor);
+      final usuario = await controlador.agregarUsuario(
+        sesionDeEjemplo(Rol.dueno),
+        pin: '246813',
+      );
+      expect(
+        await controlador.entrarConPin(usuario.personaId, '246813'),
+        ResultadoDesbloqueo.faltaCuenta,
+      );
+      expect(contenedor.read(controladorTabletProvider).enModoCasa, isTrue);
+      expect(falso().personaEnServidor, casa);
+    },
+  );
 
   test('I6: con una cuenta que no es Casa, nadie entra', () async {
     servicio = ServicioSesionFalso(inicial: sesionDeEjemplo(Rol.dueno));
@@ -330,65 +357,71 @@ void main() {
     expect(contenedor.read(controladorTabletProvider).enModoCasa, isTrue);
   });
 
-  test('I6: si el servidor cierra la sesión de la persona, vuelve a Casa', () async {
-    final contenedor = crear();
-    final controlador = await listo(contenedor);
-    final usuario = await agregar(controlador, Rol.dueno);
-    await controlador.entrarConPin(usuario.personaId, '246813');
-    falso().revocarSesionDePersona();
-    await pumpEventQueue();
-    expect(contenedor.read(controladorTabletProvider).enModoCasa, isTrue);
-    await controlador.cambiosEnServidor;
-    expect(falso().personaEnServidor, casa);
-    expect(await vueltaGuardada(usuario.personaId, '246813'), isNull);
-  });
+  test(
+    'I6: si el servidor cierra la sesión de la persona, vuelve a Casa',
+    () async {
+      final contenedor = crear();
+      final controlador = await listo(contenedor);
+      final usuario = await agregar(controlador, Rol.dueno);
+      await controlador.entrarConPin(usuario.personaId, '246813');
+      falso().revocarSesionDePersona();
+      await pumpEventQueue();
+      expect(contenedor.read(controladorTabletProvider).enModoCasa, isTrue);
+      await controlador.cambiosEnServidor;
+      expect(falso().personaEnServidor, casa);
+      expect(await vueltaGuardada(usuario.personaId, '246813'), isNull);
+    },
+  );
 
-  test('I2: 5 fallos bloquean 30 s; la espera se duplica en cada bloqueo', () async {
-    final contenedor = crear();
-    final controlador = await listo(contenedor);
-    final usuario = await agregar(controlador, Rol.familiar, pin: '1111');
-    for (var i = 0; i < 4; i++) {
+  test(
+    'I2: 5 fallos bloquean 30 s; la espera se duplica en cada bloqueo',
+    () async {
+      final contenedor = crear();
+      final controlador = await listo(contenedor);
+      final usuario = await agregar(controlador, Rol.familiar, pin: '1111');
+      for (var i = 0; i < 4; i++) {
+        expect(
+          controlador.desbloquearConPin(usuario.personaId, '9999'),
+          ResultadoDesbloqueo.pinIncorrecto,
+        );
+      }
       expect(
         controlador.desbloquearConPin(usuario.personaId, '9999'),
-        ResultadoDesbloqueo.pinIncorrecto,
+        ResultadoDesbloqueo.bloqueado,
       );
-    }
-    expect(
-      controlador.desbloquearConPin(usuario.personaId, '9999'),
-      ResultadoDesbloqueo.bloqueado,
-    );
-    expect(
-      controlador.esperaRestante(usuario.personaId),
-      const Duration(seconds: 30),
-    );
-    // Ni con el PIN correcto mientras dura el bloqueo.
-    expect(
-      controlador.desbloquearConPin(usuario.personaId, '1111'),
-      ResultadoDesbloqueo.bloqueado,
-    );
-    ahora = ahora.add(const Duration(seconds: 31));
-    for (var i = 0; i < 5; i++) {
-      controlador.desbloquearConPin(usuario.personaId, '9999');
-    }
-    expect(
-      controlador.esperaRestante(usuario.personaId),
-      const Duration(minutes: 1),
-    );
-    ahora = ahora.add(const Duration(minutes: 1));
-    expect(
-      await controlador.entrarConPin(usuario.personaId, '1111'),
-      ResultadoDesbloqueo.abierto,
-    );
-    // Un acierto reinicia la cuenta: el siguiente bloqueo vuelve a 30 s.
-    controlador.volverAModoCasa();
-    for (var i = 0; i < 5; i++) {
-      controlador.desbloquearConPin(usuario.personaId, '9999');
-    }
-    expect(
-      controlador.esperaRestante(usuario.personaId),
-      const Duration(seconds: 30),
-    );
-  });
+      expect(
+        controlador.esperaRestante(usuario.personaId),
+        const Duration(seconds: 30),
+      );
+      // Ni con el PIN correcto mientras dura el bloqueo.
+      expect(
+        controlador.desbloquearConPin(usuario.personaId, '1111'),
+        ResultadoDesbloqueo.bloqueado,
+      );
+      ahora = ahora.add(const Duration(seconds: 31));
+      for (var i = 0; i < 5; i++) {
+        controlador.desbloquearConPin(usuario.personaId, '9999');
+      }
+      expect(
+        controlador.esperaRestante(usuario.personaId),
+        const Duration(minutes: 1),
+      );
+      ahora = ahora.add(const Duration(minutes: 1));
+      expect(
+        await controlador.entrarConPin(usuario.personaId, '1111'),
+        ResultadoDesbloqueo.abierto,
+      );
+      // Un acierto reinicia la cuenta: el siguiente bloqueo vuelve a 30 s.
+      controlador.volverAModoCasa();
+      for (var i = 0; i < 5; i++) {
+        controlador.desbloquearConPin(usuario.personaId, '9999');
+      }
+      expect(
+        controlador.esperaRestante(usuario.personaId),
+        const Duration(seconds: 30),
+      );
+    },
+  );
 
   test('I2: la espera no pasa de 15 minutos', () {
     const politica = ControladorTablet.politicaIntentos;
@@ -398,28 +431,31 @@ void main() {
     );
   });
 
-  test('B3: la huella no abre la tablet compartida, aunque esté marcada', () async {
-    // Datos de la versión anterior: la persona había activado la huella.
-    await almacen.escribir(
-      RepositorioTablet.claveUsuarios,
-      '[{"persona_id":"${sesionDeEjemplo(Rol.dueno).persona.id}",'
-      '"nombre":"Dueño de ejemplo","rol":"dueno",'
-      '"hash_pin":"pbkdf2-sha256\$1\$AA==\$AA==","huella":true}]',
-    );
-    final contenedor = crear();
-    final controlador = await listo(contenedor);
-    final dueno = sesionDeEjemplo(Rol.dueno).persona.id;
-    expect(
-      await controlador.desbloquearConHuella(dueno),
-      ResultadoDesbloqueo.huellaNoDisponible,
-    );
-    expect(biometria.intentos, 0, reason: 'ni siquiera se pide la huella');
-    expect(contenedor.read(controladorTabletProvider).enModoCasa, isTrue);
-    expect(
-      await controlador.desbloquearConHuella('no-existe'),
-      ResultadoDesbloqueo.noExiste,
-    );
-  });
+  test(
+    'B3: la huella no abre la tablet compartida, aunque esté marcada',
+    () async {
+      // Datos de la versión anterior: la persona había activado la huella.
+      await almacen.escribir(
+        RepositorioTablet.claveUsuarios,
+        '[{"persona_id":"${sesionDeEjemplo(Rol.dueno).persona.id}",'
+        '"nombre":"Dueño de ejemplo","rol":"dueno",'
+        '"hash_pin":"pbkdf2-sha256\$1\$AA==\$AA==","huella":true}]',
+      );
+      final contenedor = crear();
+      final controlador = await listo(contenedor);
+      final dueno = sesionDeEjemplo(Rol.dueno).persona.id;
+      expect(
+        await controlador.desbloquearConHuella(dueno),
+        ResultadoDesbloqueo.huellaNoDisponible,
+      );
+      expect(biometria.intentos, 0, reason: 'ni siquiera se pide la huella');
+      expect(contenedor.read(controladorTabletProvider).enModoCasa, isTrue);
+      expect(
+        await controlador.desbloquearConHuella('no-existe'),
+        ResultadoDesbloqueo.noExiste,
+      );
+    },
+  );
 
   test('cambiar PIN pide el actual y vuelve a cifrar la credencial', () async {
     final contenedor = crear();
@@ -481,7 +517,10 @@ void main() {
     await controlador.elegirContexto('cocina');
     final otro = crear();
     await listo(otro);
-    expect(otro.read(controladorTabletProvider).configuracion.contexto, 'cocina');
+    expect(
+      otro.read(controladorTabletProvider).configuracion.contexto,
+      'cocina',
+    );
   });
 
   test('al cerrar la sesión de la tablet se vuelve al modo Casa', () async {

@@ -776,9 +776,6 @@ void main() {
         RutasDeHerramientas.revisionHabitos,
         RutasDeHerramientas.sosHabitos,
         RutasDeHerramientas.hoyHabitos,
-        Rutas.alimentacion,
-        Rutas.casa,
-        Rutas.ajustes,
       ]);
     });
 
