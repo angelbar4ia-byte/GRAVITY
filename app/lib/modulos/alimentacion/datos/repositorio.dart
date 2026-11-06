@@ -12,7 +12,13 @@ abstract interface class RepositorioAlimentacion {
   Future<List<EntradaMenu>> menu(MenuId menu, DateTime lunes);
 
   /// Asigna [platilloId] a la celda; `null` la vacía.
-  Future<void> asignar(MenuId menu, DateTime lunes, int dia, TiempoComida tiempo, String? platilloId);
+  Future<void> asignar(
+    MenuId menu,
+    DateTime lunes,
+    int dia,
+    TiempoComida tiempo,
+    String? platilloId,
+  );
 
   /// Claves (`claveCompra`) comprados en la semana.
   Future<Set<String>> comprados(MenuId menu, DateTime lunes);
@@ -23,16 +29,23 @@ abstract interface class RepositorioAlimentacion {
   Future<void> quitarSuplemento(MenuId menu, String id);
 }
 
-String _k(MenuId m, DateTime lunes) => '${m.name}|${lunes.year}-${lunes.month}-${lunes.day}';
+String _k(MenuId m, DateTime lunes) =>
+    '${m.name}|${lunes.year}-${lunes.month}-${lunes.day}';
 
 class RepositorioAlimentacionEnMemoria implements RepositorioAlimentacion {
   /// [semanaEjemplo]: llena esa semana con el menú inventado de ambos menús.
-  RepositorioAlimentacionEnMemoria({DateTime? semanaEjemplo, bool conEjemplo = true}) {
+  RepositorioAlimentacionEnMemoria({
+    DateTime? semanaEjemplo,
+    bool conEjemplo = true,
+  }) {
     for (final m in MenuId.values) {
       _supl[m] = conEjemplo ? [...suplementosEjemplo(m)] : [];
       if (conEjemplo && semanaEjemplo != null) {
         for (final e in menuEjemplo(m)) {
-          _menu.putIfAbsent(_k(m, lunesDe(semanaEjemplo)), () => {})[(e.dia, e.tiempo)] = e.platilloId;
+          _menu.putIfAbsent(
+            _k(m, lunesDe(semanaEjemplo)),
+            () => {},
+          )[(e.dia, e.tiempo)] = e.platilloId;
         }
       }
     }
@@ -47,13 +60,18 @@ class RepositorioAlimentacionEnMemoria implements RepositorioAlimentacion {
 
   @override
   Future<List<EntradaMenu>> menu(MenuId menu, DateTime lunes) async => [
-        for (final e in (_menu[_k(menu, lunes)] ?? const {}).entries)
-          EntradaMenu(dia: e.key.$1, tiempo: e.key.$2, platilloId: e.value),
-      ];
+    for (final e in (_menu[_k(menu, lunes)] ?? const {}).entries)
+      EntradaMenu(dia: e.key.$1, tiempo: e.key.$2, platilloId: e.value),
+  ];
 
   @override
   Future<void> asignar(
-      MenuId menu, DateTime lunes, int dia, TiempoComida tiempo, String? platilloId) async {
+    MenuId menu,
+    DateTime lunes,
+    int dia,
+    TiempoComida tiempo,
+    String? platilloId,
+  ) async {
     final m = _menu.putIfAbsent(_k(menu, lunes), () => {});
     if (platilloId == null) {
       m.remove((dia, tiempo));
@@ -63,11 +81,17 @@ class RepositorioAlimentacionEnMemoria implements RepositorioAlimentacion {
   }
 
   @override
-  Future<Set<String>> comprados(MenuId menu, DateTime lunes) async =>
-      {...?_comprados[_k(menu, lunes)]};
+  Future<Set<String>> comprados(MenuId menu, DateTime lunes) async => {
+    ...?_comprados[_k(menu, lunes)],
+  };
 
   @override
-  Future<void> marcar(MenuId menu, DateTime lunes, String clave, bool comprado) async {
+  Future<void> marcar(
+    MenuId menu,
+    DateTime lunes,
+    String clave,
+    bool comprado,
+  ) async {
     final s = _comprados.putIfAbsent(_k(menu, lunes), () => {});
     comprado ? s.add(clave) : s.remove(clave);
   }

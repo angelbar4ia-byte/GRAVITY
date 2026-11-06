@@ -84,6 +84,16 @@ class ErrorInvitacion implements Exception {
 }
 
 abstract interface class RepositorioInvitaciones {
+  /// Invita a [correo] con [rol] (coadministrador, familiar, cuidador o casa;
+  /// el dueño no se invita). Una sola invitación pendiente por correo: la
+  /// anterior se revoca. El código sale **una sola vez** (E3 de la Fase 4).
+  Future<InvitacionCreada> invitar({
+    required String hogarId,
+    required String correo,
+    required String rol,
+    int vigenciaDias = 7,
+  });
+
   /// Invita a [correo] como cuenta maestra: rol coadministrador con la marca
   /// de maestra. La persona es **otra** (no puede ser ya del hogar).
   Future<InvitacionCreada> crearCuentaMaestra({
@@ -132,6 +142,31 @@ class RepositorioInvitacionesSupabase implements RepositorioInvitaciones {
     }
     return fila.cast<String, dynamic>();
   }
+
+  @override
+  Future<InvitacionCreada> invitar({
+    required String hogarId,
+    required String correo,
+    required String rol,
+    int vigenciaDias = 7,
+  }) => _seguro(() async {
+    final fila = _primera(
+      await _cliente().rpc(
+        'crear_invitacion',
+        params: {
+          'p_hogar_id': hogarId,
+          'p_correo': correo.trim(),
+          'p_rol': rol,
+          'p_vigencia_dias': vigenciaDias,
+        },
+      ),
+    );
+    return InvitacionCreada(
+      id: '${fila['invitacion_id']}',
+      token: '${fila['token']}',
+      expira: DateTime.parse('${fila['expira']}'),
+    );
+  });
 
   @override
   Future<InvitacionCreada> crearCuentaMaestra({
@@ -235,6 +270,43 @@ class RepositorioInvitacionesEnMemoria implements RepositorioInvitaciones {
 
   /// Simula que no hay señal.
   bool sinConexion = false;
+
+  @override
+  Future<InvitacionCreada> invitar({
+    required String hogarId,
+    required String correo,
+    required String rol,
+    int vigenciaDias = 7,
+  }) async {
+    if (sinConexion) throw ErrorInvitacion.sinConexion;
+    if (rol == 'dueno' || !_rolesInvitables.contains(rol)) {
+      throw const ErrorInvitacion('Rol no válido para una invitación.');
+    }
+    final limpio = correo.trim().toLowerCase();
+    if (correosDeMiembros.contains(limpio)) {
+      throw const ErrorInvitacion('Ese correo ya es de una persona del hogar.');
+    }
+    _pendientes.removeWhere((i) => i.correo == limpio);
+    final id = 'invitacion-${_siguiente++}';
+    final expira = _reloj().add(Duration(days: vigenciaDias));
+    _pendientes.add(
+      InvitacionPendiente(
+        id: id,
+        correo: limpio,
+        rol: rol,
+        esMaestra: false,
+        expira: expira,
+      ),
+    );
+    return InvitacionCreada(id: id, token: 'token-de-ejemplo-$id', expira: expira);
+  }
+
+  static const _rolesInvitables = {
+    'coadministrador',
+    'familiar',
+    'cuidador',
+    'casa',
+  };
 
   @override
   Future<InvitacionCreada> crearCuentaMaestra({

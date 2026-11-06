@@ -17,6 +17,7 @@ import 'navegacion.dart';
 import 'pantalla_segura.dart';
 import 'avisos/pantalla_bandeja_avisos.dart';
 import 'pantallas/pantalla_entrar.dart';
+import 'pantallas/pantalla_invitacion.dart';
 import 'pantallas/pantalla_inicio.dart';
 import 'pantallas/pantalla_mas.dart';
 import 'pantallas/pantalla_proximamente.dart';
@@ -167,6 +168,10 @@ List<RouteBase> rutasDeGravity({
   GoRoute(
     path: Rutas.entrar,
     builder: (context, estado) => const PantallaEntrar(),
+  ),
+  GoRoute(
+    path: RutasApp.invitacion,
+    builder: (context, estado) => const PantallaInvitacion(),
   ),
   ShellRoute(
     navigatorKey: navegadorCascaronKey,

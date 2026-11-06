@@ -78,10 +78,9 @@ Future<void> _sembrar(RepositorioFinanzasEnMemoria repo) async {
 ProviderContainer _contenedor(WidgetTester tester) =>
     ProviderScope.containerOf(tester.element(find.byType(AppGravity)));
 
-Finder _lista(String llave) => find.descendant(
-  of: find.byKey(ValueKey(llave)),
-  matching: find.byType(Scrollable),
-);
+Finder _lista(String llave) => find
+    .descendant(of: find.byKey(ValueKey(llave)), matching: find.byType(Scrollable))
+    .first;
 
 void main() {
   final pantallas = {
@@ -225,7 +224,11 @@ void main() {
       final contenedor = _contenedor(tester);
       contenedor.read(montosVisiblesProvider.notifier).fijar(true);
       final tarjeta = find.byKey(const ValueKey('deudas-abono-extra'));
-      await tester.ensureVisible(tarjeta);
+      await tester.scrollUntilVisible(
+        tarjeta,
+        200,
+        scrollable: _lista('deudas-lista'),
+      );
       await tester.enterText(
         find.byKey(const ValueKey('abono-extra-monto')),
         '500',
@@ -261,9 +264,10 @@ void main() {
       WidgetTester tester,
       Finder boton, {
       required String formulario,
+      required String lista,
     }) async {
       final errores = await recolectar(() async {
-        await tester.ensureVisible(boton);
+        await tester.scrollUntilVisible(boton, 200, scrollable: _lista(lista));
         await tester.tap(boton);
         await avanzar(tester);
       });
@@ -281,11 +285,13 @@ void main() {
         tester,
         find.byKey(const ValueKey('deudas-nuevo-msi')),
         formulario: 'compra a meses',
+        lista: 'deudas-lista',
       );
       await abre(
         tester,
         find.widgetWithText(TextButton, 'Estado de cuenta').first,
         formulario: 'estado de cuenta',
+        lista: 'deudas-lista',
       );
       // "Captura la tasa" solo sale con datos viejos sin tasa (el servicio ya
       // no deja guardarlos): se abre el formulario directo.
@@ -316,6 +322,7 @@ void main() {
         tester,
         find.byKey(const ValueKey('ahorro-nueva-bolsa')),
         formulario: 'bolsa',
+        lista: 'ahorro-lista',
       );
       await abre(
         tester,
@@ -325,6 +332,7 @@ void main() {
               '${(w.key! as ValueKey).value}'.startsWith('apartar-'),
         ).first,
         formulario: 'aportación',
+        lista: 'ahorro-lista',
       );
       await abre(
         tester,
@@ -334,6 +342,7 @@ void main() {
               '${(w.key! as ValueKey).value}'.startsWith('retirar-'),
         ).first,
         formulario: 'retiro',
+        lista: 'ahorro-lista',
       );
     });
   });

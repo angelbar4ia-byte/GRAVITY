@@ -58,7 +58,12 @@ class Ingrediente {
 }
 
 class Platillo {
-  const Platillo(this.id, this.nombre, this.ingredientes, {this.duros = const []});
+  const Platillo(
+    this.id,
+    this.nombre,
+    this.ingredientes, {
+    this.duros = const [],
+  });
   final String id;
   final String nombre;
   final List<Ingrediente> ingredientes;
@@ -69,7 +74,12 @@ class Platillo {
 
 /// Suplemento de un menú: nombre, dosis y horario (texto libre de ejemplo).
 class Suplemento {
-  const Suplemento({required this.id, required this.nombre, required this.dosis, required this.horario});
+  const Suplemento({
+    required this.id,
+    required this.nombre,
+    required this.dosis,
+    required this.horario,
+  });
   final String id;
   final String nombre;
   final String dosis;

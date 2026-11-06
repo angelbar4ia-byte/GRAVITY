@@ -494,3 +494,10 @@ Respuestas del dueño a la especificación de la Fase 4 (`docs/specs/fase-4-puli
 - El perfil de Papá es dato clínico (D3): no sale a la IA ni a las bocinas.
 - **Ajuste (6/nov/2026):** el familiar también **edita** el menú de Papá (no el de la pareja y del dueño). La cuidadora lo ve en solo lectura.
 
+## D24. Vista temporal de Finanzas de Papá para el familiar — confirmada (6/nov/2026)
+
+- El familiar **no** ve Finanzas de Papá de forma permanente. Puede **pedir** la vista; el dueño **autoriza por 30 minutos** o rechaza.
+- Durante la vista: **sin captura de pantalla, sin copiar, sin seleccionar y sin exportar**.
+- Cada solicitud y autorización va a la bitácora sin montos ni cuentas. El aviso al dueño usa el catálogo discreto (D20).
+- Excepción a D5 solo para esta vista temporal. Detalle en `docs/specs/fase-4-vista-temporal.md`.
+

@@ -15,9 +15,16 @@ class PermisoDenegado implements Exception {
 
 bool _duenos(Rol r) => r == Rol.dueno || r == Rol.coadministrador;
 
-/// Dueño y pareja editan los dos menús y marcan "comprado". La cuenta
-/// maestra (D19) solo lee. Nadie más edita.
-bool puedeEditarAlimentacion(Rol rol, {bool esMaestra = false}) => !esMaestra && _duenos(rol);
+/// Dueño y pareja editan los dos menús, sus suplementos y marcan "comprado".
+/// La cuenta maestra (D19) solo lee.
+bool puedeEditarAlimentacion(Rol rol, {bool esMaestra = false}) =>
+    !esMaestra && _duenos(rol);
+
+/// Quién cambia los platillos de [menu]: dueño y pareja en los dos; el
+/// familiar solo en el de Papá (ajuste del 6/nov). La cuidadora solo lee.
+bool puedeEditarMenu(Rol rol, MenuId menu, {bool esMaestra = false}) =>
+    puedeEditarAlimentacion(rol, esMaestra: esMaestra) ||
+    (!esMaestra && rol == Rol.familiar && menu == MenuId.papa);
 
 /// Menú de Papá: dueño, pareja, cuidador y familiar (y la maestra, solo
 /// lectura). Menú de la pareja: dueño, pareja y la maestra. La cuenta Casa
@@ -30,7 +37,8 @@ bool puedeVerMenu(Rol rol, MenuId menu, {bool esMaestra = false}) {
 /// Lista de compras: como el menú, pero el familiar no ve la de Papá (propuesta
 /// pendiente de confirmar con el dueño).
 bool puedeVerCompras(Rol rol, MenuId menu, {bool esMaestra = false}) =>
-    puedeVerMenu(rol, menu, esMaestra: esMaestra) && !(rol == Rol.familiar && !esMaestra);
+    puedeVerMenu(rol, menu, esMaestra: esMaestra) &&
+    !(rol == Rol.familiar && !esMaestra);
 
 class ServicioAlimentacion {
   ServicioAlimentacion(this._repo, {required this.rol, this.esMaestra = false});
@@ -39,17 +47,25 @@ class ServicioAlimentacion {
   final bool esMaestra;
 
   bool get puedeEditar => puedeEditarAlimentacion(rol, esMaestra: esMaestra);
-  List<MenuId> get menusVisibles =>
-      [for (final m in MenuId.values) if (puedeVerMenu(rol, m, esMaestra: esMaestra)) m];
-  List<MenuId> get menusConCompras =>
-      [for (final m in MenuId.values) if (puedeVerCompras(rol, m, esMaestra: esMaestra)) m];
+  List<MenuId> get menusVisibles => [
+    for (final m in MenuId.values)
+      if (puedeVerMenu(rol, m, esMaestra: esMaestra)) m,
+  ];
+  List<MenuId> get menusConCompras => [
+    for (final m in MenuId.values)
+      if (puedeVerCompras(rol, m, esMaestra: esMaestra)) m,
+  ];
+
+  bool puedeEditarMenuDe(MenuId m) =>
+      puedeEditarMenu(rol, m, esMaestra: esMaestra);
 
   void _exigirEdicion() {
     if (!puedeEditar) throw const PermisoDenegado();
   }
 
   void _exigirVer(MenuId m) {
-    if (!puedeVerMenu(rol, m, esMaestra: esMaestra)) throw const PermisoDenegado();
+    if (!puedeVerMenu(rol, m, esMaestra: esMaestra))
+      throw const PermisoDenegado();
   }
 
   PerfilMenu perfil(MenuId m) {
@@ -66,9 +82,13 @@ class ServicioAlimentacion {
 
   /// Devuelve el platillo anterior de la celda (para deshacer).
   Future<String?> asignar(
-      MenuId m, DateTime semana, int dia, TiempoComida t, String? platilloId) async {
-    _exigirEdicion();
-    _exigirVer(m);
+    MenuId m,
+    DateTime semana,
+    int dia,
+    TiempoComida t,
+    String? platilloId,
+  ) async {
+    if (!puedeEditarMenuDe(m)) throw const PermisoDenegado();
     final lunes = lunesDe(semana);
     final antes = (await _repo.menu(m, lunes))
         .where((e) => e.dia == dia && e.tiempo == t)
@@ -79,7 +99,8 @@ class ServicioAlimentacion {
   }
 
   Future<List<ItemCompra>> listaCompras(MenuId m, DateTime semana) async {
-    if (!puedeVerCompras(rol, m, esMaestra: esMaestra)) throw const PermisoDenegado();
+    if (!puedeVerCompras(rol, m, esMaestra: esMaestra))
+      throw const PermisoDenegado();
     final lunes = lunesDe(semana);
     return generarListaCompras(
       menu: await _repo.menu(m, lunes),
@@ -88,7 +109,12 @@ class ServicioAlimentacion {
     );
   }
 
-  Future<void> marcar(MenuId m, DateTime semana, String clave, bool comprado) async {
+  Future<void> marcar(
+    MenuId m,
+    DateTime semana,
+    String clave,
+    bool comprado,
+  ) async {
     _exigirEdicion();
     await _repo.marcar(m, lunesDe(semana), clave, comprado);
   }

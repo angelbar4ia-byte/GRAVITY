@@ -102,15 +102,14 @@ class SeccionApariencia extends ConsumerWidget {
         ),
         if (preferencia.modo == ModoClaroOscuro.automaticoSolar) ...[
           SizedBox(height: e * 1.5),
-          Wrap(
-            crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: e,
-            runSpacing: e,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text('Lugar', style: v.lectura()),
               DropdownButton<LugarSolar>(
                 key: const ValueKey('lugar-solar'),
                 value: preferencia.lugar,
+                isExpanded: true,
                 underline: const SizedBox(),
                 onChanged: (lugar) {
                   if (lugar == null) return;

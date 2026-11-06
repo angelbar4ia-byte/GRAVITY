@@ -18,6 +18,10 @@ abstract final class RutasApp {
   static const cuidadosComidas = '${Rutas.cuidados}/comidas';
   static const cuidadosBitacora = '${Rutas.cuidados}/bitacora';
 
+  /// "Tengo una invitación": registro y aceptación del código del dueño (E3,
+  /// Fase 4). Se abre **sin sesión**; con sesión, lleva al inicio.
+  static const invitacion = '/invitacion';
+
   /// Registros que el servidor no aceptó y requieren atención (I4).
   static const pendientes = '/pendientes';
 
@@ -336,9 +340,15 @@ String? calcularRedireccion({
   bool esMaestra = false,
   bool enAccionDeTabletCasa = false,
 }) {
-  if (rol == null) return ubicacion == Rutas.entrar ? null : Rutas.entrar;
+  if (rol == null) {
+    return ubicacion == Rutas.entrar || ubicacion == RutasApp.invitacion
+        ? null
+        : Rutas.entrar;
+  }
   final inicio = inicioDe(rol);
-  if (ubicacion == Rutas.entrar) return inicio;
+  if (ubicacion == Rutas.entrar || ubicacion == RutasApp.invitacion) {
+    return inicio;
+  }
   if (ubicacion == Rutas.inicio) {
     if (enAccionDeTabletCasa) return null;
     return inicio == Rutas.inicio ? null : inicio;

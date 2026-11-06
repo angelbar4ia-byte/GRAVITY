@@ -71,7 +71,8 @@ class _SeccionCuentaMaestraState extends ConsumerState<SeccionCuentaMaestra> {
       if (!mounted) return;
       await showDialog<void>(
         context: context,
-        builder: (contexto) => _DialogoCodigo(correo: correo, creada: creada),
+        builder: (contexto) =>
+            DialogoCodigoInvitacion(correo: correo, creada: creada),
       );
     } on ErrorInvitacion catch (error) {
       if (!mounted) return;
@@ -249,8 +250,14 @@ class _DialogoCorreoMaestraState extends State<_DialogoCorreoMaestra> {
   );
 }
 
-class _DialogoCodigo extends ConsumerWidget {
-  const _DialogoCodigo({required this.correo, required this.creada});
+/// Muestra una sola vez el código de una invitación (cuenta maestra o persona
+/// del hogar).
+class DialogoCodigoInvitacion extends ConsumerWidget {
+  const DialogoCodigoInvitacion({
+    super.key,
+    required this.correo,
+    required this.creada,
+  });
 
   final String correo;
   final InvitacionCreada creada;

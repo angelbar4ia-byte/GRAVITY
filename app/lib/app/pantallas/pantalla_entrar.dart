@@ -4,6 +4,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../nucleo/contratos/dispositivo.dart';
 import '../../nucleo/contratos/roles.dart';
@@ -11,6 +12,7 @@ import '../../nucleo/permisos/permisos.dart';
 import '../../nucleo/sesion/proveedores_sesion.dart';
 import '../../nucleo/sesion/sesion.dart';
 import '../dispositivo.dart';
+import '../navegacion.dart' show RutasApp;
 import '../sesion_efectiva.dart';
 
 class PantallaEntrar extends ConsumerStatefulWidget {
@@ -179,6 +181,19 @@ class _PantallaEntrarState extends ConsumerState<PantallaEntrar> {
                             : const Text('Entrar'),
                       ),
                     ),
+                    // E3 (Fase 4): quien recibió un código del dueño crea su
+                    // cuenta y entra al hogar. La tablet de la casa no: allí
+                    // solo entra la cuenta Hogar.
+                    if (!esTablet && servicio is AceptaInvitaciones) ...[
+                      const SizedBox(height: 12),
+                      TextButton(
+                        key: const ValueKey('tengo-invitacion'),
+                        onPressed: _cargando
+                            ? null
+                            : () => context.go(RutasApp.invitacion),
+                        child: const Text('Tengo una invitación'),
+                      ),
+                    ],
                     if (demostracion != null) ...[
                       const SizedBox(height: 32),
                       _ModoDemostracion(

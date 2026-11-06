@@ -28,6 +28,8 @@ Future<void> montarConEstilo(
   if (altoContraste) c.read(altoContrasteProvider.notifier).fijar(true);
   await tester.pump();
   await tester.pump(duracionCambioTema);
+  // Deja terminar las animaciones de los botones y chips al nuevo tema.
+  await tester.pump(const Duration(seconds: 1));
 }
 
 /// Pantalla de muestra con los gadgets que cada estilo debe poder dibujar.

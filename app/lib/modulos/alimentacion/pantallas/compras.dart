@@ -30,30 +30,35 @@ class PantallaListaCompras extends ConsumerWidget {
                 mensaje: 'No tienes listas para ver',
                 icono: Icons.lock_outline,
               )
-            : Column(children: [
-                SelectorMenu(
-                  menus: permitidos,
-                  actual: menu,
-                  alElegir: (m) => ref.read(menuElegidoProvider.notifier).state = m,
-                ),
-                Expanded(
-                  child: ref.watch(listaComprasProvider(menu)).when(
-                        loading: () => const EstadoCargando(),
-                        error: (_, _) => EstadoError(
-                          mensaje: 'No pudimos armar la lista.',
-                          alReintentar: () => ref.invalidate(listaComprasProvider(menu)),
+            : Column(
+                children: [
+                  SelectorMenu(
+                    menus: permitidos,
+                    actual: menu,
+                    alElegir: (m) =>
+                        ref.read(menuElegidoProvider.notifier).state = m,
+                  ),
+                  Expanded(
+                    child: ref
+                        .watch(listaComprasProvider(menu))
+                        .when(
+                          loading: () => const EstadoCargando(),
+                          error: (_, _) => EstadoError(
+                            mensaje: 'No pudimos armar la lista.',
+                            alReintentar: () =>
+                                ref.invalidate(listaComprasProvider(menu)),
+                          ),
+                          data: (items) => items.isEmpty
+                              ? const EstadoVacio(
+                                  mensaje: 'La lista está vacía',
+                                  detalle: 'Agrega platillos al menú de la semana y aquí aparecerán los ingredientes.',
+                                  icono: Icons.shopping_cart_outlined,
+                                )
+                              : _Contenido(menu: menu, items: items),
                         ),
-                        data: (items) => items.isEmpty
-                            ? const EstadoVacio(
-                                mensaje: 'La lista está vacía',
-                                detalle:
-                                    'Agrega platillos al menú de la semana y aquí aparecerán los ingredientes.',
-                                icono: Icons.shopping_cart_outlined,
-                              )
-                            : _Contenido(menu: menu, items: items),
-                      ),
-                ),
-              ]),
+                  ),
+                ],
+              ),
       ),
     );
   }

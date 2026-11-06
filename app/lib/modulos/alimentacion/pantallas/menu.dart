@@ -30,7 +30,10 @@ class PantallaMenuSemana extends ConsumerWidget {
       child: MarcoPantalla(
         titulo: 'Menú de la semana',
         acciones: [
-          if (ref.watch(servicioAlimentacionProvider).menusConCompras.isNotEmpty)
+          if (ref
+              .watch(servicioAlimentacionProvider)
+              .menusConCompras
+              .isNotEmpty)
             IconButton(
               icon: const Icon(Icons.shopping_cart_outlined),
               tooltip: 'Lista de compras',
@@ -43,35 +46,50 @@ class PantallaMenuSemana extends ConsumerWidget {
                 detalle: 'Pide al dueño que te dé acceso.',
                 icono: Icons.lock_outline,
               )
-            : Column(children: [
-                SelectorMenu(
-                  menus: visibles,
-                  actual: menu,
-                  alElegir: (m) => ref.read(menuElegidoProvider.notifier).state = m,
-                ),
-                _NavegadorSemana(
-                  texto: 'Semana del ${_fechaCorta(semana)} al ${_fechaCorta(domingo)}',
-                  alCambiar: (dias) => ref.read(semanaAlimentacionProvider.notifier).state =
-                      semana.add(Duration(days: dias)),
-                ),
-                Expanded(
-                  child: ref.watch(platillosProvider).when(
-                        loading: () => const EstadoCargando(),
-                        error: (_, _) => EstadoError(
-                          mensaje: 'No pudimos cargar los platillos.',
-                          alReintentar: () => ref.invalidate(platillosProvider),
-                        ),
-                        data: (platillos) => ref.watch(menuSemanaProvider(menu)).when(
-                              loading: () => const EstadoCargando(),
-                              error: (_, _) => EstadoError(
-                                mensaje: 'No pudimos cargar el menú.',
-                                alReintentar: () => ref.invalidate(menuSemanaProvider(menu)),
+            : Column(
+                children: [
+                  SelectorMenu(
+                    menus: visibles,
+                    actual: menu,
+                    alElegir: (m) =>
+                        ref.read(menuElegidoProvider.notifier).state = m,
+                  ),
+                  _NavegadorSemana(
+                    texto:
+                        'Semana del ${_fechaCorta(semana)} al ${_fechaCorta(domingo)}',
+                    alCambiar: (dias) =>
+                        ref.read(semanaAlimentacionProvider.notifier).state =
+                            semana.add(Duration(days: dias)),
+                  ),
+                  Expanded(
+                    child: ref
+                        .watch(platillosProvider)
+                        .when(
+                          loading: () => const EstadoCargando(),
+                          error: (_, _) => EstadoError(
+                            mensaje: 'No pudimos cargar los platillos.',
+                            alReintentar: () =>
+                                ref.invalidate(platillosProvider),
+                          ),
+                          data: (platillos) => ref
+                              .watch(menuSemanaProvider(menu))
+                              .when(
+                                loading: () => const EstadoCargando(),
+                                error: (_, _) => EstadoError(
+                                  mensaje: 'No pudimos cargar el menú.',
+                                  alReintentar: () =>
+                                      ref.invalidate(menuSemanaProvider(menu)),
+                                ),
+                                data: (m) => _ListaDias(
+                                  menu: menu,
+                                  entradas: m,
+                                  platillos: platillos,
+                                ),
                               ),
-                              data: (m) => _ListaDias(menu: menu, entradas: m, platillos: platillos),
-                            ),
-                      ),
-                ),
-              ]),
+                        ),
+                  ),
+                ],
+              ),
       ),
     );
   }
@@ -114,7 +132,11 @@ class _NavegadorSemana extends StatelessWidget {
 }
 
 class _ListaDias extends ConsumerWidget {
-  const _ListaDias({required this.menu, required this.entradas, required this.platillos});
+  const _ListaDias({
+    required this.menu,
+    required this.entradas,
+    required this.platillos,
+  });
   final MenuId menu;
   final List<EntradaMenu> entradas;
   final List<Platillo> platillos;
@@ -122,8 +144,9 @@ class _ListaDias extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final v = ValoresDiseno.de(context);
-    final editar = ref.watch(puedeEditarAlimentacionProvider);
-    final perfil = ref.watch(servicioAlimentacionProvider).perfil(menu);
+    final servicio = ref.watch(servicioAlimentacionProvider);
+    final editar = servicio.puedeEditarMenuDe(menu);
+    final perfil = servicio.perfil(menu);
     final porId = {for (final p in platillos) p.id: p};
     Platillo? platilloDe(int dia, TiempoComida t) {
       for (final e in entradas) {
@@ -132,41 +155,55 @@ class _ListaDias extends ConsumerWidget {
       return null;
     }
 
-    return ListView(padding: const EdgeInsets.all(16), children: [
-      if (!editar)
-        Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: Row(children: [
-            Icon(Icons.visibility_outlined, size: 18, color: v.textoTenue),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text('Solo lectura', style: v.lectura(tamano: 14, color: v.textoTenue)),
-            ),
-          ]),
-        ),
-      if (perfil.texturaBlanda) _TarjetaPerfil(perfil: perfil),
-      for (var d = 0; d < 7; d++)
-        Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(diasSemana[d], style: v.titulo(tamano: 18, color: v.textoFuerte)),
-              for (final t in TiempoComida.values)
-                _CeldaComida(
-                  menu: menu,
-                  dia: d,
-                  tiempo: t,
-                  platillo: platilloDe(d, t),
-                  editable: editar,
-                  platillos: platillos,
-                  textura: perfil.texturaBlanda,
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        if (!editar)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              children: [
+                Icon(Icons.visibility_outlined, size: 18, color: v.textoTenue),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Solo lectura',
+                    style: v.lectura(tamano: 14, color: v.textoTenue),
+                  ),
                 ),
-            ]),
+              ],
+            ),
           ),
-        ),
-      _Suplementos(menu: menu, editable: editar),
-    ]);
+        if (perfil.texturaBlanda) _TarjetaPerfil(perfil: perfil),
+        for (var d = 0; d < 7; d++)
+          Card(
+            margin: const EdgeInsets.only(bottom: 12),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    diasSemana[d],
+                    style: v.titulo(tamano: 18, color: v.textoFuerte),
+                  ),
+                  for (final t in TiempoComida.values)
+                    _CeldaComida(
+                      menu: menu,
+                      dia: d,
+                      tiempo: t,
+                      platillo: platilloDe(d, t),
+                      editable: editar,
+                      platillos: platillos,
+                      textura: perfil.texturaBlanda,
+                    ),
+                ],
+              ),
+            ),
+          ),
+        _Suplementos(menu: menu, editable: servicio.puedeEditar),
+      ],
+    );
   }
 }
 
@@ -181,16 +218,26 @@ class _TarjetaPerfil extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
         padding: const EdgeInsets.all(12),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [
-            Icon(Icons.info_outline, color: v.acento),
-            const SizedBox(width: 8),
-            Expanded(
-                child: Text(perfil.titulo, style: v.titulo(tamano: 16, color: v.textoFuerte))),
-          ]),
-          const SizedBox(height: 6),
-          for (final l in perfil.lineas) Text(l, style: v.lectura(tamano: 15, color: v.texto)),
-        ]),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.info_outline, color: v.acento),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    perfil.titulo,
+                    style: v.titulo(tamano: 16, color: v.textoFuerte),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            for (final l in perfil.lineas)
+              Text(l, style: v.lectura(tamano: 15, color: v.texto)),
+          ],
+        ),
       ),
     );
   }
@@ -218,35 +265,65 @@ class _CeldaComida extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final v = ValoresDiseno.de(context);
     final nombre = platillo?.nombre;
-    final duros = textura ? (platillo?.duros ?? const <String>[]) : const <String>[];
+    final duros = textura
+        ? (platillo?.duros ?? const <String>[])
+        : const <String>[];
     final contenido = ConstrainedBox(
       constraints: const BoxConstraints(minHeight: 48),
-      child: Row(children: [
-        SizedBox(
-          width: 96,
-          child: Text(tiempo.etiqueta, style: v.lectura(tamano: 14, color: v.etiqueta)),
-        ),
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(nombre ?? 'Sin platillo',
-                style: v.lectura(tamano: 16, color: nombre == null ? v.textoTenue : v.texto)),
-            if (duros.isNotEmpty)
-              Row(children: [
-                Icon(Icons.warning_amber_rounded, size: 16, color: v.alerta),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text('Alimento duro: ${duros.join(', ')}',
-                      style: v.lectura(tamano: 13, color: v.alerta)),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 96,
+            child: Text(
+              tiempo.etiqueta,
+              style: v.lectura(tamano: 14, color: v.etiqueta),
+            ),
+          ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  nombre ?? 'Sin platillo',
+                  style: v.lectura(
+                    tamano: 16,
+                    color: nombre == null ? v.textoTenue : v.texto,
+                  ),
                 ),
-              ]),
-          ]),
-        ),
-        if (editable) Icon(Icons.edit_outlined, size: 18, color: v.textoTenue),
-      ]),
+                if (duros.isNotEmpty)
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.warning_amber_rounded,
+                        size: 16,
+                        color: v.alerta,
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          'Alimento duro: ${duros.join(', ')}',
+                          style: v.lectura(tamano: 13, color: v.alerta),
+                        ),
+                      ),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+          if (editable)
+            Icon(Icons.edit_outlined, size: 18, color: v.textoTenue),
+        ],
+      ),
     );
-    final etiqueta = '${diasSemana[dia]}, ${tiempo.etiqueta}: ${nombre ?? 'sin platillo'}'
+    final etiqueta =
+        '${diasSemana[dia]}, ${tiempo.etiqueta}: ${nombre ?? 'sin platillo'}'
         '${duros.isEmpty ? '' : '. Advertencia: alimento duro'}';
-    if (!editable) return Semantics(label: etiqueta, excludeSemantics: true, child: contenido);
+    if (!editable)
+      return Semantics(
+        label: etiqueta,
+        excludeSemantics: true,
+        child: contenido,
+      );
     return Semantics(
       button: true,
       label: '$etiqueta. Toca para cambiar.',
@@ -259,50 +336,63 @@ class _CeldaComida extends ConsumerWidget {
     final elegido = await mostrarHojaInferior<String>(
       context,
       titulo: '${diasSemana[dia]} · ${tiempo.etiqueta}',
-      child: Column(mainAxisSize: MainAxisSize.min, children: [
-        for (final p in platillos)
-          ListTile(
-            title: Text(p.nombre),
-            subtitle: textura && p.duros.isNotEmpty
-                ? Text('Alimento duro: ${p.duros.join(', ')}')
-                : null,
-            trailing: textura && p.duros.isNotEmpty
-                ? const Icon(Icons.warning_amber_rounded)
-                : null,
-            onTap: () async {
-              if (textura && p.duros.isNotEmpty) {
-                final seguir = await showDialog<bool>(
-                  context: context,
-                  builder: (c) => AlertDialog(
-                    title: const Text('Alimento duro'),
-                    content: Text('${p.nombre} tiene ${p.duros.join(', ')}. '
-                        'Este menú pide alimentos blandos. ¿Usarlo de todos modos?'),
-                    actions: [
-                      TextButton(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final p in platillos)
+            ListTile(
+              title: Text(p.nombre),
+              subtitle: textura && p.duros.isNotEmpty
+                  ? Text('Alimento duro: ${p.duros.join(', ')}')
+                  : null,
+              trailing: textura && p.duros.isNotEmpty
+                  ? const Icon(Icons.warning_amber_rounded)
+                  : null,
+              onTap: () async {
+                if (textura && p.duros.isNotEmpty) {
+                  final seguir = await showDialog<bool>(
+                    context: context,
+                    builder: (c) => AlertDialog(
+                      title: const Text('Alimento duro'),
+                      content: Text(
+                        '${p.nombre} tiene ${p.duros.join(', ')}. '
+                        'Este menú pide alimentos blandos. ¿Usarlo de todos modos?',
+                      ),
+                      actions: [
+                        TextButton(
                           onPressed: () => Navigator.of(c).pop(false),
-                          child: const Text('Elegir otro')),
-                      FilledButton(
+                          child: const Text('Elegir otro'),
+                        ),
+                        FilledButton(
                           onPressed: () => Navigator.of(c).pop(true),
-                          child: const Text('Usar de todos modos')),
-                    ],
-                  ),
-                );
-                if (seguir != true) return;
-              }
-              if (context.mounted) Navigator.of(context).pop(p.id);
-            },
+                          child: const Text('Usar de todos modos'),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (seguir != true) return;
+                }
+                if (context.mounted) Navigator.of(context).pop(p.id);
+              },
+            ),
+          ListTile(
+            leading: const Icon(Icons.clear),
+            title: const Text('Quitar platillo'),
+            onTap: () => Navigator.of(context).pop(''),
           ),
-        ListTile(
-          leading: const Icon(Icons.clear),
-          title: const Text('Quitar platillo'),
-          onTap: () => Navigator.of(context).pop(''),
-        ),
-      ]),
+        ],
+      ),
     );
     if (elegido == null || !context.mounted) return;
     final servicio = ref.read(servicioAlimentacionProvider);
     final semana = ref.read(semanaAlimentacionProvider);
-    final antes = await servicio.asignar(menu, semana, dia, tiempo, elegido.isEmpty ? null : elegido);
+    final antes = await servicio.asignar(
+      menu,
+      semana,
+      dia,
+      tiempo,
+      elegido.isEmpty ? null : elegido,
+    );
     ref.read(versionAlimentacionProvider.notifier).state++;
     if (!context.mounted) return;
     mostrarAvisoDeshacer(
@@ -324,46 +414,64 @@ class _Suplementos extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final v = ValoresDiseno.de(context);
-    final lista = ref.watch(suplementosProvider(menu)).value ?? const <Suplemento>[];
+    final lista =
+        ref.watch(suplementosProvider(menu)).value ?? const <Suplemento>[];
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(12),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('Suplementos', style: v.titulo(tamano: 18, color: v.textoFuerte)),
-          if (lista.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Text('Sin suplementos', style: v.lectura(tamano: 15, color: v.textoTenue)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Suplementos',
+              style: v.titulo(tamano: 18, color: v.textoFuerte),
             ),
-          for (final s in lista)
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(s.nombre),
-              subtitle: Text('${s.dosis} · ${s.horario}'),
-              onTap: editable ? () => _editar(context, ref, s) : null,
-              trailing: editable
-                  ? IconButton(
-                      icon: const Icon(Icons.delete_outline),
-                      tooltip: 'Quitar ${s.nombre}',
-                      onPressed: () async {
-                        await ref.read(servicioAlimentacionProvider).quitarSuplemento(menu, s.id);
-                        ref.read(versionAlimentacionProvider.notifier).state++;
-                      },
-                    )
-                  : null,
-            ),
-          if (editable)
-            TextButton.icon(
-              icon: const Icon(Icons.add),
-              label: const Text('Agregar suplemento'),
-              onPressed: () => _editar(context, ref, null),
-            ),
-        ]),
+            if (lista.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Text(
+                  'Sin suplementos',
+                  style: v.lectura(tamano: 15, color: v.textoTenue),
+                ),
+              ),
+            for (final s in lista)
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(s.nombre),
+                subtitle: Text('${s.dosis} · ${s.horario}'),
+                onTap: editable ? () => _editar(context, ref, s) : null,
+                trailing: editable
+                    ? IconButton(
+                        icon: const Icon(Icons.delete_outline),
+                        tooltip: 'Quitar ${s.nombre}',
+                        onPressed: () async {
+                          await ref
+                              .read(servicioAlimentacionProvider)
+                              .quitarSuplemento(menu, s.id);
+                          ref
+                              .read(versionAlimentacionProvider.notifier)
+                              .state++;
+                        },
+                      )
+                    : null,
+              ),
+            if (editable)
+              TextButton.icon(
+                icon: const Icon(Icons.add),
+                label: const Text('Agregar suplemento'),
+                onPressed: () => _editar(context, ref, null),
+              ),
+          ],
+        ),
       ),
     );
   }
 
-  Future<void> _editar(BuildContext context, WidgetRef ref, Suplemento? actual) async {
+  Future<void> _editar(
+    BuildContext context,
+    WidgetRef ref,
+    Suplemento? actual,
+  ) async {
     final nombre = TextEditingController(text: actual?.nombre);
     final dosis = TextEditingController(text: actual?.dosis);
     final horario = TextEditingController(text: actual?.horario);
@@ -372,18 +480,34 @@ class _Suplementos extends ConsumerWidget {
       titulo: actual == null ? 'Nuevo suplemento' : 'Editar suplemento',
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          TextField(controller: nombre, decoration: const InputDecoration(labelText: 'Nombre')),
-          TextField(controller: dosis, decoration: const InputDecoration(labelText: 'Dosis')),
-          TextField(controller: horario, decoration: const InputDecoration(labelText: 'Horario')),
-          const SizedBox(height: 12),
-          FilledButton(
-              onPressed: () => Navigator.of(context).pop(true), child: const Text('Guardar')),
-        ]),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nombre,
+              decoration: const InputDecoration(labelText: 'Nombre'),
+            ),
+            TextField(
+              controller: dosis,
+              decoration: const InputDecoration(labelText: 'Dosis'),
+            ),
+            TextField(
+              controller: horario,
+              decoration: const InputDecoration(labelText: 'Horario'),
+            ),
+            const SizedBox(height: 12),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Guardar'),
+            ),
+          ],
+        ),
       ),
     );
     if (ok != true || nombre.text.trim().isEmpty) return;
-    await ref.read(servicioAlimentacionProvider).guardarSuplemento(
+    await ref
+        .read(servicioAlimentacionProvider)
+        .guardarSuplemento(
           menu,
           Suplemento(
             id: actual?.id ?? 's${DateTime.now().microsecondsSinceEpoch}',

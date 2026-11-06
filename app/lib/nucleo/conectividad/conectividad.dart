@@ -45,7 +45,7 @@ class FuenteConectividadSiempre implements FuenteConectividad {
 
 /// Red simulada para pruebas: se cambia con [poner].
 class FuenteConectividadFalsa implements FuenteConectividad {
-  FuenteConectividadFalsa({bool hayRed = true}) : _hayRed = hayRed;
+  FuenteConectividadFalsa({this._hayRed = true});
 
   bool _hayRed;
   final _controlador = StreamController<bool>.broadcast();

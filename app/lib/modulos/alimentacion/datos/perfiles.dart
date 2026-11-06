@@ -19,17 +19,17 @@ class PerfilMenu {
 }
 
 PerfilMenu perfilDe(MenuId menu) => switch (menu) {
-      MenuId.papa => const PerfilMenu(
-          titulo: 'Adulto mayor con Alzheimer',
-          lineas: [
-            'Adulto de 80 años.',
-            'Dieta alta en proteínas y aminoácidos.',
-            'No puede comer alimentos duros; de preferencia blandos.',
-          ],
-          texturaBlanda: true,
-        ),
-      MenuId.pareja => const PerfilMenu(
-          titulo: 'Pareja y dueño',
-          lineas: ['Menú general del hogar.'],
-        ),
-    };
+  MenuId.papa => const PerfilMenu(
+    titulo: 'Adulto mayor con Alzheimer',
+    lineas: [
+      'Adulto de 80 años.',
+      'Dieta alta en proteínas y aminoácidos.',
+      'No puede comer alimentos duros; de preferencia blandos.',
+    ],
+    texturaBlanda: true,
+  ),
+  MenuId.pareja => const PerfilMenu(
+    titulo: 'Pareja y dueño',
+    lineas: ['Menú general del hogar.'],
+  ),
+};

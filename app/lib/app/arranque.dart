@@ -41,6 +41,7 @@ import '../nucleo/sensibles/subida_diferida.dart'
     show funcionSubirSobres, tipoColaSobres;
 import '../nucleo/conectividad/conectividad.dart';
 import '../nucleo/conectividad/conectividad_plus.dart';
+import '../nucleo/personas/personas_hogar.dart';
 import '../nucleo/seguridad/biometria.dart';
 import '../nucleo/seguridad/limpieza_local.dart';
 import '../nucleo/seguridad/pantalla_segura.dart';
@@ -143,6 +144,7 @@ Future<List<Override>> prepararArranque({
   ServicioSesion? sesion;
   Enviador enviador = const EnviadorSinServidor();
   RepositorioInvitaciones? invitaciones;
+  RepositorioPersonasHogar? personasDelHogar;
   Override? salidaSinPin;
   RepositorioAvisos? avisos;
   if (configuracion.tieneSupabase) {
@@ -163,6 +165,10 @@ Future<List<Override>> prepararArranque({
       avisos = RepositorioAvisosSupabase(() => servicio.clienteActivo);
       // Invitaciones (cuenta maestra): con la sesión de quien está dentro.
       invitaciones = RepositorioInvitacionesSupabase(
+        () => servicio.clienteActivo,
+      );
+      // Personas del hogar (baja y cambio de rol), con la sesión del dueño.
+      personasDelHogar = RepositorioPersonasHogarSupabase(
         () => servicio.clienteActivo,
       );
       // Bandeja de salida (D14, 23/oct): lo de quien ya salió de la tablet
@@ -229,6 +235,8 @@ Future<List<Override>> prepararArranque({
     enviadorProvider.overrideWithValue(enviador),
     if (invitaciones != null)
       repositorioInvitacionesProvider.overrideWithValue(invitaciones),
+    if (personasDelHogar != null)
+      repositorioPersonasHogarProvider.overrideWithValue(personasDelHogar),
     ?salidaSinPin,
     // Avisos (Fase 2, D20): notificaciones del sistema en Android (teléfono y
     // tablets) y Windows (laptop, con la app abierta) y push solo en Android
