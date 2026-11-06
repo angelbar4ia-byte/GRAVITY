@@ -82,7 +82,7 @@ const Map<SeccionAjustes, InfoSeccionAjustes> infoSecciones = {
   SeccionAjustes.habitos: InfoSeccionAjustes(
     titulo: 'Hábitos',
     descripcion: 'Nube cifrada: frase de recuperación, modos y equipos',
-    icono: Icons.cloud_lock_outlined,
+    icono: Icons.cloud_outlined,
     segmento: 'habitos',
   ),
   SeccionAjustes.desarrollador: InfoSeccionAjustes(
