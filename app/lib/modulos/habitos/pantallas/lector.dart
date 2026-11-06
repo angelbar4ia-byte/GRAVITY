@@ -404,8 +404,9 @@ class _NotaEstado extends ConsumerState<PantallaNotaLector> {
       final n = await ref
           .read(servicioDiarioProvider)
           ?.notasDeCapitulo(widget.libro, widget.cap);
-      if (n != null && mounted)
+      if (n != null && mounted) {
         setState(() => texto.text = n[widget.ver] ?? '');
+      }
     } catch (_) {
       // Sin llave en este equipo: la nota no se puede leer.
     }

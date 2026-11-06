@@ -23,8 +23,9 @@ class RepositorioHabitosEnMemoria implements RepositorioHabitos {
   @override
   Future<void> guardarObjetivo(ObjetivoHab o) async {
     final v = _objetivos[o.id];
-    if (v != null && v.modificadoEn.isAfter(o.modificadoEn))
+    if (v != null && v.modificadoEn.isAfter(o.modificadoEn)) {
       return; // último gana
+    }
     _objetivos[o.id] = o;
   }
 

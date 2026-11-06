@@ -196,8 +196,9 @@ class _AvisoRevision extends ConsumerWidget {
   const _AvisoRevision();
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (!(ref.watch(revisionPendienteProvider).value ?? false))
+    if (!(ref.watch(revisionPendienteProvider).value ?? false)) {
       return const SizedBox.shrink();
+    }
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Card(

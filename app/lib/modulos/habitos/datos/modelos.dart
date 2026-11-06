@@ -49,8 +49,9 @@ class ObjetivoHab {
   bool programadoEn(DateTime f) {
     final d = soloDia(f);
     if (d.isBefore(soloDia(fechaInicio))) return false;
-    if (fechaObjetivo != null && d.isAfter(soloDia(fechaObjetivo!)))
+    if (fechaObjetivo != null && d.isAfter(soloDia(fechaObjetivo!))) {
       return false;
+    }
     if (frecuencia == Frecuencia.diasSemana) {
       return diasSemana & mascaraDia(d) != 0;
     }

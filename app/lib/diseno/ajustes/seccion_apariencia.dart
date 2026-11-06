@@ -12,6 +12,7 @@ import '../componentes/monto_ocultable.dart';
 import '../componentes/semaforo.dart';
 import '../componentes/tarjeta_modulo.dart';
 import '../modo_claro_oscuro.dart';
+import '../solar.dart';
 import '../personalidad_modulo.dart';
 import '../proveedores.dart';
 import '../valores_diseno.dart';
@@ -20,7 +21,8 @@ class SeccionApariencia extends ConsumerWidget {
   const SeccionApariencia({super.key});
 
   static const _modos = {
-    ModoClaroOscuro.automaticoPorHora: 'Automático por hora',
+    ModoClaroOscuro.automaticoSolar: 'Amanecer y atardecer',
+    ModoClaroOscuro.automaticoPorHora: 'Horario fijo',
     ModoClaroOscuro.sistema: 'Del sistema',
     ModoClaroOscuro.claro: 'Siempre claro',
     ModoClaroOscuro.oscuro: 'Siempre oscuro',
@@ -44,10 +46,19 @@ class SeccionApariencia extends ConsumerWidget {
     final preferencia = ref.watch(preferenciaClaroOscuroProvider);
     final opciones = ref.watch(opcionesPersonalidadProvider);
     final titulo = SizedBox(height: e * 3);
+    final altoContraste = ref.watch(altoContrasteProvider);
+    final ahora = ref.watch(horaActualProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        Text(
+          'Tu apariencia se guarda solo para ti; la tablet de la casa tiene '
+          'la suya.',
+          key: const ValueKey('apariencia-por-persona'),
+          style: v.lectura(tamano: 13, color: v.textoTenue),
+        ),
+        titulo,
         const EtiquetaPanel('Estilo'),
         SizedBox(height: e),
         Wrap(
@@ -89,6 +100,34 @@ class SeccionApariencia extends ConsumerWidget {
               ),
           ],
         ),
+        if (preferencia.modo == ModoClaroOscuro.automaticoSolar) ...[
+          SizedBox(height: e * 1.5),
+          Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: e,
+            runSpacing: e,
+            children: [
+              Text('Lugar', style: v.lectura()),
+              DropdownButton<LugarSolar>(
+                key: const ValueKey('lugar-solar'),
+                value: preferencia.lugar,
+                underline: const SizedBox(),
+                onChanged: (lugar) {
+                  if (lugar == null) return;
+                  ref
+                      .read(preferenciaClaroOscuroProvider.notifier)
+                      .cambiarLugar(lugar);
+                },
+                items: [
+                  for (final lugar in lugaresSolares)
+                    DropdownMenuItem(value: lugar, child: Text(lugar.nombre)),
+                ],
+              ),
+            ],
+          ),
+          SizedBox(height: e),
+          _TextoSol(sol: solDelDia(ahora, preferencia.lugar)),
+        ],
         if (preferencia.modo == ModoClaroOscuro.automaticoPorHora) ...[
           SizedBox(height: e * 1.5),
           Wrap(
@@ -116,6 +155,19 @@ class SeccionApariencia extends ConsumerWidget {
           ),
         ],
         titulo,
+        SwitchListTile(
+          key: const ValueKey('alto-contraste'),
+          contentPadding: EdgeInsets.zero,
+          title: Text('Alto contraste', style: v.lectura()),
+          subtitle: Text(
+            'Texto y estados a 7:1 en cualquier estilo, sin adornos.',
+            style: v.lectura(tamano: 13, color: v.textoTenue),
+          ),
+          value: altoContraste,
+          onChanged: (activo) =>
+              ref.read(altoContrasteProvider.notifier).fijar(activo),
+        ),
+        titulo,
         const EtiquetaPanel('Personalidad por módulo'),
         SizedBox(height: e),
         for (final MapEntry(key: modulo, value: nombre) in _modulos.entries)
@@ -129,6 +181,23 @@ class SeccionApariencia extends ConsumerWidget {
         SizedBox(height: e),
         const _VistaPrevia(),
       ],
+    );
+  }
+}
+
+/// "Amanecer 06:32 · Atardecer 18:10", con texto además del color.
+class _TextoSol extends StatelessWidget {
+  const _TextoSol({required this.sol});
+
+  final SolDelDia sol;
+
+  @override
+  Widget build(BuildContext context) {
+    final v = ValoresDiseno.de(context);
+    return Text(
+      'Hoy: amanecer ${sol.textoAmanecer} · atardecer ${sol.textoAtardecer}',
+      key: const ValueKey('texto-sol'),
+      style: v.lectura(tamano: 13, color: v.textoTenue),
     );
   }
 }

@@ -133,8 +133,9 @@ class ServicioMarcas {
     int ver,
     String color,
   ) async {
-    if (!coloresSubrayado.contains(color))
+    if (!coloresSubrayado.contains(color)) {
       throw ArgumentError('Ese color no existe.');
+    }
     final ref = referenciaMarca(libro, cap, ver);
     final m = MarcaBiblia(
       id: idDe('subrayado', ref),

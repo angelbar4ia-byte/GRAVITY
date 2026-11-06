@@ -49,7 +49,11 @@ class FuenteTablasSupabase implements FuenteTablas {
     try {
       return await accion();
     } on PostgrestException catch (e) {
-      throw ErrorFinanzas(_mensaje(e));
+      throw ErrorFinanzas(
+        _mensaje(e),
+        // `fin_emitir_aviso`: 22023 "se llegó al tope de 60 avisos al día".
+        topeAlcanzado: e.code == '22023' && e.message.contains('tope'),
+      );
     } catch (e) {
       if (esErrorDeRed(e)) throw ErrorFinanzas.conexion;
       rethrow;

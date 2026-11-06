@@ -72,3 +72,7 @@ Color conContrasteMinimo(
   }
   return destino;
 }
+
+/// Contraste mínimo del modo de **alto contraste** (respuesta P6 del dueño:
+/// 7:1, el nivel AAA). Lo cumplen Cuidados, la bici y el modo alto global.
+const double contrasteMinimoAlto = 7.0;

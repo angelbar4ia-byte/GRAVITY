@@ -110,18 +110,54 @@ void main() {
     expect(lista.enabled, isFalse);
   });
 
-  testWidgets('borrar: elige qué, pide el PIN y, sin él, no borra nada', (
+  testWidgets(
+    'un solo PIN (E5): con la puerta abierta, borrar no pide otro PIN y exige '
+    'escribir BORRAR',
+    (tester) async {
+      await montar(tester, rol: Rol.dueno);
+      await tester.tap(find.byKey(const ValueKey('mis-datos-borrar')));
+      await tester.pumpAndSettle();
+      expect(find.text('¿Qué quieres borrar?'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('borrar-todo')));
+      await tester.pumpAndSettle();
+      // Ya no hay segundo PIN: va directo a la palabra de confirmación.
+      expect(find.text('Tu PIN'), findsNothing);
+      expect(find.text('Confirmar borrado'), findsOneWidget);
+      await tester.tap(find.text('Cancelar'));
+      await tester.pumpAndSettle();
+      expect(find.text('Confirmar borrado'), findsNothing);
+    },
+  );
+
+  testWidgets('un solo PIN (E5): exportar tampoco pide el PIN otra vez', (
     tester,
   ) async {
     await montar(tester, rol: Rol.dueno);
-    await tester.tap(find.byKey(const ValueKey('mis-datos-borrar')));
+    await tester.tap(find.byKey(const ValueKey('mis-datos-exportar')));
     await tester.pumpAndSettle();
-    expect(find.text('¿Qué quieres borrar?'), findsOneWidget);
-    await tester.tap(find.byKey(const ValueKey('borrar-todo')));
+    // Pregunta si incluye lo reservado y, al contestar, no aparece "Tu PIN".
+    await tester.tap(find.text('Sin lo reservado'));
     await tester.pumpAndSettle();
-    expect(find.text('Tu PIN'), findsOneWidget);
-    await tester.tap(find.text('Cancelar'));
-    await tester.pumpAndSettle();
-    expect(find.text('Confirmar borrado'), findsNothing);
+    expect(find.text('Tu PIN'), findsNothing);
   });
+
+  testWidgets(
+    'si la puerta se cerró (2 min sin uso) a mitad del flujo, sí vuelve a '
+    'pedir el PIN',
+    (tester) async {
+      await montar(tester, rol: Rol.dueno);
+      await tester.tap(find.byKey(const ValueKey('mis-datos-borrar')));
+      await tester.pumpAndSettle();
+      final contenedor = ProviderScope.containerOf(
+        tester.element(find.byType(MisDatosDeHabitos)),
+      );
+      contenedor.read(reservadoAbiertoProvider.notifier).cerrar();
+      await tester.tap(find.byKey(const ValueKey('borrar-todo')));
+      await tester.pumpAndSettle();
+      expect(find.text('Tu PIN'), findsOneWidget);
+      await tester.tap(find.text('Cancelar'));
+      await tester.pumpAndSettle();
+      expect(find.text('Confirmar borrado'), findsNothing);
+    },
+  );
 }

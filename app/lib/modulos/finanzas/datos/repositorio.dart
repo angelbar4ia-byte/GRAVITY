@@ -115,12 +115,20 @@ enum ResultadoEscritura {
 
 /// Error con un mensaje listo para la interfaz.
 class ErrorFinanzas implements Exception {
-  const ErrorFinanzas(this.mensaje, {this.sinConexion = false});
+  const ErrorFinanzas(
+    this.mensaje, {
+    this.sinConexion = false,
+    this.topeAlcanzado = false,
+  });
 
   final String mensaje;
 
   /// No hubo conexión con el servidor.
   final bool sinConexion;
+
+  /// El servidor llegó a su tope de avisos del día (22023): no se reintenta
+  /// en bucle.
+  final bool topeAlcanzado;
 
   static const conexion = ErrorFinanzas(
     'Sin conexión: este cambio necesita señal. Inténtalo de nuevo cuando '
@@ -270,4 +278,20 @@ abstract interface class RepositorioFinanzas {
   /// llamarla **antes** de pedir los datos de ese libro. Devuelve `false` si el
   /// libro es de la propia persona (no se registra nada).
   Future<bool> registrarConsultaMaestra(String libroId);
+
+  /// Emite un aviso de los que solo la app sabe calcular
+  /// (`fin_emitir_aviso`: `flujo_negativo`, `abono_bajo_minimo`…). **No lleva
+  /// dinero ni texto libre**: solo el tipo del catálogo, el objeto y una clave
+  /// estable. Es idempotente por `(persona, clave)`: repetir la misma clave
+  /// devuelve 0. Devuelve cuántos avisos creó. Necesita señal (nunca va a la
+  /// cola: no se guarda nada sin conexión) y lanza [ErrorFinanzas] con
+  /// `sinConexion` si no la hay, o con `topeAlcanzado` si el servidor ya llegó
+  /// a su tope de 60 por día.
+  Future<int> emitirAviso({
+    required String libroId,
+    required String tipo,
+    required String? objetoTipo,
+    required String? objetoId,
+    required String clave,
+  });
 }

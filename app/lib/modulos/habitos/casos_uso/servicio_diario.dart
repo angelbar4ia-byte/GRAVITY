@@ -198,8 +198,9 @@ class ServicioDiario {
       await _docs.quitar(_t, _claveNotas(r.libro), 'nota:$codigoReferencia');
       return;
     }
-    if (texto.length > 4000)
+    if (texto.length > 4000) {
       throw ArgumentError('La nota admite hasta 4 000 caracteres.');
+    }
     await _docs.poner(
       _t,
       _claveNotas(r.libro),

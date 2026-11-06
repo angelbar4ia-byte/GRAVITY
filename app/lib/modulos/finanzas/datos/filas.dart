@@ -51,6 +51,9 @@ abstract final class TablasFinanzas {
   /// Función que deja en la bitácora la consulta de la cuenta maestra.
   static const consultaMaestra = 'fin_registrar_consulta_maestra';
 
+  /// Función que emite los avisos que solo la app sabe calcular (sin dinero).
+  static const emitirAviso = 'fin_emitir_aviso';
+
   /// Función que dice si existe la cuenta maestra y de quién es.
   static const cuentaMaestra = 'cuenta_maestra';
 

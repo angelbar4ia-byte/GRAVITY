@@ -11,7 +11,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../diseno/diseno.dart';
 import '../../../../nucleo/contratos/roles.dart';
+import '../../casos_uso/servicio_fase2.dart' show ServicioDeudasAhorro;
 import '../../casos_uso/sugerencias.dart';
+import '../../datos/repositorio.dart' show ErrorFinanzas;
+import '../../estado/proveedores_fase2.dart' show servicioFase2Provider;
 import '../../estado/proveedores.dart';
 import '../comunes.dart';
 
@@ -61,7 +64,16 @@ class _RevisionSemanalState extends ConsumerState<RevisionSemanal> {
     final servicio = ref.read(servicioFinanzasProvider);
     final navegador = Navigator.of(context);
     final mensajero = ScaffoldMessenger.of(context);
+    final fase2 = ref.read(servicioFase2Provider);
     final destino = v.real.destino;
+    // Ahorro automático (Fase 4): extras → sobre → sobrante → redondeo. Sale
+    // del ahorro que el motor ya propone, así que no se aparta dos veces.
+    final auto = fase2.planAhorroDeCierre(widget.libroId, widget.semana);
+    final restoAhorro = destino.ahorro - auto.total;
+    final destinoManual = DestinoRemanente(
+      destino.abonosExtra,
+      restoAhorro < 0 ? 0 : restoAhorro,
+    );
     final aplicar =
         _aplicar &&
         _origen != null &&
@@ -72,25 +84,66 @@ class _RevisionSemanalState extends ConsumerState<RevisionSemanal> {
         widget.semana,
         accion: aplicar ? AccionCierre.aplicarRemanente : AccionCierre.sinAplicar,
       );
+      final motivo = c.permiso.enNombreDe ? 'Remanente de la semana' : null;
       if (aplicar) {
         await servicio.aplicarRemanente(
           libroId: widget.libroId,
-          destino: destino,
+          destino: destinoManual,
           cuentaOrigenId: _origen!,
           cuentaAhorroId: _ahorro,
-          motivo: c.permiso.enNombreDe ? 'Remanente de la semana' : null,
+          motivo: motivo,
           cierreId: cierre.id,
+        );
+        await fase2.aplicarAhorroAutomatico(
+          libroId: widget.libroId,
+          plan: auto,
+          cuentaOrigenId: _origen!,
+          cierreId: cierre.id,
+          motivo: motivo,
         );
       }
       navegador.pop();
+      final conAuto = aplicar && auto.aportes.isNotEmpty;
       mensajero.showSnackBar(
-        const SnackBar(content: Text('Semana cerrada. Arranca la siguiente.')),
+        SnackBar(
+          content: const Text('Semana cerrada. Arranca la siguiente.'),
+          action: conAuto
+              ? SnackBarAction(
+                  label: 'Deshacer ahorro',
+                  onPressed: () => _deshacerAhorro(fase2, cierre.id, mensajero),
+                )
+              : null,
+        ),
       );
     } catch (e) {
       if (mounted) {
         setState(() => _cerrando = false);
         avisarError(context, e);
       }
+    }
+  }
+
+  /// Anula con contraasiento el ahorro automático de ese cierre (nunca se
+  /// borra). La semana queda cerrada; el dinero vuelve a la cuenta de origen.
+  Future<void> _deshacerAhorro(
+    ServicioDeudasAhorro fase2,
+    String cierreId,
+    ScaffoldMessengerState mensajero,
+  ) async {
+    try {
+      final n = await fase2.deshacerAhorroAutomatico(
+        libroId: widget.libroId,
+        cierreId: cierreId,
+      );
+      mensajero.showSnackBar(
+        SnackBar(content: Text(n == 0 ? 'Nada que deshacer.' : 'Ahorro deshecho.')),
+      );
+    } catch (e) {
+      mensajero.showSnackBar(
+        SnackBar(
+          content: Text(e is ErrorFinanzas ? e.mensaje : 'No se pudo deshacer: $e'),
+        ),
+      );
     }
   }
 
@@ -327,6 +380,9 @@ class _RevisionSemanalState extends ConsumerState<RevisionSemanal> {
     _origen ??= origenes.firstOrNull?.id;
     _ahorro ??= ahorros.firstOrNull?.id;
     final hayQueAplicar = destino.totalAbonoExtra > 0 || destino.ahorro > 0;
+    final auto = ref
+        .read(servicioFase2Provider)
+        .planAhorroDeCierre(widget.libroId, widget.semana);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -345,6 +401,24 @@ class _RevisionSemanalState extends ConsumerState<RevisionSemanal> {
           ),
         if (destino.ahorro > 0)
           Row(children: [const Expanded(child: Text('A ahorro')), Monto(destino.ahorro)]),
+        // Ahorro automático (extras → sobre → sobrante → redondeo): sale de
+        // ese mismo ahorro, con su origen a la vista.
+        for (final a in auto.aportes)
+          Padding(
+            key: ValueKey('revision-auto-${a.origen.clave}-${a.bolsaId}'),
+            padding: const EdgeInsets.only(left: 16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '${a.origen.etiqueta} → '
+                    '${c.datos.bolsas.where((b) => b.id == a.bolsaId).firstOrNull?.nombre ?? 'ahorro'}',
+                  ),
+                ),
+                Monto(a.monto),
+              ],
+            ),
+          ),
         if (v.real.abonoDiferido > 0)
           Row(
             children: [
@@ -372,7 +446,7 @@ class _RevisionSemanalState extends ConsumerState<RevisionSemanal> {
               ],
               onChanged: (x) => setState(() => _origen = x),
             ),
-          if (_aplicar && destino.ahorro > 0)
+          if (_aplicar && destino.ahorro - auto.total > 0)
             ahorros.isEmpty
                 ? const Text(
                     'No hay cuenta de ahorro en este libro: créala en Cuentas '

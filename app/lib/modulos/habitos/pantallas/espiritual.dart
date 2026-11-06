@@ -34,9 +34,10 @@ class PantallaEspiritual extends ConsumerWidget {
     String? versiculo;
     if (biblias.isNotEmpty && ref0 != null) {
       final p = pasaje(biblias.first, ref0);
-      if (p != null)
+      if (p != null) {
         versiculo =
             '${p.map((e) => e.$2).join(' ')} (${versiculoDelDia(DateTime.now(), versiculosAnimo)})';
+      }
     }
     return TemaModulo(
       modulo: Modulo.habitos,
@@ -302,10 +303,11 @@ class _DevocionalEstado extends ConsumerState<PantallaDevocional> {
                         oracion: oracion.text,
                         breve: breve,
                       );
-                  if (context.mounted)
+                  if (context.mounted) {
                     ScaffoldMessenger.of(
                       context,
                     ).showSnackBar(const SnackBar(content: Text('Guardado')));
+                  }
                 },
                 child: const Text('Guardar'),
               ),
@@ -380,12 +382,13 @@ class _OracionEstado extends ConsumerState<PantallaOracion> {
                   OutlinedButton(
                     onPressed: () async {
                       await d?.registrarOracion(10);
-                      if (context.mounted)
+                      if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('10 minutos de oración anotados'),
                           ),
                         );
+                      }
                     },
                     child: const Text('Anotar 10 minutos de oración'),
                   ),

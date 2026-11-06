@@ -5,7 +5,9 @@
 /// que el selector de apps ("recientes") muestre la ventana en blanco: es la
 /// cubierta al pasar a segundo plano. Se activa **solo mientras hay pantallas
 /// con dinero (Finanzas) o datos clínicos (Cuidados) a la vista**; el resto de
-/// la app se puede capturar. En Windows no hace falta nada.
+/// la app se puede capturar. En Windows lo hace `SetWindowDisplayAffinity`
+/// ([ProtectorDePantallaWindows], activo por omisión y editable en Ajustes ›
+/// Privacidad: [capturasBloqueadasProvider]).
 ///
 /// Varias pantallas pueden pedirlo a la vez (la pantalla del módulo y una
 /// hoja encima): el protector se enciende con la primera y se apaga cuando
@@ -17,6 +19,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'protector_windows.dart';
 
 /// Pone o quita la protección de la ventana.
 abstract interface class ProtectorDePantalla {
@@ -57,15 +61,28 @@ class ProtectorDePantallaAndroid implements ProtectorDePantalla {
 /// Lleva la cuenta de quién pide la protección y la aplica al cambiar entre
 /// "nadie la pide" y "alguien la pide".
 class ControladorPantallaSegura {
-  ControladorPantallaSegura(this._protector);
+  ControladorPantallaSegura(this._protector, {bool Function()? habilitado})
+    : _habilitado = habilitado ?? (() => true);
 
   final ProtectorDePantalla _protector;
+
+  /// Si la persona apagó el bloqueo (Windows, Ajustes › Privacidad), no se
+  /// protege nada aunque haya pantallas que lo pidan.
+  final bool Function() _habilitado;
   int _pedidos = 0;
   bool _aplicada = false;
   Future<void> _fila = Future.value();
 
   /// `true` si hay al menos una pantalla que la pide.
   bool get segura => _pedidos > 0;
+
+  /// Vuelve a aplicar lo que toca (la persona cambió el ajuste).
+  void reaplicar() {
+    _aplicada = !_queSeAplica();
+    _aplicar();
+  }
+
+  bool _queSeAplica() => segura && _habilitado();
 
   /// Alguien pide la protección. Devuelve lo que hay que llamar para soltarla
   /// (una sola vez).
@@ -82,7 +99,7 @@ class ControladorPantallaSegura {
   }
 
   void _aplicar() {
-    final quiere = segura;
+    final quiere = _queSeAplica();
     if (quiere == _aplicada) return;
     _aplicada = quiere;
     // Una llamada tras otra, en el orden en que se pidieron.
@@ -102,6 +119,13 @@ final protectorDePantallaProvider = Provider<ProtectorDePantalla>(
   (ref) => const ProtectorDePantallaNulo(),
 );
 
-final controladorPantallaSeguraProvider = Provider<ControladorPantallaSegura>(
-  (ref) => ControladorPantallaSegura(ref.watch(protectorDePantallaProvider)),
-);
+final controladorPantallaSeguraProvider = Provider<ControladorPantallaSegura>((
+  ref,
+) {
+  final controlador = ControladorPantallaSegura(
+    ref.watch(protectorDePantallaProvider),
+    habilitado: () => ref.read(capturasBloqueadasProvider),
+  );
+  ref.listen(capturasBloqueadasProvider, (_, _) => controlador.reaplicar());
+  return controlador;
+});

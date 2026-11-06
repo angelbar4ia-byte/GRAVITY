@@ -1118,5 +1118,23 @@ class RepositorioFinanzasSupabase implements RepositorioFinanzas {
     return registrada == true;
   }
 
+  @override
+  Future<int> emitirAviso({
+    required String libroId,
+    required String tipo,
+    required String? objetoTipo,
+    required String? objetoId,
+    required String clave,
+  }) async {
+    final r = await fuente.rpc(TablasFinanzas.emitirAviso, {
+      'p_libro_id': libroId,
+      'p_tipo': tipo,
+      'p_objeto_tipo': objetoTipo,
+      'p_objeto_id': objetoId,
+      'p_clave': clave,
+    });
+    return r is int ? r : int.tryParse('$r') ?? 0;
+  }
+
   Future<void> cerrar() => _cambios.close();
 }

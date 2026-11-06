@@ -22,6 +22,7 @@ library;
 export 'src/ahorro.dart';
 export 'src/ahorro_datos.dart';
 export 'src/alertas.dart';
+export 'src/avisos_app.dart';
 export 'src/calendario.dart';
 export 'src/categorias.dart';
 export 'src/cierre_ahorro.dart';

@@ -27,11 +27,17 @@ ValoresDiseno valoresPara({
   required Brightness brillo,
   PersonalidadModulo personalidad = PersonalidadModulo.asistente,
   Densidad? densidadBase,
+  bool altoContrasteGlobal = false,
 }) {
   final efectivo = personalidad.brilloEfectivo(brillo);
   var base = estilo.valores(efectivo);
   if (densidadBase != null) base = base.copyWith(densidad: densidadBase);
-  return personalidad.aplicar(base);
+  final valores = personalidad.aplicar(base);
+  // Modo alto (P6): 7:1 en todo, sin adornos; después de la personalidad, para
+  // que su acento tampoco baje el contraste.
+  return altoContrasteGlobal
+      ? valoresAltoContraste(valores).copyWith(decoracion: false)
+      : valores;
 }
 
 /// Atajo: valores + tema en un paso.
@@ -40,12 +46,14 @@ ThemeData temaPara({
   required Brightness brillo,
   PersonalidadModulo personalidad = PersonalidadModulo.asistente,
   Densidad? densidadBase,
+  bool altoContrasteGlobal = false,
 }) => construirTema(
   valoresPara(
     estilo: estilo,
     brillo: brillo,
     personalidad: personalidad,
     densidadBase: densidadBase,
+    altoContrasteGlobal: altoContrasteGlobal,
   ),
 );
 

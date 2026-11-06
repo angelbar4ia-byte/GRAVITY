@@ -1,14 +1,21 @@
 /// Capa 4 del sistema de estilos: claro u oscuro (DISENO_UX_UI, sección 4).
 ///
-/// Por defecto es automático según la hora: claro de 07:00 a 19:00 (editable).
+/// Por defecto es automático según el sol real del lugar (amanecer y
+/// atardecer); también hay un horario fijo editable (07:00 a 19:00).
 /// Todo lo de este archivo es puro: no lee el reloj ni el sistema por su cuenta.
 library;
 
 import 'package:flutter/material.dart';
 
+import 'solar.dart';
+
 /// Cómo se elige entre claro y oscuro.
 enum ModoClaroOscuro {
-  /// Claro dentro del horario de día; oscuro fuera de él.
+  /// Claro del amanecer al atardecer reales del lugar de la persona
+  /// (tabla solar sin red, [solar.dart]). Es el modo por omisión (P8).
+  automaticoSolar,
+
+  /// Claro dentro del horario fijo de día; oscuro fuera de él.
   automaticoPorHora,
 
   /// Lo que diga el sistema operativo.
@@ -73,29 +80,36 @@ class HorarioClaro {
 @immutable
 class PreferenciaClaroOscuro {
   const PreferenciaClaroOscuro({
-    this.modo = ModoClaroOscuro.automaticoPorHora,
+    this.modo = ModoClaroOscuro.automaticoSolar,
     this.horario = HorarioClaro.porDefecto,
+    this.lugar = lugarSolarPorDefecto,
   });
 
   final ModoClaroOscuro modo;
   final HorarioClaro horario;
 
+  /// Lugar de la persona para el modo solar.
+  final LugarSolar lugar;
+
   PreferenciaClaroOscuro copyWith({
     ModoClaroOscuro? modo,
     HorarioClaro? horario,
+    LugarSolar? lugar,
   }) => PreferenciaClaroOscuro(
     modo: modo ?? this.modo,
     horario: horario ?? this.horario,
+    lugar: lugar ?? this.lugar,
   );
 
   @override
   bool operator ==(Object other) =>
       other is PreferenciaClaroOscuro &&
       other.modo == modo &&
-      other.horario == horario;
+      other.horario == horario &&
+      other.lugar == lugar;
 
   @override
-  int get hashCode => Object.hash(modo, horario);
+  int get hashCode => Object.hash(modo, horario, lugar);
 }
 
 /// Si a esa hora toca la versión clara según el horario.
@@ -110,8 +124,11 @@ Brightness decidirBrillo({
   required ModoClaroOscuro modo,
   required DateTime ahora,
   HorarioClaro horario = HorarioClaro.porDefecto,
+  LugarSolar lugar = lugarSolarPorDefecto,
   Brightness brilloSistema = Brightness.light,
 }) => switch (modo) {
+  ModoClaroOscuro.automaticoSolar =>
+    esDeDiaSolar(ahora, lugar) ? Brightness.light : Brightness.dark,
   ModoClaroOscuro.automaticoPorHora =>
     horario.contiene(ahora) ? Brightness.light : Brightness.dark,
   ModoClaroOscuro.sistema => brilloSistema,
@@ -125,8 +142,11 @@ ThemeMode modoTemaPara({
   required ModoClaroOscuro modo,
   required DateTime ahora,
   HorarioClaro horario = HorarioClaro.porDefecto,
+  LugarSolar lugar = lugarSolarPorDefecto,
 }) => switch (modo) {
   ModoClaroOscuro.sistema => ThemeMode.system,
+  ModoClaroOscuro.automaticoSolar =>
+    esDeDiaSolar(ahora, lugar) ? ThemeMode.light : ThemeMode.dark,
   ModoClaroOscuro.claro => ThemeMode.light,
   ModoClaroOscuro.oscuro => ThemeMode.dark,
   ModoClaroOscuro.automaticoPorHora =>

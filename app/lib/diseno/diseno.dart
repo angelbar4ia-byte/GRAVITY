@@ -5,6 +5,7 @@
 library;
 
 export 'ajustes/seccion_apariencia.dart';
+export 'almacen_apariencia.dart';
 export 'componentes/aviso_deshacer.dart';
 export 'componentes/barra_progreso.dart';
 export 'componentes/chip_nivel_alerta.dart';

@@ -95,11 +95,16 @@ class MisDatosDeHabitos extends ConsumerWidget {
     );
   }
 
+  /// Un solo PIN (D22, E5 de la Fase 4): la puerta reservada ya lo pidió al
+  /// entrar y se mantiene abierta mientras no pasen 2 minutos sin uso. Mientras
+  /// siga abierta, exportar y borrar no lo piden otra vez; si se cerró (o el
+  /// modo privado la cubrió) se vuelve a pedir.
   static Future<bool> _pedirPin(
     BuildContext context,
     WidgetRef ref,
     String motivo,
   ) async {
+    if (ref.read(reservadoAbiertoProvider)) return true;
     final pin = await showDialog<String>(
       context: context,
       builder: (_) => _DialogoTexto(

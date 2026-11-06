@@ -39,6 +39,7 @@ import '../nucleo/sensibles/subida_diferida.dart' show funcionSubirSobres, tipoC
 import '../nucleo/seguridad/biometria.dart';
 import '../nucleo/seguridad/limpieza_local.dart';
 import '../nucleo/seguridad/pantalla_segura.dart';
+import '../nucleo/seguridad/protector_windows.dart';
 import '../nucleo/seguridad/proveedores_seguridad.dart';
 import '../nucleo/sesion/proveedores_sesion.dart';
 import '../nucleo/sesion/servicio_sesion_demostracion.dart';
@@ -202,12 +203,13 @@ Future<List<Override>> prepararArranque({
     // sin PIN, la tablet y el cierre de sesión de la cuenta del equipo.
     bandejaDeSalidaProvider.overrideWithValue(limpieza.bandeja),
     // I11: en Android, FLAG_SECURE mientras hay dinero o datos clínicos a la
-    // vista; en Windows no hace falta nada.
-    protectorDePantallaProvider.overrideWithValue(
-      plataforma == TargetPlatform.android
-          ? const ProtectorDePantallaAndroid()
-          : const ProtectorDePantallaNulo(),
-    ),
+    // vista; en Windows, SetWindowDisplayAffinity (E15, P7: activo por
+    // omisión, editable en Ajustes › Privacidad).
+    protectorDePantallaProvider.overrideWithValue(switch (plataforma) {
+      TargetPlatform.android => const ProtectorDePantallaAndroid(),
+      TargetPlatform.windows => ProtectorDePantallaWindows(),
+      _ => const ProtectorDePantallaNulo(),
+    }),
     biometriaProvider.overrideWithValue(biometria),
     servicioSesionProvider.overrideWithValue(sesion),
     // Demostración: la cola vive en memoria; nada de lo de ejemplo queda en

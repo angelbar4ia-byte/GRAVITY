@@ -163,8 +163,9 @@ class _RevisionEstado extends ConsumerState<PantallaRevision> {
                       onPressed: () async {
                         await s.omitir();
                         ref.read(versionHabitosProvider.notifier).state++;
-                        if (context.mounted)
+                        if (context.mounted) {
                           context.go('${Rutas.habitos}/progreso');
+                        }
                       },
                       child: const Text('Hoy no puedo'),
                     ),
@@ -181,8 +182,9 @@ class _RevisionEstado extends ConsumerState<PantallaRevision> {
                           dar: dar,
                         );
                         ref.read(versionHabitosProvider.notifier).state++;
-                        if (context.mounted)
+                        if (context.mounted) {
                           context.go('${Rutas.habitos}/progreso');
+                        }
                       },
                       child: const Text('Cerrar la revisión'),
                     ),

@@ -77,11 +77,12 @@ class _HojaListasEstado extends ConsumerState<HojaListasHabito> {
 
   @override
   Widget build(BuildContext context) {
-    if (!cargado)
+    if (!cargado) {
       return const Padding(
         padding: EdgeInsets.all(24),
         child: EstadoCargando(),
       );
+    }
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -144,8 +145,9 @@ class _EditorListaEstado extends State<_EditorLista> {
     final t = nuevo.text.trim();
     if (t.isEmpty ||
         widget.elementos.contains(t) ||
-        widget.elementos.length >= maxElementosLista)
+        widget.elementos.length >= maxElementosLista) {
       return;
+    }
     widget.alCambiar([
       ...widget.elementos,
       t.length > maxLargoElemento ? t.substring(0, maxLargoElemento) : t,

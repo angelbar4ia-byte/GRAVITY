@@ -18,10 +18,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../nucleo/contratos/roles.dart';
+import 'almacen_apariencia.dart';
 import 'estilo.dart';
 import 'estilos/catalogo.dart';
 import 'modo_claro_oscuro.dart';
 import 'personalidad_modulo.dart';
+import 'solar.dart';
 import 'tema.dart';
 import 'valores_diseno.dart';
 
@@ -83,7 +85,23 @@ class HoraActual extends Notifier<DateTime> {
 
 // --- Capa 2: estilo ----------------------------------------------------------
 
-/// Estilos que se pueden elegir (Fase 0: solo Futurista).
+// --- Apariencia por persona ---------------------------------------------------
+
+/// Dónde se guarda la apariencia de cada persona. Plataforma lo reemplaza con
+/// su almacén local; por omisión es en memoria (ver [AlmacenApariencia]).
+final almacenAparienciaProvider = Provider<AlmacenApariencia>(
+  (ref) => AlmacenAparienciaMemoria(),
+);
+
+/// Clave de la apariencia en pantalla: la persona que está frente a la
+/// pantalla ([personaEnPantallaProvider]) o, sin persona, la de la tablet de
+/// la casa. Al cambiar de persona, estilo, claro/oscuro y alto contraste se
+/// vuelven a leer: cada quien ve su apariencia.
+final claveAparienciaProvider = Provider<String>(
+  (ref) => ref.watch(personaEnPantallaProvider) ?? claveHogar,
+);
+
+/// Estilos que se pueden elegir (Futurista, Swagger y Glass).
 final estilosDisponiblesProvider = Provider<List<Estilo>>(
   (ref) => estilosIncluidos,
 );
@@ -93,12 +111,29 @@ final estiloProvider = NotifierProvider<EstiloActual, Estilo>(EstiloActual.new);
 
 class EstiloActual extends Notifier<Estilo> {
   @override
-  Estilo build() => estiloPorDefecto;
+  Estilo build() {
+    final clave = ref.watch(claveAparienciaProvider);
+    final id = ref
+        .watch(almacenAparienciaProvider)
+        .leer(clave, CampoApariencia.estilo);
+    if (id == null) return estiloPorDefecto;
+    return estiloPorId(id, catalogo: ref.read(estilosDisponiblesProvider));
+  }
 
-  void elegir(Estilo estilo) => state = estilo;
+  /// Cambia el estilo de la persona en pantalla y lo guarda para ella.
+  void elegir(Estilo estilo) {
+    state = estilo;
+    ref
+        .read(almacenAparienciaProvider)
+        .guardar(
+          ref.read(claveAparienciaProvider),
+          CampoApariencia.estilo,
+          estilo.id,
+        );
+  }
 
   void elegirPorId(String id) =>
-      state = estiloPorId(id, catalogo: ref.read(estilosDisponiblesProvider));
+      elegir(estiloPorId(id, catalogo: ref.read(estilosDisponiblesProvider)));
 }
 
 // --- Capa 4: claro / oscuro --------------------------------------------------
@@ -111,14 +146,57 @@ final preferenciaClaroOscuroProvider =
 
 class PreferenciaClaroOscuroActual extends Notifier<PreferenciaClaroOscuro> {
   @override
-  PreferenciaClaroOscuro build() => const PreferenciaClaroOscuro();
+  PreferenciaClaroOscuro build() => leerPreferenciaClaroOscuro(
+    ref.watch(almacenAparienciaProvider),
+    ref.watch(claveAparienciaProvider),
+  );
 
-  void cambiarModo(ModoClaroOscuro modo) => state = state.copyWith(modo: modo);
+  void cambiarModo(ModoClaroOscuro modo) => fijar(state.copyWith(modo: modo));
 
   void cambiarHorario(HorarioClaro horario) =>
-      state = state.copyWith(horario: horario);
+      fijar(state.copyWith(horario: horario));
 
-  void fijar(PreferenciaClaroOscuro preferencia) => state = preferencia;
+  void cambiarLugar(LugarSolar lugar) => fijar(state.copyWith(lugar: lugar));
+
+  /// Cambia la preferencia de la persona en pantalla y la guarda para ella.
+  void fijar(PreferenciaClaroOscuro preferencia) {
+    state = preferencia;
+    guardarPreferenciaClaroOscuro(
+      ref.read(almacenAparienciaProvider),
+      ref.read(claveAparienciaProvider),
+      preferencia,
+    );
+  }
+}
+
+/// Alto contraste global (7:1, respuesta P6): todo el texto y los estados llegan
+/// a [contrasteMinimoAlto] en cualquier estilo, y se apaga la decoración.
+/// Es por persona. Cuidados y la bici ya van siempre así.
+final altoContrasteProvider = NotifierProvider<AltoContrasteActual, bool>(
+  AltoContrasteActual.new,
+);
+
+class AltoContrasteActual extends Notifier<bool> {
+  @override
+  bool build() =>
+      ref
+          .watch(almacenAparienciaProvider)
+          .leer(
+            ref.watch(claveAparienciaProvider),
+            CampoApariencia.altoContraste,
+          ) ==
+      'true';
+
+  void fijar(bool activo) {
+    state = activo;
+    ref
+        .read(almacenAparienciaProvider)
+        .guardar(
+          ref.read(claveAparienciaProvider),
+          CampoApariencia.altoContraste,
+          activo ? 'true' : null,
+        );
+  }
 }
 
 /// Si en este momento toca la versión clara según el horario.
@@ -129,10 +207,20 @@ final esHorarioClaroProvider = Provider<bool>((ref) {
   return horario.contiene(ref.watch(horaActualProvider));
 });
 
+/// Si en este momento es de día según el sol real del lugar de la persona.
+final esDeDiaSolarProvider = Provider<bool>((ref) {
+  final lugar = ref.watch(
+    preferenciaClaroOscuroProvider.select((p) => p.lugar),
+  );
+  return esDeDiaSolar(ref.watch(horaActualProvider), lugar);
+});
+
 /// `ThemeMode` para `MaterialApp`.
 final modoTemaProvider = Provider<ThemeMode>((ref) {
   final modo = ref.watch(preferenciaClaroOscuroProvider.select((p) => p.modo));
   return switch (modo) {
+    ModoClaroOscuro.automaticoSolar =>
+      ref.watch(esDeDiaSolarProvider) ? ThemeMode.light : ThemeMode.dark,
     ModoClaroOscuro.automaticoPorHora =>
       ref.watch(esHorarioClaroProvider) ? ThemeMode.light : ThemeMode.dark,
     ModoClaroOscuro.sistema => ThemeMode.system,
@@ -208,6 +296,7 @@ final temaClaroProvider = Provider<ThemeData>(
     brillo: Brightness.light,
     personalidad: ref.watch(personalidadProvider(Modulo.gravity)),
     densidadBase: ref.watch(densidadBaseProvider),
+    altoContrasteGlobal: ref.watch(altoContrasteProvider),
   ),
 );
 
@@ -218,6 +307,7 @@ final temaOscuroProvider = Provider<ThemeData>(
     brillo: Brightness.dark,
     personalidad: ref.watch(personalidadProvider(Modulo.gravity)),
     densidadBase: ref.watch(densidadBaseProvider),
+    altoContrasteGlobal: ref.watch(altoContrasteProvider),
   ),
 );
 

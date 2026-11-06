@@ -332,8 +332,9 @@ class ServicioHabitoEliminar {
         claveDia(sumarDias(hoy, -i)),
         'antojo',
       )) {
-        if (e.datos['habito'] == t.name && e.datos['resultado'] == 'superado')
+        if (e.datos['habito'] == t.name && e.datos['resultado'] == 'superado') {
           n++;
+        }
       }
     }
     return n;

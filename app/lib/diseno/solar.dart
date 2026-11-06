@@ -157,7 +157,7 @@ SolDelDia solDelDia(DateTime fecha, LugarSolar lugar) {
     fecha.day,
     12,
   ).difference(DateTime.utc(2000, 1, 1, 12)).inDays;
-  final jEstrella = n + lugar.longitud / 360;
+  final jEstrella = n - lugar.longitud / 360;
   final anomalia = (357.5291 + 0.98560028 * jEstrella) % 360;
   final m = _rad(anomalia);
   final centro =

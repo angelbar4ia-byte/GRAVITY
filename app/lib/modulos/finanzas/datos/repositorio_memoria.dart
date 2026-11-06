@@ -750,5 +750,39 @@ class RepositorioFinanzasEnMemoria implements RepositorioFinanzas {
     return true;
   }
 
+  /// Avisos que la app emitió (para las pruebas): lo mismo que recibiría
+  /// `fin_emitir_aviso`, sin dinero ni texto libre.
+  final List<({String libroId, String tipo, String? objetoTipo, String? objetoId, String clave})>
+  avisosEmitidos = [];
+
+  /// Tope de `fin_emitir_aviso` por persona al día (el servidor: 60).
+  int topeAvisosPorDia = 60;
+
+  @override
+  Future<int> emitirAviso({
+    required String libroId,
+    required String tipo,
+    required String? objetoTipo,
+    required String? objetoId,
+    required String clave,
+  }) async {
+    _requiereConexion();
+    if (avisosEmitidos.any((a) => a.clave == clave)) return 0; // idempotente
+    if (avisosEmitidos.length >= topeAvisosPorDia) {
+      throw const ErrorFinanzas(
+        'Se llegó al tope de avisos al día por persona.',
+        topeAlcanzado: true,
+      );
+    }
+    avisosEmitidos.add((
+      libroId: libroId,
+      tipo: tipo,
+      objetoTipo: objetoTipo,
+      objetoId: objetoId,
+      clave: clave,
+    ));
+    return 1;
+  }
+
   Future<void> cerrar() => _cambios.close();
 }
