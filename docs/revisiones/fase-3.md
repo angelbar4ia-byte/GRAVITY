@@ -161,3 +161,30 @@ Sí = con prueba que pasa · Parcial = parte con prueba, parte pendiente · Manu
 3. Para la baja a 90 días: ¿cuenta desde el momento en que se desactiva la membresía? (propongo guardar esa fecha en la membresía).
 4. ¿Qué edición de RVR1909 y de KJV de dominio público usamos, y quién la revisa? Sin ella el lector está vacío (P10).
 5. ¿Aceptamos escribir la frase sin acentos y en mayúsculas?
+
+---
+
+## Estado de los hallazgos al cierre de la Fase 3 (6/nov/2026)
+
+| Hallazgo | Estado | Quién | Nota |
+|---|---|---|---|
+| F3-2 (segunda subida rechazada) | Cerrado | backend | El servidor acepta cualquier revisión mayor; un conflicto no aborta el lote |
+| F3-3 (nombre del KDF) | Cerrado | plataforma + backend | El cliente manda `pbkdf2-hmac-sha256`; el servidor acepta también el alias antiguo |
+| F3-4 (bitácora sin tope) | Cerrado | backend | Una constancia por acción, persona y minuto |
+| F3-5 (baja a 90 días) | Cerrado | backend | `membresias.desactivada_en` por trigger; probado a 89 y 91 días |
+| F3-6 (frase con acentos) | Cerrado | plataforma | Se acepta sin acentos, en mayúsculas y con teclados que descomponen (decisión del dueño por confirmar) |
+| F3-7 (recordatorio a medianoche) | Cerrado | habitos | |
+| F3-8 (emoji partido) | Cerrado | plataforma + habitos | Recorte por grafemas |
+| F3-9 (`hab_hogar_de`) | Cerrado | backend | Solo contesta por la propia sesión |
+| F3-10 (cuota de filas) | Cerrado | backend | Topes por tabla; 54000 sin reintento |
+| F3-11 (0 % de avance) | Cerrado | habitos | |
+| F3-12 (lector de pantalla en Hoy) | Cerrado | diseno | |
+| F3-13 (exportar reservado en claro) | Cerrado | habitos + plataforma | Sin frase, solo lo no sensible |
+| F3-14 (importador de la Biblia) | Cerrado | habitos | `FormatException` clara y límites |
+| F3-15 (Mis datos fuera de la puerta) | Cerrado | habitos | Posible doble PIN |
+| Criterios 53 y 54 | Cerrado | asistente | Herramientas y historial reservado |
+| Flujo para activar la nube (36, 43) | **Pendiente** | plataforma + habitos | Servidor listo; el flujo de la app queda para la siguiente ronda |
+| Texto bíblico (criterio 29) | **Pendiente** | dueño | Faltan los archivos de RVR1909 y KJV |
+
+**Veredicto de cierre:** 0 bloqueantes y 0 importantes abiertos.
+

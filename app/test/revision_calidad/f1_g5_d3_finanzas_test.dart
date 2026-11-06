@@ -87,8 +87,9 @@ void main() {
               rol: rol,
               esMaestra: esMaestra,
             )) {
-              if (h.modulo != Modulo.finanzas && h.modulo != Modulo.cuidados)
+              if (h.modulo != Modulo.finanzas && h.modulo != Modulo.cuidados) {
                 continue;
+              }
               final resultado = await registro.ejecutar(
                 h.nombre,
                 const {},

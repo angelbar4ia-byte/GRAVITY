@@ -1,7 +1,7 @@
 // Revisión de calidad de la Fase 3 (docs/revisiones/fase-3.md): cifrado, frase y
 // subida diferida de los datos sensibles de Hábitos.
 //
-// F3-2  (hallazgo) La revisión de un sobre sube +1 en cada edición LOCAL, pero la
+// F3-2  (cerrado) La revisión de un sobre sube +1 en cada edición LOCAL, pero la
 //       subida diferida solo encola la última: tras una primera subida, la
 //       segunda lleva un salto de revisión y el servidor la rechaza (22023
 //       "sube de 1 en 1"), que la cola trata como permanente. Se pierde la sincronía.
@@ -37,8 +37,9 @@ class _Enviador implements Enviador {
 
 void main() {
   test(
-    'F3-2: dos subidas seguidas llevan revisiones contiguas (el servidor exige +1)',
-    tags: 'hallazgo',
+    // Cerrado el 6/nov/2026: el servidor (migración 20261107) acepta cualquier
+    // revisión MAYOR que la suya; solo hace falta que crezcan.
+    'F3-2: dos subidas seguidas llevan revisiones crecientes (el servidor acepta una mayor)',
     () async {
       final almacen = AlmacenSeguroEnMemoria();
       final base = BaseLocal.enMemoria();
@@ -99,9 +100,9 @@ void main() {
       revisiones.sort();
       expect(revisiones.length, 2);
       expect(
-        revisiones.last - revisiones.first,
-        1,
-        reason: 'revisiones subidas: $revisiones (el servidor acepta solo +1)',
+        revisiones.last,
+        greaterThan(revisiones.first),
+        reason: 'revisiones subidas: $revisiones (el servidor acepta una mayor)',
       );
     },
   );
