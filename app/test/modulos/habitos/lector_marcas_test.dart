@@ -9,6 +9,8 @@ import 'package:gravity/modulos/habitos/datos/repositorio_agenda.dart';
 import 'package:gravity/modulos/habitos/estado/proveedores.dart';
 import 'package:gravity/modulos/habitos/pantallas/lector.dart';
 import 'package:gravity/nucleo/seguridad/almacen_seguro.dart';
+import 'package:gravity/nucleo/sesion/proveedores_sesion.dart';
+import 'package:gravity/nucleo/sesion/servicio_sesion_falso.dart';
 import 'package:gravity/nucleo/sensibles/llaves_habitos.dart';
 import 'package:gravity/nucleo/sensibles/sobres.dart';
 import 'package:gravity/nucleo/sensibles/subida_diferida.dart';
@@ -82,9 +84,10 @@ void main() {
   group('notas (cifradas y sensibles)', () {
     late AlmacenSeguroEnMemoria almacen;
     late ServicioDiario d;
+    late DateTime ahora;
     setUp(() {
       almacen = AlmacenSeguroEnMemoria();
-      final ahora = DateTime.utc(2026, 11, 6, 9);
+      ahora = DateTime.utc(2026, 11, 6, 9);
       d = ServicioDiario(
         DocumentosSensibles(
           llaves: LlavesHabitos(almacen),
@@ -105,6 +108,7 @@ void main() {
       expect(n[16], 'NOTA_PRIVADA_UNO');
       expect(n.length, 2);
       // misma referencia con otra versión: reemplaza, no duplica
+      ahora = ahora.add(const Duration(minutes: 1)); // el último cambio gana
       await d.guardarNota('43:3:16', 'NOTA_PRIVADA_DOS', version: 'kjv');
       expect((await d.notasDeCapitulo(43, 3))[16], 'NOTA_PRIVADA_DOS');
       expect((await d.notasDeCapitulo(43, 3)).length, 2);
@@ -113,6 +117,7 @@ void main() {
 
     test('texto vacío quita la nota; referencia mala se rechaza', () async {
       await d.guardarNota('19:23:1', 'x');
+      ahora = ahora.add(const Duration(minutes: 1));
       await d.guardarNota('19:23:1', '   ');
       expect(await d.notasDeCapitulo(19, 23), isEmpty);
       await expectLater(d.guardarNota('mal', 'x'), throwsArgumentError);
@@ -123,6 +128,7 @@ void main() {
   Future<void> montar(WidgetTester t, List<ProveedorBiblia> biblias) => t.pumpWidget(
     ProviderScope(
       overrides: [
+        servicioSesionProvider.overrideWithValue(ServicioSesionFalso()),
         repositorioAgendaProvider.overrideWithValue(repo),
         bibliasProvider.overrideWith((ref) async => biblias),
       ],

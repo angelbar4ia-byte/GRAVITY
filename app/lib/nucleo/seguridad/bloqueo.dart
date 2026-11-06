@@ -278,10 +278,31 @@ class ControladorBloqueo extends Notifier<EstadoBloqueo> {
     await _guardar(null, traspaso: TraspasoDePin(traspaso));
   }
 
+  /// Apaga o enciende la huella sin comprobar nada (apagarla no pide nada;
+  /// para encenderla desde la pantalla usa [activarHuella]).
   Future<void> fijarHuella(bool activa) async {
     await listo;
     final actual = state.configuracion;
     if (actual != null) await _guardar(actual.copiarCon(huella: activa));
+  }
+
+  /// Enciende la huella (D22, P10) **solo si la persona se identifica ahora**:
+  /// así se comprueba que el teléfono sí tiene huellas registradas y que quien
+  /// la activa es quien tiene el teléfono en la mano. Sin bloqueo con PIN no
+  /// hay respaldo, así que no se activa. `true` si quedó activa.
+  ///
+  /// La huella es **alternativa** al PIN, nunca su reemplazo: el PIN sigue
+  /// abriendo siempre (respaldo si la huella falla o se bloquea).
+  Future<bool> activarHuella() async {
+    await listo;
+    final actual = state.configuracion;
+    if (actual == null) return false;
+    final biometria = ref.read(biometriaProvider);
+    if (!await biometria.disponible()) return false;
+    final ok = await biometria.autenticar('Activar el desbloqueo con huella');
+    if (!ref.mounted || !ok) return false;
+    await _guardar(actual.copiarCon(huella: true));
+    return true;
   }
 
   Future<void> fijarTiempo(Duration tras) async {

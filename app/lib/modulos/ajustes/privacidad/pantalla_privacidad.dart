@@ -14,6 +14,7 @@ import '../../../nucleo/seguridad/bloqueo.dart';
 import '../../../nucleo/seguridad/intentos.dart' show textoEspera;
 import '../../../nucleo/seguridad/montos.dart';
 import '../../../nucleo/seguridad/pin.dart';
+import '../../../nucleo/seguridad/protector_windows.dart';
 import '../../../nucleo/seguridad/proveedores_seguridad.dart';
 import '../../../nucleo/sesion/proveedores_sesion.dart';
 import '../../../nucleo/tablet/controlador_tablet.dart';
@@ -26,8 +27,9 @@ class PantallaPrivacidad extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final esTelefono =
-        ref.watch(tipoDispositivoProvider) == TipoDispositivo.telefono;
+    final dispositivo = ref.watch(tipoDispositivoProvider);
+    final esTelefono = dispositivo == TipoDispositivo.telefono;
+    final esLaptop = dispositivo == TipoDispositivo.laptop;
     return MarcoSeccion(
       seccion: SeccionAjustes.privacidad,
       hijos: [
@@ -35,6 +37,10 @@ class PantallaPrivacidad extends ConsumerWidget {
         const SizedBox(height: 16),
         if (esTelefono) ...[
           const _BloqueoTelefono(),
+          const SizedBox(height: 16),
+        ],
+        if (esLaptop) ...[
+          const _CapturasWindows(),
           const SizedBox(height: 16),
         ],
         const NotaAjustes(
@@ -55,6 +61,32 @@ class PantallaPrivacidad extends ConsumerWidget {
           icono: Icons.lock_outline,
         ),
       ],
+    );
+  }
+}
+
+/// Bloqueo de capturas y miniaturas en la laptop con Windows (E15, P7 del
+/// dueño, D22): activo por omisión; aquí se puede apagar.
+class _CapturasWindows extends ConsumerWidget {
+  const _CapturasWindows();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final activo = ref.watch(capturasBloqueadasProvider);
+    return Card(
+      child: SwitchListTile(
+        key: const ValueKey('privacidad-capturas'),
+        value: activo,
+        secondary: const Icon(Icons.screenshot_monitor_outlined),
+        title: const Text('Bloquear capturas de pantalla'),
+        subtitle: const Text(
+          'Las pantallas con dinero o datos clínicos no salen en capturas, '
+          'grabaciones, al compartir pantalla ni en la vista previa de la '
+          'barra de tareas.',
+        ),
+        onChanged: (valor) =>
+            ref.read(capturasBloqueadasProvider.notifier).fijar(valor),
+      ),
     );
   }
 }
@@ -271,12 +303,26 @@ class _BloqueoTelefonoState extends ConsumerState<_BloqueoTelefono> {
               ),
               if (_hayHuella)
                 SwitchListTile(
+                  key: const ValueKey('bloqueo-huella'),
                   value: configuracion.huella,
                   title: const Text('Desbloquear con huella'),
                   subtitle: const Text(
                     'Con las huellas registradas en este teléfono.',
                   ),
-                  onChanged: controlador.fijarHuella,
+                  onChanged: (activar) async {
+                    if (!activar) return controlador.fijarHuella(false);
+                    // Para encenderla hay que identificarse con la huella.
+                    final ok = await controlador.activarHuella();
+                    if (!ok && context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'No se activó la huella. El PIN sigue funcionando.',
+                          ),
+                        ),
+                      );
+                    }
+                  },
                 ),
               ListTile(
                 title: const Text('Bloquear tras'),

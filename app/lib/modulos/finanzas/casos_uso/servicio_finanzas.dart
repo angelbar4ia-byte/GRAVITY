@@ -46,6 +46,7 @@ class ServicioFinanzas {
     this.esMaestra = false,
     this.soloLectura = false,
     this.esDueno = false,
+    this.alCambiarLibro,
     DateTime Function()? reloj,
     String Function()? generarId,
   }) : _reloj = reloj ?? DateTime.now,
@@ -65,6 +66,12 @@ class ServicioFinanzas {
   /// La persona es el dueño del hogar (puede cambiar la membresía de un
   /// compartido del que es miembro, aunque no lo haya creado).
   final bool esDueno;
+
+  /// Se llama (sin esperarla) cuando algo guardado puede cambiar el cálculo de
+  /// la semana de un libro: un gasto, un ingreso, un movimiento, una
+  /// anulación o un cierre. La app emite con él los avisos que solo ella sabe
+  /// calcular (`fin_emitir_aviso`, Fase 4) sin frenar el guardado.
+  final void Function(String libroId)? alCambiarLibro;
   final DateTime Function() _reloj;
   final String Function() _generarId;
 
@@ -72,6 +79,18 @@ class ServicioFinanzas {
   /// (índice único en `anula_a`), así que reintentar "Deshacer" no duplica.
   static String idAnulacionDe(String movimientoId) =>
       idEstable(ClavesId.anulacion(movimientoId));
+
+  void _cambio(Iterable<String> libroIds) {
+    final alCambiar = alCambiarLibro;
+    if (alCambiar == null) return;
+    for (final id in libroIds.toSet()) {
+      try {
+        alCambiar(id);
+      } catch (_) {
+        // Un aviso nunca debe impedir un guardado.
+      }
+    }
+  }
 
   DatosFinanzas get _d => repositorio.actual?.datos ?? DatosFinanzas.vacio;
   DateTime get _ahora => _reloj();
@@ -236,6 +255,7 @@ class ServicioFinanzas {
       );
     }
     final r = await repositorio.agregarMovimientos(movimientos);
+    _cambio([libroId]);
     return ResultadoRegistro(movimientos, r);
   }
 
@@ -296,6 +316,7 @@ class ServicioFinanzas {
         enNombreDe: representado?.titularId,
       );
       await repositorio.agregarMovimientos([contra]);
+      _cambio(libros.cast<String>());
       return contra;
     } on ErrorLibro catch (e) {
       throw ErrorFinanzas(e.mensaje);
@@ -339,6 +360,7 @@ class ServicioFinanzas {
       enNombreDe: quien.enNombreDe,
     );
     final r = await repositorio.agregarMovimientos([m]);
+    _cambio([libroId]);
     return ResultadoRegistro([m], r);
   }
 
@@ -426,6 +448,7 @@ class ServicioFinanzas {
       enNombreDe: quien.enNombreDe,
     );
     final r = await repositorio.agregarMovimientos([m]);
+    _cambio(libros.cast<String>());
     return ResultadoRegistro([m], r);
   }
 
@@ -1232,6 +1255,7 @@ class ServicioFinanzas {
           conPendientes: conPendientes,
         );
     await repositorio.agregarCierre(cierre, libroId: libroId);
+    _cambio([libroId]);
     return cierre;
   }
 
