@@ -44,6 +44,11 @@ class TextoAvisoHabitos {
   static String paraTipo(String tipo) => porTipo[tipo] ?? generico;
 
   /// Título con el nombre del objetivo (solo no sensibles), recortado a 40.
-  static String conNombre(String nombre) =>
-      nombre.length <= 40 ? nombre : nombre.substring(0, 40);
+  static String conNombre(String nombre) {
+    if (nombre.length <= 40) return nombre;
+    var fin = 40;
+    final u = nombre.codeUnitAt(fin - 1);
+    if (u >= 0xD800 && u <= 0xDBFF) fin--; // no partir un emoji (F3-8)
+    return nombre.substring(0, fin);
+  }
 }

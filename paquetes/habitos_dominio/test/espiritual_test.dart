@@ -53,6 +53,14 @@ void main() {
         dia(2026, 11, 9));
   });
 
+  test('generarPlan rechaza máscara 0, libro inválido y ritmo 0', () {
+    final i = dia(2026, 11, 2);
+    expect(() => generarPlan(TipoPlan.rutaInicio, i, mascaraDias: 0), throwsArgumentError);
+    expect(() => generarPlan(TipoPlan.libro, i), throwsArgumentError);
+    expect(() => generarPlan(TipoPlan.libro, i, libro: 67), throwsArgumentError);
+    expect(() => generarPlan(TipoPlan.libro, i, libro: 1, capitulosPorDia: 0), throwsArgumentError);
+  });
+
   test('ponerse al día: K=4 y K=7', () {
     for (final k in [4, 7]) {
       final p = generarPlan(TipoPlan.rutaInicio, dia(2026, 11, 2));

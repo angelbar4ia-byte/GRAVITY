@@ -24,7 +24,7 @@ import 'package:gravity/nucleo/avisos/recordatorios_habitos.dart';
 
 void main() {
   test('F3-7: un bloque de las 00:10 con aviso a 30 min se recuerda ANTES de empezar',
-      tags: 'hallazgo', () async {
+      () async {
     final agenda = RepositorioAgendaEnMemoria();
     await agenda.guardarBloque(BloqueHab(
       id: 'b1',

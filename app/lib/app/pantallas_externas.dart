@@ -98,6 +98,22 @@ List<Override> get sobrescriturasHabitos => habitos.sobrescriturasHabitos;
 /// `finanzas.ahorro_avance`): texto discreto que nunca sale del equipo.
 final consultaLocalFinanzasProvider = finanzas.consultaLocalFinanzasProvider;
 
+/// Consulta local de Hábitos para `ContextoHerramienta.consultaLocal`
+/// (`habitos.resumen_hoy`): texto discreto, solo de lo no sensible, que nunca
+/// sale del equipo ni se dice en voz alta (D3, D13). `null` si no hay datos.
+final consultaLocalHabitosProvider =
+    Provider<Future<String?> Function(String herramienta)>((ref) {
+      return (String herramienta) async {
+        if (herramienta != 'habitos.resumen_hoy') return null;
+        try {
+          ref.invalidate(habitos.consultaLocalHabitos);
+          return await ref.read(habitos.consultaLocalHabitos.future);
+        } catch (_) {
+          return null;
+        }
+      };
+    });
+
 /// Tema de la app.
 class TemaExterno {
   const TemaExterno({

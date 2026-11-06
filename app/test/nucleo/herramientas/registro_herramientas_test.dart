@@ -794,6 +794,10 @@ void main() {
             'habitos.abrir_agenda',
             'habitos.abrir_espiritual',
             'habitos.sos',
+            'habitos.abrir_lector',
+            'habitos.abrir_revision',
+            'habitos.abrir_pausa',
+            'habitos.resumen_hoy',
           }),
         );
         // Lo de Finanzas que conserva es navegación y lectura.
@@ -1075,6 +1079,10 @@ void main() {
       'habitos.abrir_agenda',
       'habitos.abrir_espiritual',
       'habitos.sos',
+      'habitos.abrir_lector',
+      'habitos.abrir_revision',
+      'habitos.abrir_pausa',
+      'habitos.resumen_hoy',
     };
 
     test('exactamente las herramientas de cada rol', () {
@@ -1133,6 +1141,10 @@ void main() {
           'habitos.abrir_agenda',
           'habitos.abrir_espiritual',
           'habitos.sos',
+          'habitos.abrir_lector',
+          'habitos.abrir_revision',
+          'habitos.abrir_pausa',
+          'habitos.resumen_hoy',
         }),
       );
       // La marca no amplía nada a quien no puede ser cuenta maestra.
@@ -1446,12 +1458,20 @@ void main() {
       'habitos.abrir_agenda',
       'habitos.abrir_espiritual',
       'habitos.sos',
+      'habitos.abrir_lector',
+      'habitos.abrir_revision',
+      'habitos.abrir_pausa',
+      'habitos.resumen_hoy',
     ];
     final rutas = {
       'habitos.abrir_hoy': RutasDeHerramientas.hoyHabitos,
       'habitos.abrir_agenda': RutasDeHerramientas.agendaHabitos,
       'habitos.abrir_espiritual': RutasDeHerramientas.espiritualHabitos,
       'habitos.sos': RutasDeHerramientas.sosHabitos,
+      'habitos.abrir_lector': RutasDeHerramientas.lectorHabitos,
+      'habitos.abrir_revision': RutasDeHerramientas.revisionHabitos,
+      'habitos.abrir_pausa': RutasDeHerramientas.sosHabitos,
+      'habitos.resumen_hoy': RutasDeHerramientas.hoyHabitos,
     };
 
     test('Hábitos es un módulo solo local (D13) y todas sus herramientas lo '
@@ -1659,7 +1679,7 @@ void main() {
         ...herramientasFase3().map((h) => h.nombre),
       });
       expect(registroFase0().todas, hasLength(8));
-      expect(registroDeGravity().todas, hasLength(18));
+      expect(registroDeGravity().todas, hasLength(22));
     });
   });
 
@@ -1694,6 +1714,11 @@ void main() {
         RutasDeHerramientas.agendaHabitos,
         RutasDeHerramientas.espiritualHabitos,
         RutasDeHerramientas.sosHabitos,
+        RutasDeHerramientas.lectorHabitos,
+        RutasDeHerramientas.revisionHabitos,
+        RutasDeHerramientas.sosHabitos,
+        // El resumen de hoy, sin contenido local, abre Hoy.
+        RutasDeHerramientas.hoyHabitos,
         Rutas.cuidados,
         Rutas.alimentacion,
         Rutas.casa,

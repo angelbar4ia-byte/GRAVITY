@@ -68,6 +68,7 @@ final borradoDeMisDatosProvider = Provider<BorradoDeMisDatos>(
     modos: ref.watch(modosLocalesProvider),
     almacen: ref.watch(almacenSeguroProvider),
     nube: ref.watch(nubeDeHabitosProvider),
+    cola: ref.watch(colaSinConexionProvider),
   ),
 );
 

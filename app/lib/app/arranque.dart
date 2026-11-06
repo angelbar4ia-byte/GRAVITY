@@ -34,6 +34,7 @@ import '../nucleo/configuracion/configuracion_entorno.dart';
 import '../nucleo/firebase/firebase.dart';
 import '../nucleo/invitaciones/invitaciones.dart';
 import '../nucleo/seguridad/almacen_seguro.dart';
+import '../nucleo/sensibles/mis_datos.dart' show funcionBorrarMisDatos, tipoColaBorrado;
 import '../nucleo/sensibles/subida_diferida.dart' show funcionSubirSobres, tipoColaSobres;
 import '../nucleo/seguridad/biometria.dart';
 import '../nucleo/seguridad/limpieza_local.dart';
@@ -173,7 +174,10 @@ Future<List<Override>> prepararArranque({
         () => servicio.clienteActivo,
         tablas: tablasDeLaCola,
         // Hábitos (Fase 3): sobres ya cifrados, por la función del servidor.
-        funciones: const {tipoColaSobres: funcionSubirSobres},
+        funciones: const {
+          tipoColaSobres: funcionSubirSobres,
+          tipoColaBorrado: funcionBorrarMisDatos,
+        },
       );
     } catch (error) {
       debugPrint('No se pudo preparar Supabase; modo demostración: $error');

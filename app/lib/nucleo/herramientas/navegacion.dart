@@ -41,6 +41,12 @@ abstract final class RutasDeHerramientas {
   /// (`segmentosReservadosDeHabitos`).
   static const sosHabitos = '${Rutas.habitos}/sos';
 
+  /// Lector de la Biblia de Hábitos.
+  static const lectorHabitos = '${Rutas.habitos}/lector';
+
+  /// Revisión semanal de Hábitos.
+  static const revisionHabitos = '${Rutas.habitos}/revision';
+
   /// Bandeja de solicitudes y recordatorios de GRAVITY (D18; plataforma:
   /// `RutasApp.solicitudes`).
   static const solicitudes = '/solicitudes';
@@ -265,10 +271,73 @@ final herramientaAbrirEspiritualHabitos = HerramientaNavegacion(
   roles: rolesParaNavegar(Modulo.habitos),
   ruta: RutasDeHerramientas.espiritualHabitos,
   etiqueta: 'Espiritual',
-  palabrasClave: const ['espiritual', 'lectura bíblica', 'biblia', 'devocional'],
+  palabrasClave: const [
+    'espiritual',
+    'lectura bíblica',
+    'biblia',
+    'devocional',
+  ],
   paraSoloLectura: false,
   historial: false,
   descripcion: 'Abre Hábitos › Espiritual. Solo abre la vista; no se guarda en ningún historial.',
+);
+
+/// Hábitos › Lector de la Biblia.
+final herramientaAbrirLectorHabitos = HerramientaNavegacion(
+  nombre: 'habitos.abrir_lector',
+  modulo: Modulo.habitos,
+  roles: rolesParaNavegar(Modulo.habitos),
+  ruta: RutasDeHerramientas.lectorHabitos,
+  etiqueta: 'Lector',
+  palabrasClave: const ['lector', 'abre el lector', 'leer la biblia'],
+  paraSoloLectura: false,
+  historial: false,
+  descripcion: 'Abre el lector de Hábitos. Solo abre la vista; no se guarda en ningún historial.',
+);
+
+/// Hábitos › Revisión semanal.
+final herramientaAbrirRevisionHabitos = HerramientaNavegacion(
+  nombre: 'habitos.abrir_revision',
+  modulo: Modulo.habitos,
+  roles: rolesParaNavegar(Modulo.habitos),
+  ruta: RutasDeHerramientas.revisionHabitos,
+  etiqueta: 'Revisión',
+  palabrasClave: const ['revisión', 'abre mi revisión', 'revisión semanal'],
+  paraSoloLectura: false,
+  historial: false,
+  descripcion: 'Abre la revisión semanal de Hábitos. Solo abre la vista; no se guarda en ningún historial.',
+);
+
+/// Hábitos › Pausa (abre el SOS, que pide PIN o huella).
+final herramientaAbrirPausaHabitos = HerramientaNavegacion(
+  nombre: 'habitos.abrir_pausa',
+  modulo: Modulo.habitos,
+  roles: rolesParaNavegar(Modulo.habitos),
+  ruta: RutasDeHerramientas.sosHabitos,
+  etiqueta: 'Pausa',
+  palabrasClave: const ['pausa', 'hacer una pausa', 'necesito una pausa'],
+  paraSoloLectura: false,
+  historial: false,
+  descripcion: 'Abre la pausa de Hábitos (el SOS, tras el PIN). Solo abre la vista; no se guarda en ningún historial.',
+);
+
+/// Consulta de Hábitos: cuántos elementos faltan hoy y cuántos van hechos,
+/// **solo de lo no sensible** (jamás un hábito a eliminar, el diario ni cifras
+/// de ellos). Se entrega en pantalla, nunca por voz ni a la IA (D3, D13); sin
+/// contenido, abre Hábitos › Hoy. La orden no se guarda en ningún historial.
+final herramientaResumenHoyHabitos = HerramientaNavegacion(
+  nombre: 'habitos.resumen_hoy',
+  modulo: Modulo.habitos,
+  roles: rolesParaNavegar(Modulo.habitos),
+  ruta: RutasDeHerramientas.hoyHabitos,
+  etiqueta: 'Resumen de hoy',
+  palabrasClave: const ['resumen de hoy', 'cómo voy hoy', 'qué me falta hoy'],
+  consulta: true,
+  paraSoloLectura: false,
+  historial: false,
+  descripcion:
+      'Da el resumen de lo no sensible de Hábitos de hoy en pantalla. Solo '
+      'lectura; nunca va a la IA en la nube ni a las bocinas.',
 );
 
 /// SOS de Hábitos ("tengo un antojo"). Solo abre la vista del SOS, que es una
@@ -516,6 +585,10 @@ final List<HerramientaNavegacion> navegacionFase3 = List.unmodifiable([
   herramientaAbrirAgendaHabitos,
   herramientaAbrirEspiritualHabitos,
   herramientaSosHabitos,
+  herramientaAbrirLectorHabitos,
+  herramientaAbrirRevisionHabitos,
+  herramientaAbrirPausaHabitos,
+  herramientaResumenHoyHabitos,
 ]);
 
 /// Todo el catálogo de navegación, en el orden en que se sugiere.
@@ -532,6 +605,10 @@ final List<HerramientaNavegacion> herramientasNavegacion = List.unmodifiable([
   herramientaAbrirAgendaHabitos,
   herramientaAbrirEspiritualHabitos,
   herramientaSosHabitos,
+  herramientaAbrirLectorHabitos,
+  herramientaAbrirRevisionHabitos,
+  herramientaAbrirPausaHabitos,
+  herramientaResumenHoyHabitos,
   herramientaAbrirCuidados,
   herramientaAbrirAlimentacion,
   herramientaAbrirCasa,

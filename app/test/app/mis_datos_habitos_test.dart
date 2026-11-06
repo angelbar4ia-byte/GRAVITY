@@ -5,7 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gravity/app/avisos/con_avisos.dart' show tipoEquipoAvisosProvider;
+import 'package:gravity/app/sensibles/puerta_reservada.dart';
 import 'package:gravity/app/sensibles/sensibles.dart';
+import 'package:gravity/nucleo/sesion/proveedores_sesion.dart';
+import 'package:gravity/nucleo/sesion/servicio_sesion_falso.dart';
 import 'package:gravity/app/sesion_efectiva.dart';
 import 'package:gravity/modulos/ajustes/privacidad/mis_datos_habitos.dart';
 import 'package:gravity/nucleo/avisos/repositorio_avisos.dart';
@@ -14,6 +17,12 @@ import 'package:gravity/nucleo/seguridad/almacen_seguro.dart';
 import 'package:gravity/nucleo/seguridad/proveedores_seguridad.dart';
 import 'package:gravity/nucleo/sensibles/mis_datos.dart';
 import 'package:gravity/nucleo/sesion/sesion.dart';
+
+/// La puerta de lo reservado ya abierta (el PIN de la puerta se prueba aparte).
+class _Abierto extends ReservadoAbierto {
+  @override
+  bool build() => true;
+}
 
 class _Fuente implements FuenteDeDatosHabitos {
   @override
@@ -35,6 +44,8 @@ Future<void> montar(
     ),
     tipoEquipoAvisosProvider.overrideWithValue(equipo),
     almacenSeguroProvider.overrideWithValue(AlmacenSeguroEnMemoria()),
+    servicioSesionProvider.overrideWithValue(ServicioSesionFalso.con(rol)),
+    reservadoAbiertoProvider.overrideWith(_Abierto.new),
     if (conFuente) fuenteDeDatosHabitosProvider.overrideWithValue(_Fuente()),
   ];
   await tester.pumpWidget(

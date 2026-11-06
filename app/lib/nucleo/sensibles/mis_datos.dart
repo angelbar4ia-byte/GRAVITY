@@ -5,6 +5,7 @@ library;
 
 import 'dart:convert';
 
+import '../cola/cola_sin_conexion.dart';
 import '../seguridad/almacen_seguro.dart';
 import 'cripto.dart';
 import 'llaves_habitos.dart';
@@ -44,7 +45,7 @@ abstract final class RespaldoLocal {
       'sobres': [for (final s in sobres) s.aJson()],
     });
     final sal = desdeBase64Url(envoltura.sal);
-    final llave = await pbkdf2EnAislado(utf8.encode(frase.join(' ')), sal, vueltas);
+    final llave = await pbkdf2EnAislado(LlaveEnvuelta.bytesDeFrase(frase), sal, vueltas);
     final cifrado = SobreAes.cifrar(llave, utf8.encode(cuerpo), datosAsociados: _aad());
     llave.fillRange(0, llave.length, 0);
     return jsonEncode({
@@ -62,8 +63,9 @@ abstract final class RespaldoLocal {
   /// es un respaldo válido, es muy grande o la frase no corresponde.
   static Future<({List<Sobre> sobres, List<int> llaveLocal})> importar(
     String texto,
-    List<String> frase,
-  ) async {
+    List<String> frase, {
+    int minimoVueltas = LlaveEnvuelta.vueltasMinimas,
+  }) async {
     if (utf8.encode(texto).length > maximoBytesDeArchivo) {
       throw const FormatException('El archivo pasa de 20 MB.');
     }
@@ -81,8 +83,7 @@ abstract final class RespaldoLocal {
     final llaveLocal = json['llave_local'];
     final cifrado = json['cifrado'];
     if (vueltas is! int ||
-        vueltas < 1 ||
-        vueltas > 5000000 ||
+        !LlaveEnvuelta.vueltasEnRango(vueltas, minimo: minimoVueltas) ||
         sal is! String ||
         llaveLocal is! String ||
         cifrado is! String) {
@@ -95,11 +96,11 @@ abstract final class RespaldoLocal {
       sal: sal,
       llaveEnvuelta: llaveLocal,
     );
-    final local = await envoltura.desenvolver(frase);
+    final local = await envoltura.desenvolver(frase, minimo: minimoVueltas);
     if (local == null) {
       throw const FormatException('La frase no corresponde a este respaldo.');
     }
-    final llave = await pbkdf2EnAislado(utf8.encode(frase.join(' ')), desdeBase64Url(sal), vueltas);
+    final llave = await pbkdf2EnAislado(LlaveEnvuelta.bytesDeFrase(frase), desdeBase64Url(sal), vueltas);
     final claro = SobreAes.descifrar(llave, cifrado, datosAsociados: _aad());
     llave.fillRange(0, llave.length, 0);
     if (claro == null) {
@@ -152,8 +153,11 @@ abstract final class ExportacionHabitos {
     List<String>? frase,
     int vueltas = LlaveEnvuelta.vueltasPorOmision,
   }) async {
+    // Decisión del dueño (F3-13): lo reservado solo sale cifrado con la frase.
+    // Sin frase, el archivo lleva únicamente lo no sensible.
     final sensibles = <String, Object?>{
-      for (final tipo in incluirSensibles) tipo.valor: await fuente.datosSensibles(tipo),
+      if (frase != null)
+        for (final tipo in incluirSensibles) tipo.valor: await fuente.datosSensibles(tipo),
     };
     final salida = <String, Object?>{
       'esquema': esquema,
@@ -162,11 +166,9 @@ abstract final class ExportacionHabitos {
       'datos': await fuente.datosEnClaro(),
     };
     if (sensibles.isNotEmpty) {
-      if (frase == null) {
-        salida['sensibles'] = sensibles;
-      } else {
+      {
         final sal = bytesAleatorios(16);
-        final llave = await pbkdf2EnAislado(utf8.encode(frase.join(' ')), sal, vueltas);
+        final llave = await pbkdf2EnAislado(LlaveEnvuelta.bytesDeFrase(frase!), sal, vueltas);
         salida['sensibles_protegidos'] = {
           'kdf': LlaveEnvuelta.kdfPbkdf2,
           'vueltas': vueltas,
@@ -212,6 +214,11 @@ abstract interface class NubeDeHabitos {
   Future<void> borrarMisDatos(AlcanceDeBorrado alcance);
 }
 
+/// Tipo de la cola para borrar en la nube y la función del servidor que atiende
+/// (`hab_borrar_mis_datos(p_alcance)`, idempotente).
+const tipoColaBorrado = 'habitos.borrar';
+const funcionBorrarMisDatos = 'hab_borrar_mis_datos';
+
 class BorradoDeMisDatos {
   BorradoDeMisDatos({
     required this.sobres,
@@ -219,6 +226,7 @@ class BorradoDeMisDatos {
     required this.modos,
     required this.almacen,
     this.nube,
+    this.cola,
   });
 
   final AlmacenDeSobres sobres;
@@ -227,13 +235,18 @@ class BorradoDeMisDatos {
   final AlmacenSeguro almacen;
   final NubeDeHabitos? nube;
 
+  /// Si hay cola, el borrado en la nube **se encola** y se reintenta solo hasta
+  /// que el servidor responde (sin señal no se pierde ni hay que repetirlo).
+  final ColaSinConexion? cola;
+
   /// ¿La persona escribió la palabra de confirmación?
   static bool confirma(String texto) => texto.trim() == palabraDeConfirmacion;
 
   /// Borra en el equipo (sobres, y con `todo` también llaves y modos) y en la
   /// nube (`hab_borrar_mis_datos`). El PIN y la palabra los pide la pantalla
-  /// antes. Si la nube falla por falta de señal, **lo local ya se borró** y se
-  /// lanza el error para que la pantalla avise que falta la nube.
+  /// antes. Lo local se borra al instante. Con [cola], lo de la nube queda
+  /// encolado (persistente, con reintentos); sin ella se llama directo y, si
+  /// falla, se lanza el error.
   Future<void> borrar(String persona, AlcanceDeBorrado alcance) async {
     for (final tipo in alcance.tipos) {
       await sobres.borrar(persona, tipo: tipo);
@@ -242,6 +255,15 @@ class BorradoDeMisDatos {
       await llaves.borrar(persona);
       await modos.borrar(persona);
       await sobres.olvidarEncolados(persona);
+    }
+    final c = cola;
+    if (c != null) {
+      await c.encolar(
+        tipo: tipoColaBorrado,
+        personaId: persona,
+        carga: {'p_alcance': alcance.valor},
+      );
+      return;
     }
     await nube?.borrarMisDatos(alcance);
   }

@@ -11,6 +11,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../app/sensibles/puerta_reservada.dart';
 import '../../../app/sensibles/sensibles.dart';
 import '../../../app/sesion_efectiva.dart';
 import '../../../nucleo/permisos/permisos.dart' show puedeUsarHabitos;
@@ -48,45 +49,57 @@ class MisDatosDeHabitos extends ConsumerWidget {
     }
     final tema = Theme.of(context);
     final hayFuente = ref.watch(fuenteDeDatosHabitosProvider) != null;
-    return Card(
-      key: const ValueKey('privacidad-mis-datos-habitos'),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-              child: Text('Mis datos de Hábitos', style: tema.textTheme.titleMedium),
-            ),
-            ListTile(
-              key: const ValueKey('mis-datos-exportar'),
-              leading: const Icon(Icons.file_download_outlined),
-              title: const Text('Exportar mis datos'),
-              subtitle: Text(
-                hayFuente
-                    ? 'Un archivo con todo lo tuyo de Hábitos.'
-                    : 'Disponible cuando Hábitos esté listo en este equipo.',
+    return PuertaReservada(
+      child: Card(
+        key: const ValueKey('privacidad-mis-datos-habitos'),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: Text(
+                  'Mis datos de Hábitos',
+                  style: tema.textTheme.titleMedium,
+                ),
               ),
-              enabled: hayFuente,
-              onTap: hayFuente ? () => _exportar(context, ref) : null,
-            ),
-            ListTile(
-              key: const ValueKey('mis-datos-borrar'),
-              leading: Icon(Icons.delete_outline, color: tema.colorScheme.error),
-              title: const Text('Borrar mis datos'),
-              subtitle: const Text(
-                'En este equipo y en la nube. No se puede deshacer.',
+              ListTile(
+                key: const ValueKey('mis-datos-exportar'),
+                leading: const Icon(Icons.file_download_outlined),
+                title: const Text('Exportar mis datos'),
+                subtitle: Text(
+                  hayFuente
+                      ? 'Un archivo con todo lo tuyo de Hábitos.'
+                      : 'Disponible cuando Hábitos esté listo en este equipo.',
+                ),
+                enabled: hayFuente,
+                onTap: hayFuente ? () => _exportar(context, ref) : null,
               ),
-              onTap: () => _borrar(context, ref),
-            ),
-          ],
+              ListTile(
+                key: const ValueKey('mis-datos-borrar'),
+                leading: Icon(
+                  Icons.delete_outline,
+                  color: tema.colorScheme.error,
+                ),
+                title: const Text('Borrar mis datos'),
+                subtitle: const Text(
+                  'En este equipo y en la nube. No se puede deshacer.',
+                ),
+                onTap: () => _borrar(context, ref),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  static Future<bool> _pedirPin(BuildContext context, WidgetRef ref, String motivo) async {
+  static Future<bool> _pedirPin(
+    BuildContext context,
+    WidgetRef ref,
+    String motivo,
+  ) async {
     final pin = await showDialog<String>(
       context: context,
       builder: (_) => _DialogoTexto(
@@ -101,21 +114,19 @@ class MisDatosDeHabitos extends ConsumerWidget {
     final r = await ref.read(controladorMontosProvider.notifier).verificar(pin);
     if (r == ResultadoRevelar.revelado) return true;
     if (context.mounted) {
-      _aviso(
-        context,
-        switch (r) {
-          ResultadoRevelar.bloqueado => 'Demasiados intentos. Espera un momento.',
-          ResultadoRevelar.faltaPin =>
-            'Primero crea tu PIN en Privacidad › Montos.',
-          _ => 'Ese PIN no es el correcto.',
-        },
-      );
+      _aviso(context, switch (r) {
+        ResultadoRevelar.bloqueado => 'Demasiados intentos. Espera un momento.',
+        ResultadoRevelar.faltaPin =>
+          'Primero crea tu PIN en Privacidad › Montos.',
+        _ => 'Ese PIN no es el correcto.',
+      });
     }
     return false;
   }
 
   static void _aviso(BuildContext context, String texto) =>
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(texto)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(texto)));
 
   Future<void> _exportar(BuildContext context, WidgetRef ref) async {
     final fuente = ref.read(fuenteDeDatosHabitosProvider);
@@ -129,13 +140,25 @@ class MisDatosDeHabitos extends ConsumerWidget {
           'Quien tenga el archivo podría leerlo.',
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Sin lo reservado')),
-          FilledButton(onPressed: () => Navigator.pop(c, true), child: const Text('Incluirlo')),
+          TextButton(
+            onPressed: () => Navigator.pop(c, false),
+            child: const Text('Sin lo reservado'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(c, true),
+            child: const Text('Incluirlo'),
+          ),
         ],
       ),
     );
     if (sensibles == null || !context.mounted) return;
-    if (!await _pedirPin(context, ref, 'Para exportar tus datos, escribe tu PIN.')) return;
+    if (!await _pedirPin(
+      context,
+      ref,
+      'Para exportar tus datos, escribe tu PIN.',
+    )) {
+      return;
+    }
     if (!context.mounted) return;
     List<String>? frase;
     if (sensibles) {
@@ -144,14 +167,17 @@ class MisDatosDeHabitos extends ConsumerWidget {
         builder: (_) => _DialogoTexto(
           titulo: 'Frase de recuperación',
           mensaje:
-              'Para cifrar lo reservado, escribe tus 12 palabras. Déjalo vacío '
-              'para guardarlo sin cifrar: $avisoDeArchivoSensible',
+              'Para incluir lo reservado, escribe tus 12 palabras: el archivo lo '
+              'lleva cifrado con ellas. Si lo dejas vacío, el archivo sale solo '
+              'con lo no reservado.',
           etiqueta: '12 palabras',
           boton: 'Continuar',
         ),
       );
       if (texto == null || !context.mounted) return;
-      if (texto.trim().isNotEmpty) {
+      if (texto.trim().isEmpty) {
+        _aviso(context, 'Sin frase, el archivo lleva solo lo no reservado.');
+      } else {
         frase = FraseDeRecuperacion.normalizar(texto);
         if (!FraseDeRecuperacion.esValida(frase)) {
           _aviso(context, 'Esa frase no es válida. Revisa las 12 palabras.');
@@ -170,7 +196,10 @@ class MisDatosDeHabitos extends ConsumerWidget {
       Uint8List.fromList(utf8.encode(contenido)),
     );
     if (context.mounted) {
-      _aviso(context, ok ? 'Listo, guardé tus datos.' : 'No se guardó el archivo.');
+      _aviso(
+        context,
+        ok ? 'Listo, guardé tus datos.' : 'No se guardó el archivo.',
+      );
     }
   }
 
@@ -205,21 +234,31 @@ class MisDatosDeHabitos extends ConsumerWidget {
       context: context,
       builder: (_) => _DialogoTexto(
         titulo: 'Confirmar borrado',
-        mensaje: 'Escribe $palabraDeConfirmacion para borrar. No se puede deshacer.',
+        mensaje:
+            'Escribe $palabraDeConfirmacion para borrar. No se puede deshacer.',
         etiqueta: palabraDeConfirmacion,
         boton: 'Borrar',
       ),
     );
     if (palabra == null || !context.mounted) return;
     if (!BorradoDeMisDatos.confirma(palabra)) {
-      _aviso(context, 'No escribiste $palabraDeConfirmacion; no se borró nada.');
+      _aviso(
+        context,
+        'No escribiste $palabraDeConfirmacion; no se borró nada.',
+      );
       return;
     }
     final persona = ref.read(sesionEfectivaProvider)?.persona.id;
     if (persona == null) return;
     try {
       await ref.read(borradoDeMisDatosProvider).borrar(persona, alcance);
-      if (context.mounted) _aviso(context, 'Listo, borré tus datos.');
+      if (context.mounted) {
+        _aviso(
+          context,
+          'Listo, borré tus datos de este equipo. Lo de la nube se borra en '
+          'cuanto haya señal.',
+        );
+      }
     } catch (_) {
       if (context.mounted) {
         _aviso(
@@ -279,7 +318,10 @@ class _DialogoTextoState extends State<_DialogoTexto> {
       ],
     ),
     actions: [
-      TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+      TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: const Text('Cancelar'),
+      ),
       FilledButton(
         onPressed: () => Navigator.pop(context, _texto.text),
         child: Text(widget.boton),

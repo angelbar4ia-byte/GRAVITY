@@ -77,20 +77,89 @@ void main() {
     });
   });
 
+  group('frase sin acentos, mayúsculas o descompuesta (F3-6)', () {
+    test('las 2048 palabras son distintas aun sin acentos (nada se confunde)', () {
+      expect(palabrasEs.map(FraseDeRecuperacion.claveDePalabra).toSet(), hasLength(2048));
+    });
+
+    test('se reconoce con la á descompuesta, sin acentos y en mayúsculas', () {
+      final frase = FraseDeRecuperacion.desdeEntropia(List.filled(16, 0));
+      final descompuesta = frase.map((p) => p.replaceAll('á', 'a\u0301')).join(' ');
+      final sinAcentos = frase.map(FraseDeRecuperacion.claveDePalabra).join(' ');
+      final mayusculas = frase.join(' ').toUpperCase();
+      for (final tecleada in [descompuesta, sinAcentos, mayusculas, '  ${frase.join('   ')} \n']) {
+        final n = FraseDeRecuperacion.normalizar(tecleada);
+        expect(n, frase, reason: tecleada);
+        expect(FraseDeRecuperacion.esValida(n), isTrue);
+      }
+    });
+
+    test('la ñ descompuesta o sin tilde también, y la clave sale igual', () async {
+      final conEnie = palabrasEs.firstWhere((p) => p.contains('ñ'));
+      expect(FraseDeRecuperacion.canonica(conEnie.replaceAll('ñ', 'n\u0303')), conEnie);
+      expect(FraseDeRecuperacion.canonica(conEnie.replaceAll('ñ', 'n')), conEnie);
+      final frase = FraseDeRecuperacion.generar();
+      final env = await LlaveEnvuelta.envolver(bytesAleatorios(32), frase, vueltas: 20);
+      final escrita = FraseDeRecuperacion.normalizar(
+        frase.map(FraseDeRecuperacion.claveDePalabra).join(' ').toUpperCase(),
+      );
+      expect(await env.desenvolver(escrita, minimo: 1), isNotNull);
+    });
+
+    test('lo que no es de la lista sigue sin validar', () {
+      final frase = FraseDeRecuperacion.generar();
+      expect(FraseDeRecuperacion.esValida(FraseDeRecuperacion.normalizar('${frase.take(11).join(' ')} zzzz')), isFalse);
+    });
+  });
+
   group('llave maestra envuelta', () {
+    test('vueltas fuera de rango (100 000 a 2 000 000) se rechazan al abrir', () async {
+      final maestra = bytesAleatorios(32);
+      final frase = FraseDeRecuperacion.generar();
+      final env = await LlaveEnvuelta.envolver(maestra, frase, vueltas: 100000);
+      expect(await env.desenvolver(frase), maestra);
+      for (final v in [0, 1, 99999, 2000001, 1 << 40]) {
+        final mala = LlaveEnvuelta(
+          version: env.version,
+          kdf: env.kdf,
+          vueltas: v,
+          sal: env.sal,
+          llaveEnvuelta: env.llaveEnvuelta,
+        );
+        expect(await mala.desenvolver(frase), isNull, reason: '$v');
+      }
+      expect(LlaveEnvuelta.vueltasEnRango(2000000), isTrue);
+      expect(LlaveEnvuelta.vueltasEnRango(2000001), isFalse);
+    });
+
+    test('el nombre antiguo del KDF solo se lee; uno desconocido no abre', () async {
+      final maestra = bytesAleatorios(32);
+      final frase = FraseDeRecuperacion.generar();
+      final env = await LlaveEnvuelta.envolver(maestra, frase, vueltas: 20);
+      LlaveEnvuelta con(String kdf) => LlaveEnvuelta(
+        version: env.version,
+        kdf: kdf,
+        vueltas: env.vueltas,
+        sal: env.sal,
+        llaveEnvuelta: env.llaveEnvuelta,
+      );
+      expect(await con(LlaveEnvuelta.kdfPbkdf2Antiguo).desenvolver(frase, minimo: 1), maestra);
+      expect(await con('argon2id').desenvolver(frase, minimo: 1), isNull);
+    });
+
     test('se abre con su frase y no con otra; la llave no sale en claro', () async {
       final maestra = bytesAleatorios(32);
       final frase = FraseDeRecuperacion.generar();
       final env = await LlaveEnvuelta.envolver(maestra, frase, vueltas: 50);
-      expect(env.kdf, 'pbkdf2-sha256');
+      expect(env.kdf, 'pbkdf2-hmac-sha256'); // el que admite el servidor
       expect(env.vueltas, 50);
       expect(env.llaveEnvuelta, isNot(contains(aBase64Url(maestra))));
-      expect(await env.desenvolver(frase), maestra);
-      expect(await env.desenvolver(FraseDeRecuperacion.generar()), isNull);
+      expect(await env.desenvolver(frase, minimo: 1), maestra);
+      expect(await env.desenvolver(FraseDeRecuperacion.generar(), minimo: 1), isNull);
       final v = LlaveEnvuelta.desdeJson(
         (jsonDecode(jsonEncode(env.aJson())) as Map).cast<String, Object?>(),
       )!;
-      expect(await v.desenvolver(frase), maestra);
+      expect(await v.desenvolver(frase, minimo: 1), maestra);
       expect(LlaveEnvuelta.desdeJson({'x': 1}), isNull);
     });
 
@@ -109,7 +178,7 @@ void main() {
         sal: env.sal,
         llaveEnvuelta: env.llaveEnvuelta,
       );
-      expect(await cambiada.desenvolver(frase), isNull);
+      expect(await cambiada.desenvolver(frase, minimo: 1), isNull);
     });
   });
 
@@ -385,14 +454,14 @@ void main() {
         vueltas: 50,
       );
       expect(archivo, isNot(contains('familia')));
-      final leido = await RespaldoLocal.importar(archivo, frase);
+      final leido = await RespaldoLocal.importar(archivo, frase, minimoVueltas: 1);
       expect(leido.sobres.single.cifrado, s.cifrado);
       expect(leido.llaveLocal, local);
       // Con la llave local recuperada se abre el sobre en otro teléfono.
       final llave = hkdfSha256(leido.llaveLocal, info: 'gravity-hab/v1/diario_oracion');
       expect(descifrarDocumento(llaveDeTipo: llave, persona: 'ana', sobre: leido.sobres.single), isNotNull);
       await expectLater(
-        RespaldoLocal.importar(archivo, FraseDeRecuperacion.generar()),
+        RespaldoLocal.importar(archivo, FraseDeRecuperacion.generar(), minimoVueltas: 1),
         throwsA(isA<FormatException>()),
       );
     });
@@ -432,15 +501,16 @@ void main() {
       expect(json.containsKey('aviso'), isFalse);
     });
 
-    test('con sensibles y sin frase: van en claro, con el aviso', () async {
+    test('con sensibles y sin frase: no sale nada reservado (F3-13)', () async {
       final texto = await ExportacionHabitos.generar(
         fuente: fuente,
         ahora: ahora,
         incluirSensibles: {TipoSensible.diarioOracion},
       );
       final json = jsonDecode(texto) as Map;
-      expect((json['sensibles'] as Map).keys, ['diario_oracion']);
-      expect(json['aviso'], avisoDeArchivoSensible);
+      expect(json.containsKey('sensibles'), isFalse);
+      expect(json.containsKey('sensibles_protegidos'), isFalse);
+      expect(texto, isNot(contains('oración secreta')));
     });
 
     test('con la frase: la parte sensible va cifrada y se recupera con ella', () async {
@@ -534,6 +604,30 @@ void main() {
       nube.falla = Exception('sin red');
       await expectLater(borrado.borrar('ana', AlcanceDeBorrado.todo), throwsException);
       expect(await store.todos('ana'), isEmpty);
+    });
+
+    test('con cola: el borrado en la nube se encola, persiste y reintenta (sin '
+        'señal no se pierde)', () async {
+      final base = BaseLocal.enMemoria();
+      addTearDown(base.close);
+      final cola = ColaSinConexion(base: base, enviador: _EnviadorNulo());
+      final conCola = BorradoDeMisDatos(
+        sobres: store,
+        llaves: llaves,
+        modos: modos,
+        almacen: almacen,
+        nube: nube,
+        cola: cola,
+      );
+      nube.falla = Exception('sin red'); // la cola no depende de esto
+      await conCola.borrar('ana', AlcanceDeBorrado.diario);
+      expect((await store.todos('ana')).map((s) => s.tipo), [TipoSensible.habitosSensibles]);
+      final r = (await cola.registros()).single;
+      expect(r.tipo, tipoColaBorrado);
+      expect(r.personaId, 'ana');
+      expect(jsonDecode(r.carga), {'p_alcance': 'diario'});
+      expect(funcionBorrarMisDatos, 'hab_borrar_mis_datos');
+      expect(nube.borrados, isEmpty, reason: 'lo llama la cola, no la pantalla');
     });
 
     test('lo de otra persona no se toca', () async {

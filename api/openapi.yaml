@@ -596,6 +596,101 @@ paths:
           $ref: '#/components/responses/ResultadoHerramienta'
         '404':
           $ref: '#/components/responses/HerramientaNoDisponible'
+  /herramientas/habitos.abrir_lector:
+    servers: *servidorHerramientas
+    post:
+      tags: [Herramientas de GRAVITY]
+      operationId: herramientaHabitosAbrirLector
+      summary: 'habitos.abrir_lector · Abrir el lector'
+      description: >-
+        Abre Hábitos › Lector de la Biblia (`/habitos/lector`). Solo abre la vista. Órdenes:
+        "abre el lector", "leer la biblia". Solo local (D13): `para_ia` siempre es nulo,
+        nunca va a las bocinas y la orden no se guarda en ningún historial (si se guardara,
+        sería "Orden de Hábitos reservada"). No la recibe la cuenta maestra que no es la
+        dueña, ni el cuidador, ni Casa.
+      x-roles: [dueno, coadministrador, familiar]
+      x-escribe: false
+      x-solo-local: true
+      x-fase: 3
+      requestBody:
+        $ref: '#/components/requestBodies/PeticionHerramienta'
+      responses:
+        '200':
+          $ref: '#/components/responses/ResultadoHerramienta'
+        '404':
+          $ref: '#/components/responses/HerramientaNoDisponible'
+  /herramientas/habitos.abrir_revision:
+    servers: *servidorHerramientas
+    post:
+      tags: [Herramientas de GRAVITY]
+      operationId: herramientaHabitosAbrirRevision
+      summary: 'habitos.abrir_revision · Abrir la revisión'
+      description: >-
+        Abre la revisión semanal de Hábitos (`/habitos/revision`). Solo abre la vista.
+        Órdenes: "abre mi revisión", "revisión semanal". Solo local (D13): `para_ia` siempre
+        es nulo, nunca va a las bocinas y la orden no se guarda en ningún historial (si se
+        guardara, sería "Orden de Hábitos reservada"). No la recibe la cuenta maestra que no
+        es la dueña, ni el cuidador, ni Casa.
+      x-roles: [dueno, coadministrador, familiar]
+      x-escribe: false
+      x-solo-local: true
+      x-fase: 3
+      requestBody:
+        $ref: '#/components/requestBodies/PeticionHerramienta'
+      responses:
+        '200':
+          $ref: '#/components/responses/ResultadoHerramienta'
+        '404':
+          $ref: '#/components/responses/HerramientaNoDisponible'
+  /herramientas/habitos.abrir_pausa:
+    servers: *servidorHerramientas
+    post:
+      tags: [Herramientas de GRAVITY]
+      operationId: herramientaHabitosAbrirPausa
+      summary: 'habitos.abrir_pausa · Abrir la pausa'
+      description: >-
+        Abre la pausa de Hábitos (`/habitos/sos`), sección reservada que pide PIN o huella y
+        no se muestra en la tablet pública. Solo abre la vista. Órdenes: "pausa", "necesito
+        una pausa". Solo local (D13): `para_ia` siempre es nulo, nunca va a las bocinas y la
+        orden no se guarda en ningún historial (si se guardara, sería "Orden de Hábitos
+        reservada"). No la recibe la cuenta maestra que no es la dueña, ni el cuidador, ni
+        Casa.
+      x-roles: [dueno, coadministrador, familiar]
+      x-escribe: false
+      x-solo-local: true
+      x-fase: 3
+      requestBody:
+        $ref: '#/components/requestBodies/PeticionHerramienta'
+      responses:
+        '200':
+          $ref: '#/components/responses/ResultadoHerramienta'
+        '404':
+          $ref: '#/components/responses/HerramientaNoDisponible'
+  /herramientas/habitos.resumen_hoy:
+    servers: *servidorHerramientas
+    post:
+      tags: [Herramientas de GRAVITY]
+      operationId: herramientaHabitosResumenHoy
+      summary: 'habitos.resumen_hoy · Resumen de hoy'
+      description: >-
+        Da en pantalla cuántos elementos de lo no sensible van hechos hoy; sin contenido,
+        abre Hábitos › Hoy. Jamás menciona un hábito a eliminar, el diario ni cifras de
+        ellos, y no se dice por voz. Órdenes: "resumen de hoy", "cómo voy hoy", "qué me
+        falta hoy". Solo lectura. Solo local (D13): `para_ia` siempre es nulo, nunca va a
+        las bocinas y la orden no se guarda en ningún historial (si se guardara, sería
+        "Orden de Hábitos reservada"). No la recibe la cuenta maestra que no es la dueña, ni
+        el cuidador, ni Casa.
+      x-roles: [dueno, coadministrador, familiar]
+      x-escribe: false
+      x-solo-local: true
+      x-fase: 3
+      requestBody:
+        $ref: '#/components/requestBodies/PeticionHerramienta'
+      responses:
+        '200':
+          $ref: '#/components/responses/ResultadoHerramienta'
+        '404':
+          $ref: '#/components/responses/HerramientaNoDisponible'
   /herramientas/cuidados.abrir:
     servers: *servidorHerramientas
     post:

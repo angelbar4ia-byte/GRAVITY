@@ -69,6 +69,26 @@ void main() {
       expect(canalDeRecordatorio(r(TipoRecordatorioHabito.revision)), CanalAviso.habitosRevision);
     });
 
+    test('el nombre se recorta sin partir emojis ni letras con acento (F3-8)', () {
+      String titulo(String nombre) => tituloDeRecordatorio(RecordatorioHabito(
+        tipo: TipoRecordatorioHabito.bloque,
+        objetoId: 'o',
+        cuando: ahora,
+        nombreEnAviso: nombre,
+      ));
+      for (final emoji in ['😀', '👨\u200d👩\u200d👧', 'e\u0301', '🇲🇽']) {
+        final t = titulo('${'a' * 39}$emoji resto');
+        expect(t.length, lessThanOrEqualTo(40));
+        expect(textoDeAvisoEsDiscreto(t), isTrue, reason: emoji);
+        final u = t.codeUnits.last;
+        expect(u >= 0xD800 && u <= 0xDBFF, isFalse, reason: 'sustituto suelto: $emoji');
+        expect(t.endsWith('\u200d'), isFalse);
+        // El grafema entra entero o no entra.
+        expect(t == 'a' * 39 || t.endsWith(emoji), isTrue, reason: emoji);
+      }
+      expect(titulo('Caminar'), 'Caminar');
+    });
+
     test('el id sale del hash de la clave: estable y distinto por objeto', () {
       final a = r(TipoRecordatorioHabito.bloque);
       expect(idDeNotificacion(claveDeRecordatorio(a)), idDeNotificacion(claveDeRecordatorio(a)));

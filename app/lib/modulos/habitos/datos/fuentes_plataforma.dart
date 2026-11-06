@@ -65,7 +65,8 @@ class FuenteDeRecordatoriosDeHabitos implements FuenteDeRecordatoriosHabitos {
     }
     for (var i = 0; i < dias; i++) {
       final f = sumarDias(base, i);
-      DateTime en(int min) => DateTime(f.year, f.month, f.day, min ~/ 60, min % 60);
+      // Minutos negativos o de más de un día se normalizan al día anterior/siguiente (F3-7).
+      DateTime en(int min) => DateTime(f.year, f.month, f.day, 0, min);
       for (final b in bloques.where((b) => b.recurrente.ocurreEn(f))) {
         final t = en(b.inicioMin - b.recordarMin!);
         if (t.isAfter(desde)) {

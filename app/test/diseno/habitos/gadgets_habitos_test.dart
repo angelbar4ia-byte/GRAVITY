@@ -423,7 +423,10 @@ void main() {
         find.bySemanticsLabel('Devocional, 07:00, hecho, racha de 3 días'),
       );
       expect(nodo, isSemantics(isChecked: true));
-      expect(nodo.hasAction(SemanticsAction.customAction), isTrue);
+      expect(
+        nodo.getSemanticsData().hasAction(SemanticsAction.customAction),
+        isTrue,
+      );
       for (final e in EstadoFila.values) {
         await _montar(
           tester,
@@ -463,7 +466,7 @@ void main() {
           findsOneWidget,
         );
         expect(
-          find.bySemanticsLabel('Sigue, Contenido privado, 20:00'),
+          find.bySemanticsLabel('Sigue, Contenido privado, 20:00, pendiente'),
           findsOneWidget,
         );
         semantica.dispose();

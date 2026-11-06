@@ -130,7 +130,9 @@ final class RegistroHerramientas {
         (!deBandeja || h.modulo == Modulo.finanzas)) {
       return false;
     }
-    if (h is HerramientaNavegacion && !deBandeja && !puedeAbrir(rol, h.modulo)) {
+    if (h is HerramientaNavegacion &&
+        !deBandeja &&
+        !puedeAbrir(rol, h.modulo)) {
       return false;
     }
     return puedeSobre(

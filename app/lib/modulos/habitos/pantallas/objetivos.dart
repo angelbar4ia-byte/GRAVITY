@@ -11,9 +11,11 @@ import '../../../nucleo/contratos/roles.dart';
 import '../../../nucleo/contratos/rutas.dart';
 import '../estado/proveedores.dart';
 
-final _objetivosProvider = FutureProvider((ref) {
+final _objetivosProvider = FutureProvider((ref) async {
   ref.watch(versionHabitosProvider);
-  return ref.watch(repositorioHabitosProvider).objetivos();
+  final os = await ref.watch(repositorioHabitosProvider).objetivos();
+  final av = await ref.watch(servicioHabitosProvider).avances([for (final o in os) if (o.activo) o]);
+  return (os, av);
 });
 
 class PantallaObjetivos extends ConsumerWidget {
@@ -31,7 +33,8 @@ class PantallaObjetivos extends ConsumerWidget {
                   mensaje: 'No pudimos cargar tus objetivos.',
                   alReintentar: () => ref.invalidate(_objetivosProvider),
                 ),
-                data: (l) {
+                data: (datos) {
+                  final (l, avances) = datos;
                   final activos = l.where((o) => o.activo).toList();
                   return ListView(padding: const EdgeInsets.all(16), children: [
                     FilledButton.icon(
@@ -47,7 +50,8 @@ class PantallaObjetivos extends ConsumerWidget {
                       TarjetaObjetivo(
                         titulo: o.titulo,
                         area: o.area,
-                        avance: 0,
+                        avance: avances[o.id] ?? 0,
+                        avanceTexto: '${((avances[o.id] ?? 0) * 100).round()} % esta semana',
                         ritmoTexto: o.metaValor == null
                             ? null
                             : '${o.metaValor} ${o.unidad ?? ''}'.trim(),

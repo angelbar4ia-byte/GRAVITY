@@ -339,6 +339,19 @@ Todas exigen Hábitos en el hogar (42501 a la maestra, el cuidador, Hogar y quie
 
 **La copia de seguridad** incluye los sobres tal cual (ilegibles sin la frase) y las tablas en claro, así que la copia contiene los datos no sensibles de las demás personas del hogar (observación 6 de la especificación).
 
+### Endurecimiento de Hábitos (`20261107000000_habitos_endurecimiento.sql`)
+
+Revisión `docs/revisiones/fase-3.md`; criterios por defecto, **provisionales**. Pruebas: `91_habitos_endurecimiento.sql` y ajustes en la 90 (`hallazgos_fase3.sql` se retiró).
+
+| Hallazgo | Qué hace el servidor |
+|---|---|
+| **F3-2** subida de sobres | `hab_subir_sobres` acepta cualquier revisión **mayor** que la del servidor (ya no exige +1: la cola puede saltar intermedias). Igual o menor con otro contenido = **conflicto** devuelto en `conflictos` sin abortar el lote (los demás sobres entran). Mismo contenido y revisión = no hace nada |
+| **F3-3** (alias) | `hab_llaves.kdf` acepta `pbkdf2-sha256` además de `pbkdf2-hmac-sha256` y `argon2id` |
+| **F3-4** bitácora | Las constancias `habitos.*` son **una por acción, persona y minuto**: 600 llamadas a `hab_borrar_mis_datos` dejan una sola |
+| **F3-5** baja | `membresias.desactivada_en` (la pone un trigger al pasar `activa` a falso, al fijar `hasta` o al crear una membresía inactiva; se borra al volver). `hab_limpiar` borra lo de Hábitos **90 días después de la baja más reciente** en todos los casos (`activa = false` con `hasta` nulo, o `hasta` vencido). Quien sigue o vuelve al hogar no se toca |
+| **F3-9** | `hab_hogar_de(persona)` solo contesta por la propia sesión (nulo para cualquier otra persona, aunque sea del mismo hogar); las funciones del servidor sin sesión siguen igual |
+| **F3-10** cuota de filas | Por persona: 2 000 objetivos, 5 000 bloques, 20 000 registros, 500 pausas, 100 planes, 40 000 días de plan, 20 000 lecturas, 20 000 marcas y 600 revisiones. Se revisa por sentencia (trigger `hab_z_cuota`); al pasarla **54000** con pista (no se reintenta). Los sobres siguen con su cuota de 25 MB |
+
 ## Pruebas
 
 ```bash
@@ -377,6 +390,7 @@ Crea una base desechable, aplica `tests/00_emulacion_supabase.sql` (roles `anon`
 | `88_finanzas_fase2_endurecimiento.sql` | **F2-1, F2-3, F2-4, F2-5:** errores transitorios no apagan el push, los rechazos sí (5), reactivación del teléfono (no de tablet pública ni la elección de la tablet personal), llave compuesta del destino del retiro, objeto del aviso del libro, solo miembros emiten, 5 críticas por día y libro, horas silenciosas coherentes |
 | `89_habitos_rls.sql` | **Hábitos, lo propio:** cada quien ve solo lo suyo (dueña, pareja, familiar); la dueña no ve lo de la pareja ni la familiar; la cuenta maestra, la cuidadora, Hogar, otro hogar y anon no leen ni escriben nada; la app no manda persona, hogar ni actualizado_en; el servidor deja los registros a nombre propio; llaves compuestas (no se apunta a lo de otro); un registro por elemento y día; último cambio gana (más viejo se ignora, futuro lejano se ajusta); ajustes y modos; plan de lectura idempotente; quién tiene Hábitos (maestra fuera, dueña-maestra no); sin bitácora y `habitos*` reservado y oculto; baja: sin acceso al instante, conserva y borra a los 90 días |
 | `90_habitos_sensibles.sql` | **Sensibles:** `hab_sobres` solo cifrado y horas del servidor; nadie escribe directo; la pareja y la maestra no ven sobres ni llaves; llaves (versión 1, +1, idempotente, constancia sin contenido); modos (55000 sin llave, volver a solo teléfono exige confirmación y borra, sube la época); subida en lote (50, idempotente, +1, conflictos, base64url, 64 KB, cuota, sobre ajeno 42501, tumbas); reiniciar la nube y borrar mis datos (con constancia); limpieza de tumbas; la tablet personal registra su dispositivo |
+| `91_habitos_endurecimiento.sql` | **F3-3 a F3-10:** alias del KDF; 600 borrados dejan una constancia; `hab_hogar_de` no revela el hogar de otros; cuota de filas por persona (2 000 objetivos, por persona); baja con `activa = false` y con `hasta` vencido se borra a los 90 días desde `desactivada_en`; volver al hogar borra la fecha de baja |
 | `34_finanzas_maestra_login.sql` | **Cuenta maestra con login propio (23/oct):** la invitación del dueño con `es_maestra` (solo el dueño la crea, solo con rol coadministrador, con un correo de fuera del hogar; se revoca al reinvitar; la vencida no sirve); al aceptarla no se crea libro personal, es solo lectura total, no es miembro de nada, no ve Cuidados ni Hábitos y sigue necesitando la consulta de 30 minutos; reemplaza a la anterior con su entrada en la bitácora |
 | `40_aislamiento_hogares.sql` | Una persona de otro hogar no ve ni toca nada |
 | `50_invitaciones.sql` | Solo el dueño las ve y crea; token solo en hash; correo confirmado; expiración, revocación y reuso; volver al hogar con la membresía vencida (M3) |

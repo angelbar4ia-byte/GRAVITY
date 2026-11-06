@@ -120,6 +120,34 @@ class ServicioHabitos {
   Future<void> deshacer(ObjetivoHab o, {DateTime? fecha}) =>
       _guardar(o, fecha ?? hoy, EstadoRegistro.pendiente);
 
+  /// Avance real de cada objetivo (0 a 1): metas de una sola vez, lo
+  /// acumulado frente a la meta; los demás, los días programados cumplidos en
+  /// la última semana (regla 5). Sin días programados todavía, 0.
+  Future<Map<String, double>> avances(List<ObjetivoHab> objetivos) async {
+    final r = <String, double>{};
+    if (objetivos.isEmpty) return r;
+    final desde = objetivos.map((o) => soloDia(o.fechaInicio)).reduce((a, b) => a.isBefore(b) ? a : b);
+    final regs = await _repo.registros(desde, hoy);
+    for (final o in objetivos) {
+      final mios = regs.where((x) => x.objetivoId == o.id && x.estado == EstadoRegistro.hecho).toList();
+      if (o.frecuencia == Frecuencia.total && (o.metaValor ?? 0) > 0) {
+        final suma = mios.fold<int>(0, (a, x) => a + (x.valor ?? 0));
+        r[o.id] = (suma / o.metaValor!).clamp(0.0, 1.0);
+        continue;
+      }
+      var prog = 0, ok = 0;
+      for (var i = 0; i < 7; i++) {
+        final d = sumarDias(hoy, -i);
+        if (!o.programadoEn(d)) continue;
+        prog++;
+        if (mios.any((x) => x.fecha == d)) ok++;
+      }
+      final pct = cumplimientoSemanal(ok, prog);
+      r[o.id] = pct == null ? 0 : pct / 100;
+    }
+    return r;
+  }
+
   /// Texto discreto para `habitos.resumen_hoy` (regla 120): solo lo no
   /// sensible, que es todo lo que vive aquí.
   Future<String> resumenHoy() async {

@@ -233,6 +233,15 @@ List<List<Capitulo>> _partir(List<Capitulo> seq, int dias) {
 
 PlanLectura generarPlan(TipoPlan tipo, DateTime inicio,
     {int mascaraDias = 127, int? libro, int capitulosPorDia = 1}) {
+  if (mascaraDias & 127 == 0) {
+    throw ArgumentError.value(mascaraDias, 'mascaraDias', 'Elige al menos un día de lectura.');
+  }
+  if (tipo == TipoPlan.libro && (libro == null || libro < 1 || libro > 66)) {
+    throw ArgumentError.value(libro, 'libro', 'Elige un libro del 1 al 66.');
+  }
+  if (capitulosPorDia < 1) {
+    throw ArgumentError.value(capitulosPorDia, 'capitulosPorDia', 'Mínimo 1.');
+  }
   switch (tipo) {
     case TipoPlan.rutaInicio:
       return _armar(tipo, _partir(capitulosDe(43, 43), 21), inicio, mascaraDias);

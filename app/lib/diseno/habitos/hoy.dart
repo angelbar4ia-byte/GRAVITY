@@ -494,6 +494,7 @@ class TarjetaSigue extends StatelessWidget {
         enCurso ? 'En curso' : 'Sigue',
         sensible ? etiquetaContenidoPrivado : titulo,
         horaTexto,
+        enCurso ? 'en curso' : 'pendiente',
         if (enCurso && transcurridoTexto != null) 'llevas $transcurridoTexto',
       ].join(', '),
       explicitChildNodes: true,
@@ -509,25 +510,34 @@ class TarjetaSigue extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                '${enCurso ? 'EN CURSO' : 'SIGUE'} · $horaTexto'.toUpperCase(),
-                style: v.etiquetaPanel(tamano: 12, color: v.acento),
-              ),
-              SizedBox(height: e),
-              _Titulo(
-                titulo,
-                sensible: sensible,
-                estilo: v.lectura(
-                  tamano: 18,
-                  peso: FontWeight.w600,
-                  color: v.textoFuerte,
+              ExcludeSemantics(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '${enCurso ? 'EN CURSO' : 'SIGUE'} · $horaTexto'
+                          .toUpperCase(),
+                      style: v.etiquetaPanel(tamano: 12, color: v.acento),
+                    ),
+                    SizedBox(height: e),
+                    _Titulo(
+                      titulo,
+                      sensible: sensible,
+                      estilo: v.lectura(
+                        tamano: 18,
+                        peso: FontWeight.w600,
+                        color: v.textoFuerte,
+                      ),
+                    ),
+                    if (enCurso && transcurridoTexto != null)
+                      Text(
+                        'Llevas $transcurridoTexto',
+                        style: v.lectura(tamano: 14, color: v.textoTenue),
+                      ),
+                  ],
                 ),
               ),
-              if (enCurso && transcurridoTexto != null)
-                Text(
-                  'Llevas $transcurridoTexto',
-                  style: v.lectura(tamano: 14, color: v.textoTenue),
-                ),
               SizedBox(height: e * 1.5),
               Wrap(
                 spacing: e,

@@ -82,5 +82,8 @@ void main() {
     expect(TextoAvisoHabitos.paraTipo('hab_reservado'), 'Recordatorio');
     expect(TextoAvisoHabitos.paraTipo('otro'), TextoAvisoHabitos.generico);
     expect(TextoAvisoHabitos.conNombre('x' * 60).length, 40);
+    final t = TextoAvisoHabitos.conNombre('${'a' * 39}😀 resto');
+    final u = t.codeUnits.last;
+    expect(u >= 0xD800 && u <= 0xDBFF, isFalse); // sin sustituto suelto (F3-8)
   });
 }

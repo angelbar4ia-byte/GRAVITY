@@ -79,6 +79,43 @@ final class _Destino {
   final List<_Clave> claves;
 }
 
+/// Lo que se guarda en un historial de GRAVITY en lugar de una orden de
+/// Hábitos (D13, criterio 54).
+const String ordenDeHabitosReservada = 'Orden de Hábitos reservada';
+
+/// Palabras que delatan un hábito sensible o el diario, aunque la orden no se
+/// entienda (ya normalizadas, sin acentos).
+const Set<String> _palabrasSensibles = {
+  'antojo',
+  'antojos',
+  'sos',
+  'consumo',
+  'cigarro',
+  'cigarrillo',
+  'cigarrillos',
+  'tabaco',
+  'azucar',
+  'eliminar',
+  'diario',
+  'oracion',
+  'devocional',
+  'notas',
+  'pausa',
+  'reservado',
+};
+
+/// Texto que puede guardarse en un historial (el de GRAVITY o cualquier otro)
+/// para la orden [texto].
+///
+/// Una orden que menciona un hábito sensible o el diario, o que abre o podría
+/// abrir algo de Hábitos, se guarda como [ordenDeHabitosReservada]: nunca el
+/// texto escrito. Las demás se guardan tal cual. [InterpreteOrdenes.paraHistorial]
+/// es la versión que además mira a dónde llevaría la orden.
+String textoParaHistorial(String texto) =>
+    palabrasDe(texto).any(_palabrasSensibles.contains)
+    ? ordenDeHabitosReservada
+    : texto;
+
 /// Intérprete de órdenes de navegación para un rol.
 final class InterpreteOrdenes {
   /// [puedeVer] decide qué módulos se ofrecen (por defecto, el espejo de la
@@ -166,6 +203,25 @@ final class InterpreteOrdenes {
       return 'abre $palabra';
     }
     return null;
+  }
+
+  /// Texto que puede guardarse en un historial para [texto] (criterio 54, D13).
+  ///
+  /// Si la orden menciona un hábito sensible o el diario, o lleva (o podría
+  /// llevar, aunque haya que elegir entre opciones) a algo de Hábitos, se
+  /// guarda [ordenDeHabitosReservada] y nunca lo escrito. Las demás órdenes se
+  /// guardan igual. Hoy ni la barra ni GRAVITY guardan historial; quien lo
+  /// agregue (Fase 6) debe pasar siempre por aquí.
+  String paraHistorial(String texto) {
+    if (textoParaHistorial(texto) != texto) return ordenDeHabitosReservada;
+    final llevaAHabitos = switch (interpretar(texto)) {
+      OrdenEntendida(:final destino) => destino.modulo == Modulo.habitos,
+      OrdenParecida(:final opciones) => opciones.any(
+        (o) => o.modulo == Modulo.habitos,
+      ),
+      _ => false,
+    };
+    return llevaAHabitos ? ordenDeHabitosReservada : texto;
   }
 
   /// Interpreta una orden completa (al presionar Enter).

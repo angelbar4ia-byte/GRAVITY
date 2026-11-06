@@ -86,12 +86,12 @@ void main() {
         reason: 'revisiones subidas: $revisiones (el servidor acepta solo +1)');
   });
 
-  test('F3-3: el KDF que manda el cliente está en la lista del servidor', tags: 'hallazgo', () {
+  test('F3-3: el KDF que manda el cliente está en la lista del servidor', () {
     const aceptados = {'pbkdf2-hmac-sha256', 'argon2id'};
     expect(aceptados, contains(LlaveEnvuelta.kdfPbkdf2));
   });
 
-  test('F3-6: la frase se reconoce con la "á" descompuesta (NFD)', tags: 'hallazgo', () {
+  test('F3-6: la frase se reconoce con la "á" descompuesta (NFD)', () {
     final frase = FraseDeRecuperacion.desdeEntropia(List.filled(16, 0));
     // ábaco ×11 + abierto, escrito con a + U+0301 (teclados que no normalizan).
     final tecleada = frase.map((p) => p.replaceAll('á', 'á')).join(' ');

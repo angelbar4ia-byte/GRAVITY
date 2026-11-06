@@ -5,7 +5,7 @@ import '../../../nucleo/contratos/roles.dart';
 import 'operacion_api.dart';
 
 /// Huella de api/openapi.yaml con la que se generó este archivo.
-const huellaEspecificacion = 'fnv1a32:50a33ac5';
+const huellaEspecificacion = 'fnv1a32:dc31ebad';
 
 /// Versión de la especificación (info.version).
 const versionEspecificacion = '0.6.0';
@@ -165,6 +165,50 @@ const gruposOperaciones = <GrupoOperaciones>[
         ruta: '/herramientas/habitos.sos',
         resumen: 'habitos.sos · SOS: tengo un antojo',
         descripcion: 'Abre el SOS de Hábitos (`/habitos/sos`), una sección reservada que pide PIN o huella y no se muestra en la tablet pública. Órdenes: "tengo un antojo", "antojo", "sos". Solo abre la vista (D13): nunca lee ni registra nada de Hábitos, `para_ia` siempre es nulo y la orden no se guarda en ningún historial. Es solo local y no la recibe la cuenta maestra que no es la dueña, ni el cuidador, ni Casa.',
+        roles: {Rol.dueno, Rol.coadministrador, Rol.familiar},
+        escribe: false,
+        soloLocal: true,
+        fase: 3,
+      ),
+      OperacionApi(
+        id: 'herramientaHabitosAbrirLector',
+        metodo: MetodoHttp.post,
+        ruta: '/herramientas/habitos.abrir_lector',
+        resumen: 'habitos.abrir_lector · Abrir el lector',
+        descripcion: 'Abre Hábitos › Lector de la Biblia (`/habitos/lector`). Solo abre la vista. Órdenes: "abre el lector", "leer la biblia". Solo local (D13): `para_ia` siempre es nulo, nunca va a las bocinas y la orden no se guarda en ningún historial (si se guardara, sería "Orden de Hábitos reservada"). No la recibe la cuenta maestra que no es la dueña, ni el cuidador, ni Casa.',
+        roles: {Rol.dueno, Rol.coadministrador, Rol.familiar},
+        escribe: false,
+        soloLocal: true,
+        fase: 3,
+      ),
+      OperacionApi(
+        id: 'herramientaHabitosAbrirRevision',
+        metodo: MetodoHttp.post,
+        ruta: '/herramientas/habitos.abrir_revision',
+        resumen: 'habitos.abrir_revision · Abrir la revisión',
+        descripcion: 'Abre la revisión semanal de Hábitos (`/habitos/revision`). Solo abre la vista. Órdenes: "abre mi revisión", "revisión semanal". Solo local (D13): `para_ia` siempre es nulo, nunca va a las bocinas y la orden no se guarda en ningún historial (si se guardara, sería "Orden de Hábitos reservada"). No la recibe la cuenta maestra que no es la dueña, ni el cuidador, ni Casa.',
+        roles: {Rol.dueno, Rol.coadministrador, Rol.familiar},
+        escribe: false,
+        soloLocal: true,
+        fase: 3,
+      ),
+      OperacionApi(
+        id: 'herramientaHabitosAbrirPausa',
+        metodo: MetodoHttp.post,
+        ruta: '/herramientas/habitos.abrir_pausa',
+        resumen: 'habitos.abrir_pausa · Abrir la pausa',
+        descripcion: 'Abre la pausa de Hábitos (`/habitos/sos`), sección reservada que pide PIN o huella y no se muestra en la tablet pública. Solo abre la vista. Órdenes: "pausa", "necesito una pausa". Solo local (D13): `para_ia` siempre es nulo, nunca va a las bocinas y la orden no se guarda en ningún historial (si se guardara, sería "Orden de Hábitos reservada"). No la recibe la cuenta maestra que no es la dueña, ni el cuidador, ni Casa.',
+        roles: {Rol.dueno, Rol.coadministrador, Rol.familiar},
+        escribe: false,
+        soloLocal: true,
+        fase: 3,
+      ),
+      OperacionApi(
+        id: 'herramientaHabitosResumenHoy',
+        metodo: MetodoHttp.post,
+        ruta: '/herramientas/habitos.resumen_hoy',
+        resumen: 'habitos.resumen_hoy · Resumen de hoy',
+        descripcion: 'Da en pantalla cuántos elementos de lo no sensible van hechos hoy; sin contenido, abre Hábitos › Hoy. Jamás menciona un hábito a eliminar, el diario ni cifras de ellos, y no se dice por voz. Órdenes: "resumen de hoy", "cómo voy hoy", "qué me falta hoy". Solo lectura. Solo local (D13): `para_ia` siempre es nulo, nunca va a las bocinas y la orden no se guarda en ningún historial (si se guardara, sería "Orden de Hábitos reservada"). No la recibe la cuenta maestra que no es la dueña, ni el cuidador, ni Casa.',
         roles: {Rol.dueno, Rol.coadministrador, Rol.familiar},
         escribe: false,
         soloLocal: true,

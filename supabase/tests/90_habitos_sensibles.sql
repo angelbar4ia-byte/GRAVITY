@@ -63,12 +63,20 @@ select pruebas.igual(public.hab_subir_sobres(jsonb_build_array(jsonb_build_objec
   'tipo', 'habitos_sensibles', 'revision', 1, 'llave_version', 1, 'cifrado', 'QUJDREVGR0g'))) ->> 'aceptados', '0', 'Subir lo mismo es idempotente');
 select pruebas.igual(public.hab_subir_sobres(jsonb_build_array(jsonb_build_object('id', 'f6000000-0000-4000-8000-000000000001',
   'tipo', 'habitos_sensibles', 'revision', 2, 'llave_version', 1, 'cifrado', 'QUJDREVGR0gy'))) ->> 'aceptados', '1', 'La revisión siguiente entra');
-select pruebas.falla($$select public.hab_subir_sobres(jsonb_build_array(jsonb_build_object('id', 'f6000000-0000-4000-8000-000000000001',
-  'tipo', 'habitos_sensibles', 'revision', 4, 'llave_version', 1, 'cifrado', 'QUJD')))$$, 'La revisión sube de 1 en 1', '22023');
 select pruebas.igual(public.hab_subir_sobres(jsonb_build_array(jsonb_build_object('id', 'f6000000-0000-4000-8000-000000000001',
-  'tipo', 'habitos_sensibles', 'revision', 2, 'llave_version', 1, 'cifrado', 'b3RyYQ'))) -> 'conflictos' -> 0 ->> 'revision', '2',
-  'Otra versión de la misma revisión es un conflicto: se devuelve la del servidor');
-select pruebas.igual((select cifrado from public.hab_sobres where id = 'f6000000-0000-4000-8000-000000000001'), 'QUJDREVGR0gy', '… y no se pisa');
+  'tipo', 'habitos_sensibles', 'revision', 4, 'llave_version', 1, 'cifrado', 'QUJDRA'))) ->> 'aceptados', '1',
+  'F3-2: una revisión MAYOR entra aunque salte (la cola puede saltar intermedias)');
+select pruebas.igual(public.hab_subir_sobres(jsonb_build_array(jsonb_build_object('id', 'f6000000-0000-4000-8000-000000000001',
+  'tipo', 'habitos_sensibles', 'revision', 3, 'llave_version', 1, 'cifrado', 'QUJDRQ'))) -> 'conflictos' -> 0 ->> 'revision', '4',
+  'Una menor es un conflicto con la revisión del servidor');
+select pruebas.igual(public.hab_subir_sobres(jsonb_build_array(
+  jsonb_build_object('id', 'f6000000-0000-4000-8000-000000000001', 'tipo', 'habitos_sensibles', 'revision', 2, 'llave_version', 1, 'cifrado', 'QUJDRg'),
+  jsonb_build_object('id', 'f6000000-0000-4000-8000-0000000000f9', 'tipo', 'habitos_sensibles', 'revision', 7, 'llave_version', 1, 'cifrado', 'QUJDRw'))) ->> 'aceptados',
+  '1', 'Un conflicto no aborta el lote: el otro sobre entra');
+select pruebas.igual(public.hab_subir_sobres(jsonb_build_array(jsonb_build_object('id', 'f6000000-0000-4000-8000-000000000001',
+  'tipo', 'habitos_sensibles', 'revision', 2, 'llave_version', 1, 'cifrado', 'b3RyYQ'))) -> 'conflictos' -> 0 ->> 'revision', '4',
+  'Otra versión de una revisión ya superada es un conflicto: se devuelve la del servidor');
+select pruebas.igual((select cifrado from public.hab_sobres where id = 'f6000000-0000-4000-8000-000000000001'), 'QUJDRA', '… y no se pisa');
 select pruebas.falla($$select public.hab_subir_sobres(jsonb_build_array(jsonb_build_object('id', 'f5600000-0000-4000-8000-000000000001',
   'tipo', 'diario_oracion', 'revision', 1, 'llave_version', 1, 'cifrado', 'QUJD')))$$, 'El sobre de otra persona no se toca (y el tipo de Carla está en solo teléfono)', '22023');
 select pruebas.falla($$select public.hab_subir_sobres(jsonb_build_array(jsonb_build_object('id', 'f6000000-0000-4000-8000-000000000002',
@@ -80,10 +88,10 @@ select pruebas.falla($$select public.hab_subir_sobres((select jsonb_agg(jsonb_bu
   'revision', 1, 'llave_version', 1, 'cifrado', 'QUJD')) from generate_series(1, 51)))$$, 'Hasta 50 sobres por llamada', '22023');
 select pruebas.igual(public.hab_subir_sobres((select jsonb_agg(jsonb_build_object('id', gen_random_uuid(), 'tipo', 'habitos_sensibles',
   'revision', 1, 'llave_version', 1, 'cifrado', 'QUJD')) from generate_series(1, 50))) ->> 'aceptados', '50', 'Con 50 sí');
-select pruebas.igual(pruebas.cuenta($$select * from public.hab_sobres$$), 51, 'Carla ve sus 51 sobres');
+select pruebas.igual(pruebas.cuenta($$select * from public.hab_sobres$$), 52, 'Carla ve sus 52 sobres');
 -- Tumba
 select public.hab_subir_sobres(jsonb_build_array(jsonb_build_object('id', 'f6000000-0000-4000-8000-000000000001',
-  'tipo', 'habitos_sensibles', 'revision', 3, 'llave_version', 1, 'cifrado', 'QUJD', 'eliminado', true)));
+  'tipo', 'habitos_sensibles', 'revision', 5, 'llave_version', 1, 'cifrado', 'QUJD', 'eliminado', true)));
 select pruebas.ok((select eliminado from public.hab_sobres where id = 'f6000000-0000-4000-8000-000000000001'), 'Una tumba es un sobre eliminado');
 -- Cuota
 select pruebas.como_postgres();
@@ -104,11 +112,11 @@ select pruebas.igual(pruebas.cuenta($$select * from public.hab_sobres$$), 0, 'Al
 -- ---------------------------------------------------------------- volver a solo teléfono borra la nube
 select pruebas.como('carla@ejemplo.test');
 select pruebas.falla($$select public.hab_cambiar_modo('habitos_sensibles', 'solo_telefono')$$, 'Sin confirmar no se borra', '22023');
-select pruebas.igual(pruebas.cuenta($$select * from public.hab_sobres$$), 51, '… y no se perdió nada');
+select pruebas.igual(pruebas.cuenta($$select * from public.hab_sobres$$), 52, '… y no se perdió nada');
 select public.hab_cambiar_modo('habitos_sensibles', 'solo_telefono', true);
 select pruebas.igual(pruebas.cuenta($$select * from public.hab_sobres$$), 0, 'Con confirmación se borran físicamente los sobres de ese tipo');
 select pruebas.igual((select epoca_nube from public.hab_ajustes), 1, 'y sube la época de la nube (los demás equipos borran su copia)');
-select pruebas.igual(pruebas.cuenta($$select * from public.bitacora where accion = 'habitos.cambiar_modo'$$), 2, 'Cada cambio de modo deja su constancia sin contenido');
+select pruebas.igual(pruebas.cuenta($$select * from public.bitacora where accion = 'habitos.cambiar_modo'$$), 1, 'F3-4: los cambios de modo del mismo minuto dejan una sola constancia sin contenido');
 
 -- ---------------------------------------------------------------- reiniciar la nube y borrar mis datos
 select public.hab_cambiar_modo('habitos_sensibles', 'nube_cifrada');
@@ -125,7 +133,7 @@ select public.hab_reiniciar_nube();
 select pruebas.igual(pruebas.cuenta($$select * from public.hab_llaves$$) + pruebas.cuenta($$select * from public.hab_sobres$$), 0,
   'Reiniciar todo borra los sobres y la llave');
 select pruebas.igual(pruebas.cuenta($$select * from public.hab_objetivos$$), 1, 'Lo que está en claro no se toca al reiniciar la nube');
-select pruebas.igual(pruebas.cuenta($$select * from public.bitacora where accion = 'habitos.reiniciar_nube'$$), 2, 'Cada reinicio deja su constancia');
+select pruebas.igual(pruebas.cuenta($$select * from public.bitacora where accion = 'habitos.reiniciar_nube'$$), 1, 'Los reinicios del mismo minuto dejan una sola constancia');
 select pruebas.falla($$select public.hab_reiniciar_nube('otro')$$, 'Tipo desconocido', '22023');
 select pruebas.falla($$select public.hab_borrar_mis_datos('otra-cosa')$$, 'Alcance desconocido', '22023');
 select public.hab_borrar_mis_datos('todo');

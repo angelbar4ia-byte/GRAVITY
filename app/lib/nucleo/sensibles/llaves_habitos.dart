@@ -74,19 +74,52 @@ abstract final class FraseDeRecuperacion {
     ];
   }
 
-  /// Minúsculas, sin espacios de más.
+  /// Sin mayúsculas, acentos ni marcas combinantes (una "á" descompuesta es
+  /// "a" + U+0301). Es la forma con la que se comparan las palabras
+  /// (decisión pendiente de confirmar por el dueño, F3-6: quien teclea sin
+  /// acentos, en mayúsculas o con un teclado que no compone igual debe poder
+  /// recuperar su llave; la lista no tiene dos palabras que solo difieran en
+  /// el acento, y una prueba lo vigila).
+  static String claveDePalabra(String palabra) {
+    final sinMarcas = palabra.toLowerCase().replaceAll(
+      RegExp('[\u0300-\u036f]'),
+      '',
+    );
+    const de = 'áàäâéèëêíìïîóòöôúùüûñ';
+    const a = 'aaaaeeeeiiiioooouuuun';
+    final salida = StringBuffer();
+    for (final r in sinMarcas.runes) {
+      final c = String.fromCharCode(r);
+      final i = de.indexOf(c);
+      salida.write(i < 0 ? c : a[i]);
+    }
+    return salida.toString();
+  }
+
+  static final Map<String, String> _canonicas = {
+    for (final p in palabrasEs) claveDePalabra(p): p,
+  };
+
+  /// La palabra de la lista que corresponde a lo tecleado, o lo tecleado en
+  /// minúsculas si no es de la lista.
+  static String canonica(String palabra) =>
+      _canonicas[claveDePalabra(palabra)] ?? palabra.toLowerCase();
+
+  /// Separa en palabras y las lleva a su forma de la lista (con acentos, NFC),
+  /// sea cual sea cómo se tecleó. La clave se deriva de estas palabras, así
+  /// que da lo mismo con o sin acentos.
   static List<String> normalizar(String texto) => texto
       .trim()
-      .toLowerCase()
       .split(RegExp(r'\s+'))
       .where((p) => p.isNotEmpty)
+      .map(canonica)
       .toList();
 
   /// `true` si son 12 palabras de la lista y la verificación coincide.
   static bool esValida(List<String> frase) {
     if (frase.length != palabras) return false;
     final bits = StringBuffer();
-    for (final p in frase) {
+    for (final p in frase.map(canonica)) {
       final i = palabrasEs.indexOf(p);
       if (i < 0) return false;
       bits.write(i.toRadixString(2).padLeft(11, '0'));
@@ -124,7 +157,7 @@ abstract final class FraseDeRecuperacion {
   ) {
     if (respuestas.length != posiciones.length) return false;
     for (var i = 0; i < posiciones.length; i++) {
-      if (respuestas[i].trim().toLowerCase() != frase[posiciones[i]]) {
+      if (claveDePalabra(respuestas[i].trim()) != claveDePalabra(frase[posiciones[i]])) {
         return false;
       }
     }
@@ -145,8 +178,21 @@ class LlaveEnvuelta {
     required this.llaveEnvuelta,
   });
 
-  static const kdfPbkdf2 = 'pbkdf2-sha256';
+  /// El nombre que admite el servidor (`hab_llaves`, supabase/README.md).
+  static const kdfPbkdf2 = 'pbkdf2-hmac-sha256';
+
+  /// Nombre que usó una primera versión del cliente; solo se lee.
+  static const kdfPbkdf2Antiguo = 'pbkdf2-sha256';
   static const vueltasPorOmision = 600000;
+
+  /// Rango razonable de vueltas al abrir una llave envuelta: lo que mande el
+  /// servidor fuera de él se rechaza (muy bajo = llave débil; muy alto =
+  /// teléfono bloqueado minutos).
+  static const vueltasMinimas = 100000;
+  static const vueltasMaximas = 2000000;
+
+  static bool vueltasEnRango(int vueltas, {int minimo = vueltasMinimas}) =>
+      vueltas >= minimo && vueltas <= vueltasMaximas;
 
   final int version;
   final String kdf;
@@ -178,7 +224,8 @@ class LlaveEnvuelta {
 
   static List<int> _aad(int version) => utf8.encode('gravity-hab-llave-v1|$version');
 
-  static List<int> _frase(List<String> frase) => utf8.encode(frase.join(' '));
+  static List<int> bytesDeFrase(List<String> frase) =>
+      utf8.encode(frase.map(FraseDeRecuperacion.canonica).join(' '));
 
   /// Envuelve [llaveMaestra] con [frase]. PBKDF2 corre en un hilo aparte.
   static Future<LlaveEnvuelta> envolver(
@@ -189,7 +236,7 @@ class LlaveEnvuelta {
     List<int>? sal,
   }) async {
     final salUsada = sal ?? bytesAleatorios(16);
-    final llave = await pbkdf2EnAislado(_frase(frase), salUsada, vueltas);
+    final llave = await pbkdf2EnAislado(bytesDeFrase(frase), salUsada, vueltas);
     final envuelta = SobreAes.cifrar(
       llave,
       llaveMaestra,
@@ -206,10 +253,18 @@ class LlaveEnvuelta {
   }
 
   /// La llave maestra, o `null` si la frase no corresponde.
-  Future<Uint8List?> desenvolver(List<String> frase) async {
-    if (kdf != kdfPbkdf2 || vueltas < 1) return null;
+  ///
+  /// [minimo] solo baja en las pruebas (vueltas pocas para ir rápido).
+  Future<Uint8List?> desenvolver(
+    List<String> frase, {
+    int minimo = vueltasMinimas,
+  }) async {
+    if ((kdf != kdfPbkdf2 && kdf != kdfPbkdf2Antiguo) ||
+        !vueltasEnRango(vueltas, minimo: minimo)) {
+      return null;
+    }
     try {
-      final llave = await pbkdf2EnAislado(_frase(frase), desdeBase64Url(sal), vueltas);
+      final llave = await pbkdf2EnAislado(bytesDeFrase(frase), desdeBase64Url(sal), vueltas);
       final maestra = SobreAes.descifrar(llave, llaveEnvuelta, datosAsociados: _aad(version));
       llave.fillRange(0, llave.length, 0);
       return maestra;

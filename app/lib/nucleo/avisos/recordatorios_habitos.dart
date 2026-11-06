@@ -12,6 +12,7 @@
 /// bloqueada.
 library;
 
+import 'package:characters/characters.dart';
 import 'package:flutter/foundation.dart';
 
 import 'aviso.dart';
@@ -126,9 +127,16 @@ String tituloDeRecordatorio(RecordatorioHabito r) {
   if (r.sensible) return titulosDeHabitos[TipoRecordatorioHabito.reservado]!;
   final nombre = r.nombreEnAviso?.trim();
   if (nombre != null && nombre.isNotEmpty) {
-    return nombre.length <= largoMaximoTituloAviso
-        ? nombre
-        : nombre.substring(0, largoMaximoTituloAviso);
+    // Por grafemas, no por unidades UTF-16: no parte un emoji ni una letra con
+    // acento descompuesto (F3-8).
+    final salida = StringBuffer();
+    var largo = 0;
+    for (final g in nombre.characters) {
+      if (largo + g.length > largoMaximoTituloAviso) break;
+      salida.write(g);
+      largo += g.length;
+    }
+    return salida.toString();
   }
   return titulosDeHabitos[r.tipo] ?? textoAvisoGenerico;
 }
