@@ -16,6 +16,7 @@ enum SeccionAjustes {
   privacidad,
   copias,
   notificaciones,
+  habitos,
   desarrollador,
 }
 
@@ -78,6 +79,12 @@ const Map<SeccionAjustes, InfoSeccionAjustes> infoSecciones = {
     icono: Icons.notifications_outlined,
     segmento: 'notificaciones',
   ),
+  SeccionAjustes.habitos: InfoSeccionAjustes(
+    titulo: 'Hábitos',
+    descripcion: 'Nube cifrada: frase de recuperación, modos y equipos',
+    icono: Icons.cloud_lock_outlined,
+    segmento: 'habitos',
+  ),
   SeccionAjustes.desarrollador: InfoSeccionAjustes(
     titulo: 'Desarrollador',
     descripcion: 'APIs del sistema con Swagger UI',
@@ -121,6 +128,9 @@ bool seccionDisponible(
     SeccionAjustes.personas || SeccionAjustes.copias => administra,
     SeccionAjustes.dispositivos =>
       administra && dispositivo == TipoDispositivo.tablet,
+    // La nube cifrada de Hábitos es de quien usa Hábitos (no la cuenta
+    // maestra, el cuidador ni la cuenta Hogar).
+    SeccionAjustes.habitos => puedeUsarHabitos(rol, esMaestra: esMaestra),
     SeccionAjustes.desarrollador =>
       !soloLectura && puedeVerDesarrollador(rol, dispositivo),
     _ => true,

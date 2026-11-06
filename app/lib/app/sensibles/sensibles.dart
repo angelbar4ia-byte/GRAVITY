@@ -14,6 +14,7 @@ import '../../nucleo/cola/proveedores_cola.dart';
 import '../../nucleo/seguridad/proveedores_seguridad.dart';
 import '../../nucleo/sensibles/llaves_habitos.dart';
 import '../../nucleo/sensibles/mis_datos.dart';
+import '../../nucleo/sensibles/nube_cifrada.dart';
 import '../../nucleo/sensibles/sobres.dart';
 import '../../nucleo/sensibles/subida_diferida.dart';
 import '../avisos/con_avisos.dart';
@@ -51,6 +52,26 @@ final fuenteDeDatosHabitosProvider = Provider<FuenteDeDatosHabitos?>(
 );
 
 final nubeDeHabitosProvider = Provider<NubeDeHabitos?>((ref) => null);
+
+/// El servidor de la nube cifrada (E7, P5). El arranque lo fija con Supabase;
+/// sin servidor (demostración) no hay nube que administrar.
+final administracionNubeHabitosProvider =
+    Provider<AdministracionNubeHabitos?>((ref) => null);
+
+/// Activar, cambiar de modo, añadir equipo, cambiar la frase y reiniciar la
+/// nube cifrada de Hábitos (`nucleo/sensibles/nube_cifrada.dart`). `null` si
+/// no hay servidor.
+final nubeCifradaHabitosProvider = Provider<NubeCifradaHabitos?>((ref) {
+  final servidor = ref.watch(administracionNubeHabitosProvider);
+  if (servidor == null) return null;
+  return NubeCifradaHabitos(
+    llaves: ref.watch(llavesHabitosProvider),
+    sobres: ref.watch(almacenDeSobresProvider),
+    modos: ref.watch(modosLocalesProvider),
+    almacen: ref.watch(almacenSeguroProvider),
+    servidor: servidor,
+  );
+});
 
 final subidaDiferidaProvider = Provider<SubidaDiferidaDeSobres>(
   (ref) => SubidaDiferidaDeSobres(

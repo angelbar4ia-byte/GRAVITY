@@ -152,6 +152,27 @@ void main() {
       });
     }
 
+    testWidgets('Ahorro con el reparto propuesto: teléfono 360 dp, letra 2.0, '
+        'Apartar y Después caben', (tester) async {
+      final repo = await montarFinanzasConTamano(
+        tester,
+        dispositivo: TipoDispositivo.telefono,
+        tamano: _telefono,
+        escalaDeLetra: 2.0,
+      );
+      await _sembrar(repo, conDeuda: false);
+      final errores = await recolectar(
+        () => irA(tester, SeccionFinanzas.ahorro.ruta),
+      );
+      expect(errores.desbordes, isEmpty, reason: errores.desbordes.join('\n'));
+      final apartar = find.byWidgetPredicate(
+        (w) =>
+            w.key is ValueKey &&
+            '${(w.key! as ValueKey).value}'.startsWith('apartar-'),
+      );
+      expect(apartar, findsWidgets, reason: 'hay un reparto propuesto');
+    });
+
     testWidgets('la hoja corta de pago (teléfono, letra 2.0) cabe y Guardar '
         'queda a la vista', (tester) async {
       final repo = await montarFinanzasConTamano(
