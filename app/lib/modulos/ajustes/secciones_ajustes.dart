@@ -130,7 +130,8 @@ bool seccionDisponible(
       administra && dispositivo == TipoDispositivo.tablet,
     // La nube cifrada de Hábitos es de quien usa Hábitos (no la cuenta
     // maestra, el cuidador ni la cuenta Hogar).
-    SeccionAjustes.habitos => puedeUsarHabitos(rol, esMaestra: esMaestra),
+    SeccionAjustes.habitos =>
+      !soloLectura && puedeUsarHabitos(rol, esMaestra: false),
     SeccionAjustes.desarrollador =>
       !soloLectura && puedeVerDesarrollador(rol, dispositivo),
     _ => true,

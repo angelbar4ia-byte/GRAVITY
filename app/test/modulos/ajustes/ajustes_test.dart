@@ -342,6 +342,12 @@ void main() {
       );
       await cola.rechazarPendientesDe('persona-quitada', motivoPersonaQuitada);
       await tester.pumpAndSettle();
+      // La lista de personas del hogar va arriba: se baja hasta el aviso.
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('aviso-purga-quitados')),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
       expect(
         find.byKey(const ValueKey('aviso-purga-quitados')),
         findsOneWidget,

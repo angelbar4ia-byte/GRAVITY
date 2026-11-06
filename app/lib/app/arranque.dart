@@ -12,6 +12,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../diseno/licencias.dart';
 import '../diseno/proveedores.dart'
     show
+        almacenAparienciaProvider,
         densidadBaseProvider,
         montosVisiblesProvider,
         personaEnPantallaProvider,
@@ -39,6 +40,7 @@ import '../nucleo/sensibles/mis_datos.dart'
     show funcionBorrarMisDatos, tipoColaBorrado;
 import '../nucleo/sensibles/subida_diferida.dart'
     show funcionSubirSobres, tipoColaSobres;
+import '../nucleo/apariencia/almacen_apariencia_persistente.dart';
 import '../nucleo/conectividad/conectividad.dart';
 import '../nucleo/conectividad/conectividad_plus.dart';
 import '../nucleo/personas/personas_hogar.dart';
@@ -224,6 +226,10 @@ Future<List<Override>> prepararArranque({
       _ => const ProtectorDePantallaNulo(),
     }),
     biometriaProvider.overrideWithValue(biometria),
+    // La apariencia de cada persona sobrevive al reinicio (P3).
+    almacenAparienciaProvider.overrideWithValue(
+      await AlmacenAparienciaPersistente.abrir(),
+    ),
     // E1: el indicador "En línea" sale de la conexión real del equipo.
     fuenteConectividadProvider.overrideWithValue(FuenteConectividadPlus()),
     servicioSesionProvider.overrideWithValue(sesion),

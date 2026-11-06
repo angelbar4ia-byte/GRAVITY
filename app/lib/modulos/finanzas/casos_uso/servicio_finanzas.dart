@@ -86,7 +86,7 @@ class ServicioFinanzas {
     for (final id in libroIds.toSet()) {
       try {
         alCambiar(id);
-      } catch (_) {
+      } catch (e) {
         // Un aviso nunca debe impedir un guardado.
       }
     }

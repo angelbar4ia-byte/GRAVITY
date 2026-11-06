@@ -436,7 +436,9 @@ servicioFinanzasProvider = Provider<ServicioFinanzas>((ref) {
   final reloj = ref.watch(relojProvider);
   final maestra = ref.watch(esMaestraFinanzasProvider);
   final rol = sesion?.rol;
-  return ServicioFinanzas(
+  final emisor = ref.watch(emisorAvisosFinanzasProvider);
+  late final ServicioFinanzas servicio;
+  servicio = ServicioFinanzas(
     repositorio: ref.watch(repositorioFinanzasProvider),
     personaId: sesion?.persona.id ?? '',
     hogarId: sesion?.hogarId ?? '',
@@ -446,12 +448,9 @@ servicioFinanzasProvider = Provider<ServicioFinanzas>((ref) {
     reloj: reloj.ahora,
     // Tras guardar algo que cambia la semana: emitir (sin esperar) los avisos
     // de flujo negativo y abono bajo el mínimo.
-    alCambiarLibro: (libroId) => unawaited(
-      ref
-          .read(emisorAvisosFinanzasProvider)
-          .emitir(ref.read(servicioFinanzasProvider), libroId),
-    ),
+    alCambiarLibro: (libroId) => unawaited(emisor.emitir(servicio, libroId)),
   );
+  return servicio;
 });
 
 /// Cuánto vale una consulta registrada de la cuenta maestra: el servidor deja
