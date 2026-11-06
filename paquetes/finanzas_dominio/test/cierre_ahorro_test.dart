@@ -147,6 +147,20 @@ void main() {
       );
     });
 
+    test('el sobrante salta a la siguiente bolsa de la lista que tenga ese '
+        'método (D25)', () {
+      final plan = planearAhorroDeCierre(
+        remanente: 30000,
+        orden: const ['a', 'b'],
+        bolsas: [
+          bolsa('a', [MetodoAhorro.redondeo]),
+          bolsa('b', [MetodoAhorro.sobranteSemanal]),
+        ],
+      );
+      expect(plan.aportadoA('b'), 30000);
+      expect(plan.aportadoA('a'), 0);
+    });
+
     test('con varias bolsas el sobre y el sobrante no se cuentan dos veces', () {
       final plan = planearAhorroDeCierre(
         remanente: 30000,
