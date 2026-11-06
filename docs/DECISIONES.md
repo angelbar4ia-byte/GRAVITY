@@ -501,3 +501,11 @@ Respuestas del dueño a la especificación de la Fase 4 (`docs/specs/fase-4-puli
 - Cada solicitud y autorización va a la bitácora sin montos ni cuentas. El aviso al dueño usa el catálogo discreto (D20).
 - Excepción a D5 solo para esta vista temporal. Detalle en `docs/specs/fase-4-vista-temporal.md`.
 
+## D25. Finanzas: decisiones de la Fase 4 — confirmada (6/nov/2026)
+
+- **Hoy sin datos:** "Sin datos todavía" cuando el presupuesto no tiene plan ni movimientos.
+- **Extras:** se aparta el **20 %** por omisión (editable).
+- **Sobres por bolsa:** se prioriza **arrastrando** las bolsas de ahorro para darles prioridad, y el sobrante va a la primera bolsa de la lista.
+- **Recordatorios "días antes":** **más de uno** por vencimiento (se mantienen los días configurados en Ajustes › Notificaciones).
+- **Sin señal:** el aviso no se reenvía solo; pasa al siguiente cálculo (abrir el libro, guardar o Reintentar). Confirmado.
+
