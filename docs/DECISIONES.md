@@ -474,3 +474,14 @@ Desarrolla D13 con la especificación de la Fase 3 (`docs/specs/fase-3-habitos.m
 
 **Respuestas del dueño a la Fase 3 (1/nov/2026):** datos sensibles **solo en el teléfono por ahora**; **frase de 12 palabras** aprobada; la **fecha de inicio** de los planes de cigarrillo y azúcar la fija **cada miembro** cuando quiera; el arquitecto y el agente de hábitos **proponen** el SOS y los versículos de ánimo (el dueño los revisa); la **copia diaria de la laptop incluye las tablas en claro** de toda la familia, con aviso a la pareja; los **datos de una persona dada de baja se conservan sin acceso y se borran a los 90 días**.
 
+---
+
+## D22. Apariencia, PIN y alimentación urgente — confirmada (6/nov/2026)
+
+Respuestas del dueño a la especificación de la Fase 4 (`docs/specs/fase-4-pulido.md`, sección 14):
+- **Estilos:** por ahora Swagger y Glass; los demás después. Cada uno se aprueba al terminarlo. El estilo es por persona y la tablet de la casa tiene el suyo. Se edita en Configuración.
+- **Claro y oscuro:** cambian solos según el amanecer y el atardecer.
+- **Capturas en Windows:** bloqueadas por omisión, editable en Configuración.
+- **PIN:** 600 000 vueltas de cifrado, y desbloqueo por huella con los controles del teléfono.
+- **Alimentación:** entra en esta fase en versión mínima (menú de la semana y lista de compras).
+

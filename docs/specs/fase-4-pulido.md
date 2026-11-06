@@ -460,3 +460,33 @@ Cada pregunta trae la **propuesta por defecto** con la que se construye si no ha
 | Versión | Fecha | Cambio |
 |---|---|---|
 | 0.1 | 6/nov/2026 | Borrador inicial: alcance, lista y orden de estilos, lo que estorba con decisión, metas de rendimiento con su medición, accesibilidad, D3/D13/D14, 53 criterios, trabajo por agente y 14 preguntas |
+
+---
+
+## 14. Respuestas del dueño (6/nov/2026) — v0.2, en construcción
+
+| # | Pregunta | Respuesta | Qué implica |
+|---|---|---|---|
+| P1 | Estilos y orden | **Solo Swagger y Glass por ahora** | Se construyen estos dos; los demás quedan para después |
+| P2 | Aprobación por estilo | Sí | Cada estilo se aprueba antes de cerrar |
+| P3 | Estilo por persona y tablet de la casa | Sí | El estilo se guarda por persona; la tablet de la casa tiene el suyo |
+| P4 | Gadgets de módulos futuros | Sí, solo diseño visual | Gadgets de Cuidados, Alimentación y Hábitos con datos de ejemplo |
+| P5 | Pantalla de la nube cifrada | Sí, ahora | Ajustes › Hábitos › Nube cifrada: activar con frase, cambiar modo, añadir equipo, reiniciar |
+| P6 | "Alto contraste" | 7:1 | Umbral de contraste del modo alto |
+| P7 | Bloqueo de capturas en Windows | Sí, **editable en Configuración** | Se activa por omisión y la persona puede apagarlo |
+| P8 | Claro y oscuro por amanecer y atardecer | **Ahora** | Cambio automático según la hora real del lugar |
+| P9 | Lo "para después" urgente | **Alimentación** | Menú de la semana y lista de compras entran en esta fase (ver sección 15) |
+| P10 | Vueltas del PIN | **600 000** y **desbloqueo por huella** con los controles del teléfono | El PIN se rehace con 600 000; la huella es alternativa al PIN en el teléfono |
+| P11 | Quién mide en el A52 | (no quedó claro) | Ver sección 16: propuesta de medición |
+| P12 | Datos de ejemplo | Solo para diseño por ahora | Los datos reales se darán al final |
+| P13 | Chip "+ Cuenta" | Sí | Va al final de la lista de cuentas |
+| P14 | Variante animada del núcleo por estilo | Sí | Cada estilo tiene su núcleo animado |
+
+## 15. Alimentación urgente (P9)
+
+Entra en esta fase como versión mínima: menú de la semana y lista de compras, con datos de ejemplo. Recetas paso a paso, precios y el asistente de menús quedan en la Fase 7. El alcance exacto lo escribe el agente de alimentación antes de construir.
+
+## 16. Medición en el Galaxy A52 (P11)
+
+Propuesta: tú mides en tu teléfono siguiendo una lista corta de pasos que te doy al terminar cada parte (abrir la app, registrar un gasto, cronómetro). Yo dejo el medidor integrado en la app. No hace falta conocimiento técnico: basta un cronómetro y el teléfono.
+
