@@ -52,7 +52,7 @@ class _SeccionMiembrosState extends ConsumerState<SeccionMiembros> {
   @override
   void initState() {
     super.initState();
-    _carga = _cargar();
+    _carga = _cargar()..ignore();
   }
 
   Future<(List<MiembroDelHogar>, List<InvitacionPendiente>)> _cargar() async {
@@ -68,7 +68,9 @@ class _SeccionMiembrosState extends ConsumerState<SeccionMiembros> {
   }
 
   void _recargar() {
-    final carga = _cargar();
+    // `ignore`: el error lo muestra el FutureBuilder en el siguiente cuadro;
+    // sin esto, un error que llega antes se reporta como no atendido.
+    final carga = _cargar()..ignore();
     setState(() {
       _carga = carga;
     });
