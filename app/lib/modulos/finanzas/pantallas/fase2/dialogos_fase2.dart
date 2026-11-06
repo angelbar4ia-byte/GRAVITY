@@ -427,6 +427,7 @@ class _MsiState extends ConsumerState<DialogoMsi> {
         ),
         if (tarjetas.isNotEmpty)
           DropdownButtonFormField<String>(
+            isExpanded: true,
             initialValue: _tarjeta,
             decoration: const InputDecoration(labelText: 'Tarjeta (opcional)'),
             items: [
@@ -511,6 +512,7 @@ class _BolsaState extends ConsumerState<DialogoBolsa> {
               (v ?? '').trim().isEmpty ? 'Escribe un nombre' : null,
         ),
         DropdownButtonFormField<TipoBolsaAhorro>(
+          isExpanded: true,
           key: const ValueKey('bolsa-tipo'),
           initialValue: _tipo,
           decoration: const InputDecoration(labelText: 'Tipo'),
@@ -621,6 +623,7 @@ class _RetiroState extends ConsumerState<DialogoRetiro> {
       forma: _forma,
       campos: [
         DropdownButtonFormField<TipoRetiro>(
+          isExpanded: true,
           key: const ValueKey('retiro-tipo'),
           initialValue: _tipo,
           decoration: const InputDecoration(labelText: 'Motivo del retiro'),
@@ -636,6 +639,7 @@ class _RetiroState extends ConsumerState<DialogoRetiro> {
         ),
         if (_tipo == TipoRetiro.cambioDeDestino)
           DropdownButtonFormField<String>(
+            isExpanded: true,
             key: const ValueKey('retiro-bolsa'),
             initialValue: _bolsaDestino,
             decoration: const InputDecoration(labelText: 'A qué bolsa'),
@@ -648,6 +652,7 @@ class _RetiroState extends ConsumerState<DialogoRetiro> {
           )
         else
           DropdownButtonFormField<String>(
+            isExpanded: true,
             key: const ValueKey('retiro-cuenta'),
             initialValue: _cuenta,
             decoration: const InputDecoration(labelText: 'A qué cuenta'),
@@ -739,6 +744,7 @@ class _ConfirmarAportacionState
           child: CampoMonto(controlador: _monto, etiqueta: 'Monto a apartar'),
         ),
         DropdownButtonFormField<String>(
+          isExpanded: true,
           key: const ValueKey('apartar-cuenta'),
           initialValue: _cuenta,
           decoration: const InputDecoration(labelText: 'De qué cuenta sale'),

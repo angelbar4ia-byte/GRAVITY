@@ -318,12 +318,13 @@ class _CeldaComida extends ConsumerWidget {
     final etiqueta =
         '${diasSemana[dia]}, ${tiempo.etiqueta}: ${nombre ?? 'sin platillo'}'
         '${duros.isEmpty ? '' : '. Advertencia: alimento duro'}';
-    if (!editable)
+    if (!editable) {
       return Semantics(
         label: etiqueta,
         excludeSemantics: true,
         child: contenido,
       );
+    }
     return Semantics(
       button: true,
       label: '$etiqueta. Toca para cambiar.',

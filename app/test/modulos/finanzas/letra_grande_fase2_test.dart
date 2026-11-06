@@ -4,8 +4,17 @@
 // `f1_i6_letra_grande_telefono_test.dart`: cero desbordes y las acciones a la
 // vista. Datos de ejemplo inventados.
 import 'package:finanzas_dominio/finanzas_dominio.dart'
-    show ClaseDeuda, Semana, TipoBolsaAhorro, TipoCuenta, TipoDeuda, Deuda,
-        CalendarioConfig, ReglaDiaInhabil, Frecuencia;
+    show
+        ClaseDeuda,
+        Semana,
+        TipoBolsaAhorro,
+        TipoCuenta,
+        TipoDeuda,
+        Deuda,
+        CalendarioConfig,
+        ReglaDiaInhabil,
+        Frecuencia;
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -35,33 +44,38 @@ const _libro = IdsDemostracion.libroDueno;
 /// Una tarjeta con saldo y sin tasa, una bolsa con saldo y la semana activada
 /// con su reparto propuesto: lo que hace falta para abrir todos los
 /// formularios de la Fase 2.
-Future<void> _sembrar(RepositorioFinanzasEnMemoria repo) async {
+Future<void> _sembrar(
+  RepositorioFinanzasEnMemoria repo, {
+  bool conDeuda = true,
+}) async {
   final base = servicioDe(repo, sesionDe(Rol.dueno));
   final svc = ServicioDeudasAhorro(base);
-  final cuenta = await base.crearCuenta(
-    libroId: _libro,
-    nombre: 'Tarjeta de ejemplo',
-    tipo: TipoCuenta.tarjeta,
-    saldoInicial: 500000,
-    limiteCentavos: 1000000,
-  );
-  await base.guardarDeuda(
-    Deuda(
-      id: base.nuevoId(),
+  if (conDeuda) {
+    final cuenta = await base.crearCuenta(
       libroId: _libro,
       nombre: 'Tarjeta de ejemplo',
-      tipo: TipoDeuda.conCosto,
-      clase: ClaseDeuda.tarjeta,
-      cuentaPasivoId: cuenta.id,
-      abono: 50000,
-      minimo: 15000,
-      frecuencia: Frecuencia.mensual,
-      calendario: const CalendarioConfig.mensual([
-        25,
-      ], regla: ReglaDiaInhabil.sinCambio),
-      tasaAnualPuntosBase: 4500,
-    ),
-  );
+      tipo: TipoCuenta.tarjeta,
+      saldoInicial: 500000,
+      limiteCentavos: 1000000,
+    );
+    await base.guardarDeuda(
+      Deuda(
+        id: base.nuevoId(),
+        libroId: _libro,
+        nombre: 'Tarjeta de ejemplo',
+        tipo: TipoDeuda.conCosto,
+        clase: ClaseDeuda.tarjeta,
+        cuentaPasivoId: cuenta.id,
+        abono: 50000,
+        minimo: 15000,
+        frecuencia: Frecuencia.mensual,
+        calendario: const CalendarioConfig.mensual([
+          25,
+        ], regla: ReglaDiaInhabil.sinCambio),
+        tasaAnualPuntosBase: 4500,
+      ),
+    );
+  }
   await svc.crearBolsa(
     libroId: _libro,
     nombre: 'Celular',
@@ -79,7 +93,10 @@ ProviderContainer _contenedor(WidgetTester tester) =>
     ProviderScope.containerOf(tester.element(find.byType(AppGravity)));
 
 Finder _lista(String llave) => find
-    .descendant(of: find.byKey(ValueKey(llave)), matching: find.byType(Scrollable))
+    .descendant(
+      of: find.byKey(ValueKey(llave)),
+      matching: find.byType(Scrollable),
+    )
     .first;
 
 void main() {
@@ -102,7 +119,11 @@ void main() {
         );
         await _sembrar(repo);
         final errores = await recolectar(() => irA(tester, e.value.ruta));
-        expect(errores.desbordes, isEmpty, reason: errores.desbordes.join('\n'));
+        expect(
+          errores.desbordes,
+          isEmpty,
+          reason: errores.desbordes.join('\n'),
+        );
       });
 
       testWidgets('${e.key}: laptop 900 dp con letra 1.5 sin desbordes', (
@@ -116,7 +137,11 @@ void main() {
         );
         await _sembrar(repo);
         final errores = await recolectar(() => irA(tester, e.value.ruta));
-        expect(errores.desbordes, isEmpty, reason: errores.desbordes.join('\n'));
+        expect(
+          errores.desbordes,
+          isEmpty,
+          reason: errores.desbordes.join('\n'),
+        );
       });
     }
 
@@ -131,9 +156,21 @@ void main() {
       await _sembrar(repo);
       await irA(tester, SeccionFinanzas.deudas.ruta);
       final errores = await recolectar(() async {
-        final tarjeta = find.textContaining('Tarjeta de ejemplo').first;
+        final deuda = _contenedor(tester)
+            .read(contextoFinanzasProvider)
+            .value!
+            .datos
+            .deudasDe(_libro)
+            .first;
+        final tarjeta = find.byKey(ValueKey('deuda-${deuda.id}'));
+        await tester.scrollUntilVisible(
+          tarjeta,
+          200,
+          scrollable: _lista('deudas-lista'),
+        );
         await tester.ensureVisible(tarjeta);
-        await tester.tap(tarjeta, warnIfMissed: false);
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.tap(tarjeta);
         await avanzar(tester);
       });
       expect(errores.desbordes, isEmpty, reason: errores.desbordes.join('\n'));
@@ -248,103 +285,125 @@ void main() {
     });
   });
 
-  group('formularios de la Fase 2 (laptop 900 dp, letra 1.5)', () {
-    Future<RepositorioFinanzasEnMemoria> montar(WidgetTester tester) async {
-      final repo = await montarFinanzasConTamano(
-        tester,
-        dispositivo: TipoDispositivo.laptop,
-        tamano: _laptop,
-        escalaDeLetra: 1.5,
-      );
-      await _sembrar(repo);
-      return repo;
-    }
-
-    Future<void> abre(
-      WidgetTester tester,
-      Finder boton, {
-      required String formulario,
-      required String lista,
-    }) async {
-      final errores = await recolectar(() async {
-        await tester.scrollUntilVisible(boton, 200, scrollable: _lista(lista));
-        await tester.tap(boton);
-        await avanzar(tester);
-      });
-      expect(errores.desbordes, isEmpty, reason: '$formulario: ${errores.desbordes}');
-      expect(find.byType(AlertDialog), findsOneWidget, reason: formulario);
-      // Cerrar para el siguiente.
-      await tester.tap(find.text('Cancelar').last);
-      await avanzar(tester);
-    }
-
-    testWidgets('estado de cuenta, compra a meses y tasa', (tester) async {
-      await montar(tester);
-      await irA(tester, SeccionFinanzas.deudas.ruta);
-      await abre(
-        tester,
-        find.byKey(const ValueKey('deudas-nuevo-msi')),
-        formulario: 'compra a meses',
-        lista: 'deudas-lista',
-      );
-      await abre(
-        tester,
-        find.widgetWithText(TextButton, 'Estado de cuenta').first,
-        formulario: 'estado de cuenta',
-        lista: 'deudas-lista',
-      );
-      // "Captura la tasa" solo sale con datos viejos sin tasa (el servicio ya
-      // no deja guardarlos): se abre el formulario directo.
-      final contexto = tester.element(find.byType(Scaffold).first);
-      final deuda = _contenedor(tester)
-          .read(contextoFinanzasProvider)
-          .value!
-          .datos
-          .deudasDe(_libro)
-          .first;
-      final errores = await recolectar(() async {
-        unawaited(
-          showDialog<void>(
-            context: contexto,
-            builder: (_) => DialogoTasa(deuda: deuda),
-          ),
+  void formularios(String nombre, Size tamano, double escala) {
+    group('formularios de la Fase 2 ($nombre)', () {
+      Future<RepositorioFinanzasEnMemoria> montar(
+        WidgetTester tester, {
+        bool conDeuda = true,
+      }) async {
+        final repo = await montarFinanzasConTamano(
+          tester,
+          dispositivo: TipoDispositivo.laptop,
+          tamano: tamano,
+          escalaDeLetra: escala,
         );
+        await _sembrar(repo, conDeuda: conDeuda);
+        return repo;
+      }
+
+      Future<void> abre(
+        WidgetTester tester,
+        Finder boton, {
+        required String formulario,
+        required String lista,
+      }) async {
+        final errores = await recolectar(() async {
+          await tester.scrollUntilVisible(
+            boton,
+            200,
+            scrollable: _lista(lista),
+          );
+          await tester.ensureVisible(boton);
+          await tester.pump(const Duration(milliseconds: 300));
+          await tester.tap(boton);
+          await avanzar(tester);
+        });
+        expect(
+          errores.desbordes,
+          isEmpty,
+          reason: '$formulario: ${errores.desbordes}',
+        );
+        expect(find.byType(AlertDialog), findsOneWidget, reason: formulario);
+        // Cerrar para el siguiente.
+        await tester.tap(find.text('Cancelar').last);
         await avanzar(tester);
+      }
+
+      testWidgets('estado de cuenta, compra a meses y tasa', (tester) async {
+        await montar(tester);
+        await irA(tester, SeccionFinanzas.deudas.ruta);
+        await abre(
+          tester,
+          find.byKey(const ValueKey('deudas-nuevo-msi')),
+          formulario: 'compra a meses',
+          lista: 'deudas-lista',
+        );
+        await abre(
+          tester,
+          find.widgetWithText(TextButton, 'Estado de cuenta').first,
+          formulario: 'estado de cuenta',
+          lista: 'deudas-lista',
+        );
+        // "Captura la tasa" solo sale con datos viejos sin tasa (el servicio ya
+        // no deja guardarlos): se abre el formulario directo.
+        final contexto = tester.element(find.byType(Scaffold).first);
+        final deuda = _contenedor(tester)
+            .read(contextoFinanzasProvider)
+            .value!
+            .datos
+            .deudasDe(_libro)
+            .first;
+        final errores = await recolectar(() async {
+          unawaited(
+            showDialog<void>(
+              context: contexto,
+              builder: (_) => DialogoTasa(deuda: deuda),
+            ),
+          );
+          await avanzar(tester);
+        });
+        expect(errores.desbordes, isEmpty, reason: '${errores.desbordes}');
+        expect(find.byType(AlertDialog), findsOneWidget);
       });
-      expect(errores.desbordes, isEmpty, reason: '${errores.desbordes}');
-      expect(find.byType(AlertDialog), findsOneWidget);
-    });
 
-    testWidgets('bolsa, aportación y retiro', (tester) async {
-      await montar(tester);
-      await irA(tester, SeccionFinanzas.ahorro.ruta);
-      await abre(
-        tester,
-        find.byKey(const ValueKey('ahorro-nueva-bolsa')),
-        formulario: 'bolsa',
-        lista: 'ahorro-lista',
-      );
-      await abre(
-        tester,
-        find.byWidgetPredicate(
-          (w) =>
-              w.key is ValueKey &&
-              '${(w.key! as ValueKey).value}'.startsWith('apartar-'),
-        ).first,
-        formulario: 'aportación',
-        lista: 'ahorro-lista',
-      );
-      await abre(
-        tester,
-        find.byWidgetPredicate(
-          (w) =>
-              w.key is ValueKey &&
-              '${(w.key! as ValueKey).value}'.startsWith('retirar-'),
-        ).first,
-        formulario: 'retiro',
-        lista: 'ahorro-lista',
-      );
+      testWidgets('bolsa, aportación y retiro', (tester) async {
+        // Sin deuda que reciba el extra, el remanente se reparte al ahorro.
+        await montar(tester, conDeuda: false);
+        await irA(tester, SeccionFinanzas.ahorro.ruta);
+        await abre(
+          tester,
+          find.byKey(const ValueKey('ahorro-nueva-bolsa')),
+          formulario: 'bolsa',
+          lista: 'ahorro-lista',
+        );
+        await abre(
+          tester,
+          find
+              .byWidgetPredicate(
+                (w) =>
+                    w.key is ValueKey &&
+                    '${(w.key! as ValueKey).value}'.startsWith('apartar-'),
+              )
+              .first,
+          formulario: 'aportación',
+          lista: 'ahorro-lista',
+        );
+        await abre(
+          tester,
+          find
+              .byWidgetPredicate(
+                (w) =>
+                    w.key is ValueKey &&
+                    '${(w.key! as ValueKey).value}'.startsWith('retirar-'),
+              )
+              .first,
+          formulario: 'retiro',
+          lista: 'ahorro-lista',
+        );
+      });
     });
-  });
+  }
 
+  formularios('laptop 900 dp, letra 1.5', _laptop, 1.5);
+  formularios('ventana angosta 360 dp, letra 2.0', _telefono, 2.0);
 }

@@ -183,6 +183,7 @@ ErrorSesion traducirErrorInvitacion(Object error) {
     }
     return ErrorSesion('No se pudo: ${error.message}');
   }
+  debugPrint('Invitación: $error');
   return const ErrorSesion('No se pudo aceptar la invitación. Intenta de nuevo.');
 }
 

@@ -442,7 +442,7 @@ void main() {
         expect(find.text('Agregar suplemento'), findsNothing);
         await t.tap(find.byIcon(Icons.edit_outlined).first);
         await t.pumpAndSettle();
-        await t.tap(find.text('Flan de huevo'));
+        await t.tap(find.text('Flan de huevo').last);
         await t.pumpAndSettle();
         expect(find.text('Menú actualizado'), findsOneWidget);
       },

@@ -64,8 +64,9 @@ class ServicioAlimentacion {
   }
 
   void _exigirVer(MenuId m) {
-    if (!puedeVerMenu(rol, m, esMaestra: esMaestra))
+    if (!puedeVerMenu(rol, m, esMaestra: esMaestra)) {
       throw const PermisoDenegado();
+    }
   }
 
   PerfilMenu perfil(MenuId m) {
@@ -99,8 +100,9 @@ class ServicioAlimentacion {
   }
 
   Future<List<ItemCompra>> listaCompras(MenuId m, DateTime semana) async {
-    if (!puedeVerCompras(rol, m, esMaestra: esMaestra))
+    if (!puedeVerCompras(rol, m, esMaestra: esMaestra)) {
       throw const PermisoDenegado();
+    }
     final lunes = lunesDe(semana);
     return generarListaCompras(
       menu: await _repo.menu(m, lunes),

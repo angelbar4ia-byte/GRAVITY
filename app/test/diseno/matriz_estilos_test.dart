@@ -82,7 +82,9 @@ void main() {
           brillo: brillo,
           altoContraste: true,
         );
-        final v = ValoresDiseno.de(tester.element(find.byType(TarjetaModulo).first));
+        final v = ValoresDiseno.de(
+          tester.element(find.byType(TarjetaModulo).first),
+        );
         expect(v.altoContraste, isTrue);
         expect(razonContraste(v.texto, v.panel), greaterThanOrEqualTo(7));
         expect(tester.takeException(), isNull);
