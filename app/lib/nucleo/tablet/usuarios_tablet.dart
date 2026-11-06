@@ -251,7 +251,7 @@ class RepositorioTablet {
   /// o el PIN no la abre.
   Future<(LlavePin, String)?> leerCredencial(String personaId, String pin) async {
     final sobre = await _almacen.leer(claveCredencial(personaId));
-    return sobre == null ? null : CifradoPin.descifrar(pin, sobre);
+    return sobre == null ? null : CifradoPin.descifrarAsync(pin, sobre);
   }
 
   Future<bool> tieneCredencial(String personaId) async =>

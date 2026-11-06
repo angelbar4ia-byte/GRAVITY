@@ -178,9 +178,18 @@ class _PantallaBloqueoState extends ConsumerState<PantallaBloqueo> {
     );
   }
 
-  void _desbloquear() => _mostrar(
-    ref.read(controladorBloqueoProvider.notifier).desbloquearConPin(_pin.text),
-  );
+  bool _verificando = false;
+
+  Future<void> _desbloquear() async {
+    if (_verificando) return;
+    setState(() => _verificando = true);
+    final resultado = await ref
+        .read(controladorBloqueoProvider.notifier)
+        .desbloquearConPin(_pin.text);
+    if (!mounted) return;
+    setState(() => _verificando = false);
+    _mostrar(resultado);
+  }
 
   /// Guarda el PIN de 6 dígitos y abre.
   Future<void> _guardarNuevoYAbrir() async {

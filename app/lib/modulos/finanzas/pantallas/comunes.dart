@@ -674,6 +674,14 @@ Future<bool> intentar(BuildContext context, Future<void> Function() accion) asyn
   }
 }
 
+/// Error de un motivo que se está escribiendo: `null` si está vacío (aún no
+/// escribe) o si es válido (`motivoValido`: 3 caracteres visibles, al menos 2
+/// letras o números y no todos iguales).
+String? errorDeMotivo(String? texto) =>
+    (texto ?? '').trim().isEmpty || motivoValido(texto)
+    ? null
+    : mensajeMotivoCorto;
+
 /// Pide un texto (motivo, nombre). Devuelve `null` si se cancela.
 Future<String?> pedirTexto(
   BuildContext context, {
@@ -684,6 +692,7 @@ Future<String?> pedirTexto(
   String inicial = '',
   bool obligatorio = true,
   int minimoVisibles = 0,
+  bool esMotivo = false,
 }) => showDialog<String>(
   context: context,
   builder: (_) => _DialogoTexto(
@@ -694,6 +703,7 @@ Future<String?> pedirTexto(
     inicial: inicial,
     obligatorio: obligatorio,
     minimoVisibles: minimoVisibles,
+    esMotivo: esMotivo,
   ),
 );
 
@@ -706,6 +716,7 @@ class _DialogoTexto extends StatefulWidget {
     required this.inicial,
     required this.obligatorio,
     required this.minimoVisibles,
+    required this.esMotivo,
   });
 
   final String titulo;
@@ -718,6 +729,10 @@ class _DialogoTexto extends StatefulWidget {
   /// Caracteres visibles que debe tener lo escrito (0: basta con no estar en
   /// blanco). Los motivos piden 3 (`motivoValido`).
   final int minimoVisibles;
+
+  /// Es un motivo: vale `motivoValido` (3 caracteres visibles, al menos 2
+  /// letras o dígitos y no todos iguales; Fase 4).
+  final bool esMotivo;
 
   @override
   State<_DialogoTexto> createState() => _DialogoTextoState();
@@ -733,6 +748,7 @@ class _DialogoTextoState extends State<_DialogoTexto> {
   }
 
   bool get _valido {
+    if (widget.esMotivo) return motivoValido(_control.text);
     if (!widget.obligatorio) return true;
     final minimo = widget.minimoVisibles > 0 ? widget.minimoVisibles : 1;
     return caracteresVisibles(_control.text) >= minimo;
@@ -750,6 +766,14 @@ class _DialogoTextoState extends State<_DialogoTexto> {
         labelText: widget.etiqueta,
         helperText: widget.ayuda,
         helperMaxLines: 3,
+        // El error sale en cuanto hay algo escrito que no alcanza.
+        errorText:
+            widget.esMotivo &&
+                _control.text.trim().isNotEmpty &&
+                !motivoValido(_control.text)
+            ? mensajeMotivoCorto
+            : null,
+        errorMaxLines: 3,
       ),
       onChanged: (_) => setState(() {}),
       onSubmitted: (_) {

@@ -19,6 +19,7 @@
 library;
 
 import 'dart:async';
+import 'dart:math' show min;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -28,6 +29,7 @@ import '../seguridad/cifrado.dart';
 import '../seguridad/intentos.dart';
 import '../seguridad/pin.dart';
 import '../seguridad/proveedores_seguridad.dart';
+import '../seguridad/serie_pin.dart';
 import '../sesion/proveedores_sesion.dart';
 import '../sesion/servicio_sesion_demostracion.dart';
 import '../sesion/sesion.dart';
@@ -168,6 +170,9 @@ class ControladorTablet extends Notifier<EstadoTablet> {
 
   late RepositorioTablet _repositorio;
   late LimiteIntentos _intentos;
+
+  /// Una verificación de PIN a la vez (los fallos se cuentan en fila).
+  final _serie = SerieDePin();
   Future<void>? _carga;
 
   // Persona dentro: la llave de su PIN vive en memoria solo mientras está
@@ -233,7 +238,15 @@ class ControladorTablet extends Notifier<EstadoTablet> {
     ])
       UsuarioTablet.desdeSesion(
         sesionDeEjemplo(rol),
-        hashPin: HashPin.crear(pinDeDemostracion),
+        // Solo demostración (sin servidor): pocas vueltas para no congelar el
+        // arranque; se rehace con las de hoy al entrar.
+        hashPin: HashPin.crear(
+          pinDeDemostracion,
+          iteraciones: min(
+            HashPin.iteracionesPorDefecto,
+            HashPin.iteracionesAnteriores,
+          ),
+        ),
       ),
   ];
 
@@ -249,38 +262,43 @@ class ControladorTablet extends Notifier<EstadoTablet> {
   /// para volver a ver los montos, que se ocultan solos tras unos minutos sin
   /// uso). Cuenta los intentos fallidos igual que al entrar: la espera crece y
   /// la comparten los dos caminos.
-  ResultadoDesbloqueo comprobarPin(String personaId, String pin) {
-    final usuario = _buscar(personaId);
-    if (usuario == null) return ResultadoDesbloqueo.noExiste;
-    if (_intentos.bloqueado(personaId)) return ResultadoDesbloqueo.bloqueado;
-    if (!HashPin.verificar(pin, usuario.hashPin)) {
-      return _intentos.anotarFallo(personaId) == ResultadoFallo.bloqueado
-          ? ResultadoDesbloqueo.bloqueado
-          : ResultadoDesbloqueo.pinIncorrecto;
-    }
-    _intentos.anotarAcierto(personaId);
-    if (pinEsCortoParaSuRol(usuario.rol, pin)) {
-      return ResultadoDesbloqueo.debeCambiarPin;
-    }
-    return ResultadoDesbloqueo.abierto;
-  }
+  Future<ResultadoDesbloqueo> comprobarPin(String personaId, String pin) =>
+      _serie.correr(() async {
+        final usuario = _buscar(personaId);
+        if (usuario == null) return ResultadoDesbloqueo.noExiste;
+        if (_intentos.bloqueado(personaId)) return ResultadoDesbloqueo.bloqueado;
+        if (!await HashPin.verificarAsync(pin, usuario.hashPin)) {
+          return _intentos.anotarFallo(personaId) == ResultadoFallo.bloqueado
+              ? ResultadoDesbloqueo.bloqueado
+              : ResultadoDesbloqueo.pinIncorrecto;
+        }
+        _intentos.anotarAcierto(personaId);
+        if (pinEsCortoParaSuRol(usuario.rol, pin)) {
+          return ResultadoDesbloqueo.debeCambiarPin;
+        }
+        return ResultadoDesbloqueo.abierto;
+      });
 
   /// Comprueba el PIN de [personaId] y, si es correcto, empieza a entrar
   /// (ver [entrarConPin], que espera a que la sesión del servidor cambie).
   /// Tras 5 fallos seguidos se bloquea 30 s; cada bloqueo siguiente dura el
   /// doble, hasta 15 min. Los fallos sobreviven al reinicio de la app.
-  ResultadoDesbloqueo desbloquearConPin(
+  ///
+  /// La derivación del PIN corre en un hilo aparte: devuelve un [Future]. Las
+  /// verificaciones van en fila ([SerieDePin]) para que los fallos se cuenten
+  /// uno tras otro.
+  Future<ResultadoDesbloqueo> desbloquearConPin(
     String personaId,
     String pin, {
     bool soloAccion = false,
-  }) {
+  }) => _serie.correr(() async {
     final usuario = _buscar(personaId);
     if (usuario == null) return ResultadoDesbloqueo.noExiste;
     if (!puedeEntrarEnTablet(usuario, state.configuracion)) {
       return ResultadoDesbloqueo.noPermitida;
     }
     if (_intentos.bloqueado(personaId)) return ResultadoDesbloqueo.bloqueado;
-    if (!HashPin.verificar(pin, usuario.hashPin)) {
+    if (!await HashPin.verificarAsync(pin, usuario.hashPin)) {
       return _intentos.anotarFallo(personaId) == ResultadoFallo.bloqueado
           ? ResultadoDesbloqueo.bloqueado
           : ResultadoDesbloqueo.pinIncorrecto;
@@ -293,13 +311,13 @@ class ControladorTablet extends Notifier<EstadoTablet> {
     }
     _entrada = _entrar(usuario, pin, soloAccion: soloAccion);
     return ResultadoDesbloqueo.abierto;
-  }
+  });
 
   /// Entra como [personaId] con su PIN: la interfaz se arma con su rol cuando
   /// la sesión del servidor ya es la suya (o sin señal, con su credencial
   /// guardada).
   Future<ResultadoDesbloqueo> entrarConPin(String personaId, String pin) async {
-    final resultado = desbloquearConPin(personaId, pin);
+    final resultado = await desbloquearConPin(personaId, pin);
     if (resultado != ResultadoDesbloqueo.abierto) return resultado;
     return _entrada!;
   }
@@ -315,7 +333,11 @@ class ControladorTablet extends Notifier<EstadoTablet> {
     if (state.configuracion.esPersonal) {
       return entrarConPin(personaId, pin);
     }
-    final resultado = desbloquearConPin(personaId, pin, soloAccion: true);
+    final resultado = await desbloquearConPin(
+      personaId,
+      pin,
+      soloAccion: true,
+    );
     if (resultado != ResultadoDesbloqueo.abierto) return resultado;
     return _entrada!;
   }
@@ -368,7 +390,7 @@ class ControladorTablet extends Notifier<EstadoTablet> {
         : await bandeja.tomarParaEntrada(usuario.personaId, pin);
     final (LlavePin, String)? guardada;
     if (delaBandeja != null) {
-      final llaveNueva = LlavePin.derivar(pin);
+      final llaveNueva = await LlavePin.derivarAsync(pin);
       await _repositorio.guardarCredencial(
         usuario.personaId,
         llaveNueva,
@@ -384,7 +406,7 @@ class ControladorTablet extends Notifier<EstadoTablet> {
     // se vuelve a cifrar con las de hoy; es el único momento en que se tiene el
     // PIN. La credencial es la misma; solo cambia la llave que la protege.
     if (llave.iteraciones < HashPin.iteracionesPorDefecto) {
-      final nueva = LlavePin.derivar(pin);
+      final nueva = await LlavePin.derivarAsync(pin);
       llave.olvidar();
       llave = nueva;
     }
@@ -445,7 +467,7 @@ class ControladorTablet extends Notifier<EstadoTablet> {
     }
     // Lo mismo con el hash del PIN guardado (verifica sin abrir el sobre).
     if (HashPin.necesitaActualizarse(usuario.hashPin)) {
-      final rehecho = activo.copiarCon(hashPin: HashPin.crear(pin));
+      final rehecho = activo.copiarCon(hashPin: await HashPin.crearAsync(pin));
       activo = rehecho;
       await _guardarUsuarios([
         for (final u in state.usuarios) u.personaId == rehecho.personaId ? rehecho : u,
@@ -560,7 +582,7 @@ class ControladorTablet extends Notifier<EstadoTablet> {
     await listo;
     final usuario = UsuarioTablet.desdeSesion(
       sesion,
-      hashPin: HashPin.crear(pin),
+      hashPin: await HashPin.crearAsync(pin),
     );
     // Volver a agregar a alguien trae una credencial nueva (otra cadena de
     // renovación): el permiso de subida viejo, si lo había, no debe pisarla al
@@ -568,7 +590,7 @@ class ControladorTablet extends Notifier<EstadoTablet> {
     // conserva y sube con su sesión nueva.
     await ref.read(bandejaDeLaTabletProvider)?.alAgregarDeNuevo(usuario.personaId);
     if (credencial != null) {
-      final llave = LlavePin.derivar(pin);
+      final llave = await LlavePin.derivarAsync(pin);
       await _repositorio.guardarCredencial(usuario.personaId, llave, credencial);
       llave.olvidar();
     } else {
@@ -677,7 +699,10 @@ class ControladorTablet extends Notifier<EstadoTablet> {
     if (usuario == null) return ResultadoDesbloqueo.noExiste;
     _exigirPinNuevo(pinNuevo, rol: usuario.rol);
     if (_intentos.bloqueado(personaId)) return ResultadoDesbloqueo.bloqueado;
-    if (!HashPin.verificar(pinActual, usuario.hashPin)) {
+    final correcto = await _serie.correr(
+      () => HashPin.verificarAsync(pinActual, usuario.hashPin),
+    );
+    if (!correcto) {
       return _intentos.anotarFallo(personaId) == ResultadoFallo.bloqueado
           ? ResultadoDesbloqueo.bloqueado
           : ResultadoDesbloqueo.pinIncorrecto;
@@ -690,7 +715,7 @@ class ControladorTablet extends Notifier<EstadoTablet> {
         ?.cambiarPin(personaId, pinActual, pinNuevo);
     final guardada = await _repositorio.leerCredencial(personaId, pinActual);
     if (guardada != null) {
-      final llaveNueva = LlavePin.derivar(pinNuevo);
+      final llaveNueva = await LlavePin.derivarAsync(pinNuevo);
       await _repositorio.guardarCredencial(personaId, llaveNueva, guardada.$2);
       guardada.$1.olvidar();
       if (_personaConLlave == personaId) {
@@ -700,10 +725,11 @@ class ControladorTablet extends Notifier<EstadoTablet> {
         llaveNueva.olvidar();
       }
     }
+    final hashNuevo = await HashPin.crearAsync(pinNuevo);
     await _guardarUsuarios([
       for (final u in state.usuarios)
         u.personaId == personaId
-            ? u.copiarCon(hashPin: HashPin.crear(pinNuevo))
+            ? u.copiarCon(hashPin: hashNuevo)
             : u,
     ]);
     return ResultadoDesbloqueo.abierto;

@@ -45,6 +45,7 @@ import 'intentos.dart';
 import 'pin.dart';
 import 'pin_de_montos.dart';
 import 'proveedores_seguridad.dart';
+import 'serie_pin.dart';
 
 /// Tiempo sin uso tras el que los montos se ocultan solos.
 const ocultarMontosTrasPorOmision = Duration(minutes: 2);
@@ -123,6 +124,9 @@ class ControladorMontos extends Notifier<EstadoMontos> {
   static const claveIntentos = 'montos.intentos_pin';
 
   late LimiteIntentos _intentos;
+
+  /// Una verificación de PIN a la vez (los fallos se cuentan en fila).
+  final _serie = SerieDePin();
   String? _persona;
   String? _hashPin;
   Future<void>? _carga;
@@ -265,7 +269,7 @@ class ControladorMontos extends Notifier<EstadoMontos> {
       }
       return _cambiarPropio(actual, pin);
     }
-    await _guardar(hashPin: HashPin.crear(pin));
+    await _guardar(hashPin: await HashPin.crearAsync(pin));
     final persona = _persona;
     if (persona != null) _intentos.olvidar(persona);
     return ResultadoRevelar.revelado;
@@ -278,13 +282,13 @@ class ControladorMontos extends Notifier<EstadoMontos> {
     if (persona == null) return ResultadoRevelar.pinIncorrecto;
     if (hash == null) return ResultadoRevelar.faltaPin;
     if (_intentos.bloqueado(persona)) return ResultadoRevelar.bloqueado;
-    if (!HashPin.verificar(actual, hash)) {
+    if (!await _serie.correr(() => HashPin.verificarAsync(actual, hash))) {
       return _intentos.anotarFallo(persona) == ResultadoFallo.bloqueado
           ? ResultadoRevelar.bloqueado
           : ResultadoRevelar.pinIncorrecto;
     }
     _intentos.anotarAcierto(persona);
-    await _guardar(hashPin: HashPin.crear(nuevo));
+    await _guardar(hashPin: await HashPin.crearAsync(nuevo));
     return ResultadoRevelar.revelado;
   }
 
@@ -310,7 +314,7 @@ class ControladorMontos extends Notifier<EstadoMontos> {
     if (persona == null) return ResultadoRevelar.pinIncorrecto;
     switch (fuente) {
       case FuenteDePinMontos.tablet:
-        return switch (ref
+        return switch (await ref
             .read(controladorTabletProvider.notifier)
             .comprobarPin(persona, pin)) {
           ResultadoDesbloqueo.abierto => ResultadoRevelar.revelado,
@@ -319,7 +323,7 @@ class ControladorMontos extends Notifier<EstadoMontos> {
           _ => ResultadoRevelar.pinIncorrecto,
         };
       case FuenteDePinMontos.bloqueo:
-        return switch (ref
+        return switch (await ref
             .read(controladorBloqueoProvider.notifier)
             .comprobarPin(pin)) {
           ResultadoBloqueo.abierto => ResultadoRevelar.revelado,
@@ -331,7 +335,10 @@ class ControladorMontos extends Notifier<EstadoMontos> {
         final hash = _hashPin;
         if (hash == null) return ResultadoRevelar.faltaPin;
         if (_intentos.bloqueado(persona)) return ResultadoRevelar.bloqueado;
-        if (!HashPin.verificar(pin, hash)) {
+        final correcto = await _serie.correr(
+          () => HashPin.verificarAsync(pin, hash),
+        );
+        if (!correcto) {
           return _intentos.anotarFallo(persona) == ResultadoFallo.bloqueado
               ? ResultadoRevelar.bloqueado
               : ResultadoRevelar.pinIncorrecto;
@@ -340,7 +347,12 @@ class ControladorMontos extends Notifier<EstadoMontos> {
         if (pinEsCortoParaSuRol(rol, pin)) return ResultadoRevelar.debeCambiarPin;
         // M9': el hash de antes (menos vueltas) se rehace al escribir el PIN.
         if (HashPin.necesitaActualizarse(hash)) {
-          unawaited(_guardar(hashPin: HashPin.crear(pin)));
+          unawaited(() async {
+            final rehecho = await HashPin.crearAsync(pin);
+            if (ref.mounted && _hashPin == hash) {
+              await _guardar(hashPin: rehecho);
+            }
+          }());
         }
         return ResultadoRevelar.revelado;
     }

@@ -15,54 +15,61 @@ import '../datos/modelos.dart';
 import '../estado/proveedores.dart';
 
 EstadoFila _estadoFila(EstadoRegistro e) => switch (e) {
-      EstadoRegistro.pendiente => EstadoFila.pendiente,
-      EstadoRegistro.hecho => EstadoFila.hecho,
-      EstadoRegistro.parcial => EstadoFila.parcial,
-      EstadoRegistro.omitido => EstadoFila.omitido,
-      EstadoRegistro.pospuesto => EstadoFila.pospuesto,
-    };
+  EstadoRegistro.pendiente => EstadoFila.pendiente,
+  EstadoRegistro.hecho => EstadoFila.hecho,
+  EstadoRegistro.parcial => EstadoFila.parcial,
+  EstadoRegistro.omitido => EstadoFila.omitido,
+  EstadoRegistro.pospuesto => EstadoFila.pospuesto,
+};
 
 class PantallaHoyHabitos extends ConsumerWidget {
   const PantallaHoyHabitos({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) => TemaModulo(
-        modulo: Modulo.habitos,
-        child: MarcoPantalla(
-          titulo: 'Hábitos · Hoy',
-          acciones: [
-            IconButton(
-              tooltip: 'Objetivos',
-              icon: const Icon(Icons.flag_outlined),
-              onPressed: () => context.go('${Rutas.habitos}/objetivos'),
-            ),
-          ],
-          cuerpo: const _CuerpoHoy(),
+    modulo: Modulo.habitos,
+    child: MarcoPantalla(
+      titulo: 'Hábitos · Hoy',
+      acciones: [
+        IconButton(
+          tooltip: 'Objetivos',
+          icon: const Icon(Icons.flag_outlined),
+          onPressed: () => context.go('${Rutas.habitos}/objetivos'),
         ),
-      );
+      ],
+      cuerpo: const _CuerpoHoy(),
+    ),
+  );
 }
 
 class _CuerpoHoy extends ConsumerWidget {
   const _CuerpoHoy();
 
-  Future<void> _accion(BuildContext context, WidgetRef ref, ItemHoy i,
-      Future<void> Function(ServicioHabitos s) hacer, String texto) async {
+  Future<void> _accion(
+    BuildContext context,
+    WidgetRef ref,
+    ItemHoy i,
+    Future<void> Function(ServicioHabitos s) hacer,
+    String texto,
+  ) async {
     final s = ref.read(servicioHabitosProvider);
     await hacer(s);
     ref.read(versionHabitosProvider.notifier).state++;
     if (!context.mounted) return;
     ScaffoldMessenger.of(context)
       ..clearSnackBars()
-      ..showSnackBar(SnackBar(
-        content: Text(texto),
-        action: SnackBarAction(
-          label: 'Deshacer',
-          onPressed: () async {
-            await s.deshacer(i.objetivo);
-            ref.read(versionHabitosProvider.notifier).state++;
-          },
+      ..showSnackBar(
+        SnackBar(
+          content: Text(texto),
+          action: SnackBarAction(
+            label: 'Deshacer',
+            onPressed: () async {
+              await s.deshacer(i.objetivo);
+              ref.read(versionHabitosProvider.notifier).state++;
+            },
+          ),
         ),
-      ));
+      );
   }
 
   @override
@@ -77,13 +84,15 @@ class _CuerpoHoy extends ConsumerWidget {
       data: (items) => ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          if (items.isEmpty)
+          if (items.isEmpty) ...[
+            const _AvisoRevision(),
             EstadoVacioHabitos(
               tipo: VacioHabitos.sinObjetivos,
               textoAccion: 'Crear un objetivo',
               alAccionar: () => context.go('${Rutas.habitos}/objetivos'),
-            )
-          else ...[
+            ),
+          ] else ...[
+            const _AvisoRevision(),
             const _CargaHoy(),
             _Sigue(items: items),
             for (final i in items)
@@ -91,16 +100,31 @@ class _CuerpoHoy extends ConsumerWidget {
                 titulo: i.objetivo.titulo,
                 detalle: i.objetivo.metaValor == null
                     ? null
-                    : '${i.objetivo.metaValor} ${i.objetivo.unidad ?? ''}'.trim(),
+                    : '${i.objetivo.metaValor} ${i.objetivo.unidad ?? ''}'
+                          .trim(),
                 estado: _estadoFila(i.estado),
                 racha: i.racha.actual > 0 ? i.racha.actual : null,
-                alHecho: () => _accion(context, ref, i,
-                    (s) => s.marcarHecho(i.objetivo), 'Hecho'),
-                alPosponer: () => _accion(context, ref, i,
-                    (s) => s.posponer(i.objetivo, aMin: _ahoraMin() + 60),
-                    'Pospuesto una hora'),
+                alHecho: () => _accion(
+                  context,
+                  ref,
+                  i,
+                  (s) => s.marcarHecho(i.objetivo),
+                  'Hecho',
+                ),
+                alPosponer: () => _accion(
+                  context,
+                  ref,
+                  i,
+                  (s) => s.posponer(i.objetivo, aMin: _ahoraMin() + 60),
+                  'Pospuesto una hora',
+                ),
                 alOmitir: () => _accion(
-                    context, ref, i, (s) => s.omitir(i.objetivo), 'Omitido'),
+                  context,
+                  ref,
+                  i,
+                  (s) => s.omitir(i.objetivo),
+                  'Omitido',
+                ),
               ),
           ],
           ListTile(
@@ -145,7 +169,10 @@ class _Sigue extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pend = [for (final i in items) if (!i.hecho && i.estado != EstadoRegistro.omitido) i];
+    final pend = [
+      for (final i in items)
+        if (!i.hecho && i.estado != EstadoRegistro.omitido) i,
+    ];
     if (pend.isEmpty) return const SizedBox.shrink();
     final i = pend.first;
     return TarjetaSigue(titulo: i.objetivo.titulo, horaTexto: 'Hoy');
@@ -159,5 +186,31 @@ class _CargaHoy extends ConsumerWidget {
     final c = ref.watch(cargaHoyProvider).value;
     if (c == null || c.programados == 0) return const SizedBox.shrink();
     return MedidorCarga(planeadosMin: c.programados, disponiblesMin: c.libres);
+  }
+}
+
+/// Aviso de la revisión semanal en Hoy (E12): aparece desde la hora del aviso
+/// y hasta que se cierre, se omita o pase el miércoles. Un toque la abre; sin
+/// culpa ni racha de revisiones.
+class _AvisoRevision extends ConsumerWidget {
+  const _AvisoRevision();
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (!(ref.watch(revisionPendienteProvider).value ?? false))
+      return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Card(
+        child: ListTile(
+          leading: const Icon(Icons.rate_review_outlined),
+          title: const Text('Es hora de tu revisión semanal'),
+          subtitle: const Text('Lleva unos minutos. Hay una versión corta.'),
+          trailing: FilledButton(
+            onPressed: () => context.go('${Rutas.habitos}/revision'),
+            child: const Text('Empezar'),
+          ),
+        ),
+      ),
+    );
   }
 }

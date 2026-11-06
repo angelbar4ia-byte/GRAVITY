@@ -90,7 +90,7 @@ class BloqueSensible extends ConsumerWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: v.panel,
-          border: Border.all(color: v.borde),
+          border: Border.all(color: v.borde, width: v.grosorBorde),
           borderRadius: BorderRadius.circular(v.radioMediano),
         ),
         child: Padding(

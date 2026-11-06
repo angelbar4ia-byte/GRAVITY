@@ -331,7 +331,7 @@ class LlavesHabitos {
       return bytes;
     }
     if (pin == null) throw const LlaveBloqueada();
-    final abierto = CifradoPin.descifrar(pin, texto);
+    final abierto = await CifradoPin.descifrarAsync(pin, texto);
     if (abierto == null) throw const LlaveBloqueada();
     abierto.$1.olvidar();
     final bytes = desdeBase64Url(abierto.$2);
@@ -342,7 +342,7 @@ class LlavesHabitos {
   Future<void> _guardar(String persona, String clave, Uint8List bytes, String? pin) async {
     if (protegidaConPin) {
       if (pin == null) throw const LlaveBloqueada();
-      final llave = LlavePin.derivar(pin);
+      final llave = await LlavePin.derivarAsync(pin);
       await _almacen.escribir(clave, CifradoPin.cifrar(llave, aBase64Url(bytes)));
       llave.olvidar();
     } else {

@@ -13,8 +13,12 @@ import 'repositorio.dart';
 import 'repositorio_agenda.dart';
 
 class FuenteDeDatosDeHabitos implements FuenteDeDatosHabitos {
-  FuenteDeDatosDeHabitos(this._repo, this._agenda, this._docs, {DateTime Function()? ahora})
-      : _ahora = ahora ?? DateTime.now;
+  FuenteDeDatosDeHabitos(
+    this._repo,
+    this._agenda,
+    this._docs, {
+    DateTime Function()? ahora,
+  }) : _ahora = ahora ?? DateTime.now;
   final RepositorioHabitos _repo;
   final RepositorioAgenda _agenda;
   final DocumentosSensibles? _docs;
@@ -26,9 +30,13 @@ class FuenteDeDatosDeHabitos implements FuenteDeDatosHabitos {
     return {
       'objetivos': [for (final o in await _repo.objetivos()) o.aFila()],
       'bloques': [for (final b in await _agenda.bloques()) b.aFila()],
-      'registros': [for (final r in await _repo.registros(sumarDias(hoy, -800), hoy)) r.aFila()],
+      'registros': [
+        for (final r in await _repo.registros(sumarDias(hoy, -800), hoy))
+          r.aFila(),
+      ],
       'planes_lectura': [
-        for (final p in await _agenda.planes()) {...p.aPlanJson(_ahora()), 'dias': p.aDiasJson()}
+        for (final p in await _agenda.planes())
+          {...p.aPlanJson(_ahora()), 'dias': p.aDiasJson()},
       ],
       'ajustes': (await _agenda.ajustes()).aCambios(_ahora()),
     };
@@ -51,14 +59,21 @@ class FuenteDeRecordatoriosDeHabitos implements FuenteDeRecordatoriosHabitos {
   final ServicioHabitoEliminar? _eliminar;
 
   @override
-  Future<List<RecordatorioHabito>> proximos({required DateTime desde, required int dias}) async {
+  Future<List<RecordatorioHabito>> proximos({
+    required DateTime desde,
+    required int dias,
+  }) async {
     final r = <RecordatorioHabito>[];
     final aj = await _agenda.ajustes();
-    final bloques = [for (final b in await _agenda.bloques()) if (b.activo && b.recordarMin != null && !b.fijo) b];
+    final bloques = [
+      for (final b in await _agenda.bloques())
+        if (b.activo && b.recordarMin != null && !b.fijo) b,
+    ];
     final base = soloDia(desde);
     bool tieneHabito = false;
     try {
-      tieneHabito = await _eliminar?.config(TipoHabito.cigarrillo) != null ||
+      tieneHabito =
+          await _eliminar?.config(TipoHabito.cigarrillo) != null ||
           await _eliminar?.config(TipoHabito.azucar) != null;
     } catch (_) {
       tieneHabito = false; // llaves bloqueadas: no se programa lo reservado
@@ -70,24 +85,66 @@ class FuenteDeRecordatoriosDeHabitos implements FuenteDeRecordatoriosHabitos {
       for (final b in bloques.where((b) => b.recurrente.ocurreEn(f))) {
         final t = en(b.inicioMin - b.recordarMin!);
         if (t.isAfter(desde)) {
-          r.add(RecordatorioHabito(tipo: TipoRecordatorioHabito.bloque, objetoId: b.id, cuando: t));
+          r.add(
+            RecordatorioHabito(
+              tipo: TipoRecordatorioHabito.bloque,
+              objetoId: b.id,
+              cuando: t,
+            ),
+          );
         }
       }
       if (f.weekday == aj.revisionDia) {
         final pre = en(aj.revisionHoraMin - aj.revisionAvisoMin);
         final ya = en(aj.revisionHoraMin);
         if (pre.isAfter(desde)) {
-          r.add(RecordatorioHabito(tipo: TipoRecordatorioHabito.revisionPre, objetoId: 'revision', cuando: pre));
+          r.add(
+            RecordatorioHabito(
+              tipo: TipoRecordatorioHabito.revisionPre,
+              objetoId: 'revision',
+              cuando: pre,
+            ),
+          );
         }
         if (ya.isAfter(desde)) {
-          r.add(RecordatorioHabito(tipo: TipoRecordatorioHabito.revision, objetoId: 'revision', cuando: ya));
+          r.add(
+            RecordatorioHabito(
+              tipo: TipoRecordatorioHabito.revision,
+              objetoId: 'revision',
+              cuando: ya,
+            ),
+          );
+        }
+      }
+      // Recordatorio de dar (E11): apagado por omisión; solo el título genérico
+      // "Recordatorio", sin montos ni nombres (Hábitos no maneja dinero).
+      if (aj.darActivo &&
+          aj.darDia != null &&
+          aj.darHoraMin != null &&
+          f.weekday == aj.darDia) {
+        final t = en(aj.darHoraMin!);
+        if (t.isAfter(desde)) {
+          r.add(
+            RecordatorioHabito(
+              tipo: TipoRecordatorioHabito.reservado,
+              objetoId: 'dar',
+              cuando: t,
+              sensible: true,
+            ),
+          );
         }
       }
       if (tieneHabito) {
         final t = en(aj.dormirMin - 60);
         if (t.isAfter(desde)) {
-          r.add(RecordatorioHabito(
-              tipo: TipoRecordatorioHabito.reservado, objetoId: 'cierre', cuando: t, sensible: true));
+          r.add(
+            RecordatorioHabito(
+              tipo: TipoRecordatorioHabito.reservado,
+              objetoId: 'cierre',
+              cuando: t,
+              sensible: true,
+            ),
+          );
         }
       }
     }

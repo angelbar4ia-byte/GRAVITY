@@ -26,6 +26,18 @@ abstract final class FuentesGravity {
   static const mono = 'IBMPlexMono';
 }
 
+/// Variante del núcleo animado de GRAVITY; cada estilo trae la suya (P14).
+enum VarianteNucleo {
+  /// Futurista: anillos punteados que giran.
+  anillos,
+
+  /// Swagger: círculos gruesos que laten como un pulso.
+  pulso,
+
+  /// Glass: orbes translúcidos que flotan.
+  cristal,
+}
+
 /// Densidad de la interfaz. La laptop es compacta, el teléfono cómodo y la
 /// tablet grande (sección 18); algunas personalidades la fijan (Cuidados, bici).
 enum Densidad {
@@ -105,6 +117,10 @@ class ValoresDiseno extends ThemeExtension<ValoresDiseno> {
     this.escalaLectura = 1,
     this.decoracion = true,
     this.altoContraste = false,
+    this.grosorBorde = 1,
+    this.etiquetaSticker = false,
+    this.marcasEsquina = true,
+    this.nucleo = VarianteNucleo.anillos,
   });
 
   /// Claro u oscuro.
@@ -179,6 +195,18 @@ class ValoresDiseno extends ThemeExtension<ValoresDiseno> {
 
   /// Si es una variante de alto contraste (Cuidados y bici).
   final bool altoContraste;
+
+  /// Grosor de los bordes de paneles y tarjetas (Swagger los dibuja gruesos).
+  final double grosorBorde;
+
+  /// Si las etiquetas de panel se dibujan como "sticker" (relleno de acento).
+  final bool etiquetaSticker;
+
+  /// Si las tarjetas dibujan las marcas de esquina del HUD (solo Futurista).
+  final bool marcasEsquina;
+
+  /// Variante del núcleo animado de GRAVITY.
+  final VarianteNucleo nucleo;
 
   /// Los valores de diseño del tema más cercano.
   ///
@@ -283,6 +311,10 @@ class ValoresDiseno extends ThemeExtension<ValoresDiseno> {
     double? escalaLectura,
     bool? decoracion,
     bool? altoContraste,
+    double? grosorBorde,
+    bool? etiquetaSticker,
+    bool? marcasEsquina,
+    VarianteNucleo? nucleo,
   }) {
     return ValoresDiseno(
       brillo: brillo ?? this.brillo,
@@ -309,6 +341,10 @@ class ValoresDiseno extends ThemeExtension<ValoresDiseno> {
       escalaLectura: escalaLectura ?? this.escalaLectura,
       decoracion: decoracion ?? this.decoracion,
       altoContraste: altoContraste ?? this.altoContraste,
+      grosorBorde: grosorBorde ?? this.grosorBorde,
+      etiquetaSticker: etiquetaSticker ?? this.etiquetaSticker,
+      marcasEsquina: marcasEsquina ?? this.marcasEsquina,
+      nucleo: nucleo ?? this.nucleo,
     );
   }
 
@@ -345,6 +381,10 @@ class ValoresDiseno extends ThemeExtension<ValoresDiseno> {
       escalaLectura: d(escalaLectura, other.escalaLectura),
       decoracion: mitad(decoracion, other.decoracion),
       altoContraste: mitad(altoContraste, other.altoContraste),
+      grosorBorde: d(grosorBorde, other.grosorBorde),
+      etiquetaSticker: mitad(etiquetaSticker, other.etiquetaSticker),
+      marcasEsquina: mitad(marcasEsquina, other.marcasEsquina),
+      nucleo: mitad(nucleo, other.nucleo),
     );
   }
 
@@ -375,7 +415,11 @@ class ValoresDiseno extends ThemeExtension<ValoresDiseno> {
           other.duracionAnimacion == duracionAnimacion &&
           other.escalaLectura == escalaLectura &&
           other.decoracion == decoracion &&
-          other.altoContraste == altoContraste;
+          other.altoContraste == altoContraste &&
+          other.grosorBorde == grosorBorde &&
+          other.etiquetaSticker == etiquetaSticker &&
+          other.marcasEsquina == marcasEsquina &&
+          other.nucleo == nucleo;
 
   @override
   int get hashCode => Object.hashAll([
@@ -403,6 +447,10 @@ class ValoresDiseno extends ThemeExtension<ValoresDiseno> {
     escalaLectura,
     decoracion,
     altoContraste,
+    grosorBorde,
+    etiquetaSticker,
+    marcasEsquina,
+    nucleo,
   ]);
 }
 

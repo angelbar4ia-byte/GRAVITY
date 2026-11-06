@@ -333,7 +333,7 @@ class _Tecla extends StatelessWidget {
     final v = ValoresDiseno.de(context);
     final forma = RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(v.radioGrande),
-      side: BorderSide(color: v.borde),
+      side: BorderSide(color: v.borde, width: v.grosorBorde),
     );
     return Semantics(
       button: true,

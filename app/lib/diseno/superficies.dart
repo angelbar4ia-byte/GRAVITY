@@ -13,8 +13,13 @@ import 'valores_diseno.dart';
 extension SuperficiesDiseno on ValoresDiseno {
   /// Pista de barras, medidores y anillos (la parte "vacía"). En alto
   /// contraste el borde es muy marcado, así que la pista se aclara para que el
-  /// avance se distinga de ella (3:1 o más).
-  Color get pista => Color.lerp(panel, borde, altoContraste ? 0.25 : 0.45)!;
+  /// avance se distinga de ella (3:1 o más). Con bordes gruesos y marcados
+  /// (Swagger) pasa lo mismo, así que la pista también se aclara.
+  Color get pista => Color.lerp(
+    panel,
+    borde,
+    altoContraste ? 0.25 : (grosorBorde > 1 ? 0.2 : 0.45),
+  )!;
 
   /// Fondo de las teclas del teclado numérico.
   Color get superficieTecla => Color.lerp(panel, borde, 0.18)!;

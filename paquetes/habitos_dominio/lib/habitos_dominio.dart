@@ -6,6 +6,7 @@ library;
 export 'src/agenda.dart';
 export 'src/carga_dia.dart';
 export 'src/documentos_cifrados.dart';
+export 'src/edicion.dart';
 export 'src/espiritual.dart';
 export 'src/fecha.dart';
 export 'src/habito_eliminar.dart';

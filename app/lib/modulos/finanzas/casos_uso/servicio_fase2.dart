@@ -347,9 +347,10 @@ class ServicioDeudasAhorro {
 
   int saldoDeBolsa(BolsaAhorro b) => _d.vista(b.libroId).saldo(b.cuentaId);
 
-  /// Gasto esencial semanal: lo de las partidas protegidas del plan (el
-  /// historial por cierre llega cuando el cierre guarde la marca de
-  /// "esencial"; hasta entonces se rotula *"según tu plan"*, regla 18).
+  /// Gasto esencial semanal (regla 18): el promedio **real** de las últimas 8
+  /// semanas cerradas en partidas protegidas (la marca de esencial queda en
+  /// la foto de cada semana). Mientras no haya ninguna semana cerrada, lo de
+  /// las partidas protegidas del plan, rotulado *"según tu plan"*.
   GastoEsencial gastoEsencial(String libroId, Semana semana) {
     final plan = armarPlanDelLibro(_d, libroId, semana);
     var esencial = 0;
@@ -364,7 +365,7 @@ class ServicioDeudasAhorro {
       }
     }
     return gastoEsencialSemanal(
-      esencialesPorSemanaCerrada: const [],
+      esencialesPorSemanaCerrada: esencialesPorSemanaCerrada(_d, libroId),
       presupuestoEsencial: esencial > 0 ? esencial : null,
       minimosDeDeudaSemanales: minimos,
       incluirMinimos: p.esencialesIncluyenMinimos,
@@ -647,6 +648,108 @@ class ServicioDeudasAhorro {
         estado: omitir ? EstadoAportacion.omitida : EstadoAportacion.pospuesta,
       ),
     );
+  }
+
+  // ------------------------------------------------ ahorro automático (cierre)
+
+  /// Lo que el cierre de [semana] aparta solo, en el orden extras, sobre,
+  /// sobrante y redondeo (Fase 4, E16). Sale del ahorro que el motor ya
+  /// propone para el remanente (`destino.ahorro`), así que no se aparta dos
+  /// veces; mientras una deuda reciba abono extra solo cuenta el fondo de
+  /// emergencia (regla 16). Vacío si la semana tiene déficit o no hay bolsas
+  /// con esos métodos.
+  PlanAhorroDeCierre planAhorroDeCierre(String libroId, Semana semana) {
+    final v = base.vista(libroId, semana);
+    final destino = v.real.destino;
+    if (destino.ahorro <= 0) return PlanAhorroDeCierre.vacio;
+    final conDeudaPorPagar = destino.abonosExtra.isNotEmpty;
+    return planearAhorroDeCierre(
+      remanente: destino.ahorro,
+      bolsas: [
+        for (final b in _d.bolsasDe(libroId))
+          if (!conDeudaPorPagar || b.tipo == TipoBolsaAhorro.fondoEmergencia) b,
+      ],
+      extras: extrasDeLaSemana(_d, libroId, semana),
+      sobre: sobreDeLaSemana(v),
+      gastos: gastosDeLaSemana(_d, libroId, semana),
+    );
+  }
+
+  /// Ids estables de los movimientos automáticos de un cierre (uno por origen
+  /// y bolsa): cerrar dos veces la misma versión no duplica.
+  static String idAporteAutomatico(String cierreId, OrigenAporte o, String bolsaId) =>
+      idEstable(ClavesId.remanente(cierreId, 'auto-${o.clave}-$bolsaId'));
+
+  /// Crea los movimientos de ahorro automático del cierre [cierreId]: una
+  /// transferencia de [cuentaOrigenId] a la cuenta de cada bolsa, con el
+  /// origen en la nota (*"Ahorro automático · Redondeo · Celular"*). Los que
+  /// ya existen (mismo id) no se repiten. Sin señal quedan en la cola como
+  /// cualquier movimiento.
+  Future<List<Movimiento>> aplicarAhorroAutomatico({
+    required String libroId,
+    required PlanAhorroDeCierre plan,
+    required String cuentaOrigenId,
+    required String cierreId,
+    String? motivo,
+  }) async {
+    base.exigirEscribir(libroId);
+    if (plan.aportes.isEmpty) return const [];
+    final quien = base.quienDe(libroId, motivo);
+    final ya = {for (final m in _d.movimientos) m.id};
+    final nuevos = <Movimiento>[];
+    for (final a in plan.aportes) {
+      final bolsa = _bolsa(a.bolsaId);
+      final id = idAporteAutomatico(cierreId, a.origen, a.bolsaId);
+      if (ya.contains(id)) continue;
+      nuevos.add(
+        Movimiento(
+          id: id,
+          tipo: TipoMovimiento.transferencia,
+          fecha: base.hoy,
+          registradoEn: base.ahora,
+          cuentaOrigenId: cuentaOrigenId,
+          cuentaDestinoId: bolsa.cuentaId,
+          monto: a.monto,
+          realizadoPor: quien.realizadoPor,
+          registradoPor: base.personaId,
+          nota: 'Ahorro automático · ${a.origen.etiqueta} · ${bolsa.nombre}',
+          motivo: motivo?.trim(),
+          enNombreDe: quien.enNombreDe,
+        ),
+      );
+    }
+    if (nuevos.isNotEmpty) await base.repositorio.agregarMovimientos(nuevos);
+    return nuevos;
+  }
+
+  /// Los movimientos automáticos de un cierre que siguen vigentes (sin
+  /// anular), para mostrarlos o deshacerlos.
+  List<Movimiento> aportesAutomaticosDe(String libroId, String cierreId) {
+    final ids = {
+      for (final o in OrigenAporte.values)
+        for (final b in _d.bolsasDe(libroId))
+          idAporteAutomatico(cierreId, o, b.id),
+    };
+    final libro = _d.vista(libroId);
+    return [
+      for (final m in libro.movimientos)
+        if (ids.contains(m.id) && libro.contraasientoDe(m.id) == null) m,
+    ];
+  }
+
+  /// Deshace el ahorro automático de un cierre: una anulación con su
+  /// contraasiento por movimiento (nunca se borra). Devuelve cuántos
+  /// deshizo; repetirlo no hace nada.
+  Future<int> deshacerAhorroAutomatico({
+    required String libroId,
+    required String cierreId,
+  }) async {
+    var n = 0;
+    for (final m in aportesAutomaticosDe(libroId, cierreId)) {
+      await base.anular(m.id, motivo: 'Cierre de semana deshecho');
+      n++;
+    }
+    return n;
   }
 
   /// Retira de una bolsa a [cuentaDestinoId] (o a [bolsaDestinoId] si cambia

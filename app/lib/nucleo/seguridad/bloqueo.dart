@@ -21,6 +21,7 @@ import '../sesion/proveedores_sesion.dart';
 import 'intentos.dart';
 import 'pin.dart';
 import 'pin_de_montos.dart';
+import 'serie_pin.dart';
 import 'proveedores_seguridad.dart';
 
 /// Tiempo en segundo plano tras el que se pide el PIN.
@@ -125,6 +126,9 @@ class ControladorBloqueo extends Notifier<EstadoBloqueo> {
   String? _persona;
   DateTime? _enSegundoPlanoDesde;
   Future<void>? _carga;
+
+  /// Una verificación de PIN a la vez (los fallos se cuentan en fila).
+  final _serie = SerieDePin();
 
   DateTime _ahora() => ref.read(relojSeguridadProvider)();
 
@@ -238,7 +242,7 @@ class ControladorBloqueo extends Notifier<EstadoBloqueo> {
       // ese mismo PIN no cambia el secreto: escribirlo ya es conocerlo. Todo
       // intento, bueno o malo, pasa por el límite de fallos.
       if (_intentos.bloqueado(persona!)) return ResultadoBloqueo.bloqueado;
-      if (!HashPin.verificar(actual ?? pin, propio)) {
+      if (!await HashPin.verificarAsync(actual ?? pin, propio)) {
         final bloqueado =
             _intentos.anotarFallo(persona) == ResultadoFallo.bloqueado;
         if (actual == null && !bloqueado) throw StateError(_sinActual);
@@ -248,7 +252,7 @@ class ControladorBloqueo extends Notifier<EstadoBloqueo> {
       }
       _intentos.anotarAcierto(persona);
     }
-    await _guardar(ConfiguracionBloqueo(hashPin: HashPin.crear(pin)));
+    await _guardar(ConfiguracionBloqueo(hashPin: await HashPin.crearAsync(pin)));
     return ResultadoBloqueo.abierto;
   }
 
@@ -294,14 +298,14 @@ class ControladorBloqueo extends Notifier<EstadoBloqueo> {
 
   /// Comprueba el PIN del bloqueo **sin desbloquear nada** (p. ej. para volver
   /// a ver los montos). Cuenta los fallos igual que [desbloquearConPin].
-  ResultadoBloqueo comprobarPin(String pin) {
+  Future<ResultadoBloqueo> comprobarPin(String pin) => _serie.correr(() async {
     final persona = _persona;
     final configuracion = state.configuracion;
     if (persona == null || configuracion == null) {
       return ResultadoBloqueo.pinIncorrecto;
     }
     if (_intentos.bloqueado(persona)) return ResultadoBloqueo.bloqueado;
-    if (!HashPin.verificar(pin, configuracion.hashPin)) {
+    if (!await HashPin.verificarAsync(pin, configuracion.hashPin)) {
       return _intentos.anotarFallo(persona) == ResultadoFallo.bloqueado
           ? ResultadoBloqueo.bloqueado
           : ResultadoBloqueo.pinIncorrecto;
@@ -310,7 +314,7 @@ class ControladorBloqueo extends Notifier<EstadoBloqueo> {
     if (pinEsCortoParaSuRol(_rol, pin)) return ResultadoBloqueo.debeCambiarPin;
     _actualizarHash(pin, configuracion);
     return ResultadoBloqueo.abierto;
-  }
+  });
 
   /// Cambia el PIN del bloqueo comprobando el actual y, si el teléfono estaba
   /// bloqueado, lo abre. Es la salida de [ResultadoBloqueo.debeCambiarPin]
@@ -325,46 +329,58 @@ class ControladorBloqueo extends Notifier<EstadoBloqueo> {
       return ResultadoBloqueo.pinIncorrecto;
     }
     if (_intentos.bloqueado(persona)) return ResultadoBloqueo.bloqueado;
-    if (!HashPin.verificar(pinActual, configuracion.hashPin)) {
+    final correcto = await _serie.correr(
+      () => HashPin.verificarAsync(pinActual, configuracion.hashPin),
+    );
+    if (!correcto) {
       return _intentos.anotarFallo(persona) == ResultadoFallo.bloqueado
           ? ResultadoBloqueo.bloqueado
           : ResultadoBloqueo.pinIncorrecto;
     }
     _intentos.anotarAcierto(persona);
-    await _guardar(configuracion.copiarCon(hashPin: HashPin.crear(pinNuevo)));
+    await _guardar(
+      configuracion.copiarCon(hashPin: await HashPin.crearAsync(pinNuevo)),
+    );
     _desbloquear();
     return ResultadoBloqueo.abierto;
   }
 
-  ResultadoBloqueo desbloquearConPin(String pin) {
-    final persona = _persona;
-    final configuracion = state.configuracion;
-    if (persona == null || configuracion == null) {
-      _desbloquear();
-      return ResultadoBloqueo.abierto;
-    }
-    if (_intentos.bloqueado(persona)) return ResultadoBloqueo.bloqueado;
-    if (!HashPin.verificar(pin, configuracion.hashPin)) {
-      return _intentos.anotarFallo(persona) == ResultadoFallo.bloqueado
-          ? ResultadoBloqueo.bloqueado
-          : ResultadoBloqueo.pinIncorrecto;
-    }
-    _intentos.anotarAcierto(persona);
-    // D18 (23/oct): con un PIN corto, quien ve dinero no entra todavía.
-    if (pinEsCortoParaSuRol(_rol, pin)) return ResultadoBloqueo.debeCambiarPin;
-    _desbloquear();
-    _actualizarHash(pin, configuracion);
-    return ResultadoBloqueo.abierto;
-  }
+  Future<ResultadoBloqueo> desbloquearConPin(String pin) =>
+      _serie.correr(() async {
+        final persona = _persona;
+        final configuracion = state.configuracion;
+        if (persona == null || configuracion == null) {
+          _desbloquear();
+          return ResultadoBloqueo.abierto;
+        }
+        if (_intentos.bloqueado(persona)) return ResultadoBloqueo.bloqueado;
+        if (!await HashPin.verificarAsync(pin, configuracion.hashPin)) {
+          return _intentos.anotarFallo(persona) == ResultadoFallo.bloqueado
+              ? ResultadoBloqueo.bloqueado
+              : ResultadoBloqueo.pinIncorrecto;
+        }
+        _intentos.anotarAcierto(persona);
+        // D18 (23/oct): con un PIN corto, quien ve dinero no entra todavía.
+        if (pinEsCortoParaSuRol(_rol, pin)) {
+          return ResultadoBloqueo.debeCambiarPin;
+        }
+        _desbloquear();
+        _actualizarHash(pin, configuracion);
+        return ResultadoBloqueo.abierto;
+      });
 
   /// M9': un hash hecho con menos vueltas de PBKDF2 (los de antes) se rehace
   /// con las de hoy en cuanto se escribe el PIN, el único momento en que se
   /// tiene.
   void _actualizarHash(String pin, ConfiguracionBloqueo configuracion) {
     if (!HashPin.necesitaActualizarse(configuracion.hashPin)) return;
-    unawaited(
-      _guardar(configuracion.copiarCon(hashPin: HashPin.crear(pin))),
-    );
+    unawaited(() async {
+      final rehecho = await HashPin.crearAsync(pin);
+      if (!ref.mounted || state.configuracion?.hashPin != configuracion.hashPin) {
+        return;
+      }
+      await _guardar(state.configuracion!.copiarCon(hashPin: rehecho));
+    }());
   }
 
   /// Desbloquea con la huella del teléfono, si la persona la activó.

@@ -13,11 +13,27 @@ class EtiquetaPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final v = ValoresDiseno.de(context);
-    return Text(
+    final sticker = v.etiquetaSticker && v.decoracion;
+    final etiqueta = Text(
       texto.toUpperCase(),
-      style: v.etiquetaPanel(tamano: tamano, color: color),
+      style: v.etiquetaPanel(
+        tamano: tamano,
+        color: sticker ? v.sobreAcento : color,
+      ),
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
+    );
+    if (!sticker) return etiqueta;
+    // Estilo Swagger: etiqueta tipo sticker, con el relleno del acento.
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: v.acento,
+        borderRadius: BorderRadius.circular(v.radioChico),
+      ),
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: v.espacio, vertical: 2),
+        child: etiqueta,
+      ),
     );
   }
 }

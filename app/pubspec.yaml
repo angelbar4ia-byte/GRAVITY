@@ -101,6 +101,9 @@ flutter:
     - assets/fonts/ChakraPetch/OFL.txt
     - assets/fonts/IBMPlexSans/OFL.txt
     - assets/fonts/IBMPlexMono/OFL.txt
+    - assets/fonts/Anton/OFL.txt
+    - assets/fonts/Inter/OFL.txt
+    - assets/fonts/PlusJakartaSans/OFL.txt
 
   fonts:
     - family: ChakraPetch
@@ -132,4 +135,24 @@ flutter:
         - asset: assets/fonts/IBMPlexMono/IBMPlexMono-SemiBold.ttf
           weight: 600
         - asset: assets/fonts/IBMPlexMono/IBMPlexMono-Bold.ttf
+          weight: 700
+    - family: Anton
+      fonts:
+        - asset: assets/fonts/Anton/Anton-Regular.ttf
+          weight: 400
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter/Inter-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Inter/Inter-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Inter/Inter-Bold.ttf
+          weight: 700
+    - family: PlusJakartaSans
+      fonts:
+        - asset: assets/fonts/PlusJakartaSans/PlusJakartaSans-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/PlusJakartaSans/PlusJakartaSans-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/PlusJakartaSans/PlusJakartaSans-Bold.ttf
           weight: 700

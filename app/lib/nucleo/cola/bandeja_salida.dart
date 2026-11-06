@@ -405,12 +405,13 @@ class BandejaDeSalida {
         // haya caducado: el PIN es la identidad.
         final credencial = switch (permiso.estado) {
           EstadoPermiso.enEspera => permiso.credencial,
-          EstadoPermiso.devuelto => _abrirSobre(permiso, pin),
+          EstadoPermiso.devuelto => await _abrirSobre(permiso, pin),
         };
         if (credencial == null) {
           // Con el PIN bueno y sin poder abrirlo: está dañado, no sirve.
           if (permiso.estado == EstadoPermiso.devuelto &&
-              CifradoPin.descifrar(pin, permiso.clavePrivadaCifrada) != null) {
+              await CifradoPin.descifrarAsync(pin, permiso.clavePrivadaCifrada) !=
+                  null) {
             await borrar(personaId);
           }
           return null;
@@ -419,8 +420,11 @@ class BandejaDeSalida {
         return credencial;
       });
 
-  String? _abrirSobre(PermisoDeSubida permiso, String pin) {
-    final privada = CifradoPin.descifrar(pin, permiso.clavePrivadaCifrada);
+  Future<String?> _abrirSobre(PermisoDeSubida permiso, String pin) async {
+    final privada = await CifradoPin.descifrarAsync(
+      pin,
+      permiso.clavePrivadaCifrada,
+    );
     if (privada == null) return null;
     final (llave, base64Privada) = privada;
     llave.olvidar();
@@ -436,11 +440,14 @@ class BandejaDeSalida {
   ) => conCandado(personaId, urgente: true, () async {
     final permiso = await leer(personaId);
     if (permiso == null) return true;
-    final privada = CifradoPin.descifrar(pinActual, permiso.clavePrivadaCifrada);
+    final privada = await CifradoPin.descifrarAsync(
+      pinActual,
+      permiso.clavePrivadaCifrada,
+    );
     if (privada == null) return false;
     final (llaveVieja, base64Privada) = privada;
     llaveVieja.olvidar();
-    final llaveNueva = LlavePin.derivar(pinNuevo);
+    final llaveNueva = await LlavePin.derivarAsync(pinNuevo);
     await _guardar(
       permiso.copiarCon(
         clavePrivadaCifrada: CifradoPin.cifrar(llaveNueva, base64Privada),

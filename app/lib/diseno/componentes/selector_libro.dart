@@ -371,7 +371,7 @@ class _Marquita extends StatelessWidget {
       excludeFromSemantics: true,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          border: Border.all(color: v.borde),
+          border: Border.all(color: v.borde, width: v.grosorBorde),
           borderRadius: BorderRadius.circular(v.radioChico),
         ),
         child: Padding(
@@ -484,7 +484,7 @@ class _BotonMenu extends StatelessWidget {
     final libro = this.libro;
     final forma = RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(v.radioChico),
-      side: BorderSide(color: v.borde),
+      side: BorderSide(color: v.borde, width: v.grosorBorde),
     );
     return Semantics(
       container: true,

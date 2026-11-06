@@ -107,7 +107,7 @@ ThemeData construirTema(ValoresDiseno v) {
   );
   final formaPanel = RoundedRectangleBorder(
     borderRadius: BorderRadius.circular(v.radioMediano),
-    side: BorderSide(color: v.borde),
+    side: BorderSide(color: v.borde, width: v.grosorBorde),
   );
   const tamanoMinimo = Size(zonaTactilMinima, zonaTactilMinima);
   final textoBoton = v.lectura(tamano: 14, peso: FontWeight.w600);
@@ -193,7 +193,7 @@ ThemeData construirTema(ValoresDiseno v) {
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         foregroundColor: v.texto,
-        side: BorderSide(color: v.borde),
+        side: BorderSide(color: v.borde, width: v.grosorBorde),
         minimumSize: tamanoMinimo,
         shape: forma,
         textStyle: textoBoton,
@@ -225,11 +225,11 @@ ThemeData construirTema(ValoresDiseno v) {
       labelStyle: TextStyle(color: v.textoTenue),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(v.radioChico),
-        borderSide: BorderSide(color: v.borde),
+        borderSide: BorderSide(color: v.borde, width: v.grosorBorde),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(v.radioChico),
-        borderSide: BorderSide(color: v.borde),
+        borderSide: BorderSide(color: v.borde, width: v.grosorBorde),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(v.radioChico),
@@ -239,7 +239,7 @@ ThemeData construirTema(ValoresDiseno v) {
     chipTheme: ChipThemeData(
       backgroundColor: v.panel,
       selectedColor: contenedorAcento,
-      side: BorderSide(color: v.borde),
+      side: BorderSide(color: v.borde, width: v.grosorBorde),
       labelStyle: v.lectura(tamano: 13),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(v.radioGrande),
@@ -293,7 +293,7 @@ ThemeData construirTema(ValoresDiseno v) {
     tooltipTheme: TooltipThemeData(
       decoration: BoxDecoration(
         color: v.panel,
-        border: Border.all(color: v.borde),
+        border: Border.all(color: v.borde, width: v.grosorBorde),
         borderRadius: BorderRadius.circular(v.radioChico),
       ),
       textStyle: v.lectura(tamano: 12),
@@ -312,7 +312,7 @@ ThemeData construirTema(ValoresDiseno v) {
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(v.radioGrande),
-        side: BorderSide(color: v.borde),
+        side: BorderSide(color: v.borde, width: v.grosorBorde),
       ),
     ),
     textSelectionTheme: TextSelectionThemeData(

@@ -44,7 +44,7 @@ Future<bool> anularConMotivo(
         '$ayudaDelMotivo No se borra: se registra un contraasiento con el '
         'mismo monto y la misma fecha, y queda en la bitácora.',
     textoAccion: 'Anular',
-    minimoVisibles: minimoCaracteresDeMotivo,
+    esMotivo: true,
   );
   if (motivo == null || !context.mounted) return false;
   final ok = await intentar(

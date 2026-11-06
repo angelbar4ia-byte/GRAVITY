@@ -637,7 +637,7 @@ class _PanelNucleo extends ConsumerWidget {
       key: const ValueKey('panel-nucleo'),
       decoration: BoxDecoration(
         color: superficie,
-        border: Border.all(color: v.borde),
+        border: Border.all(color: v.borde, width: v.grosorBorde),
         borderRadius: BorderRadius.circular(v.radioMediano),
       ),
       child: Padding(

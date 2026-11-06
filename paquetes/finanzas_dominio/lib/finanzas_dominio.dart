@@ -24,6 +24,7 @@ export 'src/ahorro_datos.dart';
 export 'src/alertas.dart';
 export 'src/calendario.dart';
 export 'src/categorias.dart';
+export 'src/cierre_ahorro.dart';
 export 'src/configuracion.dart';
 export 'src/datos_finanzas.dart';
 export 'src/deudas_detalle.dart';

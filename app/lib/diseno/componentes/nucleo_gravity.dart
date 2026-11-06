@@ -101,6 +101,7 @@ class _NucleoGravityState extends State<NucleoGravity>
             borde: v.borde,
             panel: v.panel,
             pulso: widget.estado.pulso,
+            variante: v.nucleo,
           ),
         ),
       ),
@@ -117,6 +118,7 @@ class PintorNucleo extends CustomPainter {
     required this.borde,
     required this.panel,
     required this.pulso,
+    this.variante = VarianteNucleo.anillos,
   }) : super(repaint: animacion);
 
   final Animation<double> animacion;
@@ -125,8 +127,66 @@ class PintorNucleo extends CustomPainter {
   final Color panel;
   final double pulso;
 
+  /// Cada estilo trae su variante del núcleo (P14).
+  final VarianteNucleo variante;
+
   @override
   void paint(Canvas canvas, Size size) {
+    switch (variante) {
+      case VarianteNucleo.pulso:
+        _pintarPulso(canvas, size);
+      case VarianteNucleo.anillos:
+      case VarianteNucleo.cristal:
+        _pintarAnillos(canvas, size);
+    }
+  }
+
+  /// Swagger: tres ondas gruesas que se abren desde el centro, como un sonar,
+  /// sobre un disco central que late.
+  void _pintarPulso(Canvas canvas, Size size) {
+    final t = animacion.value;
+    final c = size.center(Offset.zero);
+    final s = size.shortestSide / 320;
+    final latido = (1 + math.sin(2 * math.pi * 80 * t)) / 2;
+    final opacidadPulso = 1 - pulso + pulso * latido;
+
+    canvas.drawCircle(
+      c,
+      152 * s,
+      Paint()
+        ..color = borde
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3 * s.clamp(0.6, 2.0),
+    );
+    // Cada onda hace 14 ciclos por vuelta del reloj del núcleo.
+    for (var i = 0; i < 3; i++) {
+      final fase = (t * 14 + i / 3) % 1.0;
+      final radio = (40 + 100 * fase) * s;
+      canvas.drawCircle(
+        c,
+        radio,
+        Paint()
+          ..color = acento.withValues(alpha: (1 - fase) * 0.9)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 6 * s.clamp(0.6, 2.0),
+      );
+    }
+    canvas.drawCircle(
+      c,
+      (34 + 6 * latido * pulso) * s,
+      Paint()..color = acento.withValues(alpha: 0.6 + 0.4 * opacidadPulso),
+    );
+    canvas.drawCircle(
+      c,
+      34 * s,
+      Paint()
+        ..color = panel
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3 * s.clamp(0.6, 2.0),
+    );
+  }
+
+  void _pintarAnillos(Canvas canvas, Size size) {
     final t = animacion.value;
     final c = size.center(Offset.zero);
     // Las medidas siguen al boceto (lienzo de 320).
@@ -220,5 +280,6 @@ class PintorNucleo extends CustomPainter {
       oldDelegate.borde != borde ||
       oldDelegate.panel != panel ||
       oldDelegate.pulso != pulso ||
+      oldDelegate.variante != variante ||
       oldDelegate.animacion != animacion;
 }

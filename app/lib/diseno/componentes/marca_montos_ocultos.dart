@@ -36,7 +36,7 @@ class MarcaMontosOcultos extends ConsumerWidget {
     final e = v.espacio;
     final forma = RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(v.radioGrande * 2),
-      side: BorderSide(color: v.borde),
+      side: BorderSide(color: v.borde, width: v.grosorBorde),
     );
     final mostrado = privado ? textoPrivado : texto;
     final accion = privado

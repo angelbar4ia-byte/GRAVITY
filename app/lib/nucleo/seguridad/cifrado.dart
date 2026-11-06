@@ -35,6 +35,26 @@ class LlavePin {
     );
   }
 
+  /// Como [LlavePin.derivar], sin congelar la pantalla (hilo aparte).
+  static Future<LlavePin> derivarAsync(
+    String pin, {
+    List<int>? sal,
+    int? iteraciones,
+  }) async {
+    iteraciones ??= HashPin.iteracionesPorDefecto;
+    final salUsada = sal ?? HashPin.salAleatoria();
+    final bytes = await HashPin.derivarLlaveAsync(
+      pin,
+      salUsada,
+      iteraciones: iteraciones,
+    );
+    return LlavePin._(
+      List.unmodifiable(salUsada),
+      iteraciones,
+      Uint8List.fromList(bytes),
+    );
+  }
+
   final List<int> sal;
   final int iteraciones;
   final Uint8List _bytes;
@@ -73,6 +93,34 @@ abstract final class CifradoPin {
       final json = (jsonDecode(sobre) as Map).cast<String, Object?>();
       if (json['v'] != version) return null;
       final llave = LlavePin.derivar(
+        pin,
+        sal: base64Decode(json['sal']! as String),
+        iteraciones: json['it']! as int,
+      );
+      final nonce = base64Decode(json['nonce']! as String);
+      final datos = base64Decode(json['datos']! as String);
+      final claro = _gcm(false, llave._bytes, nonce).process(datos);
+      return (llave, utf8.decode(claro));
+    } on InvalidCipherTextException {
+      return null;
+    } on FormatException {
+      return null;
+    } on TypeError {
+      return null;
+    } on ArgumentError {
+      return null;
+    }
+  }
+
+  /// Como [descifrar], con la derivación del PIN en un hilo aparte.
+  static Future<(LlavePin, String)?> descifrarAsync(
+    String pin,
+    String sobre,
+  ) async {
+    try {
+      final json = (jsonDecode(sobre) as Map).cast<String, Object?>();
+      if (json['v'] != version) return null;
+      final llave = await LlavePin.derivarAsync(
         pin,
         sal: base64Decode(json['sal']! as String),
         iteraciones: json['it']! as int,

@@ -73,10 +73,10 @@ class TarjetaModulo extends StatelessWidget {
         color: v.panel,
         shape: RoundedRectangleBorder(
           borderRadius: radio,
-          side: BorderSide(color: v.borde),
+          side: BorderSide(color: v.borde, width: v.grosorBorde),
         ),
         clipBehavior: Clip.antiAlias,
-        child: v.decoracion
+        child: v.decoracion && v.marcasEsquina
             ? CustomPaint(
                 foregroundPainter: MarcasEsquina(color: v.acento),
                 child: contenido,

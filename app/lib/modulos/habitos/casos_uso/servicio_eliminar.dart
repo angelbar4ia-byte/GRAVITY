@@ -29,6 +29,8 @@ class ConfigHabito {
     this.cigarrillosPorCajetilla = 20,
     this.mostrarAhorro = false,
     this.motivos = const [],
+    this.disparadores = const [],
+    this.reemplazos = const [],
   });
 
   final TipoHabito tipo;
@@ -44,43 +46,73 @@ class ConfigHabito {
   final bool mostrarAhorro;
   final List<String> motivos;
 
+  /// Qué dispara las ganas ("después de comer", "estrés"…) y con qué se
+  /// reemplaza (E9). Texto de la persona: cifrado como todo lo demás.
+  final List<String> disparadores;
+  final List<String> reemplazos;
+
+  ConfigHabito conListas({
+    List<String>? motivos,
+    List<String>? disparadores,
+    List<String>? reemplazos,
+  }) => ConfigHabito(
+    tipo: tipo,
+    inicio: inicio,
+    diaD: diaD,
+    lineaBaseDias: lineaBaseDias,
+    porcentajes: porcentajes,
+    focoDias: focoDias,
+    limiteOcasional: limiteOcasional,
+    periodoSemana: periodoSemana,
+    precioCajetillaCentavos: precioCajetillaCentavos,
+    cigarrillosPorCajetilla: cigarrillosPorCajetilla,
+    mostrarAhorro: mostrarAhorro,
+    motivos: motivos ?? this.motivos,
+    disparadores: disparadores ?? this.disparadores,
+    reemplazos: reemplazos ?? this.reemplazos,
+  );
+
   PlanCigarrillo get plan => PlanCigarrillo(
-        inicio: inicio,
-        diaD: diaD,
-        lineaBaseDias: lineaBaseDias,
-        porcentajes: porcentajes,
-        focoDias: focoDias,
-      );
+    inicio: inicio,
+    diaD: diaD,
+    lineaBaseDias: lineaBaseDias,
+    porcentajes: porcentajes,
+    focoDias: focoDias,
+  );
 
   Map<String, Object?> aDatos() => {
-        'tipo': tipo.name,
-        'inicio': inicio.toIso8601String(),
-        'dia_d': diaD?.toIso8601String(),
-        'linea_base_dias': lineaBaseDias,
-        'porcentajes': porcentajes,
-        'foco_dias': focoDias,
-        'limite_ocasional': limiteOcasional,
-        'periodo_semana': periodoSemana,
-        'precio_cajetilla': precioCajetillaCentavos,
-        'cig_por_cajetilla': cigarrillosPorCajetilla,
-        'mostrar_ahorro': mostrarAhorro,
-        'motivos': motivos,
-      };
+    'tipo': tipo.name,
+    'inicio': inicio.toIso8601String(),
+    'dia_d': diaD?.toIso8601String(),
+    'linea_base_dias': lineaBaseDias,
+    'porcentajes': porcentajes,
+    'foco_dias': focoDias,
+    'limite_ocasional': limiteOcasional,
+    'periodo_semana': periodoSemana,
+    'precio_cajetilla': precioCajetillaCentavos,
+    'cig_por_cajetilla': cigarrillosPorCajetilla,
+    'mostrar_ahorro': mostrarAhorro,
+    'motivos': motivos,
+    'disparadores': disparadores,
+    'reemplazos': reemplazos,
+  };
 
   static ConfigHabito deDatos(Map<String, Object?> d) => ConfigHabito(
-        tipo: TipoHabito.values.byName(d['tipo']! as String),
-        inicio: DateTime.parse(d['inicio']! as String),
-        diaD: d['dia_d'] == null ? null : DateTime.parse(d['dia_d']! as String),
-        lineaBaseDias: d['linea_base_dias']! as int,
-        porcentajes: (d['porcentajes']! as List).cast<int>(),
-        focoDias: d['foco_dias']! as int,
-        limiteOcasional: d['limite_ocasional'] as int?,
-        periodoSemana: d['periodo_semana']! as bool,
-        precioCajetillaCentavos: d['precio_cajetilla'] as int?,
-        cigarrillosPorCajetilla: d['cig_por_cajetilla']! as int,
-        mostrarAhorro: d['mostrar_ahorro']! as bool,
-        motivos: (d['motivos']! as List).cast<String>(),
-      );
+    tipo: TipoHabito.values.byName(d['tipo']! as String),
+    inicio: DateTime.parse(d['inicio']! as String),
+    diaD: d['dia_d'] == null ? null : DateTime.parse(d['dia_d']! as String),
+    lineaBaseDias: d['linea_base_dias']! as int,
+    porcentajes: (d['porcentajes']! as List).cast<int>(),
+    focoDias: d['foco_dias']! as int,
+    limiteOcasional: d['limite_ocasional'] as int?,
+    periodoSemana: d['periodo_semana']! as bool,
+    precioCajetillaCentavos: d['precio_cajetilla'] as int?,
+    cigarrillosPorCajetilla: d['cig_por_cajetilla']! as int,
+    mostrarAhorro: d['mostrar_ahorro']! as bool,
+    motivos: (d['motivos']! as List).cast<String>(),
+    disparadores: ((d['disparadores'] as List?) ?? const []).cast<String>(),
+    reemplazos: ((d['reemplazos'] as List?) ?? const []).cast<String>(),
+  );
 }
 
 /// Lo que muestra el panel hoy.
@@ -117,45 +149,132 @@ class EstadoHabito {
 
 class ServicioHabitoEliminar {
   ServicioHabitoEliminar(this._docs, {DateTime Function()? ahora})
-      : _ahora = ahora ?? DateTime.now;
+    : _ahora = ahora ?? DateTime.now;
 
   final DocumentosSensibles _docs;
   final DateTime Function() _ahora;
   DateTime get hoy => soloDia(_ahora());
 
   Future<void> configurar(ConfigHabito c) => _docs.poner(
-      _t,
-      _claveConfig,
-      ElementoDoc(
-          id: 'habito:${c.tipo.name}',
-          clase: 'habito',
-          modificadoEn: _ahora().millisecondsSinceEpoch,
-          datos: c.aDatos()));
+    _t,
+    _claveConfig,
+    ElementoDoc(
+      id: 'habito:${c.tipo.name}',
+      clase: 'habito',
+      modificadoEn: _ahora().millisecondsSinceEpoch,
+      datos: c.aDatos(),
+    ),
+  );
 
   Future<ConfigHabito?> config(TipoHabito t) async {
-    final e = (await _docs.leer(_t, _claveConfig)).elementos['habito:${t.name}'];
+    final e = (await _docs.leer(
+      _t,
+      _claveConfig,
+    )).elementos['habito:${t.name}'];
     return e == null || e.eliminado ? null : ConfigHabito.deDatos(e.datos);
   }
 
+  /// Guarda motivos, disparadores y reemplazos (E9) sin tocar lo demás de la
+  /// configuración. Lanza [ArgumentError] si una lista pasa del límite o si el
+  /// hábito aún no está configurado.
+  Future<ConfigHabito> guardarListas(
+    TipoHabito t, {
+    List<String>? motivos,
+    List<String>? disparadores,
+    List<String>? reemplazos,
+  }) async {
+    final c = await config(t);
+    if (c == null) throw ArgumentError('Configura primero el hábito.');
+    final nueva = c.conListas(
+      motivos: motivos == null ? null : limpiarLista(motivos),
+      disparadores: disparadores == null ? null : limpiarLista(disparadores),
+      reemplazos: reemplazos == null ? null : limpiarLista(reemplazos),
+    );
+    await configurar(nueva);
+    return nueva;
+  }
+
+  static const _claveHitos = 'hitos';
+
+  Future<Set<int>> _hitosVistos(TipoHabito t) async {
+    final e = (await _docs.leer(_t, _claveConfig)).elementos['hitos:${t.name}'];
+    return e == null || e.eliminado
+        ? <int>{}
+        : {...(e.datos['vistos'] as List? ?? const []).cast<int>()};
+  }
+
+  /// Días de constancia: cigarrillo, la racha libre; azúcar, los días seguidos
+  /// sin refresco desde que terminó la línea base. Solo cifras (E10).
+  Future<int> diasDeConstancia(TipoHabito t) async {
+    final c = await config(t);
+    if (c == null) return 0;
+    if (t == TipoHabito.cigarrillo) {
+      final e = await _cigarrillo(c);
+      return e.racha?.actual ?? 0;
+    }
+    final fin = sumarDias(soloDia(c.inicio), c.lineaBaseDias);
+    if (hoy.isBefore(fin)) return 0;
+    final (cuenta, _) = await _consumos(
+      TipoHabito.azucar,
+      fin,
+      categoria: 'refresco',
+    );
+    var n = 0;
+    for (var d = hoy; !d.isBefore(fin); d = sumarDias(d, -1)) {
+      if ((cuenta[d] ?? 0) > 0) break;
+      n++;
+    }
+    return n;
+  }
+
+  /// Hitos de constancia alcanzados que la persona aún no ha visto (E10).
+  Future<List<int>> hitosPorVerDe(TipoHabito t) async => hitosPorVer(
+    await diasDeConstancia(t),
+    t == TipoHabito.cigarrillo ? hitosCigarrillo : hitosAzucar,
+    await _hitosVistos(t),
+  );
+
+  /// "Visto": cada hito sale una sola vez.
+  Future<void> marcarHitosVistos(TipoHabito t, Iterable<int> hitos) async {
+    final vistos = {...await _hitosVistos(t), ...hitos};
+    await _docs.poner(
+      _t,
+      _claveConfig,
+      ElementoDoc(
+        id: 'hitos:${t.name}',
+        clase: _claveHitos,
+        modificadoEn: _ahora().millisecondsSinceEpoch,
+        datos: {'vistos': (vistos.toList()..sort())},
+      ),
+    );
+  }
+
   /// Registro en un toque (regla 39). Devuelve el id para Deshacer.
-  Future<String> registrarConsumo(TipoHabito t,
-      {int? horaMin, DateTime? fecha, String? categoria, String? ocasion}) async {
+  Future<String> registrarConsumo(
+    TipoHabito t, {
+    int? horaMin,
+    DateTime? fecha,
+    String? categoria,
+    String? ocasion,
+  }) async {
     final f = soloDia(fecha ?? hoy);
     final n = _ahora();
     final id = const Uuid().v4();
     await _docs.poner(
-        _t,
-        claveDia(f),
-        ElementoDoc(
-            id: id,
-            clase: 'consumo',
-            modificadoEn: n.millisecondsSinceEpoch,
-            datos: {
-              'habito': t.name,
-              'hora_min': horaMin ?? n.hour * 60 + n.minute,
-              'categoria': categoria,
-              'ocasion': ocasion,
-            }));
+      _t,
+      claveDia(f),
+      ElementoDoc(
+        id: id,
+        clase: 'consumo',
+        modificadoEn: n.millisecondsSinceEpoch,
+        datos: {
+          'habito': t.name,
+          'hora_min': horaMin ?? n.hour * 60 + n.minute,
+          'categoria': categoria,
+          'ocasion': ocasion,
+        },
+      ),
+    );
     return id;
   }
 
@@ -166,44 +285,55 @@ class ServicioHabitoEliminar {
   Future<void> cerrarDia(TipoHabito t, {DateTime? fecha}) {
     final f = soloDia(fecha ?? hoy);
     return _docs.poner(
-        _t,
-        claveDia(f),
-        ElementoDoc(
-            id: 'cierre:${t.name}',
-            clase: 'cierre',
-            modificadoEn: _ahora().millisecondsSinceEpoch,
-            datos: {'habito': t.name}));
+      _t,
+      claveDia(f),
+      ElementoDoc(
+        id: 'cierre:${t.name}',
+        clase: 'cierre',
+        modificadoEn: _ahora().millisecondsSinceEpoch,
+        datos: {'habito': t.name},
+      ),
+    );
   }
 
   /// Guarda el antojo del SOS (regla 59).
-  Future<void> guardarAntojo(TipoHabito t,
-      {required ResultadoAntojo resultado,
-      String? tecnica,
-      int? intensidad,
-      String? disparador}) {
+  Future<void> guardarAntojo(
+    TipoHabito t, {
+    required ResultadoAntojo resultado,
+    String? tecnica,
+    int? intensidad,
+    String? disparador,
+  }) {
     final n = _ahora();
     return _docs.poner(
-        _t,
-        claveDia(hoy),
-        ElementoDoc(
-            id: const Uuid().v4(),
-            clase: 'antojo',
-            modificadoEn: n.millisecondsSinceEpoch,
-            datos: {
-              'habito': t.name,
-              'hora_min': n.hour * 60 + n.minute,
-              'resultado': resultado.name,
-              'tecnica': tecnica,
-              'intensidad': intensidad,
-              'disparador': disparador,
-            }));
+      _t,
+      claveDia(hoy),
+      ElementoDoc(
+        id: const Uuid().v4(),
+        clase: 'antojo',
+        modificadoEn: n.millisecondsSinceEpoch,
+        datos: {
+          'habito': t.name,
+          'hora_min': n.hour * 60 + n.minute,
+          'resultado': resultado.name,
+          'tecnica': tecnica,
+          'intensidad': intensidad,
+          'disparador': disparador,
+        },
+      ),
+    );
   }
 
   Future<int> antojosSuperados(TipoHabito t, {int dias = 30}) async {
     var n = 0;
     for (var i = 0; i < dias; i++) {
-      for (final e in await _docs.vivos(_t, claveDia(sumarDias(hoy, -i)), 'antojo')) {
-        if (e.datos['habito'] == t.name && e.datos['resultado'] == 'superado') n++;
+      for (final e in await _docs.vivos(
+        _t,
+        claveDia(sumarDias(hoy, -i)),
+        'antojo',
+      )) {
+        if (e.datos['habito'] == t.name && e.datos['resultado'] == 'superado')
+          n++;
       }
     }
     return n;
@@ -211,7 +341,10 @@ class ServicioHabitoEliminar {
 
   /// Cuenta de consumos y días con datos desde [desde] hasta hoy.
   Future<(Map<DateTime, int>, Set<DateTime>)> _consumos(
-      TipoHabito t, DateTime desde, {String? categoria}) async {
+    TipoHabito t,
+    DateTime desde, {
+    String? categoria,
+  }) async {
     final cuenta = <DateTime, int>{};
     final conDatos = <DateTime>{};
     for (var d = soloDia(desde); !d.isAfter(hoy); d = sumarDias(d, 1)) {
@@ -245,7 +378,7 @@ class ServicioHabitoEliminar {
     final finBase = sumarDias(c.inicio, c.lineaBaseDias);
     final base = <int>[
       for (final d in conDatos)
-        if (!d.isBefore(c.inicio) && d.isBefore(finBase)) cuenta[d] ?? 0
+        if (!d.isBefore(c.inicio) && d.isBefore(finBase)) cuenta[d] ?? 0,
     ];
     final prom = promedioLineaBase(base);
     final fase = plan.fase(hoy);
@@ -281,19 +414,27 @@ class ServicioHabitoEliminar {
   }
 
   Future<EstadoHabito> _azucar(ConfigHabito c) async {
-    final desde = c.periodoSemana ? lunesDe(hoy) : DateTime.utc(hoy.year, hoy.month, 1);
-    final (cuenta, _) = await _consumos(TipoHabito.azucar, desde, categoria: 'refresco');
+    final desde = c.periodoSemana
+        ? lunesDe(hoy)
+        : DateTime.utc(hoy.year, hoy.month, 1);
+    final (cuenta, _) = await _consumos(
+      TipoHabito.azucar,
+      desde,
+      categoria: 'refresco',
+    );
     final usadas = cuenta.values.fold<int>(0, (a, b) => a + b);
     final lim = c.limiteOcasional;
     final fase = soloDia(c.inicio).isAfter(hoy)
         ? FaseHabito.noIniciado
         : (diasEntre(c.inicio, hoy) < c.lineaBaseDias
-            ? FaseHabito.lineaBase
-            : FaseHabito.mantenimiento);
+              ? FaseHabito.lineaBase
+              : FaseHabito.mantenimiento);
     return EstadoHabito(
       fase: fase,
       hoy: (await _consumos(TipoHabito.azucar, hoy)).$1[hoy] ?? 0,
-      semaforo: fase == FaseHabito.lineaBase || lim == null ? null : semaforoAzucar(usadas, lim),
+      semaforo: fase == FaseHabito.lineaBase || lim == null
+          ? null
+          : semaforoAzucar(usadas, lim),
       usadasPeriodo: usadas,
       limite: lim,
     );

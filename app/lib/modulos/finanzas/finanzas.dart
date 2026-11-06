@@ -53,6 +53,15 @@ import 'pantallas/telefono/pantallas_telefono.dart';
 
 export 'datos/repositorio_supabase.dart' show TiposCola;
 export 'estado/proveedores.dart' show refrescarFinanzas;
+export 'estado/resumen_hoy.dart'
+    show
+        CifrasSemana,
+        EstadoResumenHoy,
+        ResumenFinanzasHoy,
+        ResumenLibroHoy,
+        cifrasMiSemanaProvider,
+        resumenFinanzasHoyProvider;
+export 'pantallas/tarjeta_hoy.dart' show TarjetaFinanzasHoy;
 export 'pantallas/laptop/marco_laptop.dart' show SeccionFinanzas;
 
 /// Tabla de Supabase de cada tipo de registro de la cola sin conexión

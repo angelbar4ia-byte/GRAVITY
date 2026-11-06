@@ -138,10 +138,13 @@ class _RevisionSemanalState extends ConsumerState<RevisionSemanal> {
                 Expanded(
                   child: TextField(
                     controller: _motivos.putIfAbsent(cuenta.id, TextEditingController.new),
-                    decoration: const InputDecoration(
+                    onChanged: (_) => setState(() {}),
+                    decoration: InputDecoration(
                       labelText: 'Motivo si no cuadra',
                       helperText: 'Suele ser gasto sin capturar. $ayudaDelMotivo',
-                      helperMaxLines: 2,
+                      helperMaxLines: 3,
+                      errorText: errorDeMotivo(_motivos[cuenta.id]?.text),
+                      errorMaxLines: 3,
                     ),
                   ),
                 ),

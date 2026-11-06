@@ -287,7 +287,7 @@ class FilaHabito extends StatelessWidget {
     final fila = DecoratedBox(
       decoration: BoxDecoration(
         color: v.panel,
-        border: Border.all(color: v.borde),
+        border: Border.all(color: v.borde, width: v.grosorBorde),
         borderRadius: BorderRadius.circular(v.radioMediano),
       ),
       child: ConstrainedBox(

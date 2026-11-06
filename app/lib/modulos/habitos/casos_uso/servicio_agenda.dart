@@ -26,7 +26,7 @@ class CargaDelDia {
 
 class ServicioAgenda {
   ServicioAgenda(this._agenda, this._repo, {DateTime Function()? ahora})
-      : _ahora = ahora ?? DateTime.now;
+    : _ahora = ahora ?? DateTime.now;
 
   final RepositorioAgenda _agenda;
   final RepositorioHabitos _repo;
@@ -35,11 +35,14 @@ class ServicioAgenda {
 
   Future<List<OcurrenciaBloque>> bloquesDe(DateTime fecha) async {
     final f = soloDia(fecha);
-    final bs = [for (final b in await _agenda.bloques()) if (b.activo && b.recurrente.ocurreEn(f)) b];
+    final bs = [
+      for (final b in await _agenda.bloques())
+        if (b.activo && b.recurrente.ocurreEn(f)) b,
+    ];
     final regs = await _repo.registros(f, f);
     final o = [
       for (final b in bs)
-        OcurrenciaBloque(b, regs.where((r) => r.bloqueId == b.id).firstOrNull)
+        OcurrenciaBloque(b, regs.where((r) => r.bloqueId == b.id).firstOrNull),
     ]..sort((a, b) => a.inicioMin.compareTo(b.inicioMin));
     return o;
   }
@@ -52,9 +55,15 @@ class ServicioAgenda {
       if (!nuevo.recurrente.ocurreEn(f)) continue;
       for (final o in await bloquesDe(f)) {
         if (o.bloque.id != nuevo.id &&
-            conflictos(Intervalo(nuevo.inicioMin, nuevo.inicioMin + nuevo.duracionMin),
-                    [Intervalo(o.bloque.inicioMin, o.bloque.inicioMin + o.bloque.duracionMin)])
-                .isNotEmpty &&
+            conflictos(
+              Intervalo(nuevo.inicioMin, nuevo.inicioMin + nuevo.duracionMin),
+              [
+                Intervalo(
+                  o.bloque.inicioMin,
+                  o.bloque.inicioMin + o.bloque.duracionMin,
+                ),
+              ],
+            ).isNotEmpty &&
             !r.any((x) => x.id == o.bloque.id)) {
           r.add(o.bloque);
         }
@@ -96,26 +105,103 @@ class ServicioAgenda {
     return b;
   }
 
-  Future<void> desactivar(BloqueHab b) =>
-      _agenda.guardarBloque(b.copiar(activo: false, modificadoEn: _ahora().toUtc()));
+  /// Edita nombre, área, hora, duración, días y recordatorio (E4). No toca el
+  /// id: los registros del bloque (hecho, pospuesto, omitido) se conservan.
+  /// Devuelve el bloque editado; para deshacer, [restaurarBloque].
+  Future<BloqueHab> editarBloque(
+    BloqueHab b, {
+    required String titulo,
+    required String area,
+    required int inicioMin,
+    required int duracionMin,
+    required int dias,
+    bool? minimo,
+    bool? esencial,
+    int? recordarMin,
+  }) async {
+    final errores = validarBloque(
+      titulo: titulo,
+      area: area,
+      inicioMin: inicioMin,
+      duracionMin: duracionMin,
+      dias: dias,
+      recordarMin: recordarMin,
+    );
+    if (errores.isNotEmpty) throw ArgumentError(errores.first);
+    final nuevo = b.editado(
+      titulo: titulo.trim(),
+      area: area,
+      inicioMin: inicioMin,
+      duracionMin: duracionMin,
+      dias: dias,
+      minimo: minimo ?? b.minimo,
+      esencial: esencial ?? b.esencial,
+      recordarMin: recordarMin,
+      modificadoEn: _ahora().toUtc(),
+    );
+    await _agenda.guardarBloque(nuevo);
+    return nuevo;
+  }
 
-  Future<void> _registro(BloqueHab b, DateTime f, EstadoRegistro e, {int? movidoA, String? motivo}) =>
-      _repo.guardarRegistro(RegistroHab(
-        id: const Uuid().v5('6b1f8e0a-4c3d-5e2f-9a7b-1d2c3e4f5a6b',
-            'bloque|${b.id}|${soloDia(f).toIso8601String().substring(0, 10)}'),
-        bloqueId: b.id,
-        fecha: soloDia(f),
-        estado: e,
-        movidoAMin: movidoA,
-        motivoOmision: motivo,
-        modificadoEn: _ahora().toUtc(),
-      ));
+  Future<void> restaurarBloque(BloqueHab original) =>
+      _agenda.guardarBloque(original.copiar(modificadoEn: _ahora().toUtc()));
 
-  Future<void> marcarHecho(BloqueHab b, {DateTime? fecha}) => _registro(b, fecha ?? hoy, EstadoRegistro.hecho);
+  /// Recordatorio de dar (E11): apagado por omisión; día (1 a 7) y hora.
+  /// Hábitos no maneja dinero: no hay montos.
+  Future<void> configurarDar({
+    required bool activo,
+    int? dia,
+    int? horaMin,
+  }) async {
+    if (activo &&
+        (dia == null ||
+            dia < 1 ||
+            dia > 7 ||
+            horaMin == null ||
+            horaMin < 0 ||
+            horaMin > 1439)) {
+      throw ArgumentError('Elige el día y la hora del recordatorio.');
+    }
+    final a = await _agenda.ajustes();
+    await _agenda.guardarAjustes(
+      a.copiar(darActivo: activo, darDia: dia, darHoraMin: horaMin),
+      _ahora(),
+    );
+  }
+
+  Future<void> desactivar(BloqueHab b) => _agenda.guardarBloque(
+    b.copiar(activo: false, modificadoEn: _ahora().toUtc()),
+  );
+
+  Future<void> _registro(
+    BloqueHab b,
+    DateTime f,
+    EstadoRegistro e, {
+    int? movidoA,
+    String? motivo,
+  }) => _repo.guardarRegistro(
+    RegistroHab(
+      id: const Uuid().v5(
+        '6b1f8e0a-4c3d-5e2f-9a7b-1d2c3e4f5a6b',
+        'bloque|${b.id}|${soloDia(f).toIso8601String().substring(0, 10)}',
+      ),
+      bloqueId: b.id,
+      fecha: soloDia(f),
+      estado: e,
+      movidoAMin: movidoA,
+      motivoOmision: motivo,
+      modificadoEn: _ahora().toUtc(),
+    ),
+  );
+
+  Future<void> marcarHecho(BloqueHab b, {DateTime? fecha}) =>
+      _registro(b, fecha ?? hoy, EstadoRegistro.hecho);
   Future<void> posponer(BloqueHab b, int aMin, {DateTime? fecha}) =>
       _registro(b, fecha ?? hoy, EstadoRegistro.pospuesto, movidoA: aMin);
-  Future<void> omitir(BloqueHab b, {DateTime? fecha}) => _registro(b, fecha ?? hoy, EstadoRegistro.omitido);
-  Future<void> deshacer(BloqueHab b, {DateTime? fecha}) => _registro(b, fecha ?? hoy, EstadoRegistro.pendiente);
+  Future<void> omitir(BloqueHab b, {DateTime? fecha}) =>
+      _registro(b, fecha ?? hoy, EstadoRegistro.omitido);
+  Future<void> deshacer(BloqueHab b, {DateTime? fecha}) =>
+      _registro(b, fecha ?? hoy, EstadoRegistro.pendiente);
 
   /// Medidor de carga del día (regla 25).
   Future<CargaDelDia> carga([DateTime? fecha]) async {
@@ -129,18 +215,36 @@ class ServicioAgenda {
         prog += o.bloque.duracionMin;
       }
     }
-    final libres = minutosLibres(despertarMin: aj.despertarMin, dormirMin: aj.dormirMin, fijosMin: fijos);
-    return CargaDelDia(libres, prog, medirCarga(libres: libres, programados: prog));
+    final libres = minutosLibres(
+      despertarMin: aj.despertarMin,
+      dormirMin: aj.dormirMin,
+      fijosMin: fijos,
+    );
+    return CargaDelDia(
+      libres,
+      prog,
+      medirCarga(libres: libres, programados: prog),
+    );
   }
 
   /// Huecos libres del día (regla 67).
-  Future<List<Intervalo>> huecos(DateTime fecha, {int minimoMin = 15, int? preferidaMin}) async {
+  Future<List<Intervalo>> huecos(
+    DateTime fecha, {
+    int minimoMin = 15,
+    int? preferidaMin,
+  }) async {
     final aj = await _agenda.ajustes();
     final bs = await bloquesDe(fecha);
     return huecosLibres(
       aj.despertarMin,
       aj.dormirMin,
-      [for (final o in bs) Intervalo(o.bloque.inicioMin, o.bloque.inicioMin + o.bloque.duracionMin)],
+      [
+        for (final o in bs)
+          Intervalo(
+            o.bloque.inicioMin,
+            o.bloque.inicioMin + o.bloque.duracionMin,
+          ),
+      ],
       minimoMin: minimoMin,
       preferidaMin: preferidaMin,
     );
@@ -161,6 +265,8 @@ class ServicioAgenda {
     int? revisionHoraMin,
     int? revisionAvisoMin,
     bool? darActivo,
+    int? darDia,
+    int? darHoraMin,
     Set<int> pasosHechos = const {},
   }) async {
     final a = await _agenda.ajustes();
@@ -173,41 +279,50 @@ class ServicioAgenda {
         revisionHoraMin: revisionHoraMin,
         revisionAvisoMin: revisionAvisoMin,
         darActivo: darActivo,
-        asistente: {'pasos': pasosHechos.toList()..sort(), 'completo': pasosHechos.length >= 8},
+        darDia: darDia,
+        darHoraMin: darHoraMin,
+        asistente: {
+          'pasos': pasosHechos.toList()..sort(),
+          'completo': pasosHechos.length >= 8,
+        },
       ),
       _ahora(),
     );
     if (trabajoEntradaMin != null && trabajoSalidaMin != null) {
       await crearBloque(
-          titulo: 'Trabajo',
-          area: 'laboral',
-          tipo: 'trabajo',
-          inicioMin: trabajoEntradaMin,
-          duracionMin: trabajoSalidaMin - trabajoEntradaMin,
-          dias: trabajoDias);
+        titulo: 'Trabajo',
+        area: 'laboral',
+        tipo: 'trabajo',
+        inicioMin: trabajoEntradaMin,
+        duracionMin: trabajoSalidaMin - trabajoEntradaMin,
+        dias: trabajoDias,
+      );
       if (trasladoIdaMin > 0) {
         await crearBloque(
-            titulo: 'Traslado de ida',
-            area: 'laboral',
-            tipo: 'traslado',
-            inicioMin: trabajoEntradaMin - trasladoIdaMin,
-            duracionMin: trasladoIdaMin,
-            dias: trabajoDias);
+          titulo: 'Traslado de ida',
+          area: 'laboral',
+          tipo: 'traslado',
+          inicioMin: trabajoEntradaMin - trasladoIdaMin,
+          duracionMin: trasladoIdaMin,
+          dias: trabajoDias,
+        );
       }
       if (trasladoVueltaMin > 0) {
         await crearBloque(
-            titulo: 'Traslado de regreso',
-            area: 'laboral',
-            tipo: 'traslado',
-            inicioMin: trabajoSalidaMin,
-            duracionMin: trasladoVueltaMin,
-            dias: trabajoDias);
+          titulo: 'Traslado de regreso',
+          area: 'laboral',
+          tipo: 'traslado',
+          inicioMin: trabajoSalidaMin,
+          duracionMin: trasladoVueltaMin,
+          dias: trabajoDias,
+        );
       }
     }
   }
 
   /// Semana tipo con la carga de cada día (paso 8). Lunes = índice 0.
   Future<List<CargaDelDia>> semanaTipo([DateTime? fecha]) async => [
-        for (var i = 0; i < 7; i++) await carga(sumarDias(lunesDe(fecha ?? hoy), i))
-      ];
+    for (var i = 0; i < 7; i++)
+      await carga(sumarDias(lunesDe(fecha ?? hoy), i)),
+  ];
 }
