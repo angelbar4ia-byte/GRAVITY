@@ -69,7 +69,9 @@ class _SeccionMiembrosState extends ConsumerState<SeccionMiembros> {
 
   void _recargar() {
     final carga = _cargar();
-    setState(() => _carga = carga);
+    setState(() {
+      _carga = carga;
+    });
   }
 
   void _aviso(String texto) {
