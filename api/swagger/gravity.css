@@ -1,0 +1,273 @@
+/*
+ * GRAVITY · Swagger UI con el estilo Futurista de noche (DISENO_UX_UI.md, secciones 4, 10 y 18).
+ * Parte del modo oscuro que trae Swagger UI (html.dark-mode) y lo lleva a la paleta de GRAVITY.
+ */
+:root {
+  color-scheme: dark;
+  --fondo: #04070c;
+  --panel: #08111b;
+  --panel-alto: #0d1a27;
+  --texto: #d3ecf4;
+  --tenue: #8fb2bf;
+  --acento: #35d4f0;
+  --acento-suave: rgba(53, 212, 240, 0.12);
+  --borde: rgba(53, 212, 240, 0.24);
+  --get: #35d4f0;
+  --post: #3ee08f;
+  --patch: #f0b429;
+  --put: #f0b429;
+  --delete: #ff6b6b;
+  --letra: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+  --letra-tecnica: 'IBM Plex Mono', 'Cascadia Mono', Consolas, ui-monospace, monospace;
+}
+
+html,
+html.dark-mode,
+body {
+  background: var(--fondo);
+  color: var(--texto);
+}
+
+body {
+  margin: 0;
+  font-family: var(--letra);
+}
+
+/* Encabezado propio */
+.gravity-encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 24px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--borde);
+  background: linear-gradient(180deg, rgba(53, 212, 240, 0.08), transparent);
+}
+
+.gravity-marca {
+  font-family: var(--letra-tecnica);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  color: var(--acento);
+}
+
+.gravity-marca span {
+  color: var(--texto);
+  letter-spacing: 0.04em;
+  font-weight: 400;
+}
+
+.gravity-aviso,
+.gravity-origen {
+  font-size: 13px;
+  color: var(--tenue);
+}
+
+.gravity-origen {
+  font-family: var(--letra-tecnica);
+}
+
+/* Base */
+html.dark-mode .swagger-ui,
+html.dark-mode .swagger-ui .wrapper,
+html.dark-mode .swagger-ui .information-container,
+html.dark-mode .swagger-ui .scheme-container {
+  background: var(--fondo);
+  color: var(--texto);
+  box-shadow: none;
+}
+
+html.dark-mode .swagger-ui .scheme-container {
+  border-bottom: 1px solid var(--borde);
+}
+
+html.dark-mode .swagger-ui,
+html.dark-mode .swagger-ui .info .title,
+html.dark-mode .swagger-ui .opblock-tag,
+html.dark-mode .swagger-ui .opblock .opblock-summary-description,
+html.dark-mode .swagger-ui .markdown p,
+html.dark-mode .swagger-ui .markdown li,
+html.dark-mode .swagger-ui .renderedMarkdown p,
+html.dark-mode .swagger-ui .renderedMarkdown li,
+html.dark-mode .swagger-ui .opblock-description-wrapper p,
+html.dark-mode .swagger-ui .opblock .opblock-section-header h4,
+html.dark-mode .swagger-ui .responses-inner h4,
+html.dark-mode .swagger-ui .responses-inner h5,
+html.dark-mode .swagger-ui .response-col_status,
+html.dark-mode .swagger-ui .parameter__name,
+html.dark-mode .swagger-ui .tab li,
+html.dark-mode .swagger-ui table thead tr th,
+html.dark-mode .swagger-ui table thead tr td,
+html.dark-mode .swagger-ui section.models h4,
+html.dark-mode .swagger-ui .model-title,
+html.dark-mode .swagger-ui .servers-title,
+html.dark-mode .swagger-ui .servers > label {
+  color: var(--texto);
+  font-family: var(--letra);
+}
+
+html.dark-mode .swagger-ui .info .title {
+  font-family: var(--letra-tecnica);
+  letter-spacing: 0.04em;
+}
+
+html.dark-mode .swagger-ui .info .title small {
+  background: var(--acento-suave);
+  color: var(--acento);
+  border: 1px solid var(--borde);
+}
+
+html.dark-mode .swagger-ui .info .title small pre {
+  color: var(--acento);
+}
+
+html.dark-mode .swagger-ui a,
+html.dark-mode .swagger-ui .info a,
+html.dark-mode .swagger-ui .info .link {
+  color: var(--acento);
+}
+
+html.dark-mode .swagger-ui .opblock-tag small,
+html.dark-mode .swagger-ui .parameter__in,
+html.dark-mode .swagger-ui .parameter__type,
+html.dark-mode .swagger-ui .prop-format,
+html.dark-mode .swagger-ui .opblock .opblock-summary-operation-id {
+  color: var(--tenue);
+}
+
+html.dark-mode .swagger-ui .opblock-tag {
+  border-bottom: 1px solid var(--borde);
+  font-family: var(--letra-tecnica);
+  letter-spacing: 0.06em;
+}
+
+html.dark-mode .swagger-ui .opblock-tag:hover {
+  background: var(--acento-suave);
+}
+
+/* Operaciones */
+html.dark-mode .swagger-ui .opblock {
+  background: var(--panel);
+  border-color: var(--borde);
+  box-shadow: none;
+}
+
+html.dark-mode .swagger-ui .opblock .opblock-summary {
+  border-color: var(--borde);
+}
+
+html.dark-mode .swagger-ui .opblock .opblock-summary-path,
+html.dark-mode .swagger-ui .opblock .opblock-summary-path__deprecated {
+  color: var(--texto);
+  font-family: var(--letra-tecnica);
+}
+
+html.dark-mode .swagger-ui .opblock .opblock-summary-method {
+  color: var(--fondo);
+  font-family: var(--letra-tecnica);
+  text-shadow: none;
+  border-radius: 3px;
+}
+
+html.dark-mode .swagger-ui .opblock .opblock-section-header {
+  background: var(--panel-alto);
+  box-shadow: none;
+}
+
+html.dark-mode .swagger-ui .opblock.opblock-get { border-color: var(--get); background: rgba(53, 212, 240, 0.06); }
+html.dark-mode .swagger-ui .opblock.opblock-get .opblock-summary-method { background: var(--get); }
+html.dark-mode .swagger-ui .opblock.opblock-get .opblock-summary { border-color: var(--get); }
+html.dark-mode .swagger-ui .opblock.opblock-post { border-color: var(--post); background: rgba(62, 224, 143, 0.06); }
+html.dark-mode .swagger-ui .opblock.opblock-post .opblock-summary-method { background: var(--post); }
+html.dark-mode .swagger-ui .opblock.opblock-post .opblock-summary { border-color: var(--post); }
+html.dark-mode .swagger-ui .opblock.opblock-patch { border-color: var(--patch); background: rgba(240, 180, 41, 0.06); }
+html.dark-mode .swagger-ui .opblock.opblock-patch .opblock-summary-method { background: var(--patch); }
+html.dark-mode .swagger-ui .opblock.opblock-patch .opblock-summary { border-color: var(--patch); }
+html.dark-mode .swagger-ui .opblock.opblock-put { border-color: var(--put); background: rgba(240, 180, 41, 0.06); }
+html.dark-mode .swagger-ui .opblock.opblock-put .opblock-summary-method { background: var(--put); }
+html.dark-mode .swagger-ui .opblock.opblock-delete { border-color: var(--delete); background: rgba(255, 107, 107, 0.06); }
+html.dark-mode .swagger-ui .opblock.opblock-delete .opblock-summary-method { background: var(--delete); }
+html.dark-mode .swagger-ui .opblock.opblock-delete .opblock-summary { border-color: var(--delete); }
+
+/* Extensiones x-roles, x-escribe, x-solo-local, x-fase */
+html.dark-mode .swagger-ui .opblock-extensions,
+html.dark-mode .swagger-ui .opblock-extensions td,
+html.dark-mode .swagger-ui .opblock-extensions th {
+  color: var(--acento);
+  font-family: var(--letra-tecnica);
+}
+
+/* Código y modelos */
+html.dark-mode .swagger-ui .markdown code,
+html.dark-mode .swagger-ui .renderedMarkdown code {
+  background: var(--acento-suave);
+  color: var(--acento);
+  font-family: var(--letra-tecnica);
+}
+
+html.dark-mode .swagger-ui .highlight-code > .microlight,
+html.dark-mode .swagger-ui .opblock-body pre.microlight,
+html.dark-mode .swagger-ui .model-box,
+html.dark-mode .swagger-ui section.models,
+html.dark-mode .swagger-ui section.models .model-container {
+  background: var(--panel-alto) !important;
+  border-color: var(--borde);
+  font-family: var(--letra-tecnica);
+}
+
+/* Controles */
+html.dark-mode .swagger-ui input,
+html.dark-mode .swagger-ui textarea,
+html.dark-mode .swagger-ui select {
+  background-color: var(--panel-alto);
+  color: var(--texto);
+  border-color: var(--borde);
+}
+
+html.dark-mode .swagger-ui .btn {
+  color: var(--texto);
+  border-color: var(--borde);
+  box-shadow: none;
+}
+
+html.dark-mode .swagger-ui .btn.execute,
+html.dark-mode .swagger-ui .btn.authorize {
+  background: var(--acento-suave);
+  color: var(--acento);
+  border-color: var(--acento);
+}
+
+html.dark-mode .swagger-ui .btn.authorize svg,
+html.dark-mode .swagger-ui .authorization__btn svg {
+  fill: var(--acento);
+}
+
+html.dark-mode .swagger-ui .dialog-ux .modal-ux {
+  background: var(--panel);
+  border: 1px solid var(--borde);
+  color: var(--texto);
+}
+
+html.dark-mode .swagger-ui .dialog-ux .modal-ux-header {
+  border-bottom-color: var(--borde);
+}
+
+html.dark-mode .swagger-ui .dialog-ux .modal-ux-header h3,
+html.dark-mode .swagger-ui .dialog-ux .modal-ux-content h4,
+html.dark-mode .swagger-ui .dialog-ux .modal-ux-content p,
+html.dark-mode .swagger-ui .dialog-ux .modal-ux-content label {
+  color: var(--texto);
+}
+
+html.dark-mode .swagger-ui :focus-visible {
+  outline: 2px solid var(--acento);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

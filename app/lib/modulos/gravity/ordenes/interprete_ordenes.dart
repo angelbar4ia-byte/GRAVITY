@@ -1,0 +1,392 @@
+/// Intérprete de la barra de órdenes: solo navegación, sin IA.
+///
+/// Entiende órdenes como "abre presupuesto", "registrar gasto", "mi semana",
+/// "ir a hábitos" o "ajustes", tolera acentos, mayúsculas y errores de dedo,
+/// sugiere mientras se escribe y nunca ofrece un destino que el rol no ve: a
+/// la cuidadora solo su bandeja de solicitudes (D18) y a la cuenta maestra
+/// nada que escriba o administre lo ajeno (D19); si además no es la dueña,
+/// solo navegación y lectura (ninguna hoja de registro, 23/oct).
+///
+/// El gasto exige el verbo (23/oct): "registrar gasto". La palabra "gasto"
+/// suelta no lo nombra; a lo más sale como "¿Quisiste decir…?", que nunca abre
+/// nada sin que la persona lo elija.
+library;
+
+import 'dart:math' as math;
+
+import '../../../nucleo/contratos/dispositivo.dart';
+import '../../../nucleo/contratos/roles.dart';
+import '../../../nucleo/contratos/rutas.dart';
+import '../../../nucleo/herramientas/herramientas.dart';
+import 'texto_ordenes.dart';
+
+/// Lo que entendió el intérprete.
+sealed class ResultadoOrden {
+  const ResultadoOrden();
+}
+
+/// No se escribió nada.
+final class OrdenVacia extends ResultadoOrden {
+  const OrdenVacia();
+}
+
+/// Se entendió un solo destino: se puede abrir.
+final class OrdenEntendida extends ResultadoOrden {
+  const OrdenEntendida(this.destino);
+
+  final HerramientaNavegacion destino;
+}
+
+/// No hubo coincidencia exacta única: "¿Quisiste decir…?" con [opciones].
+final class OrdenParecida extends ResultadoOrden {
+  const OrdenParecida(this.texto, this.opciones);
+
+  final String texto;
+  final List<HerramientaNavegacion> opciones;
+}
+
+/// No se entendió. [disponibles] son los destinos que el rol sí puede abrir.
+final class OrdenNoEntendida extends ResultadoOrden {
+  const OrdenNoEntendida(this.texto, this.disponibles);
+
+  final String texto;
+  final List<HerramientaNavegacion> disponibles;
+}
+
+/// Una sugerencia mientras se escribe.
+final class SugerenciaOrden {
+  const SugerenciaOrden(this.destino, {this.palabra});
+
+  final HerramientaNavegacion destino;
+
+  /// Palabra clave que coincidió, si no es el nombre del destino
+  /// (p. ej. "presupuesto" para Finanzas).
+  final String? palabra;
+}
+
+/// Una palabra clave ya normalizada.
+final class _Clave {
+  _Clave(this.original, this.palabras);
+
+  final String original;
+  final List<String> palabras;
+}
+
+final class _Destino {
+  _Destino(this.herramienta, this.claves);
+
+  final HerramientaNavegacion herramienta;
+  final List<_Clave> claves;
+}
+
+/// Lo que se guarda en un historial de GRAVITY en lugar de una orden de
+/// Hábitos (D13, criterio 54).
+const String ordenDeHabitosReservada = 'Orden de Hábitos reservada';
+
+/// Palabras que delatan un hábito sensible o el diario, aunque la orden no se
+/// entienda (ya normalizadas, sin acentos).
+const Set<String> _palabrasSensibles = {
+  'antojo',
+  'antojos',
+  'sos',
+  'consumo',
+  'cigarro',
+  'cigarrillo',
+  'cigarrillos',
+  'tabaco',
+  'azucar',
+  'eliminar',
+  'diario',
+  'oracion',
+  'devocional',
+  'notas',
+  'pausa',
+  'reservado',
+};
+
+/// Texto que puede guardarse en un historial (el de GRAVITY o cualquier otro)
+/// para la orden [texto].
+///
+/// Una orden que menciona un hábito sensible o el diario, o que abre o podría
+/// abrir algo de Hábitos, se guarda como [ordenDeHabitosReservada]: nunca el
+/// texto escrito. Las demás se guardan tal cual. [InterpreteOrdenes.paraHistorial]
+/// es la versión que además mira a dónde llevaría la orden.
+String textoParaHistorial(String texto) =>
+    palabrasDe(texto).any(_palabrasSensibles.contains)
+    ? ordenDeHabitosReservada
+    : texto;
+
+/// Intérprete de órdenes de navegación para un rol.
+final class InterpreteOrdenes {
+  /// [puedeVer] decide qué módulos se ofrecen (por defecto, el espejo de la
+  /// matriz de permisos). Además, cada destino es una herramienta y solo se
+  /// ofrece si [rol] está en sus roles, su módulo está en [modulosActivos]
+  /// (`null`: todos), va en [dispositivo] (Desarrollador solo en la laptop,
+  /// D16) y, con [esMaestra], no escribe ni administra lo ajeno y, si [rol]
+  /// no es el dueño, tampoco abre una hoja de registro (D19). Sin
+  /// [dispositivo] no se ofrece nada que dependa del dispositivo. La bandeja
+  /// de solicitudes no es una pantalla de módulo: [puedeVer] no la quita.
+  InterpreteOrdenes({
+    required this.rol,
+    this.dispositivo,
+    this.esMaestra = false,
+    PuedeVerModulo? puedeVer,
+    Set<Modulo>? modulosActivos,
+    List<HerramientaNavegacion>? catalogo,
+  }) : _destinos = _armar(
+         rol: rol,
+         dispositivo: dispositivo,
+         esMaestra: esMaestra,
+         puedeVer: puedeVer ?? puedeVerPorDefecto(rol),
+         modulosActivos: modulosActivos,
+         catalogo: catalogo ?? herramientasNavegacion,
+       );
+
+  final Rol rol;
+
+  /// Dispositivo de la sesión; `null` si no se sabe.
+  final TipoDispositivo? dispositivo;
+
+  /// `true` si la sesión es la cuenta maestra (D19).
+  final bool esMaestra;
+
+  final List<_Destino> _destinos;
+
+  static List<_Destino> _armar({
+    required Rol rol,
+    required TipoDispositivo? dispositivo,
+    required bool esMaestra,
+    required PuedeVerModulo puedeVer,
+    required Set<Modulo>? modulosActivos,
+    required List<HerramientaNavegacion> catalogo,
+  }) {
+    final permitidas = RegistroHerramientas(catalogo)
+        .disponibles(
+          rol: rol,
+          modulosActivos: modulosActivos,
+          esMaestra: esMaestra,
+        )
+        .whereType<HerramientaNavegacion>()
+        .where(
+          (h) =>
+              (h.ambito == AmbitoHerramienta.solicitudes ||
+                  puedeVer(h.modulo)) &&
+              h.disponibleEn(dispositivo),
+        );
+    return [
+      for (final h in permitidas)
+        _Destino(h, [
+          for (final original in {h.etiqueta, ...h.palabrasClave})
+            if (quitarRelleno(palabrasDe(original)) case final p
+                when p.isNotEmpty)
+              _Clave(original, p),
+        ]),
+    ];
+  }
+
+  /// Destinos que este rol puede abrir, en orden.
+  List<HerramientaNavegacion> get destinos =>
+      List.unmodifiable(_destinos.map((d) => d.herramienta));
+
+  /// Orden de ejemplo para la ayuda de la barra, con un destino que el rol
+  /// sí abre: «abre presupuesto» a quien ve Finanzas, «abre hábitos» al
+  /// Familiar, «abre solicitudes» a la cuidadora. `null` si no hay ninguno
+  /// (además de Inicio).
+  String? get ejemplo {
+    for (final d in _destinos) {
+      final h = d.herramienta;
+      if (h.ruta == Rutas.inicio || h.dispositivos != null) continue;
+      if (h.hoja != null) return h.etiqueta.toLowerCase();
+      final palabra = h.ruta == Rutas.finanzas
+          ? 'presupuesto'
+          : h.etiqueta.toLowerCase();
+      return 'abre $palabra';
+    }
+    return null;
+  }
+
+  /// Texto que puede guardarse en un historial para [texto] (criterio 54, D13).
+  ///
+  /// Si la orden menciona un hábito sensible o el diario, o lleva (o podría
+  /// llevar, aunque haya que elegir entre opciones) a algo de Hábitos, se
+  /// guarda [ordenDeHabitosReservada] y nunca lo escrito. Las demás órdenes se
+  /// guardan igual. Hoy ni la barra ni GRAVITY guardan historial; quien lo
+  /// agregue (Fase 6) debe pasar siempre por aquí.
+  String paraHistorial(String texto) {
+    if (textoParaHistorial(texto) != texto) return ordenDeHabitosReservada;
+    final llevaAHabitos = switch (interpretar(texto)) {
+      OrdenEntendida(:final destino) => destino.modulo == Modulo.habitos,
+      OrdenParecida(:final opciones) => opciones.any(
+        (o) => o.modulo == Modulo.habitos,
+      ),
+      _ => false,
+    };
+    return llevaAHabitos ? ordenDeHabitosReservada : texto;
+  }
+
+  /// Interpreta una orden completa (al presionar Enter).
+  ResultadoOrden interpretar(String texto) {
+    final todas = palabrasDe(texto);
+    if (todas.isEmpty) return const OrdenVacia();
+    final palabras = quitarRelleno(todas);
+    if (palabras.isEmpty) return OrdenNoEntendida(texto, destinos);
+
+    // 1. Coincidencias exactas; gana la palabra clave más larga
+    //    ("menú principal" le gana a "menú").
+    final largoPorDestino = <_Destino, int>{};
+    for (final d in _destinos) {
+      for (final c in d.claves) {
+        if (_contiene(palabras, c.palabras)) {
+          largoPorDestino[d] = math.max(
+            largoPorDestino[d] ?? 0,
+            c.palabras.length,
+          );
+        }
+      }
+    }
+    if (largoPorDestino.isNotEmpty) {
+      final mayor = largoPorDestino.values.reduce(math.max);
+      final ganadores = [
+        for (final d in _destinos)
+          if (largoPorDestino[d] == mayor) d.herramienta,
+      ];
+      return ganadores.length == 1
+          ? OrdenEntendida(ganadores.single)
+          : OrdenParecida(texto, ganadores);
+    }
+
+    // 2. Parecidas: errores de dedo o palabras a medias.
+    final parecidas = <_Destino, int>{};
+    for (final d in _destinos) {
+      final puntos = _parecido(d, palabras);
+      if (puntos != null) parecidas[d] = puntos;
+    }
+    if (parecidas.isNotEmpty) {
+      final orden = parecidas.keys.toList()
+        ..sort((a, b) {
+          final porPuntos = parecidas[a]!.compareTo(parecidas[b]!);
+          return porPuntos != 0
+              ? porPuntos
+              : _destinos.indexOf(a).compareTo(_destinos.indexOf(b));
+        });
+      return OrdenParecida(texto, [
+        for (final d in orden.take(3)) d.herramienta,
+      ]);
+    }
+    return OrdenNoEntendida(texto, destinos);
+  }
+
+  /// Sugerencias mientras se escribe: la última palabra puede estar a medias.
+  List<SugerenciaOrden> sugerir(String texto, {int maximo = 5}) {
+    final todas = palabrasDe(texto);
+    if (todas.isEmpty) return const [];
+    final aMedias = texto.endsWith(' ') ? null : todas.last;
+    final completas = quitarRelleno(
+      aMedias == null ? todas : todas.sublist(0, todas.length - 1),
+    );
+
+    final puntos = <_Destino, (int, String?)>{};
+    void anotar(_Destino d, int valor, _Clave c) {
+      final actual = puntos[d];
+      if (actual == null || valor < actual.$1) {
+        final esEtiqueta =
+            normalizarTexto(c.original) ==
+            normalizarTexto(d.herramienta.etiqueta);
+        puntos[d] = (valor, esEtiqueta ? null : c.original);
+      }
+    }
+
+    for (final d in _destinos) {
+      for (final c in d.claves) {
+        if (_contiene(completas, c.palabras)) anotar(d, 0, c);
+        for (final palabraClave in c.palabras) {
+          if (aMedias != null) {
+            if (palabraClave.startsWith(aMedias)) {
+              anotar(d, 1, c);
+            } else if (aMedias.length >= 3 && palabraClave.contains(aMedias)) {
+              anotar(d, 2, c);
+            } else if (aMedias.length >= 3 &&
+                distanciaEdicion(
+                      aMedias,
+                      palabraClave.substring(
+                        0,
+                        math.min(aMedias.length, palabraClave.length),
+                      ),
+                    ) <=
+                    1) {
+              anotar(d, 3, c);
+            }
+          }
+          for (final p in completas) {
+            if (p.length >= 3 &&
+                distanciaEdicion(p, palabraClave) <=
+                    toleranciaPara(palabraClave.length)) {
+              anotar(d, 3, c);
+            }
+          }
+        }
+      }
+    }
+
+    // Solo relleno ("abre ") o un verbo a medias: se ofrecen todos.
+    final soloRelleno =
+        completas.isEmpty &&
+        (aMedias == null || palabrasDeRelleno.contains(aMedias));
+    if (puntos.isEmpty && soloRelleno) {
+      return [
+        for (final d in _destinos.take(maximo)) SugerenciaOrden(d.herramienta),
+      ];
+    }
+
+    final orden = puntos.keys.toList()
+      ..sort((a, b) {
+        final porPuntos = puntos[a]!.$1.compareTo(puntos[b]!.$1);
+        return porPuntos != 0
+            ? porPuntos
+            : _destinos.indexOf(a).compareTo(_destinos.indexOf(b));
+      });
+    return [
+      for (final d in orden.take(maximo))
+        SugerenciaOrden(d.herramienta, palabra: puntos[d]!.$2),
+    ];
+  }
+
+  /// Menor distancia de edición entre las palabras escritas y las claves del
+  /// destino, si está dentro de la tolerancia; si no, `null`.
+  static int? _parecido(_Destino d, List<String> palabras) {
+    int? mejor;
+    for (final c in d.claves) {
+      for (final palabraClave in c.palabras) {
+        for (final p in palabras) {
+          if (p.length < 3) continue;
+          int? valor;
+          final distancia = distanciaEdicion(p, palabraClave);
+          if (distancia <= toleranciaPara(palabraClave.length)) {
+            valor = distancia * 2;
+          } else if (palabraClave.startsWith(p)) {
+            // Palabra a medias ("presu"): vale como un error.
+            valor = 2;
+          }
+          if (valor != null && (mejor == null || valor < mejor)) mejor = valor;
+        }
+      }
+    }
+    return mejor;
+  }
+
+  /// `true` si [aguja] aparece seguida dentro de [pajar].
+  static bool _contiene(List<String> pajar, List<String> aguja) {
+    if (aguja.isEmpty || aguja.length > pajar.length) return false;
+    for (var i = 0; i + aguja.length <= pajar.length; i++) {
+      var igual = true;
+      for (var j = 0; j < aguja.length; j++) {
+        if (pajar[i + j] != aguja[j]) {
+          igual = false;
+          break;
+        }
+      }
+      if (igual) return true;
+    }
+    return false;
+  }
+}

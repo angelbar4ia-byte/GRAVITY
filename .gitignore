@@ -1,6 +1,37 @@
-﻿.env
+# Secretos
+.env
+.env.*
+*.keystore
+*.jks
+google-services.json
+GoogleService-Info.plist
+
+# Datos personales (nunca al repositorio)
+data/personal/*
+!data/personal/.gitkeep
+
+# Flutter / Dart
+.dart_tool/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+*.iml
+.idea/
+app/android/local.properties
+app/android/.gradle/
+app/windows/flutter/ephemeral/
+coverage/
+
+# Node / Python
+node_modules/
 __pycache__/
 *.pyc
-node_modules/
 .venv/
-.claude/
+
+# Supabase local
+supabase/.branches/
+supabase/.temp/
+
+# Claude Code: solo se versionan los agentes del proyecto
+.claude/*
+!.claude/agents/

@@ -1,26 +1,29 @@
 # Instrucciones para Claude Code — GRAVITY
 
-Asistente virtual tipo JARVIS (voz y texto). Fase inicial: arquitectura y stack sin definir.
+GRAVITY es **la app única del proyecto Segundo Cerebro** (D1): laptop Windows con el sistema completo, teléfono Android con lo mínimo, tablet portátil de la casa y pulsera. Módulos: Finanzas, Hábitos, Cuidados, Alimentación, Casa y GRAVITY (el asistente que los une).
 
 ## Lee primero
-- `README.md` (objetivo y hoja de ruta).
-- `docs/CONTRATO_CONEXION_APPS.md` (v2.0), sobre todo la **sección 9** y la 10. Es una copia: la fuente está en la raíz de SEGUNDO CEREBRO. La sección 9 es **propuesta**: confírmala o ajústala con el usuario.
+1. `docs/DECISIONES.md` — decisiones D1 a D16 (mandan sobre el contrato v2.0).
+2. `docs/ROADMAP.md` — fases, estado y **equipo de agentes** (sección 11).
+3. `docs/specs/fase-0-cimientos.md` — estructura del repositorio, pila técnica y **convenciones obligatorias**.
+4. `docs/DISENO_UX_UI.md` — estilos, pantallas, flujos y voz.
+5. El diseño del módulo en `docs/modulos/` y la especificación de la fase en `docs/specs/`.
 
-## Primera tarea
-1. Proponer arquitectura y stack, con pros y contras, y preguntar al usuario antes de decidir. Pregunta clave: ¿Android, escritorio o ambos? Eso cambia los enlaces `gravity://` del contrato.
-2. Actualizar la hoja de ruta del `README.md` con lo que se decida.
+## Equipo de agentes
+Los agentes especializados están en `.claude/agents/` (arquitecto, plataforma, diseno, backend, asistente, finanzas, habitos, cuidados, casa, alimentacion, calidad). Cada uno escribe solo en sus carpetas; el arquitecto integra y hace commit.
 
-## Reglas respecto de las otras apps (contrato v2.0, sección 9)
-1. GRAVITY no es dueña de datos de Presupuesto, Hábitos ni Cuidados, y no lee sus bases de datos.
-2. Actúa sobre ellas solo abriendo pantallas por enlace (`presupuesto://`, `habitos://`), por orden del usuario. Un enlace no importa, no escribe ni confirma por el usuario.
-3. Solo lee un plan o seguimiento exportado si el usuario lo concede de forma explícita y por sesión.
-4. Prohibido: dinero, cuentas, precios, datos clínicos de la persona bajo cuidado y datos de salud de terceros.
-5. Si usa un modelo de lenguaje: lo mínimo necesario, sin nombres ni alergias, activado por el usuario, y la clave de la API nunca dentro de la app.
-6. Si necesita un dato nuevo de otra app, propón un cambio al contrato (qué y por qué); no lo resuelvas por tu cuenta.
-7. Funciona sin las otras apps y ellas sin GRAVITY.
+## Reglas que no se rompen
+- Permisos en el servidor (RLS); cada persona ve solo lo de su rol (D5).
+- El dinero y los datos clínicos **nunca** van a la IA en la nube ni a las bocinas (D3, D6).
+- Dinero en centavos; semana en lunes; libro de movimientos solo-agregar.
+- Sin secretos ni datos reales en el repositorio (`data/personal/` está ignorada).
+- Especificación antes que código; pruebas en verde antes de entregar.
+
+## Comandos
+- App: `cd app && flutter analyze && flutter test`
+- Paquetes de dominio: `cd paquetes/<paquete> && dart test`
+- Base de datos: ver `supabase/README.md`
 
 ## Cómo trabajar
-- No cambies el contrato por tu cuenta. Se edita primero en la raíz y se corre `sincronizar-contrato.sh`.
-- Este repositorio es independiente (se enlaza como submódulo). Haz commit aquí; luego actualiza el puntero en la raíz.
-- No guardes claves ni secretos en el repositorio.
 - Responde en español.
+- No cambies decisiones confirmadas por tu cuenta: propón el cambio (qué y por qué).

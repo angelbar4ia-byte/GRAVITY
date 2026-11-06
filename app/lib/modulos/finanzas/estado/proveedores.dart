@@ -1,0 +1,507 @@
+/// Estado de Finanzas con Riverpod: el repositorio según la sesión, lo
+/// cargado, el **libro activo** (D19) con su permiso y los casos de uso.
+library;
+
+import 'dart:async';
+
+import 'package:finanzas_dominio/finanzas_dominio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show ProviderException;
+
+import '../../../app/sesion_efectiva.dart';
+import '../../../diseno/proveedores.dart' show horaActualProvider, relojProvider;
+import '../../../nucleo/cola/proveedores_cola.dart';
+import '../../../nucleo/contratos/roles.dart';
+import '../../../nucleo/permisos/permisos.dart' as permisos;
+import '../../../nucleo/seguridad/proveedores_seguridad.dart';
+import '../../../nucleo/sesion/proveedores_sesion.dart';
+import '../../../nucleo/sesion/servicio_sesion_supabase.dart';
+import '../casos_uso/servicio_finanzas.dart';
+import '../datos/demostracion.dart';
+import '../datos/fuente_tablas.dart';
+import '../datos/permisos_libro.dart';
+import '../datos/repositorio.dart';
+import '../datos/repositorio_memoria.dart';
+import '../datos/repositorio_supabase.dart';
+
+/// Hoy (fecha local), según el reloj de la app. Cambia solo al cambiar el día.
+final hoyFinanzasProvider = Provider<Fecha>(
+  (ref) => ref.watch(
+    horaActualProvider.select((t) => Fecha.deDateTime(t)),
+  ),
+);
+
+/// Repositorio de la persona que usa la app ahora (en la tablet, la que
+/// entró con su PIN): Supabase con su cliente; en demostración, el hogar de
+/// ejemplo filtrado como lo haría el servidor; sin sesión, vacío.
+final repositorioFinanzasProvider = Provider<RepositorioFinanzas>((ref) {
+  final sesion = ref.watch(sesionEfectivaProvider);
+  final servicio = ref.watch(servicioSesionProvider);
+  if (sesion == null) return RepositorioFinanzasEnMemoria();
+  final personaId = sesion.persona.id;
+  final hogarId = sesion.hogarId;
+  if (servicio is ServicioSesionSupabase && hogarId != null) {
+    final repo = RepositorioFinanzasSupabase(
+      fuente: FuenteTablasSupabase(() => servicio.clienteActivo),
+      cola: ref.watch(colaSinConexionProvider),
+      hogarId: hogarId,
+      personaId: personaId,
+      copia: CopiaLocalFinanzas(
+        ref.watch(almacenSeguroProvider),
+        personaId: personaId,
+      ),
+    );
+    ref.onDispose(repo.cerrar);
+    return repo;
+  }
+  if (servicio.esDemostracion) {
+    final hoy = Fecha.deDateTime(ref.read(relojProvider).ahora());
+    final maestra = ref.watch(esCuentaMaestraProvider);
+    final repo = RepositorioFinanzasEnMemoria(
+      datos: filtrarParaPersona(
+        datosDeDemostracion(hoy: hoy),
+        personaId,
+        hoy: hoy,
+        esMaestra: maestra,
+      ),
+      personaId: personaId,
+      personas: personasDeDemostracion(),
+      esMaestra: maestra,
+      // Como `fin_adultos_con_finanzas`: cualquier adulto con Finanzas ve a
+      // los demás (solo nombres) para invitarlos a un compartido.
+      adultosConFinanzas: {IdsDemostracion.dueno, IdsDemostracion.pareja},
+      // La hora de la app, para las altas y bajas de miembros.
+      reloj: ref.read(relojProvider).ahora,
+    );
+    ref.onDispose(repo.cerrar);
+    return repo;
+  }
+  final repo = RepositorioFinanzasEnMemoria(
+    personaId: personaId,
+    reloj: ref.read(relojProvider).ahora,
+  );
+  ref.onDispose(repo.cerrar);
+  return repo;
+});
+
+/// Lo cargado de Finanzas, al día con cada escritura.
+///
+/// **Sin reintentos automáticos** (I10 de la revisión de la Fase 1): Riverpod
+/// reintenta solo lo que falla (11 intentos en unos 40 s) y mientras tanto la
+/// pantalla dice "Cargando…". Aquí el error se ve de inmediato (sin señal y
+/// sin copia: "Sin conexión… Reintentar") y se reintenta a mano.
+final cargaFinanzasProvider =
+    AsyncNotifierProvider<CargaFinanzasNotifier, CargaFinanzas>(
+      CargaFinanzasNotifier.new,
+      retry: sinReintentosAutomaticos,
+    );
+
+/// Vuelve a pedir lo de Finanzas al servidor si el módulo ya estaba abierto
+/// (si no, la próxima apertura lo carga). Llámala **tras una baja del hogar o
+/// un cambio de rol**: el servidor puede haber cambiado `creado_por` y
+/// `visibilidad` de los compartidos (el administrador que deja de ser adulto
+/// con Finanzas pasa el cargo al miembro más antiguo; con menos de 2 miembros
+/// el libro queda privado) y el cargo de albacea. Nunca lanza.
+Future<void> refrescarFinanzas(ProviderContainer contenedor) async {
+  if (!contenedor.exists(cargaFinanzasProvider)) return;
+  try {
+    await contenedor.read(cargaFinanzasProvider.notifier).recargar();
+  } catch (_) {
+    // Sin señal se queda con lo último que se cargó.
+  }
+}
+
+/// `retry` de Riverpod que nunca reintenta (el error se muestra y la persona
+/// decide).
+Duration? sinReintentosAutomaticos(int intentos, Object error) => null;
+
+class CargaFinanzasNotifier extends AsyncNotifier<CargaFinanzas> {
+  @override
+  Future<CargaFinanzas> build() async {
+    final repo = ref.watch(repositorioFinanzasProvider);
+    final suscripcion = repo.cambios.listen((c) => state = AsyncData(c));
+    ref.onDispose(suscripcion.cancel);
+    return repo.cargar();
+  }
+
+  /// Vuelve a pedir todo al servidor (Reintentar, deslizar para actualizar).
+  Future<void> recargar() async {
+    final repo = ref.read(repositorioFinanzasProvider);
+    state = await AsyncValue.guard(repo.cargar);
+  }
+
+  /// Igual que [recargar], pero devuelve lo cargado o lanza el error (para
+  /// quien necesita esperar el resultado, como la consulta de la maestra).
+  Future<CargaFinanzas> recargarOLanzar() async {
+    final repo = ref.read(repositorioFinanzasProvider);
+    final cargado = await repo.cargar();
+    state = AsyncData(cargado);
+    return cargado;
+  }
+}
+
+/// Libro que eligió la persona en el selector (nulo = el primero: su libro
+/// personal). Se olvida al cambiar de persona.
+final libroElegidoProvider = NotifierProvider<LibroElegido, String?>(
+  LibroElegido.new,
+);
+
+class LibroElegido extends Notifier<String?> {
+  @override
+  String? build() {
+    ref.watch(sesionEfectivaProvider.select((s) => s?.persona.id));
+    return null;
+  }
+
+  void elegir(String libroId) => state = libroId;
+
+  /// Vuelve a la portada (la cuenta maestra, sin libro abierto).
+  void alaPortada() => state = null;
+}
+
+/// Semana que se está viendo (nula = la de hoy).
+final semanaElegidaProvider = NotifierProvider<SemanaElegida, Semana?>(
+  SemanaElegida.new,
+);
+
+class SemanaElegida extends Notifier<Semana?> {
+  @override
+  Semana? build() {
+    ref.watch(libroElegidoProvider);
+    return null;
+  }
+
+  void elegir(Semana? semana) => state = semana;
+}
+
+/// Todo lo que necesita una pantalla de Finanzas.
+class ContextoFinanzas {
+  const ContextoFinanzas({
+    required this.carga,
+    required this.personaId,
+    required this.rol,
+    required this.hoy,
+    required this.esMaestra,
+    required this.libros,
+    required this.libro,
+    required this.permiso,
+  });
+
+  final CargaFinanzas carga;
+  final String personaId;
+  final Rol rol;
+  final Fecha hoy;
+  final bool esMaestra;
+
+  /// Libros que la persona ve, en el orden del selector.
+  final List<Libro> libros;
+
+  /// Libro activo. Es nulo si no ve ninguno o si es la cuenta maestra que aún
+  /// no abre ninguno: ve la **portada** (los libros y quién los lleva, sin
+  /// consulta registrada) y elige cuál mirar ([enPortada]).
+  final Libro? libro;
+  final PermisoLibro permiso;
+
+  DatosFinanzas get datos => carga.datos;
+  String get libroId => libro!.id;
+
+  /// La cuenta maestra todavía no abre ningún libro: ve la portada.
+  bool get enPortada => libro == null && libros.isNotEmpty;
+
+  /// La persona es miembro de algún libro (tiene uno propio o compartido).
+  bool get tienePropioLibro =>
+      libros.any((l) => l.papelDe(personaId, hoy) != null);
+
+  /// **Solo lectura total** (respuestas del dueño del 23/oct/2026): la cuenta
+  /// maestra que no es la dueña no registra ni administra nada, tampoco lo
+  /// suyo; no tiene (+) ni órdenes que abran una hoja de registro.
+  bool get soloLecturaTotal => permisos.esSoloLectura(rol, esMaestra: esMaestra);
+
+  /// `true` si el libro activo es de la persona: es su titular, miembro o
+  /// albacea vigente (no lo lee como cuenta maestra ni como lector de uno
+  /// público).
+  bool get esLibroPropio =>
+      libro != null && permiso.leer && !permiso.comoMaestra && !permiso.comoLector;
+
+  /// El libro activo está archivado: solo lectura para todos.
+  bool get libroArchivado => libro?.archivado ?? false;
+
+  /// La cuenta maestra necesita una consulta registrada para leer el libro
+  /// activo (es ajeno).
+  bool get requiereConsulta => permiso.comoMaestra;
+
+  /// Lo que deja la matriz de la interfaz (`puedeSobre`) sobre el libro
+  /// activo: en lo propio, lo de su rol; en lo ajeno, la cuenta maestra solo
+  /// lee (D19).
+  bool _matrizDeja(Accion accion) => permisos.puedeSobre(
+    rol,
+    Modulo.finanzas,
+    accion,
+    esDeLaPersona: esLibroPropio,
+    esMaestra: esMaestra,
+  );
+
+  /// Puede registrar en el libro activo: el espejo de `fin_puede` (papel en
+  /// el libro) **y** la matriz por rol. Si no, no se muestran los botones de
+  /// escribir.
+  bool get puedeEscribir => permiso.escribir && _matrizDeja(Accion.escribir);
+
+  /// Puede cambiar la configuración del libro activo.
+  bool get puedeAdministrar =>
+      permiso.administrar && _matrizDeja(Accion.administrar);
+
+  /// Solo lee el libro activo (la pareja en lo ajeno nunca llega aquí; la
+  /// cuenta maestra y el lector de un público, sí).
+  bool get soloLectura => !puedeEscribir;
+
+  /// Permiso para lo que es del **hogar** (categorías y cuentas de gasto,
+  /// días inhábiles e importaciones): lo hacen el dueño y la pareja. La cuenta
+  /// maestra que no es la dueña solo lo lee (M6).
+  bool get administraHogar => permisos.puedeSobre(
+    rol,
+    Modulo.finanzas,
+    Accion.administrar,
+    esDeLaPersona: true,
+    esMaestra: esMaestra,
+  );
+
+  /// Permiso de la persona en [l] con lo que dejó la matriz de la interfaz.
+  PermisoLibro permisoEn(Libro l) => _permisoDe(
+    carga,
+    l,
+    personaId: personaId,
+    rol: rol,
+    hoy: hoy,
+    esMaestra: esMaestra,
+  );
+
+  /// `true` si [l] es un compartido que la persona administra: quien lo creó.
+  /// El dueño del hogar también cambia la membresía si es miembro (lo dice el
+  /// servidor); aquí se ofrece a quien lo creó o al dueño miembro.
+  bool administraMiembrosDe(Libro l) {
+    if (l.tipo != TipoLibro.compartido || soloLecturaTotal) return false;
+    if (l.esAdministrador(personaId)) return true;
+    return rol == Rol.dueno && l.papelDe(personaId, hoy) != null && !l.archivado;
+  }
+
+  /// `true` si la persona puede salirse de [l].
+  bool puedeSalirDe(Libro l) =>
+      !soloLecturaTotal && l.puedeSalir(personaId, hoy);
+
+  /// El dueño del hogar puede nombrar albacea o suplente de [l] (el libro de
+  /// papá) si ese cargo [papel] está vacío (`fin_nombrar_albacea`).
+  bool puedeNombrarAlbaceaEn(Libro l, PapelLibro papel) =>
+      rol == Rol.dueno &&
+      !soloLecturaTotal &&
+      cargoVacioEnLibro(l, papel, carga.adultosConFinanzas, hoy);
+
+  static PermisoLibro _permisoDe(
+    CargaFinanzas carga,
+    Libro l, {
+    required String personaId,
+    required Rol rol,
+    required Fecha hoy,
+    required bool esMaestra,
+  }) {
+    final soloLectura = permisos.esSoloLectura(rol, esMaestra: esMaestra);
+    final p = permisoDeCarga(
+      carga,
+      l,
+      personaId,
+      hoy: hoy,
+      esMaestra: esMaestra,
+      soloLectura: soloLectura,
+    );
+    final propio = p.leer && !p.comoMaestra && !p.comoLector;
+    bool deja(Accion a) => permisos.puedeSobre(
+      rol,
+      Modulo.finanzas,
+      a,
+      esDeLaPersona: propio,
+      esMaestra: esMaestra,
+    );
+    return PermisoLibro(
+      leer: p.leer && (p.comoLector || deja(Accion.leer)),
+      escribir: p.escribir && deja(Accion.escribir),
+      administrar: p.administrar && deja(Accion.administrar),
+      enNombreDe: p.enNombreDe,
+      comoMaestra: p.comoMaestra,
+      comoLector: p.comoLector,
+    );
+  }
+
+  static ContextoFinanzas armar({
+    required CargaFinanzas carga,
+    required String personaId,
+    required Rol rol,
+    required Fecha hoy,
+    required bool esMaestra,
+    String? elegido,
+  }) {
+    final visibles = librosVisibles(
+      carga.datos.libros,
+      personaId,
+      hoy: hoy,
+      esMaestra: esMaestra,
+    );
+    final elegidoVisible = visibles.where((l) => l.id == elegido).firstOrNull;
+    // La cuenta maestra que no tiene libro propio entra por la portada: no se
+    // le abre (y consulta) el primero de los ajenos sin que lo pida.
+    final tienePropio = visibles.any((l) => l.papelDe(personaId, hoy) != null);
+    final libro =
+        elegidoVisible ??
+        (esMaestra && !tienePropio ? null : visibles.firstOrNull);
+    return ContextoFinanzas(
+      carga: carga,
+      personaId: personaId,
+      rol: rol,
+      hoy: hoy,
+      esMaestra: esMaestra,
+      libros: visibles,
+      libro: libro,
+      permiso: libro == null
+          ? PermisoLibro.ninguno
+          : _permisoDe(
+              carga,
+              libro,
+              personaId: personaId,
+              rol: rol,
+              hoy: hoy,
+              esMaestra: esMaestra,
+            ),
+    );
+  }
+}
+
+/// `true` si la persona es la cuenta maestra (por la sesión o por el
+/// servidor).
+final esMaestraFinanzasProvider = Provider<bool>(
+  (ref) =>
+      ref.watch(esCuentaMaestraProvider) ||
+      ref.watch(
+        cargaFinanzasProvider.select((a) => a.value?.esMaestra ?? false),
+      ),
+);
+
+final contextoFinanzasProvider = Provider<AsyncValue<ContextoFinanzas>>((ref) {
+  try {
+    final sesion = ref.watch(sesionEfectivaProvider);
+    final carga = ref.watch(cargaFinanzasProvider);
+    final hoy = ref.watch(hoyFinanzasProvider);
+    final elegido = ref.watch(libroElegidoProvider);
+    final maestra = ref.watch(esMaestraFinanzasProvider);
+    if (sesion == null) {
+      return AsyncError(
+        const ErrorFinanzas('Nadie ha entrado.'),
+        StackTrace.empty,
+      );
+    }
+    return carga.whenData(
+      (c) => ContextoFinanzas.armar(
+        carga: c,
+        personaId: sesion.persona.id,
+        rol: sesion.rol,
+        hoy: hoy,
+        esMaestra: maestra,
+        elegido: elegido,
+      ),
+    );
+  } on ProviderException catch (_, pila) {
+    // Sin sesión configurada (arranque incompleto o una prueba que monta solo
+    // la hoja): las pantallas muestran su estado de error en vez de fallar.
+    return AsyncError(
+      const ErrorFinanzas('Finanzas aún no está lista en este equipo.'),
+      pila,
+    );
+  }
+});
+
+/// Casos de uso con la persona y el reloj de ahora.
+final servicioFinanzasProvider = Provider<ServicioFinanzas>((ref) {
+  final sesion = ref.watch(sesionEfectivaProvider);
+  final reloj = ref.watch(relojProvider);
+  final maestra = ref.watch(esMaestraFinanzasProvider);
+  final rol = sesion?.rol;
+  return ServicioFinanzas(
+    repositorio: ref.watch(repositorioFinanzasProvider),
+    personaId: sesion?.persona.id ?? '',
+    hogarId: sesion?.hogarId ?? '',
+    esMaestra: maestra,
+    soloLectura: rol != null && permisos.esSoloLectura(rol, esMaestra: maestra),
+    esDueno: rol == Rol.dueno,
+    reloj: reloj.ahora,
+  );
+});
+
+/// Cuánto vale una consulta registrada de la cuenta maestra: el servidor deja
+/// leer un libro ajeno solo mientras la consulta está vigente (30 min).
+const vigenciaConsultaMaestra = Duration(minutes: 30);
+
+/// Cada cuánto se renueva la consulta mientras el libro sigue abierto: antes de
+/// que venza, para que la lectura nunca se quede sin respaldo en la bitácora.
+/// La persona no nota nada.
+const renovarConsultaCada = Duration(minutes: 25);
+
+/// La consulta de la cuenta maestra a un libro ajeno (D19, I2).
+///
+/// El servidor **filtra en silencio**: sin una consulta registrada en los
+/// últimos 30 minutos, la lectura de un libro ajeno devuelve vacío (la portada
+/// —libros, miembros, categorías— sí se ve). Por eso el orden es:
+///
+/// 1. registrar la consulta (RPC `fin_registrar_consulta_maestra`; queda en la
+///    bitácora para quienes llevan ese libro);
+/// 2. **recién entonces** volver a pedir los datos;
+/// 3. si el libro ajeno sigue vacío, la consulta no valió (venció o no se
+///    registró): se registra **otra vez** y se recarga una vez más; si todavía
+///    viene vacío, se avisa con *Reintentar* (sin reintentos automáticos).
+///
+/// La pantalla no muestra el contenido hasta que esto termina. Mientras el
+/// libro siga abierto la consulta se **renueva** sola cada
+/// [renovarConsultaCada] y se recarga, sin tapar la pantalla. Al cerrar el
+/// libro la renovación se detiene; al volver a abrirlo se registra otra vez.
+final consultaMaestraProvider = FutureProvider.autoDispose.family<bool, String>(
+  (ref, libroId) async {
+    final repo = ref.watch(repositorioFinanzasProvider);
+    final carga = ref.read(cargaFinanzasProvider.notifier);
+    for (var intento = 0; intento < 2; intento++) {
+      await repo.registrarConsultaMaestra(libroId);
+      final cargado = await carga.recargarOLanzar();
+      if (!cargado.libroSinContenido(libroId)) {
+        final renovacion = Timer(renovarConsultaCada, ref.invalidateSelf);
+        ref.onDispose(renovacion.cancel);
+        return true;
+      }
+    }
+    throw const ErrorFinanzas(
+      'El servidor no devolvió los datos de este libro: la consulta no está '
+      'vigente.',
+    );
+  },
+  retry: sinReintentosAutomaticos,
+);
+
+/// Libros a los que ya se les revisó el cierre automático en esta sesión.
+final cierresRevisadosProvider = NotifierProvider<CierresRevisados, Set<String>>(
+  CierresRevisados.new,
+);
+
+class CierresRevisados extends Notifier<Set<String>> {
+  @override
+  Set<String> build() {
+    ref.watch(sesionEfectivaProvider.select((s) => s?.persona.id));
+    return const {};
+  }
+
+  /// Revisa una sola vez por libro y sesión las semanas que pasaron 3 días
+  /// sin cerrar (5.9 bis, punto 4): se cierran con pendientes marcados.
+  void revisar(String libroId) {
+    if (state.contains(libroId)) return;
+    state = {...state, libroId};
+    unawaited(
+      ref
+          .read(servicioFinanzasProvider)
+          .cerrarSemanasVencidas(libroId)
+          .catchError((_) => 0),
+    );
+  }
+}

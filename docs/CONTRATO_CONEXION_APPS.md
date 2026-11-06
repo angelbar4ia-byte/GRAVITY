@@ -15,6 +15,8 @@
 >
 > Lo marcado **(propuesto)** no está confirmado por el dueño del proyecto y debe aprobarse antes de implementarse.
 
+> **Aviso (20/oct/2026).** Se decidió una **sola app modular** con Cuidados como módulo, GRAVITY con acceso al dinero por rol (sin IA en la nube), la laptop Windows con el sistema completo y el teléfono con lo mínimo, y **Supabase** (plan gratis) como servidor en lugar de Firebase. Esto cambia la tabla de apps y las secciones 1, 2, 6, 7, 9 y 10. Antes de programar, leer `DECISIONES.md` (manda sobre esta versión donde se contradigan) hasta que salga la versión 3.0.
+
 ---
 
 ## 1. Reparto de responsabilidades

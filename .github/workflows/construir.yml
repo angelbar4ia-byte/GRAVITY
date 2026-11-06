@@ -1,0 +1,76 @@
+# Construye la app para ver los avances sin instalar Flutter en tu equipo.
+# Sin llaves de Supabase ni Firebase arranca en MODO DEMOSTRACIÓN con datos de
+# ejemplo (hogar de Ana y Alex). Nada real entra al repositorio ni al archivo.
+# Descarga los archivos en la pestaña Actions › la ejecución › Artifacts.
+name: Construir app
+
+on:
+  push:
+    branches: [claude/zen-pasteur-b0jblz]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pruebas:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.7
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test --exclude-tags hallazgo
+
+  android:
+    needs: pruebas
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.7
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter build apk --debug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gravity-android-demo
+          path: app/build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 14
+
+  windows:
+    needs: pruebas
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.7
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter build windows --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gravity-windows-demo
+          path: app/build/windows/x64/runner/Release
+          retention-days: 14
