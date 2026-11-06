@@ -22,7 +22,6 @@ import 'package:gravity/nucleo/sensibles/sobres.dart';
 import 'package:gravity/nucleo/sensibles/subida_diferida.dart';
 import 'package:gravity/nucleo/sesion/proveedores_sesion.dart';
 import 'package:gravity/nucleo/sesion/servicio_sesion_falso.dart';
-import 'package:habitos_dominio/habitos_dominio.dart';
 
 // Fase 4, criterio 39 y sección 7.3 del spec: la acción diaria de Hábitos
 // toma 3 toques o menos. Se cuenta cada pulsación en pantalla desde Hoy, con

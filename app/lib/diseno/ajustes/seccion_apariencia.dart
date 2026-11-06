@@ -245,47 +245,54 @@ class _FilaPersonalidad extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final v = ValoresDiseno.de(context);
     final automatica = PersonalidadModulo.automatica(modulo);
+    final selector = DropdownButton<OpcionPersonalidad>(
+      key: ValueKey('personalidad-${modulo.name}'),
+      value: opcion,
+      isExpanded: true,
+      underline: const SizedBox(),
+      onChanged: (nueva) {
+        if (nueva == null) return;
+        ref.read(opcionesPersonalidadProvider.notifier).fijar(modulo, nueva);
+      },
+      items: const [
+        DropdownMenuItem(
+          value: OpcionPersonalidad.automatica,
+          child: Text('Automática'),
+        ),
+        DropdownMenuItem(
+          value: OpcionPersonalidad.igualAlEstilo,
+          child: Text('Igual al estilo'),
+        ),
+      ],
+    );
+    final textos = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(nombre, style: v.lectura(color: v.textoFuerte)),
+        Text(
+          automatica.tieneExcepciones
+              ? '${automatica.nombre} · siempre en alto contraste'
+              : automatica.nombre,
+          style: v.lectura(tamano: 13, color: v.textoTenue),
+        ),
+      ],
+    );
+    // Con letra grande el selector baja a su propia línea en lugar de cortarse.
+    final grande = MediaQuery.textScalerOf(context).scale(14) > 14 * 1.3;
     return Padding(
       padding: EdgeInsets.symmetric(vertical: v.espacio * 0.5),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: grande
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [textos, selector],
+            )
+          : Row(
               children: [
-                Text(nombre, style: v.lectura(color: v.textoFuerte)),
-                Text(
-                  automatica.tieneExcepciones
-                      ? '${automatica.nombre} · siempre en alto contraste'
-                      : automatica.nombre,
-                  style: v.lectura(tamano: 13, color: v.textoTenue),
-                ),
+                Expanded(child: textos),
+                SizedBox(width: v.espacio, child: null),
+                SizedBox(width: 150, child: selector),
               ],
             ),
-          ),
-          DropdownButton<OpcionPersonalidad>(
-            key: ValueKey('personalidad-${modulo.name}'),
-            value: opcion,
-            underline: const SizedBox(),
-            onChanged: (nueva) {
-              if (nueva == null) return;
-              ref
-                  .read(opcionesPersonalidadProvider.notifier)
-                  .fijar(modulo, nueva);
-            },
-            items: const [
-              DropdownMenuItem(
-                value: OpcionPersonalidad.automatica,
-                child: Text('Automática'),
-              ),
-              DropdownMenuItem(
-                value: OpcionPersonalidad.igualAlEstilo,
-                child: Text('Igual al estilo'),
-              ),
-            ],
-          ),
-        ],
-      ),
     );
   }
 }

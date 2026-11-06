@@ -43,7 +43,7 @@ const platillosEjemplo = <Platillo>[
     Ingrediente('Lechuga', 3, 'hoja', _fv),
     Ingrediente('Jitomate', 1, 'pza', _fv),
     Ingrediente('Limón', 2, 'pza', _fv),
-  ]),
+  ], duros: ['verdura cruda']),
   Platillo('p-quesadillas', 'Quesadillas con frijoles', [
     Ingrediente('Tortilla', 6, 'pza', _pt),
     Ingrediente('Queso Oaxaca', 120, 'g', _lh),
@@ -58,21 +58,65 @@ const platillosEjemplo = <Platillo>[
     Ingrediente('Yogurt natural', 1, 'vaso', _lh),
     Ingrediente('Granola', 40, 'g', _ab),
     Ingrediente('Plátano', 1, 'pza', _fv),
+  ], duros: ['granola']),
+  Platillo('p-pure', 'Puré de papa con pollo deshebrado', [
+    Ingrediente('Papa', 1, 'pza', _fv),
+    Ingrediente('Pechuga de pollo', 150, 'g', _cp),
+    Ingrediente('Leche', 100, 'ml', _lh),
   ]),
+  Platillo('p-licuado', 'Licuado de proteína con plátano', [
+    Ingrediente('Leche', 250, 'ml', _lh),
+    Ingrediente('Plátano', 1, 'pza', _fv),
+    Ingrediente('Proteína en polvo', 1, 'cacito', _ab),
+  ]),
+  Platillo('p-flan', 'Flan de huevo', [
+    Ingrediente('Huevo', 2, 'pza', _lh),
+    Ingrediente('Leche', 200, 'ml', _lh),
+  ]),
+  Platillo('p-caldo', 'Caldo de pollo con verduras suaves', [
+    Ingrediente('Pechuga de pollo', 150, 'g', _cp),
+    Ingrediente('Zanahoria', 1, 'pza', _fv),
+    Ingrediente('Calabacita', 1, 'pza', _fv),
+  ]),
+  Platillo('p-fruta', 'Fruta picada', [
+    Ingrediente('Manzana', 1, 'pza', _fv),
+    Ingrediente('Limón', 1, 'pza', _fv),
+  ], duros: ['manzana cruda']),
 ];
 
+/// Suplementos de ejemplo (inventados; no son indicación de nadie).
+List<Suplemento> suplementosEjemplo(MenuId menu) => switch (menu) {
+      MenuId.papa => const [
+          Suplemento(id: 's1', nombre: 'Proteína en polvo', dosis: '1 cacito', horario: 'Colación'),
+          Suplemento(id: 's2', nombre: 'Multivitamínico', dosis: '1 tableta', horario: 'Desayuno'),
+        ],
+      MenuId.pareja => const [
+          Suplemento(id: 's3', nombre: 'Omega 3', dosis: '1 cápsula', horario: 'Comida'),
+        ],
+    };
+
 /// Menú de ejemplo de una semana (desayuno, comida, cena de lunes a domingo).
-List<EntradaMenu> menuEjemplo() {
-  const ids = [
-    // desayuno, comida, cena
-    ['p-huevo', 'p-pollo', 'p-yogurt'],
-    ['p-avena', 'p-lentejas', 'p-sandwich'],
-    ['p-huevo', 'p-pasta', 'p-quesadillas'],
-    ['p-avena', 'p-pescado', 'p-yogurt'],
-    ['p-huevo', 'p-pollo', 'p-sandwich'],
-    ['p-yogurt', 'p-lentejas', 'p-quesadillas'],
-    ['p-avena', 'p-pasta', 'p-yogurt'],
+List<EntradaMenu> menuEjemplo(MenuId menu) {
+  // desayuno, comida, cena, colación
+  const papa = [
+    ['p-huevo', 'p-pure', 'p-caldo', 'p-licuado'],
+    ['p-avena', 'p-lentejas', 'p-flan', 'p-yogurt'],
+    ['p-huevo', 'p-pollo', 'p-caldo', 'p-licuado'],
+    ['p-avena', 'p-pure', 'p-quesadillas', 'p-flan'],
+    ['p-huevo', 'p-lentejas', 'p-caldo', 'p-licuado'],
+    ['p-avena', 'p-pollo', 'p-flan', 'p-licuado'],
+    ['p-huevo', 'p-pure', 'p-caldo', 'p-flan'],
   ];
+  const pareja = [
+    ['p-huevo', 'p-pollo', 'p-yogurt', 'p-fruta'],
+    ['p-avena', 'p-lentejas', 'p-sandwich', 'p-fruta'],
+    ['p-huevo', 'p-pasta', 'p-quesadillas', 'p-yogurt'],
+    ['p-avena', 'p-pescado', 'p-yogurt', 'p-fruta'],
+    ['p-huevo', 'p-pollo', 'p-sandwich', 'p-fruta'],
+    ['p-yogurt', 'p-lentejas', 'p-quesadillas', 'p-fruta'],
+    ['p-avena', 'p-pasta', 'p-yogurt', 'p-fruta'],
+  ];
+  final ids = menu == MenuId.papa ? papa : pareja;
   return [
     for (var d = 0; d < 7; d++)
       for (final t in TiempoComida.values)

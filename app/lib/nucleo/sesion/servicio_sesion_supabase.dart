@@ -143,8 +143,51 @@ SupabaseClient _clienteAparte(
   authOptions: AuthClientOptions(autoRefreshToken: autoRenovar),
 );
 
+/// Traduce el error de `aceptar_invitacion` (o del registro) a un mensaje.
+ErrorSesion traducirErrorInvitacion(Object error) {
+  if (error is ErrorSesion) return error;
+  if (esErrorDeRed(error)) return ErrorSesion.sinConexion;
+  if (error is PostgrestException) {
+    return switch (error.code) {
+      '22023' => const ErrorSesion(
+        'El código no es válido o ya venció. Pide uno nuevo a quien te invitó.',
+      ),
+      '42501' => const ErrorSesion(
+        'La invitación es para otro correo, o tu correo aún no está '
+        'confirmado.',
+      ),
+      '23505' => const ErrorSesion('Ya perteneces a este hogar. Entra normal.'),
+      _ => ErrorSesion('No se pudo aceptar la invitación: ${error.message}'),
+    };
+  }
+  if (error is AuthException) {
+    if (error.code == 'email_not_confirmed') {
+      return const ErrorSesion(
+        'Aún no confirmas tu correo. Abre el enlace que te mandamos y vuelve '
+        'a intentar.',
+      );
+    }
+    if (error is AuthWeakPasswordException || error.code == 'weak_password') {
+      return const ErrorSesion(
+        'La contraseña es muy débil. Usa una más larga, con letras y números.',
+      );
+    }
+    if (error.code == 'user_already_exists') {
+      return const ErrorSesion(
+        'Ese correo ya tiene cuenta: elige "Ya tengo cuenta".',
+      );
+    }
+    final codigo = error.statusCode;
+    if (codigo == '400' || codigo == '401' || codigo == '422') {
+      return ErrorSesion.credencialesIncorrectas;
+    }
+    return ErrorSesion('No se pudo: ${error.message}');
+  }
+  return const ErrorSesion('No se pudo aceptar la invitación. Intenta de nuevo.');
+}
+
 class ServicioSesionSupabase extends ServicioSesionEnMemoria
-    implements SesionesPorPersona {
+    implements SesionesPorPersona, AceptaInvitaciones {
   ServicioSesionSupabase({
     required this._cliente,
     required this._almacen,
@@ -251,6 +294,49 @@ class ServicioSesionSupabase extends ServicioSesionEnMemoria
         await _cerrarEnEsteEquipo(limpiar: false);
       }
       throw traducirErrorSesion(error);
+    }
+  }
+
+  @override
+  Future<ResultadoInvitacion> aceptarInvitacion({
+    required String token,
+    required String correo,
+    required String contrasena,
+    String? nombre,
+    required bool cuentaNueva,
+  }) async {
+    try {
+      if (cuentaNueva) {
+        final respuesta = await _cliente.auth.signUp(
+          email: correo.trim(),
+          password: contrasena,
+          data: {
+            if (nombre != null && nombre.trim().isNotEmpty)
+              'nombre': nombre.trim(),
+          },
+        );
+        // Con "confirmar correo" activo en el servidor no hay sesión hasta
+        // que abre el enlace que recibió.
+        if (respuesta.session == null) {
+          return const ResultadoInvitacion.faltaConfirmar();
+        }
+      } else {
+        await _cliente.auth.signInWithPassword(
+          email: correo.trim(),
+          password: contrasena,
+        );
+      }
+      await _cliente.rpc('aceptar_invitacion', params: {'p_token': token.trim()});
+      final sesion = await _lector(_cliente);
+      await _guardar(sesion);
+      emitir(sesion);
+      return ResultadoInvitacion.dentro(sesion);
+    } catch (error) {
+      if (_cliente.auth.currentUser != null && sesionActual == null) {
+        // Entró, pero no quedó dentro del hogar: no se deja la sesión a medias.
+        await _cerrarEnEsteEquipo(limpiar: false);
+      }
+      throw traducirErrorInvitacion(error);
     }
   }
 

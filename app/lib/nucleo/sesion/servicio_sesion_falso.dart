@@ -25,13 +25,114 @@ class CuentaFalsa {
   final Sesion sesion;
 }
 
+/// Una invitación del servidor falso.
+class InvitacionFalsa {
+  InvitacionFalsa({
+    required this.correo,
+    required this.rol,
+    this.esMaestra = false,
+    this.vencida = false,
+  });
+
+  final String correo;
+  final Rol rol;
+  final bool esMaestra;
+  bool vencida;
+  bool usada = false;
+}
+
 class ServicioSesionFalso extends ServicioSesionEnMemoria
-    implements SesionesPorPersona {
+    implements SesionesPorPersona, AceptaInvitaciones {
   ServicioSesionFalso({
     Map<String, CuentaFalsa>? cuentas,
     super.inicial,
     this.sinConexion = false,
   }) : cuentas = cuentas ?? {};
+
+  /// Invitaciones vigentes del servidor falso, por código.
+  final Map<String, InvitacionFalsa> invitaciones = {};
+
+  /// Si el servidor pide confirmar el correo al crear una cuenta (la cuenta
+  /// queda creada y se confirma sola con [confirmarCorreo]).
+  bool exigeConfirmarCorreo = false;
+  final Set<String> _correosPorConfirmar = {};
+  int vecesAceptar = 0;
+
+  /// Confirma el correo (el enlace del mensaje).
+  void confirmarCorreo(String correo) =>
+      _correosPorConfirmar.remove(correo.trim().toLowerCase());
+
+  @override
+  Future<ResultadoInvitacion> aceptarInvitacion({
+    required String token,
+    required String correo,
+    required String contrasena,
+    String? nombre,
+    required bool cuentaNueva,
+  }) async {
+    vecesAceptar++;
+    if (sinConexion) throw ErrorSesion.sinConexion;
+    final llave = correo.trim().toLowerCase();
+    if (cuentaNueva) {
+      if (cuentas.containsKey(llave)) {
+        throw const ErrorSesion(
+          'Ese correo ya tiene cuenta: elige "Ya tengo cuenta".',
+        );
+      }
+      // La cuenta existe, sin rol, hasta que acepta.
+      cuentas[llave] = CuentaFalsa(
+        contrasena,
+        Sesion(
+          persona: Persona(
+            id: 'nueva-$llave',
+            nombre: (nombre ?? '').trim().isEmpty ? llave : nombre!.trim(),
+            correo: llave,
+          ),
+          rol: Rol.familiar,
+          hogarId: hogarDeEjemplo,
+        ),
+      );
+      if (exigeConfirmarCorreo) {
+        _correosPorConfirmar.add(llave);
+        return const ResultadoInvitacion.faltaConfirmar();
+      }
+    } else {
+      final cuenta = cuentas[llave];
+      if (cuenta == null || cuenta.contrasena != contrasena) {
+        throw ErrorSesion.credencialesIncorrectas;
+      }
+      if (_correosPorConfirmar.contains(llave)) {
+        throw const ErrorSesion(
+          'Aún no confirmas tu correo. Abre el enlace que te mandamos y '
+          'vuelve a intentar.',
+        );
+      }
+    }
+    final invitacion = invitaciones[token.trim()];
+    if (invitacion == null || invitacion.usada || invitacion.vencida) {
+      throw const ErrorSesion(
+        'El código no es válido o ya venció. Pide uno nuevo a quien te '
+        'invitó.',
+      );
+    }
+    if (invitacion.correo.toLowerCase() != llave) {
+      throw const ErrorSesion(
+        'La invitación es para otro correo, o tu correo aún no está '
+        'confirmado.',
+      );
+    }
+    invitacion.usada = true;
+    final base = cuentas[llave]!.sesion;
+    final sesion = Sesion(
+      persona: base.persona,
+      rol: invitacion.rol,
+      hogarId: hogarDeEjemplo,
+      esMaestra: invitacion.esMaestra,
+    );
+    cuentas[llave] = CuentaFalsa(cuentas[llave]!.contrasena, sesion);
+    emitir(sesion);
+    return ResultadoInvitacion.dentro(sesion);
+  }
 
   /// Abre el servicio con una sesión de ejemplo del [rol].
   factory ServicioSesionFalso.con(Rol rol) =>

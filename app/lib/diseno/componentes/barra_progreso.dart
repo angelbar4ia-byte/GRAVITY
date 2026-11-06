@@ -75,9 +75,12 @@ class BarraProgreso extends StatelessWidget {
                     )
                   else
                     const Spacer(),
-                  Text(
-                    textoValor ?? porcentaje,
-                    style: v.numero(tamano: 13, color: v.textoTenue),
+                  Flexible(
+                    child: Text(
+                      textoValor ?? porcentaje,
+                      textAlign: TextAlign.end,
+                      style: v.numero(tamano: 13, color: v.textoTenue),
+                    ),
                   ),
                 ],
               ),

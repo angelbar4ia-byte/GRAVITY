@@ -11,38 +11,57 @@ import '../../../nucleo/contratos/rutas.dart';
 import '../casos_uso/lista_compras.dart';
 import '../datos/modelos.dart';
 import '../estado/proveedores.dart';
+import 'selector_menu.dart';
 
 class PantallaListaCompras extends ConsumerWidget {
   const PantallaListaCompras({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) => TemaModulo(
-    modulo: Modulo.alimentacion,
-    child: MarcoPantalla(
-      titulo: 'Lista de compras',
-      rutaAnterior: Rutas.alimentacion,
-      cuerpo: ref
-          .watch(listaComprasProvider)
-          .when(
-            loading: () => const EstadoCargando(),
-            error: (_, _) => EstadoError(
-              mensaje: 'No pudimos armar la lista.',
-              alReintentar: () => ref.invalidate(listaComprasProvider),
-            ),
-            data: (items) => items.isEmpty
-                ? const EstadoVacio(
-                    mensaje: 'La lista está vacía',
-                    detalle: 'Agrega platillos al menú de la semana y aquí aparecerán los ingredientes.',
-                    icono: Icons.shopping_cart_outlined,
-                  )
-                : _Contenido(items: items),
-          ),
-    ),
-  );
+  Widget build(BuildContext context, WidgetRef ref) {
+    final permitidos = ref.watch(servicioAlimentacionProvider).menusConCompras;
+    final menu = menuEfectivo(ref.watch(menuElegidoProvider), permitidos);
+    return TemaModulo(
+      modulo: Modulo.alimentacion,
+      child: MarcoPantalla(
+        titulo: 'Lista de compras',
+        rutaAnterior: Rutas.alimentacion,
+        cuerpo: menu == null
+            ? const EstadoVacio(
+                mensaje: 'No tienes listas para ver',
+                icono: Icons.lock_outline,
+              )
+            : Column(children: [
+                SelectorMenu(
+                  menus: permitidos,
+                  actual: menu,
+                  alElegir: (m) => ref.read(menuElegidoProvider.notifier).state = m,
+                ),
+                Expanded(
+                  child: ref.watch(listaComprasProvider(menu)).when(
+                        loading: () => const EstadoCargando(),
+                        error: (_, _) => EstadoError(
+                          mensaje: 'No pudimos armar la lista.',
+                          alReintentar: () => ref.invalidate(listaComprasProvider(menu)),
+                        ),
+                        data: (items) => items.isEmpty
+                            ? const EstadoVacio(
+                                mensaje: 'La lista está vacía',
+                                detalle:
+                                    'Agrega platillos al menú de la semana y aquí aparecerán los ingredientes.',
+                                icono: Icons.shopping_cart_outlined,
+                              )
+                            : _Contenido(menu: menu, items: items),
+                      ),
+                ),
+              ]),
+      ),
+    );
+  }
 }
 
 class _Contenido extends ConsumerWidget {
-  const _Contenido({required this.items});
+  const _Contenido({required this.menu, required this.items});
+  final MenuId menu;
   final List<ItemCompra> items;
 
   @override
@@ -81,7 +100,7 @@ class _Contenido extends ConsumerWidget {
                       final semana = ref.read(semanaAlimentacionProvider);
                       await ref
                           .read(servicioAlimentacionProvider)
-                          .marcar(semana, i.clave, marca ?? false);
+                          .marcar(menu, semana, i.clave, marca ?? false);
                       ref.read(versionAlimentacionProvider.notifier).state++;
                     }
                   : null,

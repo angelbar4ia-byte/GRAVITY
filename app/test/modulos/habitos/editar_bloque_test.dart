@@ -7,7 +7,6 @@ import 'package:gravity/modulos/habitos/datos/repositorio.dart';
 import 'package:gravity/modulos/habitos/datos/repositorio_agenda.dart';
 import 'package:gravity/modulos/habitos/estado/proveedores.dart';
 import 'package:gravity/modulos/habitos/pantallas/edicion.dart';
-import 'package:habitos_dominio/habitos_dominio.dart';
 
 // Fase 4, E4 / criterio 28: editar un bloque no pierde sus registros.
 void main() {

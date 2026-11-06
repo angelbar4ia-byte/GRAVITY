@@ -106,3 +106,9 @@ En `app/lib/app/pantallas_externas.dart` agregar `List<RouteBase> rutasAlimentac
 
 Pendiente de confirmar por el dueño: si el familiar debe ver también la lista de compras de Papá (propuesta: no; solo el menú).
 
+### Ajuste del dueño (6/nov/2026): el familiar también edita el menú de Papá
+
+- **Familiar:** ve **y edita** el menú de Papá. No ve ni edita el menú de la pareja y del dueño.
+- **Cuidadora:** ve el menú de Papá (solo lectura, como antes).
+- **Marcar "comprado":** sigue siendo del dueño y la pareja (no cambia con este ajuste).
+

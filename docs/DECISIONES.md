@@ -492,4 +492,5 @@ Respuestas del dueño a la especificación de la Fase 4 (`docs/specs/fase-4-puli
 - Ven el menú de Papá: dueño, pareja, cuidadora y familiar (familiar en solo lectura). Ven el menú de la pareja y del dueño: solo ellos.
 - Marcan "comprado": el dueño y la pareja.
 - El perfil de Papá es dato clínico (D3): no sale a la IA ni a las bocinas.
+- **Ajuste (6/nov/2026):** el familiar también **edita** el menú de Papá (no el de la pareja y del dueño). La cuidadora lo ve en solo lectura.
 

@@ -336,6 +336,9 @@ class _FilaCompra extends StatelessWidget {
     final v = ValoresDiseno.de(context);
     final estado = renglon.hecho ? 'Listo' : 'Pendiente';
     final cantidad = renglon.cantidad == null ? '' : ', ${renglon.cantidad}';
+    final detalle = renglon.cantidad == null
+        ? estado
+        : '${renglon.cantidad} · $estado';
     return Semantics(
       container: true,
       button: alTocar != null,
@@ -357,28 +360,35 @@ class _FilaCompra extends StatelessWidget {
               ),
               SizedBox(width: v.espacio * 1.5),
               Expanded(
-                child: Text(
-                  renglon.nombre,
-                  style: v
-                      .lectura(
-                        tamano: 18,
-                        peso: FontWeight.w600,
-                        color: renglon.hecho ? v.textoTenue : v.textoFuerte,
-                      )
-                      .copyWith(
-                        decoration: renglon.hecho
-                            ? TextDecoration.lineThrough
-                            : null,
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: v.espacio * 0.5),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        renglon.nombre,
+                        style: v
+                            .lectura(
+                              tamano: 18,
+                              peso: FontWeight.w600,
+                              color: renglon.hecho
+                                  ? v.textoTenue
+                                  : v.textoFuerte,
+                            )
+                            .copyWith(
+                              decoration: renglon.hecho
+                                  ? TextDecoration.lineThrough
+                                  : null,
+                            ),
                       ),
+                      Text(
+                        detalle,
+                        style: v.lectura(tamano: 14, color: v.textoTenue),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              if (renglon.cantidad != null)
-                Text(
-                  renglon.cantidad!,
-                  style: v.lectura(tamano: 15, color: v.textoTenue),
-                ),
-              SizedBox(width: v.espacio),
-              Text(estado, style: v.lectura(tamano: 13, color: v.textoTenue)),
             ],
           ),
         ),
@@ -713,23 +723,26 @@ class SerieDescanso extends StatelessWidget {
                   grosor: 10,
                 ),
                 child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        _mmss(descansoRestante),
-                        key: const ValueKey('descanso-restante'),
-                        style: v.numero(
-                          tamano: 22,
-                          peso: FontWeight.w700,
-                          color: v.textoFuerte,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _mmss(descansoRestante),
+                          key: const ValueKey('descanso-restante'),
+                          style: v.numero(
+                            tamano: 22,
+                            peso: FontWeight.w700,
+                            color: v.textoFuerte,
+                          ),
                         ),
-                      ),
-                      Text(
-                        'descanso',
-                        style: v.lectura(tamano: 12, color: v.textoTenue),
-                      ),
-                    ],
+                        Text(
+                          'descanso',
+                          style: v.lectura(tamano: 12, color: v.textoTenue),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

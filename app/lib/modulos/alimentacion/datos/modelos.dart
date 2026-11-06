@@ -5,9 +5,19 @@ library;
 enum TiempoComida {
   desayuno('Desayuno'),
   comida('Comida'),
-  cena('Cena');
+  cena('Cena'),
+  colacion('Colación');
 
   const TiempoComida(this.etiqueta);
+  final String etiqueta;
+}
+
+/// Los dos menús del hogar (D23).
+enum MenuId {
+  papa('Menú de Papá'),
+  pareja('Menú de la pareja y del dueño');
+
+  const MenuId(this.etiqueta);
   final String etiqueta;
 }
 
@@ -48,10 +58,22 @@ class Ingrediente {
 }
 
 class Platillo {
-  const Platillo(this.id, this.nombre, this.ingredientes);
+  const Platillo(this.id, this.nombre, this.ingredientes, {this.duros = const []});
   final String id;
   final String nombre;
   final List<Ingrediente> ingredientes;
+
+  /// Alimentos duros o crudos del platillo (para advertir en el menú de Papá).
+  final List<String> duros;
+}
+
+/// Suplemento de un menú: nombre, dosis y horario (texto libre de ejemplo).
+class Suplemento {
+  const Suplemento({required this.id, required this.nombre, required this.dosis, required this.horario});
+  final String id;
+  final String nombre;
+  final String dosis;
+  final String horario;
 }
 
 /// Una celda del menú: día 0 = lunes ... 6 = domingo.
