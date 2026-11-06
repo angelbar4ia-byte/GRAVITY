@@ -2,6 +2,7 @@
 // además del color, letra al 200 % en 360 dp y 900 dp sin desbordes, contraste
 // con las tres personalidades (Hábitos, contemplativa y empática).
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gravity/diseno/diseno.dart';
 import 'package:gravity/nucleo/contratos/roles.dart';
@@ -402,6 +403,72 @@ void main() {
       await tester.pumpAndSettle();
       expect(eventos, ['hecho', 'posponer']);
     });
+
+    testWidgets('FilaHabito: el lector oye título, hora, estado y racha', (
+      tester,
+    ) async {
+      final semantica = tester.ensureSemantics();
+      await _montar(
+        tester,
+        FilaHabito(
+          titulo: 'Devocional',
+          horaTexto: '07:00',
+          estado: EstadoFila.hecho,
+          racha: 3,
+          alHecho: () {},
+          alPosponer: () {},
+        ),
+      );
+      final nodo = tester.getSemantics(
+        find.bySemanticsLabel('Devocional, 07:00, hecho, racha de 3 días'),
+      );
+      expect(nodo, isSemantics(isChecked: true));
+      expect(nodo.hasAction(SemanticsAction.customAction), isTrue);
+      for (final e in EstadoFila.values) {
+        await _montar(
+          tester,
+          FilaHabito(titulo: 'X', estado: e),
+          visibles: true,
+        );
+        expect(
+          find.bySemanticsLabel(RegExp(e.etiqueta.toLowerCase())),
+          findsWidgets,
+          reason: e.name,
+        );
+      }
+      semantica.dispose();
+    });
+
+    testWidgets(
+      'FilaHabito y TarjetaSigue sensibles dicen "Contenido privado"',
+      (tester) async {
+        final semantica = tester.ensureSemantics();
+        await _montar(
+          tester,
+          const Column(
+            children: [
+              FilaHabito(titulo: 'Cigarrillo', sensible: true),
+              TarjetaSigue(
+                titulo: 'Cigarrillo',
+                horaTexto: '20:00',
+                sensible: true,
+              ),
+            ],
+          ),
+          visibles: false,
+        );
+        expect(find.bySemanticsLabel(RegExp('Cigarrillo')), findsNothing);
+        expect(
+          find.bySemanticsLabel(RegExp('Contenido privado, pendiente')),
+          findsOneWidget,
+        );
+        expect(
+          find.bySemanticsLabel('Sigue, Contenido privado, 20:00'),
+          findsOneWidget,
+        );
+        semantica.dispose();
+      },
+    );
 
     testWidgets('FilaHabito sensible oculta el título', (tester) async {
       await _montar(

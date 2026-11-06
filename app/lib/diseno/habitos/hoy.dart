@@ -381,10 +381,16 @@ class FilaHabito extends StatelessWidget {
     final deslizable = alHecho != null || alPosponer != null;
     return Semantics(
       container: true,
-      label:
-          '${horaTexto == null ? '' : '$horaTexto, '}'
-          '${sensible ? etiquetaContenidoPrivado : titulo}',
-      value: estado.etiqueta,
+      // Todo en la etiqueta: título (o "Contenido privado"), hora, estado y
+      // racha; con rol de casilla y las acciones como acciones del lector.
+      label: [
+        sensible ? etiquetaContenidoPrivado : titulo,
+        ?horaTexto,
+        estado.etiqueta.toLowerCase(),
+        if (racha != null && racha! > 0)
+          'racha de $racha ${racha == 1 ? 'día' : 'días'}',
+      ].join(', '),
+      checked: estado == EstadoFila.hecho,
       customSemanticsActions: {
         const CustomSemanticsAction(label: 'Hecho'): ?alHecho,
         const CustomSemanticsAction(label: 'Posponer'): ?alPosponer,
@@ -484,7 +490,13 @@ class TarjetaSigue extends StatelessWidget {
     final e = v.espacio;
     return Semantics(
       container: true,
-      label: enCurso ? 'En curso' : 'Sigue',
+      label: [
+        enCurso ? 'En curso' : 'Sigue',
+        sensible ? etiquetaContenidoPrivado : titulo,
+        horaTexto,
+        if (enCurso && transcurridoTexto != null) 'llevas $transcurridoTexto',
+      ].join(', '),
+      explicitChildNodes: true,
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: v.panel,

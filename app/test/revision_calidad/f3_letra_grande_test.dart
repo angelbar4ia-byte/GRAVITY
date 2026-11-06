@@ -98,7 +98,7 @@ void main() {
       expect(RegExp('pendiente|hecho|parcial|omitido|pospuesto', caseSensitive: false).hasMatch(e), isTrue, reason: 'etiqueta sin estado: "$e"');
     }
     h.dispose();
-  }, tags: 'hallazgo');
+  });
 
   testWidgets('F3-11: la lista de Objetivos no pinta 0 % de avance a quien ya cumplió', (t) async {
     final repo = await repoConDatos();
