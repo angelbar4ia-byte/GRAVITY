@@ -24,7 +24,8 @@ class PantallaMas extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final rol = ref.watch(rolEfectivoProvider);
     if (rol == null) return const SizedBox.shrink();
-    final esTablet = ref.watch(tipoDispositivoProvider) == TipoDispositivo.tablet;
+    final esTablet =
+        ref.watch(tipoDispositivoProvider) == TipoDispositivo.tablet;
     return MarcoPantalla(
       titulo: 'Más',
       cuerpo: ListView(
@@ -52,8 +53,9 @@ class PantallaMas extends ConsumerWidget {
               leading: const Icon(Icons.home_outlined),
               title: const Text('Volver al modo Casa'),
               minTileHeight: 56,
-              onTap: () =>
-                  ref.read(controladorTabletProvider.notifier).volverAModoCasa(),
+              onTap: () => ref
+                  .read(controladorTabletProvider.notifier)
+                  .volverAModoCasa(),
             )
           else if (!esTablet)
             ListTile(

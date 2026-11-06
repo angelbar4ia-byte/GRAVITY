@@ -31,9 +31,7 @@ const Map<String, List<(String, String)>> tarjetasPorContexto = {
     ('Receta paso a paso', 'Con letra enorme y voz (Fase 7).'),
     ('Lista de compras', 'Llega con Alimentación (Fase 7).'),
   ],
-  'gimnasio': [
-    ('Serie y descanso', 'Llega con Hábitos (Fase 3).'),
-  ],
+  'gimnasio': [('Serie y descanso', 'Llega con Hábitos (Fase 3).')],
   'cuidados': [
     ('Recordatorios del turno', 'Genéricos, sin datos clínicos (Fase 5).'),
     ('Mi turno', 'La cuidadora entra con su PIN para ver su turno.'),
@@ -120,8 +118,8 @@ class PantallaModoCasa extends ConsumerWidget {
                   children: [
                     Expanded(
                       child: FilledButton.tonalIcon(
-                        onPressed: () =>
-                            ScaffoldMessenger.of(context).showSnackBar(
+                        onPressed: () => ScaffoldMessenger.of(context)
+                            .showSnackBar(
                               const SnackBar(
                                 content: Text(
                                   'Hablar con GRAVITY llega en la Fase 6.',

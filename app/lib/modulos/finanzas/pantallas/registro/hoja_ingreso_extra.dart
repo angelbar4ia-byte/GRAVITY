@@ -174,7 +174,9 @@ class _HojaIngresoExtraState extends ConsumerState<HojaIngresoExtra> {
                 }),
               )
             else
-              const Text('Pide a quien administra este libro que cree una cuenta.'),
+              const Text(
+                'Pide a quien administra este libro que cree una cuenta.',
+              ),
           ] else
             Wrap(
               spacing: 8,
@@ -213,7 +215,9 @@ class _HojaIngresoExtraState extends ConsumerState<HojaIngresoExtra> {
           TextField(
             controller: _nota,
             maxLength: 200,
-            decoration: const InputDecoration(labelText: 'De qué es (opcional)'),
+            decoration: const InputDecoration(
+              labelText: 'De qué es (opcional)',
+            ),
           ),
           if (representado)
             TextField(
@@ -223,7 +227,8 @@ class _HojaIngresoExtraState extends ConsumerState<HojaIngresoExtra> {
               onChanged: (_) => setState(() {}),
               decoration: InputDecoration(
                 labelText: 'Motivo (obligatorio)',
-                helperText: '$ayudaDelMotivo Se registra en nombre de ${libro.nombre}.',
+                helperText:
+                    '$ayudaDelMotivo Se registra en nombre de ${libro.nombre}.',
                 helperMaxLines: 3,
                 errorText: errorDeMotivo(_motivo.text),
                 errorMaxLines: 3,

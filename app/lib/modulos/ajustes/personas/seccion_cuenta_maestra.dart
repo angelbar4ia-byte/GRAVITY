@@ -75,9 +75,8 @@ class _SeccionCuentaMaestraState extends ConsumerState<SeccionCuentaMaestra> {
       );
     } on ErrorInvitacion catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(error.mensaje)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error.mensaje)));
     }
     if (mounted) _recargar();
   }
@@ -87,9 +86,8 @@ class _SeccionCuentaMaestraState extends ConsumerState<SeccionCuentaMaestra> {
       await ref.read(repositorioInvitacionesProvider).revocar(invitacion.id);
     } on ErrorInvitacion catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(error.mensaje)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error.mensaje)));
     }
     if (mounted) _recargar();
   }
@@ -149,7 +147,9 @@ class _SeccionCuentaMaestraState extends ConsumerState<SeccionCuentaMaestra> {
                           ? null
                           : const Text('Es la cuenta maestra de hoy'),
                     ),
-                    for (final invitacion in pendientes.where((i) => i.esMaestra))
+                    for (final invitacion in pendientes.where(
+                      (i) => i.esMaestra,
+                    ))
                       ListTile(
                         key: ValueKey('invitacion-${invitacion.id}'),
                         contentPadding: EdgeInsets.zero,
@@ -224,8 +224,9 @@ class _DialogoCorreoMaestraState extends State<_DialogoCorreoMaestra> {
               keyboardType: TextInputType.emailAddress,
               autofocus: true,
               decoration: const InputDecoration(labelText: 'Correo'),
-              validator: (v) =>
-                  _correoValido.hasMatch((v ?? '').trim()) ? null : 'Escribe un correo válido.',
+              validator: (v) => _correoValido.hasMatch((v ?? '').trim())
+                  ? null
+                  : 'Escribe un correo válido.',
             ),
           ],
         ),

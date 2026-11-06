@@ -69,6 +69,9 @@ dependencies:
   # Selector de archivos nativo (Android y Windows) para Finanzas › Importar
   # datos (decisión del dueño, 23/oct/2026).
   file_picker: ^13.1.0
+  # Conexión real del equipo para el indicador "En línea" (E1, Fase 4): 7.3.2
+  # del 1/oct/2026, con más de dos semanas de publicada.
+  connectivity_plus: ^7.3.2
 
 dev_dependencies:
   flutter_test:

@@ -132,7 +132,9 @@ class ServicioFinanzas {
 
   void _exigirEscribir(String libroId) {
     if (soloLectura) {
-      throw const ErrorFinanzas('La cuenta maestra solo lee: no registra nada.');
+      throw const ErrorFinanzas(
+        'La cuenta maestra solo lee: no registra nada.',
+      );
     }
     final libro = _d.libro(libroId);
     if (libro != null && libro.archivado && permiso(libroId).leer) {
@@ -276,7 +278,10 @@ class ServicioFinanzas {
 
   /// Anula un movimiento con un contraasiento (motivo obligatorio). Lleva la
   /// misma fecha económica: la semana del original se recalcula (P14).
-  Future<Movimiento> anular(String movimientoId, {required String motivo}) async {
+  Future<Movimiento> anular(
+    String movimientoId, {
+    required String motivo,
+  }) async {
     if (!motivoValido(motivo)) {
       throw const ErrorFinanzas(
         'Escribe el motivo de la anulación: $mensajeMotivoCorto',
@@ -285,7 +290,9 @@ class ServicioFinanzas {
     final original = _d.movimientos
         .where((m) => m.id == movimientoId)
         .firstOrNull;
-    if (original == null) throw const ErrorFinanzas('No existe ese movimiento.');
+    if (original == null) {
+      throw const ErrorFinanzas('No existe ese movimiento.');
+    }
     final libros = {
       for (final id in [original.cuentaOrigenId, original.cuentaDestinoId])
         ?_d.cuenta(id)?.libroId,
@@ -336,7 +343,9 @@ class ServicioFinanzas {
     String? motivo,
   }) async {
     _exigirEscribir(libroId);
-    if (monto <= 0) throw const ErrorFinanzas('Escribe un monto mayor que cero.');
+    if (monto <= 0) {
+      throw const ErrorFinanzas('Escribe un monto mayor que cero.');
+    }
     final destino = _d.cuenta(cuentaDestinoId);
     if (destino == null ||
         destino.libroId != libroId ||
@@ -381,7 +390,9 @@ class ServicioFinanzas {
     // Id estable: si el primer intento creó la cuenta y falló después, el
     // reintento no choca con el único (libro, nombre).
     final nueva = Cuenta(
-      id: idEstable(ClavesId.cuentaDeLibro(libroId, 'origen_ingreso', 'Extras')),
+      id: idEstable(
+        ClavesId.cuentaDeLibro(libroId, 'origen_ingreso', 'Extras'),
+      ),
       nombre: 'Extras',
       tipo: TipoCuenta.origenIngreso,
       libroId: libroId,
@@ -403,7 +414,9 @@ class ServicioFinanzas {
     String? nota,
     String? motivo,
   }) async {
-    if (monto <= 0) throw const ErrorFinanzas('Escribe un monto mayor que cero.');
+    if (monto <= 0) {
+      throw const ErrorFinanzas('Escribe un monto mayor que cero.');
+    }
     if (tipo == TipoMovimiento.anulacion ||
         tipo == TipoMovimiento.ajuste ||
         tipo == TipoMovimiento.apertura) {
@@ -412,7 +425,8 @@ class ServicioFinanzas {
       );
     }
     final libros = [
-      for (final id in [cuentaOrigenId, cuentaDestinoId]) ?_d.cuenta(id)?.libroId,
+      for (final id in [cuentaOrigenId, cuentaDestinoId])
+        ?_d.cuenta(id)?.libroId,
     ];
     if (libros.isEmpty) {
       throw const ErrorFinanzas('Una de las cuentas debe ser de un libro.');
@@ -484,8 +498,13 @@ class ServicioFinanzas {
       throw const ErrorFinanzas('El libro no tiene su cuenta de apertura.');
     }
     final pasivo = cuenta.clase == ClaseCuenta.pasivo;
-    final quien = _quien(libroId, motivo ?? (
-        _libro(libroId).tipo == TipoLibro.representado ? 'Saldo inicial' : null));
+    final quien = _quien(
+      libroId,
+      motivo ??
+          (_libro(libroId).tipo == TipoLibro.representado
+              ? 'Saldo inicial'
+              : null),
+    );
     await repositorio.agregarMovimientos([
       Movimiento(
         id: _generarId(),
@@ -528,10 +547,13 @@ class ServicioFinanzas {
       throw const ErrorFinanzas('Ese tipo de cuenta no se crea a mano.');
     }
     final repetido = _d.cuentas.any(
-      (c) => normalizarNombre(c.nombre) == normalizarNombre(nombre) &&
+      (c) =>
+          normalizarNombre(c.nombre) == normalizarNombre(nombre) &&
           c.libroId == libroId,
     );
-    if (repetido) throw const ErrorFinanzas('Ya hay una cuenta con ese nombre.');
+    if (repetido) {
+      throw const ErrorFinanzas('Ya hay una cuenta con ese nombre.');
+    }
     final cuenta = Cuenta(
       id: _generarId(),
       nombre: nombre.trim(),
@@ -812,7 +834,9 @@ class ServicioFinanzas {
   }) async {
     _exigirAdministrar(libroId);
     if (nombre.trim().isEmpty) throw const ErrorFinanzas('Escribe un nombre.');
-    if (montoNeto <= 0) throw const ErrorFinanzas('El neto debe ser mayor que cero.');
+    if (montoNeto <= 0) {
+      throw const ErrorFinanzas('El neto debe ser mayor que cero.');
+    }
     try {
       calendario.calendario;
     } on ArgumentError catch (e) {
@@ -831,9 +855,11 @@ class ServicioFinanzas {
         )
         .firstOrNull;
     if (previa == null &&
-        _d.cuentasDe(libroId).any(
-          (c) => normalizarNombre(c.nombre) == normalizarNombre(nombre),
-        )) {
+        _d
+            .cuentasDe(libroId)
+            .any(
+              (c) => normalizarNombre(c.nombre) == normalizarNombre(nombre),
+            )) {
       throw const ErrorFinanzas(
         'Ya hay una cuenta con ese nombre en el libro: usa otro nombre.',
       );
@@ -854,8 +880,10 @@ class ServicioFinanzas {
     final ingreso = Ingreso(
       id: id,
       libroId: libroId,
-      personaId: personaId ??
-          (libro.tipo == TipoLibro.personal || libro.tipo == TipoLibro.representado
+      personaId:
+          personaId ??
+          (libro.tipo == TipoLibro.personal ||
+                  libro.tipo == TipoLibro.representado
               ? libro.titularId
               : this.personaId),
       nombre: nombre.trim(),
@@ -1003,7 +1031,9 @@ class ServicioFinanzas {
         if (p != personaId) p,
     ];
     if (demas.isEmpty) {
-      throw const ErrorFinanzas('Un libro compartido se crea con 2 o más miembros.');
+      throw const ErrorFinanzas(
+        'Un libro compartido se crea con 2 o más miembros.',
+      );
     }
     final id = idEstable(ClavesId.libroCompartido(hogarId, nombre.trim()));
     await repositorio.crearLibroCompartido(
@@ -1058,7 +1088,9 @@ class ServicioFinanzas {
       !soloLectura &&
       libro.tipo == TipoLibro.compartido &&
       (libro.esAdministrador(personaId) ||
-          (esDueno && libro.papelDe(personaId, hoy) != null && !libro.archivado));
+          (esDueno &&
+              libro.papelDe(personaId, hoy) != null &&
+              !libro.archivado));
 
   /// Agrega a [persona] a un compartido (su administrador).
   Future<void> agregarMiembroLibro(String libroId, String persona) async {
@@ -1264,10 +1296,13 @@ class ServicioFinanzas {
   Future<int> cerrarSemanasVencidas(String libroId) async {
     if (!permiso(libroId).escribir) return 0;
     var cerradas = 0;
-    final abiertas = _d.semanas
-        .where((s) => s.libroId == libroId && s.estado != EstadoSemana.cerrada)
-        .toList()
-      ..sort((a, b) => a.semana.compareTo(b.semana));
+    final abiertas =
+        _d.semanas
+            .where(
+              (s) => s.libroId == libroId && s.estado != EstadoSemana.cerrada,
+            )
+            .toList()
+          ..sort((a, b) => a.semana.compareTo(b.semana));
     for (final s in abiertas) {
       if (!vista(libroId, s.semana).debeCerrarseSola) continue;
       await cerrarSemana(
@@ -1372,17 +1407,18 @@ class ServicioFinanzas {
     _exigirEscribir(libroId);
     // Si dos pagos del mismo ingreso caen el mismo día (30 y último en
     // febrero; M4), la ocurrencia (única por fecha programada) vale los dos.
-    final delDia = vencimientosEntre(
-      _d,
-      libroId,
-      v.fecha.ajustada,
-      v.fecha.ajustada,
-    ).where(
-      (x) =>
-          x.origen == v.origen &&
-          x.origenId == v.origenId &&
-          x.fecha.programada == v.fecha.programada,
-    );
+    final delDia =
+        vencimientosEntre(
+          _d,
+          libroId,
+          v.fecha.ajustada,
+          v.fecha.ajustada,
+        ).where(
+          (x) =>
+              x.origen == v.origen &&
+              x.origenId == v.origenId &&
+              x.fecha.programada == v.fecha.programada,
+        );
     final montoEsperado = delDia.isEmpty
         ? v.monto
         : delDia.fold<int>(0, (t, x) => t + x.monto);

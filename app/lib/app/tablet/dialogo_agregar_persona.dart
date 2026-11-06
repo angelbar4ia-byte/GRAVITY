@@ -102,16 +102,18 @@ class _DialogoAgregarPersonaState extends ConsumerState<DialogoAgregarPersona> {
                   controller: _correo,
                   keyboardType: TextInputType.emailAddress,
                   decoration: const InputDecoration(labelText: 'Correo'),
-                  validator: (v) =>
-                      (v == null || !v.contains('@')) ? 'Escribe el correo.' : null,
+                  validator: (v) => (v == null || !v.contains('@'))
+                      ? 'Escribe el correo.'
+                      : null,
                 ),
                 TextFormField(
                   key: const Key('agregar-contrasena'),
                   controller: _contrasena,
                   obscureText: true,
                   decoration: const InputDecoration(labelText: 'Contraseña'),
-                  validator: (v) =>
-                      (v == null || v.isEmpty) ? 'Escribe la contraseña.' : null,
+                  validator: (v) => (v == null || v.isEmpty)
+                      ? 'Escribe la contraseña.'
+                      : null,
                 ),
                 TextFormField(
                   key: const Key('agregar-pin'),
@@ -121,9 +123,9 @@ class _DialogoAgregarPersonaState extends ConsumerState<DialogoAgregarPersona> {
                   maxLength: 6,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   decoration: const InputDecoration(
-                    labelText: 'PIN nuevo (6 dígitos si ve dinero; si no, 4 a 6)',
-                    helperText:
-                        'Dueño y pareja usan 6 dígitos. No uno fácil como 1234.',
+                    labelText:
+                        'PIN nuevo (6 dígitos si ve dinero; si no, 4 a 6)',
+                    helperText: 'Dueño y pareja usan 6 dígitos. No uno fácil como 1234.',
                     helperMaxLines: 2,
                   ),
                   validator: (v) => errorDePinNuevo(v ?? ''),

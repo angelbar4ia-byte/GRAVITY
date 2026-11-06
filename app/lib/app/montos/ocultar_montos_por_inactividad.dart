@@ -19,7 +19,9 @@ class OcultarMontosPorInactividad extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final visibles = ref.watch(montosVisiblesProvider);
-    final tras = ref.watch(controladorMontosProvider.select((e) => e.ocultarTras));
+    final tras = ref.watch(
+      controladorMontosProvider.select((e) => e.ocultarTras),
+    );
     return DetectorInactividad(
       // Solo mientras los montos están a la vista.
       activo: visibles,
@@ -32,4 +34,6 @@ class OcultarMontosPorInactividad extends ConsumerWidget {
 }
 
 /// Reloj con el que se compara al volver de segundo plano (pruebas).
-final relojMontosProvider = Provider<DateTime Function()>((ref) => DateTime.now);
+final relojMontosProvider = Provider<DateTime Function()>(
+  (ref) => DateTime.now,
+);

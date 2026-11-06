@@ -22,6 +22,7 @@ import '../nucleo/base_local/base_local.dart';
 import '../nucleo/cola/bandeja_salida.dart';
 import '../nucleo/cola/cola_sin_conexion.dart';
 import '../nucleo/cola/enviador_supabase.dart';
+
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 import '../nucleo/avisos/fuente_push.dart';
@@ -34,8 +35,12 @@ import '../nucleo/configuracion/configuracion_entorno.dart';
 import '../nucleo/firebase/firebase.dart';
 import '../nucleo/invitaciones/invitaciones.dart';
 import '../nucleo/seguridad/almacen_seguro.dart';
-import '../nucleo/sensibles/mis_datos.dart' show funcionBorrarMisDatos, tipoColaBorrado;
-import '../nucleo/sensibles/subida_diferida.dart' show funcionSubirSobres, tipoColaSobres;
+import '../nucleo/sensibles/mis_datos.dart'
+    show funcionBorrarMisDatos, tipoColaBorrado;
+import '../nucleo/sensibles/subida_diferida.dart'
+    show funcionSubirSobres, tipoColaSobres;
+import '../nucleo/conectividad/conectividad.dart';
+import '../nucleo/conectividad/conectividad_plus.dart';
 import '../nucleo/seguridad/biometria.dart';
 import '../nucleo/seguridad/limpieza_local.dart';
 import '../nucleo/seguridad/pantalla_segura.dart';
@@ -49,7 +54,8 @@ import 'avisos/con_avisos.dart' show tipoEquipoAvisosProvider;
 import 'dispositivo.dart';
 import '../nucleo/sensibles/nube_habitos.dart';
 import 'sensibles/sensibles.dart';
-import '../nucleo/tablet/controlador_tablet.dart' show alEntrarConPinProvider, alSalirDeLaTabletProvider;
+import '../nucleo/tablet/controlador_tablet.dart'
+    show alEntrarConPinProvider, alSalirDeLaTabletProvider;
 import 'montos/montos_al_entrar.dart';
 import 'montos/revelar_montos.dart';
 import 'pantallas_externas.dart'
@@ -89,7 +95,8 @@ List<Override> conexionesDeLaApp() => [
     },
   ),
   alSalirDeLaTabletProvider.overrideWith(
-    (ref) => (persona) => ref.read(llavesHabitosProvider).olvidarEnMemoria(),
+    (ref) =>
+        (persona) => ref.read(llavesHabitosProvider).olvidarEnMemoria(),
   ),
   bandejaDeLaTabletProvider.overrideWith(
     (ref) => BandejaDeLaTabletConCola(
@@ -211,6 +218,8 @@ Future<List<Override>> prepararArranque({
       _ => const ProtectorDePantallaNulo(),
     }),
     biometriaProvider.overrideWithValue(biometria),
+    // E1: el indicador "En línea" sale de la conexión real del equipo.
+    fuenteConectividadProvider.overrideWithValue(FuenteConectividadPlus()),
     servicioSesionProvider.overrideWithValue(sesion),
     // Demostración: la cola vive en memoria; nada de lo de ejemplo queda en
     // el dispositivo ni se sube después (M16).
@@ -230,7 +239,9 @@ Future<List<Override>> prepararArranque({
           plataforma == TargetPlatform.windows)
         notificadorProvider.overrideWithValue(NotificadorPlugin()),
       nubeDeHabitosProvider.overrideWithValue(
-        NubeDeHabitosSupabase(() => (sesion! as ServicioSesionSupabase).clienteActivo),
+        NubeDeHabitosSupabase(
+          () => (sesion! as ServicioSesionSupabase).clienteActivo,
+        ),
       ),
       if (firebase == EstadoFirebase.activo)
         fuentePushProvider.overrideWithValue(FuentePushFirebase()),

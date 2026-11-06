@@ -14,7 +14,8 @@ import 'package:finanzas_dominio/finanzas_dominio.dart'
         BolsaAhorro,
         NivelFondo,
         NivelAlerta;
-import 'package:finanzas_dominio/finanzas_dominio.dart' as dom
+import 'package:finanzas_dominio/finanzas_dominio.dart'
+    as dom
     show BolsaAhorro, NivelFondo;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -123,7 +124,8 @@ class VistaAhorro extends ConsumerWidget {
                           .cambiarNivelFondo(
                             bolsas
                                 .firstWhere(
-                                  (b) => b.bolsa.tipo ==
+                                  (b) =>
+                                      b.bolsa.tipo ==
                                       TipoBolsaAhorro.fondoEmergencia,
                                 )
                                 .bolsa
@@ -156,7 +158,9 @@ class VistaAhorro extends ConsumerWidget {
                   _FilaPropuesta(
                     contexto: c,
                     aportacion: a,
-                    bolsa: bolsas.firstWhere((b) => b.bolsa.id == a.bolsaId).bolsa,
+                    bolsa: bolsas
+                        .firstWhere((b) => b.bolsa.id == a.bolsaId)
+                        .bolsa,
                   ),
               ],
             ),

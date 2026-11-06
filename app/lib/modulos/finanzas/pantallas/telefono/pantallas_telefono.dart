@@ -72,7 +72,8 @@ class _SemanaResumida extends ConsumerWidget {
           icono: Icons.waterfall_chart,
           accion: Semaforo(
             estado: estadoDe(v.indicadores.remanente),
-            etiqueta: 'Remanente ${formatearPuntosBase(v.indicadores.remanentePuntosBase, decimales: 1)}',
+            etiqueta:
+                'Remanente ${formatearPuntosBase(v.indicadores.remanentePuntosBase, decimales: 1)}',
             tamanoTexto: 12,
           ),
           child: Column(

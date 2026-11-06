@@ -19,6 +19,9 @@ Page<void> Function(BuildContext, GoRouterState) _pagina(Widget Function() b) =>
     (context, state) => NoTransitionPage<void>(key: state.pageKey, child: b());
 
 List<RouteBase> rutasAlimentacion() => [
-      GoRoute(path: '/', pageBuilder: _pagina(() => const PantallaMenuSemana())),
-      GoRoute(path: 'compras', pageBuilder: _pagina(() => const PantallaListaCompras())),
-    ];
+  GoRoute(path: '/', pageBuilder: _pagina(() => const PantallaMenuSemana())),
+  GoRoute(
+    path: 'compras',
+    pageBuilder: _pagina(() => const PantallaListaCompras()),
+  ),
+];

@@ -10,7 +10,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/dispositivo.dart';
 import '../../../app/tablet/dialogo_agregar_persona.dart';
 import '../../../app/tablet/dialogo_pin.dart' show mensajeDesbloqueo;
-import '../../../nucleo/cola/proveedores_cola.dart' show purgaDeQuitadosProvider;
+import '../../../nucleo/cola/proveedores_cola.dart'
+    show purgaDeQuitadosProvider;
 import '../../../nucleo/contratos/dispositivo.dart';
 import '../../../nucleo/contratos/roles.dart';
 import '../../../nucleo/permisos/permisos.dart';
@@ -40,7 +41,8 @@ class PantallaPersonas extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final esTablet = ref.watch(tipoDispositivoProvider) == TipoDispositivo.tablet;
+    final esTablet =
+        ref.watch(tipoDispositivoProvider) == TipoDispositivo.tablet;
     final tema = Theme.of(context);
     return MarcoSeccion(
       seccion: SeccionAjustes.personas,
@@ -140,9 +142,8 @@ class _PersonasTablet extends ConsumerWidget {
                         usuario,
                       );
                       if (mensaje != null && context.mounted) {
-                        ScaffoldMessenger.of(
-                          context,
-                        ).showSnackBar(SnackBar(content: Text(mensaje)));
+                        ScaffoldMessenger.of(context)
+                            .showSnackBar(SnackBar(content: Text(mensaje)));
                       }
                     case 'quitar':
                       await controlador.quitarUsuario(usuario.personaId);

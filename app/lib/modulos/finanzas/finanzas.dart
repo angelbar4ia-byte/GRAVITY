@@ -30,9 +30,11 @@ import '../../nucleo/contratos/roles.dart';
 import '../../nucleo/contratos/rutas.dart';
 import '../../nucleo/permisos/permisos.dart';
 import '../../nucleo/seguridad/almacen_seguro.dart';
-import 'datos/repositorio_supabase.dart' as supabase
+import 'datos/repositorio_supabase.dart'
+    as supabase
     show CopiaLocalFinanzas, tablasDeLaColaFinanzas;
-import 'estado/proveedores_fase2.dart' as fase2
+import 'estado/proveedores_fase2.dart'
+    as fase2
     show consultaLocalFinanzasProvider, sobrescriturasAvisosFinanzas;
 import 'pantallas/laptop/ajustes.dart';
 import 'pantallas/laptop/arranque.dart';
@@ -61,6 +63,7 @@ export 'estado/resumen_hoy.dart'
         ResumenLibroHoy,
         cifrasMiSemanaProvider,
         resumenFinanzasHoyProvider;
+export 'pantallas/ajustes_avisos.dart' show SeccionAvisosFinanzas;
 export 'pantallas/tarjeta_hoy.dart' show TarjetaFinanzasHoy;
 export 'pantallas/laptop/marco_laptop.dart' show SeccionFinanzas;
 
@@ -74,7 +77,8 @@ const Map<String, String> tablasColaFinanzas = supabase.tablasDeLaColaFinanzas;
 /// próximos 14 días con la copia local) y el detalle de cada aviso en la
 /// bandeja (montos ocultables). El arranque suma esta lista a los `overrides`
 /// de Riverpod.
-List<Override> get sobrescriturasAvisosFinanzas => fase2.sobrescriturasAvisosFinanzas;
+List<Override> get sobrescriturasAvisosFinanzas =>
+    fase2.sobrescriturasAvisosFinanzas;
 
 /// Consultas locales de las herramientas `finanzas.resumen_semana`,
 /// `finanzas.proximos_pagos` y `finanzas.ahorro_avance`: texto discreto que no
@@ -175,26 +179,24 @@ List<RouteBase> rutasFinanzas() => [
 /// Página sin animación (cambiar de sección es cambiar de pestaña).
 Page<void> Function(BuildContext, GoRouterState) _pagina(
   WidgetBuilder pantalla,
-) => (context, estado) =>
-    NoTransitionPage<void>(key: estado.pageKey, child: pantalla(context));
+) =>
+    (context, estado) =>
+        NoTransitionPage<void>(key: estado.pageKey, child: pantalla(context));
 
 /// Sección que solo existe en la laptop (D4). En el teléfono y la tablet
 /// regresa al inicio del módulo. Las de configuración exigen administrar.
-GoRoute _soloLaptop(SeccionFinanzas seccion, WidgetBuilder pantalla) =>
-    GoRoute(
-      path: seccion.segmento,
-      metadata: seccion.esDeConfiguracion
-          ? exigeAccion(Accion.administrar)
-          : null,
-      redirect: (context, estado) {
-        final dispositivo = ProviderScope.containerOf(
-          context,
-          listen: false,
-        ).read(tipoDispositivoProvider);
-        return esFinanzasCompleto(dispositivo) ? null : Rutas.finanzas;
-      },
-      pageBuilder: _pagina(pantalla),
-    );
+GoRoute _soloLaptop(SeccionFinanzas seccion, WidgetBuilder pantalla) => GoRoute(
+  path: seccion.segmento,
+  metadata: seccion.esDeConfiguracion ? exigeAccion(Accion.administrar) : null,
+  redirect: (context, estado) {
+    final dispositivo = ProviderScope.containerOf(
+      context,
+      listen: false,
+    ).read(tipoDispositivoProvider);
+    return esFinanzasCompleto(dispositivo) ? null : Rutas.finanzas;
+  },
+  pageBuilder: _pagina(pantalla),
+);
 
 /// La pantalla de la laptop o la del teléfono (y la tablet).
 class _SegunDispositivo extends ConsumerWidget {

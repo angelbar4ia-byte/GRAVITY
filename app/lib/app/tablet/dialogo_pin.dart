@@ -36,28 +36,30 @@ Future<bool> mostrarDialogoPin(
     false;
 
 /// Mensaje para la persona según el resultado de entrar.
-String? mensajeDesbloqueo(ResultadoDesbloqueo resultado, {Duration? espera}) =>
-    switch (resultado) {
-      ResultadoDesbloqueo.abierto || ResultadoDesbloqueo.cancelado => null,
-      ResultadoDesbloqueo.pinIncorrecto => 'PIN incorrecto.',
-      ResultadoDesbloqueo.bloqueado =>
-        'Demasiados intentos. Espera ${textoEspera(espera ?? ControladorTablet.duracionBloqueo)}.',
-      ResultadoDesbloqueo.huellaNoDisponible =>
-        'En la tablet de la casa se entra con el PIN.',
-      ResultadoDesbloqueo.faltaCuenta =>
-        'Falta tu cuenta en esta tablet: pide que te agreguen de nuevo con tu '
-            'correo y contraseña.',
-      ResultadoDesbloqueo.sinAcceso =>
-        'Tu cuenta ya no tiene acceso a esta casa. Se quitó de la tablet.',
-      ResultadoDesbloqueo.requiereCuentaCasa =>
-        'La tablet debe tener abierta la cuenta Hogar.',
-      ResultadoDesbloqueo.error =>
-        'No se pudo comprobar tu cuenta. Intenta de nuevo.',
-      ResultadoDesbloqueo.noExiste => 'Esta persona ya no está en la tablet.',
-      ResultadoDesbloqueo.noPermitida =>
-        'Esta tablet es personal y no estás entre las personas permitidas.',
-      ResultadoDesbloqueo.debeCambiarPin => avisoPinCortoConDinero,
-    };
+String? mensajeDesbloqueo(
+  ResultadoDesbloqueo resultado, {
+  Duration? espera,
+}) => switch (resultado) {
+  ResultadoDesbloqueo.abierto || ResultadoDesbloqueo.cancelado => null,
+  ResultadoDesbloqueo.pinIncorrecto => 'PIN incorrecto.',
+  ResultadoDesbloqueo.bloqueado =>
+    'Demasiados intentos. Espera ${textoEspera(espera ?? ControladorTablet.duracionBloqueo)}.',
+  ResultadoDesbloqueo.huellaNoDisponible =>
+    'En la tablet de la casa se entra con el PIN.',
+  ResultadoDesbloqueo.faltaCuenta =>
+    'Falta tu cuenta en esta tablet: pide que te agreguen de nuevo con tu '
+        'correo y contraseña.',
+  ResultadoDesbloqueo.sinAcceso =>
+    'Tu cuenta ya no tiene acceso a esta casa. Se quitó de la tablet.',
+  ResultadoDesbloqueo.requiereCuentaCasa =>
+    'La tablet debe tener abierta la cuenta Hogar.',
+  ResultadoDesbloqueo.error =>
+    'No se pudo comprobar tu cuenta. Intenta de nuevo.',
+  ResultadoDesbloqueo.noExiste => 'Esta persona ya no está en la tablet.',
+  ResultadoDesbloqueo.noPermitida =>
+    'Esta tablet es personal y no estás entre las personas permitidas.',
+  ResultadoDesbloqueo.debeCambiarPin => avisoPinCortoConDinero,
+};
 
 class DialogoPin extends ConsumerStatefulWidget {
   const DialogoPin({super.key, required this.usuario, this.paraAccion = false});

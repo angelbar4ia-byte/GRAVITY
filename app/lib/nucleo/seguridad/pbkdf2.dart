@@ -113,7 +113,10 @@ void _cargarBloque(Uint32List w, Uint8List bytes, int desde) {
   for (var i = 0; i < 16; i++) {
     final j = desde + i * 4;
     w[i] =
-        (bytes[j] << 24) | (bytes[j + 1] << 16) | (bytes[j + 2] << 8) | bytes[j + 3];
+        (bytes[j] << 24) |
+        (bytes[j + 1] << 16) |
+        (bytes[j + 2] << 8) |
+        bytes[j + 3];
   }
 }
 
@@ -219,7 +222,8 @@ Uint8List pbkdf2HmacSha256(
       // U = HMAC(clave, U_anterior): dos compresiones, una por cada estado.
       h.setAll(0, estadoInterno);
       for (var i = 0; i < 8; i++) {
-        w[i] = (u[i * 4] << 24) |
+        w[i] =
+            (u[i * 4] << 24) |
             (u[i * 4 + 1] << 16) |
             (u[i * 4 + 2] << 8) |
             u[i * 4 + 3];

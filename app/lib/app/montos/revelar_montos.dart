@@ -18,7 +18,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../diseno/proveedores.dart' show modoPrivadoProvider, montosVisiblesProvider;
+import '../../diseno/proveedores.dart'
+    show modoPrivadoProvider, montosVisiblesProvider;
 import '../../nucleo/seguridad/intentos.dart';
 import '../../nucleo/seguridad/montos.dart';
 import '../../nucleo/seguridad/pin.dart';
@@ -42,17 +43,19 @@ Future<bool> revelarMontos(BuildContext context) async {
 }
 
 /// Mensaje para la persona según el resultado de pedir ver los montos.
-String? mensajeRevelar(ResultadoRevelar resultado, {Duration? espera}) =>
-    switch (resultado) {
-      ResultadoRevelar.revelado => null,
-      ResultadoRevelar.pinIncorrecto => 'PIN incorrecto.',
-      ResultadoRevelar.bloqueado =>
-        'Demasiados intentos. Espera ${textoEspera(espera ?? const Duration(seconds: 30))}.',
-      ResultadoRevelar.faltaPin => 'Primero crea tu PIN para ver los montos.',
-      ResultadoRevelar.huellaFallida =>
-        'No se reconoció la huella. Escribe tu PIN.',
-      ResultadoRevelar.debeCambiarPin => avisoPinCortoConDinero,
-    };
+String? mensajeRevelar(
+  ResultadoRevelar resultado, {
+  Duration? espera,
+}) => switch (resultado) {
+  ResultadoRevelar.revelado => null,
+  ResultadoRevelar.pinIncorrecto => 'PIN incorrecto.',
+  ResultadoRevelar.bloqueado =>
+    'Demasiados intentos. Espera ${textoEspera(espera ?? const Duration(seconds: 30))}.',
+  ResultadoRevelar.faltaPin => 'Primero crea tu PIN para ver los montos.',
+  ResultadoRevelar.huellaFallida =>
+    'No se reconoció la huella. Escribe tu PIN.',
+  ResultadoRevelar.debeCambiarPin => avisoPinCortoConDinero,
+};
 
 class DialogoRevelarMontos extends ConsumerStatefulWidget {
   const DialogoRevelarMontos({super.key});

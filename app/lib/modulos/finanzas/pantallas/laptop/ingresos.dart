@@ -70,15 +70,27 @@ class _Ingresos extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(children: [const Expanded(child: Text('Cuenta en el plan')), Monto(plan.ingreso)]),
+              Row(
+                children: [
+                  const Expanded(child: Text('Cuenta en el plan')),
+                  Monto(plan.ingreso),
+                ],
+              ),
               if (plan.ingresoPotencial > 0)
                 Row(
                   children: [
-                    const Expanded(child: Text('Potencial (inciertos, no cuentan)')),
+                    const Expanded(
+                      child: Text('Potencial (inciertos, no cuentan)'),
+                    ),
                     Monto(plan.ingresoPotencial),
                   ],
                 ),
-              Row(children: [const Expanded(child: Text('Extras de esta semana')), Monto(extras)]),
+              Row(
+                children: [
+                  const Expanded(child: Text('Extras de esta semana')),
+                  Monto(extras),
+                ],
+              ),
               const SizedBox(height: 8),
               const Text(
                 'Un mes con tres catorcenas o cinco semanas no es un extra: ya '
@@ -93,7 +105,8 @@ class _Ingresos extends ConsumerWidget {
           const EstadoVacio(
             icono: Icons.savings_outlined,
             mensaje: 'Este libro aún no tiene ingresos.',
-            detalle: 'Agrégalos con "Nuevo ingreso" o con el asistente de arranque.',
+            detalle:
+                'Agrégalos con "Nuevo ingreso" o con el asistente de arranque.',
           ),
         for (final i in ingresos) _FichaIngreso(ingreso: i, contexto: c),
       ],
@@ -138,7 +151,9 @@ class _FichaIngreso extends StatelessWidget {
             DatoConMonto('Neto por pago', actual.montoNeto),
           ],
           DatoConMonto('Equivalente semanal', semanal),
-          Text('Certeza: ${nombreCerteza(i.certeza)}${i.activo ? '' : ' · inactivo'}'),
+          Text(
+            'Certeza: ${nombreCerteza(i.certeza)}${i.activo ? '' : ' · inactivo'}',
+          ),
           if (proximos.isNotEmpty)
             Text(
               'Próximas fechas: ${proximos.map((p) => p.$1.seMovio ? '${textoFecha(p.$1.ajustada)} (era ${textoDiaMes(p.$1.programada)})' : textoFecha(p.$1.ajustada)).join(' · ')}',

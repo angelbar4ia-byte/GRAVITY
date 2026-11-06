@@ -251,13 +251,13 @@ void main() {
         ).aJson(),
       );
       final controlador = await abrir();
-      expect(controlador.desbloquearConPin(pin), ResultadoBloqueo.abierto);
+      expect(await controlador.desbloquearConPin(pin), ResultadoBloqueo.abierto);
       await pumpEventQueue();
       expect(
         HashPin.iteracionesDe(hashGuardado()!),
         HashPin.iteracionesPorDefecto,
       );
-      expect(controlador.comprobarPin(pin), ResultadoBloqueo.abierto);
+      expect(await controlador.comprobarPin(pin), ResultadoBloqueo.abierto);
       expect(
         controlador.state.configuracion!.huella,
         isTrue,
@@ -272,7 +272,7 @@ void main() {
           jsonEncode(ConfiguracionBloqueo(hashPin: viejo).aJson());
       final controlador = await abrir();
       expect(
-        controlador.desbloquearConPin('000000'),
+        await controlador.desbloquearConPin('000000'),
         ResultadoBloqueo.pinIncorrecto,
       );
       await pumpEventQueue();

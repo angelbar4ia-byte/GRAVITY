@@ -107,8 +107,8 @@ class NotificadorEnMemoria implements NotificadorLocal {
   final List<NotificacionLocal> historial = [];
 
   /// Lo programado, por id.
-  final Map<int, ({NotificacionLocal notificacion, DateTime cuando})> programadas =
-      {};
+  final Map<int, ({NotificacionLocal notificacion, DateTime cuando})>
+  programadas = {};
 
   /// Simula que la persona toca una notificación.
   void tocar(String? carga) => _alTocar?.call(carga);

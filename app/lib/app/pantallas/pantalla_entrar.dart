@@ -46,7 +46,8 @@ class _PantallaEntrarState extends ConsumerState<PantallaEntrar> {
     } on ErrorSesion catch (error) {
       if (mounted) setState(() => _error = error.mensaje);
     } catch (_) {
-      if (mounted) setState(() => _error = 'No se pudo entrar. Intenta de nuevo.');
+      if (mounted)
+        setState(() => _error = 'No se pudo entrar. Intenta de nuevo.');
     } finally {
       if (mounted) setState(() => _cargando = false);
     }
@@ -171,7 +172,9 @@ class _PantallaEntrarState extends ConsumerState<PantallaEntrar> {
                         child: _cargando
                             ? const SizedBox.square(
                                 dimension: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               )
                             : const Text('Entrar'),
                       ),

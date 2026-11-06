@@ -24,6 +24,7 @@ import 'dart:convert';
 import 'dart:isolate';
 import 'dart:math';
 import 'dart:typed_data';
+
 import '../contratos/roles.dart';
 import '../permisos/permisos.dart';
 import 'pbkdf2.dart';
@@ -127,7 +128,8 @@ String? errorDePinNuevoConfirmado(
   String pin,
   String confirmacion, {
   Rol? rol,
-}) => errorDePinNuevo(pin, rol: rol) ??
+}) =>
+    errorDePinNuevo(pin, rol: rol) ??
     (pin == confirmacion ? null : 'Los PIN no coinciden.');
 
 abstract final class HashPin {
@@ -158,11 +160,7 @@ abstract final class HashPin {
   static const _bytesSal = 16;
 
   /// Hash con sal aleatoria: `pbkdf2-sha256$iteraciones$sal$hash` (base64).
-  static String crear(
-    String pin, {
-    int? iteraciones,
-    List<int>? sal,
-  }) {
+  static String crear(String pin, {int? iteraciones, List<int>? sal}) {
     if (!pinValido(pin)) {
       throw ArgumentError.value(pin, 'pin', 'Debe tener de 4 a 6 dígitos');
     }
@@ -259,11 +257,7 @@ abstract final class HashPin {
     String pin,
     List<int> sal, {
     int? iteraciones,
-  }) => _derivar(
-    utf8.encode(pin),
-    sal,
-    iteraciones ?? iteracionesPorDefecto,
-  );
+  }) => _derivar(utf8.encode(pin), sal, iteraciones ?? iteracionesPorDefecto);
 
   static Future<Uint8List> _derivar(
     List<int> clave,

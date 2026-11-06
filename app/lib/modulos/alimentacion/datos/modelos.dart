@@ -56,7 +56,11 @@ class Platillo {
 
 /// Una celda del menú: día 0 = lunes ... 6 = domingo.
 class EntradaMenu {
-  const EntradaMenu({required this.dia, required this.tiempo, required this.platilloId});
+  const EntradaMenu({
+    required this.dia,
+    required this.tiempo,
+    required this.platilloId,
+  });
   final int dia;
   final TiempoComida tiempo;
   final String platilloId;

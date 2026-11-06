@@ -60,7 +60,8 @@ abstract final class FraseDeRecuperacion {
 
   /// La frase de [entropia] (16 bytes). Pública para los vectores de prueba.
   static List<String> desdeEntropia(List<int> entropia) {
-    if (entropia.length != 16) throw ArgumentError('La entropía es de 16 bytes.');
+    if (entropia.length != 16)
+      throw ArgumentError('La entropía es de 16 bytes.');
     final bits = StringBuffer();
     for (final b in entropia) {
       bits.write(b.toRadixString(2).padLeft(8, '0'));
@@ -126,7 +127,8 @@ abstract final class FraseDeRecuperacion {
     }
     final cadena = bits.toString();
     final entropia = [
-      for (var i = 0; i < 16; i++) int.parse(cadena.substring(i * 8, i * 8 + 8), radix: 2),
+      for (var i = 0; i < 16; i++)
+        int.parse(cadena.substring(i * 8, i * 8 + 8), radix: 2),
     ];
     final esperado = sha256
         .convert(entropia)
@@ -157,7 +159,8 @@ abstract final class FraseDeRecuperacion {
   ) {
     if (respuestas.length != posiciones.length) return false;
     for (var i = 0; i < posiciones.length; i++) {
-      if (claveDePalabra(respuestas[i].trim()) != claveDePalabra(frase[posiciones[i]])) {
+      if (claveDePalabra(respuestas[i].trim()) !=
+          claveDePalabra(frase[posiciones[i]])) {
         return false;
       }
     }
@@ -222,7 +225,8 @@ class LlaveEnvuelta {
     }
   }
 
-  static List<int> _aad(int version) => utf8.encode('gravity-hab-llave-v1|$version');
+  static List<int> _aad(int version) =>
+      utf8.encode('gravity-hab-llave-v1|$version');
 
   static List<int> bytesDeFrase(List<String> frase) =>
       utf8.encode(frase.map(FraseDeRecuperacion.canonica).join(' '));
@@ -264,8 +268,16 @@ class LlaveEnvuelta {
       return null;
     }
     try {
-      final llave = await pbkdf2EnAislado(bytesDeFrase(frase), desdeBase64Url(sal), vueltas);
-      final maestra = SobreAes.descifrar(llave, llaveEnvuelta, datosAsociados: _aad(version));
+      final llave = await pbkdf2EnAislado(
+        bytesDeFrase(frase),
+        desdeBase64Url(sal),
+        vueltas,
+      );
+      final maestra = SobreAes.descifrar(
+        llave,
+        llaveEnvuelta,
+        datosAsociados: _aad(version),
+      );
       llave.fillRange(0, llave.length, 0);
       return maestra;
     } catch (_) {
@@ -339,11 +351,19 @@ class LlavesHabitos {
     return bytes;
   }
 
-  Future<void> _guardar(String persona, String clave, Uint8List bytes, String? pin) async {
+  Future<void> _guardar(
+    String persona,
+    String clave,
+    Uint8List bytes,
+    String? pin,
+  ) async {
     if (protegidaConPin) {
       if (pin == null) throw const LlaveBloqueada();
       final llave = await LlavePin.derivarAsync(pin);
-      await _almacen.escribir(clave, CifradoPin.cifrar(llave, aBase64Url(bytes)));
+      await _almacen.escribir(
+        clave,
+        CifradoPin.cifrar(llave, aBase64Url(bytes)),
+      );
       llave.olvidar();
     } else {
       await _almacen.escribir(clave, aBase64Url(bytes));
@@ -432,9 +452,19 @@ class LlavesHabitos {
 
   /// Id opaco de un sobre: primeros 16 bytes de `HMAC-SHA256(llave_de_ids,
   /// tipo ‖ clave_doc)` como uuid. El servidor no puede ligarlo a una fecha.
-  static String idOpaco(List<int> llaveDeIds, TipoSensible tipo, String claveDoc) {
-    final mac = Hmac(sha256, llaveDeIds).convert(utf8.encode('${tipo.valor}$claveDoc')).bytes;
-    final h = mac.take(16).map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+  static String idOpaco(
+    List<int> llaveDeIds,
+    TipoSensible tipo,
+    String claveDoc,
+  ) {
+    final mac = Hmac(
+      sha256,
+      llaveDeIds,
+    ).convert(utf8.encode('${tipo.valor}$claveDoc')).bytes;
+    final h = mac
+        .take(16)
+        .map((b) => b.toRadixString(16).padLeft(2, '0'))
+        .join();
     return '${h.substring(0, 8)}-${h.substring(8, 12)}-${h.substring(12, 16)}-'
         '${h.substring(16, 20)}-${h.substring(20)}';
   }

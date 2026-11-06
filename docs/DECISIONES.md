@@ -485,3 +485,11 @@ Respuestas del dueño a la especificación de la Fase 4 (`docs/specs/fase-4-puli
 - **PIN:** 600 000 vueltas de cifrado, y desbloqueo por huella con los controles del teléfono.
 - **Alimentación:** entra en esta fase en versión mínima (menú de la semana y lista de compras).
 
+## D23. Alimentación: dos menús por hogar y perfil clínico de Papá — confirmada (6/nov/2026)
+
+- Dos menús por hogar: **menú de Papá** (perfil: adulto de 80 años con Alzheimer, alta en proteínas y aminoácidos, textura blanda) y **menú de la pareja y del dueño**.
+- Cuatro tiempos de comida, como en el Excel. Suplementos en ambos menús.
+- Ven el menú de Papá: dueño, pareja, cuidadora y familiar (familiar en solo lectura). Ven el menú de la pareja y del dueño: solo ellos.
+- Marcan "comprado": el dueño y la pareja.
+- El perfil de Papá es dato clínico (D3): no sale a la IA ni a las bocinas.
+

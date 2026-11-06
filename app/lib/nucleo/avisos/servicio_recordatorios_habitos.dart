@@ -70,7 +70,8 @@ class ServicioRecordatoriosHabitos {
       return true;
     }
     final permiso =
-        await notificador.permisoConcedido() || await notificador.pedirPermiso();
+        await notificador.permisoConcedido() ||
+        await notificador.pedirPermiso();
     await reprogramar();
     return permiso;
   }
@@ -98,7 +99,9 @@ class ServicioRecordatoriosHabitos {
     final persona = contexto().personaId;
     if (persona == null) return const [];
     await _cancelarProgramados(persona);
-    if (!recibe() || !await activado() || !await notificador.permisoConcedido()) {
+    if (!recibe() ||
+        !await activado() ||
+        !await notificador.permisoConcedido()) {
       return const [];
     }
     final prefs = await preferencias();

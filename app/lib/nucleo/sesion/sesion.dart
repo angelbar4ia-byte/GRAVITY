@@ -121,6 +121,7 @@ class ErrorSesion implements Exception {
   static const sinConexion = ErrorSesion(
     'Sin conexión. Intenta de nuevo cuando haya señal.',
   );
+
   /// El servidor no pudo atender ahora (límite de peticiones, tiempo agotado,
   /// algo inesperado): la credencial sigue buena y se reintenta más tarde.
   static const servidorOcupado = ErrorSesion(

@@ -13,8 +13,10 @@ class NubeDeHabitosSupabase implements NubeDeHabitos {
   final SupabaseClient Function() _cliente;
 
   @override
-  Future<void> borrarMisDatos(AlcanceDeBorrado alcance) =>
-      _cliente().rpc('hab_borrar_mis_datos', params: {'p_alcance': alcance.valor});
+  Future<void> borrarMisDatos(AlcanceDeBorrado alcance) => _cliente().rpc(
+    'hab_borrar_mis_datos',
+    params: {'p_alcance': alcance.valor},
+  );
 }
 
 /// En memoria (pruebas y demostración).

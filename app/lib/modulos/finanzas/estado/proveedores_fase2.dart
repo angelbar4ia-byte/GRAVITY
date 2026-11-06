@@ -12,6 +12,7 @@ import '../../../app/avisos/con_avisos.dart' show servicioAvisosProvider;
 import '../../../nucleo/avisos/aviso.dart';
 import '../../../nucleo/avisos/proveedores_avisos.dart';
 import '../../../nucleo/avisos/recordatorios.dart' as av;
+import '../../../nucleo/conectividad/conectividad.dart' show hayRedProvider;
 import '../casos_uso/servicio_fase2.dart';
 import '../../../diseno/proveedores.dart' show montosOcultosProvider;
 import '../datos/ids.dart';
@@ -24,6 +25,7 @@ import 'proveedores.dart';
 final servicioFase2Provider = Provider<ServicioDeudasAhorro>((ref) {
   return ServicioDeudasAhorro(
     ref.watch(servicioFinanzasProvider),
+    hayRed: () => ref.read(hayRedProvider),
     alRegistrarPago: (objetoId, fecha) {
       try {
         final avisos = ref.read(servicioAvisosProvider);
@@ -156,7 +158,11 @@ final consultaLocalFinanzasProvider =
             for (final r in svc.deudas(c.libroId)) {
               final p = proximoPagoDe(c.datos, r.deuda, c.hoy);
               if (p != null) {
-                pagos.add((nombre: r.deuda.titulo, fecha: p.fecha, monto: p.monto));
+                pagos.add((
+                  nombre: r.deuda.titulo,
+                  fecha: p.fecha,
+                  monto: p.monto,
+                ));
               }
             }
             if (pagos.isEmpty) return 'No tienes pagos próximos registrados.';

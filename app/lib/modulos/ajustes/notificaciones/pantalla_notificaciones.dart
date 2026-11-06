@@ -124,7 +124,11 @@ class _Preferencias extends ConsumerWidget {
     ref.invalidate(estadoAvisosEquipoProvider);
   }
 
-  Future<void> _activar(BuildContext context, WidgetRef ref, bool activar) async {
+  Future<void> _activar(
+    BuildContext context,
+    WidgetRef ref,
+    bool activar,
+  ) async {
     final servicio = ref.read(servicioAvisosProvider);
     if (activar && !datos.permiso) {
       // Se explica antes de pedir el permiso del sistema (regla 46).
@@ -210,7 +214,8 @@ class _Preferencias extends ConsumerWidget {
                 key: const ValueKey('avisos-criticas-silencio'),
                 title: const Text('Las críticas también suenan en silencio'),
                 value: p.criticasEnSilencio,
-                onChanged: (v) => _guardar(ref, p.copiarCon(criticasEnSilencio: v)),
+                onChanged: (v) =>
+                    _guardar(ref, p.copiarCon(criticasEnSilencio: v)),
               ),
               ListTile(
                 title: const Text('Tope diario de avisos no críticos'),
@@ -222,7 +227,8 @@ class _Preferencias extends ConsumerWidget {
                       DropdownMenuItem(value: n, child: Text('$n')),
                   ],
                   onChanged: (n) {
-                    if (n != null) _guardar(ref, p.copiarCon(topeNoCriticas: n));
+                    if (n != null)
+                      _guardar(ref, p.copiarCon(topeNoCriticas: n));
                   },
                 ),
               ),

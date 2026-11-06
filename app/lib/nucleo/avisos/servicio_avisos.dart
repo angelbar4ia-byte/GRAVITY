@@ -202,7 +202,8 @@ class ServicioAvisos {
     }
     // Tablet personal: apagada por omisión.
     final persona = c.personaId;
-    return persona != null && await almacen.leer(_claveActivado(persona)) == '1';
+    return persona != null &&
+        await almacen.leer(_claveActivado(persona)) == '1';
   }
 
   /// Si la persona activó los avisos en este equipo (teléfono: sí por
@@ -232,7 +233,8 @@ class ServicioAvisos {
       await alSalirPersona(conservarToken: true);
       return true;
     }
-    final permiso = await notificador.permisoConcedido() ||
+    final permiso =
+        await notificador.permisoConcedido() ||
         await notificador.pedirPermiso();
     await alEntrarPersona();
     return permiso;

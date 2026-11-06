@@ -39,10 +39,7 @@ class PantallaPrivacidad extends ConsumerWidget {
           const _BloqueoTelefono(),
           const SizedBox(height: 16),
         ],
-        if (esLaptop) ...[
-          const _CapturasWindows(),
-          const SizedBox(height: 16),
-        ],
+        if (esLaptop) ...[const _CapturasWindows(), const SizedBox(height: 16)],
         const NotaAjustes(
           'El dinero y los datos clínicos nunca van a la IA en la nube ni a las '
           'bocinas.',
@@ -105,7 +102,9 @@ class _MontosOcultos extends ConsumerWidget {
     // Quién pide el PIN: la tablet (el de la persona), el bloqueo del teléfono
     // o uno propio. Se vuelve a leer al cambiar el bloqueo o la persona.
     ref.watch(controladorBloqueoProvider);
-    ref.watch(controladorTabletProvider.select((e) => e.usuarioActivo?.personaId));
+    ref.watch(
+      controladorTabletProvider.select((e) => e.usuarioActivo?.personaId),
+    );
     final fuente = controlador.fuente;
     return Card(
       key: const ValueKey('privacidad-montos'),
@@ -139,7 +138,8 @@ class _MontosOcultos extends ConsumerWidget {
                 onChanged: !estado.cargado
                     ? null
                     : (opcion) {
-                        if (opcion != null) controlador.fijarOcultarTras(opcion);
+                        if (opcion != null)
+                          controlador.fijarOcultarTras(opcion);
                       },
               ),
             ),
@@ -182,7 +182,8 @@ class _MontosOcultos extends ConsumerWidget {
                     pines.nuevo,
                     actual: pines.actual,
                   );
-                  if (resultado != ResultadoRevelar.revelado && context.mounted) {
+                  if (resultado != ResultadoRevelar.revelado &&
+                      context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
@@ -435,7 +436,11 @@ class _DialogoPinBloqueoState extends State<_DialogoPinBloqueo> {
               : 'PIN (${textoDelLargoDelPin(widget.rol)})',
           const Key('bloqueo-pin'),
         ),
-        _campo(_confirmacion, 'Repite el PIN', const Key('bloqueo-confirmacion')),
+        _campo(
+          _confirmacion,
+          'Repite el PIN',
+          const Key('bloqueo-confirmacion'),
+        ),
         if (_error != null)
           Text(
             _error!,

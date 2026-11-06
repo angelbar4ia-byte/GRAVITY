@@ -27,10 +27,14 @@ import '../comunes.dart';
 import 'marco_laptop.dart';
 
 /// Lee la plantilla de una ruta. Solo para las pruebas (ruta oculta).
-typedef LectorPlantilla = Future<LecturaPlantilla> Function(String ruta, String hoja);
+typedef LectorPlantilla = Future<LecturaPlantilla> Function(
+  String ruta,
+  String hoja,
+);
 
 final lectorPlantillaProvider = Provider<LectorPlantilla>(
-  (ref) => (ruta, hoja) => leerPlantillaDeRuta(ruta, hoja: hoja),
+  (ref) =>
+      (ruta, hoja) => leerPlantillaDeRuta(ruta, hoja: hoja),
 );
 
 /// Muestra el campo de ruta escrita (oculto por omisión; solo las pruebas lo
@@ -61,7 +65,9 @@ Future<ArchivoElegido?> elegirArchivoDelSistema() async {
   // tamaño ANTES de leerlo, para no cargar en memoria uno de varios GB.
   final tamano = archivo.lengthSync() ?? await archivo.length();
   if (tamano != null && tamano > maximoBytesDeImportacion) {
-    throw const ErrorArchivo('El archivo pesa más de 10 MB: no es la plantilla.');
+    throw const ErrorArchivo(
+      'El archivo pesa más de 10 MB: no es la plantilla.',
+    );
   }
   // Y se lee por pedazos con el mismo tope, por si el tamaño no se supo o
   // mintió.
@@ -69,7 +75,9 @@ Future<ArchivoElegido?> elegirArchivoDelSistema() async {
   await for (final pedazo in archivo.readAsByteStream()) {
     bytes.add(pedazo);
     if (bytes.length > maximoBytesDeImportacion) {
-      throw const ErrorArchivo('El archivo pesa más de 10 MB: no es la plantilla.');
+      throw const ErrorArchivo(
+        'El archivo pesa más de 10 MB: no es la plantilla.',
+      );
     }
   }
   return ArchivoElegido(archivo.name, bytes.takeBytes());
@@ -127,7 +135,8 @@ class _ImportarState extends ConsumerState<_Importar> {
       _archivo?.nombre ?? _ruta.text.trim().split(RegExp(r'[\\/]')).last;
 
   bool get _hayArchivo =>
-      _archivo != null || (ref.read(rutaManualProvider) && _ruta.text.trim().isNotEmpty);
+      _archivo != null ||
+      (ref.read(rutaManualProvider) && _ruta.text.trim().isNotEmpty);
 
   Future<void> _elegir() async {
     setState(() {
@@ -184,7 +193,9 @@ class _ImportarState extends ConsumerState<_Importar> {
               hoja: _hoja.text,
             )
           : await ref.read(lectorPlantillaProvider)(_ruta.text, _hoja.text);
-      final vista = ref.read(servicioFinanzasProvider).previsualizarImportacion(lectura);
+      final vista = ref
+          .read(servicioFinanzasProvider)
+          .previsualizarImportacion(lectura);
       setState(() {
         _lectura = lectura;
         _vista = vista;
@@ -192,7 +203,10 @@ class _ImportarState extends ConsumerState<_Importar> {
     } on ErrorArchivo catch (e) {
       setState(() => _error = e.mensaje);
     } catch (e) {
-      setState(() => _error = 'No pude leer el archivo: está dañado o no es la plantilla.');
+      setState(
+        () => _error =
+            'No pude leer el archivo: está dañado o no es la plantilla.',
+      );
     } finally {
       if (mounted) setState(() => _trabajando = false);
     }
@@ -204,11 +218,13 @@ class _ImportarState extends ConsumerState<_Importar> {
     setState(() => _trabajando = true);
     final nombre = _nombreArchivo;
     try {
-      final r = await ref.read(servicioFinanzasProvider).importarCategorias(
-        lectura,
-        archivo: nombre,
-        hoja: _hoja.text.trim(),
-      );
+      final r = await ref
+          .read(servicioFinanzasProvider)
+          .importarCategorias(
+            lectura,
+            archivo: nombre,
+            hoja: _hoja.text.trim(),
+          );
       setState(() {
         _resultado = r;
         _vista = null;
@@ -228,9 +244,13 @@ class _ImportarState extends ConsumerState<_Importar> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (final e in porMotivo.entries) Text('${e.value} omitidas: ${e.key}'),
+        for (final e in porMotivo.entries)
+          Text('${e.value} omitidas: ${e.key}'),
         for (final o in omitidas.where((o) => o.motivo != 'Ya existe').take(20))
-          Text('Fila ${o.numero} (${o.texto}): ${o.motivo}', style: Theme.of(context).textTheme.bodySmall),
+          Text(
+            'Fila ${o.numero} (${o.texto}): ${o.motivo}',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
       ],
     );
   }
@@ -239,7 +259,12 @@ class _ImportarState extends ConsumerState<_Importar> {
   Widget build(BuildContext context) {
     final vista = _vista;
     final resultado = _resultado;
-    final arbol = vista == null ? null : ArbolCategorias([...widget.contexto.datos.categorias, ...vista.nuevas]);
+    final arbol = vista == null
+        ? null
+        : ArbolCategorias([
+            ...widget.contexto.datos.categorias,
+            ...vista.nuevas,
+          ]);
     return ContenidoLaptop(
       children: [
         TarjetaModulo(
@@ -277,21 +302,28 @@ class _ImportarState extends ConsumerState<_Importar> {
                 TextField(
                   key: const ValueKey('importar-ruta'),
                   controller: _ruta,
-                  decoration: const InputDecoration(labelText: 'Ruta del archivo'),
+                  decoration: const InputDecoration(
+                    labelText: 'Ruta del archivo',
+                  ),
                   onChanged: (_) => setState(() {}),
                 ),
-              if (_archivo == null || _nombreArchivo.toLowerCase().endsWith('.xlsx'))
+              if (_archivo == null ||
+                  _nombreArchivo.toLowerCase().endsWith('.xlsx'))
                 TextField(
                   key: const ValueKey('importar-hoja'),
                   controller: _hoja,
-                  decoration: const InputDecoration(labelText: 'Hoja (solo .xlsx)'),
+                  decoration: const InputDecoration(
+                    labelText: 'Hoja (solo .xlsx)',
+                  ),
                 ),
               const SizedBox(height: 8),
               Align(
                 alignment: AlignmentDirectional.centerEnd,
                 child: FilledButton(
                   key: const ValueKey('importar-vista-previa'),
-                  onPressed: _trabajando || !_hayArchivo ? null : _previsualizar,
+                  onPressed: _trabajando || !_hayArchivo
+                      ? null
+                      : _previsualizar,
                   child: const Text('Vista previa'),
                 ),
               ),
@@ -328,7 +360,9 @@ class _ImportarState extends ConsumerState<_Importar> {
                   child: FilledButton(
                     key: const ValueKey('importar-confirmar'),
                     onPressed: _trabajando ? null : _importar,
-                    child: Text(vista.sinCambios ? 'Registrar (sin cambios)' : 'Importar'),
+                    child: Text(
+                      vista.sinCambios ? 'Registrar (sin cambios)' : 'Importar',
+                    ),
                   ),
                 ),
               ],

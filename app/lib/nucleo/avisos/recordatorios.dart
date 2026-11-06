@@ -37,7 +37,10 @@ class Vencimiento {
 
 /// Quién sabe qué vence: Finanzas, con la copia local. Por omisión, nadie.
 abstract interface class FuenteDeVencimientos {
-  Future<List<Vencimiento>> proximos({required DateTime desde, required int dias});
+  Future<List<Vencimiento>> proximos({
+    required DateTime desde,
+    required int dias,
+  });
 }
 
 class SinVencimientos implements FuenteDeVencimientos {
@@ -117,15 +120,21 @@ List<RecordatorioLocal> calcularRecordatorios({
     final lunes = hoy.add(
       Duration(days: ((DateTime.monday - hoy.weekday) % 7) + 7 * s),
     );
-    agregar('resumen_lunes:${_dia(lunes)}', 'resumen_lunes',
-        _a(lunes, preferencias.resumenLunes));
+    agregar(
+      'resumen_lunes:${_dia(lunes)}',
+      'resumen_lunes',
+      _a(lunes, preferencias.resumenLunes),
+    );
     final cierre = hoy.add(
       Duration(
         days: ((preferencias.recordatorioCierreDia - hoy.weekday) % 7) + 7 * s,
       ),
     );
-    agregar('recordatorio_cierre:${_dia(cierre)}', 'recordatorio_cierre',
-        _a(cierre, preferencias.recordatorioCierreHora));
+    agregar(
+      'recordatorio_cierre:${_dia(cierre)}',
+      'recordatorio_cierre',
+      _a(cierre, preferencias.recordatorioCierreHora),
+    );
   }
 
   // Las horas silenciosas esperan a su fin, salvo críticas permitidas.
@@ -138,8 +147,10 @@ List<RecordatorioLocal> calcularRecordatorios({
           clave: r.clave,
           tipo: r.tipo,
           cuando: _a(
-            r.cuando.hour * 60 + r.cuando.minute >= preferencias.silencioHasta.minutos &&
-                    preferencias.silencioDesde.minutos > preferencias.silencioHasta.minutos
+            r.cuando.hour * 60 + r.cuando.minute >=
+                        preferencias.silencioHasta.minutos &&
+                    preferencias.silencioDesde.minutos >
+                        preferencias.silencioHasta.minutos
                 ? DateTime(r.cuando.year, r.cuando.month, r.cuando.day + 1)
                 : DateTime(r.cuando.year, r.cuando.month, r.cuando.day),
             preferencias.silencioHasta,

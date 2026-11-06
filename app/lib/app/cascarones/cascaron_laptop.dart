@@ -48,10 +48,7 @@ class CascaronLaptop extends ConsumerWidget {
           const SingleActivator(LogicalKeyboardKey.keyN, control: true): () =>
               abrirRegistroEnDialogo(context),
       },
-      child: Focus(
-        autofocus: true,
-        child: ConAvisoAtencion(child: child),
-      ),
+      child: Focus(autofocus: true, child: ConAvisoAtencion(child: child)),
     );
   }
 }

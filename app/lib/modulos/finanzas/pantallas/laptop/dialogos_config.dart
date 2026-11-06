@@ -15,7 +15,13 @@ import '../../estado/proveedores.dart';
 import '../comunes.dart';
 
 const _diasSemana = [
-  'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo',
+  'Lunes',
+  'Martes',
+  'Miércoles',
+  'Jueves',
+  'Viernes',
+  'Sábado',
+  'Domingo',
 ];
 
 /// Lee "1, 11" o "15 y último" en días del mes (0 = último).
@@ -59,8 +65,11 @@ class _EditorCalendarioState extends State<EditorCalendario> {
   late FormaPago _forma = widget.inicial.forma;
   late int _diaSemana = widget.inicial.diaSemana ?? 5;
   late final _dias = TextEditingController(
-    text: widget.inicial.diasMes.map((d) => d == 0 ? 'último' : '$d').join(', '),
+    text: widget.inicial.diasMes
+        .map((d) => d == 0 ? 'último' : '$d')
+        .join(', '),
   );
+
   /// Fecha de un pago conocido: la escribe la persona (no se inventa); sin
   /// ella el calendario catorcenal o cada N meses no está completo.
   late Fecha? _ancla = widget.inicial.fechaAncla;
@@ -83,17 +92,19 @@ class _EditorCalendarioState extends State<EditorCalendario> {
     final c = switch (_forma) {
       FormaPago.semanal => CalendarioConfig.semanal(_diaSemana, regla: _regla),
       FormaPago.catorcenal =>
-        ancla == null ? null : CalendarioConfig.catorcenal(ancla, regla: _regla),
+        ancla == null
+            ? null
+            : CalendarioConfig.catorcenal(ancla, regla: _regla),
       FormaPago.quincenal => CalendarioConfig.quincenal(
         diasMes: dias != null && dias.length == 2 ? dias : const [15, 0],
         regla: _regla,
       ),
-      FormaPago.mensual => dias == null
-          ? null
-          : CalendarioConfig.mensual(dias, regla: _regla),
-      FormaPago.cadaMeses => ancla == null
-          ? null
-          : CalendarioConfig.cadaMeses(ancla, _intervalo, regla: _regla),
+      FormaPago.mensual =>
+        dias == null ? null : CalendarioConfig.mensual(dias, regla: _regla),
+      FormaPago.cadaMeses =>
+        ancla == null
+            ? null
+            : CalendarioConfig.cadaMeses(ancla, _intervalo, regla: _regla),
     };
     if (c == null) return null;
     try {
@@ -116,8 +127,14 @@ class _EditorCalendarioState extends State<EditorCalendario> {
         decoration: const InputDecoration(labelText: 'Cada cuándo'),
         items: const [
           DropdownMenuItem(value: FormaPago.semanal, child: Text('Semanal')),
-          DropdownMenuItem(value: FormaPago.catorcenal, child: Text('Catorcenal')),
-          DropdownMenuItem(value: FormaPago.quincenal, child: Text('Quincenal')),
+          DropdownMenuItem(
+            value: FormaPago.catorcenal,
+            child: Text('Catorcenal'),
+          ),
+          DropdownMenuItem(
+            value: FormaPago.quincenal,
+            child: Text('Quincenal'),
+          ),
           DropdownMenuItem(
             value: FormaPago.mensual,
             child: Text('Mensual (1 o 2 días fijos)'),
@@ -155,7 +172,8 @@ class _EditorCalendarioState extends State<EditorCalendario> {
                 : 'Día o días del mes (p. ej. 1, 11 o "último")',
           ),
           onChanged: (_) => _avisar(),
-          validator: (_) => _forma == FormaPago.mensual &&
+          validator: (_) =>
+              _forma == FormaPago.mensual &&
                   (diasDeTexto(_dias.text)?.length ?? 0) == 0
               ? 'Escribe uno o dos días'
               : ((diasDeTexto(_dias.text)?.length ?? 0) > 2
@@ -165,8 +183,9 @@ class _EditorCalendarioState extends State<EditorCalendario> {
       if (_forma == FormaPago.catorcenal || _forma == FormaPago.cadaMeses)
         FormField<Fecha>(
           key: const ValueKey('calendario-ancla'),
-          validator: (_) =>
-              _ancla == null ? 'Elige la fecha de un pago que ya conozcas' : null,
+          validator: (_) => _ancla == null
+              ? 'Elige la fecha de un pago que ya conozcas'
+              : null,
           builder: (estado) => ListTile(
             contentPadding: EdgeInsets.zero,
             title: const Text('Fecha de un pago conocido'),
@@ -224,7 +243,10 @@ class _EditorCalendarioState extends State<EditorCalendario> {
             value: ReglaDiaInhabil.diaHabilAnterior,
             child: Text('Día hábil anterior'),
           ),
-          DropdownMenuItem(value: ReglaDiaInhabil.sinCambio, child: Text('En su fecha')),
+          DropdownMenuItem(
+            value: ReglaDiaInhabil.sinCambio,
+            child: Text('En su fecha'),
+          ),
         ],
         onChanged: (r) {
           setState(() => _regla = r!);
@@ -262,7 +284,10 @@ class _DialogoForma extends StatelessWidget {
       ),
     ),
     actions: [
-      TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+      TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: const Text('Cancelar'),
+      ),
       FilledButton(
         key: const ValueKey('dialogo-guardar'),
         onPressed: () async {
@@ -301,10 +326,10 @@ class PlantillaIngreso {
     nombre: 'Pensión',
     tipo: TipoIngreso.pension,
     certeza: Certeza.segura,
-    calendario: CalendarioConfig.mensual(
-      [1, 11],
-      regla: ReglaDiaInhabil.siguienteDiaHabil,
-    ),
+    calendario: CalendarioConfig.mensual([
+      1,
+      11,
+    ], regla: ReglaDiaInhabil.siguienteDiaHabil),
     ayuda:
         'Días 1 y 11 de cada mes; si cae en fin de semana o festivo, el '
         'siguiente día hábil. Escribe el neto que llega en cada pago.',
@@ -345,7 +370,9 @@ class DialogoIngreso extends ConsumerStatefulWidget {
 
 class _DialogoIngresoState extends ConsumerState<DialogoIngreso> {
   final _forma = GlobalKey<FormState>();
-  late final _nombre = TextEditingController(text: widget.plantilla?.nombre ?? '');
+  late final _nombre = TextEditingController(
+    text: widget.plantilla?.nombre ?? '',
+  );
   final _monto = TextEditingController();
   late final CalendarioConfig _inicial =
       widget.plantilla?.calendario ?? const CalendarioConfig.quincenal();
@@ -379,19 +406,27 @@ class _DialogoIngresoState extends ConsumerState<DialogoIngreso> {
     _destino ??= destinos.firstOrNull?.id;
     final plantilla = widget.plantilla;
     return _DialogoForma(
-      titulo: plantilla == null ? 'Nuevo ingreso' : 'Nuevo ingreso: ${plantilla.nombre}',
+      titulo: plantilla == null
+          ? 'Nuevo ingreso'
+          : 'Nuevo ingreso: ${plantilla.nombre}',
       forma: _forma,
       campos: [
         if (plantilla != null)
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
-            child: Text(plantilla.ayuda, key: const ValueKey('ingreso-ayuda-plantilla')),
+            child: Text(
+              plantilla.ayuda,
+              key: const ValueKey('ingreso-ayuda-plantilla'),
+            ),
           ),
         TextFormField(
           key: const ValueKey('ingreso-nombre'),
           controller: _nombre,
-          decoration: const InputDecoration(labelText: 'Nombre (p. ej. Sueldo)'),
-          validator: (v) => (v ?? '').trim().isEmpty ? 'Escribe un nombre' : null,
+          decoration: const InputDecoration(
+            labelText: 'Nombre (p. ej. Sueldo)',
+          ),
+          validator: (v) =>
+              (v ?? '').trim().isEmpty ? 'Escribe un nombre' : null,
         ),
         CampoMonto(
           key: const ValueKey('ingreso-monto'),
@@ -407,11 +442,26 @@ class _DialogoIngresoState extends ConsumerState<DialogoIngreso> {
           initialValue: _tipo,
           decoration: const InputDecoration(labelText: 'Tipo'),
           items: const [
-            DropdownMenuItem(value: TipoIngreso.salario, child: Text('Salario')),
-            DropdownMenuItem(value: TipoIngreso.independiente, child: Text('Independiente')),
-            DropdownMenuItem(value: TipoIngreso.prestaciones, child: Text('Prestaciones')),
-            DropdownMenuItem(value: TipoIngreso.pension, child: Text('Pensión')),
-            DropdownMenuItem(value: TipoIngreso.otro, child: Text('Otro (apoyo, renta…)')),
+            DropdownMenuItem(
+              value: TipoIngreso.salario,
+              child: Text('Salario'),
+            ),
+            DropdownMenuItem(
+              value: TipoIngreso.independiente,
+              child: Text('Independiente'),
+            ),
+            DropdownMenuItem(
+              value: TipoIngreso.prestaciones,
+              child: Text('Prestaciones'),
+            ),
+            DropdownMenuItem(
+              value: TipoIngreso.pension,
+              child: Text('Pensión'),
+            ),
+            DropdownMenuItem(
+              value: TipoIngreso.otro,
+              child: Text('Otro (apoyo, renta…)'),
+            ),
           ],
           onChanged: (t) => setState(() => _tipo = t!),
         ),
@@ -428,24 +478,28 @@ class _DialogoIngresoState extends ConsumerState<DialogoIngreso> {
           initialValue: _destino,
           decoration: const InputDecoration(labelText: 'Llega a'),
           items: [
-            for (final x in destinos) DropdownMenuItem(value: x.id, child: Text(x.nombre)),
+            for (final x in destinos)
+              DropdownMenuItem(value: x.id, child: Text(x.nombre)),
           ],
           onChanged: (x) => setState(() => _destino = x),
-          validator: (v) => v == null ? 'Crea primero una cuenta de banco o efectivo' : null,
+          validator: (v) =>
+              v == null ? 'Crea primero una cuenta de banco o efectivo' : null,
         ),
       ],
       alGuardar: () async {
         final cal = _calendario;
         if (cal == null) throw const ErrorFinanzas('Revisa el calendario');
-        await ref.read(servicioFinanzasProvider).crearIngreso(
-          libroId: c.libroId,
-          nombre: _nombre.text,
-          montoNeto: centavosDeTexto(_monto.text)!,
-          calendario: cal,
-          cuentaDestinoId: _destino!,
-          tipo: _tipo,
-          certeza: _certeza,
-        );
+        await ref
+            .read(servicioFinanzasProvider)
+            .crearIngreso(
+              libroId: c.libroId,
+              nombre: _nombre.text,
+              montoNeto: centavosDeTexto(_monto.text)!,
+              calendario: cal,
+              cuentaDestinoId: _destino!,
+              tipo: _tipo,
+              certeza: _certeza,
+            );
       },
     );
   }
@@ -453,7 +507,11 @@ class _DialogoIngresoState extends ConsumerState<DialogoIngreso> {
 
 /// Cambiar el neto desde una fecha (vigencia nueva).
 class DialogoCambiarNeto extends ConsumerStatefulWidget {
-  const DialogoCambiarNeto({super.key, required this.ingreso, required this.hoy});
+  const DialogoCambiarNeto({
+    super.key,
+    required this.ingreso,
+    required this.hoy,
+  });
 
   final Ingreso ingreso;
   final Fecha hoy;
@@ -470,7 +528,8 @@ class _DialogoCambiarNetoState extends ConsumerState<DialogoCambiarNeto> {
         : textoDeCentavos(widget.ingreso.vigenciaActual!.montoNeto),
   );
   late CalendarioConfig? _calendario =
-      widget.ingreso.vigenciaActual?.calendario ?? const CalendarioConfig.quincenal();
+      widget.ingreso.vigenciaActual?.calendario ??
+      const CalendarioConfig.quincenal();
   late Fecha _desde = widget.hoy;
 
   @override
@@ -501,12 +560,14 @@ class _DialogoCambiarNetoState extends ConsumerState<DialogoCambiarNeto> {
       ),
       const Text('El historial no cambia: se crea una vigencia nueva.'),
     ],
-    alGuardar: () => ref.read(servicioFinanzasProvider).cambiarNeto(
-      widget.ingreso.id,
-      montoNeto: centavosDeTexto(_monto.text)!,
-      calendario: _calendario!,
-      desde: _desde,
-    ),
+    alGuardar: () => ref
+        .read(servicioFinanzasProvider)
+        .cambiarNeto(
+          widget.ingreso.id,
+          montoNeto: centavosDeTexto(_monto.text)!,
+          calendario: _calendario!,
+          desde: _desde,
+        ),
   );
 }
 
@@ -534,7 +595,9 @@ Widget campoCategoria(
     ],
     onChanged: alCambiar,
     validator: (v) => v == null
-        ? (todas.isEmpty ? 'Importa o crea primero las categorías' : 'Elige una categoría')
+        ? (todas.isEmpty
+              ? 'Importa o crea primero las categorías'
+              : 'Elige una categoría')
         : null,
   );
 }
@@ -554,10 +617,9 @@ class _DialogoCompromisoState extends ConsumerState<DialogoCompromiso> {
   final _monto = TextEditingController();
   TipoCompromiso _tipo = TipoCompromiso.fija;
   String? _categoria;
-  CalendarioConfig? _calendario = const CalendarioConfig.mensual(
-    [1],
-    regla: ReglaDiaInhabil.sinCambio,
-  );
+  CalendarioConfig? _calendario = const CalendarioConfig.mensual([
+    1,
+  ], regla: ReglaDiaInhabil.sinCambio);
   bool _protegida = false;
 
   @override
@@ -577,13 +639,22 @@ class _DialogoCompromisoState extends ConsumerState<DialogoCompromiso> {
         TextFormField(
           key: const ValueKey('compromiso-nombre'),
           controller: _nombre,
-          decoration: const InputDecoration(labelText: 'Nombre (renta, luz, predial…)'),
-          validator: (v) => (v ?? '').trim().isEmpty ? 'Escribe un nombre' : null,
+          decoration: const InputDecoration(
+            labelText: 'Nombre (renta, luz, predial…)',
+          ),
+          validator: (v) =>
+              (v ?? '').trim().isEmpty ? 'Escribe un nombre' : null,
         ),
         SegmentedButton<TipoCompromiso>(
           segments: const [
-            ButtonSegment(value: TipoCompromiso.fija, label: Text('Gasto fijo')),
-            ButtonSegment(value: TipoCompromiso.reserva, label: Text('Reserva')),
+            ButtonSegment(
+              value: TipoCompromiso.fija,
+              label: Text('Gasto fijo'),
+            ),
+            ButtonSegment(
+              value: TipoCompromiso.reserva,
+              label: Text('Reserva'),
+            ),
           ],
           selected: {_tipo},
           onSelectionChanged: (s) => setState(() => _tipo = s.first),
@@ -601,7 +672,8 @@ class _DialogoCompromisoState extends ConsumerState<DialogoCompromiso> {
         campoCategoria(c.datos, _categoria, (v) {
           setState(() {
             _categoria = v;
-            _protegida = v != null && (c.datos.arbol.porId(v)?.protegida ?? false);
+            _protegida =
+                v != null && (c.datos.arbol.porId(v)?.protegida ?? false);
           });
         }),
         SwitchListTile(
@@ -615,24 +687,28 @@ class _DialogoCompromisoState extends ConsumerState<DialogoCompromiso> {
         final cal = _calendario;
         if (cal == null) throw const ErrorFinanzas('Revisa el calendario');
         final cuenta = c.datos.arbol.cuentaGastoDe(_categoria!);
-        if (cuenta == null) throw const ErrorFinanzas('La categoría no tiene cuenta de gasto');
+        if (cuenta == null) {
+          throw const ErrorFinanzas('La categoría no tiene cuenta de gasto');
+        }
         final categoria = c.datos.arbol.porId(_categoria)!;
-        await ref.read(servicioFinanzasProvider).guardarCompromiso(
-          Compromiso(
-            id: const Uuid().v4(),
-            libroId: c.libroId,
-            nombre: _nombre.text.trim(),
-            tipo: _tipo,
-            cuentaGastoId: cuenta,
-            categoriaId: _categoria,
-            monto: centavosDeTexto(_monto.text)!,
-            frecuencia: cal.frecuencia,
-            calendario: cal,
-            protegida: _protegida,
-            prioridad: categoria.prioridad,
-            desde: Semana.de(c.hoy).inicio,
-          ),
-        );
+        await ref
+            .read(servicioFinanzasProvider)
+            .guardarCompromiso(
+              Compromiso(
+                id: const Uuid().v4(),
+                libroId: c.libroId,
+                nombre: _nombre.text.trim(),
+                tipo: _tipo,
+                cuentaGastoId: cuenta,
+                categoriaId: _categoria,
+                monto: centavosDeTexto(_monto.text)!,
+                frecuencia: cal.frecuencia,
+                calendario: cal,
+                protegida: _protegida,
+                prioridad: categoria.prioridad,
+                desde: Semana.de(c.hoy).inicio,
+              ),
+            );
       },
     );
   }
@@ -654,7 +730,9 @@ class _DialogoSobreState extends ConsumerState<DialogoSobre> {
   final _forma = GlobalKey<FormState>();
   late final _nombre = TextEditingController(text: widget.sobre?.nombre ?? '');
   late final _monto = TextEditingController(
-    text: widget.sobre == null ? '' : textoDeCentavos(widget.sobre!.montoSemanal),
+    text: widget.sobre == null
+        ? ''
+        : textoDeCentavos(widget.sobre!.montoSemanal),
   );
   late final _piso = TextEditingController(
     text: widget.sobre == null || widget.sobre!.pisoMinimo == 0
@@ -663,9 +741,12 @@ class _DialogoSobreState extends ConsumerState<DialogoSobre> {
   );
   late String? _categoria = widget.sobre == null
       ? null
-      : widget.contexto.datos.arbol.deCuentaGasto(widget.sobre!.cuentaGastoId)?.id;
+      : widget.contexto.datos.arbol
+            .deCuentaGasto(widget.sobre!.cuentaGastoId)
+            ?.id;
   late Prioridad _prioridad = widget.sobre?.prioridad ?? Prioridad.deseable;
-  late ModoArrastre _arrastre = widget.sobre?.modoArrastre ?? ModoArrastre.arrastrar;
+  late ModoArrastre _arrastre =
+      widget.sobre?.modoArrastre ?? ModoArrastre.arrastrar;
   late bool _protegida = widget.sobre?.protegida ?? false;
 
   @override
@@ -698,7 +779,8 @@ class _DialogoSobreState extends ConsumerState<DialogoSobre> {
           key: const ValueKey('sobre-nombre'),
           controller: _nombre,
           decoration: const InputDecoration(labelText: 'Nombre del sobre'),
-          validator: (v) => (v ?? '').trim().isEmpty ? 'Escribe un nombre' : null,
+          validator: (v) =>
+              (v ?? '').trim().isEmpty ? 'Escribe un nombre' : null,
         ),
         CampoMonto(
           key: const ValueKey('sobre-monto'),
@@ -707,7 +789,9 @@ class _DialogoSobreState extends ConsumerState<DialogoSobre> {
         ),
         DropdownButtonFormField<Prioridad>(
           initialValue: _prioridad,
-          decoration: const InputDecoration(labelText: 'Prioridad (orden de recortes)'),
+          decoration: const InputDecoration(
+            labelText: 'Prioridad (orden de recortes)',
+          ),
           items: [
             for (final p in Prioridad.values)
               DropdownMenuItem(value: p, child: Text(nombrePrioridad(p))),
@@ -728,7 +812,10 @@ class _DialogoSobreState extends ConsumerState<DialogoSobre> {
               value: ModoArrastre.arrastrar,
               child: Text('Pasa a la semana siguiente (hasta 2 semanas)'),
             ),
-            DropdownMenuItem(value: ModoArrastre.alRemanente, child: Text('Va al remanente')),
+            DropdownMenuItem(
+              value: ModoArrastre.alRemanente,
+              child: Text('Va al remanente'),
+            ),
           ],
           onChanged: (m) => setState(() => _arrastre = m!),
         ),
@@ -741,21 +828,25 @@ class _DialogoSobreState extends ConsumerState<DialogoSobre> {
       ],
       alGuardar: () async {
         final cuenta = c.datos.arbol.cuentaGastoDe(_categoria!);
-        if (cuenta == null) throw const ErrorFinanzas('La categoría no tiene cuenta de gasto');
-        await ref.read(servicioFinanzasProvider).guardarSobre(
-          Sobre(
-            id: widget.sobre?.id ?? const Uuid().v4(),
-            libroId: c.libroId,
-            cuentaGastoId: cuenta,
-            nombre: _nombre.text.trim(),
-            montoSemanal: centavosDeTexto(_monto.text)!,
-            protegida: _protegida,
-            prioridad: _prioridad,
-            pisoMinimo: centavosDeTexto(_piso.text) ?? 0,
-            modoArrastre: _arrastre,
-            activo: widget.sobre?.activo ?? true,
-          ),
-        );
+        if (cuenta == null) {
+          throw const ErrorFinanzas('La categoría no tiene cuenta de gasto');
+        }
+        await ref
+            .read(servicioFinanzasProvider)
+            .guardarSobre(
+              Sobre(
+                id: widget.sobre?.id ?? const Uuid().v4(),
+                libroId: c.libroId,
+                cuentaGastoId: cuenta,
+                nombre: _nombre.text.trim(),
+                montoSemanal: centavosDeTexto(_monto.text)!,
+                protegida: _protegida,
+                prioridad: _prioridad,
+                pisoMinimo: centavosDeTexto(_piso.text) ?? 0,
+                modoArrastre: _arrastre,
+                activo: widget.sobre?.activo ?? true,
+              ),
+            );
       },
     );
   }
@@ -780,10 +871,9 @@ class _DialogoDeudaState extends ConsumerState<DialogoDeuda> {
   final _tasa = TextEditingController();
   TipoDeuda _tipo = TipoDeuda.conCosto;
   String? _cuenta;
-  CalendarioConfig? _calendario = const CalendarioConfig.mensual(
-    [1],
-    regla: ReglaDiaInhabil.sinCambio,
-  );
+  CalendarioConfig? _calendario = const CalendarioConfig.mensual([
+    1,
+  ], regla: ReglaDiaInhabil.sinCambio);
 
   @override
   void dispose() {
@@ -809,7 +899,8 @@ class _DialogoDeudaState extends ConsumerState<DialogoDeuda> {
           key: const ValueKey('deuda-nombre'),
           controller: _nombre,
           decoration: const InputDecoration(labelText: 'Nombre'),
-          validator: (v) => (v ?? '').trim().isEmpty ? 'Escribe un nombre' : null,
+          validator: (v) =>
+              (v ?? '').trim().isEmpty ? 'Escribe un nombre' : null,
         ),
         DropdownButtonFormField<TipoDeuda>(
           initialValue: _tipo,
@@ -827,7 +918,8 @@ class _DialogoDeudaState extends ConsumerState<DialogoDeuda> {
             helperText: 'El saldo sale de esta cuenta.',
           ),
           items: [
-            for (final x in pasivos) DropdownMenuItem(value: x.id, child: Text(x.nombre)),
+            for (final x in pasivos)
+              DropdownMenuItem(value: x.id, child: Text(x.nombre)),
           ],
           onChanged: (x) => setState(() => _cuenta = x),
           // fin_deudas.cuenta_pasivo_id es obligatoria: el saldo sale de ella.
@@ -843,8 +935,15 @@ class _DialogoDeudaState extends ConsumerState<DialogoDeuda> {
           etiqueta: 'Abono planeado por pago',
         ),
         if (_tipo == TipoDeuda.conCosto) ...[
-          CampoMonto(controlador: _minimo, etiqueta: 'Pago mínimo', obligatorio: false),
-          CampoPorcentaje(controlador: _tasa, etiqueta: 'Tasa anual (del estado de cuenta)'),
+          CampoMonto(
+            controlador: _minimo,
+            etiqueta: 'Pago mínimo',
+            obligatorio: false,
+          ),
+          CampoPorcentaje(
+            controlador: _tasa,
+            etiqueta: 'Tasa anual (del estado de cuenta)',
+          ),
         ],
         EditorCalendario(
           inicial: _calendario!,
@@ -855,22 +954,26 @@ class _DialogoDeudaState extends ConsumerState<DialogoDeuda> {
       alGuardar: () async {
         final cal = _calendario;
         if (cal == null) throw const ErrorFinanzas('Revisa el calendario');
-        await ref.read(servicioFinanzasProvider).guardarDeuda(
-          Deuda(
-            id: const Uuid().v4(),
-            libroId: c.libroId,
-            nombre: _nombre.text.trim(),
-            tipo: _tipo,
-            cuentaPasivoId: _cuenta,
-            abono: centavosDeTexto(_abono.text)!,
-            frecuencia: cal.frecuencia,
-            calendario: cal,
-            minimo: _tipo == TipoDeuda.conCosto ? (centavosDeTexto(_minimo.text) ?? 0) : 0,
-            tasaAnualPuntosBase: _tipo == TipoDeuda.conCosto
-                ? (CampoPorcentaje.puntosBase(_tasa.text) ?? 0)
-                : 0,
-          ),
-        );
+        await ref
+            .read(servicioFinanzasProvider)
+            .guardarDeuda(
+              Deuda(
+                id: const Uuid().v4(),
+                libroId: c.libroId,
+                nombre: _nombre.text.trim(),
+                tipo: _tipo,
+                cuentaPasivoId: _cuenta,
+                abono: centavosDeTexto(_abono.text)!,
+                frecuencia: cal.frecuencia,
+                calendario: cal,
+                minimo: _tipo == TipoDeuda.conCosto
+                    ? (centavosDeTexto(_minimo.text) ?? 0)
+                    : 0,
+                tasaAnualPuntosBase: _tipo == TipoDeuda.conCosto
+                    ? (CampoPorcentaje.puntosBase(_tasa.text) ?? 0)
+                    : 0,
+              ),
+            );
       },
     );
   }

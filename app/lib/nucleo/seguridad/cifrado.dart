@@ -19,11 +19,7 @@ class LlavePin {
   LlavePin._(this.sal, this.iteraciones, this._bytes);
 
   /// Deriva la llave de [pin] con una sal nueva (o la dada).
-  factory LlavePin.derivar(
-    String pin, {
-    List<int>? sal,
-    int? iteraciones,
-  }) {
+  factory LlavePin.derivar(String pin, {List<int>? sal, int? iteraciones}) {
     iteraciones ??= HashPin.iteracionesPorDefecto;
     final salUsada = sal ?? HashPin.salAleatoria();
     return LlavePin._(
@@ -74,9 +70,11 @@ abstract final class CifradoPin {
     final nonce = Uint8List.fromList(
       List<int>.generate(_bytesNonce, (_) => azar.nextInt(256)),
     );
-    final datos = _gcm(true, llave._bytes, nonce).process(
-      Uint8List.fromList(utf8.encode(texto)),
-    );
+    final datos = _gcm(
+      true,
+      llave._bytes,
+      nonce,
+    ).process(Uint8List.fromList(utf8.encode(texto)));
     return jsonEncode({
       'v': version,
       'sal': base64Encode(llave.sal),

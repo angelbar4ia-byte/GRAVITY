@@ -78,10 +78,8 @@ abstract final class TablasFinanzas {
 // ------------------------------------------------------------------ ayudas
 
 /// `pagoDeuda` → `pago_deuda`.
-String aSnake(String camel) => camel.replaceAllMapped(
-  RegExp('[A-Z]'),
-  (m) => '_${m[0]!.toLowerCase()}',
-);
+String aSnake(String camel) =>
+    camel.replaceAllMapped(RegExp('[A-Z]'), (m) => '_${m[0]!.toLowerCase()}');
 
 String nombreEnum(Enum valor) => aSnake(valor.name);
 
@@ -282,7 +280,10 @@ ParametrosFinanzas parametrosDeFila(Map<String, dynamic> f) =>
           ? const ParametrosFinanzas(libroId: '').ordenAhorro
           : [for (final x in (f['orden_ahorro'] as List)) '$x'],
       dependientesCuidados: booleano(f['dependientes_cuidados']),
-      esencialesIncluyenMinimos: booleano(f['esenciales_incluyen_minimos'], true),
+      esencialesIncluyenMinimos: booleano(
+        f['esenciales_incluyen_minimos'],
+        true,
+      ),
       diasAvisoDeuda: f['dias_aviso_deuda'] == null
           ? const [3, 1]
           : enteros(f['dias_aviso_deuda']),
@@ -441,7 +442,8 @@ CalendarioConfig? calendarioDeFila(
     diasMes: enteros(f['dias_mes']),
     fechaAncla: fechaDe(f['fecha_ancla']),
     intervaloMeses: enteroONulo(f['intervalo_meses']),
-    regla: enumONulo(ReglaDiaInhabil.values, f['regla_inhabil']) ??
+    regla:
+        enumONulo(ReglaDiaInhabil.values, f['regla_inhabil']) ??
         reglaPorOmision,
   );
 }
@@ -471,10 +473,7 @@ Map<String, Object?> filaVigencia(
   'libro_id': libroId,
   'ingreso_id': v.ingresoId,
   'monto_neto_centavos': v.montoNeto,
-  ...filaCalendario(
-    v.calendario,
-    porOmision: CalendarioConfig.reglaDeIngreso,
-  ),
+  ...filaCalendario(v.calendario, porOmision: CalendarioConfig.reglaDeIngreso),
   'desde': fechaIso(v.desde),
   'hasta': v.hasta == null ? null : fechaIso(v.hasta!),
 };
@@ -511,28 +510,27 @@ Ingreso ingresoDeFila(
 
 // ------------------------------------------------------------ compromisos
 
-Map<String, Object?> filaCompromiso(Compromiso c, {required String hogarId}) =>
-    {
-      'id': c.id,
-      'hogar_id': hogarId,
-      'libro_id': c.libroId,
-      'nombre': c.nombre,
-      'tipo': nombreEnum(c.tipo),
-      'cuenta_gasto_id': c.cuentaGastoId,
-      'categoria_id': c.categoriaId,
-      'monto_centavos': c.monto,
-      'frecuencia': nombreEnum(c.frecuencia),
-      'dias_activos': c.diasActivos,
-      ...filaCalendario(
-        c.calendario,
-        porOmision: CalendarioConfig.reglaDeSalida,
-      ),
-      'protegida': c.protegida,
-      'prioridad': nombreEnum(c.prioridad),
-      'desde': c.desde == null ? null : fechaIso(c.desde!),
-      'hasta': c.hasta == null ? null : fechaIso(c.hasta!),
-      'activo': c.activo,
-    };
+Map<String, Object?> filaCompromiso(
+  Compromiso c, {
+  required String hogarId,
+}) => {
+  'id': c.id,
+  'hogar_id': hogarId,
+  'libro_id': c.libroId,
+  'nombre': c.nombre,
+  'tipo': nombreEnum(c.tipo),
+  'cuenta_gasto_id': c.cuentaGastoId,
+  'categoria_id': c.categoriaId,
+  'monto_centavos': c.monto,
+  'frecuencia': nombreEnum(c.frecuencia),
+  'dias_activos': c.diasActivos,
+  ...filaCalendario(c.calendario, porOmision: CalendarioConfig.reglaDeSalida),
+  'protegida': c.protegida,
+  'prioridad': nombreEnum(c.prioridad),
+  'desde': c.desde == null ? null : fechaIso(c.desde!),
+  'hasta': c.hasta == null ? null : fechaIso(c.hasta!),
+  'activo': c.activo,
+};
 
 Compromiso compromisoDeFila(Map<String, dynamic> f) => Compromiso(
   id: '${f['id']}',

@@ -40,7 +40,8 @@ abstract final class ClavesId {
       'cuenta:$libroId:$tipo:${normalizarNombre(nombre)}';
 
   /// La semana activada de un libro (único `(libro_id, semana_inicio)`).
-  static String semana(String libroId, String lunes) => 'semana:$libroId:$lunes';
+  static String semana(String libroId, String lunes) =>
+      'semana:$libroId:$lunes';
 
   /// El cierre de una semana en su versión (único `(semana_id, version)`).
   static String cierre(String semanaId, int version) =>

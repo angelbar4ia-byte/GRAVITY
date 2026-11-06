@@ -89,10 +89,7 @@ class SubidaDiferidaDeSobres {
   /// y al abrir la app; solo sube si pasaron 6 horas desde la última vez (o si
   /// [forzar], que es *Sincronizar*). Los tipos en
   /// `solo_telefono` nunca se encolan. Devuelve cuántos sobres encoló.
-  Future<int> encolarPendientes(
-    String persona, {
-    bool forzar = false,
-  }) async {
+  Future<int> encolarPendientes(String persona, {bool forzar = false}) async {
     final ahora = _reloj();
     if (!tocaSubir(
       ahora: ahora,
@@ -109,7 +106,9 @@ class SubidaDiferidaDeSobres {
         final lote = pendientes.skip(i).take(maximoSobresPorLlamada).toList();
         await cola.encolar(
           tipo: tipoColaSobres,
-          carga: {'p_sobres': [for (final s in lote) s.aJson()]},
+          carga: {
+            'p_sobres': [for (final s in lote) s.aJson()],
+          },
           personaId: persona,
         );
         await sobres.marcarEncolados(persona, lote);
@@ -117,16 +116,21 @@ class SubidaDiferidaDeSobres {
       }
     }
     if (total > 0) {
-      await almacen.escribir(_claveUltima(persona), ahora.toUtc().toIso8601String());
+      await almacen.escribir(
+        _claveUltima(persona),
+        ahora.toUtc().toIso8601String(),
+      );
     }
     return total;
   }
 
   /// Los sobres que lleva una carga de la cola, para pruebas y revisión: solo
   /// campos opacos.
-  static List<Map<String, Object?>> sobresDeCarga(Map<String, Object?> carga) => [
-    for (final s in (carga['p_sobres'] as List)) (s as Map).cast<String, Object?>(),
-  ];
+  static List<Map<String, Object?>> sobresDeCarga(Map<String, Object?> carga) =>
+      [
+        for (final s in (carga['p_sobres'] as List))
+          (s as Map).cast<String, Object?>(),
+      ];
 
   /// La carga como texto (para comprobar que no lleva texto claro).
   static String comoTexto(Map<String, Object?> carga) => jsonEncode(carga);

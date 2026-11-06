@@ -21,9 +21,7 @@ TipoDispositivo detectarTipoDispositivo({
   TargetPlatform.windows ||
   TargetPlatform.linux ||
   TargetPlatform.macOS => TipoDispositivo.laptop,
-  TargetPlatform.android ||
-  TargetPlatform.iOS ||
-  TargetPlatform.fuchsia =>
+  TargetPlatform.android || TargetPlatform.iOS || TargetPlatform.fuchsia =>
     tamanoLogico.shortestSide >= ladoCortoMinimoTablet
         ? TipoDispositivo.tablet
         : TipoDispositivo.telefono,
@@ -31,14 +29,13 @@ TipoDispositivo detectarTipoDispositivo({
 
 /// Interpreta `--dart-define=GRAVITY_DISPOSITIVO=tablet` (para probar otro
 /// cascarón desde la laptop). Vacío o desconocido: `null`.
-TipoDispositivo? tipoDispositivoForzado(String texto) => switch (texto
-    .trim()
-    .toLowerCase()) {
-  'laptop' => TipoDispositivo.laptop,
-  'tablet' => TipoDispositivo.tablet,
-  'telefono' || 'teléfono' => TipoDispositivo.telefono,
-  _ => null,
-};
+TipoDispositivo? tipoDispositivoForzado(String texto) =>
+    switch (texto.trim().toLowerCase()) {
+      'laptop' => TipoDispositivo.laptop,
+      'tablet' => TipoDispositivo.tablet,
+      'telefono' || 'teléfono' => TipoDispositivo.telefono,
+      _ => null,
+    };
 
 /// Detecta el dispositivo con la primera vista de la app.
 TipoDispositivo detectarDesdeVista(

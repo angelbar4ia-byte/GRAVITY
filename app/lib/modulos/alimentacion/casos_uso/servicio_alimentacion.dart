@@ -30,7 +30,12 @@ class ServicioAlimentacion {
   Future<List<EntradaMenu>> menu(DateTime lunes) => _repo.menu(lunesDe(lunes));
 
   /// Devuelve el platillo anterior de la celda (para deshacer).
-  Future<String?> asignar(DateTime semana, int dia, TiempoComida t, String? platilloId) async {
+  Future<String?> asignar(
+    DateTime semana,
+    int dia,
+    TiempoComida t,
+    String? platilloId,
+  ) async {
     _exigirEdicion();
     final lunes = lunesDe(semana);
     final antes = (await _repo.menu(lunes))

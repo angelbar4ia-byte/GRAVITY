@@ -141,7 +141,9 @@ class _FilaLibro extends ConsumerWidget {
                     ? null
                     : ocultos
                     ? () => ref.read(revelarMontosProvider)(context)
-                    : () => ref.read(montosVisiblesProvider.notifier).fijar(false),
+                    : () => ref
+                          .read(montosVisiblesProvider.notifier)
+                          .fijar(false),
               ),
             ],
           ),

@@ -69,7 +69,10 @@ class _CuentasState extends ConsumerState<_Cuentas> {
       etiquetaSemantica: x.nombre,
       alTocar: () => setState(() => _seleccionada = x.id),
       celdas: [
-        CeldaTexto(x.nombre, detalle: x.estado == EstadoCuenta.activa ? null : x.estado.name),
+        CeldaTexto(
+          x.nombre,
+          detalle: x.estado == EstadoCuenta.activa ? null : x.estado.name,
+        ),
         CeldaTexto(nombreTipoCuenta(x.tipo)),
         CeldaMonto(vista.saldo(x.id), oculto: ocultos),
       ],
@@ -116,12 +119,18 @@ class _CuentasState extends ConsumerState<_Cuentas> {
                   _Renglon('Activos', balance.activos),
                   _Renglon('Pasivos', balance.pasivos),
                   _Renglon('Patrimonio', balance.patrimonio),
-                  _Renglon('Disponible (efectivo y bancos)', vista.disponible()),
+                  _Renglon(
+                    'Disponible (efectivo y bancos)',
+                    vista.disponible(),
+                  ),
                   const Divider(),
                   // Cuadre del libro (D19): las aportaciones entre libros
                   // cambian el patrimonio sin pasar por el resultado.
                   _Renglon('Patrimonio inicial', balance.patrimonioInicial),
-                  _Renglon('+ Resultado (ingresos − gastos)', balance.resultadoAcumulado),
+                  _Renglon(
+                    '+ Resultado (ingresos − gastos)',
+                    balance.resultadoAcumulado,
+                  ),
                   if (balance.ajustes != 0)
                     _Renglon('+ Ajustes de conciliación', balance.ajustes),
                   if (balance.aportacionesRecibidas != 0)
@@ -138,7 +147,9 @@ class _CuentasState extends ConsumerState<_Cuentas> {
                   const SizedBox(height: 8),
                   Semaforo(
                     key: const ValueKey('cuentas-cuadre'),
-                    estado: balance.cuadra ? EstadoSemaforo.verde : EstadoSemaforo.rojo,
+                    estado: balance.cuadra
+                        ? EstadoSemaforo.verde
+                        : EstadoSemaforo.rojo,
                     etiqueta: balance.cuadra ? 'Cuadra' : 'Descuadre',
                   ),
                 ],
@@ -152,15 +163,23 @@ class _CuentasState extends ConsumerState<_Cuentas> {
                 value: _periodo,
                 underline: const SizedBox.shrink(),
                 items: const [
-                  DropdownMenuItem(value: TipoPeriodo.semana, child: Text('Semana')),
-                  DropdownMenuItem(value: TipoPeriodo.quincena, child: Text('Quincena')),
+                  DropdownMenuItem(
+                    value: TipoPeriodo.semana,
+                    child: Text('Semana'),
+                  ),
+                  DropdownMenuItem(
+                    value: TipoPeriodo.quincena,
+                    child: Text('Quincena'),
+                  ),
                   DropdownMenuItem(value: TipoPeriodo.mes, child: Text('Mes')),
                 ],
                 onChanged: (v) => setState(() => _periodo = v!),
               ),
               child: Column(
                 children: [
-                  Text('${textoFecha(periodo.inicio)} a ${textoFecha(periodo.fin)}'),
+                  Text(
+                    '${textoFecha(periodo.inicio)} a ${textoFecha(periodo.fin)}',
+                  ),
                   _Renglon('Ingresos', resultados.ingresos),
                   _Renglon('Gastos', resultados.gastos),
                   _Renglon('Gasto financiero', resultados.gastoFinanciero),
@@ -200,7 +219,12 @@ class _Renglon extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 2),
-    child: Row(children: [Expanded(child: Text(etiqueta)), Monto(centavos)]),
+    child: Row(
+      children: [
+        Expanded(child: Text(etiqueta)),
+        Monto(centavos),
+      ],
+    ),
   );
 }
 
@@ -225,16 +249,28 @@ class _DetalleCuenta extends ConsumerWidget {
       for (final m in movimientosDelLibro(c))
         if (m.cuentaOrigenId == x.id || m.cuentaDestinoId == x.id) m,
     ];
-    final tieneApertura = movimientos.any((m) => m.tipo == TipoMovimiento.apertura);
-    final conciliable = x.clase == ClaseCuenta.activo || x.clase == ClaseCuenta.pasivo;
+    final tieneApertura = movimientos.any(
+      (m) => m.tipo == TipoMovimiento.apertura,
+    );
+    final conciliable =
+        x.clase == ClaseCuenta.activo || x.clase == ClaseCuenta.pasivo;
     return ListView(
       key: const ValueKey('cuentas-detalle'),
       padding: const EdgeInsets.all(16),
       children: [
         Row(
           children: [
-            Expanded(child: Text(x.nombre, style: Theme.of(context).textTheme.titleMedium)),
-            IconButton(tooltip: 'Cerrar detalle', onPressed: alCerrar, icon: const Icon(Icons.close)),
+            Expanded(
+              child: Text(
+                x.nombre,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+            IconButton(
+              tooltip: 'Cerrar detalle',
+              onPressed: alCerrar,
+              icon: const Icon(Icons.close),
+            ),
           ],
         ),
         Text('${nombreTipoCuenta(x.tipo)} · ${x.estado.name}'),
@@ -244,7 +280,9 @@ class _DetalleCuenta extends ConsumerWidget {
           spacing: 8,
           runSpacing: 8,
           children: [
-            if (c.puedeEscribir && conciliable && x.estado == EstadoCuenta.activa)
+            if (c.puedeEscribir &&
+                conciliable &&
+                x.estado == EstadoCuenta.activa)
               OutlinedButton(
                 key: const ValueKey('cuentas-conciliar'),
                 onPressed: () => showDialog<void>(
@@ -275,11 +313,16 @@ class _DetalleCuenta extends ConsumerWidget {
                 },
                 child: const Text('Saldo inicial'),
               ),
-            if (c.puedeAdministrar && x.estado == EstadoCuenta.activa && conciliable)
+            if (c.puedeAdministrar &&
+                x.estado == EstadoCuenta.activa &&
+                conciliable)
               OutlinedButton(
                 onPressed: () => intentar(
                   context,
-                  () => servicio.cambiarEstadoCuenta(x.id, EstadoCuenta.congelada),
+                  () => servicio.cambiarEstadoCuenta(
+                    x.id,
+                    EstadoCuenta.congelada,
+                  ),
                 ),
                 child: const Text('Congelar'),
               ),
@@ -301,19 +344,24 @@ class _DetalleCuenta extends ConsumerWidget {
                 key: const ValueKey('cuentas-cerrar'),
                 onPressed: () => intentar(
                   context,
-                  () => servicio.cambiarEstadoCuenta(x.id, EstadoCuenta.cerrada),
+                  () =>
+                      servicio.cambiarEstadoCuenta(x.id, EstadoCuenta.cerrada),
                 ),
                 child: const Text('Cerrar'),
               ),
               OutlinedButton(
                 onPressed: () => intentar(
                   context,
-                  () => servicio.cambiarEstadoCuenta(x.id, EstadoCuenta.archivada),
+                  () => servicio.cambiarEstadoCuenta(
+                    x.id,
+                    EstadoCuenta.archivada,
+                  ),
                 ),
                 child: const Text('Archivar'),
               ),
             ],
-            if (c.puedeAdministrar && movimientos.isEmpty &&
+            if (c.puedeAdministrar &&
+                movimientos.isEmpty &&
                 x.tipo != TipoCuenta.ajustes &&
                 x.tipo != TipoCuenta.apertura &&
                 x.tipo != TipoCuenta.porClasificar)
@@ -327,7 +375,10 @@ class _DetalleCuenta extends ConsumerWidget {
                         textoAccion: 'Eliminar',
                       ) &&
                       context.mounted) {
-                    await intentar(context, () => servicio.eliminarCuenta(x.id));
+                    await intentar(
+                      context,
+                      () => servicio.eliminarCuenta(x.id),
+                    );
                   }
                 },
                 child: const Text('Eliminar'),
@@ -336,7 +387,8 @@ class _DetalleCuenta extends ConsumerWidget {
         ),
         const SizedBox(height: 12),
         const EtiquetaPanel('Movimientos'),
-        for (final m in movimientos.take(30)) FilaMovimiento(movimiento: m, contexto: c),
+        for (final m in movimientos.take(30))
+          FilaMovimiento(movimiento: m, contexto: c),
         if (movimientos.isEmpty) const Text('Sin movimientos.'),
       ],
     );
@@ -368,7 +420,9 @@ class _DialogoConciliarState extends ConsumerState<_DialogoConciliar> {
   @override
   Widget build(BuildContext context) {
     final c = widget.contexto;
-    final calculado = c.datos.vista(c.libroId).saldo(widget.cuenta.id, hasta: c.hoy);
+    final calculado = c.datos
+        .vista(c.libroId)
+        .saldo(widget.cuenta.id, hasta: c.hoy);
     final declarado = centavosDeTexto(_saldo.text);
     final diferencia = declarado == null ? null : declarado - calculado;
     return AlertDialog(
@@ -406,7 +460,10 @@ class _DialogoConciliarState extends ConsumerState<_DialogoConciliar> {
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancelar'),
+        ),
         FilledButton(
           key: const ValueKey('conciliar-guardar'),
           onPressed: () async {
@@ -416,12 +473,14 @@ class _DialogoConciliarState extends ConsumerState<_DialogoConciliar> {
             final navegador = Navigator.of(context);
             if (await intentar(
               context,
-              () => ref.read(servicioFinanzasProvider).conciliar(
-                cuentaId: widget.cuenta.id,
-                saldoDeclarado: saldo,
-                fecha: c.hoy,
-                motivo: _motivo.text,
-              ),
+              () => ref
+                  .read(servicioFinanzasProvider)
+                  .conciliar(
+                    cuentaId: widget.cuenta.id,
+                    saldoDeclarado: saldo,
+                    fecha: c.hoy,
+                    motivo: _motivo.text,
+                  ),
             )) {
               navegador.pop();
             }
@@ -470,7 +529,8 @@ class _DialogoCuentaState extends ConsumerState<DialogoCuenta> {
             key: const ValueKey('cuenta-nombre'),
             controller: _nombre,
             decoration: const InputDecoration(labelText: 'Nombre'),
-            validator: (v) => (v ?? '').trim().isEmpty ? 'Escribe un nombre' : null,
+            validator: (v) =>
+                (v ?? '').trim().isEmpty ? 'Escribe un nombre' : null,
           ),
           DropdownButtonFormField<TipoCuenta>(
             key: const ValueKey('cuenta-tipo'),
@@ -494,18 +554,26 @@ class _DialogoCuentaState extends ConsumerState<DialogoCuenta> {
             CampoMonto(
               key: const ValueKey('cuenta-saldo'),
               controlador: _saldo,
-              etiqueta: _tipo == TipoCuenta.tarjeta || _tipo == TipoCuenta.prestamo
+              etiqueta:
+                  _tipo == TipoCuenta.tarjeta || _tipo == TipoCuenta.prestamo
                   ? 'Lo que debes hoy (opcional)'
                   : 'Saldo de hoy (opcional)',
               obligatorio: false,
             ),
           if (_tipo == TipoCuenta.tarjeta)
-            CampoMonto(controlador: _limite, etiqueta: 'Límite (opcional)', obligatorio: false),
+            CampoMonto(
+              controlador: _limite,
+              etiqueta: 'Límite (opcional)',
+              obligatorio: false,
+            ),
         ],
       ),
     ),
     actions: [
-      TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+      TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: const Text('Cancelar'),
+      ),
       FilledButton(
         key: const ValueKey('cuenta-guardar'),
         onPressed: () async {
@@ -514,14 +582,16 @@ class _DialogoCuentaState extends ConsumerState<DialogoCuenta> {
           final c = widget.contexto;
           if (await intentar(
             context,
-            () => ref.read(servicioFinanzasProvider).crearCuenta(
-              libroId: c.libroId,
-              nombre: _nombre.text,
-              tipo: _tipo,
-              saldoInicial: centavosDeTexto(_saldo.text) ?? 0,
-              fechaSaldo: c.hoy,
-              limiteCentavos: centavosDeTexto(_limite.text),
-            ),
+            () => ref
+                .read(servicioFinanzasProvider)
+                .crearCuenta(
+                  libroId: c.libroId,
+                  nombre: _nombre.text,
+                  tipo: _tipo,
+                  saldoInicial: centavosDeTexto(_saldo.text) ?? 0,
+                  fechaSaldo: c.hoy,
+                  limiteCentavos: centavosDeTexto(_limite.text),
+                ),
           )) {
             navegador.pop();
           }

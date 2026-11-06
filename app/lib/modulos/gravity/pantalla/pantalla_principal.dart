@@ -211,6 +211,15 @@ class _Encabezado extends ConsumerWidget {
     final v = ValoresDiseno.de(context);
     final ahora = ref.watch(horaActualProvider);
     final enLinea = ref.watch(resumenGravityProvider.select((r) => r.enLinea));
+    // Plataforma entrega la conectividad real (conectividadProvider); si el
+    // resumen dice que no hay conexión, eso manda.
+    final real = ref.watch(conectividadProvider);
+    final conexion = enLinea
+        ? real
+        : EstadoConectividad(
+            EstadoConexion.sinConexion,
+            pendientes: real.pendientes,
+          );
     final privado = ref.watch(modoPrivadoProvider);
     return Wrap(
       alignment: WrapAlignment.spaceBetween,
@@ -254,42 +263,11 @@ class _Encabezado extends ConsumerWidget {
           spacing: v.espacio * 1.5,
           runSpacing: v.espacio,
           children: [
-            _IndicadorConexion(enLinea: enLinea),
+            IndicadorConexionConectado(alternativo: conexion),
             _BotonModoPrivado(activo: privado),
           ],
         ),
       ],
-    );
-  }
-}
-
-class _IndicadorConexion extends StatelessWidget {
-  const _IndicadorConexion({required this.enLinea});
-
-  final bool enLinea;
-
-  @override
-  Widget build(BuildContext context) {
-    final v = ValoresDiseno.de(context);
-    final texto = enLinea ? 'En línea' : 'Sin conexión';
-    return Semantics(
-      label: 'Estado: $texto',
-      excludeSemantics: true,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: enLinea ? v.exito : v.alerta,
-            ),
-          ),
-          SizedBox(width: v.espacio),
-          Text(texto, style: v.lectura(tamano: 13, color: v.textoTenue)),
-        ],
-      ),
     );
   }
 }

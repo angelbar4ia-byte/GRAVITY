@@ -67,18 +67,18 @@ void main() {
     final (contenedor, controlador) = await abrir();
     expect(contenedor.read(controladorBloqueoProvider).bloqueado, isTrue);
     expect(
-      controlador.desbloquearConPin('0000'),
+      await controlador.desbloquearConPin('0000'),
       ResultadoBloqueo.pinIncorrecto,
     );
     expect(contenedor.read(controladorBloqueoProvider).bloqueado, isTrue);
-    expect(controlador.desbloquearConPin('246813'), ResultadoBloqueo.abierto);
+    expect(await controlador.desbloquearConPin('246813'), ResultadoBloqueo.abierto);
     expect(contenedor.read(controladorBloqueoProvider).bloqueado, isFalse);
   });
 
   test('tras 1 minuto en segundo plano vuelve a bloquear; antes, no', () async {
     guardarBloqueo();
     final (contenedor, controlador) = await abrir();
-    controlador.desbloquearConPin('246813');
+    await controlador.desbloquearConPin('246813');
 
     controlador.alIrASegundoPlano();
     ahora = ahora.add(const Duration(seconds: 59));
@@ -94,7 +94,7 @@ void main() {
   test('el tiempo es configurable', () async {
     guardarBloqueo();
     final (contenedor, controlador) = await abrir();
-    controlador.desbloquearConPin('246813');
+    await controlador.desbloquearConPin('246813');
     await controlador.fijarTiempo(const Duration(minutes: 5));
     controlador.alIrASegundoPlano();
     ahora = ahora.add(const Duration(minutes: 2));
@@ -110,13 +110,13 @@ void main() {
     guardarBloqueo();
     var (_, controlador) = await abrir();
     for (var i = 0; i < 5; i++) {
-      controlador.desbloquearConPin('0000');
+      await controlador.desbloquearConPin('0000');
     }
-    expect(controlador.desbloquearConPin('246813'), ResultadoBloqueo.bloqueado);
+    expect(await controlador.desbloquearConPin('246813'), ResultadoBloqueo.bloqueado);
     (_, controlador) = await abrir();
-    expect(controlador.desbloquearConPin('246813'), ResultadoBloqueo.bloqueado);
+    expect(await controlador.desbloquearConPin('246813'), ResultadoBloqueo.bloqueado);
     ahora = ahora.add(const Duration(seconds: 30));
-    expect(controlador.desbloquearConPin('246813'), ResultadoBloqueo.abierto);
+    expect(await controlador.desbloquearConPin('246813'), ResultadoBloqueo.abierto);
   });
 
   test('huella: solo si la persona la activó (teléfono personal)', () async {

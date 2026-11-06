@@ -9,7 +9,10 @@ import 'repositorio.dart';
 
 abstract interface class FuenteTablas {
   /// Todas las filas visibles de [tabla] (la RLS filtra).
-  Future<List<Map<String, dynamic>>> leer(String tabla, {String columnas = '*'});
+  Future<List<Map<String, dynamic>>> leer(
+    String tabla, {
+    String columnas = '*',
+  });
 
   /// Inserta o actualiza [filas] (upsert por [conflicto]). Con
   /// [ignorarDuplicados], lo que ya existe no se toca (solo agregar).
@@ -62,8 +65,9 @@ class FuenteTablasSupabase implements FuenteTablas {
 
   static String _mensaje(PostgrestException e) => switch (e.code) {
     '42501' => 'No tienes permiso para hacer eso en este libro.',
-    '23503' => 'Falta un dato del que depende (quizá aún no sube): '
-        '${e.message}',
+    '23503' =>
+      'Falta un dato del que depende (quizá aún no sube): '
+          '${e.message}',
     '23505' => 'Ya existe: ${e.message}',
     '55000' => e.message,
     _ => e.message,
@@ -200,11 +204,14 @@ class FuenteTablasEnMemoria implements FuenteTablas {
   }
 
   @override
-  Future<void> borrar(String tabla, {required Map<String, Object?> donde}) async {
+  Future<void> borrar(
+    String tabla, {
+    required Map<String, Object?> donde,
+  }) async {
     _senal();
-    this.tabla(tabla).removeWhere(
-      (f) => donde.entries.every((e) => f[e.key] == e.value),
-    );
+    this
+        .tabla(tabla)
+        .removeWhere((f) => donde.entries.every((e) => f[e.key] == e.value));
   }
 
   @override

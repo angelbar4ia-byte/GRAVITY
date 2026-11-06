@@ -122,28 +122,27 @@ void main() {
 
     test('con el sol real: a las 18:00 de octubre sigue claro y a las 18:30 '
         'ya es oscuro (en junio sigue claro a las 18:30)', () {
-      expect(
-        contenedor(_a(18, 0)).read(modoTemaProvider),
-        ThemeMode.light,
-      );
-      expect(
-        contenedor(_a(18, 30)).read(modoTemaProvider),
-        ThemeMode.dark,
-      );
+      expect(contenedor(_a(18, 0)).read(modoTemaProvider), ThemeMode.light);
+      expect(contenedor(_a(18, 30)).read(modoTemaProvider), ThemeMode.dark);
       expect(
         contenedor(DateTime(2026, 6, 21, 18, 30)).read(modoTemaProvider),
         ThemeMode.light,
       );
     });
 
-    test('el lugar cambia el resultado: a las 06:45 es de día en la CDMX '
-        'pero aún de noche en Hermosillo', () {
-      final c = contenedor(_a(6, 45));
-      expect(c.read(modoTemaProvider), ThemeMode.light);
+    test('el lugar cambia el resultado: entre el atardecer de la CDMX y el '
+        'de Cancún (más al este) es de noche en una y de día en la otra', () {
+      final fecha = DateTime(2026, 10, 20);
+      final cdmx = solDelDia(fecha, lugarSolarPorId('cdmx')).atardecerMin;
+      final cancun = solDelDia(fecha, lugarSolarPorId('cancun')).atardecerMin;
+      expect(cancun, greaterThan(cdmx));
+      final medio = (cdmx + cancun) ~/ 2;
+      final c = contenedor(_a(medio ~/ 60, medio % 60));
+      expect(c.read(modoTemaProvider), ThemeMode.dark);
       c
           .read(preferenciaClaroOscuroProvider.notifier)
-          .cambiarLugar(lugarSolarPorId('hermosillo'));
-      expect(c.read(modoTemaProvider), ThemeMode.dark);
+          .cambiarLugar(lugarSolarPorId('cancun'));
+      expect(c.read(modoTemaProvider), ThemeMode.light);
     });
 
     test('editar el horario cambia el resultado al instante', () {
@@ -186,6 +185,7 @@ void main() {
     contenedorDe(tester, find.byType(SizedBox))
         .read(preferenciaClaroOscuroProvider.notifier)
         .cambiarModo(ModoClaroOscuro.automaticoPorHora);
+    await tester.pump();
     await tester.pump(duracionCambioTema);
     expect(brillo, Brightness.light);
 

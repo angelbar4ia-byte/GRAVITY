@@ -475,7 +475,8 @@ class RepositorioFinanzasSupabase implements RepositorioFinanzas {
         personas: (guardada['personas'] as Map? ?? const {})
             .cast<String, String>(),
         permisosServidor: {
-          for (final e in (guardada['permisos_servidor'] as Map? ?? const {}).entries)
+          for (final e
+              in (guardada['permisos_servidor'] as Map? ?? const {}).entries)
             '${e.key}': PermisoServidor.deJson(e.value as Map),
         },
         desdeCopia: true,
@@ -604,7 +605,11 @@ class RepositorioFinanzasSupabase implements RepositorioFinanzas {
     _publicar(carga.copiar(datos: cambio(carga.datos)));
   }
 
-  static List<T> _reemplazar<T>(List<T> lista, T nuevo, bool Function(T) mismo) {
+  static List<T> _reemplazar<T>(
+    List<T> lista,
+    T nuevo,
+    bool Function(T) mismo,
+  ) {
     final i = lista.indexWhere(mismo);
     if (i < 0) return [...lista, nuevo];
     return [...lista]..[i] = nuevo;
@@ -721,14 +726,18 @@ class RepositorioFinanzasSupabase implements RepositorioFinanzas {
       filaSobre(sobre, hogarId: hogarId),
     ]);
     _local(
-      (d) => d.copiar(sobres: _reemplazar(d.sobres, sobre, (s) => s.id == sobre.id)),
+      (d) => d.copiar(
+        sobres: _reemplazar(d.sobres, sobre, (s) => s.id == sobre.id),
+      ),
     );
   }
 
   @override
   Future<void> guardarMsi(Msi msi) async {
     await fuente.guardar(TablasFinanzas.msi, [filaMsi(msi, hogarId: hogarId)]);
-    _local((d) => d.copiar(msi: _reemplazar(d.msi, msi, (x) => x.id == msi.id)));
+    _local(
+      (d) => d.copiar(msi: _reemplazar(d.msi, msi, (x) => x.id == msi.id)),
+    );
   }
 
   @override
@@ -749,7 +758,9 @@ class RepositorioFinanzasSupabase implements RepositorioFinanzas {
       filaBolsa(bolsa, hogarId: hogarId),
     ]);
     _local(
-      (d) => d.copiar(bolsas: _reemplazar(d.bolsas, bolsa, (x) => x.id == bolsa.id)),
+      (d) => d.copiar(
+        bolsas: _reemplazar(d.bolsas, bolsa, (x) => x.id == bolsa.id),
+      ),
     );
   }
 
@@ -787,7 +798,9 @@ class RepositorioFinanzasSupabase implements RepositorioFinanzas {
       filaDeuda(deuda, hogarId: hogarId),
     ]);
     _local(
-      (d) => d.copiar(deudas: _reemplazar(d.deudas, deuda, (x) => x.id == deuda.id)),
+      (d) => d.copiar(
+        deudas: _reemplazar(d.deudas, deuda, (x) => x.id == deuda.id),
+      ),
     );
   }
 
@@ -798,7 +811,9 @@ class RepositorioFinanzasSupabase implements RepositorioFinanzas {
       // de la fecha, así precargar dos veces no choca.
       for (final d in dias)
         d.id == null
-            ? d.copiar(id: idEstable(ClavesId.diaInhabil(hogarId, fechaIso(d.fecha))))
+            ? d.copiar(
+                id: idEstable(ClavesId.diaInhabil(hogarId, fechaIso(d.fecha))),
+              )
             : d,
     ];
     await fuente.guardar(TablasFinanzas.diasInhabiles, [
@@ -889,7 +904,8 @@ class RepositorioFinanzasSupabase implements RepositorioFinanzas {
     // Quien ya estuvo y se salió vuelve con una fila nueva (el único vigente es
     // `(libro, persona)`); la primera vez, un id estable para que reintentar no
     // duplique.
-    final yaEstuvo = libro?.miembros.any((m) => m.personaId == personaId) ?? false;
+    final yaEstuvo =
+        libro?.miembros.any((m) => m.personaId == personaId) ?? false;
     final id = yaEstuvo
         ? const Uuid().v4()
         : idEstable(ClavesId.miembro(libroId, personaId, 'miembro'));

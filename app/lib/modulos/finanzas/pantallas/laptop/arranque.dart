@@ -64,12 +64,14 @@ class _AsistenteState extends ConsumerState<_Asistente> {
           children: [for (final r in renglones) Text('• $r')],
         );
 
-  Widget _boton(String texto, Widget Function() dialogo, {Key? key}) => OutlinedButton.icon(
-    key: key,
-    onPressed: () => showDialog<void>(context: context, builder: (_) => dialogo()),
-    icon: const Icon(Icons.add),
-    label: Text(texto),
-  );
+  Widget _boton(String texto, Widget Function() dialogo, {Key? key}) =>
+      OutlinedButton.icon(
+        key: key,
+        onPressed: () =>
+            showDialog<void>(context: context, builder: (_) => dialogo()),
+        icon: const Icon(Icons.add),
+        label: Text(texto),
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -80,7 +82,9 @@ class _AsistenteState extends ConsumerState<_Asistente> {
     final parametros = d.parametrosDe(c.libroId);
     if (_meta.text.isEmpty) {
       _meta.text = CampoPorcentaje.texto(parametros.metaRemanentePuntosBase);
-      _ahorro.text = CampoPorcentaje.texto(parametros.ahorroMinimoConDeudaPuntosBase);
+      _ahorro.text = CampoPorcentaje.texto(
+        parametros.ahorroMinimoConDeudaPuntosBase,
+      );
     }
     final ocultos = ref.watch(montosOcultosProvider);
     final servicio = ref.read(servicioFinanzasProvider);
@@ -107,7 +111,8 @@ class _AsistenteState extends ConsumerState<_Asistente> {
             _lista(
               [
                 for (final x in d.cuentasDe(c.libroId))
-                  if (x.clase == ClaseCuenta.activo || x.clase == ClaseCuenta.pasivo)
+                  if (x.clase == ClaseCuenta.activo ||
+                      x.clase == ClaseCuenta.pasivo)
                     '${x.nombre} (${nombreTipoCuenta(x.tipo)})',
               ],
               'Aún no hay cuentas: agrega tu efectivo, tu banco y tus tarjetas con '
@@ -126,7 +131,9 @@ class _AsistenteState extends ConsumerState<_Asistente> {
                   TextButton(
                     key: const ValueKey('arranque-importar'),
                     onPressed: () => context.go(SeccionFinanzas.importar.ruta),
-                    child: const Text('Importar las categorías de la plantilla'),
+                    child: const Text(
+                      'Importar las categorías de la plantilla',
+                    ),
                   ),
                 TextButton(
                   key: const ValueKey('arranque-libros'),
@@ -191,7 +198,10 @@ class _AsistenteState extends ConsumerState<_Asistente> {
             Wrap(
               spacing: 8,
               children: [
-                _boton('Agregar compromiso', () => DialogoCompromiso(contexto: c)),
+                _boton(
+                  'Agregar compromiso',
+                  () => DialogoCompromiso(contexto: c),
+                ),
                 _boton('Agregar deuda', () => DialogoDeuda(contexto: c)),
               ],
             ),
@@ -277,7 +287,9 @@ class _AsistenteState extends ConsumerState<_Asistente> {
                       key: ValueKey('arranque-sobre-${s.id}'),
                       controlador: _montos.putIfAbsent(
                         s.id,
-                        () => TextEditingController(text: textoDeCentavos(s.montoSemanal)),
+                        () => TextEditingController(
+                          text: textoDeCentavos(s.montoSemanal),
+                        ),
                       ),
                       etiqueta: 'Por semana',
                     ),
@@ -297,19 +309,21 @@ class _AsistenteState extends ConsumerState<_Asistente> {
                       // escrito (o en partes iguales): el usuario ajusta.
                       final actuales = [
                         for (final s in sobres)
-                          centavosDeTexto(_montos[s.id]?.text ?? '') ?? s.montoSemanal,
+                          centavosDeTexto(_montos[s.id]?.text ?? '') ??
+                              s.montoSemanal,
                       ];
                       final total = actuales.fold(0, (t, x) => t + x);
                       final pesos = total == 0
                           ? List.filled(sobres.length, 1)
                           : actuales;
-                      final partes = repartirConMayorResto(
-                        [for (final p in pesos) p * paraSobres],
-                        pesos.fold(0, (t, x) => t + x),
-                      );
+                      final partes = repartirConMayorResto([
+                        for (final p in pesos) p * paraSobres,
+                      ], pesos.fold(0, (t, x) => t + x));
                       setState(() {
                         for (var i = 0; i < sobres.length; i++) {
-                          _montos[sobres[i].id]!.text = textoDeCentavos(partes[i]);
+                          _montos[sobres[i].id]!.text = textoDeCentavos(
+                            partes[i],
+                          );
                         }
                       });
                     },
@@ -320,7 +334,9 @@ class _AsistenteState extends ConsumerState<_Asistente> {
                     key: const ValueKey('arranque-guardar-sobres'),
                     onPressed: () => intentar(context, () async {
                       for (final s in sobres) {
-                        final monto = centavosDeTexto(_montos[s.id]?.text ?? '');
+                        final monto = centavosDeTexto(
+                          _montos[s.id]?.text ?? '',
+                        );
                         if (monto != null && monto != s.montoSemanal) {
                           await servicio.guardarSobre(s.conMonto(monto));
                         }
@@ -342,7 +358,9 @@ class _AsistenteState extends ConsumerState<_Asistente> {
           physics: const NeverScrollableScrollPhysics(),
           currentStep: _paso,
           onStepTapped: (i) => setState(() => _paso = i),
-          onStepContinue: _paso < pasos.length - 1 ? () => setState(() => _paso++) : null,
+          onStepContinue: _paso < pasos.length - 1
+              ? () => setState(() => _paso++)
+              : null,
           onStepCancel: _paso > 0 ? () => setState(() => _paso--) : null,
           controlsBuilder: (context, detalles) => Padding(
             padding: const EdgeInsets.only(top: 12),
@@ -357,7 +375,10 @@ class _AsistenteState extends ConsumerState<_Asistente> {
                     child: const Text('Siguiente'),
                   ),
                 if (detalles.onStepCancel != null)
-                  TextButton(onPressed: detalles.onStepCancel, child: const Text('Atrás')),
+                  TextButton(
+                    onPressed: detalles.onStepCancel,
+                    child: const Text('Atrás'),
+                  ),
                 if (detalles.onStepContinue != null)
                   TextButton(
                     onPressed: detalles.onStepContinue,
@@ -386,9 +407,18 @@ class _AsistenteState extends ConsumerState<_Asistente> {
               GadgetCascada(
                 montosOcultos: ocultos,
                 escalones: [
-                  EscalonCascada(etiqueta: 'Ingreso', planeadoCentavos: plan.ingreso),
-                  EscalonCascada(etiqueta: '− Presupuesto', planeadoCentavos: plan.presupuesto),
-                  EscalonCascada(etiqueta: '− Deuda', planeadoCentavos: plan.deudaPlaneada),
+                  EscalonCascada(
+                    etiqueta: 'Ingreso',
+                    planeadoCentavos: plan.ingreso,
+                  ),
+                  EscalonCascada(
+                    etiqueta: '− Presupuesto',
+                    planeadoCentavos: plan.presupuesto,
+                  ),
+                  EscalonCascada(
+                    etiqueta: '− Deuda',
+                    planeadoCentavos: plan.deudaPlaneada,
+                  ),
                   EscalonCascada(
                     etiqueta: '= Remanente',
                     planeadoCentavos: plan.remanente,
@@ -420,7 +450,10 @@ class _AsistenteState extends ConsumerState<_Asistente> {
                             : () async {
                                 if (await intentar(
                                       context,
-                                      () => servicio.activarSemana(c.libroId, semana),
+                                      () => servicio.activarSemana(
+                                        c.libroId,
+                                        semana,
+                                      ),
                                     ) &&
                                     context.mounted) {
                                   context.go(SeccionFinanzas.semana.ruta);

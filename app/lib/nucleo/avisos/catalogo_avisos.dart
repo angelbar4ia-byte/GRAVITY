@@ -101,7 +101,8 @@ const Map<String, SeveridadAviso> severidadDeAviso = {
 const Set<String> avisosFijos = {'resumen_lunes', 'recordatorio_cierre'};
 
 /// Título para [tipo]; el genérico si no está en el catálogo.
-String tituloDeAviso(String? tipo) => titulosDeAviso[tipo] ?? textoAvisoGenerico;
+String tituloDeAviso(String? tipo) =>
+    titulosDeAviso[tipo] ?? textoAvisoGenerico;
 
 SeveridadAviso severidadDe(String? tipo) =>
     severidadDeAviso[tipo] ?? SeveridadAviso.informativa;

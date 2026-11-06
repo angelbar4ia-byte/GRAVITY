@@ -22,7 +22,9 @@ final baseLocalProvider = Provider<BaseLocal>(
 
 /// Enviador de la cola. Sin servidor (modo demostración) los registros se
 /// quedan en el dispositivo.
-final enviadorProvider = Provider<Enviador>((ref) => const EnviadorSinServidor());
+final enviadorProvider = Provider<Enviador>(
+  (ref) => const EnviadorSinServidor(),
+);
 
 /// Persona que registra ahora: en la tablet, la que entró con su PIN; si no,
 /// la de la sesión (revisión de la Fase 0, I4).

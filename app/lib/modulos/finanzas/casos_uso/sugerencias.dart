@@ -47,18 +47,18 @@ List<Cuenta> cuentasParaPagar(DatosFinanzas d, String libroId) {
 }
 
 /// Cuentas del libro donde entra dinero (activos líquidos y ahorro).
-List<Cuenta> cuentasParaRecibir(DatosFinanzas d, String libroId) => d
-    .cuentasDe(libroId)
-    .where(
-      (c) =>
-          c.estado == EstadoCuenta.activa &&
-          c.clase == ClaseCuenta.activo,
-    )
-    .toList()
-  ..sort((a, b) {
-    final t = (a.tipo.liquida ? 0 : 1).compareTo(b.tipo.liquida ? 0 : 1);
-    return t != 0 ? t : a.nombre.compareTo(b.nombre);
-  });
+List<Cuenta> cuentasParaRecibir(DatosFinanzas d, String libroId) =>
+    d
+        .cuentasDe(libroId)
+        .where(
+          (c) =>
+              c.estado == EstadoCuenta.activa && c.clase == ClaseCuenta.activo,
+        )
+        .toList()
+      ..sort((a, b) {
+        final t = (a.tipo.liquida ? 0 : 1).compareTo(b.tipo.liquida ? 0 : 1);
+        return t != 0 ? t : a.nombre.compareTo(b.nombre);
+      });
 
 SugerenciasGasto sugerenciasDeGasto(
   DatosFinanzas d, {
@@ -69,14 +69,15 @@ SugerenciasGasto sugerenciasDeGasto(
   final cuentas = cuentasParaPagar(d, libroId);
   final idsCuentas = {for (final c in cuentas) c.id};
   final desde = hoy.sumarDias(-60);
-  final gastos = d.movimientos
-      .where(
-        (m) =>
-            m.tipo == TipoMovimiento.gasto &&
-            idsCuentas.contains(m.cuentaOrigenId),
-      )
-      .toList()
-    ..sort((a, b) => b.registradoEn.compareTo(a.registradoEn));
+  final gastos =
+      d.movimientos
+          .where(
+            (m) =>
+                m.tipo == TipoMovimiento.gasto &&
+                idsCuentas.contains(m.cuentaOrigenId),
+          )
+          .toList()
+        ..sort((a, b) => b.registradoEn.compareTo(a.registradoEn));
   final mios = gastos.where((m) => m.registradoPor == personaId);
   final ultimo = mios.firstOrNull ?? gastos.firstOrNull;
   final usables = {
@@ -95,8 +96,8 @@ SugerenciasGasto sugerenciasDeGasto(
       final c = cuenta[b]!.compareTo(cuenta[a]!);
       return c != 0 ? c : usables[a]!.nombre.compareTo(usables[b]!.nombre);
     });
-  final ultimaCategoria = ultimo?.categoriaId != null &&
-          usables.containsKey(ultimo!.categoriaId)
+  final ultimaCategoria =
+      ultimo?.categoriaId != null && usables.containsKey(ultimo!.categoriaId)
       ? ultimo.categoriaId
       : null;
   final elegidas = <String>[

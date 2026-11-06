@@ -289,7 +289,9 @@ class BandejaDeSalida {
     } finally {
       if (pide) {
         final quedan = (_urgentes[personaId] ?? 1) - 1;
-        quedan <= 0 ? _urgentes.remove(personaId) : _urgentes[personaId] = quedan;
+        quedan <= 0
+            ? _urgentes.remove(personaId)
+            : _urgentes[personaId] = quedan;
       }
     }
     return () {
@@ -348,10 +350,8 @@ class BandejaDeSalida {
     return permisos;
   }
 
-  Future<void> _guardar(PermisoDeSubida permiso) => _almacen.escribir(
-    clave(permiso.personaId),
-    jsonEncode(permiso.aJson()),
-  );
+  Future<void> _guardar(PermisoDeSubida permiso) =>
+      _almacen.escribir(clave(permiso.personaId), jsonEncode(permiso.aJson()));
 
   /// Borra el permiso (con su credencial) de [personaId].
   Future<void> borrar(String personaId) => _almacen.borrar(clave(personaId));
@@ -364,30 +364,30 @@ class BandejaDeSalida {
   ///
   /// Si ya había un permiso en espera que no ha caducado se conserva su
   /// vencimiento (los 7 días cuentan desde lo más viejo que sigue pendiente).
-  Future<void> delegar(
-    String personaId,
-    String credencial,
-    LlavePin llave,
-  ) => conCandado(personaId, () async {
-    final ahora = _reloj();
-    final anterior = await leer(personaId);
-    final conserva =
-        anterior != null &&
-        anterior.estado == EstadoPermiso.enEspera &&
-        !anterior.caducadoEn(ahora);
-    final par = SobreSellado.generar();
-    await _guardar(
-      PermisoDeSubida(
-        personaId: personaId,
-        estado: EstadoPermiso.enEspera,
-        credencial: credencial,
-        clavePublica: par.publica,
-        clavePrivadaCifrada: CifradoPin.cifrar(llave, base64Encode(par.privada)),
-        creadoEn: conserva ? anterior.creadoEn : ahora,
-        vence: conserva ? anterior.vence : ahora.add(vigencia),
-      ),
-    );
-  });
+  Future<void> delegar(String personaId, String credencial, LlavePin llave) =>
+      conCandado(personaId, () async {
+        final ahora = _reloj();
+        final anterior = await leer(personaId);
+        final conserva =
+            anterior != null &&
+            anterior.estado == EstadoPermiso.enEspera &&
+            !anterior.caducadoEn(ahora);
+        final par = SobreSellado.generar();
+        await _guardar(
+          PermisoDeSubida(
+            personaId: personaId,
+            estado: EstadoPermiso.enEspera,
+            credencial: credencial,
+            clavePublica: par.publica,
+            clavePrivadaCifrada: CifradoPin.cifrar(
+              llave,
+              base64Encode(par.privada),
+            ),
+            creadoEn: conserva ? anterior.creadoEn : ahora,
+            vence: conserva ? anterior.vence : ahora.add(vigencia),
+          ),
+        );
+      });
 
   // -------------------------------------------------------- al entrar (PIN)
 
@@ -397,28 +397,31 @@ class BandejaDeSalida {
   ///
   /// Espera al candado: si la subida sin PIN está usando la credencial,
   /// termina primero.
-  Future<String?> tomarParaEntrada(String personaId, String pin) =>
-      conCandado(personaId, urgente: true, () async {
-        final permiso = await leer(personaId);
-        if (permiso == null) return null;
-        // Entrar con el PIN siempre puede tomar la credencial, aunque el permiso
-        // haya caducado: el PIN es la identidad.
-        final credencial = switch (permiso.estado) {
-          EstadoPermiso.enEspera => permiso.credencial,
-          EstadoPermiso.devuelto => await _abrirSobre(permiso, pin),
-        };
-        if (credencial == null) {
-          // Con el PIN bueno y sin poder abrirlo: está dañado, no sirve.
-          if (permiso.estado == EstadoPermiso.devuelto &&
-              await CifradoPin.descifrarAsync(pin, permiso.clavePrivadaCifrada) !=
-                  null) {
-            await borrar(personaId);
-          }
-          return null;
+  Future<String?> tomarParaEntrada(String personaId, String pin) => conCandado(
+    personaId,
+    urgente: true,
+    () async {
+      final permiso = await leer(personaId);
+      if (permiso == null) return null;
+      // Entrar con el PIN siempre puede tomar la credencial, aunque el permiso
+      // haya caducado: el PIN es la identidad.
+      final credencial = switch (permiso.estado) {
+        EstadoPermiso.enEspera => permiso.credencial,
+        EstadoPermiso.devuelto => await _abrirSobre(permiso, pin),
+      };
+      if (credencial == null) {
+        // Con el PIN bueno y sin poder abrirlo: está dañado, no sirve.
+        if (permiso.estado == EstadoPermiso.devuelto &&
+            await CifradoPin.descifrarAsync(pin, permiso.clavePrivadaCifrada) !=
+                null) {
+          await borrar(personaId);
         }
-        await borrar(personaId);
-        return credencial;
-      });
+        return null;
+      }
+      await borrar(personaId);
+      return credencial;
+    },
+  );
 
   Future<String?> _abrirSobre(PermisoDeSubida permiso, String pin) async {
     final privada = await CifradoPin.descifrarAsync(
@@ -539,12 +542,11 @@ class BandejaDeSalida {
 
 /// Cómo se abre una [SesionAparte]: lo ofrecen los servicios con servidor
 /// (`SesionesPorPersona.abrirSesionAparte`).
-typedef AbridorDeSesionAparte =
-    Future<SesionAparte> Function(
-      String personaId,
-      String credencial, {
-      required void Function(String credencial) alRenovar,
-    });
+typedef AbridorDeSesionAparte = Future<SesionAparte> Function(
+  String personaId,
+  String credencial, {
+  required void Function(String credencial) alRenovar,
+});
 
 /// Crea el [Enviador] que sube con la sesión de [sesion].
 typedef FabricaDeEnviador = Enviador Function(SesionAparte sesion);
@@ -578,7 +580,10 @@ class SalidaSinPinConSesiones implements SalidaSinPin {
           final actual = await bandeja.leer(permiso.personaId);
           if (actual?.estado == EstadoPermiso.enEspera &&
               actual!.credencial != null) {
-            await bandeja.sellarYDevolver(permiso.personaId, actual.credencial!);
+            await bandeja.sellarYDevolver(
+              permiso.personaId,
+              actual.credencial!,
+            );
           }
         });
       }

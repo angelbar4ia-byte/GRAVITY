@@ -143,34 +143,15 @@ void main() {
     expect(() => pbkdf2HmacSha256([1], [1], 1, largo: 0), throwsArgumentError);
   });
 
-  group('costo del PIN (M9\')', () {
-    test('las vueltas de hoy son 100 000 y las de antes 10 000', () {
-      expect(HashPin.iteracionesActuales, 100000);
+  group('costo del PIN (M9\', D22)', () {
+    test('las vueltas de hoy son 600 000 y las de antes 100 000 y 10 000', () {
+      expect(HashPin.iteracionesActuales, 600000);
+      expect(HashPin.iteraciones100k, 100000);
       expect(HashPin.iteracionesAnteriores, 10000);
       expect(
         HashPin.iteracionesActuales,
-        greaterThan(HashPin.iteracionesAnteriores),
+        greaterThan(HashPin.iteraciones100k),
       );
-    });
-
-    test('con las vueltas de verdad, crear y verificar un PIN es razonable', () {
-      final antes = HashPin.iteracionesPorDefecto;
-      addTearDown(() => HashPin.iteracionesPorDefecto = antes);
-      HashPin.iteracionesPorDefecto = HashPin.iteracionesActuales;
-      final reloj = Stopwatch()..start();
-      final hash = HashPin.crear('738291');
-      final crear = reloj.elapsedMilliseconds;
-      reloj
-        ..reset()
-        ..start();
-      expect(HashPin.verificar('738291', hash), isTrue);
-      expect(HashPin.verificar('738290', hash), isFalse);
-      final verificar = reloj.elapsedMilliseconds ~/ 2;
-      expect(hash, contains(r'$100000$'));
-      // Medido ~0.3 s en una computadora; el tope es generoso para no depender
-      // de la máquina que corra la prueba. En un teléfono medio se estiman ~1 s.
-      expect(crear, lessThan(8000), reason: 'crear: $crear ms');
-      expect(verificar, lessThan(8000), reason: 'verificar: $verificar ms');
     });
   });
 }

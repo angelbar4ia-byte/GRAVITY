@@ -185,7 +185,7 @@ void main() {
           throwsArgumentError,
         );
         await controlador.configurarPin(nuevo);
-        expect(controlador.comprobarPin(nuevo), ResultadoBloqueo.abierto);
+        expect(await controlador.comprobarPin(nuevo), ResultadoBloqueo.abierto);
       }
     });
 
@@ -197,7 +197,7 @@ void main() {
       ]) {
         final controlador = await abrir(sesionDeEjemplo(rol));
         await controlador.configurarPin(pin);
-        expect(controlador.comprobarPin(pin), ResultadoBloqueo.abierto);
+        expect(await controlador.comprobarPin(pin), ResultadoBloqueo.abierto);
       }
     });
 
@@ -210,12 +210,12 @@ void main() {
         expect(controlador.state.bloqueado, isTrue);
 
         expect(
-          controlador.desbloquearConPin(corto),
+          await controlador.desbloquearConPin(corto),
           ResultadoBloqueo.debeCambiarPin,
         );
         expect(controlador.state.bloqueado, isTrue, reason: 'sigue bloqueado');
         expect(
-          controlador.comprobarPin(corto),
+          await controlador.comprobarPin(corto),
           ResultadoBloqueo.debeCambiarPin,
         );
         expect(
@@ -234,23 +234,23 @@ void main() {
         final controlador = await abrir(dueno);
         for (var i = 0; i < 4; i++) {
           expect(
-            controlador.desbloquearConPin('0001'),
+            await controlador.desbloquearConPin('0001'),
             ResultadoBloqueo.pinIncorrecto,
           );
         }
         // El PIN corto bueno reinicia el contador.
         expect(
-          controlador.desbloquearConPin(corto),
+          await controlador.desbloquearConPin(corto),
           ResultadoBloqueo.debeCambiarPin,
         );
         for (var i = 0; i < 4; i++) {
           expect(
-            controlador.desbloquearConPin('0001'),
+            await controlador.desbloquearConPin('0001'),
             ResultadoBloqueo.pinIncorrecto,
           );
         }
         expect(
-          controlador.desbloquearConPin('0001'),
+          await controlador.desbloquearConPin('0001'),
           ResultadoBloqueo.bloqueado,
         );
       },
@@ -263,7 +263,7 @@ void main() {
         bloqueoAnterior(dueno);
         final controlador = await abrir(dueno);
         expect(
-          controlador.desbloquearConPin(corto),
+          await controlador.desbloquearConPin(corto),
           ResultadoBloqueo.debeCambiarPin,
         );
 
@@ -272,12 +272,12 @@ void main() {
           ResultadoBloqueo.abierto,
         );
         expect(controlador.state.bloqueado, isFalse);
-        expect(controlador.comprobarPin(corto), ResultadoBloqueo.pinIncorrecto);
-        expect(controlador.comprobarPin(nuevo), ResultadoBloqueo.abierto);
+        expect(await controlador.comprobarPin(corto), ResultadoBloqueo.pinIncorrecto);
+        expect(await controlador.comprobarPin(nuevo), ResultadoBloqueo.abierto);
         // Se guardó: la próxima vez que abra la app pide el nuevo.
         final otra = await abrir(dueno);
         expect(otra.state.bloqueado, isTrue);
-        expect(otra.desbloquearConPin(nuevo), ResultadoBloqueo.abierto);
+        expect(await otra.desbloquearConPin(nuevo), ResultadoBloqueo.abierto);
         // El resto de su configuración se conserva.
         expect(otra.state.configuracion!.tras, bloqueoTrasPorOmision);
       },
@@ -302,7 +302,7 @@ void main() {
         }
         // Nada cambió: el PIN de antes sigue reconocido.
         expect(
-          controlador.comprobarPin(corto),
+          await controlador.comprobarPin(corto),
           ResultadoBloqueo.debeCambiarPin,
         );
         expect(controlador.state.bloqueado, isTrue);
@@ -317,7 +317,7 @@ void main() {
           bloqueoAnterior(sesion);
           final controlador = await abrir(sesion);
           expect(
-            controlador.desbloquearConPin(corto),
+            await controlador.desbloquearConPin(corto),
             ResultadoBloqueo.abierto,
           );
         }
@@ -489,8 +489,8 @@ void main() {
           await controlador.cambiarPin(corto, nuevo),
           ResultadoRevelar.revelado,
         );
-        expect(bloqueo.comprobarPin(nuevo), ResultadoBloqueo.abierto);
-        expect(bloqueo.comprobarPin(corto), ResultadoBloqueo.pinIncorrecto);
+        expect(await bloqueo.comprobarPin(nuevo), ResultadoBloqueo.abierto);
+        expect(await bloqueo.comprobarPin(corto), ResultadoBloqueo.pinIncorrecto);
         expect(await controlador.verificar(nuevo), ResultadoRevelar.revelado);
       },
     );
@@ -678,15 +678,15 @@ void main() {
       final id = dueno.persona.id;
 
       expect(
-        nuevaApp.comprobarPin(id, corto),
+        await nuevaApp.comprobarPin(id, corto),
         ResultadoDesbloqueo.debeCambiarPin,
       );
       expect(
-        nuevaApp.desbloquearConPin(id, corto),
+        await nuevaApp.desbloquearConPin(id, corto),
         ResultadoDesbloqueo.debeCambiarPin,
       );
       expect(
-        nuevaApp.desbloquearConPin(id, corto, soloAccion: true),
+        await nuevaApp.desbloquearConPin(id, corto, soloAccion: true),
         ResultadoDesbloqueo.debeCambiarPin,
       );
       expect(
@@ -700,7 +700,7 @@ void main() {
         reason: 'no cuenta como fallo',
       );
       expect(
-        nuevaApp.desbloquearConPin(id, '0001'),
+        await nuevaApp.desbloquearConPin(id, '0001'),
         ResultadoDesbloqueo.pinIncorrecto,
       );
     });

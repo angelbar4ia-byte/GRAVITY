@@ -297,9 +297,8 @@ class ControladorMontos extends Notifier<EstadoMontos> {
     final persona = _persona;
     if (persona == null) return null;
     return switch (fuente) {
-      FuenteDePinMontos.tablet => ref
-          .read(controladorTabletProvider.notifier)
-          .esperaRestante(persona),
+      FuenteDePinMontos.tablet =>
+        ref.read(controladorTabletProvider.notifier).esperaRestante(persona),
       FuenteDePinMontos.bloqueo =>
         ref.read(controladorBloqueoProvider.notifier).esperaRestante(),
       FuenteDePinMontos.propio => _intentos.esperaRestante(persona),
@@ -344,7 +343,8 @@ class ControladorMontos extends Notifier<EstadoMontos> {
               : ResultadoRevelar.pinIncorrecto;
         }
         _intentos.anotarAcierto(persona);
-        if (pinEsCortoParaSuRol(rol, pin)) return ResultadoRevelar.debeCambiarPin;
+        if (pinEsCortoParaSuRol(rol, pin))
+          return ResultadoRevelar.debeCambiarPin;
         // M9': el hash de antes (menos vueltas) se rehace al escribir el PIN.
         if (HashPin.necesitaActualizarse(hash)) {
           unawaited(() async {

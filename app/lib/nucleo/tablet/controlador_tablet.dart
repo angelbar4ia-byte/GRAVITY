@@ -101,7 +101,8 @@ class EstadoTablet {
 
   /// `true` si la pantalla muestra el reposo de la tablet pública (modo
   /// Casa), también durante una acción personal.
-  bool get muestraModoCasa => !configuracion.esPersonal && (enModoCasa || soloAccion);
+  bool get muestraModoCasa =>
+      !configuracion.esPersonal && (enModoCasa || soloAccion);
 
   /// `true` si la tablet personal está bloqueada (nadie dentro).
   bool get bloqueada => configuracion.esPersonal && enModoCasa;
@@ -266,7 +267,8 @@ class ControladorTablet extends Notifier<EstadoTablet> {
       _serie.correr(() async {
         final usuario = _buscar(personaId);
         if (usuario == null) return ResultadoDesbloqueo.noExiste;
-        if (_intentos.bloqueado(personaId)) return ResultadoDesbloqueo.bloqueado;
+        if (_intentos.bloqueado(personaId))
+          return ResultadoDesbloqueo.bloqueado;
         if (!await HashPin.verificarAsync(pin, usuario.hashPin)) {
           return _intentos.anotarFallo(personaId) == ResultadoFallo.bloqueado
               ? ResultadoDesbloqueo.bloqueado
@@ -333,11 +335,7 @@ class ControladorTablet extends Notifier<EstadoTablet> {
     if (state.configuracion.esPersonal) {
       return entrarConPin(personaId, pin);
     }
-    final resultado = await desbloquearConPin(
-      personaId,
-      pin,
-      soloAccion: true,
-    );
+    final resultado = await desbloquearConPin(personaId, pin, soloAccion: true);
     if (resultado != ResultadoDesbloqueo.abierto) return resultado;
     return _entrada!;
   }
@@ -437,7 +435,9 @@ class ControladorTablet extends Notifier<EstadoTablet> {
 
     if (!_vigente(generacion)) {
       // Se volvió al modo Casa mientras entraba: se regresa a la cuenta Casa.
-      await _enSerie(() => _cerrarEnServidor(sesiones, usuario.personaId, llave));
+      await _enSerie(
+        () => _cerrarEnServidor(sesiones, usuario.personaId, llave),
+      );
       return ResultadoDesbloqueo.cancelado;
     }
 
@@ -450,7 +450,8 @@ class ControladorTablet extends Notifier<EstadoTablet> {
       // El rol lo dice el servidor, no lo guardado en la tablet.
       activo = usuario.copiarCon(sesion: vigente);
       await _guardarUsuarios([
-        for (final u in state.usuarios) u.personaId == activo.personaId ? activo : u,
+        for (final u in state.usuarios)
+          u.personaId == activo.personaId ? activo : u,
       ]);
       if (!_vigente(generacion)) {
         await _enSerie(
@@ -462,7 +463,9 @@ class ControladorTablet extends Notifier<EstadoTablet> {
     if (activo.rol != usuario.rol && pinEsCortoParaSuRol(activo.rol, pin)) {
       // El servidor le dio un rol que ve dinero y su PIN es corto: no entra
       // (se regresa a la cuenta Hogar) hasta que lo cambie.
-      await _enSerie(() => _cerrarEnServidor(sesiones, usuario.personaId, llave));
+      await _enSerie(
+        () => _cerrarEnServidor(sesiones, usuario.personaId, llave),
+      );
       return ResultadoDesbloqueo.debeCambiarPin;
     }
     // Lo mismo con el hash del PIN guardado (verifica sin abrir el sobre).
@@ -470,7 +473,8 @@ class ControladorTablet extends Notifier<EstadoTablet> {
       final rehecho = activo.copiarCon(hashPin: await HashPin.crearAsync(pin));
       activo = rehecho;
       await _guardarUsuarios([
-        for (final u in state.usuarios) u.personaId == rehecho.personaId ? rehecho : u,
+        for (final u in state.usuarios)
+          u.personaId == rehecho.personaId ? rehecho : u,
       ]);
     }
     try {
@@ -556,7 +560,8 @@ class ControladorTablet extends Notifier<EstadoTablet> {
     if (persona != null && llave != null && servicio is SesionesPorPersona) {
       unawaited(
         _enSerie(
-          () => _cerrarEnServidor(servicio as SesionesPorPersona, persona, llave),
+          () =>
+              _cerrarEnServidor(servicio as SesionesPorPersona, persona, llave),
         ),
       );
     }
@@ -588,10 +593,16 @@ class ControladorTablet extends Notifier<EstadoTablet> {
     // renovación): el permiso de subida viejo, si lo había, no debe pisarla al
     // entrar (B5 de la revisión de la Fase 1b). Lo que tenía por subir se
     // conserva y sube con su sesión nueva.
-    await ref.read(bandejaDeLaTabletProvider)?.alAgregarDeNuevo(usuario.personaId);
+    await ref
+        .read(bandejaDeLaTabletProvider)
+        ?.alAgregarDeNuevo(usuario.personaId);
     if (credencial != null) {
       final llave = await LlavePin.derivarAsync(pin);
-      await _repositorio.guardarCredencial(usuario.personaId, llave, credencial);
+      await _repositorio.guardarCredencial(
+        usuario.personaId,
+        llave,
+        credencial,
+      );
       llave.olvidar();
     } else {
       // Una credencial anterior ya no abre con el PIN nuevo.
@@ -605,7 +616,8 @@ class ControladorTablet extends Notifier<EstadoTablet> {
     ]);
     // En la tablet personal, el dueño o la pareja que se agrega puede entrar.
     final configuracion = state.configuracion;
-    if (configuracion.esPersonal && rolesDeTabletPersonal.contains(usuario.rol)) {
+    if (configuracion.esPersonal &&
+        rolesDeTabletPersonal.contains(usuario.rol)) {
       await _guardarConfiguracion(
         configuracion.copiarCon(
           permitidas: {...configuracion.permitidas, usuario.personaId},
@@ -728,9 +740,7 @@ class ControladorTablet extends Notifier<EstadoTablet> {
     final hashNuevo = await HashPin.crearAsync(pinNuevo);
     await _guardarUsuarios([
       for (final u in state.usuarios)
-        u.personaId == personaId
-            ? u.copiarCon(hashPin: hashNuevo)
-            : u,
+        u.personaId == personaId ? u.copiarCon(hashPin: hashNuevo) : u,
     ]);
     return ResultadoDesbloqueo.abierto;
   }

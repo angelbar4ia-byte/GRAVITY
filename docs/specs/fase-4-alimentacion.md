@@ -79,3 +79,30 @@ En `app/lib/app/pantallas_externas.dart` agregar `List<RouteBase> rutasAlimentac
 | P3 | ¿Quién marca "comprado": solo quien edita, o también un lector que va al súper? | Solo quien edita; si un familiar hace las compras se le da el permiso de escribir en Alimentación |
 | P4 | ¿Un menú por hogar o uno por persona? | Uno por hogar |
 | P5 | ¿Los platillos de ejemplo se quedan como catálogo base? | Sí, como punto de partida editable en la Fase 7; hoy son inventados |
+
+---
+
+## Respuestas del dueño (6/nov/2026) — v0.2
+
+| # | Pregunta | Respuesta |
+|---|---|---|
+| 1 | Tiempos de comida | **Cuatro**, como en el Excel (desayuno, comida, cena y colación/merienda) |
+| 2 | Qué ve el familiar | **Solo el menú de Papá**, igual que la cuidadora |
+| 3 | Quién marca "comprado" | **El dueño y su pareja** |
+| 4 | Cuántos menús | **Dos**: el **menú de Papá** (en el hogar) y el **menú de la pareja y del dueño** |
+| 5 | Perfil de Papá | Adulto de 80 años con Alzheimer. **Dieta alta en proteínas y aminoácidos. No puede comer alimentos duros; de preferencia blandos.** |
+| - | Suplementos | Se contemplan en **ambos menús** |
+
+### Reglas nuevas
+
+1. **Dos menús por hogar.** Cada menú tiene su perfil. El menú de Papá usa el perfil "Adulto mayor con Alzheimer": alta en proteínas y aminoácidos, textura blanda; los platillos con alimentos duros se advierten al elegirlos.
+2. **Permisos:**
+   - Dueño y pareja: ven y editan los dos menús y marcan "comprado".
+   - Cuidador y familiar: solo ven el menú de Papá (solo lectura). Cuidador: también la lista de compras de Papá.
+   - Cuenta maestra: no edita (D19).
+3. **Suplementos:** cada menú tiene su lista de suplementos (nombre, dosis y horario de ejemplo), editable por el dueño y la pareja.
+4. **Datos clínicos (D3):** el perfil de Papá (Alzheimer, dieta) es **dato clínico**: no sale a la IA ni a las bocinas, y solo lo ven las personas con permiso.
+5. **Sin precios**, como antes.
+
+Pendiente de confirmar por el dueño: si el familiar debe ver también la lista de compras de Papá (propuesta: no; solo el menú).
+

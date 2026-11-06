@@ -33,7 +33,11 @@ Future<void> mostrarRevisionSemanal(
 );
 
 class RevisionSemanal extends ConsumerStatefulWidget {
-  const RevisionSemanal({super.key, required this.libroId, required this.semana});
+  const RevisionSemanal({
+    super.key,
+    required this.libroId,
+    required this.semana,
+  });
 
   final String libroId;
   final Semana semana;
@@ -82,7 +86,9 @@ class _RevisionSemanalState extends ConsumerState<RevisionSemanal> {
       final cierre = await servicio.cerrarSemana(
         widget.libroId,
         widget.semana,
-        accion: aplicar ? AccionCierre.aplicarRemanente : AccionCierre.sinAplicar,
+        accion: aplicar
+            ? AccionCierre.aplicarRemanente
+            : AccionCierre.sinAplicar,
       );
       final motivo = c.permiso.enNombreDe ? 'Remanente de la semana' : null;
       if (aplicar) {
@@ -136,12 +142,16 @@ class _RevisionSemanalState extends ConsumerState<RevisionSemanal> {
         cierreId: cierreId,
       );
       mensajero.showSnackBar(
-        SnackBar(content: Text(n == 0 ? 'Nada que deshacer.' : 'Ahorro deshecho.')),
+        SnackBar(
+          content: Text(n == 0 ? 'Nada que deshacer.' : 'Ahorro deshecho.'),
+        ),
       );
     } catch (e) {
       mensajero.showSnackBar(
         SnackBar(
-          content: Text(e is ErrorFinanzas ? e.mensaje : 'No se pudo deshacer: $e'),
+          content: Text(
+            e is ErrorFinanzas ? e.mensaje : 'No se pudo deshacer: $e',
+          ),
         ),
       );
     }
@@ -182,7 +192,10 @@ class _RevisionSemanalState extends ConsumerState<RevisionSemanal> {
                 Expanded(
                   child: CampoMonto(
                     key: ValueKey('revision-saldo-${cuenta.id}'),
-                    controlador: _saldos.putIfAbsent(cuenta.id, TextEditingController.new),
+                    controlador: _saldos.putIfAbsent(
+                      cuenta.id,
+                      TextEditingController.new,
+                    ),
                     etiqueta: 'Cuánto hay',
                     obligatorio: false,
                   ),
@@ -190,11 +203,15 @@ class _RevisionSemanalState extends ConsumerState<RevisionSemanal> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: TextField(
-                    controller: _motivos.putIfAbsent(cuenta.id, TextEditingController.new),
+                    controller: _motivos.putIfAbsent(
+                      cuenta.id,
+                      TextEditingController.new,
+                    ),
                     onChanged: (_) => setState(() {}),
                     decoration: InputDecoration(
                       labelText: 'Motivo si no cuadra',
-                      helperText: 'Suele ser gasto sin capturar. $ayudaDelMotivo',
+                      helperText:
+                          'Suele ser gasto sin capturar. $ayudaDelMotivo',
                       helperMaxLines: 3,
                       errorText: errorDeMotivo(_motivos[cuenta.id]?.text),
                       errorMaxLines: 3,
@@ -212,12 +229,14 @@ class _RevisionSemanalState extends ConsumerState<RevisionSemanal> {
                     }
                     final ok = await intentar(
                       context,
-                      () => ref.read(servicioFinanzasProvider).conciliar(
-                        cuentaId: cuenta.id,
-                        saldoDeclarado: declarado,
-                        fecha: c.hoy,
-                        motivo: _motivos[cuenta.id]!.text,
-                      ),
+                      () => ref
+                          .read(servicioFinanzasProvider)
+                          .conciliar(
+                            cuentaId: cuenta.id,
+                            saldoDeclarado: declarado,
+                            fecha: c.hoy,
+                            motivo: _motivos[cuenta.id]!.text,
+                          ),
                     );
                     if (ok && mounted) avisar(context, 'Conciliado.');
                   },
@@ -231,7 +250,10 @@ class _RevisionSemanalState extends ConsumerState<RevisionSemanal> {
   }
 
   Widget _ingresos(ContextoFinanzas c, VistaSemana v) {
-    final entradas = [for (final x in v.vencimientos) if (x.esEntrada) x];
+    final entradas = [
+      for (final x in v.vencimientos)
+        if (x.esEntrada) x,
+    ];
     if (entradas.isEmpty) {
       return const Text('No se esperaban ingresos esta semana.');
     }
@@ -255,9 +277,18 @@ class _RevisionSemanalState extends ConsumerState<RevisionSemanal> {
               showSelectedIcon: false,
               emptySelectionAllowed: true,
               segments: const [
-                ButtonSegment(value: EstadoOcurrencia.cumplida, label: Text('Llegó')),
-                ButtonSegment(value: EstadoOcurrencia.retrasada, label: Text('Se retrasó')),
-                ButtonSegment(value: EstadoOcurrencia.noLlegara, label: Text('No llegará')),
+                ButtonSegment(
+                  value: EstadoOcurrencia.cumplida,
+                  label: Text('Llegó'),
+                ),
+                ButtonSegment(
+                  value: EstadoOcurrencia.retrasada,
+                  label: Text('Se retrasó'),
+                ),
+                ButtonSegment(
+                  value: EstadoOcurrencia.noLlegara,
+                  label: Text('No llegará'),
+                ),
               ],
               selected: {?estadoDe(x)},
               onSelectionChanged: c.puedeEscribir
@@ -283,13 +314,17 @@ class _RevisionSemanalState extends ConsumerState<RevisionSemanal> {
 
   Widget _desvios(VistaSemana v) {
     final lista = v.desvios();
-    if (lista.isEmpty) return const Text('Todas las partidas van según el plan.');
+    if (lista.isEmpty) {
+      return const Text('Todas las partidas van según el plan.');
+    }
     return Column(
       children: [
         for (final d in lista)
           ListTile(
             contentPadding: EdgeInsets.zero,
-            leading: Icon(d.diferencia > 0 ? Icons.trending_up : Icons.trending_down),
+            leading: Icon(
+              d.diferencia > 0 ? Icons.trending_up : Icons.trending_down,
+            ),
             title: Text(d.partida.nombre),
             subtitle: Text(d.diferencia > 0 ? 'Se pasó' : 'Sobró'),
             trailing: Monto(d.diferencia.abs()),
@@ -299,7 +334,11 @@ class _RevisionSemanalState extends ConsumerState<RevisionSemanal> {
   }
 
   Widget _siguiente(ContextoFinanzas c, VistaSemana v, bool ocultos) {
-    final siguiente = armarPlanDelLibro(c.datos, widget.libroId, widget.semana.siguiente);
+    final siguiente = armarPlanDelLibro(
+      c.datos,
+      widget.libroId,
+      widget.semana.siguiente,
+    );
     final p = siguiente.plan;
     final recortes = v.recortesSiguiente(siguiente);
     final orden = ordenDeAbonoExtra(p.abonos.map((r) => r.origen));
@@ -311,8 +350,14 @@ class _RevisionSemanalState extends ConsumerState<RevisionSemanal> {
           montosOcultos: ocultos,
           escalones: [
             EscalonCascada(etiqueta: 'Ingreso', planeadoCentavos: p.ingreso),
-            EscalonCascada(etiqueta: '− Presupuesto', planeadoCentavos: p.presupuesto),
-            EscalonCascada(etiqueta: '− Deuda', planeadoCentavos: p.deudaPlaneada),
+            EscalonCascada(
+              etiqueta: '− Presupuesto',
+              planeadoCentavos: p.presupuesto,
+            ),
+            EscalonCascada(
+              etiqueta: '− Deuda',
+              planeadoCentavos: p.deudaPlaneada,
+            ),
             EscalonCascada(
               etiqueta: '= Remanente',
               planeadoCentavos: p.remanente,
@@ -355,11 +400,18 @@ class _RevisionSemanalState extends ConsumerState<RevisionSemanal> {
             'nunca se toca):',
           ),
           for (final r in recortes.recortes)
-            Row(children: [Expanded(child: Text(r.partida.nombre)), Monto(r.monto)]),
+            Row(
+              children: [
+                Expanded(child: Text(r.partida.nombre)),
+                Monto(r.monto),
+              ],
+            ),
           if (recortes.faltante > 0)
             Row(
               children: [
-                const Expanded(child: Text('Falta cubrir sin tocar lo protegido')),
+                const Expanded(
+                  child: Text('Falta cubrir sin tocar lo protegido'),
+                ),
                 Monto(recortes.faltante),
               ],
             ),
@@ -370,9 +422,10 @@ class _RevisionSemanalState extends ConsumerState<RevisionSemanal> {
 
   Widget _aplicarYCerrar(ContextoFinanzas c, VistaSemana v) {
     final destino = v.real.destino;
-    final origenes = cuentasParaRecibir(c.datos, widget.libroId)
-        .where((x) => x.tipo.liquida)
-        .toList();
+    final origenes = cuentasParaRecibir(
+      c.datos,
+      widget.libroId,
+    ).where((x) => x.tipo.liquida).toList();
     final ahorros = [
       for (final x in c.datos.cuentasDe(widget.libroId))
         if (x.tipo == TipoCuenta.ahorro && x.estado == EstadoCuenta.activa) x,
@@ -400,7 +453,12 @@ class _RevisionSemanalState extends ConsumerState<RevisionSemanal> {
             ],
           ),
         if (destino.ahorro > 0)
-          Row(children: [const Expanded(child: Text('A ahorro')), Monto(destino.ahorro)]),
+          Row(
+            children: [
+              const Expanded(child: Text('A ahorro')),
+              Monto(destino.ahorro),
+            ],
+          ),
         // Ahorro automático (extras → sobre → sobrante → redondeo): sale de
         // ese mismo ahorro, con su origen a la vista.
         for (final a in auto.aportes)
@@ -427,7 +485,12 @@ class _RevisionSemanalState extends ConsumerState<RevisionSemanal> {
             ],
           ),
         if (v.real.deficit > 0)
-          Row(children: [const Expanded(child: Text('Déficit')), Monto(v.real.deficit)]),
+          Row(
+            children: [
+              const Expanded(child: Text('Déficit')),
+              Monto(v.real.deficit),
+            ],
+          ),
         if (hayQueAplicar && c.puedeEscribir) ...[
           SwitchListTile(
             key: const ValueKey('revision-aplicar'),

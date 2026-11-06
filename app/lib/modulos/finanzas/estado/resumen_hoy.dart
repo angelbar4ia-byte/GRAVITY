@@ -206,7 +206,9 @@ final resumenFinanzasHoyProvider = Provider<ResumenFinanzasHoy>((ref) {
     return ResumenFinanzasHoy.sinAcceso;
   }
   final contexto = ref.watch(contextoFinanzasProvider);
-  if (contexto.isLoading && !contexto.hasValue) return ResumenFinanzasHoy.cargando;
+  if (contexto.isLoading && !contexto.hasValue) {
+    return ResumenFinanzasHoy.cargando;
+  }
   final c = contexto.value;
   if (c == null) return ResumenFinanzasHoy.noDisponible;
 

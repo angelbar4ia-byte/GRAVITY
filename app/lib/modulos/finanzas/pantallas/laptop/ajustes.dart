@@ -559,10 +559,10 @@ class _FilaLibro extends ConsumerWidget {
       ),
       subtitle: Text(
         [
-          for (final m in l.vigentes(c.hoy))
-            '${c.carga.nombreDe(m.personaId)} (${nombrePapel(m.papel)}'
-                '${l.esAdministrador(m.personaId) ? ', administrador' : ''})',
-        ].join(', ') +
+              for (final m in l.vigentes(c.hoy))
+                '${c.carga.nombreDe(m.personaId)} (${nombrePapel(m.papel)}'
+                    '${l.esAdministrador(m.personaId) ? ', administrador' : ''})',
+            ].join(', ') +
             (compartido &&
                     l.papelDe(c.personaId, c.hoy) != null &&
                     l.vigentes(c.hoy).length == 1
@@ -570,7 +570,8 @@ class _FilaLibro extends ConsumerWidget {
                       'usarlo, archívalo.'
                 : ''),
       ),
-      trailing: l.tipo == dom.TipoLibro.representado &&
+      trailing:
+          l.tipo == dom.TipoLibro.representado &&
               (c.puedeNombrarAlbaceaEn(l, PapelLibro.albacea) ||
                   c.puedeNombrarAlbaceaEn(l, PapelLibro.albaceaSuplente))
           ? Wrap(

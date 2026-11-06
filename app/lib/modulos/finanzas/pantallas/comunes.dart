@@ -15,7 +15,8 @@ import 'package:finanzas_dominio/finanzas_dominio.dart'
         TipoLibro,
         VisibilidadLibro,
         puntosBaseEnCien;
-import 'package:finanzas_dominio/finanzas_dominio.dart' as dom
+import 'package:finanzas_dominio/finanzas_dominio.dart'
+    as dom
     show Semaforo, TipoLibro, VisibilidadLibro;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -30,8 +31,18 @@ import '../estado/proveedores.dart';
 DateTime aDateTime(Fecha f) => DateTime(f.anio, f.mes, f.dia);
 
 const _meses = [
-  'ene', 'feb', 'mar', 'abr', 'may', 'jun',
-  'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
+  'ene',
+  'feb',
+  'mar',
+  'abr',
+  'may',
+  'jun',
+  'jul',
+  'ago',
+  'sep',
+  'oct',
+  'nov',
+  'dic',
 ];
 
 /// `mar 20 oct`
@@ -88,7 +99,13 @@ String nombreFrecuencia(Frecuencia f) => switch (f) {
 };
 
 const _diasSemana = [
-  'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo',
+  'lunes',
+  'martes',
+  'miércoles',
+  'jueves',
+  'viernes',
+  'sábado',
+  'domingo',
 ];
 
 String _dia(int d) => d == 0 ? 'último' : '$d';
@@ -103,9 +120,10 @@ String descripcionCalendario(CalendarioConfig c, {bool salida = false}) {
       'Cada 14 días desde el ${c.fechaAncla == null ? '?' : textoDiaMes(c.fechaAncla!)}',
     FormaPago.quincenal =>
       'Quincenal (${(c.diasMes.isEmpty ? const [15, 0] : c.diasMes).map(_dia).join(' y ')})',
-    FormaPago.mensual => c.diasMes.length > 1
-        ? 'Días ${c.diasMes.map(_dia).join(' y ')} de cada mes'
-        : 'Mensual (día ${c.diasMes.isEmpty ? '?' : _dia(c.diasMes.first)})',
+    FormaPago.mensual =>
+      c.diasMes.length > 1
+          ? 'Días ${c.diasMes.map(_dia).join(' y ')} de cada mes'
+          : 'Mensual (día ${c.diasMes.isEmpty ? '?' : _dia(c.diasMes.first)})',
     FormaPago.cadaMeses =>
       'Cada ${c.intervaloMeses ?? '?'} meses desde el '
           '${c.fechaAncla == null ? '?' : '${textoDiaMes(c.fechaAncla!)} ${c.fechaAncla!.anio}'}',
@@ -113,7 +131,8 @@ String descripcionCalendario(CalendarioConfig c, {bool salida = false}) {
   final regla = switch (c.reglaPara(
     salida ? CalendarioConfig.reglaDeSalida : CalendarioConfig.reglaDeIngreso,
   )) {
-    ReglaDiaInhabil.siguienteDiaHabil => 'si es inhábil, el siguiente día hábil',
+    ReglaDiaInhabil.siguienteDiaHabil =>
+      'si es inhábil, el siguiente día hábil',
     ReglaDiaInhabil.diaHabilAnterior => 'si es inhábil, el día hábil anterior',
     ReglaDiaInhabil.sinCambio => 'en su fecha',
   };
@@ -299,7 +318,12 @@ class Monto extends ConsumerWidget {
 /// una ventana angosta un `Row` rígido se desbordaba: M7 de la revisión de la
 /// Fase 1).
 class DatoConMonto extends StatelessWidget {
-  const DatoConMonto(this.etiqueta, this.centavos, {super.key, this.signo = false});
+  const DatoConMonto(
+    this.etiqueta,
+    this.centavos, {
+    super.key,
+    this.signo = false,
+  });
 
   final String etiqueta;
   final int centavos;
@@ -308,7 +332,10 @@ class DatoConMonto extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Wrap(
     crossAxisAlignment: WrapCrossAlignment.center,
-    children: [Text('$etiqueta: '), Monto(centavos, signo: signo)],
+    children: [
+      Text('$etiqueta: '),
+      Monto(centavos, signo: signo),
+    ],
   );
 }
 
@@ -331,7 +358,9 @@ class BotonMontos extends ConsumerWidget {
           : ocultos
           ? () => ref.read(revelarMontosProvider)(context)
           : () => ref.read(montosVisiblesProvider.notifier).alternar(),
-      icon: Icon(ocultos ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+      icon: Icon(
+        ocultos ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+      ),
     );
   }
 }
@@ -440,7 +469,8 @@ class _ConConsultaMaestra extends ConsumerWidget {
     return consulta.when(
       // La renovación (cada 25 min) no tapa la pantalla con "Cargando".
       skipLoadingOnReload: true,
-      data: (_) => listaYVacia ? _CargandoConsulta(contexto: c) : builder(context, c),
+      data: (_) =>
+          listaYVacia ? _CargandoConsulta(contexto: c) : builder(context, c),
       loading: () => _CargandoConsulta(contexto: c),
       error: (e, _) => Column(
         children: [
@@ -457,7 +487,8 @@ class _ConConsultaMaestra extends ConsumerWidget {
                   'La cuenta maestra abre un libro ajeno solo si la consulta '
                   'queda registrada en la bitácora. $e',
               textoAccion: 'Reintentar',
-              alAccionar: () => ref.invalidate(consultaMaestraProvider(libroId)),
+              alAccionar: () =>
+                  ref.invalidate(consultaMaestraProvider(libroId)),
             ),
           ),
         ],
@@ -587,7 +618,8 @@ class _Error extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final sinConexion = error is ErrorFinanzas && (error as ErrorFinanzas).sinConexion;
+    final sinConexion =
+        error is ErrorFinanzas && (error as ErrorFinanzas).sinConexion;
     return EstadoVacio(
       key: ValueKey(sinConexion ? 'finanzas-sin-conexion' : 'finanzas-error'),
       icono: sinConexion ? Icons.cloud_off_outlined : Icons.error_outline,
@@ -605,7 +637,11 @@ class _Error extends ConsumerWidget {
 
 /// Selector del libro activo ("Mi libro", compartidos, el de papá).
 class SelectorLibroFinanzas extends ConsumerWidget {
-  const SelectorLibroFinanzas({super.key, required this.contexto, this.comoMenu});
+  const SelectorLibroFinanzas({
+    super.key,
+    required this.contexto,
+    this.comoMenu,
+  });
 
   final ContextoFinanzas contexto;
   final bool? comoMenu;
@@ -627,7 +663,8 @@ class SelectorLibroFinanzas extends ConsumerWidget {
                 opcionDe(l, contexto.permisoEn(l), contexto.personaId),
             ],
             libroActualId: contexto.libroId,
-            alCambiar: (id) => ref.read(libroElegidoProvider.notifier).elegir(id),
+            alCambiar: (id) =>
+                ref.read(libroElegidoProvider.notifier).elegir(id),
             comoMenu: comoMenu,
           );
     if (!conPortada) return selector;
@@ -647,16 +684,14 @@ class SelectorLibroFinanzas extends ConsumerWidget {
 }
 
 /// Marca del libro activo ("Solo lectura", "En nombre de…").
-Widget marcaDe(ContextoFinanzas c) => MarcaLibro(
-  libro: opcionDe(c.libro!, c.permiso, c.personaId),
-);
+Widget marcaDe(ContextoFinanzas c) =>
+    MarcaLibro(libro: opcionDe(c.libro!, c.permiso, c.personaId));
 
 // ----------------------------------------------------------------- diálogos
 
 void avisar(BuildContext context, String mensaje) =>
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-      SnackBar(content: Text(mensaje)),
-    );
+    ScaffoldMessenger.maybeOf(context)
+        ?.showSnackBar(SnackBar(content: Text(mensaje)));
 
 void avisarError(BuildContext context, Object error) => avisar(
   context,
@@ -664,7 +699,10 @@ void avisarError(BuildContext context, Object error) => avisar(
 );
 
 /// Ejecuta [accion] y avisa del error (sin lanzar).
-Future<bool> intentar(BuildContext context, Future<void> Function() accion) async {
+Future<bool> intentar(
+  BuildContext context,
+  Future<void> Function() accion,
+) async {
   try {
     await accion();
     return true;
@@ -786,7 +824,9 @@ class _DialogoTextoState extends State<_DialogoTexto> {
         child: const Text('Cancelar'),
       ),
       FilledButton(
-        onPressed: _valido ? () => Navigator.pop(context, _control.text.trim()) : null,
+        onPressed: _valido
+            ? () => Navigator.pop(context, _control.text.trim())
+            : null,
         child: Text(widget.textoAccion),
       ),
     ],
@@ -914,7 +954,9 @@ class CampoMonto extends StatelessWidget {
       helperText: ayuda,
     ),
     validator: (v) {
-      if ((v ?? '').trim().isEmpty) return obligatorio ? 'Escribe el monto' : null;
+      if ((v ?? '').trim().isEmpty) {
+        return obligatorio ? 'Escribe el monto' : null;
+      }
       return centavosDeTexto(v!) == null ? 'Monto no válido' : null;
     },
   );
@@ -936,8 +978,9 @@ class CampoPorcentaje extends StatelessWidget {
     return c;
   }
 
-  static String texto(int puntosBase) =>
-      puntosBase % 100 == 0 ? '${puntosBase ~/ 100}' : textoDeCentavos(puntosBase);
+  static String texto(int puntosBase) => puntosBase % 100 == 0
+      ? '${puntosBase ~/ 100}'
+      : textoDeCentavos(puntosBase);
 
   @override
   Widget build(BuildContext context) => TextFormField(

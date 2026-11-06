@@ -9,6 +9,7 @@
 library;
 
 import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 
 import '../seguridad/almacen_seguro.dart';
@@ -57,7 +58,9 @@ class Sobre {
 
   static Sobre? desdeJson(Map<String, Object?> json) {
     try {
-      final tipo = TipoSensible.values.firstWhere((t) => t.valor == json['tipo']);
+      final tipo = TipoSensible.values.firstWhere(
+        (t) => t.valor == json['tipo'],
+      );
       return Sobre(
         id: json['id']! as String,
         tipo: tipo,
@@ -151,7 +154,9 @@ class AlmacenDeSobres {
     final texto = await _almacen.leer('${_prefijo(persona)}$id');
     if (texto == null) return null;
     try {
-      return Sobre.desdeJson((jsonDecode(texto) as Map).cast<String, Object?>());
+      return Sobre.desdeJson(
+        (jsonDecode(texto) as Map).cast<String, Object?>(),
+      );
     } catch (_) {
       return null;
     }
@@ -161,8 +166,12 @@ class AlmacenDeSobres {
     final lista = <Sobre>[];
     for (final clave in await _almacen.claves()) {
       if (!clave.startsWith(_prefijo(persona))) continue;
-      final sobre = await leer(persona, clave.substring(_prefijo(persona).length));
-      if (sobre != null && (tipo == null || sobre.tipo == tipo)) lista.add(sobre);
+      final sobre = await leer(
+        persona,
+        clave.substring(_prefijo(persona).length),
+      );
+      if (sobre != null && (tipo == null || sobre.tipo == tipo))
+        lista.add(sobre);
     }
     return lista..sort((a, b) => a.id.compareTo(b.id));
   }
@@ -188,7 +197,8 @@ class AlmacenDeSobres {
     if (texto == null) return {};
     try {
       return {
-        for (final e in (jsonDecode(texto) as Map).entries) '${e.key}': e.value as int,
+        for (final e in (jsonDecode(texto) as Map).entries)
+          '${e.key}': e.value as int,
       };
     } catch (_) {
       return {};
@@ -218,5 +228,6 @@ class AlmacenDeSobres {
   }
 
   /// Olvida lo encolado (p. ej. al cambiar de modo: todo debe volver a subir).
-  Future<void> olvidarEncolados(String persona) => _almacen.borrar(_claveSubidos(persona));
+  Future<void> olvidarEncolados(String persona) =>
+      _almacen.borrar(_claveSubidos(persona));
 }

@@ -166,7 +166,8 @@ Fecha? _fecha(String texto) {
   return null;
 }
 
-String _celda(List<String> fila, int i) => i < fila.length ? fila[i].trim() : '';
+String _celda(List<String> fila, int i) =>
+    i < fila.length ? fila[i].trim() : '';
 
 String? _texto(String s) => s.isEmpty ? null : s;
 
@@ -221,7 +222,13 @@ LecturaFicha leerFichaDeBytes(Uint8List bytes, {required String nombre}) {
         if (id.isEmpty || _norm(id) == 'ejemplo') continue;
         final saldo = centavosDeCelda(_celda(f, 6));
         if (saldo == null) {
-          omitidas.add(FilaOmitida('Tarjetas', i + 1, '$id: sin saldo actual (captúralo en la ficha).'));
+          omitidas.add(
+            FilaOmitida(
+              'Tarjetas',
+              i + 1,
+              '$id: sin saldo actual (captúralo en la ficha).',
+            ),
+          );
           continue;
         }
         final institucion = _celda(f, 1);
@@ -263,14 +270,24 @@ LecturaFicha leerFichaDeBytes(Uint8List bytes, {required String nombre}) {
       final saldo = centavosDeCelda(buscar((k) => k.startsWith('saldo')) ?? '');
       if (saldo == null) {
         if (valores.isNotEmpty) {
-          omitidas.add(const FilaOmitida('Credito_Auto', 0, 'Crédito automotriz: sin saldo actual.'));
+          omitidas.add(
+            const FilaOmitida(
+              'Credito_Auto',
+              0,
+              'Crédito automotriz: sin saldo actual.',
+            ),
+          );
         }
       } else {
         final anticipado = buscar((k) => k.contains('anticipado'));
         credito = CreditoFicha(
-          institucion: buscar((k) => k.startsWith('institucion')) ?? 'Crédito automotriz',
+          institucion:
+              buscar((k) => k.startsWith('institucion')) ??
+              'Crédito automotriz',
           saldo: saldo,
-          montoOriginal: centavosDeCelda(buscar((k) => k.startsWith('monto original')) ?? ''),
+          montoOriginal: centavosDeCelda(
+            buscar((k) => k.startsWith('monto original')) ?? '',
+          ),
           tasaPb: puntosBaseDeCelda(buscar((k) => k.startsWith('tasa')) ?? ''),
           permitePagoAnticipado: anticipado == null
               ? null
@@ -279,8 +296,20 @@ LecturaFicha leerFichaDeBytes(Uint8List bytes, {required String nombre}) {
                   'no' => false,
                   _ => null,
                 },
-          mensualidad: centavosDeCelda(buscar((k) => k.startsWith('mensualidad') || k.startsWith('pago mensual')) ?? ''),
-          diaPago: _dia(buscar((k) => k.contains('dia de pago') || k.contains('dia limite')) ?? ''),
+          mensualidad: centavosDeCelda(
+            buscar(
+                  (k) =>
+                      k.startsWith('mensualidad') ||
+                      k.startsWith('pago mensual'),
+                ) ??
+                '',
+          ),
+          diaPago: _dia(
+            buscar(
+                  (k) => k.contains('dia de pago') || k.contains('dia limite'),
+                ) ??
+                '',
+          ),
         );
       }
     }
@@ -292,7 +321,9 @@ LecturaFicha leerFichaDeBytes(Uint8List bytes, {required String nombre}) {
         final id = _celda(f, 0);
         if (id.isEmpty || _norm(id) == 'ejemplo') continue;
         final total = centavosDeCelda(_celda(f, 5));
-        final meses = int.tryParse(_celda(f, 6).replaceAll(RegExp(r'\.0+$'), ''));
+        final meses = int.tryParse(
+          _celda(f, 6).replaceAll(RegExp(r'\.0+$'), ''),
+        );
         final fecha = _fecha(_celda(f, 4));
         final comercio = _celda(f, 2);
         String? falta;
@@ -309,7 +340,8 @@ LecturaFicha leerFichaDeBytes(Uint8List bytes, {required String nombre}) {
           omitidas.add(FilaOmitida('MSI', i + 1, '$id: $falta.'));
           continue;
         }
-        final pagadas = int.tryParse(_celda(f, 8).replaceAll(RegExp(r'\.0+$'), '')) ?? 0;
+        final pagadas =
+            int.tryParse(_celda(f, 8).replaceAll(RegExp(r'\.0+$'), '')) ?? 0;
         msi.add(
           MsiFicha(
             idFicha: id,

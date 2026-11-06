@@ -102,7 +102,7 @@ void main() {
         await bloqueo.configurarPin(pinDelCurioso);
       } catch (_) {}
       expect(
-        bloqueo.comprobarPin(pinDelCurioso),
+        await bloqueo.comprobarPin(pinDelCurioso),
         isNot(ResultadoBloqueo.abierto),
         reason:
             'Ajustes › Privacidad › "Cambiar PIN" no pide el actual: quien tiene '
@@ -209,7 +209,7 @@ void main() {
         final bloqueo = contenedor.read(controladorBloqueoProvider.notifier);
         await bloqueo.listo;
         await bloqueo.configurarPin(pinDelDueno);
-        expect(bloqueo.comprobarPin(pinDelDueno), ResultadoBloqueo.abierto);
+        expect(await bloqueo.comprobarPin(pinDelDueno), ResultadoBloqueo.abierto);
       },
     );
   });

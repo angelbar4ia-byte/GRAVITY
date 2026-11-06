@@ -45,8 +45,16 @@ abstract final class RespaldoLocal {
       'sobres': [for (final s in sobres) s.aJson()],
     });
     final sal = desdeBase64Url(envoltura.sal);
-    final llave = await pbkdf2EnAislado(LlaveEnvuelta.bytesDeFrase(frase), sal, vueltas);
-    final cifrado = SobreAes.cifrar(llave, utf8.encode(cuerpo), datosAsociados: _aad());
+    final llave = await pbkdf2EnAislado(
+      LlaveEnvuelta.bytesDeFrase(frase),
+      sal,
+      vueltas,
+    );
+    final cifrado = SobreAes.cifrar(
+      llave,
+      utf8.encode(cuerpo),
+      datosAsociados: _aad(),
+    );
     llave.fillRange(0, llave.length, 0);
     return jsonEncode({
       'formato': formato,
@@ -76,7 +84,9 @@ abstract final class RespaldoLocal {
       throw const FormatException('No es un respaldo de GRAVITY.');
     }
     if (json['formato'] != formato || json['v'] != version) {
-      throw const FormatException('No es un respaldo de GRAVITY (o es de otra versión).');
+      throw const FormatException(
+        'No es un respaldo de GRAVITY (o es de otra versión).',
+      );
     }
     final vueltas = json['vueltas'];
     final sal = json['sal'];
@@ -100,18 +110,25 @@ abstract final class RespaldoLocal {
     if (local == null) {
       throw const FormatException('La frase no corresponde a este respaldo.');
     }
-    final llave = await pbkdf2EnAislado(LlaveEnvuelta.bytesDeFrase(frase), desdeBase64Url(sal), vueltas);
+    final llave = await pbkdf2EnAislado(
+      LlaveEnvuelta.bytesDeFrase(frase),
+      desdeBase64Url(sal),
+      vueltas,
+    );
     final claro = SobreAes.descifrar(llave, cifrado, datosAsociados: _aad());
     llave.fillRange(0, llave.length, 0);
     if (claro == null) {
       throw const FormatException('El respaldo está dañado.');
     }
     try {
-      final cuerpo = (jsonDecode(utf8.decode(claro)) as Map).cast<String, Object?>();
+      final cuerpo = (jsonDecode(utf8.decode(claro)) as Map)
+          .cast<String, Object?>();
       final sobres = [
         for (final s in cuerpo['sobres']! as List)
           Sobre.desdeJson((s as Map).cast<String, Object?>()) ??
-              (throw const FormatException('Un sobre del respaldo no es válido.')),
+              (throw const FormatException(
+                'Un sobre del respaldo no es válido.',
+              )),
       ];
       return (sobres: sobres, llaveLocal: local);
     } on FormatException {
@@ -157,7 +174,8 @@ abstract final class ExportacionHabitos {
     // Sin frase, el archivo lleva únicamente lo no sensible.
     final sensibles = <String, Object?>{
       if (frase != null)
-        for (final tipo in incluirSensibles) tipo.valor: await fuente.datosSensibles(tipo),
+        for (final tipo in incluirSensibles)
+          tipo.valor: await fuente.datosSensibles(tipo),
     };
     final salida = <String, Object?>{
       'esquema': esquema,
@@ -168,7 +186,11 @@ abstract final class ExportacionHabitos {
     if (sensibles.isNotEmpty) {
       {
         final sal = bytesAleatorios(16);
-        final llave = await pbkdf2EnAislado(LlaveEnvuelta.bytesDeFrase(frase!), sal, vueltas);
+        final llave = await pbkdf2EnAislado(
+          LlaveEnvuelta.bytesDeFrase(frase!),
+          sal,
+          vueltas,
+        );
         salida['sensibles_protegidos'] = {
           'kdf': LlaveEnvuelta.kdfPbkdf2,
           'vueltas': vueltas,
@@ -176,7 +198,9 @@ abstract final class ExportacionHabitos {
           'cifrado': SobreAes.cifrar(
             llave,
             utf8.encode(jsonEncode(sensibles)),
-            datosAsociados: utf8.encode('gravity-habitos-exportacion-v$version'),
+            datosAsociados: utf8.encode(
+              'gravity-habitos-exportacion-v$version',
+            ),
           ),
         };
         llave.fillRange(0, llave.length, 0);

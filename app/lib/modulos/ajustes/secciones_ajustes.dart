@@ -87,8 +87,8 @@ const Map<SeccionAjustes, InfoSeccionAjustes> infoSecciones = {
 };
 
 /// Ruta completa de la sección.
-String rutaSeccion(SeccionAjustes seccion) => seccion ==
-        SeccionAjustes.desarrollador
+String rutaSeccion(SeccionAjustes seccion) =>
+    seccion == SeccionAjustes.desarrollador
     ? Rutas.desarrollador
     : '${Rutas.ajustes}/${infoSecciones[seccion]!.segmento}';
 

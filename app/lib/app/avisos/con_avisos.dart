@@ -96,7 +96,11 @@ final servicioAvisosProvider = Provider<ServicioAvisos>((ref) {
       // a Hábitos (lo sensible pide el PIN allí), no a la bandeja de Finanzas.
       ref
           .read(routerProvider)
-          .go(carga != null && carga.startsWith('hab:') ? Rutas.habitos : RutasApp.avisos);
+          .go(
+            carga != null && carga.startsWith('hab:')
+                ? Rutas.habitos
+                : RutasApp.avisos,
+          );
     },
     alAccion: (carga, accion) => unawaited(
       ref.read(recordatoriosHabitosProvider).alAccion(carga, accion),
@@ -124,11 +128,14 @@ class _ConAvisosState extends ConsumerState<ConAvisos> {
     super.initState();
     final servicio = ref.read(servicioAvisosProvider);
     unawaited(
-      servicio.iniciar().then((_) {
-        if (!mounted) return Future<void>.value();
-        _persona = ref.read(contextoAvisosProvider).personaId;
-        return servicio.alEntrarPersona();
-      }).then((_) => ref.read(recordatoriosHabitosProvider).reprogramar()),
+      servicio
+          .iniciar()
+          .then((_) {
+            if (!mounted) return Future<void>.value();
+            _persona = ref.read(contextoAvisosProvider).personaId;
+            return servicio.alEntrarPersona();
+          })
+          .then((_) => ref.read(recordatoriosHabitosProvider).reprogramar()),
     );
     // La tarea diaria de los recordatorios de Hábitos (cada 12 h con la app
     // abierta; al reiniciar el teléfono los reprograma la biblioteca).

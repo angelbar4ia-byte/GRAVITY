@@ -13,7 +13,9 @@ import '../../nucleo/avisos/proveedores_avisos.dart';
 import '../../nucleo/avisos/repositorio_avisos.dart';
 import '../pantallas/marco_pantalla.dart';
 
-final bandejaDeAvisosProvider = StreamProvider.autoDispose<List<Aviso>>((ref) async* {
+final bandejaDeAvisosProvider = StreamProvider.autoDispose<List<Aviso>>((
+  ref,
+) async* {
   final repo = ref.watch(repositorioAvisosProvider);
   if (repo == null) {
     yield const [];

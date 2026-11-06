@@ -20,19 +20,22 @@ List<ItemCompra> generarListaCompras({
       acum[k] = (base: i, total: (previo?.total ?? 0) + i.cantidad);
     }
   }
-  final items = [
-    for (final e in acum.entries)
-      ItemCompra(
-        nombre: e.value.base.nombre,
-        cantidad: e.value.total,
-        unidad: e.value.base.unidad,
-        seccion: e.value.base.seccion,
-        comprado: comprados.contains(e.key),
-      ),
-  ]..sort((a, b) {
-      final s = a.seccion.index.compareTo(b.seccion.index);
-      return s != 0 ? s : a.nombre.toLowerCase().compareTo(b.nombre.toLowerCase());
-    });
+  final items =
+      [
+        for (final e in acum.entries)
+          ItemCompra(
+            nombre: e.value.base.nombre,
+            cantidad: e.value.total,
+            unidad: e.value.base.unidad,
+            seccion: e.value.base.seccion,
+            comprado: comprados.contains(e.key),
+          ),
+      ]..sort((a, b) {
+        final s = a.seccion.index.compareTo(b.seccion.index);
+        return s != 0
+            ? s
+            : a.nombre.toLowerCase().compareTo(b.nombre.toLowerCase());
+      });
   return items;
 }
 

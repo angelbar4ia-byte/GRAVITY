@@ -23,7 +23,10 @@ class PermisoServidor {
   final bool escribir;
   final bool administrar;
 
-  Map<String, Object?> aJson() => {'escribir': escribir, 'administrar': administrar};
+  Map<String, Object?> aJson() => {
+    'escribir': escribir,
+    'administrar': administrar,
+  };
 
   static PermisoServidor deJson(Map<Object?, Object?> j) => PermisoServidor(
     escribir: j['escribir'] == true,
@@ -133,6 +136,14 @@ class ErrorFinanzas implements Exception {
   static const conexion = ErrorFinanzas(
     'Sin conexión: este cambio necesita señal. Inténtalo de nuevo cuando '
     'vuelva.',
+    sinConexion: true,
+  );
+
+  /// Estados de cuenta, aportaciones y retiros de ahorro: el servidor liga el
+  /// movimiento al guardarlo, así que no van por la cola (Fase 4, F4-3.7).
+  static const necesitaConexion = ErrorFinanzas(
+    'Esto necesita conexión: el servidor liga el movimiento al guardarlo. '
+    'Tus datos siguen aquí; intenta de nuevo cuando tengas señal.',
     sinConexion: true,
   );
 

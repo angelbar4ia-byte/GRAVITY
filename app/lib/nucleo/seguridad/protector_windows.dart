@@ -20,7 +20,6 @@ import 'dart:ffi';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'almacen_seguro.dart';
 import 'pantalla_segura.dart';
 import 'proveedores_seguridad.dart';
 
@@ -37,10 +36,10 @@ bool aplicarAfinidadNativa(int afinidad) {
   final user32 = DynamicLibrary.open('user32.dll');
   final ventanaActiva = user32
       .lookupFunction<IntPtr Function(), int Function()>('GetActiveWindow');
-  final fijar = user32.lookupFunction<
-    Int32 Function(IntPtr, Uint32),
-    int Function(int, int)
-  >('SetWindowDisplayAffinity');
+  final fijar = user32
+      .lookupFunction<Int32 Function(IntPtr, Uint32), int Function(int, int)>(
+        'SetWindowDisplayAffinity',
+      );
   final ventana = ventanaActiva();
   if (ventana == 0) return false;
   return fijar(ventana, afinidad) != 0;
@@ -71,8 +70,9 @@ class ProtectorDePantallaWindows implements ProtectorDePantalla {
 
 /// ¿Bloquear las capturas en Windows? Activo por omisión; se guarda en el
 /// almacén seguro de este equipo (es de la ventana, no de la persona).
-final capturasBloqueadasProvider =
-    NotifierProvider<CapturasBloqueadas, bool>(CapturasBloqueadas.new);
+final capturasBloqueadasProvider = NotifierProvider<CapturasBloqueadas, bool>(
+  CapturasBloqueadas.new,
+);
 
 class CapturasBloqueadas extends Notifier<bool> {
   static const clave = 'privacidad.bloqueo_capturas_windows';
@@ -101,7 +101,9 @@ class CapturasBloqueadas extends Notifier<bool> {
     await listo;
     state = activo;
     try {
-      await ref.read(almacenSeguroProvider).escribir(clave, activo ? 'si' : 'no');
+      await ref
+          .read(almacenSeguroProvider)
+          .escribir(clave, activo ? 'si' : 'no');
     } catch (error) {
       debugPrint('Bloqueo de capturas: $error');
     }

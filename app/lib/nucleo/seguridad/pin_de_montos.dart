@@ -31,7 +31,9 @@ Future<String?> leerPinPropioDeMontos(
   AlmacenSeguro almacen,
   String personaId,
 ) async {
-  final hash = _leer(await almacen.leer(claveConfiguracionMontos(personaId)))['hash_pin'];
+  final hash = _leer(
+    await almacen.leer(claveConfiguracionMontos(personaId)),
+  )['hash_pin'];
   return hash is String ? hash : null;
 }
 

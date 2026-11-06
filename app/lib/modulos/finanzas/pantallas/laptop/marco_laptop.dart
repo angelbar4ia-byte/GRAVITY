@@ -30,11 +30,7 @@ enum SeccionFinanzas {
   ),
   deudas('deudas', 'Deudas', Icons.credit_card_outlined),
   ahorro('ahorro', 'Ahorro y fondo', Icons.savings_outlined),
-  vencimientos(
-    'vencimientos',
-    'Vencimientos',
-    Icons.calendar_month_outlined,
-  ),
+  vencimientos('vencimientos', 'Vencimientos', Icons.calendar_month_outlined),
   arranque('arranque', 'Asistente de arranque', Icons.rocket_launch_outlined),
   importar('importar', 'Importar datos', Icons.upload_file_outlined),
   ajustes('ajustes', 'Ajustes de Finanzas', Icons.tune);
@@ -180,7 +176,12 @@ class _Principal extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: EdgeInsets.fromLTRB(v.espacio * 3, v.espacio * 2, v.espacio * 3, 0),
+          padding: EdgeInsets.fromLTRB(
+            v.espacio * 3,
+            v.espacio * 2,
+            v.espacio * 3,
+            0,
+          ),
           child: Wrap(
             spacing: 12,
             runSpacing: 8,
@@ -227,7 +228,12 @@ class _Principal extends StatelessWidget {
         ),
         if (conMenu)
           Padding(
-            padding: EdgeInsets.fromLTRB(v.espacio * 3, v.espacio, v.espacio * 3, 0),
+            padding: EdgeInsets.fromLTRB(
+              v.espacio * 3,
+              v.espacio,
+              v.espacio * 3,
+              0,
+            ),
             child: SelectorLibroFinanzas(contexto: contexto),
           ),
         SizedBox(height: v.espacio),
@@ -274,9 +280,7 @@ class Rejilla extends StatelessWidget {
       return Wrap(
         spacing: e,
         runSpacing: e,
-        children: [
-          for (final c in children) SizedBox(width: ancho, child: c),
-        ],
+        children: [for (final c in children) SizedBox(width: ancho, child: c)],
       );
     },
   );

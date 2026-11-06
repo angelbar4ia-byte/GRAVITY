@@ -70,7 +70,10 @@ class _AccionesSemana extends ConsumerWidget {
             textoAccion: 'Reabrir',
           );
           if (si && context.mounted) {
-            await intentar(context, () => servicio.reabrirSemana(c.libroId, semana));
+            await intentar(
+              context,
+              () => servicio.reabrirSemana(c.libroId, semana),
+            );
           }
         },
         icon: const Icon(Icons.lock_open),
@@ -118,7 +121,10 @@ class _SemanaState extends ConsumerState<_Semana> {
               onPressed: () => elegir.elegir(semana.anterior),
               icon: const Icon(Icons.chevron_left),
             ),
-            Text(textoSemana(semana), style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              textoSemana(semana),
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             IconButton(
               key: const ValueKey('semana-siguiente'),
               tooltip: 'Semana siguiente',
@@ -126,7 +132,10 @@ class _SemanaState extends ConsumerState<_Semana> {
               icon: const Icon(Icons.chevron_right),
             ),
             if (semana != Semana.de(c.hoy))
-              TextButton(onPressed: () => elegir.elegir(null), child: const Text('Hoy')),
+              TextButton(
+                onPressed: () => elegir.elegir(null),
+                child: const Text('Hoy'),
+              ),
             Chip(
               key: const ValueKey('semana-estado'),
               label: Text(nombreEstadoSemana(v.estado)),
@@ -136,8 +145,14 @@ class _SemanaState extends ConsumerState<_Semana> {
               showSelectedIcon: false,
               segments: const [
                 ButtonSegment(value: TipoPeriodo.semana, label: Text('Semana')),
-                ButtonSegment(value: TipoPeriodo.catorcena, label: Text('Catorcena')),
-                ButtonSegment(value: TipoPeriodo.quincena, label: Text('Quincena')),
+                ButtonSegment(
+                  value: TipoPeriodo.catorcena,
+                  label: Text('Catorcena'),
+                ),
+                ButtonSegment(
+                  value: TipoPeriodo.quincena,
+                  label: Text('Quincena'),
+                ),
                 ButtonSegment(value: TipoPeriodo.mes, label: Text('Mes')),
               ],
               selected: {_periodo},
@@ -146,7 +161,12 @@ class _SemanaState extends ConsumerState<_Semana> {
           ],
         ),
         if (_periodo != TipoPeriodo.semana)
-          _VistaPeriodo(contexto: c, vista: v, periodo: _periodo, ocultos: ocultos)
+          _VistaPeriodo(
+            contexto: c,
+            vista: v,
+            periodo: _periodo,
+            ocultos: ocultos,
+          )
         else ...[
           if (v.estado == EstadoSemana.cerrada && v.ultimoCierre != null)
             Text(
@@ -167,7 +187,10 @@ class _SemanaState extends ConsumerState<_Semana> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                GadgetCascada(escalones: escalonesDe(v), montosOcultos: ocultos),
+                GadgetCascada(
+                  escalones: escalonesDe(v),
+                  montosOcultos: ocultos,
+                ),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 16,
@@ -195,7 +218,8 @@ class _SemanaState extends ConsumerState<_Semana> {
             ),
           ),
           _TablaPartidas(vista: v, ocultos: ocultos),
-          if (v.real.abonos.isNotEmpty) _TablaAbonos(vista: v, ocultos: ocultos),
+          if (v.real.abonos.isNotEmpty)
+            _TablaAbonos(vista: v, ocultos: ocultos),
           _Flujo(vista: v, ocultos: ocultos),
         ],
       ],
@@ -338,14 +362,19 @@ class _TablaAbonos extends StatelessWidget {
                 CeldaMonto(a.real, oculto: ocultos),
                 CeldaMonto(a.minimo, oculto: ocultos, tenue: true),
                 CeldaMonto(a.diferido, oculto: ocultos),
-                CeldaMonto(v.real.destino.extraPara(a.deuda.id), oculto: ocultos),
+                CeldaMonto(
+                  v.real.destino.extraPara(a.deuda.id),
+                  oculto: ocultos,
+                ),
                 a.bajoMinimo
                     ? const CeldaSemaforo(
                         EstadoSemaforo.rojo,
                         etiqueta: 'Bajo el mínimo',
                       )
                     : CeldaSemaforo(
-                        a.diferido > 0 ? EstadoSemaforo.ambar : EstadoSemaforo.verde,
+                        a.diferido > 0
+                            ? EstadoSemaforo.ambar
+                            : EstadoSemaforo.verde,
                         etiqueta: a.diferido > 0 ? 'Diferido' : 'Completo',
                       ),
               ],
@@ -378,7 +407,10 @@ class _Flujo extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 8),
               child: Row(
                 children: [
-                  const Semaforo(estado: EstadoSemaforo.rojo, etiqueta: 'Alerta de flujo'),
+                  const Semaforo(
+                    estado: EstadoSemaforo.rojo,
+                    etiqueta: 'Alerta de flujo',
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
@@ -484,17 +516,25 @@ class _VistaPeriodo extends StatelessWidget {
               GadgetCascada(
                 montosOcultos: ocultos,
                 escalones: [
-                  EscalonCascada(etiqueta: 'Ingreso', planeadoCentavos: plan.ingreso),
+                  EscalonCascada(
+                    etiqueta: 'Ingreso',
+                    planeadoCentavos: plan.ingreso,
+                  ),
                   EscalonCascada(
                     etiqueta: '− Presupuesto',
                     planeadoCentavos: plan.presupuesto,
                     realCentavos: real.gastos + real.gastoFinanciero,
                   ),
-                  EscalonCascada(etiqueta: '− Deuda', planeadoCentavos: plan.deuda),
+                  EscalonCascada(
+                    etiqueta: '− Deuda',
+                    planeadoCentavos: plan.deuda,
+                  ),
                   EscalonCascada(
                     etiqueta: '= Remanente',
                     planeadoCentavos: plan.remanente,
-                    tono: plan.remanente < 0 ? TonoEscalon.peligro : TonoEscalon.neutro,
+                    tono: plan.remanente < 0
+                        ? TonoEscalon.peligro
+                        : TonoEscalon.neutro,
                   ),
                 ],
               ),
@@ -521,7 +561,10 @@ class _VistaPeriodo extends StatelessWidget {
               filas: [
                 for (final (s, gasto) in mes.semanas)
                   FilaTabla(
-                    celdas: [CeldaTexto(textoSemana(s)), CeldaMonto(gasto, oculto: ocultos)],
+                    celdas: [
+                      CeldaTexto(textoSemana(s)),
+                      CeldaMonto(gasto, oculto: ocultos),
+                    ],
                   ),
               ],
               pie: FilaTabla(

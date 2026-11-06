@@ -45,12 +45,15 @@ class ConfiguracionBloqueo {
   final bool huella;
   final Duration tras;
 
-  ConfiguracionBloqueo copiarCon({String? hashPin, bool? huella, Duration? tras}) =>
-      ConfiguracionBloqueo(
-        hashPin: hashPin ?? this.hashPin,
-        huella: huella ?? this.huella,
-        tras: tras ?? this.tras,
-      );
+  ConfiguracionBloqueo copiarCon({
+    String? hashPin,
+    bool? huella,
+    Duration? tras,
+  }) => ConfiguracionBloqueo(
+    hashPin: hashPin ?? this.hashPin,
+    huella: huella ?? this.huella,
+    tras: tras ?? this.tras,
+  );
 
   Map<String, Object?> aJson() => {
     'hash_pin': hashPin,
@@ -252,7 +255,9 @@ class ControladorBloqueo extends Notifier<EstadoBloqueo> {
       }
       _intentos.anotarAcierto(persona);
     }
-    await _guardar(ConfiguracionBloqueo(hashPin: await HashPin.crearAsync(pin)));
+    await _guardar(
+      ConfiguracionBloqueo(hashPin: await HashPin.crearAsync(pin)),
+    );
     return ResultadoBloqueo.abierto;
   }
 
@@ -397,7 +402,8 @@ class ControladorBloqueo extends Notifier<EstadoBloqueo> {
     if (!HashPin.necesitaActualizarse(configuracion.hashPin)) return;
     unawaited(() async {
       final rehecho = await HashPin.crearAsync(pin);
-      if (!ref.mounted || state.configuracion?.hashPin != configuracion.hashPin) {
+      if (!ref.mounted ||
+          state.configuracion?.hashPin != configuracion.hashPin) {
         return;
       }
       await _guardar(state.configuracion!.copiarCon(hashPin: rehecho));

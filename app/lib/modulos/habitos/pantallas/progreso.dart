@@ -157,7 +157,10 @@ class _RevisionEstado extends ConsumerState<PantallaRevision> {
                     value: dar ?? false,
                     onChanged: (v) => setState(() => dar = v),
                   ),
-                Row(
+                Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 8,
                   children: [
                     TextButton(
                       onPressed: () async {
@@ -169,7 +172,6 @@ class _RevisionEstado extends ConsumerState<PantallaRevision> {
                       },
                       child: const Text('Hoy no puedo'),
                     ),
-                    const Spacer(),
                     FilledButton(
                       onPressed: () async {
                         await s.completar(

@@ -104,8 +104,18 @@ List<SemanaVencimientos> semanasDeVencimientos(
 /// Lo que sumarán las mensualidades de MSI en los próximos 3 meses.
 List<TotalMsiDelMes> totalesMsi(ContextoFinanzas c) {
   const meses = [
-    'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-    'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+    'enero',
+    'febrero',
+    'marzo',
+    'abril',
+    'mayo',
+    'junio',
+    'julio',
+    'agosto',
+    'septiembre',
+    'octubre',
+    'noviembre',
+    'diciembre',
   ];
   final datos = c.datos;
   final lista = <TotalMsiDelMes>[];
@@ -119,7 +129,9 @@ List<TotalMsiDelMes> totalesMsi(ContextoFinanzas c) {
       final saldo = saldoDeDeuda(datos, d) ?? 0;
       if (saldo <= 0 || d.abono <= 0) continue;
       final restantes = (saldo / d.abono).ceil();
-      if (restantes > i) total += d.abono < saldo - i * d.abono ? d.abono : saldo - i * d.abono;
+      if (restantes > i) {
+        total += d.abono < saldo - i * d.abono ? d.abono : saldo - i * d.abono;
+      }
     }
     if (total > 0) lista.add(TotalMsiDelMes(meses[mes], total));
   }
@@ -145,10 +157,7 @@ class VistaVencimientos extends ConsumerWidget {
             icono: Icons.event_available_outlined,
           )
         else
-          LineaVencimientos(
-            semanas: semanas,
-            totalesMsi: totalesMsi(contexto),
-          ),
+          LineaVencimientos(semanas: semanas, totalesMsi: totalesMsi(contexto)),
       ],
     );
   }
