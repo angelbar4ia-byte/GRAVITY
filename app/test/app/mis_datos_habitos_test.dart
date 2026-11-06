@@ -7,7 +7,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:gravity/app/avisos/con_avisos.dart'
     show tipoEquipoAvisosProvider;
 import 'package:gravity/app/sensibles/puerta_reservada.dart';
-import 'package:gravity/modulos/ajustes/privacidad/mis_datos_habitos.dart' show guardarArchivoProvider;
 import 'package:gravity/app/sensibles/sensibles.dart';
 import 'package:gravity/nucleo/sesion/proveedores_sesion.dart';
 import 'package:gravity/nucleo/sesion/servicio_sesion_falso.dart';
