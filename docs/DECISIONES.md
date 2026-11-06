@@ -509,3 +509,9 @@ Respuestas del dueño a la especificación de la Fase 4 (`docs/specs/fase-4-puli
 - **Recordatorios "días antes":** **más de uno** por vencimiento (se mantienen los días configurados en Ajustes › Notificaciones).
 - **Sin señal:** el aviso no se reenvía solo; pasa al siguiente cálculo (abrir el libro, guardar o Reintentar). Confirmado.
 
+## D26. Estilo Bento en lugar de Swagger — confirmada (6/nov/2026)
+
+- El dueño no aprobó el estilo **Swagger**. Se retira de las opciones de la app; el código se conserva sin usarse hasta que se decida.
+- El nuevo estilo es **Bento**: tarjetas en cuadrícula, esquinas redondeadas, fondo suave, un color de acento y letras limpias. Se propone así; el dueño lo aprueba al verlo, como cualquier estilo.
+- Glass sigue pendiente de construir hasta que Bento se apruebe.
+
