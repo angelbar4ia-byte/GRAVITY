@@ -232,7 +232,10 @@ void main() {
     );
     await irAPersonas(tester);
     expect(find.byKey(const ValueKey('maestra-error')), findsOneWidget);
-    expect(find.textContaining('Sin conexión'), findsOneWidget);
+    // La cuenta maestra y la lista de personas comparten las invitaciones: las
+    // dos dicen que no hay señal.
+    expect(find.byKey(const ValueKey('maestra-error')), findsOneWidget);
+    expect(find.textContaining('Sin conexión'), findsWidgets);
   });
 
   testWidgets('quien no es el dueño no ve Personas (ni la cuenta maestra)', (
