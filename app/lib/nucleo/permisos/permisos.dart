@@ -173,7 +173,14 @@ const Map<Modulo, Map<Rol, Permiso>> matrizPermisos = {
       accesoDirecto: false,
       desdeFase: 5,
     ),
-    Rol.familiar: Permiso.ninguno(),
+    // Fase 5 (D5, spec §2 y §5): la hermana lee y escribe lo suyo (turnos,
+    // bitácora, entregas y sus gastos); cui_puede decide el detalle.
+    Rol.familiar: Permiso(
+      Alcance.restringido,
+      'Sus turnos y visitas',
+      acciones: _leerYEscribir,
+      desdeFase: 5,
+    ),
     // Restringido = su turno.
     Rol.cuidador: Permiso(
       Alcance.restringido,

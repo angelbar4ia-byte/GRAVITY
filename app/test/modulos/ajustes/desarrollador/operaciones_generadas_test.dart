@@ -47,6 +47,12 @@ const _rpcDeLectura = {
   'avisosPorcentajeBase',
   'habActiva',
   'habHogarDe',
+  // Fase 5: preguntas y resúmenes de Cuidados (no escriben).
+  'cuiPerfil',
+  'cuiPuede',
+  'cuiQuienEnTurno',
+  'cuiResumenMensual',
+  'cuiResumenPapa',
 };
 
 /// Libros solo-agregar de Finanzas: no tienen PATCH ni DELETE.
@@ -119,6 +125,7 @@ void main() {
       'Base de datos',
       'Base de datos · Finanzas',
       'Base de datos · Hábitos',
+      'Base de datos · Cuidados',
       'Funciones del servidor',
       'Puente de casa',
     ]);
@@ -170,7 +177,7 @@ void main() {
       final base = gruposOperaciones.where(
         (g) => g.nombre.startsWith('Base de datos'),
       );
-      expect(base, hasLength(3));
+      expect(base, hasLength(4));
       for (final o in base.expand((g) => g.operaciones)) {
         expect(o.soloLocal, isTrue, reason: o.id);
         final esLectura =
