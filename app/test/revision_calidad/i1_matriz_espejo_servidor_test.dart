@@ -197,8 +197,8 @@ void main() {
   // D18 y D19 (21/oct/2026, migración de Finanzas MVP 1) agregan 4: la pareja
   // escribe y administra su libro de Finanzas, y la cuidadora lee y confirma
   // sus solicitudes de GRAVITY (restringido). Total: 59.
-  test('se leyó la matriz del servidor (61 filas)', () {
-    expect(servidor, hasLength(61));
+  test('se leyó la matriz del servidor (59 filas)', () {
+    expect(servidor, hasLength(59));
   });
 
   test('D17: el servidor solo acepta total, propio y restringido', () {

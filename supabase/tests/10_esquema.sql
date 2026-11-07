@@ -61,8 +61,8 @@ select pruebas.igual(
   0, 'Bitácora sin reglas de UPDATE ni DELETE');
 
 -- La matriz de la sección 5, con los cambios de D18 y D19 (Fase 1).
-select pruebas.igual((select count(*)::int from public.permisos_rol), 61,
-  'La matriz tiene 61 permisos (sección 5 + gravity alineado con la app + D18 y D19 + Cuidados de la hermana)');
+select pruebas.igual((select count(*)::int from public.permisos_rol), 59,
+  'La matriz tiene 59 permisos (sección 5 + gravity alineado con la app + D18 y D19); la hermana es cuidadora (D5)');
 select pruebas.igual(
   (select string_agg(accion::text || '=' || alcance::text, ',' order by accion)
      from public.permisos_rol where rol = 'dueno' and modulo = 'finanzas'),
