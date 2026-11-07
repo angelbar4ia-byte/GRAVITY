@@ -15,7 +15,7 @@
 -- Tres caracteres visibles, de ellos al menos dos que no sean puntuación o símbolos ('___', '...' y '---' no valen) y
 -- no todos iguales ('aaa' no vale). La puntuación se define por lista (no por clase de letras) para no depender
 -- de la configuración regional del servidor.
-create or replace function public.fin_motivo_valido(p_motivo text)
+create or replace function fin_motivo_valido(p_motivo text)
 returns boolean
 language sql immutable parallel safe
 set search_path = ''
@@ -26,7 +26,7 @@ as $$
   from (select regexp_replace(coalesce(p_motivo, ''),
           '[[:space:][:cntrl:]\u0085 ­؜ᅟᅠ ᠎ -‏ -  -⁯⠀　ㅤ﻿ﾠ￹-￻]', '', 'g') as s) q
 $$;
-comment on function public.fin_motivo_valido(text) is
+comment on function fin_motivo_valido(text) is
   'El motivo cuenta si tiene 3 caracteres visibles, al menos 2 que no son puntuación ni símbolos y no todos iguales '
   '(la misma regla que motivoValido en la app).';
 
