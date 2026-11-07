@@ -1,6 +1,6 @@
 # Fase 5 · Cuidados (especificación)
 
-> v1.3, 7/nov/2026 (respuestas del dueño sobre medicamentos de la hermana y bitácora de la pareja). Aprobada por el dueño con sus respuestas del mismo día. El documento de la app de cuidados actual se pospone a la siguiente sesión. Base: D2, D5, D18 y las respuestas del dueño a D5 (7/nov/2026). Pendiente: el documento de la app de cuidados actual (no está en el repositorio); mientras llega, esta especificación se apoya en la descripción del roadmap (Fase 5).
+> v1.4, 7/nov/2026 (respuestas del dueño sobre medicamentos de la hermana y bitácora de la pareja). Aprobada por el dueño con sus respuestas del mismo día. El documento de la app de cuidados actual se pospone a la siguiente sesión. Base: D2, D5, D18 y las respuestas del dueño a D5 (7/nov/2026). Pendiente: el documento de la app de cuidados actual (no está en el repositorio); mientras llega, esta especificación se apoya en la descripción del roadmap (Fase 5).
 
 ## 1. Alcance
 
@@ -92,6 +92,12 @@ Decisión del dueño (7/nov/2026): **sin PIN**. Si la voz no da seguridad para i
 
 - **Medicamentos:** la hermana puede **marcar y dar** los medicamentos durante **su turno** (martes por la tarde y visitas), igual que la cuidadora de turno.
 - **Pareja con consentimiento:** **sí ve la bitácora** de cuidados (con consentimiento explícito; sin consentimiento, no).
+
+## 8f. Instrucciones para la cuidadora principal (v1.4, 7/nov/2026)
+
+- **Quién deja instrucciones:** el dueño, la hermana y la pareja.
+- **Para quién:** la cuidadora principal. Ella ve esas instrucciones y sus propias entradas (sección 8c).
+- **La pareja** puede dejar instrucciones aunque no tenga consentimiento para leer la bitácora. Solo escribe instrucciones; no lee la bitácora ni las entregas sin consentimiento.
 
 ## 8e. Roles de cuidador (v1.3, 7/nov/2026)
 
