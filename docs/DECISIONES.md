@@ -520,4 +520,5 @@ Respuestas del dueño a la especificación de la Fase 4 (`docs/specs/fase-4-puli
 - El estilo **Swagger** se **elimina** del proyecto (código, pruebas y fuentes que solo él usaba).
 - Se construye ahora el estilo **Glass** (día y noche), con la misma regla de contraste y letra grande.
 - El estilo **Bento** queda **en pausa**: no aparece en las opciones de la app hasta que el dueño decida retomarlo. Su código se conserva.
+- **Glass aprobado por el dueño (7/nov/2026).** Plataforma aplica el fondo degradado a toda la app.
 
