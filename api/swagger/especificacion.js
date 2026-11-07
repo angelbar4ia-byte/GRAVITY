@@ -1,7 +1,7 @@
 // GENERADO por api/generar_dart.mjs a partir de api/openapi.yaml. No se edita a mano.
 // Permite abrir Swagger UI con doble clic (file://), donde el navegador no deja leer
 // ../openapi.yaml. Servida por http, la página lee openapi.yaml directamente.
-// huella: fnv1a32:dc31ebad
+// huella: fnv1a32:07fc1f91
 window.ESPECIFICACION_GRAVITY = {
   "openapi": "3.1.0",
   "info": {
@@ -887,8 +887,7 @@ window.ESPECIFICACION_GRAVITY = {
         "x-roles": [
           "dueno",
           "coadministrador",
-          "familiar",
-          "casa"
+          "familiar"
         ],
         "x-escribe": false,
         "x-solo-local": false,
@@ -15693,4 +15692,4 @@ window.ESPECIFICACION_GRAVITY = {
     }
   }
 };
-window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:dc31ebad';
+window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:07fc1f91';

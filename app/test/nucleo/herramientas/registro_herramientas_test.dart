@@ -1116,7 +1116,6 @@ void main() {
       expect(nombres(Rol.casa), {
         'gravity.abrir',
         'cuidados.abrir',
-        'alimentacion.abrir',
         'casa.abrir',
       });
     });

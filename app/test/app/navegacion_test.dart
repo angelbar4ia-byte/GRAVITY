@@ -42,8 +42,8 @@ void main() {
       expect(etiquetas(Rol.familiar), ['Hoy', 'Hábitos', 'Más']);
     });
 
-    test('Casa: Hoy · Alimentación · Más', () {
-      expect(etiquetas(Rol.casa), ['Hoy', 'Alimentación', 'Más']);
+    test('Casa: Hoy · Más (sin Alimentación, D23)', () {
+      expect(etiquetas(Rol.casa), ['Hoy', 'Más']);
     });
   });
 

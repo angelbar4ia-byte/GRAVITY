@@ -721,7 +721,7 @@ paths:
       summary: alimentacion.abrir · Abrir Alimentación
       description: >-
         Abre Alimentación. Sinónimos en la barra de órdenes: comida, cocina, menú, recetas.
-      x-roles: [dueno, coadministrador, familiar, casa]
+      x-roles: [dueno, coadministrador, familiar]
       x-escribe: false
       x-solo-local: false
       x-fase: 0

@@ -5,7 +5,7 @@ import '../../../nucleo/contratos/roles.dart';
 import 'operacion_api.dart';
 
 /// Huella de api/openapi.yaml con la que se generó este archivo.
-const huellaEspecificacion = 'fnv1a32:dc31ebad';
+const huellaEspecificacion = 'fnv1a32:07fc1f91';
 
 /// Versión de la especificación (info.version).
 const versionEspecificacion = '0.6.0';
@@ -243,7 +243,7 @@ const gruposOperaciones = <GrupoOperaciones>[
         ruta: '/herramientas/alimentacion.abrir',
         resumen: 'alimentacion.abrir · Abrir Alimentación',
         descripcion: 'Abre Alimentación. Sinónimos en la barra de órdenes: comida, cocina, menú, recetas.',
-        roles: {Rol.dueno, Rol.coadministrador, Rol.familiar, Rol.casa},
+        roles: {Rol.dueno, Rol.coadministrador, Rol.familiar},
         escribe: false,
         soloLocal: false,
         fase: 0,

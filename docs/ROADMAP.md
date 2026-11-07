@@ -1,6 +1,6 @@
 # Roadmap de GRAVITY (proyecto Segundo Cerebro)
 
-> **Versión 1.2 (6/nov/2026), en ejecución.** El dueño del proyecto dio la orden de inicio el 20/oct/2026. Plan de ejecución de la app única (D1): la **laptop Windows** con el sistema completo y el **teléfono Android** con lo mínimo (D4). Las decisiones de arquitectura están en `DECISIONES.md`; el diseño visual se define en paralelo en `DISENO_UX_UI.md`.
+> **Versión 1.3 (7/nov/2026), en ejecución.** El dueño del proyecto dio la orden de inicio el 20/oct/2026. Plan de ejecución de la app única (D1): la **laptop Windows** con el sistema completo y el **teléfono Android** con lo mínimo (D4). Las decisiones de arquitectura están en `DECISIONES.md`; el diseño visual se define en paralelo en `DISENO_UX_UI.md`.
 >
 > Fuente única: `GRAVITY/docs/ROADMAP.md` (D10 aplicada el 20/oct/2026). La ejecución la hace el **equipo de agentes** de la sección 11.
 
@@ -271,3 +271,4 @@ La ejecución la hace un equipo de agentes de Claude Code, **cada uno especializ
 | 1.0 | 31/oct/2026 | Fase 1 cerrada en lo técnico tras dos revisiones de calidad (0 bloqueantes y 0 importantes abiertos); endurecimiento de la bandeja de salida, el PIN y el importador; D17 con criterios de la Fase 1b; siguiente ronda actualizada |
 | 1.1 | 1/nov/2026 | Fase 2 cerrada en lo técnico (deudas, ahorro y avisos); D20 confirmada; revisión de calidad de la Fase 2 sin bloqueantes |
 | 1.2 | 6/nov/2026 | Fase 3 cerrada en lo técnico (Hábitos MVP); D21 confirmada; revisión de calidad de la Fase 3 sin bloqueantes |
+| 1.3 | 7/nov/2026 | Fase 4 cerrada en lo técnico tras la revisión de calidad (0 bloqueantes; 5 importantes corregidos o con prueba en rojo a propósito). D23 y su ajuste aplicados: familiar edita el menú de Papá, Casa no ve Alimentación (matriz en servidor y app), Alimentación en el servidor (migraciones 20261108 y 20261109). D24 (vista temporal de Finanzas) pendiente de construir; mediciones en Galaxy A52 y laptop pendientes; Glass sin probar en Windows real |
