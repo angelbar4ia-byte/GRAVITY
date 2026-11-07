@@ -37,6 +37,7 @@ class ContextoAvisos {
     this.esMaestra = false,
     this.puedeRecibir = true,
     this.usaHabitos = false,
+    this.recibeCuidados = false,
   });
 
   final TipoEquipoAvisos tipo;
@@ -52,6 +53,13 @@ class ContextoAvisos {
   /// `true` si la sesión usa Hábitos (dueño, coadministrador o familiar que no
   /// son la cuenta maestra): recibe sus recordatorios locales.
   final bool usaHabitos;
+
+  /// `true` para el cuidador (y el dueño, que cubre turnos): recibe solo los
+  /// avisos de Cuidados aunque no vea dinero.
+  final bool recibeCuidados;
+
+  /// Puede recibir avisos de algún tipo en este equipo.
+  bool get puedeRecibirAvisos => puedeRecibir || recibeCuidados;
 }
 
 /// Cómo se presenta un aviso (reglas 35 y 36).
@@ -191,7 +199,7 @@ class ServicioAvisos {
     final c = contexto();
     if (c.tipo == TipoEquipoAvisos.tabletPublica ||
         c.esMaestra ||
-        !c.puedeRecibir) {
+        !c.puedeRecibirAvisos) {
       return false;
     }
     if (c.tipo == TipoEquipoAvisos.laptop) return !porPush;
@@ -225,7 +233,7 @@ class ServicioAvisos {
     if (persona == null ||
         c.tipo == TipoEquipoAvisos.tabletPublica ||
         c.esMaestra ||
-        !c.puedeRecibir) {
+        !c.puedeRecibirAvisos) {
       return false;
     }
     await almacen.escribir(_claveActivado(persona), activar ? '1' : '0');
@@ -249,7 +257,7 @@ class ServicioAvisos {
     if (c.personaId == null ||
         c.tipo == TipoEquipoAvisos.tabletPublica ||
         c.esMaestra ||
-        !c.puedeRecibir) {
+        !c.puedeRecibirAvisos) {
       return;
     }
     _preferencias = null;
@@ -358,6 +366,8 @@ class ServicioAvisos {
       await _mostrarGenerico();
       return;
     }
+    // Quien no ve dinero solo recibe los avisos de Cuidados.
+    if (!c.puedeRecibir && !avisosDeCuidados.contains(aviso.tipo)) return;
     await _mostrar(aviso, persona);
   }
 

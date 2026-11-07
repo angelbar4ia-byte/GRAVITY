@@ -55,6 +55,7 @@ final contextoAvisosProvider = Provider<ContextoAvisos>((ref) {
     usaHabitos:
         rol != null &&
         puedeUsarHabitos(rol, esMaestra: sesion?.esMaestra ?? false),
+    recibeCuidados: rol == Rol.cuidador || rol == Rol.dueno,
   );
 });
 

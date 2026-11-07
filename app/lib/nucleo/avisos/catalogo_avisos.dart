@@ -70,6 +70,11 @@ const Map<String, String> titulosDeAviso = {
   'resumen_lunes': 'Tu resumen de la semana está listo',
   'recordatorio_cierre': 'Es hora de cerrar la semana',
   'solicitud_vista': 'Solicitud de vista: Familiar',
+  // Cuidados (Fase 5, D6): genéricos, sin medicamento ni dato clínico.
+  'recordatorio_toma': 'Hora de la toma de Papá',
+  'recordatorio_comida': 'Hora de la comida de Papá',
+  'entrega_turno': 'Es hora de dejar tus notas',
+  'cambio_urgente_cuidados': 'Cambio urgente en los cuidados',
   'base_80': 'Revisa el almacenamiento de GRAVITY',
   'base_90': 'Revisa el almacenamiento de GRAVITY',
 };
@@ -91,6 +96,11 @@ const Map<String, SeveridadAviso> severidadDeAviso = {
   'base_80': SeveridadAviso.importante,
   // D24: el familiar pidió la vista temporal de Finanzas de Papá.
   'solicitud_vista': SeveridadAviso.critica,
+  // Cuidados: el cambio urgente del dueño llega al instante a quien está de turno.
+  'cambio_urgente_cuidados': SeveridadAviso.critica,
+  'recordatorio_toma': SeveridadAviso.importante,
+  'recordatorio_comida': SeveridadAviso.importante,
+  'entrega_turno': SeveridadAviso.informativa,
   'partida_80': SeveridadAviso.informativa,
   'uso_limite': SeveridadAviso.informativa,
   'aportacion_pendiente': SeveridadAviso.informativa,
@@ -102,6 +112,14 @@ const Map<String, SeveridadAviso> severidadDeAviso = {
 
 /// Los que no cuentan para el tope diario de avisos no críticos.
 const Set<String> avisosFijos = {'resumen_lunes', 'recordatorio_cierre'};
+
+/// Tipos de Cuidados: los recibe también quien no ve dinero (el cuidador).
+const Set<String> avisosDeCuidados = {
+  'recordatorio_toma',
+  'recordatorio_comida',
+  'entrega_turno',
+  'cambio_urgente_cuidados',
+};
 
 /// Título para [tipo]; el genérico si no está en el catálogo.
 String tituloDeAviso(String? tipo) =>
