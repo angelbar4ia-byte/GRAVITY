@@ -40,6 +40,10 @@ const _rpcDeLectura = {
   'finSoloLectura',
   'finPuedeSalir',
   'finAdultosConFinanzas',
+  // D24: preguntas sobre la vista temporal de Papá (no escriben).
+  'finVistaPapaVigente',
+  'finVistaVigenteHogar',
+  'finVistaVigenteLibro',
   'avisosPorcentajeBase',
   'habActiva',
   'habHogarDe',
@@ -235,14 +239,25 @@ void main() {
         'asignarCuentaMaestra',
         'finCrearLibroRepresentado',
         'finNombrarAlbacea',
+        'finResponderVista',
+      };
+      // D24 (fase 4): el familiar pide y consulta la vista temporal de Papá;
+      // el dueño la autoriza. Es la única excepción a «solo dueño y pareja».
+      const soloFamiliar = {
+        'finPedirVistaPapa',
+        'finVistaPapaVigente',
+        'finVistaVigenteHogar',
+        'finVistaVigenteLibro',
       };
       for (final o in finanzas) {
         expect(o.soloLocal, isTrue, reason: o.id);
-        expect(o.fase, anyOf(1, 2), reason: o.id);
+        expect(o.fase, anyOf(1, 2, 4), reason: o.id);
         if (deTodos.contains(o.id)) {
           expect(o.roles, Rol.values.toSet(), reason: o.id);
         } else if (soloDueno.contains(o.id)) {
           expect(o.roles, {Rol.dueno}, reason: o.id);
+        } else if (soloFamiliar.contains(o.id)) {
+          expect(o.roles, {Rol.familiar}, reason: o.id);
         } else {
           expect(o.roles, {Rol.dueno, Rol.coadministrador}, reason: o.id);
         }

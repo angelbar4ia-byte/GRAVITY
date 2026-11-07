@@ -80,20 +80,39 @@ List<String> _columnas(String cuerpo) {
 /// Columnas con permiso de INSERT para la app (`grant insert (…) on tabla`).
 Map<String, Set<String>> _conInsert(String sql) => {
   for (final m in RegExp(
-    r'grant insert \(([^)]*)\)(.*?)on public\.(fin_\w+)',
+    // `[^;]*?`: no cruza a otra sentencia (un grant de otra tabla no se
+    // confunde con el `grant select` de una tabla de solo lectura).
+    r'grant insert \(([^)]*)\)([^;]*?)on public\.(fin_\w+)',
     dotAll: true,
   ).allMatches(sql))
     m[3]!: {for (final c in m[1]!.split(',')) c.trim().replaceAll('"', '')},
 };
 
+/// Tablas fin_* que la app solo lee (sin `grant insert`): nadie escribe directo,
+/// cambian por RPC del servidor, así que no pasan por la cola de subida.
+const _soloLectura = {
+  // D24: fin_pedir_vista_papa / fin_responder_vista (migración 20261110).
+  'fin_vistas_solicitadas',
+};
+
 void main() {
   final sql = _sqlDeFinanzas();
-  final tablas = _cuerposDeTablas(sql);
+  final todas = _cuerposDeTablas(sql);
+  // Tablas de escritura: las que la cola puede subir.
+  final tablas = {
+    for (final e in todas.entries)
+      if (!_soloLectura.contains(e.key)) e.key: e.value,
+  };
   final conInsert = _conInsert(sql);
 
-  test('se leyeron las 26 tablas de Finanzas y sus permisos de INSERT', () {
+  test('se leyeron las 26 tablas de escritura de Finanzas y sus INSERT', () {
     expect(tablas, hasLength(26));
     expect(conInsert.keys.toSet(), tablas.keys.toSet());
+  });
+
+  test('las tablas de solo lectura existen y no admiten INSERT', () {
+    expect(todas.keys.toSet(), {...tablas.keys, ..._soloLectura});
+    expect(conInsert.keys.toSet().intersection(_soloLectura), isEmpty);
   });
 
   group('columnas que pone el servidor', () {

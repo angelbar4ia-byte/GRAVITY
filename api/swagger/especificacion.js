@@ -1,7 +1,7 @@
 // GENERADO por api/generar_dart.mjs a partir de api/openapi.yaml. No se edita a mano.
 // Permite abrir Swagger UI con doble clic (file://), donde el navegador no deja leer
 // ../openapi.yaml. Servida por http, la página lee openapi.yaml directamente.
-// huella: fnv1a32:07fc1f91
+// huella: fnv1a32:61675f71
 window.ESPECIFICACION_GRAVITY = {
   "openapi": "3.1.0",
   "info": {
@@ -11088,6 +11088,278 @@ window.ESPECIFICACION_GRAVITY = {
         }
       }
     },
+    "/rest/v1/rpc/fin_pedir_vista_papa": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finPedirVistaPapa",
+        "summary": "Pedir la vista temporal de Finanzas de Papá (familiar)",
+        "description": "Solo el familiar vigente del hogar (D24): a cualquier otra sesión responde 403 (42501). Crea una solicitud `pendiente` en `fin_vistas_solicitadas` y avisa al dueño (aviso `solicitud_vista`, crítico, sin montos ni nombres). Devuelve el id de la solicitud. Responde 400 (22023) si el motivo tiene menos de 3 caracteres visibles o más de 200, si el hogar no tiene libro de Papá, o si ya hay una solicitud pendiente o una vista vigente (máximo 5 solicitudes por 24 horas).",
+        "x-roles": [
+          "familiar"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 4,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_motivo"
+                ],
+                "properties": {
+                  "p_motivo": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 200
+                  }
+                }
+              },
+              "example": {
+                "p_motivo": "Revisar el pago del predial"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Id de la solicitud creada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Uuid"
+                },
+                "example": "5d3a1c70-2b8e-4f19-a6c4-8e0b7d92f315"
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/fin_responder_vista": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finResponderVista",
+        "summary": "Autorizar, rechazar o cancelar una solicitud de vista",
+        "description": "Solo el dueño del hogar (42501 a cualquier otro). `autorizar` y `rechazar` valen para solicitudes pendientes; al autorizar, `vigente_hasta` queda en ahora más 30 minutos exactos. `cancelar` vale para una pendiente o una autorizada vigente. No devuelve nada. Responde 400 (22023) si la acción no es una de las tres, si la solicitud ya venció, ya no está pendiente o ya no se puede cancelar.",
+        "x-roles": [
+          "dueno"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 4,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_solicitud",
+                  "p_accion"
+                ],
+                "properties": {
+                  "p_solicitud": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_accion": {
+                    "type": "string",
+                    "enum": [
+                      "autorizar",
+                      "rechazar",
+                      "cancelar"
+                    ]
+                  }
+                }
+              },
+              "example": {
+                "p_solicitud": "5d3a1c70-2b8e-4f19-a6c4-8e0b7d92f315",
+                "p_accion": "autorizar"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Hecho."
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/fin_vista_papa_vigente": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finVistaPapaVigente",
+        "summary": "¿Tengo una vista de Papá autorizada y en tiempo?",
+        "description": "Verdadero si la sesión es un familiar con una solicitud `autorizada` cuyo `vigente_hasta` aún no pasa. Es la verdad para la app (D24); a cualquier otra sesión le responde `false`. La lectura de los datos de Papá la decide la RLS en cada consulta, no esta marca.",
+        "x-roles": [
+          "familiar"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 4,
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              },
+              "example": {}
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Si hay una vista vigente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                },
+                "example": false
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/fin_vista_vigente_hogar": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finVistaVigenteHogar",
+        "summary": "¿Tengo una vista de Papá vigente en este hogar?",
+        "description": "Como `fin_vista_papa_vigente`, para un hogar (D24). Lo usan las políticas de lectura de categorías y cuentas de gasto. Verdadero solo para un familiar de ese hogar con una solicitud `autorizada` cuyo `vigente_hasta` no ha pasado; a cualquier otra sesión le responde `false`.",
+        "x-roles": [
+          "familiar"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 4,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_hogar_id"
+                ],
+                "properties": {
+                  "p_hogar_id": {
+                    "$ref": "#/components/schemas/Uuid"
+                  }
+                }
+              },
+              "example": {
+                "p_hogar_id": "b0000000-0000-4000-8000-000000000001"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Si hay una vista vigente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                },
+                "example": false
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/fin_vista_vigente_libro": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finVistaVigenteLibro",
+        "summary": "¿Tengo una vista vigente sobre este libro de Papá?",
+        "description": "Verdadero si la sesión es un familiar con una vista `autorizada` y en tiempo sobre ese libro `representado` (D24). Con cualquier otro libro o sesión responde `false`. Es la base de la regla de lectura de `fin_puede`; la app la usa para saber si puede mostrar el libro.",
+        "x-roles": [
+          "familiar"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 4,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_libro_id"
+                ],
+                "properties": {
+                  "p_libro_id": {
+                    "$ref": "#/components/schemas/Uuid"
+                  }
+                }
+              },
+              "example": {
+                "p_libro_id": "f1000000-0000-4000-8000-000000000002"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Si hay una vista vigente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                },
+                "example": false
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
     "/rest/v1/rpc/fin_lunes": {
       "post": {
         "tags": [
@@ -15692,4 +15964,4 @@ window.ESPECIFICACION_GRAVITY = {
     }
   }
 };
-window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:07fc1f91';
+window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:61675f71';

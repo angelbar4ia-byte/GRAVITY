@@ -5,7 +5,7 @@ import '../../../nucleo/contratos/roles.dart';
 import 'operacion_api.dart';
 
 /// Huella de api/openapi.yaml con la que se generó este archivo.
-const huellaEspecificacion = 'fnv1a32:07fc1f91';
+const huellaEspecificacion = 'fnv1a32:61675f71';
 
 /// Versión de la especificación (info.version).
 const versionEspecificacion = '0.6.0';
@@ -1654,6 +1654,61 @@ const gruposOperaciones = <GrupoOperaciones>[
         escribe: true,
         soloLocal: true,
         fase: 1,
+      ),
+      OperacionApi(
+        id: 'finPedirVistaPapa',
+        metodo: MetodoHttp.post,
+        ruta: '/rest/v1/rpc/fin_pedir_vista_papa',
+        resumen: 'Pedir la vista temporal de Finanzas de Papá (familiar)',
+        descripcion: 'Solo el familiar vigente del hogar (D24): a cualquier otra sesión responde 403 (42501). Crea una solicitud `pendiente` en `fin_vistas_solicitadas` y avisa al dueño (aviso `solicitud_vista`, crítico, sin montos ni nombres). Devuelve el id de la solicitud. Responde 400 (22023) si el motivo tiene menos de 3 caracteres visibles o más de 200, si el hogar no tiene libro de Papá, o si ya hay una solicitud pendiente o una vista vigente (máximo 5 solicitudes por 24 horas).',
+        roles: {Rol.familiar},
+        escribe: true,
+        soloLocal: true,
+        fase: 4,
+      ),
+      OperacionApi(
+        id: 'finResponderVista',
+        metodo: MetodoHttp.post,
+        ruta: '/rest/v1/rpc/fin_responder_vista',
+        resumen: 'Autorizar, rechazar o cancelar una solicitud de vista',
+        descripcion: 'Solo el dueño del hogar (42501 a cualquier otro). `autorizar` y `rechazar` valen para solicitudes pendientes; al autorizar, `vigente_hasta` queda en ahora más 30 minutos exactos. `cancelar` vale para una pendiente o una autorizada vigente. No devuelve nada. Responde 400 (22023) si la acción no es una de las tres, si la solicitud ya venció, ya no está pendiente o ya no se puede cancelar.',
+        roles: {Rol.dueno},
+        escribe: true,
+        soloLocal: true,
+        fase: 4,
+      ),
+      OperacionApi(
+        id: 'finVistaPapaVigente',
+        metodo: MetodoHttp.post,
+        ruta: '/rest/v1/rpc/fin_vista_papa_vigente',
+        resumen: '¿Tengo una vista de Papá autorizada y en tiempo?',
+        descripcion: 'Verdadero si la sesión es un familiar con una solicitud `autorizada` cuyo `vigente_hasta` aún no pasa. Es la verdad para la app (D24); a cualquier otra sesión le responde `false`. La lectura de los datos de Papá la decide la RLS en cada consulta, no esta marca.',
+        roles: {Rol.familiar},
+        escribe: false,
+        soloLocal: true,
+        fase: 4,
+      ),
+      OperacionApi(
+        id: 'finVistaVigenteHogar',
+        metodo: MetodoHttp.post,
+        ruta: '/rest/v1/rpc/fin_vista_vigente_hogar',
+        resumen: '¿Tengo una vista de Papá vigente en este hogar?',
+        descripcion: 'Como `fin_vista_papa_vigente`, para un hogar (D24). Lo usan las políticas de lectura de categorías y cuentas de gasto. Verdadero solo para un familiar de ese hogar con una solicitud `autorizada` cuyo `vigente_hasta` no ha pasado; a cualquier otra sesión le responde `false`.',
+        roles: {Rol.familiar},
+        escribe: false,
+        soloLocal: true,
+        fase: 4,
+      ),
+      OperacionApi(
+        id: 'finVistaVigenteLibro',
+        metodo: MetodoHttp.post,
+        ruta: '/rest/v1/rpc/fin_vista_vigente_libro',
+        resumen: '¿Tengo una vista vigente sobre este libro de Papá?',
+        descripcion: 'Verdadero si la sesión es un familiar con una vista `autorizada` y en tiempo sobre ese libro `representado` (D24). Con cualquier otro libro o sesión responde `false`. Es la base de la regla de lectura de `fin_puede`; la app la usa para saber si puede mostrar el libro.',
+        roles: {Rol.familiar},
+        escribe: false,
+        soloLocal: true,
+        fase: 4,
       ),
       OperacionApi(
         id: 'finLunes',
