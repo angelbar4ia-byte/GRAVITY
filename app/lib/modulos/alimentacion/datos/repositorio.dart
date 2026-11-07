@@ -110,3 +110,32 @@ class RepositorioAlimentacionEnMemoria implements RepositorioAlimentacion {
   Future<void> quitarSuplemento(MenuId menu, String id) async =>
       _supl[menu]!.removeWhere((x) => x.id == id);
 }
+
+/// Con sesión real y mientras el servidor no tenga las tablas de Alimentación
+/// (spec, sección 6): nada de datos de ejemplo mostrados como si fueran del
+/// hogar. Lectura vacía; escribir no está disponible todavía.
+class RepositorioAlimentacionSinServidor implements RepositorioAlimentacion {
+  const RepositorioAlimentacionSinServidor();
+
+  static Never _no() =>
+      throw UnsupportedError('Alimentación aún no tiene tablas en el servidor.');
+
+  @override
+  Future<List<Platillo>> platillos() async => const [];
+  @override
+  Future<List<EntradaMenu>> menu(MenuId menu, DateTime lunes) async => const [];
+  @override
+  Future<void> asignar(MenuId menu, DateTime lunes, int dia, TiempoComida tiempo,
+          String? platilloId) async =>
+      _no();
+  @override
+  Future<Set<String>> comprados(MenuId menu, DateTime lunes) async => const {};
+  @override
+  Future<void> marcar(MenuId menu, DateTime lunes, String clave, bool comprado) async => _no();
+  @override
+  Future<List<Suplemento>> suplementos(MenuId menu) async => const [];
+  @override
+  Future<void> guardarSuplemento(MenuId menu, Suplemento s) async => _no();
+  @override
+  Future<void> quitarSuplemento(MenuId menu, String id) async => _no();
+}

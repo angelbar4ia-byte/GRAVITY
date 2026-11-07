@@ -278,7 +278,9 @@ class DialogoCodigoInvitacion extends ConsumerWidget {
               'vez y no se manda por correo. Vence el ${_fecha(creada.expira)}.',
             ),
             const SizedBox(height: 12),
-            SelectableText(
+            // Texto no seleccionable (F4-I1): copiarlo con el menú del sistema
+            // lo dejaría en el portapapeles sin borrarse. Solo el botón Copiar.
+            Text(
               creada.token,
               key: const ValueKey('codigo-invitacion'),
               style: const TextStyle(fontFamily: 'monospace'),
@@ -290,7 +292,7 @@ class DialogoCodigoInvitacion extends ConsumerWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'Si lo copias, se borra del portapapeles a los '
+              'Para copiarlo usa el botón Copiar: se borra del portapapeles a los '
               '${portapapeles.duracion.inSeconds} segundos.',
               key: const ValueKey('aviso-portapapeles'),
               style: Theme.of(context).textTheme.bodySmall,

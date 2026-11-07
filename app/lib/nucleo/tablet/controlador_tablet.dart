@@ -711,16 +711,18 @@ class ControladorTablet extends Notifier<EstadoTablet> {
     final usuario = _buscar(personaId);
     if (usuario == null) return ResultadoDesbloqueo.noExiste;
     _exigirPinNuevo(pinNuevo, rol: usuario.rol);
-    if (_intentos.bloqueado(personaId)) return ResultadoDesbloqueo.bloqueado;
-    final correcto = await _serie.correr(
-      () => HashPin.verificarAsync(pinActual, usuario.hashPin),
-    );
-    if (!correcto) {
-      return _intentos.anotarFallo(personaId) == ResultadoFallo.bloqueado
-          ? ResultadoDesbloqueo.bloqueado
-          : ResultadoDesbloqueo.pinIncorrecto;
-    }
-    _intentos.anotarAcierto(personaId);
+    // El límite se revisa dentro de la fila (F4-S1).
+    final fallo = await _serie.correr<ResultadoDesbloqueo?>(() async {
+      if (_intentos.bloqueado(personaId)) return ResultadoDesbloqueo.bloqueado;
+      if (!await HashPin.verificarAsync(pinActual, usuario.hashPin)) {
+        return _intentos.anotarFallo(personaId) == ResultadoFallo.bloqueado
+            ? ResultadoDesbloqueo.bloqueado
+            : ResultadoDesbloqueo.pinIncorrecto;
+      }
+      _intentos.anotarAcierto(personaId);
+      return null;
+    });
+    if (fallo != null) return fallo;
     // Si su credencial está en la bandeja, la llave que la protege pasa al PIN
     // nuevo (si no, el próximo PIN no podría abrirla).
     await ref

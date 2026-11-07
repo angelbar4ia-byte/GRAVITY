@@ -281,13 +281,18 @@ class ControladorMontos extends Notifier<EstadoMontos> {
     final hash = _hashPin;
     if (persona == null) return ResultadoRevelar.pinIncorrecto;
     if (hash == null) return ResultadoRevelar.faltaPin;
-    if (_intentos.bloqueado(persona)) return ResultadoRevelar.bloqueado;
-    if (!await _serie.correr(() => HashPin.verificarAsync(actual, hash))) {
-      return _intentos.anotarFallo(persona) == ResultadoFallo.bloqueado
-          ? ResultadoRevelar.bloqueado
-          : ResultadoRevelar.pinIncorrecto;
-    }
-    _intentos.anotarAcierto(persona);
+    // El límite se revisa dentro de la fila (F4-S1).
+    final fallo = await _serie.correr<ResultadoRevelar?>(() async {
+      if (_intentos.bloqueado(persona)) return ResultadoRevelar.bloqueado;
+      if (!await HashPin.verificarAsync(actual, hash)) {
+        return _intentos.anotarFallo(persona) == ResultadoFallo.bloqueado
+            ? ResultadoRevelar.bloqueado
+            : ResultadoRevelar.pinIncorrecto;
+      }
+      _intentos.anotarAcierto(persona);
+      return null;
+    });
+    if (fallo != null) return fallo;
     await _guardar(hashPin: await HashPin.crearAsync(nuevo));
     return ResultadoRevelar.revelado;
   }
@@ -333,16 +338,17 @@ class ControladorMontos extends Notifier<EstadoMontos> {
       case FuenteDePinMontos.propio:
         final hash = _hashPin;
         if (hash == null) return ResultadoRevelar.faltaPin;
-        if (_intentos.bloqueado(persona)) return ResultadoRevelar.bloqueado;
-        final correcto = await _serie.correr(
-          () => HashPin.verificarAsync(pin, hash),
-        );
-        if (!correcto) {
-          return _intentos.anotarFallo(persona) == ResultadoFallo.bloqueado
-              ? ResultadoRevelar.bloqueado
-              : ResultadoRevelar.pinIncorrecto;
-        }
-        _intentos.anotarAcierto(persona);
+        final fallo = await _serie.correr<ResultadoRevelar?>(() async {
+          if (_intentos.bloqueado(persona)) return ResultadoRevelar.bloqueado;
+          if (!await HashPin.verificarAsync(pin, hash)) {
+            return _intentos.anotarFallo(persona) == ResultadoFallo.bloqueado
+                ? ResultadoRevelar.bloqueado
+                : ResultadoRevelar.pinIncorrecto;
+          }
+          _intentos.anotarAcierto(persona);
+          return null;
+        });
+        if (fallo != null) return fallo;
         if (pinEsCortoParaSuRol(rol, pin)) {
           return ResultadoRevelar.debeCambiarPin;
         }

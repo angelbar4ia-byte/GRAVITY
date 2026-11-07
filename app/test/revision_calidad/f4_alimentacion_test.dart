@@ -230,7 +230,7 @@ void main() {
           reason: '$rol ve el perfil clínico de Papá en ${Rutas.alimentacion}',
         );
       }
-    }, tags: 'hallazgo');
+    });
 
     // F4-A2 (IMPORTANTE) · D23 / spec 4: la cuenta Casa (tablet pública) no ve
     // ningún menú. Hoy la navegación le ofrece la pestaña "Alimentación" y le

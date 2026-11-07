@@ -39,26 +39,35 @@ class ConfiguracionBloqueo {
     required this.hashPin,
     this.huella = false,
     this.tras = bloqueoTrasPorOmision,
+    this.pinCorto = false,
   });
 
   final String hashPin;
   final bool huella;
   final Duration tras;
 
+  /// El PIN resultó corto para el rol de quien ve dinero la última vez que se
+  /// escribió (D18): la huella tampoco abre hasta que lo cambie (F4-H1). Solo
+  /// se sabe al escribir el PIN; el hash no dice su largo.
+  final bool pinCorto;
+
   ConfiguracionBloqueo copiarCon({
     String? hashPin,
     bool? huella,
     Duration? tras,
+    bool? pinCorto,
   }) => ConfiguracionBloqueo(
     hashPin: hashPin ?? this.hashPin,
     huella: huella ?? this.huella,
     tras: tras ?? this.tras,
+    pinCorto: pinCorto ?? this.pinCorto,
   );
 
   Map<String, Object?> aJson() => {
     'hash_pin': hashPin,
     'huella': huella,
     'tras_segundos': tras.inSeconds,
+    if (pinCorto) 'pin_corto': true,
   };
 
   static ConfiguracionBloqueo? desdeJson(Map<String, Object?> json) {
@@ -71,6 +80,7 @@ class ConfiguracionBloqueo {
         seconds:
             (json['tras_segundos'] as int?) ?? bloqueoTrasPorOmision.inSeconds,
       ),
+      pinCorto: (json['pin_corto'] as bool?) ?? false,
     );
   }
 }
@@ -244,16 +254,21 @@ class ControladorBloqueo extends Notifier<EstadoBloqueo> {
       // otro nuevo sin saber ese sería la misma puerta. Activar el bloqueo con
       // ese mismo PIN no cambia el secreto: escribirlo ya es conocerlo. Todo
       // intento, bueno o malo, pasa por el límite de fallos.
-      if (_intentos.bloqueado(persona!)) return ResultadoBloqueo.bloqueado;
-      if (!await HashPin.verificarAsync(actual ?? pin, propio)) {
-        final bloqueado =
-            _intentos.anotarFallo(persona) == ResultadoFallo.bloqueado;
-        if (actual == null && !bloqueado) throw StateError(_sinActual);
-        return bloqueado
-            ? ResultadoBloqueo.bloqueado
-            : ResultadoBloqueo.pinIncorrecto;
-      }
-      _intentos.anotarAcierto(persona);
+      // Dentro de la fila (F4-S1): el límite se revisa justo antes de probar.
+      final fallo = await _serie.correr<ResultadoBloqueo?>(() async {
+        if (_intentos.bloqueado(persona!)) return ResultadoBloqueo.bloqueado;
+        if (!await HashPin.verificarAsync(actual ?? pin, propio)) {
+          final bloqueado =
+              _intentos.anotarFallo(persona) == ResultadoFallo.bloqueado;
+          if (actual == null && !bloqueado) throw StateError(_sinActual);
+          return bloqueado
+              ? ResultadoBloqueo.bloqueado
+              : ResultadoBloqueo.pinIncorrecto;
+        }
+        _intentos.anotarAcierto(persona);
+        return null;
+      });
+      if (fallo != null) return fallo;
     }
     await _guardar(
       ConfiguracionBloqueo(hashPin: await HashPin.crearAsync(pin)),
@@ -337,7 +352,10 @@ class ControladorBloqueo extends Notifier<EstadoBloqueo> {
           : ResultadoBloqueo.pinIncorrecto;
     }
     _intentos.anotarAcierto(persona);
-    if (pinEsCortoParaSuRol(_rol, pin)) return ResultadoBloqueo.debeCambiarPin;
+    if (pinEsCortoParaSuRol(_rol, pin)) {
+      await _marcarPinCorto(configuracion);
+      return ResultadoBloqueo.debeCambiarPin;
+    }
     _actualizarHash(pin, configuracion);
     return ResultadoBloqueo.abierto;
   });
@@ -354,18 +372,24 @@ class ControladorBloqueo extends Notifier<EstadoBloqueo> {
     if (persona == null || configuracion == null) {
       return ResultadoBloqueo.pinIncorrecto;
     }
-    if (_intentos.bloqueado(persona)) return ResultadoBloqueo.bloqueado;
-    final correcto = await _serie.correr(
-      () => HashPin.verificarAsync(pinActual, configuracion.hashPin),
-    );
-    if (!correcto) {
-      return _intentos.anotarFallo(persona) == ResultadoFallo.bloqueado
-          ? ResultadoBloqueo.bloqueado
-          : ResultadoBloqueo.pinIncorrecto;
-    }
-    _intentos.anotarAcierto(persona);
+    // La revisión del límite va dentro de la fila (F4-S1): una ráfaga de
+    // llamadas no puede pasar todas la revisión antes de anotar el primer fallo.
+    final fallo = await _serie.correr<ResultadoBloqueo?>(() async {
+      if (_intentos.bloqueado(persona)) return ResultadoBloqueo.bloqueado;
+      if (!await HashPin.verificarAsync(pinActual, configuracion.hashPin)) {
+        return _intentos.anotarFallo(persona) == ResultadoFallo.bloqueado
+            ? ResultadoBloqueo.bloqueado
+            : ResultadoBloqueo.pinIncorrecto;
+      }
+      _intentos.anotarAcierto(persona);
+      return null;
+    });
+    if (fallo != null) return fallo;
     await _guardar(
-      configuracion.copiarCon(hashPin: await HashPin.crearAsync(pinNuevo)),
+      configuracion.copiarCon(
+        hashPin: await HashPin.crearAsync(pinNuevo),
+        pinCorto: false,
+      ),
     );
     _desbloquear();
     return ResultadoBloqueo.abierto;
@@ -388,6 +412,7 @@ class ControladorBloqueo extends Notifier<EstadoBloqueo> {
         _intentos.anotarAcierto(persona);
         // D18 (23/oct): con un PIN corto, quien ve dinero no entra todavía.
         if (pinEsCortoParaSuRol(_rol, pin)) {
+          await _marcarPinCorto(configuracion);
           return ResultadoBloqueo.debeCambiarPin;
         }
         _desbloquear();
@@ -421,8 +446,21 @@ class ControladorBloqueo extends Notifier<EstadoBloqueo> {
     }
     final ok = await biometria.autenticar('Desbloquear GRAVITY');
     if (!ref.mounted || !ok) return ResultadoBloqueo.huellaFallida;
+    // F4-H1: quien ve dinero y tiene un PIN corto debe cambiarlo; la huella no
+    // lo salta.
+    if (configuracion.pinCorto && _rol != null && rolVeDinero(_rol!)) {
+      return ResultadoBloqueo.debeCambiarPin;
+    }
     _desbloquear();
     return ResultadoBloqueo.abierto;
+  }
+
+  Future<void> _marcarPinCorto(ConfiguracionBloqueo configuracion) async {
+    if (configuracion.pinCorto) return;
+    final actual = state.configuracion;
+    if (actual != null && actual.hashPin == configuracion.hashPin) {
+      await _guardar(actual.copiarCon(pinCorto: true));
+    }
   }
 
   void _desbloquear() {

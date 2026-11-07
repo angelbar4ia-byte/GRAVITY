@@ -352,6 +352,37 @@ Revisión `docs/revisiones/fase-3.md`; criterios por defecto, **provisionales**.
 | **F3-9** | `hab_hogar_de(persona)` solo contesta por la propia sesión (nulo para cualquier otra persona, aunque sea del mismo hogar); las funciones del servidor sin sesión siguen igual |
 | **F3-10** cuota de filas | Por persona: 2 000 objetivos, 5 000 bloques, 20 000 registros, 500 pausas, 100 planes, 40 000 días de plan, 20 000 lecturas, 20 000 marcas y 600 revisiones. Se revisa por sentencia (trigger `hab_z_cuota`); al pasarla **54000** con pista (no se reintenta). Los sobres siguen con su cuota de 25 MB |
 
+## Fase 4: Alimentación (D23) y motivo (F4-M1)
+
+Migración `20261108000000_alimentacion.sql`, según `docs/specs/fase-4-alimentacion.md` (secciones 4 y 6) y `docs/revisiones/fase-4.md` (F4-B1, F4-M1). Dos menús por hogar: `papa` (con su **perfil clínico**, dato D3) y `pareja` (el del dueño y su pareja).
+
+**Los permisos los decide `ali_puede(hogar, menu, objeto, accion)`, no `permisos_rol`** (la matriz no distingue menús ni el ajuste del 6/nov; su fila de Casa y la del familiar siguen como estaban, y actualizarlas con su espejo en la app es del arquitecto, F4-A2/A3). `objeto`: `platillos`, `menu`, `perfil`, `suplementos`, `compras`; `accion`: `leer` o `escribir`.
+
+| Quién | Menú de Papá | Menú de la pareja | Perfil de Papá | Suplementos | Platillos | Comprado / lista |
+|---|---|---|---|---|---|---|
+| Dueño | ve y edita | ve y edita | **edita** | edita | edita | marca ambas |
+| Pareja (coadministrador) | ve y edita | ve y edita | ve | edita | edita | marca ambas |
+| Familiar | **ve y edita** | nada | ve | ve | ve | ninguna (por confirmar) |
+| Cuidadora | solo ve | nada | ve | ve | ve | ve la de Papá |
+| Cuenta maestra (no dueña) | solo ve | solo ve | ve | ve | ve | ve ambas, no marca |
+| Casa (tablet pública) | **nada** | nada | nada | nada | nada | nada |
+
+Una dueña que además es maestra conserva sus permisos de dueña. Otro hogar y `anon`: nada.
+
+| Tabla | Qué guarda |
+|---|---|
+| `ali_platillos` | `id`, `hogar_id`, `nombre`, `ingredientes` (jsonb: `[{nombre, cantidad, unidad, seccion}]`, ≤ 16 KB), `duros text[]` |
+| `ali_menus` | PK (`hogar_id`, `menu`) y `perfil` jsonb (≤ 8 KB). El de Papá es dato clínico |
+| `ali_menu` | `menu`, `semana` (lunes), `dia` 0 a 6, `tiempo` (`desayuno`/`comida`/`cena`/`colacion`), `platillo_id` (llave compuesta con el hogar). Única por (hogar, menu, semana, día, tiempo) |
+| `ali_suplementos` | `menu`, `nombre`, `dosis`, `horario` |
+| `ali_compras_marcas` | PK (hogar, menu, semana, `clave` = `nombre|unidad`); fila presente = comprado |
+
+`actualizado_por/en` y `marcado_por/en` los pone el servidor (la app no los manda). **Sin precios ni dinero**, **sin bitácora** (el perfil clínico no se copia a otra parte) y cuota de filas por hogar (2 000 platillos, 20 000 entradas de menú, 200 suplementos, 20 000 marcas; 54000). Ninguna función ni vista usa estos datos para la IA o las bocinas. Sin permiso, el INSERT da 42501 y la lectura devuelve cero filas. Convención 12: los `grant` repiten la lista completa.
+
+**F4-M1:** `fin_motivo_valido` ahora es igual que `motivoValido` de la app: 3 caracteres visibles, al menos 2 que no son puntuación ni símbolos y no todos iguales (`___`, `...`, `---`, `aaa` ya no valen). La puntuación se define por lista, no por la configuración regional. Esto afecta solo a los triggers de motivo (libro de papá, anulaciones, ajustes, conciliaciones, retiros de ahorro).
+
+**Pendiente:** `fin_vistas_solicitadas` (D24, vista temporal de Finanzas de Papá para el familiar) cuando haya pantalla; no se construyó en esta migración.
+
 ## Pruebas
 
 ```bash
@@ -391,6 +422,7 @@ Crea una base desechable, aplica `tests/00_emulacion_supabase.sql` (roles `anon`
 | `89_habitos_rls.sql` | **Hábitos, lo propio:** cada quien ve solo lo suyo (dueña, pareja, familiar); la dueña no ve lo de la pareja ni la familiar; la cuenta maestra, la cuidadora, Hogar, otro hogar y anon no leen ni escriben nada; la app no manda persona, hogar ni actualizado_en; el servidor deja los registros a nombre propio; llaves compuestas (no se apunta a lo de otro); un registro por elemento y día; último cambio gana (más viejo se ignora, futuro lejano se ajusta); ajustes y modos; plan de lectura idempotente; quién tiene Hábitos (maestra fuera, dueña-maestra no); sin bitácora y `habitos*` reservado y oculto; baja: sin acceso al instante, conserva y borra a los 90 días |
 | `90_habitos_sensibles.sql` | **Sensibles:** `hab_sobres` solo cifrado y horas del servidor; nadie escribe directo; la pareja y la maestra no ven sobres ni llaves; llaves (versión 1, +1, idempotente, constancia sin contenido); modos (55000 sin llave, volver a solo teléfono exige confirmación y borra, sube la época); subida en lote (50, idempotente, +1, conflictos, base64url, 64 KB, cuota, sobre ajeno 42501, tumbas); reiniciar la nube y borrar mis datos (con constancia); limpieza de tumbas; la tablet personal registra su dispositivo |
 | `91_habitos_endurecimiento.sql` | **F3-3 a F3-10:** alias del KDF; 600 borrados dejan una constancia; `hab_hogar_de` no revela el hogar de otros; cuota de filas por persona (2 000 objetivos, por persona); baja con `activa = false` y con `hasta` vencido se borra a los 90 días desde `desactivada_en`; volver al hogar borra la fecha de baja |
+| `92_alimentacion.sql` | **D23:** cada rol contra cada tabla: dueña y pareja editan los dos menús, el perfil clínico de Papá solo lo edita el dueño; la familiar edita el menú de Papá y no ve nada de la pareja ni la lista de compras; la cuidadora solo ve a Papá y su lista; la maestra solo lee los dos; Casa, otro hogar y anon, nada; lo que pone el servidor; llaves e índices del menú; la dueña-maestra conserva sus permisos; sin precios, sin bitácora, cuota de filas. (F4-M1 está en la 36.) |
 | `34_finanzas_maestra_login.sql` | **Cuenta maestra con login propio (23/oct):** la invitación del dueño con `es_maestra` (solo el dueño la crea, solo con rol coadministrador, con un correo de fuera del hogar; se revoca al reinvitar; la vencida no sirve); al aceptarla no se crea libro personal, es solo lectura total, no es miembro de nada, no ve Cuidados ni Hábitos y sigue necesitando la consulta de 30 minutos; reemplaza a la anterior con su entrada en la bitácora |
 | `40_aislamiento_hogares.sql` | Una persona de otro hogar no ve ni toca nada |
 | `50_invitaciones.sql` | Solo el dueño las ve y crea; token solo en hash; correo confirmado; expiración, revocación y reuso; volver al hogar con la membresía vencida (M3) |

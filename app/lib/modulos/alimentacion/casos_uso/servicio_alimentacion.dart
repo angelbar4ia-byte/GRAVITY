@@ -74,7 +74,13 @@ class ServicioAlimentacion {
     return perfilDe(m);
   }
 
-  Future<List<Platillo>> platillos() => _repo.platillos();
+  /// El catálogo se lee con permiso de lectura de algún menú (Casa no lo lee).
+  Future<List<Platillo>> platillos() async {
+    if (menusVisibles.isEmpty) {
+      throw const PermisoDenegado();
+    }
+    return _repo.platillos();
+  }
 
   Future<List<EntradaMenu>> menu(MenuId m, DateTime semana) async {
     _exigirVer(m);

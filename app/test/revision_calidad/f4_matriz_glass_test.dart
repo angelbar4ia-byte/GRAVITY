@@ -80,7 +80,6 @@ void main() {
         await avanzar(tester);
         expect(await _desbordesDe(tester, _rutaConHallazgo), isEmpty);
       },
-      tags: 'hallazgo',
     );
   }
 

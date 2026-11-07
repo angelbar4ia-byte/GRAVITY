@@ -117,13 +117,19 @@ class _MontosOcultos extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
               child: Text('Montos', style: tema.textTheme.titleMedium),
             ),
-            ListTile(
-              title: const Text('Ocultar los montos tras'),
-              subtitle: const Text(
+            const ListTile(
+              title: Text('Ocultar los montos tras'),
+              subtitle: Text(
                 'Sin tocar la pantalla. Para volver a verlos se pide tu PIN.',
               ),
-              trailing: DropdownButton<Duration>(
+            ),
+            // Debajo del texto y a lo ancho (F4-X1): como `trailing` ocupaba
+            // todo el ancho con letra grande y desbordaba a 360 dp.
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: DropdownButton<Duration>(
                 key: const ValueKey('montos-ocultar-tras'),
+                isExpanded: true,
                 value: opcionesOcultarMontosTras.contains(estado.ocultarTras)
                     ? estado.ocultarTras
                     : null,

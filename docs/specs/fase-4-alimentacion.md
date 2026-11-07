@@ -58,7 +58,9 @@ Las de la Fase 0, sección 4: semana en lunes, UUID, identificadores en español
 12. La semana arranca en lunes; cada menú y semana se guardan por separado.
 13. Datos de ejemplo inventados; ninguna prueba abre `data/personal/`.
 14. Letra 2.0 en 360 dp sin desbordes.
-15. `flutter analyze` sin avisos y `flutter test --exclude-tags hallazgo` en verde.
+15. **Sesión real sin tablas (revisión F4-A6):** con sesión real no se muestra ningún menú, suplemento, platillo ni perfil de ejemplo; menú y lista dicen "Sin menú todavía" hasta que backend entregue las tablas de la sección 6. Los datos de ejemplo viven solo en demostración y pruebas.
+16. **Catálogo con permiso (F4-A4):** `platillos()` exige poder ver algún menú; la cuenta Casa no lo lee.
+17. `flutter analyze` sin avisos y `flutter test --exclude-tags hallazgo` en verde.
 
 ## 6. Contrato para backend
 

@@ -114,7 +114,6 @@ void main() {
           reason: 'solo el botón Copiar (con borrado) debe sacar el código',
         );
       },
-      tags: 'hallazgo',
     );
   });
 }

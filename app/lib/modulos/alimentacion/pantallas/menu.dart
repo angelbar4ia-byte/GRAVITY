@@ -46,6 +46,12 @@ class PantallaMenuSemana extends ConsumerWidget {
                 detalle: 'Pide al dueño que te dé acceso.',
                 icono: Icons.lock_outline,
               )
+            : ref.watch(alimentacionSinServidorProvider)
+            ? const EstadoVacio(
+                mensaje: 'Sin menú todavía',
+                detalle: 'El menú de la semana aparecerá cuando Alimentación esté activa en tu hogar.',
+                icono: Icons.restaurant_menu_outlined,
+              )
             : Column(
                 children: [
                   SelectorMenu(

@@ -44,6 +44,11 @@ bool esPantallaSensible(String ubicacion, Rol? rol) {
   if (esRutaReservadaDeHabitos(ubicacion)) {
     return puedeAbrir(rol, Modulo.habitos);
   }
+  // Alimentación: el menú de Papá lleva su perfil clínico (dieta, textura).
+  // Lo ve quien puede abrir Alimentación (F4-A1).
+  if (_bajoRuta(ubicacion, Rutas.alimentacion)) {
+    return puedeAbrir(rol, Modulo.alimentacion);
+  }
   // Bandeja de avisos: el detalle trae montos.
   if (_bajoRuta(ubicacion, RutasApp.avisos)) return veDinero(rol);
   // Registros que el servidor no aceptó: pueden ser gastos.

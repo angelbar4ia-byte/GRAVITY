@@ -41,6 +41,38 @@ void main() {
       expect(llamadas, [wdaExcluirDeCaptura, wdaMonitor]);
     });
 
+    test('F4-W1: sin ventana activa espera y reintenta; al aparecer aplica',
+        () async {
+      var consultas = 0;
+      final llamadas = <int>[];
+      final p = ProtectorDePantallaWindows(
+        aplicar: (a) {
+          llamadas.add(a);
+          return true;
+        },
+        hayVentana: () => ++consultas >= 4,
+        espera: Duration.zero,
+      );
+      await p.establecer(segura: true);
+      expect(consultas, 4);
+      expect(llamadas, [wdaExcluirDeCaptura]);
+    });
+
+    test('F4-W1: si la ventana nunca aparece no aplica nada ni falla', () async {
+      final llamadas = <int>[];
+      final p = ProtectorDePantallaWindows(
+        aplicar: (a) {
+          llamadas.add(a);
+          return true;
+        },
+        hayVentana: () => false,
+        intentos: 3,
+        espera: Duration.zero,
+      );
+      await p.establecer(segura: true);
+      expect(llamadas, isEmpty);
+    });
+
     test('un fallo nativo no tira la app', () async {
       final p = ProtectorDePantallaWindows(
         aplicar: (_) => throw StateError('sin user32'),

@@ -18,6 +18,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart' show AppLifecycleListener;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'protector_windows.dart';
@@ -127,5 +128,17 @@ final controladorPantallaSeguraProvider = Provider<ControladorPantallaSegura>((
     habilitado: () => ref.read(capturasBloqueadasProvider),
   );
   ref.listen(capturasBloqueadasProvider, (_, _) => controlador.reaplicar());
+  // F4-W1: al volver al primer plano se vuelve a aplicar (en Windows la
+  // ventana pudo no estar activa cuando se pidió la primera vez).
+  try {
+    final escucha = AppLifecycleListener(
+      onResume: () {
+        if (controlador.segura) controlador.reaplicar();
+      },
+    );
+    ref.onDispose(escucha.dispose);
+  } catch (_) {
+    // Sin el motor de Flutter (pruebas de Dart puro): nada que escuchar.
+  }
   return controlador;
 });

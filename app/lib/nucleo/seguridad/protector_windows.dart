@@ -31,6 +31,18 @@ const int wdaExcluirDeCaptura = 0x11;
 /// Aplica una afinidad a la ventana de la app; `true` si Windows la aceptó.
 typedef AplicarAfinidad = bool Function(int afinidad);
 
+/// ¿La app tiene una ventana activa ahora? `GetActiveWindow` devuelve 0 si la
+/// ventana aún no existe o no está activa (F4-W1): entonces no hay a quién
+/// aplicarle la afinidad y hay que reintentar.
+typedef HayVentanaActiva = bool Function();
+
+bool hayVentanaActivaNativa() {
+  final user32 = DynamicLibrary.open('user32.dll');
+  final ventanaActiva = user32
+      .lookupFunction<IntPtr Function(), int Function()>('GetActiveWindow');
+  return ventanaActiva() != 0;
+}
+
 /// Llamada real a `user32.dll` (solo existe en Windows).
 bool aplicarAfinidadNativa(int afinidad) {
   final user32 = DynamicLibrary.open('user32.dll');
@@ -46,10 +58,35 @@ bool aplicarAfinidadNativa(int afinidad) {
 }
 
 class ProtectorDePantallaWindows implements ProtectorDePantalla {
-  ProtectorDePantallaWindows({AplicarAfinidad? aplicar})
-    : _aplicar = aplicar ?? aplicarAfinidadNativa;
+  ProtectorDePantallaWindows({
+    AplicarAfinidad? aplicar,
+    HayVentanaActiva? hayVentana,
+    this.intentos = 10,
+    this.espera = const Duration(milliseconds: 500),
+  }) : _aplicar = aplicar ?? aplicarAfinidadNativa,
+       _hayVentana = hayVentana ?? (aplicar == null ? hayVentanaActivaNativa : null);
 
   final AplicarAfinidad _aplicar;
+  final HayVentanaActiva? _hayVentana;
+
+  /// Cuántas veces se espera la ventana activa (F4-W1) y cada cuánto.
+  final int intentos;
+  final Duration espera;
+
+  /// Espera a que la ventana de la app esté activa. Sin ventana no hay nada
+  /// que proteger todavía; si nunca aparece, queda para el próximo
+  /// `reaplicar` (al volver al primer plano).
+  Future<bool> _esperarVentana() async {
+    final hay = _hayVentana;
+    if (hay == null) return true;
+    for (var i = 0; i < intentos; i++) {
+      if (hay()) return true;
+      await Future<void>.delayed(espera);
+    }
+    debugPrint('Bloqueo de capturas: la ventana no estuvo activa; se '
+        'reintenta al volver al primer plano.');
+    return false;
+  }
 
   @override
   Future<void> establecer({required bool segura}) async {
@@ -58,6 +95,7 @@ class ProtectorDePantallaWindows implements ProtectorDePantalla {
         _aplicar(wdaNinguna);
         return;
       }
+      if (!await _esperarVentana()) return;
       if (!_aplicar(wdaExcluirDeCaptura)) {
         // Windows viejo: al menos que salga en negro.
         _aplicar(wdaMonitor);

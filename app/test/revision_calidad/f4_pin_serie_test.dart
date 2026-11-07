@@ -129,5 +129,5 @@ void main() {
       ResultadoBloqueo.bloqueado,
       reason: 'el PIN bueno no debe pasar con la cuenta ya bloqueada',
     );
-  }, tags: 'hallazgo');
+  });
 }

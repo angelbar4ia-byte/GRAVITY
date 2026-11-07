@@ -6,17 +6,33 @@ import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 import '../../../app/sesion_efectiva.dart';
 import '../../../diseno/proveedores.dart' show relojProvider;
 import '../../../nucleo/contratos/roles.dart';
+import '../../../nucleo/sesion/proveedores_sesion.dart';
+import '../../../nucleo/sesion/servicio_sesion_supabase.dart';
 import '../casos_uso/servicio_alimentacion.dart';
 import '../datos/modelos.dart';
 import '../datos/repositorio.dart';
 
-/// Hoy en memoria con datos de ejemplo; cuando backend entregue las tablas
-/// (spec, sección 6) se cambia aquí por el repositorio de Supabase.
-final repositorioAlimentacionProvider = Provider<RepositorioAlimentacion>(
-  (ref) => RepositorioAlimentacionEnMemoria(
+/// `true` con sesión real (Supabase): todavía no hay tablas de Alimentación,
+/// así que no se muestra ningún dato de ejemplo (revisión F4-A6).
+final alimentacionSinServidorProvider = Provider<bool>((ref) {
+  final sesion = ref.watch(sesionEfectivaProvider);
+  return sesion != null &&
+      ref.watch(servicioSesionProvider) is ServicioSesionSupabase;
+});
+
+/// Demostración y pruebas: memoria con datos de ejemplo. Sesión real: vacío
+/// honesto hasta que backend entregue las tablas (spec, sección 6); entonces
+/// se cambia aquí por el repositorio de Supabase.
+final repositorioAlimentacionProvider = Provider<RepositorioAlimentacion>((
+  ref,
+) {
+  if (ref.watch(alimentacionSinServidorProvider)) {
+    return const RepositorioAlimentacionSinServidor();
+  }
+  return RepositorioAlimentacionEnMemoria(
     semanaEjemplo: ref.read(relojProvider).ahora(),
-  ),
-);
+  );
+});
 
 final puedeEditarAlimentacionProvider = Provider<bool>((ref) {
   final s = ref.watch(sesionEfectivaProvider);

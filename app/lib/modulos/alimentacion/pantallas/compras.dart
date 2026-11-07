@@ -30,6 +30,12 @@ class PantallaListaCompras extends ConsumerWidget {
                 mensaje: 'No tienes listas para ver',
                 icono: Icons.lock_outline,
               )
+            : ref.watch(alimentacionSinServidorProvider)
+            ? const EstadoVacio(
+                mensaje: 'Sin menú todavía',
+                detalle: 'La lista de compras saldrá del menú cuando Alimentación esté activa en tu hogar.',
+                icono: Icons.shopping_cart_outlined,
+              )
             : Column(
                 children: [
                   SelectorMenu(

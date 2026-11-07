@@ -552,3 +552,23 @@ select pg_temp.como('a0000000-0000-4000-8000-000000000003');
 insert into public.hab_objetivos (id, titulo, area, tipo, unidad, meta_valor, frecuencia, fecha_inicio, modificado_en) values
   ('f5000000-0000-4000-8000-000000000004', 'Orar cada noche (ejemplo)', 'espiritual', 'construir', null, null, 'diaria', '2026-10-19', '2026-10-19 08:00-06');
 select pg_temp.como(null);
+
+-- ------------------------------------------------------------ Fase 4: Alimentación (datos inventados, sin precios)
+select pg_temp.como('a0000000-0000-4000-8000-000000000001');
+insert into public.ali_platillos (id, hogar_id, nombre, ingredientes, duros) values
+  ('a1000000-0000-4000-8000-000000000001', 'b0000000-0000-4000-8000-000000000001', 'Avena con plátano (ejemplo)',
+   '[{"nombre": "Avena", "cantidad": 50, "unidad": "g", "seccion": "Despensa"}, {"nombre": "Plátano", "cantidad": 1, "unidad": "pieza", "seccion": "Frutas"}]', '{}'),
+  ('a1000000-0000-4000-8000-000000000002', 'b0000000-0000-4000-8000-000000000001', 'Ensalada con nueces (ejemplo)',
+   '[{"nombre": "Lechuga", "cantidad": 1, "unidad": "pieza", "seccion": "Verduras"}]', '{nueces}');
+insert into public.ali_menus (hogar_id, menu, perfil) values
+  ('b0000000-0000-4000-8000-000000000001', 'papa', '{"titulo": "Perfil de ejemplo (inventado)", "lineas": ["Dieta alta en proteínas (ejemplo)"], "texturaBlanda": true}'),
+  ('b0000000-0000-4000-8000-000000000001', 'pareja', '{"titulo": "Pareja y dueño (ejemplo)", "lineas": [], "texturaBlanda": false}');
+insert into public.ali_menu (id, hogar_id, menu, semana, dia, tiempo, platillo_id) values
+  ('a2000000-0000-4000-8000-000000000001', 'b0000000-0000-4000-8000-000000000001', 'papa', '2026-11-02', 0, 'desayuno', 'a1000000-0000-4000-8000-000000000001'),
+  ('a2000000-0000-4000-8000-000000000002', 'b0000000-0000-4000-8000-000000000001', 'pareja', '2026-11-02', 0, 'comida', 'a1000000-0000-4000-8000-000000000002');
+insert into public.ali_suplementos (id, hogar_id, menu, nombre, dosis, horario) values
+  ('a3000000-0000-4000-8000-000000000001', 'b0000000-0000-4000-8000-000000000001', 'papa', 'Suplemento de ejemplo', '1 cápsula (ejemplo)', 'Con el desayuno'),
+  ('a3000000-0000-4000-8000-000000000002', 'b0000000-0000-4000-8000-000000000001', 'pareja', 'Vitamina de ejemplo', '1 tableta (ejemplo)', 'Por la mañana');
+insert into public.ali_compras_marcas (hogar_id, menu, semana, clave) values
+  ('b0000000-0000-4000-8000-000000000001', 'papa', '2026-11-02', 'Avena|g');
+select pg_temp.como(null);

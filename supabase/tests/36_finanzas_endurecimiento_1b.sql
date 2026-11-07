@@ -136,8 +136,13 @@ select pruebas.ok(
 select pruebas.ok(
   public.fin_motivo_valido('abc') and public.fin_motivo_valido('a b c') and public.fin_motivo_valido('Renta')
   and public.fin_motivo_valido(E'\n  Compra de la medicina  \n') and public.fin_motivo_valido('ñañ')
-  and public.fin_motivo_valido('...'),
-  'Tres o más caracteres visibles sí (la regla no juzga el sentido)');
+  and public.fin_motivo_valido('a.b') and public.fin_motivo_valido('ab-'),
+  'Tres o más caracteres visibles, con al menos 2 que no son puntuación y no todos iguales, sí');
+select pruebas.ok(
+  not public.fin_motivo_valido('...') and not public.fin_motivo_valido('___') and not public.fin_motivo_valido('---')
+  and not public.fin_motivo_valido('aaa') and not public.fin_motivo_valido('111') and not public.fin_motivo_valido('a..')
+  and not public.fin_motivo_valido(E'\u00bf?\u00a1'),
+  'F4-M1: "___", "...", "aaa" y similares no son motivo (misma regla que la app)');
 select pruebas.como('ana@ejemplo.test');
 select pruebas.falla($$select pruebas.registrar('gasto', 'c6000000-0000-4000-8000-000000000002',
   'c2000000-0000-4000-8000-000000000001', 5000, p_motivo => E'\t',

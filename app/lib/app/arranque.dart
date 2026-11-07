@@ -20,6 +20,7 @@ import '../diseno/proveedores.dart'
         revelarMontosProvider;
 import '../diseno/valores_diseno.dart' show densidadPara;
 
+import '../nucleo/rendimiento/medidor_arranque.dart';
 import 'conectividad_diseno.dart';
 import '../nucleo/base_local/base_local.dart';
 import '../nucleo/cola/bandeja_salida.dart';
@@ -121,7 +122,9 @@ Future<List<Override>> prepararArranque({
   ConfiguracionEntorno configuracion =
       const ConfiguracionEntorno.desdeCompilacion(),
   BaseLocal Function() abrirBase = BaseLocal.enDispositivo,
+  MedidorArranque? medidor,
 }) async {
+  final m = medidor ?? medidorDeArranque;
   final plataforma = defaultTargetPlatform;
   final dispositivo =
       tipoDispositivoForzado(configuracion.dispositivoForzado) ??
@@ -129,9 +132,33 @@ Future<List<Override>> prepararArranque({
 
   Intl.defaultLocale = 'es_MX';
   registrarLicenciasFuentes();
-  await initializeDateFormatting('es_MX');
-
-  final firebase = await prepararFirebase(plataforma: plataforma);
+  // Los pasos que no dependen unos de otros arrancan juntos (y cada uno se
+  // mide): el arranque tarda lo del más lento, no la suma.
+  final fechas = m.medir('formato_de_fechas', () => initializeDateFormatting('es_MX'));
+  final firebaseListo = m.medir(
+    'firebase',
+    () => prepararFirebase(plataforma: plataforma),
+  );
+  final aparienciaLista = m.medir(
+    'apariencia',
+    AlmacenAparienciaPersistente.abrir,
+  );
+  final supabaseListo = configuracion.tieneSupabase
+      ? m.medir('supabase_initialize', () async {
+          try {
+            await Supabase.initialize(
+              url: configuracion.supabaseUrl,
+              publishableKey: configuracion.supabaseLlavePublica,
+            );
+            return true;
+          } catch (error) {
+            debugPrint('No se pudo preparar Supabase; modo demostración: $error');
+            return false;
+          }
+        })
+      : Future.value(false);
+  await fechas;
+  final firebase = await firebaseListo;
   if (firebase == EstadoFirebase.activo) {
     // Mensajes con la app cerrada: solo el aviso genérico (ver el archivo).
     FirebaseMessaging.onBackgroundMessage(manejadorPushSegundoPlano);
@@ -151,12 +178,8 @@ Future<List<Override>> prepararArranque({
   RepositorioPersonasHogar? personasDelHogar;
   Override? salidaSinPin;
   RepositorioAvisos? avisos;
-  if (configuracion.tieneSupabase) {
+  if (await supabaseListo) {
     try {
-      await Supabase.initialize(
-        url: configuracion.supabaseUrl,
-        publishableKey: configuracion.supabaseLlavePublica,
-      );
       final servicio = ServicioSesionSupabase(
         cliente: Supabase.instance.client,
         almacen: almacen,
@@ -207,7 +230,7 @@ Future<List<Override>> prepararArranque({
     limpieza = LimpiezaLocal(almacen);
     sesion = ServicioSesionDemostracion();
   }
-  await sesion.iniciar();
+  await m.medir('sesion', sesion.iniciar);
 
   return [
     ...conexionesDeLaApp(),
@@ -229,9 +252,7 @@ Future<List<Override>> prepararArranque({
     }),
     biometriaProvider.overrideWithValue(biometria),
     // La apariencia de cada persona sobrevive al reinicio (P3).
-    almacenAparienciaProvider.overrideWithValue(
-      await AlmacenAparienciaPersistente.abrir(),
-    ),
+    almacenAparienciaProvider.overrideWithValue(await aparienciaLista),
     // E1: el indicador "En línea" sale de la conexión real del equipo.
     fuenteConectividadProvider.overrideWithValue(FuenteConectividadPlus()),
     // El indicador de diseño muestra esa conexión real, con lo que falta subir.
