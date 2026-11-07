@@ -21,7 +21,7 @@ void main() {
       await montar(tester, _pantalla);
       expect(tester.takeException(), isNull);
       expect(find.text('Futurista'), findsOneWidget);
-      expect(find.text('Bento'), findsOneWidget);
+      expect(find.text('Glass'), findsOneWidget);
       expect(find.byKey(const ValueKey('texto-sol')), findsOneWidget);
       await tester.ensureVisible(
         find.byKey(const ValueKey('modo-automaticoPorHora')),

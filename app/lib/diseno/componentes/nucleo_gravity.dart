@@ -133,59 +133,50 @@ class PintorNucleo extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     switch (variante) {
-      case VarianteNucleo.pulso:
-        _pintarPulso(canvas, size);
       case VarianteNucleo.orbe:
         _pintarOrbe(canvas, size);
-      case VarianteNucleo.anillos:
       case VarianteNucleo.cristal:
+        _pintarCristal(canvas, size);
+      case VarianteNucleo.anillos:
         _pintarAnillos(canvas, size);
     }
   }
 
-  /// Swagger: tres ondas gruesas que se abren desde el centro, como un sonar,
-  /// sobre un disco central que late.
-  void _pintarPulso(Canvas canvas, Size size) {
+  /// Glass: tres orbes de vidrio que flotan en órbita, cada uno con un
+  /// degradado radial suave, alrededor de un punto de luz.
+  void _pintarCristal(Canvas canvas, Size size) {
     final t = animacion.value;
     final c = size.center(Offset.zero);
     final s = size.shortestSide / 320;
-    final latido = (1 + math.sin(2 * math.pi * 80 * t)) / 2;
-    final opacidadPulso = 1 - pulso + pulso * latido;
-
-    canvas.drawCircle(
-      c,
-      152 * s,
-      Paint()
-        ..color = borde
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 3 * s.clamp(0.6, 2.0),
-    );
-    // Cada onda hace 14 ciclos por vuelta del reloj del núcleo.
+    final giro = 2 * math.pi * 5 * t;
+    final flota = math.sin(2 * math.pi * 80 * t);
     for (var i = 0; i < 3; i++) {
-      final fase = (t * 14 + i / 3) % 1.0;
-      final radio = (40 + 100 * fase) * s;
+      final angulo = (i.isEven ? giro : -giro) + i * 2 * math.pi / 3;
+      final orbita = (46 + 14 * i) * s;
+      final centro = c + Offset(math.cos(angulo), math.sin(angulo)) * orbita;
+      final radio = (78 - 10 * i) * s * (1 + 0.04 * pulso * flota);
       canvas.drawCircle(
-        c,
+        centro,
         radio,
         Paint()
-          ..color = acento.withValues(alpha: (1 - fase) * 0.9)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 6 * s.clamp(0.6, 2.0),
+          ..shader = RadialGradient(
+            colors: [
+              Color.lerp(panel, acento, 0.55)!.withValues(alpha: 0.7),
+              acento.withValues(alpha: 0.06),
+            ],
+          ).createShader(Rect.fromCircle(center: centro, radius: radio)),
       );
     }
-    canvas.drawCircle(
-      c,
-      (34 + 6 * latido * pulso) * s,
-      Paint()..color = acento.withValues(alpha: 0.6 + 0.4 * opacidadPulso),
-    );
-    canvas.drawCircle(
-      c,
-      34 * s,
-      Paint()
-        ..color = panel
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 3 * s.clamp(0.6, 2.0),
-    );
+    canvas
+      ..drawCircle(
+        c,
+        150 * s,
+        Paint()
+          ..color = borde
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.5 * s.clamp(0.6, 2.0),
+      )
+      ..drawCircle(c, 14 * s, Paint()..color = acento);
   }
 
   /// Bento: tres círculos rellenos y suaves que respiran, uno dentro de otro.

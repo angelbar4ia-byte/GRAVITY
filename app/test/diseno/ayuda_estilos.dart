@@ -14,8 +14,15 @@ Future<void> montarConEstilo(
   required Estilo estilo,
   required Brightness brillo,
   bool altoContraste = false,
+  Densidad? densidad,
 }) async {
-  await montar(tester, home);
+  await montar(
+    tester,
+    home,
+    overrides: [
+      if (densidad != null) densidadBaseProvider.overrideWithValue(densidad),
+    ],
+  );
   final c = contenedorDe(tester, find.byWidget(home));
   c.read(estiloProvider.notifier).elegir(estilo);
   c

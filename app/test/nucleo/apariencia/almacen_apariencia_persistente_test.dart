@@ -9,12 +9,12 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     final a = await AlmacenAparienciaPersistente.abrir();
     a.guardar('ana', CampoApariencia.estilo, 'glass');
-    a.guardar('hogar', CampoApariencia.estilo, 'swagger');
+    a.guardar('hogar', CampoApariencia.estilo, 'glass');
     expect(a.leer('ana', CampoApariencia.estilo), 'glass');
     await Future<void>.delayed(Duration.zero);
     final b = AlmacenAparienciaPersistente(await SharedPreferences.getInstance());
     expect(b.leer('ana', CampoApariencia.estilo), 'glass');
-    expect(b.leer('hogar', CampoApariencia.estilo), 'swagger');
+    expect(b.leer('hogar', CampoApariencia.estilo), 'glass');
     expect(b.leer('luis', CampoApariencia.estilo), isNull);
   });
 

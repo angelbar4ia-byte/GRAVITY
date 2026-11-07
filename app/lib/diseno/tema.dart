@@ -28,10 +28,14 @@ ValoresDiseno valoresPara({
   PersonalidadModulo personalidad = PersonalidadModulo.asistente,
   Densidad? densidadBase,
   bool altoContrasteGlobal = false,
+  bool esmerilar = true,
 }) {
   final efectivo = personalidad.brilloEfectivo(brillo);
   var base = estilo.valores(efectivo);
   if (densidadBase != null) base = base.copyWith(densidad: densidadBase);
+  // El esmerilado cuesta batería: solo en laptop y tablet. En el teléfono el
+  // panel de vidrio queda en su versión translúcida sólida (esmerilado cero).
+  if (!esmerilar) base = base.copyWith(esmerilado: 0);
   final valores = personalidad.aplicar(base);
   // Modo alto (P6): 7:1 en todo, sin adornos; después de la personalidad, para
   // que su acento tampoco baje el contraste.
@@ -47,6 +51,7 @@ ThemeData temaPara({
   PersonalidadModulo personalidad = PersonalidadModulo.asistente,
   Densidad? densidadBase,
   bool altoContrasteGlobal = false,
+  bool esmerilar = true,
 }) => construirTema(
   valoresPara(
     estilo: estilo,
@@ -54,6 +59,7 @@ ThemeData temaPara({
     personalidad: personalidad,
     densidadBase: densidadBase,
     altoContrasteGlobal: altoContrasteGlobal,
+    esmerilar: esmerilar,
   ),
 );
 

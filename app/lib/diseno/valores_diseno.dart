@@ -31,9 +31,6 @@ enum VarianteNucleo {
   /// Futurista: anillos punteados que giran.
   anillos,
 
-  /// Swagger: círculos gruesos que laten como un pulso.
-  pulso,
-
   /// Glass: orbes translúcidos que flotan.
   cristal,
 
@@ -121,10 +118,12 @@ class ValoresDiseno extends ThemeExtension<ValoresDiseno> {
     this.decoracion = true,
     this.altoContraste = false,
     this.grosorBorde = 1,
-    this.etiquetaSticker = false,
     this.marcasEsquina = true,
     this.nucleo = VarianteNucleo.anillos,
     this.cuadricula = false,
+    this.esmerilado = 0,
+    this.panelTranslucido,
+    this.fondoFin,
   });
 
   /// Claro u oscuro.
@@ -200,11 +199,8 @@ class ValoresDiseno extends ThemeExtension<ValoresDiseno> {
   /// Si es una variante de alto contraste (Cuidados y bici).
   final bool altoContraste;
 
-  /// Grosor de los bordes de paneles y tarjetas (Swagger los dibuja gruesos).
+  /// Grosor de los bordes de paneles y tarjetas.
   final double grosorBorde;
-
-  /// Si las etiquetas de panel se dibujan como "sticker" (relleno de acento).
-  final bool etiquetaSticker;
 
   /// Si las tarjetas dibujan las marcas de esquina del HUD (solo Futurista).
   final bool marcasEsquina;
@@ -215,6 +211,20 @@ class ValoresDiseno extends ThemeExtension<ValoresDiseno> {
   /// Si las pantallas de resumen acomodan sus tarjetas en cuadrícula tipo
   /// bento ([CuadriculaBento]) en lugar de una sola columna.
   final bool cuadricula;
+
+  /// Radio del esmerilado (desenfoque) de los paneles de vidrio; cero es sin
+  /// esmerilar. Solo la laptop y la tablet lo usan: en el teléfono vale cero y
+  /// el panel es la versión translúcida **sólida** ([panel]), que no gasta
+  /// batería ni vuelve lenta la app (DISENO_UX_UI, sección 4).
+  final double esmerilado;
+
+  /// Color translúcido del panel de vidrio (con transparencia). `null` en los
+  /// estilos que no son de vidrio. Se dibuja sobre el fondo difuminado.
+  final Color? panelTranslucido;
+
+  /// Segundo color del fondo (el "fondo final" del degradado). `null` si el
+  /// fondo es liso.
+  final Color? fondoFin;
 
   /// Los valores de diseño del tema más cercano.
   ///
@@ -320,10 +330,13 @@ class ValoresDiseno extends ThemeExtension<ValoresDiseno> {
     bool? decoracion,
     bool? altoContraste,
     double? grosorBorde,
-    bool? etiquetaSticker,
     bool? marcasEsquina,
     VarianteNucleo? nucleo,
     bool? cuadricula,
+    double? esmerilado,
+    Color? panelTranslucido,
+    Color? fondoFin,
+    bool quitarVidrio = false,
   }) {
     return ValoresDiseno(
       brillo: brillo ?? this.brillo,
@@ -351,10 +364,14 @@ class ValoresDiseno extends ThemeExtension<ValoresDiseno> {
       decoracion: decoracion ?? this.decoracion,
       altoContraste: altoContraste ?? this.altoContraste,
       grosorBorde: grosorBorde ?? this.grosorBorde,
-      etiquetaSticker: etiquetaSticker ?? this.etiquetaSticker,
       marcasEsquina: marcasEsquina ?? this.marcasEsquina,
       nucleo: nucleo ?? this.nucleo,
       cuadricula: cuadricula ?? this.cuadricula,
+      esmerilado: quitarVidrio ? 0 : esmerilado ?? this.esmerilado,
+      panelTranslucido: quitarVidrio
+          ? null
+          : panelTranslucido ?? this.panelTranslucido,
+      fondoFin: quitarVidrio ? null : fondoFin ?? this.fondoFin,
     );
   }
 
@@ -392,10 +409,12 @@ class ValoresDiseno extends ThemeExtension<ValoresDiseno> {
       decoracion: mitad(decoracion, other.decoracion),
       altoContraste: mitad(altoContraste, other.altoContraste),
       grosorBorde: d(grosorBorde, other.grosorBorde),
-      etiquetaSticker: mitad(etiquetaSticker, other.etiquetaSticker),
       marcasEsquina: mitad(marcasEsquina, other.marcasEsquina),
       nucleo: mitad(nucleo, other.nucleo),
       cuadricula: mitad(cuadricula, other.cuadricula),
+      esmerilado: d(esmerilado, other.esmerilado),
+      panelTranslucido: Color.lerp(panelTranslucido, other.panelTranslucido, t),
+      fondoFin: Color.lerp(fondoFin, other.fondoFin, t),
     );
   }
 
@@ -428,10 +447,12 @@ class ValoresDiseno extends ThemeExtension<ValoresDiseno> {
           other.decoracion == decoracion &&
           other.altoContraste == altoContraste &&
           other.grosorBorde == grosorBorde &&
-          other.etiquetaSticker == etiquetaSticker &&
           other.marcasEsquina == marcasEsquina &&
           other.nucleo == nucleo &&
-          other.cuadricula == cuadricula;
+          other.cuadricula == cuadricula &&
+          other.esmerilado == esmerilado &&
+          other.panelTranslucido == panelTranslucido &&
+          other.fondoFin == fondoFin;
 
   @override
   int get hashCode => Object.hashAll([
@@ -460,10 +481,12 @@ class ValoresDiseno extends ThemeExtension<ValoresDiseno> {
     decoracion,
     altoContraste,
     grosorBorde,
-    etiquetaSticker,
     marcasEsquina,
     nucleo,
     cuadricula,
+    esmerilado,
+    panelTranslucido,
+    fondoFin,
   ]);
 }
 

@@ -23,7 +23,7 @@ void main() {
     ),
   ];
 
-  for (final estilo in estilosIncluidos) {
+  for (final estilo in [...estilosIncluidos, ...estilosEnPausa]) {
     for (final brillo in Brightness.values) {
       final nombre = '${estilo.id} ${brillo.name}';
       for (final (tamano, etiqueta) in const [
@@ -41,6 +41,11 @@ void main() {
                 crear(),
                 estilo: estilo,
                 brillo: brillo,
+                // Laptop (900 dp) y teléfono (360 dp): el vidrio se esmerila
+                // solo en la laptop.
+                densidad: tamano.width >= 900
+                    ? Densidad.compacta
+                    : Densidad.comoda,
               );
               await tester.pump(const Duration(milliseconds: 300));
             });

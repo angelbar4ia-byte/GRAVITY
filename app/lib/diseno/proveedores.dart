@@ -101,7 +101,7 @@ final claveAparienciaProvider = Provider<String>(
   (ref) => ref.watch(personaEnPantallaProvider) ?? claveHogar,
 );
 
-/// Estilos que se pueden elegir (Futurista, Swagger y Glass).
+/// Estilos que se pueden elegir (Futurista y Glass).
 final estilosDisponiblesProvider = Provider<List<Estilo>>(
   (ref) => estilosIncluidos,
 );
@@ -287,6 +287,12 @@ final personalidadSubmoduloProvider =
 /// `densidadBaseProvider.overrideWithValue(densidadPara(TipoDispositivo.laptop))`.
 final densidadBaseProvider = Provider<Densidad>((ref) => Densidad.comoda);
 
+/// Si este equipo puede esmerilar los paneles de vidrio: la laptop (densidad
+/// compacta) y la tablet (grande) sí; el teléfono (cómoda) no.
+final esmeriladoPermitidoProvider = Provider<bool>(
+  (ref) => ref.watch(densidadBaseProvider) != Densidad.comoda,
+);
+
 // --- Temas de la app ---------------------------------------------------------
 
 /// Tema claro de la app (estilo global con la personalidad de GRAVITY).
@@ -297,6 +303,7 @@ final temaClaroProvider = Provider<ThemeData>(
     personalidad: ref.watch(personalidadProvider(Modulo.gravity)),
     densidadBase: ref.watch(densidadBaseProvider),
     altoContrasteGlobal: ref.watch(altoContrasteProvider),
+    esmerilar: ref.watch(esmeriladoPermitidoProvider),
   ),
 );
 
@@ -308,6 +315,7 @@ final temaOscuroProvider = Provider<ThemeData>(
     personalidad: ref.watch(personalidadProvider(Modulo.gravity)),
     densidadBase: ref.watch(densidadBaseProvider),
     altoContrasteGlobal: ref.watch(altoContrasteProvider),
+    esmerilar: ref.watch(esmeriladoPermitidoProvider),
   ),
 );
 

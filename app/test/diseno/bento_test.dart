@@ -10,9 +10,12 @@ import 'ayuda_pruebas.dart';
 
 void main() {
   group('Estilo Bento: valores', () {
-    test('está en el catálogo con día y noche y su id estable', () {
-      expect(estilosIncluidos.map((e) => e.id), ['futurista', 'bento']);
-      expect(estiloPorId('bento'), estiloBento);
+    test('está en pausa (D27): existe pero no se ofrece', () {
+      expect(estilosIncluidos.map((e) => e.id), isNot(contains('bento')));
+      expect(estilosEnPausa, [estiloBento]);
+      // Quien lo tuviera guardado vuelve al Futurista.
+      expect(estiloPorId('bento'), estiloFuturista);
+      expect(estiloPorId('bento', catalogo: estilosEnPausa), estiloBento);
       expect(estiloBento.dia.brillo, Brightness.light);
       expect(estiloBento.noche.brillo, Brightness.dark);
       expect(estiloPorDefecto, estiloFuturista);
@@ -25,7 +28,6 @@ void main() {
           expect(v.radioMediano, greaterThanOrEqualTo(20));
           expect(v.grosorBorde, 1);
           expect(v.marcasEsquina, isFalse);
-          expect(v.etiquetaSticker, isFalse);
           expect(v.cuadricula, isTrue);
           expect(v.nucleo, VarianteNucleo.orbe);
           expect(v.fuenteTitulos, 'Inter');
@@ -262,8 +264,7 @@ void main() {
         brillo: Brightness.light,
       );
       expect(find.byType(CuadriculaBento), findsOneWidget);
-      expect(find.text('Swagger'), findsNothing);
-      expect(find.text('Bento'), findsOneWidget);
+      expect(find.text('Bento'), findsNothing); // no se ofrece
     });
 
     testWidgets('el núcleo de Bento respira y se detiene con reducir '

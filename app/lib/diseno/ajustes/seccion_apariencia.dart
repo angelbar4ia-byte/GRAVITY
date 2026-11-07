@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../nucleo/contratos/roles.dart';
 import '../componentes/cuadricula_bento.dart';
 import '../componentes/etiqueta_panel.dart';
+import '../esmerilado.dart';
 import '../componentes/indicador_conexion.dart';
 import '../componentes/monto_ocultable.dart';
 import '../componentes/semaforo.dart';
@@ -84,6 +85,33 @@ class SeccionApariencia extends ConsumerWidget {
             style: v.lectura(tamano: 14, color: v.textoTenue),
           ),
         ],
+        // Si el vidrio se apagó solo por rendimiento, se dice y se puede probar
+        // de nuevo (D27).
+        ListenableBuilder(
+          listenable: GestorEsmerilado.instancia,
+          builder: (context, _) => GestorEsmerilado.instancia.apagadoAutomatico
+              ? Padding(
+                  padding: EdgeInsets.only(top: e * 1.5),
+                  child: Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: e,
+                    runSpacing: e,
+                    children: [
+                      Text(
+                        'El esmerilado se apagó porque la app iba lenta.',
+                        key: const ValueKey('esmerilado-apagado'),
+                        style: v.lectura(tamano: 13, color: v.textoTenue),
+                      ),
+                      OutlinedButton(
+                        key: const ValueKey('esmerilado-reactivar'),
+                        onPressed: GestorEsmerilado.instancia.reactivar,
+                        child: const Text('Volver a probar'),
+                      ),
+                    ],
+                  ),
+                )
+              : const SizedBox.shrink(),
+        ),
         titulo,
         const EtiquetaPanel('Claro / oscuro'),
         SizedBox(height: e),

@@ -10,7 +10,6 @@ const Map<String, String> licenciasFuentes = {
   'Chakra Petch': 'assets/fonts/ChakraPetch/OFL.txt',
   'IBM Plex Sans': 'assets/fonts/IBMPlexSans/OFL.txt',
   'IBM Plex Mono': 'assets/fonts/IBMPlexMono/OFL.txt',
-  'Anton': 'assets/fonts/Anton/OFL.txt',
   'Inter': 'assets/fonts/Inter/OFL.txt',
   'Plus Jakarta Sans': 'assets/fonts/PlusJakartaSans/OFL.txt',
 };

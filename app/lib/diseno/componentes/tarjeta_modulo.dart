@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../valores_diseno.dart';
 import 'cuadricula_bento.dart';
 import 'etiqueta_panel.dart';
+import 'superficie_panel.dart';
 
 /// Tarjeta de resumen de un módulo (sección 19): etiqueta, acción opcional y
 /// contenido. Toma los colores del estilo activo y la personalidad del módulo.
@@ -79,13 +80,8 @@ class TarjetaModulo extends StatelessWidget {
     return Semantics(
       container: true,
       label: titulo,
-      child: Material(
-        color: v.panel,
-        shape: RoundedRectangleBorder(
-          borderRadius: radio,
-          side: BorderSide(color: v.borde, width: v.grosorBorde),
-        ),
-        clipBehavior: Clip.antiAlias,
+      child: SuperficiePanel(
+        radio: radio,
         child: v.decoracion && v.marcasEsquina
             ? CustomPaint(
                 foregroundPainter: MarcasEsquina(color: v.acento),

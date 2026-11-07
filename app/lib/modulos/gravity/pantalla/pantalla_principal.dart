@@ -40,26 +40,28 @@ class PantallaPrincipalGravity extends ConsumerWidget {
     final barra = barraOrdenes ?? const _BarraOrdenesMuestra();
     return Scaffold(
       backgroundColor: v.fondo,
-      body: SafeArea(
-        child: CallbackShortcuts(
-          bindings: {
-            const SingleActivator(
-              LogicalKeyboardKey.keyO,
-              control: true,
-              shift: true,
-            ): () =>
-                ref.read(modoPrivadoProvider.notifier).alternar(),
-          },
-          child: Focus(
-            autofocus: true,
-            child: LayoutBuilder(
-              builder: (context, limites) =>
-                  limites.maxWidth >= anchoParaTresColumnas(context)
-                  ? _DisenoAmplio(barraOrdenes: barra)
-                  : _DisenoApilado(
-                      barraOrdenes: barra,
-                      ancho: limites.maxWidth,
-                    ),
+      body: FondoEstilo(
+        child: SafeArea(
+          child: CallbackShortcuts(
+            bindings: {
+              const SingleActivator(
+                LogicalKeyboardKey.keyO,
+                control: true,
+                shift: true,
+              ): () =>
+                  ref.read(modoPrivadoProvider.notifier).alternar(),
+            },
+            child: Focus(
+              autofocus: true,
+              child: LayoutBuilder(
+                builder: (context, limites) =>
+                    limites.maxWidth >= anchoParaTresColumnas(context)
+                    ? _DisenoAmplio(barraOrdenes: barra)
+                    : _DisenoApilado(
+                        barraOrdenes: barra,
+                        ancho: limites.maxWidth,
+                      ),
+              ),
             ),
           ),
         ),

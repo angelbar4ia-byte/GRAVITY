@@ -10,7 +10,7 @@ void main() {
     expect(contrasteMinimoAlto, 7.0);
   });
 
-  for (final estilo in estilosIncluidos) {
+  for (final estilo in [...estilosIncluidos, ...estilosEnPausa]) {
     for (final brillo in Brightness.values) {
       test('${estilo.id} ${brillo.name}: todas las personalidades llegan a '
           '7:1 y van sin adornos', () {

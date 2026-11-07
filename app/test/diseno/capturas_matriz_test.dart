@@ -1,4 +1,4 @@
-// Genera capturas PNG de las pantallas con el estilo Bento (y el Futurista de
+// Genera capturas PNG de las pantallas con el estilo Glass (y el Futurista de
 // referencia) para que el dueño las revise. No compara nada: solo escribe los
 // archivos y solo cuando se pide con la variable CAPTURAS_DIR.
 //
@@ -25,6 +25,7 @@ import 'ayuda_pruebas.dart';
 Future<void> _cargarFuentes() async {
   const familias = {
     'Inter': ['Regular', 'SemiBold', 'Bold'],
+    'PlusJakartaSans': ['Regular', 'SemiBold', 'Bold'],
     'ChakraPetch': ['Regular', 'Medium', 'SemiBold', 'Bold'],
     'IBMPlexSans': ['Regular', 'Medium', 'SemiBold', 'Bold'],
     'IBMPlexMono': ['Regular', 'Medium', 'SemiBold', 'Bold'],
@@ -100,8 +101,8 @@ void main() {
   });
 
   for (final (estilo, brillo) in [
-    (estiloBento, Brightness.light),
-    (estiloBento, Brightness.dark),
+    (estiloGlass, Brightness.light),
+    (estiloGlass, Brightness.dark),
     (estiloFuturista, Brightness.dark),
   ]) {
     for (final (nombre, tamano, letra, crear) in pantallas) {
@@ -120,6 +121,8 @@ void main() {
             RepaintBoundary(key: clave, child: crear()),
             estilo: estilo,
             brillo: brillo,
+            // Laptop y tablet esmerilan el vidrio; el teléfono no.
+            densidad: tamano.width >= 800 ? Densidad.compacta : Densidad.comoda,
           );
           await tester.pump(const Duration(milliseconds: 500));
           await tester.runAsync(() async {

@@ -70,7 +70,7 @@ void main() {
   });
 
   group('Todos los estilos incluidos', () {
-    for (final estilo in estilosIncluidos) {
+    for (final estilo in [...estilosIncluidos, ...estilosEnPausa]) {
       for (final brillo in Brightness.values) {
         final v = estilo.valores(brillo);
         final nombre = '${estilo.nombre} ${brillo.name}';
@@ -159,7 +159,7 @@ void main() {
     });
 
     test('lo justo para llegar a 4.5:1, hacia el negro o el blanco', () {
-      for (final estilo in estilosIncluidos) {
+      for (final estilo in [...estilosIncluidos, ...estilosEnPausa]) {
         for (final brillo in Brightness.values) {
           final v = estilo.valores(brillo);
           for (final t in [0.0, 0.4, 0.6, 1.0]) {

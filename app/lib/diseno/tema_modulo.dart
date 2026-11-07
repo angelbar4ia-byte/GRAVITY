@@ -43,6 +43,7 @@ class TemaModulo extends ConsumerWidget {
       personalidad: personalidad,
       densidadBase: ref.watch(densidadBaseProvider),
       altoContrasteGlobal: ref.watch(altoContrasteProvider),
+      esmerilar: ref.watch(esmeriladoPermitidoProvider),
     );
     if (MediaQuery.disableAnimationsOf(context)) {
       return Theme(data: tema, child: child);
