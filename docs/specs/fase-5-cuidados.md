@@ -1,6 +1,6 @@
 # Fase 5 · Cuidados (especificación)
 
-> v1.2, 7/nov/2026 (respuestas del dueño sobre medicamentos de la hermana y bitácora de la pareja). Aprobada por el dueño con sus respuestas del mismo día. El documento de la app de cuidados actual se pospone a la siguiente sesión. Base: D2, D5, D18 y las respuestas del dueño a D5 (7/nov/2026). Pendiente: el documento de la app de cuidados actual (no está en el repositorio); mientras llega, esta especificación se apoya en la descripción del roadmap (Fase 5).
+> v1.3, 7/nov/2026 (respuestas del dueño sobre medicamentos de la hermana y bitácora de la pareja). Aprobada por el dueño con sus respuestas del mismo día. El documento de la app de cuidados actual se pospone a la siguiente sesión. Base: D2, D5, D18 y las respuestas del dueño a D5 (7/nov/2026). Pendiente: el documento de la app de cuidados actual (no está en el repositorio); mientras llega, esta especificación se apoya en la descripción del roadmap (Fase 5).
 
 ## 1. Alcance
 
@@ -92,6 +92,12 @@ Decisión del dueño (7/nov/2026): **sin PIN**. Si la voz no da seguridad para i
 
 - **Medicamentos:** la hermana puede **marcar y dar** los medicamentos durante **su turno** (martes por la tarde y visitas), igual que la cuidadora de turno.
 - **Pareja con consentimiento:** **sí ve la bitácora** de cuidados (con consentimiento explícito; sin consentimiento, no).
+
+## 8e. Roles de cuidador (v1.3, 7/nov/2026)
+
+- **Cuidadora principal:** rol cuidador, con su horario de la sección 3.
+- **Hermana:** rol cuidador (D5), con sus turnos y visitas (tipo `hermana_visita`).
+- **Dueño:** conserva el rol dueño y, además, es **cuidador de turno** en sus horarios y en los huecos (tipo `dueno`).
 
 ## 8c. Respuestas del dueño (v1.1, 7/nov/2026)
 
