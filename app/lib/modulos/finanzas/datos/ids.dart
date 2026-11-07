@@ -21,6 +21,10 @@ String idEstable(String clave) =>
 
 /// Claves de los ids estables. Cada una nombra lo que identifica.
 abstract final class ClavesId {
+  /// El movimiento de Finanzas que nace de confirmar un gasto de cuidado
+  /// (`cui_gastos.id`): confirmar dos veces o desde dos equipos da el mismo id.
+  static String gastoCuidado(String gastoId) => 'gasto-cuidado:$gastoId';
+
   /// La anulación de un movimiento: hay a lo más una (índice único en
   /// `anula_a`), así que "Deshacer" o "Anular" repetidos dan el mismo id.
   static String anulacion(String movimientoId) => 'anulacion:$movimientoId';
