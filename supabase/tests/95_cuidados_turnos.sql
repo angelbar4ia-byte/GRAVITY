@@ -14,18 +14,18 @@ grant execute on function pg_temp.turno(text) to authenticated, service_role;
 
 -- ---------------------------------------------------------------- quién está de turno (la dueña consulta)
 select pruebas.como('ana@ejemplo.test');
-select pruebas.igual(pg_temp.turno('2026-11-09 08:00-06'), '-', 'Lunes 8:00: nadie (la cuidadora entra a las 9:00)');
+select pruebas.igual(pg_temp.turno('2026-11-09 08:00-06'), 'ana:dueno', 'Lunes 8:00: nadie de cuidado, cubre el dueño (turno residual)');
 select pruebas.igual(pg_temp.turno('2026-11-09 09:00-06'), 'diana:cuidadora', 'Lunes 9:00: la cuidadora');
 select pruebas.igual(pg_temp.turno('2026-11-09 14:59-06'), 'diana:cuidadora', 'Lunes 14:59: la cuidadora');
 select pruebas.igual(pg_temp.turno('2026-11-09 15:00-06'), 'ana:dueno', 'Lunes 15:00: el dueño toma la tarde');
 select pruebas.igual(pg_temp.turno('2026-11-09 15:00:00+00'), 'diana:cuidadora', 'Las horas se leen en la zona del hogar (15:00 UTC = 9:00 en la Ciudad de México)');
-select pruebas.igual(pg_temp.turno('2026-11-10 07:29-06'), '-', 'Martes 7:29: nadie');
+select pruebas.igual(pg_temp.turno('2026-11-10 07:29-06'), 'ana:dueno', 'Martes 7:29: cubre el dueño');
 select pruebas.igual(pg_temp.turno('2026-11-10 07:30-06'), 'diana:cuidadora', 'Martes 7:30: la cuidadora');
 select pruebas.igual(pg_temp.turno('2026-11-10 15:00-06'), 'carla:hermana_visita', 'Martes 15:00: la hermana (sin la cuidadora)');
 select pruebas.igual(pg_temp.turno('2026-11-11 06:59-06'), 'carla:hermana_visita', 'Miércoles 6:59: la hermana todavía');
-select pruebas.igual(pg_temp.turno('2026-11-11 07:00-06'), '-', 'Miércoles 7:00: la hermana se va, nadie hasta las 7:30');
+select pruebas.igual(pg_temp.turno('2026-11-11 07:00-06'), 'ana:dueno', 'Miércoles 7:00: la hermana se va, cubre el dueño hasta las 7:30');
 select pruebas.igual(pg_temp.turno('2026-11-11 18:29-06'), 'diana:cuidadora', 'Miércoles 18:29: la cuidadora');
-select pruebas.igual(pg_temp.turno('2026-11-11 18:30-06'), '-', 'Miércoles 18:30: termina');
+select pruebas.igual(pg_temp.turno('2026-11-11 18:30-06'), 'ana:dueno', 'Miércoles 18:30: termina la cuidadora, cubre el dueño');
 select pruebas.igual(pg_temp.turno('2026-11-13 18:00-06'), 'diana:cuidadora', 'Viernes 18:00: la cuidadora');
 select pruebas.igual(pg_temp.turno('2026-11-14 10:00-06'), 'diana:cuidadora', 'Sábado por la mañana: la cuidadora');
 select pruebas.igual(pg_temp.turno('2026-11-14 16:00-06'), 'ana:dueno', 'Sábado por la tarde: el dueño');
@@ -39,12 +39,18 @@ select pruebas.igual(
   (select string_agg(to_char(t.programada_para at time zone 'America/Mexico_City', 'DD HH24:MI') || '=' ||
                      pg_temp.turno(t.programada_para::text), ' ' order by t.programada_para)
      from public.cui_tomas t where t.programada_para < '2026-11-10 00:00-06'),
-  '09 08:00=- 09 14:00=diana:cuidadora 09 20:00=ana:dueno',
-  'Criterio 1: la toma de las 8:00 del lunes no tiene a quién avisar; la de las 14:00, a la cuidadora; la de las 20:00, al dueño');
+  '09 08:00=ana:dueno 09 14:00=diana:cuidadora 09 20:00=ana:dueno',
+  'Criterio 1: la toma de las 8:00 del lunes va al dueño (residual); la de las 14:00, a la cuidadora; la de las 20:00, al dueño');
+
+-- Turno residual del dueño (spec 5 §8c): de madrugada y de noche, sin cuidadora ni hermana, devuelve al dueño y a nadie más
+select pruebas.igual(pg_temp.turno('2026-11-10 02:00-06'), 'ana:dueno', 'Martes 2:00: la noche sin turno devuelve al dueño');
+select pruebas.igual(pg_temp.turno('2026-11-12 23:00-06'), 'ana:dueno', 'Jueves 23:00: la noche sin turno devuelve al dueño');
+select pruebas.igual(pg_temp.turno('2026-11-10 16:00-06'), 'carla:hermana_visita', 'Con la hermana de turno no se añade al dueño');
+select pruebas.igual(pg_temp.turno('2026-11-09 16:00-06'), 'ana:dueno', 'Con turno propio el dueño no sale repetido');
 
 -- La cuidadora ve a quién avisarían, y a sí misma solo dentro de su turno
 select pruebas.como('diana@ejemplo.test');
-select pruebas.igual(pg_temp.turno('2026-11-09 08:00-06'), '-', 'Diana a las 8:00 del lunes: no está de turno');
+select pruebas.igual(pg_temp.turno('2026-11-09 08:00-06'), 'ana:dueno', 'Diana a las 8:00 del lunes: no está de turno (cubre el dueño)');
 select pruebas.igual(pg_temp.turno('2026-11-09 10:00-06'), 'diana:cuidadora', 'y a las 10:00 sí');
 select pruebas.igual(pg_temp.turno('2026-11-15 12:00-06'), 'ana:dueno', 'El domingo ve que cuida el dueño');
 

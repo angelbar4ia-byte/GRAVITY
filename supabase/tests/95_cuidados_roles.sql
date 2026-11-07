@@ -173,7 +173,8 @@ select pruebas.como('diana@ejemplo.test');
 select pruebas.igual(pruebas.cuenta($$select * from public.cui_turnos$$), 11, 'La cuidadora ve los turnos');
 select pruebas.igual(pruebas.cuenta($$select * from public.cui_medicamentos$$), 3, '… los medicamentos');
 select pruebas.igual(pruebas.cuenta($$select * from public.cui_tomas$$), 3, '… las tomas');
-select pruebas.igual(pruebas.cuenta($$select * from public.cui_bitacora$$), 2, '… y la bitácora de cuidados (su área)');
+select pruebas.igual(pruebas.cuenta($$select * from public.cui_bitacora$$), 2, '… y la bitácora de cuidados: la del dueño y la de la hermana (v1.1)');
+select pruebas.ok(exists (select 1 from public.cui_bitacora where persona_id = pruebas.id_persona('carla@ejemplo.test')), 'Ve la entrada de la hermana');
 select pruebas.igual(pruebas.cuenta($$select * from public.cui_entregas$$), 2, 'Las entregas que le dejaron (dueña y hermana)');
 select pruebas.igual(pruebas.cuenta($$select * from public.cui_consentimientos$$), 0, 'No ve consentimientos');
 select pruebas.falla($$insert into public.cui_turnos (hogar_id, persona_id, dia_semana, inicio_min, fin_min, tipo)
@@ -188,6 +189,17 @@ select pruebas.falla($$insert into public.cui_comidas (hogar_id, fecha, tiempo, 
   values ('b0000000-0000-4000-8000-000000000001', '2026-11-08', 'cena', 'comio')$$, 'No en domingo (cuida el dueño)', '42501');
 select pruebas.igual(pruebas.afecta($$insert into public.cui_bitacora (hogar_id, nota) values ('b0000000-0000-4000-8000-000000000001', 'Tomó agua (ejemplo)')$$), 1,
   'Escribe en la bitácora');
+select pruebas.igual(pruebas.cuenta($$select * from public.cui_bitacora$$), 3, 'Ve lo suyo, lo del dueño y lo de la hermana');
+-- v1.1: la entrada de cualquier otra persona (aquí la pareja, escrita directo por el servidor) no la ve la cuidadora
+select pruebas.como_postgres();
+insert into public.cui_bitacora (hogar_id, persona_id, nota)
+  values ('b0000000-0000-4000-8000-000000000001', pruebas.id_persona('alex@ejemplo.test'), 'Nota de otra persona (ejemplo)');
+select pruebas.como('diana@ejemplo.test');
+select pruebas.igual(pruebas.cuenta($$select * from public.cui_bitacora where nota like 'Nota de otra%'$$), 0, 'No ve la entrada de otra persona');
+select pruebas.igual(pruebas.cuenta($$select * from public.cui_bitacora$$), 3, '… y sigue viendo solo esas tres');
+select pruebas.como('carla@ejemplo.test');
+select pruebas.igual(pruebas.cuenta($$select * from public.cui_bitacora$$), 4, 'La hermana sigue leyendo toda la bitácora de cuidados');
+select pruebas.como('diana@ejemplo.test');
 select pruebas.falla($$insert into public.cui_entregas (hogar_id, para_persona, nota)
   values ('b0000000-0000-4000-8000-000000000001', pruebas.id_persona('alex@ejemplo.test'), 'x')$$, 'No deja entregas a la pareja', '42501');
 select pruebas.igual(pruebas.afecta($$insert into public.cui_gastos (id, hogar_id, monto_centavos, concepto, fecha)

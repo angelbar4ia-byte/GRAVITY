@@ -64,15 +64,20 @@ begin
          and ((t.tipo = 'dueno' and m.rol = 'dueno')
               or (t.tipo in ('cuidadora', 'hermana_visita') and m.rol in ('cuidador', 'familiar')))
     )
-    select b.pid, b.tp from base b
+    select x.pid, x.tp from (
+    select b.pid, b.tp, b.ini from base b
     union all
     -- Residual (spec 5 §8c): sin cuidadora ni hermana de turno, cubre el dueño (si no aparece ya por turno propio).
-    select m.persona_id, 'dueno'
+    select m.persona_id, 'dueno'::text, null::integer
       from public.membresias m
      where m.hogar_id = p_hogar_id and m.rol = 'dueno'
        and m.activa and m.desde <= now() and (m.hasta is null or m.hasta > now())
        and not exists (select 1 from base b where b.tp in ('cuidadora', 'hermana_visita'))
        and not exists (select 1 from base b where b.pid = m.persona_id)
-    order by 2, 3 nulls first;
+    ) x order by x.tp, x.ini nulls first;
 end
 $$;
+comment on function public.cui_quien_en_turno(uuid, timestamptz) is
+  'Quién está de turno en p_ts (zona del hogar): persona y tipo (cuidadora, dueno, hermana_visita). Solo membresías vigentes. '
+  'Si no hay cuidadora ni hermana de turno, devuelve al dueño (turno residual, spec 5 §8c). Los recordatorios de medicamentos '
+  'y comidas van a estas personas y a nadie más.';

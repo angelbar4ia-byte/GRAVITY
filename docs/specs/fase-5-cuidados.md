@@ -1,6 +1,6 @@
 # Fase 5 · Cuidados (especificación)
 
-> v1.1, 7/nov/2026 (respuestas del dueño sobre bitácora, turno del dueño y turnos de la hermana). Aprobada por el dueño con sus respuestas del mismo día. El documento de la app de cuidados actual se pospone a la siguiente sesión. Base: D2, D5, D18 y las respuestas del dueño a D5 (7/nov/2026). Pendiente: el documento de la app de cuidados actual (no está en el repositorio); mientras llega, esta especificación se apoya en la descripción del roadmap (Fase 5).
+> v1.2, 7/nov/2026 (respuestas del dueño sobre medicamentos de la hermana y bitácora de la pareja). Aprobada por el dueño con sus respuestas del mismo día. El documento de la app de cuidados actual se pospone a la siguiente sesión. Base: D2, D5, D18 y las respuestas del dueño a D5 (7/nov/2026). Pendiente: el documento de la app de cuidados actual (no está en el repositorio); mientras llega, esta especificación se apoya en la descripción del roadmap (Fase 5).
 
 ## 1. Alcance
 
@@ -87,6 +87,11 @@ Decisión del dueño (7/nov/2026): **sin PIN**. Si la voz no da seguridad para i
 4. Papá vive en la casa de las bocinas. **Consecuencia:** los recordatorios que se dicen en voz alta son genéricos (sin nombre de medicamento ni de persona), según D6.
 5. Voz de la hermana: sin PIN; si la voz no da seguridad, se pide de nuevo la identidad.
 6. El documento de la app de cuidados actual se revisa en la siguiente sesión. No bloquea la construcción de esta versión.
+
+## 8d. Respuestas del dueño (v1.2, 7/nov/2026)
+
+- **Medicamentos:** la hermana puede **marcar y dar** los medicamentos durante **su turno** (martes por la tarde y visitas), igual que la cuidadora de turno.
+- **Pareja con consentimiento:** **sí ve la bitácora** de cuidados (con consentimiento explícito; sin consentimiento, no).
 
 ## 8c. Respuestas del dueño (v1.1, 7/nov/2026)
 
