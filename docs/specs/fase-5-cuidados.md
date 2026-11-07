@@ -1,6 +1,6 @@
 # Fase 5 · Cuidados (especificación)
 
-> v1.0, 7/nov/2026. Aprobada por el dueño con sus respuestas del mismo día. El documento de la app de cuidados actual se pospone a la siguiente sesión. Base: D2, D5, D18 y las respuestas del dueño a D5 (7/nov/2026). Pendiente: el documento de la app de cuidados actual (no está en el repositorio); mientras llega, esta especificación se apoya en la descripción del roadmap (Fase 5).
+> v1.1, 7/nov/2026 (respuestas del dueño sobre bitácora, turno del dueño y turnos de la hermana). Aprobada por el dueño con sus respuestas del mismo día. El documento de la app de cuidados actual se pospone a la siguiente sesión. Base: D2, D5, D18 y las respuestas del dueño a D5 (7/nov/2026). Pendiente: el documento de la app de cuidados actual (no está en el repositorio); mientras llega, esta especificación se apoya en la descripción del roadmap (Fase 5).
 
 ## 1. Alcance
 
@@ -87,6 +87,13 @@ Decisión del dueño (7/nov/2026): **sin PIN**. Si la voz no da seguridad para i
 4. Papá vive en la casa de las bocinas. **Consecuencia:** los recordatorios que se dicen en voz alta son genéricos (sin nombre de medicamento ni de persona), según D6.
 5. Voz de la hermana: sin PIN; si la voz no da seguridad, se pide de nuevo la identidad.
 6. El documento de la app de cuidados actual se revisa en la siguiente sesión. No bloquea la construcción de esta versión.
+
+## 8c. Respuestas del dueño (v1.1, 7/nov/2026)
+
+- **Bitácora de la cuidadora:** ve lo **suyo** y lo que la **hermana** y el **dueño** escriben o planean para ella con Papá. No ve nada más de la familia.
+- **Turno del dueño:** cubre **todo lo que no cubren** la cuidadora ni la hermana, después de su trabajo. Si nadie está de turno, el responsable es el dueño (un cambio urgente y los recordatorios van a él).
+- **La visita de la hermana** la define ella.
+- **Turnos de la hermana:** se confirman (martes desde las 15:00 y miércoles hasta las 7:00).
 
 ## 8b. Respuestas del dueño a preguntas de construcción (7/nov/2026)
 
