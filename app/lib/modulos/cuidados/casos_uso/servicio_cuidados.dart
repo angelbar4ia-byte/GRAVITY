@@ -66,7 +66,9 @@ class ServicioCuidados {
   Future<void> dejarEntrega(String notas) async {
     _exigir(permisos.dejaEntrega);
     final t = notas.trim();
-    if (t.isEmpty) throw const ErrorCuidados('Escribe una nota para quien sigue.');
+    if (t.isEmpty) {
+      throw const ErrorCuidados('Escribe una nota para quien sigue.');
+    }
     await _repo.dejarEntrega(
       Entrega(
         id: idNuevoCuidados(),
@@ -130,7 +132,13 @@ class ServicioCuidados {
     for (final m in meds.where((m) => m.activo)) {
       for (final h in m.horas) {
         final p = h.split(':');
-        final hora = DateTime(d.year, d.month, d.day, int.parse(p[0]), int.parse(p[1]));
+        final hora = DateTime(
+          d.year,
+          d.month,
+          d.day,
+          int.parse(p[0]),
+          int.parse(p[1]),
+        );
         salida.add(
           Dosis(medicamento: m, hora: hora, toma: tomas[Toma.idDe(m.id, hora)]),
         );
@@ -149,7 +157,11 @@ class ServicioCuidados {
         pendientes.firstOrNull;
   }
 
-  Future<void> marcarToma(Dosis dosis, {required bool dado, String? motivo}) async {
+  Future<void> marcarToma(
+    Dosis dosis, {
+    required bool dado,
+    String? motivo,
+  }) async {
     _exigir(permisos.marcaToma);
     await _repo.registrarToma(
       Toma(
@@ -174,9 +186,7 @@ class ServicioCuidados {
 
   Future<Map<TiempoComidaPapa, ComidaRegistro>> comidasDeHoy() async {
     if (!permisos.veComidas) return const {};
-    return {
-      for (final c in await _repo.comidas(ahora())) c.tiempo: c,
-    };
+    return {for (final c in await _repo.comidas(ahora())) c.tiempo: c};
   }
 
   Future<void> registrarComida(TiempoComidaPapa t, ResultadoComida r) async {
@@ -201,7 +211,10 @@ class ServicioCuidados {
     if (!permisos.veBitacora) return const [];
     final todas = await _repo.bitacora();
     return permisos.soloLoPropioEnBitacora
-        ? [for (final e in todas) if (e.autorId == personaId) e]
+        ? [
+            for (final e in todas)
+              if (e.autorId == personaId) e,
+          ]
         : todas;
   }
 
@@ -226,12 +239,18 @@ class ServicioCuidados {
     return [
       for (final e in await _repo.bitacora())
         if (e.tipo == TipoBitacora.cita) e,
-    ]..sort((a, b) => (a.programadaEn ?? a.creadaEn).compareTo(b.programadaEn ?? b.creadaEn));
+    ]..sort(
+      (a, b) => (a.programadaEn ?? a.creadaEn).compareTo(
+        b.programadaEn ?? b.creadaEn,
+      ),
+    );
   }
 
   Future<void> agregarCita(String texto, DateTime cuando) async {
     _exigir(permisos.administra);
-    if (texto.trim().isEmpty) throw const ErrorCuidados('Escribe de qué es la cita.');
+    if (texto.trim().isEmpty) {
+      throw const ErrorCuidados('Escribe de qué es la cita.');
+    }
     await _repo.agregarBitacora(
       EntradaBitacora(
         id: idNuevoCuidados(),
@@ -253,7 +272,10 @@ class ServicioCuidados {
     // Salvo el dueño, cada quien ve solo los que registró.
     return permisos.confirmaGasto
         ? todos
-        : [for (final g in todos) if (g.registradoPor == personaId) g];
+        : [
+            for (final g in todos)
+              if (g.registradoPor == personaId) g,
+          ];
   }
 
   /// Registra un gasto: queda **pendiente de confirmación del dueño**; al
@@ -263,8 +285,12 @@ class ServicioCuidados {
     required int centavos,
   }) async {
     _exigir(permisos.registraGasto);
-    if (concepto.trim().isEmpty) throw const ErrorCuidados('Escribe en qué se gastó.');
-    if (centavos <= 0) throw const ErrorCuidados('El monto debe ser mayor que cero.');
+    if (concepto.trim().isEmpty) {
+      throw const ErrorCuidados('Escribe en qué se gastó.');
+    }
+    if (centavos <= 0) {
+      throw const ErrorCuidados('El monto debe ser mayor que cero.');
+    }
     await _repo.registrarGasto(
       GastoCuidado(
         id: idNuevoCuidados(),

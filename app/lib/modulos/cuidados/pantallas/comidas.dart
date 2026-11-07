@@ -75,12 +75,15 @@ class _OpcionComida extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // El elegido se marca con icono y texto, no solo con color.
-    final texto = elegido ? '${resultado.etiqueta} (registrado)' : resultado.etiqueta;
+    final texto = elegido
+        ? '${resultado.etiqueta} (registrado)'
+        : resultado.etiqueta;
     final icono = elegido ? Icons.check_circle : Icons.radio_button_unchecked;
     void alTocar() => ejecutarCuidados(
       context,
       ref,
-      () => ref.read(servicioCuidadosProvider).registrarComida(tiempo, resultado),
+      () =>
+          ref.read(servicioCuidadosProvider).registrarComida(tiempo, resultado),
       ok: 'Registrado',
     );
     return BotonGrande(

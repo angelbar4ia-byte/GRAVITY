@@ -11,6 +11,7 @@ import '../../../nucleo/contratos/roles.dart';
 import '../../../nucleo/sesion/proveedores_sesion.dart';
 import '../../../nucleo/sesion/servicio_sesion_supabase.dart';
 import '../../finanzas/datos/fuente_tablas.dart';
+import '../casos_uso/horario_turnos.dart';
 import '../casos_uso/permisos_cuidados.dart';
 import '../casos_uso/servicio_cuidados.dart';
 import '../datos/modelos.dart';
@@ -113,7 +114,9 @@ final mesResumenProvider = StateProvider<DateTime>((ref) {
 
 final resumenMensualProvider = FutureProvider<ResumenMensual?>((ref) {
   ref.watch(versionCuidadosProvider);
-  return ref.watch(servicioCuidadosProvider).resumen(ref.watch(mesResumenProvider));
+  return ref
+      .watch(servicioCuidadosProvider)
+      .resumen(ref.watch(mesResumenProvider));
 });
 
 /// Ahora, según el reloj de la app (el simulado en las pruebas).

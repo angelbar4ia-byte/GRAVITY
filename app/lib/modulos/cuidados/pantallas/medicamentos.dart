@@ -73,13 +73,16 @@ class _FilaDosis extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = Theme.of(context).textTheme;
-    final retrasada = dosis.estado == EstadoToma.pendiente &&
+    final retrasada =
+        dosis.estado == EstadoToma.pendiente &&
         dosis.hora.isBefore(ahora.subtract(const Duration(minutes: 30)));
     final (icono, texto) = switch (dosis.estado) {
       EstadoToma.dado => (Icons.check_circle, 'Ya se dio'),
       EstadoToma.noDado => (Icons.cancel_outlined, 'No se dio'),
-      EstadoToma.pendiente =>
-        (Icons.schedule, retrasada ? 'Pendiente · pasó la hora' : 'Pendiente'),
+      EstadoToma.pendiente => (
+        Icons.schedule,
+        retrasada ? 'Pendiente · pasó la hora' : 'Pendiente',
+      ),
     };
     return Card(
       child: ListTile(
@@ -89,7 +92,10 @@ class _FilaDosis extends ConsumerWidget {
           '${horaTexto(dosis.hora)} · ${dosis.medicamento.nombre}',
           style: t.titleLarge,
         ),
-        subtitle: Text('${dosis.medicamento.dosis}\n$texto', style: t.titleMedium),
+        subtitle: Text(
+          '${dosis.medicamento.dosis}\n$texto',
+          style: t.titleMedium,
+        ),
         isThreeLine: true,
         onTap: puedeMarcar ? () => _marcar(context, ref) : null,
       ),

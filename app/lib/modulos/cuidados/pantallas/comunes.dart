@@ -105,7 +105,10 @@ class TarjetaCuidados extends StatelessWidget {
           children: [
             Row(
               children: [
-                if (icono != null) ...[Icon(icono, size: 28), const SizedBox(width: 12)],
+                if (icono != null) ...[
+                  Icon(icono, size: 28),
+                  const SizedBox(width: 12),
+                ],
                 Expanded(
                   child: Semantics(
                     header: true,
@@ -143,26 +146,52 @@ Widget cuando<T>(
   Widget Function(T datos) construir,
 ) => v.when(
   loading: () => const EstadoCargando(),
-  error: (_, _) => EstadoError(
-    mensaje: 'No pudimos cargar esto.',
-    alReintentar: reintentar,
-  ),
+  error: (_, _) =>
+      EstadoError(mensaje: 'No pudimos cargar esto.', alReintentar: reintentar),
   data: construir,
 );
 
-String fechaLarga(DateTime d) {
-  const dias = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
+String diaLargo(DateTime d) {
+  const dias = [
+    'lunes',
+    'martes',
+    'miércoles',
+    'jueves',
+    'viernes',
+    'sábado',
+    'domingo',
+  ];
   const meses = [
-    'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
-    'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+    'enero',
+    'febrero',
+    'marzo',
+    'abril',
+    'mayo',
+    'junio',
+    'julio',
+    'agosto',
+    'septiembre',
+    'octubre',
+    'noviembre',
+    'diciembre',
   ];
   return '${dias[d.weekday - 1]} ${d.day} de ${meses[d.month - 1]}';
 }
 
 String mesTexto(DateTime d) {
   const meses = [
-    'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
-    'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+    'enero',
+    'febrero',
+    'marzo',
+    'abril',
+    'mayo',
+    'junio',
+    'julio',
+    'agosto',
+    'septiembre',
+    'octubre',
+    'noviembre',
+    'diciembre',
   ];
   return '${meses[d.month - 1]} de ${d.year}';
 }

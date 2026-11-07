@@ -572,3 +572,28 @@ insert into public.ali_suplementos (id, hogar_id, menu, nombre, dosis, horario) 
 insert into public.ali_compras_marcas (hogar_id, menu, semana, clave) values
   ('b0000000-0000-4000-8000-000000000001', 'papa', '2026-11-02', 'Avena|g');
 select pg_temp.como(null);
+
+-- ------------------------------------------------------------ Fase 5: Cuidados (turnos de la spec §3, datos inventados)
+-- Minutos desde medianoche; dia_semana 1 = lunes. Diana es la cuidadora; Carla (la hermana) cubre los martes por la tarde
+-- hasta las 7:00 del miércoles; el dueño cubre sábados y lunes por la tarde y todo el domingo. Las visitas de fin de semana
+-- de la hermana no son turnos.
+select pg_temp.como('a0000000-0000-4000-8000-000000000001');
+insert into public.cui_turnos (id, hogar_id, persona_id, dia_semana, inicio_min, fin_min, tipo)
+select t.id::uuid, 'b0000000-0000-4000-8000-000000000001', pg_temp.persona(t.usuario::uuid), t.dia, t.ini, t.fin, t.tipo
+from (values
+  ('a5100000-0000-4000-8000-000000000001', 'a0000000-0000-4000-8000-000000000004', 1,  540,  900, 'cuidadora'),
+  ('a5100000-0000-4000-8000-000000000002', 'a0000000-0000-4000-8000-000000000001', 1,  900, 1440, 'dueno'),
+  ('a5100000-0000-4000-8000-000000000003', 'a0000000-0000-4000-8000-000000000004', 2,  450,  900, 'cuidadora'),
+  ('a5100000-0000-4000-8000-000000000004', 'a0000000-0000-4000-8000-000000000003', 2,  900, 1440, 'hermana_visita'),
+  ('a5100000-0000-4000-8000-000000000005', 'a0000000-0000-4000-8000-000000000003', 3,    0,  420, 'hermana_visita'),
+  ('a5100000-0000-4000-8000-000000000006', 'a0000000-0000-4000-8000-000000000004', 3,  450, 1110, 'cuidadora'),
+  ('a5100000-0000-4000-8000-000000000007', 'a0000000-0000-4000-8000-000000000004', 4,  450, 1110, 'cuidadora'),
+  ('a5100000-0000-4000-8000-000000000008', 'a0000000-0000-4000-8000-000000000004', 5,  450, 1110, 'cuidadora'),
+  ('a5100000-0000-4000-8000-000000000009', 'a0000000-0000-4000-8000-000000000004', 6,  540,  900, 'cuidadora'),
+  ('a5100000-0000-4000-8000-00000000000a', 'a0000000-0000-4000-8000-000000000001', 6,  900, 1440, 'dueno'),
+  ('a5100000-0000-4000-8000-00000000000b', 'a0000000-0000-4000-8000-000000000001', 7,    0, 1440, 'dueno')
+) as t (id, usuario, dia, ini, fin, tipo);
+insert into public.cui_medicamentos (id, hogar_id, nombre, dosis, horas, notas) values
+  ('a5200000-0000-4000-8000-000000000001', 'b0000000-0000-4000-8000-000000000001', 'Medicamento A (ejemplo)', '1 tableta (ejemplo)', '{08:00,20:00}', 'Con alimento (ejemplo)'),
+  ('a5200000-0000-4000-8000-000000000002', 'b0000000-0000-4000-8000-000000000001', 'Medicamento B (ejemplo)', '1 cápsula (ejemplo)', '{14:00}', null);
+select pg_temp.como(null);

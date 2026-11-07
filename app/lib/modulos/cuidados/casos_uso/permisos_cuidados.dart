@@ -45,7 +45,8 @@ class PermisosCuidados {
   /// La cuidadora y la hermana solo ven lo que ellas escribieron.
   bool get soloLoPropioEnBitacora => _cuidador;
 
-  bool get veGastos => _dueno || _cuidador || (_pareja && perfil.consentimiento);
+  bool get veGastos =>
+      _dueno || _cuidador || (_pareja && perfil.consentimiento);
   bool get registraGasto => _escribe && (_dueno || _cuidador || _pareja);
   bool get confirmaGasto => _dueno && !esMaestra;
 

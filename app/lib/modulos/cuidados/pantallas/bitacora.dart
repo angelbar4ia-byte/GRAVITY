@@ -21,7 +21,7 @@ int? centavosDeTexto(String texto) {
   final m = RegExp(r'^(\d+)(?:\.(\d{1,2}))?$').firstMatch(t);
   if (m == null) return null;
   final pesos = int.parse(m[1]!);
-  final cent = int.parse((m[2] ?? '').padRight(2, '0').isEmpty ? '0' : (m[2] ?? '').padRight(2, '0'));
+  final cent = int.parse((m[2] ?? '0').padRight(2, '0'));
   return pesos * 100 + cent;
 }
 
@@ -47,7 +47,9 @@ class PantallaBitacora extends ConsumerWidget {
                   children: [
                     TabBar(tabs: [for (final e in pestanas) Tab(text: e.$1)]),
                     Expanded(
-                      child: TabBarView(children: [for (final e in pestanas) e.$2]),
+                      child: TabBarView(
+                        children: [for (final e in pestanas) e.$2],
+                      ),
                     ),
                   ],
                 ),
@@ -64,40 +66,45 @@ class _ListaBitacora extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final p = ref.watch(permisosCuidadosProvider);
     final t = Theme.of(context).textTheme;
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      floatingActionButton: p.escribeBitacora
-          ? FloatingActionButton.extended(
+    return Column(
+      children: [
+        if (p.escribeBitacora)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+            child: BotonGrande(
+              texto: 'Nueva nota',
+              icono: Icons.add,
               onPressed: () => _nueva(context, ref),
-              icon: const Icon(Icons.add),
-              label: const Text('Nueva nota', style: TextStyle(fontSize: 18)),
-            )
-          : null,
-      body: cuando(
-        ref.watch(bitacoraProvider),
-        () => ref.invalidate(bitacoraProvider),
-        (entradas) => entradas.isEmpty
-            ? const EstadoVacio(
-                mensaje: 'Sin notas todavía',
-                detalle: 'Escribe qué pasó durante el turno.',
-                icono: Icons.menu_book_outlined,
-              )
-            : ListView(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-                children: [
-                  for (final e in entradas)
-                    Card(
-                      child: ListTile(
-                        title: Text(e.texto, style: t.titleMedium),
-                        subtitle: Text(
-                          '${e.autorNombre} · ${fechaLarga(e.creadaEn)} ${horaTexto(e.creadaEn)}',
-                          style: t.bodyMedium,
+            ),
+          ),
+        Expanded(
+          child: cuando(
+            ref.watch(bitacoraProvider),
+            () => ref.invalidate(bitacoraProvider),
+            (entradas) => entradas.isEmpty
+                ? const EstadoVacio(
+                    mensaje: 'Sin notas todavía',
+                    detalle: 'Escribe qué pasó durante el turno.',
+                    icono: Icons.menu_book_outlined,
+                  )
+                : ListView(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                    children: [
+                      for (final e in entradas)
+                        Card(
+                          child: ListTile(
+                            title: Text(e.texto, style: t.titleMedium),
+                            subtitle: Text(
+                              '${e.autorNombre} · ${diaLargo(e.creadaEn)} ${horaTexto(e.creadaEn)}',
+                              style: t.bodyMedium,
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                ],
-              ),
-      ),
+                    ],
+                  ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -125,30 +132,35 @@ class _ListaGastos extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final p = ref.watch(permisosCuidadosProvider);
     final t = Theme.of(context).textTheme;
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      floatingActionButton: p.registraGasto
-          ? FloatingActionButton.extended(
+    return Column(
+      children: [
+        if (p.registraGasto)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+            child: BotonGrande(
+              texto: 'Registrar gasto',
+              icono: Icons.add,
               onPressed: () => _nuevo(context, ref),
-              icon: const Icon(Icons.add),
-              label: const Text('Registrar gasto', style: TextStyle(fontSize: 18)),
-            )
-          : null,
-      body: cuando(
-        ref.watch(gastosProvider),
-        () => ref.invalidate(gastosProvider),
-        (gastos) => gastos.isEmpty
-            ? const EstadoVacio(
-                mensaje: 'Sin gastos registrados',
-                icono: Icons.receipt_long_outlined,
-              )
-            : ListView(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-                children: [
-                  for (final g in gastos) _TarjetaGasto(g: g, p: p, t: t),
-                ],
-              ),
-      ),
+            ),
+          ),
+        Expanded(
+          child: cuando(
+            ref.watch(gastosProvider),
+            () => ref.invalidate(gastosProvider),
+            (gastos) => gastos.isEmpty
+                ? const EstadoVacio(
+                    mensaje: 'Sin gastos registrados',
+                    icono: Icons.receipt_long_outlined,
+                  )
+                : ListView(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                    children: [
+                      for (final g in gastos) _TarjetaGasto(g: g, p: p, t: t),
+                    ],
+                  ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -162,7 +174,9 @@ class _ListaGastos extends ConsumerWidget {
     await ejecutarCuidados(
       context,
       ref,
-      () => ref.read(servicioCuidadosProvider).registrarGasto(concepto: r.$1, centavos: r.$2),
+      () => ref
+          .read(servicioCuidadosProvider)
+          .registrarGasto(concepto: r.$1, centavos: r.$2),
       ok: 'Gasto registrado, pendiente de confirmación',
     );
   }
@@ -184,17 +198,25 @@ class _TarjetaGasto extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('${g.concepto} · ${formatearCentavos(g.centavos)}', style: t.titleMedium),
             Text(
-              '${g.registradoNombre} · ${fechaLarga(g.fecha)}',
+              '${g.concepto} · ${formatearCentavos(g.centavos)}',
+              style: t.titleMedium,
+            ),
+            Text(
+              '${g.registradoNombre} · ${diaLargo(g.fecha)}',
               style: t.bodyMedium,
             ),
             const SizedBox(height: 4),
             Row(
               children: [
-                Icon(pendiente ? Icons.hourglass_empty : Icons.check_circle_outline, size: 20),
+                Icon(
+                  pendiente
+                      ? Icons.hourglass_empty
+                      : Icons.check_circle_outline,
+                  size: 20,
+                ),
                 const SizedBox(width: 6),
-                Text(g.estado.etiqueta, style: t.titleSmall),
+                Expanded(child: Text(g.estado.etiqueta, style: t.titleSmall)),
               ],
             ),
             if (pendiente && p.confirmaGasto) ...[
@@ -207,7 +229,9 @@ class _TarjetaGasto extends ConsumerWidget {
                       onPressed: () => ejecutarCuidados(
                         context,
                         ref,
-                        () => ref.read(servicioCuidadosProvider).resolverGasto(g.id, confirmar: true),
+                        () => ref
+                            .read(servicioCuidadosProvider)
+                            .resolverGasto(g.id, confirmar: true),
                         ok: 'Gasto confirmado',
                       ),
                       child: const Text('Confirmar'),
@@ -218,7 +242,9 @@ class _TarjetaGasto extends ConsumerWidget {
                       onPressed: () => ejecutarCuidados(
                         context,
                         ref,
-                        () => ref.read(servicioCuidadosProvider).resolverGasto(g.id, confirmar: false),
+                        () => ref
+                            .read(servicioCuidadosProvider)
+                            .resolverGasto(g.id, confirmar: false),
                         ok: 'Gasto rechazado',
                       ),
                       child: const Text('Rechazar'),
@@ -266,26 +292,48 @@ class _HojaGastoState extends State<_HojaGasto> {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + MediaQuery.of(context).viewInsets.bottom),
+    padding: EdgeInsets.fromLTRB(
+      16,
+      16,
+      16,
+      16 + MediaQuery.of(context).viewInsets.bottom,
+    ),
     child: Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       spacing: 12,
       children: [
-        Text('Registrar gasto de cuidado', style: Theme.of(context).textTheme.titleLarge),
+        Text(
+          'Registrar gasto de cuidado',
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
         TextField(
           controller: _concepto,
           autofocus: true,
           style: const TextStyle(fontSize: 20),
-          decoration: const InputDecoration(labelText: '¿En qué se gastó?', border: OutlineInputBorder()),
+          decoration: const InputDecoration(
+            labelText: '¿En qué se gastó?',
+            border: OutlineInputBorder(),
+          ),
         ),
         TextField(
           controller: _monto,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           style: const TextStyle(fontSize: 20),
-          decoration: const InputDecoration(labelText: 'Monto en pesos', prefixText: r'$ ', border: OutlineInputBorder()),
+          decoration: const InputDecoration(
+            labelText: 'Monto en pesos',
+            prefixText: r'$ ',
+            border: OutlineInputBorder(),
+          ),
         ),
-        if (_error != null) Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 16)),
+        if (_error != null)
+          Text(
+            _error!,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.error,
+              fontSize: 16,
+            ),
+          ),
         const Text('Queda pendiente de confirmación del dueño.'),
         BotonGrande(texto: 'Guardar', onPressed: _guardar),
       ],

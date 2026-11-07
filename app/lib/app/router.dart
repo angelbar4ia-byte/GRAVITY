@@ -137,14 +137,6 @@ List<RouteBase> montarRutasDeModulo(
   ];
 }
 
-GoRoute _cuidados(String segmento, String titulo, IconData icono) => GoRoute(
-  path: segmento,
-  pageBuilder: (context, estado) => _sinAnimacion(
-    estado,
-    PantallaProximamente(titulo: titulo, icono: icono, fase: 5),
-  ),
-);
-
 /// Navegador de las pantallas dentro del cascarón. Con él y el navegador raíz
 /// se cierran las hojas y diálogos de una persona al cambiar de persona en la
 /// tablet (revisión de la Fase 0, B2).
@@ -190,24 +182,10 @@ List<RouteBase> rutasDeGravity({
         _modulo(Rutas.habitos, Modulo.habitos)
       else
         ...montarRutasDeModulo(Rutas.habitos, habitos, modulo: Modulo.habitos),
-      GoRoute(
-        path: Rutas.cuidados,
-        pageBuilder: (context, estado) => _sinAnimacion(
-          estado,
-          const PantallaProximamente(
-            titulo: 'Mi turno',
-            icono: Icons.assignment_ind_outlined,
-            fase: 5,
-            detalle:
-                'Entrega de turno, siguiente medicamento, comidas y gastos '
-                'de cuidado.',
-          ),
-        ),
-        routes: [
-          _cuidados('medicamentos', 'Medicamentos', Icons.medication_outlined),
-          _cuidados('comidas', 'Comidas', Icons.restaurant_outlined),
-          _cuidados('bitacora', 'Bitácora', Icons.menu_book_outlined),
-        ],
+      ...montarRutasDeModulo(
+        Rutas.cuidados,
+        rutasCuidados(),
+        modulo: Modulo.cuidados,
       ),
       ...montarRutasDeModulo(
         Rutas.alimentacion,

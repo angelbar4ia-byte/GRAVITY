@@ -79,7 +79,8 @@ class RepositorioCuidadosEnMemoria implements RepositorioCuidados {
   bool get _dueno => rol == Rol.dueno;
   bool get _cuidador => rol == Rol.cuidador;
   bool get _pareja => rol == Rol.coadministrador;
-  bool get _entra => _dueno || _cuidador || (_pareja && perfilActual.consentimiento);
+  bool get _entra =>
+      _dueno || _cuidador || (_pareja && perfilActual.consentimiento);
 
   void _exigir(bool ok) {
     if (!ok) throw ErrorCuidados.sinPermiso;
@@ -94,7 +95,9 @@ class RepositorioCuidadosEnMemoria implements RepositorioCuidados {
     return [
       for (final t in datos.turnos)
         if (t.inicio.isBefore(hasta) && t.fin.isAfter(desde))
-          if (!_cuidador || t.tipo == TipoTurno.turno || t.personaId == personaId)
+          if (!_cuidador ||
+              t.tipo == TipoTurno.turno ||
+              t.personaId == personaId)
             t,
     ]..sort((a, b) => a.inicio.compareTo(b.inicio));
   }
@@ -236,7 +239,9 @@ class RepositorioCuidadosEnMemoria implements RepositorioCuidados {
         lineas: [...?lineas],
       );
     }
-    if (_cuidador && perfilActual.esFamiliar && perfilActual.resumenAutorizado) {
+    if (_cuidador &&
+        perfilActual.esFamiliar &&
+        perfilActual.resumenAutorizado) {
       return ResumenMensual(
         mes: DateTime(mes.year, mes.month),
         lineas: [...?lineas],
@@ -270,11 +275,31 @@ DatosCuidadosMemoria datosDeEjemploCuidados(
   ]);
   final mes = fechaClave(DateTime(ahora.year, ahora.month));
   d.resumenes[mes] = const [
-    LineaResumen(concepto: 'Pago de la cuidadora', centavos: 1200000, titular: Titular.papa),
-    LineaResumen(concepto: 'Pañales y aseo', centavos: 180000, titular: Titular.papa),
-    LineaResumen(concepto: 'Servicios de la casa', centavos: 350000, titular: Titular.casa),
-    LineaResumen(concepto: 'Gasto de la pareja', centavos: 90000, titular: Titular.pareja),
-    LineaResumen(concepto: 'Gasto del dueño', centavos: 75000, titular: Titular.dueno),
+    LineaResumen(
+      concepto: 'Pago de la cuidadora',
+      centavos: 1200000,
+      titular: Titular.papa,
+    ),
+    LineaResumen(
+      concepto: 'Pañales y aseo',
+      centavos: 180000,
+      titular: Titular.papa,
+    ),
+    LineaResumen(
+      concepto: 'Servicios de la casa',
+      centavos: 350000,
+      titular: Titular.casa,
+    ),
+    LineaResumen(
+      concepto: 'Gasto de la pareja',
+      centavos: 90000,
+      titular: Titular.pareja,
+    ),
+    LineaResumen(
+      concepto: 'Gasto del dueño',
+      centavos: 75000,
+      titular: Titular.dueno,
+    ),
   ];
   return d;
 }

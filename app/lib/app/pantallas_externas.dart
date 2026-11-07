@@ -18,6 +18,7 @@ import '../modulos/gravity/pantalla/hoy_telefono.dart';
 import '../modulos/gravity/pantalla/pantalla_principal.dart';
 import '../modulos/finanzas/finanzas.dart' as finanzas;
 import '../modulos/alimentacion/alimentacion.dart' as alimentacion;
+import '../modulos/cuidados/cuidados.dart' as cuidados;
 import '../modulos/habitos/habitos.dart' as habitos;
 import '../nucleo/contratos/dispositivo.dart';
 import '../nucleo/contratos/roles.dart';
@@ -67,6 +68,10 @@ List<RouteBase> rutasFinanzas() => finanzas.rutasFinanzas();
 
 /// Rutas de Hábitos: Hoy en la raíz, más objetivos y pausa (SOS).
 List<RouteBase> rutasHabitos() => habitos.rutasHabitos();
+
+/// Rutas de Cuidados: Mi turno (raíz), medicamentos, comidas, bitácora y
+/// gastos, resumen mensual, cambio urgente y gestión (laptop del dueño).
+List<RouteBase> rutasCuidados() => cuidados.rutasCuidados();
 
 /// Rutas de Alimentación: menú (raíz) y lista de compras.
 List<RouteBase> rutasAlimentacion() => alimentacion.rutasAlimentacion();

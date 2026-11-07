@@ -52,7 +52,7 @@ class _TurnoDeHoy extends ConsumerWidget {
       titulo: 'Turno de hoy',
       icono: Icons.assignment_ind_outlined,
       hijos: [
-        Text(fechaLarga(hoy), style: t.bodyLarge),
+        Text(diaLargo(hoy), style: t.bodyLarge),
         const SizedBox(height: 8),
         cuando(
           ref.watch(miTurnoHoyProvider),
@@ -77,7 +77,10 @@ class _TurnoDeHoy extends ConsumerWidget {
           (d) => d == null
               ? const SizedBox.shrink()
               // Solo la hora: sin nombre del medicamento.
-              : Text('Siguiente medicamento a las ${horaTexto(d.hora)}', style: t.titleMedium),
+              : Text(
+                  'Siguiente medicamento a las ${horaTexto(d.hora)}',
+                  style: t.titleMedium,
+                ),
         ),
       ],
     );
@@ -103,7 +106,10 @@ class _Entrega extends ConsumerWidget {
               : Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('De ${e.deNombre} · ${horaTexto(e.creadaEn)}', style: t.labelLarge),
+                    Text(
+                      'De ${e.deNombre} · ${horaTexto(e.creadaEn)}',
+                      style: t.labelLarge,
+                    ),
                     const SizedBox(height: 4),
                     Text(e.notas, style: t.titleMedium),
                   ],
@@ -151,16 +157,27 @@ class _CambiosUrgentes extends ConsumerWidget {
       ref.watch(cambiosUrgentesProvider),
       () => ref.invalidate(cambiosUrgentesProvider),
       (cambios) {
-        final pendientes = [for (final c in cambios) if (!c.atendido) c];
-        final atendidos = [for (final c in cambios) if (c.atendido) c].take(3);
-        if (pendientes.isEmpty && atendidos.isEmpty) return const SizedBox.shrink();
+        final pendientes = [
+          for (final c in cambios)
+            if (!c.atendido) c,
+        ];
+        final atendidos = [
+          for (final c in cambios)
+            if (c.atendido) c,
+        ].take(3);
+        if (pendientes.isEmpty && atendidos.isEmpty) {
+          return const SizedBox.shrink();
+        }
         return TarjetaCuidados(
           titulo: 'Cambios urgentes',
           icono: Icons.priority_high,
           hijos: [
             for (final c in pendientes) ...[
               Text('Hay una indicación nueva', style: t.titleMedium),
-              Text('${c.accion.etiqueta}: ${c.medicamentoNombre ?? 'medicamento'}', style: t.bodyLarge),
+              Text(
+                '${c.accion.etiqueta}: ${c.medicamentoNombre ?? 'medicamento'}',
+                style: t.bodyLarge,
+              ),
               if (c.nota.isNotEmpty) Text(c.nota, style: t.bodyLarge),
               const SizedBox(height: 8),
               if (p.atiendeCambioUrgente)
@@ -170,7 +187,8 @@ class _CambiosUrgentes extends ConsumerWidget {
                   onPressed: () => ejecutarCuidados(
                     context,
                     ref,
-                    () => ref.read(servicioCuidadosProvider).atenderCambio(c.id),
+                    () =>
+                        ref.read(servicioCuidadosProvider).atenderCambio(c.id),
                     ok: 'Enterada',
                   ),
                 ),
@@ -255,7 +273,12 @@ Future<String?> pedirTexto(
     context: context,
     isScrollControlled: true,
     builder: (ctx) => Padding(
-      padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + MediaQuery.of(ctx).viewInsets.bottom),
+      padding: EdgeInsets.fromLTRB(
+        16,
+        16,
+        16,
+        16 + MediaQuery.of(ctx).viewInsets.bottom,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -269,10 +292,16 @@ Future<String?> pedirTexto(
             maxLines: lineas + 2,
             keyboardType: teclado,
             style: const TextStyle(fontSize: 20),
-            decoration: InputDecoration(hintText: pista, border: const OutlineInputBorder()),
+            decoration: InputDecoration(
+              hintText: pista,
+              border: const OutlineInputBorder(),
+            ),
           ),
           const SizedBox(height: 12),
-          BotonGrande(texto: 'Guardar', onPressed: () => Navigator.pop(ctx, c.text)),
+          BotonGrande(
+            texto: 'Guardar',
+            onPressed: () => Navigator.pop(ctx, c.text),
+          ),
         ],
       ),
     ),

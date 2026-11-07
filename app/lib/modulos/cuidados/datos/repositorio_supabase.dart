@@ -38,7 +38,12 @@ DateTime _fecha(Object? v) => DateTime.parse(v! as String).toLocal();
 DateTime? _fechaOpc(Object? v) => v == null ? null : _fecha(v);
 String _iso(DateTime d) => d.toUtc().toIso8601String();
 
-T _enumPor<T extends Enum>(List<T> valores, Object? v, T porOmision, [String Function(T)? clave]) {
+T _enumPor<T extends Enum>(
+  List<T> valores,
+  Object? v,
+  T porOmision, [
+  String Function(T)? clave,
+]) {
   final k = clave ?? (T e) => e.name;
   for (final e in valores) {
     if (k(e) == v) return e;
@@ -46,10 +51,8 @@ T _enumPor<T extends Enum>(List<T> valores, Object? v, T porOmision, [String Fun
   return porOmision;
 }
 
-String _snake(Enum e) => e.name.replaceAllMapped(
-  RegExp('[A-Z]'),
-  (m) => '_${m[0]!.toLowerCase()}',
-);
+String _snake(Enum e) =>
+    e.name.replaceAllMapped(RegExp('[A-Z]'), (m) => '_${m[0]!.toLowerCase()}');
 
 class RepositorioCuidadosSupabase implements RepositorioCuidados {
   RepositorioCuidadosSupabase({
@@ -67,7 +70,9 @@ class RepositorioCuidadosSupabase implements RepositorioCuidados {
     final aut = await fuente.leer('cui_autorizacion_resumen');
     final fila = aut.where((f) => f['persona_id'] == personaId).firstOrNull;
     final cons = await fuente.leer('cui_consentimientos');
-    final dio = cons.any((f) => f['persona_id'] == personaId && f['vigente'] == true);
+    final dio = cons.any(
+      (f) => f['persona_id'] == personaId && f['vigente'] == true,
+    );
     return PerfilCuidados(
       esFamiliar: fila != null,
       resumenAutorizado: fila?['autorizado'] == true,
@@ -79,16 +84,16 @@ class RepositorioCuidadosSupabase implements RepositorioCuidados {
   Future<List<Turno>> turnos(DateTime desde, DateTime hasta) async {
     final filas = await fuente.leer('cui_turnos');
     return [
-      for (final f in filas)
-        Turno(
-          id: f['id'] as String,
-          personaId: f['persona_id'] as String,
-          nombre: (f['persona_nombre'] as String?) ?? '',
-          inicio: _fecha(f['inicio']),
-          fin: _fecha(f['fin']),
-          tipo: f['tipo'] == 'visita' ? TipoTurno.visita : TipoTurno.turno,
-        ),
-    ].where((t) => t.inicio.isBefore(hasta) && t.fin.isAfter(desde)).toList()
+        for (final f in filas)
+          Turno(
+            id: f['id'] as String,
+            personaId: f['persona_id'] as String,
+            nombre: (f['persona_nombre'] as String?) ?? '',
+            inicio: _fecha(f['inicio']),
+            fin: _fecha(f['fin']),
+            tipo: f['tipo'] == 'visita' ? TipoTurno.visita : TipoTurno.turno,
+          ),
+      ].where((t) => t.inicio.isBefore(hasta) && t.fin.isAfter(desde)).toList()
       ..sort((a, b) => a.inicio.compareTo(b.inicio));
   }
 
@@ -121,19 +126,17 @@ class RepositorioCuidadosSupabase implements RepositorioCuidados {
   }
 
   @override
-  Future<void> guardarMedicamento(Medicamento m) => fuente.guardar(
-    'cui_medicamentos',
-    [
-      {
-        'id': m.id,
-        'hogar_id': hogarId,
-        'nombre': m.nombre,
-        'dosis': m.dosis,
-        'horas': m.horas,
-        'activo': m.activo,
-      },
-    ],
-  );
+  Future<void> guardarMedicamento(Medicamento m) =>
+      fuente.guardar('cui_medicamentos', [
+        {
+          'id': m.id,
+          'hogar_id': hogarId,
+          'nombre': m.nombre,
+          'dosis': m.dosis,
+          'horas': m.horas,
+          'activo': m.activo,
+        },
+      ]);
 
   @override
   Future<List<Toma>> tomas(DateTime dia) async {
@@ -178,8 +181,17 @@ class RepositorioCuidadosSupabase implements RepositorioCuidados {
           ComidaRegistro(
             id: f['id'] as String,
             fecha: d,
-            tiempo: _enumPor(TiempoComidaPapa.values, f['tiempo'], TiempoComidaPapa.comida),
-            resultado: _enumPor(ResultadoComida.values, f['resultado'], ResultadoComida.comio, _snake),
+            tiempo: _enumPor(
+              TiempoComidaPapa.values,
+              f['tiempo'],
+              TiempoComidaPapa.comida,
+            ),
+            resultado: _enumPor(
+              ResultadoComida.values,
+              f['resultado'],
+              ResultadoComida.comio,
+              _snake,
+            ),
             registradaPor: f['registrada_por'] as String,
             registradaPorNombre: (f['registrada_nombre'] as String?) ?? '',
             registradaEn: _fecha(f['registrada_en']),
@@ -188,21 +200,19 @@ class RepositorioCuidadosSupabase implements RepositorioCuidados {
   }
 
   @override
-  Future<void> registrarComida(ComidaRegistro c) => fuente.guardar(
-    'cui_comidas',
-    [
-      {
-        'id': c.id,
-        'hogar_id': hogarId,
-        'fecha': fechaClave(c.fecha),
-        'tiempo': c.tiempo.name,
-        'resultado': _snake(c.resultado),
-        'registrada_por': c.registradaPor,
-        'registrada_nombre': c.registradaPorNombre,
-        'registrada_en': _iso(c.registradaEn),
-      },
-    ],
-  );
+  Future<void> registrarComida(ComidaRegistro c) =>
+      fuente.guardar('cui_comidas', [
+        {
+          'id': c.id,
+          'hogar_id': hogarId,
+          'fecha': fechaClave(c.fecha),
+          'tiempo': c.tiempo.name,
+          'resultado': _snake(c.resultado),
+          'registrada_por': c.registradaPor,
+          'registrada_nombre': c.registradaPorNombre,
+          'registrada_en': _iso(c.registradaEn),
+        },
+      ]);
 
   @override
   Future<List<EntradaBitacora>> bitacora() async {
@@ -273,7 +283,9 @@ class RepositorioCuidadosSupabase implements RepositorioCuidados {
       for (final f in filas)
         CambioUrgente(
           id: f['id'] as String,
-          accion: f['accion'] == 'agregar' ? AccionCambio.agregar : AccionCambio.suspender,
+          accion: f['accion'] == 'agregar'
+              ? AccionCambio.agregar
+              : AccionCambio.suspender,
           nota: (f['nota'] as String?) ?? '',
           creadoPor: f['creado_por'] as String,
           creadoEn: _fecha(f['creado_en']),
@@ -288,22 +300,19 @@ class RepositorioCuidadosSupabase implements RepositorioCuidados {
 
   /// El servidor avisa a la cuidadora de turno al insertar (plataforma, D4).
   @override
-  Future<void> crearCambioUrgente(CambioUrgente c) => fuente.guardar(
-    'cui_cambios_urgentes',
-    [
-      {
-        'id': c.id,
-        'hogar_id': hogarId,
-        'accion': c.accion.name,
-        'medicamento_id': c.medicamentoId,
-        'medicamento_nombre': c.medicamentoNombre,
-        'nota': c.nota,
-        'creado_por': c.creadoPor,
-        'creado_en': _iso(c.creadoEn),
-      },
-    ],
-    ignorarDuplicados: true,
-  );
+  Future<void> crearCambioUrgente(CambioUrgente c) =>
+      fuente.guardar('cui_cambios_urgentes', [
+        {
+          'id': c.id,
+          'hogar_id': hogarId,
+          'accion': c.accion.name,
+          'medicamento_id': c.medicamentoId,
+          'medicamento_nombre': c.medicamentoNombre,
+          'nota': c.nota,
+          'creado_por': c.creadoPor,
+          'creado_en': _iso(c.creadoEn),
+        },
+      ], ignorarDuplicados: true);
 
   @override
   Future<void> atenderCambioUrgente(
@@ -313,7 +322,11 @@ class RepositorioCuidadosSupabase implements RepositorioCuidados {
     required DateTime en,
   }) => fuente.actualizar(
     'cui_cambios_urgentes',
-    {'atendido_por': personaId, 'atendido_nombre': nombre, 'atendido_en': _iso(en)},
+    {
+      'atendido_por': personaId,
+      'atendido_nombre': nombre,
+      'atendido_en': _iso(en),
+    },
     donde: {'id': id, 'atendido_en': null},
   );
 
@@ -329,35 +342,35 @@ class RepositorioCuidadosSupabase implements RepositorioCuidados {
           fecha: DateTime.parse(f['fecha'] as String),
           registradoPor: f['registrado_por'] as String,
           registradoNombre: (f['registrado_nombre'] as String?) ?? '',
-          estado: _enumPor(EstadoGasto.values, f['estado'], EstadoGasto.pendiente),
+          estado: _enumPor(
+            EstadoGasto.values,
+            f['estado'],
+            EstadoGasto.pendiente,
+          ),
           titular: _enumPor(Titular.values, f['titular'], Titular.papa),
         ),
     ]..sort((a, b) => b.fecha.compareTo(a.fecha));
   }
 
   @override
-  Future<void> registrarGasto(GastoCuidado g) => fuente.guardar(
-    'cui_gastos',
-    [
-      {
-        'id': g.id,
-        'hogar_id': hogarId,
-        'concepto': g.concepto,
-        'centavos': g.centavos,
-        'fecha': fechaClave(g.fecha),
-        'registrado_por': g.registradoPor,
-        'registrado_nombre': g.registradoNombre,
-        // Siempre pendiente: solo el dueño confirma (el servidor lo exige).
-        'estado': 'pendiente',
-        'titular': g.titular.name,
-      },
-    ],
-    ignorarDuplicados: true,
-  );
+  Future<void> registrarGasto(GastoCuidado g) => fuente.guardar('cui_gastos', [
+    {
+      'id': g.id,
+      'hogar_id': hogarId,
+      'concepto': g.concepto,
+      'centavos': g.centavos,
+      'fecha': fechaClave(g.fecha),
+      'registrado_por': g.registradoPor,
+      'registrado_nombre': g.registradoNombre,
+      // Siempre pendiente: solo el dueño confirma (el servidor lo exige).
+      'estado': 'pendiente',
+      'titular': g.titular.name,
+    },
+  ], ignorarDuplicados: true);
 
   @override
-  Future<void> resolverGasto(String id, EstadoGasto estado) =>
-      fuente.actualizar('cui_gastos', {'estado': estado.name}, donde: {'id': id});
+  Future<void> resolverGasto(String id, EstadoGasto estado) => fuente
+      .actualizar('cui_gastos', {'estado': estado.name}, donde: {'id': id});
 
   @override
   Future<ResumenMensual?> resumenMensual(DateTime mes) async {

@@ -54,11 +54,19 @@ List<Turno> turnosDeLaSemana(DateTime lunes, PersonasTurno p) {
     TipoTurno tipo = TipoTurno.turno,
   }) {
     final base = soloFecha(lunes).add(Duration(days: dia));
-    final inicio = DateTime(base.year, base.month, base.day, desde.$1, desde.$2);
+    final inicio = DateTime(
+      base.year,
+      base.month,
+      base.day,
+      desde.$1,
+      desde.$2,
+    );
     final fin = DateTime(base.year, base.month, base.day, hasta.$1, hasta.$2);
     salida.add(
       Turno(
-        id: idEstableCuidados('turno:${fechaClave(base)}:$id:${desde.$1}:${desde.$2}'),
+        id: idEstableCuidados(
+          'turno:${fechaClave(base)}:$id:${desde.$1}:${desde.$2}',
+        ),
         personaId: id,
         nombre: nombre,
         inicio: inicio,
