@@ -3,6 +3,7 @@
 /// interfaz: el servidor (`cui_puede`, RLS y las RPC) decide (D5).
 library;
 
+import '../../../nucleo/cuidados/turnos.dart';
 import '../../../nucleo/contratos/roles.dart';
 import '../datos/modelos.dart';
 
@@ -29,9 +30,10 @@ bool cuiPuede(TipoPerfil? p, String objeto, String accion) {
     return switch (objeto) {
       'turnos' || 'gastos' => true,
       'medicamentos' || 'tomas' || 'comidas' => clinico,
-      _ => p == TipoPerfil.dueno ||
-          p == TipoPerfil.cuidadora ||
-          p == TipoPerfil.hermana,
+      _ =>
+        p == TipoPerfil.dueno ||
+            p == TipoPerfil.cuidadora ||
+            p == TipoPerfil.hermana,
     };
   }
   if (accion != 'escribir') return false;
@@ -84,14 +86,21 @@ class PermisosCuidados {
   bool get veMedicamentos => _lee('medicamentos');
   bool get veComidas => _lee('comidas');
 
-  /// Solo el dueño y la cuidadora **de turno a esa hora** (`cui_marcar_toma`).
-  /// La hermana, aunque esté de turno, solo lee.
-  bool get marcaToma => _escribe && (_dueno || _cuidadora);
+  /// El dueño y la cuidadora o la hermana **de turno a esa hora**
+  /// (`cui_marcar_toma`; v1.2 de la especificación). El turno lo valida el
+  /// servidor; aquí solo se decide quién puede intentarlo.
+  bool get marcaToma => _escribe && (_dueno || _cuidadora || _hermana);
+
+  /// Marcar una toma **a esta hora**: la hermana solo si quien está de turno es
+  /// ella (v1.2). `quienEnTurno` es `cuidadorDeTurno(ahora)`.
+  bool marcaTomaA(String quienEnTurno) =>
+      marcaToma && (!_hermana || quienEnTurno == RolDeTurno.hermana);
   bool get registraComida => _escribeEn('comidas');
   bool get dejaEntrega => _escribeEn('entregas');
 
-  /// Bitácora clínica: nunca para la pareja (aun con consentimiento, §4).
-  bool get veBitacora => _lee('bitacora');
+  /// Bitácora clínica: la pareja la ve solo con su consentimiento (v1.2, §8d).
+  bool get veBitacora =>
+      _lee('bitacora') || tipo == TipoPerfil.parejaConsentida;
   bool get escribeBitacora => _escribeEn('bitacora');
 
   /// Decisión pendiente (c): la cuidadora y la hermana ven solo lo que ellas

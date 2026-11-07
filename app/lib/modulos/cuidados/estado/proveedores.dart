@@ -30,6 +30,7 @@ final repositorioCuidadosProvider = Provider<RepositorioCuidados>((ref) {
       fuente: FuenteTablasSupabase(() => servicio.clienteActivo),
       hogarId: hogarId,
       personaId: sesion.persona.id,
+      nombre: sesion.persona.nombre,
     );
   }
   final ahora = ref.read(relojProvider).ahora();

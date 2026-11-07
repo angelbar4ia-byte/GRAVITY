@@ -1,9 +1,11 @@
+import 'package:gravity/nucleo/cuidados/turnos.dart';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gravity/app/sesion_efectiva.dart';
+import 'package:gravity/diseno/formato.dart' show formatearCentavos;
 import 'package:gravity/diseno/proveedores.dart' show RelojFijo, relojProvider;
 import 'package:gravity/modulos/cuidados/casos_uso/horario_turnos.dart';
 import 'package:gravity/modulos/cuidados/casos_uso/permisos_cuidados.dart';
@@ -171,7 +173,9 @@ void main() {
 
       const her = PermisosCuidados(rol: Rol.cuidador, perfil: _perfilHermana);
       expect(her.veMedicamentos && her.veComidas, isTrue);
-      expect(her.marcaToma || her.registraComida, isFalse);
+      // v1.2: la hermana marca tomas en su turno (la hora la valida marcaTomaA).
+      expect(her.marcaToma, isTrue);
+      expect(her.registraComida, isFalse);
       expect(her.escribeBitacora && her.registraGasto, isTrue);
       expect(her.resumenDisponible, isTrue);
     });
@@ -185,7 +189,8 @@ void main() {
       );
       expect(con.veTurno && con.veMedicamentos && con.veComidas, isTrue);
       expect(con.marcaToma || con.registraComida, isFalse);
-      expect(con.veBitacora || con.veResumen, isFalse);
+      expect(con.veBitacora, isTrue);
+      expect(con.veResumen, isFalse);
     });
 
     test('familiar y casa no entran; la cuenta maestra solo lee', () {
@@ -216,9 +221,14 @@ void main() {
         expect(despues[0].toma!.registradaPorNombre, _cuidadora);
         expect(despues[1].estado, EstadoToma.noDado);
         expect(despues[2].estado, EstadoToma.pendiente);
-        // Marcar dos veces no duplica: mismo id.
+        // Marcar dos veces no duplica: la toma es la misma fila.
+        final total = d.tomas.length;
         await s.marcarToma(antes.first, dado: true);
-        expect(d.tomas.length, 2);
+        expect(d.tomas.length, total);
+        expect(
+          d.tomas.values.where((t) => t.estado != EstadoToma.pendiente).length,
+          2,
+        );
       },
     );
 
@@ -246,7 +256,7 @@ void main() {
           _hermana,
           Rol.cuidador,
           perfil: _perfilHermana,
-        ).registrarToma(toma),
+        ).marcarToma(toma),
         throwsA(isA<ErrorCuidados>()),
       );
     });
@@ -349,7 +359,10 @@ void main() {
           () => c.resolverGasto(g.id, confirmar: true),
           throwsA(isA<ErrorCuidados>()),
         );
-        expect((await o.gastos()).single.estado, EstadoGasto.pendiente);
+        expect(
+          (await o.gastos()).firstWhere((x) => x.id == g.id).estado,
+          EstadoGasto.pendiente,
+        );
         await o.resolverGasto(g.id, confirmar: true);
         expect((await c.gastos()).single.estado, EstadoGasto.confirmado);
       },
@@ -392,10 +405,10 @@ void main() {
           perfil: _perfilHermana,
         ).resumen(mes);
         expect(r, isNotNull);
-        expect(r!.lineas.map((l) => l.titular).toSet(), {
-          Titular.papa,
-          Titular.casa,
-        });
+        // Solo gastos confirmados, sin los de la pareja ni los del dueño.
+        expect(r!.gastosCuidadoCentavos, 1200000 + 180000);
+        expect(r.gastosCasaCentavos, 350000);
+        expect(r.nGastos, 3);
         expect(r.totalCentavos, 1200000 + 180000 + 350000);
       },
     );
@@ -427,36 +440,35 @@ void main() {
           ).resumen(mes),
           isNull,
         );
+        // El servidor excluye lo de la pareja y lo del dueño también para el
+        // dueño (spec §4): ve los mismos totales que la hermana.
         final o = await _srv(d, _dueno, Rol.dueno).resumen(mes);
-        expect(o!.lineas.length, 5);
+        expect(o!.totalCentavos, 1200000 + 180000 + 350000);
+        expect(o.nGastos, 3);
       },
     );
 
-    test(
-      'aunque el servidor devolviera de más, la app lo quita a la hermana',
-      () async {
-        // Un repositorio que "olvida" filtrar: la app vuelve a filtrar.
-        final d = _datos();
-        final sucio = _RepoSinFiltro(_repo(d, _dueno, Rol.dueno));
-        final s = ServicioCuidados(
-          sucio,
-          permisos: const PermisosCuidados(
-            rol: Rol.cuidador,
-            perfil: _perfilHermana,
-          ),
-          personaId: _hermana,
-          nombre: 'h',
-          ahora: () => _miercoles10,
-        );
-        final r = await s.resumen(mes);
-        expect(
-          r!.lineas.any(
-            (l) => l.titular == Titular.pareja || l.titular == Titular.dueno,
-          ),
-          isFalse,
-        );
-      },
-    );
+    test('solo cuentan los gastos confirmados del mes', () async {
+      final d = _datos();
+      final c = _srv(d, _cuidadora, Rol.cuidador);
+      final o = _srv(d, _dueno, Rol.dueno);
+      await c.registrarGasto(concepto: 'Aseo', centavos: 5000);
+      await c.registrarGasto(
+        concepto: 'Luz',
+        centavos: 7000,
+        ambito: AmbitoGasto.casa,
+      );
+      expect((await o.resumen(mes))!.nGastos, 3); // pendientes: no cuentan
+      for (final g in await o.gastos()) {
+        if (g.estado == EstadoGasto.pendiente) {
+          await o.resolverGasto(g.id, confirmar: true);
+        }
+      }
+      final r = (await o.resumen(mes))!;
+      expect(r.gastosCuidadoCentavos, 1200000 + 180000 + 5000);
+      expect(r.gastosCasaCentavos, 350000 + 7000);
+      expect(r.nGastos, 5);
+    });
   });
 
   group('Cambio urgente', () {
@@ -481,8 +493,11 @@ void main() {
           ),
           throwsA(isA<ErrorCuidados>()),
         );
-        final id = (await c.cambiosUrgentes()).single.id;
-        await c.atenderCambio(id);
+        final recibido = (await c.cambiosUrgentes()).single;
+        // El servidor avisa a quien está de turno (miércoles 10:00).
+        expect(recibido.paraPersonaId, _cuidadora);
+        expect(recibido.texto, startsWith('Suspender: Medicamento A'));
+        await c.atenderCambio(recibido.id);
         final visto = (await o.cambiosUrgentes()).single;
         expect(visto.atendido, isTrue);
         expect(visto.atendidoNombre, _cuidadora);
@@ -491,77 +506,473 @@ void main() {
   });
 
   group('Repositorio Supabase (con fuente en memoria)', () {
+    RepositorioCuidadosSupabase repo(FuenteTablasEnMemoria f, String quien) =>
+        RepositorioCuidadosSupabase(fuente: f, hogarId: 'h1', personaId: quien);
+
+    test('gasto: solo manda las columnas del servidor, sin persona ni estado', () async {
+      final fuente = FuenteTablasEnMemoria();
+      final r = repo(fuente, _cuidadora);
+      await r.registrarGasto(
+        GastoCuidado(
+          id: 'g1',
+          concepto: 'Pañales',
+          centavos: 10000,
+          fecha: DateTime(2026, 11, 4),
+          registradoPor: _cuidadora,
+          registradoNombre: 'C',
+          estado: EstadoGasto.confirmado,
+          ambito: AmbitoGasto.casa,
+        ),
+      );
+      final fila = fuente.tabla('cui_gastos').single;
+      expect(fila.keys.toSet(), {
+        'id',
+        'hogar_id',
+        'monto_centavos',
+        'concepto',
+        'fecha',
+        'ambito',
+      });
+      expect(fila['monto_centavos'], 10000);
+      expect(fila['ambito'], 'casa');
+      // Lo que devuelve el servidor: pendiente y a nombre de quien lo registró.
+      fila
+        ..['persona_id'] = _cuidadora
+        ..['estado'] = 'pendiente_confirmacion';
+      final g = (await r.gastos()).single;
+      expect(g.estado, EstadoGasto.pendiente);
+      expect(g.registradoPor, _cuidadora);
+      expect(g.ambito, AmbitoGasto.casa);
+    });
+
+    test('toma: se marca con cui_marcar_toma, no con update directo', () async {
+      final fuente = FuenteTablasEnMemoria();
+      final hora = DateTime(2026, 11, 4, 8);
+      fuente.tabla('cui_tomas').add({
+        'id': 'toma-servidor',
+        'medicamento_id': 'm',
+        'programada_para': hora.toUtc().toIso8601String(),
+        'estado': 'pendiente',
+        'marcada_por': null,
+        'marcada_en': null,
+      });
+      final r = repo(fuente, _cuidadora);
+      expect(
+        (await r.tomas(DateTime(2026, 11, 4))).single.estado,
+        EstadoToma.pendiente,
+      );
+      await r.marcarToma(
+        Toma(
+          id: 'ignorado',
+          medicamentoId: 'm',
+          programada: hora,
+          estado: EstadoToma.dado,
+          registradaPor: _cuidadora,
+          registradaPorNombre: 'C',
+          registradaEn: hora,
+        ),
+      );
+      expect(fuente.llamadas.last.$1, 'cui_marcar_toma');
+      expect(fuente.llamadas.last.$2, {
+        'p_toma_id': 'toma-servidor',
+        'p_estado': 'dado',
+      });
+      expect(fuente.tabla('cui_tomas').single['estado'], 'pendiente');
+    });
+
     test(
-      'gasto y toma van a sus tablas; el gasto siempre sale pendiente',
+      'perfil: sale de cui_perfil; la hermana, de su autorización',
       () async {
         final fuente = FuenteTablasEnMemoria();
-        final repo = RepositorioCuidadosSupabase(
-          fuente: fuente,
-          hogarId: 'h1',
-          personaId: _cuidadora,
-        );
-        await repo.registrarGasto(
-          GastoCuidado(
-            id: 'g1',
-            concepto: 'Pañales',
-            centavos: 10000,
-            fecha: DateTime(2026, 11, 4),
-            registradoPor: _cuidadora,
-            registradoNombre: 'C',
-            estado: EstadoGasto.confirmado,
-          ),
-        );
-        expect(fuente.tabla('cui_gastos').single['estado'], 'pendiente');
-        expect((await repo.gastos()).single.estado, EstadoGasto.pendiente);
-        await repo.registrarToma(
-          Toma(
-            id: 't1',
-            medicamentoId: 'm',
-            programada: DateTime(2026, 11, 4, 8),
-            estado: EstadoToma.dado,
-            registradaPor: _cuidadora,
-            registradaPorNombre: 'C',
-            registradaEn: DateTime(2026, 11, 4, 8, 5),
-          ),
-        );
-        expect(fuente.tabla('cui_tomas').single['estado'], 'dado');
+        fuente.funciones['cui_perfil'] = (p) {
+          expect(p, {'p_hogar_id': 'h1'});
+          return 'hermana';
+        };
+        fuente.tabla('cui_autorizacion_resumen').add({
+          'persona_id': _hermana,
+          'vigente': true,
+        });
+        final p = await repo(fuente, _hermana).perfil();
+        expect(p.esFamiliar && p.resumenAutorizado, isTrue);
+        // El tipo de sus turnos, no el rol de membresía, decide.
+        final permisos = PermisosCuidados(rol: Rol.familiar, perfil: p);
+        expect(permisos.entra && permisos.resumenDisponible, isTrue);
+        expect(permisos.marcaTomaA(RolDeTurno.cuidadoraPrincipal), isFalse);
+      expect(permisos.marcaTomaA(RolDeTurno.hermana), isTrue);
+
+        fuente.funciones['cui_perfil'] = (_) => null;
+        final sin = await repo(fuente, _hermana).perfil();
+        expect(sin.sinAcceso, isTrue);
+        expect(PermisosCuidados(rol: Rol.cuidador, perfil: sin).entra, isFalse);
+      },
+    );
+
+    test('turnos: el horario semanal se expande a los días pedidos', () async {
+      final fuente = FuenteTablasEnMemoria();
+      fuente.tabla('cui_turnos').addAll([
+        {
+          'id': 't1',
+          'persona_id': _cuidadora,
+          'dia_semana': 3, // miércoles
+          'inicio_min': 450,
+          'fin_min': 1110,
+          'tipo': 'cuidadora',
+        },
+        {
+          'id': 't2',
+          'persona_id': _hermana,
+          'dia_semana': 2, // martes
+          'inicio_min': 900,
+          'fin_min': 1440,
+          'tipo': 'hermana_visita',
+        },
+      ]);
+      final r = repo(fuente, _dueno);
+      final semana = await r.turnos(
+        DateTime(2026, 11, 2),
+        DateTime(2026, 11, 9),
+      );
+      expect(semana.length, 2);
+      expect(semana[0].funcion, FuncionTurno.hermanaVisita);
+      expect(semana[0].horario, '15:00 a 00:00');
+      expect(semana[0].fin, DateTime(2026, 11, 4));
+      expect(semana[1].horario, '07:30 a 18:30');
+      expect(semana[1].inicio, DateTime(2026, 11, 4, 7, 30));
+      // Una semana después, el mismo horario.
+      expect(
+        (await r.turnos(DateTime(2026, 11, 9), DateTime(2026, 11, 16))).length,
+        2,
+      );
+    });
+
+    test('comida, bitácora y entrega: solo las columnas con permiso', () async {
+      final fuente = FuenteTablasEnMemoria();
+      final r = repo(fuente, _cuidadora);
+      await r.registrarComida(
+        ComidaRegistro(
+          id: 'c1',
+          fecha: DateTime(2026, 11, 4),
+          tiempo: TiempoComidaPapa.desayuno,
+          resultado: ResultadoComida.comioPoco,
+          registradaPor: _cuidadora,
+          registradaPorNombre: 'C',
+          registradaEn: _miercoles10,
+        ),
+      );
+      await r.agregarBitacora(
+        EntradaBitacora(
+          id: 'b1',
+          tipo: TipoBitacora.cita,
+          texto: 'Revisión',
+          autorId: _cuidadora,
+          autorNombre: 'C',
+          creadaEn: _miercoles10,
+          programadaEn: DateTime(2026, 11, 12, 10),
+        ),
+      );
+      await r.dejarEntrega(
+        Entrega(
+          id: 'e1',
+          dePersonaId: _cuidadora,
+          deNombre: 'C',
+          notas: 'Todo bien',
+          creadaEn: _miercoles10,
+          paraPersonaId: _dueno,
+        ),
+      );
+      expect(fuente.tabla('cui_comidas').single.keys.toSet(), {
+        'id',
+        'hogar_id',
+        'fecha',
+        'tiempo',
+        'resultado',
+      });
+      expect(fuente.tabla('cui_comidas').single['resultado'], 'comio_poco');
+      expect(fuente.tabla('cui_bitacora').single.keys.toSet(), {
+        'id',
+        'hogar_id',
+        'nota',
+      });
+      expect(
+        fuente.tabla('cui_bitacora').single['nota'],
+        '[cita 2026-11-12T10:00] Revisión',
+      );
+      expect(fuente.tabla('cui_entregas').single.keys.toSet(), {
+        'id',
+        'hogar_id',
+        'para_persona',
+        'nota',
+      });
+      // La cita se vuelve a leer como cita.
+      fuente.tabla('cui_bitacora').single
+        ..['persona_id'] = _cuidadora
+        ..['creada_en'] = _miercoles10.toUtc().toIso8601String();
+      final e = (await r.bitacora()).single;
+      expect(e.tipo, TipoBitacora.cita);
+      expect(e.texto, 'Revisión');
+      expect(e.programadaEn, DateTime(2026, 11, 12, 10));
+    });
+
+    test('cambio urgente, gasto y permisos: por RPC', () async {
+      final fuente = FuenteTablasEnMemoria();
+      final r = repo(fuente, _dueno);
+      await r.crearCambioUrgente(
+        CambioUrgente(
+          id: 'u1',
+          texto: 'Suspender: A',
+          creadoPor: _dueno,
+          creadoEn: _miercoles10,
+        ),
+      );
+      await r.atenderCambioUrgente(
+        'u1',
+        personaId: _dueno,
+        nombre: 'D',
+        en: _miercoles10,
+      );
+      await r.resolverGasto('g1', EstadoGasto.rechazado);
+      await r.cambiarConsentimiento(_pareja, true);
+      await r.autorizarResumen(_hermana, false);
+      await r.generarTomas(DateTime(2026, 11, 4, 15), dias: 3);
+      expect(fuente.llamadas.map((l) => l.$1), [
+        'cui_crear_cambio_urgente',
+        'cui_atender_cambio_urgente',
+        'cui_confirmar_gasto',
+        'cui_cambiar_consentimiento',
+        'cui_autorizar_resumen',
+        'cui_generar_tomas',
+      ]);
+      expect(fuente.llamadas[0].$2, {
+        'p_hogar_id': 'h1',
+        'p_texto': 'Suspender: A',
+        'p_id': 'u1',
+      });
+      expect(fuente.llamadas[2].$2, {'p_gasto_id': 'g1', 'p_confirmar': false});
+      expect(fuente.llamadas[3].$2, {
+        'p_hogar_id': 'h1',
+        'p_persona_id': _pareja,
+        'p_concedido': true,
+      });
+      expect(fuente.llamadas[4].$2['p_vigente'], false);
+      expect(fuente.llamadas[5].$2, {
+        'p_hogar_id': 'h1',
+        'p_desde': '2026-11-04',
+        'p_dias': 3,
+      });
+      for (final t in [
+        'cui_cambios_urgentes',
+        'cui_gastos',
+        'cui_consentimientos',
+        'cui_autorizacion_resumen',
+      ]) {
+        expect(fuente.tabla(t), isEmpty, reason: 'no se escribe $t directo');
+      }
+    });
+
+    test(
+      'resumen: usa la función del servidor (un renglón por hogar)',
+      () async {
+        final fuente = FuenteTablasEnMemoria();
+        fuente.funciones['cui_resumen_mensual'] = (_) => [
+          {
+            'hogar_id': 'otro',
+            'mes': '2026-11-01',
+            'gastos_cuidado_centavos': 1,
+            'gastos_casa_centavos': 1,
+            'n_gastos': 1,
+          },
+          {
+            'hogar_id': 'h1',
+            'mes': '2026-11-01',
+            'gastos_cuidado_centavos': 100,
+            'gastos_casa_centavos': 50,
+            'n_gastos': 2,
+          },
+        ];
+        final r = await repo(
+          fuente,
+          _dueno,
+        ).resumenMensual(DateTime(2026, 11, 15));
+        expect(r!.gastosCuidadoCentavos, 100);
+        expect(r.gastosCasaCentavos, 50);
+        expect(r.nGastos, 2);
+        expect(fuente.llamadas.single.$2['p_mes'], '2026-11-01');
+      },
+    );
+
+    test('resumen y conteos del día de Papá', () async {
+      final fuente = FuenteTablasEnMemoria();
+      fuente.funciones['cui_resumen_papa'] = (_) => [
+        {
+          'dia': '2026-11-04',
+          'tomas_total': 3,
+          'tomas_dadas': 1,
+          'tomas_no_dadas': 1,
+          'tomas_pendientes': 1,
+          'comidas_registradas': 2,
+          'comidas_con_rechazo': 1,
+        },
+      ];
+      final p = await repo(fuente, _pareja).resumenPapa(DateTime(2026, 11, 4));
+      expect(p!.tomasTotal, 3);
+      expect(p.comidasConRechazo, 1);
+      expect(fuente.llamadas.single.$2, {
+        'p_hogar_id': 'h1',
+        'p_dia': '2026-11-04',
+      });
+    });
+  });
+
+  group('Mismas reglas que el servidor (repositorio en memoria)', () {
+    test(
+      'la cuidadora solo marca si estaba de turno a la hora de la toma',
+      () async {
+        final d = _datos();
+        final s = _srv(d, _cuidadora, Rol.cuidador);
+        final dosis = await s.dosisDelDia();
+        final de20 = dosis.firstWhere((x) => x.hora.hour == 20);
+        // 20:00 del miércoles: su turno terminó a las 18:30 (42501).
         expect(
-          (await repo.tomas(DateTime(2026, 11, 4))).single.estado,
+          () => s.marcarToma(de20, dado: true),
+          throwsA(isA<ErrorCuidados>()),
+        );
+        // El dueño sí marca a cualquier hora.
+        await _srv(d, _dueno, Rol.dueno).marcarToma(de20, dado: true);
+        expect(
+          (await _srv(d, _dueno, Rol.dueno).dosisDelDia()).last.estado,
           EstadoToma.dado,
         );
       },
     );
 
-    test('perfil: la hermana sale de su fila de autorización', () async {
-      final fuente = FuenteTablasEnMemoria();
-      fuente.tabla('cui_autorizacion_resumen').add({
-        'persona_id': _hermana,
-        'autorizado': true,
-      });
-      final repo = RepositorioCuidadosSupabase(
-        fuente: fuente,
-        hogarId: 'h1',
-        personaId: _hermana,
+    test('la hermana de turno el martes por la tarde solo lee (decisión pendiente a)', () async {
+      final d = _datos(_martes16);
+      final her = _srv(
+        d,
+        _hermana,
+        Rol.familiar,
+        perfil: PerfilCuidados.servidor('hermana'),
+        ahora: _martes16,
       );
-      final p = await repo.perfil();
-      expect(p.esFamiliar && p.resumenAutorizado, isTrue);
+      final dosis = (await her.dosisDelDia()).firstWhere(
+        (x) => x.hora.hour == 20,
+      );
+      expect(
+        () => her.marcarToma(dosis, dado: true),
+        throwsA(isA<ErrorCuidados>()),
+      );
+      // Pero sí entra y lee, aunque su rol sea familiar: manda el perfil.
+      expect(dosis.medicamento.nombre, isNotEmpty);
     });
 
-    test('resumen: usa la función del servidor', () async {
-      final fuente = FuenteTablasEnMemoria();
-      fuente.funciones['cui_resumen_mensual'] = (_) => {
-        'lineas': [
-          {'concepto': 'Cuidadora', 'centavos': 100, 'titular': 'papa'},
-        ],
-      };
-      final repo = RepositorioCuidadosSupabase(
-        fuente: fuente,
-        hogarId: 'h1',
-        personaId: _dueno,
+    test('la toma solo existe si el servidor la generó', () async {
+      final d = _datos();
+      d.tomas.clear();
+      final s = _srv(d, _dueno, Rol.dueno);
+      final dosis = (await s.dosisDelDia()).first;
+      expect(
+        () => s.marcarToma(dosis, dado: true),
+        throwsA(isA<ErrorCuidados>()),
       );
-      final r = await repo.resumenMensual(DateTime(2026, 11, 15));
-      expect(r!.totalCentavos, 100);
-      expect(fuente.llamadas.single.$2['p_mes'], '2026-11-01');
+      expect(await s.generarTomas(), 3);
+      expect(await s.generarTomas(), 0); // idempotente
+      await s.marcarToma((await s.dosisDelDia()).first, dado: true);
+    });
+
+    test('la entrega es para quien sigue y la leen solo su autora y su destinataria', () async {
+      final d = _datos();
+      final c = _srv(d, _cuidadora, Rol.cuidador);
+      await c.dejarEntrega('Todo en orden');
+      final e = d.entregas.single;
+      expect(e.dePersonaId, _cuidadora);
+      expect(e.paraPersonaId, _dueno);
+      expect(
+        await _srv(
+          d,
+          _hermana,
+          Rol.cuidador,
+          perfil: _perfilHermana,
+        ).ultimaEntrega(),
+        isNull,
+      );
+      expect(
+        (await _srv(d, _dueno, Rol.dueno).ultimaEntrega())!.notas,
+        'Todo en orden',
+      );
+    });
+
+    test(
+      'la comida corregida es una fila nueva y vale la más reciente',
+      () async {
+        final d = _datos();
+        final s = _srv(d, _cuidadora, Rol.cuidador);
+        await s.registrarComida(TiempoComidaPapa.cena, ResultadoComida.rechazo);
+        await s.registrarComida(TiempoComidaPapa.cena, ResultadoComida.comio);
+        expect(d.comidas.length, 2);
+        expect(
+          (await s.comidasDeHoy())[TiempoComidaPapa.cena]!.resultado,
+          ResultadoComida.comio,
+        );
+        final r = await _repo(
+          d,
+          _pareja,
+          Rol.coadministrador,
+        ).resumenPapa(_miercoles10);
+        expect(r!.comidasRegistradas, 1);
+        expect(r.comidasConRechazo, 0);
+      },
+    );
+
+    test('la pareja: turnos y conteos del día sin consentimiento; lo clínico con él', () async {
+      final d = _datos();
+      final sin = _srv(d, _pareja, Rol.coadministrador);
+      expect((await sin.turnosDeLaSemana()), isNotEmpty);
+      expect((await sin.resumenDelDia())!.tomasTotal, 3);
+      expect(await sin.dosisDelDia(), isEmpty);
+      await sin.cambiarMiConsentimiento(true);
+      final con = _srv(
+        d,
+        _pareja,
+        Rol.coadministrador,
+        perfil: await _repo(d, _pareja, Rol.coadministrador).perfil(),
+      );
+      expect((await con.dosisDelDia()), isNotEmpty);
+      expect(await con.bitacora(), isEmpty);
+    });
+
+    test('solo el albacea autoriza el resumen de la hermana', () async {
+      final d = _datos();
+      final sinAut = _repo(
+        d,
+        _hermana,
+        Rol.cuidador,
+        perfil: const PerfilCuidados(esFamiliar: true),
+      );
+      expect(await sinAut.resumenMensual(DateTime(2026, 11)), isNull);
+      expect(
+        () => _repo(d, _dueno, Rol.dueno).autorizarResumen(_hermana, true),
+        throwsA(isA<ErrorCuidados>()),
+      );
+      await RepositorioCuidadosEnMemoria(
+        datos: d,
+        personaId: _dueno,
+        rol: Rol.dueno,
+        esAlbacea: true,
+      ).autorizarResumen(_hermana, true);
+      expect(await sinAut.resumenMensual(DateTime(2026, 11)), isNotNull);
+    });
+
+    test('solo el dueño resuelve gastos, y una sola vez', () async {
+      final d = _datos();
+      final c = _srv(d, _cuidadora, Rol.cuidador);
+      await c.registrarGasto(concepto: 'Aseo', centavos: 100);
+      final id = d.gastos.last.id;
+      final o = _repo(d, _dueno, Rol.dueno);
+      await o.resolverGasto(id, EstadoGasto.rechazado);
+      expect(
+        () => o.resolverGasto(id, EstadoGasto.confirmado),
+        throwsA(isA<ErrorCuidados>()),
+      );
     });
   });
 
@@ -594,6 +1005,7 @@ void main() {
           deNombre: 'Dueño',
           notas: 'Cenó poco',
           creadaEn: DateTime(2026, 11, 4, 7),
+          paraPersonaId: _cuidadora,
         ),
       );
       await t.pumpWidget(
@@ -618,11 +1030,9 @@ void main() {
         d.cambios.add(
           CambioUrgente(
             id: 'c1',
-            accion: AccionCambio.suspender,
-            nota: 'Hasta nuevo aviso',
+            texto: 'Suspender: Medicamento A. Hasta nuevo aviso',
             creadoPor: _dueno,
             creadoEn: DateTime(2026, 11, 4, 9),
-            medicamentoNombre: 'Medicamento A',
           ),
         );
         await t.pumpWidget(
@@ -654,7 +1064,10 @@ void main() {
         await t.pumpAndSettle();
         await t.tap(find.text('Ya se dio'));
         await t.pumpAndSettle();
-        expect(d.tomas.values.single.estado, EstadoToma.dado);
+        expect(
+          d.tomas.values.where((x) => x.estado == EstadoToma.dado).length,
+          1,
+        );
         // El aviso no nombra el medicamento.
         expect(find.text('Registrado'), findsOneWidget);
         final snack = t.widget<SnackBar>(find.byType(SnackBar));
@@ -742,8 +1155,8 @@ void main() {
         );
         await t.tap(find.text('Guardar'));
         await t.pumpAndSettle();
-        expect(d.gastos.single.estado, EstadoGasto.pendiente);
-        expect(d.gastos.single.centavos, 18550);
+        expect(d.gastos.last.estado, EstadoGasto.pendiente);
+        expect(d.gastos.last.centavos, 18550);
         expect(find.text('Pendiente de confirmación'), findsOneWidget);
         expect(find.text('Confirmar'), findsNothing);
       },
@@ -768,7 +1181,10 @@ void main() {
       await t.pumpAndSettle();
       await t.tap(find.text('Confirmar'));
       await t.pumpAndSettle();
-      expect(d.gastos.single.estado, EstadoGasto.confirmado);
+      expect(
+        d.gastos.firstWhere((g) => g.id == 'g1').estado,
+        EstadoGasto.confirmado,
+      );
     });
 
     testWidgets('Resumen: la hermana no ve montos de la pareja ni del dueño', (
@@ -785,7 +1201,11 @@ void main() {
         ),
       );
       await t.pumpAndSettle();
-      expect(find.text('Pago de la cuidadora'), findsOneWidget);
+      // Solo totales; lo de la pareja y el dueño (165,000) no está sumado.
+      expect(find.text('Cuidado de Papá'), findsOneWidget);
+      expect(find.text(formatearCentavos(1380000)), findsOneWidget);
+      expect(find.text(formatearCentavos(350000)), findsOneWidget);
+      expect(find.text(formatearCentavos(1730000)), findsOneWidget);
       expect(find.text('Gasto de la pareja'), findsNothing);
       expect(find.text('Gasto del dueño'), findsNothing);
     });
@@ -809,14 +1229,19 @@ void main() {
       },
     );
 
-    testWidgets('Resumen: el dueño lo ve completo', (t) async {
+    testWidgets('Resumen: el dueño ve los mismos totales confirmados', (
+      t,
+    ) async {
       await _alto(t);
       await t.pumpWidget(
         _app(const PantallaResumenMensual(), _datos(), _dueno, Rol.dueno),
       );
       await t.pumpAndSettle();
-      expect(find.text('Gasto de la pareja'), findsOneWidget);
-      expect(find.text('Gasto del dueño'), findsOneWidget);
+      // Mismos totales que la hermana: el servidor excluye lo de la pareja y
+      // lo del dueño para todos (spec §4).
+      expect(find.text(formatearCentavos(1730000)), findsOneWidget);
+      expect(find.text('Gasto de la pareja'), findsNothing);
+      expect(find.text('Gasto del dueño'), findsNothing);
     });
 
     testWidgets('Resumen: la cuidadora no tiene acceso', (t) async {
@@ -830,7 +1255,7 @@ void main() {
         ),
       );
       await t.pumpAndSettle();
-      expect(find.text('Pago de la cuidadora'), findsNothing);
+      expect(find.text('Cuidado de Papá'), findsNothing);
       expect(find.text('Esta sección no está disponible'), findsOneWidget);
     });
   });
@@ -873,7 +1298,3 @@ void main() {
 
 /// Repositorio que devuelve el resumen sin filtrar, para probar la defensa
 /// doble de la app.
-class _RepoSinFiltro extends RepositorioCuidadosEnMemoria {
-  _RepoSinFiltro(RepositorioCuidadosEnMemoria base)
-    : super(datos: base.datos, personaId: base.personaId, rol: Rol.dueno);
-}

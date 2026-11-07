@@ -63,7 +63,7 @@ class PantallaResumenMensual extends ConsumerWidget {
                     child: cuando(
                       ref.watch(resumenMensualProvider),
                       () => ref.invalidate(resumenMensualProvider),
-                      (r) => r == null || r.lineas.isEmpty
+                      (r) => r == null || r.nGastos == 0
                           ? const EstadoVacio(
                               mensaje: 'Sin gastos en este mes',
                               icono: Icons.summarize_outlined,
@@ -71,14 +71,20 @@ class PantallaResumenMensual extends ConsumerWidget {
                           : ListView(
                               padding: const EdgeInsets.all(16),
                               children: [
-                                for (final l in r.lineas)
-                                  ListTile(
-                                    title: Text(l.concepto),
-                                    trailing: Text(
-                                      formatearCentavos(l.centavos),
-                                      style: t.titleMedium,
-                                    ),
+                                ListTile(
+                                  title: const Text('Cuidado de Papá'),
+                                  trailing: Text(
+                                    formatearCentavos(r.gastosCuidadoCentavos),
+                                    style: t.titleMedium,
                                   ),
+                                ),
+                                ListTile(
+                                  title: const Text('Casa'),
+                                  trailing: Text(
+                                    formatearCentavos(r.gastosCasaCentavos),
+                                    style: t.titleMedium,
+                                  ),
+                                ),
                                 const Divider(),
                                 ListTile(
                                   title: Text('Total', style: t.titleLarge),
@@ -87,13 +93,12 @@ class PantallaResumenMensual extends ConsumerWidget {
                                     style: t.titleLarge,
                                   ),
                                 ),
-                                if (!p.administra)
-                                  const Padding(
-                                    padding: EdgeInsets.all(8),
-                                    child: Text(
-                                      'Solo lectura. No incluye gastos personales de la familia.',
-                                    ),
+                                const Padding(
+                                  padding: EdgeInsets.all(8),
+                                  child: Text(
+                                    'Solo gastos confirmados. No incluye gastos personales de la familia.',
                                   ),
+                                ),
                               ],
                             ),
                     ),

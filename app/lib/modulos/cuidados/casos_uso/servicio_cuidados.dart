@@ -12,6 +12,11 @@ import 'permisos_cuidados.dart';
 /// nombre de medicamento ni de persona (D6, spec §8.4).
 const textoRecordatorioGenerico = 'Hay un recordatorio en Cuidados';
 
+/// Una toma se identifica por medicamento y hora (en el servidor tiene su
+/// propio id; la app no lo conoce hasta leerla).
+String _claveToma(String medicamentoId, DateTime hora) =>
+    '$medicamentoId|${hora.millisecondsSinceEpoch ~/ 60000}';
+
 class ServicioCuidados {
   ServicioCuidados(
     this._repo, {
@@ -63,11 +68,35 @@ class ServicioCuidados {
     return todas.firstOrNull;
   }
 
+  /// Quién sigue después de mí: la siguiente persona con turno que no soy yo
+  /// (`cui_entregas.para_persona` es obligatoria y distinta de quien la deja).
+  Future<String?> _quienSigue() async {
+    final t = ahora();
+    final turnos = await _repo.turnos(t, t.add(const Duration(days: 8)));
+    for (final x in turnos) {
+      if (x.tipo == TipoTurno.turno &&
+          x.personaId != personaId &&
+          x.fin.isAfter(t)) {
+        return x.personaId;
+      }
+    }
+    return null;
+  }
+
   Future<void> dejarEntrega(String notas) async {
     _exigir(permisos.dejaEntrega);
     final t = notas.trim();
     if (t.isEmpty) {
       throw const ErrorCuidados('Escribe una nota para quien sigue.');
+    }
+    if (t.length > 500) {
+      throw const ErrorCuidados('La nota puede tener hasta 500 letras.');
+    }
+    final para = await _quienSigue();
+    if (para == null) {
+      throw const ErrorCuidados(
+        'No hay a quién dejarle la nota: faltan turnos por asignar.',
+      );
     }
     await _repo.dejarEntrega(
       Entrega(
@@ -76,6 +105,7 @@ class ServicioCuidados {
         deNombre: nombre,
         notas: t,
         creadaEn: ahora(),
+        paraPersonaId: para,
       ),
     );
   }
@@ -83,6 +113,8 @@ class ServicioCuidados {
   Future<List<CambioUrgente>> cambiosUrgentes() async =>
       permisos.veCambiosUrgentes ? _repo.cambiosUrgentes() : const [];
 
+  /// El servidor guarda solo el texto (1 a 200 letras): aquí se arma con la
+  /// acción, el medicamento y la nota.
   Future<void> crearCambioUrgente({
     required AccionCambio accion,
     required String nota,
@@ -90,18 +122,23 @@ class ServicioCuidados {
     String? medicamentoNombre,
   }) async {
     _exigir(permisos.creaCambioUrgente);
-    if (medicamentoId == null && (medicamentoNombre ?? '').trim().isEmpty) {
+    final med = (medicamentoNombre ?? '').trim();
+    if (medicamentoId == null && med.isEmpty) {
       throw const ErrorCuidados('Elige o escribe el medicamento.');
+    }
+    final n = nota.trim();
+    final texto =
+        '${accion.etiqueta}: ${med.isEmpty ? 'medicamento' : med}'
+        '${n.isEmpty ? '' : '. $n'}';
+    if (texto.length > 200) {
+      throw const ErrorCuidados('El aviso puede tener hasta 200 letras.');
     }
     await _repo.crearCambioUrgente(
       CambioUrgente(
         id: idNuevoCuidados(),
-        accion: accion,
-        nota: nota.trim(),
+        texto: texto,
         creadoPor: personaId,
         creadoEn: ahora(),
-        medicamentoId: medicamentoId,
-        medicamentoNombre: medicamentoNombre?.trim(),
       ),
     );
   }
@@ -127,7 +164,10 @@ class ServicioCuidados {
     if (!permisos.veMedicamentos) return const [];
     final d = soloFecha(dia ?? ahora());
     final meds = await _repo.medicamentos();
-    final tomas = {for (final t in await _repo.tomas(d)) t.id: t};
+    final tomas = {
+      for (final t in await _repo.tomas(d))
+        _claveToma(t.medicamentoId, t.programada): t,
+    };
     final salida = <Dosis>[];
     for (final m in meds.where((m) => m.activo)) {
       for (final h in m.horas) {
@@ -140,7 +180,11 @@ class ServicioCuidados {
           int.parse(p[1]),
         );
         salida.add(
-          Dosis(medicamento: m, hora: hora, toma: tomas[Toma.idDe(m.id, hora)]),
+          Dosis(
+            medicamento: m,
+            hora: hora,
+            toma: tomas[_claveToma(m.id, hora)],
+          ),
         );
       }
     }
@@ -163,7 +207,7 @@ class ServicioCuidados {
     String? motivo,
   }) async {
     _exigir(permisos.marcaToma);
-    await _repo.registrarToma(
+    await _repo.marcarToma(
       Toma(
         id: Toma.idDe(dosis.medicamento.id, dosis.hora),
         medicamentoId: dosis.medicamento.id,
@@ -186,7 +230,15 @@ class ServicioCuidados {
 
   Future<Map<TiempoComidaPapa, ComidaRegistro>> comidasDeHoy() async {
     if (!permisos.veComidas) return const {};
-    return {for (final c in await _repo.comidas(ahora())) c.tiempo: c};
+    // Solo agregar: la corrección es una fila nueva; vale la más reciente.
+    final salida = <TiempoComidaPapa, ComidaRegistro>{};
+    for (final c in await _repo.comidas(ahora())) {
+      final previa = salida[c.tiempo];
+      if (previa == null || !c.registradaEn.isBefore(previa.registradaEn)) {
+        salida[c.tiempo] = c;
+      }
+    }
+    return salida;
   }
 
   Future<void> registrarComida(TiempoComidaPapa t, ResultadoComida r) async {
@@ -194,7 +246,7 @@ class ServicioCuidados {
     final hoy = soloFecha(ahora());
     await _repo.registrarComida(
       ComidaRegistro(
-        id: ComidaRegistro.idDe(hoy, t),
+        id: idNuevoCuidados(),
         fecha: hoy,
         tiempo: t,
         resultado: r,
@@ -222,6 +274,9 @@ class ServicioCuidados {
     _exigir(permisos.escribeBitacora);
     final t = texto.trim();
     if (t.isEmpty) throw const ErrorCuidados('Escribe qué pasó.');
+    if (t.length > 500) {
+      throw const ErrorCuidados('La nota puede tener hasta 500 letras.');
+    }
     await _repo.agregarBitacora(
       EntradaBitacora(
         id: idNuevoCuidados(),
@@ -283,10 +338,14 @@ class ServicioCuidados {
   Future<void> registrarGasto({
     required String concepto,
     required int centavos,
+    AmbitoGasto ambito = AmbitoGasto.cuidado,
   }) async {
     _exigir(permisos.registraGasto);
     if (concepto.trim().isEmpty) {
       throw const ErrorCuidados('Escribe en qué se gastó.');
+    }
+    if (concepto.trim().length > 120) {
+      throw const ErrorCuidados('El concepto puede tener hasta 120 letras.');
     }
     if (centavos <= 0) {
       throw const ErrorCuidados('El monto debe ser mayor que cero.');
@@ -299,6 +358,8 @@ class ServicioCuidados {
         fecha: soloFecha(ahora()),
         registradoPor: personaId,
         registradoNombre: nombre,
+        ambito: ambito,
+        registradoEn: ahora(),
       ),
     );
   }
@@ -313,11 +374,36 @@ class ServicioCuidados {
 
   // ---------------------------------------------------------------- Resumen
 
-  /// Resumen del mes. Para la hermana, sin lo de la pareja ni del dueño.
+  /// Resumen del mes: totales de gastos confirmados. El servidor ya deja
+  /// fuera lo de la pareja y lo del dueño (`cui_resumen_mensual`).
   Future<ResumenMensual?> resumen(DateTime mes) async {
     if (!permisos.resumenDisponible) return null;
-    final r = await _repo.resumenMensual(mes);
-    if (r == null) return null;
-    return permisos.resumenSinMontosDelDueno ? r.paraFamiliar() : r;
+    return _repo.resumenMensual(mes);
+  }
+
+  /// Conteos del día de Papá, sin nombres (`cui_resumen_papa`); también para
+  /// la pareja sin consentimiento.
+  Future<ResumenPapa?> resumenDelDia([DateTime? dia]) async {
+    if (!permisos.veResumenPapa) return null;
+    return _repo.resumenPapa(dia ?? ahora());
+  }
+
+  // ----------------------------------------------- Consentimientos y permisos
+
+  /// La pareja concede o retira su consentimiento (abre medicamentos, tomas y
+  /// comidas en solo lectura).
+  Future<void> cambiarMiConsentimiento(bool concedido) async {
+    _exigir(permisos.daConsentimiento);
+    await _repo.cambiarConsentimiento(personaId, concedido);
+  }
+
+  /// Solo el albacea (D19): el servidor lo exige.
+  Future<void> autorizarResumen(String personaHermanaId, bool vigente) =>
+      _repo.autorizarResumen(personaHermanaId, vigente);
+
+  /// Solo el dueño: crea las tomas pendientes de los próximos [dias].
+  Future<int> generarTomas({int dias = 1}) async {
+    _exigir(permisos.administra);
+    return _repo.generarTomas(soloFecha(ahora()), dias: dias);
   }
 }

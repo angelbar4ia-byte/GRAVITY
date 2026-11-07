@@ -4,6 +4,7 @@
 /// bloqueo, D3).
 library;
 
+import '../../../nucleo/cuidados/turnos.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -39,7 +40,11 @@ class PantallaMedicamentos extends ConsumerWidget {
                         padding: const EdgeInsets.all(16),
                         children: [
                           Text(
-                            p.marcaToma
+                            p.marcaTomaA(
+                                  cuidadorDeTurno(
+                                    ref.watch(relojDeCuidados),
+                                  ),
+                                )
                                 ? 'Toca una dosis para marcarla.'
                                 : 'Solo lectura.',
                             style: t.titleMedium,
@@ -48,7 +53,9 @@ class PantallaMedicamentos extends ConsumerWidget {
                           for (final d in dosis)
                             _FilaDosis(
                               dosis: d,
-                              puedeMarcar: p.marcaToma,
+                              puedeMarcar: p.marcaTomaA(
+                                cuidadorDeTurno(ref.watch(relojDeCuidados)),
+                              ),
                               ahora: ref.watch(relojDeCuidados),
                             ),
                         ],

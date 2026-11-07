@@ -146,13 +146,13 @@ class _EstadoCambio extends ConsumerState<PantallaCambioUrgente> {
                                         ? Icons.done_all
                                         : Icons.hourglass_empty,
                                   ),
-                                  title: Text(
-                                    '${c.accion.etiqueta}: ${c.medicamentoNombre ?? 'medicamento'}',
-                                  ),
+                                  title: Text(c.texto),
                                   subtitle: Text(
-                                    c.atendido
-                                        ? 'Atendido por ${c.atendidoNombre} a las ${horaTexto(c.atendidoEn!)}'
-                                        : 'Sin atender todavía',
+                                    !c.atendido
+                                        ? 'Sin atender todavía'
+                                        : (c.atendidoNombre ?? '').isEmpty
+                                        ? 'Atendido a las ${horaTexto(c.atendidoEn!)}'
+                                        : 'Atendido por ${c.atendidoNombre} a las ${horaTexto(c.atendidoEn!)}',
                                   ),
                                 ),
                             ],

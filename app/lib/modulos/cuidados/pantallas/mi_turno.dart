@@ -174,11 +174,7 @@ class _CambiosUrgentes extends ConsumerWidget {
           hijos: [
             for (final c in pendientes) ...[
               Text('Hay una indicación nueva', style: t.titleMedium),
-              Text(
-                '${c.accion.etiqueta}: ${c.medicamentoNombre ?? 'medicamento'}',
-                style: t.bodyLarge,
-              ),
-              if (c.nota.isNotEmpty) Text(c.nota, style: t.bodyLarge),
+              Text(c.texto, style: t.bodyLarge),
               const SizedBox(height: 8),
               if (p.atiendeCambioUrgente)
                 BotonGrande(
@@ -196,7 +192,9 @@ class _CambiosUrgentes extends ConsumerWidget {
             ],
             for (final c in atendidos)
               Text(
-                'Atendido por ${c.atendidoNombre} a las ${horaTexto(c.atendidoEn!)}',
+                c.atendidoNombre == null || c.atendidoNombre!.isEmpty
+                    ? 'Atendido a las ${horaTexto(c.atendidoEn!)}'
+                    : 'Atendido por ${c.atendidoNombre} a las ${horaTexto(c.atendidoEn!)}',
                 style: t.bodyMedium,
               ),
           ],
