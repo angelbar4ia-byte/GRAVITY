@@ -163,6 +163,11 @@ abstract interface class RepositorioFinanzas {
   /// cargado (marcado [CargaFinanzas.desdeCopia]) o lanza [ErrorFinanzas].
   Future<CargaFinanzas> cargar();
 
+  /// Igual que [cargar], pero no deja copia local ni publica el estado. La
+  /// vista temporal de Papá (D24) la usa para que sus cifras no sobrevivan a
+  /// la autorización.
+  Future<CargaFinanzas> cargarSinPersistir();
+
   // --------------------------------------------- libro (solo agregar, cola)
 
   /// Agrega movimientos al libro. Nunca se editan ni se borran: se corrigen

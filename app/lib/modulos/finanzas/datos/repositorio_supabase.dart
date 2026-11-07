@@ -380,7 +380,12 @@ class RepositorioFinanzasSupabase implements RepositorioFinanzas {
   }
 
   @override
-  Future<CargaFinanzas> cargar() async {
+  Future<CargaFinanzas> cargar() => _cargar(persistir: true);
+
+  @override
+  Future<CargaFinanzas> cargarSinPersistir() => _cargar(persistir: false);
+
+  Future<CargaFinanzas> _cargar({required bool persistir}) async {
     final (enColaMov, enColaConc) = await _enCola();
     try {
       final filas = <String, List<Map<String, dynamic>>>{};
@@ -428,6 +433,7 @@ class RepositorioFinanzasSupabase implements RepositorioFinanzas {
         },
         movimientosEnCola: {for (final m in enColaMov) m.id},
       );
+      if (!persistir) return carga;
       _publicar(carga);
       unawaited(
         copia?.guardar({
@@ -444,7 +450,7 @@ class RepositorioFinanzasSupabase implements RepositorioFinanzas {
       );
       return carga;
     } on ErrorFinanzas catch (e) {
-      if (!e.sinConexion) rethrow;
+      if (!e.sinConexion || !persistir) rethrow;
       final ultima = _actual;
       if (ultima != null) {
         final carga = ultima.copiar(desdeCopia: true);

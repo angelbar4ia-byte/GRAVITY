@@ -1,3 +1,5 @@
+import 'dart:io';
+
 // D24, criterios 1, 3, 4 y 6 de docs/specs/fase-4-vista-temporal.md: sin
 // autorización no hay nada de Papá; con ella, 30 minutos exactos de solo
 // lectura (sin copiar, seleccionar, exportar ni compartir y con captura
@@ -18,9 +20,13 @@ import 'package:gravity/modulos/finanzas/estado/proveedores_vista_papa.dart';
 import 'package:gravity/modulos/finanzas/pantallas/vista_papa/pedir_vista_papa.dart';
 import 'package:gravity/modulos/finanzas/pantallas/vista_papa/tarjeta_vista_papa_dueno.dart';
 import 'package:gravity/nucleo/avisos/catalogo_avisos.dart'
-    show largoMaximoTituloAviso;
+    show largoMaximoTituloAviso, titulosDeAviso;
 import 'package:gravity/nucleo/contratos/roles.dart';
+import 'package:gravity/nucleo/seguridad/almacen_seguro.dart'
+    show AlmacenSeguroEnMemoria;
 import 'package:gravity/nucleo/seguridad/pantalla_segura.dart';
+import 'package:gravity/nucleo/seguridad/proveedores_seguridad.dart'
+    show almacenSeguroProvider;
 import 'package:gravity/nucleo/sesion/servicio_sesion_demostracion.dart';
 
 import '../../nucleo/seguridad/pantalla_segura_test.dart'
@@ -42,6 +48,7 @@ final _duenoId = IdsDemostracion.dueno;
 final _familiarId = personasDeEjemplo[Rol.familiar]!.id;
 
 void main() {
+  guardiaCopiaLocalVistaPapa();
   late RelojSimulado reloj;
   late RepositorioVistaPapaEnMemoria servidor;
   late ProtectorRegistrador protector;
@@ -76,6 +83,7 @@ void main() {
         relojProvider.overrideWithValue(reloj),
         montosOcultosProvider.overrideWithValue(false),
         protectorDePantallaProvider.overrideWithValue(protector),
+        almacenSeguroProvider.overrideWithValue(AlmacenSeguroEnMemoria()),
       ],
     );
     addTearDown(c.dispose);
@@ -330,7 +338,11 @@ void main() {
       expect(textos, isNot(contains('Papá (ejemplo)')));
       expect(textos, isNot(contains('Cuenta de la pensión')));
       // Todos los textos del catálogo: cortos, sin dígitos, sin "$".
-      for (final titulo in textosVistaPapa.values) {
+      expect(find.text(titulosDeAviso['solicitud_vista']!), findsOneWidget);
+      for (final titulo in [
+        ...textosVistaPapa.values,
+        titulosDeAviso['solicitud_vista']!,
+      ]) {
         expect(titulo.length, lessThanOrEqualTo(largoMaximoTituloAviso));
         expect(titulo, isNot(matches(RegExp(r'[0-9$]'))));
       }
@@ -370,5 +382,18 @@ void main() {
         throwsA(anything),
       );
     });
+  });
+}
+
+// Guardia (D24): la vista temporal de Papá no deja copia local. Si alguien
+// vuelve a usar cargar() en esa ruta, las cifras de Papá quedarían guardadas
+// después de los 30 minutos.
+void guardiaCopiaLocalVistaPapa() {
+  test('la vista de Papá carga sin persistir (D24)', () {
+    final fuente = File(
+      'lib/modulos/finanzas/estado/proveedores_vista_papa.dart',
+    ).readAsStringSync();
+    expect(fuente, contains('cargarSinPersistir()'));
+    expect(fuente, isNot(contains('.cargar()')));
   });
 }

@@ -15,6 +15,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../app/sesion_efectiva.dart';
 import '../../../../diseno/diseno.dart' show ValoresDiseno;
 import '../../../../diseno/proveedores.dart' show relojProvider;
+import '../../../../nucleo/avisos/catalogo_avisos.dart' show titulosDeAviso;
 import '../../../../nucleo/contratos/roles.dart';
 import '../../datos/vista_papa.dart';
 import '../../estado/proveedores_vista_papa.dart';
@@ -22,8 +23,8 @@ import 'vista_temporal_papa.dart' show formatoContador;
 
 /// Catálogo cerrado de textos de esta vista (D20): lo único que se dice del
 /// asunto en avisos y tarjetas. Sin dígitos, "\$" ni nombres propios.
-const Map<String, String> textosVistaPapa = {
-  'solicitud_vista': 'Solicitud de vista: Familiar',
+final Map<String, String> textosVistaPapa = {
+  'solicitud_vista': titulosDeAviso['solicitud_vista']!,
   'vista_autorizada': 'Vista autorizada: Familiar',
 };
 

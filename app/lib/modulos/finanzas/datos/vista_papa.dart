@@ -99,7 +99,7 @@ class SolicitudVista {
   /// Desde una fila de `fin_vistas_solicitadas`.
   static SolicitudVista deFila(Map<String, dynamic> f) => SolicitudVista(
     id: '${f['id']}',
-    solicitanteId: '${f['solicitante']}',
+    solicitanteId: '${f['solicitante_id'] ?? f['solicitante']}',
     motivo: '${f['motivo'] ?? ''}',
     estado: EstadoVista.desdeTexto(f['estado'] as String?),
     pedidaEn: DateTime.parse(

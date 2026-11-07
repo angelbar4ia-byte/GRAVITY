@@ -132,6 +132,9 @@ class RepositorioFinanzasEnMemoria implements RepositorioFinanzas {
     return _vista;
   }
 
+  @override
+  Future<CargaFinanzas> cargarSinPersistir() async => _vista;
+
   DatosFinanzas get _d => _carga.datos;
 
   void _publicar(DatosFinanzas datos, {Map<String, String>? personas}) {

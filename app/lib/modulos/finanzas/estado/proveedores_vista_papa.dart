@@ -24,7 +24,8 @@ final repositorioVistaPapaProvider = Provider<RepositorioVistaPapa>((ref) {
     return RepositorioVistaPapaSupabase(
       fuente: FuenteTablasSupabase(() => servicio.clienteActivo),
       cargarLibros: () async =>
-          (await ref.read(repositorioFinanzasProvider).cargar()).datos,
+          (await ref.read(repositorioFinanzasProvider).cargarSinPersistir())
+              .datos,
     );
   }
   final reloj = ref.read(relojProvider);
