@@ -5,7 +5,7 @@ import '../../../nucleo/contratos/roles.dart';
 import 'operacion_api.dart';
 
 /// Huella de api/openapi.yaml con la que se generó este archivo.
-const huellaEspecificacion = 'fnv1a32:61675f71';
+const huellaEspecificacion = 'fnv1a32:c6b5694a';
 
 /// Versión de la especificación (info.version).
 const versionEspecificacion = '0.6.0';
@@ -628,7 +628,7 @@ const gruposOperaciones = <GrupoOperaciones>[
         metodo: MetodoHttp.get,
         ruta: '/rest/v1/bitacora',
         resumen: 'Leer la bitácora',
-        descripcion: 'Solo agregar. Cada quien ve lo que hizo. El historial de GRAVITY (`gravity.*`): su autor, también para el dueño (D18), y la cuenta maestra. Lo de Finanzas (tablas `fin_*` y acciones `finanzas*`): quien puede leer el libro de la entrada (la cuenta maestra solo con una consulta vigente, I2) o, si es del hogar, quien tiene Finanzas. Lo demás (membresías, invitaciones…): el dueño y la cuenta maestra. Las acciones que el servidor deja en Finanzas son `finanzas.consulta_maestra` (cada consulta de la maestra a un libro ajeno, visible para quienes lo llevan), `finanzas.maestra_asignada` (quién es la maestra, visible para todo adulto con Finanzas), `finanzas.salida_libro_representado` (una salida del libro de Papá hacia cualquier otro libro, personal o compartido, visible para quienes lo llevan) y `finanzas.albacea_nombrado` (el dueño nombró al albacea o al suplente del libro de Papá, visible para quienes lo llevan).',
+        descripcion: 'Solo agregar. Cada quien ve lo que hizo. El historial de GRAVITY (`gravity.*`): su autor, también para el dueño (D18), y la cuenta maestra. Lo de Finanzas (tablas `fin_*` y acciones `finanzas*`): quien puede leer el libro de la entrada (la cuenta maestra solo con una consulta vigente, I2) o, si es del hogar, quien tiene Finanzas. Lo demás (membresías, invitaciones…): el dueño y la cuenta maestra. Las acciones que el servidor deja en Finanzas son `finanzas.consulta_maestra` (cada consulta de la maestra a un libro ajeno, visible para quienes lo llevan), `finanzas.maestra_asignada` (quién es la maestra, visible para todo adulto con Finanzas), `finanzas.salida_libro_representado` (una salida del libro de Papá hacia cualquier otro libro, personal o compartido, visible para quienes lo llevan), `finanzas.albacea_nombrado` (el dueño nombró al albacea o al suplente del libro de Papá, visible para quienes lo llevan) y `finanzas.consulta_vista` (cada consulta del familiar con la vista temporal de Papá, D24; solo quién y cuándo, sin montos ni cuentas).',
         roles: {
           Rol.dueno,
           Rol.coadministrador,
@@ -1516,7 +1516,7 @@ const gruposOperaciones = <GrupoOperaciones>[
         metodo: MetodoHttp.post,
         ruta: '/rest/v1/rpc/fin_puede',
         resumen: '¿Puedo leer, escribir o administrar este libro?',
-        descripcion: 'La regla de las tablas de cada libro (D19). `leer`: miembro vigente; la cuenta maestra, solo con una consulta registrada en ese libro en los últimos 30 minutos (I2, también si es público); y, en un compartido `publica`, todo adulto con Finanzas del hogar. `escribir`: titular, miembro o albacea (el suplente solo si no hay albacea vigente; el albacea es vigente solo si sigue siendo adulto con Finanzas, I4), con el libro activo (archivado = solo lectura). `administrar`: titular de un personal, miembro de un compartido (si está archivado, solo quien lo creó, para reactivarlo), albacea de un representado. La cuenta maestra que no es la dueña nunca escribe ni administra, en ningún libro. Siempre exige un rol con Finanzas: a familiar, cuidador y Casa les responde `false`.',
+        descripcion: 'La regla de las tablas de cada libro (D19). `leer`: miembro vigente; la cuenta maestra, solo con una consulta registrada en ese libro en los últimos 30 minutos (I2, también si es público); y, en un compartido `publica`, todo adulto con Finanzas del hogar. `escribir`: titular, miembro o albacea (el suplente solo si no hay albacea vigente; el albacea es vigente solo si sigue siendo adulto con Finanzas, I4), con el libro activo (archivado = solo lectura). `administrar`: titular de un personal, miembro de un compartido (si está archivado, solo quien lo creó, para reactivarlo), albacea de un representado. La cuenta maestra que no es la dueña nunca escribe ni administra, en ningún libro. Siempre exige un rol con Finanzas: a familiar, cuidador y Casa les responde `false`, salvo que el familiar lee el libro de Papá (representado) solo con una vista temporal vigente (D24; `fin_vista_papa_vigente`): nunca escribe ni administra.',
         roles: {Rol.dueno, Rol.coadministrador},
         escribe: false,
         soloLocal: true,
@@ -1654,6 +1654,28 @@ const gruposOperaciones = <GrupoOperaciones>[
         escribe: true,
         soloLocal: true,
         fase: 1,
+      ),
+      OperacionApi(
+        id: 'leerFinVistasSolicitadas',
+        metodo: MetodoHttp.get,
+        ruta: '/rest/v1/fin_vistas_solicitadas',
+        resumen: 'Leer las solicitudes de vista temporal de Papá',
+        descripcion: 'Solo lectura (D24). El familiar lee las suyas; el dueño del hogar lee las del hogar. Nadie escribe directo: la tabla cambia solo por `fin_pedir_vista_papa` y `fin_responder_vista` (y el vencimiento, del servidor). No se borra. La autorización dura 30 minutos (`vigente_hasta`). No lleva montos ni cuentas.',
+        roles: {Rol.dueno, Rol.familiar},
+        escribe: false,
+        soloLocal: true,
+        fase: 4,
+      ),
+      OperacionApi(
+        id: 'finRegistrarConsultaVista',
+        metodo: MetodoHttp.post,
+        ruta: '/rest/v1/rpc/fin_registrar_consulta_vista',
+        resumen: 'Registrar una consulta de la vista temporal de Papá',
+        descripcion: 'El familiar la llama cada vez que consulta el libro de Papá con una vista vigente (D24). Deja una entrada en la bitácora (`finanzas.consulta_vista`: quién y cuándo, sin montos ni cuentas), una por minuto y persona como máximo (mismo tope que la cuenta maestra, D19). No devuelve nada. Sin una vista vigente, o si la sesión no es un familiar, 403 (42501).',
+        roles: {Rol.familiar},
+        escribe: true,
+        soloLocal: true,
+        fase: 4,
       ),
       OperacionApi(
         id: 'finPedirVistaPapa',

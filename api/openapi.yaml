@@ -3368,9 +3368,10 @@ paths:
         maestra a un libro ajeno, visible para quienes lo llevan), `finanzas.maestra_asignada`
         (quién es la maestra, visible para todo adulto con Finanzas),
         `finanzas.salida_libro_representado` (una salida del libro de Papá hacia cualquier
-        otro libro, personal o compartido, visible para quienes lo llevan) y
+        otro libro, personal o compartido, visible para quienes lo llevan),
         `finanzas.albacea_nombrado` (el dueño nombró al albacea o al suplente del libro de
-        Papá, visible para quienes lo llevan).
+        Papá, visible para quienes lo llevan) y `finanzas.consulta_vista` (cada consulta del
+        familiar con la vista temporal de Papá, D24; solo quién y cuándo, sin montos ni cuentas).
       x-roles: [dueno, coadministrador, familiar, cuidador, casa]
       x-escribe: false
       x-solo-local: true
@@ -6540,7 +6541,9 @@ paths:
         miembro de un compartido (si está archivado, solo quien lo creó, para reactivarlo),
         albacea de un representado. La cuenta maestra que no es la dueña nunca escribe ni
         administra, en ningún libro. Siempre exige un rol con Finanzas: a familiar, cuidador
-        y Casa les responde `false`.
+        y Casa les responde `false`, salvo que el familiar lee el libro de Papá (representado)
+        solo con una vista temporal vigente (D24; `fin_vista_papa_vigente`): nunca escribe
+        ni administra.
       x-roles: [dueno, coadministrador]
       x-escribe: false
       x-solo-local: true
@@ -7058,6 +7061,77 @@ paths:
           $ref: '#/components/responses/SinSesion'
         '403':
           $ref: '#/components/responses/Prohibido'
+  /rest/v1/fin_vistas_solicitadas:
+    get:
+      tags: [Base de datos · Finanzas]
+      operationId: leerFinVistasSolicitadas
+      summary: Leer las solicitudes de vista temporal de Papá
+      description: >-
+        Solo lectura (D24). El familiar lee las suyas; el dueño del hogar lee las del hogar. Nadie
+        escribe directo: la tabla cambia solo por `fin_pedir_vista_papa` y `fin_responder_vista`
+        (y el vencimiento, del servidor). No se borra. La autorización dura 30 minutos
+        (`vigente_hasta`). No lleva montos ni cuentas.
+      x-roles: [dueno, familiar]
+      x-escribe: false
+      x-solo-local: true
+      x-fase: 4
+      parameters:
+        - $ref: '#/components/parameters/select'
+        - $ref: '#/components/parameters/filtroId'
+        - $ref: '#/components/parameters/filtroHogar'
+        - $ref: '#/components/parameters/orden'
+        - $ref: '#/components/parameters/limite'
+      responses:
+        '200':
+          description: Solicitudes visibles para la sesión.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VistaSolicitada'
+              example:
+                - id: 9c000000-0000-4000-8000-000000000001
+                  hogar_id: b0000000-0000-4000-8000-000000000001
+                  solicitante_id: e0000000-0000-4000-8000-000000000003
+                  libro_persona_id: e0000000-0000-4000-8000-000000000001
+                  motivo: Revisar las medicinas de Papá
+                  estado: autorizada
+                  autorizada_por: e0000000-0000-4000-8000-000000000001
+                  vigente_hasta: '2026-11-10T10:30:00-06:00'
+                  creado_en: '2026-11-10T10:00:00-06:00'
+        '401':
+          $ref: '#/components/responses/SinSesion'
+  /rest/v1/rpc/fin_registrar_consulta_vista:
+    post:
+      tags: [Base de datos · Finanzas]
+      operationId: finRegistrarConsultaVista
+      summary: Registrar una consulta de la vista temporal de Papá
+      description: >-
+        El familiar la llama cada vez que consulta el libro de Papá con una vista vigente
+        (D24). Deja una entrada en la bitácora (`finanzas.consulta_vista`: quién y cuándo, sin
+        montos ni cuentas), una por minuto y persona como máximo (mismo tope que la cuenta
+        maestra, D19). No devuelve nada. Sin una vista vigente, o si la sesión no es un
+        familiar, 403 (42501).
+      x-roles: [familiar]
+      x-escribe: true
+      x-solo-local: true
+      x-fase: 4
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+            example: {}
+      responses:
+        '200':
+          description: Consulta registrada (o ya registrada en el último minuto).
+        '403':
+          $ref: '#/components/responses/Prohibido'
+        '401':
+          $ref: '#/components/responses/SinSesion'
   /rest/v1/rpc/fin_pedir_vista_papa:
     post:
       tags: [Base de datos · Finanzas]
@@ -8001,12 +8075,15 @@ components:
             de origen, el de destino, el tipo, la fecha, el monto en centavos,
             `en_nombre_de` y `motivo`) y `finanzas.albacea_nombrado` (el dueño nombró al
             albacea o al suplente del libro de Papá; `detalle` lleva `libro_id`,
-            `persona_id`, `papel` y `anterior_persona_id`).
+            `persona_id`, `papel` y `anterior_persona_id`) y `finanzas.consulta_vista` (cada
+            consulta del familiar con la vista temporal de Papá; `detalle` lleva solo
+            `solicitud_id`).
           examples:
             - finanzas.consulta_maestra
             - finanzas.maestra_asignada
             - finanzas.salida_libro_representado
             - finanzas.albacea_nombrado
+            - finanzas.consulta_vista
         tabla:
           type: [string, 'null']
         registro_id:
@@ -9096,6 +9173,35 @@ components:
           format: date-time
         emitido_por:
           $ref: '#/components/schemas/UuidONulo'
+    VistaSolicitada:
+      type: object
+      description: Una solicitud de vista temporal de Finanzas de Papá (D24). Sin montos ni cuentas.
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        hogar_id:
+          $ref: '#/components/schemas/Uuid'
+        solicitante_id:
+          $ref: '#/components/schemas/Uuid'
+        libro_persona_id:
+          $ref: '#/components/schemas/Uuid'
+        motivo:
+          type: string
+          maxLength: 200
+        estado:
+          type: string
+          enum: [pendiente, autorizada, rechazada, cancelada, vencida]
+        autorizada_por:
+          $ref: '#/components/schemas/UuidONulo'
+        vigente_hasta:
+          type: [string, 'null']
+          format: date-time
+        creado_en:
+          type: string
+          format: date-time
+        cambiado_en:
+          type: string
+          format: date-time
     AvisosPreferencias:
       type: object
       description: Preferencias de avisos de una persona.

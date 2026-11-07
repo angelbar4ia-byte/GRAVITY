@@ -1,7 +1,7 @@
 // GENERADO por api/generar_dart.mjs a partir de api/openapi.yaml. No se edita a mano.
 // Permite abrir Swagger UI con doble clic (file://), donde el navegador no deja leer
 // ../openapi.yaml. Servida por http, la página lee openapi.yaml directamente.
-// huella: fnv1a32:61675f71
+// huella: fnv1a32:c6b5694a
 window.ESPECIFICACION_GRAVITY = {
   "openapi": "3.1.0",
   "info": {
@@ -5248,7 +5248,7 @@ window.ESPECIFICACION_GRAVITY = {
         ],
         "operationId": "leerBitacora",
         "summary": "Leer la bitácora",
-        "description": "Solo agregar. Cada quien ve lo que hizo. El historial de GRAVITY (`gravity.*`): su autor, también para el dueño (D18), y la cuenta maestra. Lo de Finanzas (tablas `fin_*` y acciones `finanzas*`): quien puede leer el libro de la entrada (la cuenta maestra solo con una consulta vigente, I2) o, si es del hogar, quien tiene Finanzas. Lo demás (membresías, invitaciones…): el dueño y la cuenta maestra. Las acciones que el servidor deja en Finanzas son `finanzas.consulta_maestra` (cada consulta de la maestra a un libro ajeno, visible para quienes lo llevan), `finanzas.maestra_asignada` (quién es la maestra, visible para todo adulto con Finanzas), `finanzas.salida_libro_representado` (una salida del libro de Papá hacia cualquier otro libro, personal o compartido, visible para quienes lo llevan) y `finanzas.albacea_nombrado` (el dueño nombró al albacea o al suplente del libro de Papá, visible para quienes lo llevan).",
+        "description": "Solo agregar. Cada quien ve lo que hizo. El historial de GRAVITY (`gravity.*`): su autor, también para el dueño (D18), y la cuenta maestra. Lo de Finanzas (tablas `fin_*` y acciones `finanzas*`): quien puede leer el libro de la entrada (la cuenta maestra solo con una consulta vigente, I2) o, si es del hogar, quien tiene Finanzas. Lo demás (membresías, invitaciones…): el dueño y la cuenta maestra. Las acciones que el servidor deja en Finanzas son `finanzas.consulta_maestra` (cada consulta de la maestra a un libro ajeno, visible para quienes lo llevan), `finanzas.maestra_asignada` (quién es la maestra, visible para todo adulto con Finanzas), `finanzas.salida_libro_representado` (una salida del libro de Papá hacia cualquier otro libro, personal o compartido, visible para quienes lo llevan), `finanzas.albacea_nombrado` (el dueño nombró al albacea o al suplente del libro de Papá, visible para quienes lo llevan) y `finanzas.consulta_vista` (cada consulta del familiar con la vista temporal de Papá, D24; solo quién y cuándo, sin montos ni cuentas).",
         "x-roles": [
           "dueno",
           "coadministrador",
@@ -10324,7 +10324,7 @@ window.ESPECIFICACION_GRAVITY = {
         ],
         "operationId": "finPuede",
         "summary": "¿Puedo leer, escribir o administrar este libro?",
-        "description": "La regla de las tablas de cada libro (D19). `leer`: miembro vigente; la cuenta maestra, solo con una consulta registrada en ese libro en los últimos 30 minutos (I2, también si es público); y, en un compartido `publica`, todo adulto con Finanzas del hogar. `escribir`: titular, miembro o albacea (el suplente solo si no hay albacea vigente; el albacea es vigente solo si sigue siendo adulto con Finanzas, I4), con el libro activo (archivado = solo lectura). `administrar`: titular de un personal, miembro de un compartido (si está archivado, solo quien lo creó, para reactivarlo), albacea de un representado. La cuenta maestra que no es la dueña nunca escribe ni administra, en ningún libro. Siempre exige un rol con Finanzas: a familiar, cuidador y Casa les responde `false`.",
+        "description": "La regla de las tablas de cada libro (D19). `leer`: miembro vigente; la cuenta maestra, solo con una consulta registrada en ese libro en los últimos 30 minutos (I2, también si es público); y, en un compartido `publica`, todo adulto con Finanzas del hogar. `escribir`: titular, miembro o albacea (el suplente solo si no hay albacea vigente; el albacea es vigente solo si sigue siendo adulto con Finanzas, I4), con el libro activo (archivado = solo lectura). `administrar`: titular de un personal, miembro de un compartido (si está archivado, solo quien lo creó, para reactivarlo), albacea de un representado. La cuenta maestra que no es la dueña nunca escribe ni administra, en ningún libro. Siempre exige un rol con Finanzas: a familiar, cuidador y Casa les responde `false`, salvo que el familiar lee el libro de Papá (representado) solo con una vista temporal vigente (D24; `fin_vista_papa_vigente`): nunca escribe ni administra.",
         "x-roles": [
           "dueno",
           "coadministrador"
@@ -11078,6 +11078,110 @@ window.ESPECIFICACION_GRAVITY = {
           },
           "400": {
             "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_vistas_solicitadas": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerFinVistasSolicitadas",
+        "summary": "Leer las solicitudes de vista temporal de Papá",
+        "description": "Solo lectura (D24). El familiar lee las suyas; el dueño del hogar lee las del hogar. Nadie escribe directo: la tabla cambia solo por `fin_pedir_vista_papa` y `fin_responder_vista` (y el vencimiento, del servidor). No se borra. La autorización dura 30 minutos (`vigente_hasta`). No lleva montos ni cuentas.",
+        "x-roles": [
+          "dueno",
+          "familiar"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 4,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/orden"
+          },
+          {
+            "$ref": "#/components/parameters/limite"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Solicitudes visibles para la sesión.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VistaSolicitada"
+                  }
+                },
+                "example": [
+                  {
+                    "id": "9c000000-0000-4000-8000-000000000001",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "solicitante_id": "e0000000-0000-4000-8000-000000000003",
+                    "libro_persona_id": "e0000000-0000-4000-8000-000000000001",
+                    "motivo": "Revisar las medicinas de Papá",
+                    "estado": "autorizada",
+                    "autorizada_por": "e0000000-0000-4000-8000-000000000001",
+                    "vigente_hasta": "2026-11-10T10:30:00-06:00",
+                    "creado_en": "2026-11-10T10:00:00-06:00"
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/fin_registrar_consulta_vista": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finRegistrarConsultaVista",
+        "summary": "Registrar una consulta de la vista temporal de Papá",
+        "description": "El familiar la llama cada vez que consulta el libro de Papá con una vista vigente (D24). Deja una entrada en la bitácora (`finanzas.consulta_vista`: quién y cuándo, sin montos ni cuentas), una por minuto y persona como máximo (mismo tope que la cuenta maestra, D19). No devuelve nada. Sin una vista vigente, o si la sesión no es un familiar, 403 (42501).",
+        "x-roles": [
+          "familiar"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 4,
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              },
+              "example": {}
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Consulta registrada (o ya registrada en el último minuto)."
           },
           "401": {
             "$ref": "#/components/responses/SinSesion"
@@ -12509,12 +12613,13 @@ window.ESPECIFICACION_GRAVITY = {
           },
           "accion": {
             "type": "string",
-            "description": "Qué pasó, en minúsculas. `insertar`, `actualizar` y `borrar` solo las escriben los triggers que registran los cambios de las tablas. Las de Finanzas las escribe solo el servidor (I5): `finanzas.consulta_maestra` (la cuenta maestra consultó un libro ajeno; vale 30 minutos), `finanzas.maestra_asignada` (el dueño nombró o quitó la cuenta maestra, o se aceptó una invitación de cuenta maestra; `detalle` lleva `anterior_persona_id` y `nueva_persona_id` y, con invitación, `invitada_por`), `finanzas.salida_libro_representado` (una salida del libro de Papá hacia cualquier otro libro, personal o compartido; `detalle` lleva el libro de origen, el de destino, el tipo, la fecha, el monto en centavos, `en_nombre_de` y `motivo`) y `finanzas.albacea_nombrado` (el dueño nombró al albacea o al suplente del libro de Papá; `detalle` lleva `libro_id`, `persona_id`, `papel` y `anterior_persona_id`).",
+            "description": "Qué pasó, en minúsculas. `insertar`, `actualizar` y `borrar` solo las escriben los triggers que registran los cambios de las tablas. Las de Finanzas las escribe solo el servidor (I5): `finanzas.consulta_maestra` (la cuenta maestra consultó un libro ajeno; vale 30 minutos), `finanzas.maestra_asignada` (el dueño nombró o quitó la cuenta maestra, o se aceptó una invitación de cuenta maestra; `detalle` lleva `anterior_persona_id` y `nueva_persona_id` y, con invitación, `invitada_por`), `finanzas.salida_libro_representado` (una salida del libro de Papá hacia cualquier otro libro, personal o compartido; `detalle` lleva el libro de origen, el de destino, el tipo, la fecha, el monto en centavos, `en_nombre_de` y `motivo`) y `finanzas.albacea_nombrado` (el dueño nombró al albacea o al suplente del libro de Papá; `detalle` lleva `libro_id`, `persona_id`, `papel` y `anterior_persona_id`) y `finanzas.consulta_vista` (cada consulta del familiar con la vista temporal de Papá; `detalle` lleva solo `solicitud_id`).",
             "examples": [
               "finanzas.consulta_maestra",
               "finanzas.maestra_asignada",
               "finanzas.salida_libro_representado",
-              "finanzas.albacea_nombrado"
+              "finanzas.albacea_nombrado",
+              "finanzas.consulta_vista"
             ]
           },
           "tabla": {
@@ -14302,6 +14407,56 @@ window.ESPECIFICACION_GRAVITY = {
           }
         }
       },
+      "VistaSolicitada": {
+        "type": "object",
+        "description": "Una solicitud de vista temporal de Finanzas de Papá (D24). Sin montos ni cuentas.",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "solicitante_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "libro_persona_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "motivo": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "estado": {
+            "type": "string",
+            "enum": [
+              "pendiente",
+              "autorizada",
+              "rechazada",
+              "cancelada",
+              "vencida"
+            ]
+          },
+          "autorizada_por": {
+            "$ref": "#/components/schemas/UuidONulo"
+          },
+          "vigente_hasta": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "creado_en": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "cambiado_en": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "AvisosPreferencias": {
         "type": "object",
         "description": "Preferencias de avisos de una persona.",
@@ -15964,4 +16119,4 @@ window.ESPECIFICACION_GRAVITY = {
     }
   }
 };
-window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:61675f71';
+window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:c6b5694a';

@@ -248,6 +248,7 @@ void main() {
         'finVistaPapaVigente',
         'finVistaVigenteHogar',
         'finVistaVigenteLibro',
+        'finRegistrarConsultaVista',
       };
       for (final o in finanzas) {
         expect(o.soloLocal, isTrue, reason: o.id);
@@ -256,6 +257,9 @@ void main() {
           expect(o.roles, Rol.values.toSet(), reason: o.id);
         } else if (soloDueno.contains(o.id)) {
           expect(o.roles, {Rol.dueno}, reason: o.id);
+        } else if (o.id == 'leerFinVistasSolicitadas') {
+          // El familiar lee las suyas y el dueño las del hogar (D24).
+          expect(o.roles, {Rol.dueno, Rol.familiar}, reason: o.id);
         } else if (soloFamiliar.contains(o.id)) {
           expect(o.roles, {Rol.familiar}, reason: o.id);
         } else {
@@ -1129,6 +1133,7 @@ void main() {
               'finanzas.maestra_asignada',
               'finanzas.salida_libro_representado',
               'finanzas.albacea_nombrado',
+              'finanzas.consulta_vista',
             }),
           );
           final bitacora = _plano(_bloque(yaml, '/rest/v1/bitacora'));
