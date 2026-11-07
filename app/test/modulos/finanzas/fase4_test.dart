@@ -77,6 +77,11 @@ Future<ProviderContainer> _cargado(WidgetTester tester) async {
 
 /// Muestra la tarjeta de Hoy de Finanzas dentro de la app (la plataforma la
 /// monta en "Hoy"; aquí se prueba sola).
+/// Busca [f] solo dentro del diálogo que abre `_mostrarTarjetaHoy`: la tarjeta
+/// también vive en Hoy y en la pantalla principal.
+Finder _enDialogo(Finder f) =>
+    find.descendant(of: find.byType(Dialog), matching: f);
+
 Future<void> _mostrarTarjetaHoy(WidgetTester tester) async {
   final contexto = tester.element(find.byType(Scaffold).first);
   unawaited(
@@ -256,7 +261,7 @@ void main() {
       );
       await _cargado(tester);
       await _mostrarTarjetaHoy(tester);
-      final tarjeta = find.byKey(const ValueKey('finanzas-hoy'));
+      final tarjeta = _enDialogo(find.byKey(const ValueKey('finanzas-hoy')));
       expect(tarjeta, findsOneWidget);
       expect(
         find.descendant(
@@ -297,14 +302,18 @@ void main() {
           if (l.cifras.sinDatos) continue;
           expect(
             find.descendant(
-              of: find.byKey(ValueKey('finanzas-hoy-quedan-${l.libroId}')),
+              of: _enDialogo(
+                find.byKey(ValueKey('finanzas-hoy-quedan-${l.libroId}')),
+              ),
               matching: find.text(dis.formatearCentavos(l.cifras.disponible)),
             ),
             findsOneWidget,
             reason: l.nombre,
           );
           expect(
-            find.byKey(ValueKey('finanzas-hoy-alertas-${l.libroId}')),
+            _enDialogo(
+              find.byKey(ValueKey('finanzas-hoy-alertas-${l.libroId}')),
+            ),
             findsOneWidget,
           );
         }
@@ -320,12 +329,12 @@ void main() {
       expect(resumen.sinDatos, isTrue);
       await _mostrarTarjetaHoy(tester);
       expect(
-        find.byKey(const ValueKey('finanzas-hoy-sin-datos')),
+        _enDialogo(find.byKey(const ValueKey('finanzas-hoy-sin-datos'))),
         findsOneWidget,
       );
       expect(
         find.descendant(
-          of: find.byKey(const ValueKey('finanzas-hoy')),
+          of: _enDialogo(find.byKey(const ValueKey('finanzas-hoy'))),
           matching: find.textContaining('Quedan'),
         ),
         findsNothing,
@@ -1230,11 +1239,14 @@ void main() {
       () {
         final ahora = DateTime(2026, 10, 20, 8);
         final vence = DateTime(2026, 10, 30);
-        final r = av.calcularRecordatorios(
-          preferencias: const PreferenciasAvisos(diasAvisoDeuda: [7, 3, 1]),
-          ahora: ahora,
-          vencimientos: [av.Vencimiento(objetoId: 'o1', fecha: vence)],
-        ).where((x) => x.tipo == 'pago_proximo').toList();
+        final r = av
+            .calcularRecordatorios(
+              preferencias: const PreferenciasAvisos(diasAvisoDeuda: [7, 3, 1]),
+              ahora: ahora,
+              vencimientos: [av.Vencimiento(objetoId: 'o1', fecha: vence)],
+            )
+            .where((x) => x.tipo == 'pago_proximo')
+            .toList();
         expect(r, hasLength(3));
         expect(r.map((x) => x.clave.split(':').last), ['7', '3', '1']);
         for (final x in r) {
