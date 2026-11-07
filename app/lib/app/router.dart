@@ -209,7 +209,11 @@ List<RouteBase> rutasDeGravity({
           _cuidados('bitacora', 'Bitácora', Icons.menu_book_outlined),
         ],
       ),
-      _modulo(Rutas.alimentacion, Modulo.alimentacion),
+      ...montarRutasDeModulo(
+        Rutas.alimentacion,
+        rutasAlimentacion(),
+        modulo: Modulo.alimentacion,
+      ),
       _modulo(Rutas.casa, Modulo.casa),
       GoRoute(
         path: RutasApp.pendientes,
