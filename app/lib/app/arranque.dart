@@ -9,6 +9,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../diseno/componentes/indicador_conexion.dart' show conectividadProvider;
 import '../diseno/licencias.dart';
 import '../diseno/proveedores.dart'
     show
@@ -19,6 +20,7 @@ import '../diseno/proveedores.dart'
         revelarMontosProvider;
 import '../diseno/valores_diseno.dart' show densidadPara;
 
+import 'conectividad_diseno.dart';
 import '../nucleo/base_local/base_local.dart';
 import '../nucleo/cola/bandeja_salida.dart';
 import '../nucleo/cola/cola_sin_conexion.dart';
@@ -232,6 +234,10 @@ Future<List<Override>> prepararArranque({
     ),
     // E1: el indicador "En línea" sale de la conexión real del equipo.
     fuenteConectividadProvider.overrideWithValue(FuenteConectividadPlus()),
+    // El indicador de diseño muestra esa conexión real, con lo que falta subir.
+    conectividadProvider.overrideWith(
+      (ref) => ref.watch(conectividadRealDeDisenoProvider),
+    ),
     servicioSesionProvider.overrideWithValue(sesion),
     // Demostración: la cola vive en memoria; nada de lo de ejemplo queda en
     // el dispositivo ni se sube después (M16).
