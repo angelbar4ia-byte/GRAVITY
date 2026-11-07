@@ -18,7 +18,8 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart' show AppLifecycleListener;
+import 'package:flutter/widgets.dart'
+    show AppLifecycleState, WidgetsBinding, WidgetsBindingObserver;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'protector_windows.dart';
@@ -131,14 +132,24 @@ final controladorPantallaSeguraProvider = Provider<ControladorPantallaSegura>((
   // F4-W1: al volver al primer plano se vuelve a aplicar (en Windows la
   // ventana pudo no estar activa cuando se pidió la primera vez).
   try {
-    final escucha = AppLifecycleListener(
-      onResume: () {
-        if (controlador.segura) controlador.reaplicar();
-      },
-    );
-    ref.onDispose(escucha.dispose);
+    final observador = _AlVolver(() {
+      if (controlador.segura) controlador.reaplicar();
+    });
+    WidgetsBinding.instance.addObserver(observador);
+    ref.onDispose(() => WidgetsBinding.instance.removeObserver(observador));
   } catch (_) {
     // Sin el motor de Flutter (pruebas de Dart puro): nada que escuchar.
   }
   return controlador;
 });
+
+class _AlVolver with WidgetsBindingObserver {
+  _AlVolver(this._alVolver);
+
+  final VoidCallback _alVolver;
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _alVolver();
+  }
+}
