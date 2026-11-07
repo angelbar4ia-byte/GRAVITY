@@ -522,3 +522,24 @@ Respuestas del dueño a la especificación de la Fase 4 (`docs/specs/fase-4-puli
 - El estilo **Bento** queda **en pausa**: no aparece en las opciones de la app hasta que el dueño decida retomarlo. Su código se conserva.
 - **Glass aprobado por el dueño (7/nov/2026).** Plataforma aplica el fondo degradado a toda la app.
 
+
+## D28. Alimentación: despensas por persona, menú del día para Casa y menús para visitas — propuesta (7/nov/2026)
+
+**Estado: propuesta, pendiente de confirmación del dueño.** Cambia parte de D23 (lo que ve Casa) y amplía Alimentación. No se implementa hasta confirmarla.
+
+- **Menú del día (Casa):** la cuenta Casa **lee el menú del día de Papá**. No ve el perfil clínico de Papá (D3), ni los menús de la semana, ni la despensa de Papá. *Pendiente: si los suplementos entran en el menú del día.*
+- **Tres despensas:**
+  - **Despensa de Papá:** su aportación a la casa. Se abre al hogar para planear comidas, incluidas las de visita.
+  - **Despensa de la pareja y del dueño:** pueden compartirla con Casa o aportarla a la casa, o dejarla privada.
+  - **Despensa compartida de la casa:** lo que se aporta o comparte con Casa.
+- **Familiar:** ve **solo la despensa de Papá**. Con ella arma un menú para una visita y puede elegir ingredientes de esa despensa.
+- **Ingrediente faltante:** el familiar puede (a) **apartarlo** de la despensa de Papá o (b) **pedir al albacea** que lo compre con dinero de Papá. El albacea (D19) aprueba o rechaza la solicitud. El gasto va al libro de Papá, como cualquier gasto del albacea. *Pendiente: si la solicitud pasa por Finanzas como un tipo de solicitud nuevo o como la solicitud de vista de D24.*
+- **Visitas:** el familiar puede traer ingredientes que falten para su menú y cargarlos a la despensa de Papá.
+- **Menú familiar:** el familiar, la pareja y el dueño planean una comida conjunta (p. ej., el fin de semana). Los habitantes de la casa pueden planear menús para toda la familia.
+- **Calendario:** la familia se reúne los martes, pero puede juntarse otro día, por lo general los fines de semana.
+
+### Preguntas abiertas
+1. ¿Casa ve también los suplementos del menú del día?
+2. ¿La pareja y el dueño comparten su despensa con Casa por defecto o por cada compra?
+3. ¿La solicitud de compra al albacea es una solicitud nueva en Finanzas o usa la de D24?
+4. ¿El menú familiar lo editan todos (familiar, pareja y dueño) o solo quien lo crea?
