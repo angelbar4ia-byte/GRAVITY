@@ -29,7 +29,7 @@ select pruebas.ok(not exists (select 1 from public.bitacora where accion = 'fina
 select pruebas.como('carla@ejemplo.test');
 select public.fin_registrar_consulta_vista();
 select pruebas.como_postgres();
-select pruebas.igual((select count(*)::int from public.bitacora where accion = 'finanzas.consulta_vista'), 1, 'Mismo tope que la maestra: una por minuto');
+select pruebas.igual((select count(*)::int from public.bitacora where accion = 'finanzas.consulta_vista'), 2, 'Cada consulta queda en la bitácora, sin tope por minuto (D24)');
 select pruebas.como('ana@ejemplo.test');
 select pruebas.ok(pruebas.cuenta($$select * from public.bitacora where accion = 'finanzas.consulta_vista'$$) >= 1, 'El dueño las lee');
 rollback;

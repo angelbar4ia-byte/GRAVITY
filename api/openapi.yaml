@@ -7110,8 +7110,7 @@ paths:
       description: >-
         El familiar la llama cada vez que consulta el libro de Papá con una vista vigente
         (D24). Deja una entrada en la bitácora (`finanzas.consulta_vista`: quién y cuándo, sin
-        montos ni cuentas), una por minuto y persona como máximo (mismo tope que la cuenta
-        maestra, D19). No devuelve nada. Sin una vista vigente, o si la sesión no es un
+        montos ni cuentas), una por cada consulta, sin tope (D24). No devuelve nada. Sin una vista vigente, o si la sesión no es un
         familiar, 403 (42501).
       x-roles: [familiar]
       x-escribe: true

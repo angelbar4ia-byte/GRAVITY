@@ -5,7 +5,7 @@ import '../../../nucleo/contratos/roles.dart';
 import 'operacion_api.dart';
 
 /// Huella de api/openapi.yaml con la que se generó este archivo.
-const huellaEspecificacion = 'fnv1a32:c6b5694a';
+const huellaEspecificacion = 'fnv1a32:04027df3';
 
 /// Versión de la especificación (info.version).
 const versionEspecificacion = '0.6.0';
@@ -1671,7 +1671,7 @@ const gruposOperaciones = <GrupoOperaciones>[
         metodo: MetodoHttp.post,
         ruta: '/rest/v1/rpc/fin_registrar_consulta_vista',
         resumen: 'Registrar una consulta de la vista temporal de Papá',
-        descripcion: 'El familiar la llama cada vez que consulta el libro de Papá con una vista vigente (D24). Deja una entrada en la bitácora (`finanzas.consulta_vista`: quién y cuándo, sin montos ni cuentas), una por minuto y persona como máximo (mismo tope que la cuenta maestra, D19). No devuelve nada. Sin una vista vigente, o si la sesión no es un familiar, 403 (42501).',
+        descripcion: 'El familiar la llama cada vez que consulta el libro de Papá con una vista vigente (D24). Deja una entrada en la bitácora (`finanzas.consulta_vista`: quién y cuándo, sin montos ni cuentas), una por cada consulta, sin tope (D24). No devuelve nada. Sin una vista vigente, o si la sesión no es un familiar, 403 (42501).',
         roles: {Rol.familiar},
         escribe: true,
         soloLocal: true,

@@ -1,7 +1,7 @@
 // GENERADO por api/generar_dart.mjs a partir de api/openapi.yaml. No se edita a mano.
 // Permite abrir Swagger UI con doble clic (file://), donde el navegador no deja leer
 // ../openapi.yaml. Servida por http, la página lee openapi.yaml directamente.
-// huella: fnv1a32:c6b5694a
+// huella: fnv1a32:04027df3
 window.ESPECIFICACION_GRAVITY = {
   "openapi": "3.1.0",
   "info": {
@@ -11160,7 +11160,7 @@ window.ESPECIFICACION_GRAVITY = {
         ],
         "operationId": "finRegistrarConsultaVista",
         "summary": "Registrar una consulta de la vista temporal de Papá",
-        "description": "El familiar la llama cada vez que consulta el libro de Papá con una vista vigente (D24). Deja una entrada en la bitácora (`finanzas.consulta_vista`: quién y cuándo, sin montos ni cuentas), una por minuto y persona como máximo (mismo tope que la cuenta maestra, D19). No devuelve nada. Sin una vista vigente, o si la sesión no es un familiar, 403 (42501).",
+        "description": "El familiar la llama cada vez que consulta el libro de Papá con una vista vigente (D24). Deja una entrada en la bitácora (`finanzas.consulta_vista`: quién y cuándo, sin montos ni cuentas), una por cada consulta, sin tope (D24). No devuelve nada. Sin una vista vigente, o si la sesión no es un familiar, 403 (42501).",
         "x-roles": [
           "familiar"
         ],
@@ -16119,4 +16119,4 @@ window.ESPECIFICACION_GRAVITY = {
     }
   }
 };
-window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:c6b5694a';
+window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:04027df3';
