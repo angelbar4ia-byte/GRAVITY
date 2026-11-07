@@ -1,6 +1,6 @@
 # Fase 5 · Cuidados (especificación)
 
-> v0.1, 7/nov/2026. Borrador para aprobación. Base: D2, D5, D18 y las respuestas del dueño a D5 (7/nov/2026). Pendiente: el documento de la app de cuidados actual (no está en el repositorio); mientras llega, esta especificación se apoya en la descripción del roadmap (Fase 5).
+> v1.0, 7/nov/2026. Aprobada por el dueño con sus respuestas del mismo día. El documento de la app de cuidados actual se pospone a la siguiente sesión. Base: D2, D5, D18 y las respuestas del dueño a D5 (7/nov/2026). Pendiente: el documento de la app de cuidados actual (no está en el repositorio); mientras llega, esta especificación se apoya en la descripción del roadmap (Fase 5).
 
 ## 1. Alcance
 
@@ -14,7 +14,7 @@
 
 | Persona | Rol | Cuidados | Dinero |
 |---|---|---|---|
-| Dueño | Dueño | Completo | Sus finanzas, compartidas y las de Papá como albacea |
+| Dueño | Dueño y **cuidador de turno** los domingos y en la tarde de sábados y lunes | Completo | Sus finanzas, compartidas y las de Papá como albacea |
 | Pareja | Co-administrador | Según consentimiento (§4) | Sus finanzas y las compartidas |
 | Cuidadora principal | Cuidador | Su turno, medicamentos, comidas de Papá, bitácora | Solo los gastos de cuidado que registra |
 | Hermana | Cuidador (familiar) | Su turno de martes y visitas; resumen mensual (§4) | Gastos de cuidado que registra y el resumen mensual |
@@ -27,25 +27,26 @@
 
 | Día | Cuidadora principal | Hermana |
 |---|---|---|
-| Lunes | 9:00 a 15:00 | — |
+| Lunes | 9:00 a 15:00; el dueño, de 15:00 en adelante | — |
 | Martes | 7:30 a 15:00 | 15:00 en adelante |
 | Miércoles | 7:30 a 18:30 | Se va a las 7:00 |
 | Jueves | 7:30 a 18:30 | — |
 | Viernes | 7:30 a 18:30 | — |
-| Sábado | 9:00 a 15:00 | Visitas de fin de semana |
-| Domingo | *No indicado* | Visitas de fin de semana |
+| Sábado | 9:00 a 15:00; el dueño, de 15:00 en adelante | Visitas de fin de semana |
+| Domingo | — (el dueño lo cuida **todo el día**) | Visitas de fin de semana |
 
 Reglas:
 - Los recordatorios de medicamentos y comidas llegan a **quien está de turno** en ese momento (D5). Fuera de turno no llega nada a la cuidadora.
 - La **entrega de turno** se hace al cambiar de turno (notas para quien sigue).
 - Las visitas de la hermana no cambian el turno de la cuidadora.
 
-*Pendiente:* el domingo. Si no hay turno, la app no debe avisar a nadie ese día.
+- El dueño cubre los domingos todo el día y la tarde de sábados y lunes (respuesta del dueño, 7/nov/2026). Sus recordatorios de turno siguen las mismas reglas que los de la cuidadora.
 
 ## 4. Consentimientos y datos
 
-- **Papá:** los consentimientos sobre sus datos los da **el albacea** (respuesta del dueño: "albacea autoriza los datos", 7/nov/2026). *Pendiente de confirmar:* si el albacea firma también en nombre de Papá en Cuidados o solo autoriza el resumen de la hermana.
-- **Pareja y dueño:** dan su consentimiento para sus propios datos. *Pendiente:* si la pareja ve Cuidados (D5 lo deja "según consentimiento"). Propuesta: la pareja ve el resumen de Papá y los turnos, sin la bitácora clínica, hasta que dé su consentimiento explícito.
+- **Papá:** los consentimientos sobre sus datos los firma **el albacea** (respuesta del dueño, 7/nov/2026: "también firma").
+- **Pareja:** ve los turnos y el resumen de Papá, **sin la bitácora clínica**, hasta que dé su consentimiento explícito (respuesta del dueño: "sí").
+- **Dueño:** da su consentimiento para sus propios datos.
 - **Resumen mensual del costo del cuidado:** solo para la hermana y el dueño. Sin montos de la pareja ni del dueño.
 
 ## 5. Permisos (matriz propuesta)
@@ -60,14 +61,14 @@ Reglas:
 - Los permisos se validan **en el servidor** (reglas por rol), no solo en la pantalla (D5).
 - Al dar de baja a alguien, pierde el acceso de inmediato; lo que registró queda en la bitácora con su nombre.
 
-## 6. Voz de la hermana (conflicto con D5, pendiente)
+## 6. Voz de la hermana (decidido: sin PIN, con identidad pedida de nuevo)
 
 La hermana pidió activar su modo diciendo **"Gravity estoy en casa"** y terminarlo con **"Gravity nos vemos"**, y que el sistema **detecte su voz**. D5 dice que la voz **no identifica de forma segura** a una persona, y las bocinas siempre tienen el rol Casa.
 
-Propuesta (para decidir, no implementar):
-- La frase **no identifica**: solo activa un modo que pide confirmación (PIN o toque) antes de dar acceso a datos de la hermana.
+Decisión del dueño (7/nov/2026): **sin PIN**. Si la voz no da seguridad para identificar, la app **pide de nuevo la identidad** de la hermana antes de dar acceso a sus datos.
+- La frase **no identifica**: solo activa el modo; después la app pide la identidad (confirmación de su cuenta) antes de mostrar nada.
 - Las bocinas siguen con rol Casa; el modo de la hermana vive en el teléfono o la laptop.
-- Esto va con la Fase 6 (voz). En la Fase 5 no se construye la voz.
+- Las frases van con la Fase 6 (voz). En la Fase 5 la hermana activa su modo desde el teléfono con la misma confirmación de identidad.
 
 ## 7. Criterios de aceptación (borrador)
 
@@ -78,16 +79,20 @@ Propuesta (para decidir, no implementar):
 5. Dar de baja a un cuidador corta su acceso de inmediato (prueba de servidor).
 6. Ningún dato de Cuidados sale a IA, bocinas ni tablet pública (D3).
 
-## 8. Preguntas abiertas
+## 8. Preguntas resueltas (7/nov/2026)
 
-1. ¿El domingo hay turno de cuidado?
-2. ¿El albacea firma también por Papá en Cuidados, o solo autoriza el resumen de la hermana?
-3. ¿La pareja ve Cuidados (turnos y resumen de Papá) desde ya?
-4. ¿Papá vive en la casa de las bocinas? (Afecta qué se dice en voz alta.)
-5. Sobre la voz de la hermana: ¿aceptas la propuesta de §6 (la frase activa un modo que confirma con PIN o toque)?
-6. Falta el documento de la app de cuidados actual. ¿Lo compartes o describes sus pantallas?
+1. Domingos: el dueño cuida todo el día; sábados y lunes, por la tarde.
+2. El albacea firma también por Papá.
+3. La pareja ve turnos y el resumen de Papá; sin bitácora clínica hasta su consentimiento.
+4. Papá vive en la casa de las bocinas. **Consecuencia:** los recordatorios que se dicen en voz alta son genéricos (sin nombre de medicamento ni de persona), según D6.
+5. Voz de la hermana: sin PIN; si la voz no da seguridad, se pide de nuevo la identidad.
+6. El documento de la app de cuidados actual se revisa en la siguiente sesión. No bloquea la construcción de esta versión.
 
-## 9. Trabajo por agente (cuando se apruebe)
+## 9. Pendiente de la siguiente sesión
+
+- Documento de la app de cuidados actual: confirmar si algo que hoy usan falta en esta versión.
+
+## 10. Trabajo por agente
 
 - **backend:** tablas de turnos, medicamentos, comidas de Papá, bitácora de cuidados y resumen mensual; RLS por rol; pruebas SQL.
 - **cuidados:** pantallas del teléfono (turno, medicamentos, comidas, bitácora, gastos) y de la laptop (resumen, turnos, cuidadoras).
