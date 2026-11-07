@@ -523,23 +523,24 @@ Respuestas del dueño a la especificación de la Fase 4 (`docs/specs/fase-4-puli
 - **Glass aprobado por el dueño (7/nov/2026).** Plataforma aplica el fondo degradado a toda la app.
 
 
-## D28. Alimentación: despensas por persona, menú del día para Casa y menús para visitas — propuesta (7/nov/2026)
+## D28. Alimentación: despensas por persona, menú del día para Casa, plan familiar y votación — confirmada (7/nov/2026)
 
-**Estado: propuesta, pendiente de confirmación del dueño.** Cambia parte de D23 (lo que ve Casa) y amplía Alimentación. No se implementa hasta confirmarla.
+Cambia lo que ve Casa en D23. Se implementa en la fase donde se construya Alimentación completa (ver Estado de implementación).
 
-- **Menú del día (Casa):** la cuenta Casa **lee el menú del día de Papá**. No ve el perfil clínico de Papá (D3), ni los menús de la semana, ni la despensa de Papá. *Pendiente: si los suplementos entran en el menú del día.*
-- **Tres despensas:**
-  - **Despensa de Papá:** su aportación a la casa. Se abre al hogar para planear comidas, incluidas las de visita.
-  - **Despensa de la pareja y del dueño:** pueden compartirla con Casa o aportarla a la casa, o dejarla privada.
-  - **Despensa compartida de la casa:** lo que se aporta o comparte con Casa.
-- **Familiar:** ve **solo la despensa de Papá**. Con ella arma un menú para una visita y puede elegir ingredientes de esa despensa.
-- **Ingrediente faltante:** el familiar puede (a) **apartarlo** de la despensa de Papá o (b) **pedir al albacea** que lo compre con dinero de Papá. El albacea (D19) aprueba o rechaza la solicitud. El gasto va al libro de Papá, como cualquier gasto del albacea. *Pendiente: si la solicitud pasa por Finanzas como un tipo de solicitud nuevo o como la solicitud de vista de D24.*
-- **Visitas:** el familiar puede traer ingredientes que falten para su menú y cargarlos a la despensa de Papá.
-- **Menú familiar:** el familiar, la pareja y el dueño planean una comida conjunta (p. ej., el fin de semana). Los habitantes de la casa pueden planear menús para toda la familia.
+- **Qué ve cada cuenta:**
+  - **Casa:** solo el **menú de Papá** (del día) y el **plan familiar** (de la pareja y la familia).
+  - **Cuidador:** solo el **menú de Papá**.
+  - **Familiar:** su parte del plan familiar y la despensa de Papá (para armar el menú de una visita).
+- **Inventario por persona:** cada persona tiene su inventario de ingredientes. El inventario de **Papá** se separa del de la **pareja** y del de **tu cuenta**. Se actualiza al registrar compras.
+- **Compartir sobrantes:** la pareja y el dueño comparten lo que **sobra** de su inventario planeado por semana. No comparten lo que ya tienen planeado.
+- **Plan familiar como cuentas:** el plan para familia, pareja y Papá funciona como cuentas (cada plan con su inventario y sus compras).
+- **Menú familiar por votación:** una persona propone un menú. Otra da su propuesta. Ambas se envían a votación. El menú ganador evalúa los ingredientes faltantes.
+- **Ingredientes faltantes:** quien propone puede pedir la compra de uno o varios ingredientes faltantes. La compra sale del presupuesto del plan, y para Papá, del albacea (D19).
+- **Visitas:** el familiar elige ingredientes de la despensa de Papá y puede traer los que falten.
 - **Calendario:** la familia se reúne los martes, pero puede juntarse otro día, por lo general los fines de semana.
+- **Suplementos:** pendiente de decisión en la siguiente ronda (no se incluyen en el menú del día de Casa hasta confirmar).
 
-### Preguntas abiertas
-1. ¿Casa ve también los suplementos del menú del día?
-2. ¿La pareja y el dueño comparten su despensa con Casa por defecto o por cada compra?
-3. ¿La solicitud de compra al albacea es una solicitud nueva en Finanzas o usa la de D24?
-4. ¿El menú familiar lo editan todos (familiar, pareja y dueño) o solo quien lo crea?
+### Estado de implementación
+- La matriz actual (migración 20261109 y espejo de la app) aún **no** refleja D28: Casa tiene sin acceso a Alimentación y el familiar edita el menú de Papá.
+- Pendiente: menú familiar y votación, inventario por persona, compras con albacea y permisos de Casa y cuidador.
+- Propuesto: construirlo dentro de la Fase 7 (Alimentación), o antes si el dueño lo pide.
