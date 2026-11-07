@@ -133,10 +133,12 @@ Cuando las decisiones confirmadas cambian el contrato, se reescribe `CONTRATO_CO
 
 **Respondido por el dueño (7/nov/2026)** — detalles en `docs/specs/fase-5-cuidados.md`.
 - **Hermana:** ve el **registro mensual del costo del cuidado** y los **gastos de la casa**, excepto los que corresponden a la pareja y al dueño. El **albacea** autoriza los datos que ella ve.
-- **Consentimientos:** Papá, la pareja y el dueño. *Pendiente de confirmar: quién firma por Papá (el albacea, según la respuesta anterior).*
-- **Papá y las bocinas:** *pendiente de respuesta.*
+- **Consentimientos:** Papá, la pareja y el dueño. El albacea firma también por Papá.
+- **Papá y las bocinas:** Papá vive en la casa de las bocinas; los recordatorios en voz alta son genéricos (D6).
+- **Dueño:** cubre los domingos todo el día y la tarde de sábados y lunes. **Pareja:** ve turnos y resumen de Papá sin bitácora clínica hasta su consentimiento.
+- **Voz de la hermana:** sin PIN; si la voz no da seguridad, la app pide de nuevo su identidad.
 
-**Pendiente de decidir (Fase 5).** La voz **no** identifica de forma segura a una persona (regla de arriba), y la hermana quiere activar su modo por voz ("Gravity estoy en casa" / "Gravity nos vemos"). Ver la especificación: se propone que la frase active un modo, pero que la identidad la confirme la cuenta, no la voz.
+**Confirmado (7/nov/2026).** La voz **no** identifica de forma segura: la frase activa el modo y la app pide de nuevo la identidad (regla de arriba).
 
 ---
 
