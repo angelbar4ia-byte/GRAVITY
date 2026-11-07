@@ -538,7 +538,7 @@ Cambia lo que ve Casa en D23. Se implementa en la fase donde se construya Alimen
 - **Ingredientes faltantes:** quien propone puede pedir la compra de uno o varios ingredientes faltantes. La compra sale del presupuesto del plan, y para Papá, del albacea (D19).
 - **Visitas:** el familiar elige ingredientes de la despensa de Papá y puede traer los que falten.
 - **Calendario:** la familia se reúne los martes, pero puede juntarse otro día, por lo general los fines de semana.
-- **Suplementos:** pendiente de decisión en la siguiente ronda (no se incluyen en el menú del día de Casa hasta confirmar).
+- **Suplementos de Papá:** visibles para **todos** los que ven el menú de Papá, igual que los medicamentos en Cuidados. Cada toma se **confirma** (dado o no dado) de forma discreta, para que quien lo dio lo marque de verdad. Si nadie confirma la toma, se **solicita el recurso** (reposición del suplemento). *Pendiente: si Casa también confirma tomas.*
 
 ### Estado de implementación
 - La matriz actual (migración 20261109 y espejo de la app) aún **no** refleja D28: Casa tiene sin acceso a Alimentación y el familiar edita el menú de Papá.
