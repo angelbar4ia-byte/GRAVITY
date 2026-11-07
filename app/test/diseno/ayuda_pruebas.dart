@@ -1,13 +1,16 @@
 // Ayudas compartidas por las pruebas del sistema de diseño y de las pantallas
 // de GRAVITY. No es una prueba (no termina en _test.dart).
 
+import 'package:finanzas_dominio/finanzas_dominio.dart' as dom;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gravity/app/sesion_efectiva.dart';
 import 'package:gravity/diseno/diseno.dart';
+import 'package:gravity/modulos/finanzas/estado/resumen_hoy.dart';
 import 'package:gravity/modulos/gravity/pantalla/resumen_gravity.dart';
+import 'package:gravity/nucleo/permisos/permisos.dart' show puedeAbrir;
 import 'package:gravity/nucleo/contratos/roles.dart';
 
 /// Martes 20 de octubre de 2026, 19:42 (como en los bocetos): de noche.
@@ -25,6 +28,30 @@ class RelojMovible implements Reloj {
   @override
   DateTime ahora() => momento;
 }
+
+/// Resumen de Finanzas de ejemplo (nunca datos reales): un libro con $3,500 de
+/// presupuesto y $2,170 gastados, o sea, "Quedan \$1,330.00".
+final resumenFinanzasEjemplo = ResumenFinanzasHoy(EstadoResumenHoy.conLibros, [
+  ResumenLibroHoy(
+    libroId: 'libro-ejemplo',
+    nombre: 'Mi libro',
+    tipo: dom.TipoLibro.personal,
+    alertasCriticas: 1,
+    cifras: CifrasSemana(
+      semana: dom.Semana.de(dom.Fecha(2026, 10, 20)),
+      ingresoPlaneado: 400000,
+      ingresoReal: 400000,
+      presupuesto: 350000,
+      gastado: 217000,
+      deuda: 0,
+      abonado: 0,
+      remanentePlaneado: 50000,
+      remanenteReal: 50000,
+      semaforo: dom.Semaforo.verde,
+      sinDatos: false,
+    ),
+  ),
+]);
 
 /// Montos a la vista desde el primer cuadro (en la app, empiezan ocultos).
 class _Visibles extends MontosVisibles {
@@ -63,6 +90,7 @@ Future<void> montar(
   Reloj? reloj,
   Rol? rol = Rol.dueno,
   ResumenGravity datos = ResumenGravity.ejemplo,
+  ResumenFinanzasHoy? finanzasHoy,
   bool montosVisibles = false,
   List<Override> overrides = const [],
 }) async {
@@ -76,6 +104,12 @@ Future<void> montar(
         // Sin servicio de sesión, las pruebas usan los datos de ejemplo de los
         // bocetos (con una sesión real el resumen viene vacío: I9).
         datosResumenGravityProvider.overrideWithValue(datos),
+        resumenFinanzasHoyProvider.overrideWithValue(
+          finanzasHoy ??
+              (rol != null && puedeAbrir(rol, Modulo.finanzas)
+                  ? resumenFinanzasEjemplo
+                  : ResumenFinanzasHoy.sinAcceso),
+        ),
         if (montosVisibles) montosVisiblesProvider.overrideWith(_Visibles.new),
         ...overrides,
       ],

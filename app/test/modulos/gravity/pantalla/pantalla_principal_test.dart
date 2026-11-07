@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gravity/app/sesion_efectiva.dart';
 import 'package:gravity/diseno/diseno.dart';
+import 'package:gravity/modulos/finanzas/estado/resumen_hoy.dart';
 import 'package:gravity/modulos/gravity/pantalla/pantalla_principal.dart';
 import 'package:gravity/modulos/gravity/pantalla/resumen_gravity.dart';
 import 'package:gravity/nucleo/contratos/roles.dart';
@@ -69,14 +70,14 @@ void main() {
 
     expect(find.text('HOY · AGENDA'), findsOneWidget);
     expect(find.text('CUIDADOS · TURNO'), findsOneWidget);
-    expect(find.text('FINANZAS · SEMANA 43'), findsOneWidget);
+    expect(find.text('FINANZAS · SEMANA'), findsOneWidget);
     expect(find.text('AVISOS'), findsOneWidget);
     expect(find.text(_mensajeCompleto), findsOneWidget);
     expect(find.text('EN ESPERA'), findsOneWidget);
 
     final hoy = _esquina(tester, 'panel-hoy');
     final nucleo = _esquina(tester, 'panel-nucleo');
-    final finanzas = _esquina(tester, 'panel-finanzas');
+    final finanzas = _esquina(tester, 'finanzas-hoy');
     expect(hoy.dx, lessThan(nucleo.dx));
     expect(nucleo.dx, lessThan(finanzas.dx));
     expect(hoy.dy, finanzas.dy);
@@ -100,7 +101,7 @@ void main() {
       find.byKey(const ValueKey('panel-avisos')),
       300,
     );
-    final finanzas = _esquina(tester, 'panel-finanzas');
+    final finanzas = _esquina(tester, 'finanzas-hoy');
     final avisos = _esquina(tester, 'panel-avisos');
     expect(hoy.dx, nucleo.dx);
     expect(cuidados.dx, hoy.dx);
@@ -140,15 +141,16 @@ void main() {
       expect(find.text(r'$1,330.00'), findsNothing);
       // La marca avisa y es la forma de pedir verlos (por omisión, sin PIN).
       expect(find.text(MarcaMontosOcultos.texto), findsOneWidget);
-      expect(find.text('Ocultar'), findsNothing);
 
       await tester.tap(find.byKey(const ValueKey('marca-montos-ocultos')));
       await tester.pump();
       expect(find.text(r'$1,330.00'), findsOneWidget);
       expect(find.text(MarcaMontosOcultos.texto), findsNothing);
-      expect(find.text('Ocultar'), findsOneWidget);
 
-      await tester.tap(find.byKey(const ValueKey('boton-ocultar-montos')));
+      // Tocar el monto a la vista lo oculta de nuevo.
+      await tester.tap(
+        find.byKey(const ValueKey('finanzas-hoy-quedan-libro-ejemplo')),
+      );
       await tester.pump();
       expect(find.text(r'$1,330.00'), findsNothing);
       expect(find.text(montoOculto), findsOneWidget);
@@ -187,7 +189,6 @@ void main() {
       await tester.pump();
       expect(find.text(r'$1,330.00'), findsNothing);
       expect(find.text(montoOculto), findsOneWidget);
-      expect(find.byKey(const ValueKey('boton-ocultar-montos')), findsNothing);
       // En modo privado la marca lo dice y no se toca: se quita el modo.
       expect(find.text(MarcaMontosOcultos.textoPrivado), findsOneWidget);
       expect(find.text(MarcaMontosOcultos.texto), findsNothing);
@@ -232,6 +233,7 @@ void main() {
     await montar(
       tester,
       const PantallaPrincipalGravity(),
+      finanzasHoy: ResumenFinanzasHoy.sinAcceso,
       overrides: [
         resumenGravityProvider.overrideWithValue(
           ResumenGravity(
@@ -248,7 +250,7 @@ void main() {
         ),
       ],
     );
-    expect(find.byKey(const ValueKey('panel-finanzas')), findsNothing);
+    expect(find.byKey(const ValueKey('finanzas-hoy')), findsNothing);
     expect(find.byKey(const ValueKey('panel-cuidados')), findsNothing);
     expect(find.text(montoOculto), findsNothing);
     expect(
@@ -344,8 +346,11 @@ void main() {
       tester,
     ) async {
       await montarComo(tester, Rol.familiar);
-      expect(find.byKey(const ValueKey('panel-finanzas')), findsNothing);
-      expect(find.byKey(const ValueKey('monto-quedan')), findsNothing);
+      expect(find.byKey(const ValueKey('finanzas-hoy')), findsNothing);
+      expect(
+        find.byKey(const ValueKey('finanzas-hoy-quedan-libro-ejemplo')),
+        findsNothing,
+      );
       expect(find.byKey(const ValueKey('panel-cuidados')), findsNothing);
       // Lo suyo sí: agenda y hábitos.
       expect(find.byKey(const ValueKey('panel-hoy')), findsOneWidget);
@@ -371,7 +376,7 @@ void main() {
       tester,
     ) async {
       await montarComo(tester, Rol.casa);
-      expect(find.byKey(const ValueKey('panel-finanzas')), findsNothing);
+      expect(find.byKey(const ValueKey('finanzas-hoy')), findsNothing);
       expect(find.byKey(const ValueKey('panel-hoy')), findsNothing);
       expect(find.byKey(const ValueKey('panel-cuidados')), findsOneWidget);
       expect(find.text('Turno de cuidados · hasta 20:00'), findsOneWidget);
@@ -399,7 +404,7 @@ void main() {
     testWidgets('Coadministrador: Finanzas sí; Cuidados no sin '
         'consentimiento', (tester) async {
       await montarComo(tester, Rol.coadministrador);
-      expect(find.byKey(const ValueKey('panel-finanzas')), findsOneWidget);
+      expect(find.byKey(const ValueKey('finanzas-hoy')), findsOneWidget);
       expect(find.byKey(const ValueKey('panel-cuidados')), findsNothing);
       expect(textoVisible(tester), isNot(contains('medicamento')));
     });
@@ -410,7 +415,7 @@ void main() {
       for (final panel in [
         'panel-hoy',
         'panel-cuidados',
-        'panel-finanzas',
+        'finanzas-hoy',
         'panel-avisos',
       ]) {
         expect(find.byKey(ValueKey(panel)), findsNothing, reason: panel);

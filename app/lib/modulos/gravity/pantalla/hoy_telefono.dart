@@ -9,6 +9,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../diseno/diseno.dart';
+import '../../../nucleo/contratos/rutas.dart';
+import '../../finanzas/estado/resumen_hoy.dart' show resumenFinanzasHoyProvider;
+import '../../finanzas/finanzas.dart' show TarjetaFinanzasHoy;
+
+import 'package:go_router/go_router.dart';
+
 import 'resumen_gravity.dart';
 
 class PantallaHoyTelefono extends ConsumerWidget {
@@ -18,12 +24,13 @@ class PantallaHoyTelefono extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final v = ValoresDiseno.de(context);
     final r = ref.watch(resumenGravityProvider);
+    final verFinanzas = ref.watch(resumenFinanzasHoyProvider).visible;
     final e = v.espacio;
     final hueco = SizedBox(height: e * 1.5);
     final sinNada =
         r.siguiente == null &&
         r.habitos.isEmpty &&
-        r.finanzas == null &&
+        !verFinanzas &&
         r.cuidados == null;
     return Scaffold(
       backgroundColor: v.fondo,
@@ -46,8 +53,8 @@ class PantallaHoyTelefono extends ConsumerWidget {
                       ),
                     if (r.habitos.isNotEmpty)
                       const TeselaBento(child: _TarjetaHabitos()),
-                    if (r.finanzas != null)
-                      const TeselaBento(child: _TarjetaFinanzas()),
+                    if (verFinanzas)
+                      TeselaBento(child: _tarjetaFinanzas(context)),
                     if (r.cuidados != null)
                       const TeselaBento(child: _TarjetaCuidados()),
                   ],
@@ -58,7 +65,7 @@ class PantallaHoyTelefono extends ConsumerWidget {
                   hueco,
                 ],
                 if (r.habitos.isNotEmpty) ...[const _TarjetaHabitos(), hueco],
-                if (r.finanzas != null) ...[const _TarjetaFinanzas(), hueco],
+                if (verFinanzas) ...[_tarjetaFinanzas(context), hueco],
                 if (r.cuidados != null) const _TarjetaCuidados(),
               ],
               if (sinNada && r.sinDatos)
@@ -287,67 +294,6 @@ class _ChipHabito extends StatelessWidget {
   }
 }
 
-class _TarjetaFinanzas extends ConsumerWidget {
-  const _TarjetaFinanzas();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final v = ValoresDiseno.de(context);
-    final f = ref.watch(resumenGravityProvider).finanzas!;
-    final ocultos = ref.watch(montosOcultosProvider);
-    final privado = ref.watch(modoPrivadoProvider);
-    final e = v.espacio;
-    return TarjetaModulo(
-      key: const ValueKey('tarjeta-finanzas'),
-      titulo: 'Finanzas · semana',
-      accion: Semaforo(estado: f.estado),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text('Quedan', style: v.lectura(tamano: 14, color: v.textoTenue)),
-              SizedBox(width: e),
-              Expanded(
-                child: MontoOcultable(
-                  key: const ValueKey('monto-quedan'),
-                  centavos: f.quedanCentavos,
-                  oculto: ocultos,
-                  estilo: v.numero(
-                    tamano: 22,
-                    peso: FontWeight.w600,
-                    color: v.acento,
-                  ),
-                  // Ocultos: pide verlos (PIN o huella). A la vista: los oculta.
-                  alTocar: privado
-                      ? null
-                      : ocultos
-                      ? () => ref.read(revelarMontosProvider)(context)
-                      : () => ref
-                            .read(montosVisiblesProvider.notifier)
-                            .fijar(false),
-                ),
-              ),
-            ],
-          ),
-          if (ocultos) ...[
-            SizedBox(height: e * 0.5),
-            const Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: MarcaMontosOcultos(),
-            ),
-          ],
-          if (f.aviso != null) ...[
-            SizedBox(height: e * 0.5),
-            Text(f.aviso!, style: v.lectura(tamano: 14, color: v.textoTenue)),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
 class _TarjetaCuidados extends ConsumerWidget {
   const _TarjetaCuidados();
 
@@ -410,3 +356,9 @@ void _avisoEjemplo(BuildContext context, String texto) {
     ?..hideCurrentSnackBar()
     ..showSnackBar(SnackBar(content: Text(texto)));
 }
+
+/// Tarjeta de Finanzas de "Hoy": cifras reales locales por libro, montos
+/// ocultables; sin plan ni movimientos dice "Sin datos todavía".
+Widget _tarjetaFinanzas(BuildContext context) => TarjetaFinanzasHoy(
+  alAbrir: () => GoRouter.maybeOf(context)?.go(Rutas.finanzas),
+);
