@@ -543,4 +543,4 @@ Cambia lo que ve Casa en D23. Se implementa en la fase donde se construya Alimen
 ### Estado de implementación
 - La matriz actual (migración 20261109 y espejo de la app) aún **no** refleja D28: Casa tiene sin acceso a Alimentación y el familiar edita el menú de Papá.
 - Pendiente: menú familiar y votación, inventario por persona, compras con albacea y permisos de Casa y cuidador.
-- Propuesto: construirlo dentro de la Fase 7 (Alimentación), o antes si el dueño lo pide.
+- **Confirmado (7/nov/2026): se construye en la Fase 7 (Alimentación).**
