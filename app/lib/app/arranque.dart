@@ -9,7 +9,8 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../diseno/componentes/indicador_conexion.dart' show conectividadProvider;
+import '../diseno/componentes/indicador_conexion.dart'
+    show conectividadProvider;
 import '../diseno/licencias.dart';
 import '../diseno/proveedores.dart'
     show
@@ -134,7 +135,10 @@ Future<List<Override>> prepararArranque({
   registrarLicenciasFuentes();
   // Los pasos que no dependen unos de otros arrancan juntos (y cada uno se
   // mide): el arranque tarda lo del más lento, no la suma.
-  final fechas = m.medir('formato_de_fechas', () => initializeDateFormatting('es_MX'));
+  final fechas = m.medir(
+    'formato_de_fechas',
+    () => initializeDateFormatting('es_MX'),
+  );
   final firebaseListo = m.medir(
     'firebase',
     () => prepararFirebase(plataforma: plataforma),
@@ -152,7 +156,9 @@ Future<List<Override>> prepararArranque({
             );
             return true;
           } catch (error) {
-            debugPrint('No se pudo preparar Supabase; modo demostración: $error');
+            debugPrint(
+              'No se pudo preparar Supabase; modo demostración: $error',
+            );
             return false;
           }
         })

@@ -14,6 +14,10 @@ import '../nucleo/permisos/permisos.dart';
 /// Rutas propias de la plataforma (además de las del contrato `Rutas`).
 abstract final class RutasApp {
   static const mas = '/mas';
+
+  /// D24: el familiar pide ver las finanzas de Papá. Única ruta de Finanzas
+  /// que el router deja abrir al familiar, y solo la pantalla de pedir.
+  static const vistaPapa = '${Rutas.finanzas}/vista-papa';
   static const cuidadosMedicamentos = '${Rutas.cuidados}/medicamentos';
   static const cuidadosComidas = '${Rutas.cuidados}/comidas';
   static const cuidadosBitacora = '${Rutas.cuidados}/bitacora';
@@ -366,6 +370,10 @@ String? calcularRedireccion({
     // y Casa tampoco ven nada de Finanzas.
     return puedeAbrir(rol, Modulo.finanzas) && !esMaestra ? null : inicio;
   }
+  // D24 (excepción estrecha): solo el familiar, solo esta ruta exacta. La
+  // matriz de permisos no cambia: los datos los entrega el servidor (RLS)
+  // solo durante una vista autorizada.
+  if (rol == Rol.familiar && ubicacion == RutasApp.vistaPapa) return null;
   final modulo = moduloDeRuta(ubicacion);
   if (modulo != null && !puedeAbrir(rol, modulo)) return inicio;
   if (modulo == Modulo.habitos) {

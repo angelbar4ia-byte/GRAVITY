@@ -88,7 +88,9 @@ class _PantallaInvitacionState extends ConsumerState<PantallaInvitacion> {
       if (mounted) setState(() => _error = error.mensaje);
     } catch (_) {
       if (mounted) {
-        setState(() => _error = 'No se pudo aceptar la invitación. Intenta de nuevo.');
+        setState(
+          () => _error = 'No se pudo aceptar la invitación. Intenta de nuevo.',
+        );
       }
     } finally {
       if (mounted) setState(() => _trabajando = false);
@@ -127,13 +129,20 @@ class _PantallaInvitacionState extends ConsumerState<PantallaInvitacion> {
                     SegmentedButton<bool>(
                       key: const ValueKey('invitacion-modo'),
                       segments: const [
-                        ButtonSegment(value: true, label: Text('Crear mi cuenta')),
-                        ButtonSegment(value: false, label: Text('Ya tengo cuenta')),
+                        ButtonSegment(
+                          value: true,
+                          label: Text('Crear mi cuenta'),
+                        ),
+                        ButtonSegment(
+                          value: false,
+                          label: Text('Ya tengo cuenta'),
+                        ),
                       ],
                       selected: {_cuentaNueva},
                       onSelectionChanged: _trabajando
                           ? null
-                          : (valor) => setState(() => _cuentaNueva = valor.first),
+                          : (valor) =>
+                                setState(() => _cuentaNueva = valor.first),
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
@@ -213,7 +222,8 @@ class _PantallaInvitacionState extends ConsumerState<PantallaInvitacion> {
                       validator: (v) {
                         final texto = v ?? '';
                         if (texto.isEmpty) return 'Escribe tu contraseña.';
-                        if (_cuentaNueva && texto.length < largoMinimoContrasena) {
+                        if (_cuentaNueva &&
+                            texto.length < largoMinimoContrasena) {
                           return 'Usa al menos $largoMinimoContrasena caracteres.';
                         }
                         return null;
@@ -240,7 +250,9 @@ class _PantallaInvitacionState extends ConsumerState<PantallaInvitacion> {
                         child: _trabajando
                             ? const SizedBox.square(
                                 dimension: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               )
                             : Text(
                                 _cuentaNueva

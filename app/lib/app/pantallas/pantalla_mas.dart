@@ -15,6 +15,7 @@ import '../../nucleo/tablet/controlador_tablet.dart';
 import '../dispositivo.dart';
 import '../navegacion.dart';
 import '../sesion_efectiva.dart';
+import 'acceso_vista_papa.dart';
 import 'marco_pantalla.dart';
 
 class PantallaMas extends ConsumerWidget {
@@ -38,6 +39,7 @@ class PantallaMas extends ConsumerWidget {
               minTileHeight: 56,
               onTap: () => context.go(rutaDeModulo(modulo)),
             ),
+          if (rol == Rol.familiar) const AccesoPedirVistaPapa(),
           if (puedeAbrir(rol, Modulo.ajustes)) ...[
             const Divider(),
             ListTile(
