@@ -35,7 +35,7 @@ EventoDeCuidado toma(DateTime cuando, [String id = 'm1']) =>
 void main() {
   group('cuidadorDeTurno (sección 3)', () {
     test('lunes: cuidadora de 9:00 a 15:00, dueño desde las 15:00', () {
-      expect(cuidadorDeTurno(f(2, 8, 59)), isNull);
+      expect(cuidadorDeTurno(f(2, 8, 59)), _d);
       expect(cuidadorDeTurno(f(2, 9)), _c);
       expect(cuidadorDeTurno(f(2, 14, 59)), _c);
       expect(cuidadorDeTurno(f(2, 15)), _d);
@@ -44,12 +44,12 @@ void main() {
     test(
       'martes: cuidadora 7:30 a 15:00; hermana de 15:00 al miércoles 7:00',
       () {
-        expect(cuidadorDeTurno(f(3, 7, 29)), isNull);
+        expect(cuidadorDeTurno(f(3, 7, 29)), _d);
         expect(cuidadorDeTurno(f(3, 7, 30)), _c);
         expect(cuidadorDeTurno(f(3, 15)), _h);
         expect(cuidadorDeTurno(f(3, 23, 59)), _h);
         expect(cuidadorDeTurno(f(4, 6, 59)), _h);
-        expect(cuidadorDeTurno(f(4, 7)), isNull);
+        expect(cuidadorDeTurno(f(4, 7)), _d);
         expect(cuidadorDeTurno(f(4, 7, 30)), _c);
       },
     );
@@ -58,7 +58,7 @@ void main() {
       for (final dia in [4, 5, 6]) {
         expect(cuidadorDeTurno(f(dia, 12)), _c);
         expect(cuidadorDeTurno(f(dia, 18, 29)), _c);
-        expect(cuidadorDeTurno(f(dia, 18, 30)), isNull);
+        expect(cuidadorDeTurno(f(dia, 18, 30)), _d);
       }
     });
 
@@ -67,7 +67,7 @@ void main() {
       expect(cuidadorDeTurno(f(7, 15)), _d);
       expect(cuidadorDeTurno(f(8, 0)), _d);
       expect(cuidadorDeTurno(f(8, 23, 59)), _d);
-      expect(cuidadorDeTurno(f(9, 8)), isNull); // lunes antes de las 9:00
+      expect(cuidadorDeTurno(f(9, 8)), _d); // lunes antes de las 9:00
     });
 
     test('acepta una lista de turnos propia', () {
@@ -80,14 +80,46 @@ void main() {
         ),
       ];
       expect(cuidadorDeTurno(f(2, 1, 30), turnos), 'x');
-      expect(cuidadorDeTurno(f(2, 9), turnos), isNull);
+      expect(cuidadorDeTurno(f(2, 9), turnos), _d);
     });
+  });
+
+  group('el dueño cubre lo que nadie más cubre', () {
+    test('noche de lunes 2:00 y miércoles 7:15 van al dueño', () {
+      expect(cuidadorDeTurno(f(2, 2)), _d);
+      expect(cuidadorDeTurno(f(4, 7, 15)), _d);
+      expect(cuidadorDeTurno(f(7, 15, 30)), _d); // sábado
+    });
+
+    test(
+      'recordatorios: hueco y sábado al dueño; martes 16:00 a la hermana',
+      () {
+        final ahora = f(2, 1);
+        final eventos = [
+          toma(f(3, 2), 'noche'), // lunes a martes 2:00
+          toma(f(4, 7, 15), 'hueco'), // miércoles 7:15
+          toma(f(3, 16), 'hermana'), // martes 16:00
+          toma(f(7, 15, 30), 'sabado'), // sábado 15:30
+        ];
+        List<String> para(String quien) => [
+          for (final r in recordatoriosParaCuidador(
+            cuidador: quien,
+            eventos: eventos,
+            ahora: ahora,
+          ))
+            r.clave.split(':')[2],
+        ];
+        expect(para(_d), ['noche', 'hueco', 'sabado']);
+        expect(para(_h), ['hermana']);
+        expect(para(_d), isNot(contains('hermana')));
+      },
+    );
   });
 
   group('criterio 1: sin turno no hay recordatorio', () {
     final ahora = f(2, 7); // lunes
     final eventos = [
-      toma(f(2, 8), 'a'), // nadie de turno
+      toma(f(2, 8), 'a'), // hueco: el dueño
       toma(f(2, 10), 'b'), // cuidadora
       toma(f(2, 16), 'c'), // dueño
       toma(f(3, 16), 'd'), // hermana
@@ -105,7 +137,7 @@ void main() {
 
     test('cada quien recibe solo lo de su turno', () {
       expect(para(_c), ['b']);
-      expect(para(_d), ['c']);
+      expect(para(_d), ['a', 'c']);
       expect(para(_h), ['d']);
       expect(para('otra_persona'), isEmpty);
     });
@@ -249,7 +281,7 @@ void main() {
       expect(destinatarioDeCambioUrgente(f(4, 10)), _c);
       expect(destinatarioDeCambioUrgente(f(3, 20)), _h);
       expect(destinatarioDeCambioUrgente(f(8, 12)), _d);
-      expect(destinatarioDeCambioUrgente(f(4, 22)), isNull);
+      expect(destinatarioDeCambioUrgente(f(4, 22)), _d);
     });
 
     test(

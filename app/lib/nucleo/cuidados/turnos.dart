@@ -46,8 +46,8 @@ const _c = RolDeTurno.cuidadoraPrincipal;
 const _h = RolDeTurno.hermana;
 const _d = RolDeTurno.dueno;
 
-/// Turnos de la sección 3 (respuesta del dueño, 7/nov/2026). La noche no tiene
-/// responsable asignado (pregunta abierta). El dueño puede editarlos en la
+/// Turnos de la sección 3 (respuesta del dueño, 7/nov/2026). Lo no cubierto
+/// (noches, huecos) lo cubre el dueño por omisión. El dueño puede editarlos en la
 /// laptop; esta es la base cuando no hay otros.
 const List<Turno> turnosPorOmision = [
   // Lunes
@@ -83,16 +83,18 @@ const List<Turno> turnosPorOmision = [
   Turno(cuidador: _d, dia: 7, desde: HoraDelDia(0), hasta: _finDelDia),
 ];
 
-/// Quién está de turno en [cuando] (hora de pared), o `null` si nadie. Las
+/// Quién está de turno en [cuando] (hora de pared). Lo que no cubren la
+/// cuidadora ni la hermana (noches, huecos, miércoles de 7:00 a 7:30) lo cubre
+/// el dueño (decisión del dueño, 7/nov/2026): nunca devuelve `null`. Las
 /// visitas de la hermana no cuentan: no cambian el turno.
-String? cuidadorDeTurno(
+String cuidadorDeTurno(
   DateTime cuando, [
   List<Turno> turnos = turnosPorOmision,
 ]) {
   for (final t in turnos) {
     if (t.contiene(cuando)) return t.cuidador;
   }
-  return null;
+  return RolDeTurno.dueno;
 }
 
 /// Una toma o comida de Papá que hay que recordar. [objetoId] entra en la
@@ -131,7 +133,13 @@ String _dia(DateTime d) =>
     '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
 /// Los recordatorios que le tocan a [cuidador]: solo los eventos que caen en
-/// su turno, a partir de [ahora] y dentro de [dias]. Sin turno, nada.
+/// su turno (el dueño recibe también los que caen fuera de los turnos de la
+/// cuidadora y la hermana), a partir de [ahora] y dentro de [dias].
+///
+/// Pendiente del dueño (spec fase-5 §3): de noche el dueño recibe los
+/// recordatorios sin sonido (silencio nocturno); la hora de silencio y si
+/// debe sonar en tomas críticas está por confirmar. El silencio lo aplica el
+/// servicio al programar (`sonar`), no esta función.
 List<RecordatorioCuidado> recordatoriosParaCuidador({
   required String cuidador,
   required List<EventoDeCuidado> eventos,
@@ -155,9 +163,9 @@ List<RecordatorioCuidado> recordatoriosParaCuidador({
   ]..sort((a, b) => a.cuando.compareTo(b.cuando));
 }
 
-/// A quién avisa un cambio urgente del dueño: a quien está de turno en [ahora],
-/// o `null` si nadie (el esquema decide el respaldo).
-String? destinatarioDeCambioUrgente(
+/// A quién avisa un cambio urgente del dueño: a quien está de turno en [ahora];
+/// en los huecos, el propio dueño. Siempre hay destinatario.
+String destinatarioDeCambioUrgente(
   DateTime ahora, [
   List<Turno> turnos = turnosPorOmision,
 ]) => cuidadorDeTurno(ahora, turnos);
