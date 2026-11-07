@@ -429,7 +429,7 @@ void main() {
         ['finanzas', 'habitos', 'cuidados', 'alimentacion', 'casa', 'ajustes'],
       ),
       (Rol.familiar, ['habitos', 'alimentacion', 'casa', 'ajustes']),
-      (Rol.casa, ['cuidados', 'alimentacion', 'casa']),
+      (Rol.casa, ['cuidados', 'casa']),
     ]) {
       testWidgets('barra de módulos de ${rol.name}', (tester) async {
         await montarComo(tester, rol);
