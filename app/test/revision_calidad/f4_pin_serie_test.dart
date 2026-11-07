@@ -130,4 +130,35 @@ void main() {
       reason: 'el PIN bueno no debe pasar con la cuenta ya bloqueada',
     );
   });
+
+  // F4-H1: la huella no salta el cambio de un PIN corto de quien ve dinero.
+  test('F4-H1: con un PIN corto marcado, la huella no abre: pide cambiarlo',
+      () async {
+    almacen.datos[ControladorBloqueo.claveConfiguracion(
+      dueno.persona.id,
+    )] = jsonEncode(
+      ConfiguracionBloqueo(
+        hashPin: HashPin.crear('2468', iteraciones: 50),
+        huella: true,
+      ).aJson(),
+    );
+    final controlador = await abrir();
+    // Al escribir el PIN corto se anota; ya no abre ni por PIN ni por huella.
+    expect(
+      await controlador.desbloquearConPin('2468'),
+      ResultadoBloqueo.debeCambiarPin,
+    );
+    expect(controlador.state.configuracion!.pinCorto, isTrue);
+    expect(
+      await controlador.desbloquearConHuella(),
+      ResultadoBloqueo.debeCambiarPin,
+    );
+    // Cambiarlo limpia la marca y la huella vuelve a abrir.
+    expect(
+      await controlador.cambiarPin('2468', '135792'),
+      ResultadoBloqueo.abierto,
+    );
+    expect(controlador.state.configuracion!.pinCorto, isFalse);
+    expect(await controlador.desbloquearConHuella(), ResultadoBloqueo.abierto);
+  });
 }

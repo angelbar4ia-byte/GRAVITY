@@ -7,6 +7,7 @@ import 'package:gravity/nucleo/cola/proveedores_cola.dart';
 import 'package:gravity/nucleo/configuracion/configuracion_entorno.dart';
 import 'package:gravity/nucleo/contratos/dispositivo.dart';
 import 'package:gravity/nucleo/firebase/firebase.dart';
+import 'package:gravity/nucleo/rendimiento/medidor_arranque.dart';
 import 'package:gravity/nucleo/seguridad/almacen_seguro.dart';
 import 'package:gravity/nucleo/seguridad/proveedores_seguridad.dart';
 import 'package:gravity/nucleo/sesion/proveedores_sesion.dart';
@@ -21,9 +22,17 @@ void main() {
   test(
     'sin llaves de Supabase arranca en modo demostración y en es_MX',
     () async {
+      final medidor = MedidorArranque();
       final overrides = await prepararArranque(
         configuracion: const ConfiguracionEntorno(dispositivoForzado: 'tablet'),
         abrirBase: BaseLocal.enMemoria,
+        medidor: medidor,
+      );
+      // Cada paso del arranque queda medido (sin cifras fijas: dependen del
+      // equipo).
+      expect(
+        medidor.pasos.map((p) => p.nombre),
+        containsAll(['formato_de_fechas', 'firebase', 'apariencia', 'sesion']),
       );
       final contenedor = ProviderContainer(overrides: overrides);
       addTearDown(() async {
