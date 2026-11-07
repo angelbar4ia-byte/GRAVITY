@@ -518,3 +518,8 @@ La CLI guarda el historial en `supabase_migrations.schema_migrations` y aplica c
 ## Respaldos
 
 Ver `herramientas/respaldo/README.md` (respaldo diario cifrado desde la laptop y restauración).
+
+
+## Vista temporal de Finanzas de Papá (Fase 4, D24)
+
+Migración `20261110000000_fin_vista_papa.sql`, pruebas `93_fin_vista_papa.sql`. El familiar no tiene dinero de forma permanente: pide la vista con `fin_pedir_vista_papa(motivo)`, el dueño la responde con `fin_responder_vista(solicitud, 'autorizar' | 'rechazar' | 'cancelar')` y la autorización dura 30 minutos (`vigente_hasta`). `fin_vista_papa_vigente()` dice si la hay; `fin_puede(libro, 'leer')` la usa para el libro representado, y el servidor niega al pasar `vigente_hasta` o cancelar. `fin_vistas_vencer()` (solo servidor, `pg_cron` cada 5 min) marca `vencida`. La tabla `fin_vistas_solicitadas` (27.ª tabla `fin_*`) solo cambia por RPC y su bitácora no lleva motivo, montos ni cuentas. Aviso al dueño: tipo `solicitud_vista` (crítico). Contrato completo: `docs/specs/fase-4-vista-temporal.md`, sección 6.

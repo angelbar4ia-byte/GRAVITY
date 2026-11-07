@@ -37,3 +37,20 @@
 ## 5. Decisión registrada
 
 D5 cambia en este punto: el familiar **no** tiene permanentemente dinero; tiene vista temporal por solicitud (D24).
+
+## 6. Contrato de servidor
+
+Migración `supabase/migrations/20261110000000_fin_vista_papa.sql`; pruebas en `supabase/tests/93_fin_vista_papa.sql`. No cambia ninguna decisión.
+
+| Pieza | Qué hace |
+|---|---|
+| Tabla `fin_vistas_solicitadas` | `id`, `hogar_id`, `solicitante_id` (familiar), `libro_persona_id` (Papá, titular del libro representado), `motivo` (3 caracteres visibles, máximo 200), `estado` (`pendiente`, `autorizada`, `rechazada`, `cancelada`, `vencida`), `autorizada_por`, `vigente_hasta`, `creado_en`, `cambiado_en`. Solo cambia por RPC; no se borra. El solicitante ve las suyas y el dueño las del hogar |
+| `fin_pedir_vista_papa(motivo) -> uuid` | Solo el familiar vigente (42501 si no). Crea la solicitud pendiente y avisa al dueño. Una pendiente o vigente a la vez; 5 por 24 horas (22023) |
+| `fin_responder_vista(solicitud, accion)` | Solo el dueño del hogar. `autorizar` (pendiente: `vigente_hasta = now() + 30 min`), `rechazar` (pendiente), `cancelar` (pendiente o autorizada vigente; corta la lectura al instante) |
+| `fin_vista_papa_vigente() -> boolean` | Para la app: verdadero si la sesión es familiar y tiene una autorizada con `vigente_hasta > now()` |
+| `fin_vistas_vencer(hogar?)` | Marca `vencida` lo vencido (autorizadas pasadas de tiempo; pendientes de más de 24 h). Solo `service_role` y `pg_cron` cada 5 minutos |
+
+- **Lectura:** con vista vigente, `fin_puede(libro, 'leer')` es verdadero para el libro de Papá (y con él todas las tablas `fin_*` de ese libro); también se leen los nombres de categorías y cuentas de gasto del hogar. Nunca se escribe. La lectura **no depende** de la marca `vencida`: la RLS compara `vigente_hasta` con `now()` en cada consulta, así que al vencer o cancelar el servidor niega al instante. La app debe usar `fin_vista_papa_vigente()` y `vigente_hasta` (no el campo `estado`) para el contador.
+- **Aviso al dueño (D20):** tipo nuevo `solicitud_vista` (crítico: no se agrupa), `objeto_tipo = 'solicitud_vista'`, `objeto_id` = la solicitud. Sin texto, montos ni nombres; el texto lo pone el catálogo de la app. Al responder, el aviso queda `resuelta`.
+- **Bitácora:** cada alta y cambio de estado queda por trigger (tabla `fin_vistas_solicitadas`), sin el motivo, sin montos ni cuentas: solo quién, cuándo, estado y `vigente_hasta`. Las escribe el servidor, así que no cuentan en el tope de 500 entradas por 24 horas.
+- **Pendiente de otras áreas:** la consulta (lecturas) no se registra en la bitácora, porque un SELECT no deja huella; si el dueño la quiere, la app debe llamar una función de registro (propuesta, no incluida).

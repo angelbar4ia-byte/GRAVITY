@@ -212,7 +212,7 @@ class RepositorioVistaPapaEnMemoria implements RepositorioVistaPapa {
     DatosFinanzas? datosPapa,
     DateTime Function()? reloj,
     String Function()? generarId,
-  }) : _personaId = personaId,
+  }) : _personaId = personaId, // ignore: prefer_initializing_formals
        _a = _Almacen(
          duenoId: duenoId,
          datosPapa: datosPapa ?? DatosFinanzas.vacio,

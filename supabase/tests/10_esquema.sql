@@ -174,7 +174,7 @@ select pruebas.igual(
 select pruebas.igual(
   (select count(*)::int from pg_class c join pg_namespace n on n.oid = c.relnamespace
     where n.nspname = 'public' and c.relkind = 'r' and c.relname like 'fin\_%'),
-  26, 'Las 26 tablas de Finanzas (21 de la Fase 1 y 5 de la Fase 2)');
+  27, 'Las 27 tablas de Finanzas (21 de la Fase 1, 5 de la Fase 2 y 1 de la Fase 4)');
 select pruebas.igual(
   (select coalesce(string_agg(c.relname, ', ' order by c.relname), '')
      from pg_class c join pg_namespace n on n.oid = c.relnamespace

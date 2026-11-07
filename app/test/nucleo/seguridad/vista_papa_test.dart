@@ -83,12 +83,12 @@ void main() {
 
   group('aviso de solicitud de vista', () {
     test('está en el catálogo, es discreto y no lleva montos ni nombres', () {
-      final texto = tituloDeAviso('solicitud_vista_papa');
+      final texto = tituloDeAviso('solicitud_vista');
       expect(texto, 'Solicitud de vista: Familiar');
-      expect(titulosDeAviso.containsKey('solicitud_vista_papa'), isTrue);
+      expect(titulosDeAviso.containsKey('solicitud_vista'), isTrue);
       expect(textoDeAvisoEsDiscreto(texto), isTrue);
       expect(texto, isNot(contains('Papá')));
-      expect(severidadDe('solicitud_vista_papa'), SeveridadAviso.importante);
+      expect(severidadDe('solicitud_vista'), SeveridadAviso.critica);
     });
   });
 }

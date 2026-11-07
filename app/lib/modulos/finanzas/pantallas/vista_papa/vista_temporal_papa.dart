@@ -18,6 +18,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../app/pantalla_segura.dart' show PantallaSegura;
 import '../../../../diseno/diseno.dart' show MontoOcultable, ValoresDiseno;
+import '../../../../nucleo/seguridad/vista_papa_activa.dart'
+    show vistaPapaActivaProvider;
 import '../../datos/vista_papa.dart';
 import '../../estado/proveedores_vista_papa.dart';
 import '../comunes.dart' show conceptoDe;
@@ -55,9 +57,14 @@ class _EstadoVista extends ConsumerState<VistaTemporalPapa> {
   Object? _error;
   bool _cargando = true;
 
+  late final _activa = ref.read(vistaPapaActivaProvider.notifier);
+
   @override
   void initState() {
     super.initState();
+    // Avisa al cascarón (su guardia también bloquea capturas). Fuera del
+    // montaje para no tocar un proveedor mientras se construye el árbol.
+    Future.microtask(_activa.abrir);
     _cargar();
   }
 
@@ -76,6 +83,7 @@ class _EstadoVista extends ConsumerState<VistaTemporalPapa> {
   void dispose() {
     // Las cifras no se quedan: al cerrarse la vista se sueltan.
     _datos = null;
+    Future.microtask(_activa.cerrar);
     super.dispose();
   }
 
@@ -102,9 +110,7 @@ class _EstadoVista extends ConsumerState<VistaTemporalPapa> {
             ),
           ],
         ),
-        body: SelectionContainer.disabled(
-          child: _cuerpo(context, v),
-        ),
+        body: SelectionContainer.disabled(child: _cuerpo(context, v)),
       ),
     );
   }
@@ -139,7 +145,8 @@ class _EstadoVista extends ConsumerState<VistaTemporalPapa> {
     final cuentas = datos.cuentas
         .where((c) => c.libroId == libro.id && c.clase == ClaseCuenta.activo)
         .toList();
-    final movs = <Movimiento>[...vista.movimientos]..sort((a, b) => b.registradoEn.compareTo(a.registradoEn));
+    final movs = <Movimiento>[...vista.movimientos]
+      ..sort((a, b) => b.registradoEn.compareTo(a.registradoEn));
 
     return ListView(
       padding: EdgeInsets.all(v.espacio * 2),

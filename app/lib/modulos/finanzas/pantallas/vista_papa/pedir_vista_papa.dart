@@ -145,10 +145,7 @@ class _EstadoPantalla extends ConsumerState<PantallaPedirVistaPapa> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Finanzas de Papá')),
-      body: Padding(
-        padding: EdgeInsets.all(v.espacio * 2),
-        child: cuerpo,
-      ),
+      body: Padding(padding: EdgeInsets.all(v.espacio * 2), child: cuerpo),
     );
   }
 }
@@ -208,10 +205,7 @@ class _Formulario extends StatelessWidget {
               ),
               SizedBox(height: v.espacio * 2),
             ],
-            Text(
-              'Pedir ver finanzas de Papá',
-              style: v.lectura(tamano: 18),
-            ),
+            Text('Pedir ver finanzas de Papá', style: v.lectura(tamano: 18)),
             SizedBox(height: v.espacio),
             Text(
               'El dueño decide. Si autoriza, verás las finanzas de Papá por '
