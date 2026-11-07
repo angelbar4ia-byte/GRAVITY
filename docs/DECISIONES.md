@@ -131,10 +131,12 @@ Cuando las decisiones confirmadas cambian el contrato, se reescribe `CONTRATO_CO
 - **Cada quien ve lo suyo** (21/oct/2026): el historial de GRAVITY y las finanzas personales son de cada persona, también para el dueño. Solo la **cuenta maestra** (D19) ve todo.
 - **Cuidadora y GRAVITY** (21/oct/2026): GRAVITY le recuerda sus actividades y le hace solicitudes; ella las **confirma** (hecho, no se pudo, con nota). También usa los **dispositivos de la casa** (Fase 6). No conversa libremente con GRAVITY ni ve nada de la familia.
 
-**Pendiente.**
-- Si la hermana ve el **resumen mensual del costo del cuidado** (p. ej. si comparten gastos).
-- Quién representa a papá para los consentimientos.
-- Si papá vive en la casa de las bocinas (afecta qué recordatorios se dicen en voz alta y en qué bocina).
+**Respondido por el dueño (7/nov/2026)** — detalles en `docs/specs/fase-5-cuidados.md`.
+- **Hermana:** ve el **registro mensual del costo del cuidado** y los **gastos de la casa**, excepto los que corresponden a la pareja y al dueño. El **albacea** autoriza los datos que ella ve.
+- **Consentimientos:** Papá, la pareja y el dueño. *Pendiente de confirmar: quién firma por Papá (el albacea, según la respuesta anterior).*
+- **Papá y las bocinas:** *pendiente de respuesta.*
+
+**Pendiente de decidir (Fase 5).** La voz **no** identifica de forma segura a una persona (regla de arriba), y la hermana quiere activar su modo por voz ("Gravity estoy en casa" / "Gravity nos vemos"). Ver la especificación: se propone que la frase active un modo, pero que la identidad la confirme la cuenta, no la voz.
 
 ---
 
