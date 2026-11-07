@@ -45,7 +45,7 @@ Reglas:
 ## 4. Consentimientos y datos
 
 - **Papá:** los consentimientos sobre sus datos los firma **el albacea** (respuesta del dueño, 7/nov/2026: "también firma").
-- **Pareja:** ve los turnos y el resumen de Papá, **sin la bitácora clínica**, hasta que dé su consentimiento explícito (respuesta del dueño: "sí").
+- **Pareja:** ve los turnos y el resumen de Papá. **La bitácora de cuidados la ve solo con su consentimiento explícito** (v1.2). Sin consentimiento, no.
 - **Dueño:** da su consentimiento para sus propios datos.
 - **Resumen mensual del costo del cuidado:** solo para la hermana y el dueño. Sin montos de la pareja ni del dueño.
 
@@ -54,9 +54,9 @@ Reglas:
 | Rol | Turno | Medicamentos | Comidas de Papá | Bitácora | Gastos de cuidado | Resumen mensual |
 |---|---|---|---|---|---|---|
 | Dueño | Total | Total | Total | Total | Total | Total |
-| Pareja | Solo lectura (con consentimiento) | Solo lectura | Solo lectura | No | Sus propios | No |
+| Pareja | Solo lectura (con consentimiento) | Solo lectura | Solo lectura | Solo lectura (con consentimiento) | Sus propios | No |
 | Cuidadora (de turno) | Su turno | Marca "dado" | Registra comió/poco/rechazó | Escribe | Los suyos | No |
-| Hermana | Sus visitas y martes | Solo lectura | Solo lectura | Escribe | Los suyos | Solo lectura (albacea autoriza) |
+| Hermana | Sus visitas y martes | Marca y da en su turno (v1.2) | Solo lectura | Escribe | Los suyos | Solo lectura (albacea autoriza) |
 
 - Los permisos se validan **en el servidor** (reglas por rol), no solo en la pantalla (D5).
 - Al dar de baja a alguien, pierde el acceso de inmediato; lo que registró queda en la bitácora con su nombre.

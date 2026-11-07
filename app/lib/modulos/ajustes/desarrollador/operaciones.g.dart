@@ -5,7 +5,7 @@ import '../../../nucleo/contratos/roles.dart';
 import 'operacion_api.dart';
 
 /// Huella de api/openapi.yaml con la que se generó este archivo.
-const huellaEspecificacion = 'fnv1a32:2e32e831';
+const huellaEspecificacion = 'fnv1a32:77820d9b';
 
 /// Versión de la especificación (info.version).
 const versionEspecificacion = '0.6.0';
@@ -2411,8 +2411,8 @@ const gruposOperaciones = <GrupoOperaciones>[
         metodo: MetodoHttp.get,
         ruta: '/rest/v1/cui_bitacora',
         resumen: 'Leer notas de la bitácora de cuidados',
-        descripcion: 'Bitácora de cuidados (notas del día a día, dato clínico D3). SOLO AGREGAR. No es la bitácora de auditoría (`bitacora`). La pareja no la ve, tampoco con consentimiento.',
-        roles: {Rol.dueno, Rol.familiar, Rol.cuidador},
+        descripcion: 'Bitácora de cuidados (notas del día a día, dato clínico D3). SOLO AGREGAR. No es la bitácora de auditoría (`bitacora`). La pareja la lee solo con su consentimiento vigente (`cuiCambiarConsentimiento`; v1.2), sin escribir; retirarlo la cierra de inmediato.',
+        roles: {Rol.dueno, Rol.coadministrador, Rol.familiar, Rol.cuidador},
         escribe: false,
         soloLocal: true,
         fase: 5,
@@ -2554,7 +2554,7 @@ const gruposOperaciones = <GrupoOperaciones>[
         metodo: MetodoHttp.post,
         ruta: '/rest/v1/rpc/cui_marcar_toma',
         resumen: 'Marcar una toma como dada o no dada',
-        descripcion: 'El dueño siempre; la cuidadora solo si estaba de turno a la hora programada de la toma. La hermana y la pareja solo leen (403, 42501, igual exista o no la toma). `p_estado` es `dado` o `no_dado` (22023); no vuelve a pendiente. Cada cambio queda en la bitácora de auditoría (`cuidados.toma_marcada`, solo el estado).',
+        descripcion: 'El dueño siempre; la cuidadora o la hermana solo si estaban de turno (cuidadora u hermana_visita) a la hora programada de la toma (v1.2). Fuera de su turno y la pareja (403, 42501, igual exista o no la toma). `p_estado` es `dado` o `no_dado` (22023); no vuelve a pendiente. Cada cambio queda en la bitácora de auditoría (`cuidados.toma_marcada`, solo el estado).',
         roles: {Rol.dueno, Rol.familiar, Rol.cuidador},
         escribe: true,
         soloLocal: true,

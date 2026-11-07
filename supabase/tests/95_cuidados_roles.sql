@@ -127,12 +127,15 @@ select public.cui_cambiar_consentimiento('b0000000-0000-4000-8000-000000000001',
 select pruebas.igual(pruebas.cuenta($$select * from public.cui_medicamentos$$), 3, 'Con consentimiento ve los medicamentos (solo lectura)');
 select pruebas.igual(pruebas.cuenta($$select * from public.cui_tomas$$), 3, '… las tomas');
 select pruebas.igual(pruebas.cuenta($$select * from public.cui_comidas$$), 2, '… y las comidas');
-select pruebas.igual(pruebas.cuenta($$select * from public.cui_bitacora$$) + pruebas.cuenta($$select * from public.cui_entregas$$), 0,
-  'Pero la bitácora y las entregas siguen cerradas (spec 5 §5)');
+select pruebas.igual(pruebas.cuenta($$select * from public.cui_bitacora$$), 1, 'Con consentimiento lee la bitácora de cuidados (v1.2)');
+select pruebas.igual(pruebas.cuenta($$select * from public.cui_entregas$$), 0, 'Pero las entregas de turno siguen cerradas');
+select pruebas.falla($$insert into public.cui_bitacora (hogar_id, nota) values ('b0000000-0000-4000-8000-000000000001', 'x')$$,
+  'y la bitácora es solo lectura para ella', '42501');
 select pruebas.igual(pruebas.afecta($$update public.cui_medicamentos set activo = false$$), 0, 'Sigue sin poder cambiar nada');
 select pruebas.falla($$select public.cui_marcar_toma((select id from public.cui_tomas limit 1), 'dado')$$, 'ni marcar tomas', '42501');
 select public.cui_cambiar_consentimiento('b0000000-0000-4000-8000-000000000001', pruebas.id_persona('alex@ejemplo.test'), false);
-select pruebas.igual(pruebas.cuenta($$select * from public.cui_medicamentos$$), 0, 'Al retirar el consentimiento se cierra de inmediato');
+select pruebas.igual(pruebas.cuenta($$select * from public.cui_medicamentos$$) + pruebas.cuenta($$select * from public.cui_bitacora$$), 0,
+  'Al retirar el consentimiento se cierra de inmediato (también la bitácora)');
 
 -- ---------------------------------------------------------------- la cuenta maestra (otra coadministradora)
 select pruebas.como('marta@ejemplo.test');

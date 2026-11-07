@@ -432,7 +432,7 @@ Crea una base desechable, aplica `tests/00_emulacion_supabase.sql` (roles `anon`
 | `80_calidad_fase1.sql` | Guardias de la revisión de calidad de la Fase 1: escalada, roles sin Finanzas, solo agregar (con TRUNCATE en cascada), cruce entre libros, reenvío de otra persona |
 | `81_calidad_fase1b.sql` | Guardias de la revisión de calidad de la Fase 1b (las escribe calidad): intentos de romper las reglas del 23/oct (cuenta maestra con login propio, compartidos, libro de Papá, bitácora); no dependen de que un compartido se archive. Sus hallazgos abiertos (N1 a N5) ya se cerraron en `36_finanzas_endurecimiento_1b.sql` y `hallazgos_fase1b.sql` se retiró |
 | `95_cuidados_roles.sql` | **Fase 5, criterios 2 y 6:** cada rol ve y escribe lo que la spec 5 §5 permite (dueña, pareja sin y con consentimiento, maestra, hermana, cuidadora); la cuidadora no ve Finanzas, Hábitos, miembros ni la bitácora de auditoría de la familia; Casa (tablet y bocinas), otro hogar, sin hogar y `anon` no ven nada; comidas, bitácora y entregas solo agregar; el servidor pone quién y cuándo; lo clínico no se copia a la bitácora de auditoría ni a los avisos |
-| `95_cuidados_turnos.sql` | **Criterios 1 y 4:** `cui_quien_en_turno` con el horario de la spec §3 (límites exactos, zona del hogar, domingo del dueño) y turno residual del dueño (sin cuidadora ni hermana devuelve al dueño); la toma de las 8:00 del lunes va al dueño; marcar "dado" solo la cuidadora a la hora de su turno o el dueño, nunca la hermana ni la pareja; cada marca en la bitácora sin datos clínicos; cambio urgente del dueño con aviso crítico inmediato solo al cuidador de turno |
+| `95_cuidados_turnos.sql` | **Criterios 1 y 4:** `cui_quien_en_turno` con el horario de la spec §3 (límites exactos, zona del hogar, domingo del dueño) y turno residual del dueño (sin cuidadora ni hermana devuelve al dueño); la toma de las 8:00 del lunes va al dueño; marcar "dado" solo la cuidadora o la hermana a la hora de su turno (v1.2) o el dueño, nunca fuera de su turno ni la pareja; cada marca en la bitácora sin datos clínicos; cambio urgente del dueño con aviso crítico inmediato solo al cuidador de turno |
 | `95_cuidados_resumen.sql` | **Criterio 3:** gastos de cuidado pendientes/confirmados/rechazados; el resumen mensual excluye a la pareja y al dueño; la hermana lo ve solo con la autorización del albacea (no la pareja, la maestra, la cuidadora, Casa ni `anon`); lo retira de inmediato; devuelve solo totales |
 | `95_cuidados_baja.sql` | **Criterio 5:** la baja (con `activa = false` o `hasta = now()`) corta todo en la misma transacción, también el resumen autorizado; cancela sus avisos; lo que registró queda a su nombre; un cuidador sin turnos no tiene acceso |
 
@@ -531,7 +531,7 @@ Migración `20261110000000_fin_vista_papa.sql`, pruebas `93_fin_vista_papa.sql`.
 
 ## Cuidados (Fase 5)
 
-Migraciones `20261113000000_cuidados_avisos.sql`, `20261114000000_cuidados_esquema.sql`, `20261115000000_cuidados_operaciones.sql`, `20261116000000_cuidados_matriz.sql` y `20261117000000_cuidados_v11.sql`; pruebas `95_cuidados_*.sql`; según `docs/specs/fase-5-cuidados.md` v1.1 (turnos §3, consentimientos §4, permisos §5, criterios §7). **Los permisos los decide `cui_puede()`, no `permisos_rol`** (la matriz es solo el espejo de la app). Los medicamentos, las comidas y la bitácora de cuidados son **datos clínicos (D3)**: nunca a la IA en la nube, a las bocinas ni a la tablet pública. Casa no ve nada.
+Migraciones `20261113000000_cuidados_avisos.sql`, `20261114000000_cuidados_esquema.sql`, `20261115000000_cuidados_operaciones.sql`, `20261116000000_cuidados_matriz.sql`, `20261117000000_cuidados_v11.sql` y `20261118000000_cuidados_v12.sql`; pruebas `95_cuidados_*.sql`; según `docs/specs/fase-5-cuidados.md` v1.2 (turnos §3, consentimientos §4, permisos §5, criterios §7). **Los permisos los decide `cui_puede()`, no `permisos_rol`** (la matriz es solo el espejo de la app). Los medicamentos, las comidas y la bitácora de cuidados son **datos clínicos (D3)**: nunca a la IA en la nube, a las bocinas ni a la tablet pública. Casa no ve nada.
 
 ### Quién es quién (`cui_perfil(hogar)`)
 
@@ -545,14 +545,16 @@ Migraciones `20261113000000_cuidados_avisos.sql`, `20261114000000_cuidados_esque
 
 Una baja (`activa = false` o `hasta` vencido) quita el perfil **en la misma consulta**: todas las reglas parten de `rol_en_hogar()`. Además `cui_baja_cancela_avisos()` cancela sus avisos de Cuidados pendientes y `cui_quien_en_turno()` deja de contarla. Lo que registró queda a su nombre.
 
+**Cuidados v1.2 (`20261118`, respuestas del dueño del 7/nov/2026, spec §8d).** (1) `cui_marcar_toma` acepta a la hermana igual que a la cuidadora: solo si `cui_quien_en_turno(hogar, programada_para)` la devuelve con tipo `hermana_visita` (martes desde las 15:00 y sus visitas); fuera de su turno, 42501; la pareja sigue sin poder. (2) `cui_puede(…, 'bitacora', 'leer')` incluye a la pareja con consentimiento vigente (`cui_consentimientos.concedido`): solo lectura; sin consentimiento o al retirarlo, nada, en la misma consulta. Las entregas de turno siguen cerradas para la pareja y la matriz `permisos_rol` no cambia.
+
 **Cuidados v1.1 (`20261117`, respuestas del dueño del 7/nov/2026, spec §8c).** (1) La política `cui_bitacora_leer` limita a la cuidadora a sus propias entradas y a las de autores que `cui_autor_visible_cuidadora()` acepta (el dueño del hogar y quien tiene turnos de hermana); no ve las de la pareja ni de nadie más. Dueño y hermana siguen leyendo toda la bitácora de cuidados. (2) Turno residual: `cui_quien_en_turno(hogar, ts)`, misma firma y misma fuente de los recordatorios, devuelve al dueño vigente (tipo `dueno`) cuando no hay cuidadora ni hermana de turno; antes devolvía vacío (noches, madrugadas, huecos). Con cuidadora o hermana de turno todo queda igual, y el dueño no sale repetido si ya tiene turno propio. Los recordatorios y `cui_marcar_toma` (que sigue exigiendo cuidadora de turno o dueño) no cambian; `cui_crear_cambio_urgente` sigue avisando solo a cuidadores distintos del dueño, que es quien lo manda.
 
 | Objeto | Dueño | Pareja | Pareja consentida | Cuidadora | Hermana |
 |---|---|---|---|---|---|
 | Turnos | lee y edita | lee | lee | lee | lee |
-| Medicamentos y tomas | lee y edita | nada | **solo lee** | lee; marca tomas (RPC) | solo lee |
+| Medicamentos y tomas | lee y edita | nada | **solo lee** | lee; marca tomas (RPC) | lee; marca tomas de su turno (RPC, v1.2) |
 | Comidas | lee y registra | nada | solo lee | lee; registra (si tiene turno ese día) | solo lee |
-| Bitácora de cuidados | lee y escribe | nada | nada | escribe; lee **lo suyo y lo del dueño y la hermana** (v1.1) | lee y escribe |
+| Bitácora de cuidados | lee y escribe | nada | **solo lee** (v1.2) | escribe; lee **lo suyo y lo del dueño y la hermana** (v1.1) | lee y escribe |
 | Entregas de turno | las suyas y todas | nada | nada | las suyas | las suyas |
 | Cambios urgentes | los crea (RPC) y ve todos | nada | nada | los suyos o los que nadie recibió | ídem |
 | Gastos de cuidado | todos; confirma (RPC) | solo los suyos | solo los suyos | solo los suyos | solo los suyos |
@@ -583,7 +585,7 @@ La app **no manda** `persona_id`, `registrada_por`, `de_persona`, `estado`, `con
 | `cui_perfil(hogar)` · `cui_puede(hogar, objeto, accion)` | cualquiera | Perfil y permiso de la sesión (espejo para la app) |
 | `cui_quien_en_turno(hogar, ts = now())` → `(persona_id, tipo)` | quien tiene perfil; el servidor (`service_role`) | Quién está de turno en `ts` (zona del hogar; solo membresías vigentes). **Los recordatorios de medicamentos y comidas se envían solo a estas personas** (criterio 1) |
 | `cui_generar_tomas(hogar, desde, dias = 1)` → entero | dueño; servidor | Crea las tomas pendientes de los medicamentos activos (1 a 14 días). Idempotente |
-| `cui_marcar_toma(toma, 'dado' \| 'no_dado')` | dueño; cuidadora **de turno a la hora programada de la toma** | Marca y deja `cuidados.toma_marcada` en la bitácora. La hermana y la pareja no (42501) |
+| `cui_marcar_toma(toma, 'dado' \| 'no_dado')` | dueño; cuidadora u hermana **de turno a la hora programada de la toma** | Marca y deja `cuidados.toma_marcada` en la bitácora. Fuera de su turno y la pareja no (42501) |
 | `cui_crear_cambio_urgente(hogar, texto, id)` → `id` | solo el dueño | Crea el cambio y avisa **al instante** (tipo `cambio_urgente_cuidados`, crítico, sin esperar el silencio nocturno) a quien está de turno que no sea él. Idempotente por `id` |
 | `cui_atender_cambio_urgente(id)` | quien lo recibe, el dueño o, si nadie estaba de turno, cuidadora u hermana | Marca atendido y resuelve el aviso |
 | `cui_confirmar_gasto(gasto, confirmar)` | solo el dueño | `confirmado` o `rechazado`. **Finanzas** parte del estado `confirmado` (su función de paso es de finanzas) |

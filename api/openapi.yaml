@@ -7823,8 +7823,9 @@ paths:
       summary: Leer notas de la bitácora de cuidados
       description: >-
         Bitácora de cuidados (notas del día a día, dato clínico D3). SOLO AGREGAR. No es la
-        bitácora de auditoría (`bitacora`). La pareja no la ve, tampoco con consentimiento.
-      x-roles: [dueno, familiar, cuidador]
+        bitácora de auditoría (`bitacora`). La pareja la lee solo con su consentimiento vigente
+        (`cuiCambiarConsentimiento`; v1.2), sin escribir; retirarlo la cierra de inmediato.
+      x-roles: [dueno, coadministrador, familiar, cuidador]
       x-escribe: false
       x-solo-local: true
       x-fase: 5
@@ -8262,8 +8263,9 @@ paths:
       operationId: cuiMarcarToma
       summary: Marcar una toma como dada o no dada
       description: >-
-        El dueño siempre; la cuidadora solo si estaba de turno a la hora programada de la toma.
-        La hermana y la pareja solo leen (403, 42501, igual exista o no la toma). `p_estado` es
+        El dueño siempre; la cuidadora o la hermana solo si estaban de turno (cuidadora u
+        hermana_visita) a la hora programada de la toma (v1.2). Fuera de su turno y la pareja
+        (403, 42501, igual exista o no la toma). `p_estado` es
         `dado` o `no_dado` (22023); no vuelve a pendiente. Cada cambio queda en la bitácora de
         auditoría (`cuidados.toma_marcada`, solo el estado).
       x-roles: [dueno, familiar, cuidador]

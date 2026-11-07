@@ -75,7 +75,7 @@ select pruebas.falla($$select public.cui_marcar_toma(t.id, 'dado') from public.c
 select pruebas.falla($$select public.cui_marcar_toma(t.id, 'dado') from public.cui_tomas t where t.programada_para = '2026-11-09 20:00-06'$$,
   'ni una del turno del dueño (20:00)', '42501');
 select pruebas.falla($$select public.cui_marcar_toma(t.id, 'dado') from public.cui_tomas t where t.programada_para = '2026-11-10 20:00-06'$$,
-  'ni una del turno de la hermana', '42501');
+  'ni una del turno de la hermana (martes 20:00)', '42501');
 select pruebas.igual(pruebas.afecta($$select public.cui_marcar_toma(t.id, 'no_dado') from public.cui_tomas t
   where t.programada_para = '2026-11-09 14:00-06'$$), 1, 'Puede corregirla a "no_dado"');
 select pruebas.falla($$select public.cui_marcar_toma(t.id, 'pendiente') from public.cui_tomas t where t.programada_para = '2026-11-09 14:00-06'$$,
@@ -88,8 +88,18 @@ select pruebas.ok((select bool_and(detalle = jsonb_build_object('estado', detall
   'y el detalle es solo el estado (sin medicamento, dosis ni hora)');
 
 select pruebas.como('carla@ejemplo.test');
-select pruebas.falla($$select public.cui_marcar_toma(t.id, 'dado') from public.cui_tomas t where t.programada_para = '2026-11-10 20:00-06'$$,
-  'La hermana solo lee los medicamentos, también en su turno de martes', '42501');
+select pruebas.falla($$select public.cui_marcar_toma(t.id, 'dado') from public.cui_tomas t where t.programada_para = '2026-11-10 14:00-06'$$,
+  'La hermana no marca una toma fuera de su turno (martes 14:00, turno de la cuidadora)', '42501');
+select pruebas.falla($$select public.cui_marcar_toma(t.id, 'dado') from public.cui_tomas t where t.programada_para = '2026-11-09 20:00-06'$$,
+  'ni la del lunes 20:00 (turno del dueño)', '42501');
+select pruebas.igual(pruebas.afecta($$select public.cui_marcar_toma(t.id, 'dado') from public.cui_tomas t
+  where t.programada_para = '2026-11-10 20:00-06'$$), 1, 'La hermana marca "dado" la toma de su turno (martes 20:00, v1.2)');
+select pruebas.ok((select estado = 'dado' and marcada_por = pruebas.id_persona('carla@ejemplo.test') and marcada_en is not null
+                     from public.cui_tomas where programada_para = '2026-11-10 20:00-06'), 'Queda quién y cuándo');
+select pruebas.igual(pruebas.afecta($$select public.cui_marcar_toma(t.id, 'no_dado') from public.cui_tomas t
+  where t.programada_para = '2026-11-10 20:00-06'$$), 1, 'y puede corregirla');
+select pruebas.igual((select count(*)::int from public.bitacora where accion = 'cuidados.toma_marcada' and persona_id = pruebas.id_persona('carla@ejemplo.test')),
+  2, 'Sus marcas quedan en la bitácora de auditoría');
 
 select pruebas.como('ana@ejemplo.test');
 select pruebas.igual(pruebas.afecta($$select public.cui_marcar_toma(t.id, 'dado') from public.cui_tomas t where t.programada_para = '2026-11-09 08:00-06'$$), 1,

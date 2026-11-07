@@ -1,7 +1,7 @@
 // GENERADO por api/generar_dart.mjs a partir de api/openapi.yaml. No se edita a mano.
 // Permite abrir Swagger UI con doble clic (file://), donde el navegador no deja leer
 // ../openapi.yaml. Servida por http, la página lee openapi.yaml directamente.
-// huella: fnv1a32:2e32e831
+// huella: fnv1a32:77820d9b
 window.ESPECIFICACION_GRAVITY = {
   "openapi": "3.1.0",
   "info": {
@@ -12370,9 +12370,10 @@ window.ESPECIFICACION_GRAVITY = {
         ],
         "operationId": "leerCuiBitacora",
         "summary": "Leer notas de la bitácora de cuidados",
-        "description": "Bitácora de cuidados (notas del día a día, dato clínico D3). SOLO AGREGAR. No es la bitácora de auditoría (`bitacora`). La pareja no la ve, tampoco con consentimiento.",
+        "description": "Bitácora de cuidados (notas del día a día, dato clínico D3). SOLO AGREGAR. No es la bitácora de auditoría (`bitacora`). La pareja la lee solo con su consentimiento vigente (`cuiCambiarConsentimiento`; v1.2), sin escribir; retirarlo la cierra de inmediato.",
         "x-roles": [
           "dueno",
+          "coadministrador",
           "familiar",
           "cuidador"
         ],
@@ -13258,7 +13259,7 @@ window.ESPECIFICACION_GRAVITY = {
         ],
         "operationId": "cuiMarcarToma",
         "summary": "Marcar una toma como dada o no dada",
-        "description": "El dueño siempre; la cuidadora solo si estaba de turno a la hora programada de la toma. La hermana y la pareja solo leen (403, 42501, igual exista o no la toma). `p_estado` es `dado` o `no_dado` (22023); no vuelve a pendiente. Cada cambio queda en la bitácora de auditoría (`cuidados.toma_marcada`, solo el estado).",
+        "description": "El dueño siempre; la cuidadora o la hermana solo si estaban de turno (cuidadora u hermana_visita) a la hora programada de la toma (v1.2). Fuera de su turno y la pareja (403, 42501, igual exista o no la toma). `p_estado` es `dado` o `no_dado` (22023); no vuelve a pendiente. Cada cambio queda en la bitácora de auditoría (`cuidados.toma_marcada`, solo el estado).",
         "x-roles": [
           "dueno",
           "familiar",
@@ -18606,4 +18607,4 @@ window.ESPECIFICACION_GRAVITY = {
     }
   }
 };
-window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:2e32e831';
+window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:77820d9b';
