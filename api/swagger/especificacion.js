@@ -1,7 +1,7 @@
 // GENERADO por api/generar_dart.mjs a partir de api/openapi.yaml. No se edita a mano.
 // Permite abrir Swagger UI con doble clic (file://), donde el navegador no deja leer
 // ../openapi.yaml. Servida por http, la página lee openapi.yaml directamente.
-// huella: fnv1a32:77820d9b
+// huella: fnv1a32:9f04b2b4
 window.ESPECIFICACION_GRAVITY = {
   "openapi": "3.1.0",
   "info": {
@@ -13314,6 +13314,74 @@ window.ESPECIFICACION_GRAVITY = {
         }
       }
     },
+    "/rest/v1/rpc/cui_dejar_instruccion": {
+      "post": {
+        "tags": [
+          "Base de datos · Cuidados"
+        ],
+        "operationId": "cuiDejarInstruccion",
+        "summary": "Dejar una instrucción para la cuidadora principal",
+        "description": "El dueño, la hermana y la pareja (con o sin consentimiento; no la cuenta maestra) (v1.4). Escribe una fila de la bitácora de cuidados con `tipo = instruccion`. De 1 a 500 caracteres (22023). La cuidadora la lee; la pareja sin consentimiento no lee la bitácora. Cuidadora, Casa y quien no tiene perfil: 403 (42501). La bitácora de auditoría guarda `cuidados.instruccion_dejada` sin el texto.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 5,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_hogar_id",
+                  "p_texto"
+                ],
+                "properties": {
+                  "p_hogar_id": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_texto": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  }
+                }
+              },
+              "example": {
+                "p_hogar_id": "b0000000-0000-4000-8000-000000000001",
+                "p_texto": "Papá no debe comer sal hoy (ejemplo)"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "El id de la instrucción.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Uuid"
+                },
+                "example": "a5500000-0000-4000-8000-000000000001"
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaCuidados"
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
     "/rest/v1/rpc/cui_crear_cambio_urgente": {
       "post": {
         "tags": [
@@ -18607,4 +18675,4 @@ window.ESPECIFICACION_GRAVITY = {
     }
   }
 };
-window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:77820d9b';
+window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:9f04b2b4';

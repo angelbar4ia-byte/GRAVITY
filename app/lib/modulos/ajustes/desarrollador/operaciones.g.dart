@@ -5,7 +5,7 @@ import '../../../nucleo/contratos/roles.dart';
 import 'operacion_api.dart';
 
 /// Huella de api/openapi.yaml con la que se generó este archivo.
-const huellaEspecificacion = 'fnv1a32:77820d9b';
+const huellaEspecificacion = 'fnv1a32:9f04b2b4';
 
 /// Versión de la especificación (info.version).
 const versionEspecificacion = '0.6.0';
@@ -2556,6 +2556,17 @@ const gruposOperaciones = <GrupoOperaciones>[
         resumen: 'Marcar una toma como dada o no dada',
         descripcion: 'El dueño siempre; la cuidadora o la hermana solo si estaban de turno (cuidadora u hermana_visita) a la hora programada de la toma (v1.2). Fuera de su turno y la pareja (403, 42501, igual exista o no la toma). `p_estado` es `dado` o `no_dado` (22023); no vuelve a pendiente. Cada cambio queda en la bitácora de auditoría (`cuidados.toma_marcada`, solo el estado).',
         roles: {Rol.dueno, Rol.familiar, Rol.cuidador},
+        escribe: true,
+        soloLocal: true,
+        fase: 5,
+      ),
+      OperacionApi(
+        id: 'cuiDejarInstruccion',
+        metodo: MetodoHttp.post,
+        ruta: '/rest/v1/rpc/cui_dejar_instruccion',
+        resumen: 'Dejar una instrucción para la cuidadora principal',
+        descripcion: 'El dueño, la hermana y la pareja (con o sin consentimiento; no la cuenta maestra) (v1.4). Escribe una fila de la bitácora de cuidados con `tipo = instruccion`. De 1 a 500 caracteres (22023). La cuidadora la lee; la pareja sin consentimiento no lee la bitácora. Cuidadora, Casa y quien no tiene perfil: 403 (42501). La bitácora de auditoría guarda `cuidados.instruccion_dejada` sin el texto.',
+        roles: {Rol.dueno, Rol.coadministrador, Rol.familiar},
         escribe: true,
         soloLocal: true,
         fase: 5,
