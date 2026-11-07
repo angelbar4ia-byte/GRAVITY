@@ -157,7 +157,69 @@ class RepositorioCuidadosSupabase implements RepositorioCuidados {
         (f) => f['persona_id'] == personaId && f['vigente'] == true,
       );
     }
-    return PerfilCuidados.servidor(valor, resumenAutorizado: autorizado);
+    return PerfilCuidados.servidor(
+      valor,
+      resumenAutorizado: autorizado,
+      esAlbacea: valor != null && await _esAlbacea(),
+    );
+  }
+
+  /// El servidor no expone `cui_es_albacea`; quien lo es lee su propia fila
+  /// de `fin_libro_miembros` (papel `albacea`, sin `hasta`). Solo oculta o
+  /// muestra: `cui_autorizar_resumen` lo vuelve a exigir.
+  Future<bool> _esAlbacea() async {
+    try {
+      final filas = await _leer('fin_libro_miembros');
+      return filas.any(
+        (f) =>
+            f['persona_id'] == personaId &&
+            f['papel'] == 'albacea' &&
+            f['hasta'] == null,
+      );
+    } catch (_) {
+      return false;
+    }
+  }
+
+  @override
+  Future<EstadoConsentimientos> estadoConsentimientos() async {
+    final nombres = await _mapaNombres();
+    String? parejaId, hermanaId;
+    if (_perfil?.startsWith('pareja') ?? false) parejaId = personaId;
+    try {
+      for (final f in await _leer('membresias')) {
+        if (f['activa'] == false) continue;
+        if (f['rol'] == 'coadministrador') {
+          parejaId ??= f['persona_id'] as String?;
+        }
+      }
+    } catch (_) {}
+    try {
+      for (final f in await _leer('cui_turnos')) {
+        if (f['tipo'] == 'hermana_visita') {
+          hermanaId ??= f['persona_id'] as String?;
+        }
+      }
+    } catch (_) {}
+    var parejaOk = false, hermanaOk = false;
+    try {
+      for (final f in await _leer('cui_consentimientos')) {
+        if (f['persona_id'] == parejaId) parejaOk = f['concedido'] == true;
+      }
+    } catch (_) {}
+    try {
+      for (final f in await _leer('cui_autorizacion_resumen')) {
+        if (f['persona_id'] == hermanaId) hermanaOk = f['vigente'] == true;
+      }
+    } catch (_) {}
+    return EstadoConsentimientos(
+      parejaId: parejaId,
+      parejaNombre: _quien(nombres, parejaId, 'Pareja'),
+      parejaConcedido: parejaOk,
+      hermanaId: hermanaId,
+      hermanaNombre: _quien(nombres, hermanaId, 'Hermana'),
+      hermanaAutorizada: hermanaOk,
+    );
   }
 
   @override
@@ -402,8 +464,10 @@ class RepositorioCuidadosSupabase implements RepositorioCuidados {
     final cita = _citaEnNota.firstMatch(nota);
     return EntradaBitacora(
       id: f['id'] as String,
-      tipo: cita == null ? TipoBitacora.nota : TipoBitacora.cita,
-      texto: cita == null ? nota : cita[2]!,
+      tipo: f['tipo'] == 'instruccion'
+          ? TipoBitacora.instruccion
+          : (cita == null ? TipoBitacora.nota : TipoBitacora.cita),
+      texto: cita == null || f['tipo'] == 'instruccion' ? nota : cita[2]!,
       autorId: f['persona_id'] as String,
       autorNombre: _quien(nombres, f['persona_id']),
       creadaEn: _fecha(f['creada_en']),
@@ -420,6 +484,19 @@ class RepositorioCuidadosSupabase implements RepositorioCuidados {
       'id': e.id,
       'hogar_id': hogarId,
       'nota': nota,
+    });
+  }
+
+  @override
+  Future<void> dejarInstruccion(
+    String texto, {
+    required String autorNombre,
+    required DateTime en,
+  }) async {
+    // La RPC devuelve el id de la fila; el texto no se guarda en la app.
+    await _rpc('cui_dejar_instruccion', {
+      'p_hogar_id': hogarId,
+      'p_texto': texto,
     });
   }
 

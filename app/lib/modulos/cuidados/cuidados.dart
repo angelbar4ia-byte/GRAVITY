@@ -1,7 +1,7 @@
 /// Módulo **Cuidados** de GRAVITY (agente cuidados, Fase 5).
 ///
 /// [rutasCuidados]: rutas **relativas** a `/cuidados` (raíz = Mi turno;
-/// `medicamentos`, `comidas`, `bitacora`, `resumen`, `urgente`, `gestion`).
+/// `medicamentos`, `comidas`, `bitacora`, `instrucciones`, `consentimientos`, `resumen`, `urgente`, `gestion`).
 /// Contrato del servidor: `docs/specs/fase-5-cuidados.md` y las tablas
 /// `cui_*` (columnas en `datos/repositorio_supabase.dart`). Los datos
 /// clínicos nunca van a la IA ni a las bocinas (D3, D6): este módulo no
@@ -16,7 +16,9 @@ import '../../nucleo/permisos/permisos.dart';
 import 'pantallas/bitacora.dart';
 import 'pantallas/cambio_urgente.dart';
 import 'pantallas/comidas.dart';
+import 'pantallas/consentimientos.dart';
 import 'pantallas/gestion.dart';
+import 'pantallas/instrucciones.dart';
 import 'pantallas/medicamentos.dart';
 import 'pantallas/mi_turno.dart';
 import 'pantallas/resumen_mensual.dart';
@@ -38,6 +40,14 @@ List<RouteBase> rutasCuidados() => [
   GoRoute(
     path: 'bitacora',
     pageBuilder: _pagina(() => const PantallaBitacora()),
+  ),
+  GoRoute(
+    path: 'instrucciones',
+    pageBuilder: _pagina(() => const PantallaInstrucciones()),
+  ),
+  GoRoute(
+    path: 'consentimientos',
+    pageBuilder: _pagina(() => const PantallaConsentimientos()),
   ),
   GoRoute(
     path: 'resumen',

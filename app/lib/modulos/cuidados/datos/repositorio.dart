@@ -46,6 +46,15 @@ abstract interface class RepositorioCuidados {
   Future<List<EntradaBitacora>> bitacora();
   Future<void> agregarBitacora(EntradaBitacora e);
 
+  /// `cui_dejar_instruccion(hogar, texto)`: dueño, hermana y pareja. El
+  /// servidor pone quién y cuándo (en el servidor real [autorNombre] y [en]
+  /// no viajan; la versión en memoria los usa para mostrar la entrada).
+  Future<void> dejarInstruccion(
+    String texto, {
+    required String autorNombre,
+    required DateTime en,
+  });
+
   Future<List<Entrega>> entregas();
   Future<void> dejarEntrega(Entrega e);
 
@@ -74,6 +83,10 @@ abstract interface class RepositorioCuidados {
 
   /// `cui_autorizar_resumen(hogar, persona, vigente)`: solo el albacea.
   Future<void> autorizarResumen(String personaId, bool vigente);
+
+  /// Estado de consentimiento de la pareja y autorización de la hermana, tal
+  /// como lo puede leer esta sesión (el servidor filtra).
+  Future<EstadoConsentimientos> estadoConsentimientos();
 
   /// `null` si no hay resumen (sin autorización o sin permiso).
   Future<ResumenMensual?> resumenMensual(DateTime mes);
@@ -107,6 +120,10 @@ class DatosCuidadosMemoria {
 
   /// La persona de Papá (la que el albacea representa).
   String personaPapaId = 'persona-papa';
+
+  /// Pareja y hermana de la demostración (para el estado de consentimientos).
+  String personaParejaId = 'persona-pareja';
+  String personaHermanaId = 'persona-hermana';
 }
 
 /// Crea las tomas pendientes de los medicamentos activos (como
@@ -193,11 +210,23 @@ class RepositorioCuidadosEnMemoria implements RepositorioCuidados {
     final base = perfilActual;
     final cons = datos.consentimientos[personaId];
     final aut = datos.autorizaciones[personaId];
-    if (cons == null && aut == null) return base;
+    if (cons == null && aut == null) {
+      return esAlbacea && !base.esAlbacea
+          ? PerfilCuidados(
+              tipo: base.tipo,
+              sinAcceso: base.sinAcceso,
+              esFamiliar: base.esFamiliar,
+              consentimiento: base.consentimiento,
+              resumenAutorizado: base.resumenAutorizado,
+              esAlbacea: true,
+            )
+          : base;
+    }
     return PerfilCuidados(
       tipo: base.tipo,
       sinAcceso: base.sinAcceso,
       esFamiliar: base.esFamiliar,
+      esAlbacea: base.esAlbacea || esAlbacea,
       consentimiento: cons ?? base.consentimiento,
       resumenAutorizado: aut ?? base.resumenAutorizado,
     );
@@ -331,7 +360,11 @@ class RepositorioCuidadosEnMemoria implements RepositorioCuidados {
     // El servidor deja leer toda la bitácora a dueño, cuidadora y hermana;
     // que la cuidadora y la hermana vean solo la suya es decisión pendiente
     // del dueño y la aplica el servicio.
-    if (!_puede('bitacora', 'leer')) return const [];
+    // La pareja la lee entera solo con su consentimiento (v1.2).
+    final parejaConsentida =
+        _pareja &&
+        (datos.consentimientos[personaId] ?? perfilActual.consentimiento);
+    if (!_puede('bitacora', 'leer') && !parejaConsentida) return const [];
     return [...datos.bitacora]
       ..sort((a, b) => b.creadaEn.compareTo(a.creadaEn));
   }
@@ -352,6 +385,36 @@ class RepositorioCuidadosEnMemoria implements RepositorioCuidados {
         autorNombre: e.autorNombre,
         creadaEn: e.creadaEn,
         programadaEn: e.programadaEn,
+      ),
+    );
+  }
+
+  @override
+  Future<void> dejarInstruccion(
+    String texto, {
+    required String autorNombre,
+    required DateTime en,
+  }) async {
+    // Como `cui_dejar_instruccion`: dueño, hermana y pareja; 1 a 500
+    // caracteres (22023); el autor lo pone el servidor.
+    _exigir(_dueno || _perfil == TipoPerfil.hermana || _pareja);
+    final t = texto.trim();
+    if (t.isEmpty || t.length > 500) {
+      throw const ErrorCuidados('La instrucción debe tener de 1 a 500 letras.');
+    }
+    final ahora = en;
+    _tope([
+      for (final x in datos.bitacora)
+        if (x.autorId == personaId) x.creadaEn,
+    ], ahora);
+    datos.bitacora.add(
+      EntradaBitacora(
+        id: idNuevoCuidados(),
+        tipo: TipoBitacora.instruccion,
+        texto: t,
+        autorId: personaId,
+        autorNombre: autorNombre,
+        creadaEn: ahora,
       ),
     );
   }
@@ -523,6 +586,25 @@ class RepositorioCuidadosEnMemoria implements RepositorioCuidados {
   Future<void> autorizarResumen(String persona, bool vigente) async {
     _exigir(esAlbacea);
     datos.autorizaciones[persona] = vigente;
+  }
+
+  @override
+  Future<EstadoConsentimientos> estadoConsentimientos() async {
+    // El servidor deja leer los consentimientos al dueño y a su titular.
+    final soloLoMio = _pareja || _perfil == TipoPerfil.hermana;
+    _exigir(_dueno || soloLoMio || esAlbacea);
+    final pareja = datos.personaParejaId;
+    final hermana = datos.personaHermanaId;
+    bool conc(String id, bool propio) =>
+        datos.consentimientos[id] ?? (personaId == id && propio);
+    bool aut(String id, bool propio) =>
+        datos.autorizaciones[id] ?? (personaId == id && propio);
+    return EstadoConsentimientos(
+      parejaId: pareja,
+      parejaConcedido: conc(pareja, perfilActual.consentimiento),
+      hermanaId: hermana,
+      hermanaAutorizada: aut(hermana, perfilActual.resumenAutorizado),
+    );
   }
 
   @override

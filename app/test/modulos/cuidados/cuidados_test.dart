@@ -1,4 +1,5 @@
 import 'package:gravity/nucleo/cuidados/turnos.dart';
+
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -314,29 +315,26 @@ void main() {
   });
 
   group('Bitácora (criterio 2)', () {
-    test(
-      'cada cuidadora ve solo lo suyo; el dueño ve todo; la pareja nada',
-      () async {
-        final d = _datos();
-        final c = _srv(d, _cuidadora, Rol.cuidador);
-        final h = _srv(d, _hermana, Rol.cuidador, perfil: _perfilHermana);
-        final o = _srv(d, _dueno, Rol.dueno);
-        await c.agregarNota('Papá durmió bien');
-        await h.agregarNota('Visita por la tarde');
-        expect((await c.bitacora()).map((e) => e.texto), ['Papá durmió bien']);
-        expect((await h.bitacora()).map((e) => e.texto), [
-          'Visita por la tarde',
-        ]);
-        expect((await o.bitacora()).length, 2);
-        final p = _srv(
-          d,
-          _pareja,
-          Rol.coadministrador,
-          perfil: const PerfilCuidados(consentimiento: true),
-        );
-        expect(await p.bitacora(), isEmpty);
-      },
-    );
+    test('cada cuidadora ve solo lo suyo; el dueño ve todo; la pareja con consentimiento también', () async {
+      final d = _datos();
+      final c = _srv(d, _cuidadora, Rol.cuidador);
+      final h = _srv(d, _hermana, Rol.cuidador, perfil: _perfilHermana);
+      final o = _srv(d, _dueno, Rol.dueno);
+      await c.agregarNota('Papá durmió bien');
+      await h.agregarNota('Visita por la tarde');
+      expect((await c.bitacora()).map((e) => e.texto), ['Papá durmió bien']);
+      expect((await h.bitacora()).map((e) => e.texto), ['Visita por la tarde']);
+      expect((await o.bitacora()).length, 2);
+      final p = _srv(
+        d,
+        _pareja,
+        Rol.coadministrador,
+        perfil: const PerfilCuidados(consentimiento: true),
+      );
+      // Con su consentimiento la pareja lee la bitácora entera (v1.2, §8d);
+      // sin él, nada (lo cubre instrucciones_consentimientos_test.dart).
+      expect(await p.bitacora(), hasLength(2));
+    });
 
     test('una nota vacía no se guarda', () async {
       final s = _srv(_datos(), _cuidadora, Rol.cuidador);
@@ -598,7 +596,7 @@ void main() {
         final permisos = PermisosCuidados(rol: Rol.familiar, perfil: p);
         expect(permisos.entra && permisos.resumenDisponible, isTrue);
         expect(permisos.marcaTomaA(RolDeTurno.cuidadoraPrincipal), isFalse);
-      expect(permisos.marcaTomaA(RolDeTurno.hermana), isTrue);
+        expect(permisos.marcaTomaA(RolDeTurno.hermana), isTrue);
 
         fuente.funciones['cui_perfil'] = (_) => null;
         final sin = await repo(fuente, _hermana).perfil();

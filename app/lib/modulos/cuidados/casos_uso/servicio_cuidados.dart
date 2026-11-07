@@ -289,6 +289,28 @@ class ServicioCuidados {
     );
   }
 
+  /// Deja una instrucción para la cuidadora principal (`cui_dejar_instruccion`).
+  /// El texto no se copia a ningún registro local (D3): solo viaja al servidor.
+  Future<void> dejarInstruccion(String texto) async {
+    _exigir(permisos.dejaInstruccion);
+    final t = texto.trim();
+    if (t.isEmpty) throw const ErrorCuidados('Escribe la instrucción.');
+    if (t.length > 500) {
+      throw const ErrorCuidados('La instrucción puede tener hasta 500 letras.');
+    }
+    await _repo.dejarInstruccion(t, autorNombre: nombre, en: ahora());
+  }
+
+  /// Solo la cuidadora: las instrucciones que le llegan más sus propias notas,
+  /// de la más reciente a la más antigua. Solo lectura.
+  Future<List<EntradaBitacora>> instruccionesRecibidas() async {
+    if (!permisos.veInstruccionesRecibidas) return const [];
+    return [
+      for (final e in await _repo.bitacora())
+        if (e.tipo == TipoBitacora.instruccion || e.autorId == personaId) e,
+    ];
+  }
+
   Future<List<EntradaBitacora>> citas() async {
     _exigir(permisos.administra);
     return [
@@ -398,8 +420,16 @@ class ServicioCuidados {
   }
 
   /// Solo el albacea (D19): el servidor lo exige.
-  Future<void> autorizarResumen(String personaHermanaId, bool vigente) =>
-      _repo.autorizarResumen(personaHermanaId, vigente);
+  Future<void> autorizarResumen(String personaHermanaId, bool vigente) async {
+    _exigir(permisos.autorizaResumen);
+    await _repo.autorizarResumen(personaHermanaId, vigente);
+  }
+
+  /// Estado de consentimiento de la pareja y autorización de la hermana.
+  Future<EstadoConsentimientos?> estadoConsentimientos() async {
+    if (!permisos.veConsentimientos) return null;
+    return _repo.estadoConsentimientos();
+  }
 
   /// Solo el dueño: crea las tomas pendientes de los próximos [dias].
   Future<int> generarTomas({int dias = 1}) async {

@@ -5,6 +5,7 @@
 library;
 
 import '../../../nucleo/cuidados/turnos.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -41,9 +42,7 @@ class PantallaMedicamentos extends ConsumerWidget {
                         children: [
                           Text(
                             p.marcaTomaA(
-                                  cuidadorDeTurno(
-                                    ref.watch(relojDeCuidados),
-                                  ),
+                                  cuidadorDeTurno(ref.watch(relojDeCuidados)),
                                 )
                                 ? 'Toca una dosis para marcarla.'
                                 : 'Solo lectura.',

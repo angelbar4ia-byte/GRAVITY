@@ -104,6 +104,10 @@ final dosisHoyProvider = _datos((s) => s.dosisDelDia());
 final siguienteDosisProvider = _datos((s) => s.siguienteDosis());
 final comidasHoyProvider = _datos((s) => s.comidasDeHoy());
 final bitacoraProvider = _datos((s) => s.bitacora());
+final instruccionesRecibidasProvider = _datos(
+  (s) => s.instruccionesRecibidas(),
+);
+final consentimientosProvider = _datos((s) => s.estadoConsentimientos());
 final citasProvider = _datos((s) => s.citas());
 final gastosProvider = _datos((s) => s.gastos());
 

@@ -63,6 +63,7 @@ class PerfilCuidados {
     this.consentimiento = false,
     this.tipo,
     this.sinAcceso = false,
+    this.esAlbacea = false,
   });
 
   /// Perfil leído del servidor: [valor] es lo que devolvió `cui_perfil`
@@ -70,6 +71,7 @@ class PerfilCuidados {
   factory PerfilCuidados.servidor(
     Object? valor, {
     bool resumenAutorizado = false,
+    bool esAlbacea = false,
   }) {
     final t = TipoPerfil.deServidor(valor);
     return PerfilCuidados(
@@ -78,6 +80,7 @@ class PerfilCuidados {
       esFamiliar: t == TipoPerfil.hermana,
       consentimiento: t == TipoPerfil.parejaConsentida,
       resumenAutorizado: t == TipoPerfil.hermana && resumenAutorizado,
+      esAlbacea: t != null && esAlbacea,
     );
   }
 
@@ -96,6 +99,10 @@ class PerfilCuidados {
 
   /// El servidor respondió "sin perfil": no hay acceso a Cuidados.
   final bool sinAcceso;
+
+  /// Es el albacea vigente de Papá (D19): único que autoriza el resumen.
+  /// Solo adorno de la interfaz; el servidor lo vuelve a exigir.
+  final bool esAlbacea;
 
   /// Perfil efectivo para [rol]: el del servidor si lo hay; si no, se deduce.
   /// Nulo = sin acceso (Casa, familiar sin perfil, baja…).
@@ -280,7 +287,7 @@ class ComidaRegistro {
       idEstableCuidados('comida:${fechaClave(fecha)}:${t.name}');
 }
 
-enum TipoBitacora { nota, cita }
+enum TipoBitacora { nota, cita, instruccion }
 
 @immutable
 class EntradaBitacora {
@@ -492,4 +499,30 @@ class ErrorCuidados implements Exception {
 
   @override
   String toString() => mensaje;
+}
+
+/// Estado de los consentimientos y autorizaciones (`cui_consentimientos` y
+/// `cui_autorizacion_resumen`). Sin textos clínicos: solo quién y si sí o no.
+@immutable
+class EstadoConsentimientos {
+  const EstadoConsentimientos({
+    this.parejaId,
+    this.parejaNombre = 'Pareja',
+    this.parejaConcedido = false,
+    this.hermanaId,
+    this.hermanaNombre = 'Hermana',
+    this.hermanaAutorizada = false,
+  });
+
+  final String? parejaId;
+  final String parejaNombre;
+
+  /// La pareja concedió leer la bitácora.
+  final bool parejaConcedido;
+
+  final String? hermanaId;
+  final String hermanaNombre;
+
+  /// El albacea autorizó que la hermana vea el resumen mensual.
+  final bool hermanaAutorizada;
 }

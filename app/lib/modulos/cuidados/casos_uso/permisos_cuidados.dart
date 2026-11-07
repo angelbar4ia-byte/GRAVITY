@@ -127,5 +127,20 @@ class PermisosCuidados {
       _escribe && (_dueno || _cuidadora || _hermana);
 
   /// La pareja puede dar o retirar su consentimiento.
-  bool get daConsentimiento => _pareja;
+  bool get daConsentimiento => _pareja && !esMaestra;
+
+  /// Dejar instrucciones a la cuidadora principal: dueño, hermana y pareja
+  /// (con o sin consentimiento; §8f). La cuidadora y la cuenta maestra no
+  /// (decisión pendiente sobre la maestra; no se cambia aquí).
+  bool get dejaInstruccion => !esMaestra && (_dueno || _hermana || _pareja);
+
+  /// La cuidadora ve las instrucciones que le llegan y sus propias notas.
+  bool get veInstruccionesRecibidas => _cuidadora;
+
+  /// Solo el albacea autoriza el resumen de la hermana (D19).
+  bool get autorizaResumen => !esMaestra && perfil.esAlbacea && tipo != null;
+
+  /// Quién ve el estado de los consentimientos: la pareja el suyo, el dueño
+  /// como resumen y el albacea la autorización de la hermana.
+  bool get veConsentimientos => _pareja || _dueno || autorizaResumen;
 }
