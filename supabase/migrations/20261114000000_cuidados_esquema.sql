@@ -449,7 +449,7 @@ $$;
 -- Un turno es del dueño o de un cuidador o familiar vigente del mismo hogar.
 create function public.cui_turnos_validar()
 returns trigger
-language plpgsql
+language plpgsql security definer
 set search_path = ''
 as $$
 begin
@@ -670,6 +670,7 @@ revoke execute on function
 -- Las políticas se evalúan con el rol de quien consulta: necesita ejecutar lo que usan.
 grant execute on function
   public.cui_perfil(uuid), public.cui_puede(uuid, text, text), public.cui_en_circulo(uuid, uuid),
-  public.cui_puede_comida(uuid, date), public.cui_quien_en_turno(uuid, timestamptz), public.cui_persona_papa(uuid),
-  public.cui_es_albacea(uuid), public.cui_zona(uuid)
+  public.cui_puede_comida(uuid, date), public.cui_quien_en_turno(uuid, timestamptz)
   to authenticated, service_role;
+-- cui_zona, cui_persona_papa y cui_es_albacea son internas (las llaman otras funciones SECURITY DEFINER): la app no las ejecuta.
+grant execute on function public.cui_zona(uuid) to service_role;

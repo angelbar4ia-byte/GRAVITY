@@ -88,6 +88,13 @@ Decisión del dueño (7/nov/2026): **sin PIN**. Si la voz no da seguridad para i
 5. Voz de la hermana: sin PIN; si la voz no da seguridad, se pide de nuevo la identidad.
 6. El documento de la app de cuidados actual se revisa en la siguiente sesión. No bloquea la construcción de esta versión.
 
+## 8b. Respuestas del dueño a preguntas de construcción (7/nov/2026)
+
+- **Noches sin cuidador de turno:** las cubre el **dueño**. Un cambio urgente en esas horas avisa al dueño. (Si no hay turno, el destinatario por omisión es el dueño.)
+- **Resumen mensual:** "Cuidados de largo plazo" va **aparte** del rubro Salud, pero **agrupado junto a él**, porque están relacionados.
+
+*Pendiente de respuesta del dueño (del informe de Cuidados):* (a) si la cuidadora ve solo su propia bitácora; (b) si el turno del dueño por la tarde termina a las 24:00 y las visitas de la hermana se muestran todo el día; (c) el turno de la hermana de martes (15:00 a 24:00) y del miércoles (0:00 a 7:00).
+
 ## 9. Pendiente de la siguiente sesión
 
 - Documento de la app de cuidados actual: confirmar si algo que hoy usan falta en esta versión.

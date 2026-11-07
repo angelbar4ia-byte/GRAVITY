@@ -122,12 +122,15 @@ begin
             where q.tipo <> 'dueno' and q.persona_id <> v_yo loop
     perform public.avisos_insertar(p_hogar_id, r.persona_id, 'cuidados', 'cambio_urgente_cuidados', null,
                                    'cambio_urgente', p_id, 'cambio_urgente:' || p_id::text, now(), v_yo);
+    -- Inmediato (D4): no espera al fin del silencio nocturno (la hermana puede estar de turno de noche).
+    update public.avisos a set enviar_en = now()
+     where a.persona_id = r.persona_id and a.clave = 'cambio_urgente:' || p_id::text and a.estado = 'pendiente';
   end loop;
   return p_id;
 end
 $$;
 comment on function public.cui_crear_cambio_urgente(uuid, text, uuid) is
-  'Solo el dueño. Crea el cambio y avisa (tipo cambio_urgente_cuidados, crítico) a quien está de turno que no sea él. Sin nadie '
+  'Solo el dueño. Crea el cambio y avisa AL INSTANTE (tipo cambio_urgente_cuidados, crítico, sin esperar el silencio nocturno) a quien está de turno que no sea él. Sin nadie '
   'de turno, para_persona queda nula (lo ven al entrar). Devuelve el id (idempotente por id).';
 
 create function public.cui_atender_cambio_urgente(p_id uuid)

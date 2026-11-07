@@ -35,7 +35,7 @@ La tabla de muestra `finanzas_muestra` de la Fase 0 se borró en la Fase 1 (la r
 
 Sin fila = sin acceso. `restringido` tampoco da acceso mientras el módulo no defina su regla en su fase: hoy el coadministrador **no** entra a Cuidados (hasta que exista el consentimiento, Fase 5), el cuidador **no lee** Finanzas (solo escribirá sus gastos de cuidado, Fase 5) y su GRAVITY `restringido` (D18: sus solicitudes y recordatorios) espera su regla propia.
 
-El módulo `gravity` no está en la sección 5; se alineó con el espejo de la app en la revisión de la Fase 0 (hallazgo I1). Con D18 (migración de la Fase 1): dueño, coadministrador, familiar y casa `propio` (cada quien su historial); cuidador `restringido` en leer y escribir. Con D19, Finanzas es `propio` para dueño y coadministrador (leer, escribir y administrar): qué libro ve cada quien lo decide `fin_puede()`. La matriz queda con **59 filas**. Si cambias la matriz, cambia también el espejo (`app/lib/nucleo/permisos/permisos.dart`): la prueba `app/test/revision_calidad/i1_matriz_espejo_servidor_test.dart` lee los `insert into public.permisos_rol` de **todas** las migraciones y compara las acciones (no el alcance). Usa solo `total`, `propio` o `restringido` (el dominio no acepta otros y la prueba de la app solo reconoce esos).
+El módulo `gravity` no está en la sección 5; se alineó con el espejo de la app en la revisión de la Fase 0 (hallazgo I1). Con D18 (migración de la Fase 1): dueño, coadministrador, familiar y casa `propio` (cada quien su historial); cuidador `restringido` en leer y escribir. Con D19, Finanzas es `propio` para dueño y coadministrador (leer, escribir y administrar): qué libro ve cada quien lo decide `fin_puede()`. La matriz queda con **61 filas** (59 más las 2 del familiar en Cuidados, Fase 5). Si cambias la matriz, cambia también el espejo (`app/lib/nucleo/permisos/permisos.dart`): la prueba `app/test/revision_calidad/i1_matriz_espejo_servidor_test.dart` lee los `insert into public.permisos_rol` de **todas** las migraciones y compara las acciones (no el alcance). Usa solo `total`, `propio` o `restringido` (el dominio no acepta otros y la prueba de la app solo reconoce esos).
 
 **Funciones para las reglas** (SECURITY DEFINER, `search_path` vacío; las pueden usar las reglas de cualquier tabla):
 
@@ -395,7 +395,7 @@ Crea una base desechable, aplica `tests/00_emulacion_supabase.sql` (roles `anon`
 
 | Archivo | Comprueba |
 |---|---|
-| `10_esquema.sql` | RLS en **todas** las tablas de `public` (también las futuras); funciones SECURITY DEFINER con `search_path`; `anon` sin privilegios; nadie con TRUNCATE; matriz (59 filas, D18 y D19) y su alineación con la app (I1); persona automática al registrarse; privilegios por omisión de lo que se cree después (M1); las 21 tablas `fin_*` con `hogar_id` y bitácora, los libros solo agregar sin UPDATE/DELETE/TRUNCATE ni reglas para eso, vistas con `security_invoker`, una cuenta maestra por hogar; triggers de las salvaguardas y ayudantes internos que la API no puede ejecutar; la columna `fin_libros.visibilidad`, `invitaciones.es_maestra` y una sola `crear_invitacion` (5 parámetros) |
+| `10_esquema.sql` | RLS en **todas** las tablas de `public` (también las futuras); funciones SECURITY DEFINER con `search_path`; `anon` sin privilegios; nadie con TRUNCATE; matriz (61 filas, D18, D19 y Cuidados) y su alineación con la app (I1); persona automática al registrarse; privilegios por omisión de lo que se cree después (M1); las 21 tablas `fin_*` con `hogar_id` y bitácora, los libros solo agregar sin UPDATE/DELETE/TRUNCATE ni reglas para eso, vistas con `security_invoker`, una cuenta maestra por hogar; triggers de las salvaguardas y ayudantes internos que la API no puede ejecutar; la columna `fin_libros.visibilidad`, `invitaciones.es_maestra` y una sola `crear_invitacion` (5 parámetros) |
 | `20_finanzas_roles.sql` | **Criterio 26 con D19:** cada quien ve y registra en su libro y en los compartidos; la pareja no ve el libro personal de la dueña (en ninguna tabla ni vista) ni al revés; la aportación al compartido se ve desde los dos libros; familiar, cuidador y casa no ven nada de `fin_*` (tablas, vistas, bitácora) ni escriben; nadie registra a nombre de otro; la baja quita el acceso |
 | `21_finanzas_albacea.sql` | **D19:** el albacea registra en nombre de Papá con motivo (sin motivo falla); con albacea vigente el suplente solo lee; máximo un albacea y un suplente, solo adultos con Finanzas; si el albacea deja el cargo, el suplente escribe; `fin_crear_libro_representado` (solo dueño, idempotente) |
 | `22_finanzas_solo_agregar.sql` | **Criterios 25, 9 y 16:** nadie (ni dueña, ni `service_role`, ni `postgres`) edita, borra ni vacía movimientos, conciliaciones, cierres o importaciones; un gasto de una semana cerrada se corrige con anulación y contraasiento y la semana se recalcula; la foto del cierre no cambia; reglas de la anulación |
@@ -431,6 +431,10 @@ Crea una base desechable, aplica `tests/00_emulacion_supabase.sql` (roles `anon`
 
 | `80_calidad_fase1.sql` | Guardias de la revisión de calidad de la Fase 1: escalada, roles sin Finanzas, solo agregar (con TRUNCATE en cascada), cruce entre libros, reenvío de otra persona |
 | `81_calidad_fase1b.sql` | Guardias de la revisión de calidad de la Fase 1b (las escribe calidad): intentos de romper las reglas del 23/oct (cuenta maestra con login propio, compartidos, libro de Papá, bitácora); no dependen de que un compartido se archive. Sus hallazgos abiertos (N1 a N5) ya se cerraron en `36_finanzas_endurecimiento_1b.sql` y `hallazgos_fase1b.sql` se retiró |
+| `95_cuidados_roles.sql` | **Fase 5, criterios 2 y 6:** cada rol ve y escribe lo que la spec 5 §5 permite (dueña, pareja sin y con consentimiento, maestra, hermana, cuidadora); la cuidadora no ve Finanzas, Hábitos, miembros ni la bitácora de auditoría de la familia; Casa (tablet y bocinas), otro hogar, sin hogar y `anon` no ven nada; comidas, bitácora y entregas solo agregar; el servidor pone quién y cuándo; lo clínico no se copia a la bitácora de auditoría ni a los avisos |
+| `95_cuidados_turnos.sql` | **Criterios 1 y 4:** `cui_quien_en_turno` con el horario de la spec §3 (límites exactos, zona del hogar, domingo del dueño); la toma de las 8:00 del lunes no tiene a quién avisar; marcar "dado" solo la cuidadora a la hora de su turno o el dueño, nunca la hermana ni la pareja; cada marca en la bitácora sin datos clínicos; cambio urgente del dueño con aviso crítico inmediato solo al cuidador de turno |
+| `95_cuidados_resumen.sql` | **Criterio 3:** gastos de cuidado pendientes/confirmados/rechazados; el resumen mensual excluye a la pareja y al dueño; la hermana lo ve solo con la autorización del albacea (no la pareja, la maestra, la cuidadora, Casa ni `anon`); lo retira de inmediato; devuelve solo totales |
+| `95_cuidados_baja.sql` | **Criterio 5:** la baja (con `activa = false` o `hasta = now()`) corta todo en la misma transacción, también el resumen autorizado; cancela sus avisos; lo que registró queda a su nombre; un cuidador sin turnos no tiene acceso |
 
 Los casos de la revisión de calidad de la Fase 0 (`docs/revisiones/fase-0.md`: I1, M1, M2 y M3) y de la Fase 1 (`docs/revisiones/fase-1.md`: I1 a I5, M6 y M10) viven en estos archivos con la clave del hallazgo al inicio de su descripción (p. ej. `M2: …`, `I2: …`); `hallazgos_fase0.sql` y `hallazgos_fase1.sql` ya no existen.
 
@@ -523,3 +527,75 @@ Ver `herramientas/respaldo/README.md` (respaldo diario cifrado desde la laptop y
 ## Vista temporal de Finanzas de Papá (Fase 4, D24)
 
 Migración `20261110000000_fin_vista_papa.sql`, pruebas `93_fin_vista_papa.sql`. El familiar no tiene dinero de forma permanente: pide la vista con `fin_pedir_vista_papa(motivo)`, el dueño la responde con `fin_responder_vista(solicitud, 'autorizar' | 'rechazar' | 'cancelar')` y la autorización dura 30 minutos (`vigente_hasta`). `fin_vista_papa_vigente()` dice si la hay; `fin_puede(libro, 'leer')` la usa para el libro representado, y el servidor niega al pasar `vigente_hasta` o cancelar. `fin_vistas_vencer()` (solo servidor, `pg_cron` cada 5 min) marca `vencida`. La tabla `fin_vistas_solicitadas` (27.ª tabla `fin_*`) solo cambia por RPC y su bitácora no lleva motivo, montos ni cuentas. Aviso al dueño: tipo `solicitud_vista` (crítico). Contrato completo: `docs/specs/fase-4-vista-temporal.md`, sección 6.
+
+
+## Cuidados (Fase 5)
+
+Migraciones `20261113000000_cuidados_avisos.sql`, `20261114000000_cuidados_esquema.sql`, `20261115000000_cuidados_operaciones.sql` y `20261116000000_cuidados_matriz.sql`; pruebas `95_cuidados_*.sql`; según `docs/specs/fase-5-cuidados.md` v1.0 (turnos §3, consentimientos §4, permisos §5, criterios §7). **Los permisos los decide `cui_puede()`, no `permisos_rol`** (la matriz es solo el espejo de la app). Los medicamentos, las comidas y la bitácora de cuidados son **datos clínicos (D3)**: nunca a la IA en la nube, a las bocinas ni a la tablet pública. Casa no ve nada.
+
+### Quién es quién (`cui_perfil(hogar)`)
+
+| Perfil | Quién es |
+|---|---|
+| `dueno` | Rol `dueno` (también cuida: domingos y tardes de sábado y lunes) |
+| `pareja` / `pareja_consentida` | Rol `coadministrador` (la cuenta maestra también); `pareja_consentida` si tiene `cui_consentimientos.concedido` para sí misma |
+| `cuidadora` | Rol `cuidador` o `familiar` con algún turno de tipo `cuidadora` |
+| `hermana` | Rol `cuidador` o `familiar` con algún turno de tipo `hermana_visita` |
+| nulo | Casa, un cuidador o familiar **sin turnos**, un miembro dado de baja, otro hogar, `anon`: sin acceso |
+
+Una baja (`activa = false` o `hasta` vencido) quita el perfil **en la misma consulta**: todas las reglas parten de `rol_en_hogar()`. Además `cui_baja_cancela_avisos()` cancela sus avisos de Cuidados pendientes y `cui_quien_en_turno()` deja de contarla. Lo que registró queda a su nombre.
+
+| Objeto | Dueño | Pareja | Pareja consentida | Cuidadora | Hermana |
+|---|---|---|---|---|---|
+| Turnos | lee y edita | lee | lee | lee | lee |
+| Medicamentos y tomas | lee y edita | nada | **solo lee** | lee; marca tomas (RPC) | solo lee |
+| Comidas | lee y registra | nada | solo lee | lee; registra (si tiene turno ese día) | solo lee |
+| Bitácora de cuidados | lee y escribe | nada | nada | lee y escribe | lee y escribe |
+| Entregas de turno | las suyas y todas | nada | nada | las suyas | las suyas |
+| Cambios urgentes | los crea (RPC) y ve todos | nada | nada | los suyos o los que nadie recibió | ídem |
+| Gastos de cuidado | todos; confirma (RPC) | solo los suyos | solo los suyos | solo los suyos | solo los suyos |
+| Resumen mensual | sí | no | no | no | **solo con autorización del albacea** |
+| Resumen del día de Papá | sí | **sí** (conteos, sin nombres) | sí | sí | sí |
+
+### Tablas (contrato; no cambia sin avisar)
+
+| Tabla | Columnas |
+|---|---|
+| `cui_turnos` | `id`, `hogar_id`, `persona_id`, `dia_semana` 1 a 7 (1 = lunes), `inicio_min`, `fin_min` (minutos desde medianoche, 0 a 1440, `fin > inicio`; un turno no cruza la medianoche), `tipo` (`cuidadora`, `dueno`, `hermana_visita`). `dueno` es del dueño; los otros, de un cuidador o familiar vigente |
+| `cui_medicamentos` | `id`, `hogar_id`, `nombre`, `dosis`, `horas text[]` (`HH:MM`, 1 a 12), `notas`, `activo`. No se borran |
+| `cui_tomas` | `id`, `hogar_id`, `medicamento_id`, `programada_para`, `estado` (`pendiente`, `dado`, `no_dado`), `marcada_por`, `marcada_en`. Única por (medicamento, hora). Solo cambia con `cui_marcar_toma` |
+| `cui_comidas` | `id`, `hogar_id`, `fecha`, `tiempo`, `resultado` (`comio`, `comio_poco`, `rechazo`), `registrada_por`, `registrada_en`. **Solo agregar**: la corrección es una fila nueva (vale la más reciente) |
+| `cui_bitacora` | `id`, `hogar_id`, `persona_id`, `nota` (1 a 500), `creada_en`. **Solo agregar** |
+| `cui_entregas` | `id`, `hogar_id`, `de_persona`, `para_persona`, `nota` (1 a 500), `creada_en`. **Solo agregar** |
+| `cui_cambios_urgentes` | `id`, `hogar_id`, `de_persona`, `para_persona` (nula si nadie estaba de turno), `texto` (1 a 200), `creado_en`, `atendido_en` |
+| `cui_gastos` | `id`, `hogar_id`, `persona_id`, `monto_centavos` (> 0), `concepto`, `fecha`, `estado` (`pendiente_confirmacion`, `confirmado`, `rechazado`), `confirmado_en` y dos **extensiones**: `ambito` (`cuidado` por omisión, `casa`) y `registrado_en`. Solo cambian `estado` y `confirmado_en`, una vez |
+| `cui_consentimientos` | PK (`hogar_id`, `persona_id`), `concedido`, `cambiado_en`, `cambiado_por`. Solo por RPC |
+| `cui_autorizacion_resumen` | PK (`hogar_id`, `persona_id` de la hermana), `autorizado_por`, `vigente`, `cambiado_en`. Solo por RPC |
+
+La app **no manda** `persona_id`, `registrada_por`, `de_persona`, `estado`, `confirmado_en` ni los `*_en` (sin permiso de columna, 42501): los pone el servidor. Cada tabla con persona lleva un tope de 300 registros propios en 24 horas (54000). La bitácora de auditoría (`bitacora`) registra los cambios de turnos, medicamentos (**sin** nombre, dosis, horas ni notas), gastos (sin concepto), cambios urgentes (sin texto), consentimientos y autorizaciones; las tomas, con `cuidados.toma_marcada` y solo el estado.
+
+### Operaciones (RPC)
+
+| Función | Quién | Qué hace |
+|---|---|---|
+| `cui_perfil(hogar)` · `cui_puede(hogar, objeto, accion)` | cualquiera | Perfil y permiso de la sesión (espejo para la app) |
+| `cui_quien_en_turno(hogar, ts = now())` → `(persona_id, tipo)` | quien tiene perfil; el servidor (`service_role`) | Quién está de turno en `ts` (zona del hogar; solo membresías vigentes). **Los recordatorios de medicamentos y comidas se envían solo a estas personas** (criterio 1) |
+| `cui_generar_tomas(hogar, desde, dias = 1)` → entero | dueño; servidor | Crea las tomas pendientes de los medicamentos activos (1 a 14 días). Idempotente |
+| `cui_marcar_toma(toma, 'dado' \| 'no_dado')` | dueño; cuidadora **de turno a la hora programada de la toma** | Marca y deja `cuidados.toma_marcada` en la bitácora. La hermana y la pareja no (42501) |
+| `cui_crear_cambio_urgente(hogar, texto, id)` → `id` | solo el dueño | Crea el cambio y avisa **al instante** (tipo `cambio_urgente_cuidados`, crítico, sin esperar el silencio nocturno) a quien está de turno que no sea él. Idempotente por `id` |
+| `cui_atender_cambio_urgente(id)` | quien lo recibe, el dueño o, si nadie estaba de turno, cuidadora u hermana | Marca atendido y resuelve el aviso |
+| `cui_confirmar_gasto(gasto, confirmar)` | solo el dueño | `confirmado` o `rechazado`. **Finanzas** parte del estado `confirmado` (su función de paso es de finanzas) |
+| `cui_cambiar_consentimiento(hogar, persona, concedido)` | el titular; el albacea por Papá | Concede o retira. Hoy abre a la pareja medicamentos, tomas y comidas (solo lectura) |
+| `cui_autorizar_resumen(hogar, persona, vigente)` | solo el albacea (D19) | Autoriza o retira que esa persona vea el resumen mensual |
+| `cui_resumen_mensual(mes)` → `(hogar_id, mes, gastos_cuidado_centavos, gastos_casa_centavos, n_gastos)` | dueño; hermana autorizada | Totales del mes de gastos **confirmados** sin los de la pareja ni los del dueño. Nunca filas. Otra sesión: 42501 |
+| `cui_resumen_papa(hogar, dia)` | cualquiera con perfil, también la pareja sin consentimiento | Conteos de tomas y comidas del día, sin nombres, dosis ni notas |
+
+Errores: `42501` sin permiso (igual exista o no el registro), `22023` dato inválido, `55000` ya resuelto, `54000` tope, `23514` regla de la tabla.
+
+**Avisos (`20261113`).** `avisos.modulo` admite `cuidados`, `avisos.tipo` el nuevo `cambio_urgente_cuidados` (crítico) y `avisos.objeto_tipo` `cambio_urgente`; el aviso no lleva texto (D3, D20): apunta al cambio con `objeto_id`. Quien envíe los avisos (Edge Function y catálogo de la app) debe conocer el tipo nuevo.
+
+**Matriz (`20261116`).** Dos filas nuevas: `familiar × cuidados × leer` y `escribir`, `restringido` (la hermana). El espejo de la app (`permisos.dart`) debe pasar el familiar de `ninguno` a `restringido` en Cuidados; la prueba `i1_matriz_espejo_servidor_test.dart` lo exige.
+
+**Datos de ejemplo.** `seed.sql` carga los 11 turnos de la spec §3 (Diana, Carla y Ana) y dos medicamentos inventados.
+
+**Límites conocidos.** No hay traslape de turnos de una misma persona (la base lo tolera) y un turno no cruza la medianoche. Los gastos de "la casa" del resumen son los que quien cuida registra con `ambito = 'casa'`; los del libro compartido de Finanzas los suma finanzas, no esta migración.
