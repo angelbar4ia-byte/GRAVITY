@@ -515,3 +515,9 @@ Respuestas del dueño a la especificación de la Fase 4 (`docs/specs/fase-4-puli
 - El nuevo estilo es **Bento**: tarjetas en cuadrícula, esquinas redondeadas, fondo suave, un color de acento y letras limpias. Se propone así; el dueño lo aprueba al verlo, como cualquier estilo.
 - Glass sigue pendiente de construir hasta que Bento se apruebe.
 
+## D27. Eliminar Swagger, seguir con Glass, Bento en pausa — confirmada (7/nov/2026)
+
+- El estilo **Swagger** se **elimina** del proyecto (código, pruebas y fuentes que solo él usaba).
+- Se construye ahora el estilo **Glass** (día y noche), con la misma regla de contraste y letra grande.
+- El estilo **Bento** queda **en pausa**: no aparece en las opciones de la app hasta que el dueño decida retomarlo. Su código se conserva.
+
