@@ -281,6 +281,54 @@ void main() {
     );
   });
 
+  group('bitácora de consultas (D24)', () {
+    Future<void> autoriza(WidgetTester t) async {
+      await monta(t, Rol.familiar, const PantallaPedirVistaPapa());
+      await pideComoFamiliar(t);
+      final id = (await servidor.listar()).single.id;
+      await servidor.responder(id, AccionVista.autorizar);
+      await pasa(t, const Duration(seconds: 3));
+    }
+
+    testWidgets('una consulta por carga de la vista', (t) async {
+      await autoriza(t);
+      expect(find.textContaining(montoDePapa()), findsWidgets);
+      expect(servidor.consultasRegistradas, 1);
+    });
+
+    testWidgets('si el registro falla no hay cifras', (t) async {
+      servidor.fallaRegistro = true;
+      await autoriza(t);
+      expect(
+        find.byKey(const ValueKey('vista-papa-sin-registro')),
+        findsOneWidget,
+      );
+      expect(
+        find.text('No pudimos registrar la consulta; intenta de nuevo'),
+        findsOneWidget,
+      );
+      expect(find.textContaining(montoDePapa()), findsNothing);
+      expect(servidor.consultasRegistradas, 0);
+    });
+
+    test('el contador en memoria sube con cada refresco', () async {
+      final f = servidor.comoPersona(_familiarId);
+      final id = await f.pedir('Revisar pagos');
+      await servidor.responder(id, AccionVista.autorizar);
+      for (var i = 1; i <= 3; i++) {
+        await f.registrarConsulta();
+        await f.leerVista();
+        expect(servidor.consultasRegistradas, i);
+      }
+    });
+
+    test('sin autorización vigente no se registra', () async {
+      final f = servidor.comoPersona(_familiarId);
+      await expectLater(f.registrarConsulta(), throwsA(anything));
+      expect(servidor.consultasRegistradas, 0);
+    });
+  });
+
   group('lado del dueño (crit. 4 y 6)', () {
     Future<void> pideElFamiliar() async {
       await servidor

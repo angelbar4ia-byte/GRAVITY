@@ -131,6 +131,11 @@ abstract interface class RepositorioVistaPapa {
   /// `null`. Es lo único de Papá que ve el familiar, y solo en memoria: no se
   /// guarda en la copia del equipo.
   Future<DatosFinanzas?> leerVista();
+
+  /// Anota en la bitácora del servidor que el familiar consultó el libro de
+  /// Papá (`fin_registrar_consulta_vista`; sin montos ni cuentas). Debe
+  /// llamarse antes de cada [leerVista]; si lanza, no se muestran cifras.
+  Future<void> registrarConsulta();
 }
 
 // ------------------------------------------------------------------ Supabase
@@ -179,6 +184,11 @@ class RepositorioVistaPapaSupabase implements RepositorioVistaPapa {
     final datos = await cargarLibros();
     return _soloLibroDePapa(datos);
   }
+
+  @override
+  Future<void> registrarConsulta() async {
+    await fuente.rpc('fin_registrar_consulta_vista', {});
+  }
 }
 
 DatosFinanzas _soloLibroDePapa(DatosFinanzas d) => datosDeLibros(d, {
@@ -201,6 +211,8 @@ class _Almacen {
   final DateTime Function() reloj;
   final String Function() generarId;
   final List<SolicitudVista> filas = [];
+  int consultas = 0;
+  bool fallaRegistro = false;
 }
 
 /// Para pruebas y demostración. Varias personas comparten el mismo almacén con
@@ -306,4 +318,21 @@ class RepositorioVistaPapaEnMemoria implements RepositorioVistaPapa {
   @override
   Future<DatosFinanzas?> leerVista() async =>
       await vigente() ? _a.datosPapa : null;
+
+  /// Cuántas consultas quedaron anotadas (para pruebas).
+  int get consultasRegistradas => _a.consultas;
+
+  /// Para pruebas: hace que el registro falle (como sin señal).
+  set fallaRegistro(bool valor) => _a.fallaRegistro = valor;
+
+  @override
+  Future<void> registrarConsulta() async {
+    if (_a.fallaRegistro) {
+      throw const ErrorFinanzas('No se pudo registrar la consulta.');
+    }
+    if (!await vigente()) {
+      throw const ErrorFinanzas('No hay una autorización vigente.');
+    }
+    _a.consultas++;
+  }
 }

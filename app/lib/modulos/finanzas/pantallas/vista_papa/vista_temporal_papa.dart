@@ -56,6 +56,7 @@ class _EstadoVista extends ConsumerState<VistaTemporalPapa> {
   DatosFinanzas? _datos;
   Object? _error;
   bool _cargando = true;
+  bool _sinRegistro = false;
 
   late final _activa = ref.read(vistaPapaActivaProvider.notifier);
 
@@ -69,8 +70,16 @@ class _EstadoVista extends ConsumerState<VistaTemporalPapa> {
   }
 
   Future<void> _cargar() async {
+    final repo = ref.read(repositorioVistaPapaProvider);
     try {
-      final d = await ref.read(repositorioVistaPapaProvider).leerVista();
+      // Primero se anota la consulta; si falla, no se lee nada de Papá.
+      try {
+        await repo.registrarConsulta();
+      } catch (_) {
+        if (mounted) setState(() => _sinRegistro = true);
+        return;
+      }
+      final d = await repo.leerVista();
       if (mounted) setState(() => _datos = d);
     } catch (e) {
       if (mounted) setState(() => _error = e);
@@ -117,6 +126,16 @@ class _EstadoVista extends ConsumerState<VistaTemporalPapa> {
 
   Widget _cuerpo(BuildContext context, ValoresDiseno v) {
     if (_cargando) return const Center(child: CircularProgressIndicator());
+    if (_sinRegistro) {
+      return Padding(
+        padding: EdgeInsets.all(v.espacio * 2),
+        child: Text(
+          'No pudimos registrar la consulta; intenta de nuevo',
+          key: const ValueKey('vista-papa-sin-registro'),
+          style: v.lectura(tamano: 16),
+        ),
+      );
+    }
     final datos = _datos;
     if (_error != null || datos == null) {
       return Padding(
