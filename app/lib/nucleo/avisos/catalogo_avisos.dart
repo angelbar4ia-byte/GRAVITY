@@ -69,6 +69,7 @@ const Map<String, String> titulosDeAviso = {
   'retiro_bolsa_compartida': 'Hay un movimiento por revisar',
   'resumen_lunes': 'Tu resumen de la semana está listo',
   'recordatorio_cierre': 'Es hora de cerrar la semana',
+  'solicitud_vista_papa': 'Solicitud de vista: Familiar',
   'base_80': 'Revisa el almacenamiento de GRAVITY',
   'base_90': 'Revisa el almacenamiento de GRAVITY',
 };
@@ -88,6 +89,8 @@ const Map<String, SeveridadAviso> severidadDeAviso = {
   'fondo_bajo': SeveridadAviso.importante,
   'salida_libro_representado': SeveridadAviso.importante,
   'base_80': SeveridadAviso.importante,
+  // D24: el familiar pidió la vista temporal de Finanzas de Papá.
+  'solicitud_vista_papa': SeveridadAviso.importante,
   'partida_80': SeveridadAviso.informativa,
   'uso_limite': SeveridadAviso.informativa,
   'aportacion_pendiente': SeveridadAviso.informativa,

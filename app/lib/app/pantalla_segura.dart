@@ -13,6 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../nucleo/contratos/roles.dart';
 import '../nucleo/contratos/rutas.dart';
 import '../nucleo/permisos/permisos.dart';
+import '../nucleo/seguridad/vista_papa_activa.dart';
 import '../nucleo/seguridad/pantalla_segura.dart';
 import 'navegacion.dart';
 import 'sesion_efectiva.dart';
@@ -122,7 +123,10 @@ class GuardiaDePantallaSegura extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) => PantallaSegura(
-    activa: esPantallaSensible(ubicacion, ref.watch(rolEfectivoProvider)),
+    // D24: con la vista temporal de Papá vigente se protege toda la ventana.
+    activa:
+        ref.watch(vistaPapaActivaProvider) ||
+        esPantallaSensible(ubicacion, ref.watch(rolEfectivoProvider)),
     child: child,
   );
 }

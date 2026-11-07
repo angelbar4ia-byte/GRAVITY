@@ -52,6 +52,7 @@ import 'pantallas/registro/hoja_gasto.dart';
 import 'pantallas/registro/hoja_ingreso_extra.dart';
 import 'pantallas/telefono/fase2_telefono.dart';
 import 'pantallas/telefono/pantallas_telefono.dart';
+import 'pantallas/vista_papa/pedir_vista_papa.dart';
 
 export 'datos/repositorio_supabase.dart' show TiposCola;
 export 'estado/proveedores.dart' show refrescarFinanzas;
@@ -65,6 +66,9 @@ export 'estado/resumen_hoy.dart'
         resumenFinanzasHoyProvider;
 export 'pantallas/ajustes_avisos.dart' show SeccionAvisosFinanzas;
 export 'pantallas/tarjeta_hoy.dart' show TarjetaFinanzasHoy;
+export 'pantallas/vista_papa/pedir_vista_papa.dart' show PantallaPedirVistaPapa;
+export 'pantallas/vista_papa/tarjeta_vista_papa_dueno.dart'
+    show TarjetaVistaPapaDueno, textosVistaPapa;
 export 'pantallas/laptop/marco_laptop.dart' show SeccionFinanzas;
 
 /// Tabla de Supabase de cada tipo de registro de la cola sin conexión
@@ -170,6 +174,11 @@ List<RouteBase> rutasFinanzas() => [
         telefono: PantallaVencimientosTelefono(),
       ),
     ),
+  ),
+  // D24: el familiar pide ver las finanzas de Papá (vista temporal de 30 min).
+  GoRoute(
+    path: 'vista-papa',
+    pageBuilder: _pagina((_) => const PantallaPedirVistaPapa()),
   ),
   _soloLaptop(SeccionFinanzas.arranque, (_) => const PantallaArranque()),
   _soloLaptop(SeccionFinanzas.importar, (_) => const PantallaImportar()),
