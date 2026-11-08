@@ -1,4 +1,4 @@
-/// Accesos a "Instrucciones" y "Consentimientos" de Cuidados (Fase 5, 8f).
+/// Accesos a "Instrucciones", "Consentimientos" y "Resumen del día" de Cuidados (Fase 5, 8f).
 ///
 /// Los monta "Más" (teléfono y tablet) y la franja al pie de GRAVITY en la
 /// laptop (que no tiene "Más"). Misma visibilidad que el guardia de rutas
@@ -22,7 +22,10 @@ class AccesosInstruccionesCuidados extends ConsumerWidget {
     final esMaestra = ref.watch(esCuentaMaestraProvider);
     final instrucciones = veAccesoInstrucciones(rol, esMaestra: esMaestra);
     final consentimientos = veAccesoConsentimientos(rol, esMaestra: esMaestra);
-    if (!instrucciones && !consentimientos) return const SizedBox.shrink();
+    final resumenDia = puedeAbrirResumenDia(rol, esMaestra: esMaestra);
+    if (!instrucciones && !consentimientos && !resumenDia) {
+      return const SizedBox.shrink();
+    }
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -42,6 +45,15 @@ class AccesosInstruccionesCuidados extends ConsumerWidget {
             title: const Text('Consentimientos'),
             minTileHeight: 56,
             onTap: () => context.go(RutasApp.cuidadosConsentimientos),
+          ),
+        if (resumenDia)
+          ListTile(
+            key: const ValueKey('acceso-cuidados-resumen-dia'),
+            leading: const Icon(Icons.fact_check_outlined),
+            title: const Text('Resumen del día'),
+            subtitle: const Text('Cómo va el día de Papá'),
+            minTileHeight: 56,
+            onTap: () => context.go(RutasApp.cuidadosResumenDia),
           ),
       ],
     );

@@ -9,7 +9,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../modulos/cuidados/estado/proveedores.dart'
+    show repositorioCuidadosProvider;
+import '../../nucleo/avisos/notificador.dart' show AccionDeNotificacion;
 import '../../nucleo/avisos/proveedores_avisos.dart';
+import 'accion_posponer_toma.dart';
 import '../../nucleo/avisos/aviso.dart';
 import '../../nucleo/avisos/recordatorios.dart';
 import '../../nucleo/avisos/servicio_recordatorios_habitos.dart';
@@ -103,9 +107,21 @@ final servicioAvisosProvider = Provider<ServicioAvisos>((ref) {
                 : RutasApp.avisos,
           );
     },
-    alAccion: (carga, accion) => unawaited(
-      ref.read(recordatoriosHabitosProvider).alAccion(carga, accion),
-    ),
+    alAccion: (carga, accion) {
+      // Cuidados: *Posponer al siguiente turno* llama a cui_posponer_toma.
+      if (accion == AccionDeNotificacion.posponerTurno) {
+        unawaited(
+          posponerTomaDesdeAviso(
+            carga: carga,
+            accion: accion,
+            repositorio: ref.read(repositorioCuidadosProvider),
+            notificador: notificador,
+          ),
+        );
+        return;
+      }
+      unawaited(ref.read(recordatoriosHabitosProvider).alAccion(carga, accion));
+    },
   );
   ref.onDispose(() => unawaited(servicio.detener()));
   return servicio;

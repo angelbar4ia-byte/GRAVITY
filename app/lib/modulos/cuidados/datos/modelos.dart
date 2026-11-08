@@ -287,7 +287,7 @@ class ComidaRegistro {
       idEstableCuidados('comida:${fechaClave(fecha)}:${t.name}');
 }
 
-enum TipoBitacora { nota, cita, instruccion }
+enum TipoBitacora { nota, instruccion }
 
 @immutable
 class EntradaBitacora {
@@ -298,7 +298,6 @@ class EntradaBitacora {
     required this.autorId,
     required this.autorNombre,
     required this.creadaEn,
-    this.programadaEn,
   });
 
   final String id;
@@ -307,9 +306,29 @@ class EntradaBitacora {
   final String autorId;
   final String autorNombre;
   final DateTime creadaEn;
+}
 
-  /// Solo en citas: cuándo es.
-  final DateTime? programadaEn;
+/// Una cita de Papá (`cui_citas`, solo agregar). Dato clínico (D3): no se
+/// copia a ningún registro local ni a la IA.
+@immutable
+class Cita {
+  const Cita({
+    required this.id,
+    required this.programadaEn,
+    required this.autorId,
+    required this.autorNombre,
+    required this.creadaEn,
+    this.lugar,
+    this.nota,
+  });
+
+  final String id;
+  final DateTime programadaEn;
+  final String? lugar;
+  final String? nota;
+  final String autorId;
+  final String autorNombre;
+  final DateTime creadaEn;
 }
 
 /// Entrega de turno: notas para quien sigue.

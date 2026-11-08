@@ -19,7 +19,7 @@
 /// - `cui_bitacora`: id, persona_id, nota, creada_en. Solo agregar.
 /// - `cui_entregas`: id, de_persona, para_persona, nota, creada_en.
 /// - `cui_cambios_urgentes`: id, de_persona, para_persona, texto, creado_en,
-///   atendido_en.
+///   atendido_en, atendido_por.
 /// - `cui_gastos`: id, persona_id, monto_centavos, concepto, fecha, estado
 ///   (`pendiente_confirmacion`|`confirmado`|`rechazado`), ambito
 ///   (`cuidado`|`casa`), registrado_en.
@@ -35,15 +35,17 @@
 /// Por RPC: `cui_marcar_toma`, `cui_crear_cambio_urgente`,
 /// `cui_atender_cambio_urgente`, `cui_confirmar_gasto`,
 /// `cui_cambiar_consentimiento`, `cui_autorizar_resumen`,
-/// `cui_generar_tomas`. Lecturas por RPC: `cui_perfil`, `cui_puede`,
+/// `cui_generar_tomas`, `cui_posponer_toma`. Lecturas por RPC: `cui_perfil`, `cui_puede`,
 /// `cui_resumen_mensual`, `cui_resumen_papa`.
 ///
-/// El servidor no tiene tabla de citas ni nombres de otras personas: las
-/// citas viajan como una nota de la bitácora con el prefijo
-/// `[cita AAAA-MM-DDTHH:MM] ` y los nombres salen de `personas` cuando la
-/// sesión puede leerlos (el dueño); si no, se usa la función del turno.
+/// Las citas viven en `cui_citas` (id, programada_en, lugar, nota; solo
+/// agregar; el servidor pone `persona_id` y `creada_en`). Las notas viejas con
+/// prefijo `[cita ` no se migran: se siguen mostrando como nota. Los nombres
+/// salen de `personas` cuando la sesión puede leerlos (el dueño); si no, se
+/// usa la función del turno.
 library;
 
+import '../../../nucleo/cuidados/posponer_toma.dart' show rpcPosponerToma;
 import '../../finanzas/datos/fuente_tablas.dart';
 import '../../finanzas/datos/repositorio.dart' show ErrorFinanzas;
 import 'modelos.dart';
@@ -67,15 +69,6 @@ T _enumPor<T extends Enum>(
 
 String _snake(Enum e) =>
     e.name.replaceAllMapped(RegExp('[A-Z]'), (m) => '_${m[0]!.toLowerCase()}');
-
-/// Prefijo con el que una cita viaja dentro de la bitácora.
-final _citaEnNota = RegExp(
-  r'^\[cita (\d{4}-\d{2}-\d{2}T\d{2}:\d{2})\] ([\s\S]*)$',
-);
-
-String _horaClave(DateTime d) =>
-    '${fechaClave(d)}T${d.hour.toString().padLeft(2, '0')}:'
-    '${d.minute.toString().padLeft(2, '0')}';
 
 class RepositorioCuidadosSupabase implements RepositorioCuidados {
   RepositorioCuidadosSupabase({
@@ -397,6 +390,11 @@ class RepositorioCuidadosSupabase implements RepositorioCuidados {
   }
 
   @override
+  Future<void> posponerToma(String tomaId) async {
+    await _rpc(rpcPosponerToma, {'p_toma': tomaId});
+  }
+
+  @override
   Future<int> generarTomas(DateTime desde, {int dias = 1}) async {
     final r = await _rpc('cui_generar_tomas', {
       'p_hogar_id': hogarId,
@@ -461,31 +459,55 @@ class RepositorioCuidadosSupabase implements RepositorioCuidados {
     Map<String, String> nombres,
   ) {
     final nota = f['nota'] as String;
-    final cita = _citaEnNota.firstMatch(nota);
     return EntradaBitacora(
       id: f['id'] as String,
       tipo: f['tipo'] == 'instruccion'
           ? TipoBitacora.instruccion
-          : (cita == null ? TipoBitacora.nota : TipoBitacora.cita),
-      texto: cita == null || f['tipo'] == 'instruccion' ? nota : cita[2]!,
+          : TipoBitacora.nota,
+      texto: nota,
       autorId: f['persona_id'] as String,
       autorNombre: _quien(nombres, f['persona_id']),
       creadaEn: _fecha(f['creada_en']),
-      programadaEn: cita == null ? null : DateTime.parse(cita[1]!),
     );
   }
 
   @override
-  Future<void> agregarBitacora(EntradaBitacora e) {
-    final nota = e.tipo == TipoBitacora.cita && e.programadaEn != null
-        ? '[cita ${_horaClave(e.programadaEn!)}] ${e.texto}'
-        : e.texto;
-    return _insertar('cui_bitacora', {
-      'id': e.id,
-      'hogar_id': hogarId,
-      'nota': nota,
-    });
+  Future<void> agregarBitacora(EntradaBitacora e) => _insertar('cui_bitacora', {
+    'id': e.id,
+    'hogar_id': hogarId,
+    'nota': e.texto,
+  });
+
+  // ------------------------------------------------------------------ Citas
+
+  @override
+  Future<List<Cita>> citas() async {
+    final filas = await _leer('cui_citas');
+    final nombres = await _mapaNombres();
+    return [
+      for (final f in filas)
+        Cita(
+          id: f['id'] as String,
+          programadaEn: _fecha(f['programada_en']),
+          lugar: f['lugar'] as String?,
+          nota: f['nota'] as String?,
+          autorId: '${f['persona_id']}',
+          autorNombre: _quien(nombres, f['persona_id']),
+          creadaEn: _fecha(f['creada_en']),
+        ),
+    ]..sort((a, b) => a.programadaEn.compareTo(b.programadaEn));
   }
+
+  /// Solo `id, hogar_id, programada_en, lugar, nota`: nada de `persona_id` ni
+  /// `creada_en` (los pone el servidor; mandarlos da 42501).
+  @override
+  Future<void> agregarCita(Cita c) => _insertar('cui_citas', {
+    'id': c.id,
+    'hogar_id': hogarId,
+    'programada_en': c.programadaEn.toUtc().toIso8601String(),
+    if (c.lugar != null) 'lugar': c.lugar,
+    if (c.nota != null) 'nota': c.nota,
+  });
 
   @override
   Future<void> dejarInstruccion(
@@ -547,13 +569,12 @@ class RepositorioCuidadosSupabase implements RepositorioCuidados {
           creadoPor: f['de_persona'] as String,
           creadoEn: _fecha(f['creado_en']),
           paraPersonaId: f['para_persona'] as String?,
-          // El servidor no guarda quién lo atendió: es quien lo recibía.
-          atendidoPor: f['atendido_en'] == null
+          // `atendido_por` lo pone el servidor (solo lectura); sin nombre
+          // visible la pantalla dice solo "Atendido".
+          atendidoPor: f['atendido_por'] as String?,
+          atendidoNombre: f['atendido_por'] == null
               ? null
-              : f['para_persona'] as String?,
-          atendidoNombre: f['atendido_en'] == null
-              ? null
-              : _quien(nombres, f['para_persona']),
+              : _quien(nombres, f['atendido_por']),
           atendidoEn: _fechaOpc(f['atendido_en']),
         ),
     ]..sort((a, b) => b.creadoEn.compareTo(a.creadoEn));

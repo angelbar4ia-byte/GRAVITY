@@ -662,12 +662,11 @@ void main() {
       await r.agregarBitacora(
         EntradaBitacora(
           id: 'b1',
-          tipo: TipoBitacora.cita,
+          tipo: TipoBitacora.nota,
           texto: 'Revisión',
           autorId: _cuidadora,
           autorNombre: 'C',
           creadaEn: _miercoles10,
-          programadaEn: DateTime(2026, 11, 12, 10),
         ),
       );
       await r.dejarEntrega(
@@ -693,24 +692,19 @@ void main() {
         'hogar_id',
         'nota',
       });
-      expect(
-        fuente.tabla('cui_bitacora').single['nota'],
-        '[cita 2026-11-12T10:00] Revisión',
-      );
+      expect(fuente.tabla('cui_bitacora').single['nota'], 'Revisión');
       expect(fuente.tabla('cui_entregas').single.keys.toSet(), {
         'id',
         'hogar_id',
         'para_persona',
         'nota',
       });
-      // La cita se vuelve a leer como cita.
       fuente.tabla('cui_bitacora').single
         ..['persona_id'] = _cuidadora
         ..['creada_en'] = _miercoles10.toUtc().toIso8601String();
       final e = (await r.bitacora()).single;
-      expect(e.tipo, TipoBitacora.cita);
+      expect(e.tipo, TipoBitacora.nota);
       expect(e.texto, 'Revisión');
-      expect(e.programadaEn, DateTime(2026, 11, 12, 10));
     });
 
     test('cambio urgente, gasto y permisos: por RPC', () async {

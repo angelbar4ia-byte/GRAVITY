@@ -149,6 +149,15 @@ final instruccionesRecibidasProvider = _datos(
   (s) => s.instruccionesRecibidas(),
 );
 final consentimientosProvider = _datos((s) => s.estadoConsentimientos());
+
+/// Conteos del día de Papá; `null` si esta persona no tiene la pantalla.
+final resumenDiaProvider = FutureProvider<ResumenPapa?>((ref) {
+  ref.watch(versionCuidadosProvider);
+  if (!ref.watch(permisosCuidadosProvider).veResumenDelDia) {
+    return Future.value();
+  }
+  return ref.watch(servicioCuidadosProvider).resumenDelDia();
+});
 final citasProvider = _datos((s) => s.citas());
 final gastosProvider = _datos((s) => s.gastos());
 

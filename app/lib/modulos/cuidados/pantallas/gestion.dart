@@ -193,11 +193,10 @@ class _Citas extends ConsumerWidget {
                 for (final c in citas)
                   ListTile(
                     leading: const Icon(Icons.event_outlined),
-                    title: Text(c.texto),
+                    title: Text(c.nota ?? c.lugar ?? 'Cita'),
                     subtitle: Text(
-                      c.programadaEn == null
-                          ? ''
-                          : '${diaLargo(c.programadaEn!)} · ${horaTexto(c.programadaEn!)}',
+                      '${diaLargo(c.programadaEn)} · ${horaTexto(c.programadaEn)}'
+                      '${c.lugar != null && c.nota != null ? ' · ${c.lugar}' : ''}',
                     ),
                   ),
               ],
@@ -207,6 +206,7 @@ class _Citas extends ConsumerWidget {
 
   Future<void> _agregar(BuildContext context, WidgetRef ref) async {
     final texto = TextEditingController();
+    final lugar = TextEditingController();
     final ahora = ref.read(relojDeCuidados);
     var cuando = DateTime(ahora.year, ahora.month, ahora.day + 1, 10);
     final ok = await showDialog<bool>(
@@ -220,6 +220,12 @@ class _Citas extends ConsumerWidget {
               TextField(
                 controller: texto,
                 decoration: const InputDecoration(labelText: 'Cita'),
+              ),
+              TextField(
+                controller: lugar,
+                decoration: const InputDecoration(
+                  labelText: 'Lugar (opcional)',
+                ),
               ),
               const SizedBox(height: 12),
               OutlinedButton.icon(
@@ -264,7 +270,9 @@ class _Citas extends ConsumerWidget {
     await ejecutarCuidados(
       context,
       ref,
-      () => ref.read(servicioCuidadosProvider).agregarCita(texto.text, cuando),
+      () => ref
+          .read(servicioCuidadosProvider)
+          .agregarCita(texto.text, cuando, lugar: lugar.text),
       ok: 'Guardado',
     );
   }

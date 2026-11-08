@@ -123,6 +123,11 @@ class PermisosCuidados {
   /// Resumen del día de Papá (conteos): todo perfil.
   bool get veResumenPapa => tipo != null;
 
+  /// Pantalla "Resumen del día": el dueño y la pareja **con** consentimiento.
+  /// (La cuenta maestra no es dueña: no entra.)
+  bool get veResumenDelDia =>
+      !esMaestra && (_dueno || tipo == TipoPerfil.parejaConsentida);
+
   /// Laptop del dueño: medicamentos, citas, turnos, cuidadoras.
   bool get administra => _dueno && !esMaestra;
   bool get creaCambioUrgente => administra;

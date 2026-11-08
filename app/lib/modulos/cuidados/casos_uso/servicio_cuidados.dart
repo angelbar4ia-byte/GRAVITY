@@ -326,32 +326,35 @@ class ServicioCuidados {
     ];
   }
 
-  Future<List<EntradaBitacora>> citas() async {
+  Future<List<Cita>> citas() async {
     _exigir(permisos.administra);
-    return [
-      for (final e in await _repo.bitacora())
-        if (e.tipo == TipoBitacora.cita) e,
-    ]..sort(
-      (a, b) => (a.programadaEn ?? a.creadaEn).compareTo(
-        b.programadaEn ?? b.creadaEn,
-      ),
-    );
+    return _repo.citas();
   }
 
-  Future<void> agregarCita(String texto, DateTime cuando) async {
+  Future<void> agregarCita(
+    String texto,
+    DateTime cuando, {
+    String? lugar,
+  }) async {
     _exigir(permisos.administra);
-    if (texto.trim().isEmpty) {
-      throw const ErrorCuidados('Escribe de qué es la cita.');
+    final nota = texto.trim();
+    if (nota.isEmpty) throw const ErrorCuidados('Escribe de qué es la cita.');
+    if (nota.length > 500) {
+      throw const ErrorCuidados('La cita puede tener hasta 500 letras.');
     }
-    await _repo.agregarBitacora(
-      EntradaBitacora(
+    final sitio = lugar?.trim();
+    if (sitio != null && sitio.length > 120) {
+      throw const ErrorCuidados('El lugar puede tener hasta 120 letras.');
+    }
+    await _repo.agregarCita(
+      Cita(
         id: idNuevoCuidados(),
-        tipo: TipoBitacora.cita,
-        texto: texto.trim(),
+        programadaEn: cuando,
+        lugar: sitio == null || sitio.isEmpty ? null : sitio,
+        nota: nota,
         autorId: personaId,
         autorNombre: nombre,
         creadaEn: ahora(),
-        programadaEn: cuando,
       ),
     );
   }

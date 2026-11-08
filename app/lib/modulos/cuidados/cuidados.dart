@@ -1,7 +1,7 @@
 /// Módulo **Cuidados** de GRAVITY (agente cuidados, Fase 5).
 ///
 /// [rutasCuidados]: rutas **relativas** a `/cuidados` (raíz = Mi turno;
-/// `medicamentos`, `comidas`, `bitacora`, `instrucciones`, `consentimientos`, `resumen`, `urgente`, `gestion`).
+/// `medicamentos`, `comidas`, `bitacora`, `instrucciones`, `consentimientos`, `resumen-dia`, `resumen`, `urgente`, `gestion`).
 /// Contrato del servidor: `docs/specs/fase-5-cuidados.md` y las tablas
 /// `cui_*` (columnas en `datos/repositorio_supabase.dart`). Los datos
 /// clínicos nunca van a la IA ni a las bocinas (D3, D6): este módulo no
@@ -21,6 +21,7 @@ import 'pantallas/gestion.dart';
 import 'pantallas/instrucciones.dart';
 import 'pantallas/medicamentos.dart';
 import 'pantallas/mi_turno.dart';
+import 'pantallas/resumen_dia.dart';
 import 'pantallas/resumen_mensual.dart';
 
 export 'casos_uso/horario_turnos.dart' show deTurnoAhora, recibeRecordatorio;
@@ -48,6 +49,10 @@ List<RouteBase> rutasCuidados() => [
   GoRoute(
     path: 'consentimientos',
     pageBuilder: _pagina(() => const PantallaConsentimientos()),
+  ),
+  GoRoute(
+    path: 'resumen-dia',
+    pageBuilder: _pagina(() => const PantallaResumenDia()),
   ),
   GoRoute(
     path: 'resumen',

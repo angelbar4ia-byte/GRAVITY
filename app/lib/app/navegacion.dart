@@ -28,6 +28,10 @@ abstract final class RutasApp {
   /// Fase 5: consentimiento de la pareja y autorización de la hermana.
   static const cuidadosConsentimientos = '${Rutas.cuidados}/consentimientos';
 
+  /// Resumen del día de Papá (solo conteos): la pareja con consentimiento y el
+  /// dueño.
+  static const cuidadosResumenDia = '${Rutas.cuidados}/resumen-dia';
+
   /// "Tengo una invitación": registro y aceptación del código del dueño (E3,
   /// Fase 4). Se abre **sin sesión**; con sesión, lleva al inicio.
   static const invitacion = '/invitacion';
@@ -87,6 +91,13 @@ bool puedeAbrirInstrucciones(Rol rol, {bool esMaestra = false}) =>
 bool puedeAbrirConsentimientos(Rol rol, {bool esMaestra = false}) =>
     !esSoloLectura(rol, esMaestra: esMaestra) &&
     (rol == Rol.dueno || rol == Rol.coadministrador);
+
+/// Quién abre `/cuidados/resumen-dia`: misma regla que Consentimientos (dueño y
+/// pareja; la cuenta maestra de solo lectura no). El guardia no conoce el
+/// consentimiento: la **pantalla** solo muestra los conteos al dueño y a la
+/// pareja con consentimiento vigente; el servidor decide los datos.
+bool puedeAbrirResumenDia(Rol rol, {bool esMaestra = false}) =>
+    puedeAbrirConsentimientos(rol, esMaestra: esMaestra);
 
 /// Accesos "Instrucciones" y "Consentimientos" de Más (teléfono y tablet) y
 /// de la franja de la laptop: los ven el dueño y la pareja. La hermana y la
@@ -408,7 +419,7 @@ String? calcularRedireccion({
   // matriz de permisos no cambia: los datos los entrega el servidor (RLS)
   // solo durante una vista autorizada.
   if (rol == Rol.familiar && ubicacion == RutasApp.vistaPapa) return null;
-  // Fase 5 (excepción estrecha, solo estas dos rutas exactas): la pareja
+  // Fase 5 (excepción estrecha, solo estas tres rutas exactas): la pareja
   // (coadministrador) no abre Cuidados sin consentimiento
   // (dependeDelConsentimiento), pero siempre puede dejar instrucciones y dar o
   // retirar su consentimiento. No se abre nada más de Cuidados: la bitácora,
@@ -420,6 +431,10 @@ String? calcularRedireccion({
   }
   if (ubicacion == RutasApp.cuidadosConsentimientos) {
     return puedeAbrirConsentimientos(rol, esMaestra: esMaestra) ? null : inicio;
+  }
+  // Tercera excepción, igual de estrecha: el resumen del día (solo conteos).
+  if (ubicacion == RutasApp.cuidadosResumenDia) {
+    return puedeAbrirResumenDia(rol, esMaestra: esMaestra) ? null : inicio;
   }
   final modulo = moduloDeRuta(ubicacion);
   if (modulo != null && !puedeAbrir(rol, modulo)) return inicio;

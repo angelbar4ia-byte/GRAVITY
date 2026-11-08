@@ -36,6 +36,10 @@ abstract interface class RepositorioCuidados {
   /// programada) y el estado; quién y cuándo lo pone el servidor.
   Future<void> marcarToma(Toma t);
 
+  /// `cui_posponer_toma(p_toma)`: pasa la toma pendiente a quien entra al
+  /// siguiente turno. Solo quien estaba de turno (42501 si no).
+  Future<void> posponerToma(String tomaId);
+
   /// `cui_generar_tomas(hogar, desde, dias)`: solo el dueño. Devuelve cuántas
   /// creó.
   Future<int> generarTomas(DateTime desde, {int dias = 1});
@@ -45,6 +49,12 @@ abstract interface class RepositorioCuidados {
 
   Future<List<EntradaBitacora>> bitacora();
   Future<void> agregarBitacora(EntradaBitacora e);
+
+  /// Citas (`cui_citas`, solo agregar): lee como la bitácora.
+  Future<List<Cita>> citas();
+
+  /// Agrega una cita: el servidor pone quién y cuándo.
+  Future<void> agregarCita(Cita c);
 
   /// `cui_dejar_instruccion(hogar, texto)`: dueño, hermana y pareja. El
   /// servidor pone quién y cuándo (en el servidor real [autorNombre] y [en]
@@ -105,6 +115,10 @@ class DatosCuidadosMemoria {
   final Map<String, Toma> tomas = {};
   final Map<String, ComidaRegistro> comidas = {};
   final List<EntradaBitacora> bitacora = [];
+  final List<Cita> citas = [];
+
+  /// Tomas que se pasaron al siguiente turno (ids).
+  final List<String> tomasPospuestas = [];
   final List<Entrega> entregas = [];
   final List<CambioUrgente> cambios = [];
   final List<GastoCuidado> gastos = [];
@@ -384,7 +398,42 @@ class RepositorioCuidadosEnMemoria implements RepositorioCuidados {
         autorId: personaId,
         autorNombre: e.autorNombre,
         creadaEn: e.creadaEn,
-        programadaEn: e.programadaEn,
+      ),
+    );
+  }
+
+  @override
+  Future<void> posponerToma(String tomaId) async {
+    _exigir(_perfil != null && !_pareja);
+    datos.tomasPospuestas.add(tomaId);
+  }
+
+  @override
+  Future<List<Cita>> citas() async {
+    final parejaConsentida =
+        _pareja &&
+        (datos.consentimientos[personaId] ?? perfilActual.consentimiento);
+    if (!_puede('bitacora', 'leer') && !parejaConsentida) return const [];
+    return [...datos.citas]
+      ..sort((a, b) => a.programadaEn.compareTo(b.programadaEn));
+  }
+
+  @override
+  Future<void> agregarCita(Cita c) async {
+    _exigir(_puede('bitacora', 'escribir'));
+    _tope([
+      for (final x in datos.citas)
+        if (x.autorId == personaId) x.creadaEn,
+    ], c.creadaEn);
+    datos.citas.add(
+      Cita(
+        id: c.id,
+        programadaEn: c.programadaEn,
+        lugar: c.lugar,
+        nota: c.nota,
+        autorId: personaId,
+        autorNombre: c.autorNombre,
+        creadaEn: c.creadaEn,
       ),
     );
   }
