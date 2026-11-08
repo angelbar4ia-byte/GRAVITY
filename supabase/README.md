@@ -383,6 +383,40 @@ Una dueña que además es maestra conserva sus permisos de dueña. Otro hogar y 
 
 **Pendiente:** `fin_vistas_solicitadas` (D24, vista temporal de Finanzas de Papá para el familiar) cuando haya pantalla; no se construyó en esta migración.
 
+### Fase 7 v1.0: Alimentación completa (D28), primera tanda
+
+Migración `20261126000000_alimentacion_fase7.sql`, según `docs/specs/fase-7-alimentacion.md` v1.0 (secciones 2, 3 y 5). Los permisos los decide `ali_puede7(hogar, objeto, cuenta, accion)` (cuentas: `dueno`, `pareja`, `maestra`, `familiar`, `cuidador`, `casa`, de `ali_cuenta_de`); `permisos_rol` sigue sin reflejar D28 (pendiente del arquitecto y del espejo de la app). La despensa y la lista se separan por `cuenta`: `papa`, `dueno`, `pareja`, `casa`.
+
+| Cuenta | Catálogo y recetas | Despensa | Lista de compras | Plan familiar | Suplementos |
+|---|---|---|---|---|---|
+| Dueño | edita | Papá, suya y casa (edita); de la pareja **solo sobrantes** | las de dueño, Papá y casa; marca | ve, propone, vota | programa tomas, confirma, atiende reposiciones |
+| Pareja | edita | Papá, suya y casa; del dueño **solo sobrantes** | las de pareja, Papá y casa; marca | ve, propone, vota | igual que el dueño |
+| Familiar | ve catálogo y recetas | **solo la de Papá** (lectura) | solicita (`ali_solicitar_compra`) y ve/retira solo lo que pidió | ve, propone, vota | ve tomas y confirma |
+| Cuidadora | solo recetas | nada | nada | nada | ve tomas y confirma |
+| Casa | nada | nada | nada | **ve** | **ve las tomas** (nombre sin dosis); menú del día de Papá solo por `ali_menu_del_dia_papa` |
+| Maestra | lee | lee todas | lee | ve | lee |
+
+| Tabla | Qué guarda |
+|---|---|
+| `ali_ingredientes` | nombre (único por hogar sin importar mayúsculas), `unidad`, `pasillo`, `precio_base_centavos` (**supuesto, no dato real**), `precio_real_centavos` y `precio_real_en` (solo los escribe la compra), `precio_es_base` y `precio_vigente_centavos` (generadas). Precios por unidad |
+| `ali_recetas`, `ali_receta_pasos` | receta (título, porciones; una por platillo) y pasos en orden, de texto libre; `tiene_cifras` es solo un aviso para el filtro de la bocina |
+| `ali_platillo_ingredientes` | ingredientes de cada platillo con cantidad (base de los faltantes) |
+| `ali_despensa` | inventario por `cuenta`, `cantidad` y `reservado` (lo planeado de la semana); sobrante = cantidad menos reservado |
+| `ali_compras` | lista por cuenta (el pasillo sale del ingrediente): `comprador_id`, `para_el`, `votacion_id`, `comprado`, `monto_centavos`, `estado_pago` (`sin_pago`, `movimiento`, `solicitud`, `rechazada`), `movimiento_id`. Marcada, ya no se edita, desmarca ni borra |
+| `ali_solicitudes_pago`, `ali_precios_historial`, `ali_ajustes` | solicitud al albacea por una compra de Papá; precios reales capturados (solo agregar); libro compartido de la casa que elige el dueño |
+| `ali_votaciones`, `ali_votacion_opciones`, `ali_opcion_platillos`, `ali_votos` | plan familiar: opción 1 (propuesta) y 2 (alternativa de otra persona), un voto por persona (`cambios` cuenta los cambios) |
+| `ali_tomas_suplemento`, `ali_reposiciones_suplemento` | toma de un suplemento de Papá (`pendiente`, `dado`, `no_dado`, `sin_confirmar`) y solicitud de reposición (una pendiente por suplemento) |
+
+**Escritura directa:** solo ingredientes (precio base), recetas, pasos, ingredientes de platillo, despensa, lista (agregar, editar o borrar lo no marcado) y `ali_ajustes` (solo el dueño). Precios reales, dinero, votos y tomas **solo por RPC**.
+
+**Precio base y real.** Cada ingrediente nace con un precio base supuesto (`precio_es_base`). `ali_marcar_comprada(compra, monto_centavos, cuenta_origen, cuenta_gasto)` con monto: el precio real por unidad (monto entre cantidad, redondeado) reemplaza al base en la primera compra y se actualiza con las siguientes, queda en `ali_precios_historial`, sube la despensa de la cuenta y registra el gasto con las funciones de Finanzas (`fin_movimientos`, que valida permisos y libros). Sin monto solo marca y sube el inventario. Dónde sale el dinero: `dueno` y `pareja`, de una cuenta de **su** libro personal; `casa`, de una cuenta del libro compartido de `ali_ajustes.libro_casa_id` (22023 mientras el dueño no lo elija); `papa`, **solicitud al albacea** (`estado_pago = 'solicitud'`) salvo que quien marca sea el albacea y pase una cuenta del libro de Papá (paga en el acto, en su nombre y con motivo). El albacea resuelve con `ali_resolver_solicitud_pago(solicitud, aprobar, cuenta_origen, cuenta_gasto, motivo)`; rechazar lleva motivo. La cuenta de gasto por omisión es la de la categoría de sistema "Alimentación".
+
+**Votación (un día).** `ali_proponer_menu(hogar, titulo, platillos[], cuenta, para_el)` abre la votación (cierra en 1 día; una abierta por plan `casa` o `papa`); `ali_proponer_alternativa(votacion, titulo, platillos[])` la da **otra** persona; `ali_votar(votacion, opcion)` vota o cambia el voto mientras esté `abierta` o en `empate`. `ali_cerrar_votaciones(hogar)` (el servidor la llama a diario con `service_role` y sin hogar; la app, al abrir el plan, con su hogar) cierra las vencidas: gana la opción con más votos (una propuesta sin contendiente gana sola); con **empate** la votación sigue abierta un día más (`estado = 'empate'`, `ronda` + 1) para que cada quien cambie su voto. Cerrada, `ali_faltantes(votacion)` calcula necesario, disponible (nulo si tu cuenta no ve esa despensa) y faltante del menú ganador, y `ali_pedir_compra_faltantes(votacion, ingredientes[])` (quien propuso el ganador, el dueño o la pareja) los pasa a la lista, sin repetir.
+
+**Suplementos.** `ali_programar_toma(suplemento, prevista_en)` (solo suplementos de Papá), `ali_confirmar_toma(toma, dado)` (una sola vez), `ali_revisar_tomas(hogar, gracia)` (2 horas; el servidor sin hogar) pasa a `sin_confirmar` las tomas sin confirmar y crea la solicitud de reposición; `ali_resolver_reposicion(id, atendida)`.
+
+**Otras RPC:** `ali_solicitar_compra(hogar, cuenta, ingrediente, cantidad, para_el)`, `ali_sobrantes(hogar, cuenta)` (lo no reservado de la despensa del otro, solo dueño y pareja), `ali_menu_del_dia_papa(hogar, fecha)` (nombres de platillos por tiempo; Casa solo recibe el de hoy en zona de México, sin perfil clínico ni ingredientes). Auxiliares de reglas: `ali_cuenta_de`, `ali_puede7`, `ali_libro_papa`. Sin bitácora y cuota de filas por hogar (54000). El pasillo de la lista, el filtro de la bocina, la alerta del historial de precios y el lector de código de barras son de la app o de tandas siguientes.
+
 ## Pruebas
 
 ```bash
@@ -391,7 +425,7 @@ supabase/tests/correr.sh -v         # cada afirmación
 supabase/tests/correr.sh 20_finanzas_roles.sql 27_finanzas_idempotencia.sql
 ```
 
-Crea una base desechable, aplica `tests/00_emulacion_supabase.sql` (roles `anon`, `authenticated`, `service_role`, `auth.users` y `auth.uid()` como en Supabase), las migraciones (cada una en su transacción), `seed.sql` y `tests/01_utilidades.sql`; luego corre cada `tests/NN_*.sql` (de 10 a 99) dentro de `begin … rollback`. Sale con error si algo falla.
+Crea una base desechable, aplica `tests/00_emulacion_supabase.sql` (roles `anon`, `authenticated`, `service_role`, `auth.users` y `auth.uid()` como en Supabase), las migraciones (cada una en su transacción), `seed.sql` y `tests/01_utilidades.sql`; luego corre cada `tests/NN_*.sql` (de 10 a 99) y `tests/NNN_*.sql` (100 en adelante) dentro de `begin … rollback`. Sale con error si algo falla.
 
 | Archivo | Comprueba |
 |---|---|
@@ -423,6 +457,7 @@ Crea una base desechable, aplica `tests/00_emulacion_supabase.sql` (roles `anon`
 | `90_habitos_sensibles.sql` | **Sensibles:** `hab_sobres` solo cifrado y horas del servidor; nadie escribe directo; la pareja y la maestra no ven sobres ni llaves; llaves (versión 1, +1, idempotente, constancia sin contenido); modos (55000 sin llave, volver a solo teléfono exige confirmación y borra, sube la época); subida en lote (50, idempotente, +1, conflictos, base64url, 64 KB, cuota, sobre ajeno 42501, tumbas); reiniciar la nube y borrar mis datos (con constancia); limpieza de tumbas; la tablet personal registra su dispositivo |
 | `91_habitos_endurecimiento.sql` | **F3-3 a F3-10:** alias del KDF; 600 borrados dejan una constancia; `hab_hogar_de` no revela el hogar de otros; cuota de filas por persona (2 000 objetivos, por persona); baja con `activa = false` y con `hasta` vencido se borra a los 90 días desde `desactivada_en`; volver al hogar borra la fecha de baja |
 | `92_alimentacion.sql` | **D23:** cada rol contra cada tabla: dueña y pareja editan los dos menús, el perfil clínico de Papá solo lo edita el dueño; la familiar edita el menú de Papá y no ve nada de la pareja ni la lista de compras; la cuidadora solo ve a Papá y su lista; la maestra solo lee los dos; Casa, otro hogar y anon, nada; lo que pone el servidor; llaves e índices del menú; la dueña-maestra conserva sus permisos; sin precios, sin bitácora, cuota de filas. (F4-M1 está en la 36.) |
+| `100_alimentacion_fase7.sql` | **D28 (Fase 7):** reglas de cada cuenta contra cada tabla nueva (despensa propia, solo sobrantes del otro, familiar solo la de Papá, cuidadora sin compras, Casa solo plan y tomas, maestra solo lee); precio base reemplazado por el real y actualizado en la siguiente compra; compras al libro correcto (propio, casa elegido por el dueño, Papá con solicitud al albacea que aprueba o rechaza); votación (una abierta, alternativa de otra persona, cambio de voto, **empate** que reabre un día, cierre diario del servidor, faltantes y pedido de compra); tomas, reposición y menú del día de Papá para Casa; aislamiento, anon y cuota. |
 | `34_finanzas_maestra_login.sql` | **Cuenta maestra con login propio (23/oct):** la invitación del dueño con `es_maestra` (solo el dueño la crea, solo con rol coadministrador, con un correo de fuera del hogar; se revoca al reinvitar; la vencida no sirve); al aceptarla no se crea libro personal, es solo lectura total, no es miembro de nada, no ve Cuidados ni Hábitos y sigue necesitando la consulta de 30 minutos; reemplaza a la anterior con su entrada en la bitácora |
 | `40_aislamiento_hogares.sql` | Una persona de otro hogar no ve ni toca nada |
 | `50_invitaciones.sql` | Solo el dueño las ve y crea; token solo en hash; correo confirmado; expiración, revocación y reuso; volver al hogar con la membresía vencida (M3) |

@@ -102,8 +102,9 @@ select pruebas.ok(not public.ali_puede('b0000000-0000-4000-8000-000000000001', '
 select pruebas.ok(not public.ali_puede('b0000000-0000-4000-8000-000000000001', 'papa', 'menu', 'borrar'), 'Una acción desconocida es falsa');
 
 -- ---------------------------------------------------------------- esquema y cuota
-select pruebas.ok(not exists (select 1 from information_schema.columns where table_schema = 'public' and table_name like 'ali\_%'
-  and column_name ~* '(precio|costo|monto|centavos)'), 'Sin columnas de precio ni dinero');
+select pruebas.ok(not exists (select 1 from information_schema.columns where table_schema = 'public'
+  and table_name in ('ali_platillos', 'ali_menus', 'ali_menu', 'ali_suplementos', 'ali_compras_marcas')
+  and column_name ~* '(precio|costo|monto|centavos)'), 'Sin columnas de precio ni dinero (las de la Fase 4; los precios de la Fase 7 están en ali_ingredientes, test 100)');
 select pruebas.ok(not exists (select 1 from pg_trigger t where not t.tgisinternal and t.tgfoid = 'public.registrar_cambio_en_bitacora()'::regprocedure
   and t.tgrelid::regclass::text like 'ali\_%'), 'Sin bitácora (el perfil clínico no se copia a otra parte)');
 select pruebas.como('ana@ejemplo.test');

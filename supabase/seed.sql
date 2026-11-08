@@ -571,6 +571,11 @@ insert into public.ali_suplementos (id, hogar_id, menu, nombre, dosis, horario) 
   ('a3000000-0000-4000-8000-000000000002', 'b0000000-0000-4000-8000-000000000001', 'pareja', 'Vitamina de ejemplo', '1 tableta (ejemplo)', 'Por la mañana');
 insert into public.ali_compras_marcas (hogar_id, menu, semana, clave) values
   ('b0000000-0000-4000-8000-000000000001', 'papa', '2026-11-02', 'Avena|g');
+-- Fase 7: ingredientes con PRECIO BASE SUPUESTO (inventado, no es un dato real; se reemplaza con la primera compra real).
+insert into public.ali_ingredientes (id, hogar_id, nombre, unidad, pasillo, precio_base_centavos) values
+  ('a7000000-0000-4000-8000-000000000001', 'b0000000-0000-4000-8000-000000000001', 'Avena (ejemplo)',   'kg',    'Despensa',          4500),
+  ('a7000000-0000-4000-8000-000000000002', 'b0000000-0000-4000-8000-000000000001', 'Plátano (ejemplo)', 'pieza', 'Frutas y verduras',   400),
+  ('a7000000-0000-4000-8000-000000000003', 'b0000000-0000-4000-8000-000000000001', 'Lechuga (ejemplo)', 'pieza', 'Frutas y verduras',  2500);
 select pg_temp.como(null);
 
 -- ------------------------------------------------------------ Fase 5: Cuidados (turnos de la spec §3, datos inventados)
