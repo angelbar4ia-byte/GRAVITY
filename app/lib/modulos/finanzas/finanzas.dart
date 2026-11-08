@@ -30,6 +30,7 @@ import '../../nucleo/contratos/roles.dart';
 import '../../nucleo/contratos/rutas.dart';
 import '../../nucleo/permisos/permisos.dart';
 import '../../nucleo/seguridad/almacen_seguro.dart';
+import 'casos_uso/gasto_desde_recibo.dart' show ReciboImagen;
 import 'datos/repositorio_supabase.dart'
     as supabase
     show CopiaLocalFinanzas, tablasDeLaColaFinanzas;
@@ -49,7 +50,9 @@ import 'pantallas/laptop/movimientos.dart';
 import 'pantallas/laptop/semana.dart';
 import 'pantallas/laptop/tablero.dart';
 import 'pantallas/registro/hoja_gasto.dart';
+import 'pantallas/reportes/vista_reportes.dart';
 import 'pantallas/registro/hoja_ingreso_extra.dart';
+import 'pantallas/registro/hoja_recibo.dart';
 import 'pantallas/telefono/fase2_telefono.dart';
 import 'pantallas/telefono/pantallas_telefono.dart';
 import 'pantallas/transferencias/aportacion_casa.dart';
@@ -66,6 +69,15 @@ export 'estado/resumen_hoy.dart'
         ResumenLibroHoy,
         cifrasMiSemanaProvider,
         resumenFinanzasHoyProvider;
+export 'casos_uso/gasto_desde_recibo.dart'
+    show
+        ComprobanteLocal,
+        ComprobanteLocalEnMemoria,
+        PropuestaGasto,
+        ReciboImagen,
+        ReciboImagenEnMemoria,
+        proponerGastoDeRecibo;
+export 'estado/proveedores_recibo.dart' show comprobanteLocalProvider;
 export 'pantallas/ajustes_avisos.dart' show SeccionAvisosFinanzas;
 export 'pantallas/tarjeta_hoy.dart' show TarjetaFinanzasHoy;
 export 'pantallas/vista_papa/pedir_vista_papa.dart' show PantallaPedirVistaPapa;
@@ -109,6 +121,12 @@ Future<void> limpiarCopiaLocalFinanzas(
 /// Registro rápido de un gasto (F1): teclado ya abierto → categoría →
 /// cuenta → Guardar → *"Guardado · Deshacer"*.
 Widget hojaRegistrarGasto() => const HojaRegistrarGasto();
+
+/// Gasto propuesto desde un recibo fotografiado (Fase 8, bloque 4): la
+/// plataforma da la foto y el texto ya leído en el teléfono; la persona
+/// confirma antes de guardar y la foto queda como comprobante local.
+Widget hojaGastoDesdeRecibo(ReciboImagen recibo) =>
+    HojaGastoDesdeRecibo(recibo: recibo);
 
 /// Registro de un ingreso extra: monto → cuenta → fecha → Guardar.
 Widget hojaIngresoExtra() => const HojaIngresoExtra();
@@ -177,6 +195,15 @@ List<RouteBase> rutasFinanzas() => [
       (_) => const _SegunDispositivo(
         laptop: PantallaVencimientos(),
         telefono: PantallaVencimientosTelefono(),
+      ),
+    ),
+  ),
+  GoRoute(
+    path: SeccionFinanzas.reportes.segmento,
+    pageBuilder: _pagina(
+      (_) => const _SegunDispositivo(
+        laptop: PantallaReportes(),
+        telefono: PantallaReportesTelefono(),
       ),
     ),
   ),

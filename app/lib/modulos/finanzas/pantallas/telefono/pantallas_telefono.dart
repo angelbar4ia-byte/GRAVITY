@@ -167,6 +167,13 @@ class _SemanaResumida extends ConsumerWidget {
                   ],
                 ),
         ),
+        hueco,
+        OutlinedButton.icon(
+          key: const ValueKey('finanzas-ver-reportes'),
+          onPressed: () => context.go('${Rutas.finanzas}/reportes'),
+          icon: const Icon(Icons.assessment_outlined),
+          label: const Text('Reportes'),
+        ),
       ],
     );
   }

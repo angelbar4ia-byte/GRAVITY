@@ -38,6 +38,7 @@ enum SeccionFinanzas {
     'Objetivos e inversión',
     Icons.account_balance_outlined,
   ),
+  reportes('reportes', 'Reportes', Icons.assessment_outlined),
   transferencias('transferencias', 'Transferencias', Icons.swap_horiz),
   aportacion('aportacion', 'Aportación a la casa', Icons.home_outlined),
   vencimientos('vencimientos', 'Vencimientos', Icons.calendar_month_outlined),

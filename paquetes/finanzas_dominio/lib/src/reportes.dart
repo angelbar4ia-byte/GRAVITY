@@ -105,20 +105,21 @@ ReporteGastoCategoria gastoPorCategoria(
     porCategoria[raiz] = (porCategoria[raiz] ?? 0) + m.monto;
     total += m.monto;
   }
-  final lineas = [
-    for (final e in porCategoria.entries)
-      LineaGastoCategoria(
-        categoriaId: e.key,
-        nombre: e.key == null
-            ? nombreSinCategoria
-            : (datos.arbol.porId(e.key)?.nombre ?? nombreSinCategoria),
-        centavos: e.value,
-        partePb: total == 0 ? 0 : e.value * 10000 ~/ total,
-      ),
-  ]..sort((a, b) {
-      final porMonto = b.centavos.compareTo(a.centavos);
-      return porMonto != 0 ? porMonto : a.nombre.compareTo(b.nombre);
-    });
+  final lineas =
+      [
+        for (final e in porCategoria.entries)
+          LineaGastoCategoria(
+            categoriaId: e.key,
+            nombre: e.key == null
+                ? nombreSinCategoria
+                : (datos.arbol.porId(e.key)?.nombre ?? nombreSinCategoria),
+            centavos: e.value,
+            partePb: total == 0 ? 0 : e.value * 10000 ~/ total,
+          ),
+      ]..sort((a, b) {
+        final porMonto = b.centavos.compareTo(a.centavos);
+        return porMonto != 0 ? porMonto : a.nombre.compareTo(b.nombre);
+      });
   return ReporteGastoCategoria(
     rango: rango,
     lineas: lineas,

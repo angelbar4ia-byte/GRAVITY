@@ -20,19 +20,43 @@ void main() {
     anulaA: m.id,
   );
 
-  final luz = gasto('g1', Fecha(2026, 10, 5), 80000, 'g-vivienda',
-      categoria: 'c-luz');
-  final agua = gasto('g2', Fecha(2026, 10, 6), 20000, 'g-vivienda',
-      categoria: 'c-agua');
-  final super1 = gasto('g3', Fecha(2026, 10, 7), 100000, 'g-alimentacion',
-      categoria: 'c-super');
+  final luz = gasto(
+    'g1',
+    Fecha(2026, 10, 5),
+    80000,
+    'g-vivienda',
+    categoria: 'c-luz',
+  );
+  final agua = gasto(
+    'g2',
+    Fecha(2026, 10, 6),
+    20000,
+    'g-vivienda',
+    categoria: 'c-agua',
+  );
+  final super1 = gasto(
+    'g3',
+    Fecha(2026, 10, 7),
+    100000,
+    'g-alimentacion',
+    categoria: 'c-super',
+  );
   final sinCat = gasto('g4', Fecha(2026, 10, 8), 5000, 'g-vivienda');
-  final deAna = gasto('g5', Fecha(2026, 10, 9), 70000, 'g-alimentacion',
-      origen: 'banco-ana', categoria: 'c-super', por: ana);
+  final deAna = gasto(
+    'g5',
+    Fecha(2026, 10, 9),
+    70000,
+    'g-alimentacion',
+    origen: 'banco-ana',
+    categoria: 'c-super',
+    por: ana,
+  );
   final septiembre = gasto('g6', Fecha(2026, 9, 30), 30000, 'g-salud');
 
   test('agrupa por categoría de nivel 1, mayor primero, y suma el total', () {
-    final d = hogarEjemplo(movimientos: [luz, agua, super1, sinCat, septiembre]);
+    final d = hogarEjemplo(
+      movimientos: [luz, agua, super1, sinCat, septiembre],
+    );
     final r = gastoPorCategoria(d, casa, octubre);
     expect(r.totalCentavos, 205000);
     expect(r.lineas.map((l) => l.nombre), [
