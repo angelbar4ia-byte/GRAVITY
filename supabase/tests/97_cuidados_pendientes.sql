@@ -25,7 +25,12 @@ select pruebas.falla($$select public.cui_generar_tomas_todas()$$, 'La cuidadora 
 
 -- ---------------------------------------------------------------- 2. posponer toma
 select pruebas.como_servicio();
-select pruebas.igual(public.cui_generar_tomas('b0000000-0000-4000-8000-000000000001', '2026-11-09', 2), 6, 'Preparación: tomas del lunes y el martes');
+-- Generar es idempotente: si la prueba 1 ya creó tomas de esos días, aquí solo se cuentan las que existen.
+select public.cui_generar_tomas('b0000000-0000-4000-8000-000000000001', '2026-11-09', 2);
+select pruebas.igual((select count(*)::int from public.cui_tomas
+                       where hogar_id = 'b0000000-0000-4000-8000-000000000001'
+                         and (programada_para at time zone 'America/Mexico_City')::date between '2026-11-09' and '2026-11-10'),
+  6, 'Preparación: tomas del lunes y el martes');
 
 -- Lunes 14:00 es de Diana (turno 9:00 a 15:00); a las 15:00 sigue el dueño.
 select pruebas.como('carla@ejemplo.test');
