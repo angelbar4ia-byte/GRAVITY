@@ -12,6 +12,7 @@ import '../../../nucleo/contratos/rutas.dart';
 import '../casos_uso/lista_compras.dart';
 import '../datos/modelos.dart';
 import '../estado/proveedores.dart';
+import 'hay_presupuesto.dart';
 import 'selector_menu.dart';
 
 class PantallaListaCompras extends ConsumerWidget {
@@ -163,6 +164,7 @@ class _Contenido extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        const TarjetaHayPresupuesto(),
         Text(
           '$hechos de ${items.length} comprados',
           style: v.lectura(
@@ -180,6 +182,11 @@ class _Contenido extends ConsumerWidget {
         else
           Text(
             'Sin precios todavía: no se calcula el costo.',
+            style: v.lectura(tamano: 14, color: v.textoTenue),
+          ),
+        if (items.any((i) => i.costoEstimado && i.costoCentavos != null))
+          Text(
+            'Precios base de supuesto: $notaPrecioBase.',
             style: v.lectura(tamano: 14, color: v.textoTenue),
           ),
         const SizedBox(height: 8),

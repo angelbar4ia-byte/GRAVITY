@@ -1,8 +1,9 @@
 /// Plan familiar por votación (D28; Fase 7, decisión 5 del dueño).
 ///
 /// Alguien propone un menú; otra persona propone el suyo; se vota **un día**.
-/// Si hay empate, cada quien puede **cambiar su voto**. Lógica pura: la
-/// pantalla y el repositorio solo la usan.
+/// Cada quien puede **cambiar su voto** mientras la votación esté abierta. Un
+/// empate al cierre lo resuelve el servidor por volado; aquí solo se muestra.
+/// Lógica pura: la pantalla y el repositorio solo la usan.
 library;
 
 import '../../../nucleo/contratos/roles.dart';
@@ -53,7 +54,11 @@ class ServicioPlanFamiliar {
 
   Future<VotacionPlan?> votacion(DateTime dia) async {
     _exigirVer();
-    return _repo.votacion(_soloDia(dia));
+    final d = _soloDia(dia);
+    // Como en el servidor: al abrir el plan se cierran las votaciones
+    // vencidas; el servidor decide los empates (la app no).
+    await _repo.cerrarVotacionesVencidas(ahora());
+    return _repo.votacion(d);
   }
 
   /// Propone un menú para [dia]; abre la votación con la primera propuesta.

@@ -15,6 +15,7 @@ import 'package:gravity/modulos/alimentacion/casos_uso/plan_familiar.dart';
 import 'package:gravity/modulos/alimentacion/casos_uso/servicio_alimentacion.dart';
 import 'package:gravity/modulos/alimentacion/datos/modelos.dart';
 import 'package:gravity/modulos/alimentacion/datos/repositorio.dart';
+import 'package:gravity/modulos/alimentacion/pantallas/compras.dart';
 import 'package:gravity/modulos/alimentacion/pantallas/importar_recetas.dart';
 import 'package:gravity/modulos/alimentacion/pantallas/menu_del_dia_papa.dart';
 import 'package:gravity/modulos/alimentacion/pantallas/plan_familiar.dart';
@@ -191,12 +192,41 @@ void main() {
       expect(h.costoEstimado, isTrue);
       expect(h.costoCentavos, isNotNull);
       expect(costoTexto(h.costoCentavos!, estimado: h.costoEstimado), contains('estimado'));
-      // Ingrediente sin precio base: sin costo.
-      final sinPrecio = items.firstWhere((i) => i.precio == null);
-      expect(sinPrecio.costoCentavos, isNull);
+      // Los precios base cubren todos los ingredientes de ejemplo.
+      expect(items.every((i) => i.precio != null && i.precio!.esBase), isTrue);
+      expect(items.every((i) => i.costoEstimado), isTrue);
+      expect(huevo.nota, notaPrecioBase);
+      expect(notaPrecioBase, 'estimado, se reemplaza con la primera compra real');
       final total = costoDeLista(items)!;
       expect(total.estimado, isTrue);
-      expect(total.sinPrecio, greaterThan(0));
+      expect(total.sinPrecio, 0);
+    });
+
+    test('los precios base cubren todos los ingredientes de ejemplo, marcados base', () async {
+      final repo = RepositorioAlimentacionEnMemoria(semanaEjemplo: _lunes);
+      final precios = await repo.precios();
+      final ingredientes = {
+        for (final p in await repo.platillos())
+          for (final i in p.ingredientes) claveCompra(i.nombre, i.unidad),
+      };
+      expect(ingredientes, isNotEmpty);
+      for (final c in ingredientes) {
+        expect(precios[c], isNotNull, reason: 'falta precio base de $c');
+        expect(precios[c]!.esBase, isTrue, reason: c);
+        expect(precios[c]!.nota, contains('estimado'), reason: c);
+        expect(precios[c]!.centavos, greaterThan(0), reason: c);
+      }
+    });
+
+    test('ingrediente fuera del catálogo: sin precio y sin costo', () {
+      const it = ItemCompra(
+        nombre: 'Sal',
+        cantidad: 1,
+        unidad: 'kg',
+        seccion: SeccionCompra.abarrotes,
+        comprado: false,
+      );
+      expect(it.costoCentavos, isNull);
     });
 
     test('lista sin ningún precio: no hay costo total', () {
@@ -313,7 +343,7 @@ void main() {
             esMaestra: maestra,
             ahora: () => ahora ?? t0);
 
-    test('dos propuestas de personas distintas; votos; empate y cambio de voto', () async {
+    test('dos propuestas de personas distintas; votos y cambio de voto con la votación abierta', () async {
       final repo = RepositorioAlimentacionEnMemoria(conEjemplo: false);
       final ana = srv(repo, Rol.dueno, 'ana');
       final beto = srv(repo, Rol.coadministrador, 'beto');
@@ -326,23 +356,30 @@ void main() {
       final a = v.propuestas[0].id, b = v.propuestas[1].id;
 
       v = await ana.votar(dia, a);
+      // Con un solo voto (sin empate) también se puede cambiar.
+      v = await ana.votar(dia, b);
+      expect(v.votos['ana'], b);
+      v = await ana.votar(dia, a);
       v = await beto.votar(dia, b);
       expect(v.hayEmpate, isTrue);
-      expect(v.estado(t0), EstadoVotacion.empate);
+      // Empatadas pero abierta: sigue en curso, nadie decide aún.
+      expect(v.estado(t0), EstadoVotacion.enCurso);
+      expect(v.puedeVotar(t0), isTrue);
       expect(v.delante, isNull);
 
-      // Empate: Beto cambia su voto y gana la primera.
+      // Beto cambia su voto y gana la primera.
       v = await beto.votar(dia, a);
       expect(v.votos['beto'], a);
       expect(v.conteo(a), 2);
       expect(v.conteo(b), 0);
       expect(v.hayEmpate, isFalse);
       expect(v.delante!.id, a);
-      // Mismo día aún: sin ganador definitivo.
       expect(v.ganador(t0), isNull);
       final despues = t0.add(const Duration(days: 1, minutes: 1));
       expect(v.ganador(despues)!.titulo, 'Pozole');
       expect(v.estado(despues), EstadoVotacion.ganador);
+      expect(v.resueltaPorVolado(despues), isFalse);
+      // Cerrada: ya no se vota ni se cambia el voto.
       expect(v.puedeVotar(despues), isFalse);
       await expectLater(
         srv(repo, Rol.dueno, 'ana', ahora: despues).votar(dia, b),
@@ -350,20 +387,47 @@ void main() {
       );
     });
 
-    test('pasado el día, un empate sigue abierto para cambiar el voto', () async {
-      final repo = RepositorioAlimentacionEnMemoria(conEjemplo: false);
+    for (final cae in [true, false]) {
+      test('empate al cierre: lo resuelve el servidor por volado (${cae ? 'primera' : 'segunda'}), la app no decide', () async {
+        final repo = RepositorioAlimentacionEnMemoria(
+            conEjemplo: false, volado: () => cae);
+        var v = await srv(repo, Rol.dueno, 'ana').proponer(dia, titulo: 'Pozole');
+        v = await srv(repo, Rol.familiar, 'cris').proponer(dia, titulo: 'Tacos');
+        final a = v.propuestas[0].id, b = v.propuestas[1].id;
+        await srv(repo, Rol.dueno, 'ana').votar(dia, a);
+        await srv(repo, Rol.familiar, 'cris').votar(dia, b);
+        final tarde = t0.add(const Duration(days: 2));
+
+        // La app por sí sola no decide: sin el cierre del servidor, pendiente.
+        v = (await repo.votacion(dia))!;
+        expect(v.estado(tarde), EstadoVotacion.empatePendiente);
+        expect(v.ganador(tarde), isNull);
+        expect(v.puedeVotar(tarde), isFalse);
+        await expectLater(
+          srv(repo, Rol.familiar, 'cris', ahora: tarde).votar(dia, a),
+          throwsA(isA<ErrorVotacion>()),
+        );
+
+        // Al abrir el plan se pide el cierre al servidor, que hace el volado.
+        v = (await srv(repo, Rol.dueno, 'ana', ahora: tarde).votacion(dia))!;
+        expect(v.estado(tarde), EstadoVotacion.ganador);
+        expect(v.resueltaPorVolado(tarde), isTrue);
+        expect(v.ganador(tarde)!.id, cae ? a : b);
+        // Pedirlo otra vez no cambia el resultado del servidor.
+        v = (await srv(repo, Rol.dueno, 'ana', ahora: tarde).votacion(dia))!;
+        expect(v.ganador(tarde)!.id, cae ? a : b);
+      });
+    }
+
+    test('mientras está abierta no se hace volado aunque haya empate', () async {
+      final repo = RepositorioAlimentacionEnMemoria(conEjemplo: false, volado: () => true);
       var v = await srv(repo, Rol.dueno, 'ana').proponer(dia, titulo: 'Pozole');
       v = await srv(repo, Rol.familiar, 'cris').proponer(dia, titulo: 'Tacos');
-      final a = v.propuestas[0].id, b = v.propuestas[1].id;
-      await srv(repo, Rol.dueno, 'ana').votar(dia, a);
-      await srv(repo, Rol.familiar, 'cris').votar(dia, b);
-      final tarde = t0.add(const Duration(days: 2));
-      v = (await repo.votacion(dia))!;
-      expect(v.estado(tarde), EstadoVotacion.empate);
-      expect(v.ganador(tarde), isNull);
-      v = await srv(repo, Rol.familiar, 'cris', ahora: tarde).votar(dia, a);
-      expect(v.estado(tarde), EstadoVotacion.ganador);
-      expect(v.ganador(tarde)!.id, a);
+      await srv(repo, Rol.dueno, 'ana').votar(dia, v.propuestas[0].id);
+      await srv(repo, Rol.familiar, 'cris').votar(dia, v.propuestas[1].id);
+      v = (await srv(repo, Rol.dueno, 'ana').votacion(dia))!;
+      expect(v.ganadoraVoladoId, isNull);
+      expect(v.estado(t0), EstadoVotacion.enCurso);
     });
 
     test('quién propone y vota: dueño, pareja y familiar; Casa y la maestra ven; la cuidadora no', () async {
@@ -383,6 +447,34 @@ void main() {
         throwsA(isA<ErrorVotacion>()),
       );
       expect(puedeParticiparPlan(Rol.familiar), isTrue);
+    });
+  });
+
+  group('presupuesto sí o no', () {
+    test('responde sí o no, sin cifras, y solo a dueño, pareja y familiar', () async {
+      for (final hay in [true, false]) {
+        final repo = RepositorioAlimentacionEnMemoria(
+            semanaEjemplo: _lunes, hayPresupuestoSupuesto: hay);
+        for (final r in [Rol.dueno, Rol.coadministrador, Rol.familiar]) {
+          final res = await ServicioAlimentacion(repo, rol: r).hayPresupuesto();
+          expect(res, hay, reason: r.name);
+          // Es un bool: no lleva saldo, cuenta ni monto.
+          expect(res, isA<bool>());
+        }
+      }
+    });
+
+    test('la cuidadora, la cuenta maestra y Casa no lo ven', () async {
+      final repo = RepositorioAlimentacionEnMemoria(semanaEjemplo: _lunes);
+      await expectLater(ServicioAlimentacion(repo, rol: Rol.cuidador).hayPresupuesto(),
+          throwsA(isA<PermisoDenegado>()));
+      await expectLater(ServicioAlimentacion(repo, rol: Rol.casa).hayPresupuesto(),
+          throwsA(isA<PermisoDenegado>()));
+      await expectLater(
+          ServicioAlimentacion(repo, rol: Rol.coadministrador, esMaestra: true)
+              .hayPresupuesto(),
+          throwsA(isA<PermisoDenegado>()));
+      expect(puedeVerHayPresupuesto(Rol.dueno, esMaestra: true), isFalse);
     });
   });
 
@@ -494,7 +586,7 @@ void main() {
       expect(find.text('Elegir archivo'), findsNothing);
     });
 
-    testWidgets('plan: proponer, votar y cambiar el voto en empate', (t) async {
+    testWidgets('plan: proponer, votar y cambiar el voto con la votación abierta', (t) async {
       await alto(t);
       final repo = RepositorioAlimentacionEnMemoria(conEjemplo: false);
       final dia = DateTime(2026, 11, 4);
@@ -512,12 +604,79 @@ void main() {
       await t.pumpWidget(app(Rol.dueno, const PantallaPlanFamiliar(),
           repo: repo, id: 'ana'));
       await t.pumpAndSettle();
-      expect(find.text('Empate: cualquiera puede cambiar su voto.'), findsOneWidget);
+      expect(find.textContaining('Votación abierta, van empatadas'), findsOneWidget);
+      expect(find.textContaining('cualquiera puede cambiar'), findsNothing);
       expect(find.text('Tu voto'), findsOneWidget);
       await t.tap(find.text('Cambiar mi voto a esta'));
       await t.pumpAndSettle();
       expect(find.text('2 votos'), findsOneWidget);
       expect(find.text('Tu voto'), findsOneWidget);
+    });
+
+    testWidgets('plan: votación abierta sin empate también deja cambiar el voto', (t) async {
+      await alto(t);
+      final repo = RepositorioAlimentacionEnMemoria(conEjemplo: false);
+      final dia = DateTime(2026, 11, 4);
+      ServicioPlanFamiliar sv(Rol r, String id) => ServicioPlanFamiliar(repo,
+          rol: r, personaId: id, personaNombre: id, ahora: () => _miercoles);
+      var v = await sv(Rol.dueno, 'ana').proponer(dia, titulo: 'Pozole');
+      v = await sv(Rol.familiar, 'beto').proponer(dia, titulo: 'Tacos');
+      await sv(Rol.dueno, 'ana').votar(dia, v.propuestas[0].id);
+      await t.pumpWidget(app(Rol.dueno, const PantallaPlanFamiliar(), repo: repo, id: 'ana'));
+      await t.pumpAndSettle();
+      expect(find.text('Cambiar mi voto a esta'), findsOneWidget);
+    });
+
+    testWidgets('plan: empate al cierre se muestra como resultado del servidor', (t) async {
+      await alto(t);
+      final repo = RepositorioAlimentacionEnMemoria(conEjemplo: false, volado: () => false);
+      final dia = DateTime(2026, 11, 4);
+      final antes = DateTime(2026, 10, 30, 9);
+      ServicioPlanFamiliar sv(Rol r, String id) => ServicioPlanFamiliar(repo,
+          rol: r, personaId: id, personaNombre: id, ahora: () => antes);
+      var v = await sv(Rol.dueno, 'ana').proponer(dia, titulo: 'Pozole');
+      v = await sv(Rol.familiar, 'beto').proponer(dia, titulo: 'Tacos');
+      await sv(Rol.dueno, 'ana').votar(dia, v.propuestas[0].id);
+      await sv(Rol.familiar, 'beto').votar(dia, v.propuestas[1].id);
+      await t.pumpWidget(app(Rol.dueno, const PantallaPlanFamiliar(), repo: repo, id: 'ana'));
+      await t.pumpAndSettle();
+      expect(find.textContaining('Empate resuelto por volado del servidor. Ganó: Tacos'),
+          findsOneWidget);
+      expect(find.textContaining('Cambiar mi voto'), findsNothing);
+      expect(find.textContaining('Votar por esta'), findsNothing);
+    });
+
+    testWidgets('presupuesto sí o no en el plan y en compras, sin cifras', (t) async {
+      await alto(t);
+      for (final hay in [true, false]) {
+        final repo = RepositorioAlimentacionEnMemoria(
+            semanaEjemplo: _lunes, hayPresupuestoSupuesto: hay);
+        await t.pumpWidget(app(Rol.dueno, const PantallaPlanFamiliar(), repo: repo));
+        await t.pumpAndSettle();
+        expect(find.text('¿Hay presupuesto para comprar?'), findsOneWidget);
+        expect(find.text(hay ? 'Sí' : 'No'), findsOneWidget);
+        expect(find.textContaining('\$'), findsNothing);
+        await t.pumpWidget(app(Rol.dueno, const PantallaListaCompras(), repo: repo));
+        await t.pumpAndSettle();
+        expect(find.text('¿Hay presupuesto para comprar?'), findsOneWidget);
+        expect(find.text(hay ? 'Sí' : 'No'), findsOneWidget);
+        // Precios base de la lista: rotulados como estimado, con la nota.
+        expect(find.textContaining('(estimado)'), findsWidgets);
+        expect(find.textContaining(notaPrecioBase), findsOneWidget);
+      }
+      // El familiar lo ve en el plan.
+      final repo = RepositorioAlimentacionEnMemoria(semanaEjemplo: _lunes);
+      await t.pumpWidget(app(Rol.familiar, const PantallaPlanFamiliar(), repo: repo));
+      await t.pumpAndSettle();
+      expect(find.text('¿Hay presupuesto para comprar?'), findsOneWidget);
+      // La maestra y la cuidadora no.
+      await t.pumpWidget(app(Rol.coadministrador, const PantallaPlanFamiliar(),
+          repo: repo, maestra: true));
+      await t.pumpAndSettle();
+      expect(find.text('¿Hay presupuesto para comprar?'), findsNothing);
+      await t.pumpWidget(app(Rol.cuidador, const PantallaListaCompras(), repo: repo));
+      await t.pumpAndSettle();
+      expect(find.text('¿Hay presupuesto para comprar?'), findsNothing);
     });
 
     testWidgets('plan: Casa lo ve en solo lectura, la cuidadora no', (t) async {

@@ -159,8 +159,10 @@ List<EntradaMenu> menuEjemplo(MenuId menu) {
 }
 
 /// Precios base **supuestos** (inventados, sin relevancia): arrancan marcados
-/// como base y se muestran "estimado". Algunos ingredientes quedan sin precio
-/// a propósito: sin precio no se calcula costo.
+/// como base y se muestran "estimado" con [notaPrecioBase]. Cubren todos los
+/// ingredientes de ejemplo; un ingrediente que no esté aquí (por ejemplo, de
+/// una receta importada) queda sin precio y no se calcula su costo. Se
+/// reemplazan con la primera compra real; nunca se presentan como reales.
 List<PrecioIngrediente> preciosBaseEjemplo() {
   PrecioIngrediente b(String n, String u, int centavos, [double por = 1]) =>
       PrecioIngrediente(
@@ -181,5 +183,18 @@ List<PrecioIngrediente> preciosBaseEjemplo() {
     b('Arroz', 'g', 2800, 1000),
     b('Pechuga de pollo', 'g', 12000, 1000),
     b('Pasta', 'g', 2500, 1000),
+    b('Frijoles de la olla', 'taza', 1200),
+    b('Pan de caja', 'reb', 250),
+    b('Jamón de pavo', 'reb', 400),
+    b('Lechuga', 'hoja', 200),
+    b('Lentejas', 'g', 4000, 1000),
+    b('Filete de pescado', 'g', 18000, 1000),
+    b('Limón', 'pza', 150),
+    b('Queso Oaxaca', 'g', 18000, 1000),
+    b('Yogurt natural', 'vaso', 1000),
+    b('Granola', 'g', 9000, 1000),
+    b('Papa', 'pza', 600),
+    b('Proteína en polvo', 'cacito', 1500),
+    b('Manzana', 'pza', 500),
   ];
 }

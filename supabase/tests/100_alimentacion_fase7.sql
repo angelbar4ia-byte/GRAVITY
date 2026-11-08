@@ -1,5 +1,5 @@
 -- Alimentación, Fase 7 (D28): reglas de cada cuenta, precio base que el real reemplaza, compras con dinero (libro correcto o
--- solicitud al albacea), plan familiar por votación (cambio de voto en empate, cierre diario), suplementos y menú del día para Casa.
+-- solicitud al albacea), plan familiar por votación (cambio de voto mientras esté abierta, cierre diario), suplementos y menú del día para Casa.
 begin;
 -- Fixtures como postgres. Cuentas del seed: Ana dueña y albacea de Papá, Alex pareja y suplente, Carla familiar, Diana cuidadora,
 -- Casa, Marta maestra, Elena otro hogar.
@@ -297,7 +297,7 @@ select pruebas.igual(pruebas.cuenta($$select * from public.ali_solicitudes_pago$
 select pruebas.como('marta@ejemplo.test');
 select pruebas.igual(pruebas.cuenta($$select * from public.ali_solicitudes_pago$$), 2, 'La maestra lee las solicitudes');
 
--- ---------------------------------------------------------------- plan familiar: propuesta, alternativa, voto, empate, cierre diario
+-- ---------------------------------------------------------------- plan familiar: propuesta, alternativa, voto, cierre diario
 select pruebas.como('diana@ejemplo.test');
 select pruebas.falla($$select public.ali_proponer_menu('b0000000-0000-4000-8000-000000000001', 'Cena del martes', array['a1000000-0000-4000-8000-000000000001']::uuid[])$$,
   'La cuidadora no propone menús familiares', '42501');
@@ -345,28 +345,25 @@ select pruebas.falla($$select public.ali_votar((select id from public.ali_votaci
 select pruebas.como('elena@ejemplo.test');
 select pruebas.igual(pruebas.cuenta($$select * from public.ali_votaciones$$) + pruebas.cuenta($$select * from public.ali_votos$$), 0, 'Otro hogar no ve nada del plan');
 
--- Llega el día siguiente: empate → se puede cambiar el voto.
-select pruebas.como_postgres();
-update public.ali_votaciones set cierra_en = now() - interval '1 hour';
-select pruebas.como_servicio();
-select pruebas.igual(public.ali_cerrar_votaciones(null), 1, 'El cierre diario del servidor procesa la votación vencida');
-select pruebas.como_postgres();
-select pruebas.ok((select estado = 'empate' and ronda = 2 and ganadora_id is null and cierra_en > now() + interval '23 hours' from public.ali_votaciones),
-  'Con 1 a 1 es EMPATE: sigue abierta un día más (ronda 2)');
+-- Con 1 a 1 y la votación aún abierta, cada quien puede CAMBIAR su voto (antes del cierre, haya empate o no).
 select pruebas.como('alex@ejemplo.test');
-select pruebas.igual(public.ali_votar((select id from public.ali_votaciones), (select id from public.ali_votacion_opciones where titulo = 'Cena del martes')), 'empate',
-  'En empate cada quien puede CAMBIAR su voto');
+select pruebas.igual(public.ali_votar((select id from public.ali_votaciones), (select id from public.ali_votacion_opciones where titulo = 'Cena del martes')), 'abierta',
+  'Aun con 1 a 1, la votación sigue abierta y cada quien puede CAMBIAR su voto');
 select pruebas.ok((select opcion_id = (select id from public.ali_votacion_opciones where titulo = 'Cena del martes') and cambios = 1
                      from public.ali_votos where persona_id = pruebas.id_persona('alex@ejemplo.test')), 'El voto cambió (una vez)');
 select pruebas.igual(pruebas.cuenta($$select * from public.ali_votos$$), 2, 'Sigue un voto por persona');
 select pruebas.como('carla@ejemplo.test');
-select pruebas.igual(public.ali_votar((select id from public.ali_votaciones), (select id from public.ali_votacion_opciones where titulo = 'Cena ligera')), 'empate', 'La familiar también vota ahora');
+select pruebas.igual(public.ali_votar((select id from public.ali_votaciones), (select id from public.ali_votacion_opciones where titulo = 'Cena ligera')), 'abierta', 'La familiar también vota');
+select pruebas.igual(public.ali_votar((select id from public.ali_votaciones), (select id from public.ali_votacion_opciones where titulo = 'Cena del martes')), 'abierta', '… y cambia a la propuesta (3 a 0)');
+-- Llega el día siguiente: se cierra con los votos de ese momento (el empate se resuelve por volado: ver 101_alimentacion_volado.sql).
 select pruebas.como_postgres();
-update public.ali_votaciones set cierra_en = now() - interval '1 minute';
+update public.ali_votaciones set cierra_en = now() - interval '1 hour';
+select pruebas.como_servicio();
+select pruebas.igual(public.ali_cerrar_votaciones(null), 1, 'El cierre diario del servidor procesa la votación vencida');
 select pruebas.como('ana@ejemplo.test');
-select pruebas.igual(public.ali_cerrar_votaciones('b0000000-0000-4000-8000-000000000001'), 1, 'Al cumplirse el día se cierra (también lo puede pedir la app de la dueña)');
+select pruebas.igual(public.ali_cerrar_votaciones('b0000000-0000-4000-8000-000000000001'), 0, 'Ya no queda nada por cerrar (también lo puede pedir la app de la dueña)');
 select pruebas.ok((select estado = 'cerrada' and ganadora_id = (select id from public.ali_votacion_opciones where titulo = 'Cena del martes') and cerrada_en is not null from public.ali_votaciones),
-  'Ganó la propuesta con 2 votos contra 1');
+  'Ganó la propuesta por votos, sin volado');
 select pruebas.falla($$select public.ali_votar((select id from public.ali_votaciones), (select id from public.ali_votacion_opciones where titulo = 'Cena ligera'))$$,
   'Cerrada, ya no se vota', '22023');
 select pruebas.falla($$select public.ali_cerrar_votaciones(null)$$, 'La dueña no cierra las de todos los hogares', '42501');

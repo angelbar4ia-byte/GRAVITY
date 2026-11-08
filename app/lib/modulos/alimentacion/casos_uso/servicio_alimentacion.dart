@@ -8,6 +8,12 @@ import '../datos/repositorio.dart';
 import 'importar_recetas.dart';
 import 'lista_compras.dart';
 
+/// "¿Hay presupuesto para comprar?": dueño, pareja y familiar. La cuidadora
+/// no, ni la cuenta maestra, ni Casa. Solo sí o no, nunca cifras.
+bool puedeVerHayPresupuesto(Rol rol, {bool esMaestra = false}) =>
+    !esMaestra &&
+    (rol == Rol.dueno || rol == Rol.coadministrador || rol == Rol.familiar);
+
 class PermisoDenegado implements Exception {
   const PermisoDenegado();
   @override
@@ -54,6 +60,15 @@ class ServicioAlimentacion {
   final RepositorioAlimentacion _repo;
   final Rol rol;
   final bool esMaestra;
+
+  bool get puedeVerPresupuesto =>
+      puedeVerHayPresupuesto(rol, esMaestra: esMaestra);
+
+  /// Sí o no (sin saldos, cuentas ni montos). `null` = sin respuesta aún.
+  Future<bool?> hayPresupuesto() async {
+    if (!puedeVerPresupuesto) throw const PermisoDenegado();
+    return _repo.hayPresupuesto();
+  }
 
   bool get puedeEditar => puedeEditarAlimentacion(rol, esMaestra: esMaestra);
   List<MenuId> get menusVisibles => [

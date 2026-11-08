@@ -1,7 +1,9 @@
 /// Votación del plan familiar (D28; Fase 7, decisión 5): modelo puro.
 ///
 /// Alguien propone un menú; otra persona propone el suyo; se vota **un día**.
-/// Si hay empate, cada quien puede **cambiar su voto**.
+/// Cada quien puede **cambiar su voto** mientras la votación esté abierta. Si
+/// al cierre hay empate, lo resuelve un **volado** que decide el servidor
+/// (`ali_cerrar_votaciones`); la app solo muestra el resultado, no decide.
 library;
 
 class ErrorVotacion implements Exception {
@@ -34,10 +36,11 @@ enum EstadoVotacion {
   /// Hay dos propuestas y el día de votación sigue abierto.
   enCurso,
 
-  /// Los votos están igualados: cualquiera puede cambiar el suyo.
-  empate,
+  /// El día terminó con empate (o sin votos) y el servidor aún no hace el
+  /// volado. La app no decide: espera el resultado del servidor.
+  empatePendiente,
 
-  /// El día terminó y una propuesta ganó.
+  /// El día terminó y una propuesta ganó (por votos o por volado).
   ganador,
 }
 
@@ -51,6 +54,7 @@ class VotacionPlan {
     required this.abiertaEn,
     this.propuestas = const [],
     this.votos = const {},
+    this.ganadoraVoladoId,
   });
 
   final String id;
@@ -65,6 +69,10 @@ class VotacionPlan {
   /// persona -> propuesta elegida. Una persona, un voto.
   final Map<String, String> votos;
 
+  /// Propuesta que ganó por volado: la fija el servidor al cerrar con empate.
+  /// La app nunca la calcula.
+  final String? ganadoraVoladoId;
+
   DateTime get cierraEn => abiertaEn.add(duracionVotacion);
   bool abierta(DateTime ahora) => ahora.isBefore(cierraEn);
 
@@ -77,31 +85,48 @@ class VotacionPlan {
       votos.isNotEmpty &&
       conteo(propuestas[0].id) == conteo(propuestas[1].id);
 
+  /// Cerrada con empate (o sin votos): se decide por volado en el servidor.
+  bool _empateAlCierre(DateTime ahora) =>
+      propuestas.length == 2 &&
+      !abierta(ahora) &&
+      (votos.isEmpty || hayEmpate);
+
   EstadoVotacion estado(DateTime ahora) {
     if (propuestas.length < 2) return EstadoVotacion.faltaPropuesta;
-    if (hayEmpate) return EstadoVotacion.empate;
     if (abierta(ahora)) return EstadoVotacion.enCurso;
-    // Cerrada sin votos: nadie decidió, se trata como empate (se puede votar).
-    if (votos.isEmpty) return EstadoVotacion.empate;
+    if (_empateAlCierre(ahora)) {
+      return ganadoraVoladoId == null
+          ? EstadoVotacion.empatePendiente
+          : EstadoVotacion.ganador;
+    }
     return EstadoVotacion.ganador;
   }
 
-  /// Propuesta que va ganando o ganó; `null` si no hay dos propuestas o van
-  /// igualadas.
+  /// Propuesta que va ganando por votos; `null` si van igualadas o no hay
+  /// votos.
   PropuestaMenu? get delante {
     if (propuestas.length < 2 || hayEmpate || votos.isEmpty) return null;
     final a = conteo(propuestas[0].id), b = conteo(propuestas[1].id);
     return a > b ? propuestas[0] : propuestas[1];
   }
 
-  /// El ganador definitivo: solo cuando el día terminó y no hay empate.
-  PropuestaMenu? ganador(DateTime ahora) =>
-      estado(ahora) == EstadoVotacion.ganador ? delante : null;
+  /// El ganador definitivo: cerrada la votación, por votos o por el volado
+  /// del servidor. `null` mientras siga abierta o el servidor no resuelva.
+  PropuestaMenu? ganador(DateTime ahora) {
+    if (estado(ahora) != EstadoVotacion.ganador) return null;
+    if (_empateAlCierre(ahora)) {
+      return propuestas.firstWhere((p) => p.id == ganadoraVoladoId);
+    }
+    return delante;
+  }
 
-  /// Se puede votar o cambiar el voto mientras el día está abierto, y también
-  /// después si el resultado es un empate.
-  bool puedeVotar(DateTime ahora) =>
-      propuestas.length == 2 && (abierta(ahora) || hayEmpate || votos.isEmpty);
+  /// `true` si el ganador salió del volado del servidor, no de los votos.
+  bool resueltaPorVolado(DateTime ahora) =>
+      estado(ahora) == EstadoVotacion.ganador && _empateAlCierre(ahora);
+
+  /// Se puede votar o cambiar el voto mientras la votación esté abierta,
+  /// haya o no empate. Cerrada, nunca.
+  bool puedeVotar(DateTime ahora) => propuestas.length == 2 && abierta(ahora);
 
   VotacionPlan _con({List<PropuestaMenu>? propuestas, Map<String, String>? votos}) =>
       VotacionPlan(
@@ -110,6 +135,17 @@ class VotacionPlan {
         abiertaEn: abiertaEn,
         propuestas: propuestas ?? this.propuestas,
         votos: votos ?? this.votos,
+        ganadoraVoladoId: ganadoraVoladoId,
+      );
+
+  /// Copia con el resultado del volado que decidió el servidor.
+  VotacionPlan conVolado(String propuestaId) => VotacionPlan(
+        id: id,
+        dia: dia,
+        abiertaEn: abiertaEn,
+        propuestas: propuestas,
+        votos: votos,
+        ganadoraVoladoId: propuestaId,
       );
 
   /// Agrega una propuesta: máximo dos, de personas distintas.

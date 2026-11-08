@@ -1,6 +1,7 @@
 /// Plan familiar por votación (D28; Fase 7, decisión 5): una persona propone
-/// un menú, otra da el suyo y se vota un día. Con empate, cada quien puede
-/// cambiar su voto. Pantalla sencilla, igual en la laptop y el teléfono.
+/// un menú, otra da el suyo y se vota un día. Se puede cambiar el voto mientras
+/// la votación esté abierta; un empate al cierre lo resuelve el servidor por
+/// volado. Pantalla sencilla, igual en la laptop y el teléfono.
 library;
 
 import 'package:flutter/material.dart';
@@ -14,6 +15,7 @@ import '../../../nucleo/contratos/rutas.dart';
 import '../casos_uso/plan_familiar.dart';
 import '../datos/modelos.dart';
 import '../estado/proveedores.dart';
+import 'hay_presupuesto.dart';
 
 String _fecha(DateTime d) => '${diasSemana[d.weekday - 1]} ${d.day}/${d.month}';
 
@@ -114,17 +116,23 @@ class _Votacion extends ConsumerWidget {
       return switch (estado!) {
         EstadoVotacion.faltaPropuesta =>
           'Falta la segunda propuesta, de otra persona.',
-        EstadoVotacion.enCurso => 'Votación abierta. Cierra en un día.',
-        EstadoVotacion.empate =>
-          'Empate: cualquiera puede cambiar su voto.',
+        EstadoVotacion.enCurso =>
+          vot.hayEmpate
+              ? 'Votación abierta, van empatadas. Puedes cambiar tu voto hasta el cierre; si sigue el empate, el servidor decide por volado.'
+              : 'Votación abierta. Puedes cambiar tu voto hasta el cierre.',
+        EstadoVotacion.empatePendiente =>
+          'Empate: el servidor lo resuelve por volado.',
         EstadoVotacion.ganador =>
-          'Ganó: ${vot.ganador(ahora)!.titulo}.',
+          vot.resueltaPorVolado(ahora)
+              ? 'Empate resuelto por volado del servidor. Ganó: ${vot.ganador(ahora)!.titulo}.'
+              : 'Ganó: ${vot.ganador(ahora)!.titulo}.',
       };
     }
 
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        const TarjetaHayPresupuesto(),
         Text(
           aviso(),
           style: v.lectura(

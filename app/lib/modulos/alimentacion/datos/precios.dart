@@ -6,6 +6,9 @@
 /// una fuente sin verificar.
 library;
 
+/// Nota obligatoria junto a todo precio base.
+const notaPrecioBase = 'estimado, se reemplaza con la primera compra real';
+
 /// Precio de un ingrediente: [centavos] por [porCantidad] de la unidad de su
 /// clave (`claveCompra`). Ejemplo: leche, 2800 centavos por 1000 ml.
 class PrecioIngrediente {
@@ -23,6 +26,9 @@ class PrecioIngrediente {
 
   /// `true` = precio base supuesto: se rotula "estimado", nunca como real.
   final bool esBase;
+
+  /// Nota para mostrar junto al precio: solo los base la llevan.
+  String? get nota => esBase ? notaPrecioBase : null;
 
   /// Costo en centavos de [cantidad] a este precio.
   int costoDe(double cantidad) => (cantidad / porCantidad * centavos).round();

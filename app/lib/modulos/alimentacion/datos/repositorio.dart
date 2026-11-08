@@ -2,6 +2,8 @@
 /// servidor está en `docs/specs/fase-4-alimentacion.md`, sección 6.
 library;
 
+import 'dart:math' show Random;
+
 import 'ejemplo.dart';
 import 'modelos.dart';
 import 'votacion.dart';
@@ -23,6 +25,14 @@ abstract interface class RepositorioAlimentacion {
   /// Votación del plan familiar de [dia] (sin hora), si existe.
   Future<VotacionPlan?> votacion(DateTime dia);
   Future<void> guardarVotacion(VotacionPlan votacion);
+
+  /// Pide al servidor cerrar las votaciones vencidas (`ali_cerrar_votaciones`).
+  /// Con empate, el servidor decide por volado; la app no decide.
+  Future<void> cerrarVotacionesVencidas(DateTime ahora);
+
+  /// "¿Hay presupuesto para comprar?" (`ali_hay_presupuesto`): solo sí o no,
+  /// sin saldos, cuentas ni montos. `null` = el servidor no responde todavía.
+  Future<bool?> hayPresupuesto();
 
   /// Menú [menu] de la semana que empieza en [lunes].
   Future<List<EntradaMenu>> menu(MenuId menu, DateTime lunes);
@@ -64,7 +74,9 @@ class RepositorioAlimentacionEnMemoria implements RepositorioAlimentacion {
   RepositorioAlimentacionEnMemoria({
     DateTime? semanaEjemplo,
     bool conEjemplo = true,
-  }) {
+    this.hayPresupuestoSupuesto = true,
+    bool Function()? volado,
+  }) : _volado = volado ?? (() => Random().nextBool()) {
     if (conEjemplo) {
       for (final p in preciosBaseEjemplo()) {
         _precios[p.clave] = p;
@@ -89,6 +101,29 @@ class RepositorioAlimentacionEnMemoria implements RepositorioAlimentacion {
   final List<Platillo> _platillos = [...platillosEjemplo];
   final Map<String, PrecioIngrediente> _precios = {};
   final Map<String, VotacionPlan> _votaciones = {};
+
+  /// Supuesto de la demostración: sí o no, sin cifras.
+  bool hayPresupuestoSupuesto;
+
+  /// Hace de servidor en memoria: el volado de `ali_cerrar_votaciones`.
+  final bool Function() _volado;
+
+  @override
+  Future<bool?> hayPresupuesto() async => hayPresupuestoSupuesto;
+
+  @override
+  Future<void> cerrarVotacionesVencidas(DateTime ahora) async {
+    for (final e in _votaciones.entries.toList()) {
+      final v = e.value;
+      if (v.propuestas.length == 2 &&
+          !v.abierta(ahora) &&
+          v.ganadoraVoladoId == null &&
+          (v.votos.isEmpty || v.hayEmpate)) {
+        _votaciones[e.key] =
+            v.conVolado(v.propuestas[_volado() ? 0 : 1].id);
+      }
+    }
+  }
 
   @override
   Future<List<Platillo>> platillos() async => [..._platillos];
@@ -189,6 +224,10 @@ class RepositorioAlimentacionSinServidor implements RepositorioAlimentacion {
   Future<void> guardarPrecio(PrecioIngrediente precio) async => _no();
   @override
   Future<VotacionPlan?> votacion(DateTime dia) async => null;
+  @override
+  Future<void> cerrarVotacionesVencidas(DateTime ahora) async {}
+  @override
+  Future<bool?> hayPresupuesto() async => null;
   @override
   Future<void> guardarVotacion(VotacionPlan votacion) async => _no();
   @override

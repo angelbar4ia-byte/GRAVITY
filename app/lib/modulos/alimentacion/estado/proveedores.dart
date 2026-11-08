@@ -152,3 +152,9 @@ final consultaLocalAlimentacionProvider =
         }
       };
     });
+
+/// Respuesta de "¿Hay presupuesto para comprar?": sí o no, sin cifras.
+final hayPresupuestoProvider = FutureProvider<bool?>((ref) {
+  ref.watch(versionAlimentacionProvider);
+  return ref.watch(servicioAlimentacionProvider).hayPresupuesto();
+});

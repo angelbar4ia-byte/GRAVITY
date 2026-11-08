@@ -46,12 +46,12 @@
 2. **Precios:** cada ingrediente o platillo empieza con un **precio base supuesto** (sin mucha relevancia). Al registrar la **primera compra real**, el precio real reemplaza al base y se **actualiza** con las siguientes compras.
 3. **Lector de código de barras:** después de la lista de compras.
 4. **Lista de compras:** organizada **por pasillo**.
-5. **Votación del menú familiar:** dura **un día**. Si hay empate, cada quien puede **cambiar su voto**.
+5. **Votación del menú familiar:** dura **un día**. Si hay empate, se decide por **volado** en el servidor.
 
 ## 5a. Respuestas del dueño (v1.1, 8/nov/2026)
 
 1. **Presupuesto para comprar:** la familia (y quien participa) puede ver los **precios** de presupuesto, pero **no** cuentas bancarias ni saldos. Puede preguntar si **hay presupuesto para comprar** y recibir **sí o no**, sin cifras de saldo.
-2. **Cambio de voto:** se permite **mientras la votación esté abierta** (no solo en empate).
+2. **Cambio de voto:** se permite **mientras la votación esté abierta**, haya empate o no.
 3. **Precios base:** los carga el asistente (arquitecto) como **supuestos**, marcados como base; se reemplazan con la primera compra real.
 4. **Empate:** se resuelve con un **volado** (sorteo al cerrar la votación). Ya no se reabre el día.
 5. **Precios para el familiar:** están bien (lo necesita para armar el menú de una visita).
