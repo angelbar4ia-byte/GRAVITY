@@ -1,7 +1,7 @@
 // GENERADO por api/generar_dart.mjs a partir de api/openapi.yaml. No se edita a mano.
 // Permite abrir Swagger UI con doble clic (file://), donde el navegador no deja leer
 // ../openapi.yaml. Servida por http, la página lee openapi.yaml directamente.
-// huella: fnv1a32:419dbe6d
+// huella: fnv1a32:bc7cb65f
 window.ESPECIFICACION_GRAVITY = {
   "openapi": "3.1.0",
   "info": {
@@ -12858,6 +12858,920 @@ window.ESPECIFICACION_GRAVITY = {
         }
       }
     },
+    "/rest/v1/fin_objetivos": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerFinObjetivos",
+        "summary": "Leer los objetivos de ahorro",
+        "description": "Metas de ahorro con monto y fecha; `bolsa_id` es el apartado de ahorro que las alimenta (se lee, no se copia). Cada fila es de una persona (su libro, D19). La lee quien puede leer el libro: la titular; la pareja, lo de la casa; el dueño como albacea de Papá y el suplente igual que en la Fase 1 (`fin_puede leer`); la maestra solo con su consulta vigente. La familiar, la cuidadora y Casa no ven nada. Nada de esto sale a la IA ni a las bocinas (D3). Sin escritura directa: se guarda con `fin_objetivo_guardar`. No se borran: baja = `activo` en falso.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/orden"
+          },
+          {
+            "$ref": "#/components/parameters/limite"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas visibles para la sesión.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinObjetivo"
+                  }
+                },
+                "example": [
+                  {
+                    "id": "a1080000-0000-4000-8000-0000000000a1",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000011",
+                    "titular_id": "a0000000-0000-4000-8000-000000000002",
+                    "nombre": "Viaje",
+                    "monto_meta_centavos": 100000,
+                    "fecha_meta": "2026-12-20",
+                    "bolsa_id": "ea800000-0000-4000-8000-000000000001",
+                    "activo": true
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_inversiones": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerFinInversiones",
+        "summary": "Leer las inversiones",
+        "description": "Saldo y rendimiento (puntos base) tal como los capturó la persona; `origen` distingue `capturado` (a mano) de `verificado` (leído del estado en PDF, en la laptop). Cada fila es de una persona (su libro, D19). La lee quien puede leer el libro: la titular; la pareja, lo de la casa; el dueño como albacea de Papá y el suplente igual que en la Fase 1 (`fin_puede leer`); la maestra solo con su consulta vigente. La familiar, la cuidadora y Casa no ven nada. Nada de esto sale a la IA ni a las bocinas (D3). Sin escritura directa: se guarda con `fin_inversion_guardar`.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/orden"
+          },
+          {
+            "$ref": "#/components/parameters/limite"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas visibles para la sesión.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinInversion"
+                  }
+                },
+                "example": [
+                  {
+                    "id": "a1080000-0000-4000-8000-0000000000b1",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000011",
+                    "titular_id": "a0000000-0000-4000-8000-000000000002",
+                    "nombre": "Cetes (ejemplo)",
+                    "saldo_centavos": 7654321,
+                    "rendimiento_pb": 1234,
+                    "origen": "capturado",
+                    "fecha_captura": "2026-11-05",
+                    "activa": true
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_bienes": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerFinBienes",
+        "summary": "Leer los bienes",
+        "description": "Bienes (auto, casa, otro) con su valor ingresado a mano y la fecha de captura. Cada fila es de una persona (su libro, D19). La lee quien puede leer el libro: la titular; la pareja, lo de la casa; el dueño como albacea de Papá y el suplente igual que en la Fase 1 (`fin_puede leer`); la maestra solo con su consulta vigente. La familiar, la cuidadora y Casa no ven nada. Nada de esto sale a la IA ni a las bocinas (D3). Sin escritura directa: se guarda con `fin_bien_guardar`.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/orden"
+          },
+          {
+            "$ref": "#/components/parameters/limite"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas visibles para la sesión.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinBien"
+                  }
+                },
+                "example": [
+                  {
+                    "id": "a1080000-0000-4000-8000-0000000000c1",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000011",
+                    "titular_id": "a0000000-0000-4000-8000-000000000002",
+                    "nombre": "Auto (ejemplo)",
+                    "tipo": "auto",
+                    "valor_centavos": 98765432,
+                    "fecha_captura": "2026-11-01",
+                    "activo": true
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_previsiones": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerFinPrevisiones",
+        "summary": "Leer las previsiones",
+        "description": "Previsión (seguro, pensión, otro) con su valor ingresado a mano y la fecha de captura. Cada fila es de una persona (su libro, D19). La lee quien puede leer el libro: la titular; la pareja, lo de la casa; el dueño como albacea de Papá y el suplente igual que en la Fase 1 (`fin_puede leer`); la maestra solo con su consulta vigente. La familiar, la cuidadora y Casa no ven nada. Nada de esto sale a la IA ni a las bocinas (D3). Sin escritura directa: se guarda con `fin_prevision_guardar`.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/orden"
+          },
+          {
+            "$ref": "#/components/parameters/limite"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas visibles para la sesión.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinPrevision"
+                  }
+                },
+                "example": [
+                  {
+                    "id": "a1080000-0000-4000-8000-0000000000d1",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000011",
+                    "titular_id": "a0000000-0000-4000-8000-000000000002",
+                    "nombre": "Seguro de vida (ejemplo)",
+                    "tipo": "seguro",
+                    "valor_centavos": 40000000,
+                    "fecha_captura": "2026-10-15",
+                    "activa": true
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_v_inversiones_vigentes": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerFinVInversionesVigentes",
+        "summary": "Leer las inversiones vigentes",
+        "description": "Las inversiones activas que tienen fecha de captura: sin fecha de captura no se muestran como vigentes. Misma regla de lectura que la tabla.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/orden"
+          },
+          {
+            "$ref": "#/components/parameters/limite"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas visibles para la sesión.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinInversion"
+                  }
+                },
+                "example": []
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_v_bienes_vigentes": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerFinVBienesVigentes",
+        "summary": "Leer las bienes vigentes",
+        "description": "Las bienes activas que tienen fecha de captura: sin fecha de captura no se muestran como vigentes. Misma regla de lectura que la tabla.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/orden"
+          },
+          {
+            "$ref": "#/components/parameters/limite"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas visibles para la sesión.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinBien"
+                  }
+                },
+                "example": []
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_v_previsiones_vigentes": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerFinVPrevisionesVigentes",
+        "summary": "Leer las previsiones vigentes",
+        "description": "Las previsiones activas que tienen fecha de captura: sin fecha de captura no se muestran como vigentes. Misma regla de lectura que la tabla.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/orden"
+          },
+          {
+            "$ref": "#/components/parameters/limite"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas visibles para la sesión.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinPrevision"
+                  }
+                },
+                "example": []
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/fin_objetivo_guardar": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finObjetivoGuardar",
+        "summary": "Guardar un objetivo de ahorro (crear o actualizar)",
+        "description": "Crea o actualiza (idempotente por `p_id`) un objetivo. `p_bolsa` es el apartado de ahorro del mismo libro que lo alimenta (se lee, no se copia); un apartado alimenta a un solo objetivo activo (23505). Solo quien administra el libro (la titular; el dueño como albacea de Papá; la pareja en la casa): 403 (42501) a la familiar, la cuidadora, Casa, la maestra y a quien no lleva el libro, y en un libro archivado. 400 (22023) si la titular no lleva el libro; 23505 si el id es de otro libro. La bitácora no guarda montos, valores ni rendimientos. 400 (23514) si la meta no es mayor que cero; 23503 si el apartado no existe en el libro. Una baja es `p_activo` en falso.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_id",
+                  "p_libro",
+                  "p_titular",
+                  "p_nombre",
+                  "p_monto_meta_centavos",
+                  "p_fecha_meta"
+                ],
+                "properties": {
+                  "p_id": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_libro": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_titular": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_nombre": {
+                    "type": "string",
+                    "maxLength": 60
+                  },
+                  "p_monto_meta_centavos": {
+                    "type": "integer",
+                    "format": "int64",
+                    "minimum": 1
+                  },
+                  "p_fecha_meta": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "p_bolsa": {
+                    "$ref": "#/components/schemas/UuidONulo"
+                  },
+                  "p_activo": {
+                    "type": "boolean"
+                  }
+                }
+              },
+              "example": {
+                "p_id": "a1080000-0000-4000-8000-0000000000a1",
+                "p_libro": "f1000000-0000-4000-8000-000000000011",
+                "p_titular": "a0000000-0000-4000-8000-000000000002",
+                "p_nombre": "Viaje",
+                "p_monto_meta_centavos": 100000,
+                "p_fecha_meta": "2026-12-20",
+                "p_bolsa": "ea800000-0000-4000-8000-000000000001"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "El id del objetivo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Uuid"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/fin_inversion_guardar": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finInversionGuardar",
+        "summary": "Guardar una inversión (crear o actualizar)",
+        "description": "Crea o actualiza (idempotente por `p_id`) una inversión. `p_rendimiento_pb` en puntos base, tal como lo capturó la persona (nulo = sin dato; no se calcula en este bloque). `p_origen`: `capturado` (por omisión) o `verificado` (leído del PDF; exige fecha de captura, 23514). Solo quien administra el libro (la titular; el dueño como albacea de Papá; la pareja en la casa): 403 (42501) a la familiar, la cuidadora, Casa, la maestra y a quien no lleva el libro, y en un libro archivado. 400 (22023) si la titular no lleva el libro; 23505 si el id es de otro libro. La bitácora no guarda montos, valores ni rendimientos. Una baja es `p_activa` en falso.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_id",
+                  "p_libro",
+                  "p_titular",
+                  "p_nombre",
+                  "p_saldo_centavos"
+                ],
+                "properties": {
+                  "p_id": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_libro": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_titular": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_nombre": {
+                    "type": "string",
+                    "maxLength": 60
+                  },
+                  "p_saldo_centavos": {
+                    "type": "integer",
+                    "format": "int64",
+                    "minimum": 0
+                  },
+                  "p_rendimiento_pb": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": -10000,
+                    "maximum": 100000
+                  },
+                  "p_origen": {
+                    "type": "string",
+                    "enum": [
+                      "capturado",
+                      "verificado"
+                    ]
+                  },
+                  "p_fecha_captura": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date"
+                  },
+                  "p_activa": {
+                    "type": "boolean"
+                  }
+                }
+              },
+              "example": {
+                "p_id": "a1080000-0000-4000-8000-0000000000b1",
+                "p_libro": "f1000000-0000-4000-8000-000000000011",
+                "p_titular": "a0000000-0000-4000-8000-000000000002",
+                "p_nombre": "Cetes (ejemplo)",
+                "p_saldo_centavos": 7654321,
+                "p_rendimiento_pb": 1234,
+                "p_origen": "capturado",
+                "p_fecha_captura": "2026-11-05"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "El id de la inversión.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Uuid"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/fin_bien_guardar": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finBienGuardar",
+        "summary": "Guardar un bien (crear o actualizar)",
+        "description": "Crea o actualiza (idempotente por `p_id`) un bien (`auto`, `casa` u `otro`; 23514 si el tipo no vale) con su valor y fecha de captura. Sin fecha de captura no es vigente. Solo quien administra el libro (la titular; el dueño como albacea de Papá; la pareja en la casa): 403 (42501) a la familiar, la cuidadora, Casa, la maestra y a quien no lleva el libro, y en un libro archivado. 400 (22023) si la titular no lleva el libro; 23505 si el id es de otro libro. La bitácora no guarda montos, valores ni rendimientos. Una baja es `p_activo` en falso.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_id",
+                  "p_libro",
+                  "p_titular",
+                  "p_nombre",
+                  "p_tipo",
+                  "p_valor_centavos"
+                ],
+                "properties": {
+                  "p_id": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_libro": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_titular": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_nombre": {
+                    "type": "string",
+                    "maxLength": 60
+                  },
+                  "p_tipo": {
+                    "type": "string",
+                    "enum": [
+                      "auto",
+                      "casa",
+                      "otro"
+                    ]
+                  },
+                  "p_valor_centavos": {
+                    "type": "integer",
+                    "format": "int64",
+                    "minimum": 0
+                  },
+                  "p_fecha_captura": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date"
+                  },
+                  "p_activo": {
+                    "type": "boolean"
+                  }
+                }
+              },
+              "example": {
+                "p_id": "a1080000-0000-4000-8000-0000000000c1",
+                "p_libro": "f1000000-0000-4000-8000-000000000011",
+                "p_titular": "a0000000-0000-4000-8000-000000000002",
+                "p_nombre": "Auto (ejemplo)",
+                "p_tipo": "auto",
+                "p_valor_centavos": 98765432,
+                "p_fecha_captura": "2026-11-01"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "El id del bien.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Uuid"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/fin_prevision_guardar": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finPrevisionGuardar",
+        "summary": "Guardar una previsión (crear o actualizar)",
+        "description": "Crea o actualiza (idempotente por `p_id`) una previsión (`seguro`, `pension` u `otro`; 23514 si el tipo no vale) con su valor y fecha de captura. Sin fecha de captura no es vigente. Solo quien administra el libro (la titular; el dueño como albacea de Papá; la pareja en la casa): 403 (42501) a la familiar, la cuidadora, Casa, la maestra y a quien no lleva el libro, y en un libro archivado. 400 (22023) si la titular no lleva el libro; 23505 si el id es de otro libro. La bitácora no guarda montos, valores ni rendimientos. Una baja es `p_activa` en falso.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_id",
+                  "p_libro",
+                  "p_titular",
+                  "p_nombre",
+                  "p_tipo",
+                  "p_valor_centavos"
+                ],
+                "properties": {
+                  "p_id": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_libro": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_titular": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_nombre": {
+                    "type": "string",
+                    "maxLength": 60
+                  },
+                  "p_tipo": {
+                    "type": "string",
+                    "enum": [
+                      "seguro",
+                      "pension",
+                      "otro"
+                    ]
+                  },
+                  "p_valor_centavos": {
+                    "type": "integer",
+                    "format": "int64",
+                    "minimum": 0
+                  },
+                  "p_fecha_captura": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date"
+                  },
+                  "p_activa": {
+                    "type": "boolean"
+                  }
+                }
+              },
+              "example": {
+                "p_id": "a1080000-0000-4000-8000-0000000000d1",
+                "p_libro": "f1000000-0000-4000-8000-000000000011",
+                "p_titular": "a0000000-0000-4000-8000-000000000002",
+                "p_nombre": "Seguro de vida (ejemplo)",
+                "p_tipo": "seguro",
+                "p_valor_centavos": 40000000,
+                "p_fecha_captura": "2026-10-15"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "El id de la previsión.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Uuid"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/fin_objetivo_avance": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finObjetivoAvance",
+        "summary": "Avance de un objetivo (cuánto falta y en cuántas semanas)",
+        "description": "Lee el apartado de ahorro del objetivo (su saldo y su ritmo; no se copia nada) y devuelve cuánto falta y las semanas estimadas. Ritmo = aporte fijo del apartado (`ritmo_origen: aporte_fijo`) o el promedio de sus últimas 8 aportaciones confirmadas (`promedio`). Estados: `ok`, `cumplido` (falta 0), `sin_apartado` y `falta_dato` (el apartado no tiene ritmo conocido; sin semanas, no se estima). `aporte_necesario_semanal_centavos` = lo que haría falta cada semana hasta la fecha meta. Lo lee quien puede leer el libro (`fin_puede leer`; la maestra con consulta vigente): 403 (42501) a los demás. Nada sale a la IA (D3).",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_objetivo"
+                ],
+                "properties": {
+                  "p_objetivo": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_hoy": {
+                    "type": "string",
+                    "format": "date"
+                  }
+                }
+              },
+              "example": {
+                "p_objetivo": "a1080000-0000-4000-8000-0000000000a1",
+                "p_hoy": "2026-11-08"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Una fila con el avance.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AvanceObjetivo"
+                  }
+                },
+                "example": [
+                  {
+                    "objetivo_id": "a1080000-0000-4000-8000-0000000000a1",
+                    "estado": "ok",
+                    "monto_meta_centavos": 100000,
+                    "ahorrado_centavos": 30000,
+                    "falta_centavos": 70000,
+                    "aporte_semanal_centavos": 20000,
+                    "ritmo_origen": "aporte_fijo",
+                    "semanas_estimadas": 4,
+                    "fecha_estimada": "2026-12-06",
+                    "fecha_meta": "2026-12-20",
+                    "a_tiempo": true,
+                    "aporte_necesario_semanal_centavos": 11667
+                  }
+                ]
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
     "/rest/v1/rpc/fin_periodo_rango": {
       "post": {
         "tags": [
@@ -19169,6 +20083,279 @@ window.ESPECIFICACION_GRAVITY = {
           }
         }
       },
+      "FinObjetivo": {
+        "type": "object",
+        "description": "Meta de ahorro de una persona. `bolsa_id` = el apartado que la alimenta (se lee, no se copia). Sin escritura directa, solo con `fin_objetivo_guardar`.",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "libro_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "titular_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "monto_meta_centavos": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1
+          },
+          "fecha_meta": {
+            "type": "string",
+            "format": "date"
+          },
+          "bolsa_id": {
+            "$ref": "#/components/schemas/UuidONulo"
+          },
+          "activo": {
+            "type": "boolean"
+          },
+          "creado_por": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "creado_en": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "FinInversion": {
+        "type": "object",
+        "description": "Inversión de una persona. El rendimiento (puntos base) es el capturado; no se calcula. Sin escritura directa, solo con `fin_inversion_guardar`.",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "libro_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "titular_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "saldo_centavos": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "rendimiento_pb": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "origen": {
+            "type": "string",
+            "enum": [
+              "capturado",
+              "verificado"
+            ]
+          },
+          "fecha_captura": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "activa": {
+            "type": "boolean"
+          },
+          "creado_por": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "creado_en": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "FinBien": {
+        "type": "object",
+        "description": "Bien de una persona con su valor y fecha de captura. Sin escritura directa, solo con `fin_bien_guardar`.",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "libro_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "titular_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "auto",
+              "casa",
+              "otro"
+            ]
+          },
+          "valor_centavos": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "fecha_captura": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "activo": {
+            "type": "boolean"
+          },
+          "creado_por": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "creado_en": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "FinPrevision": {
+        "type": "object",
+        "description": "Previsión de una persona con su valor y fecha de captura. Sin escritura directa, solo con `fin_prevision_guardar`.",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "libro_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "titular_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "seguro",
+              "pension",
+              "otro"
+            ]
+          },
+          "valor_centavos": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "fecha_captura": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "activa": {
+            "type": "boolean"
+          },
+          "creado_por": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "creado_en": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AvanceObjetivo": {
+        "type": "object",
+        "description": "Avance de un objetivo de ahorro contra su apartado. Sin ritmo conocido no se estima.",
+        "properties": {
+          "objetivo_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "estado": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "cumplido",
+              "sin_apartado",
+              "falta_dato"
+            ]
+          },
+          "monto_meta_centavos": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "ahorrado_centavos": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "falta_centavos": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "aporte_semanal_centavos": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "ritmo_origen": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "aporte_fijo",
+              "promedio",
+              null
+            ]
+          },
+          "semanas_estimadas": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "fecha_estimada": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "fecha_meta": {
+            "type": "string",
+            "format": "date"
+          },
+          "a_tiempo": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "aporte_necesario_semanal_centavos": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "FinCasaSubcuenta": {
         "type": "object",
         "description": "Subcuenta de la casa (un servicio), una categoría de gasto con su fecha límite.",
@@ -21517,4 +22704,4 @@ window.ESPECIFICACION_GRAVITY = {
     }
   }
 };
-window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:419dbe6d';
+window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:bc7cb65f';

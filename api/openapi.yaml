@@ -8688,7 +8688,7 @@ paths:
     post:
       tags: [Base de datos · Finanzas]
       operationId: finObjetivoAvance
-      summary: Avance de un objetivo: cuánto falta y en cuántas semanas
+      summary: Avance de un objetivo (cuánto falta y en cuántas semanas)
       description: >-
         Lee el apartado de ahorro del objetivo (su saldo y su ritmo; no se copia nada) y devuelve cuánto falta y las semanas estimadas. Ritmo = aporte fijo del apartado (`ritmo_origen: aporte_fijo`) o el promedio de sus últimas 8 aportaciones confirmadas (`promedio`). Estados: `ok`, `cumplido` (falta 0), `sin_apartado` y `falta_dato` (el apartado no tiene ritmo conocido; sin semanas, no se estima). `aporte_necesario_semanal_centavos` = lo que haría falta cada semana hasta la fecha meta. Lo lee quien puede leer el libro (`fin_puede leer`; la maestra con consulta vigente): 403 (42501) a los demás. Nada sale a la IA (D3).
       x-roles: [dueno, coadministrador]
@@ -8720,19 +8720,19 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/AvanceObjetivo'
-                example:
-                  - objetivo_id: a1080000-0000-4000-8000-0000000000a1
-                    estado: ok
-                    monto_meta_centavos: 100000
-                    ahorrado_centavos: 30000
-                    falta_centavos: 70000
-                    aporte_semanal_centavos: 20000
-                    ritmo_origen: aporte_fijo
-                    semanas_estimadas: 4
-                    fecha_estimada: '2026-12-06'
-                    fecha_meta: '2026-12-20'
-                    a_tiempo: true
-                    aporte_necesario_semanal_centavos: 11667
+              example:
+                - objetivo_id: a1080000-0000-4000-8000-0000000000a1
+                  estado: ok
+                  monto_meta_centavos: 100000
+                  ahorrado_centavos: 30000
+                  falta_centavos: 70000
+                  aporte_semanal_centavos: 20000
+                  ritmo_origen: aporte_fijo
+                  semanas_estimadas: 4
+                  fecha_estimada: '2026-12-06'
+                  fecha_meta: '2026-12-20'
+                  a_tiempo: true
+                  aporte_necesario_semanal_centavos: 11667
         '400':
           $ref: '#/components/responses/ReglaFinanzas'
         '401':
