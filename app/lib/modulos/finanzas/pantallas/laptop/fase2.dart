@@ -9,6 +9,7 @@ import '../fase2/vista_deudas.dart';
 import '../fase2/vista_simulador.dart';
 import '../fase2/vista_tarjetas.dart';
 import '../fase2/vista_vencimientos.dart';
+import '../patrimonio/vista_patrimonio.dart';
 import 'marco_laptop.dart';
 
 class PantallaDeudas extends StatelessWidget {
@@ -58,5 +59,16 @@ class PantallaTarjetas extends StatelessWidget {
   Widget build(BuildContext context) => MarcoFinanzasLaptop(
     seccion: SeccionFinanzas.tarjetas,
     builder: (context, c) => VistaTarjetas(contexto: c),
+  );
+}
+
+/// Objetivos, inversiones, bienes y previsión (Fase 8, bloque 3).
+class PantallaPatrimonio extends StatelessWidget {
+  const PantallaPatrimonio({super.key});
+
+  @override
+  Widget build(BuildContext context) => MarcoFinanzasLaptop(
+    seccion: SeccionFinanzas.patrimonio,
+    builder: (context, c) => VistaPatrimonio(contexto: c),
   );
 }

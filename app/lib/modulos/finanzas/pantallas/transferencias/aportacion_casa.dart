@@ -255,7 +255,8 @@ class ReferenciaPorSubcuenta extends ConsumerWidget {
             onPressed: () => Navigator.pop(
               ctx,
               ReparteReferencia(
-                papaPb: (int.tryParse(c[ParteReferencia.papa]!.text) ?? 0) * 100,
+                papaPb:
+                    (int.tryParse(c[ParteReferencia.papa]!.text) ?? 0) * 100,
                 duenoPb:
                     (int.tryParse(c[ParteReferencia.dueno]!.text) ?? 0) * 100,
                 parejaPb:

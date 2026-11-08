@@ -450,9 +450,7 @@ class _RevisionSemanalState extends ConsumerState<RevisionSemanal> {
     final conMetodos = [
       for (final b in c.datos.bolsasDe(widget.libroId))
         if (b.activa &&
-            b.metodos.any(
-              (m) => OrigenAporte.values.any((o) => o.metodo == m),
-            ))
+            b.metodos.any((m) => OrigenAporte.values.any((o) => o.metodo == m)))
           b,
     ];
     if (_orden != null) {

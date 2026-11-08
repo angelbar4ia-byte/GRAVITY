@@ -159,6 +159,7 @@ List<RouteBase> rutasFinanzas() => [
       ),
     ),
   ),
+  _soloLaptop(SeccionFinanzas.patrimonio, (_) => const PantallaPatrimonio()),
   _soloLaptop(SeccionFinanzas.simulador, (_) => const PantallaSimulador()),
   _soloLaptop(SeccionFinanzas.tarjetas, (_) => const PantallaTarjetas()),
   GoRoute(

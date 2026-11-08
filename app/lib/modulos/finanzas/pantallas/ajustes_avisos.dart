@@ -53,8 +53,7 @@ class SeccionAvisosFinanzas extends ConsumerStatefulWidget {
       _SeccionAvisosFinanzasState();
 }
 
-class _SeccionAvisosFinanzasState
-    extends ConsumerState<SeccionAvisosFinanzas> {
+class _SeccionAvisosFinanzasState extends ConsumerState<SeccionAvisosFinanzas> {
   PreferenciasAvisos? _p;
   String? _error;
   bool _guardando = false;
@@ -75,14 +74,19 @@ class _SeccionAvisosFinanzasState
     if (!mounted) return;
     final c = ref.read(contextoFinanzasProvider).value;
     final libro = c?.libro;
-    final dias = libro == null ? null : c!.datos.parametrosDe(libro.id).diasAvisoDeuda;
+    final dias = libro == null
+        ? null
+        : c!.datos.parametrosDe(libro.id).diasAvisoDeuda;
     setState(() {
       final base = leidas ?? const PreferenciasAvisos();
       _p = dias == null ? base : base.copiarCon(diasAvisoDeuda: dias);
     });
   }
 
-  Future<void> _guardar(PreferenciasAvisos nuevas, {bool conDias = false}) async {
+  Future<void> _guardar(
+    PreferenciasAvisos nuevas, {
+    bool conDias = false,
+  }) async {
     final actual = _p;
     if (actual == null || _guardando) return;
     String? error = nuevas.error;
@@ -182,7 +186,10 @@ class _SeccionAvisosFinanzasState
               style: tema.textTheme.bodySmall,
             ),
             const SizedBox(height: 16),
-            Text('Cuántos días antes de un vencimiento', style: tema.textTheme.titleSmall),
+            Text(
+              'Cuántos días antes de un vencimiento',
+              style: tema.textTheme.titleSmall,
+            ),
             Text(
               'Hasta 3 avisos. 0 es el mismo día.',
               style: tema.textTheme.bodySmall,
@@ -219,28 +226,32 @@ class _SeccionAvisosFinanzasState
               etiqueta: 'Hora de los avisos de vencimiento',
               llave: const ValueKey('avisos-fin-hora-vencimientos'),
               valor: p.horaVencimientos.hora,
-              alCambiar: (h) => _guardar(p.copiarCon(horaVencimientos: HoraDelDia(h))),
+              alCambiar: (h) =>
+                  _guardar(p.copiarCon(horaVencimientos: HoraDelDia(h))),
             ),
             const SizedBox(height: 12),
             _horas(
               etiqueta: 'Silencio desde',
               llave: const ValueKey('avisos-fin-silencio-desde'),
               valor: p.silencioDesde.hora,
-              alCambiar: (h) => _guardar(p.copiarCon(silencioDesde: HoraDelDia(h))),
+              alCambiar: (h) =>
+                  _guardar(p.copiarCon(silencioDesde: HoraDelDia(h))),
             ),
             const SizedBox(height: 12),
             _horas(
               etiqueta: 'Silencio hasta',
               llave: const ValueKey('avisos-fin-silencio-hasta'),
               valor: p.silencioHasta.hora,
-              alCambiar: (h) => _guardar(p.copiarCon(silencioHasta: HoraDelDia(h))),
+              alCambiar: (h) =>
+                  _guardar(p.copiarCon(silencioHasta: HoraDelDia(h))),
             ),
             const SizedBox(height: 12),
             _horas(
               etiqueta: 'Resumen del lunes',
               llave: const ValueKey('avisos-fin-resumen-lunes'),
               valor: p.resumenLunes.hora,
-              alCambiar: (h) => _guardar(p.copiarCon(resumenLunes: HoraDelDia(h))),
+              alCambiar: (h) =>
+                  _guardar(p.copiarCon(resumenLunes: HoraDelDia(h))),
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<int>(
@@ -257,7 +268,8 @@ class _SeccionAvisosFinanzasState
               onChanged: _guardando
                   ? null
                   : (d) {
-                      if (d != null) _guardar(p.copiarCon(recordatorioCierreDia: d));
+                      if (d != null)
+                        _guardar(p.copiarCon(recordatorioCierreDia: d));
                     },
             ),
             const SizedBox(height: 12),
@@ -274,7 +286,11 @@ class _SeccionAvisosFinanzasState
                 key: const ValueKey('avisos-fin-error'),
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.error_outline, size: 20, color: tema.colorScheme.error),
+                  Icon(
+                    Icons.error_outline,
+                    size: 20,
+                    color: tema.colorScheme.error,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(

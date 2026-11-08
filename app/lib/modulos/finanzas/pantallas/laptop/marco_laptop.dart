@@ -13,6 +13,7 @@ import '../../../../diseno/diseno.dart';
 import '../../../../nucleo/contratos/roles.dart';
 import '../../../../nucleo/contratos/rutas.dart';
 import '../../estado/proveedores.dart';
+import '../../datos/patrimonio.dart' show permisoPatrimonio;
 import '../comunes.dart';
 
 /// Secciones de Finanzas en la laptop (especificación 6.1).
@@ -32,6 +33,11 @@ enum SeccionFinanzas {
   simulador('simulador', 'Simulador de deudas', Icons.compare_arrows),
   tarjetas('tarjetas', 'Tarjetas y beneficios', Icons.credit_card),
   ahorro('ahorro', 'Ahorro y fondo', Icons.savings_outlined),
+  patrimonio(
+    'patrimonio',
+    'Objetivos e inversión',
+    Icons.account_balance_outlined,
+  ),
   transferencias('transferencias', 'Transferencias', Icons.swap_horiz),
   aportacion('aportacion', 'Aportación a la casa', Icons.home_outlined),
   vencimientos('vencimientos', 'Vencimientos', Icons.calendar_month_outlined),
@@ -66,6 +72,11 @@ enum SeccionFinanzas {
     SeccionFinanzas.arranque => c.puedeAdministrar,
     SeccionFinanzas.importar => c.administraHogar && !c.permiso.comoMaestra,
     SeccionFinanzas.ajustes => c.puedeAdministrar || c.administraHogar,
+    SeccionFinanzas.patrimonio => permisoPatrimonio(
+      c.permiso,
+      c.rol,
+      soloLectura: c.soloLecturaTotal,
+    ).ver,
     _ => true,
   };
 }
