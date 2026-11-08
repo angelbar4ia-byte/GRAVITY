@@ -157,3 +157,55 @@ String claveCompra(String nombre, String unidad) =>
 /// 2.0 -> "2"; 1.5 -> "1.5".
 String cantidadTexto(double c) =>
     c == c.roundToDouble() ? c.round().toString() : c.toStringAsFixed(1);
+
+
+/// Una comida del día de Papá para la cuenta Casa (D28): solo el nombre del
+/// platillo. Sin perfil clínico, sin suplementos, sin alimentos duros.
+class ComidaDelDia {
+  const ComidaDelDia(this.tiempo, this.platillo);
+  final TiempoComida tiempo;
+  final String platillo;
+}
+
+/// Cuenta de Alimentación a la que pertenece una compra (despensa y lista del
+/// servidor). La elige quien compra; el valor por omisión sale de su rol.
+enum CuentaCompra {
+  papa('Papá'),
+  dueno('Dueño'),
+  pareja('Pareja'),
+  casa('Casa');
+
+  const CuentaCompra(this.etiqueta);
+  final String etiqueta;
+}
+
+/// Lo que dejó registrar una compra con precio real.
+class ResultadoCompra {
+  const ResultadoCompra({this.pendienteAlbacea = false});
+
+  /// La compra es de Papá y no traía cuenta de pago: el servidor dejó la
+  /// solicitud al albacea (no es un error).
+  final bool pendienteAlbacea;
+}
+
+/// Un renglón de la lista de compras que viene de `ali_compras` (servidor).
+class CompraLista {
+  const CompraLista({
+    required this.nombre,
+    required this.unidad,
+    required this.cantidad,
+    required this.seccion,
+    required this.comprada,
+    this.pendienteAlbacea = false,
+  });
+  final String nombre;
+  final String unidad;
+  final double cantidad;
+  final SeccionCompra seccion;
+  final bool comprada;
+
+  /// Compra de Papá con la solicitud de pago sin resolver.
+  final bool pendienteAlbacea;
+
+  String get clave => claveCompra(nombre, unidad);
+}

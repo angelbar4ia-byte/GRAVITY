@@ -28,7 +28,11 @@ abstract interface class RepositorioAlimentacion {
 
   /// Ingredientes capturados a mano con su código de barras.
   Future<List<Ingrediente>> ingredientesConCodigo();
-  Future<void> guardarIngredienteConCodigo(Ingrediente ingrediente);
+
+  /// Guarda un ingrediente con su código. Mientras el servidor no tenga la
+  /// columna `codigo_barras`, queda solo en memoria de la sesión y devuelve
+  /// `false`; con servidor devolverá `true`.
+  Future<bool> guardarIngredienteConCodigo(Ingrediente ingrediente);
 
   /// Votación del plan familiar de [dia] (sin hora), si existe.
   Future<VotacionPlan?> votacion(DateTime dia);
@@ -41,6 +45,28 @@ abstract interface class RepositorioAlimentacion {
   /// "¿Hay presupuesto para comprar?" (`ali_hay_presupuesto`): solo sí o no,
   /// sin saldos, cuentas ni montos. `null` = el servidor no responde todavía.
   Future<bool?> hayPresupuesto();
+
+  /// Lo mismo para un monto (el total de la lista de la semana), en centavos.
+  Future<bool?> hayPresupuestoPara(int montoCentavos);
+
+  /// Menú del día de Papá para la cuenta Casa (`ali_menu_del_dia_papa`): solo
+  /// nombres de platillo por tiempo.
+  Future<List<ComidaDelDia>> menuDelDiaPapa(DateTime hoy);
+
+  /// Compras de la semana que están en el servidor (`ali_compras`), además de
+  /// lo que sale del menú. Vacío donde no hay servidor.
+  Future<List<CompraLista>> comprasLista(MenuId menu, DateTime lunes);
+
+  /// Registra una compra real con precio. En el servidor es
+  /// `ali_marcar_comprada`: él escribe el precio real, la fila de la compra y
+  /// el movimiento del libro correcto. La app no escribe dinero.
+  Future<ResultadoCompra> registrarCompraReal({
+    required MenuId menu,
+    required DateTime lunes,
+    required CompraPrecio compra,
+    required PrecioIngrediente precio,
+    required CuentaCompra cuenta,
+  });
 
   /// Menú [menu] de la semana que empieza en [lunes].
   Future<List<EntradaMenu>> menu(MenuId menu, DateTime lunes);
@@ -63,14 +89,17 @@ abstract interface class RepositorioAlimentacion {
   Future<void> quitarSuplemento(MenuId menu, String id);
 }
 
-/// Nombres de tabla que el servidor debe tener para esta fase (migración
-/// 20261126 de backend). `ali_platillos` y `ali_compras_marcas` ya existen; a
-/// `ali_platillos` se le agregan `pasos text[]` y `porciones smallint`.
+/// Nombres de tabla de Alimentación que existen en el servidor (migraciones
+/// `20261126`, `20261127` y `20261128`). El precio vive en `ali_ingredientes`
+/// y el historial en `ali_precios_historial`; no hay `ali_precios` ni
+/// `ali_propuestas` (las propuestas son `ali_votacion_opciones`).
 abstract final class TablasAlimentacion {
   static const platillos = 'ali_platillos';
-  static const precios = 'ali_precios';
+  static const ingredientes = 'ali_ingredientes';
+  static const preciosHistorial = 'ali_precios_historial';
+  static const compras = 'ali_compras';
   static const votaciones = 'ali_votaciones';
-  static const propuestas = 'ali_propuestas';
+  static const opciones = 'ali_votacion_opciones';
   static const votos = 'ali_votos';
 }
 
@@ -122,6 +151,44 @@ class RepositorioAlimentacionEnMemoria implements RepositorioAlimentacion {
   Future<bool?> hayPresupuesto() async => hayPresupuestoSupuesto;
 
   @override
+  Future<bool?> hayPresupuestoPara(int montoCentavos) async =>
+      hayPresupuestoSupuesto;
+
+  @override
+  Future<List<CompraLista>> comprasLista(MenuId menu, DateTime lunes) async =>
+      const [];
+
+  @override
+  Future<List<ComidaDelDia>> menuDelDiaPapa(DateTime hoy) async {
+    final dia = hoy.weekday - DateTime.monday;
+    final entradas = (await menu(MenuId.papa, lunesDe(hoy)))
+        .where((e) => e.dia == dia)
+        .toList()
+      ..sort((a, b) => a.tiempo.index.compareTo(b.tiempo.index));
+    final nombres = {for (final p in _platillos) p.id: p.nombre};
+    return [
+      for (final e in entradas)
+        if (nombres[e.platilloId] != null)
+          ComidaDelDia(e.tiempo, nombres[e.platilloId]!),
+    ];
+  }
+
+  /// Hace de servidor en memoria: precio real, historial y marca.
+  @override
+  Future<ResultadoCompra> registrarCompraReal({
+    required MenuId menu,
+    required DateTime lunes,
+    required CompraPrecio compra,
+    required PrecioIngrediente precio,
+    required CuentaCompra cuenta,
+  }) async {
+    _historial.add(compra);
+    _precios[precio.clave] = precio;
+    await marcar(menu, lunes, compra.clave, true);
+    return const ResultadoCompra();
+  }
+
+  @override
   Future<void> cerrarVotacionesVencidas(DateTime ahora) async {
     for (final e in _votaciones.entries.toList()) {
       final v = e.value;
@@ -165,8 +232,10 @@ class RepositorioAlimentacionEnMemoria implements RepositorioAlimentacion {
       [..._conCodigo.values];
 
   @override
-  Future<void> guardarIngredienteConCodigo(Ingrediente ingrediente) async =>
-      _conCodigo[ingrediente.clave] = ingrediente;
+  Future<bool> guardarIngredienteConCodigo(Ingrediente ingrediente) async {
+    _conCodigo[ingrediente.clave] = ingrediente;
+    return true;
+  }
 
   String _kd(DateTime d) => '${d.year}-${d.month}-${d.day}';
 
@@ -254,13 +323,28 @@ class RepositorioAlimentacionSinServidor implements RepositorioAlimentacion {
   @override
   Future<List<Ingrediente>> ingredientesConCodigo() async => const [];
   @override
-  Future<void> guardarIngredienteConCodigo(Ingrediente ingrediente) async => _no();
+  Future<bool> guardarIngredienteConCodigo(Ingrediente ingrediente) async => _no();
   @override
   Future<VotacionPlan?> votacion(DateTime dia) async => null;
   @override
   Future<void> cerrarVotacionesVencidas(DateTime ahora) async {}
   @override
   Future<bool?> hayPresupuesto() async => null;
+  @override
+  Future<bool?> hayPresupuestoPara(int montoCentavos) async => null;
+  @override
+  Future<List<ComidaDelDia>> menuDelDiaPapa(DateTime hoy) async => const [];
+  @override
+  Future<List<CompraLista>> comprasLista(MenuId menu, DateTime lunes) async =>
+      const [];
+  @override
+  Future<ResultadoCompra> registrarCompraReal({
+    required MenuId menu,
+    required DateTime lunes,
+    required CompraPrecio compra,
+    required PrecioIngrediente precio,
+    required CuentaCompra cuenta,
+  }) async => _no();
   @override
   Future<void> guardarVotacion(VotacionPlan votacion) async => _no();
   @override
