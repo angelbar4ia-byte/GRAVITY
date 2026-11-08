@@ -145,7 +145,7 @@ void main() {
         minimoMensual: 10000,
         diasParaVencer: 40,
       );
-      // Mínimos 20 000; con 110 000 alcanza a liquidar solo una en el mes 1.
+      // Mínimos 20 000; con 120 000 alcanza a liquidar solo una en el mes 1.
       final r = simularEstrategia(EstrategiaPago.porVencimiento, [
         futura,
         cercana,

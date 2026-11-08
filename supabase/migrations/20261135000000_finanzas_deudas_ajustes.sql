@@ -145,7 +145,8 @@ begin
                    case p_modo when 'bola_de_nieve' then v_saldo[g.i]
                                when 'avalancha' then -v_tasa[g.i]::bigint
                                when 'vencimiento' then (
-                                 case when v_mes = 1 then v_lim[g.i]
+                                 case when v_lim[g.i] >= v_fin then date '2000-01-01'
+                                      when v_mes = 1 then v_lim[g.i]
                                       else public.fin_deudas_ciclo_desde(v_lim[g.i], v_ini) end
                                  - date '2000-01-01')::bigint
                                else g.i::bigint end as k1,

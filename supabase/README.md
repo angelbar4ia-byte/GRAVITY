@@ -278,6 +278,14 @@ Base: `docs/specs/fase-8-deudas-intereses.md` v1.0 (D3, D19). Pruebas: `107_fina
 - **`fin_estimar_intereses(p_libro uuid, p_presupuesto_mensual bigint default null, p_hoy date default current_date) -> table(escenario, estado, falta, intereses_centavos, meses, ahorro_vs_minimo_centavos)`**: `pago_minimo` y las tres estrategias; el escenario del mínimo exige pago mínimo mayor a 0 en cada deuda (si no, `falta_dato: pago_minimo`).
 - **Acceso al cálculo**: solo quien administra el libro (la titular; el dueño como albacea de Papá; la pareja en la casa). `42501` a la maestra (solo lee las tablas con consulta vigente), la familiar, la cuidadora, Casa, anon y al suplente con albacea vigente. El cálculo corre en el servidor y nada sale a la IA ni a las bocinas (D3); simular no escribe nada.
 
+### Deudas bloque 2 v1.1 (`20261135000000_finanzas_deudas_ajustes.sql`)
+
+Respuestas del dueño (8/nov/2026), sin cambios de firma. Pruebas: `107_finanzas_deudas_intereses.sql`.
+
+- **Papá uniforme**: `fin_deudas_puede_ver(libro)` ahora es exactamente `fin_puede(libro, 'leer')` de la Fase 1 (RLS de `fin_tarjetas` y `fin_tarjeta_beneficios`). Esa regla deja leer a todo miembro vigente del libro de Papá (albacea y suplente, también con albacea vigente; el suplente solo escribe sin albacea), a un familiar con vista temporal autorizada (D24) y a la maestra con consulta vigente. Simular y escribir siguen siendo de quien administra el libro.
+- **Presupuesto mensual**: nulo en `fin_simular_estrategias` y `fin_estimar_intereses` = suma de los pagos mínimos de las deudas activas con saldo; si se pasa uno se usa ese, y uno menor que la suma de mínimos devuelve `no_alcanza`.
+- **Vencimiento con ciclos futuros**: cada mes la estrategia ordena por la fecha límite de ese ciclo (la fecha de la deuda repetida cada mes, `fin_deudas_ciclo_desde`); la deuda cuya fecha aún no llega a ese mes no tiene urgencia (el extra va a la de mayor tasa) y una ya vencida va primero.
+
 ## Fase 2: deudas, ahorro y avisos (D20, propuesta)
 
 Migraciones `20261101000000_finanzas_fase2.sql` (deudas ampliadas, MSI, estados de cuenta, ahorro) y `20261102000000_avisos.sql` (infraestructura de avisos), y la Edge Function `functions/enviar-avisos/`. Especificación: `docs/specs/fase-2-finanzas.md` (secciones 4 y 5). Se construyó con las **propuestas por defecto** de la sección 9 mientras el dueño responde.
