@@ -13,16 +13,6 @@ import '../../nucleo/seguridad/almacen_seguro.dart';
 import '../../modulos/cuidados/datos/modelos.dart';
 import '../../modulos/cuidados/datos/repositorio.dart';
 
-/// Horas habituales de cada comida de Papá (no hay horario de comidas en el
-/// esquema; pendiente de confirmar con el dueño). Solo se recuerdan las que
-/// aún no tienen registro hoy.
-const horasDeComida = <TiempoComidaPapa, HoraDelDia>{
-  TiempoComidaPapa.desayuno: HoraDelDia(8, 30),
-  TiempoComidaPapa.comida: HoraDelDia(14),
-  TiempoComidaPapa.colacion: HoraDelDia(17),
-  TiempoComidaPapa.cena: HoraDelDia(19),
-};
-
 /// Tomas pendientes y comidas sin registrar de hoy, leídas del repositorio.
 class FuenteCuidadosRepositorio implements FuenteDeEventosDeCuidado {
   const FuenteCuidadosRepositorio(this.repositorio);
@@ -47,8 +37,14 @@ class FuenteCuidadosRepositorio implements FuenteDeEventosDeCuidado {
         );
       }
     }
+    Map<TiempoComidaPapa, HoraDelDia> horas;
+    try {
+      horas = await repositorio.horariosComida();
+    } catch (_) {
+      horas = horariosComidaPorOmision;
+    }
     final hechas = {for (final c in await repositorio.comidas(hoy)) c.tiempo};
-    for (final e in horasDeComida.entries) {
+    for (final e in horas.entries) {
       if (hechas.contains(e.key)) continue;
       eventos.add(
         t.EventoDeCuidado(

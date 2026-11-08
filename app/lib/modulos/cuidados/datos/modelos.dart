@@ -8,6 +8,7 @@ library;
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../nucleo/avisos/aviso.dart' show HoraDelDia;
 import '../../../nucleo/contratos/roles.dart';
 
 /// Id estable (UUID v5): el mismo hecho da el mismo id, así tocar dos veces o
@@ -253,6 +254,15 @@ enum TiempoComidaPapa {
   const TiempoComidaPapa(this.etiqueta);
   final String etiqueta;
 }
+
+/// Horario de comidas por omisión (8h): se usa mientras el servidor no tenga
+/// uno guardado o no responda. El dueño lo edita (`cui_fijar_horario_comida`).
+const horariosComidaPorOmision = <TiempoComidaPapa, HoraDelDia>{
+  TiempoComidaPapa.desayuno: HoraDelDia(8, 30),
+  TiempoComidaPapa.comida: HoraDelDia(14),
+  TiempoComidaPapa.colacion: HoraDelDia(17),
+  TiempoComidaPapa.cena: HoraDelDia(19),
+};
 
 enum ResultadoComida {
   comio('Comió'),

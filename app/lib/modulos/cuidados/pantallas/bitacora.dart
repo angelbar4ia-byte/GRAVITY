@@ -227,14 +227,28 @@ class _TarjetaGasto extends ConsumerWidget {
                 children: [
                   Expanded(
                     child: FilledButton(
-                      onPressed: () => ejecutarCuidados(
-                        context,
-                        ref,
-                        () => ref
-                            .read(servicioCuidadosProvider)
-                            .resolverGasto(g.id, confirmar: true),
-                        ok: 'Gasto confirmado',
-                      ),
+                      onPressed: () async {
+                        String? libro;
+                        if (g.ambito == AmbitoGasto.casa) {
+                          libro = await showDialog<String>(
+                            context: context,
+                            builder: (_) => const _ElegirLibroCasa(),
+                          );
+                          if (libro == null || !context.mounted) return;
+                        }
+                        await ejecutarCuidados(
+                          context,
+                          ref,
+                          () => ref
+                              .read(servicioCuidadosProvider)
+                              .resolverGasto(
+                                g.id,
+                                confirmar: true,
+                                libroCompartidoId: libro,
+                              ),
+                          ok: 'Gasto confirmado',
+                        );
+                      },
                       child: const Text('Confirmar'),
                     ),
                   ),
@@ -360,4 +374,63 @@ class _HojaGastoState extends State<_HojaGasto> {
       ],
     ),
   );
+}
+
+/// El dueño elige el libro compartido vigente donde va un gasto de la casa.
+/// Con un solo libro viene elegido, pero hay que confirmar.
+class _ElegirLibroCasa extends ConsumerStatefulWidget {
+  const _ElegirLibroCasa();
+
+  @override
+  ConsumerState<_ElegirLibroCasa> createState() => _ElegirLibroCasaState();
+}
+
+class _ElegirLibroCasaState extends ConsumerState<_ElegirLibroCasa> {
+  String? _id;
+
+  @override
+  Widget build(BuildContext context) {
+    final libros = ref.watch(librosCompartidosProvider);
+    final lista = libros.value ?? const <LibroParaGasto>[];
+    if (_id == null && lista.length == 1) _id = lista.first.id;
+    return AlertDialog(
+      title: const Text('¿En qué libro va este gasto?'),
+      content: libros.isLoading
+          ? const SizedBox(
+              height: 48,
+              child: Center(child: CircularProgressIndicator()),
+            )
+          : lista.isEmpty
+          ? const Text(
+              'No tienes libros compartidos vigentes. Crea o únete a uno en '
+              'Finanzas.',
+            )
+          : RadioGroup<String>(
+              groupValue: _id,
+              onChanged: (v) => setState(() => _id = v),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (final l in lista)
+                    RadioListTile<String>(
+                      key: Key('libro-${l.id}'),
+                      value: l.id,
+                      title: Text(l.nombre),
+                    ),
+                ],
+              ),
+            ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          key: const Key('confirmar-libro'),
+          onPressed: _id == null ? null : () => Navigator.of(context).pop(_id),
+          child: const Text('Confirmar gasto'),
+        ),
+      ],
+    );
+  }
 }

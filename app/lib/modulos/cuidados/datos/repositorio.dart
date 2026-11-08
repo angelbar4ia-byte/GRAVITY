@@ -11,6 +11,7 @@
 /// vuelve a revisar (defensa doble).
 library;
 
+import '../../../nucleo/avisos/aviso.dart' show HoraDelDia;
 import '../../../nucleo/contratos/roles.dart';
 import '../casos_uso/horario_turnos.dart';
 import '../casos_uso/permisos_cuidados.dart';
@@ -43,6 +44,13 @@ abstract interface class RepositorioCuidados {
   /// `cui_generar_tomas(hogar, desde, dias)`: solo el dueño. Devuelve cuántas
   /// creó.
   Future<int> generarTomas(DateTime desde, {int dias = 1});
+
+  /// `cui_horarios_hogar(hogar)`: hora de cada comida del hogar; lo que falte
+  /// se completa con [horariosComidaPorOmision]. Lo lee quien entra a Cuidados.
+  Future<Map<TiempoComidaPapa, HoraDelDia>> horariosComida();
+
+  /// `cui_fijar_horario_comida(hogar, tiempo, hora)`: solo el dueño.
+  Future<void> fijarHorarioComida(TiempoComidaPapa tiempo, HoraDelDia hora);
 
   Future<List<ComidaRegistro>> comidas(DateTime dia);
   Future<void> registrarComida(ComidaRegistro c);
@@ -131,6 +139,9 @@ class DatosCuidadosMemoria {
 
   /// `cui_autorizacion_resumen` (persona → vigente).
   final Map<String, bool> autorizaciones = {};
+
+  /// `cui_horarios_comida`: lo que el dueño fijó (lo demás, por omisión).
+  final Map<TiempoComidaPapa, HoraDelDia> horariosComida = {};
 
   /// La persona de Papá (la que el albacea representa).
   String personaPapaId = 'persona-papa';
@@ -327,6 +338,27 @@ class RepositorioCuidadosEnMemoria implements RepositorioCuidados {
       throw const ErrorCuidados('Genera de 1 a 14 días a la vez.');
     }
     return generarTomasMemoria(datos, desde, dias: dias);
+  }
+
+  @override
+  Future<Map<TiempoComidaPapa, HoraDelDia>> horariosComida() async => {
+    ...horariosComidaPorOmision,
+    ...datos.horariosComida,
+  };
+
+  @override
+  Future<void> fijarHorarioComida(
+    TiempoComidaPapa tiempo,
+    HoraDelDia hora,
+  ) async {
+    _exigir(_dueno && rol != Rol.casa);
+    if (hora.hora < 0 ||
+        hora.hora > 23 ||
+        hora.minuto < 0 ||
+        hora.minuto > 59) {
+      throw const ErrorCuidados('Esa hora no es válida.');
+    }
+    datos.horariosComida[tiempo] = hora;
   }
 
   @override

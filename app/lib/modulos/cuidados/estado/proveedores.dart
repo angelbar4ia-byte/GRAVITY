@@ -86,10 +86,11 @@ final servicioCuidadosProvider = Provider<ServicioCuidados>((ref) {
     ahora: reloj.ahora,
     alConfirmarGasto: s == null
         ? null
-        : (g) => pasarGastoAFinanzas(
+        : (g, {libroCompartidoId}) => pasarGastoAFinanzas(
             ref.read(repositorioFinanzasProvider),
             g,
             confirmadoPor: s.persona.id,
+            libroCompartidoId: libroCompartidoId,
           ),
   );
 });
@@ -101,6 +102,7 @@ Future<void> pasarGastoAFinanzas(
   RepositorioFinanzas repo,
   GastoCuidado g, {
   required String confirmadoPor,
+  String? libroCompartidoId,
 }) async {
   final datos = (repo.actual ?? await repo.cargar()).datos;
   final papa = datos.libros
@@ -120,8 +122,47 @@ Future<void> pasarGastoAFinanzas(
     ),
     repo,
     confirmadoPor: confirmadoPor,
+    libroCompartidoId: g.ambito == AmbitoGasto.casa ? libroCompartidoId : null,
   );
 }
+
+/// Un libro compartido donde puede ir un gasto de la casa.
+class LibroParaGasto {
+  const LibroParaGasto(this.id, this.nombre);
+  final String id;
+  final String nombre;
+}
+
+/// Libros compartidos vigentes de [personaId] según Finanzas (no archivados y
+/// con su membresía vigente en [hoy]). Lo único que se ofrece al confirmar un
+/// gasto de la casa.
+Future<List<LibroParaGasto>> librosCompartidosVigentes(
+  RepositorioFinanzas repo,
+  String personaId,
+  DateTime hoy,
+) async {
+  final datos = (repo.actual ?? await repo.cargar()).datos;
+  final dia = Fecha.deDateTime(hoy);
+  return [
+    for (final l in datos.libros)
+      if (l.tipo == TipoLibro.compartido &&
+          !l.archivado &&
+          l.miembros.any((m) => m.personaId == personaId && m.vigenteEn(dia)))
+        LibroParaGasto(l.id, l.nombre),
+  ];
+}
+
+final librosCompartidosProvider = FutureProvider<List<LibroParaGasto>>((
+  ref,
+) async {
+  final s = ref.watch(sesionEfectivaProvider);
+  if (s == null) return const [];
+  return librosCompartidosVigentes(
+    ref.watch(repositorioFinanzasProvider),
+    s.persona.id,
+    ref.read(relojProvider).ahora(),
+  );
+});
 
 /// Contador para volver a pedir los datos tras cada cambio.
 final versionCuidadosProvider = StateProvider<int>((_) => 0);
@@ -144,6 +185,7 @@ final medicamentosProvider = _datos((s) => s.medicamentos());
 final dosisHoyProvider = _datos((s) => s.dosisDelDia());
 final siguienteDosisProvider = _datos((s) => s.siguienteDosis());
 final comidasHoyProvider = _datos((s) => s.comidasDeHoy());
+final horariosComidaProvider = _datos((s) => s.horariosComida());
 final bitacoraProvider = _datos((s) => s.bitacora());
 final instruccionesRecibidasProvider = _datos(
   (s) => s.instruccionesRecibidas(),

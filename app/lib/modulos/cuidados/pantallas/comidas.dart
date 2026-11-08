@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/pantallas/marco_pantalla.dart';
 import '../../../diseno/diseno.dart';
+import '../../../nucleo/avisos/aviso.dart' show HoraDelDia;
 import '../../../nucleo/contratos/roles.dart';
 import '../datos/modelos.dart';
 import '../estado/proveedores.dart';
@@ -30,6 +31,7 @@ class PantallaComidas extends ConsumerWidget {
                 (hechas) => ListView(
                   padding: const EdgeInsets.only(bottom: 24),
                   children: [
+                    const _Horarios(),
                     for (final tiempo in TiempoComidaPapa.values)
                       TarjetaCuidados(
                         titulo: tiempo.etiqueta,
@@ -91,6 +93,71 @@ class _OpcionComida extends ConsumerWidget {
       icono: icono,
       tonal: !elegido,
       onPressed: puede ? alTocar : null,
+    );
+  }
+}
+
+String _textoHora(HoraDelDia h) =>
+    '${h.hora.toString().padLeft(2, '0')}:${h.minuto.toString().padLeft(2, '0')}';
+
+/// Horas de los recordatorios de comida. Todos las ven; solo el dueño las
+/// edita (al cambiar una, se reprograman los recordatorios).
+class _Horarios extends ConsumerWidget {
+  const _Horarios();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final edita = ref.watch(permisosCuidadosProvider).editaHorariosComida;
+    final horas =
+        ref.watch(horariosComidaProvider).value ?? horariosComidaPorOmision;
+    return TarjetaCuidados(
+      titulo: 'Horarios de las comidas',
+      hijos: [
+        for (final tiempo in TiempoComidaPapa.values)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '${tiempo.etiqueta}: ${_textoHora(horas[tiempo]!)}',
+                    key: Key('horario-${tiempo.name}'),
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+                if (edita)
+                  OutlinedButton(
+                    key: Key('editar-horario-${tiempo.name}'),
+                    onPressed: () => _editar(context, ref, tiempo, horas),
+                    child: const Text('Cambiar hora'),
+                  ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  Future<void> _editar(
+    BuildContext context,
+    WidgetRef ref,
+    TiempoComidaPapa tiempo,
+    Map<TiempoComidaPapa, HoraDelDia> horas,
+  ) async {
+    final actual = horas[tiempo]!;
+    final r = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(hour: actual.hora, minute: actual.minuto),
+      helpText: 'Hora de ${tiempo.etiqueta.toLowerCase()}',
+    );
+    if (r == null || !context.mounted) return;
+    await ejecutarCuidados(
+      context,
+      ref,
+      () => ref
+          .read(servicioCuidadosProvider)
+          .fijarHorarioComida(tiempo, HoraDelDia(r.hour, r.minute)),
+      ok: 'Horario guardado',
     );
   }
 }

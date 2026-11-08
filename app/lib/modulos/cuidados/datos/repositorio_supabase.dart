@@ -45,6 +45,7 @@
 /// usa la función del turno.
 library;
 
+import '../../../nucleo/avisos/aviso.dart' show HoraDelDia;
 import '../../../nucleo/cuidados/posponer_toma.dart' show rpcPosponerToma;
 import '../../finanzas/datos/fuente_tablas.dart';
 import '../../finanzas/datos/repositorio.dart' show ErrorFinanzas;
@@ -405,6 +406,41 @@ class RepositorioCuidadosSupabase implements RepositorioCuidados {
   }
 
   // ---------------------------------------------------------------- Comidas
+
+  @override
+  Future<Map<TiempoComidaPapa, HoraDelDia>> horariosComida() async {
+    final salida = {...horariosComidaPorOmision};
+    Object? v;
+    try {
+      v = await _rpc('cui_horarios_hogar', {'p_hogar_id': hogarId});
+    } catch (_) {
+      return salida; // Sin lectura (aún) o sin señal: horarios por omisión.
+    }
+    void poner(Object? tiempo, Object? hora) {
+      final h = HoraDelDia.desdeTexto(hora is String ? hora : null);
+      final t = TiempoComidaPapa.values.where((x) => x.name == tiempo);
+      if (h != null && t.isNotEmpty) salida[t.first] = h;
+    }
+
+    if (v is List) {
+      for (final f in v) {
+        if (f is Map) poner(f['tiempo'], f['hora']);
+      }
+    } else if (v is Map) {
+      v.forEach(poner);
+    }
+    return salida;
+  }
+
+  @override
+  Future<void> fijarHorarioComida(TiempoComidaPapa tiempo, HoraDelDia hora) =>
+      _rpc('cui_fijar_horario_comida', {
+        'p_hogar_id': hogarId,
+        'p_tiempo': tiempo.name,
+        'p_hora':
+            '${hora.hora.toString().padLeft(2, '0')}:'
+            '${hora.minuto.toString().padLeft(2, '0')}',
+      });
 
   @override
   Future<List<ComidaRegistro>> comidas(DateTime dia) async {

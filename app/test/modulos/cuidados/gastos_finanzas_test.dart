@@ -85,7 +85,7 @@ void main() {
       d,
       'persona-dueno',
       Rol.dueno,
-      alConfirmar: (g) async => llamadas.add(g),
+      alConfirmar: (g, {libroCompartidoId}) async => llamadas.add(g),
     );
     await c.registrarGasto(concepto: 'Pañales', centavos: 18550);
     await c.registrarGasto(concepto: 'Gasas', centavos: 9000);
@@ -104,7 +104,7 @@ void main() {
       d,
       'persona-dueno',
       Rol.dueno,
-      alConfirmar: (_) async => throw StateError('sin permiso'),
+      alConfirmar: (_, {libroCompartidoId}) async => throw StateError('sin permiso'),
     );
     await c.registrarGasto(concepto: 'Pañales', centavos: 18550);
     final id = (await c.gastos()).single.id;
@@ -135,7 +135,7 @@ void main() {
       d,
       'persona-dueno',
       Rol.dueno,
-      alConfirmar: (g) =>
+      alConfirmar: (g, {libroCompartidoId}) =>
           pasarGastoAFinanzas(fin, g, confirmadoPor: IdsDemostracion.dueno),
     );
     await o.registrarGasto(concepto: 'Pañales', centavos: 18550);

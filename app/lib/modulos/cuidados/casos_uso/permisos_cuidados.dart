@@ -95,6 +95,9 @@ class PermisosCuidados {
   /// ella (v1.2). `quienEnTurno` es `cuidadorDeTurno(ahora)`.
   bool marcaTomaA(String quienEnTurno) =>
       marcaToma && (!_hermana || quienEnTurno == RolDeTurno.hermana);
+
+  /// Solo el dueño edita las horas de las comidas; los demás las ven (8h).
+  bool get editaHorariosComida => administra;
   bool get registraComida => _escribeEn('comidas');
   bool get dejaEntrega => _escribeEn('entregas');
 

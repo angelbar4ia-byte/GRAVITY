@@ -5,7 +5,7 @@ import '../../../nucleo/contratos/roles.dart';
 import 'operacion_api.dart';
 
 /// Huella de api/openapi.yaml con la que se generó este archivo.
-const huellaEspecificacion = 'fnv1a32:206abfaf';
+const huellaEspecificacion = 'fnv1a32:9939dbd9';
 
 /// Versión de la especificación (info.version).
 const versionEspecificacion = '0.6.0';
@@ -2601,6 +2601,28 @@ const gruposOperaciones = <GrupoOperaciones>[
         descripcion: 'El dueño, la hermana y la pareja (con o sin consentimiento; no la cuenta maestra) (v1.4). Escribe una fila de la bitácora de cuidados con `tipo = instruccion`. De 1 a 500 caracteres (22023). La cuidadora la lee; la pareja sin consentimiento no lee la bitácora. Cuidadora, Casa y quien no tiene perfil: 403 (42501). La bitácora de auditoría guarda `cuidados.instruccion_dejada` sin el texto.',
         roles: {Rol.dueno, Rol.coadministrador, Rol.familiar},
         escribe: true,
+        soloLocal: true,
+        fase: 5,
+      ),
+      OperacionApi(
+        id: 'cuiFijarHorarioComida',
+        metodo: MetodoHttp.post,
+        ruta: '/rest/v1/rpc/cui_fijar_horario_comida',
+        resumen: 'Fijar la hora de un tiempo de comida',
+        descripcion: 'Solo el dueño (v1.6). `p_tiempo` es `desayuno`, `comida`, `colacion` o `cena`; `p_hora` va de 00:00 a 23:59. Tiempo desconocido u hora fuera de rango o nula: 400 (22023). Los demás roles, Casa y la cuenta maestra: 403 (42501). Si la hora cambia, la bitácora de auditoría guarda `cuidados.horario_comida_cambiado` (tiempo, antes y después; sin texto clínico). Devuelve la hora guardada.',
+        roles: {Rol.dueno},
+        escribe: true,
+        soloLocal: true,
+        fase: 5,
+      ),
+      OperacionApi(
+        id: 'leerCuiHorariosComida',
+        metodo: MetodoHttp.get,
+        ruta: '/rest/v1/cui_horarios_comida',
+        resumen: 'Leer los horarios de comida del hogar',
+        descripcion: 'Los cuatro tiempos (`desayuno`, `comida`, `colacion`, `cena`; por omisión 08:30, 14:00, 17:00 y 19:00) para quien ve Cuidados (v1.6): dueño, pareja, cuidadora y hermana. La cuenta maestra, Casa y otros hogares no ven filas. Solo se cambian con `cuiFijarHorarioComida`. En SQL también existe `cui_horarios_hogar(p_hogar_id)`, que los devuelve en orden del día.',
+        roles: {Rol.dueno, Rol.coadministrador, Rol.familiar, Rol.cuidador},
+        escribe: false,
         soloLocal: true,
         fase: 5,
       ),

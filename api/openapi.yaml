@@ -8437,6 +8437,83 @@ paths:
           $ref: '#/components/responses/SinSesion'
         '403':
           $ref: '#/components/responses/Prohibido'
+  /rest/v1/rpc/cui_fijar_horario_comida:
+    post:
+      tags: [Base de datos · Cuidados]
+      operationId: cuiFijarHorarioComida
+      summary: Fijar la hora de un tiempo de comida
+      description: >-
+        Solo el dueño (v1.6). `p_tiempo` es `desayuno`, `comida`, `colacion` o `cena`; `p_hora`
+        va de 00:00 a 23:59. Tiempo desconocido u hora fuera de rango o nula: 400 (22023). Los
+        demás roles, Casa y la cuenta maestra: 403 (42501). Si la hora cambia, la bitácora de
+        auditoría guarda `cuidados.horario_comida_cambiado` (tiempo, antes y después; sin texto
+        clínico). Devuelve la hora guardada.
+      x-roles: [dueno]
+      x-escribe: true
+      x-solo-local: true
+      x-fase: 5
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: ["p_hogar_id", "p_tiempo", "p_hora"]
+              properties:
+                p_hogar_id: {$ref: '#/components/schemas/Uuid'}
+                p_tiempo: {type: string, enum: [desayuno, comida, colacion, cena]}
+                p_hora: {type: string, pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$', description: 'HH:MM, de 00:00 a 23:59.'}
+            example: {"p_hogar_id": "b0000000-0000-4000-8000-000000000001", "p_tiempo": "comida", "p_hora": "13:30"}
+      responses:
+        '200':
+          description: La hora guardada.
+          content:
+            application/json:
+              schema:
+                type: string
+              example: "13:30:00"
+        '400':
+          $ref: '#/components/responses/ReglaCuidados'
+        '401':
+          $ref: '#/components/responses/SinSesion'
+        '403':
+          $ref: '#/components/responses/Prohibido'
+  /rest/v1/cui_horarios_comida:
+    get:
+      tags: [Base de datos · Cuidados]
+      operationId: leerCuiHorariosComida
+      summary: Leer los horarios de comida del hogar
+      description: >-
+        Los cuatro tiempos (`desayuno`, `comida`, `colacion`, `cena`; por omisión 08:30, 14:00,
+        17:00 y 19:00) para quien ve Cuidados (v1.6): dueño, pareja, cuidadora y hermana. La
+        cuenta maestra, Casa y otros hogares no ven filas. Solo se cambian con
+        `cuiFijarHorarioComida`. En SQL también existe `cui_horarios_hogar(p_hogar_id)`, que los
+        devuelve en orden del día.
+      x-roles: [dueno, coadministrador, familiar, cuidador]
+      x-escribe: false
+      x-solo-local: true
+      x-fase: 5
+      parameters:
+        - $ref: '#/components/parameters/select'
+        - $ref: '#/components/parameters/filtroHogar'
+        - $ref: '#/components/parameters/orden'
+        - $ref: '#/components/parameters/limite'
+      responses:
+        '200':
+          description: Filas que tu rol puede ver (RLS).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    hogar_id: {$ref: '#/components/schemas/Uuid'}
+                    tiempo: {type: string, enum: [desayuno, comida, colacion, cena]}
+                    hora: {type: string, description: 'HH:MM:SS'}
+              example: [{"hogar_id": "b0000000-0000-4000-8000-000000000001", "tiempo": "desayuno", "hora": "08:30:00"}]
+        '401':
+          $ref: '#/components/responses/SinSesion'
   /rest/v1/rpc/cui_crear_cambio_urgente:
     post:
       tags: [Base de datos · Cuidados]

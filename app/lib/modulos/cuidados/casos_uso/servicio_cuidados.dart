@@ -3,6 +3,7 @@
 /// pantallas. Nada de esto va a la IA ni a las bocinas (D3, D6).
 library;
 
+import '../../../nucleo/avisos/aviso.dart' show HoraDelDia;
 import '../datos/modelos.dart';
 import '../datos/repositorio.dart';
 import 'horario_turnos.dart';
@@ -19,7 +20,13 @@ String _claveToma(String medicamentoId, DateTime hora) =>
 
 /// Paso de un gasto recién confirmado a Finanzas (lo arma el proveedor con el
 /// repositorio de Finanzas). Puede lanzar si no hay permiso, libro o cuenta.
-typedef PasarGastoAFinanzas = Future<void> Function(GastoCuidado confirmado);
+///
+/// [libroCompartidoId] es el libro compartido que el dueño eligió para un
+/// gasto de la casa (8h); en el gasto de Papá va `null`.
+typedef PasarGastoAFinanzas = Future<void> Function(
+  GastoCuidado confirmado, {
+  String? libroCompartidoId,
+});
 
 /// Aviso sobrio cuando el gasto quedó confirmado en Cuidados pero Finanzas no
 /// lo recibió (la confirmación del servidor no se revierte).
@@ -243,6 +250,24 @@ class ServicioCuidados {
 
   // ---------------------------------------------------------------- Comidas
 
+  /// Horas de las comidas del hogar (las ven todos los que entran).
+  Future<Map<TiempoComidaPapa, HoraDelDia>> horariosComida() async {
+    try {
+      return await _repo.horariosComida();
+    } catch (_) {
+      return horariosComidaPorOmision;
+    }
+  }
+
+  /// Solo el dueño fija la hora de una comida.
+  Future<void> fijarHorarioComida(
+    TiempoComidaPapa tiempo,
+    HoraDelDia hora,
+  ) async {
+    _exigir(permisos.editaHorariosComida);
+    await _repo.fijarHorarioComida(tiempo, hora);
+  }
+
   Future<Map<TiempoComidaPapa, ComidaRegistro>> comidasDeHoy() async {
     if (!permisos.veComidas) return const {};
     // Solo agregar: la corrección es una fila nueva; vale la más reciente.
@@ -408,12 +433,26 @@ class ServicioCuidados {
   /// Confirma o rechaza un gasto. Al confirmar, y ya guardado el estado en el
   /// servidor, lo pasa a Finanzas. Devuelve un aviso si Finanzas no lo recibió
   /// (la confirmación no se revierte); `null` si todo salió bien.
-  Future<String?> resolverGasto(String id, {required bool confirmar}) async {
+  ///
+  /// Un gasto de la casa exige [libroCompartidoId]: el dueño elige el libro,
+  /// no se adivina.
+  Future<String?> resolverGasto(
+    String id, {
+    required bool confirmar,
+    String? libroCompartidoId,
+  }) async {
     _exigir(permisos.confirmaGasto);
     GastoCuidado? gasto;
     if (confirmar && alConfirmarGasto != null) {
       for (final g in await _repo.gastos()) {
         if (g.id == id) gasto = g;
+      }
+      if (gasto != null &&
+          gasto.ambito == AmbitoGasto.casa &&
+          (libroCompartidoId == null || libroCompartidoId.isEmpty)) {
+        throw const ErrorCuidados(
+          'Elige el libro compartido donde va el gasto de la casa.',
+        );
       }
     }
     await _repo.resolverGasto(
@@ -422,7 +461,12 @@ class ServicioCuidados {
     );
     if (gasto == null) return null;
     try {
-      await alConfirmarGasto!(gasto.conEstado(EstadoGasto.confirmado));
+      await alConfirmarGasto!(
+        gasto.conEstado(EstadoGasto.confirmado),
+        libroCompartidoId: gasto.ambito == AmbitoGasto.casa
+            ? libroCompartidoId
+            : null,
+      );
     } catch (_) {
       return avisoGastoSinFinanzas;
     }
