@@ -1,6 +1,6 @@
 # Fase 6 · GRAVITY asistente (especificación)
 
-> v0.1, 8/nov/2026. Borrador para aprobación. Base: D3, D6, D8, D9 y las respuestas del dueño de hoy.
+> v1.0, 8/nov/2026. Aprobada por el dueño: Home Assistant Green con Home Assistant Cloud; Gmail y Calendar por cuenta de cada persona, y una cuenta de Google de la casa para Casa. Base: D3, D6, D8, D9 y las respuestas del dueño de hoy.
 
 ## 1. Alcance
 
@@ -58,10 +58,17 @@ Todo se prepara para cualquiera de estas opciones; el dueño elige después.
 
 **Mi propuesta:** Home Assistant Green con Home Assistant Cloud, porque es lo más simple y deja la casa funcionando sin depender de la laptop. Mientras llega, la laptop hace de puente (D9, fase 1).
 
-## 7. Preguntas abiertas
+## 7. Decisiones aprobadas (8/nov/2026)
 
-1. ¿Confirmas la propuesta de la sección 6 (Home Assistant Green con Home Assistant Cloud)?
-2. ¿Cuál es el orden de construcción: primero el texto con Gemini, luego Gmail y Calendar, luego las bocinas?
+1. **Puente de casa:** Home Assistant Green con Home Assistant Cloud.
+2. **Gmail y Calendar:** cada persona conecta **su propia cuenta de Google**. Casa usa una **cuenta de Google de la casa**, creada para ese fin.
+3. **Orden de construcción:** conversación de texto con Gemini; después Gmail y Calendar; después bocinas.
+
+*Pendiente del dueño:* crear el proyecto de Google Cloud y la clave de Gemini (se guardan en el servidor, no en la app).
+
+## 7b. Preguntas abiertas (ya no bloquean)
+
+- Verificar los límites actuales de Gemini antes de activarlo.
 
 ## 8. Trabajo por agente (cuando se apruebe)
 
