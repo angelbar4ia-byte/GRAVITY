@@ -1,6 +1,6 @@
 # Fase 8 · Bloque 4: Reportes, imagen y voz en el teléfono
 
-> v0.1, 8/nov/2026. Borrador: el dueño aprobó los tres alcances y pidió "todos" en reportes y en imagen, y "solo dictar" en voz. Base: D3, D19, D25 y las especificaciones de los bloques 1 a 3.
+> v1.0, 8/nov/2026. Aprobada. Borrador anterior: el dueño aprobó los tres alcances y pidió "todos" en reportes y en imagen, y "solo dictar" en voz. Base: D3, D19, D25 y las especificaciones de los bloques 1 a 3.
 
 ## 1. Reportes (todos)
 
@@ -16,9 +16,8 @@
 - **Recibos y tickets:** se fotografía el recibo y se propone un gasto; la persona confirma antes de guardar.
 - **Estados de cuenta:** se fotografía o se escanea la página para conciliar (bloque 1), sin subir la imagen a ninguna nube.
 - **Lectura de la imagen:** el texto se lee **en el teléfono** (sin enviar la imagen a la IA ni al servidor).
-- La imagen no se guarda después de registrar el gasto, salvo que la persona lo elija.
-
-*Pendiente de confirmar:* si la imagen se borra al terminar, o si se guarda como comprobante del gasto.
+- **Recibos de gastos:** la foto **se guarda como comprobante** del gasto, solo en el teléfono de quien lo registró (supuesto: no se sube a la nube).
+- **Páginas de estados de cuenta:** se procesan para conciliar y **se borran** al terminar; no se guardan.
 
 ## 3. Voz en el teléfono (solo dictar)
 
@@ -30,13 +29,13 @@
 
 1. Un reporte nunca muestra cifras que la persona no vea en su libro (prueba por rol).
 2. Un recibo fotografiado propone un gasto que solo se guarda con confirmación.
-3. La imagen no sale del teléfono (prueba: sin llamadas de red con la imagen).
+3. La imagen no sale del teléfono (prueba: sin llamadas de red con la imagen). Los recibos quedan como comprobante del gasto y las páginas de estado de cuenta se borran.
 4. Dictar un gasto llega como texto y pasa por el mismo flujo que escribirlo.
 5. Ninguna cifra de estos reportes llega a la IA ni a las bocinas (D3).
 
 ## Pendientes
 
-- Si la imagen se borra al registrar el gasto o se guarda como comprobante.
+- Confirmar que los comprobantes solo viven en el teléfono (supuesto actual).
 
 ## Trabajo por agente (cuando se apruebe)
 
