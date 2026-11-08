@@ -105,6 +105,8 @@ class CuerpoAportacionCasa extends ConsumerWidget {
                   ),
                 ),
               const SizedBox(height: 8),
+              const ReferenciaPorSubcuenta(),
+              const SizedBox(height: 8),
               const Text(
                 'Es una guía: cada quien aporta lo que quiera. Nadie debe '
                 'nada por no aportar.',
@@ -173,5 +175,102 @@ class SelectorPeriodoAportacion extends ConsumerWidget {
         ],
       ),
     );
+  }
+}
+
+/// Referencia por subcuenta y por persona (por omisión 50/25/25). Solo el
+/// dueño la edita.
+class ReferenciaPorSubcuenta extends ConsumerWidget {
+  const ReferenciaPorSubcuenta({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final subs = ref.watch(subcuentasCasaProvider).value ?? const [];
+    final esDueno =
+        ref.watch(parteTransferenciaProvider) == ParteTransferencia.dueno;
+    final repo = ref.watch(repositorioTransferenciasProvider);
+    return Column(
+      key: const ValueKey('aporte-por-subcuenta'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final s in subs)
+          FutureBuilder<ReparteReferencia>(
+            future: repo.referencia(s.id),
+            builder: (context, snap) {
+              final r = snap.data ?? ReparteReferencia.porOmision;
+              String pct(int pb) => '${pb / 100}%';
+              return ListTile(
+                key: ValueKey('aporte-sub-${s.id}'),
+                contentPadding: EdgeInsets.zero,
+                title: Text(s.nombre),
+                subtitle: Text(
+                  'Papá ${pct(r.papaPb)} · Dueño ${pct(r.duenoPb)} · '
+                  'Pareja ${pct(r.parejaPb)}',
+                ),
+                trailing: esDueno
+                    ? TextButton(
+                        key: ValueKey('aporte-editar-${s.id}'),
+                        onPressed: () => _editar(context, repo, s, r),
+                        child: const Text('Cambiar reparto'),
+                      )
+                    : null,
+              );
+            },
+          ),
+      ],
+    );
+  }
+
+  Future<void> _editar(
+    BuildContext context,
+    RepositorioTransferencias repo,
+    SubcuentaCasa s,
+    ReparteReferencia actual,
+  ) async {
+    final c = {
+      for (final p in ParteReferencia.values)
+        p: TextEditingController(text: '${actual.de(p) ~/ 100}'),
+    };
+    final nuevo = await showDialog<ReparteReferencia>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Reparto de ${s.nombre}'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final p in ParteReferencia.values)
+              TextField(
+                controller: c[p],
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(labelText: '${p.name} (%)'),
+              ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(
+              ctx,
+              ReparteReferencia(
+                papaPb: (int.tryParse(c[ParteReferencia.papa]!.text) ?? 0) * 100,
+                duenoPb:
+                    (int.tryParse(c[ParteReferencia.dueno]!.text) ?? 0) * 100,
+                parejaPb:
+                    (int.tryParse(c[ParteReferencia.pareja]!.text) ?? 0) * 100,
+              ),
+            ),
+            child: const Text('Guardar'),
+          ),
+        ],
+      ),
+    );
+    for (final x in c.values) {
+      x.dispose();
+    }
+    if (nuevo == null || !context.mounted) return;
+    await intentar(context, () => repo.fijarReferencia(s.id, nuevo));
   }
 }

@@ -68,6 +68,7 @@ class _EstadoFormulario extends ConsumerState<FormularioTransferencia> {
   final _monto = TextEditingController();
   final _nota = TextEditingController();
   late RutaTransferencia _ruta = widget.rutas.first;
+  String? _subcuenta;
   bool _enviando = false;
 
   @override
@@ -79,7 +80,12 @@ class _EstadoFormulario extends ConsumerState<FormularioTransferencia> {
 
   Future<void> _proponer() async {
     final centavos = centavosDeTexto(_monto.text);
-    final error = errorAlProponer(centavos, _nota.text);
+    final error = errorAlProponer(
+      centavos,
+      _nota.text,
+      ruta: _ruta,
+      subcuentaId: _subcuenta,
+    );
     if (error != null) {
       avisar(context, error);
       return;
@@ -89,13 +95,19 @@ class _EstadoFormulario extends ConsumerState<FormularioTransferencia> {
       context,
       () => ref
           .read(transferenciasProvider.notifier)
-          .proponer(ruta: _ruta, montoCentavos: centavos!, nota: _nota.text),
+          .proponer(
+            ruta: _ruta,
+            montoCentavos: centavos!,
+            nota: _nota.text,
+            subcuentaId: _ruta.esACasa ? _subcuenta : null,
+          ),
     );
     if (!mounted) return;
     setState(() => _enviando = false);
     if (ok) {
       _monto.clear();
       _nota.clear();
+      setState(() => _subcuenta = null);
       avisar(context, 'Propuesta enviada. Falta que la confirme quien recibe.');
     }
   }
@@ -120,6 +132,13 @@ class _EstadoFormulario extends ConsumerState<FormularioTransferencia> {
               ),
           ],
         ),
+        if (_ruta.esACasa) ...[
+          const SizedBox(height: 8),
+          _SelectorSubcuenta(
+            elegida: _subcuenta,
+            alElegir: (id) => setState(() => _subcuenta = id),
+          ),
+        ],
         const SizedBox(height: 8),
         CampoMonto(controlador: _monto, etiqueta: 'Monto'),
         TextField(
@@ -139,6 +158,38 @@ class _EstadoFormulario extends ConsumerState<FormularioTransferencia> {
       ],
     ),
   );
+}
+
+/// Subcuentas de la casa como fichas; obligatoria en las rutas a la casa.
+class _SelectorSubcuenta extends ConsumerWidget {
+  const _SelectorSubcuenta({required this.elegida, required this.alElegir});
+
+  final String? elegida;
+  final ValueChanged<String> alElegir;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final subs = ref.watch(subcuentasCasaProvider).value ?? const [];
+    return Column(
+      key: const ValueKey('transf-subcuentas'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Subcuenta de la casa (obligatoria)'),
+        Wrap(
+          spacing: 8,
+          children: [
+            for (final s in subs)
+              ChoiceChip(
+                key: ValueKey('transf-sub-${s.id}'),
+                label: Text(s.nombre),
+                selected: elegida == s.id,
+                onSelected: (_) => alElegir(s.id),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
 }
 
 class _Listas extends ConsumerWidget {

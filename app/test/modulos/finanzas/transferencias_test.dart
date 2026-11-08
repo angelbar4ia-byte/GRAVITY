@@ -273,4 +273,99 @@ void main() {
       expect(filas.map((f) => f.clave), ['dueno', 'pareja', 'papa']);
     });
   });
+
+  group('subcuenta de la casa y referencia por subcuenta', () {
+    test('a la casa exige subcuenta; pareja a dueño no la pide', () async {
+      final dueno = _repo(_dueno);
+      expect(
+        () => dueno.proponer(
+          ruta: RutaTransferencia.duenoACasa,
+          montoCentavos: 1000,
+        ),
+        throwsA(isA<Exception>()),
+      );
+      await dueno.proponer(
+        ruta: RutaTransferencia.duenoACasa,
+        montoCentavos: 1000,
+        subcuentaId: 'sub-luz',
+      );
+      expect(
+        (await dueno.listar()).single.subcuentaId,
+        'sub-luz',
+      );
+      final pareja = dueno.comoPersona(_pareja);
+      expect(
+        () => pareja.proponer(
+          ruta: RutaTransferencia.parejaACasa,
+          montoCentavos: 1000,
+        ),
+        throwsA(isA<Exception>()),
+      );
+      await pareja.proponer(
+        ruta: RutaTransferencia.parejaADueno,
+        montoCentavos: 1000,
+      );
+      expect((await pareja.listar()).first.subcuentaId, isNull);
+      expect(
+        errorAlProponer(100, '', ruta: RutaTransferencia.parejaADueno),
+        isNull,
+      );
+      expect(
+        errorAlProponer(100, '', ruta: RutaTransferencia.parejaACasa),
+        isNotNull,
+      );
+    });
+
+    test('la RPC lleva p_subcuenta solo a la casa', () async {
+      final fuente = FuenteTablasEnMemoria();
+      final repo = RepositorioTransferenciasSupabase(fuente);
+      await repo.proponer(
+        ruta: RutaTransferencia.duenoACasa,
+        montoCentavos: 500,
+        subcuentaId: 's-1',
+      );
+      await repo.proponer(
+        ruta: RutaTransferencia.parejaADueno,
+        montoCentavos: 500,
+        subcuentaId: 's-1',
+      );
+      expect(fuente.llamadas[0].$2['p_subcuenta'], 's-1');
+      expect(fuente.llamadas[1].$2['p_subcuenta'], isNull);
+    });
+
+    test('el reparto por subcuenta suma 100% y no pasa de 100%', () {
+      const r = ReparteReferencia.porOmision;
+      expect([r.papaPb, r.duenoPb, r.parejaPb], [5000, 2500, 2500]);
+      expect(r.sumaPb, 10000);
+      expect(r.error, isNull);
+      expect(r.repartir(100001).values.fold<int>(0, (a, b) => a + b), 100001);
+      expect(const ReparteReferencia(papaPb: 6000).error, isNotNull);
+    });
+
+    test('solo el dueño cambia el reparto de una subcuenta', () async {
+      final dueno = _repo(_dueno);
+      const nuevo = ReparteReferencia(
+        papaPb: 7000,
+        duenoPb: 1500,
+        parejaPb: 1500,
+      );
+      await dueno.fijarReferencia('sub-luz', nuevo);
+      expect((await dueno.referencia('sub-luz')).papaPb, 7000);
+      expect(
+        (await dueno.referencia('sub-telefono')).papaPb,
+        5000,
+      );
+      expect(
+        () => dueno.comoPersona(_pareja).fijarReferencia('sub-luz', nuevo),
+        throwsA(isA<Exception>()),
+      );
+      expect(
+        () => dueno.fijarReferencia(
+          'sub-luz',
+          const ReparteReferencia(papaPb: 9000),
+        ),
+        throwsA(isA<Exception>()),
+      );
+    });
+  });
 }

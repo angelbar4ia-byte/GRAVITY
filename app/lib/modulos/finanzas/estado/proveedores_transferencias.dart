@@ -41,6 +41,11 @@ final parteTransferenciaProvider = Provider<ParteTransferencia>((ref) {
   };
 });
 
+/// Subcuentas de la casa (destino de las transferencias a la casa).
+final subcuentasCasaProvider = FutureProvider<List<SubcuentaCasa>>(
+  (ref) => ref.watch(repositorioTransferenciasProvider).subcuentas(),
+);
+
 final transferenciasProvider =
     AsyncNotifierProvider<TransferenciasNotifier, List<Transferencia>>(
       TransferenciasNotifier.new,
@@ -68,8 +73,14 @@ class TransferenciasNotifier extends AsyncNotifier<List<Transferencia>> {
     required RutaTransferencia ruta,
     required int montoCentavos,
     String nota = '',
+    String? subcuentaId,
   }) async {
-    await _repo.proponer(ruta: ruta, montoCentavos: montoCentavos, nota: nota);
+    await _repo.proponer(
+      ruta: ruta,
+      montoCentavos: montoCentavos,
+      nota: nota,
+      subcuentaId: subcuentaId,
+    );
     await refrescar();
   }
 

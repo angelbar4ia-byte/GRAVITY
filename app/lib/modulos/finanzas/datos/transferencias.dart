@@ -96,6 +96,7 @@ class Transferencia {
     required this.estado,
     required this.creadaEn,
     this.nota = '',
+    this.subcuentaId,
   });
 
   final String id;
@@ -109,6 +110,9 @@ class Transferencia {
   final DateTime creadaEn;
   final String nota;
 
+  /// Subcuenta de la casa que recibe (solo en las rutas a la casa).
+  final String? subcuentaId;
+
   Transferencia conEstado(EstadoTransferencia nuevo) => Transferencia(
     id: id,
     ruta: ruta,
@@ -118,6 +122,7 @@ class Transferencia {
     estado: nuevo,
     creadaEn: creadaEn,
     nota: nota,
+    subcuentaId: subcuentaId,
   );
 
   /// Desde una fila de `fin_transferencias`.
@@ -133,12 +138,22 @@ class Transferencia {
       estado: EstadoTransferencia.desdeTexto(f['estado'] as String?),
       creadaEn: DateTime.parse('${f['creado_en'] ?? f['created_at']}'),
       nota: '${f['nota'] ?? ''}',
+      subcuentaId: f['subcuenta_id'] == null ? null : '${f['subcuenta_id']}',
     );
   }
 }
 
-/// Error de validación al proponer; `null` si es válida.
-String? errorAlProponer(int? montoCentavos, String nota) {
+/// Error de validación al proponer; `null` si es válida. A la casa, la
+/// subcuenta destino es obligatoria; de pareja a dueño no se pide.
+String? errorAlProponer(
+  int? montoCentavos,
+  String nota, {
+  RutaTransferencia? ruta,
+  String? subcuentaId,
+}) {
+  if (ruta != null && ruta.esACasa && (subcuentaId ?? '').isEmpty) {
+    return 'Elige la subcuenta de la casa que recibe.';
+  }
   if (montoCentavos == null || montoCentavos <= 0) {
     return 'Escribe un monto mayor que cero.';
   }
@@ -232,6 +247,72 @@ class ReferenciaAportacion {
   int get sumaCentavos => papaCentavos + duenoCentavos + parejaCentavos;
 }
 
+// ------------------------------------------- referencia por subcuenta
+
+/// Subcuenta de la casa (un servicio: luz, teléfono...).
+class SubcuentaCasa {
+  const SubcuentaCasa({required this.id, required this.nombre});
+  final String id;
+  final String nombre;
+}
+
+/// Personas que aparecen en la referencia de una subcuenta.
+enum ParteReferencia { papa, dueno, pareja }
+
+/// Reparto de referencia de una subcuenta en puntos base (10000 = 100%). Por
+/// omisión 50/25/25 (Papá, dueño, pareja). La suma no pasa de 100%.
+class ReparteReferencia {
+  const ReparteReferencia({
+    this.papaPb = 5000,
+    this.duenoPb = 2500,
+    this.parejaPb = 2500,
+  });
+
+  static const porOmision = ReparteReferencia();
+
+  final int papaPb;
+  final int duenoPb;
+  final int parejaPb;
+
+  int get sumaPb => papaPb + duenoPb + parejaPb;
+
+  int de(ParteReferencia p) => switch (p) {
+    ParteReferencia.papa => papaPb,
+    ParteReferencia.dueno => duenoPb,
+    ParteReferencia.pareja => parejaPb,
+  };
+
+  ReparteReferencia con(ParteReferencia p, int pb) => ReparteReferencia(
+    papaPb: p == ParteReferencia.papa ? pb : papaPb,
+    duenoPb: p == ParteReferencia.dueno ? pb : duenoPb,
+    parejaPb: p == ParteReferencia.pareja ? pb : parejaPb,
+  );
+
+  /// Error de validación; `null` si es válido.
+  String? get error {
+    for (final v in [papaPb, duenoPb, parejaPb]) {
+      if (v < 0 || v > 10000) return 'Cada parte va de 0% a 100%.';
+    }
+    if (sumaPb > 10000) return 'El reparto de una subcuenta no pasa de 100%.';
+    return null;
+  }
+
+  /// Reparte [totalCentavos] según estas partes; el centavo sobrante de los
+  /// redondeos hacia abajo se queda en Papá solo si el reparto suma 100%.
+  Map<ParteReferencia, int> repartir(int totalCentavos) {
+    final total = totalCentavos < 0 ? 0 : totalCentavos;
+    final d = total * duenoPb ~/ 10000;
+    final p = total * parejaPb ~/ 10000;
+    var a = total * papaPb ~/ 10000;
+    if (sumaPb == 10000) a = total - d - p;
+    return {
+      ParteReferencia.papa: a,
+      ParteReferencia.dueno: d,
+      ParteReferencia.pareja: p,
+    };
+  }
+}
+
 /// Total de gastos de la casa en el periodo: gastos confirmados contra
 /// cuentas del libro [libroCasaId], con fecha en [desde]..[hasta], sin los
 /// anulados (ni los contraasientos).
@@ -284,11 +365,22 @@ int aportadoPorPersona(
 
 abstract interface class RepositorioTransferencias {
   /// Propone una transferencia (`fin_proponer_transferencia`); devuelve el id.
+  /// A la casa, [subcuentaId] es obligatoria (`p_subcuenta`).
   Future<String> proponer({
     required RutaTransferencia ruta,
     required int montoCentavos,
     String nota = '',
+    String? subcuentaId,
   });
+
+  /// Subcuentas de la casa (servicios) para elegir destino.
+  Future<List<SubcuentaCasa>> subcuentas();
+
+  /// Reparto de referencia de cada subcuenta (por omisión 50/25/25).
+  Future<ReparteReferencia> referencia(String subcuentaId);
+
+  /// Solo el dueño (`fin_casa_fijar_referencia`).
+  Future<void> fijarReferencia(String subcuentaId, ReparteReferencia reparto);
 
   /// Confirma, rechaza o cancela (`fin_responder_transferencia`).
   Future<void> responder(String transferenciaId, AccionTransferencia accion);
@@ -312,15 +404,70 @@ class RepositorioTransferenciasSupabase implements RepositorioTransferencias {
     required RutaTransferencia ruta,
     required int montoCentavos,
     String nota = '',
+    String? subcuentaId,
   }) async {
-    final error = errorAlProponer(montoCentavos, nota);
+    final error = errorAlProponer(
+      montoCentavos,
+      nota,
+      ruta: ruta,
+      subcuentaId: subcuentaId,
+    );
     if (error != null) throw ErrorFinanzas(error);
     final r = await fuente.rpc('fin_proponer_transferencia', {
       'p_ruta': ruta.codigo,
       'p_monto_centavos': montoCentavos,
       'p_nota': nota.trim(),
+      'p_subcuenta': ruta.esACasa ? subcuentaId : null,
     });
     return '$r';
+  }
+
+  @override
+  Future<List<SubcuentaCasa>> subcuentas() async {
+    final subs = await fuente.leer('fin_casa_subcuentas');
+    final cats = await fuente.leer('fin_categorias');
+    final nombres = {for (final c in cats) '${c['id']}': '${c['nombre']}'};
+    return [
+      for (final s in subs)
+        if (s['activa'] != false)
+          SubcuentaCasa(
+            id: '${s['id']}',
+            nombre: nombres['${s['categoria_id']}'] ?? 'Subcuenta',
+          ),
+    ];
+  }
+
+  @override
+  Future<ReparteReferencia> referencia(String subcuentaId) async {
+    final filas = await fuente.leer('fin_casa_referencias');
+    var r = ReparteReferencia.porOmision;
+    for (final f in filas) {
+      if ('${f['subcuenta_id']}' != subcuentaId) continue;
+      final pb = (f['parte_pb'] as num).toInt();
+      final parte = switch ('${f['parte'] ?? f['rol']}') {
+        'papa' => ParteReferencia.papa,
+        'pareja' => ParteReferencia.pareja,
+        _ => ParteReferencia.dueno,
+      };
+      r = r.con(parte, pb);
+    }
+    return r;
+  }
+
+  @override
+  Future<void> fijarReferencia(
+    String subcuentaId,
+    ReparteReferencia reparto,
+  ) async {
+    final error = reparto.error;
+    if (error != null) throw ErrorFinanzas(error);
+    for (final p in ParteReferencia.values) {
+      await fuente.rpc('fin_casa_fijar_referencia', {
+        'p_subcuenta': subcuentaId,
+        'p_parte': p.name,
+        'p_parte_pb': reparto.de(p),
+      });
+    }
   }
 
   @override
@@ -387,12 +534,21 @@ class RepositorioTransferenciasEnMemoria implements RepositorioTransferencias {
     required RutaTransferencia ruta,
     required int montoCentavos,
     String nota = '',
+    String? subcuentaId,
   }) async {
     if (!rutasQueOfrece(_parte).contains(ruta)) {
       throw const ErrorFinanzas('Esa ruta no está permitida.');
     }
-    final error = errorAlProponer(montoCentavos, nota);
+    final error = errorAlProponer(
+      montoCentavos,
+      nota,
+      ruta: ruta,
+      subcuentaId: subcuentaId,
+    );
     if (error != null) throw ErrorFinanzas(error);
+    if (ruta.esACasa && !_a.subcuentas.any((s) => s.id == subcuentaId)) {
+      throw const ErrorFinanzas('Esa subcuenta no existe en la casa.');
+    }
     // Receptor: el dueño en pareja → dueño; en las rutas a la casa confirma
     // el otro adulto (el servidor es quien lo decide de verdad).
     final receptor = ruta == RutaTransferencia.parejaADueno
@@ -409,9 +565,30 @@ class RepositorioTransferenciasEnMemoria implements RepositorioTransferencias {
         estado: EstadoTransferencia.pendiente,
         creadaEn: _a.reloj(),
         nota: nota.trim(),
+        subcuentaId: ruta.esACasa ? subcuentaId : null,
       ),
     );
     return id;
+  }
+
+  @override
+  Future<List<SubcuentaCasa>> subcuentas() async => List.of(_a.subcuentas);
+
+  @override
+  Future<ReparteReferencia> referencia(String subcuentaId) async =>
+      _a.referencias[subcuentaId] ?? ReparteReferencia.porOmision;
+
+  @override
+  Future<void> fijarReferencia(
+    String subcuentaId,
+    ReparteReferencia reparto,
+  ) async {
+    if (_personaId != _a.duenoId) {
+      throw const ErrorFinanzas('Solo el dueño cambia el reparto.');
+    }
+    final error = reparto.error;
+    if (error != null) throw ErrorFinanzas(error);
+    _a.referencias[subcuentaId] = reparto;
   }
 
   @override
@@ -465,6 +642,12 @@ class RepositorioTransferenciasEnMemoria implements RepositorioTransferencias {
 
 class _Almacen {
   _Almacen(this.duenoId, this.parejaId, this.reloj);
+  final List<SubcuentaCasa> subcuentas = const [
+    SubcuentaCasa(id: 'sub-servicios', nombre: 'Servicios'),
+    SubcuentaCasa(id: 'sub-luz', nombre: 'Luz'),
+    SubcuentaCasa(id: 'sub-telefono', nombre: 'Teléfono'),
+  ];
+  final Map<String, ReparteReferencia> referencias = {};
   final String duenoId;
   final String parejaId;
   final DateTime Function() reloj;
