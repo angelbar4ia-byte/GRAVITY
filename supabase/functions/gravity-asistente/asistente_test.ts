@@ -47,7 +47,7 @@ const pide = (mensaje: string, extra: Record<string, unknown> = {}) => ({ mensaj
 test("el catálogo y sus descripciones no contienen montos ni datos de salud", () => {
   for (const h of catalogo) {
     assert.equal(tieneDatoSensible(h.nombre + " " + h.descripcion), false, h.nombre);
-    assert.ok(["finanzas", "habitos", "cuidados"].includes(h.modulo), `${h.nombre}: módulo fuera de la lista`);
+    assert.ok(["finanzas", "habitos", "cuidados", "alimentacion"].includes(h.modulo), `${h.nombre}: módulo fuera de la lista`);
   }
 });
 

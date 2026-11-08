@@ -756,6 +756,101 @@ paths:
           $ref: '#/components/responses/ResultadoHerramienta'
         '404':
           $ref: '#/components/responses/HerramientaNoDisponible'
+  /herramientas/alimentacion.receta_siguiente_paso:
+    servers: *servidorHerramientas
+    post:
+      tags: [Herramientas de GRAVITY]
+      operationId: herramientaRecetaSiguientePaso
+      summary: alimentacion.receta_siguiente_paso · Siguiente paso de la receta
+      description: >-
+        Lee el siguiente paso de la receta que se cocina ahora. Sin cifras ni precios.
+      x-roles: [dueno, coadministrador, familiar, casa]
+      x-escribe: false
+      x-solo-local: true
+      x-fase: 0
+      requestBody:
+        $ref: '#/components/requestBodies/PeticionHerramienta'
+      responses:
+        '200':
+          $ref: '#/components/responses/ResultadoHerramienta'
+        '404':
+          $ref: '#/components/responses/HerramientaNoDisponible'
+  /herramientas/alimentacion.receta_paso_anterior:
+    servers: *servidorHerramientas
+    post:
+      tags: [Herramientas de GRAVITY]
+      operationId: herramientaRecetaPasoAnterior
+      summary: alimentacion.receta_paso_anterior · Paso anterior de la receta
+      description: >-
+        Lee el paso anterior de la receta que se cocina ahora.
+      x-roles: [dueno, coadministrador, familiar, casa]
+      x-escribe: false
+      x-solo-local: true
+      x-fase: 0
+      requestBody:
+        $ref: '#/components/requestBodies/PeticionHerramienta'
+      responses:
+        '200':
+          $ref: '#/components/responses/ResultadoHerramienta'
+        '404':
+          $ref: '#/components/responses/HerramientaNoDisponible'
+  /herramientas/alimentacion.receta_repetir_paso:
+    servers: *servidorHerramientas
+    post:
+      tags: [Herramientas de GRAVITY]
+      operationId: herramientaRecetaRepetirPaso
+      summary: alimentacion.receta_repetir_paso · Repetir el paso de la receta
+      description: >-
+        Repite el paso actual de la receta.
+      x-roles: [dueno, coadministrador, familiar, casa]
+      x-escribe: false
+      x-solo-local: true
+      x-fase: 0
+      requestBody:
+        $ref: '#/components/requestBodies/PeticionHerramienta'
+      responses:
+        '200':
+          $ref: '#/components/responses/ResultadoHerramienta'
+        '404':
+          $ref: '#/components/responses/HerramientaNoDisponible'
+  /herramientas/alimentacion.que_cocino_hoy:
+    servers: *servidorHerramientas
+    post:
+      tags: [Herramientas de GRAVITY]
+      operationId: herramientaQueCocinoHoy
+      summary: alimentacion.que_cocino_hoy · Qué cocino hoy
+      description: >-
+        Dice los platillos del menú de hoy por tiempo de comida (pareja y dueño).
+      x-roles: [dueno, coadministrador, familiar, casa]
+      x-escribe: false
+      x-solo-local: true
+      x-fase: 0
+      requestBody:
+        $ref: '#/components/requestBodies/PeticionHerramienta'
+      responses:
+        '200':
+          $ref: '#/components/responses/ResultadoHerramienta'
+        '404':
+          $ref: '#/components/responses/HerramientaNoDisponible'
+  /herramientas/alimentacion.leer_lista_compras:
+    servers: *servidorHerramientas
+    post:
+      tags: [Herramientas de GRAVITY]
+      operationId: herramientaLeerListaCompras
+      summary: alimentacion.leer_lista_compras · Leer la lista de compras
+      description: >-
+        Dice lo que falta comprar, sin cantidades ni precios.
+      x-roles: [dueno, coadministrador, familiar, casa]
+      x-escribe: false
+      x-solo-local: true
+      x-fase: 0
+      requestBody:
+        $ref: '#/components/requestBodies/PeticionHerramienta'
+      responses:
+        '200':
+          $ref: '#/components/responses/ResultadoHerramienta'
+        '404':
+          $ref: '#/components/responses/HerramientaNoDisponible'
   /herramientas/casa.abrir:
     servers: *servidorHerramientas
     post:

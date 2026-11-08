@@ -174,6 +174,9 @@ void main() {
       for (final f in raiz.listSync(recursive: true).whereType<File>()) {
         if (!f.path.endsWith('.dart')) continue;
         if (f.path.endsWith('modulos/alimentacion/datos/perfiles.dart')) continue;
+        // El filtro de la bocina (Fase 6b) lista estas palabras para BLOQUEARLAS;
+        // no copia el perfil de Papá.
+        if (f.path.endsWith('modulos/casa/puente/mensaje_bocina.dart')) continue;
         final t = f.readAsStringSync().toLowerCase();
         if (t.contains('alzheimer') || t.contains('aminoácidos')) {
           infractores.add(f.path);

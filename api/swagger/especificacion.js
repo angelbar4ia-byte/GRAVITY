@@ -1,7 +1,7 @@
 // GENERADO por api/generar_dart.mjs a partir de api/openapi.yaml. No se edita a mano.
 // Permite abrir Swagger UI con doble clic (file://), donde el navegador no deja leer
 // ../openapi.yaml. Servida por http, la página lee openapi.yaml directamente.
-// huella: fnv1a32:9939dbd9
+// huella: fnv1a32:8495c39b
 window.ESPECIFICACION_GRAVITY = {
   "openapi": "3.1.0",
   "info": {
@@ -895,6 +895,211 @@ window.ESPECIFICACION_GRAVITY = {
         ],
         "x-escribe": false,
         "x-solo-local": false,
+        "x-fase": 0,
+        "requestBody": {
+          "$ref": "#/components/requestBodies/PeticionHerramienta"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ResultadoHerramienta"
+          },
+          "404": {
+            "$ref": "#/components/responses/HerramientaNoDisponible"
+          }
+        }
+      }
+    },
+    "/herramientas/alimentacion.receta_siguiente_paso": {
+      "servers": [
+        {
+          "url": "http://127.0.0.1:{puerto}",
+          "description": "Propuesta para la Fase 6: GRAVITY en la laptop atiende las herramientas para el puente de casa. En la Fase 0 se ejecutan dentro de la app, sin red.",
+          "variables": {
+            "puerto": {
+              "default": "8787"
+            }
+          }
+        }
+      ],
+      "post": {
+        "tags": [
+          "Herramientas de GRAVITY"
+        ],
+        "operationId": "herramientaRecetaSiguientePaso",
+        "summary": "alimentacion.receta_siguiente_paso · Siguiente paso de la receta",
+        "description": "Lee el siguiente paso de la receta que se cocina ahora. Sin cifras ni precios.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar",
+          "casa"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 0,
+        "requestBody": {
+          "$ref": "#/components/requestBodies/PeticionHerramienta"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ResultadoHerramienta"
+          },
+          "404": {
+            "$ref": "#/components/responses/HerramientaNoDisponible"
+          }
+        }
+      }
+    },
+    "/herramientas/alimentacion.receta_paso_anterior": {
+      "servers": [
+        {
+          "url": "http://127.0.0.1:{puerto}",
+          "description": "Propuesta para la Fase 6: GRAVITY en la laptop atiende las herramientas para el puente de casa. En la Fase 0 se ejecutan dentro de la app, sin red.",
+          "variables": {
+            "puerto": {
+              "default": "8787"
+            }
+          }
+        }
+      ],
+      "post": {
+        "tags": [
+          "Herramientas de GRAVITY"
+        ],
+        "operationId": "herramientaRecetaPasoAnterior",
+        "summary": "alimentacion.receta_paso_anterior · Paso anterior de la receta",
+        "description": "Lee el paso anterior de la receta que se cocina ahora.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar",
+          "casa"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 0,
+        "requestBody": {
+          "$ref": "#/components/requestBodies/PeticionHerramienta"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ResultadoHerramienta"
+          },
+          "404": {
+            "$ref": "#/components/responses/HerramientaNoDisponible"
+          }
+        }
+      }
+    },
+    "/herramientas/alimentacion.receta_repetir_paso": {
+      "servers": [
+        {
+          "url": "http://127.0.0.1:{puerto}",
+          "description": "Propuesta para la Fase 6: GRAVITY en la laptop atiende las herramientas para el puente de casa. En la Fase 0 se ejecutan dentro de la app, sin red.",
+          "variables": {
+            "puerto": {
+              "default": "8787"
+            }
+          }
+        }
+      ],
+      "post": {
+        "tags": [
+          "Herramientas de GRAVITY"
+        ],
+        "operationId": "herramientaRecetaRepetirPaso",
+        "summary": "alimentacion.receta_repetir_paso · Repetir el paso de la receta",
+        "description": "Repite el paso actual de la receta.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar",
+          "casa"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 0,
+        "requestBody": {
+          "$ref": "#/components/requestBodies/PeticionHerramienta"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ResultadoHerramienta"
+          },
+          "404": {
+            "$ref": "#/components/responses/HerramientaNoDisponible"
+          }
+        }
+      }
+    },
+    "/herramientas/alimentacion.que_cocino_hoy": {
+      "servers": [
+        {
+          "url": "http://127.0.0.1:{puerto}",
+          "description": "Propuesta para la Fase 6: GRAVITY en la laptop atiende las herramientas para el puente de casa. En la Fase 0 se ejecutan dentro de la app, sin red.",
+          "variables": {
+            "puerto": {
+              "default": "8787"
+            }
+          }
+        }
+      ],
+      "post": {
+        "tags": [
+          "Herramientas de GRAVITY"
+        ],
+        "operationId": "herramientaQueCocinoHoy",
+        "summary": "alimentacion.que_cocino_hoy · Qué cocino hoy",
+        "description": "Dice los platillos del menú de hoy por tiempo de comida (pareja y dueño).",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar",
+          "casa"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 0,
+        "requestBody": {
+          "$ref": "#/components/requestBodies/PeticionHerramienta"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ResultadoHerramienta"
+          },
+          "404": {
+            "$ref": "#/components/responses/HerramientaNoDisponible"
+          }
+        }
+      }
+    },
+    "/herramientas/alimentacion.leer_lista_compras": {
+      "servers": [
+        {
+          "url": "http://127.0.0.1:{puerto}",
+          "description": "Propuesta para la Fase 6: GRAVITY en la laptop atiende las herramientas para el puente de casa. En la Fase 0 se ejecutan dentro de la app, sin red.",
+          "variables": {
+            "puerto": {
+              "default": "8787"
+            }
+          }
+        }
+      ],
+      "post": {
+        "tags": [
+          "Herramientas de GRAVITY"
+        ],
+        "operationId": "herramientaLeerListaCompras",
+        "summary": "alimentacion.leer_lista_compras · Leer la lista de compras",
+        "description": "Dice lo que falta comprar, sin cantidades ni precios.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar",
+          "casa"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
         "x-fase": 0,
         "requestBody": {
           "$ref": "#/components/requestBodies/PeticionHerramienta"
@@ -19084,4 +19289,4 @@ window.ESPECIFICACION_GRAVITY = {
     }
   }
 };
-window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:9939dbd9';
+window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:8495c39b';

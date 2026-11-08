@@ -5,7 +5,7 @@ import '../../../nucleo/contratos/roles.dart';
 import 'operacion_api.dart';
 
 /// Huella de api/openapi.yaml con la que se generó este archivo.
-const huellaEspecificacion = 'fnv1a32:9939dbd9';
+const huellaEspecificacion = 'fnv1a32:8495c39b';
 
 /// Versión de la especificación (info.version).
 const versionEspecificacion = '0.6.0';
@@ -246,6 +246,64 @@ const gruposOperaciones = <GrupoOperaciones>[
         roles: {Rol.dueno, Rol.coadministrador, Rol.familiar},
         escribe: false,
         soloLocal: false,
+        fase: 0,
+      ),
+      OperacionApi(
+        id: 'herramientaRecetaSiguientePaso',
+        metodo: MetodoHttp.post,
+        ruta: '/herramientas/alimentacion.receta_siguiente_paso',
+        resumen:
+            'alimentacion.receta_siguiente_paso · Siguiente paso de la receta',
+        descripcion: 'Lee el siguiente paso de la receta que se cocina ahora. Sin cifras ni precios.',
+        roles: {Rol.dueno, Rol.coadministrador, Rol.familiar, Rol.casa},
+        escribe: false,
+        soloLocal: true,
+        fase: 0,
+      ),
+      OperacionApi(
+        id: 'herramientaRecetaPasoAnterior',
+        metodo: MetodoHttp.post,
+        ruta: '/herramientas/alimentacion.receta_paso_anterior',
+        resumen:
+            'alimentacion.receta_paso_anterior · Paso anterior de la receta',
+        descripcion: 'Lee el paso anterior de la receta que se cocina ahora.',
+        roles: {Rol.dueno, Rol.coadministrador, Rol.familiar, Rol.casa},
+        escribe: false,
+        soloLocal: true,
+        fase: 0,
+      ),
+      OperacionApi(
+        id: 'herramientaRecetaRepetirPaso',
+        metodo: MetodoHttp.post,
+        ruta: '/herramientas/alimentacion.receta_repetir_paso',
+        resumen:
+            'alimentacion.receta_repetir_paso · Repetir el paso de la receta',
+        descripcion: 'Repite el paso actual de la receta.',
+        roles: {Rol.dueno, Rol.coadministrador, Rol.familiar, Rol.casa},
+        escribe: false,
+        soloLocal: true,
+        fase: 0,
+      ),
+      OperacionApi(
+        id: 'herramientaQueCocinoHoy',
+        metodo: MetodoHttp.post,
+        ruta: '/herramientas/alimentacion.que_cocino_hoy',
+        resumen: 'alimentacion.que_cocino_hoy · Qué cocino hoy',
+        descripcion: 'Dice los platillos del menú de hoy por tiempo de comida (pareja y dueño).',
+        roles: {Rol.dueno, Rol.coadministrador, Rol.familiar, Rol.casa},
+        escribe: false,
+        soloLocal: true,
+        fase: 0,
+      ),
+      OperacionApi(
+        id: 'herramientaLeerListaCompras',
+        metodo: MetodoHttp.post,
+        ruta: '/herramientas/alimentacion.leer_lista_compras',
+        resumen: 'alimentacion.leer_lista_compras · Leer la lista de compras',
+        descripcion: 'Dice lo que falta comprar, sin cantidades ni precios.',
+        roles: {Rol.dueno, Rol.coadministrador, Rol.familiar, Rol.casa},
+        escribe: false,
+        soloLocal: true,
         fase: 0,
       ),
       OperacionApi(
