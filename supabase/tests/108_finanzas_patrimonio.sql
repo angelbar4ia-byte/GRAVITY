@@ -108,13 +108,27 @@ select pruebas.igual(pruebas.cuenta($$select public.fin_objetivo_guardar('a10800
 select pruebas.igual((select count(*)::int from public.fin_objetivos where id = 'a1080000-0000-4000-8000-0000000000a2'), 1,
   '1: y no duplica');
 
+-- v1.1: la fecha de meta es opcional.
+select public.fin_objetivo_guardar('a1080000-0000-4000-8000-0000000000a6', (select id from t_ids where clave = 'libro'),
+  pruebas.id_persona('alex@ejemplo.test'), 'Sin fecha', 500000, null, 'ea800000-0000-4000-8000-000000000001');
+select pruebas.ok((select fecha_meta is null from public.fin_objetivos where id = 'a1080000-0000-4000-8000-0000000000a6'),
+  '1: un objetivo sin fecha se guarda');
+select pruebas.igual((select estado || '/' || semanas_estimadas::text || '/' || coalesce(a_tiempo::text, 'nulo') || '/'
+     || coalesce(aporte_necesario_semanal_centavos::text, 'nulo') || '/' || coalesce(fecha_meta::text, 'nulo')
+   from public.fin_objetivo_avance('a1080000-0000-4000-8000-0000000000a6', '2026-11-08')),
+  'ok/20/nulo/nulo/nulo', '1: sin fecha el avance da semanas estimadas (20) y no marca a_tiempo ni aporte necesario');
+select pruebas.igual((select estado from public.fin_objetivo_avance('a1080000-0000-4000-8000-0000000000a6', '2026-11-08')), 'ok',
+  '1: y el estado sigue calculándose');
+select pruebas.igual((select fecha_estimada from public.fin_objetivo_avance('a1080000-0000-4000-8000-0000000000a6', '2026-11-08')),
+  '2027-03-28'::date, '1: con fecha estimada (hoy + 20 semanas)');
+
 -- ---------------------------------------------------------------- 2: inversiones, origen capturado y verificado (criterios 2 y 3)
 select public.fin_inversion_guardar('a1080000-0000-4000-8000-0000000000b1', (select id from t_ids where clave = 'libro'),
   pruebas.id_persona('alex@ejemplo.test'), 'Cetes (ejemplo)', 7654321, 1234, 'capturado', '2026-11-05');
 select public.fin_inversion_guardar('a1080000-0000-4000-8000-0000000000b2', (select id from t_ids where clave = 'libro'),
   pruebas.id_persona('alex@ejemplo.test'), 'Fondo (ejemplo)', 500000, 875, 'verificado', '2026-11-06');
 select public.fin_inversion_guardar('a1080000-0000-4000-8000-0000000000b3', (select id from t_ids where clave = 'libro'),
-  pruebas.id_persona('alex@ejemplo.test'), 'Sin origen dicho', 100, null);
+  pruebas.id_persona('alex@ejemplo.test'), 'Sin origen dicho', 100, 0);
 select pruebas.igual((select origen from public.fin_inversiones where id = 'a1080000-0000-4000-8000-0000000000b1'), 'capturado',
   '2: la inversión a mano queda capturada');
 select pruebas.igual((select origen from public.fin_inversiones where id = 'a1080000-0000-4000-8000-0000000000b2'), 'verificado',
@@ -124,8 +138,14 @@ select pruebas.igual((select origen from public.fin_inversiones where id = 'a108
 select pruebas.igual((select count(distinct origen)::int from public.fin_inversiones), 2, '2: los dos orígenes se distinguen');
 select pruebas.igual((select rendimiento_pb from public.fin_inversiones where id = 'a1080000-0000-4000-8000-0000000000b1'), 1234,
   '3: el rendimiento queda tal como se capturó (puntos base, sin cálculo)');
-select pruebas.ok((select rendimiento_pb is null from public.fin_inversiones where id = 'a1080000-0000-4000-8000-0000000000b3'),
-  '3: sin rendimiento capturado queda en nulo (no se inventa)');
+select pruebas.igual((select rendimiento_pb from public.fin_inversiones where id = 'a1080000-0000-4000-8000-0000000000b3'), 0,
+  '3: con rendimiento cero se acepta y queda en 0');
+select pruebas.falla($$select public.fin_inversion_guardar('a1080000-0000-4000-8000-0000000000b5', (select id from t_ids where clave = 'libro'),
+  pruebas.id_persona('alex@ejemplo.test'), 'Sin rendimiento', 100, null)$$, '3: una inversión sin rendimiento se rechaza (v1.1)', '22023');
+select pruebas.falla($$select public.fin_inversion_guardar('a1080000-0000-4000-8000-0000000000b3', (select id from t_ids where clave = 'libro'),
+  pruebas.id_persona('alex@ejemplo.test'), 'Sin origen dicho', 100, null)$$, '3: ni al actualizar una existente', '22023');
+select pruebas.igual((select count(*)::int from public.fin_inversiones where id = 'a1080000-0000-4000-8000-0000000000b5'), 0,
+  '3: y no queda guardada');
 select pruebas.falla($$select public.fin_inversion_guardar('a1080000-0000-4000-8000-0000000000b4', (select id from t_ids where clave = 'libro'),
   pruebas.id_persona('alex@ejemplo.test'), 'X', 1, 1, 'automatico', '2026-11-06')$$, '2: un origen fuera de catálogo se rechaza', '23514');
 select pruebas.falla($$select public.fin_inversion_guardar('a1080000-0000-4000-8000-0000000000b4', (select id from t_ids where clave = 'libro'),
@@ -260,7 +280,7 @@ select pruebas.igual(pruebas.cuenta($$select * from public.fin_bienes where libr
   '4: con consulta vigente lee los bienes de Alex');
 select pruebas.igual(pruebas.cuenta($$select * from public.fin_inversiones where libro_id = (select id from t_ids where clave = 'libro')$$), 3,
   '4: sus inversiones');
-select pruebas.igual(pruebas.cuenta($$select * from public.fin_objetivos where libro_id = (select id from t_ids where clave = 'libro')$$), 3,
+select pruebas.igual(pruebas.cuenta($$select * from public.fin_objetivos where libro_id = (select id from t_ids where clave = 'libro')$$), 4,
   '4: sus objetivos');
 select pruebas.igual((select estado from public.fin_objetivo_avance('a1080000-0000-4000-8000-0000000000a2')), 'sin_apartado',
   '4: y el avance');

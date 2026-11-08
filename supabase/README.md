@@ -292,8 +292,8 @@ Especificación: `docs/specs/fase-8-patrimonio.md` v1.0. Pruebas: `108_finanzas_
 
 | Objeto | Qué es |
 |---|---|
-| `fin_objetivos` | Meta de ahorro: `titular_id`, `nombre` (1 a 60), `monto_meta_centavos` > 0, `fecha_meta`, `bolsa_id` (el **apartado de ahorro** `fin_bolsas_ahorro` del mismo libro; se lee, no se copia; llave compuesta con `libro_id`), `activo`. Un apartado alimenta a un solo objetivo activo (23505) |
-| `fin_inversiones` | `saldo_centavos` >= 0, `rendimiento_pb` (puntos base, capturado; nulo = sin dato; este bloque no lo calcula), `origen` (`capturado` por omisión o `verificado`, leído del PDF; el verificado exige `fecha_captura`), `fecha_captura`, `activa` |
+| `fin_objetivos` | Meta de ahorro: `titular_id`, `nombre` (1 a 60), `monto_meta_centavos` > 0, `fecha_meta` (opcional desde v1.1), `bolsa_id` (el **apartado de ahorro** `fin_bolsas_ahorro` del mismo libro; se lee, no se copia; llave compuesta con `libro_id`), `activo`. Un apartado alimenta a un solo objetivo activo (23505) |
+| `fin_inversiones` | `saldo_centavos` >= 0, `rendimiento_pb` (puntos base, capturado; obligatorio, 0 si no rinde; este bloque no lo calcula), `origen` (`capturado` por omisión o `verificado`, leído del PDF; el verificado exige `fecha_captura`), `fecha_captura`, `activa` |
 | `fin_bienes` | `tipo` (`auto`/`casa`/`otro`), `valor_centavos`, `fecha_captura`, `activo` |
 | `fin_previsiones` | `tipo` (`seguro`/`pension`/`otro`), `valor_centavos`, `fecha_captura`, `activa` |
 | `fin_v_inversiones_vigentes`, `fin_v_bienes_vigentes`, `fin_v_previsiones_vigentes` | `security_invoker`. Vigente = activo **y con fecha de captura**: sin fecha no se muestra como vigente. La fecha de captura puede quedar nula y no puede ser futura (22023) |
@@ -307,6 +307,13 @@ RLS: lectura con `fin_puede(libro, 'leer')` (la titular; la pareja, lo de la cas
 | `fin_bien_guardar(p_id, p_libro, p_titular, p_nombre, p_tipo, p_valor_centavos, p_fecha_captura default null, p_activo default true) -> uuid` | Igual regla. Tipo fuera de catálogo: 23514 |
 | `fin_prevision_guardar(p_id, p_libro, p_titular, p_nombre, p_tipo, p_valor_centavos, p_fecha_captura default null, p_activa default true) -> uuid` | Igual regla |
 | `fin_objetivo_avance(p_objetivo, p_hoy default current_date) -> table(objetivo_id, estado, monto_meta_centavos, ahorrado_centavos, falta_centavos, aporte_semanal_centavos, ritmo_origen, semanas_estimadas, fecha_estimada, fecha_meta, a_tiempo, aporte_necesario_semanal_centavos)` | Lo lee quien puede leer el libro (`fin_puede leer`, la maestra con consulta vigente); a otros, 42501. `ahorrado` = saldo actual del apartado (`fin_v_bolsa_saldo`). Ritmo = `aporte_fijo_centavos` del apartado (`ritmo_origen = aporte_fijo`) o el promedio de sus últimas 8 aportaciones confirmadas (`promedio`). Semanas = falta / ritmo hacia arriba. Estados: `ok`, `cumplido` (falta 0, 0 semanas), `sin_apartado` y `falta_dato` (sin ritmo conocido; sin semanas, no estima). `aporte_necesario_semanal` = lo que haría falta cada semana hasta la fecha meta |
+
+### Patrimonio v1.1 (`20261137000000_finanzas_patrimonio_v11.sql`)
+
+Especificación: `docs/specs/fase-8-patrimonio.md` v1.1. Las firmas de las RPC no cambian; solo las validaciones. Pruebas: `108_finanzas_patrimonio.sql`.
+
+- `fin_objetivos.fecha_meta` es **opcional** (nula permitida). Con fecha, `fin_objetivo_avance` calcula `a_tiempo` y `aporte_necesario_semanal_centavos`; sin fecha devuelve las `semanas_estimadas` (y `fecha_estimada`) y deja `a_tiempo`, `aporte_necesario_semanal_centavos` y `fecha_meta` en nulo: no marca "a tiempo" ni "no alcanza".
+- `fin_inversiones.rendimiento_pb` es **obligatorio** (`not null`; 0 si no rinde). `fin_inversion_guardar` rechaza nulo con 22023 (al crear y al actualizar). La migración no inventa valores: si existe alguna inversión sin rendimiento se detiene (23502) y hay que capturarlo antes de aplicarla.
 
 ## Fase 2: deudas, ahorro y avisos (D20, propuesta)
 

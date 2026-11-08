@@ -226,7 +226,11 @@ class _FilaObjetivo extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [const Text('Meta '), Monto(objetivo.metaCentavos)],
             ),
-            Text('para ${textoFecha(objetivo.fechaMeta)}'),
+            Text(
+              objetivo.fechaMeta == null
+                  ? 'sin fecha límite'
+                  : 'para ${textoFecha(objetivo.fechaMeta!)}',
+            ),
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -270,8 +274,7 @@ class _DialogoObjetivoState extends ConsumerState<_DialogoObjetivo> {
         ? ''
         : textoDeCentavos(widget.objetivo!.metaCentavos),
   );
-  late Fecha _fecha =
-      widget.objetivo?.fechaMeta ?? widget.contexto.hoy.sumarDias(365);
+  late Fecha? _fecha = widget.objetivo?.fechaMeta;
   late String? _bolsa = widget.objetivo?.bolsaId;
 
   @override
@@ -293,10 +296,33 @@ class _DialogoObjetivoState extends ConsumerState<_DialogoObjetivo> {
         validator: (v) => (v ?? '').trim().isEmpty ? 'Escribe un nombre' : null,
       ),
       CampoMonto(controlador: _meta, etiqueta: 'Meta'),
-      _BotonFecha(
-        etiqueta: 'Fecha meta',
-        valor: _fecha,
-        alCambiar: (f) => setState(() => _fecha = f),
+      Row(
+        children: [
+          Expanded(
+            child: OutlinedButton(
+              key: const ValueKey('objetivo-fecha'),
+              onPressed: () async {
+                final f = await elegirFecha(
+                  context,
+                  _fecha ?? widget.contexto.hoy.sumarDias(365),
+                );
+                if (f != null) setState(() => _fecha = f);
+              },
+              child: Text(
+                _fecha == null
+                    ? 'Fecha límite (opcional): sin fecha'
+                    : 'Fecha límite: ${textoFecha(_fecha!)}',
+              ),
+            ),
+          ),
+          if (_fecha != null)
+            IconButton(
+              key: const ValueKey('objetivo-fecha-quitar'),
+              tooltip: 'Quitar la fecha',
+              onPressed: () => setState(() => _fecha = null),
+              icon: const Icon(Icons.close),
+            ),
+        ],
       ),
       DropdownButtonFormField<String?>(
         isExpanded: true,
@@ -325,6 +351,7 @@ class _DialogoObjetivoState extends ConsumerState<_DialogoObjetivo> {
               metaCentavos: centavosDeTexto(_meta.text)!,
               fechaMeta: _fecha,
               bolsaId: _bolsa,
+              titularId: c.libro?.titularId,
             ),
           );
       _guardado(ref, c.libroId);
@@ -438,6 +465,7 @@ class _Inversiones extends ConsumerWidget {
                             id: const Uuid().v4(),
                             libroId: c.libroId,
                             estado: estado,
+                            titularId: c.libro?.titularId,
                           ),
                         );
                     _guardado(ref, c.libroId);
@@ -500,14 +528,15 @@ class _DialogoInversionState extends ConsumerState<_DialogoInversion> {
         controller: _rendimiento,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
         decoration: const InputDecoration(
-          labelText: 'Rendimiento anual capturado (opcional)',
+          labelText: 'Rendimiento anual capturado (0 si no rinde)',
           suffixText: '%',
           helperText: 'Se muestra tal cual lo escribes; no se calcula.',
         ),
-        validator: (v) =>
-            (v ?? '').trim().isEmpty || puntosBaseDeTexto(v!) != null
-            ? null
-            : 'Porcentaje no válido',
+        validator: (v) => (v ?? '').trim().isEmpty
+            ? 'Escribe el rendimiento (0 si no rinde)'
+            : puntosBaseDeTexto(v!) == null
+            ? 'Porcentaje no válido'
+            : null,
       ),
       _BotonFecha(
         etiqueta: 'Fecha de captura',
@@ -526,10 +555,9 @@ class _DialogoInversionState extends ConsumerState<_DialogoInversion> {
               nombre: _nombre.text,
               institucion: _institucion.text,
               saldoCentavos: centavosDeTexto(_saldo.text)!,
-              rendimientoPuntosBase: _rendimiento.text.trim().isEmpty
-                  ? null
-                  : puntosBaseDeTexto(_rendimiento.text),
+              rendimientoPuntosBase: puntosBaseDeTexto(_rendimiento.text),
               fechaCaptura: _fecha,
+              titularId: c.libro?.titularId,
             ),
           );
       _guardado(ref, c.libroId);
@@ -717,6 +745,7 @@ class _DialogoValorState extends ConsumerState<_DialogoValor> {
             nombre: _nombre.text.trim(),
             valorCentavos: valor,
             fechaCaptura: _fecha,
+            titularId: c.libro?.titularId,
           ),
         );
       } else {
@@ -728,6 +757,7 @@ class _DialogoValorState extends ConsumerState<_DialogoValor> {
             nombre: _nombre.text.trim(),
             valorCentavos: valor,
             fechaCaptura: _fecha,
+            titularId: c.libro?.titularId,
           ),
         );
       }

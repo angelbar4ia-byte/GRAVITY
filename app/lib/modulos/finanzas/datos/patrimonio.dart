@@ -8,16 +8,21 @@
 ///   ([permisoPatrimonio]).
 /// - Lo capturado a mano es [OrigenDato.capturado]; solo lo leído del estado
 ///   en PDF es [OrigenDato.verificado] ([inversionLeidaDeEstado]).
-/// - El **rendimiento** de una inversión se muestra tal como se capturó: en
-///   este bloque no hay ningún cálculo automático.
+/// - El **rendimiento** de una inversión es obligatorio al capturarla (cero
+///   es válido) y se muestra tal como se capturó: en este bloque no hay
+///   ningún cálculo automático.
+/// - La **fecha meta** de un objetivo es opcional (v1.1): sin ella el avance
+///   da las semanas estimadas y no dice si llega "a tiempo".
 /// - Un bien o una previsión **sin fecha de captura** no es vigente.
 /// - El objetivo **lee** el apartado de ahorro, no lo copia ([avanceObjetivo]).
 /// - Nada de esto va a la IA ni a las bocinas (D3).
 ///
 /// Dinero en centavos; rendimientos en puntos base. Las tablas del servidor
 /// son `fin_objetivos`, `fin_inversiones`, `fin_bienes` y `fin_previsiones`
-/// (RLS por persona); se escriben con `fin_guardar_*` y el avance con
-/// `fin_objetivo_avance` ([RepositorioPatrimonioSupabase]).
+/// (RLS por persona); se escriben con `fin_objetivo_guardar`,
+/// `fin_inversion_guardar`, `fin_bien_guardar` y `fin_prevision_guardar`, y el
+/// avance se lee con `fin_objetivo_avance` ([RepositorioPatrimonioSupabase],
+/// migración 20261136).
 library;
 
 import 'package:finanzas_dominio/finanzas_dominio.dart'
@@ -75,18 +80,24 @@ class Objetivo {
     required this.libroId,
     required this.nombre,
     required this.metaCentavos,
-    required this.fechaMeta,
+    this.fechaMeta,
     this.bolsaId,
+    this.titularId,
   });
 
   final String id;
   final String libroId;
   final String nombre;
   final int metaCentavos;
-  final Fecha fechaMeta;
+
+  /// Fecha límite elegida; `null` si la persona no puso ninguna.
+  final Fecha? fechaMeta;
 
   /// Bolsa del apartado de ahorro de la que lee el avance (no se copia).
   final String? bolsaId;
+
+  /// Titular del libro (la persona dueña del dato); el servidor la exige.
+  final String? titularId;
 }
 
 /// Cuánto falta y en cuántas semanas se alcanza con el apartado.
@@ -95,7 +106,7 @@ class AvanceObjetivo {
     required this.ahorrado,
     required this.falta,
     required this.apartadoSemanal,
-    required this.semanasHastaFecha,
+    this.semanasHastaFecha,
     this.semanasParaAlcanzar,
   });
 
@@ -109,17 +120,19 @@ class AvanceObjetivo {
   /// `0` si ya se alcanzó; `null` si no hay apartado (no se puede estimar).
   final int? semanasParaAlcanzar;
 
-  /// Semanas completas que quedan hasta la fecha meta (`0` si ya pasó).
-  final int semanasHastaFecha;
+  /// Semanas completas que quedan hasta la fecha meta (`0` si ya pasó);
+  /// `null` si el objetivo no tiene fecha meta.
+  final int? semanasHastaFecha;
 
   bool get alcanzado => falta == 0;
 
-  /// `true` si con el apartado actual llega a la fecha; `null` sin estimación.
+  /// `true` si con el apartado actual llega a la fecha; `null` sin
+  /// estimación o sin fecha meta (no hay contra qué comparar).
   bool? get llegaATiempo => alcanzado
       ? true
-      : semanasParaAlcanzar == null
+      : semanasParaAlcanzar == null || semanasHastaFecha == null
       ? null
-      : semanasParaAlcanzar! <= semanasHastaFecha;
+      : semanasParaAlcanzar! <= semanasHastaFecha!;
 }
 
 /// Avance de un objetivo de meta [metaCentavos] con lo [ahorrado] en su bolsa
@@ -129,7 +142,7 @@ AvanceObjetivo avanceObjetivo({
   required int metaCentavos,
   required int ahorrado,
   required int apartadoSemanal,
-  required Fecha fechaMeta,
+  required Fecha? fechaMeta,
   required Fecha hoy,
 }) {
   final falta = metaCentavos > ahorrado ? metaCentavos - ahorrado : 0;
@@ -139,13 +152,13 @@ AvanceObjetivo avanceObjetivo({
       : apartado == 0
       ? null
       : (falta + apartado - 1) ~/ apartado;
-  final dias = hoy.diasHasta(fechaMeta);
+  final dias = fechaMeta == null ? null : hoy.diasHasta(fechaMeta);
   return AvanceObjetivo(
     ahorrado: ahorrado,
     falta: falta,
     apartadoSemanal: apartado,
     semanasParaAlcanzar: semanas,
-    semanasHastaFecha: dias > 0 ? dias ~/ 7 : 0,
+    semanasHastaFecha: dias == null ? null : (dias > 0 ? dias ~/ 7 : 0),
   );
 }
 
@@ -161,6 +174,7 @@ class Inversion {
     this.institucion,
     this.rendimientoPuntosBase,
     this.origen = OrigenDato.capturado,
+    this.titularId,
   });
 
   final String id;
@@ -174,6 +188,7 @@ class Inversion {
   final int? rendimientoPuntosBase;
   final Fecha fechaCaptura;
   final OrigenDato origen;
+  final String? titularId;
 
   bool get esVerificada => origen == OrigenDato.verificado;
 
@@ -203,21 +218,26 @@ int? puntosBaseDeTexto(String texto) {
   return int.parse(m.group(1)!) * 100 + int.parse(decimales);
 }
 
-/// Alta de una inversión **capturada a mano**: siempre `capturado`.
+/// Alta de una inversión **capturada a mano**: siempre `capturado`. El
+/// rendimiento es obligatorio (cero es válido); un vacío no se guarda.
 Inversion inversionCapturada({
   required String id,
   required String libroId,
   required String nombre,
   required int saldoCentavos,
   required Fecha fechaCaptura,
+  required int? rendimientoPuntosBase,
   String? institucion,
-  int? rendimientoPuntosBase,
+  String? titularId,
 }) {
   final n = nombre.trim();
   if (n.isEmpty || n.length > 60) {
     throw ArgumentError('El nombre va de 1 a 60 caracteres');
   }
   if (saldoCentavos < 0) throw ArgumentError('El saldo no puede ser negativo');
+  if (rendimientoPuntosBase == null) {
+    throw ArgumentError('El rendimiento es obligatorio (puede ser 0)');
+  }
   return Inversion(
     id: id,
     libroId: libroId,
@@ -229,6 +249,7 @@ Inversion inversionCapturada({
         : institucion!.trim(),
     rendimientoPuntosBase: rendimientoPuntosBase,
     origen: OrigenDato.capturado,
+    titularId: titularId,
   );
 }
 
@@ -275,6 +296,7 @@ Inversion inversionLeidaDeEstado({
   required String id,
   required String libroId,
   required EstadoInversionLeido estado,
+  String? titularId,
 }) => Inversion(
   id: id,
   libroId: libroId,
@@ -284,6 +306,7 @@ Inversion inversionLeidaDeEstado({
   rendimientoPuntosBase: estado.rendimientoPuntosBase,
   fechaCaptura: estado.fecha,
   origen: OrigenDato.verificado,
+  titularId: titularId,
 );
 
 // ------------------------------------------------------- bienes y previsión
@@ -322,8 +345,10 @@ class Bien {
     required this.nombre,
     required this.valorCentavos,
     this.fechaCaptura,
+    this.titularId,
   });
 
+  final String? titularId;
   final String id;
   final String libroId;
   final TipoBien tipo;
@@ -344,8 +369,10 @@ class Prevision {
     required this.nombre,
     required this.valorCentavos,
     this.fechaCaptura,
+    this.titularId,
   });
 
+  final String? titularId;
   final String id;
   final String libroId;
   final TipoPrevision tipo;
@@ -422,67 +449,71 @@ class RepositorioPatrimonioEnMemoria implements RepositorioPatrimonio {
   Future<void> guardarPrevision(Prevision p) async => _previsiones[p.id] = p;
 }
 
-/// Adaptador del servidor: lee las tablas (la RLS filtra por persona) y
-/// escribe **solo con las RPC** `fin_guardar_*`. Los nombres de parámetros y
-/// columnas siguen la convención de las demás RPC (`p_…`); confirmar con la
-/// migración 20261136 de backend antes de conectarlo.
+/// Adaptador del servidor (migración 20261136): lee las tablas (la RLS filtra
+/// por persona; solo lo activo) y escribe **solo con las RPC** de guardar.
+/// Las inversiones se leen de la vista de vigentes (con fecha de captura).
+/// La fecha meta opcional y el rendimiento obligatorio (v1.1) piden la
+/// migración 20261137 del servidor; hasta entonces `fecha_meta` es `not null`.
 class RepositorioPatrimonioSupabase implements RepositorioPatrimonio {
   RepositorioPatrimonioSupabase(this.fuente);
 
   final FuenteTablas fuente;
 
   static const tablaObjetivos = 'fin_objetivos';
-  static const tablaInversiones = 'fin_inversiones';
+  static const vistaInversiones = 'fin_v_inversiones_vigentes';
   static const tablaBienes = 'fin_bienes';
   static const tablaPrevisiones = 'fin_previsiones';
-  static const rpcObjetivo = 'fin_guardar_objetivo';
-  static const rpcInversion = 'fin_guardar_inversion';
-  static const rpcBien = 'fin_guardar_bien';
-  static const rpcPrevision = 'fin_guardar_prevision';
+  static const rpcObjetivo = 'fin_objetivo_guardar';
+  static const rpcInversion = 'fin_inversion_guardar';
+  static const rpcBien = 'fin_bien_guardar';
+  static const rpcPrevision = 'fin_prevision_guardar';
   static const rpcAvance = 'fin_objetivo_avance';
 
   Fecha? _f(Object? v) => v == null ? null : Fecha.parse('$v'.substring(0, 10));
   String? _s(Fecha? f) => f?.toString();
 
+  /// Filas del [libroId] que siguen activas ([activo] es la columna de baja).
   Future<List<Map<String, dynamic>>> _filas(
     String tabla,
-    String libroId,
-  ) async => [
+    String libroId, {
+    String? activo,
+  }) async => [
     for (final f in await fuente.leer(tabla))
-      if (f['libro_id'] == libroId) f,
+      if (f['libro_id'] == libroId && (activo == null || f[activo] != false)) f,
   ];
 
   @override
   Future<List<Objetivo>> objetivos(String libroId) async => [
-    for (final f in await _filas(tablaObjetivos, libroId))
+    for (final f in await _filas(tablaObjetivos, libroId, activo: 'activo'))
       Objetivo(
         id: f['id'] as String,
         libroId: libroId,
         nombre: f['nombre'] as String,
-        metaCentavos: (f['meta_centavos'] as num).toInt(),
-        fechaMeta: _f(f['fecha_meta'])!,
+        metaCentavos: (f['monto_meta_centavos'] as num).toInt(),
+        fechaMeta: _f(f['fecha_meta']),
         bolsaId: f['bolsa_id'] as String?,
+        titularId: f['titular_id'] as String?,
       ),
   ];
 
   @override
   Future<List<Inversion>> inversiones(String libroId) async => [
-    for (final f in await _filas(tablaInversiones, libroId))
+    for (final f in await _filas(vistaInversiones, libroId))
       Inversion(
         id: f['id'] as String,
         libroId: libroId,
         nombre: f['nombre'] as String,
-        institucion: f['institucion'] as String?,
         saldoCentavos: (f['saldo_centavos'] as num).toInt(),
         rendimientoPuntosBase: (f['rendimiento_pb'] as num?)?.toInt(),
         fechaCaptura: _f(f['fecha_captura'])!,
         origen: OrigenDato.deClave(f['origen'] as String?),
+        titularId: f['titular_id'] as String?,
       ),
   ];
 
   @override
   Future<List<Bien>> bienes(String libroId) async => [
-    for (final f in await _filas(tablaBienes, libroId))
+    for (final f in await _filas(tablaBienes, libroId, activo: 'activo'))
       Bien(
         id: f['id'] as String,
         libroId: libroId,
@@ -490,12 +521,13 @@ class RepositorioPatrimonioSupabase implements RepositorioPatrimonio {
         nombre: f['nombre'] as String,
         valorCentavos: (f['valor_centavos'] as num).toInt(),
         fechaCaptura: _f(f['fecha_captura']),
+        titularId: f['titular_id'] as String?,
       ),
   ];
 
   @override
   Future<List<Prevision>> previsiones(String libroId) async => [
-    for (final f in await _filas(tablaPrevisiones, libroId))
+    for (final f in await _filas(tablaPrevisiones, libroId, activo: 'activa'))
       Prevision(
         id: f['id'] as String,
         libroId: libroId,
@@ -503,18 +535,27 @@ class RepositorioPatrimonioSupabase implements RepositorioPatrimonio {
         nombre: f['nombre'] as String,
         valorCentavos: (f['valor_centavos'] as num).toInt(),
         fechaCaptura: _f(f['fecha_captura']),
+        titularId: f['titular_id'] as String?,
       ),
   ];
+
+  String _titular(String? titularId) {
+    if (titularId == null || titularId.isEmpty) {
+      throw StateError('Falta la titular del libro para guardar.');
+    }
+    return titularId;
+  }
 
   @override
   Future<void> guardarObjetivo(Objetivo o) async {
     await fuente.rpc(rpcObjetivo, {
       'p_id': o.id,
-      'p_libro_id': o.libroId,
+      'p_libro': o.libroId,
+      'p_titular': _titular(o.titularId),
       'p_nombre': o.nombre,
-      'p_meta_centavos': o.metaCentavos,
+      'p_monto_meta_centavos': o.metaCentavos,
       'p_fecha_meta': _s(o.fechaMeta),
-      'p_bolsa_id': o.bolsaId,
+      'p_bolsa': o.bolsaId,
     });
   }
 
@@ -522,13 +563,13 @@ class RepositorioPatrimonioSupabase implements RepositorioPatrimonio {
   Future<void> guardarInversion(Inversion i) async {
     await fuente.rpc(rpcInversion, {
       'p_id': i.id,
-      'p_libro_id': i.libroId,
+      'p_libro': i.libroId,
+      'p_titular': _titular(i.titularId),
       'p_nombre': i.nombre,
-      'p_institucion': i.institucion,
       'p_saldo_centavos': i.saldoCentavos,
       'p_rendimiento_pb': i.rendimientoPuntosBase,
-      'p_fecha_captura': _s(i.fechaCaptura),
       'p_origen': i.origen.clave,
+      'p_fecha_captura': _s(i.fechaCaptura),
     });
   }
 
@@ -536,9 +577,10 @@ class RepositorioPatrimonioSupabase implements RepositorioPatrimonio {
   Future<void> guardarBien(Bien b) async {
     await fuente.rpc(rpcBien, {
       'p_id': b.id,
-      'p_libro_id': b.libroId,
-      'p_tipo': b.tipo.clave,
+      'p_libro': b.libroId,
+      'p_titular': _titular(b.titularId),
       'p_nombre': b.nombre,
+      'p_tipo': b.tipo.clave,
       'p_valor_centavos': b.valorCentavos,
       'p_fecha_captura': _s(b.fechaCaptura),
     });
@@ -548,11 +590,27 @@ class RepositorioPatrimonioSupabase implements RepositorioPatrimonio {
   Future<void> guardarPrevision(Prevision p) async {
     await fuente.rpc(rpcPrevision, {
       'p_id': p.id,
-      'p_libro_id': p.libroId,
-      'p_tipo': p.tipo.clave,
+      'p_libro': p.libroId,
+      'p_titular': _titular(p.titularId),
       'p_nombre': p.nombre,
+      'p_tipo': p.tipo.clave,
       'p_valor_centavos': p.valorCentavos,
       'p_fecha_captura': _s(p.fechaCaptura),
     });
+  }
+
+  /// Avance calculado por el servidor (`fin_objetivo_avance`): la fila cruda
+  /// (`estado`, `falta_centavos`, `semanas_estimadas`, `a_tiempo`, ...). Con
+  /// objetivo sin fecha meta, `a_tiempo` no aplica.
+  Future<Map<String, dynamic>?> avance(String objetivoId, Fecha hoy) async {
+    final r = await fuente.rpc(rpcAvance, {
+      'p_objetivo': objetivoId,
+      'p_hoy': hoy.toString(),
+    });
+    if (r is List && r.isNotEmpty) {
+      return Map<String, dynamic>.from(r.first as Map);
+    }
+    if (r is Map) return Map<String, dynamic>.from(r);
+    return null;
   }
 }

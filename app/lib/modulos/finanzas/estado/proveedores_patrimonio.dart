@@ -4,14 +4,24 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../app/sesion_efectiva.dart';
+import '../../../nucleo/sesion/proveedores_sesion.dart';
+import '../../../nucleo/sesion/servicio_sesion_supabase.dart';
+import '../datos/fuente_tablas.dart';
 import '../datos/patrimonio.dart';
 
-/// Repositorio de patrimonio. Pendiente: conectar
-/// [RepositorioPatrimonioSupabase] cuando backend entregue la migración
-/// 20261136 y se confirmen las columnas.
-final repositorioPatrimonioProvider = Provider<RepositorioPatrimonio>(
-  (ref) => RepositorioPatrimonioEnMemoria(),
-);
+/// Repositorio de patrimonio según la sesión: Supabase con la sesión real
+/// (migración 20261136); en demostración, memoria.
+final repositorioPatrimonioProvider = Provider<RepositorioPatrimonio>((ref) {
+  final sesion = ref.watch(sesionEfectivaProvider);
+  final servicio = ref.watch(servicioSesionProvider);
+  if (servicio is ServicioSesionSupabase && sesion?.hogarId != null) {
+    return RepositorioPatrimonioSupabase(
+      FuenteTablasSupabase(() => servicio.clienteActivo),
+    );
+  }
+  return RepositorioPatrimonioEnMemoria();
+});
 
 /// Lector de estados de inversión en PDF (plataforma lo reemplaza en la
 /// laptop). El archivo no se sube.

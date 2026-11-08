@@ -5,6 +5,7 @@ import 'package:finanzas_dominio/finanzas_dominio.dart'
     show Fecha, Libro, OrigenDato, permisoEnLibro;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gravity/modulos/finanzas/datos/demostracion.dart';
+import 'package:gravity/modulos/finanzas/datos/fuente_tablas.dart';
 import 'package:gravity/modulos/finanzas/datos/patrimonio.dart';
 import 'package:gravity/modulos/finanzas/pantallas/patrimonio/vista_patrimonio.dart'
     show apartadoSemanalDeBolsa;
@@ -70,6 +71,33 @@ void main() {
       expect(a.llegaATiempo, isNull);
     });
 
+    test('sin fecha meta: semanas estimadas y sin "a tiempo"', () {
+      final a = avanceObjetivo(
+        metaCentavos: 100000,
+        ahorrado: 0,
+        apartadoSemanal: 5000,
+        fechaMeta: null,
+        hoy: hoy,
+      );
+      expect(a.semanasParaAlcanzar, 20);
+      expect(a.semanasHastaFecha, isNull);
+      expect(a.llegaATiempo, isNull);
+    });
+
+    test('un objetivo sin fecha se guarda y se lee', () async {
+      final r = RepositorioPatrimonioEnMemoria();
+      await r.guardarObjetivo(
+        const Objetivo(
+          id: 'o1',
+          libroId: libro,
+          nombre: 'Viaje de ejemplo',
+          metaCentavos: 100000,
+        ),
+      );
+      final o = (await r.objetivos(libro)).single;
+      expect(o.fechaMeta, isNull);
+    });
+
     test('meta alcanzada: falta 0 y 0 semanas', () {
       final a = avanceObjetivo(
         metaCentavos: 100000,
@@ -117,6 +145,7 @@ void main() {
         nombre: 'Fondo de ejemplo',
         saldoCentavos: 500000,
         fechaCaptura: hoy,
+        rendimientoPuntosBase: 0,
       );
       final b = inversionLeidaDeEstado(
         id: 'i2',
@@ -141,6 +170,7 @@ void main() {
         nombre: 'X',
         saldoCentavos: 1,
         fechaCaptura: hoy,
+        rendimientoPuntosBase: 0,
       );
       expect(i.esVerificada, isFalse);
     });
@@ -168,16 +198,31 @@ void main() {
       expect(otra.rendimientoTexto, '5.50 %');
     });
 
-    test('sin rendimiento capturado no se inventa uno', () {
-      final i = inversionCapturada(
-        id: 'i1',
+    test('sin rendimiento no se guarda; con cero sí', () async {
+      expect(
+        () => inversionCapturada(
+          id: 'i1',
+          libroId: libro,
+          nombre: 'X',
+          saldoCentavos: 1000000,
+          fechaCaptura: hoy,
+          rendimientoPuntosBase: puntosBaseDeTexto(''),
+        ),
+        throwsArgumentError,
+      );
+      final cero = inversionCapturada(
+        id: 'i2',
         libroId: libro,
         nombre: 'X',
         saldoCentavos: 1000000,
         fechaCaptura: hoy,
+        rendimientoPuntosBase: puntosBaseDeTexto('0'),
       );
-      expect(i.rendimientoPuntosBase, isNull);
-      expect(i.rendimientoTexto, isNull);
+      expect(cero.rendimientoPuntosBase, 0);
+      expect(cero.rendimientoTexto, '0.00 %');
+      final r = RepositorioPatrimonioEnMemoria();
+      await r.guardarInversion(cero);
+      expect(await r.inversiones(libro), hasLength(1));
     });
 
     test('puntos base de texto', () {
@@ -204,6 +249,7 @@ void main() {
           nombre: 'X',
           saldoCentavos: 1,
           fechaCaptura: hoy,
+          rendimientoPuntosBase: 0,
         ),
       );
       expect(await r.inversiones(libro), hasLength(1));
@@ -250,6 +296,177 @@ void main() {
       );
       expect(sin.vigente, isFalse);
       expect(con.vigente, isTrue);
+    });
+  });
+
+  group('repositorio de Supabase (migración 20261136)', () {
+    late FuenteTablasEnMemoria fuente;
+    late RepositorioPatrimonioSupabase repo;
+    setUp(() {
+      fuente = FuenteTablasEnMemoria();
+      repo = RepositorioPatrimonioSupabase(fuente);
+    });
+    Map<String, Object?> llamada(String f) =>
+        fuente.llamadas.singleWhere((l) => l.$1 == f).$2;
+
+    test(
+      'objetivo sin fecha llama fin_objetivo_guardar con fecha nula',
+      () async {
+        await repo.guardarObjetivo(
+          const Objetivo(
+            id: 'o1',
+            libroId: libro,
+            titularId: 'p1',
+            nombre: 'Viaje',
+            metaCentavos: 500000,
+            bolsaId: 'b1',
+          ),
+        );
+        expect(llamada('fin_objetivo_guardar'), {
+          'p_id': 'o1',
+          'p_libro': libro,
+          'p_titular': 'p1',
+          'p_nombre': 'Viaje',
+          'p_monto_meta_centavos': 500000,
+          'p_fecha_meta': null,
+          'p_bolsa': 'b1',
+        });
+      },
+    );
+
+    test(
+      'inversión con rendimiento cero llama fin_inversion_guardar',
+      () async {
+        await repo.guardarInversion(
+          inversionCapturada(
+            id: 'i1',
+            libroId: libro,
+            titularId: 'p1',
+            nombre: 'Fondo',
+            saldoCentavos: 1000,
+            fechaCaptura: hoy,
+            rendimientoPuntosBase: 0,
+          ),
+        );
+        final p = llamada('fin_inversion_guardar');
+        expect(p['p_rendimiento_pb'], 0);
+        expect(p['p_origen'], 'capturado');
+        expect(p['p_saldo_centavos'], 1000);
+        expect(p['p_titular'], 'p1');
+        expect(p['p_fecha_captura'], hoy.toString());
+      },
+    );
+
+    test('bien y previsión llaman sus RPC', () async {
+      await repo.guardarBien(
+        Bien(
+          id: 'b1',
+          libroId: libro,
+          titularId: 'p1',
+          tipo: TipoBien.auto,
+          nombre: 'Auto',
+          valorCentavos: 9,
+          fechaCaptura: hoy,
+        ),
+      );
+      await repo.guardarPrevision(
+        const Prevision(
+          id: 'v1',
+          libroId: libro,
+          titularId: 'p1',
+          tipo: TipoPrevision.seguro,
+          nombre: 'Seguro',
+          valorCentavos: 8,
+        ),
+      );
+      expect(llamada('fin_bien_guardar')['p_tipo'], 'auto');
+      expect(llamada('fin_prevision_guardar')['p_fecha_captura'], isNull);
+    });
+
+    test('sin titular no llama al servidor', () async {
+      await expectLater(
+        repo.guardarObjetivo(
+          const Objetivo(
+            id: 'o1',
+            libroId: libro,
+            nombre: 'X',
+            metaCentavos: 1,
+          ),
+        ),
+        throwsStateError,
+      );
+      expect(fuente.llamadas, isEmpty);
+    });
+
+    test(
+      'lee las tablas reales, solo lo activo, y la vista de vigentes',
+      () async {
+        fuente.tabla('fin_objetivos').addAll([
+          {
+            'id': 'o1',
+            'libro_id': libro,
+            'nombre': 'A',
+            'monto_meta_centavos': 100,
+            'fecha_meta': null,
+            'bolsa_id': null,
+            'activo': true,
+          },
+          {
+            'id': 'o2',
+            'libro_id': libro,
+            'nombre': 'Baja',
+            'monto_meta_centavos': 100,
+            'fecha_meta': '2027-01-05',
+            'activo': false,
+          },
+        ]);
+        fuente.tabla('fin_v_inversiones_vigentes').add({
+          'id': 'i1',
+          'libro_id': libro,
+          'nombre': 'F',
+          'saldo_centavos': 50,
+          'rendimiento_pb': 0,
+          'origen': 'capturado',
+          'fecha_captura': '2026-11-09',
+        });
+        fuente.tabla('fin_bienes').add({
+          'id': 'b1',
+          'libro_id': libro,
+          'nombre': 'Casa',
+          'tipo': 'casa',
+          'valor_centavos': 7,
+          'fecha_captura': null,
+          'activo': true,
+        });
+        fuente.tabla('fin_previsiones').add({
+          'id': 'v1',
+          'libro_id': libro,
+          'nombre': 'Pensión',
+          'tipo': 'pension',
+          'valor_centavos': 7,
+          'fecha_captura': '2026-11-01',
+          'activa': true,
+        });
+        final os = await repo.objetivos(libro);
+        expect(os.map((o) => o.id), ['o1']);
+        expect(os.single.fechaMeta, isNull);
+        expect(os.single.metaCentavos, 100);
+        expect((await repo.inversiones(libro)).single.rendimientoPuntosBase, 0);
+        expect((await repo.bienes(libro)).single.vigente, isFalse);
+        expect((await repo.previsiones(libro)).single.vigente, isTrue);
+      },
+    );
+
+    test('el avance llama fin_objetivo_avance', () async {
+      fuente.funciones['fin_objetivo_avance'] = (_) => [
+        {'estado': 'ok', 'semanas_estimadas': 20, 'a_tiempo': null},
+      ];
+      final a = await repo.avance('o1', hoy);
+      expect(a!['semanas_estimadas'], 20);
+      expect(llamada('fin_objetivo_avance'), {
+        'p_objetivo': 'o1',
+        'p_hoy': hoy.toString(),
+      });
     });
   });
 

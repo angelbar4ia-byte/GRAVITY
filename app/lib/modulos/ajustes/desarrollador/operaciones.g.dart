@@ -5,7 +5,7 @@ import '../../../nucleo/contratos/roles.dart';
 import 'operacion_api.dart';
 
 /// Huella de api/openapi.yaml con la que se generó este archivo.
-const huellaEspecificacion = 'fnv1a32:bc7cb65f';
+const huellaEspecificacion = 'fnv1a32:71b18355';
 
 /// Versión de la especificación (info.version).
 const versionEspecificacion = '0.6.0';
@@ -1925,7 +1925,7 @@ const gruposOperaciones = <GrupoOperaciones>[
         metodo: MetodoHttp.post,
         ruta: '/rest/v1/rpc/fin_inversion_guardar',
         resumen: 'Guardar una inversión (crear o actualizar)',
-        descripcion: 'Crea o actualiza (idempotente por `p_id`) una inversión. `p_rendimiento_pb` en puntos base, tal como lo capturó la persona (nulo = sin dato; no se calcula en este bloque). `p_origen`: `capturado` (por omisión) o `verificado` (leído del PDF; exige fecha de captura, 23514). Solo quien administra el libro (la titular; el dueño como albacea de Papá; la pareja en la casa): 403 (42501) a la familiar, la cuidadora, Casa, la maestra y a quien no lleva el libro, y en un libro archivado. 400 (22023) si la titular no lleva el libro; 23505 si el id es de otro libro. La bitácora no guarda montos, valores ni rendimientos. Una baja es `p_activa` en falso.',
+        descripcion: 'Crea o actualiza (idempotente por `p_id`) una inversión. `p_rendimiento_pb` en puntos base, tal como lo capturó la persona (obligatorio, 0 si no rinde; nulo se rechaza con 22023; no se calcula en este bloque). `p_origen`: `capturado` (por omisión) o `verificado` (leído del PDF; exige fecha de captura, 23514). Solo quien administra el libro (la titular; el dueño como albacea de Papá; la pareja en la casa): 403 (42501) a la familiar, la cuidadora, Casa, la maestra y a quien no lleva el libro, y en un libro archivado. 400 (22023) si la titular no lleva el libro; 23505 si el id es de otro libro. La bitácora no guarda montos, valores ni rendimientos. Una baja es `p_activa` en falso.',
         roles: {Rol.dueno, Rol.coadministrador},
         escribe: true,
         soloLocal: true,

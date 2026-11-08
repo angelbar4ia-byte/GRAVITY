@@ -1,7 +1,7 @@
 // GENERADO por api/generar_dart.mjs a partir de api/openapi.yaml. No se edita a mano.
 // Permite abrir Swagger UI con doble clic (file://), donde el navegador no deja leer
 // ../openapi.yaml. Servida por http, la página lee openapi.yaml directamente.
-// huella: fnv1a32:bc7cb65f
+// huella: fnv1a32:71b18355
 window.ESPECIFICACION_GRAVITY = {
   "openapi": "3.1.0",
   "info": {
@@ -13304,8 +13304,7 @@ window.ESPECIFICACION_GRAVITY = {
                   "p_libro",
                   "p_titular",
                   "p_nombre",
-                  "p_monto_meta_centavos",
-                  "p_fecha_meta"
+                  "p_monto_meta_centavos"
                 ],
                 "properties": {
                   "p_id": {
@@ -13327,8 +13326,12 @@ window.ESPECIFICACION_GRAVITY = {
                     "minimum": 1
                   },
                   "p_fecha_meta": {
-                    "type": "string",
-                    "format": "date"
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date",
+                    "description": "Opcional (v1.1). Sin fecha el avance no marca \"a tiempo\"."
                   },
                   "p_bolsa": {
                     "$ref": "#/components/schemas/UuidONulo"
@@ -13380,7 +13383,7 @@ window.ESPECIFICACION_GRAVITY = {
         ],
         "operationId": "finInversionGuardar",
         "summary": "Guardar una inversión (crear o actualizar)",
-        "description": "Crea o actualiza (idempotente por `p_id`) una inversión. `p_rendimiento_pb` en puntos base, tal como lo capturó la persona (nulo = sin dato; no se calcula en este bloque). `p_origen`: `capturado` (por omisión) o `verificado` (leído del PDF; exige fecha de captura, 23514). Solo quien administra el libro (la titular; el dueño como albacea de Papá; la pareja en la casa): 403 (42501) a la familiar, la cuidadora, Casa, la maestra y a quien no lleva el libro, y en un libro archivado. 400 (22023) si la titular no lleva el libro; 23505 si el id es de otro libro. La bitácora no guarda montos, valores ni rendimientos. Una baja es `p_activa` en falso.",
+        "description": "Crea o actualiza (idempotente por `p_id`) una inversión. `p_rendimiento_pb` en puntos base, tal como lo capturó la persona (obligatorio, 0 si no rinde; nulo se rechaza con 22023; no se calcula en este bloque). `p_origen`: `capturado` (por omisión) o `verificado` (leído del PDF; exige fecha de captura, 23514). Solo quien administra el libro (la titular; el dueño como albacea de Papá; la pareja en la casa): 403 (42501) a la familiar, la cuidadora, Casa, la maestra y a quien no lleva el libro, y en un libro archivado. 400 (22023) si la titular no lleva el libro; 23505 si el id es de otro libro. La bitácora no guarda montos, valores ni rendimientos. Una baja es `p_activa` en falso.",
         "x-roles": [
           "dueno",
           "coadministrador"
@@ -13399,7 +13402,8 @@ window.ESPECIFICACION_GRAVITY = {
                   "p_libro",
                   "p_titular",
                   "p_nombre",
-                  "p_saldo_centavos"
+                  "p_saldo_centavos",
+                  "p_rendimiento_pb"
                 ],
                 "properties": {
                   "p_id": {
@@ -13421,10 +13425,8 @@ window.ESPECIFICACION_GRAVITY = {
                     "minimum": 0
                   },
                   "p_rendimiento_pb": {
-                    "type": [
-                      "integer",
-                      "null"
-                    ],
+                    "type": "integer",
+                    "description": "Obligatorio (v1.1); 0 si no rinde. Nulo se rechaza con 22023.",
                     "minimum": -10000,
                     "maximum": 100000
                   },
@@ -20108,7 +20110,10 @@ window.ESPECIFICACION_GRAVITY = {
             "minimum": 1
           },
           "fecha_meta": {
-            "type": "string",
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date"
           },
           "bolsa_id": {
@@ -20150,10 +20155,7 @@ window.ESPECIFICACION_GRAVITY = {
             "format": "int64"
           },
           "rendimiento_pb": {
-            "type": [
-              "integer",
-              "null"
-            ]
+            "type": "integer"
           },
           "origen": {
             "type": "string",
@@ -20341,18 +20343,26 @@ window.ESPECIFICACION_GRAVITY = {
             "format": "date"
           },
           "fecha_meta": {
-            "type": "string",
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date"
           },
           "a_tiempo": {
             "type": [
               "boolean",
               "null"
-            ]
+            ],
+            "description": "Nulo sin fecha_meta (v1.1)."
           },
           "aporte_necesario_semanal_centavos": {
-            "type": "integer",
-            "format": "int64"
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Nulo sin fecha_meta (v1.1)."
           }
         }
       },
@@ -22704,4 +22714,4 @@ window.ESPECIFICACION_GRAVITY = {
     }
   }
 };
-window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:bc7cb65f';
+window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:71b18355';
