@@ -87,8 +87,7 @@ class RepositorioAlimentacionSupabase implements RepositorioAlimentacion {
 
   // ------------------------------------------------------------- Utilidades
 
-  Future<List<Map<String, dynamic>>> _leer(String tabla) =>
-      fuente.leer(tabla);
+  Future<List<Map<String, dynamic>>> _leer(String tabla) => fuente.leer(tabla);
 
   Future<void> _guardar(
     String tabla,
@@ -104,8 +103,7 @@ class RepositorioAlimentacionSupabase implements RepositorioAlimentacion {
 
   /// Id de servidor (UUID) de un id de la app: lo que ya es UUID se queda; el
   /// resto (`imp-...`, `p-...`) da siempre el mismo UUID v5 por hogar.
-  String _idServidor(String id) =>
-      _esUuid(id)
+  String _idServidor(String id) => _esUuid(id)
       ? id
       : _uuid.v5(Namespace.url.value, 'gravity:alimentacion:$hogarId:$id');
 
@@ -119,10 +117,11 @@ class RepositorioAlimentacionSupabase implements RepositorioAlimentacion {
     }
   }
 
-  static Never _soloServidor(String que) => throw const ErrorAlimentacionServidor(
-    'El precio real lo registra el servidor al marcar la compra '
-    '(ali_marcar_comprada); no se escribe directo.',
-  );
+  static Never _soloServidor(String que) =>
+      throw const ErrorAlimentacionServidor(
+        'El precio real lo registra el servidor al marcar la compra '
+        '(ali_marcar_comprada); no se escribe directo.',
+      );
 
   // --------------------------------------------------------------- Platillos
 
@@ -171,7 +170,8 @@ class RepositorioAlimentacionSupabase implements RepositorioAlimentacion {
             ),
       ],
       duros: [
-        if (f['duros'] is List) for (final d in f['duros'] as List) '$d',
+        if (f['duros'] is List)
+          for (final d in f['duros'] as List) '$d',
       ],
       pasos: [for (final p in ordenados) '${p['texto']}'],
       porciones: (receta?['porciones'] as num?)?.toInt() ?? 1,
@@ -279,7 +279,9 @@ class RepositorioAlimentacionSupabase implements RepositorioAlimentacion {
     );
     await _guardar('ali_ingredientes', [
       {
-        'id': i.isEmpty ? _idServidor('ingrediente:${precio.clave}') : i.first['id'],
+        'id': i.isEmpty
+            ? _idServidor('ingrediente:${precio.clave}')
+            : i.first['id'],
         'hogar_id': hogarId,
         'nombre': i.isEmpty ? nombre : i.first['nombre'],
         'unidad': i.isEmpty ? unidad : i.first['unidad'],
@@ -381,7 +383,8 @@ class RepositorioAlimentacionSupabase implements RepositorioAlimentacion {
     }
     final votos = <String, String>{
       for (final x in await _leer('ali_votos'))
-        if ('${x['votacion_id']}' == id) '${x['persona_id']}': '${x['opcion_id']}',
+        if ('${x['votacion_id']}' == id)
+          '${x['persona_id']}': '${x['opcion_id']}',
     };
     final nombres = await _nombres();
     final cerrada = v['estado'] == 'cerrada';
@@ -394,7 +397,8 @@ class RepositorioAlimentacionSupabase implements RepositorioAlimentacion {
           PropuestaMenu(
             id: '${o['id']}',
             autorId: '${o['propuesto_por']}',
-            autorNombre: nombres['${o['propuesto_por']}'] ?? 'Alguien de la familia',
+            autorNombre:
+                nombres['${o['propuesto_por']}'] ?? 'Alguien de la familia',
             titulo: '${o['titulo']}',
             platilloIds: platillosDe['${o['id']}'] ?? const [],
           ),
@@ -464,7 +468,7 @@ class RepositorioAlimentacionSupabase implements RepositorioAlimentacion {
       final r = await fuente.rpc('ali_hay_presupuesto', {
         'p_hogar_id': hogarId,
         'p_monto_centavos': montoCentavos,
-        if (cuenta != null) 'p_cuenta': cuenta,
+        'p_cuenta': ?cuenta,
       });
       return r is bool ? r : null;
     } on ErrorFinanzas {
@@ -514,13 +518,9 @@ class RepositorioAlimentacionSupabase implements RepositorioAlimentacion {
       await fuente.borrar('ali_menu', donde: celda);
       return;
     }
-    await _guardar(
-      'ali_menu',
-      [
-        {...celda, 'platillo_id': _idServidor(platilloId)},
-      ],
-      conflicto: 'hogar_id,menu,semana,dia,tiempo',
-    );
+    await _guardar('ali_menu', [
+      {...celda, 'platillo_id': _idServidor(platilloId)},
+    ], conflicto: 'hogar_id,menu,semana,dia,tiempo');
   }
 
   // ----------------------------------------------------------------- Compras
@@ -598,7 +598,8 @@ class RepositorioAlimentacionSupabase implements RepositorioAlimentacion {
       fuente.rpc(funcion, parametros);
 
   List<Map<String, dynamic>> _filas(Object? r) => [
-    if (r is List) for (final f in r.whereType<Map>()) Map<String, dynamic>.from(f),
+    if (r is List)
+      for (final f in r.whereType<Map>()) Map<String, dynamic>.from(f),
   ];
 
   /// `ali_marcar_comprada`: marca la compra de la lista y, con [montoCentavos],
@@ -623,15 +624,13 @@ class RepositorioAlimentacionSupabase implements RepositorioAlimentacion {
     required String ingredienteId,
     required double cantidad,
     DateTime? paraEl,
-  }) async =>
-      await _rpc('ali_solicitar_compra', {
-            'p_hogar_id': hogarId,
-            'p_cuenta': cuenta,
-            'p_ingrediente': ingredienteId,
-            'p_cantidad': cantidad,
-            'p_para_el': paraEl == null ? null : _fechaSql(paraEl),
-          })
-          as String?;
+  }) async => await _rpc('ali_solicitar_compra', {
+    'p_hogar_id': hogarId,
+    'p_cuenta': cuenta,
+    'p_ingrediente': ingredienteId,
+    'p_cantidad': cantidad,
+    'p_para_el': paraEl == null ? null : _fechaSql(paraEl),
+  }) as String?;
 
   /// `ali_resolver_solicitud_pago`: el albacea aprueba (paga) o rechaza (con
   /// motivo) la compra de Papá.
@@ -688,18 +687,16 @@ class RepositorioAlimentacionSupabase implements RepositorioAlimentacion {
     List<String> platillos = const [],
     String cuenta = 'casa',
     DateTime? paraEl,
-  }) async =>
-      await _rpc('ali_proponer_menu', {
-            'p_hogar_id': hogarId,
-            'p_titulo': titulo,
-            'p_platillos': [
-              for (final p in platillos)
-                if (_esUuid(p)) p,
-            ],
-            'p_cuenta': cuenta,
-            'p_para_el': paraEl == null ? null : _fechaSql(paraEl),
-          })
-          as String?;
+  }) async => await _rpc('ali_proponer_menu', {
+    'p_hogar_id': hogarId,
+    'p_titulo': titulo,
+    'p_platillos': [
+      for (final p in platillos)
+        if (_esUuid(p)) p,
+    ],
+    'p_cuenta': cuenta,
+    'p_para_el': paraEl == null ? null : _fechaSql(paraEl),
+  }) as String?;
 
   /// `ali_proponer_alternativa`: la segunda propuesta, de otra persona.
   Future<Object?> proponerAlternativa({
@@ -731,7 +728,9 @@ class RepositorioAlimentacionSupabase implements RepositorioAlimentacion {
   /// `ali_faltantes`: de la votación cerrada, lo necesario, lo disponible
   /// (nulo si tu cuenta no ve esa despensa) y lo que falta.
   Future<List<FaltanteMenu>> faltantes(String votacionId) async => [
-    for (final f in _filas(await _rpc('ali_faltantes', {'p_votacion': votacionId})))
+    for (final f in _filas(
+      await _rpc('ali_faltantes', {'p_votacion': votacionId}),
+    ))
       FaltanteMenu(
         ingredienteId: '${f['ingrediente_id']}',
         nombre: '${f['nombre']}',
@@ -759,18 +758,14 @@ class RepositorioAlimentacionSupabase implements RepositorioAlimentacion {
   Future<String?> programarToma({
     required String suplementoId,
     required DateTime previstaEn,
-  }) async =>
-      await _rpc('ali_programar_toma', {
-            'p_suplemento': suplementoId,
-            'p_prevista': previstaEn.toUtc().toIso8601String(),
-          })
-          as String?;
+  }) async => await _rpc('ali_programar_toma', {
+    'p_suplemento': suplementoId,
+    'p_prevista': previstaEn.toUtc().toIso8601String(),
+  }) as String?;
 
   /// `ali_confirmar_toma`: dado o no dado, una sola vez.
-  Future<Object?> confirmarToma({
-    required String tomaId,
-    required bool dado,
-  }) => _rpc('ali_confirmar_toma', {'p_toma': tomaId, 'p_dado': dado});
+  Future<Object?> confirmarToma({required String tomaId, required bool dado}) =>
+      _rpc('ali_confirmar_toma', {'p_toma': tomaId, 'p_dado': dado});
 
   /// `ali_revisar_tomas` del hogar: pasa a `sin_confirmar` las tomas vencidas
   /// (gracia de 2 horas) y crea la solicitud de reposición.
