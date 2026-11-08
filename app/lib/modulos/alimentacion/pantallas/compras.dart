@@ -12,6 +12,7 @@ import '../../../nucleo/contratos/rutas.dart';
 import '../casos_uso/lista_compras.dart';
 import '../datos/modelos.dart';
 import '../estado/proveedores.dart';
+import 'historial_precios.dart';
 import 'hay_presupuesto.dart';
 import 'selector_menu.dart';
 
@@ -137,7 +138,7 @@ Future<void> _registrar(BuildContext context, WidgetRef ref, ItemCompra i) async
     }
     return;
   }
-  await ref
+  final alerta = await ref
       .read(servicioAlimentacionProvider)
       .registrarCompra(
         menu,
@@ -145,8 +146,104 @@ Future<void> _registrar(BuildContext context, WidgetRef ref, ItemCompra i) async
         i.clave,
         cantidadComprada: cant,
         totalCentavos: centavos,
+        nombre: i.nombre,
+        unidad: i.unidad,
       );
   ref.read(versionAlimentacionProvider.notifier).state++;
+  // Alerta local: solo porcentaje y precios unitarios, sin saldos.
+  if (alerta != null && context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        key: const Key('alerta_precio'),
+        duration: const Duration(seconds: 8),
+        content: Text(alerta.texto),
+      ),
+    );
+  }
+}
+
+/// Escanea un código: si está en el catálogo local y en la lista, abre la
+/// compra; si no existe, pide capturarlo a mano y lo guarda con el código.
+Future<void> _escanear(
+  BuildContext context,
+  WidgetRef ref,
+  List<ItemCompra> items,
+) async {
+  final servicio = ref.read(servicioAlimentacionProvider);
+  final codigo = await ref.read(lectorCodigoProvider).leer();
+  if (!context.mounted) return;
+  if (codigo == null || codigo.trim().isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('No se leyó ningún código.')),
+    );
+    return;
+  }
+  final ing = await servicio.buscarPorCodigoBarras(codigo);
+  if (!context.mounted) return;
+  if (ing != null) {
+    final item = items.where((i) => i.clave == ing.clave).firstOrNull;
+    if (item == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${ing.nombre} no está en la lista de esta semana.')),
+      );
+      return;
+    }
+    await _registrar(context, ref, item);
+    return;
+  }
+  final nombre = TextEditingController();
+  final unidad = TextEditingController();
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Código nuevo'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('El código $codigo no está en tu catálogo. Escribe qué es.'),
+          TextField(
+            key: const Key('captura_nombre'),
+            controller: nombre,
+            decoration: const InputDecoration(labelText: 'Nombre del producto'),
+          ),
+          TextField(
+            key: const Key('captura_unidad'),
+            controller: unidad,
+            decoration: const InputDecoration(labelText: 'Unidad (g, ml, pza...)'),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          child: const Text('Guardar con el código'),
+        ),
+      ],
+    ),
+  );
+  if (ok != true || !context.mounted) return;
+  try {
+    await servicio.guardarIngredienteConCodigo(
+      codigo: codigo,
+      nombre: nombre.text,
+      unidad: unidad.text,
+    );
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Producto guardado con su código.')),
+      );
+    }
+  } on ArgumentError {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Escribe el nombre y la unidad.')),
+      );
+    }
+  }
 }
 
 class _Contenido extends ConsumerWidget {
@@ -188,6 +285,28 @@ class _Contenido extends ConsumerWidget {
           Text(
             'Precios base de supuesto: $notaPrecioBase.',
             style: v.lectura(tamano: 14, color: v.textoTenue),
+          ),
+        if (editar)
+          Wrap(
+            spacing: 8,
+            children: [
+              OutlinedButton.icon(
+                key: const Key('escanear_codigo'),
+                icon: const Icon(Icons.qr_code_scanner),
+                label: const Text('Escanear código'),
+                onPressed: () => _escanear(context, ref, items),
+              ),
+              OutlinedButton.icon(
+                key: const Key('historial_precios'),
+                icon: const Icon(Icons.history),
+                label: const Text('Historial de precios'),
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const PantallaHistorialPrecios(),
+                  ),
+                ),
+              ),
+            ],
           ),
         const SizedBox(height: 8),
         for (final g in grupos.entries) ...[

@@ -10,6 +10,7 @@ import '../../../nucleo/contratos/roles.dart';
 import '../casos_uso/lectura_voz.dart';
 import '../casos_uso/plan_familiar.dart';
 import '../casos_uso/servicio_alimentacion.dart';
+import '../datos/lector_codigo.dart';
 import '../datos/modelos.dart';
 import '../datos/repositorio.dart';
 
@@ -44,8 +45,15 @@ final servicioAlimentacionProvider = Provider<ServicioAlimentacion>((ref) {
     ref.watch(repositorioAlimentacionProvider),
     rol: s?.rol ?? Rol.casa,
     esMaestra: s?.esMaestra ?? false,
+    ahora: ref.read(relojProvider).ahora,
   );
 });
+
+/// Lector de código de barras. Por omisión no lee nada ni pide cámara; la
+/// implementación con cámara se conecta aquí cuando se elija el paquete.
+final lectorCodigoProvider = Provider<LectorCodigo>(
+  (_) => const LectorCodigoSinCamara(),
+);
 
 final servicioPlanFamiliarProvider = Provider<ServicioPlanFamiliar>((ref) {
   final s = ref.watch(sesionEfectivaProvider);

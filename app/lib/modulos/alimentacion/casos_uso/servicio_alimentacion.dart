@@ -2,6 +2,7 @@
 library;
 
 import '../../../nucleo/contratos/roles.dart';
+import '../datos/lector_codigo.dart';
 import '../datos/modelos.dart';
 import '../datos/perfiles.dart';
 import '../datos/repositorio.dart';
@@ -56,7 +57,13 @@ class ComidaDelDia {
 }
 
 class ServicioAlimentacion {
-  ServicioAlimentacion(this._repo, {required this.rol, this.esMaestra = false});
+  ServicioAlimentacion(
+    this._repo, {
+    required this.rol,
+    this.esMaestra = false,
+    DateTime Function()? ahora,
+  }) : _ahora = ahora ?? DateTime.now;
+  final DateTime Function() _ahora;
   final RepositorioAlimentacion _repo;
   final Rol rol;
   final bool esMaestra;
@@ -153,25 +160,90 @@ class ServicioAlimentacion {
 
   /// Registra una compra real con precio: el precio pagado reemplaza al base
   /// (o al de la compra anterior) y el renglón queda comprado.
-  Future<void> registrarCompra(
+  ///
+  /// Devuelve la alerta de precio si el precio unitario quedó más de 20% arriba
+  /// de la última compra **real** del ingrediente (nunca contra el precio base).
+  Future<AlertaPrecio?> registrarCompra(
     MenuId m,
     DateTime semana,
     String clave, {
     required double cantidadComprada,
     required int totalCentavos,
+    String? nombre,
+    String? unidad,
   }) async {
     _exigirEdicion();
     if (!puedeVerCompras(rol, m, esMaestra: esMaestra)) {
       throw const PermisoDenegado();
     }
-    await _repo.guardarPrecio(
-      precioDeCompra(
-        clave: clave,
-        totalCentavos: totalCentavos,
-        cantidadComprada: cantidadComprada,
-      ),
+    // Valida primero (ArgumentError) antes de armar la compra del historial.
+    final precio = precioDeCompra(
+      clave: clave,
+      totalCentavos: totalCentavos,
+      cantidadComprada: cantidadComprada,
     );
+    final partes = clave.split('|');
+    final compra = CompraPrecio(
+      clave: clave,
+      nombre: nombre ?? partes.first,
+      unidad: unidad ?? (partes.length > 1 ? partes.last : ''),
+      totalCentavos: totalCentavos,
+      cantidad: cantidadComprada,
+      fecha: _ahora(),
+    );
+    final previas = historialDe(await _repo.historialCompras(), clave);
+    final alerta = calcularAlerta(previas.isEmpty ? null : previas.first, compra);
+    await _repo.guardarCompraPrecio(compra);
+    await _repo.guardarPrecio(precio);
     await _repo.marcar(m, lunesDe(semana), clave, true);
+    return alerta;
+  }
+
+  /// Compras reales de un ingrediente, de la más reciente a la más antigua.
+  Future<List<CompraPrecio>> historialPrecios(String clave) async =>
+      historialDe(await _repo.historialCompras(), clave);
+
+  /// Ingredientes con compras reales, con sus compras (para el historial).
+  Future<Map<String, List<CompraPrecio>>> historialPorIngrediente() async {
+    final r = <String, List<CompraPrecio>>{};
+    for (final c in await _repo.historialCompras()) {
+      (r[c.clave] ??= []).add(c);
+    }
+    for (final l in r.values) {
+      l.sort((a, b) => b.fecha.compareTo(a.fecha));
+    }
+    return r;
+  }
+
+  /// Catálogo local con código de barras: ingredientes de los platillos y los
+  /// capturados a mano.
+  Future<List<Ingrediente>> catalogoConCodigo() async => [
+    for (final p in await _repo.platillos())
+      for (final i in p.ingredientes)
+        if (i.codigoBarras != null) i,
+    ...await _repo.ingredientesConCodigo(),
+  ];
+
+  /// Busca [codigo] en el catálogo local; `null` = pedir captura a mano.
+  Future<Ingrediente?> buscarPorCodigoBarras(String codigo) async =>
+      buscarPorCodigo(await catalogoConCodigo(), codigo);
+
+  /// Captura a mano un ingrediente nuevo con su código y lo guarda en el
+  /// catálogo local.
+  Future<Ingrediente> guardarIngredienteConCodigo({
+    required String codigo,
+    required String nombre,
+    required String unidad,
+    SeccionCompra seccion = SeccionCompra.otros,
+  }) async {
+    _exigirEdicion();
+    final c = codigo.trim();
+    if (c.isEmpty || nombre.trim().isEmpty || unidad.trim().isEmpty) {
+      throw ArgumentError('Falta el código, el nombre o la unidad.');
+    }
+    final i = Ingrediente(nombre.trim(), 1, unidad.trim(), seccion, codigoBarras: c);
+    await _repo.guardarIngredienteConCodigo(i);
+    return i;
   }
 
   /// Menú del día de Papá. Lo ve quien ve el menú de Papá y la cuenta Casa

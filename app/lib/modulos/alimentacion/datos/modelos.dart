@@ -4,6 +4,7 @@ library;
 
 import 'precios.dart';
 export 'precios.dart';
+export 'historial_precios.dart';
 
 enum TiempoComida {
   desayuno('Desayuno'),
@@ -53,11 +54,22 @@ DateTime lunesDe(DateTime fecha) {
 }
 
 class Ingrediente {
-  const Ingrediente(this.nombre, this.cantidad, this.unidad, this.seccion);
+  const Ingrediente(
+    this.nombre,
+    this.cantidad,
+    this.unidad,
+    this.seccion, {
+    this.codigoBarras,
+  });
   final String nombre;
   final double cantidad;
   final String unidad;
   final SeccionCompra seccion;
+
+  /// Código de barras del producto, si se capturó (opcional).
+  final String? codigoBarras;
+
+  String get clave => claveCompra(nombre, unidad);
 }
 
 class Platillo {

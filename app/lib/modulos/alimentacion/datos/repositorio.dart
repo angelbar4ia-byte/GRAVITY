@@ -22,6 +22,14 @@ abstract interface class RepositorioAlimentacion {
   /// reemplaza al base y las siguientes lo actualizan.
   Future<void> guardarPrecio(PrecioIngrediente precio);
 
+  /// Compras reales con precio (historial), de cualquier ingrediente.
+  Future<List<CompraPrecio>> historialCompras();
+  Future<void> guardarCompraPrecio(CompraPrecio compra);
+
+  /// Ingredientes capturados a mano con su código de barras.
+  Future<List<Ingrediente>> ingredientesConCodigo();
+  Future<void> guardarIngredienteConCodigo(Ingrediente ingrediente);
+
   /// Votación del plan familiar de [dia] (sin hora), si existe.
   Future<VotacionPlan?> votacion(DateTime dia);
   Future<void> guardarVotacion(VotacionPlan votacion);
@@ -100,6 +108,8 @@ class RepositorioAlimentacionEnMemoria implements RepositorioAlimentacion {
   final Map<MenuId, List<Suplemento>> _supl = {};
   final List<Platillo> _platillos = [...platillosEjemplo];
   final Map<String, PrecioIngrediente> _precios = {};
+  final List<CompraPrecio> _historial = [];
+  final Map<String, Ingrediente> _conCodigo = {};
   final Map<String, VotacionPlan> _votaciones = {};
 
   /// Supuesto de la demostración: sí o no, sin cifras.
@@ -142,6 +152,21 @@ class RepositorioAlimentacionEnMemoria implements RepositorioAlimentacion {
   @override
   Future<void> guardarPrecio(PrecioIngrediente precio) async =>
       _precios[precio.clave] = precio;
+
+  @override
+  Future<List<CompraPrecio>> historialCompras() async => [..._historial];
+
+  @override
+  Future<void> guardarCompraPrecio(CompraPrecio compra) async =>
+      _historial.add(compra);
+
+  @override
+  Future<List<Ingrediente>> ingredientesConCodigo() async =>
+      [..._conCodigo.values];
+
+  @override
+  Future<void> guardarIngredienteConCodigo(Ingrediente ingrediente) async =>
+      _conCodigo[ingrediente.clave] = ingrediente;
 
   String _kd(DateTime d) => '${d.year}-${d.month}-${d.day}';
 
@@ -222,6 +247,14 @@ class RepositorioAlimentacionSinServidor implements RepositorioAlimentacion {
   Future<Map<String, PrecioIngrediente>> precios() async => const {};
   @override
   Future<void> guardarPrecio(PrecioIngrediente precio) async => _no();
+  @override
+  Future<List<CompraPrecio>> historialCompras() async => const [];
+  @override
+  Future<void> guardarCompraPrecio(CompraPrecio compra) async => _no();
+  @override
+  Future<List<Ingrediente>> ingredientesConCodigo() async => const [];
+  @override
+  Future<void> guardarIngredienteConCodigo(Ingrediente ingrediente) async => _no();
   @override
   Future<VotacionPlan?> votacion(DateTime dia) async => null;
   @override
