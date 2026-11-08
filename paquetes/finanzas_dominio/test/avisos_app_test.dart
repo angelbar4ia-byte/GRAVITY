@@ -9,9 +9,16 @@ void main() {
   final semana = Semana.de(Fecha(2026, 10, 26));
 
   test('flujo negativo: un aviso por libro y semana, con clave estable', () {
-    final v = vistaSemana(hogarEjemplo(), casa, semana, hoy: Fecha(2026, 10, 26));
+    final v = vistaSemana(
+      hogarEjemplo(),
+      casa,
+      semana,
+      hoy: Fecha(2026, 10, 26),
+    );
     final avisos = avisosPorEmitir(v);
-    final flujo = avisos.where((a) => a.tipo == TipoAlerta.flujoNegativo).toList();
+    final flujo = avisos
+        .where((a) => a.tipo == TipoAlerta.flujoNegativo)
+        .toList();
     expect(flujo, hasLength(1));
     expect(flujo.single.objetoTipo, 'libro');
     expect(flujo.single.objetoId, casa);
@@ -27,7 +34,9 @@ void main() {
 
   test('abono bajo el mínimo: uno por deuda, objeto deuda', () {
     final base = hogarEjemplo(
-      movimientos: [gasto('mucho', Fecha(2026, 10, 27), 5000000, 'g-alimentacion')],
+      movimientos: [
+        gasto('mucho', Fecha(2026, 10, 27), 5000000, 'g-alimentacion'),
+      ],
     );
     // La tarjeta exige un mínimo semanal alto que el sobregasto no deja pagar.
     final d = base.copiar(
@@ -65,15 +74,22 @@ void main() {
 
   test('las claves cumplen lo que exige el servidor y los títulos son del '
       'catálogo sin dinero', () {
-    final v = vistaSemana(hogarEjemplo(), casa, semana, hoy: Fecha(2026, 10, 26));
+    final v = vistaSemana(
+      hogarEjemplo(),
+      casa,
+      semana,
+      hoy: Fecha(2026, 10, 26),
+    );
     for (final a in avisosPorEmitir(v)) {
       expect(a.clave, matches(RegExp(r'^[a-z0-9_:.\-]+$')));
       expect(a.clave.length, lessThanOrEqualTo(120));
       expect(TextoAviso.esDiscreto(a.tipo.titulo), isTrue);
       expect(a.tipo.origen, OrigenAlerta.app);
     }
-    expect(claveDeAviso(TipoAlerta.flujoNegativo, 'ABC dé', '2026-10-26'),
-        'flujo_negativo:abc-d-:2026-10-26');
+    expect(
+      claveDeAviso(TipoAlerta.flujoNegativo, 'ABC dé', '2026-10-26'),
+      'flujo_negativo:abc-d-:2026-10-26',
+    );
     expect(
       claveDeAviso(TipoAlerta.flujoNegativo, 'x' * 300, '2026-10-26').length,
       120,

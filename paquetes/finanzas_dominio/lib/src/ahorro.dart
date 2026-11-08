@@ -46,7 +46,8 @@ class GastoEsencial {
   const GastoEsencial(this.semanal, this.origen, this.semanasUsadas);
 
   /// *"según tu plan"* cuando no hay historial.
-  String? get rotulo => origen == OrigenEsencial.segunTuPlan ? 'según tu plan' : null;
+  String? get rotulo =>
+      origen == OrigenEsencial.segunTuPlan ? 'según tu plan' : null;
 }
 
 /// Gasto esencial semanal (regla 18): promedio de las **últimas 8 semanas con
@@ -65,7 +66,9 @@ GastoEsencial gastoEsencialSemanal({
   final extra = incluirMinimos ? minimosDeDeudaSemanales : 0;
   if (esencialesPorSemanaCerrada.isNotEmpty) {
     final ultimas = esencialesPorSemanaCerrada.length > 8
-        ? esencialesPorSemanaCerrada.sublist(esencialesPorSemanaCerrada.length - 8)
+        ? esencialesPorSemanaCerrada.sublist(
+            esencialesPorSemanaCerrada.length - 8,
+          )
         : esencialesPorSemanaCerrada;
     final suma = ultimas.fold(0, (a, b) => a + b);
     return GastoEsencial(
@@ -75,7 +78,11 @@ GastoEsencial gastoEsencialSemanal({
     );
   }
   if (presupuestoEsencial != null && presupuestoEsencial > 0) {
-    return GastoEsencial(presupuestoEsencial + extra, OrigenEsencial.segunTuPlan, 0);
+    return GastoEsencial(
+      presupuestoEsencial + extra,
+      OrigenEsencial.segunTuPlan,
+      0,
+    );
   }
   return const GastoEsencial(null, OrigenEsencial.sinDatos, 0);
 }
@@ -111,8 +118,7 @@ NivelFondo nivelSugeridoDelFondo({
   required int ingresosActivos,
   required bool soloIngresosInseguros,
   required bool dependientesCuidados,
-}) =>
-    ingresosActivos <= 1 || soloIngresosInseguros || dependientesCuidados
+}) => ingresosActivos <= 1 || soloIngresosInseguros || dependientesCuidados
     ? NivelFondo.seisMeses
     : NivelFondo.porDefecto;
 
@@ -154,7 +160,9 @@ List<int> cuotasDeMetaConFecha({
 int aportacionDeFondo({required int meta, required int saldo, int? semanas}) {
   final falta = meta - saldo;
   if (falta <= 0) return 0;
-  return semanas == null || semanas < 1 ? falta : dividirRedondeando(falta, semanas);
+  return semanas == null || semanas < 1
+      ? falta
+      : dividirRedondeando(falta, semanas);
 }
 
 /// Aceleración (regla 23): cuánto sube la aportación semanal al pedir la meta
@@ -226,10 +234,8 @@ int redondeoDeGasto(int gasto, {int multiplo = 1000}) {
 
 /// Suma del redondeo de todos los gastos de la semana (se calcula al armar el
 /// reparto, no al capturar el gasto).
-int redondeoDeGastos(Iterable<int> gastos, {int multiplo = 1000}) => gastos.fold(
-  0,
-  (a, g) => a + redondeoDeGasto(g, multiplo: multiplo),
-);
+int redondeoDeGastos(Iterable<int> gastos, {int multiplo = 1000}) =>
+    gastos.fold(0, (a, g) => a + redondeoDeGasto(g, multiplo: multiplo));
 
 /// Págate primero: `porcentaje` (puntos base) del ingreso que llegó. Apagado
 /// (cero) mientras haya deuda que reciba extra ([hayDeuda]).

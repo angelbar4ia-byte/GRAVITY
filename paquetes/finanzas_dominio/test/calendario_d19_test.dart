@@ -66,18 +66,23 @@ void main() {
       expect(febrero, [Fecha(2026, 2, 28), Fecha(2026, 2, 28)]);
     });
 
-    test('el año completo tiene 24 pagos, como cuenta el equivalente semanal',
-        () {
-      final anio = treintaYUltimo.fechasNominales(
-        Fecha(2026, 1, 1),
-        Fecha(2026, 12, 31),
-      );
-      expect(anio, hasLength(24));
-      expect(treintaYUltimo.vecesAlAnio, 24);
-      expect(anio.where((f) => f.mes == 2), hasLength(2));
-      expect(anio.where((f) => f.mes == 1), hasLength(2),
-          reason: 'enero: el 30 y el 31');
-    });
+    test(
+      'el año completo tiene 24 pagos, como cuenta el equivalente semanal',
+      () {
+        final anio = treintaYUltimo.fechasNominales(
+          Fecha(2026, 1, 1),
+          Fecha(2026, 12, 31),
+        );
+        expect(anio, hasLength(24));
+        expect(treintaYUltimo.vecesAlAnio, 24);
+        expect(anio.where((f) => f.mes == 2), hasLength(2));
+        expect(
+          anio.where((f) => f.mes == 1),
+          hasLength(2),
+          reason: 'enero: el 30 y el 31',
+        );
+      },
+    );
 
     test('fechasDePago los deja pasar los dos y respeta el orden', () {
       final pagos = treintaYUltimo.fechasDePago(
@@ -132,17 +137,13 @@ void main() {
 
     test('un solo día, o dos que no coinciden, no cambian', () {
       expect(
-        const CalendarioConfig.mensual([1, 11]).calendario.fechasNominales(
-          Fecha(2026, 2, 1),
-          Fecha(2026, 2, 28),
-        ),
+        const CalendarioConfig.mensual([1, 11]).calendario
+            .fechasNominales(Fecha(2026, 2, 1), Fecha(2026, 2, 28)),
         [Fecha(2026, 2, 1), Fecha(2026, 2, 11)],
       );
       expect(
-        CalendarioPago.mensual(const DiaDelMes(31)).fechasNominales(
-          Fecha(2026, 2, 1),
-          Fecha(2026, 2, 28),
-        ),
+        CalendarioPago.mensual(const DiaDelMes(31))
+            .fechasNominales(Fecha(2026, 2, 1), Fecha(2026, 2, 28)),
         [Fecha(2026, 2, 28)],
       );
     });
@@ -301,10 +302,9 @@ void main() {
         Fecha(2026, 11, 2),
       );
       // La regla elegida manda (la caja).
-      const caja = CalendarioConfig.mensual(
-        [1],
-        regla: ReglaDiaInhabil.siguienteDiaHabil,
-      );
+      const caja = CalendarioConfig.mensual([
+        1,
+      ], regla: ReglaDiaInhabil.siguienteDiaHabil);
       final conCaja = Deuda(
         id: 'caja',
         libroId: casa,
@@ -320,8 +320,10 @@ void main() {
         conCaja.pagosEntre(desde, hasta, festivos).single.ajustada,
         Fecha(2026, 11, 2),
       );
-      expect(delUno.conRegla(ReglaDiaInhabil.diaHabilAnterior).regla,
-          ReglaDiaInhabil.diaHabilAnterior);
+      expect(
+        delUno.conRegla(ReglaDiaInhabil.diaHabilAnterior).regla,
+        ReglaDiaInhabil.diaHabilAnterior,
+      );
     });
 
     test('la frecuencia debe coincidir con el calendario', () {

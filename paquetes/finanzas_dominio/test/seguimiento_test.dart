@@ -362,11 +362,11 @@ void main() {
       final b = foto();
       expect(a.partidas.map((p) => p.id), b.partidas.map((p) => p.id));
       expect(a.abonos.map((x) => x.id), b.abonos.map((x) => x.id));
+      expect(a.partidas.first.id, startsWith('id:partida:sem-estable:'));
       expect(
-        a.partidas.first.id,
-        startsWith('id:partida:sem-estable:'),
+        a.abonos.map((x) => x.id),
+        contains('id:abono:sem-estable:deuda-tarjeta'),
       );
-      expect(a.abonos.map((x) => x.id), contains('id:abono:sem-estable:deuda-tarjeta'));
       expect(a.partidas.map((p) => p.id).toSet(), hasLength(a.partidas.length));
       expect(
         () => fotoDelPlan(

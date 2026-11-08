@@ -39,7 +39,13 @@ enum EstrategiaPago {
   }
 }
 
-enum EstadoEstrategia { calculada, faltaDato }
+enum EstadoEstrategia {
+  calculada,
+  faltaDato,
+
+  /// El presupuesto pedido es menor que la suma de los pagos mínimos.
+  noAlcanza,
+}
 
 /// Una deuda para simular. `null` en un campo = el dato no se tiene.
 class DeudaSimulable {
@@ -111,6 +117,9 @@ class ResultadoEstrategia {
         faltantes: faltantes,
       );
 
+  const ResultadoEstrategia.noAlcanza(EstrategiaPago estrategia)
+    : this._(estrategia: estrategia, estado: EstadoEstrategia.noAlcanza);
+
   final EstrategiaPago estrategia;
   final EstadoEstrategia estado;
 
@@ -167,11 +176,38 @@ const int horizonteMesesDeuda = 600;
 int _interesMensual(int saldo, int tasaPb) =>
     dividirRedondeando(saldo * tasaPb, puntosBaseEnCien * 12);
 
-/// Orden de prioridad de [estrategia] sobre [deudas] (desempate estable).
+/// Duración de un ciclo de pago para proyectar vencimientos futuros (días).
+const int diasCicloPago = 30;
+
+/// Días (desde hoy) de la **primera fecha límite que cae en el mes [mes]** o
+/// después de su inicio, proyectando ciclos futuros de [diasCicloPago]. Una
+/// deuda ya vencida (negativo) conserva su fecha en el mes 1: es la primera.
+int diasProyectadosDeVencimiento(int dias, int mes) {
+  final inicio = diasCicloPago * (mes - 1);
+  if (mes <= 1 || dias >= inicio) return dias;
+  final ciclos = (inicio - dias + diasCicloPago - 1) ~/ diasCicloPago;
+  return dias + ciclos * diasCicloPago;
+}
+
+/// Suma de los pagos mínimos mensuales: el presupuesto por omisión. `null` si
+/// a alguna deuda con saldo le falta el mínimo (no se adivina).
+int? sumaDeMinimos(List<DeudaSimulable> deudas) {
+  var t = 0;
+  for (final d in deudas) {
+    if (d.saldo != null && d.saldo! <= 0) continue;
+    if (d.minimoMensual == null) return null;
+    t += d.minimoMensual!;
+  }
+  return t;
+}
+
+/// Orden de prioridad de [estrategia] sobre [deudas] (desempate estable). En
+/// la estrategia por vencimiento se proyectan los ciclos del [mes].
 List<DeudaSimulable> _ordenar(
   EstrategiaPago estrategia,
-  List<DeudaSimulable> deudas,
-) {
+  List<DeudaSimulable> deudas, [
+  int mes = 1,
+]) {
   int porId(DeudaSimulable a, DeudaSimulable b) => a.id.compareTo(b.id);
   final copia = [...deudas];
   copia.sort((a, b) {
@@ -180,9 +216,10 @@ List<DeudaSimulable> _ordenar(
       EstrategiaPago.avalancha => b.tasaAnualPuntosBase!.compareTo(
         a.tasaAnualPuntosBase!,
       ),
-      EstrategiaPago.porVencimiento => a.diasParaVencer!.compareTo(
-        b.diasParaVencer!,
-      ),
+      EstrategiaPago.porVencimiento => diasProyectadosDeVencimiento(
+        a.diasParaVencer!,
+        mes,
+      ).compareTo(diasProyectadosDeVencimiento(b.diasParaVencer!, mes)),
     };
     if (c != 0) return c;
     // Desempates: mayor tasa, menor saldo, id.
@@ -195,12 +232,18 @@ List<DeudaSimulable> _ordenar(
 }
 
 /// Simula [estrategia] con un presupuesto mensual de **la suma de los mínimos
-/// más [extraMensual]**. Las deudas con saldo cero se ignoran.
+/// más [extraMensual]**, o con [presupuestoMensual] si se pide (nulo = por
+/// omisión). Un [presupuestoMensual] menor que la suma de mínimos da
+/// [EstadoEstrategia.noAlcanza]. Las deudas con saldo cero se ignoran.
 ResultadoEstrategia simularEstrategia(
   EstrategiaPago estrategia,
   List<DeudaSimulable> deudas, {
   int extraMensual = 0,
+  int? presupuestoMensual,
 }) {
+  if (presupuestoMensual != null && presupuestoMensual < 0) {
+    throw ArgumentError('El presupuesto mensual no puede ser negativo');
+  }
   if (extraMensual < 0) {
     throw ArgumentError('El extra mensual no puede ser negativo');
   }
@@ -215,11 +258,14 @@ ResultadoEstrategia simularEstrategia(
     for (final d in deudas)
       if (d.saldo! > 0) d,
   ];
+  final minimos = activas.fold<int>(0, (t, d) => t + d.minimoMensual!);
+  if (presupuestoMensual != null && presupuestoMensual < minimos) {
+    return ResultadoEstrategia.noAlcanza(estrategia);
+  }
   final orden = _ordenar(estrategia, activas);
   final saldos = {for (final d in activas) d.id: d.saldo!};
   final liquidadaEn = <String, int>{};
-  final presupuesto =
-      activas.fold<int>(0, (t, d) => t + d.minimoMensual!) + extraMensual;
+  final presupuesto = presupuestoMensual ?? minimos + extraMensual;
   var intereses = 0;
   var mes = 0;
   while (saldos.values.any((s) => s > 0) && mes < horizonteMesesDeuda) {
@@ -242,7 +288,10 @@ ResultadoEstrategia simularEstrategia(
       disponible -= p;
     }
     // 3. Lo que sobra, a la deuda que toca.
-    for (final d in orden) {
+    final prioridad = estrategia == EstrategiaPago.porVencimiento
+        ? _ordenar(estrategia, activas, mes)
+        : orden;
+    for (final d in prioridad) {
       if (disponible <= 0) break;
       final s = saldos[d.id]!;
       if (s <= 0) continue;
@@ -288,9 +337,15 @@ ResultadoEstrategia simularEstrategia(
 List<ResultadoEstrategia> simularTodas(
   List<DeudaSimulable> deudas, {
   int extraMensual = 0,
+  int? presupuestoMensual,
 }) => [
   for (final e in EstrategiaPago.values)
-    simularEstrategia(e, deudas, extraMensual: extraMensual),
+    simularEstrategia(
+      e,
+      deudas,
+      extraMensual: extraMensual,
+      presupuestoMensual: presupuestoMensual,
+    ),
 ];
 
 /// Intereses que se pagan con **solo el pago mínimo** de cada deuda.

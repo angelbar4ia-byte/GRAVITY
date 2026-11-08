@@ -4,15 +4,18 @@ import 'package:finanzas_dominio/finanzas_dominio.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test('criterio 31: ningun texto tiene digitos, "\$" ni mas de 40 caracteres', () {
-    for (final t in TextoAviso.todos()) {
-      expect(TextoAviso.esDiscreto(t), isTrue, reason: t);
-    }
-    expect(TextoAviso.cuerpo, isEmpty);
-    expect(TextoAviso.esDiscreto('Pagas \$500'), isFalse);
-    expect(TextoAviso.esDiscreto('Pago 3'), isFalse);
-    expect(TextoAviso.esDiscreto('x' * 41), isFalse);
-  });
+  test(
+    'criterio 31: ningun texto tiene digitos, "\$" ni mas de 40 caracteres',
+    () {
+      for (final t in TextoAviso.todos()) {
+        expect(TextoAviso.esDiscreto(t), isTrue, reason: t);
+      }
+      expect(TextoAviso.cuerpo, isEmpty);
+      expect(TextoAviso.esDiscreto('Pagas \$500'), isFalse);
+      expect(TextoAviso.esDiscreto('Pago 3'), isFalse);
+      expect(TextoAviso.esDiscreto('x' * 41), isFalse);
+    },
+  );
 
   test('clave desconocida cae al texto generico', () {
     expect(TextoAviso.paraClave('inventada'), TextoAviso.generico);

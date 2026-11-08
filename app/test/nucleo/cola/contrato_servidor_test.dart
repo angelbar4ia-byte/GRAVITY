@@ -112,6 +112,11 @@ const _soloLectura = {
   'fin_transferencias',
   'fin_casa_config',
   'fin_casa_aportes',
+  // Migración 20261134 (deudas e intereses): «Sin grant de escritura: solo las
+  // RPC». Tarjetas y beneficios se crean y cambian por RPC del servidor, no
+  // suben por la cola.
+  'fin_tarjetas',
+  'fin_tarjeta_beneficios',
 };
 
 void main() {

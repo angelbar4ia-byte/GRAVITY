@@ -76,13 +76,11 @@ class PlanAhorroDeCierre {
 
   int get total => aportes.fold(0, (t, a) => t + a.monto);
 
-  int aportadoA(String bolsaId) => aportes
-      .where((a) => a.bolsaId == bolsaId)
-      .fold(0, (t, a) => t + a.monto);
+  int aportadoA(String bolsaId) =>
+      aportes.where((a) => a.bolsaId == bolsaId).fold(0, (t, a) => t + a.monto);
 
-  int deOrigen(OrigenAporte origen) => aportes
-      .where((a) => a.origen == origen)
-      .fold(0, (t, a) => t + a.monto);
+  int deOrigen(OrigenAporte origen) =>
+      aportes.where((a) => a.origen == origen).fold(0, (t, a) => t + a.monto);
 }
 
 /// Porcentaje de los ingresos extra que se aparta por omisión (D25): 20 %.
@@ -118,22 +116,23 @@ PlanAhorroDeCierre planearAhorroDeCierre({
   var disponible = hayDeudaConExtra
       ? aplicarPorcentaje(remanente, ahorroMinimoConDeudaPuntosBase)
       : remanente;
-  final ordenadas = [
-    for (final b in bolsas)
-      if (b.activa &&
-          (!hayDeudaConExtra || b.tipo == TipoBolsaAhorro.fondoEmergencia))
-        b,
-  ]..sort((a, b) {
-    final ia = orden.indexOf(a.id);
-    final ib = orden.indexOf(b.id);
-    if (ia >= 0 || ib >= 0) {
-      if (ia < 0) return 1;
-      if (ib < 0) return -1;
-      return ia.compareTo(ib);
-    }
-    final c = a.prioridad.compareTo(b.prioridad);
-    return c != 0 ? c : a.id.compareTo(b.id);
-  });
+  final ordenadas =
+      [
+        for (final b in bolsas)
+          if (b.activa &&
+              (!hayDeudaConExtra || b.tipo == TipoBolsaAhorro.fondoEmergencia))
+            b,
+      ]..sort((a, b) {
+        final ia = orden.indexOf(a.id);
+        final ib = orden.indexOf(b.id);
+        if (ia >= 0 || ib >= 0) {
+          if (ia < 0) return 1;
+          if (ib < 0) return -1;
+          return ia.compareTo(ib);
+        }
+        final c = a.prioridad.compareTo(b.prioridad);
+        return c != 0 ? c : a.id.compareTo(b.id);
+      });
   final aportes = <AporteDeCierre>[];
   var sobreRestante = sobre < 0 ? 0 : sobre;
   final listaGastos = gastos.toList();

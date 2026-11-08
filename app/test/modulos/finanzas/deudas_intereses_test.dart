@@ -109,6 +109,53 @@ void main() {
     });
   });
 
+  group('Presupuesto y ciclos futuros', () {
+    test('el presupuesto por omisión es la suma de los mínimos', () {
+      expect(sumaDeMinimos(deudas), 180000);
+      final omision = simularTodas(deudas);
+      final explicito = simularTodas(deudas, presupuestoMensual: 180000);
+      for (var i = 0; i < 3; i++) {
+        expect(omision[i].interesesTotales, explicito[i].interesesTotales);
+        expect(omision[i].meses, explicito[i].meses);
+      }
+    });
+
+    test('un monto menor que la suma de mínimos marca "no alcanza"', () {
+      for (final r in simularTodas(deudas, presupuestoMensual: 179999)) {
+        expect(r.estado, EstadoEstrategia.noAlcanza);
+        expect(r.calculada, isFalse);
+      }
+    });
+
+    test('por vencimiento paga primero la de vencimiento más cercano cuando '
+        'la liquidez alcanza solo para una', () {
+      const cercana = DeudaSimulable(
+        id: 'x',
+        nombre: 'Cercana',
+        saldo: 100000,
+        tasaAnualPuntosBase: 2000,
+        minimoMensual: 10000,
+        diasParaVencer: 8,
+      );
+      const futura = DeudaSimulable(
+        id: 'y',
+        nombre: 'Futura',
+        saldo: 100000,
+        tasaAnualPuntosBase: 5000,
+        minimoMensual: 10000,
+        diasParaVencer: 40,
+      );
+      // Mínimos 20 000; con 110 000 alcanza a liquidar solo una en el mes 1.
+      final r = simularEstrategia(EstrategiaPago.porVencimiento, [
+        futura,
+        cercana,
+      ], presupuestoMensual: 110000);
+      expect(r.orden.first.deudaId, 'x');
+      expect(r.orden.first.mesDeLiquidacion, 1);
+      expect(r.orden.last.mesDeLiquidacion, greaterThan(1));
+    });
+  });
+
   group('Tarjetas y beneficios', () {
     test('lo capturado a mano nunca aparece como verificado', () {
       final t = tarjetaCapturada(
@@ -251,6 +298,23 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(find.text('Finanzas › Simulador de deudas'), findsOneWidget);
       expect(find.textContaining('Pagar ahora'), findsNothing);
+    });
+
+    testWidgets('el simulador marca "no alcanza" con un monto bajo', (
+      tester,
+    ) async {
+      await montar(tester);
+      router(tester).go(SeccionFinanzas.simulador.ruta);
+      await tester.pumpAndSettle();
+      final campo = find.byKey(const ValueKey('simulador-extra-campo'));
+      if (campo.evaluate().isEmpty) return; // sin deudas en la demostración
+      expect(find.byKey(const ValueKey('simulador-no-alcanza')), findsNothing);
+      await tester.enterText(campo, '0.01');
+      await tester.pump();
+      expect(
+        find.byKey(const ValueKey('simulador-no-alcanza')),
+        findsOneWidget,
+      );
     });
 
     testWidgets('tarjetas: se agrega una y queda como capturada', (

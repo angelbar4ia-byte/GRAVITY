@@ -53,37 +53,43 @@ void main() {
   final datos = hogarEjemplo(movimientos: movimientos);
 
   group('Aportaciones recibidas y entregadas (cuadre por libro)', () {
-    test('el libro que aporta: patrimonio = inicial + resultado − entregadas', () {
-      final b = datos.vista(libroAna).balance();
-      expect(b.patrimonioInicial, 1000000);
-      expect(b.resultadoAcumulado, -30000, reason: 'solo su gasto');
-      expect(b.aportacionesEntregadas, 200000 + 50000);
-      expect(b.aportacionesRecibidas, 0);
-      expect(b.patrimonio, 1000000 - 30000 - 250000);
-      expect(
-        b.patrimonio,
-        b.patrimonioInicial +
-            b.resultadoAcumulado +
-            b.aportacionesRecibidas -
-            b.aportacionesEntregadas,
-      );
-      expect(b.cuadra, isTrue);
-    });
+    test(
+      'el libro que aporta: patrimonio = inicial + resultado − entregadas',
+      () {
+        final b = datos.vista(libroAna).balance();
+        expect(b.patrimonioInicial, 1000000);
+        expect(b.resultadoAcumulado, -30000, reason: 'solo su gasto');
+        expect(b.aportacionesEntregadas, 200000 + 50000);
+        expect(b.aportacionesRecibidas, 0);
+        expect(b.patrimonio, 1000000 - 30000 - 250000);
+        expect(
+          b.patrimonio,
+          b.patrimonioInicial +
+              b.resultadoAcumulado +
+              b.aportacionesRecibidas -
+              b.aportacionesEntregadas,
+        );
+        expect(b.cuadra, isTrue);
+      },
+    );
 
-    test('el libro que recibe: patrimonio = inicial + resultado + recibidas', () {
-      final b = datos.vista(casa).balance();
-      // Inicial: banco $5,000 − tarjeta $6,000 − préstamo $3,000.
-      expect(b.patrimonioInicial, 500000 - 600000 - 300000);
-      expect(b.resultadoAcumulado, 900000 - 150000);
-      expect(b.aportacionesRecibidas, 250000);
-      expect(b.aportacionesEntregadas, 0);
-      // Activos: 5,000 + 2,000 + 9,000 − 1,500; pasivos: 6,000 − 500 + 3,000.
-      expect(b.activos, 1450000);
-      expect(b.pasivos, 850000);
-      expect(b.patrimonio, 600000);
-      expect(b.patrimonioEsperado, b.patrimonio);
-      expect(b.cuadra, isTrue);
-    });
+    test(
+      'el libro que recibe: patrimonio = inicial + resultado + recibidas',
+      () {
+        final b = datos.vista(casa).balance();
+        // Inicial: banco $5,000 − tarjeta $6,000 − préstamo $3,000.
+        expect(b.patrimonioInicial, 500000 - 600000 - 300000);
+        expect(b.resultadoAcumulado, 900000 - 150000);
+        expect(b.aportacionesRecibidas, 250000);
+        expect(b.aportacionesEntregadas, 0);
+        // Activos: 5,000 + 2,000 + 9,000 − 1,500; pasivos: 6,000 − 500 + 3,000.
+        expect(b.activos, 1450000);
+        expect(b.pasivos, 850000);
+        expect(b.patrimonio, 600000);
+        expect(b.patrimonioEsperado, b.patrimonio);
+        expect(b.cuadra, isTrue);
+      },
+    );
 
     test('la aportación no pasa por el resultado de ningún libro', () {
       final periodo = Periodo.semana(dia);
@@ -121,41 +127,47 @@ void main() {
       expect(deCasa.cuadra, isTrue);
     });
 
-    test('el balance a una fecha solo cuenta las aportaciones hasta ese día', () {
-      final antes = datos.vista(casa).balance(al: Fecha(2026, 10, 19));
-      expect(antes.aportacionesRecibidas, 0);
-      expect(antes.cuadra, isTrue);
-      final (recibidas, entregadas) = datos
-          .vista(libroAna)
-          .aportaciones(desde: dia, hasta: dia);
-      expect((recibidas, entregadas), (0, 250000));
-    });
+    test(
+      'el balance a una fecha solo cuenta las aportaciones hasta ese día',
+      () {
+        final antes = datos.vista(casa).balance(al: Fecha(2026, 10, 19));
+        expect(antes.aportacionesRecibidas, 0);
+        expect(antes.cuadra, isTrue);
+        final (recibidas, entregadas) = datos
+            .vista(libroAna)
+            .aportaciones(desde: dia, hasta: dia);
+        expect((recibidas, entregadas), (0, 250000));
+      },
+    );
   });
 
   group('Solo transferencia y pago de deuda cruzan de libro (regla 5)', () {
-    test('un ingreso, una apertura o un ajuste no cruzan de un libro a otro', () {
-      for (final m in [
-        mov('i', TipoMovimiento.ingreso, 'sueldo-ana', 'banco-ana', 100),
-        mov('a', TipoMovimiento.apertura, 'apertura-casa', 'banco-papa', 100),
-        Movimiento(
-          id: 'aj',
-          tipo: TipoMovimiento.ajuste,
-          fecha: dia,
-          registradoEn: DateTime(2026, 10, 20),
-          cuentaOrigenId: 'ajustes-casa',
-          cuentaDestinoId: 'banco-ana',
-          monto: 100,
-          realizadoPor: ana,
-          motivo: 'Diferencia',
-        ),
-      ]) {
-        expect(
-          () => hogarEjemplo().nuevoLibroHogar().agregar(m),
-          throwsA(isA<ErrorLibro>()),
-          reason: m.tipo.name,
-        );
-      }
-    });
+    test(
+      'un ingreso, una apertura o un ajuste no cruzan de un libro a otro',
+      () {
+        for (final m in [
+          mov('i', TipoMovimiento.ingreso, 'sueldo-ana', 'banco-ana', 100),
+          mov('a', TipoMovimiento.apertura, 'apertura-casa', 'banco-papa', 100),
+          Movimiento(
+            id: 'aj',
+            tipo: TipoMovimiento.ajuste,
+            fecha: dia,
+            registradoEn: DateTime(2026, 10, 20),
+            cuentaOrigenId: 'ajustes-casa',
+            cuentaDestinoId: 'banco-ana',
+            monto: 100,
+            realizadoPor: ana,
+            motivo: 'Diferencia',
+          ),
+        ]) {
+          expect(
+            () => hogarEjemplo().nuevoLibroHogar().agregar(m),
+            throwsA(isA<ErrorLibro>()),
+            reason: m.tipo.name,
+          );
+        }
+      },
+    );
 
     test('la transferencia, el pago de deuda y su anulación sí cruzan', () {
       final libro = hogarEjemplo().nuevoLibroHogar()

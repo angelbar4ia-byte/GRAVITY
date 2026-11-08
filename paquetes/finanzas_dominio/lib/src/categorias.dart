@@ -453,8 +453,7 @@ PlanImportacion planearImportacionCategorias(
   if (generarId == null && idPara == null) {
     throw ArgumentError('Falta cómo generar los ids');
   }
-  String nuevoId(String clave) =>
-      idPara != null ? idPara(clave) : generarId!();
+  String nuevoId(String clave) => idPara != null ? idPara(clave) : generarId!();
   final arbol = ArbolCategorias(existentes);
   final cuentasPorNombre = {
     for (final c in cuentasExistentes) normalizarNombre(c.nombre): c,

@@ -7,12 +7,14 @@ library;
 import 'package:finanzas_dominio/finanzas_dominio.dart'
     show
         DeudaSimulable,
+        EstadoEstrategia,
         EstrategiaPago,
         ResultadoEstrategia,
         ResultadoSoloMinimos,
         interesesConPagoMinimo,
         recomendar,
-        simularTodas;
+        simularTodas,
+        sumaDeMinimos;
 import 'package:flutter/material.dart';
 
 import '../../../../diseno/diseno.dart';
@@ -31,7 +33,10 @@ class VistaSimulador extends StatefulWidget {
 
 class _SimuladorState extends State<VistaSimulador> {
   final _extra = TextEditingController();
-  int _extraCentavos = 0;
+
+  /// Monto pedido por la persona (centavos); `null` = el por omisión, que es
+  /// la suma de los pagos mínimos.
+  int? _pedidoCentavos;
 
   @override
   void dispose() {
@@ -42,7 +47,7 @@ class _SimuladorState extends State<VistaSimulador> {
   void _cambiarExtra(String texto) {
     final limpio = texto.replaceAll(RegExp(r'[^0-9.]'), '');
     final v = double.tryParse(limpio);
-    setState(() => _extraCentavos = v == null ? 0 : (v * 100).round());
+    setState(() => _pedidoCentavos = v == null ? null : (v * 100).round());
   }
 
   @override
@@ -58,7 +63,17 @@ class _SimuladorState extends State<VistaSimulador> {
         ],
       );
     }
-    final resultados = simularTodas(deudas, extraMensual: _extraCentavos);
+    final porOmision = sumaDeMinimos(deudas);
+    final noAlcanza =
+        _pedidoCentavos != null &&
+        porOmision != null &&
+        _pedidoCentavos! < porOmision;
+    // Lo que se simula (y se enviaría a fin_simular_estrategias): el monto
+    // pedido o nulo para el por omisión.
+    final resultados = simularTodas(
+      deudas,
+      presupuestoMensual: _pedidoCentavos,
+    );
     final minimos = interesesConPagoMinimo(deudas);
     final mejor = recomendar(resultados);
     return ListView(
@@ -67,20 +82,36 @@ class _SimuladorState extends State<VistaSimulador> {
       children: [
         TarjetaModulo(
           key: const ValueKey('simulador-extra'),
-          titulo: 'Cuánto puedes pagar de más al mes',
+          titulo: 'Presupuesto mensual para deudas',
           icono: Icons.tune,
-          child: TextField(
-            key: const ValueKey('simulador-extra-campo'),
-            controller: _extra,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(
-              labelText: 'Extra mensual (opcional)',
-              prefixText: '\$ ',
-              helperText:
-                  'Se suma a la suma de tus pagos mínimos. Es una simulación: '
-                  'la app no paga por ti.',
-            ),
-            onChanged: _cambiarExtra,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (porOmision != null)
+                DatoConMonto('Por omisión (suma de pagos mínimos)', porOmision),
+              TextField(
+                key: const ValueKey('simulador-extra-campo'),
+                controller: _extra,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                decoration: const InputDecoration(
+                  labelText: 'Otro monto mensual (opcional)',
+                  prefixText: '\$ ',
+                  helperText:
+                      'Vacío usa la suma de tus pagos mínimos. Es una '
+                      'simulación: la app no paga por ti.',
+                ),
+                onChanged: _cambiarExtra,
+              ),
+              if (noAlcanza)
+                Text(
+                  'No alcanza: ese monto es menor que la suma de tus pagos '
+                  'mínimos.',
+                  key: const ValueKey('simulador-no-alcanza'),
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+            ],
           ),
         ),
         hueco,
@@ -179,7 +210,12 @@ class _TarjetaEstrategia extends StatelessWidget {
         EstrategiaPago.avalancha => Icons.trending_down,
         EstrategiaPago.porVencimiento => Icons.event_outlined,
       },
-      child: !r.calculada
+      child: r.estado == EstadoEstrategia.noAlcanza
+          ? Text(
+              'No alcanza para cubrir los pagos mínimos',
+              key: ValueKey('estrategia-$clave-no-alcanza'),
+            )
+          : !r.calculada
           ? Text(
               'Falta un dato para esta estrategia',
               key: ValueKey('estrategia-$clave-falta'),

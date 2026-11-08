@@ -145,4 +145,23 @@ void main() {
       expect(r.meses, 5);
     }
   });
+
+  test('vencimiento proyecta ciclos futuros', () {
+    expect(diasProyectadosDeVencimiento(25, 1), 25);
+    expect(diasProyectadosDeVencimiento(25, 2), 55);
+    expect(diasProyectadosDeVencimiento(40, 2), 40);
+    expect(diasProyectadosDeVencimiento(-5, 1), -5);
+    expect(diasProyectadosDeVencimiento(-5, 2), 55);
+  });
+
+  test('presupuesto pedido: menor que los mínimos no alcanza', () {
+    final minimos = sumaDeMinimos(deudas)!;
+    expect(minimos, 180000);
+    final r = simularTodas(deudas, presupuestoMensual: minimos - 1);
+    expect(r.every((x) => x.estado == EstadoEstrategia.noAlcanza), isTrue);
+    expect(r.every((x) => x.orden.isEmpty && x.interesesTotales == 0), isTrue);
+    final igual = simularTodas(deudas, presupuestoMensual: minimos);
+    final omision = simularTodas(deudas);
+    expect(igual[0].interesesTotales, omision[0].interesesTotales);
+  });
 }

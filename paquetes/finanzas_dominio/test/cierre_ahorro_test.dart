@@ -56,22 +56,29 @@ void main() {
       expect(plan.disponibleFinal, 0);
     });
 
-    test('el redondeo sale al final si hay otros métodos y queda disponible', () {
-      final plan = planearAhorroDeCierre(
-        remanente: 20000,
-        gastos: [4700, 12350, 8000], // faltan 300 + 650 + 0
-        bolsas: [bolsa('a', [MetodoAhorro.redondeo])],
-      );
-      expect(plan.aportes.single.origen, OrigenAporte.redondeo);
-      expect(plan.total, 950);
-      expect(plan.disponibleFinal, 19050);
-    });
+    test(
+      'el redondeo sale al final si hay otros métodos y queda disponible',
+      () {
+        final plan = planearAhorroDeCierre(
+          remanente: 20000,
+          gastos: [4700, 12350, 8000], // faltan 300 + 650 + 0
+          bolsas: [
+            bolsa('a', [MetodoAhorro.redondeo]),
+          ],
+        );
+        expect(plan.aportes.single.origen, OrigenAporte.redondeo);
+        expect(plan.total, 950);
+        expect(plan.disponibleFinal, 19050);
+      },
+    );
 
     test('el redondeo nunca deja la semana en negativo', () {
       final plan = planearAhorroDeCierre(
         remanente: 500,
         gastos: [4700, 12350], // pediría 950
-        bolsas: [bolsa('a', [MetodoAhorro.redondeo])],
+        bolsas: [
+          bolsa('a', [MetodoAhorro.redondeo]),
+        ],
       );
       expect(plan.total, 500);
       expect(plan.disponibleFinal, 0);
@@ -95,24 +102,29 @@ void main() {
       }
     });
 
-    test('un método que no está en la bolsa no se aplica; una inactiva tampoco', () {
-      final plan = planearAhorroDeCierre(
-        remanente: 100000,
-        extras: 50000,
-        gastos: [4700],
-        bolsas: [
-          bolsa('a', [MetodoAhorro.montoFijo]),
-          bolsa('b', [MetodoAhorro.redondeo], activa: false),
-        ],
-      );
-      expect(plan.aportes, isEmpty);
-    });
+    test(
+      'un método que no está en la bolsa no se aplica; una inactiva tampoco',
+      () {
+        final plan = planearAhorroDeCierre(
+          remanente: 100000,
+          extras: 50000,
+          gastos: [4700],
+          bolsas: [
+            bolsa('a', [MetodoAhorro.montoFijo]),
+            bolsa('b', [MetodoAhorro.redondeo], activa: false),
+          ],
+        );
+        expect(plan.aportes, isEmpty);
+      },
+    );
 
     test('extras sin porcentaje configurado aparta el 20 % por omisión', () {
       final plan = planearAhorroDeCierre(
         remanente: 100000,
         extras: 50000,
-        bolsas: [bolsa('a', [MetodoAhorro.porcentajeDeExtras])],
+        bolsas: [
+          bolsa('a', [MetodoAhorro.porcentajeDeExtras]),
+        ],
       );
       expect(porcentajeDeExtrasPorOmision, 2000);
       expect(plan.deOrigen(OrigenAporte.extras), 10000);
@@ -121,17 +133,25 @@ void main() {
     test('la prioridad arrastrada manda: el sobre llena primero la bolsa de '
         'arriba y el sobrante va solo a la primera', () {
       final bolsas = [
-        bolsa('a', [MetodoAhorro.sobrePorCategoria, MetodoAhorro.sobranteSemanal],
-            prioridad: 1),
-        bolsa('b', [MetodoAhorro.sobrePorCategoria, MetodoAhorro.sobranteSemanal],
-            prioridad: 2),
+        bolsa('a', [
+          MetodoAhorro.sobrePorCategoria,
+          MetodoAhorro.sobranteSemanal,
+        ], prioridad: 1),
+        bolsa('b', [
+          MetodoAhorro.sobrePorCategoria,
+          MetodoAhorro.sobranteSemanal,
+        ], prioridad: 2),
       ];
       final normal = planearAhorroDeCierre(
         remanente: 30000,
         sobre: 5000,
         bolsas: bolsas,
       );
-      expect(normal.aportadoA('a'), 30000, reason: 'sobre 5000 + sobrante 25000');
+      expect(
+        normal.aportadoA('a'),
+        30000,
+        reason: 'sobre 5000 + sobrante 25000',
+      );
       expect(normal.aportadoA('b'), 0);
       final arrastrada = planearAhorroDeCierre(
         remanente: 30000,
@@ -161,18 +181,21 @@ void main() {
       expect(plan.aportadoA('a'), 0);
     });
 
-    test('con varias bolsas el sobre y el sobrante no se cuentan dos veces', () {
-      final plan = planearAhorroDeCierre(
-        remanente: 30000,
-        sobre: 5000,
-        bolsas: [
-          bolsa('a', [MetodoAhorro.sobrePorCategoria], prioridad: 1),
-          bolsa('b', [MetodoAhorro.sobrePorCategoria], prioridad: 2),
-        ],
-      );
-      expect(plan.aportadoA('a'), 5000);
-      expect(plan.aportadoA('b'), 0);
-    });
+    test(
+      'con varias bolsas el sobre y el sobrante no se cuentan dos veces',
+      () {
+        final plan = planearAhorroDeCierre(
+          remanente: 30000,
+          sobre: 5000,
+          bolsas: [
+            bolsa('a', [MetodoAhorro.sobrePorCategoria], prioridad: 1),
+            bolsa('b', [MetodoAhorro.sobrePorCategoria], prioridad: 2),
+          ],
+        );
+        expect(plan.aportadoA('a'), 5000);
+        expect(plan.aportadoA('b'), 0);
+      },
+    );
 
     test('es determinista: mismos datos, mismo plan', () {
       List<AporteDeCierre> corre() => planearAhorroDeCierre(
@@ -200,11 +223,9 @@ void main() {
         ahorroMinimoConDeudaPuntosBase: 1000, // 10 %
         bolsas: [
           bolsa('meta', [MetodoAhorro.sobranteSemanal]),
-          bolsa(
-            'fondo',
-            [MetodoAhorro.sobranteSemanal],
-            tipo: TipoBolsaAhorro.fondoEmergencia,
-          ),
+          bolsa('fondo', [
+            MetodoAhorro.sobranteSemanal,
+          ], tipo: TipoBolsaAhorro.fondoEmergencia),
         ],
       );
       expect(plan.aportes.single.bolsaId, 'fondo');
@@ -224,12 +245,17 @@ void main() {
           gasto('fuera', Fecha(2026, 10, 20), 9900, 'g-alimentacion'),
         ],
       );
-      expect(gastosDeLaSemana(d, casa, semana), unorderedEquals([180000, 4700]));
+      expect(
+        gastosDeLaSemana(d, casa, semana),
+        unorderedEquals([180000, 4700]),
+      );
     });
 
     test('el esencial real sale de las partidas protegidas de los cierres', () {
       var d = hogarEjemplo(
-        movimientos: [gasto('g1', Fecha(2026, 10, 27), 180000, 'g-alimentacion')],
+        movimientos: [
+          gasto('g1', Fecha(2026, 10, 27), 180000, 'g-alimentacion'),
+        ],
       );
       expect(esencialesPorSemanaCerrada(d, casa), isEmpty);
       final plan = armarPlanDelLibro(d, casa, semana);

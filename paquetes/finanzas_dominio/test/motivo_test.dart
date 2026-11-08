@@ -14,7 +14,11 @@ void main() {
       expect(caracteresVisibles('   '), 0);
       expect(caracteresVisibles(' a b  c '), 3);
       expect(caracteresVisibles('ñandú'), 5);
-      expect(caracteresVisibles('😀😀😀'), 3, reason: 'un emoji es un solo carácter');
+      expect(
+        caracteresVisibles('😀😀😀'),
+        3,
+        reason: 'un emoji es un solo carácter',
+      );
     });
 
     test('vale con 3 o más; no con 0, 1 o 2', () {
@@ -52,11 +56,23 @@ void main() {
       ];
       for (final i in invisibles) {
         // Dos letras con invisibles en medio: no llegan a 3.
-        expect(motivoValido('a$i$i b'), isFalse, reason: 'U+${i.codeUnitAt(0).toRadixString(16)}');
+        expect(
+          motivoValido('a$i$i b'),
+          isFalse,
+          reason: 'U+${i.codeUnitAt(0).toRadixString(16)}',
+        );
         // Con una tercera letra sí.
-        expect(motivoValido('a${i}b${i}c'), isTrue, reason: 'U+${i.codeUnitAt(0).toRadixString(16)}');
+        expect(
+          motivoValido('a${i}b${i}c'),
+          isTrue,
+          reason: 'U+${i.codeUnitAt(0).toRadixString(16)}',
+        );
         // Puros invisibles: nada.
-        expect(motivoValido(i * 10), isFalse, reason: 'U+${i.codeUnitAt(0).toRadixString(16)}');
+        expect(
+          motivoValido(i * 10),
+          isFalse,
+          reason: 'U+${i.codeUnitAt(0).toRadixString(16)}',
+        );
       }
     });
 
@@ -69,7 +85,18 @@ void main() {
 
   group('Motivo válido (Fase 4): 2 letras o dígitos y no todos iguales', () {
     test('subrayados, puntos, guiones y signos solos no valen', () {
-      for (final malo in ['___', '...', '---', '***', '!!!', '_-_', 'a--', '1__', '😀😀😀', '¿?¡']) {
+      for (final malo in [
+        '___',
+        '...',
+        '---',
+        '***',
+        '!!!',
+        '_-_',
+        'a--',
+        '1__',
+        '😀😀😀',
+        '¿?¡',
+      ]) {
         expect(motivoValido(malo), isFalse, reason: '"$malo"');
       }
     });
@@ -81,7 +108,17 @@ void main() {
     });
 
     test('con 2 letras o dígitos y variedad sí vale', () {
-      for (final bueno in ['ab-', 'a_b', '1.5', 'luz', 'ñu.', 'aab', 'abab', '12a', 'Se pasó']) {
+      for (final bueno in [
+        'ab-',
+        'a_b',
+        '1.5',
+        'luz',
+        'ñu.',
+        'aab',
+        'abab',
+        '12a',
+        'Se pasó',
+      ]) {
         expect(motivoValido(bueno), isTrue, reason: '"$bueno"');
       }
     });
@@ -103,15 +140,35 @@ void main() {
   group('El libro aplica la regla', () {
     test('una anulación con motivo corto o en blanco se rechaza', () {
       final libro = libroBase();
-      final g = libro.agregar(mov(TipoMovimiento.gasto, 'efectivo', 'alimentacion', 4500));
+      final g = libro.agregar(
+        mov(TipoMovimiento.gasto, 'efectivo', 'alimentacion', 4500),
+      );
       for (final malo in ['', '  ', 'a', 'ab', ' a b ​']) {
         expect(
-          () => libro.anular(g.id, nuevoId: 'an', motivo: malo, registradoPor: yo, registradoEn: ahora),
-          throwsA(isA<ErrorLibro>().having((e) => e.mensaje, 'mensaje', contains('3 caracteres'))),
+          () => libro.anular(
+            g.id,
+            nuevoId: 'an',
+            motivo: malo,
+            registradoPor: yo,
+            registradoEn: ahora,
+          ),
+          throwsA(
+            isA<ErrorLibro>().having(
+              (e) => e.mensaje,
+              'mensaje',
+              contains('3 caracteres'),
+            ),
+          ),
           reason: '"$malo"',
         );
       }
-      libro.anular(g.id, nuevoId: 'an', motivo: 'Dup', registradoPor: yo, registradoEn: ahora);
+      libro.anular(
+        g.id,
+        nuevoId: 'an',
+        motivo: 'Dup',
+        registradoPor: yo,
+        registradoEn: ahora,
+      );
       expect(libro.estaAnulado(g.id), isTrue);
     });
 
@@ -200,7 +257,9 @@ void main() {
         movimientos: [viejo],
         validar: false,
       );
-      expect(libro.movimientos, [viejo], reason: 'lo ya guardado nunca se rechaza');
+      expect(libro.movimientos, [
+        viejo,
+      ], reason: 'lo ya guardado nunca se rechaza');
     });
   });
 }

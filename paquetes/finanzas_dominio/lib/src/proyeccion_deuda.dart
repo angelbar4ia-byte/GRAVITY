@@ -137,7 +137,8 @@ class ComparacionAbonoExtra {
 
   /// Semanas que se adelanta la salida de deuda; `null` si alguna de las dos
   /// no sale dentro del horizonte.
-  int? get semanasAdelantadas => semanaLibreBase == null || semanaLibreConExtra == null
+  int? get semanasAdelantadas =>
+      semanaLibreBase == null || semanaLibreConExtra == null
       ? null
       : semanaLibreBase! - semanaLibreConExtra!;
 
@@ -159,7 +160,11 @@ ComparacionAbonoExtra compararAbonoExtra({
   ParametrosPlan parametros = const ParametrosPlan(),
 }) {
   if (extraSemanal < 0) {
-    throw ArgumentError.value(extraSemanal, 'extraSemanal', 'no puede ser negativo');
+    throw ArgumentError.value(
+      extraSemanal,
+      'extraSemanal',
+      'no puede ser negativo',
+    );
   }
   return ComparacionAbonoExtra(
     base: proyectarSalidaDeDeuda(

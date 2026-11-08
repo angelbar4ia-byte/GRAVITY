@@ -71,7 +71,15 @@ select pruebas.igual((select (orden)[1] from public.fin_simular_estrategias((sel
 select pruebas.igual((select cardinality(orden) from public.fin_simular_estrategias((select id from t_ids where clave = 'libro'), 'avalancha', 300000, '2026-11-08')),
   3, '1: el orden trae las tres deudas');
 select pruebas.igual((select presupuesto_mensual_centavos from public.fin_simular_estrategias((select id from t_ids where clave = 'libro'), 'avalancha', null, '2026-11-08')),
-  170000::bigint, '1: sin presupuesto, usa la suma de los abonos (en equivalente mensual, no menos que el mínimo)');
+  100000::bigint, '1 (v1.1): sin presupuesto, usa la suma de los pagos mínimos (50 000 + 30 000 + 20 000)');
+select pruebas.igual((select presupuesto_mensual_centavos from public.fin_simular_estrategias((select id from t_ids where clave = 'libro'), 'avalancha', 250000, '2026-11-08')),
+  250000::bigint, '1 (v1.1): si la persona pide otro monto, se usa ese');
+select pruebas.igual((select estado from public.fin_simular_estrategias((select id from t_ids where clave = 'libro'), 'avalancha', 99999, '2026-11-08')),
+  'no_alcanza', '1 (v1.1): un monto menor que la suma de mínimos no alcanza');
+select pruebas.igual((select estado from public.fin_simular_estrategias((select id from t_ids where clave = 'libro'), 'avalancha', 100000, '2026-11-08')),
+  'ok', '1 (v1.1): justo la suma de mínimos sí alcanza');
+select pruebas.ok((select bool_and(estado = 'ok') from public.fin_simular_estrategias((select id from t_ids where clave = 'libro'), null, null, '2026-11-08')),
+  '1 (v1.1): sin presupuesto las tres estrategias calculan con la suma de mínimos');
 select pruebas.falla($$select * from public.fin_simular_estrategias((select id from t_ids where clave = 'libro'), 'azar')$$,
   '1: una estrategia desconocida se rechaza', '22023');
 select pruebas.igual((select estado from public.fin_simular_estrategias((select id from t_ids where clave = 'libro'), 'avalancha', 50000, '2026-11-08')),
@@ -85,6 +93,23 @@ select pruebas.igual((select vencidas_sin_liquidar_mes1 from public.fin_simular_
 select pruebas.igual((select vencidas_sin_liquidar_mes1 from public.fin_simular_estrategias(
   (select id from t_ids where clave = 'libro'), 'avalancha', 800000, '2026-11-12')), 1,
   '2: la avalancha, con la misma liquidez, sí deja la vencida sin liquidar');
+
+-- Ciclos futuros (v1.1): D2 vence en el mes 3 (10/ene); D1 y D3 no tienen urgencia (junio y julio). Liquidez: mínimos
+-- (100 000) + 150 000 de extra, que no alcanza para dos deudas a la vez.
+select public.fin_deuda_datos_guardar('e5700000-0000-4000-8000-000000000001', 4800, 50000, '2027-06-20', false);
+select public.fin_deuda_datos_guardar('e5700000-0000-4000-8000-000000000002', 1200, 30000, '2027-01-10', false);
+select public.fin_deuda_datos_guardar('e5700000-0000-4000-8000-000000000003', 2400, 20000, '2027-07-15', false);
+select pruebas.igual((select (orden)[1] from public.fin_simular_estrategias((select id from t_ids where clave = 'libro'), 'vencimiento', 250000, '2026-11-08')),
+  'e5700000-0000-4000-8000-000000000002'::uuid,
+  '2 (v1.1): la deuda con vencimiento en el mes 3 se liquida antes que la que no tiene urgencia');
+create temp table t_venc as
+  select intereses_centavos as i3 from public.fin_simular_estrategias((select id from t_ids where clave = 'libro'), 'vencimiento', 250000, '2026-11-08');
+select public.fin_deuda_datos_guardar('e5700000-0000-4000-8000-000000000002', 1200, 30000, '2026-11-10', false);
+select pruebas.ok((select t.i3 < e.intereses_centavos from t_venc t,
+   public.fin_simular_estrategias((select id from t_ids where clave = 'libro'), 'vencimiento', 250000, '2026-11-08') e),
+  '2 (v1.1): sin urgencia en los meses 1 y 2, el extra va a la de mayor tasa (menos intereses que con vencimiento en el mes 1)');
+select public.fin_deuda_datos_guardar('e5700000-0000-4000-8000-000000000001', 4800, 50000, '2026-11-20', false);
+select public.fin_deuda_datos_guardar('e5700000-0000-4000-8000-000000000003', 2400, 20000, '2026-11-15', false);
 
 -- ---------------------------------------------------------------- 3: un dato faltante bloquea solo a quien lo necesita (criterio 4)
 select public.fin_deuda_datos_guardar('e5700000-0000-4000-8000-000000000003', 2400, 20000, null, false);
@@ -224,13 +249,32 @@ select pruebas.igual((select count(*)::int from public.fin_simular_estrategias('
 select pruebas.como('alex@ejemplo.test');
 select pruebas.igual((select count(*)::int from public.fin_tarjetas where libro_id = 'f1000000-0000-4000-8000-000000000001'), 1,
   '6: la pareja ve las tarjetas de la casa');
-select pruebas.igual((select count(*)::int from public.fin_tarjetas where libro_id = 'f1000000-0000-4000-8000-000000000002'), 0,
-  '6: el suplente no ve las de Papá mientras haya albacea');
-select pruebas.igual((select count(*)::int from public.fin_tarjeta_beneficios where libro_id = 'f1000000-0000-4000-8000-000000000002'), 0,
-  '6: ni sus beneficios');
+select pruebas.igual((select count(*)::int from public.fin_tarjetas where libro_id = 'f1000000-0000-4000-8000-000000000002'), 1,
+  '6 (v1.1): el suplente lee las de Papá igual que lee su libro (fin_puede leer, Fase 1)');
+select pruebas.ok(public.fin_puede('f1000000-0000-4000-8000-000000000002', 'leer')
+  and public.fin_deudas_puede_ver('f1000000-0000-4000-8000-000000000002'),
+  '6 (v1.1): la regla de deudas coincide con fin_puede leer');
 select pruebas.falla($$select * from public.fin_simular_estrategias('f1000000-0000-4000-8000-000000000002')$$,
   '6: ni simula las deudas de Papá', '42501');
-select pruebas.igual((select count(*)::int from public.fin_tarjetas), 2, '6: Alex ve la suya y la de la casa');
+select pruebas.igual((select count(*)::int from public.fin_tarjetas), 3, '6: Alex ve la suya, la de la casa y la de Papá (suplente)');
+select pruebas.falla($$select public.fin_tarjeta_guardar('a1070000-0000-4000-8000-0000000000a6', 'f1000000-0000-4000-8000-000000000002',
+  pruebas.id_persona('ana@ejemplo.test'), 'B', 'N')$$, '6: pero con albacea vigente el suplente no escribe tarjetas de Papá', '42501');
+-- Sin albacea vigente, el suplente administra (y lee) el libro de Papá.
+select pruebas.como_postgres();
+update public.fin_libro_miembros set hasta = now()
+ where libro_id = 'f1000000-0000-4000-8000-000000000002' and papel = 'albacea';
+select pruebas.como('alex@ejemplo.test');
+select pruebas.igual((select count(*)::int from public.fin_tarjetas where libro_id = 'f1000000-0000-4000-8000-000000000002'), 1,
+  '6 (v1.1): sin albacea vigente, el suplente sigue leyendo las tarjetas de Papá');
+select pruebas.igual((select count(*)::int from public.fin_simular_estrategias('f1000000-0000-4000-8000-000000000002')), 3,
+  '6 (v1.1): y, al ocupar el lugar del albacea, simula sus deudas');
+select pruebas.como('ana@ejemplo.test');
+select pruebas.igual((select count(*)::int from public.fin_tarjetas where libro_id = 'f1000000-0000-4000-8000-000000000002'), 0,
+  '6 (v1.1): quien dejó de ser albacea ya no ve las tarjetas de Papá');
+select pruebas.como_postgres();
+update public.fin_libro_miembros set hasta = null
+ where libro_id = 'f1000000-0000-4000-8000-000000000002' and papel = 'albacea' and hasta is not null;
+select pruebas.como('alex@ejemplo.test');
 
 -- ---------------------------------------------------------------- 7: familiar, cuidadora, Casa y anon: nada
 select pruebas.como('carla@ejemplo.test');

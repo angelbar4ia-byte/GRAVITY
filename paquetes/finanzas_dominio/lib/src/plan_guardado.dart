@@ -132,8 +132,7 @@ class SemanaGuardada {
     techo: techo,
     activadaPor: activadaPor,
     activadaEn: activadaEn,
-    reaperturas:
-        estado == EstadoSemana.cerrada && nuevo != EstadoSemana.cerrada
+    reaperturas: estado == EstadoSemana.cerrada && nuevo != EstadoSemana.cerrada
         ? reaperturas + 1
         : reaperturas,
     partidas: partidas,

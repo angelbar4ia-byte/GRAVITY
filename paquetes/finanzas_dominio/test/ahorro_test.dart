@@ -10,7 +10,10 @@ void main() {
 
     test('meta, semanas cubiertas hacia abajo y semaforo', () {
       expect(metaDelFondo(NivelFondo.tresMeses, 150000), 1950000);
-      expect(textoSemanasCubiertas(semanasCubiertasDecimas(459999, 150000)!), '3.0');
+      expect(
+        textoSemanasCubiertas(semanasCubiertasDecimas(459999, 150000)!),
+        '3.0',
+      );
       expect(semanasCubiertasDecimas(1, 0), isNull);
       expect(semaforoDelFondo(1950000, 1950000), Semaforo.verde);
       expect(semaforoDelFondo(975000, 1950000), Semaforo.ambar);
@@ -29,7 +32,10 @@ void main() {
         presupuestoEsencial: 90000,
       );
       expect(p.rotulo, 'según tu plan');
-      expect(gastoEsencialSemanal(esencialesPorSemanaCerrada: []).semanal, isNull);
+      expect(
+        gastoEsencialSemanal(esencialesPorSemanaCerrada: []).semanal,
+        isNull,
+      );
     });
 
     test('nivel 4 sugerido con un ingreso o dependientes', () {
@@ -61,7 +67,10 @@ void main() {
       final c = cuotasDeMetaConFecha(meta: 1000, saldo: 0, semanas: 3);
       expect(c, [333, 333, 334]);
       expect(c.fold(0, (a, b) => a + b), 1000);
-      expect(aportacionDeMetaConFecha(meta: 1000, saldo: 1000, semanasRestantes: 3), 0);
+      expect(
+        aportacionDeMetaConFecha(meta: 1000, saldo: 1000, semanasRestantes: 3),
+        0,
+      );
     });
 
     test('reto de 52 semanas con base 10 pesos suma 13,780', () {
@@ -77,13 +86,32 @@ void main() {
       expect(sobranteSemanal(-5), 0);
       expect(sobreDeCategoria(asignado: 100, gastado: 130), 0);
       expect(porcentajeDeExtras(100000, 1000), 10000);
-      expect(pagatePrimero(ingresoQueLlego: 100000, puntosBase: 1000, hayDeuda: true), 0);
-      expect(pagatePrimero(ingresoQueLlego: 100000, puntosBase: 1000, hayDeuda: false), 10000);
+      expect(
+        pagatePrimero(
+          ingresoQueLlego: 100000,
+          puntosBase: 1000,
+          hayDeuda: true,
+        ),
+        0,
+      );
+      expect(
+        pagatePrimero(
+          ingresoQueLlego: 100000,
+          puntosBase: 1000,
+          hayDeuda: false,
+        ),
+        10000,
+      );
       expect(sugeridoSinLoYaApartado(5000, 8000), 0);
     });
 
     test('acelerar una meta sube la aportacion', () {
-      final a = acelerarMeta(meta: 52000, saldo: 0, semanasActuales: 52, semanasNuevas: 26);
+      final a = acelerarMeta(
+        meta: 52000,
+        saldo: 0,
+        semanasActuales: 52,
+        semanasNuevas: 26,
+      );
       expect(a.nueva, 2000);
       expect(a.aumento, 1000);
     });
@@ -98,7 +126,11 @@ void main() {
 
     test('alcanza para todo: respeta el orden de etapas', () {
       final r = repartirAhorro(remanente: 12000, pasos: pasos);
-      expect(r.renglones.map((x) => x.paso.bolsaId), ['colchon', 'reserva', 'fondo']);
+      expect(r.renglones.map((x) => x.paso.bolsaId), [
+        'colchon',
+        'reserva',
+        'fondo',
+      ]);
       expect(r.totalAportado, 10000);
       expect(r.sobrante, 2000);
     });
@@ -132,7 +164,10 @@ void main() {
     });
 
     test('reposicion del fondo tras retiro de emergencia', () {
-      expect(reposicionTrasRetiro(saldoAntes: 100000, saldoAhora: 60000), 40000);
+      expect(
+        reposicionTrasRetiro(saldoAntes: 100000, saldoAhora: 60000),
+        40000,
+      );
       expect(reposicionTrasRetiro(saldoAntes: 100, saldoAhora: 200), 0);
     });
   });
@@ -141,9 +176,8 @@ void main() {
     // Remanente \$1,520 por semana; esencial \$3,500; colchón \$7,000; reservas
     // \$250; celular \$9,000 con \$1,500 ya ahorrados; fondo de \$45,500. Las
     // semanas del celular se cuentan desde la semana 5 (observación 4).
-    ({int? colchon, int? celular, int? fondo, int fondo17, int celular17}) simular(
-      int semanasCelular,
-    ) {
+    ({int? colchon, int? celular, int? fondo, int fondo17, int celular17})
+    simular(int semanasCelular) {
       var fondo = 0;
       var celular = 150000;
       int? semColchon, semCelular, semFondo;
@@ -155,7 +189,11 @@ void main() {
         final r = repartirAhorro(
           remanente: 152000,
           pasos: [
-            PasoDeAhorro('fondo', EtapaAhorro.colchon, fondo >= 700000 ? 0 : 700000 - fondo),
+            PasoDeAhorro(
+              'fondo',
+              EtapaAhorro.colchon,
+              fondo >= 700000 ? 0 : 700000 - fondo,
+            ),
             const PasoDeAhorro('reserva', EtapaAhorro.reservas, 25000),
             PasoDeAhorro(
               'celular',
@@ -201,14 +239,17 @@ void main() {
       expect(r.fondo17, 1934000);
     });
 
-    test('A2: celular en 12 semanas; el fondo se completa en la misma semana 41 '
-        'con \$15,090 en la 17', () {
-      final r = simular(12);
-      expect(r.colchon, 5);
-      expect(r.fondo, 41);
-      expect(r.fondo17, 1509000);
-      // 12 semanas de \$625 desde la semana 5 terminan en la 16 (obs. 4).
-      expect(r.celular, 16);
-    });
+    test(
+      'A2: celular en 12 semanas; el fondo se completa en la misma semana 41 '
+      'con \$15,090 en la 17',
+      () {
+        final r = simular(12);
+        expect(r.colchon, 5);
+        expect(r.fondo, 41);
+        expect(r.fondo17, 1509000);
+        // 12 semanas de \$625 desde la semana 5 terminan en la 16 (obs. 4).
+        expect(r.celular, 16);
+      },
+    );
   });
 }
