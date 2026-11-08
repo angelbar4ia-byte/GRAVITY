@@ -54,7 +54,9 @@ Future<ProviderContainer> abrir(
       repositorioPersonasHogarProvider.overrideWithValue(personas),
       repositorioInvitacionesProvider.overrideWithValue(
         invitaciones ??
-            RepositorioInvitacionesEnMemoria(reloj: () => DateTime(2026, 11, 6)),
+            RepositorioInvitacionesEnMemoria(
+              reloj: () => DateTime(2026, 11, 6),
+            ),
       ),
       cargaFinanzasProvider.overrideWith(_CargaFalsa.new),
     ],
@@ -94,31 +96,32 @@ void main() {
     expect(find.byKey(const ValueKey('opciones-luis')), findsOneWidget);
   });
 
-  testWidgets('dar de baja: pide confirmación, quita el acceso y recarga Finanzas', (
-    tester,
-  ) async {
-    final personas = repo();
-    await abrir(tester, personas: personas);
-    await tester.tap(find.byKey(const ValueKey('opciones-luis')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Dar de baja'));
-    await tester.pumpAndSettle();
-    // Cancelar no hace nada.
-    await tester.tap(find.text('Cancelar'));
-    await tester.pumpAndSettle();
-    expect(personas.bajas, isEmpty);
-    expect(_CargaFalsa.recargas, 0);
+  testWidgets(
+    'dar de baja: pide confirmación, quita el acceso y recarga Finanzas',
+    (tester) async {
+      final personas = repo();
+      await abrir(tester, personas: personas);
+      await tester.tap(find.byKey(const ValueKey('opciones-luis')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Dar de baja'));
+      await tester.pumpAndSettle();
+      // Cancelar no hace nada.
+      await tester.tap(find.text('Cancelar'));
+      await tester.pumpAndSettle();
+      expect(personas.bajas, isEmpty);
+      expect(_CargaFalsa.recargas, 0);
 
-    await tester.tap(find.byKey(const ValueKey('opciones-luis')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Dar de baja'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('confirmar-baja')));
-    await tester.pumpAndSettle();
-    expect(personas.bajas, ['m-luis']);
-    expect(find.text('Luis'), findsNothing);
-    expect(_CargaFalsa.recargas, 1);
-  });
+      await tester.tap(find.byKey(const ValueKey('opciones-luis')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Dar de baja'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('confirmar-baja')));
+      await tester.pumpAndSettle();
+      expect(personas.bajas, ['m-luis']);
+      expect(find.text('Luis'), findsNothing);
+      expect(_CargaFalsa.recargas, 1);
+    },
+  );
 
   testWidgets('cambiar el rol: lo guarda y recarga Finanzas', (tester) async {
     final personas = repo();
@@ -148,7 +151,9 @@ void main() {
     expect(find.text('Dar de baja'), findsOneWidget);
   });
 
-  testWidgets('si el servidor no deja, lo dice y no pierde nada', (tester) async {
+  testWidgets('si el servidor no deja, lo dice y no pierde nada', (
+    tester,
+  ) async {
     final personas = repo()..sinConexion = false;
     await abrir(tester, personas: personas);
     personas.sinConexion = true;

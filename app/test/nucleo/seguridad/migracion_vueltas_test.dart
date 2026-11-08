@@ -251,7 +251,10 @@ void main() {
         ).aJson(),
       );
       final controlador = await abrir();
-      expect(await controlador.desbloquearConPin(pin), ResultadoBloqueo.abierto);
+      expect(
+        await controlador.desbloquearConPin(pin),
+        ResultadoBloqueo.abierto,
+      );
       await pumpEventQueue();
       expect(
         HashPin.iteracionesDe(hashGuardado()!),

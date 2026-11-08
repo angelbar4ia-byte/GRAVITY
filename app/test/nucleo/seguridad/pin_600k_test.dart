@@ -51,22 +51,25 @@ void main() {
     expect(llaveA, llaveS);
   });
 
-  test('un PIN guardado con 100 000 vueltas sigue verificando y pide rehacerse', () async {
-    final viejo = HashPin.crear(
-      '738291',
-      iteraciones: HashPin.iteraciones100k,
-    );
-    HashPin.iteracionesPorDefecto = HashPin.iteracionesActuales;
-    expect(HashPin.iteracionesDe(viejo), 100000);
-    expect(HashPin.necesitaActualizarse(viejo), isTrue);
-    expect(await HashPin.verificarAsync('738291', viejo), isTrue);
-    expect(await HashPin.verificarAsync('738292', viejo), isFalse);
-    // Se rehace con las de hoy al escribir el PIN.
-    final nuevo = await HashPin.crearAsync('738291');
-    expect(HashPin.iteracionesDe(nuevo), 600000);
-    expect(HashPin.necesitaActualizarse(nuevo), isFalse);
-    expect(await HashPin.verificarAsync('738291', nuevo), isTrue);
-  });
+  test(
+    'un PIN guardado con 100 000 vueltas sigue verificando y pide rehacerse',
+    () async {
+      final viejo = HashPin.crear(
+        '738291',
+        iteraciones: HashPin.iteraciones100k,
+      );
+      HashPin.iteracionesPorDefecto = HashPin.iteracionesActuales;
+      expect(HashPin.iteracionesDe(viejo), 100000);
+      expect(HashPin.necesitaActualizarse(viejo), isTrue);
+      expect(await HashPin.verificarAsync('738291', viejo), isTrue);
+      expect(await HashPin.verificarAsync('738292', viejo), isFalse);
+      // Se rehace con las de hoy al escribir el PIN.
+      final nuevo = await HashPin.crearAsync('738291');
+      expect(HashPin.iteracionesDe(nuevo), 600000);
+      expect(HashPin.necesitaActualizarse(nuevo), isFalse);
+      expect(await HashPin.verificarAsync('738291', nuevo), isTrue);
+    },
+  );
 
   test('un sobre del PIN hecho con 100 000 vueltas se abre y se vuelve a cifrar con 600 000', () async {
     final llaveVieja = LlavePin.derivar(
@@ -85,7 +88,10 @@ void main() {
     expect(llaveNueva.iteraciones, 600000);
     final nuevo = CifradoPin.cifrar(llaveNueva, 'credencial-de-ejemplo');
     expect(jsonDecode(nuevo)['it'], 600000);
-    expect((await CifradoPin.descifrarAsync('738291', nuevo))!.$2, 'credencial-de-ejemplo');
+    expect(
+      (await CifradoPin.descifrarAsync('738291', nuevo))!.$2,
+      'credencial-de-ejemplo',
+    );
   });
 
   test('SerieDePin: las verificaciones van una tras otra', () async {

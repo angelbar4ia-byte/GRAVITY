@@ -41,37 +41,42 @@ void main() {
       expect(llamadas, [wdaExcluirDeCaptura, wdaMonitor]);
     });
 
-    test('F4-W1: sin ventana activa espera y reintenta; al aparecer aplica',
-        () async {
-      var consultas = 0;
-      final llamadas = <int>[];
-      final p = ProtectorDePantallaWindows(
-        aplicar: (a) {
-          llamadas.add(a);
-          return true;
-        },
-        hayVentana: () => ++consultas >= 4,
-        espera: Duration.zero,
-      );
-      await p.establecer(segura: true);
-      expect(consultas, 4);
-      expect(llamadas, [wdaExcluirDeCaptura]);
-    });
+    test(
+      'F4-W1: sin ventana activa espera y reintenta; al aparecer aplica',
+      () async {
+        var consultas = 0;
+        final llamadas = <int>[];
+        final p = ProtectorDePantallaWindows(
+          aplicar: (a) {
+            llamadas.add(a);
+            return true;
+          },
+          hayVentana: () => ++consultas >= 4,
+          espera: Duration.zero,
+        );
+        await p.establecer(segura: true);
+        expect(consultas, 4);
+        expect(llamadas, [wdaExcluirDeCaptura]);
+      },
+    );
 
-    test('F4-W1: si la ventana nunca aparece no aplica nada ni falla', () async {
-      final llamadas = <int>[];
-      final p = ProtectorDePantallaWindows(
-        aplicar: (a) {
-          llamadas.add(a);
-          return true;
-        },
-        hayVentana: () => false,
-        intentos: 3,
-        espera: Duration.zero,
-      );
-      await p.establecer(segura: true);
-      expect(llamadas, isEmpty);
-    });
+    test(
+      'F4-W1: si la ventana nunca aparece no aplica nada ni falla',
+      () async {
+        final llamadas = <int>[];
+        final p = ProtectorDePantallaWindows(
+          aplicar: (a) {
+            llamadas.add(a);
+            return true;
+          },
+          hayVentana: () => false,
+          intentos: 3,
+          espera: Duration.zero,
+        );
+        await p.establecer(segura: true);
+        expect(llamadas, isEmpty);
+      },
+    );
 
     test('un fallo nativo no tira la app', () async {
       final p = ProtectorDePantallaWindows(
@@ -135,49 +140,55 @@ void main() {
       expect(otro.read(capturasBloqueadasProvider), isFalse);
     });
 
-    test('apagarlo con la pantalla ya protegida la desprotege al instante', () async {
-      final c = contenedor();
-      c.listen(capturasBloqueadasProvider, (_, _) {});
-      final controlador = c.read(controladorPantallaSeguraProvider);
-      controlador.pedir();
-      await controlador.aplicado;
-      expect(aplicadas, [true]);
-      await c.read(capturasBloqueadasProvider.notifier).fijar(false);
-      await controlador.aplicado;
-      expect(aplicadas, [true, false]);
-      await c.read(capturasBloqueadasProvider.notifier).fijar(true);
-      await controlador.aplicado;
-      expect(aplicadas, [true, false, true]);
-    });
+    test(
+      'apagarlo con la pantalla ya protegida la desprotege al instante',
+      () async {
+        final c = contenedor();
+        c.listen(capturasBloqueadasProvider, (_, _) {});
+        final controlador = c.read(controladorPantallaSeguraProvider);
+        controlador.pedir();
+        await controlador.aplicado;
+        expect(aplicadas, [true]);
+        await c.read(capturasBloqueadasProvider.notifier).fijar(false);
+        await controlador.aplicado;
+        expect(aplicadas, [true, false]);
+        await c.read(capturasBloqueadasProvider.notifier).fijar(true);
+        await controlador.aplicado;
+        expect(aplicadas, [true, false, true]);
+      },
+    );
   });
 
-  testWidgets('Privacidad en la laptop ofrece apagar el bloqueo; el teléfono no', (
-    tester,
-  ) async {
-    Future<void> montar(TipoDispositivo d) async {
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            tipoDispositivoProvider.overrideWithValue(d),
-            almacenSeguroProvider.overrideWithValue(AlmacenSeguroEnMemoria()),
-            servicioSesionProvider.overrideWithValue(
-              ServicioSesionFalso.con(Rol.dueno),
+  testWidgets(
+    'Privacidad en la laptop ofrece apagar el bloqueo; el teléfono no',
+    (tester) async {
+      Future<void> montar(TipoDispositivo d) async {
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              tipoDispositivoProvider.overrideWithValue(d),
+              almacenSeguroProvider.overrideWithValue(AlmacenSeguroEnMemoria()),
+              servicioSesionProvider.overrideWithValue(
+                ServicioSesionFalso.con(Rol.dueno),
+              ),
+            ],
+            child: const MaterialApp(
+              home: Scaffold(body: PantallaPrivacidad()),
             ),
-          ],
-          child: const MaterialApp(home: Scaffold(body: PantallaPrivacidad())),
-        ),
-      );
-      await tester.pumpAndSettle();
-    }
+          ),
+        );
+        await tester.pumpAndSettle();
+      }
 
-    await montar(TipoDispositivo.telefono);
-    expect(find.byKey(const ValueKey('privacidad-capturas')), findsNothing);
-    await montar(TipoDispositivo.laptop);
-    final interruptor = find.byKey(const ValueKey('privacidad-capturas'));
-    expect(interruptor, findsOneWidget);
-    expect(tester.widget<SwitchListTile>(interruptor).value, isTrue);
-    await tester.tap(interruptor);
-    await tester.pumpAndSettle();
-    expect(tester.widget<SwitchListTile>(interruptor).value, isFalse);
-  });
+      await montar(TipoDispositivo.telefono);
+      expect(find.byKey(const ValueKey('privacidad-capturas')), findsNothing);
+      await montar(TipoDispositivo.laptop);
+      final interruptor = find.byKey(const ValueKey('privacidad-capturas'));
+      expect(interruptor, findsOneWidget);
+      expect(tester.widget<SwitchListTile>(interruptor).value, isTrue);
+      await tester.tap(interruptor);
+      await tester.pumpAndSettle();
+      expect(tester.widget<SwitchListTile>(interruptor).value, isFalse);
+    },
+  );
 }

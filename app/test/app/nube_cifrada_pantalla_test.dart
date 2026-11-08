@@ -53,7 +53,9 @@ Future<ProviderContainer> montar(
     ),
   );
   await tester.pumpAndSettle();
-  return ProviderScope.containerOf(tester.element(find.byType(PantallaHabitosAjustes)));
+  return ProviderScope.containerOf(
+    tester.element(find.byType(PantallaHabitosAjustes)),
+  );
 }
 
 void main() {
@@ -93,67 +95,77 @@ void main() {
     expect(servidor.llave, isNull);
   });
 
-  testWidgets('activar: frase, confirmación con 3 palabras y queda en la nube', (
+  testWidgets(
+    'activar: frase, confirmación con 3 palabras y queda en la nube',
+    (tester) async {
+      final servidor = AdministracionNubeHabitosEnMemoria();
+      final contenedor = await montar(
+        tester,
+        rol: Rol.dueno,
+        servidor: servidor,
+      );
+      await tester.tap(find.byKey(const ValueKey('nube-activar')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('nube-elegir-continuar')));
+      await tester.pumpAndSettle();
+      // La frase se ve una vez, con las 12 palabras numeradas.
+      expect(find.byKey(const ValueKey('nube-frase')), findsOneWidget);
+      expect(find.byType(Chip), findsNWidgets(12));
+      final chips = tester.widgetList<Chip>(find.byType(Chip)).toList();
+      final frase = [
+        for (final c in chips) ((c.label as Text).data!).split('. ').last,
+      ];
+      expect(FraseDeRecuperacion.esValida(frase), isTrue);
+
+      await tester.tap(find.byKey(const ValueKey('nube-ya-anote')));
+      await tester.pumpAndSettle();
+      // Una palabra mal: no avanza.
+      await tester.enterText(
+        find.byKey(const ValueKey('nube-confirma-0')),
+        'xx',
+      );
+      await tester.tap(find.byKey(const ValueKey('nube-confirmar')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('nube-confirma-error')), findsOneWidget);
+      expect(servidor.llave, isNull);
+
+      // Las tres palabras que pide (por su número).
+      for (var i = 0; i < 3; i++) {
+        final etiqueta = tester
+            .widget<TextField>(find.byKey(ValueKey('nube-confirma-$i')))
+            .decoration!
+            .labelText!;
+        final posicion = int.parse(etiqueta.split(' ').last) - 1;
+        await tester.enterText(
+          find.byKey(ValueKey('nube-confirma-$i')),
+          frase[posicion],
+        );
+      }
+      // PBKDF2 de 600 000 vueltas corre en un hilo real.
+      await tester.tap(find.byKey(const ValueKey('nube-confirmar')));
+      await tester.pump();
+      for (var i = 0; i < 100; i++) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 100)),
+        );
+        await tester.pump(const Duration(milliseconds: 100));
+        if (find.text('En la nube cifrada').evaluate().length == 2) break;
+      }
+      await tester.pumpAndSettle();
+      expect(servidor.llave, isNotNull);
+      expect(
+        servidor.modos.values.every((m) => m.valor == 'nube_cifrada'),
+        isTrue,
+      );
+      expect(find.text('En la nube cifrada'), findsNWidgets(2));
+      expect(find.byKey(const ValueKey('nube-reiniciar')), findsOneWidget);
+      expect(contenedor, isNotNull);
+    },
+  );
+
+  testWidgets('sin señal se puede ver el estado pero no cambiar', (
     tester,
   ) async {
-    final servidor = AdministracionNubeHabitosEnMemoria();
-    final contenedor = await montar(tester, rol: Rol.dueno, servidor: servidor);
-    await tester.tap(find.byKey(const ValueKey('nube-activar')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('nube-elegir-continuar')));
-    await tester.pumpAndSettle();
-    // La frase se ve una vez, con las 12 palabras numeradas.
-    expect(find.byKey(const ValueKey('nube-frase')), findsOneWidget);
-    expect(find.byType(Chip), findsNWidgets(12));
-    final chips = tester.widgetList<Chip>(find.byType(Chip)).toList();
-    final frase = [
-      for (final c in chips) ((c.label as Text).data!).split('. ').last,
-    ];
-    expect(FraseDeRecuperacion.esValida(frase), isTrue);
-
-    await tester.tap(find.byKey(const ValueKey('nube-ya-anote')));
-    await tester.pumpAndSettle();
-    // Una palabra mal: no avanza.
-    await tester.enterText(find.byKey(const ValueKey('nube-confirma-0')), 'xx');
-    await tester.tap(find.byKey(const ValueKey('nube-confirmar')));
-    await tester.pumpAndSettle();
-    expect(find.byKey(const ValueKey('nube-confirma-error')), findsOneWidget);
-    expect(servidor.llave, isNull);
-
-    // Las tres palabras que pide (por su número).
-    for (var i = 0; i < 3; i++) {
-      final etiqueta = tester
-          .widget<TextField>(find.byKey(ValueKey('nube-confirma-$i')))
-          .decoration!
-          .labelText!;
-      final posicion = int.parse(etiqueta.split(' ').last) - 1;
-      await tester.enterText(
-        find.byKey(ValueKey('nube-confirma-$i')),
-        frase[posicion],
-      );
-    }
-    // PBKDF2 de 600 000 vueltas corre en un hilo real.
-    await tester.tap(find.byKey(const ValueKey('nube-confirmar')));
-    await tester.pump();
-    for (var i = 0; i < 100; i++) {
-      await tester.runAsync(
-        () => Future<void>.delayed(const Duration(milliseconds: 100)),
-      );
-      await tester.pump(const Duration(milliseconds: 100));
-      if (find.text('En la nube cifrada').evaluate().length == 2) break;
-    }
-    await tester.pumpAndSettle();
-    expect(servidor.llave, isNotNull);
-    expect(
-      servidor.modos.values.every((m) => m.valor == 'nube_cifrada'),
-      isTrue,
-    );
-    expect(find.text('En la nube cifrada'), findsNWidgets(2));
-    expect(find.byKey(const ValueKey('nube-reiniciar')), findsOneWidget);
-    expect(contenedor, isNotNull);
-  });
-
-  testWidgets('sin señal se puede ver el estado pero no cambiar', (tester) async {
     final servidor = AdministracionNubeHabitosEnMemoria()..sinConexion = true;
     await montar(tester, rol: Rol.dueno, servidor: servidor);
     expect(find.byKey(const ValueKey('nube-sin-senal')), findsOneWidget);

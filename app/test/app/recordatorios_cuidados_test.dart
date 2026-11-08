@@ -58,10 +58,14 @@ const _comida = 'Hora de la comida';
 void main() {
   pruebasRevisionFase5();
   test('tocar el aviso de toma abre Medicamentos; los demás, la bandeja', () {
-    expect(rutaAlAbrirAvisoDeTipo('recordatorio_toma'),
-        RutasApp.cuidadosMedicamentos);
-    expect(rutaAlAbrirAvisoDeTipo('recordatorio_toma'),
-        '/cuidados/medicamentos');
+    expect(
+      rutaAlAbrirAvisoDeTipo('recordatorio_toma'),
+      RutasApp.cuidadosMedicamentos,
+    );
+    expect(
+      rutaAlAbrirAvisoDeTipo('recordatorio_toma'),
+      '/cuidados/medicamentos',
+    );
     expect(rutaAlAbrirAvisoDeTipo('pago_proximo'), RutasApp.avisos);
     expect(rutaAlAbrirAvisoDeTipo(null), RutasApp.avisos);
   });
@@ -243,8 +247,7 @@ Future<NotificadorEnMemoria> _corrIgual(
 }
 
 void pruebasRevisionFase5() {
-  test('F5-I3: la toma pospuesta tampoco se programa localmente (la avisa el servidor)',
-      () async {
+  test('F5-I3: la toma pospuesta tampoco se programa localmente (la avisa el servidor)', () async {
     final datos = datosDeEjemploCuidados(_ahora);
     _pospuestaALaCuidadora(datos);
     final cuidadora = await _corrIgual(
@@ -258,29 +261,31 @@ void pruebasRevisionFase5() {
     expect(_cuando(dueno, _toma), isEmpty);
   });
 
-  test('F5-M7: la tablet pública no programa recordatorios de cuidado',
-      () async {
-    final datos = datosDeEjemploCuidados(_ahora);
-    final n = NotificadorEnMemoria();
-    final almacen = AlmacenSeguroEnMemoria();
-    // Antes, en el teléfono: se programa.
-    await _corrIgual(
-      datos,
-      Rol.dueno,
-      personasDemo.duenoId,
-      notificador: n,
-      almacen: almacen,
-    );
-    expect(n.programadas, isNotEmpty);
-    // La misma persona dentro de la tablet pública: se cancela y no se programa.
-    await _corrIgual(
-      datos,
-      Rol.dueno,
-      personasDemo.duenoId,
-      tabletPublica: true,
-      notificador: n,
-      almacen: almacen,
-    );
-    expect(n.programadas, isEmpty);
-  });
+  test(
+    'F5-M7: la tablet pública no programa recordatorios de cuidado',
+    () async {
+      final datos = datosDeEjemploCuidados(_ahora);
+      final n = NotificadorEnMemoria();
+      final almacen = AlmacenSeguroEnMemoria();
+      // Antes, en el teléfono: se programa.
+      await _corrIgual(
+        datos,
+        Rol.dueno,
+        personasDemo.duenoId,
+        notificador: n,
+        almacen: almacen,
+      );
+      expect(n.programadas, isNotEmpty);
+      // La misma persona dentro de la tablet pública: se cancela y no se programa.
+      await _corrIgual(
+        datos,
+        Rol.dueno,
+        personasDemo.duenoId,
+        tabletPublica: true,
+        notificador: n,
+        almacen: almacen,
+      );
+      expect(n.programadas, isEmpty);
+    },
+  );
 }

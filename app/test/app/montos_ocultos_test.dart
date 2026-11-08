@@ -632,7 +632,10 @@ void main() {
       await cambiar(tester, '739150', '739150');
       expect(await resultado(), isTrue);
       expect(await bloqueo.comprobarPin('739150'), ResultadoBloqueo.abierto);
-      expect(await bloqueo.comprobarPin('2468'), ResultadoBloqueo.pinIncorrecto);
+      expect(
+        await bloqueo.comprobarPin('2468'),
+        ResultadoBloqueo.pinIncorrecto,
+      );
     });
   });
 
@@ -806,7 +809,10 @@ void main() {
         final bloqueo = contenedorDe(tester)
             .read(controladorBloqueoProvider.notifier);
         await bloqueo.listo;
-        expect(await bloqueo.desbloquearConPin('284651'), ResultadoBloqueo.abierto);
+        expect(
+          await bloqueo.desbloquearConPin('284651'),
+          ResultadoBloqueo.abierto,
+        );
         await tester.pumpAndSettle();
         await irAPrivacidad(tester);
 

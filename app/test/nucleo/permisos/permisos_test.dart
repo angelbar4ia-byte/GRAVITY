@@ -111,18 +111,21 @@ void main() {
       expect(modulosNavegables(Rol.casa), [Modulo.cuidados, Modulo.casa]);
     });
 
-    test('Familiar: hábitos propios, Alimentación (edita el menú de papá) y casa', () {
-      expect(modulosNavegables(Rol.familiar), [
-        Modulo.habitos,
-        Modulo.alimentacion,
-        Modulo.casa,
-      ]);
-      // D23 (ajuste 6/nov): el familiar edita el menú de Papá, no el de la pareja.
-      expect(
-        puede(Rol.familiar, Modulo.alimentacion, Accion.escribir),
-        isTrue,
-      );
-    });
+    test(
+      'Familiar: hábitos propios, Alimentación (edita el menú de papá) y casa',
+      () {
+        expect(modulosNavegables(Rol.familiar), [
+          Modulo.habitos,
+          Modulo.alimentacion,
+          Modulo.casa,
+        ]);
+        // D23 (ajuste 6/nov): el familiar edita el menú de Papá, no el de la pareja.
+        expect(
+          puede(Rol.familiar, Modulo.alimentacion, Accion.escribir),
+          isTrue,
+        );
+      },
+    );
   });
 
   group('D17: solo los alcances del servidor; lo particular, por rol', () {

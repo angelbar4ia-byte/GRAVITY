@@ -36,10 +36,7 @@ const _rutas = <String>[
 /// F4-X1: con letra 2.0 a 360 dp, Ajustes › Privacidad desborda (ver abajo).
 const _rutaConHallazgo = '/ajustes/privacidad';
 
-Future<List<String>> _desbordesDe(
-  WidgetTester tester,
-  String ruta,
-) async {
+Future<List<String>> _desbordesDe(WidgetTester tester, String ruta) async {
   final r = await recolectar(() async {
     await irA(tester, ruta);
     await avanzar(tester);

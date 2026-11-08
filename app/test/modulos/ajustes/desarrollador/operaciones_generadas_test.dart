@@ -40,6 +40,10 @@ const _rpcDeLectura = {
   'finSoloLectura',
   'finPuedeSalir',
   'finAdultosConFinanzas',
+  // Fase 8 (migración 20261132): rango del periodo y aportación calculada; no
+  // escriben (la aportación solo lee y suma).
+  'finPeriodoRango',
+  'finCasaAportacion',
   // D24: preguntas sobre la vista temporal de Papá (no escriben).
   'finVistaPapaVigente',
   'finVistaVigenteHogar',
@@ -247,6 +251,8 @@ void main() {
         'finCrearLibroRepresentado',
         'finNombrarAlbacea',
         'finResponderVista',
+        // Fase 8 (migración 20261133): «Solo el dueño fija la referencia».
+        'finCasaFijarReferencia',
       };
       // D24 (fase 4): el familiar pide y consulta la vista temporal de Papá;
       // el dueño la autoriza. Es la única excepción a «solo dueño y pareja».
@@ -259,7 +265,9 @@ void main() {
       };
       for (final o in finanzas) {
         expect(o.soloLocal, isTrue, reason: o.id);
-        expect(o.fase, anyOf(1, 2, 4), reason: o.id);
+        // 8 = ampliaciones de Finanzas (transferencias y casa, migraciones
+        // 20261132 y 20261133; docs/specs/fase-8-finanzas-ampliaciones.md).
+        expect(o.fase, anyOf(1, 2, 4, 8), reason: o.id);
         if (deTodos.contains(o.id)) {
           expect(o.roles, Rol.values.toSet(), reason: o.id);
         } else if (soloDueno.contains(o.id)) {

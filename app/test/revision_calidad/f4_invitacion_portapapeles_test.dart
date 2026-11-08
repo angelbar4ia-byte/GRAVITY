@@ -64,7 +64,9 @@ void main() {
       expect(contenido, isEmpty);
     });
 
-    testWidgets('al volver antes de tiempo no se borra todavía', (tester) async {
+    testWidgets('al volver antes de tiempo no se borra todavía', (
+      tester,
+    ) async {
       await p.copiar('CODIGO-SECRETO');
       ahora = ahora.add(const Duration(seconds: 30));
       p.didChangeAppLifecycleState(AppLifecycleState.resumed);

@@ -128,42 +128,34 @@ void main() {
         10000,
       );
       expect(
-        planearAhorroDeCierre(
-          remanente: 100000,
-          bolsas: [b],
-        ).aportes,
+        planearAhorroDeCierre(remanente: 100000, bolsas: [b]).aportes,
         isEmpty,
       );
       // Redondeo al centavo más cercano; nunca más que lo disponible.
       expect(
-        planearAhorroDeCierre(
-          remanente: 5,
-          bolsas: [b],
-          extras: 1000,
-        ).total,
+        planearAhorroDeCierre(remanente: 5, bolsas: [b], extras: 1000).total,
         lessThanOrEqualTo(5),
       );
     });
 
-    test('el orden que arrastra la persona manda: el sobrante va a la primera',
-        () {
-      final a = _bolsa('a', [MetodoAhorro.sobranteSemanal], prioridad: 1);
-      final c = _bolsa('c', [MetodoAhorro.sobranteSemanal], prioridad: 2);
-      expect(
-        planearAhorroDeCierre(
+    test(
+      'el orden que arrastra la persona manda: el sobrante va a la primera',
+      () {
+        final a = _bolsa('a', [MetodoAhorro.sobranteSemanal], prioridad: 1);
+        final c = _bolsa('c', [MetodoAhorro.sobranteSemanal], prioridad: 2);
+        expect(
+          planearAhorroDeCierre(remanente: 9000, bolsas: [a, c]).aportadoA('a'),
+          9000,
+        );
+        final arrastrado = planearAhorroDeCierre(
           remanente: 9000,
           bolsas: [a, c],
-        ).aportadoA('a'),
-        9000,
-      );
-      final arrastrado = planearAhorroDeCierre(
-        remanente: 9000,
-        bolsas: [a, c],
-        orden: ['c', 'a'],
-      );
-      expect(arrastrado.aportadoA('c'), 9000);
-      expect(arrastrado.aportadoA('a'), 0);
-    });
+          orden: ['c', 'a'],
+        );
+        expect(arrastrado.aportadoA('c'), 9000);
+        expect(arrastrado.aportadoA('a'), 0);
+      },
+    );
 
     test('es determinista: el mismo cierre da el mismo plan', () {
       final bolsas = [

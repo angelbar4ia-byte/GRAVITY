@@ -76,34 +76,38 @@ void main() {
     }
   });
 
-  test('desbloquearConPin simultáneos: el límite de 5 se respeta (guardia)',
-      () async {
-    final controlador = await abrir();
-    final resultados = await Future.wait([
-      for (var i = 0; i < 8; i++) controlador.desbloquearConPin('000000'),
-      controlador.desbloquearConPin('246813'),
-    ]);
-    expect(
-      resultados.where((r) => r == ResultadoBloqueo.pinIncorrecto).length,
-      lessThanOrEqualTo(4),
-      reason: 'a partir del quinto fallo, bloqueado',
-    );
-    expect(resultados.last, ResultadoBloqueo.bloqueado);
-  });
+  test(
+    'desbloquearConPin simultáneos: el límite de 5 se respeta (guardia)',
+    () async {
+      final controlador = await abrir();
+      final resultados = await Future.wait([
+        for (var i = 0; i < 8; i++) controlador.desbloquearConPin('000000'),
+        controlador.desbloquearConPin('246813'),
+      ]);
+      expect(
+        resultados.where((r) => r == ResultadoBloqueo.pinIncorrecto).length,
+        lessThanOrEqualTo(4),
+        reason: 'a partir del quinto fallo, bloqueado',
+      );
+      expect(resultados.last, ResultadoBloqueo.bloqueado);
+    },
+  );
 
-  test('comprobarPin simultáneos: el límite de 5 se respeta (guardia)',
-      () async {
-    final controlador = await abrir();
-    final resultados = await Future.wait([
-      for (var i = 0; i < 8; i++) controlador.comprobarPin('000000'),
-      controlador.comprobarPin('246813'),
-    ]);
-    expect(
-      resultados.where((r) => r == ResultadoBloqueo.pinIncorrecto).length,
-      lessThanOrEqualTo(4),
-    );
-    expect(resultados.last, ResultadoBloqueo.bloqueado);
-  });
+  test(
+    'comprobarPin simultáneos: el límite de 5 se respeta (guardia)',
+    () async {
+      final controlador = await abrir();
+      final resultados = await Future.wait([
+        for (var i = 0; i < 8; i++) controlador.comprobarPin('000000'),
+        controlador.comprobarPin('246813'),
+      ]);
+      expect(
+        resultados.where((r) => r == ResultadoBloqueo.pinIncorrecto).length,
+        lessThanOrEqualTo(4),
+      );
+      expect(resultados.last, ResultadoBloqueo.bloqueado);
+    },
+  );
 
   // F4-S1 (IMPORTANTE) · `cambiarPin` revisa `_intentos.bloqueado` antes de
   // entrar a la fila (bloqueo.dart, ControladorBloqueo.cambiarPin). Con ocho
@@ -112,53 +116,60 @@ void main() {
   // más de 5 PIN y el PIN bueno entra aunque la cuenta ya estuviera bloqueada.
   // Igual en `ControladorTablet.cambiarPin` y en `ControladorMontos`
   // (`_cambiarPropio` y `verificar` con fuente propia).
-  test('F4-S1: cambiarPin simultáneos respetan el límite de 5 intentos',
-      () async {
-    final controlador = await abrir();
-    final resultados = await Future.wait([
-      for (var i = 0; i < 8; i++) controlador.cambiarPin('000000', '135792'),
-      controlador.cambiarPin('246813', '135792'),
-    ]);
-    expect(
-      resultados.where((r) => r == ResultadoBloqueo.pinIncorrecto).length,
-      lessThanOrEqualTo(4),
-      reason: 'a partir del quinto fallo, bloqueado',
-    );
-    expect(
-      resultados.last,
-      ResultadoBloqueo.bloqueado,
-      reason: 'el PIN bueno no debe pasar con la cuenta ya bloqueada',
-    );
-  });
+  test(
+    'F4-S1: cambiarPin simultáneos respetan el límite de 5 intentos',
+    () async {
+      final controlador = await abrir();
+      final resultados = await Future.wait([
+        for (var i = 0; i < 8; i++) controlador.cambiarPin('000000', '135792'),
+        controlador.cambiarPin('246813', '135792'),
+      ]);
+      expect(
+        resultados.where((r) => r == ResultadoBloqueo.pinIncorrecto).length,
+        lessThanOrEqualTo(4),
+        reason: 'a partir del quinto fallo, bloqueado',
+      );
+      expect(
+        resultados.last,
+        ResultadoBloqueo.bloqueado,
+        reason: 'el PIN bueno no debe pasar con la cuenta ya bloqueada',
+      );
+    },
+  );
 
   // F4-H1: la huella no salta el cambio de un PIN corto de quien ve dinero.
-  test('F4-H1: con un PIN corto marcado, la huella no abre: pide cambiarlo',
-      () async {
-    almacen.datos[ControladorBloqueo.claveConfiguracion(
-      dueno.persona.id,
-    )] = jsonEncode(
-      ConfiguracionBloqueo(
-        hashPin: HashPin.crear('2468', iteraciones: 50),
-        huella: true,
-      ).aJson(),
-    );
-    final controlador = await abrir();
-    // Al escribir el PIN corto se anota; ya no abre ni por PIN ni por huella.
-    expect(
-      await controlador.desbloquearConPin('2468'),
-      ResultadoBloqueo.debeCambiarPin,
-    );
-    expect(controlador.state.configuracion!.pinCorto, isTrue);
-    expect(
-      await controlador.desbloquearConHuella(),
-      ResultadoBloqueo.debeCambiarPin,
-    );
-    // Cambiarlo limpia la marca y la huella vuelve a abrir.
-    expect(
-      await controlador.cambiarPin('2468', '135792'),
-      ResultadoBloqueo.abierto,
-    );
-    expect(controlador.state.configuracion!.pinCorto, isFalse);
-    expect(await controlador.desbloquearConHuella(), ResultadoBloqueo.abierto);
-  });
+  test(
+    'F4-H1: con un PIN corto marcado, la huella no abre: pide cambiarlo',
+    () async {
+      almacen.datos[ControladorBloqueo.claveConfiguracion(
+        dueno.persona.id,
+      )] = jsonEncode(
+        ConfiguracionBloqueo(
+          hashPin: HashPin.crear('2468', iteraciones: 50),
+          huella: true,
+        ).aJson(),
+      );
+      final controlador = await abrir();
+      // Al escribir el PIN corto se anota; ya no abre ni por PIN ni por huella.
+      expect(
+        await controlador.desbloquearConPin('2468'),
+        ResultadoBloqueo.debeCambiarPin,
+      );
+      expect(controlador.state.configuracion!.pinCorto, isTrue);
+      expect(
+        await controlador.desbloquearConHuella(),
+        ResultadoBloqueo.debeCambiarPin,
+      );
+      // Cambiarlo limpia la marca y la huella vuelve a abrir.
+      expect(
+        await controlador.cambiarPin('2468', '135792'),
+        ResultadoBloqueo.abierto,
+      );
+      expect(controlador.state.configuracion!.pinCorto, isFalse);
+      expect(
+        await controlador.desbloquearConHuella(),
+        ResultadoBloqueo.abierto,
+      );
+    },
+  );
 }

@@ -18,8 +18,7 @@ const persona = 'ana';
 const tipo = TipoSensible.diarioOracion;
 
 class _Equipo {
-  _Equipo(this.servidor)
-    : almacen = AlmacenSeguroEnMemoria() {
+  _Equipo(this.servidor) : almacen = AlmacenSeguroEnMemoria() {
     llaves = LlavesHabitos(almacen);
     sobres = AlmacenDeSobres(almacen);
     modos = ModosLocales(almacen);
@@ -121,27 +120,35 @@ void main() {
   });
 
   group('activar', () {
-    test('guarda la llave envuelta, pasa a nube y conserva lo escrito', () async {
-      await telefono.escribir('dia:2026-11-01', 'oración uno');
-      await telefono.escribir('dia:2026-11-02', 'oración dos');
-      await telefono.nube.activar(
-        persona,
-        frase,
-        tipos: {tipo},
-      );
-      expect(servidor.modos[tipo], ModoSensible.nubeCifrada);
-      expect(servidor.modos[TipoSensible.habitosSensibles],
-          ModoSensible.soloTelefono);
-      expect(servidor.llave!.version, 1);
-      expect(servidor.llave!.kdf, LlaveEnvuelta.kdfPbkdf2);
-      expect(servidor.llave!.vueltas, 600000);
-      expect(await telefono.modos.modo(persona, tipo), ModoSensible.nubeCifrada);
-      expect(await telefono.llaves.tieneLlaveMaestra(persona), isTrue);
-      // Lo escrito sigue abriendo, ahora con la llave maestra.
-      expect(await telefono.leerTodo(), unorderedEquals(['oración uno', 'oración dos']));
-      // La llave que guardó el servidor se abre con la frase.
-      expect(await servidor.llave!.desenvolver(frase), isNotNull);
-    }, timeout: const Timeout(Duration(minutes: 2)));
+    test(
+      'guarda la llave envuelta, pasa a nube y conserva lo escrito',
+      () async {
+        await telefono.escribir('dia:2026-11-01', 'oración uno');
+        await telefono.escribir('dia:2026-11-02', 'oración dos');
+        await telefono.nube.activar(persona, frase, tipos: {tipo});
+        expect(servidor.modos[tipo], ModoSensible.nubeCifrada);
+        expect(
+          servidor.modos[TipoSensible.habitosSensibles],
+          ModoSensible.soloTelefono,
+        );
+        expect(servidor.llave!.version, 1);
+        expect(servidor.llave!.kdf, LlaveEnvuelta.kdfPbkdf2);
+        expect(servidor.llave!.vueltas, 600000);
+        expect(
+          await telefono.modos.modo(persona, tipo),
+          ModoSensible.nubeCifrada,
+        );
+        expect(await telefono.llaves.tieneLlaveMaestra(persona), isTrue);
+        // Lo escrito sigue abriendo, ahora con la llave maestra.
+        expect(
+          await telefono.leerTodo(),
+          unorderedEquals(['oración uno', 'oración dos']),
+        );
+        // La llave que guardó el servidor se abre con la frase.
+        expect(await servidor.llave!.desenvolver(frase), isNotNull);
+      },
+      timeout: const Timeout(Duration(minutes: 2)),
+    );
 
     test('una frase con una palabra cambiada no se acepta', () async {
       final mala = [...frase]..[3] = frase[3] == 'casa' ? 'mesa' : 'casa';
@@ -161,7 +168,10 @@ void main() {
         throwsA(ErrorNubeCifrada.sinConexion),
       );
       servidor.sinConexion = false;
-      expect(await telefono.modos.modo(persona, tipo), ModoSensible.soloTelefono);
+      expect(
+        await telefono.modos.modo(persona, tipo),
+        ModoSensible.soloTelefono,
+      );
       expect(await telefono.leerTodo(), ['uno']);
     });
   });
@@ -207,7 +217,10 @@ void main() {
       await telefono.nube.volverASoloTelefono(persona, tipo);
       expect(servidor.modos[tipo], ModoSensible.soloTelefono);
       expect(servidor.sobresPorTipo[tipo], isEmpty);
-      expect(await telefono.modos.modo(persona, tipo), ModoSensible.soloTelefono);
+      expect(
+        await telefono.modos.modo(persona, tipo),
+        ModoSensible.soloTelefono,
+      );
       expect(
         await telefono.leerTodo(),
         unorderedEquals(['del teléfono', 'de la laptop']),
@@ -223,7 +236,10 @@ void main() {
         throwsA(ErrorNubeCifrada.sinConexion),
       );
       servidor.sinConexion = false;
-      expect(await telefono.modos.modo(persona, tipo), ModoSensible.nubeCifrada);
+      expect(
+        await telefono.modos.modo(persona, tipo),
+        ModoSensible.nubeCifrada,
+      );
       expect(await telefono.leerTodo(), ['uno']);
     }, timeout: const Timeout(Duration(minutes: 2)));
   });
@@ -258,7 +274,10 @@ void main() {
       await telefono.nube.reiniciar(persona);
       expect(servidor.llave, isNull);
       expect(servidor.modos[tipo], ModoSensible.soloTelefono);
-      expect(await telefono.modos.modo(persona, tipo), ModoSensible.soloTelefono);
+      expect(
+        await telefono.modos.modo(persona, tipo),
+        ModoSensible.soloTelefono,
+      );
       expect(await telefono.llaves.tieneLlaveMaestra(persona), isFalse);
       expect(await telefono.leerTodo(), ['uno']);
     }, timeout: const Timeout(Duration(minutes: 2)));
@@ -280,20 +299,27 @@ void main() {
   });
 
   group('época', () {
-    test('otro equipo volvió a solo teléfono: este deja de creer en la nube', () async {
-      await telefono.escribir('dia:2026-11-01', 'uno');
-      await telefono.nube.activar(persona, frase, tipos: {tipo});
-      await subir(telefono);
-      final laptop = _Equipo(servidor);
-      await laptop.nube.anadirEquipo(persona, frase);
-      expect(await laptop.nube.revisarEpoca(persona), isFalse);
+    test(
+      'otro equipo volvió a solo teléfono: este deja de creer en la nube',
+      () async {
+        await telefono.escribir('dia:2026-11-01', 'uno');
+        await telefono.nube.activar(persona, frase, tipos: {tipo});
+        await subir(telefono);
+        final laptop = _Equipo(servidor);
+        await laptop.nube.anadirEquipo(persona, frase);
+        expect(await laptop.nube.revisarEpoca(persona), isFalse);
 
-      await telefono.nube.volverASoloTelefono(persona, tipo);
-      expect(await laptop.nube.revisarEpoca(persona), isTrue);
-      expect(await laptop.modos.modo(persona, tipo), ModoSensible.soloTelefono);
-      expect(await laptop.sobres.todos(persona, tipo: tipo), isEmpty);
-      expect(await laptop.nube.revisarEpoca(persona), isFalse);
-    }, timeout: const Timeout(Duration(minutes: 3)));
+        await telefono.nube.volverASoloTelefono(persona, tipo);
+        expect(await laptop.nube.revisarEpoca(persona), isTrue);
+        expect(
+          await laptop.modos.modo(persona, tipo),
+          ModoSensible.soloTelefono,
+        );
+        expect(await laptop.sobres.todos(persona, tipo: tipo), isEmpty);
+        expect(await laptop.nube.revisarEpoca(persona), isFalse);
+      },
+      timeout: const Timeout(Duration(minutes: 3)),
+    );
 
     test('sin señal no hace nada', () async {
       servidor.sinConexion = true;

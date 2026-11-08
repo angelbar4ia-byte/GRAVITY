@@ -50,50 +50,55 @@ void main() {
       'amplitude',
       'posthog',
     ]) {
-      expect(pubspec.contains(RegExp('^\\s+$p:', multiLine: true)), isFalse,
-          reason: p);
+      expect(
+        pubspec.contains(RegExp('^\\s+$p:', multiLine: true)),
+        isFalse,
+        reason: p,
+      );
     }
   });
 
-  test('cada familia del pubspec existe, trae OFL.txt y está en licencias.dart',
-      () {
-    final familias = RegExp(r'- family: (\w+)')
-        .allMatches(pubspec)
-        .map((m) => m.group(1)!)
-        .toList();
-    expect(familias, isNotEmpty);
-    final rutasLicencia = licenciasFuentes.values.toSet();
-    for (final familia in familias) {
-      final carpeta = Directory('assets/fonts/$familia');
-      expect(carpeta.existsSync(), isTrue, reason: familia);
-      final ofl = File('assets/fonts/$familia/OFL.txt');
-      expect(ofl.existsSync(), isTrue, reason: '$familia sin OFL.txt');
-      expect(
-        ofl.readAsStringSync(),
-        contains('SIL Open Font License'),
-        reason: familia,
-      );
-      expect(
-        rutasLicencia,
-        contains('assets/fonts/$familia/OFL.txt'),
-        reason: '$familia no está en licencias.dart',
-      );
-      // Todo archivo declarado en el pubspec existe.
-      for (final m in RegExp(
-        'asset: (assets/fonts/$familia/[^\\s]+\\.ttf)',
-      ).allMatches(pubspec)) {
-        expect(File(m.group(1)!).existsSync(), isTrue, reason: m.group(1));
+  test(
+    'cada familia del pubspec existe, trae OFL.txt y está en licencias.dart',
+    () {
+      final familias = RegExp(r'- family: (\w+)')
+          .allMatches(pubspec)
+          .map((m) => m.group(1)!)
+          .toList();
+      expect(familias, isNotEmpty);
+      final rutasLicencia = licenciasFuentes.values.toSet();
+      for (final familia in familias) {
+        final carpeta = Directory('assets/fonts/$familia');
+        expect(carpeta.existsSync(), isTrue, reason: familia);
+        final ofl = File('assets/fonts/$familia/OFL.txt');
+        expect(ofl.existsSync(), isTrue, reason: '$familia sin OFL.txt');
+        expect(
+          ofl.readAsStringSync(),
+          contains('SIL Open Font License'),
+          reason: familia,
+        );
+        expect(
+          rutasLicencia,
+          contains('assets/fonts/$familia/OFL.txt'),
+          reason: '$familia no está en licencias.dart',
+        );
+        // Todo archivo declarado en el pubspec existe.
+        for (final m in RegExp(
+          'asset: (assets/fonts/$familia/[^\\s]+\\.ttf)',
+        ).allMatches(pubspec)) {
+          expect(File(m.group(1)!).existsSync(), isTrue, reason: m.group(1));
+        }
       }
-    }
-    // Y al revés: ninguna carpeta de fuentes sin declarar (ni Anton).
-    final enDisco = Directory('assets/fonts')
-        .listSync()
-        .whereType<Directory>()
-        .map((d) => d.path.split('/').last)
-        .toSet();
-    expect(enDisco, familias.toSet());
-    expect(enDisco, isNot(contains('Anton')));
-  });
+      // Y al revés: ninguna carpeta de fuentes sin declarar (ni Anton).
+      final enDisco = Directory('assets/fonts')
+          .listSync()
+          .whereType<Directory>()
+          .map((d) => d.path.split('/').last)
+          .toSet();
+      expect(enDisco, familias.toSet());
+      expect(enDisco, isNot(contains('Anton')));
+    },
+  );
 
   test('las fuentes del proyecto pesan menos de 3 MB', () {
     var bytes = 0;

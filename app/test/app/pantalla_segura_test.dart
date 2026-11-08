@@ -64,19 +64,24 @@ void main() {
       expect(esPantallaSensible(RutasApp.pendientes, Rol.familiar), isFalse);
     });
 
-    test('F4-A1: Alimentación (perfil clínico de Papá) solo para quien la abre',
-        () {
-      for (final ruta in [Rutas.alimentacion, '${Rutas.alimentacion}/compras']) {
-        for (final rol in Rol.values) {
-          expect(
-            esPantallaSensible(ruta, rol),
-            puedeAbrir(rol, Modulo.alimentacion),
-            reason: '$ruta $rol',
-          );
+    test(
+      'F4-A1: Alimentación (perfil clínico de Papá) solo para quien la abre',
+      () {
+        for (final ruta in [
+          Rutas.alimentacion,
+          '${Rutas.alimentacion}/compras',
+        ]) {
+          for (final rol in Rol.values) {
+            expect(
+              esPantallaSensible(ruta, rol),
+              puedeAbrir(rol, Modulo.alimentacion),
+              reason: '$ruta $rol',
+            );
+          }
         }
-      }
-      expect(esPantallaSensible(Rutas.alimentacion, Rol.dueno), isTrue);
-    });
+        expect(esPantallaSensible(Rutas.alimentacion, Rol.dueno), isTrue);
+      },
+    );
 
     test('lo demás se puede capturar', () {
       for (final ruta in [

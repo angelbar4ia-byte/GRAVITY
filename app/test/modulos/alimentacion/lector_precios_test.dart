@@ -51,54 +51,67 @@ Future<AlertaPrecio?> _compra(
   ServicioAlimentacion s,
   int centavos, {
   double cantidad = 1,
-}) => s.registrarCompra(
-  MenuId.pareja,
-  _lunes,
-  claveCompra('Leche entera', 'l'),
-  cantidadComprada: cantidad,
-  totalCentavos: centavos,
-  nombre: 'Leche entera',
-  unidad: 'l',
-).then((r) => r.alerta);
+}) => s
+    .registrarCompra(
+      MenuId.pareja,
+      _lunes,
+      claveCompra('Leche entera', 'l'),
+      cantidadComprada: cantidad,
+      totalCentavos: centavos,
+      nombre: 'Leche entera',
+      unidad: 'l',
+    )
+    .then((r) => r.alerta);
 
 class _RepoCodigoUsado extends RepositorioAlimentacionEnMemoria {
   _RepoCodigoUsado() : super(semanaEjemplo: _lunes);
   @override
   Future<bool> guardarIngredienteConCodigo(Ingrediente ingrediente) async =>
-      throw const ErrorAlimentacionServidor('Ese código ya es de otro producto');
+      throw const ErrorAlimentacionServidor(
+        'Ese código ya es de otro producto',
+      );
 }
 
 void main() {
   group('lector de código', () {
-    test('lector falso devuelve un código y encuentra el ingrediente', () async {
-      final s = _srv(_repoConLeche());
-      final lector = LectorCodigoFalso('7501000000011');
-      final codigo = await lector.leer();
-      expect(codigo, '7501000000011');
-      final ing = await s.buscarPorCodigoBarras(codigo!);
-      expect(ing?.nombre, 'Leche entera');
-      expect(lector.lecturas, 1);
-    });
+    test(
+      'lector falso devuelve un código y encuentra el ingrediente',
+      () async {
+        final s = _srv(_repoConLeche());
+        final lector = LectorCodigoFalso('7501000000011');
+        final codigo = await lector.leer();
+        expect(codigo, '7501000000011');
+        final ing = await s.buscarPorCodigoBarras(codigo!);
+        expect(ing?.nombre, 'Leche entera');
+        expect(lector.lecturas, 1);
+      },
+    );
 
-    test('código no encontrado: se captura a mano y queda guardado con el código',
-        () async {
-      final repo = _repoConLeche();
-      final s = _srv(repo);
-      expect(await s.buscarPorCodigoBarras('999'), isNull);
-      await s.guardarIngredienteConCodigo(
-        codigo: '999',
-        nombre: 'Atún',
-        unidad: 'lata',
-        seccion: SeccionCompra.abarrotes,
-      );
-      final ing = await s.buscarPorCodigoBarras('999');
-      expect(ing?.nombre, 'Atún');
-      expect(ing?.codigoBarras, '999');
-      expect(
-        () => s.guardarIngredienteConCodigo(codigo: '1', nombre: '', unidad: 'g'),
-        throwsArgumentError,
-      );
-    });
+    test(
+      'código no encontrado: se captura a mano y queda guardado con el código',
+      () async {
+        final repo = _repoConLeche();
+        final s = _srv(repo);
+        expect(await s.buscarPorCodigoBarras('999'), isNull);
+        await s.guardarIngredienteConCodigo(
+          codigo: '999',
+          nombre: 'Atún',
+          unidad: 'lata',
+          seccion: SeccionCompra.abarrotes,
+        );
+        final ing = await s.buscarPorCodigoBarras('999');
+        expect(ing?.nombre, 'Atún');
+        expect(ing?.codigoBarras, '999');
+        expect(
+          () => s.guardarIngredienteConCodigo(
+            codigo: '1',
+            nombre: '',
+            unidad: 'g',
+          ),
+          throwsArgumentError,
+        );
+      },
+    );
 
     test('el lector por omisión no lee ni pide cámara', () async {
       expect(await const LectorCodigoSinCamara().leer(), isNull);
@@ -106,20 +119,26 @@ void main() {
   });
 
   group('alerta de precio e historial', () {
-    test('la primera compra real no alerta (el precio base no cuenta)', () async {
-      expect(await _compra(_srv(_repoConLeche()), 2800), isNull);
-    });
+    test(
+      'la primera compra real no alerta (el precio base no cuenta)',
+      () async {
+        expect(await _compra(_srv(_repoConLeche()), 2800), isNull);
+      },
+    );
 
-    test('sube más de 20%: alerta con porcentaje y precios unitarios', () async {
-      final s = _srv(_repoConLeche());
-      await _compra(s, 2000);
-      final a = await _compra(s, 2600); // +30%
-      expect(a, isNotNull);
-      expect(a!.porcentaje, 30);
-      expect(a.texto, contains('El precio subió 30% desde la última compra'));
-      expect(a.texto, contains('\$20.00'));
-      expect(a.texto, contains('\$26.00'));
-    });
+    test(
+      'sube más de 20%: alerta con porcentaje y precios unitarios',
+      () async {
+        final s = _srv(_repoConLeche());
+        await _compra(s, 2000);
+        final a = await _compra(s, 2600); // +30%
+        expect(a, isNotNull);
+        expect(a!.porcentaje, 30);
+        expect(a.texto, contains('El precio subió 30% desde la última compra'));
+        expect(a.texto, contains('\$20.00'));
+        expect(a.texto, contains('\$26.00'));
+      },
+    );
 
     test('compara precio unitario, no total', () async {
       final s = _srv(_repoConLeche());
@@ -166,7 +185,9 @@ void main() {
           child: const MaterialApp(home: PantallaListaCompras()),
         );
 
-    testWidgets('código desconocido pide captura a mano y la guarda', (t) async {
+    testWidgets('código desconocido pide captura a mano y la guarda', (
+      t,
+    ) async {
       await t.binding.setSurfaceSize(const Size(400, 9000));
       addTearDown(() => t.binding.setSurfaceSize(null));
       final repo = RepositorioAlimentacionEnMemoria(semanaEjemplo: _lunes);
@@ -184,7 +205,9 @@ void main() {
       expect(guardados.single.nombre, 'Galletas');
     });
 
-    testWidgets('código ya usado por otro producto muestra el aviso', (t) async {
+    testWidgets('código ya usado por otro producto muestra el aviso', (
+      t,
+    ) async {
       await t.binding.setSurfaceSize(const Size(400, 9000));
       addTearDown(() => t.binding.setSurfaceSize(null));
       await t.pumpWidget(app(_RepoCodigoUsado(), LectorCodigoFalso('555')));
@@ -200,7 +223,9 @@ void main() {
       expect(t.takeException(), isNull);
     });
 
-    testWidgets('compra que sube más de 20% muestra la alerta local', (t) async {
+    testWidgets('compra que sube más de 20% muestra la alerta local', (
+      t,
+    ) async {
       await t.binding.setSurfaceSize(const Size(400, 9000));
       addTearDown(() => t.binding.setSurfaceSize(null));
       final repo = RepositorioAlimentacionEnMemoria(semanaEjemplo: _lunes);

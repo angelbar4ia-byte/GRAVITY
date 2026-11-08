@@ -47,7 +47,10 @@ void main() {
     });
 
     test('textos del indicador', () {
-      expect(const ResumenConexion(hayRed: true, porSubir: 0).texto, 'En línea');
+      expect(
+        const ResumenConexion(hayRed: true, porSubir: 0).texto,
+        'En línea',
+      );
       expect(
         const ResumenConexion(hayRed: true, porSubir: 1).texto,
         'Sincronizando',
@@ -66,10 +69,19 @@ void main() {
       );
     });
 
-    test('"en línea" es solo "hay red" (sincronizando también está conectado)', () {
-      expect(const ResumenConexion(hayRed: true, porSubir: 5).enLinea, isTrue);
-      expect(const ResumenConexion(hayRed: false, porSubir: 5).enLinea, isFalse);
-    });
+    test(
+      '"en línea" es solo "hay red" (sincronizando también está conectado)',
+      () {
+        expect(
+          const ResumenConexion(hayRed: true, porSubir: 5).enLinea,
+          isTrue,
+        );
+        expect(
+          const ResumenConexion(hayRed: false, porSubir: 5).enLinea,
+          isFalse,
+        );
+      },
+    );
   });
 
   group('hayRedProvider', () {
@@ -119,7 +131,11 @@ void main() {
       addTearDown(contenedor.dispose);
       contenedor.listen(estadoConexionProvider, (_, _) {});
       final cola = contenedor.read(colaSinConexionProvider);
-      await cola.encolar(tipo: 'prueba.registro', carga: {'x': 1}, personaId: 'ana');
+      await cola.encolar(
+        tipo: 'prueba.registro',
+        carga: {'x': 1},
+        personaId: 'ana',
+      );
       await Future<void>.delayed(const Duration(milliseconds: 50));
       var resumen = contenedor.read(estadoConexionProvider);
       expect(resumen.hayRed, isFalse);
@@ -156,10 +172,11 @@ void main() {
           [ConnectivityResult.none],
           [ConnectivityResult.ethernet],
         ]);
-      expect(
-        await FuenteConectividadPlus(sim).cambios.toList(),
-        [true, false, true],
-      );
+      expect(await FuenteConectividadPlus(sim).cambios.toList(), [
+        true,
+        false,
+        true,
+      ]);
     });
   });
 }

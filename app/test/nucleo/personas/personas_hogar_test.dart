@@ -152,9 +152,12 @@ void main() {
     });
 
     test('darDeBaja: activa=false y hasta=ahora, solo esa membresía', () async {
-      servidor.respuestas.add((200, [
-        {'id': 'm2'},
-      ]));
+      servidor.respuestas.add((
+        200,
+        [
+          {'id': 'm2'},
+        ],
+      ));
       await repo.darDeBaja('m2');
       final (metodo, uri, cuerpo) = servidor.recibidas.single;
       expect(metodo, 'PATCH');
@@ -164,9 +167,12 @@ void main() {
     });
 
     test('cambiarRol: solo manda el rol nuevo', () async {
-      servidor.respuestas.add((200, [
-        {'id': 'm2'},
-      ]));
+      servidor.respuestas.add((
+        200,
+        [
+          {'id': 'm2'},
+        ],
+      ));
       await repo.cambiarRol('m2', Rol.cuidador);
       final (metodo, uri, cuerpo) = servidor.recibidas.single;
       expect(metodo, 'PATCH');
@@ -182,19 +188,22 @@ void main() {
       expect(servidor.recibidas, isEmpty);
     });
 
-    test('0 filas cambiadas (la regla del servidor no lo dejó): sin permiso', () async {
-      servidor.respuestas.add((200, <Object>[]));
-      await expectLater(
-        repo.darDeBaja('m-propia'),
-        throwsA(
-          isA<ErrorPersonas>().having(
-            (e) => e.mensaje,
-            'mensaje',
-            ErrorPersonas.sinPermiso.mensaje,
+    test(
+      '0 filas cambiadas (la regla del servidor no lo dejó): sin permiso',
+      () async {
+        servidor.respuestas.add((200, <Object>[]));
+        await expectLater(
+          repo.darDeBaja('m-propia'),
+          throwsA(
+            isA<ErrorPersonas>().having(
+              (e) => e.mensaje,
+              'mensaje',
+              ErrorPersonas.sinPermiso.mensaje,
+            ),
           ),
-        ),
-      );
-    });
+        );
+      },
+    );
 
     test('42501 y los errores de negocio traen su mensaje', () async {
       servidor.respuestas.add((403, {'code': '42501', 'message': 'no'}));
@@ -253,10 +262,7 @@ void main() {
         ],
         personaQueAdministra: 'ana',
       );
-      await expectLater(
-        repo.darDeBaja('m-ana'),
-        throwsA(isA<ErrorPersonas>()),
-      );
+      await expectLater(repo.darDeBaja('m-ana'), throwsA(isA<ErrorPersonas>()));
       await expectLater(
         repo.cambiarRol('m-luis', Rol.dueno),
         throwsA(isA<ErrorPersonas>()),

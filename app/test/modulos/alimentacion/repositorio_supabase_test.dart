@@ -8,7 +8,8 @@ import 'package:gravity/modulos/alimentacion/datos/modelos.dart';
 import 'package:gravity/nucleo/contratos/roles.dart';
 import 'package:gravity/modulos/alimentacion/datos/votacion.dart';
 import 'package:gravity/modulos/finanzas/datos/fuente_tablas.dart';
-import 'package:gravity/modulos/finanzas/datos/repositorio.dart' show ErrorFinanzas;
+import 'package:gravity/modulos/finanzas/datos/repositorio.dart'
+    show ErrorFinanzas;
 
 const _hogar = '00000000-0000-4000-8000-000000000001';
 const _yo = '00000000-0000-4000-8000-0000000000a1';
@@ -605,73 +606,80 @@ void main() {
       return f;
     }
 
-    test('la compra real llama a ali_marcar_comprada y no escribe dinero',
-        () async {
-      final f = conLista();
-      f.funciones['ali_marcar_comprada'] = (p) => {
-        'estado_pago': 'movimiento',
-        'precio_real_centavos': 3,
-      };
-      f.tabla('fin_libros').add({
-        'id': libro,
-        'tipo': 'personal',
-        'titular_id': _yo,
-      });
-      f.tabla('fin_cuentas').add({
-        'id': cuentaPago,
-        'libro_id': libro,
-        'tipo': 'banco',
-        'estado': 'activa',
-        'nombre': 'Débito',
-      });
-      f.tabla('ali_compras')
-        ..clear()
-        ..add({
-          'id': fila,
-          'cuenta': 'dueno',
-          'ingrediente_id': ing,
-          'cantidad': 1000,
-          'comprado': false,
+    test(
+      'la compra real llama a ali_marcar_comprada y no escribe dinero',
+      () async {
+        final f = conLista();
+        f.funciones['ali_marcar_comprada'] = (p) => {
+          'estado_pago': 'movimiento',
+          'precio_real_centavos': 3,
+        };
+        f.tabla('fin_libros').add({
+          'id': libro,
+          'tipo': 'personal',
+          'titular_id': _yo,
         });
-      final res = await _repo(f).registrarCompraReal(
-        menu: MenuId.pareja,
-        lunes: lunes,
-        compra: compra,
-        precio: precio,
-        cuenta: CuentaCompra.dueno,
-      );
-      expect(res.pendienteAlbacea, isFalse);
-      final llamada = f.llamadas.single;
-      expect(llamada.$1, 'ali_marcar_comprada');
-      expect(llamada.$2, {
-        'p_compra': fila,
-        'p_monto_centavos': 2800,
-        'p_cuenta_origen': cuentaPago,
-        'p_cuenta_gasto': null,
-      });
-      // Solo la marca de la lista: nada de dinero, precio ni historial.
-      expect(f.escrituras.toSet().intersection(sinDinero), isEmpty);
-      expect(f.escrituras.toSet().difference({'ali_compras_marcas'}), isEmpty);
-    });
+        f.tabla('fin_cuentas').add({
+          'id': cuentaPago,
+          'libro_id': libro,
+          'tipo': 'banco',
+          'estado': 'activa',
+          'nombre': 'Débito',
+        });
+        f.tabla('ali_compras')
+          ..clear()
+          ..add({
+            'id': fila,
+            'cuenta': 'dueno',
+            'ingrediente_id': ing,
+            'cantidad': 1000,
+            'comprado': false,
+          });
+        final res = await _repo(f).registrarCompraReal(
+          menu: MenuId.pareja,
+          lunes: lunes,
+          compra: compra,
+          precio: precio,
+          cuenta: CuentaCompra.dueno,
+        );
+        expect(res.pendienteAlbacea, isFalse);
+        final llamada = f.llamadas.single;
+        expect(llamada.$1, 'ali_marcar_comprada');
+        expect(llamada.$2, {
+          'p_compra': fila,
+          'p_monto_centavos': 2800,
+          'p_cuenta_origen': cuentaPago,
+          'p_cuenta_gasto': null,
+        });
+        // Solo la marca de la lista: nada de dinero, precio ni historial.
+        expect(f.escrituras.toSet().intersection(sinDinero), isEmpty);
+        expect(
+          f.escrituras.toSet().difference({'ali_compras_marcas'}),
+          isEmpty,
+        );
+      },
+    );
 
-    test('compra de Papá sin cuenta de pago: pendiente del albacea, no error',
-        () async {
-      final f = conLista();
-      f.funciones['ali_marcar_comprada'] = (p) => {
-        'estado_pago': 'solicitud',
-        'solicitud_id': 's1',
-      };
-      final res = await _repo(f).registrarCompraReal(
-        menu: MenuId.papa,
-        lunes: lunes,
-        compra: compra,
-        precio: precio,
-        cuenta: CuentaCompra.papa,
-      );
-      expect(res.pendienteAlbacea, isTrue);
-      expect(f.llamadas.single.$2['p_cuenta_origen'], isNull);
-      expect(f.llamadas.single.$2['p_compra'], fila);
-    });
+    test(
+      'compra de Papá sin cuenta de pago: pendiente del albacea, no error',
+      () async {
+        final f = conLista();
+        f.funciones['ali_marcar_comprada'] = (p) => {
+          'estado_pago': 'solicitud',
+          'solicitud_id': 's1',
+        };
+        final res = await _repo(f).registrarCompraReal(
+          menu: MenuId.papa,
+          lunes: lunes,
+          compra: compra,
+          precio: precio,
+          cuenta: CuentaCompra.papa,
+        );
+        expect(res.pendienteAlbacea, isTrue);
+        expect(f.llamadas.single.$2['p_cuenta_origen'], isNull);
+        expect(f.llamadas.single.$2['p_compra'], fila);
+      },
+    );
 
     test('sin fila en ali_compras la pide (papa y casa por RPC)', () async {
       final f = _Fuente();
@@ -691,8 +699,10 @@ void main() {
       expect(f.llamadas.first.$2['p_cuenta'], 'papa');
       expect(f.llamadas.first.$2['p_cantidad'], 1000);
       // El ingrediente faltante se crea sin precio; nada de dinero.
-      expect(f.tabla('ali_ingredientes').single.containsKey('precio_real_centavos'),
-          isFalse);
+      expect(
+        f.tabla('ali_ingredientes').single.containsKey('precio_real_centavos'),
+        isFalse,
+      );
       expect(f.escrituras.toSet().intersection(sinDinero), isEmpty);
     });
 
@@ -753,7 +763,8 @@ void main() {
 
     test('presupuesto del total de la lista: solo sí o no', () async {
       final f = _Fuente();
-      f.funciones['ali_hay_presupuesto'] = (p) => p['p_monto_centavos'] == 12345;
+      f.funciones['ali_hay_presupuesto'] = (p) =>
+          p['p_monto_centavos'] == 12345;
       final r = _repo(f);
       expect(await r.hayPresupuestoPara(12345), isTrue);
       expect(await r.hayPresupuestoPara(99999), isFalse);
@@ -781,19 +792,27 @@ void main() {
       });
       expect(f.escrituras, ['ali_ingredientes']);
       // La columna no se escribe directo.
-      expect(f.tabla('ali_ingredientes').single.containsKey('codigo_barras'),
-          isFalse);
+      expect(
+        f.tabla('ali_ingredientes').single.containsKey('codigo_barras'),
+        isFalse,
+      );
     });
 
     test('un código de otro producto (23505) sale sin error técnico', () async {
       final f = _Fuente();
-      f.funciones['ali_guardar_codigo_barras'] = (p) => throw const ErrorFinanzas(
-        'Ya existe: Ese código ya pertenece a otro ingrediente del hogar.',
-      );
+      f.funciones['ali_guardar_codigo_barras'] = (p) =>
+          throw const ErrorFinanzas(
+            'Ya existe: Ese código ya pertenece a otro ingrediente del hogar.',
+          );
       await expectLater(
         _repo(f).guardarIngredienteConCodigo(
-          const Ingrediente('Galletas', 1, 'paq', SeccionCompra.otros,
-              codigoBarras: '7501000000011'),
+          const Ingrediente(
+            'Galletas',
+            1,
+            'paq',
+            SeccionCompra.otros,
+            codigoBarras: '7501000000011',
+          ),
         ),
         throwsA(
           isA<ErrorAlimentacionServidor>().having(
@@ -808,8 +827,12 @@ void main() {
     test('el lector busca en codigo_barras de ali_ingredientes', () async {
       final f = _Fuente();
       f.tabla('ali_ingredientes').addAll([
-        {'id': _pl1, 'nombre': 'Galletas', 'unidad': 'paq',
-          'codigo_barras': '7501000000011'},
+        {
+          'id': _pl1,
+          'nombre': 'Galletas',
+          'unidad': 'paq',
+          'codigo_barras': '7501000000011',
+        },
         {'id': _o1, 'nombre': 'Sal', 'unidad': 'kg', 'codigo_barras': null},
       ]);
       final c = await _repo(f).ingredientesConCodigo();
@@ -817,35 +840,44 @@ void main() {
       expect(c.single.codigoBarras, '7501000000011');
     });
 
-    test('el servicio de Casa usa la RPC; el de compra, la cuenta por rol',
-        () async {
-      final f = conLista();
-      f.funciones['ali_menu_del_dia_papa'] = (p) => [
-        {'tiempo': 'cena', 'platillo': 'Avena'},
-      ];
-      final casa = ServicioAlimentacion(_repo(f), rol: Rol.casa);
-      expect((await casa.menuDelDiaPapa(DateTime(2026, 11, 4))).single.platillo,
-          'Avena');
-      expect(f.leidas, isNot(contains('ali_menu')));
+    test(
+      'el servicio de Casa usa la RPC; el de compra, la cuenta por rol',
+      () async {
+        final f = conLista();
+        f.funciones['ali_menu_del_dia_papa'] = (p) => [
+          {'tiempo': 'cena', 'platillo': 'Avena'},
+        ];
+        final casa = ServicioAlimentacion(_repo(f), rol: Rol.casa);
+        expect(
+          (await casa.menuDelDiaPapa(DateTime(2026, 11, 4))).single.platillo,
+          'Avena',
+        );
+        expect(f.leidas, isNot(contains('ali_menu')));
 
-      f.funciones['ali_marcar_comprada'] = (p) => {'estado_pago': 'solicitud'};
-      final dueno = ServicioAlimentacion(_repo(f), rol: Rol.dueno);
-      expect(dueno.cuentaPorOmisionDe(MenuId.papa), CuentaCompra.papa);
-      expect(dueno.cuentaPorOmisionDe(MenuId.pareja), CuentaCompra.dueno);
-      final r = await dueno.registrarCompra(
-        MenuId.papa,
-        lunes,
-        'leche|ml',
-        cantidadComprada: 1000,
-        totalCentavos: 2800,
-        nombre: 'Leche',
-        unidad: 'ml',
-      );
-      expect(r.pendienteAlbacea, isTrue);
-      expect(f.llamadas.last.$1, 'ali_marcar_comprada');
-      final lista = await dueno.listaCompras(MenuId.papa, lunes);
-      expect(lista.single.comprado, isFalse); // la fila aún no cambia en el falso
-    });
+        f.funciones['ali_marcar_comprada'] = (p) => {
+          'estado_pago': 'solicitud',
+        };
+        final dueno = ServicioAlimentacion(_repo(f), rol: Rol.dueno);
+        expect(dueno.cuentaPorOmisionDe(MenuId.papa), CuentaCompra.papa);
+        expect(dueno.cuentaPorOmisionDe(MenuId.pareja), CuentaCompra.dueno);
+        final r = await dueno.registrarCompra(
+          MenuId.papa,
+          lunes,
+          'leche|ml',
+          cantidadComprada: 1000,
+          totalCentavos: 2800,
+          nombre: 'Leche',
+          unidad: 'ml',
+        );
+        expect(r.pendienteAlbacea, isTrue);
+        expect(f.llamadas.last.$1, 'ali_marcar_comprada');
+        final lista = await dueno.listaCompras(MenuId.papa, lunes);
+        expect(
+          lista.single.comprado,
+          isFalse,
+        ); // la fila aún no cambia en el falso
+      },
+    );
   });
 
   group('Cuenta elegible, lista por RPC, presentación y albacea (5c)', () {
@@ -894,9 +926,27 @@ void main() {
           'creado_en': '2026-01-01',
         });
       f.tabla('fin_cuentas')
-        ..add({'id': cEfectivo, 'libro_id': libro, 'tipo': 'efectivo', 'nombre': 'Cartera', 'clase': 'activo'})
-        ..add({'id': cBanco, 'libro_id': libro, 'tipo': 'banco', 'nombre': 'Débito', 'clase': 'activo'})
-        ..add({'id': cPapa, 'libro_id': libroPapa, 'tipo': 'banco', 'nombre': 'Cuenta de Papá', 'clase': 'activo'});
+        ..add({
+          'id': cEfectivo,
+          'libro_id': libro,
+          'tipo': 'efectivo',
+          'nombre': 'Cartera',
+          'clase': 'activo',
+        })
+        ..add({
+          'id': cBanco,
+          'libro_id': libro,
+          'tipo': 'banco',
+          'nombre': 'Débito',
+          'clase': 'activo',
+        })
+        ..add({
+          'id': cPapa,
+          'libro_id': libroPapa,
+          'tipo': 'banco',
+          'nombre': 'Cuenta de Papá',
+          'clase': 'activo',
+        });
       f.funciones['ali_marcar_comprada'] = (p) => {'estado_pago': 'movimiento'};
       return f;
     }
@@ -911,18 +961,24 @@ void main() {
           cuentaPagoId: elegida,
         );
 
-    test('sin elegir usa la omisión; la cuenta elegida la sobrescribe', () async {
-      final f = base();
-      final ofrecidas = await _repo(f).cuentasDePago(CuentaCompra.dueno);
-      expect(ofrecidas.map((c) => c.id), containsAll([cEfectivo, cBanco]));
-      expect(ofrecidas.singleWhere((c) => c.porOmision).id, cEfectivo);
-      expect(ServicioAlimentacion.cuentaEfectiva(ofrecidas, cBanco)!.id, cBanco);
+    test(
+      'sin elegir usa la omisión; la cuenta elegida la sobrescribe',
+      () async {
+        final f = base();
+        final ofrecidas = await _repo(f).cuentasDePago(CuentaCompra.dueno);
+        expect(ofrecidas.map((c) => c.id), containsAll([cEfectivo, cBanco]));
+        expect(ofrecidas.singleWhere((c) => c.porOmision).id, cEfectivo);
+        expect(
+          ServicioAlimentacion.cuentaEfectiva(ofrecidas, cBanco)!.id,
+          cBanco,
+        );
 
-      await comprar(f);
-      expect(f.llamadas.last.$2['p_cuenta_origen'], cEfectivo);
-      await comprar(f, elegida: cBanco);
-      expect(f.llamadas.last.$2['p_cuenta_origen'], cBanco);
-    });
+        await comprar(f);
+        expect(f.llamadas.last.$2['p_cuenta_origen'], cEfectivo);
+        await comprar(f, elegida: cBanco);
+        expect(f.llamadas.last.$2['p_cuenta_origen'], cBanco);
+      },
+    );
 
     test('una cuenta ajena a su libro no se manda', () async {
       final f = base();
@@ -943,19 +999,23 @@ void main() {
       );
     });
 
-    test('agregar a la lista llama la RPC y no inserta en ali_compras', () async {
-      final f = base();
-      await _repo(f).agregarALista(nombre: 'Leche', unidad: 'ml', cantidad: 500);
-      final l = f.llamadas.single;
-      expect(l.$1, 'ali_agregar_a_lista');
-      expect(l.$2, {
-        'p_hogar_id': _hogar,
-        'p_ingrediente': ing,
-        'p_cantidad': 500,
-        'p_unidad': 'ml',
-      });
-      expect(f.escrituras, isNot(contains('ali_compras')));
-    });
+    test(
+      'agregar a la lista llama la RPC y no inserta en ali_compras',
+      () async {
+        final f = base();
+        await _repo(f)
+            .agregarALista(nombre: 'Leche', unidad: 'ml', cantidad: 500);
+        final l = f.llamadas.single;
+        expect(l.$1, 'ali_agregar_a_lista');
+        expect(l.$2, {
+          'p_hogar_id': _hogar,
+          'p_ingrediente': ing,
+          'p_cantidad': 500,
+          'p_unidad': 'ml',
+        });
+        expect(f.escrituras, isNot(contains('ali_compras')));
+      },
+    );
 
     test('comprar sin fila previa la pide por RPC, no por INSERT', () async {
       final f = base();
@@ -971,7 +1031,10 @@ void main() {
         return fila;
       };
       await comprar(f);
-      expect(f.llamadas.map((l) => l.$1), ['ali_agregar_a_lista', 'ali_marcar_comprada']);
+      expect(f.llamadas.map((l) => l.$1), [
+        'ali_agregar_a_lista',
+        'ali_marcar_comprada',
+      ]);
       expect(f.escrituras, isNot(contains('ali_compras')));
     });
 
@@ -1037,13 +1100,22 @@ void main() {
         expect(await _repo(f, yo: _otra).esAlbacea(), isFalse);
         expect(await _repo(f, yo: _v1).esAlbacea(), isFalse);
         expect(await _repo(f, yo: _otra).solicitudesPendientes(), isEmpty);
-        final s = ServicioAlimentacion(_repo(f, yo: _otra), rol: Rol.coadministrador);
-        await expectLater(s.solicitudesPendientes(), throwsA(isA<PermisoDenegado>()));
+        final s = ServicioAlimentacion(
+          _repo(f, yo: _otra),
+          rol: Rol.coadministrador,
+        );
+        await expectLater(
+          s.solicitudesPendientes(),
+          throwsA(isA<PermisoDenegado>()),
+        );
         await expectLater(
           s.aprobarSolicitud('sol1', cuentaPagoId: cPapa),
           throwsA(isA<PermisoDenegado>()),
         );
-        expect(f.llamadas.where((l) => l.$1 == 'ali_resolver_solicitud_pago'), isEmpty);
+        expect(
+          f.llamadas.where((l) => l.$1 == 'ali_resolver_solicitud_pago'),
+          isEmpty,
+        );
       });
 
       test('un cargo vencido no es albacea', () async {
@@ -1052,37 +1124,44 @@ void main() {
         expect(await _repo(f).esAlbacea(), isFalse);
       });
 
-      test('aprueba con cuenta del libro de Papá y rechaza con motivo', () async {
-        final f = base();
-        solicitud(f);
-        miembro(f, _yo, 'albacea');
-        f.funciones['ali_resolver_solicitud_pago'] = (p) => null;
-        final s = ServicioAlimentacion(_repo(f), rol: Rol.dueno);
-        expect(await s.puedeResolverSolicitudes(), isTrue);
-        final lista = await s.solicitudesPendientes();
-        expect(lista.single.montoCentavos, 2800);
-        final cuentas = await s.cuentasDelLibroDePapa();
-        expect(cuentas.map((c) => c.id), [cPapa]);
+      test(
+        'aprueba con cuenta del libro de Papá y rechaza con motivo',
+        () async {
+          final f = base();
+          solicitud(f);
+          miembro(f, _yo, 'albacea');
+          f.funciones['ali_resolver_solicitud_pago'] = (p) => null;
+          final s = ServicioAlimentacion(_repo(f), rol: Rol.dueno);
+          expect(await s.puedeResolverSolicitudes(), isTrue);
+          final lista = await s.solicitudesPendientes();
+          expect(lista.single.montoCentavos, 2800);
+          final cuentas = await s.cuentasDelLibroDePapa();
+          expect(cuentas.map((c) => c.id), [cPapa]);
 
-        await s.aprobarSolicitud('sol1', cuentaPagoId: cPapa);
-        expect(f.llamadas.last.$2['p_solicitud'], 'sol1');
-        expect(f.llamadas.last.$2['p_aprobar'], isTrue);
-        expect(f.llamadas.last.$2['p_cuenta_origen'], cPapa);
+          await s.aprobarSolicitud('sol1', cuentaPagoId: cPapa);
+          expect(f.llamadas.last.$2['p_solicitud'], 'sol1');
+          expect(f.llamadas.last.$2['p_aprobar'], isTrue);
+          expect(f.llamadas.last.$2['p_cuenta_origen'], cPapa);
 
-        await expectLater(
-          s.rechazarSolicitud('sol1', motivo: 'no'),
-          throwsArgumentError,
-        );
-        await s.rechazarSolicitud('sol1', motivo: ' Ya hay ');
-        expect(f.llamadas.last.$2['p_aprobar'], isFalse);
-        expect(f.llamadas.last.$2['p_motivo'], 'Ya hay');
-        expect(f.llamadas.last.$2['p_cuenta_origen'], isNull);
-      });
+          await expectLater(
+            s.rechazarSolicitud('sol1', motivo: 'no'),
+            throwsArgumentError,
+          );
+          await s.rechazarSolicitud('sol1', motivo: ' Ya hay ');
+          expect(f.llamadas.last.$2['p_aprobar'], isFalse);
+          expect(f.llamadas.last.$2['p_motivo'], 'Ya hay');
+          expect(f.llamadas.last.$2['p_cuenta_origen'], isNull);
+        },
+      );
 
       test('la cuenta maestra no resuelve aunque sea albacea', () async {
         final f = base();
         miembro(f, _yo, 'albacea');
-        final s = ServicioAlimentacion(_repo(f), rol: Rol.coadministrador, esMaestra: true);
+        final s = ServicioAlimentacion(
+          _repo(f),
+          rol: Rol.coadministrador,
+          esMaestra: true,
+        );
         expect(await s.puedeResolverSolicitudes(), isFalse);
       });
     });

@@ -27,13 +27,14 @@ void main() {
     bool huella = false,
   }) async {
     if (conBloqueo) {
-      almacen.datos[ControladorBloqueo.claveConfiguracion(dueno.persona.id)] =
-          jsonEncode(
-            ConfiguracionBloqueo(
-              hashPin: HashPin.crear('246813', iteraciones: 50),
-              huella: huella,
-            ).aJson(),
-          );
+      almacen.datos[ControladorBloqueo.claveConfiguracion(
+        dueno.persona.id,
+      )] = jsonEncode(
+        ConfiguracionBloqueo(
+          hashPin: HashPin.crear('246813', iteraciones: 50),
+          huella: huella,
+        ).aJson(),
+      );
     }
     final contenedor = ProviderContainer(
       overrides: [

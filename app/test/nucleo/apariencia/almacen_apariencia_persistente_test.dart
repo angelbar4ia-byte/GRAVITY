@@ -12,7 +12,9 @@ void main() {
     a.guardar('hogar', CampoApariencia.estilo, 'glass');
     expect(a.leer('ana', CampoApariencia.estilo), 'glass');
     await Future<void>.delayed(Duration.zero);
-    final b = AlmacenAparienciaPersistente(await SharedPreferences.getInstance());
+    final b = AlmacenAparienciaPersistente(
+      await SharedPreferences.getInstance(),
+    );
     expect(b.leer('ana', CampoApariencia.estilo), 'glass');
     expect(b.leer('hogar', CampoApariencia.estilo), 'glass');
     expect(b.leer('luis', CampoApariencia.estilo), isNull);

@@ -289,10 +289,7 @@ void main() {
         montoCentavos: 1000,
         subcuentaId: 'sub-luz',
       );
-      expect(
-        (await dueno.listar()).single.subcuentaId,
-        'sub-luz',
-      );
+      expect((await dueno.listar()).single.subcuentaId, 'sub-luz');
       final pareja = dueno.comoPersona(_pareja);
       expect(
         () => pareja.proponer(
@@ -351,10 +348,7 @@ void main() {
       );
       await dueno.fijarReferencia('sub-luz', nuevo);
       expect((await dueno.referencia('sub-luz')).papaPb, 7000);
-      expect(
-        (await dueno.referencia('sub-telefono')).papaPb,
-        5000,
-      );
+      expect((await dueno.referencia('sub-telefono')).papaPb, 5000);
       expect(
         () => dueno.comoPersona(_pareja).fijarReferencia('sub-luz', nuevo),
         throwsA(isA<Exception>()),

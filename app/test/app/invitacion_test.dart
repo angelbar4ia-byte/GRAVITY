@@ -236,7 +236,10 @@ void main() {
           'contrasena-larga',
         );
         await enviar(tester);
-        expect(find.textContaining('Aún no confirmas tu correo'), findsOneWidget);
+        expect(
+          find.textContaining('Aún no confirmas tu correo'),
+          findsOneWidget,
+        );
 
         servicio.confirmarCorreo('luisa@ejemplo.test');
         await enviar(tester);
@@ -247,20 +250,22 @@ void main() {
     testWidgets('"Ya tengo cuenta" con la contraseña mala no entra', (
       tester,
     ) async {
-      final servicio = ServicioSesionFalso(
-        cuentas: {
-          'luisa@ejemplo.test': CuentaFalsa(
-            'la-buena-123',
-            const Sesion(
-              persona: Persona(id: 'luisa', nombre: 'Luisa'),
+      final servicio =
+          ServicioSesionFalso(
+              cuentas: {
+                'luisa@ejemplo.test': CuentaFalsa(
+                  'la-buena-123',
+                  const Sesion(
+                    persona: Persona(id: 'luisa', nombre: 'Luisa'),
+                    rol: Rol.familiar,
+                  ),
+                ),
+              },
+            )
+            ..invitaciones['codigo-1'] = InvitacionFalsa(
+              correo: 'luisa@ejemplo.test',
               rol: Rol.familiar,
-            ),
-          ),
-        },
-      )..invitaciones['codigo-1'] = InvitacionFalsa(
-          correo: 'luisa@ejemplo.test',
-          rol: Rol.familiar,
-        );
+            );
       await montarApp(
         tester,
         dispositivo: TipoDispositivo.telefono,

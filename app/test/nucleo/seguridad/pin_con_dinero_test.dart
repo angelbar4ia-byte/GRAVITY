@@ -272,7 +272,10 @@ void main() {
           ResultadoBloqueo.abierto,
         );
         expect(controlador.state.bloqueado, isFalse);
-        expect(await controlador.comprobarPin(corto), ResultadoBloqueo.pinIncorrecto);
+        expect(
+          await controlador.comprobarPin(corto),
+          ResultadoBloqueo.pinIncorrecto,
+        );
         expect(await controlador.comprobarPin(nuevo), ResultadoBloqueo.abierto);
         // Se guardó: la próxima vez que abra la app pide el nuevo.
         final otra = await abrir(dueno);
@@ -490,7 +493,10 @@ void main() {
           ResultadoRevelar.revelado,
         );
         expect(await bloqueo.comprobarPin(nuevo), ResultadoBloqueo.abierto);
-        expect(await bloqueo.comprobarPin(corto), ResultadoBloqueo.pinIncorrecto);
+        expect(
+          await bloqueo.comprobarPin(corto),
+          ResultadoBloqueo.pinIncorrecto,
+        );
         expect(await controlador.verificar(nuevo), ResultadoRevelar.revelado);
       },
     );

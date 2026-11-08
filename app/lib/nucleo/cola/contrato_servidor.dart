@@ -34,6 +34,18 @@ const Map<String, Set<String>> columnasQuePoneElServidor = {
   'fin_retiros_ahorro': {'recibido_en'},
   'fin_cierre_abonos': {'diferido'},
   'fin_conciliaciones': {'diferencia'},
+  // Bloque 1 de ampliaciones (migraciones 20261132 y 20261133): la app solo
+  // manda las columnas con GRANT INSERT; el libro, quién actualizó y cuándo los
+  // pone el servidor, y la subcuenta de una referencia solo se fija por
+  // fin_casa_fijar_referencia (RPC).
+  'fin_casa_referencias': {
+    'libro_id',
+    'subcuenta_id',
+    'actualizado_por',
+    'actualizado_en',
+  },
+  'fin_casa_ingresos': {'libro_id', 'actualizado_por', 'actualizado_en'},
+  'fin_casa_subcuentas': {'creada_por', 'creada_en'},
 };
 
 /// [carga] sin las columnas que pone el servidor para [tabla]. Devuelve una
@@ -85,6 +97,10 @@ const Map<String, int> nivelesDeSubidaFinanzas = {
   'fin_bolsas_ahorro': 3,
   'fin_dias_inhabiles': 3,
   'fin_semanas': 3,
+  // Casa (bloque 1): dependen de libros y categorías.
+  'fin_casa_referencias': 3,
+  'fin_casa_ingresos': 3,
+  'fin_casa_subcuentas': 3,
   // Dependen de lo anterior.
   'fin_vigencias_ingreso': 4,
   'fin_partidas_semana': 4,

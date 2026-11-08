@@ -209,7 +209,10 @@ void main() {
         final bloqueo = contenedor.read(controladorBloqueoProvider.notifier);
         await bloqueo.listo;
         await bloqueo.configurarPin(pinDelDueno);
-        expect(await bloqueo.comprobarPin(pinDelDueno), ResultadoBloqueo.abierto);
+        expect(
+          await bloqueo.comprobarPin(pinDelDueno),
+          ResultadoBloqueo.abierto,
+        );
       },
     );
   });

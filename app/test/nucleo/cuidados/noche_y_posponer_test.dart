@@ -51,8 +51,10 @@ void main() {
     );
     expect(tomas, isEmpty);
     // El botón de posponer sigue existiendo para el aviso de toma.
-    expect(AccionDeNotificacion.posponerTurno.etiqueta,
-        textoPosponerAlSiguienteTurno);
+    expect(
+      AccionDeNotificacion.posponerTurno.etiqueta,
+      textoPosponerAlSiguienteTurno,
+    );
   });
 
   test('la comida de noche también suena y no ofrece posponer', () async {
@@ -90,7 +92,9 @@ void main() {
       ),
       isNull,
     );
-    expect(llamadaDePosponerToma(null, AccionDeNotificacion.posponerTurno),
-        isNull);
+    expect(
+      llamadaDePosponerToma(null, AccionDeNotificacion.posponerTurno),
+      isNull,
+    );
   });
 }

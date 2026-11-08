@@ -78,83 +78,111 @@ void main() {
       expect(_servicio(Rol.familiar).puedeEditarMenuDe(MenuId.pareja), isFalse);
     });
 
-    test('lo que el rol no puede, el servicio lo rechaza aunque se llame directo',
-        () async {
-      final familiar = _servicio(Rol.familiar);
-      // Edita platillos de Papá, no el de la pareja.
-      await familiar.asignar(MenuId.papa, _lunes, 0, TiempoComida.cena, null);
-      expect(
-        await _lanza(
-          () => familiar.asignar(MenuId.pareja, _lunes, 0, TiempoComida.cena, null),
-        ),
-        isTrue,
-      );
-      expect(await _lanza(() => familiar.menu(MenuId.pareja, _lunes)), isTrue);
-      expect(await _lanza(() => familiar.suplementos(MenuId.pareja)), isTrue);
-      // Ni suplementos ni "comprado" ni la lista de compras de Papá.
-      const s = Suplemento(
-        id: 'x',
-        nombre: 'Prueba',
-        dosis: '1',
-        horario: 'mañana',
-      );
-      expect(
-        await _lanza(() => familiar.guardarSuplemento(MenuId.papa, s)),
-        isTrue,
-      );
-      expect(
-        await _lanza(
-          () => familiar.marcar(MenuId.papa, _lunes, 'pollo|kg', true),
-        ),
-        isTrue,
-      );
-      expect(
-        await _lanza(() => familiar.listaCompras(MenuId.papa, _lunes)),
-        isTrue,
-      );
+    test(
+      'lo que el rol no puede, el servicio lo rechaza aunque se llame directo',
+      () async {
+        final familiar = _servicio(Rol.familiar);
+        // Edita platillos de Papá, no el de la pareja.
+        await familiar.asignar(MenuId.papa, _lunes, 0, TiempoComida.cena, null);
+        expect(
+          await _lanza(
+            () => familiar.asignar(
+              MenuId.pareja,
+              _lunes,
+              0,
+              TiempoComida.cena,
+              null,
+            ),
+          ),
+          isTrue,
+        );
+        expect(
+          await _lanza(() => familiar.menu(MenuId.pareja, _lunes)),
+          isTrue,
+        );
+        expect(await _lanza(() => familiar.suplementos(MenuId.pareja)), isTrue);
+        // Ni suplementos ni "comprado" ni la lista de compras de Papá.
+        const s = Suplemento(
+          id: 'x',
+          nombre: 'Prueba',
+          dosis: '1',
+          horario: 'mañana',
+        );
+        expect(
+          await _lanza(() => familiar.guardarSuplemento(MenuId.papa, s)),
+          isTrue,
+        );
+        expect(
+          await _lanza(
+            () => familiar.marcar(MenuId.papa, _lunes, 'pollo|kg', true),
+          ),
+          isTrue,
+        );
+        expect(
+          await _lanza(() => familiar.listaCompras(MenuId.papa, _lunes)),
+          isTrue,
+        );
 
-      final cuidadora = _servicio(Rol.cuidador);
-      expect((await cuidadora.menu(MenuId.papa, _lunes)), isNotEmpty);
-      expect(
-        await _lanza(
-          () => cuidadora.asignar(MenuId.papa, _lunes, 0, TiempoComida.cena, null),
-        ),
-        isTrue,
-      );
-      expect(await _lanza(() => cuidadora.menu(MenuId.pareja, _lunes)), isTrue);
-      expect(
-        await _lanza(() => cuidadora.listaCompras(MenuId.pareja, _lunes)),
-        isTrue,
-      );
-      expect(await cuidadora.listaCompras(MenuId.papa, _lunes), isNotNull);
-      expect(
-        await _lanza(
-          () => cuidadora.marcar(MenuId.papa, _lunes, 'pollo|kg', true),
-        ),
-        isTrue,
-      );
+        final cuidadora = _servicio(Rol.cuidador);
+        expect((await cuidadora.menu(MenuId.papa, _lunes)), isNotEmpty);
+        expect(
+          await _lanza(
+            () => cuidadora.asignar(
+              MenuId.papa,
+              _lunes,
+              0,
+              TiempoComida.cena,
+              null,
+            ),
+          ),
+          isTrue,
+        );
+        expect(
+          await _lanza(() => cuidadora.menu(MenuId.pareja, _lunes)),
+          isTrue,
+        );
+        expect(
+          await _lanza(() => cuidadora.listaCompras(MenuId.pareja, _lunes)),
+          isTrue,
+        );
+        expect(await cuidadora.listaCompras(MenuId.papa, _lunes), isNotNull);
+        expect(
+          await _lanza(
+            () => cuidadora.marcar(MenuId.papa, _lunes, 'pollo|kg', true),
+          ),
+          isTrue,
+        );
 
-      final maestra = _servicio(Rol.coadministrador, maestra: true);
-      expect(await maestra.menu(MenuId.pareja, _lunes), isNotNull);
-      expect(
-        await _lanza(
-          () => maestra.asignar(MenuId.papa, _lunes, 0, TiempoComida.cena, null),
-        ),
-        isTrue,
-      );
-      expect(
-        await _lanza(() => maestra.marcar(MenuId.pareja, _lunes, 'a|b', true)),
-        isTrue,
-      );
+        final maestra = _servicio(Rol.coadministrador, maestra: true);
+        expect(await maestra.menu(MenuId.pareja, _lunes), isNotNull);
+        expect(
+          await _lanza(
+            () => maestra.asignar(
+              MenuId.papa,
+              _lunes,
+              0,
+              TiempoComida.cena,
+              null,
+            ),
+          ),
+          isTrue,
+        );
+        expect(
+          await _lanza(
+            () => maestra.marcar(MenuId.pareja, _lunes, 'a|b', true),
+          ),
+          isTrue,
+        );
 
-      final casa = _servicio(Rol.casa);
-      for (final m in MenuId.values) {
-        expect(await _lanza(() => casa.menu(m, _lunes)), isTrue);
-        expect(await _lanza(() => casa.suplementos(m)), isTrue);
-        expect(await _lanza(() => casa.listaCompras(m, _lunes)), isTrue);
-        expect(() => casa.perfil(m), throwsA(isA<PermisoDenegado>()));
-      }
-    });
+        final casa = _servicio(Rol.casa);
+        for (final m in MenuId.values) {
+          expect(await _lanza(() => casa.menu(m, _lunes)), isTrue);
+          expect(await _lanza(() => casa.suplementos(m)), isTrue);
+          expect(await _lanza(() => casa.listaCompras(m, _lunes)), isTrue);
+          expect(() => casa.perfil(m), throwsA(isA<PermisoDenegado>()));
+        }
+      },
+    );
 
     test('el perfil clínico de Papá solo lo ve quien ve el menú de Papá', () {
       expect(_servicio(Rol.dueno).perfil(MenuId.papa).texturaBlanda, isTrue);
@@ -173,10 +201,12 @@ void main() {
       final infractores = <String>[];
       for (final f in raiz.listSync(recursive: true).whereType<File>()) {
         if (!f.path.endsWith('.dart')) continue;
-        if (f.path.endsWith('modulos/alimentacion/datos/perfiles.dart')) continue;
+        if (f.path.endsWith('modulos/alimentacion/datos/perfiles.dart'))
+          continue;
         // El filtro de la bocina (Fase 6b) lista estas palabras para BLOQUEARLAS;
         // no copia el perfil de Papá.
-        if (f.path.endsWith('modulos/casa/puente/mensaje_bocina.dart')) continue;
+        if (f.path.endsWith('modulos/casa/puente/mensaje_bocina.dart'))
+          continue;
         final t = f.readAsStringSync().toLowerCase();
         if (t.contains('alzheimer') || t.contains('aminoácidos')) {
           infractores.add(f.path);
@@ -224,8 +254,7 @@ void main() {
     // rutas sensibles (`esPantallaSensible`) no incluye `/alimentacion`.
     // Reproducir: en un teléfono o en Windows, abrir Alimentación y capturar
     // (o abrir "recientes" / pasar el mouse por la barra de tareas).
-    test('F4-A1: /alimentacion es pantalla sensible para quien ve el perfil de Papá',
-        () {
+    test('F4-A1: /alimentacion es pantalla sensible para quien ve el perfil de Papá', () {
       for (final rol in [Rol.dueno, Rol.coadministrador, Rol.familiar]) {
         expect(
           esPantallaSensible(Rutas.alimentacion, rol),
@@ -240,8 +269,7 @@ void main() {
     // abre la ruta; el servicio la rechaza, pero la matriz (app y servidor)
     // dice "Casa lee el menú y la lista". Si backend arma las políticas desde
     // `permisos_rol` (como Finanzas), Casa leería el perfil clínico de Papá.
-    test('F4-A2: Casa no tiene Alimentación en el espejo de permisos, en su navegación ni en las rutas',
-        () {
+    test('F4-A2: Casa no tiene Alimentación en el espejo de permisos, en su navegación ni en las rutas', () {
       expect(puede(Rol.casa, Modulo.alimentacion, Accion.leer), isFalse);
       expect(
         destinosDe(Rol.casa).any((d) => d.modulo == Modulo.alimentacion),
@@ -262,8 +290,7 @@ void main() {
     // Papá. La matriz (`permisos.dart` y `permisos_rol`) solo le da leer
     // "su parte". Una RLS desde la matriz le negaría escribir; una escrita a
     // mano (spec, sección 6) contradiría el espejo de la app.
-    test('F4-A3: el espejo de permisos refleja que el familiar edita el menú de Papá',
-        () {
+    test('F4-A3: el espejo de permisos refleja que el familiar edita el menú de Papá', () {
       expect(puede(Rol.familiar, Modulo.alimentacion, Accion.escribir), isTrue);
     }, tags: 'hallazgo');
 
@@ -272,8 +299,7 @@ void main() {
     // directo) el router la manda a /cuidados y no hay otra puerta: el menú
     // solo se ve montando la pantalla suelta. Depende de la Fase 5 (Cuidados)
     // o de abrir la ruta solo para ella.
-    test('F4-A5: la cuidadora puede llegar a /alimentacion para ver el menú de Papá',
-        () {
+    test('F4-A5: la cuidadora puede llegar a /alimentacion para ver el menú de Papá', () {
       expect(
         calcularRedireccion(
           ubicacion: Rutas.alimentacion,
@@ -292,8 +318,7 @@ void main() {
     // "Multivitamínico · 1 tableta · Desayuno" como si fuera la indicación de
     // Papá. Hasta que backend entregue las tablas (spec, sección 6), con
     // sesión real debe salir vacío o con una etiqueta de ejemplo.
-    test('F4-A6: con sesión real el menú y los suplementos de Papá no son de ejemplo',
-        () async {
+    test('F4-A6: con sesión real el menú y los suplementos de Papá no son de ejemplo', () async {
       final c = ProviderContainer(
         overrides: [
           servicioSesionProvider.overrideWithValue(

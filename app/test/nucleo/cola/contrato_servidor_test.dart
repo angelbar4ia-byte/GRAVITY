@@ -45,6 +45,18 @@ Map<String, String> _cuerposDeTablas(String sql) => {
     m[1]!: m[2]!,
 };
 
+/// Columnas agregadas después con `alter table public.fin_x add column y`
+/// (p. ej. `subcuenta_id` en la migración 20261133).
+Map<String, Set<String>> _columnasAgregadas(String sql) {
+  final r = <String, Set<String>>{};
+  for (final m in RegExp(
+    r'alter table public\.(fin_\w+)\s+add column (\w+)',
+  ).allMatches(sql)) {
+    (r[m[1]!] ??= {}).add(m[2]!);
+  }
+  return r;
+}
+
 /// Nombres de las columnas de un cuerpo de tabla.
 List<String> _columnas(String cuerpo) {
   final definiciones = <String>[];
@@ -93,6 +105,13 @@ Map<String, Set<String>> _conInsert(String sql) => {
 const _soloLectura = {
   // D24: fin_pedir_vista_papa / fin_responder_vista (migración 20261110).
   'fin_vistas_solicitadas',
+  // Migración 20261132: sin GRANT INSERT/UPDATE; se escriben solo con las RPC
+  // fin_proponer_transferencia / fin_responder_transferencia /
+  // fin_cancelar_transferencia, fin_casa_configurar y fin_casa_pagar_servicio
+  // (esta última crea el aporte junto con el movimiento). No suben por la cola.
+  'fin_transferencias',
+  'fin_casa_config',
+  'fin_casa_aportes',
 };
 
 void main() {
@@ -104,9 +123,10 @@ void main() {
       if (!_soloLectura.contains(e.key)) e.key: e.value,
   };
   final conInsert = _conInsert(sql);
+  final agregadas = _columnasAgregadas(sql);
 
-  test('se leyeron las 26 tablas de escritura de Finanzas y sus INSERT', () {
-    expect(tablas, hasLength(26));
+  test('se leyeron las 29 tablas de escritura de Finanzas y sus INSERT', () {
+    expect(tablas, hasLength(29));
     expect(conInsert.keys.toSet(), tablas.keys.toSet());
   });
 
@@ -120,7 +140,7 @@ void main() {
       final delServidor = <String, Set<String>>{};
       for (final MapEntry(key: tabla, value: cuerpo) in tablas.entries) {
         final fuera = {
-          for (final c in _columnas(cuerpo))
+          for (final c in [..._columnas(cuerpo), ...?agregadas[tabla]])
             if (!conInsert[tabla]!.contains(c)) c,
         };
         if (fuera.isNotEmpty) delServidor[tabla] = fuera;

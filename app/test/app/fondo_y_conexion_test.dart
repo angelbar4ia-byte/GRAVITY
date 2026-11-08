@@ -36,8 +36,10 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(FondoEstilo), findsWidgets);
     final scaffold = tester.widget<Scaffold>(find.byType(Scaffold).first);
-    final color = scaffold.backgroundColor ??
-        Theme.of(tester.element(find.byType(Scaffold).first)).scaffoldBackgroundColor;
+    final color =
+        scaffold.backgroundColor ??
+        Theme.of(tester.element(find.byType(Scaffold).first))
+            .scaffoldBackgroundColor;
     expect(color, Colors.transparent);
   });
 
@@ -55,10 +57,16 @@ void main() {
       return c.read(conectividadRealDeDisenoProvider);
     }
 
-    expect(de(true, 0), const diseno.EstadoConectividad(diseno.EstadoConexion.enLinea));
+    expect(
+      de(true, 0),
+      const diseno.EstadoConectividad(diseno.EstadoConexion.enLinea),
+    );
     expect(
       de(true, 3),
-      const diseno.EstadoConectividad(diseno.EstadoConexion.sincronizando, pendientes: 3),
+      const diseno.EstadoConectividad(
+        diseno.EstadoConexion.sincronizando,
+        pendientes: 3,
+      ),
     );
     expect(
       de(false, 0),
@@ -66,7 +74,10 @@ void main() {
     );
     expect(
       de(false, 2),
-      const diseno.EstadoConectividad(diseno.EstadoConexion.sinConexion, pendientes: 2),
+      const diseno.EstadoConectividad(
+        diseno.EstadoConexion.sinConexion,
+        pendientes: 2,
+      ),
     );
   });
 }

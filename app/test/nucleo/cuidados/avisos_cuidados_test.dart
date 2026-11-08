@@ -176,9 +176,8 @@ void main() {
         const tituloToma = 'Hora de un recordatorio de cuidado';
         for (final quien in [_c, _d, _h]) {
           expect(
-            (await corre(quien)).programadas.values.where(
-              (p) => p.notificacion.titulo == tituloToma,
-            ),
+            (await corre(quien)).programadas.values
+                .where((p) => p.notificacion.titulo == tituloToma),
             isEmpty,
           );
         }

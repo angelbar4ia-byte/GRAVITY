@@ -148,10 +148,7 @@ void main() {
       expect(HashPin.iteracionesActuales, 600000);
       expect(HashPin.iteraciones100k, 100000);
       expect(HashPin.iteracionesAnteriores, 10000);
-      expect(
-        HashPin.iteracionesActuales,
-        greaterThan(HashPin.iteraciones100k),
-      );
+      expect(HashPin.iteracionesActuales, greaterThan(HashPin.iteraciones100k));
     });
   });
 }

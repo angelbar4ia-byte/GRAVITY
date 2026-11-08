@@ -1,7 +1,7 @@
 // GENERADO por api/generar_dart.mjs a partir de api/openapi.yaml. No se edita a mano.
 // Permite abrir Swagger UI con doble clic (file://), donde el navegador no deja leer
 // ../openapi.yaml. Servida por http, la página lee openapi.yaml directamente.
-// huella: fnv1a32:40cc92af
+// huella: fnv1a32:f7f46f10
 window.ESPECIFICACION_GRAVITY = {
   "openapi": "3.1.0",
   "info": {
@@ -12194,6 +12194,94 @@ window.ESPECIFICACION_GRAVITY = {
         }
       }
     },
+    "/rest/v1/rpc/fin_periodo_rango": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finPeriodoRango",
+        "summary": "Rango del periodo de la aportación que contiene una fecha",
+        "description": "Función pura (no lee tablas): devuelve el rango `desde` y `hasta` (ambos inclusive) del periodo que contiene la fecha. La semana va de lunes a domingo; el bimestre es de meses 1-2, 3-4…; el semestre, enero-junio o julio-diciembre. 400 (22023) si la fecha es nula o el periodo no es `semana`, `mes`, `bimestre`, `semestre` ni `anual`. La app la usa para rotular el periodo de la aportación a la casa; solo Finanzas la llama, así que se documenta con los roles de Finanzas (dueño y pareja).",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_periodo",
+                  "p_fecha"
+                ],
+                "properties": {
+                  "p_periodo": {
+                    "type": "string",
+                    "enum": [
+                      "semana",
+                      "mes",
+                      "bimestre",
+                      "semestre",
+                      "anual"
+                    ]
+                  },
+                  "p_fecha": {
+                    "type": "string",
+                    "format": "date"
+                  }
+                }
+              },
+              "example": {
+                "p_periodo": "mes",
+                "p_fecha": "2026-11-10"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "El rango del periodo (una fila).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "desde": {
+                        "type": "string",
+                        "format": "date"
+                      },
+                      "hasta": {
+                        "type": "string",
+                        "format": "date"
+                      }
+                    }
+                  }
+                },
+                "example": [
+                  {
+                    "desde": "2026-11-01",
+                    "hasta": "2026-11-30"
+                  }
+                ]
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
     "/rest/v1/fin_vistas_solicitadas": {
       "get": {
         "tags": [
@@ -20511,4 +20599,4 @@ window.ESPECIFICACION_GRAVITY = {
     }
   }
 };
-window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:40cc92af';
+window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:f7f46f10';

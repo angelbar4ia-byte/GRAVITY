@@ -259,7 +259,10 @@ void main() {
       await bloqueo.configurarPin('246813');
       final antes = contenedor.read(controladorBloqueoProvider);
       expect(await bloqueo.comprobarPin('246813'), ResultadoBloqueo.abierto);
-      expect(await bloqueo.comprobarPin('0001'), ResultadoBloqueo.pinIncorrecto);
+      expect(
+        await bloqueo.comprobarPin('0001'),
+        ResultadoBloqueo.pinIncorrecto,
+      );
       final despues = contenedor.read(controladorBloqueoProvider);
       expect(despues.bloqueado, antes.bloqueado);
       expect(despues.activo, isTrue);
@@ -275,7 +278,10 @@ void main() {
         await controlador.verificar('0001');
       }
       // El mismo contador: el bloqueo del teléfono también espera.
-      expect(await bloqueo.desbloquearConPin('246813'), ResultadoBloqueo.bloqueado);
+      expect(
+        await bloqueo.desbloquearConPin('246813'),
+        ResultadoBloqueo.bloqueado,
+      );
     });
   });
 

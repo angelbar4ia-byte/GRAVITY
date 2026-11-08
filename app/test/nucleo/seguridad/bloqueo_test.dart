@@ -71,7 +71,10 @@ void main() {
       ResultadoBloqueo.pinIncorrecto,
     );
     expect(contenedor.read(controladorBloqueoProvider).bloqueado, isTrue);
-    expect(await controlador.desbloquearConPin('246813'), ResultadoBloqueo.abierto);
+    expect(
+      await controlador.desbloquearConPin('246813'),
+      ResultadoBloqueo.abierto,
+    );
     expect(contenedor.read(controladorBloqueoProvider).bloqueado, isFalse);
   });
 
@@ -112,11 +115,20 @@ void main() {
     for (var i = 0; i < 5; i++) {
       await controlador.desbloquearConPin('0000');
     }
-    expect(await controlador.desbloquearConPin('246813'), ResultadoBloqueo.bloqueado);
+    expect(
+      await controlador.desbloquearConPin('246813'),
+      ResultadoBloqueo.bloqueado,
+    );
     (_, controlador) = await abrir();
-    expect(await controlador.desbloquearConPin('246813'), ResultadoBloqueo.bloqueado);
+    expect(
+      await controlador.desbloquearConPin('246813'),
+      ResultadoBloqueo.bloqueado,
+    );
     ahora = ahora.add(const Duration(seconds: 30));
-    expect(await controlador.desbloquearConPin('246813'), ResultadoBloqueo.abierto);
+    expect(
+      await controlador.desbloquearConPin('246813'),
+      ResultadoBloqueo.abierto,
+    );
   });
 
   test('huella: solo si la persona la activó (teléfono personal)', () async {

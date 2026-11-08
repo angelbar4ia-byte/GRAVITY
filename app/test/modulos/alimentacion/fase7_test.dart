@@ -35,7 +35,12 @@ Map<String, Object?> _receta({
   Object? porciones = 2,
   Object? pasos = const ['Hierve el pollo.', 'Agrega las verduras.'],
   Object? ingredientes = const [
-    {'nombre': 'Pollo', 'cantidad': 300, 'unidad': 'g', 'pasillo': 'Carnes y pescados'},
+    {
+      'nombre': 'Pollo',
+      'cantidad': 300,
+      'unidad': 'g',
+      'pasillo': 'Carnes y pescados',
+    },
     {'nombre': 'Zanahoria', 'cantidad': 2, 'unidad': 'pza'},
   ],
 }) => {
@@ -77,7 +82,10 @@ void main() {
         isFalse,
       );
       expect(
-        importarRecetasDeBytes(Uint8List(maxBytesArchivoRecetas + 1)).errores.single.mensaje,
+        importarRecetasDeBytes(Uint8List(maxBytesArchivoRecetas + 1))
+            .errores
+            .single
+            .mensaje,
         contains('1 MB'),
       );
     });
@@ -89,9 +97,13 @@ void main() {
         isFalse,
       );
       expect(
-        _importar(_receta(ingredientes: [
-          {'nombre': '<script>', 'cantidad': 1, 'unidad': 'pza'},
-        ])).valido,
+        _importar(
+          _receta(
+            ingredientes: [
+              {'nombre': '<script>', 'cantidad': 1, 'unidad': 'pza'},
+            ],
+          ),
+        ).valido,
         isFalse,
       );
     });
@@ -118,21 +130,38 @@ void main() {
       expect(_importar(_receta(ingredientes: const [])).valido, isFalse);
       expect(_importar(_receta(porciones: 0)).valido, isFalse);
       expect(
-        _importar(_receta(ingredientes: [
-          {'nombre': 'Sal', 'cantidad': 1, 'unidad': ''},
-        ])).valido,
+        _importar(
+          _receta(
+            ingredientes: [
+              {'nombre': 'Sal', 'cantidad': 1, 'unidad': ''},
+            ],
+          ),
+        ).valido,
         isFalse,
       );
       expect(
-        _importar(_receta(ingredientes: [
-          {'nombre': 'Sal', 'cantidad': 0, 'unidad': 'g'},
-        ])).valido,
+        _importar(
+          _receta(
+            ingredientes: [
+              {'nombre': 'Sal', 'cantidad': 0, 'unidad': 'g'},
+            ],
+          ),
+        ).valido,
         isFalse,
       );
       expect(
-        _importar(_receta(ingredientes: [
-          {'nombre': 'Sal', 'cantidad': 1, 'unidad': 'g', 'pasillo': 'Luna'},
-        ])).valido,
+        _importar(
+          _receta(
+            ingredientes: [
+              {
+                'nombre': 'Sal',
+                'cantidad': 1,
+                'unidad': 'g',
+                'pasillo': 'Luna',
+              },
+            ],
+          ),
+        ).valido,
         isFalse,
       );
     });
@@ -146,15 +175,18 @@ void main() {
       expect(r.errores.first.donde, contains('Receta 2'));
     });
 
-    test('título repetido en el archivo es error; las cifras en pasos avisan', () {
-      expect(
-        importarRecetasDeTexto(_archivo([_receta(), _receta()])).valido,
-        isFalse,
-      );
-      final r = _importar(_receta(pasos: ['Hierve 20 minutos.']));
-      expect(r.valido, isTrue);
-      expect(r.recetas.single.advertencias, isNotEmpty);
-    });
+    test(
+      'título repetido en el archivo es error; las cifras en pasos avisan',
+      () {
+        expect(
+          importarRecetasDeTexto(_archivo([_receta(), _receta()])).valido,
+          isFalse,
+        );
+        final r = _importar(_receta(pasos: ['Hierve 20 minutos.']));
+        expect(r.valido, isTrue);
+        expect(r.recetas.single.advertencias, isNotEmpty);
+      },
+    );
 
     test('guardar reemplaza por título y la rechazada no se guarda', () async {
       final repo = RepositorioAlimentacionEnMemoria(conEjemplo: false);
@@ -164,14 +196,20 @@ void main() {
       await s.importarRecetas(_importar(_receta(porciones: 4)));
       final todos = await repo.platillos();
       expect(todos.length, n0 + 1);
-      expect(todos.firstWhere((p) => p.id == 'imp-caldo-de-pollo').porciones, 4);
+      expect(
+        todos.firstWhere((p) => p.id == 'imp-caldo-de-pollo').porciones,
+        4,
+      );
       expect(
         () => s.importarRecetas(_importar(_receta(titulo: ''))),
         throwsA(isA<ArgumentError>()),
       );
       for (final rol in [Rol.familiar, Rol.cuidador, Rol.casa]) {
         await expectLater(
-          ServicioAlimentacion(repo, rol: rol).importarRecetas(_importar(_receta())),
+          ServicioAlimentacion(
+            repo,
+            rol: rol,
+          ).importarRecetas(_importar(_receta())),
           throwsA(isA<PermisoDenegado>()),
           reason: rol.name,
         );
@@ -180,27 +218,41 @@ void main() {
   });
 
   group('precios', () {
-    test('el precio base es base y se muestra estimado; sin precio no hay costo', () async {
-      final repo = RepositorioAlimentacionEnMemoria(semanaEjemplo: _lunes);
-      final precios = await repo.precios();
-      final huevo = precios[claveCompra('Huevo', 'pza')]!;
-      expect(huevo.esBase, isTrue);
-      expect(precios.values.every((p) => p.esBase), isTrue);
-      final items = await ServicioAlimentacion(repo, rol: Rol.dueno)
-          .listaCompras(MenuId.pareja, _miercoles);
-      final h = items.firstWhere((i) => i.nombre == 'Huevo');
-      expect(h.costoEstimado, isTrue);
-      expect(h.costoCentavos, isNotNull);
-      expect(costoTexto(h.costoCentavos!, estimado: h.costoEstimado), contains('estimado'));
-      // Los precios base cubren todos los ingredientes de ejemplo.
-      expect(items.every((i) => i.precio != null && i.precio!.esBase), isTrue);
-      expect(items.every((i) => i.costoEstimado), isTrue);
-      expect(huevo.nota, notaPrecioBase);
-      expect(notaPrecioBase, 'estimado, se reemplaza con la primera compra real');
-      final total = costoDeLista(items)!;
-      expect(total.estimado, isTrue);
-      expect(total.sinPrecio, 0);
-    });
+    test(
+      'el precio base es base y se muestra estimado; sin precio no hay costo',
+      () async {
+        final repo = RepositorioAlimentacionEnMemoria(semanaEjemplo: _lunes);
+        final precios = await repo.precios();
+        final huevo = precios[claveCompra('Huevo', 'pza')]!;
+        expect(huevo.esBase, isTrue);
+        expect(precios.values.every((p) => p.esBase), isTrue);
+        final items = await ServicioAlimentacion(
+          repo,
+          rol: Rol.dueno,
+        ).listaCompras(MenuId.pareja, _miercoles);
+        final h = items.firstWhere((i) => i.nombre == 'Huevo');
+        expect(h.costoEstimado, isTrue);
+        expect(h.costoCentavos, isNotNull);
+        expect(
+          costoTexto(h.costoCentavos!, estimado: h.costoEstimado),
+          contains('estimado'),
+        );
+        // Los precios base cubren todos los ingredientes de ejemplo.
+        expect(
+          items.every((i) => i.precio != null && i.precio!.esBase),
+          isTrue,
+        );
+        expect(items.every((i) => i.costoEstimado), isTrue);
+        expect(huevo.nota, notaPrecioBase);
+        expect(
+          notaPrecioBase,
+          'estimado, se reemplaza con la primera compra real',
+        );
+        final total = costoDeLista(items)!;
+        expect(total.estimado, isTrue);
+        expect(total.sinPrecio, 0);
+      },
+    );
 
     test('los precios base cubren todos los ingredientes de ejemplo, marcados base', () async {
       final repo = RepositorioAlimentacionEnMemoria(semanaEjemplo: _lunes);
@@ -241,56 +293,87 @@ void main() {
       expect(costoDeLista([it]), isNull);
     });
 
-    test('la primera compra real reemplaza al base y las siguientes lo actualizan', () async {
-      final repo = RepositorioAlimentacionEnMemoria(semanaEjemplo: _lunes);
-      final s = ServicioAlimentacion(repo, rol: Rol.dueno);
-      final clave = claveCompra('Huevo', 'pza');
-      expect((await repo.precios())[clave]!.esBase, isTrue);
+    test(
+      'la primera compra real reemplaza al base y las siguientes lo actualizan',
+      () async {
+        final repo = RepositorioAlimentacionEnMemoria(semanaEjemplo: _lunes);
+        final s = ServicioAlimentacion(repo, rol: Rol.dueno);
+        final clave = claveCompra('Huevo', 'pza');
+        expect((await repo.precios())[clave]!.esBase, isTrue);
 
-      // 12 piezas por $48.00 -> $4.00 la pieza, real.
-      await s.registrarCompra(MenuId.pareja, _miercoles, clave,
-          cantidadComprada: 12, totalCentavos: 4800);
-      var p = (await repo.precios())[clave]!;
-      expect(p.esBase, isFalse);
-      expect(p.costoDe(3), 1200);
-      var items = await s.listaCompras(MenuId.pareja, _miercoles);
-      var h = items.firstWhere((i) => i.clave == clave);
-      expect(h.comprado, isTrue);
-      expect(h.costoEstimado, isFalse);
-      expect(costoTexto(h.costoCentavos!, estimado: h.costoEstimado), isNot(contains('estimado')));
-
-      // Segunda compra: el precio se actualiza.
-      await s.registrarCompra(MenuId.pareja, _miercoles, clave,
-          cantidadComprada: 6, totalCentavos: 3000);
-      p = (await repo.precios())[clave]!;
-      expect(p.esBase, isFalse);
-      expect(p.costoDe(1), 500);
-
-      // Las demás siguen siendo base.
-      expect((await repo.precios())[claveCompra('Tortilla', 'pza')]!.esBase, isTrue);
-    });
-
-    test('una compra necesita precio y cantidad mayores que cero y permiso', () async {
-      final repo = RepositorioAlimentacionEnMemoria(semanaEjemplo: _lunes);
-      final clave = claveCompra('Huevo', 'pza');
-      final s = ServicioAlimentacion(repo, rol: Rol.dueno);
-      expect(
-        () => s.registrarCompra(MenuId.pareja, _miercoles, clave,
-            cantidadComprada: 1, totalCentavos: 0),
-        throwsArgumentError,
-      );
-      expect((await repo.precios())[clave]!.esBase, isTrue);
-      for (final rol in [Rol.familiar, Rol.cuidador, Rol.casa]) {
-        await expectLater(
-          ServicioAlimentacion(repo, rol: rol).registrarCompra(
-            MenuId.papa, _miercoles, clave,
-            cantidadComprada: 1, totalCentavos: 100),
-          throwsA(isA<PermisoDenegado>()),
-          reason: rol.name,
+        // 12 piezas por $48.00 -> $4.00 la pieza, real.
+        await s.registrarCompra(
+          MenuId.pareja,
+          _miercoles,
+          clave,
+          cantidadComprada: 12,
+          totalCentavos: 4800,
         );
-      }
-      expect((await repo.precios())[clave]!.esBase, isTrue);
-    });
+        var p = (await repo.precios())[clave]!;
+        expect(p.esBase, isFalse);
+        expect(p.costoDe(3), 1200);
+        var items = await s.listaCompras(MenuId.pareja, _miercoles);
+        var h = items.firstWhere((i) => i.clave == clave);
+        expect(h.comprado, isTrue);
+        expect(h.costoEstimado, isFalse);
+        expect(
+          costoTexto(h.costoCentavos!, estimado: h.costoEstimado),
+          isNot(contains('estimado')),
+        );
+
+        // Segunda compra: el precio se actualiza.
+        await s.registrarCompra(
+          MenuId.pareja,
+          _miercoles,
+          clave,
+          cantidadComprada: 6,
+          totalCentavos: 3000,
+        );
+        p = (await repo.precios())[clave]!;
+        expect(p.esBase, isFalse);
+        expect(p.costoDe(1), 500);
+
+        // Las demás siguen siendo base.
+        expect(
+          (await repo.precios())[claveCompra('Tortilla', 'pza')]!.esBase,
+          isTrue,
+        );
+      },
+    );
+
+    test(
+      'una compra necesita precio y cantidad mayores que cero y permiso',
+      () async {
+        final repo = RepositorioAlimentacionEnMemoria(semanaEjemplo: _lunes);
+        final clave = claveCompra('Huevo', 'pza');
+        final s = ServicioAlimentacion(repo, rol: Rol.dueno);
+        expect(
+          () => s.registrarCompra(
+            MenuId.pareja,
+            _miercoles,
+            clave,
+            cantidadComprada: 1,
+            totalCentavos: 0,
+          ),
+          throwsArgumentError,
+        );
+        expect((await repo.precios())[clave]!.esBase, isTrue);
+        for (final rol in [Rol.familiar, Rol.cuidador, Rol.casa]) {
+          await expectLater(
+            ServicioAlimentacion(repo, rol: rol).registrarCompra(
+              MenuId.papa,
+              _miercoles,
+              clave,
+              cantidadComprada: 1,
+              totalCentavos: 100,
+            ),
+            throwsA(isA<PermisoDenegado>()),
+            reason: rol.name,
+          );
+        }
+        expect((await repo.precios())[clave]!.esBase, isTrue);
+      },
+    );
 
     test('pesosTexto en centavos', () {
       expect(pesosTexto(12345), '\$123.45');
@@ -299,27 +382,43 @@ void main() {
   });
 
   group('lista por pasillo', () {
-    test('agrupa por pasillo en orden, suma cantidades y respeta lo comprado', () async {
-      final repo = RepositorioAlimentacionEnMemoria(semanaEjemplo: _lunes);
-      final s = ServicioAlimentacion(repo, rol: Rol.dueno);
-      await s.marcar(MenuId.pareja, _miercoles, claveCompra('Huevo', 'pza'), true);
-      final items = await s.listaCompras(MenuId.pareja, _miercoles);
-      final grupos = agruparPorSeccion(items);
-      final orden = grupos.keys.map((k) => k.index).toList();
-      expect(orden, [...orden]..sort());
-      for (final g in grupos.entries) {
-        expect(g.value.every((i) => i.seccion == g.key), isTrue);
-      }
-      expect(items.firstWhere((i) => i.nombre == 'Huevo').comprado, isTrue);
-      expect(items.where((i) => i.comprado).length, 1);
-    });
+    test(
+      'agrupa por pasillo en orden, suma cantidades y respeta lo comprado',
+      () async {
+        final repo = RepositorioAlimentacionEnMemoria(semanaEjemplo: _lunes);
+        final s = ServicioAlimentacion(repo, rol: Rol.dueno);
+        await s.marcar(
+          MenuId.pareja,
+          _miercoles,
+          claveCompra('Huevo', 'pza'),
+          true,
+        );
+        final items = await s.listaCompras(MenuId.pareja, _miercoles);
+        final grupos = agruparPorSeccion(items);
+        final orden = grupos.keys.map((k) => k.index).toList();
+        expect(orden, [...orden]..sort());
+        for (final g in grupos.entries) {
+          expect(g.value.every((i) => i.seccion == g.key), isTrue);
+        }
+        expect(items.firstWhere((i) => i.nombre == 'Huevo').comprado, isTrue);
+        expect(items.where((i) => i.comprado).length, 1);
+      },
+    );
 
     test('una receta importada aporta sus ingredientes a su pasillo', () {
       final r = _importar(_receta()).recetas.single.platillo;
       final lista = generarListaCompras(
         menu: const [
-          EntradaMenu(dia: 0, tiempo: TiempoComida.comida, platilloId: 'imp-caldo-de-pollo'),
-          EntradaMenu(dia: 2, tiempo: TiempoComida.cena, platilloId: 'imp-caldo-de-pollo'),
+          EntradaMenu(
+            dia: 0,
+            tiempo: TiempoComida.comida,
+            platilloId: 'imp-caldo-de-pollo',
+          ),
+          EntradaMenu(
+            dia: 2,
+            tiempo: TiempoComida.cena,
+            platilloId: 'imp-caldo-de-pollo',
+          ),
         ],
         platillos: [r],
       );
@@ -334,14 +433,20 @@ void main() {
     final t0 = DateTime(2026, 11, 10, 9);
     final dia = DateTime(2026, 11, 10);
 
-    ServicioPlanFamiliar srv(RepositorioAlimentacion repo, Rol rol, String id,
-            {DateTime? ahora, bool maestra = false}) =>
-        ServicioPlanFamiliar(repo,
-            rol: rol,
-            personaId: id,
-            personaNombre: id,
-            esMaestra: maestra,
-            ahora: () => ahora ?? t0);
+    ServicioPlanFamiliar srv(
+      RepositorioAlimentacion repo,
+      Rol rol,
+      String id, {
+      DateTime? ahora,
+      bool maestra = false,
+    }) => ServicioPlanFamiliar(
+      repo,
+      rol: rol,
+      personaId: id,
+      personaNombre: id,
+      esMaestra: maestra,
+      ahora: () => ahora ?? t0,
+    );
 
     test('dos propuestas de personas distintas; votos y cambio de voto con la votación abierta', () async {
       final repo = RepositorioAlimentacionEnMemoria(conEjemplo: false);
@@ -349,8 +454,14 @@ void main() {
       final beto = srv(repo, Rol.coadministrador, 'beto');
       var v = await ana.proponer(dia, titulo: 'Pozole');
       expect(v.estado(t0), EstadoVotacion.faltaPropuesta);
-      await expectLater(ana.proponer(dia, titulo: 'Otro'), throwsA(isA<ErrorVotacion>()));
-      await expectLater(ana.votar(dia, v.propuestas[0].id), throwsA(isA<ErrorVotacion>()));
+      await expectLater(
+        ana.proponer(dia, titulo: 'Otro'),
+        throwsA(isA<ErrorVotacion>()),
+      );
+      await expectLater(
+        ana.votar(dia, v.propuestas[0].id),
+        throwsA(isA<ErrorVotacion>()),
+      );
       v = await beto.proponer(dia, titulo: 'Tacos');
       expect(v.estado(t0), EstadoVotacion.enCurso);
       final a = v.propuestas[0].id, b = v.propuestas[1].id;
@@ -388,47 +499,74 @@ void main() {
     });
 
     for (final cae in [true, false]) {
-      test('empate al cierre: lo resuelve el servidor por volado (${cae ? 'primera' : 'segunda'}), la app no decide', () async {
-        final repo = RepositorioAlimentacionEnMemoria(
-            conEjemplo: false, volado: () => cae);
-        var v = await srv(repo, Rol.dueno, 'ana').proponer(dia, titulo: 'Pozole');
-        v = await srv(repo, Rol.familiar, 'cris').proponer(dia, titulo: 'Tacos');
-        final a = v.propuestas[0].id, b = v.propuestas[1].id;
-        await srv(repo, Rol.dueno, 'ana').votar(dia, a);
-        await srv(repo, Rol.familiar, 'cris').votar(dia, b);
-        final tarde = t0.add(const Duration(days: 2));
+      test(
+        'empate al cierre: lo resuelve el servidor por volado (${cae ? 'primera' : 'segunda'}), la app no decide',
+        () async {
+          final repo = RepositorioAlimentacionEnMemoria(
+            conEjemplo: false,
+            volado: () => cae,
+          );
+          var v = await srv(
+            repo,
+            Rol.dueno,
+            'ana',
+          ).proponer(dia, titulo: 'Pozole');
+          v = await srv(
+            repo,
+            Rol.familiar,
+            'cris',
+          ).proponer(dia, titulo: 'Tacos');
+          final a = v.propuestas[0].id, b = v.propuestas[1].id;
+          await srv(repo, Rol.dueno, 'ana').votar(dia, a);
+          await srv(repo, Rol.familiar, 'cris').votar(dia, b);
+          final tarde = t0.add(const Duration(days: 2));
 
-        // La app por sí sola no decide: sin el cierre del servidor, pendiente.
-        v = (await repo.votacion(dia))!;
-        expect(v.estado(tarde), EstadoVotacion.empatePendiente);
-        expect(v.ganador(tarde), isNull);
-        expect(v.puedeVotar(tarde), isFalse);
-        await expectLater(
-          srv(repo, Rol.familiar, 'cris', ahora: tarde).votar(dia, a),
-          throwsA(isA<ErrorVotacion>()),
-        );
+          // La app por sí sola no decide: sin el cierre del servidor, pendiente.
+          v = (await repo.votacion(dia))!;
+          expect(v.estado(tarde), EstadoVotacion.empatePendiente);
+          expect(v.ganador(tarde), isNull);
+          expect(v.puedeVotar(tarde), isFalse);
+          await expectLater(
+            srv(repo, Rol.familiar, 'cris', ahora: tarde).votar(dia, a),
+            throwsA(isA<ErrorVotacion>()),
+          );
 
-        // Al abrir el plan se pide el cierre al servidor, que hace el volado.
-        v = (await srv(repo, Rol.dueno, 'ana', ahora: tarde).votacion(dia))!;
-        expect(v.estado(tarde), EstadoVotacion.ganador);
-        expect(v.resueltaPorVolado(tarde), isTrue);
-        expect(v.ganador(tarde)!.id, cae ? a : b);
-        // Pedirlo otra vez no cambia el resultado del servidor.
-        v = (await srv(repo, Rol.dueno, 'ana', ahora: tarde).votacion(dia))!;
-        expect(v.ganador(tarde)!.id, cae ? a : b);
-      });
+          // Al abrir el plan se pide el cierre al servidor, que hace el volado.
+          v = (await srv(repo, Rol.dueno, 'ana', ahora: tarde).votacion(dia))!;
+          expect(v.estado(tarde), EstadoVotacion.ganador);
+          expect(v.resueltaPorVolado(tarde), isTrue);
+          expect(v.ganador(tarde)!.id, cae ? a : b);
+          // Pedirlo otra vez no cambia el resultado del servidor.
+          v = (await srv(repo, Rol.dueno, 'ana', ahora: tarde).votacion(dia))!;
+          expect(v.ganador(tarde)!.id, cae ? a : b);
+        },
+      );
     }
 
-    test('mientras está abierta no se hace volado aunque haya empate', () async {
-      final repo = RepositorioAlimentacionEnMemoria(conEjemplo: false, volado: () => true);
-      var v = await srv(repo, Rol.dueno, 'ana').proponer(dia, titulo: 'Pozole');
-      v = await srv(repo, Rol.familiar, 'cris').proponer(dia, titulo: 'Tacos');
-      await srv(repo, Rol.dueno, 'ana').votar(dia, v.propuestas[0].id);
-      await srv(repo, Rol.familiar, 'cris').votar(dia, v.propuestas[1].id);
-      v = (await srv(repo, Rol.dueno, 'ana').votacion(dia))!;
-      expect(v.ganadoraVoladoId, isNull);
-      expect(v.estado(t0), EstadoVotacion.enCurso);
-    });
+    test(
+      'mientras está abierta no se hace volado aunque haya empate',
+      () async {
+        final repo = RepositorioAlimentacionEnMemoria(
+          conEjemplo: false,
+          volado: () => true,
+        );
+        var v = await srv(
+          repo,
+          Rol.dueno,
+          'ana',
+        ).proponer(dia, titulo: 'Pozole');
+        v = await srv(
+          repo,
+          Rol.familiar,
+          'cris',
+        ).proponer(dia, titulo: 'Tacos');
+        await srv(repo, Rol.dueno, 'ana').votar(dia, v.propuestas[0].id);
+        await srv(repo, Rol.familiar, 'cris').votar(dia, v.propuestas[1].id);
+        v = (await srv(repo, Rol.dueno, 'ana').votacion(dia))!;
+        expect(v.ganadoraVoladoId, isNull);
+        expect(v.estado(t0), EstadoVotacion.enCurso);
+      },
+    );
 
     test('quién propone y vota: dueño, pareja y familiar; Casa y la maestra ven; la cuidadora no', () async {
       final repo = RepositorioAlimentacionEnMemoria(conEjemplo: false);
@@ -436,12 +574,21 @@ void main() {
       for (final r in [Rol.casa]) {
         final s = srv(repo, r, 'x');
         expect((await s.votacion(dia))!.propuestas, hasLength(1));
-        await expectLater(s.proponer(dia, titulo: 'Z'), throwsA(isA<ErrorVotacion>()));
-        await expectLater(s.votar(dia, 'v-2026-11-10-p1'), throwsA(isA<ErrorVotacion>()));
+        await expectLater(
+          s.proponer(dia, titulo: 'Z'),
+          throwsA(isA<ErrorVotacion>()),
+        );
+        await expectLater(
+          s.votar(dia, 'v-2026-11-10-p1'),
+          throwsA(isA<ErrorVotacion>()),
+        );
       }
       final maestra = srv(repo, Rol.coadministrador, 'm', maestra: true);
       expect(await maestra.votacion(dia), isNotNull);
-      await expectLater(maestra.proponer(dia, titulo: 'Z'), throwsA(isA<ErrorVotacion>()));
+      await expectLater(
+        maestra.proponer(dia, titulo: 'Z'),
+        throwsA(isA<ErrorVotacion>()),
+      );
       await expectLater(
         srv(repo, Rol.cuidador, 'c').votacion(dia),
         throwsA(isA<ErrorVotacion>()),
@@ -451,29 +598,45 @@ void main() {
   });
 
   group('presupuesto sí o no', () {
-    test('responde sí o no, sin cifras, y solo a dueño, pareja y familiar', () async {
-      for (final hay in [true, false]) {
-        final repo = RepositorioAlimentacionEnMemoria(
-            semanaEjemplo: _lunes, hayPresupuestoSupuesto: hay);
-        for (final r in [Rol.dueno, Rol.coadministrador, Rol.familiar]) {
-          final res = await ServicioAlimentacion(repo, rol: r).hayPresupuesto();
-          expect(res, hay, reason: r.name);
-          // Es un bool: no lleva saldo, cuenta ni monto.
-          expect(res, isA<bool>());
+    test(
+      'responde sí o no, sin cifras, y solo a dueño, pareja y familiar',
+      () async {
+        for (final hay in [true, false]) {
+          final repo = RepositorioAlimentacionEnMemoria(
+            semanaEjemplo: _lunes,
+            hayPresupuestoSupuesto: hay,
+          );
+          for (final r in [Rol.dueno, Rol.coadministrador, Rol.familiar]) {
+            final res = await ServicioAlimentacion(
+              repo,
+              rol: r,
+            ).hayPresupuesto();
+            expect(res, hay, reason: r.name);
+            // Es un bool: no lleva saldo, cuenta ni monto.
+            expect(res, isA<bool>());
+          }
         }
-      }
-    });
+      },
+    );
 
     test('la cuidadora, la cuenta maestra y Casa no lo ven', () async {
       final repo = RepositorioAlimentacionEnMemoria(semanaEjemplo: _lunes);
-      await expectLater(ServicioAlimentacion(repo, rol: Rol.cuidador).hayPresupuesto(),
-          throwsA(isA<PermisoDenegado>()));
-      await expectLater(ServicioAlimentacion(repo, rol: Rol.casa).hayPresupuesto(),
-          throwsA(isA<PermisoDenegado>()));
       await expectLater(
-          ServicioAlimentacion(repo, rol: Rol.coadministrador, esMaestra: true)
-              .hayPresupuesto(),
-          throwsA(isA<PermisoDenegado>()));
+        ServicioAlimentacion(repo, rol: Rol.cuidador).hayPresupuesto(),
+        throwsA(isA<PermisoDenegado>()),
+      );
+      await expectLater(
+        ServicioAlimentacion(repo, rol: Rol.casa).hayPresupuesto(),
+        throwsA(isA<PermisoDenegado>()),
+      );
+      await expectLater(
+        ServicioAlimentacion(
+          repo,
+          rol: Rol.coadministrador,
+          esMaestra: true,
+        ).hayPresupuesto(),
+        throwsA(isA<PermisoDenegado>()),
+      );
       expect(puedeVerHayPresupuesto(Rol.dueno, esMaestra: true), isFalse);
     });
   });
@@ -487,13 +650,25 @@ void main() {
       expect(hoy.every((c) => c.platillo.isNotEmpty), isTrue);
       // Todo lo demás sigue negado.
       expect(casa.menusVisibles, isEmpty);
-      await expectLater(casa.menu(MenuId.papa, _miercoles), throwsA(isA<PermisoDenegado>()));
-      await expectLater(casa.suplementos(MenuId.papa), throwsA(isA<PermisoDenegado>()));
-      await expectLater(casa.listaCompras(MenuId.papa, _miercoles), throwsA(isA<PermisoDenegado>()));
+      await expectLater(
+        casa.menu(MenuId.papa, _miercoles),
+        throwsA(isA<PermisoDenegado>()),
+      );
+      await expectLater(
+        casa.suplementos(MenuId.papa),
+        throwsA(isA<PermisoDenegado>()),
+      );
+      await expectLater(
+        casa.listaCompras(MenuId.papa, _miercoles),
+        throwsA(isA<PermisoDenegado>()),
+      );
       await expectLater(casa.platillos(), throwsA(isA<PermisoDenegado>()));
       expect(() => casa.perfil(MenuId.papa), throwsA(isA<PermisoDenegado>()));
       // El menú del día sale en el mismo orden de los tiempos.
-      expect(hoy.map((c) => c.tiempo.index), [...hoy.map((c) => c.tiempo.index)]..sort());
+      expect(
+        hoy.map((c) => c.tiempo.index),
+        [...hoy.map((c) => c.tiempo.index)]..sort(),
+      );
     });
 
     test('la cuidadora ve el menú de Papá sin editar ni tocar precios; el familiar edita solo el de Papá', () async {
@@ -501,9 +676,14 @@ void main() {
       final c = ServicioAlimentacion(repo, rol: Rol.cuidador);
       expect(await c.menu(MenuId.papa, _miercoles), isNotEmpty);
       expect(c.puedeEditarMenuDe(MenuId.papa), isFalse);
-      await expectLater(c.menu(MenuId.pareja, _miercoles), throwsA(isA<PermisoDenegado>()));
-      await expectLater(c.asignar(MenuId.papa, _miercoles, 0, TiempoComida.cena, null),
-          throwsA(isA<PermisoDenegado>()));
+      await expectLater(
+        c.menu(MenuId.pareja, _miercoles),
+        throwsA(isA<PermisoDenegado>()),
+      );
+      await expectLater(
+        c.asignar(MenuId.papa, _miercoles, 0, TiempoComida.cena, null),
+        throwsA(isA<PermisoDenegado>()),
+      );
       final f = ServicioAlimentacion(repo, rol: Rol.familiar);
       expect(f.puedeEditarMenuDe(MenuId.papa), isTrue);
       expect(f.puedeEditarMenuDe(MenuId.pareja), isFalse);
@@ -512,34 +692,46 @@ void main() {
 
     test('el menú del día no lleva perfil clínico ni suplementos', () async {
       final repo = RepositorioAlimentacionEnMemoria(semanaEjemplo: _lunes);
-      final hoy = await ServicioAlimentacion(repo, rol: Rol.casa).menuDelDiaPapa(_miercoles);
-      final texto = hoy.map((c) => '${c.tiempo.etiqueta} ${c.platillo}').join(' ').toLowerCase();
+      final hoy = await ServicioAlimentacion(
+        repo,
+        rol: Rol.casa,
+      ).menuDelDiaPapa(_miercoles);
+      final texto = hoy
+          .map((c) => '${c.tiempo.etiqueta} ${c.platillo}')
+          .join(' ')
+          .toLowerCase();
       expect(texto, isNot(contains('alzheimer')));
       expect(texto, isNot(contains('tableta')));
     });
   });
 
   group('pantallas', () {
-    Widget app(Rol rol, Widget pantalla,
-            {RepositorioAlimentacion? repo,
-            SelectorArchivoRecetas? selector,
-            String id = 'p1',
-            bool maestra = false}) =>
-        ProviderScope(
-          overrides: [
-            relojProvider.overrideWithValue(RelojFijo(_miercoles)),
-            almacenSeguroProvider.overrideWithValue(AlmacenSeguroEnMemoria()),
-            servicioSesionProvider.overrideWithValue(ServicioSesionFalso()),
-            sesionEfectivaProvider.overrideWithValue(Sesion(
-              persona: Persona(id: id, nombre: 'Persona $id'),
-              rol: rol,
-              esMaestra: maestra,
-            )),
-            if (repo != null) repositorioAlimentacionProvider.overrideWithValue(repo),
-            if (selector != null) selectorRecetasProvider.overrideWithValue(selector),
-          ],
-          child: MaterialApp(home: pantalla),
-        );
+    Widget app(
+      Rol rol,
+      Widget pantalla, {
+      RepositorioAlimentacion? repo,
+      SelectorArchivoRecetas? selector,
+      String id = 'p1',
+      bool maestra = false,
+    }) => ProviderScope(
+      overrides: [
+        relojProvider.overrideWithValue(RelojFijo(_miercoles)),
+        almacenSeguroProvider.overrideWithValue(AlmacenSeguroEnMemoria()),
+        servicioSesionProvider.overrideWithValue(ServicioSesionFalso()),
+        sesionEfectivaProvider.overrideWithValue(
+          Sesion(
+            persona: Persona(id: id, nombre: 'Persona $id'),
+            rol: rol,
+            esMaestra: maestra,
+          ),
+        ),
+        if (repo != null)
+          repositorioAlimentacionProvider.overrideWithValue(repo),
+        if (selector != null)
+          selectorRecetasProvider.overrideWithValue(selector),
+      ],
+      child: MaterialApp(home: pantalla),
+    );
 
     Future<void> alto(WidgetTester t) async {
       await t.binding.setSurfaceSize(const Size(400, 9000));
@@ -552,26 +744,47 @@ void main() {
     testWidgets('importar: vista previa y luego guarda', (t) async {
       await alto(t);
       final repo = RepositorioAlimentacionEnMemoria(conEjemplo: false);
-      await t.pumpWidget(app(Rol.dueno, const PantallaImportarRecetas(),
-          repo: repo, selector: () async => arch(_archivo([_receta()]))));
+      await t.pumpWidget(
+        app(
+          Rol.dueno,
+          const PantallaImportarRecetas(),
+          repo: repo,
+          selector: () async => arch(_archivo([_receta()])),
+        ),
+      );
       await t.tap(find.text('Elegir archivo'));
       await t.pumpAndSettle();
       expect(find.text('Vista previa: 1 receta'), findsOneWidget);
       expect(find.text('Caldo de pollo'), findsOneWidget);
       expect(find.text('1. Hierve el pollo.'), findsOneWidget);
-      expect((await repo.platillos()).any((p) => p.id == 'imp-caldo-de-pollo'), isFalse);
+      expect(
+        (await repo.platillos()).any((p) => p.id == 'imp-caldo-de-pollo'),
+        isFalse,
+      );
       await t.tap(find.text('Guardar receta'));
       await t.pumpAndSettle();
       expect(find.text('Se guardó 1 receta'), findsOneWidget);
-      expect((await repo.platillos()).any((p) => p.id == 'imp-caldo-de-pollo'), isTrue);
+      expect(
+        (await repo.platillos()).any((p) => p.id == 'imp-caldo-de-pollo'),
+        isTrue,
+      );
     });
 
     testWidgets('importar: archivo con errores no se puede guardar', (t) async {
       await alto(t);
       final repo = RepositorioAlimentacionEnMemoria(conEjemplo: false);
-      await t.pumpWidget(app(Rol.dueno, const PantallaImportarRecetas(),
+      await t.pumpWidget(
+        app(
+          Rol.dueno,
+          const PantallaImportarRecetas(),
           repo: repo,
-          selector: () async => arch(_archivo([_receta(pasos: ['a' * 201])]))));
+          selector: () async => arch(
+            _archivo([
+              _receta(pasos: ['a' * 201]),
+            ]),
+          ),
+        ),
+      );
       await t.tap(find.text('Elegir archivo'));
       await t.pumpAndSettle();
       expect(find.text('El archivo no se puede importar'), findsOneWidget);
@@ -580,83 +793,138 @@ void main() {
     });
 
     testWidgets('importar: quien no edita no ve el selector', (t) async {
-      await t.pumpWidget(app(Rol.cuidador, const PantallaImportarRecetas(),
-          repo: RepositorioAlimentacionEnMemoria(conEjemplo: false)));
+      await t.pumpWidget(
+        app(
+          Rol.cuidador,
+          const PantallaImportarRecetas(),
+          repo: RepositorioAlimentacionEnMemoria(conEjemplo: false),
+        ),
+      );
       await t.pumpAndSettle();
       expect(find.text('Elegir archivo'), findsNothing);
     });
 
-    testWidgets('plan: proponer, votar y cambiar el voto con la votación abierta', (t) async {
-      await alto(t);
-      final repo = RepositorioAlimentacionEnMemoria(conEjemplo: false);
-      final dia = DateTime(2026, 11, 4);
-      final a = ServicioPlanFamiliar(repo,
-          rol: Rol.dueno, personaId: 'ana', personaNombre: 'Ana',
-          ahora: () => _miercoles);
-      final b = ServicioPlanFamiliar(repo,
-          rol: Rol.familiar, personaId: 'beto', personaNombre: 'Beto',
-          ahora: () => _miercoles);
-      var v = await a.proponer(dia, titulo: 'Pozole');
-      v = await b.proponer(dia, titulo: 'Tacos');
-      await a.votar(dia, v.propuestas[0].id);
-      await b.votar(dia, v.propuestas[1].id);
+    testWidgets(
+      'plan: proponer, votar y cambiar el voto con la votación abierta',
+      (t) async {
+        await alto(t);
+        final repo = RepositorioAlimentacionEnMemoria(conEjemplo: false);
+        final dia = DateTime(2026, 11, 4);
+        final a = ServicioPlanFamiliar(
+          repo,
+          rol: Rol.dueno,
+          personaId: 'ana',
+          personaNombre: 'Ana',
+          ahora: () => _miercoles,
+        );
+        final b = ServicioPlanFamiliar(
+          repo,
+          rol: Rol.familiar,
+          personaId: 'beto',
+          personaNombre: 'Beto',
+          ahora: () => _miercoles,
+        );
+        var v = await a.proponer(dia, titulo: 'Pozole');
+        v = await b.proponer(dia, titulo: 'Tacos');
+        await a.votar(dia, v.propuestas[0].id);
+        await b.votar(dia, v.propuestas[1].id);
 
-      await t.pumpWidget(app(Rol.dueno, const PantallaPlanFamiliar(),
-          repo: repo, id: 'ana'));
-      await t.pumpAndSettle();
-      expect(find.textContaining('Votación abierta, van empatadas'), findsOneWidget);
-      expect(find.textContaining('cualquiera puede cambiar'), findsNothing);
-      expect(find.text('Tu voto'), findsOneWidget);
-      await t.tap(find.text('Cambiar mi voto a esta'));
-      await t.pumpAndSettle();
-      expect(find.text('2 votos'), findsOneWidget);
-      expect(find.text('Tu voto'), findsOneWidget);
-    });
+        await t.pumpWidget(
+          app(Rol.dueno, const PantallaPlanFamiliar(), repo: repo, id: 'ana'),
+        );
+        await t.pumpAndSettle();
+        expect(
+          find.textContaining('Votación abierta, van empatadas'),
+          findsOneWidget,
+        );
+        expect(find.textContaining('cualquiera puede cambiar'), findsNothing);
+        expect(find.text('Tu voto'), findsOneWidget);
+        await t.tap(find.text('Cambiar mi voto a esta'));
+        await t.pumpAndSettle();
+        expect(find.text('2 votos'), findsOneWidget);
+        expect(find.text('Tu voto'), findsOneWidget);
+      },
+    );
 
-    testWidgets('plan: votación abierta sin empate también deja cambiar el voto', (t) async {
-      await alto(t);
-      final repo = RepositorioAlimentacionEnMemoria(conEjemplo: false);
-      final dia = DateTime(2026, 11, 4);
-      ServicioPlanFamiliar sv(Rol r, String id) => ServicioPlanFamiliar(repo,
-          rol: r, personaId: id, personaNombre: id, ahora: () => _miercoles);
-      var v = await sv(Rol.dueno, 'ana').proponer(dia, titulo: 'Pozole');
-      v = await sv(Rol.familiar, 'beto').proponer(dia, titulo: 'Tacos');
-      await sv(Rol.dueno, 'ana').votar(dia, v.propuestas[0].id);
-      await t.pumpWidget(app(Rol.dueno, const PantallaPlanFamiliar(), repo: repo, id: 'ana'));
-      await t.pumpAndSettle();
-      expect(find.text('Cambiar mi voto a esta'), findsOneWidget);
-    });
+    testWidgets(
+      'plan: votación abierta sin empate también deja cambiar el voto',
+      (t) async {
+        await alto(t);
+        final repo = RepositorioAlimentacionEnMemoria(conEjemplo: false);
+        final dia = DateTime(2026, 11, 4);
+        ServicioPlanFamiliar sv(Rol r, String id) => ServicioPlanFamiliar(
+          repo,
+          rol: r,
+          personaId: id,
+          personaNombre: id,
+          ahora: () => _miercoles,
+        );
+        var v = await sv(Rol.dueno, 'ana').proponer(dia, titulo: 'Pozole');
+        v = await sv(Rol.familiar, 'beto').proponer(dia, titulo: 'Tacos');
+        await sv(Rol.dueno, 'ana').votar(dia, v.propuestas[0].id);
+        await t.pumpWidget(
+          app(Rol.dueno, const PantallaPlanFamiliar(), repo: repo, id: 'ana'),
+        );
+        await t.pumpAndSettle();
+        expect(find.text('Cambiar mi voto a esta'), findsOneWidget);
+      },
+    );
 
-    testWidgets('plan: empate al cierre se muestra como resultado del servidor', (t) async {
-      await alto(t);
-      final repo = RepositorioAlimentacionEnMemoria(conEjemplo: false, volado: () => false);
-      final dia = DateTime(2026, 11, 4);
-      final antes = DateTime(2026, 10, 30, 9);
-      ServicioPlanFamiliar sv(Rol r, String id) => ServicioPlanFamiliar(repo,
-          rol: r, personaId: id, personaNombre: id, ahora: () => antes);
-      var v = await sv(Rol.dueno, 'ana').proponer(dia, titulo: 'Pozole');
-      v = await sv(Rol.familiar, 'beto').proponer(dia, titulo: 'Tacos');
-      await sv(Rol.dueno, 'ana').votar(dia, v.propuestas[0].id);
-      await sv(Rol.familiar, 'beto').votar(dia, v.propuestas[1].id);
-      await t.pumpWidget(app(Rol.dueno, const PantallaPlanFamiliar(), repo: repo, id: 'ana'));
-      await t.pumpAndSettle();
-      expect(find.textContaining('Empate resuelto por volado del servidor. Ganó: Tacos'),
-          findsOneWidget);
-      expect(find.textContaining('Cambiar mi voto'), findsNothing);
-      expect(find.textContaining('Votar por esta'), findsNothing);
-    });
+    testWidgets(
+      'plan: empate al cierre se muestra como resultado del servidor',
+      (t) async {
+        await alto(t);
+        final repo = RepositorioAlimentacionEnMemoria(
+          conEjemplo: false,
+          volado: () => false,
+        );
+        final dia = DateTime(2026, 11, 4);
+        final antes = DateTime(2026, 10, 30, 9);
+        ServicioPlanFamiliar sv(Rol r, String id) => ServicioPlanFamiliar(
+          repo,
+          rol: r,
+          personaId: id,
+          personaNombre: id,
+          ahora: () => antes,
+        );
+        var v = await sv(Rol.dueno, 'ana').proponer(dia, titulo: 'Pozole');
+        v = await sv(Rol.familiar, 'beto').proponer(dia, titulo: 'Tacos');
+        await sv(Rol.dueno, 'ana').votar(dia, v.propuestas[0].id);
+        await sv(Rol.familiar, 'beto').votar(dia, v.propuestas[1].id);
+        await t.pumpWidget(
+          app(Rol.dueno, const PantallaPlanFamiliar(), repo: repo, id: 'ana'),
+        );
+        await t.pumpAndSettle();
+        expect(
+          find.textContaining(
+            'Empate resuelto por volado del servidor. Ganó: Tacos',
+          ),
+          findsOneWidget,
+        );
+        expect(find.textContaining('Cambiar mi voto'), findsNothing);
+        expect(find.textContaining('Votar por esta'), findsNothing);
+      },
+    );
 
-    testWidgets('presupuesto sí o no en el plan y en compras, sin cifras', (t) async {
+    testWidgets('presupuesto sí o no en el plan y en compras, sin cifras', (
+      t,
+    ) async {
       await alto(t);
       for (final hay in [true, false]) {
         final repo = RepositorioAlimentacionEnMemoria(
-            semanaEjemplo: _lunes, hayPresupuestoSupuesto: hay);
-        await t.pumpWidget(app(Rol.dueno, const PantallaPlanFamiliar(), repo: repo));
+          semanaEjemplo: _lunes,
+          hayPresupuestoSupuesto: hay,
+        );
+        await t.pumpWidget(
+          app(Rol.dueno, const PantallaPlanFamiliar(), repo: repo),
+        );
         await t.pumpAndSettle();
         expect(find.text('¿Hay presupuesto para comprar?'), findsOneWidget);
         expect(find.text(hay ? 'Sí' : 'No'), findsOneWidget);
         expect(find.textContaining('\$'), findsNothing);
-        await t.pumpWidget(app(Rol.dueno, const PantallaListaCompras(), repo: repo));
+        await t.pumpWidget(
+          app(Rol.dueno, const PantallaListaCompras(), repo: repo),
+        );
         await t.pumpAndSettle();
         expect(find.text('¿Hay presupuesto para comprar?'), findsOneWidget);
         expect(find.text(hay ? 'Sí' : 'No'), findsOneWidget);
@@ -666,39 +934,63 @@ void main() {
       }
       // El familiar lo ve en el plan.
       final repo = RepositorioAlimentacionEnMemoria(semanaEjemplo: _lunes);
-      await t.pumpWidget(app(Rol.familiar, const PantallaPlanFamiliar(), repo: repo));
+      await t.pumpWidget(
+        app(Rol.familiar, const PantallaPlanFamiliar(), repo: repo),
+      );
       await t.pumpAndSettle();
       expect(find.text('¿Hay presupuesto para comprar?'), findsOneWidget);
       // La maestra y la cuidadora no.
-      await t.pumpWidget(app(Rol.coadministrador, const PantallaPlanFamiliar(),
-          repo: repo, maestra: true));
+      await t.pumpWidget(
+        app(
+          Rol.coadministrador,
+          const PantallaPlanFamiliar(),
+          repo: repo,
+          maestra: true,
+        ),
+      );
       await t.pumpAndSettle();
       expect(find.text('¿Hay presupuesto para comprar?'), findsNothing);
-      await t.pumpWidget(app(Rol.cuidador, const PantallaListaCompras(), repo: repo));
+      await t.pumpWidget(
+        app(Rol.cuidador, const PantallaListaCompras(), repo: repo),
+      );
       await t.pumpAndSettle();
       expect(find.text('¿Hay presupuesto para comprar?'), findsNothing);
     });
 
     testWidgets('plan: Casa lo ve en solo lectura, la cuidadora no', (t) async {
       final repo = RepositorioAlimentacionEnMemoria(conEjemplo: false);
-      await ServicioPlanFamiliar(repo,
-              rol: Rol.dueno, personaId: 'ana', personaNombre: 'Ana',
-              ahora: () => _miercoles)
-          .proponer(DateTime(2026, 11, 4), titulo: 'Pozole');
-      await t.pumpWidget(app(Rol.casa, const PantallaPlanFamiliar(), repo: repo));
+      await ServicioPlanFamiliar(
+        repo,
+        rol: Rol.dueno,
+        personaId: 'ana',
+        personaNombre: 'Ana',
+        ahora: () => _miercoles,
+      ).proponer(DateTime(2026, 11, 4), titulo: 'Pozole');
+      await t.pumpWidget(
+        app(Rol.casa, const PantallaPlanFamiliar(), repo: repo),
+      );
       await t.pumpAndSettle();
       expect(find.text('Pozole'), findsOneWidget);
       expect(find.text('Solo lectura'), findsOneWidget);
       expect(find.text('Dar mi propuesta'), findsNothing);
-      await t.pumpWidget(app(Rol.cuidador, const PantallaPlanFamiliar(), repo: repo));
+      await t.pumpWidget(
+        app(Rol.cuidador, const PantallaPlanFamiliar(), repo: repo),
+      );
       await t.pumpAndSettle();
       expect(find.text('Pozole'), findsNothing);
       expect(find.text('No tienes acceso al plan familiar'), findsOneWidget);
     });
 
-    testWidgets('Casa: tarjeta del menú de hoy sin perfil ni suplementos', (t) async {
-      await t.pumpWidget(app(Rol.casa, const Scaffold(body: TarjetaMenuDelDiaPapa()),
-          repo: RepositorioAlimentacionEnMemoria(semanaEjemplo: _lunes)));
+    testWidgets('Casa: tarjeta del menú de hoy sin perfil ni suplementos', (
+      t,
+    ) async {
+      await t.pumpWidget(
+        app(
+          Rol.casa,
+          const Scaffold(body: TarjetaMenuDelDiaPapa()),
+          repo: RepositorioAlimentacionEnMemoria(semanaEjemplo: _lunes),
+        ),
+      );
       await t.pumpAndSettle();
       expect(find.text('Menú de hoy'), findsOneWidget);
       expect(find.textContaining('Alzheimer'), findsNothing);

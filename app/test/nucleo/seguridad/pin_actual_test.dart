@@ -150,7 +150,10 @@ void main() {
       final (_, bloqueo) = await abrir(crear());
       await bloqueo.configurarPin(elDueno);
       await expectLater(bloqueo.configurarPin(elCurioso), throwsStateError);
-      expect(await bloqueo.comprobarPin(elCurioso), ResultadoBloqueo.pinIncorrecto);
+      expect(
+        await bloqueo.comprobarPin(elCurioso),
+        ResultadoBloqueo.pinIncorrecto,
+      );
       expect(await bloqueo.comprobarPin(elDueno), ResultadoBloqueo.abierto);
     });
 
@@ -163,13 +166,19 @@ void main() {
           await bloqueo.configurarPin(elCurioso, actual: otroMas),
           ResultadoBloqueo.pinIncorrecto,
         );
-        expect(await bloqueo.comprobarPin(elCurioso), ResultadoBloqueo.pinIncorrecto);
+        expect(
+          await bloqueo.comprobarPin(elCurioso),
+          ResultadoBloqueo.pinIncorrecto,
+        );
         expect(
           await bloqueo.configurarPin(elCurioso, actual: elDueno),
           ResultadoBloqueo.abierto,
         );
         expect(await bloqueo.comprobarPin(elCurioso), ResultadoBloqueo.abierto);
-        expect(await bloqueo.comprobarPin(elDueno), ResultadoBloqueo.pinIncorrecto);
+        expect(
+          await bloqueo.comprobarPin(elDueno),
+          ResultadoBloqueo.pinIncorrecto,
+        );
       },
     );
 
