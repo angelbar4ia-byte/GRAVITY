@@ -95,6 +95,9 @@ class ServicioAlimentacion {
         : _repo.hayPresupuestoPara(montoCentavos);
   }
 
+  /// Cuenta de compra que se propone según el rol de quien compra.
+  CuentaCompra cuentaPorOmisionDe(MenuId m) => cuentaPorOmision(rol, m);
+
   bool get puedeEditar => puedeEditarAlimentacion(rol, esMaestra: esMaestra);
   List<MenuId> get menusVisibles => [
     for (final m in MenuId.values)

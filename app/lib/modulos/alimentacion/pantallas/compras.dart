@@ -10,6 +10,7 @@ import '../../../diseno/diseno.dart';
 import '../../../nucleo/contratos/roles.dart';
 import '../../../nucleo/contratos/rutas.dart';
 import '../casos_uso/lista_compras.dart';
+import '../casos_uso/servicio_alimentacion.dart' show RegistroCompra;
 import '../datos/modelos.dart';
 import '../estado/proveedores.dart';
 import 'historial_precios.dart';
@@ -96,6 +97,7 @@ Future<void> _registrar(BuildContext context, WidgetRef ref, ItemCompra i) async
   if (menu == null) return;
   final total = TextEditingController();
   final cantidad = TextEditingController(text: cantidadTexto(i.cantidad));
+  var cuenta = ref.read(servicioAlimentacionProvider).cuentaPorOmisionDe(menu);
   final ok = await showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
@@ -112,6 +114,18 @@ Future<void> _registrar(BuildContext context, WidgetRef ref, ItemCompra i) async
             controller: total,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: const InputDecoration(labelText: 'Total pagado (pesos)'),
+          ),
+          StatefulBuilder(
+            builder: (ctx, setState) => DropdownButtonFormField<CuentaCompra>(
+              key: const Key('cuenta_compra'),
+              initialValue: cuenta,
+              decoration: const InputDecoration(labelText: 'Cuenta de la compra'),
+              items: [
+                for (final c in CuentaCompra.values)
+                  DropdownMenuItem(value: c, child: Text(c.etiqueta)),
+              ],
+              onChanged: (c) => setState(() => cuenta = c ?? cuenta),
+            ),
           ),
         ],
       ),
@@ -138,18 +152,38 @@ Future<void> _registrar(BuildContext context, WidgetRef ref, ItemCompra i) async
     }
     return;
   }
-  final alerta = await ref
-      .read(servicioAlimentacionProvider)
-      .registrarCompra(
-        menu,
-        ref.read(semanaAlimentacionProvider),
-        i.clave,
-        cantidadComprada: cant,
-        totalCentavos: centavos,
-        nombre: i.nombre,
-        unidad: i.unidad,
+  final RegistroCompra registro;
+  try {
+    registro = await ref
+        .read(servicioAlimentacionProvider)
+        .registrarCompra(
+          menu,
+          ref.read(semanaAlimentacionProvider),
+          i.clave,
+          cantidadComprada: cant,
+          totalCentavos: centavos,
+          nombre: i.nombre,
+          unidad: i.unidad,
+          cuenta: cuenta,
+        );
+  } on Exception catch (e) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se registró la compra: $e')),
       );
+    }
+    return;
+  }
   ref.read(versionAlimentacionProvider.notifier).state++;
+  if (registro.pendienteAlbacea && context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        key: Key('pendiente_albacea'),
+        content: Text('Pendiente de pago del albacea'),
+      ),
+    );
+  }
+  final alerta = registro.alerta;
   // Alerta local: solo porcentaje y precios unitarios, sin saldos.
   if (alerta != null && context.mounted) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -227,14 +261,20 @@ Future<void> _escanear(
   );
   if (ok != true || !context.mounted) return;
   try {
-    await servicio.guardarIngredienteConCodigo(
+    final r = await servicio.guardarConCodigo(
       codigo: codigo,
       nombre: nombre.text,
       unidad: unidad.text,
     );
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Producto guardado con su código.')),
+        SnackBar(
+          content: Text(
+            r.enServidor
+                ? 'Producto guardado con su código.'
+                : 'El código se guarda cuando el servidor lo tenga.',
+          ),
+        ),
       );
     }
   } on ArgumentError {
@@ -261,7 +301,7 @@ class _Contenido extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        const TarjetaHayPresupuesto(),
+        TarjetaHayPresupuesto(montoCentavos: costo?.centavos),
         Text(
           '$hechos de ${items.length} comprados',
           style: v.lectura(
@@ -346,7 +386,10 @@ class _Contenido extends ConsumerWidget {
               ),
               subtitle: Text(
                 [
-                  if (i.comprado) 'Comprado',
+                  if (i.pendienteAlbacea)
+                    'Pendiente de pago del albacea'
+                  else if (i.comprado)
+                    'Comprado',
                   _textoPrecio(i),
                 ].join(' · '),
               ),

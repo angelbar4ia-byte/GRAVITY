@@ -59,7 +59,7 @@ Future<AlertaPrecio?> _compra(
   totalCentavos: centavos,
   nombre: 'Leche entera',
   unidad: 'l',
-);
+).then((r) => r.alerta);
 
 void main() {
   group('lector de código', () {

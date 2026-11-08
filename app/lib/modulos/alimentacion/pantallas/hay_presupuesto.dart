@@ -9,7 +9,10 @@ import '../../../diseno/diseno.dart';
 import '../estado/proveedores.dart';
 
 class TarjetaHayPresupuesto extends ConsumerWidget {
-  const TarjetaHayPresupuesto({super.key});
+  const TarjetaHayPresupuesto({super.key, this.montoCentavos});
+
+  /// Total de la lista de la semana (centavos); sin él, se pregunta en general.
+  final int? montoCentavos;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -17,7 +20,7 @@ class TarjetaHayPresupuesto extends ConsumerWidget {
       return const SizedBox.shrink();
     }
     final v = ValoresDiseno.de(context);
-    final r = ref.watch(hayPresupuestoProvider);
+    final r = ref.watch(hayPresupuestoProvider(montoCentavos));
     final texto = r.when(
       loading: () => '...',
       error: (_, _) => 'No pudimos consultarlo.',

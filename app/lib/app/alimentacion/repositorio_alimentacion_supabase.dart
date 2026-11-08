@@ -16,7 +16,8 @@
 ///   (supuesto), `precio_real_centavos` y `precio_real_en` (solo los escribe la
 ///   compra). No existe `ali_precios`. Precios **por unidad**. El historial de
 ///   compras reales está en `ali_precios_historial`.
-/// - `ali_menu`, `ali_compras_marcas`, `ali_suplementos`.
+/// - `ali_menu`, `ali_compras_marcas`, `ali_suplementos`, `ali_compras` (la
+///   lista del servidor) y `ali_ajustes` (libro de la casa).
 /// - `ali_votaciones`, `ali_votacion_opciones`, `ali_opcion_platillos`,
 ///   `ali_votos` (y `personas` para los nombres, si la sesión puede leerlas).
 ///
@@ -32,8 +33,6 @@ import 'package:uuid/uuid.dart';
 
 import '../../modulos/alimentacion/casos_uso/importar_recetas.dart'
     show pasilloDeTexto;
-import '../../modulos/alimentacion/casos_uso/servicio_alimentacion.dart'
-    show ComidaDelDia;
 import '../../modulos/alimentacion/datos/modelos.dart';
 import '../../modulos/alimentacion/datos/repositorio.dart';
 import '../../modulos/alimentacion/datos/votacion.dart';
@@ -116,12 +115,6 @@ class RepositorioAlimentacionSupabase implements RepositorioAlimentacion {
       );
     }
   }
-
-  static Never _soloServidor(String que) =>
-      throw const ErrorAlimentacionServidor(
-        'El precio real lo registra el servidor al marcar la compra '
-        '(ali_marcar_comprada); no se escribe directo.',
-      );
 
   // --------------------------------------------------------------- Platillos
 
@@ -262,11 +255,12 @@ class RepositorioAlimentacionSupabase implements RepositorioAlimentacion {
     return r;
   }
 
-  /// Solo el precio **base** se escribe directo. El real sale de la compra
-  /// (`ali_marcar_comprada`): aquí se rechaza.
+  /// Solo el precio **base** se escribe directo. El real lo escribe el
+  /// servidor al marcar la compra (`ali_marcar_comprada`, ver
+  /// [registrarCompraReal]): aquí no se hace nada, y no es un error.
   @override
   Future<void> guardarPrecio(PrecioIngrediente precio) async {
-    if (!precio.esBase) _soloServidor('precio');
+    if (!precio.esBase) return;
     final partes = precio.clave.split('|');
     final nombre = partes.first;
     final unidad = partes.length > 1 ? partes.last : '';
@@ -311,20 +305,27 @@ class RepositorioAlimentacionSupabase implements RepositorioAlimentacion {
     ];
   }
 
-  /// El historial lo escribe el servidor al marcar la compra con monto.
+  /// El historial lo escribe el servidor al marcar la compra con monto
+  /// (`ali_precios_historial`): aquí no se hace nada.
   @override
-  Future<void> guardarCompraPrecio(CompraPrecio compra) async =>
-      _soloServidor('historial');
+  Future<void> guardarCompraPrecio(CompraPrecio compra) async {}
 
-  /// Sin columna de código de barras en el servidor todavía (tanda siguiente).
-  @override
-  Future<List<Ingrediente>> ingredientesConCodigo() async => const [];
+  /// Catálogo con código de barras. El servidor aún no tiene la columna
+  /// `codigo_barras` (la agrega backend): mientras tanto queda en memoria de la
+  /// sesión y se pierde al cerrar la app.
+  final Map<String, Ingrediente> _codigosLocales = {};
 
   @override
-  Future<void> guardarIngredienteConCodigo(Ingrediente ingrediente) async =>
-      throw const ErrorAlimentacionServidor(
-        'El servidor aún no guarda códigos de barras.',
-      );
+  Future<List<Ingrediente>> ingredientesConCodigo() async => [
+    ..._codigosLocales.values,
+  ];
+
+  /// Devuelve `false`: todavía no se guardó en el servidor.
+  @override
+  Future<bool> guardarIngredienteConCodigo(Ingrediente ingrediente) async {
+    _codigosLocales[ingrediente.clave] = ingrediente;
+    return false;
+  }
 
   // ---------------------------------------------------------------- Votación
 
@@ -463,6 +464,7 @@ class RepositorioAlimentacionSupabase implements RepositorioAlimentacion {
 
   /// `ali_hay_presupuesto`: solo true o false, nunca cifras. `null` si el
   /// servidor no responde.
+  @override
   Future<bool?> hayPresupuestoPara(int montoCentavos, {String? cuenta}) async {
     try {
       final r = await fuente.rpc('ali_hay_presupuesto', {
@@ -558,6 +560,195 @@ class RepositorioAlimentacionSupabase implements RepositorioAlimentacion {
     } else {
       await fuente.borrar('ali_compras_marcas', donde: fila);
     }
+  }
+
+  /// Cuentas de `ali_compras` que muestra cada menú.
+  static Set<String> _cuentasDe(MenuId m) =>
+      m == MenuId.papa ? {'papa'} : {'dueno', 'pareja', 'casa'};
+
+  /// La lista del servidor (`ali_compras`) de la semana, con el pasillo del
+  /// ingrediente. Se suma a lo que sale del menú.
+  @override
+  Future<List<CompraLista>> comprasLista(MenuId menu, DateTime lunes) async {
+    final cuentas = _cuentasDe(menu);
+    final ings = {
+      for (final f in await _leer('ali_ingredientes')) '${f['id']}': f,
+    };
+    final fin = lunes.add(const Duration(days: 7));
+    bool enSemana(Object? v) {
+      if (v == null) return false;
+      final d = _soloFecha(v);
+      return !d.isBefore(lunes) && d.isBefore(fin);
+    }
+
+    return [
+      for (final c in await _leer('ali_compras'))
+        if (cuentas.contains(c['cuenta']) &&
+            (c['para_el'] == null || enSemana(c['para_el'])) &&
+            ings['${c['ingrediente_id']}'] != null)
+          CompraLista(
+            nombre: '${ings['${c['ingrediente_id']}']!['nombre']}',
+            unidad: '${ings['${c['ingrediente_id']}']!['unidad']}',
+            cantidad: _num(c['cantidad']),
+            seccion:
+                pasilloDeTexto(
+                  '${ings['${c['ingrediente_id']}']!['pasillo'] ?? ''}',
+                ) ??
+                SeccionCompra.otros,
+            comprada: c['comprado'] == true,
+            pendienteAlbacea: c['estado_pago'] == 'solicitud',
+          ),
+    ];
+  }
+
+  /// Compra real: llama a `ali_marcar_comprada`. El servidor escribe el precio
+  /// real, el historial, la despensa, la fila de `ali_compras` y el movimiento
+  /// del libro correcto; esta clase no escribe en ninguna tabla de dinero.
+  /// Solo prepara lo que es de la lista: el ingrediente y la fila de compra.
+  ///
+  /// Compra de Papá: sin cuenta de pago el servidor deja la solicitud al
+  /// albacea (`ResultadoCompra.pendienteAlbacea`), no un error.
+  @override
+  Future<ResultadoCompra> registrarCompraReal({
+    required MenuId menu,
+    required DateTime lunes,
+    required CompraPrecio compra,
+    required PrecioIngrediente precio,
+    required CuentaCompra cuenta,
+  }) async {
+    try {
+      final ingId = await _ingredienteDe(compra);
+      final compraId = await _compraDe(
+        cuenta: cuenta.name,
+        ingredienteId: ingId,
+        cantidad: compra.cantidad,
+        lunes: lunes,
+      );
+      final origen = await _cuentaDePago(cuenta);
+      final r = await marcarComprada(
+        compraId: compraId,
+        montoCentavos: compra.totalCentavos,
+        cuentaOrigen: origen,
+      );
+      await marcar(menu, lunes, compra.clave, true);
+      final estado = r is Map ? r['estado_pago'] : null;
+      return ResultadoCompra(pendienteAlbacea: estado == 'solicitud');
+    } on ErrorFinanzas catch (e) {
+      throw ErrorAlimentacionServidor(
+        e.sinConexion ? 'Sin conexión. Intenta de nuevo.' : e.mensaje,
+      );
+    }
+  }
+
+  /// El ingrediente del servidor para la compra (lo crea sin precio si falta).
+  Future<String> _ingredienteDe(CompraPrecio compra) async {
+    for (final f in await _leer('ali_ingredientes')) {
+      if (claveCompra('${f['nombre']}', '${f['unidad']}') == compra.clave) {
+        return '${f['id']}';
+      }
+    }
+    final id = _idServidor('ingrediente:${compra.clave}');
+    await _guardar('ali_ingredientes', [
+      {
+        'id': id,
+        'hogar_id': hogarId,
+        'nombre': compra.nombre,
+        'unidad': compra.unidad,
+      },
+    ]);
+    return id;
+  }
+
+  /// La fila pendiente de `ali_compras` para ese ingrediente y cuenta, con la
+  /// cantidad realmente comprada; si no hay, la pide.
+  Future<String> _compraDe({
+    required String cuenta,
+    required String ingredienteId,
+    required double cantidad,
+    required DateTime lunes,
+  }) async {
+    final previas = [
+      for (final c in await _leer('ali_compras'))
+        if (c['cuenta'] == cuenta &&
+            '${c['ingrediente_id']}' == ingredienteId &&
+            c['comprado'] != true)
+          c,
+    ];
+    if (previas.isNotEmpty) {
+      final c = previas.first;
+      if (_num(c['cantidad']) != cantidad) {
+        await fuente.actualizar(
+          'ali_compras',
+          {'cantidad': cantidad},
+          donde: {'id': c['id']},
+        );
+      }
+      return '${c['id']}';
+    }
+    if (cuenta == 'papa' || cuenta == 'casa') {
+      final id = await solicitarCompra(
+        cuenta: cuenta,
+        ingredienteId: ingredienteId,
+        cantidad: cantidad,
+        paraEl: lunes,
+      );
+      if (id == null) {
+        throw const ErrorAlimentacionServidor(
+          'El servidor no devolvió la compra.',
+        );
+      }
+      return id;
+    }
+    final id = _uuid.v4();
+    await _guardar('ali_compras', [
+      {
+        'id': id,
+        'hogar_id': hogarId,
+        'cuenta': cuenta,
+        'ingrediente_id': ingredienteId,
+        'cantidad': cantidad,
+        'para_el': _fechaSql(lunes),
+      },
+    ]);
+    return id;
+  }
+
+  /// La cuenta de pago (de Finanzas) que pide `ali_marcar_comprada`: `dueno` y
+  /// `pareja` pagan de una cuenta líquida de su libro personal; `casa`, del
+  /// libro que el dueño eligió en `ali_ajustes`; `papa` va sin cuenta (el
+  /// servidor deja la solicitud al albacea). Si no hay cuenta, se avisa.
+  Future<String?> _cuentaDePago(CuentaCompra cuenta) async {
+    if (cuenta == CuentaCompra.papa) return null;
+    String? libro;
+    if (cuenta == CuentaCompra.casa) {
+      for (final a in await _leer('ali_ajustes')) {
+        if (a['libro_casa_id'] != null) libro = '${a['libro_casa_id']}';
+      }
+      if (libro == null) {
+        throw const ErrorAlimentacionServidor(
+          'El dueño aún no elige el libro compartido de las compras de la casa.',
+        );
+      }
+    } else {
+      for (final l in await fuente.leer('fin_libros')) {
+        if (l['tipo'] == 'personal' && '${l['titular_id']}' == personaId) {
+          libro = '${l['id']}';
+        }
+      }
+    }
+    if (libro != null) {
+      final cuentas = [
+        for (final c in await fuente.leer('fin_cuentas'))
+          if ('${c['libro_id']}' == libro &&
+              (c['tipo'] == 'efectivo' || c['tipo'] == 'banco') &&
+              (c['estado'] ?? 'activa') == 'activa')
+            c,
+      ]..sort((a, b) => '${a['nombre']}'.compareTo('${b['nombre']}'));
+      if (cuentas.isNotEmpty) return '${cuentas.first['id']}';
+    }
+    throw const ErrorAlimentacionServidor(
+      'No encontramos una cuenta de pago (efectivo o banco) en tu libro.',
+    );
   }
 
   // ------------------------------------------------------------- Suplementos
@@ -664,7 +855,9 @@ class RepositorioAlimentacionSupabase implements RepositorioAlimentacion {
   ];
 
   /// `ali_menu_del_dia_papa`: solo nombres de platillos por tiempo. Es lo
-  /// único que lee la cuenta Casa (no lee `ali_menu` ni `ali_platillos`).
+  /// único que lee la cuenta Casa: no lee `ali_menu` ni `ali_platillos`
+  /// directo. La app no manda la fecha de Casa; el servidor usa hoy.
+  @override
   Future<List<ComidaDelDia>> menuDelDiaPapa([DateTime? fecha]) async => [
     for (final f in _filas(
       await _rpc('ali_menu_del_dia_papa', {

@@ -3,7 +3,9 @@
 // historial en `ali_precios_historial` (no existe `ali_precios`).
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gravity/app/alimentacion/repositorio_alimentacion_supabase.dart';
+import 'package:gravity/modulos/alimentacion/casos_uso/servicio_alimentacion.dart';
 import 'package:gravity/modulos/alimentacion/datos/modelos.dart';
+import 'package:gravity/nucleo/contratos/roles.dart';
 import 'package:gravity/modulos/alimentacion/datos/votacion.dart';
 import 'package:gravity/modulos/finanzas/datos/fuente_tablas.dart';
 
@@ -18,6 +20,16 @@ const _pl1 = '00000000-0000-4000-8000-0000000000d1';
 /// Anota a qué tablas se escribió directo.
 class _Fuente extends FuenteTablasEnMemoria {
   final escrituras = <String>[];
+  final leidas = <String>[];
+
+  @override
+  Future<List<Map<String, dynamic>>> leer(
+    String tabla, {
+    String columnas = '*',
+  }) {
+    leidas.add(tabla);
+    return super.leer(tabla, columnas: columnas);
+  }
 
   @override
   Future<void> guardar(
@@ -362,33 +374,28 @@ void main() {
   });
 
   group('Solo RPC para dinero, votos y tomas', () {
-    test('el precio real no se escribe directo', () async {
+    test('el precio real no se escribe directo y tampoco falla', () async {
       final f = _Fuente();
       final r = _repo(f);
-      await expectLater(
-        r.guardarPrecio(
-          PrecioIngrediente.deCompra(
-            clave: 'leche|ml',
-            totalCentavos: 2800,
-            cantidadComprada: 1000,
-          ),
+      await r.guardarPrecio(
+        PrecioIngrediente.deCompra(
+          clave: 'leche|ml',
+          totalCentavos: 2800,
+          cantidadComprada: 1000,
         ),
-        throwsA(isA<ErrorAlimentacionServidor>()),
       );
-      await expectLater(
-        r.guardarCompraPrecio(
-          CompraPrecio(
-            clave: 'leche|ml',
-            nombre: 'Leche',
-            unidad: 'ml',
-            totalCentavos: 2800,
-            cantidad: 1000,
-            fecha: DateTime(2026, 11, 8),
-          ),
+      await r.guardarCompraPrecio(
+        CompraPrecio(
+          clave: 'leche|ml',
+          nombre: 'Leche',
+          unidad: 'ml',
+          totalCentavos: 2800,
+          cantidad: 1000,
+          fecha: DateTime(2026, 11, 8),
         ),
-        throwsA(isA<ErrorAlimentacionServidor>()),
       );
       expect(f.escrituras, isEmpty);
+      expect(f.llamadas, isEmpty);
     });
 
     test('el precio base sí se escribe, solo en ali_ingredientes', () async {
@@ -549,5 +556,253 @@ void main() {
         expect((await r.platillos()).single.pasos, ['Hervir']);
       },
     );
+  });
+
+  group('Conexión de Alimentación (cierre de pendientes)', () {
+    final lunes = DateTime(2026, 11, 2);
+    const ing = '00000000-0000-4000-8000-0000000000e1';
+    const fila = '00000000-0000-4000-8000-0000000000f1';
+    const cuentaPago = '00000000-0000-4000-8000-0000000000aa';
+    const libro = '00000000-0000-4000-8000-0000000000ab';
+    final compra = CompraPrecio(
+      clave: 'leche|ml',
+      nombre: 'Leche',
+      unidad: 'ml',
+      totalCentavos: 2800,
+      cantidad: 1000,
+      fecha: DateTime(2026, 11, 8),
+    );
+    final precio = PrecioIngrediente.deCompra(
+      clave: 'leche|ml',
+      totalCentavos: 2800,
+      cantidadComprada: 1000,
+    );
+    const sinDinero = {
+      'fin_movimientos',
+      'ali_precios_historial',
+      'ali_despensa',
+      'ali_solicitudes_pago',
+      'ali_votos',
+    };
+
+    _Fuente conLista() {
+      final f = _Fuente();
+      f.tabla('ali_ingredientes').add({
+        'id': ing,
+        'nombre': 'Leche',
+        'unidad': 'ml',
+        'pasillo': 'Lácteos y huevo',
+      });
+      f.tabla('ali_compras').add({
+        'id': fila,
+        'cuenta': 'papa',
+        'ingrediente_id': ing,
+        'cantidad': 1000,
+        'comprado': false,
+        'para_el': null,
+      });
+      return f;
+    }
+
+    test('la compra real llama a ali_marcar_comprada y no escribe dinero',
+        () async {
+      final f = conLista();
+      f.funciones['ali_marcar_comprada'] = (p) => {
+        'estado_pago': 'movimiento',
+        'precio_real_centavos': 3,
+      };
+      f.tabla('fin_libros').add({
+        'id': libro,
+        'tipo': 'personal',
+        'titular_id': _yo,
+      });
+      f.tabla('fin_cuentas').add({
+        'id': cuentaPago,
+        'libro_id': libro,
+        'tipo': 'banco',
+        'estado': 'activa',
+        'nombre': 'Débito',
+      });
+      f.tabla('ali_compras')
+        ..clear()
+        ..add({
+          'id': fila,
+          'cuenta': 'dueno',
+          'ingrediente_id': ing,
+          'cantidad': 1000,
+          'comprado': false,
+        });
+      final res = await _repo(f).registrarCompraReal(
+        menu: MenuId.pareja,
+        lunes: lunes,
+        compra: compra,
+        precio: precio,
+        cuenta: CuentaCompra.dueno,
+      );
+      expect(res.pendienteAlbacea, isFalse);
+      final llamada = f.llamadas.single;
+      expect(llamada.$1, 'ali_marcar_comprada');
+      expect(llamada.$2, {
+        'p_compra': fila,
+        'p_monto_centavos': 2800,
+        'p_cuenta_origen': cuentaPago,
+        'p_cuenta_gasto': null,
+      });
+      // Solo la marca de la lista: nada de dinero, precio ni historial.
+      expect(f.escrituras.toSet().intersection(sinDinero), isEmpty);
+      expect(f.escrituras.toSet().difference({'ali_compras_marcas'}), isEmpty);
+    });
+
+    test('compra de Papá sin cuenta de pago: pendiente del albacea, no error',
+        () async {
+      final f = conLista();
+      f.funciones['ali_marcar_comprada'] = (p) => {
+        'estado_pago': 'solicitud',
+        'solicitud_id': 's1',
+      };
+      final res = await _repo(f).registrarCompraReal(
+        menu: MenuId.papa,
+        lunes: lunes,
+        compra: compra,
+        precio: precio,
+        cuenta: CuentaCompra.papa,
+      );
+      expect(res.pendienteAlbacea, isTrue);
+      expect(f.llamadas.single.$2['p_cuenta_origen'], isNull);
+      expect(f.llamadas.single.$2['p_compra'], fila);
+    });
+
+    test('sin fila en ali_compras la pide (papa y casa por RPC)', () async {
+      final f = _Fuente();
+      f.funciones['ali_solicitar_compra'] = (p) => fila;
+      f.funciones['ali_marcar_comprada'] = (p) => {'estado_pago': 'solicitud'};
+      await _repo(f).registrarCompraReal(
+        menu: MenuId.papa,
+        lunes: lunes,
+        compra: compra,
+        precio: precio,
+        cuenta: CuentaCompra.papa,
+      );
+      expect(f.llamadas.map((l) => l.$1), [
+        'ali_solicitar_compra',
+        'ali_marcar_comprada',
+      ]);
+      expect(f.llamadas.first.$2['p_cuenta'], 'papa');
+      expect(f.llamadas.first.$2['p_cantidad'], 1000);
+      // El ingrediente faltante se crea sin precio; nada de dinero.
+      expect(f.tabla('ali_ingredientes').single.containsKey('precio_real_centavos'),
+          isFalse);
+      expect(f.escrituras.toSet().intersection(sinDinero), isEmpty);
+    });
+
+    test('un fallo del servidor sale con su mensaje', () async {
+      final f = conLista();
+      f.sinSenal = true;
+      await expectLater(
+        _repo(f).registrarCompraReal(
+          menu: MenuId.papa,
+          lunes: lunes,
+          compra: compra,
+          precio: precio,
+          cuenta: CuentaCompra.papa,
+        ),
+        throwsA(isA<ErrorAlimentacionServidor>()),
+      );
+    });
+
+    test('la lista del servidor sale de ali_compras con el pasillo', () async {
+      final f = conLista();
+      f.tabla('ali_compras').add({
+        'id': 'otra',
+        'cuenta': 'dueno',
+        'ingrediente_id': ing,
+        'cantidad': 2,
+        'comprado': true,
+        'estado_pago': 'movimiento',
+        'para_el': '2026-11-03',
+      });
+      f.tabla('ali_compras').add({
+        'id': 'fuera',
+        'cuenta': 'papa',
+        'ingrediente_id': ing,
+        'cantidad': 9,
+        'comprado': false,
+        'para_el': '2026-12-01',
+      });
+      final papa = await _repo(f).comprasLista(MenuId.papa, lunes);
+      expect(papa.single.nombre, 'Leche');
+      expect(papa.single.seccion, isNot(SeccionCompra.otros));
+      final pareja = await _repo(f).comprasLista(MenuId.pareja, lunes);
+      expect(pareja.single.comprada, isTrue);
+    });
+
+    test('el menú del día de Papá va por la RPC, sin leer tablas', () async {
+      final f = _Fuente();
+      f.funciones['ali_menu_del_dia_papa'] = (p) => [
+        {'tiempo': 'comida', 'platillo': 'Sopa'},
+      ];
+      final hoy = await _repo(f).menuDelDiaPapa(DateTime(2026, 11, 4));
+      expect(hoy.single.platillo, 'Sopa');
+      expect(hoy.single.tiempo, TiempoComida.comida);
+      expect(f.llamadas.single.$1, 'ali_menu_del_dia_papa');
+      expect(f.llamadas.single.$2['p_fecha'], '2026-11-04');
+      expect(f.leidas, isNot(contains('ali_menu')));
+      expect(f.leidas, isNot(contains('ali_platillos')));
+    });
+
+    test('presupuesto del total de la lista: solo sí o no', () async {
+      final f = _Fuente();
+      f.funciones['ali_hay_presupuesto'] = (p) => p['p_monto_centavos'] == 12345;
+      final r = _repo(f);
+      expect(await r.hayPresupuestoPara(12345), isTrue);
+      expect(await r.hayPresupuestoPara(99999), isFalse);
+    });
+
+    test('el código de barras queda en memoria y no falla', () async {
+      final f = _Fuente();
+      final r = _repo(f);
+      final enServidor = await r.guardarIngredienteConCodigo(
+        const Ingrediente(
+          'Galletas',
+          1,
+          'paq',
+          SeccionCompra.otros,
+          codigoBarras: '555',
+        ),
+      );
+      expect(enServidor, isFalse);
+      expect((await r.ingredientesConCodigo()).single.codigoBarras, '555');
+      expect(f.escrituras, isEmpty);
+    });
+
+    test('el servicio de Casa usa la RPC; el de compra, la cuenta por rol',
+        () async {
+      final f = conLista();
+      f.funciones['ali_menu_del_dia_papa'] = (p) => [
+        {'tiempo': 'cena', 'platillo': 'Avena'},
+      ];
+      final casa = ServicioAlimentacion(_repo(f), rol: Rol.casa);
+      expect((await casa.menuDelDiaPapa(DateTime(2026, 11, 4))).single.platillo,
+          'Avena');
+      expect(f.leidas, isNot(contains('ali_menu')));
+
+      f.funciones['ali_marcar_comprada'] = (p) => {'estado_pago': 'solicitud'};
+      final dueno = ServicioAlimentacion(_repo(f), rol: Rol.dueno);
+      expect(dueno.cuentaPorOmisionDe(MenuId.papa), CuentaCompra.papa);
+      expect(dueno.cuentaPorOmisionDe(MenuId.pareja), CuentaCompra.dueno);
+      final r = await dueno.registrarCompra(
+        MenuId.papa,
+        lunes,
+        'leche|ml',
+        cantidadComprada: 1000,
+        totalCentavos: 2800,
+        nombre: 'Leche',
+        unidad: 'ml',
+      );
+      expect(r.pendienteAlbacea, isTrue);
+      expect(f.llamadas.last.$1, 'ali_marcar_comprada');
+      final lista = await dueno.listaCompras(MenuId.papa, lunes);
+      expect(lista.single.comprado, isFalse); // la fila aún no cambia en el falso
+    });
   });
 }

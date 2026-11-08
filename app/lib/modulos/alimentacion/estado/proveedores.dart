@@ -164,7 +164,13 @@ final consultaLocalAlimentacionProvider =
     });
 
 /// Respuesta de "¿Hay presupuesto para comprar?": sí o no, sin cifras.
-final hayPresupuestoProvider = FutureProvider<bool?>((ref) {
+/// Con [montoCentavos] (el total de la lista) pregunta por ese monto.
+final hayPresupuestoProvider = FutureProvider.family<bool?, int?>((
+  ref,
+  montoCentavos,
+) {
   ref.watch(versionAlimentacionProvider);
-  return ref.watch(servicioAlimentacionProvider).hayPresupuesto();
+  return ref
+      .watch(servicioAlimentacionProvider)
+      .hayPresupuesto(montoCentavos: montoCentavos);
 });
