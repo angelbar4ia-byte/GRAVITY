@@ -1,6 +1,6 @@
 # Fase 7 · Alimentación completa (especificación)
 
-> v1.0, 8/nov/2026. Aprobada por el dueño con sus respuestas del mismo día. Base: roadmap (Fase 7), D23, D28 (confirmada: se construye aquí), D3, D19, D5 y la especificación de la Fase 4 (`fase-4-alimentacion.md`).
+> v1.1, 8/nov/2026. Aprobada por el dueño. v1.1 añade sus respuestas sobre presupuesto, votación y precios. Base: roadmap (Fase 7), D23, D28 (confirmada: se construye aquí), D3, D19, D5 y la especificación de la Fase 4 (`fase-4-alimentacion.md`).
 
 ## 1. Alcance
 
@@ -48,9 +48,18 @@
 4. **Lista de compras:** organizada **por pasillo**.
 5. **Votación del menú familiar:** dura **un día**. Si hay empate, cada quien puede **cambiar su voto**.
 
+## 5a. Respuestas del dueño (v1.1, 8/nov/2026)
+
+1. **Presupuesto para comprar:** la familia (y quien participa) puede ver los **precios** de presupuesto, pero **no** cuentas bancarias ni saldos. Puede preguntar si **hay presupuesto para comprar** y recibir **sí o no**, sin cifras de saldo.
+2. **Cambio de voto:** se permite **mientras la votación esté abierta** (no solo en empate).
+3. **Precios base:** los carga el asistente (arquitecto) como **supuestos**, marcados como base; se reemplazan con la primera compra real.
+4. **Empate:** se resuelve con un **volado** (sorteo al cerrar la votación). Ya no se reabre el día.
+5. **Precios para el familiar:** están bien (lo necesita para armar el menú de una visita).
+6. **Cuenta maestra:** sí lee todas las despensas y listas (D19).
+
 ## 5b. Decisiones pendientes
 
-- Ninguna por ahora.
+- Ninguna.
 
 1. **Recetas:** ¿quién las carga? (tú, tu pareja, o ambas) y ¿cómo: pantalla en el teléfono o archivo importado?
 2. **Precios:** ¿los captura el usuario al comprar, o quieres una fuente externa? Si es externa, cuál (la verificamos antes de usarla).
