@@ -78,7 +78,7 @@ _dueno(DatosCuidadosMemoria d, {int fallos = 0}) {
 void main() {
   group('F5-I2 reintento del paso a Finanzas', () {
     test('falla Finanzas, se reintenta y queda un solo movimiento', () async {
-      final d = datosDeEjemploCuidados(_ahora);
+      final d = datosDeEjemploCuidados(_ahora)..gastos.clear();
       final x = _dueno(d, fallos: 1);
       await x.srv.registrarGasto(concepto: 'Pañales', centavos: 18550);
       final id = (await x.srv.gastos()).firstWhere((g) => g.concepto == 'Pañales').id;
@@ -103,7 +103,7 @@ void main() {
     });
 
     test('si el reintento falla otra vez, avisa y sigue ofreciéndose', () async {
-      final d = datosDeEjemploCuidados(_ahora);
+      final d = datosDeEjemploCuidados(_ahora)..gastos.clear();
       final x = _dueno(d, fallos: 2);
       await x.srv.registrarGasto(concepto: 'Gasas', centavos: 9000);
       final id = (await x.srv.gastos()).firstWhere((g) => g.concepto == 'Gasas').id;
@@ -142,7 +142,7 @@ void main() {
     });
 
     testWidgets('la tarjeta ofrece "Pasar a Finanzas" solo al dueño', (t) async {
-      final d = datosDeEjemploCuidados(_ahora);
+      final d = datosDeEjemploCuidados(_ahora)..gastos.clear();
       final x = _dueno(d, fallos: 1);
       await x.srv.registrarGasto(concepto: 'Pañales', centavos: 18550);
       final id = (await x.srv.gastos()).firstWhere((g) => g.concepto == 'Pañales').id;
