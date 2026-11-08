@@ -131,12 +131,16 @@ class ItemCompra {
     required this.seccion,
     required this.comprado,
     this.precio,
+    this.pendienteAlbacea = false,
   });
   final String nombre;
   final double cantidad;
   final String unidad;
   final SeccionCompra seccion;
   final bool comprado;
+
+  /// Compra de Papá con la solicitud de pago sin resolver (albacea).
+  final bool pendienteAlbacea;
 
   /// Precio del ingrediente (base o real) si se conoce; sin él no hay costo.
   final PrecioIngrediente? precio;

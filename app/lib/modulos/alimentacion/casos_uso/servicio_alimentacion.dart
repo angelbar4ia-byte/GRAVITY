@@ -9,6 +9,8 @@ import '../datos/repositorio.dart';
 import 'importar_recetas.dart';
 import 'lista_compras.dart';
 
+export '../datos/modelos.dart' show ComidaDelDia;
+
 /// "¿Hay presupuesto para comprar?": dueño, pareja y familiar. La cuidadora
 /// no, ni la cuenta maestra, ni Casa. Solo sí o no, nunca cifras.
 bool puedeVerHayPresupuesto(Rol rol, {bool esMaestra = false}) =>
@@ -48,12 +50,25 @@ bool puedeVerCompras(Rol rol, MenuId menu, {bool esMaestra = false}) =>
     puedeVerMenu(rol, menu, esMaestra: esMaestra) &&
     !(rol == Rol.familiar && !esMaestra);
 
-/// Una comida del día de Papá para la cuenta Casa (D28): solo el nombre del
-/// platillo. Sin perfil clínico, sin suplementos, sin alimentos duros.
-class ComidaDelDia {
-  const ComidaDelDia(this.tiempo, this.platillo);
-  final TiempoComida tiempo;
-  final String platillo;
+/// Cuenta de compra por omisión según el rol de quien compra (no hay reglas
+/// nuevas: la pareja compra de la suya, el dueño de la suya, Casa de la casa y
+/// el resto de lo de Papá). Quien compra puede elegir otra.
+CuentaCompra cuentaPorOmision(Rol rol, MenuId menu) {
+  if (menu == MenuId.papa) return CuentaCompra.papa;
+  return switch (rol) {
+    Rol.coadministrador => CuentaCompra.pareja,
+    Rol.casa => CuentaCompra.casa,
+    _ => CuentaCompra.dueno,
+  };
+}
+
+/// Lo que devuelve [ServicioAlimentacion.registrarCompra].
+class RegistroCompra {
+  const RegistroCompra({this.alerta, this.pendienteAlbacea = false});
+  final AlertaPrecio? alerta;
+
+  /// Compra de Papá sin cuenta de pago: queda la solicitud al albacea.
+  final bool pendienteAlbacea;
 }
 
 class ServicioAlimentacion {
@@ -72,9 +87,12 @@ class ServicioAlimentacion {
       puedeVerHayPresupuesto(rol, esMaestra: esMaestra);
 
   /// Sí o no (sin saldos, cuentas ni montos). `null` = sin respuesta aún.
-  Future<bool?> hayPresupuesto() async {
+  /// Con [montoCentavos] pregunta por ese monto (el total de la lista).
+  Future<bool?> hayPresupuesto({int? montoCentavos}) async {
     if (!puedeVerPresupuesto) throw const PermisoDenegado();
-    return _repo.hayPresupuesto();
+    return montoCentavos == null
+        ? _repo.hayPresupuesto()
+        : _repo.hayPresupuestoPara(montoCentavos);
   }
 
   bool get puedeEditar => puedeEditarAlimentacion(rol, esMaestra: esMaestra);
@@ -141,12 +159,44 @@ class ServicioAlimentacion {
       throw const PermisoDenegado();
     }
     final lunes = lunesDe(semana);
-    return generarListaCompras(
+    final precios = await _repo.precios();
+    final delServidor = await _repo.comprasLista(m, lunes);
+    final marcados = {
+      ...await _repo.comprados(m, lunes),
+      for (final c in delServidor)
+        if (c.comprada) c.clave,
+    };
+    final items = generarListaCompras(
       menu: await _repo.menu(m, lunes),
       platillos: await _repo.platillos(),
-      comprados: await _repo.comprados(m, lunes),
-      precios: await _repo.precios(),
+      comprados: marcados,
+      precios: precios,
     );
+    // Lo que está en `ali_compras` y el menú no trae (solicitudes) se suma.
+    final claves = {for (final i in items) i.clave};
+    final extra = <String, CompraLista>{};
+    for (final c in delServidor) {
+      if (!claves.contains(c.clave)) extra[c.clave] = c;
+    }
+    if (extra.isEmpty) return items;
+    return [
+      ...items,
+      for (final c in extra.values)
+        ItemCompra(
+          nombre: c.nombre,
+          cantidad: c.cantidad,
+          unidad: c.unidad,
+          seccion: c.seccion,
+          comprado: c.comprada,
+          precio: precios[c.clave],
+          pendienteAlbacea: c.pendienteAlbacea,
+        ),
+    ]..sort((a, b) {
+        final x = a.seccion.index.compareTo(b.seccion.index);
+        return x != 0
+            ? x
+            : a.nombre.toLowerCase().compareTo(b.nombre.toLowerCase());
+      });
   }
 
   /// Guarda las recetas de una importación ya validada y revisada (dueño y
@@ -163,7 +213,11 @@ class ServicioAlimentacion {
   ///
   /// Devuelve la alerta de precio si el precio unitario quedó más de 20% arriba
   /// de la última compra **real** del ingrediente (nunca contra el precio base).
-  Future<AlertaPrecio?> registrarCompra(
+  ///
+  /// Con servidor, el precio real, la fila de la compra y el movimiento los
+  /// escribe `ali_marcar_comprada`; la app no toca tablas de dinero. [cuenta]:
+  /// quien compra la elige; por omisión sale de su rol.
+  Future<RegistroCompra> registrarCompra(
     MenuId m,
     DateTime semana,
     String clave, {
@@ -171,6 +225,7 @@ class ServicioAlimentacion {
     required int totalCentavos,
     String? nombre,
     String? unidad,
+    CuentaCompra? cuenta,
   }) async {
     _exigirEdicion();
     if (!puedeVerCompras(rol, m, esMaestra: esMaestra)) {
@@ -193,10 +248,17 @@ class ServicioAlimentacion {
     );
     final previas = historialDe(await _repo.historialCompras(), clave);
     final alerta = calcularAlerta(previas.isEmpty ? null : previas.first, compra);
-    await _repo.guardarCompraPrecio(compra);
-    await _repo.guardarPrecio(precio);
-    await _repo.marcar(m, lunesDe(semana), clave, true);
-    return alerta;
+    final r = await _repo.registrarCompraReal(
+      menu: m,
+      lunes: lunesDe(semana),
+      compra: compra,
+      precio: precio,
+      cuenta: cuenta ?? cuentaPorOmision(rol, m),
+    );
+    return RegistroCompra(
+      alerta: alerta,
+      pendienteAlbacea: r.pendienteAlbacea,
+    );
   }
 
   /// Compras reales de un ingrediente, de la más reciente a la más antigua.
@@ -235,6 +297,20 @@ class ServicioAlimentacion {
     required String nombre,
     required String unidad,
     SeccionCompra seccion = SeccionCompra.otros,
+  }) async => (await guardarConCodigo(
+    codigo: codigo,
+    nombre: nombre,
+    unidad: unidad,
+    seccion: seccion,
+  )).ingrediente;
+
+  /// Como [guardarIngredienteConCodigo], y dice si el servidor ya lo guardó
+  /// (`enServidor`) o solo quedó en la memoria de la sesión.
+  Future<({Ingrediente ingrediente, bool enServidor})> guardarConCodigo({
+    required String codigo,
+    required String nombre,
+    required String unidad,
+    SeccionCompra seccion = SeccionCompra.otros,
   }) async {
     _exigirEdicion();
     final c = codigo.trim();
@@ -242,8 +318,8 @@ class ServicioAlimentacion {
       throw ArgumentError('Falta el código, el nombre o la unidad.');
     }
     final i = Ingrediente(nombre.trim(), 1, unidad.trim(), seccion, codigoBarras: c);
-    await _repo.guardarIngredienteConCodigo(i);
-    return i;
+    final enServidor = await _repo.guardarIngredienteConCodigo(i);
+    return (ingrediente: i, enServidor: enServidor);
   }
 
   /// Menú del día de Papá. Lo ve quien ve el menú de Papá y la cuenta Casa
@@ -252,17 +328,7 @@ class ServicioAlimentacion {
     final puede =
         rol == Rol.casa || puedeVerMenu(rol, MenuId.papa, esMaestra: esMaestra);
     if (!puede) throw const PermisoDenegado();
-    final dia = hoy.weekday - DateTime.monday;
-    final entradas = (await _repo.menu(MenuId.papa, lunesDe(hoy)))
-        .where((e) => e.dia == dia)
-        .toList()
-      ..sort((a, b) => a.tiempo.index.compareTo(b.tiempo.index));
-    final nombres = {for (final p in await _repo.platillos()) p.id: p.nombre};
-    return [
-      for (final e in entradas)
-        if (nombres[e.platilloId] != null)
-          ComidaDelDia(e.tiempo, nombres[e.platilloId]!),
-    ];
+    return _repo.menuDelDiaPapa(hoy);
   }
 
   Future<void> marcar(
