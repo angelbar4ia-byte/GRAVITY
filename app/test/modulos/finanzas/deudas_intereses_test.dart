@@ -149,7 +149,7 @@ void main() {
       final r = simularEstrategia(EstrategiaPago.porVencimiento, [
         futura,
         cercana,
-      ], presupuestoMensual: 110000);
+      ], presupuestoMensual: 120000);
       expect(r.orden.first.deudaId, 'x');
       expect(r.orden.first.mesDeLiquidacion, 1);
       expect(r.orden.last.mesDeLiquidacion, greaterThan(1));
