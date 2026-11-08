@@ -56,7 +56,7 @@ void main() {
     );
     await dueno.fijarHorarioComida(
       TiempoComidaPapa.comida,
-      const HoraDelDia(13, 15),
+      const HoraComida(13, 15),
     );
     final n = await _corre(datos);
     expect(_comidas(n), [

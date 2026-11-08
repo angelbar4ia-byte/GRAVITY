@@ -3,7 +3,6 @@
 /// pantallas. Nada de esto va a la IA ni a las bocinas (D3, D6).
 library;
 
-import '../../../nucleo/avisos/aviso.dart' show HoraDelDia;
 import '../datos/modelos.dart';
 import '../datos/repositorio.dart';
 import 'horario_turnos.dart';
@@ -251,7 +250,7 @@ class ServicioCuidados {
   // ---------------------------------------------------------------- Comidas
 
   /// Horas de las comidas del hogar (las ven todos los que entran).
-  Future<Map<TiempoComidaPapa, HoraDelDia>> horariosComida() async {
+  Future<Map<TiempoComidaPapa, HoraComida>> horariosComida() async {
     try {
       return await _repo.horariosComida();
     } catch (_) {
@@ -262,7 +261,7 @@ class ServicioCuidados {
   /// Solo el dueño fija la hora de una comida.
   Future<void> fijarHorarioComida(
     TiempoComidaPapa tiempo,
-    HoraDelDia hora,
+    HoraComida hora,
   ) async {
     _exigir(permisos.editaHorariosComida);
     await _repo.fijarHorarioComida(tiempo, hora);

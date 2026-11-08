@@ -37,7 +37,7 @@ class FuenteCuidadosRepositorio implements FuenteDeEventosDeCuidado {
         );
       }
     }
-    Map<TiempoComidaPapa, HoraDelDia> horas;
+    Map<TiempoComidaPapa, HoraComida> horas;
     try {
       horas = await repositorio.horariosComida();
     } catch (_) {

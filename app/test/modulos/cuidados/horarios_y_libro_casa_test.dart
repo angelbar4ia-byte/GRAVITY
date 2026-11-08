@@ -17,7 +17,6 @@ import 'package:gravity/modulos/finanzas/datos/demostracion.dart';
 import 'package:gravity/modulos/finanzas/datos/repositorio_memoria.dart';
 import 'package:gravity/modulos/finanzas/estado/proveedores.dart'
     show repositorioFinanzasProvider;
-import 'package:gravity/nucleo/avisos/aviso.dart' show HoraDelDia;
 import 'package:gravity/nucleo/contratos/roles.dart';
 import 'package:gravity/nucleo/seguridad/almacen_seguro.dart';
 import 'package:gravity/nucleo/seguridad/proveedores_seguridad.dart';
@@ -77,10 +76,10 @@ void main() {
         'persona-dueno',
         Rol.dueno,
       ).horariosComida();
-      expect(h[TiempoComidaPapa.desayuno], const HoraDelDia(8, 30));
-      expect(h[TiempoComidaPapa.comida], const HoraDelDia(14));
-      expect(h[TiempoComidaPapa.colacion], const HoraDelDia(17));
-      expect(h[TiempoComidaPapa.cena], const HoraDelDia(19));
+      expect(h[TiempoComidaPapa.desayuno], const HoraComida(8, 30));
+      expect(h[TiempoComidaPapa.comida], const HoraComida(14));
+      expect(h[TiempoComidaPapa.colacion], const HoraComida(17));
+      expect(h[TiempoComidaPapa.cena], const HoraComida(19));
     });
 
     test(
@@ -90,17 +89,17 @@ void main() {
         final dueno = _srv(d, 'persona-dueno', Rol.dueno);
         await dueno.fijarHorarioComida(
           TiempoComidaPapa.comida,
-          const HoraDelDia(13, 15),
+          const HoraComida(13, 15),
         );
         final cuidadora = _srv(d, personasDemo.cuidadoraId, Rol.cuidador);
         expect(
           (await cuidadora.horariosComida())[TiempoComidaPapa.comida],
-          const HoraDelDia(13, 15),
+          const HoraComida(13, 15),
         );
         expect(
           () => cuidadora.fijarHorarioComida(
             TiempoComidaPapa.comida,
-            const HoraDelDia(9),
+            const HoraComida(9),
           ),
           throwsA(isA<ErrorCuidados>()),
         );
@@ -250,13 +249,16 @@ void main() {
         centavos: 100,
         ambito: AmbitoGasto.casa,
       );
-      final id = (await o.gastos()).single.id;
+      final id = (await o.gastos()).firstWhere((g) => g.concepto == 'Luz').id;
       await expectLater(
         o.resolverGasto(id, confirmar: true),
         throwsA(isA<ErrorCuidados>()),
       );
       // No quedó confirmado ni pasó a Finanzas.
-      expect((await o.gastos()).single.estado, EstadoGasto.pendiente);
+      expect(
+        (await o.gastos()).firstWhere((g) => g.id == id).estado,
+        EstadoGasto.pendiente,
+      );
       expect(llamadas, isEmpty);
       await o.resolverGasto(id, confirmar: true, libroCompartidoId: 'libro-x');
       expect(llamadas, ['libro-x']);

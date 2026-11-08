@@ -104,7 +104,8 @@ void main() {
       d,
       'persona-dueno',
       Rol.dueno,
-      alConfirmar: (_, {libroCompartidoId}) async => throw StateError('sin permiso'),
+      alConfirmar: (_, {libroCompartidoId}) async =>
+          throw StateError('sin permiso'),
     );
     await c.registrarGasto(concepto: 'Pañales', centavos: 18550);
     final id = (await c.gastos()).single.id;

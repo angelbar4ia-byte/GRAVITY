@@ -7,7 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/pantallas/marco_pantalla.dart';
 import '../../../diseno/diseno.dart';
-import '../../../nucleo/avisos/aviso.dart' show HoraDelDia;
 import '../../../nucleo/contratos/roles.dart';
 import '../datos/modelos.dart';
 import '../estado/proveedores.dart';
@@ -97,7 +96,7 @@ class _OpcionComida extends ConsumerWidget {
   }
 }
 
-String _textoHora(HoraDelDia h) =>
+String _textoHora(HoraComida h) =>
     '${h.hora.toString().padLeft(2, '0')}:${h.minuto.toString().padLeft(2, '0')}';
 
 /// Horas de los recordatorios de comida. Todos las ven; solo el dueño las
@@ -142,7 +141,7 @@ class _Horarios extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     TiempoComidaPapa tiempo,
-    Map<TiempoComidaPapa, HoraDelDia> horas,
+    Map<TiempoComidaPapa, HoraComida> horas,
   ) async {
     final actual = horas[tiempo]!;
     final r = await showTimePicker(
@@ -156,7 +155,7 @@ class _Horarios extends ConsumerWidget {
       ref,
       () => ref
           .read(servicioCuidadosProvider)
-          .fijarHorarioComida(tiempo, HoraDelDia(r.hour, r.minute)),
+          .fijarHorarioComida(tiempo, HoraComida(r.hour, r.minute)),
       ok: 'Horario guardado',
     );
   }

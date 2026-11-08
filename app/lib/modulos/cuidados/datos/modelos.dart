@@ -8,7 +8,6 @@ library;
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../../nucleo/avisos/aviso.dart' show HoraDelDia;
 import '../../../nucleo/contratos/roles.dart';
 
 /// Id estable (UUID v5): el mismo hecho da el mismo id, así tocar dos veces o
@@ -255,13 +254,42 @@ enum TiempoComidaPapa {
   final String etiqueta;
 }
 
+/// Hora del día de una comida (hora y minuto).
+@immutable
+class HoraComida {
+  const HoraComida(this.hora, [this.minuto = 0]);
+
+  final int hora;
+  final int minuto;
+
+  /// `"14:00"` o `"14:00:00"`; `null` si no se entiende.
+  static HoraComida? desdeTexto(String? texto) {
+    final m = RegExp(r'^(\d{1,2}):(\d{2})').firstMatch(texto ?? '');
+    if (m == null) return null;
+    final h = int.parse(m.group(1)!);
+    final min = int.parse(m.group(2)!);
+    return h > 23 || min > 59 ? null : HoraComida(h, min);
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      other is HoraComida && other.hora == hora && other.minuto == minuto;
+
+  @override
+  int get hashCode => Object.hash(hora, minuto);
+
+  @override
+  String toString() =>
+      '${hora.toString().padLeft(2, '0')}:${minuto.toString().padLeft(2, '0')}';
+}
+
 /// Horario de comidas por omisión (8h): se usa mientras el servidor no tenga
 /// uno guardado o no responda. El dueño lo edita (`cui_fijar_horario_comida`).
-const horariosComidaPorOmision = <TiempoComidaPapa, HoraDelDia>{
-  TiempoComidaPapa.desayuno: HoraDelDia(8, 30),
-  TiempoComidaPapa.comida: HoraDelDia(14),
-  TiempoComidaPapa.colacion: HoraDelDia(17),
-  TiempoComidaPapa.cena: HoraDelDia(19),
+const horariosComidaPorOmision = <TiempoComidaPapa, HoraComida>{
+  TiempoComidaPapa.desayuno: HoraComida(8, 30),
+  TiempoComidaPapa.comida: HoraComida(14),
+  TiempoComidaPapa.colacion: HoraComida(17),
+  TiempoComidaPapa.cena: HoraComida(19),
 };
 
 enum ResultadoComida {

@@ -11,7 +11,6 @@
 /// vuelve a revisar (defensa doble).
 library;
 
-import '../../../nucleo/avisos/aviso.dart' show HoraDelDia;
 import '../../../nucleo/contratos/roles.dart';
 import '../casos_uso/horario_turnos.dart';
 import '../casos_uso/permisos_cuidados.dart';
@@ -47,10 +46,10 @@ abstract interface class RepositorioCuidados {
 
   /// `cui_horarios_hogar(hogar)`: hora de cada comida del hogar; lo que falte
   /// se completa con [horariosComidaPorOmision]. Lo lee quien entra a Cuidados.
-  Future<Map<TiempoComidaPapa, HoraDelDia>> horariosComida();
+  Future<Map<TiempoComidaPapa, HoraComida>> horariosComida();
 
   /// `cui_fijar_horario_comida(hogar, tiempo, hora)`: solo el dueño.
-  Future<void> fijarHorarioComida(TiempoComidaPapa tiempo, HoraDelDia hora);
+  Future<void> fijarHorarioComida(TiempoComidaPapa tiempo, HoraComida hora);
 
   Future<List<ComidaRegistro>> comidas(DateTime dia);
   Future<void> registrarComida(ComidaRegistro c);
@@ -141,7 +140,7 @@ class DatosCuidadosMemoria {
   final Map<String, bool> autorizaciones = {};
 
   /// `cui_horarios_comida`: lo que el dueño fijó (lo demás, por omisión).
-  final Map<TiempoComidaPapa, HoraDelDia> horariosComida = {};
+  final Map<TiempoComidaPapa, HoraComida> horariosComida = {};
 
   /// La persona de Papá (la que el albacea representa).
   String personaPapaId = 'persona-papa';
@@ -341,7 +340,7 @@ class RepositorioCuidadosEnMemoria implements RepositorioCuidados {
   }
 
   @override
-  Future<Map<TiempoComidaPapa, HoraDelDia>> horariosComida() async => {
+  Future<Map<TiempoComidaPapa, HoraComida>> horariosComida() async => {
     ...horariosComidaPorOmision,
     ...datos.horariosComida,
   };
@@ -349,7 +348,7 @@ class RepositorioCuidadosEnMemoria implements RepositorioCuidados {
   @override
   Future<void> fijarHorarioComida(
     TiempoComidaPapa tiempo,
-    HoraDelDia hora,
+    HoraComida hora,
   ) async {
     _exigir(_dueno && rol != Rol.casa);
     if (hora.hora < 0 ||
