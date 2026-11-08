@@ -1,6 +1,6 @@
 # Fase 5 · Cuidados (especificación)
 
-> v1.6, 8/nov/2026 (respuestas del dueño sobre medicamentos de la hermana y bitácora de la pareja). Aprobada por el dueño con sus respuestas del mismo día. El documento de la app de cuidados actual se pospone a la siguiente sesión. Base: D2, D5, D18 y las respuestas del dueño a D5 (7/nov/2026). Pendiente: el documento de la app de cuidados actual (no está en el repositorio); mientras llega, esta especificación se apoya en la descripción del roadmap (Fase 5).
+> v1.7, 8/nov/2026 (respuestas del dueño sobre medicamentos de la hermana y bitácora de la pareja). Aprobada por el dueño con sus respuestas del mismo día. El documento de la app de cuidados actual se pospone a la siguiente sesión. Base: D2, D5, D18 y las respuestas del dueño a D5 (7/nov/2026). Pendiente: el documento de la app de cuidados actual (no está en el repositorio); mientras llega, esta especificación se apoya en la descripción del roadmap (Fase 5).
 
 ## 1. Alcance
 
@@ -99,6 +99,14 @@ Decisión del dueño (7/nov/2026): **sin PIN**. Si la voz no da seguridad para i
 - **Gastos de la casa:** es un gasto **compartido entre Papá, la pareja y el dueño**. Al confirmarlo, el dueño elige el libro compartido donde va (la lista de sus libros compartidos vigentes); no se adivina.
 - **Cuenta maestra:** no deja instrucciones (se mantiene).
 - **pg_cron:** el dueño lo activa en Supabase; las tomas se generan solas una vez activado.
+
+## 8i. Recordatorios desde el servidor (v1.7, 8/nov/2026)
+
+- **Quién genera:** el **servidor** genera los recordatorios de toma (cron de `cui_tomas`, con pg_cron activo) y los entrega al **cuidador de turno** como aviso (tabla `avisos`, entregado por la Edge Function y FCM). Ya no depende de que la app esté abierta.
+- **Bocinas (Fase 6, D6 y D9):** el servidor mandará también los recordatorios a las bocinas de la casa. El dueño las configura desde la app: fijar, quitar o crear recordatorios.
+- **Voz (Fase 6):** el dueño puede grabar mensajes de voz con su propia voz, o escribir texto, y GRAVITY los lee.
+- **Solo tomas** entran al servidor en esta versión. Las comidas siguen locales hasta la Fase 6.
+- **Pg_cron:** lo activa el dueño en Supabase.
 
 ## 8g. Noches y medicamentos (v1.5, 8/nov/2026)
 
