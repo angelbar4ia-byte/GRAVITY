@@ -176,9 +176,12 @@ class _PanelConversacionState extends ConsumerState<PanelConversacion> {
                     minLines: 1,
                     maxLines: 3,
                     maxLength: 1000,
-                    buildCounter:
-                        (_, {required currentLength, required isFocused, maxLength}) =>
-                            null,
+                    buildCounter: (
+                      _, {
+                      required currentLength,
+                      required isFocused,
+                      maxLength,
+                    }) => null,
                     decoration: const InputDecoration(
                       hintText: 'Pregúntale a GRAVITY…',
                     ),

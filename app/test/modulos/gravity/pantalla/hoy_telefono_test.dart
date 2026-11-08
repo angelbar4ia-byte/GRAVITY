@@ -11,6 +11,9 @@ import '../../../diseno/ayuda_pruebas.dart';
 Future<void> _verCuidados(WidgetTester tester) => tester.scrollUntilVisible(
   find.byKey(const ValueKey('tarjeta-cuidados')),
   200,
+  // Hay más de un Scrollable (el campo de la conversación tiene el suyo): el
+  // primero es la lista de la pantalla.
+  scrollable: find.byType(Scrollable).first,
 );
 
 void main() {
@@ -60,12 +63,20 @@ void main() {
     await montar(tester, const PantallaHoyTelefono());
     expect(find.text(r'$1,330.00'), findsNothing);
 
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('finanzas-hoy-quedan-libro-ejemplo')),
+    );
+    await tester.pump();
     await tester.tap(
       find.byKey(const ValueKey('finanzas-hoy-quedan-libro-ejemplo')),
     );
     await tester.pump();
     expect(find.text(r'$1,330.00'), findsOneWidget);
 
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('boton-modo-privado')),
+    );
+    await tester.pump();
     await tester.tap(find.byKey(const ValueKey('boton-modo-privado')));
     await tester.pump();
     expect(find.text(r'$1,330.00'), findsNothing);

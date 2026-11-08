@@ -87,7 +87,8 @@ class ConversacionAsistente extends Notifier<EstadoConversacion> {
     // mensajes locales (pueden traer cifras de las herramientas).
     final historial = [
       for (final m in state.mensajes)
-        if (m.autor == AutorMensaje.persona || m.autor == AutorMensaje.asistente)
+        if (m.autor == AutorMensaje.persona ||
+            m.autor == AutorMensaje.asistente)
           TurnoConversacion(
             esPersona: m.autor == AutorMensaje.persona,
             texto: m.texto,
@@ -120,7 +121,10 @@ class ConversacionAsistente extends Notifier<EstadoConversacion> {
         try {
           final local = await ejecutar(herramienta);
           if (local != null && local.isNotEmpty) {
-            mensajes = [...mensajes, MensajeConversacion(AutorMensaje.local, local)];
+            mensajes = [
+              ...mensajes,
+              MensajeConversacion(AutorMensaje.local, local),
+            ];
           }
         } catch (_) {
           mensajes = [

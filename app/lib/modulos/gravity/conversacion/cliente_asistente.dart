@@ -94,7 +94,10 @@ class ClienteAsistenteSupabase implements ClienteAsistente {
     } on FunctionException catch (e) {
       final d = e.details;
       if (d is Map && d['mensaje'] is String) {
-        throw ErrorAsistente('${d['error'] ?? 'error'}', d['mensaje'] as String);
+        throw ErrorAsistente(
+          '${d['error'] ?? 'error'}',
+          d['mensaje'] as String,
+        );
       }
       throw ErrorAsistente(
         'error_${e.status}',

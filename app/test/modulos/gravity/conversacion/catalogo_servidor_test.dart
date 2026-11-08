@@ -10,9 +10,7 @@ import 'package:gravity/nucleo/contratos/roles.dart';
 import 'package:gravity/nucleo/herramientas/herramientas.dart';
 
 void main() {
-  final archivo = File(
-    '../supabase/functions/gravity-asistente/catalogo.json',
-  );
+  final archivo = File('../supabase/functions/gravity-asistente/catalogo.json');
   final catalogo =
       (jsonDecode(archivo.readAsStringSync())['herramientas'] as List)
           .cast<Map<String, dynamic>>();

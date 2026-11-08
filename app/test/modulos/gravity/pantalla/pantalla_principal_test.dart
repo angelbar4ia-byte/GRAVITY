@@ -100,6 +100,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const ValueKey('panel-avisos')),
       300,
+      scrollable: find.byType(Scrollable).first,
     );
     final finanzas = _esquina(tester, 'finanzas-hoy');
     final avisos = _esquina(tester, 'panel-avisos');
