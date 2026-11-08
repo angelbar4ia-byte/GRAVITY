@@ -1,12 +1,17 @@
 # Fase 8 · Bloque 3: Objetivos, inversión, bienes y previsión
 
-> v1.0, 8/nov/2026. Aprobada por el dueño. Base: D19 (libros por persona), D25, D28 (apartado de ahorro) y las respuestas de hoy.
+> v1.1, 8/nov/2026. Aprobada por el dueño; v1.1: la fecha de meta es opcional y el rendimiento de una inversión es obligatorio. Base: D19 (libros por persona), D25, D28 (apartado de ahorro) y las respuestas de hoy.
 
 ## Alcance
 
 1. **Objetivos:** metas de ahorro con monto y fecha (por ejemplo, un viaje o un fondo para la casa). Se alimentan del **apartado de ahorro** que ya existe.
 2. **Inversión:** se registran inversiones con su saldo y su rendimiento. Se **capturan a mano** y también se **leen de los estados en PDF** (solo en la laptop; el PDF no sale de ella). El **cálculo automático** del rendimiento se activa **después**, cuando el dueño lo entienda; por ahora, el rendimiento se captura.
 3. **Bienes y previsión:** bienes (auto, casa) y previsión (seguros, pensión). Los valores se **ingresan a mano**, con fecha de captura.
+
+## Respuestas del dueño (v1.1, 8/nov/2026)
+
+- **Fecha de meta:** no es obligatoria, pero se puede elegir una fecha límite.
+- **Rendimiento de una inversión:** es **obligatorio** (puede ser cero, pero debe capturarse).
 
 ## Reglas
 
