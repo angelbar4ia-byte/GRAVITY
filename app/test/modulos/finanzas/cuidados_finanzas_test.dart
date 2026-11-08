@@ -192,19 +192,21 @@ void main() {
       confirmadoPor: dueno,
       confirmadoEn: ahoraDePrueba,
     );
-    int enLibro(RepositorioFinanzas r, String libro) => r.actual!.datos
-        .movimientos
-        .where((m) => r.actual!.datos.cuenta(m.cuentaOrigenId)?.libroId == libro)
-        .length;
+    int enLibro(RepositorioFinanzasEnMemoria r, String libro) {
+      final d = r.actual.datos;
+      return d.movimientos
+          .where((m) => d.cuenta(m.cuentaOrigenId)?.libroId == libro)
+          .length;
+    }
 
     test('confirmar agrega exactamente un movimiento', () async {
       final r = repo();
-      final antes = r.actual!.datos.movimientos.length;
+      final antes = r.actual.datos.movimientos.length;
       expect(
         await confirmar(conf(gasto()), r),
         ResultadoConfirmacionGasto.agregado,
       );
-      final nuevos = r.actual!.datos.movimientos.skip(antes).toList();
+      final nuevos = r.actual.datos.movimientos.skip(antes).toList();
       expect(nuevos, hasLength(1));
       expect(nuevos.single.monto, 85050);
     });
@@ -212,17 +214,17 @@ void main() {
     test('confirmar dos veces no duplica', () async {
       final r = repo();
       await confirmar(conf(gasto()), r);
-      final n = r.actual!.datos.movimientos.length;
+      final n = r.actual.datos.movimientos.length;
       expect(
         await confirmar(conf(gasto()), r),
         ResultadoConfirmacionGasto.yaRegistrado,
       );
-      expect(r.actual!.datos.movimientos, hasLength(n));
+      expect(r.actual.datos.movimientos, hasLength(n));
     });
 
     test('un gasto no confirmado no pasa', () async {
       final r = repo();
-      final n = r.actual!.datos.movimientos.length;
+      final n = r.actual.datos.movimientos.length;
       for (final e in [
         EstadoGastoCuidado.pendienteConfirmacion,
         EstadoGastoCuidado.rechazado,
@@ -232,7 +234,7 @@ void main() {
           ResultadoConfirmacionGasto.noConfirmado,
         );
       }
-      expect(r.actual!.datos.movimientos, hasLength(n));
+      expect(r.actual.datos.movimientos, hasLength(n));
     });
 
     test('gasto de Papá y de la casa van a sus libros', () async {

@@ -1,7 +1,7 @@
 // GENERADO por api/generar_dart.mjs a partir de api/openapi.yaml. No se edita a mano.
 // Permite abrir Swagger UI con doble clic (file://), donde el navegador no deja leer
 // ../openapi.yaml. Servida por http, la página lee openapi.yaml directamente.
-// huella: fnv1a32:9f04b2b4
+// huella: fnv1a32:206abfaf
 window.ESPECIFICACION_GRAVITY = {
   "openapi": "3.1.0",
   "info": {
@@ -54,7 +54,7 @@ window.ESPECIFICACION_GRAVITY = {
     },
     {
       "name": "Base de datos · Cuidados",
-      "description": "Tablas `cui_*` y funciones de Cuidados (Fase 5), según `supabase/migrations/20261113000000_cuidados_avisos.sql`,\n`20261114000000_cuidados_esquema.sql`, `20261115000000_cuidados_operaciones.sql`,\n`20261116000000_cuidados_matriz.sql`, `supabase/README.md` (\"Cuidados (Fase 5)\") y\n`docs/specs/fase-5-cuidados.md`. **Los permisos los decide el servidor** (`cui_puede`, RLS), no la pantalla:\nel perfil de cada quien (`cuiPerfil`) sale de su rol y de sus turnos. Dueño: todo. Pareja\n(coadministrador): turnos y resumen del día de Papá; medicamentos, tomas y comidas solo en lectura y solo\ncon su consentimiento; nunca la bitácora de cuidados. Cuidadora: lee lo clínico, marca tomas **a la hora de\nsu turno**, registra comidas en sus días, escribe bitácora y entregas. Hermana: lee, escribe bitácora y\nentregas, y ve el resumen mensual solo si el albacea la autorizó. Un cuidador o familiar **sin turnos** no\ntiene acceso, y una baja corta el acceso al instante. Casa (tablet y bocinas), la cuenta maestra y otros\nhogares no ven nada. **Los medicamentos, las comidas y la bitácora son datos clínicos: nunca a la IA en la\nnube, a las bocinas ni a la tablet pública** (D3, D6); los avisos no llevan texto.\n\n- **Solo agregar:** `cui_comidas`, `cui_bitacora` y `cui_entregas` (sin PATCH ni DELETE). Los gastos, los\n  cambios urgentes y las tomas solo cambian por sus funciones; `cui_consentimientos` y\n  `cui_autorizacion_resumen` no se escriben directo.\n- **Lo que pone el servidor** (de solo lectura; no se manda): `persona_id`, `registrada_por`, `de_persona`,\n  `estado`, `confirmado_en` y los campos `*_en` (sin permiso de columna, 42501).\n- **Tope:** 300 registros propios en 24 horas por tabla (54000).\n- **Errores:** `23514` regla de la tabla (rango, largo, monto) → 400; `22023` dato inválido → 400; `23505`\n  duplicado → 409; `55000` gasto ya resuelto → 500; `42501` sin permiso → 403; `54000` tope → 500.\n- **Ayudantes sin operación** (los usan las reglas): `cui_en_circulo` y `cui_puede_comida`.\n"
+      "description": "Tablas `cui_*` y funciones de Cuidados (Fase 5), según `supabase/migrations/20261113000000_cuidados_avisos.sql`,\n`20261114000000_cuidados_esquema.sql`, `20261115000000_cuidados_operaciones.sql`,\n`20261116000000_cuidados_matriz.sql`, `supabase/README.md` (\"Cuidados (Fase 5)\") y\n`docs/specs/fase-5-cuidados.md`. **Los permisos los decide el servidor** (`cui_puede`, RLS), no la pantalla:\nel perfil de cada quien (`cuiPerfil`) sale de su rol y de sus turnos. Dueño: todo. Pareja\n(coadministrador): turnos y resumen del día de Papá; medicamentos, tomas y comidas solo en lectura y solo\ncon su consentimiento; nunca la bitácora de cuidados. Cuidadora: lee lo clínico, marca tomas **a la hora de\nsu turno**, registra comidas en sus días, escribe bitácora y entregas. Hermana: lee, escribe bitácora y\nentregas, y ve el resumen mensual solo si el albacea la autorizó. Un cuidador o familiar **sin turnos** no\ntiene acceso, y una baja corta el acceso al instante. Casa (tablet y bocinas), la cuenta maestra y otros\nhogares no ven nada. **Los medicamentos, las comidas y la bitácora son datos clínicos: nunca a la IA en la\nnube, a las bocinas ni a la tablet pública** (D3, D6); los avisos no llevan texto.\n\n- **Solo agregar:** `cui_comidas`, `cui_bitacora`, `cui_citas` y `cui_entregas` (sin PATCH ni DELETE). Los gastos, los\n  cambios urgentes y las tomas solo cambian por sus funciones; `cui_consentimientos` y\n  `cui_autorizacion_resumen` no se escriben directo.\n- **Lo que pone el servidor** (de solo lectura; no se manda): `persona_id`, `registrada_por`, `de_persona`,\n  `estado`, `confirmado_en` y los campos `*_en` (sin permiso de columna, 42501).\n- **Tope:** 300 registros propios en 24 horas por tabla (54000).\n- **Errores:** `23514` regla de la tabla (rango, largo, monto) → 400; `22023` dato inválido → 400; `23505`\n  duplicado → 409; `55000` gasto ya resuelto → 500; `42501` sin permiso → 403; `54000` tope → 500.\n- **Ayudantes sin operación** (los usan las reglas): `cui_en_circulo` y `cui_puede_comida`.\n"
     },
     {
       "name": "Funciones del servidor",
@@ -12490,6 +12490,137 @@ window.ESPECIFICACION_GRAVITY = {
         }
       }
     },
+    "/rest/v1/cui_citas": {
+      "get": {
+        "tags": [
+          "Base de datos · Cuidados"
+        ],
+        "operationId": "leerCuiCitas",
+        "summary": "Leer citas de Papá",
+        "description": "Citas (dato clínico D3). SOLO AGREGAR. Mismas reglas de lectura que las notas de la bitácora de cuidados: dueño y hermana todas; la cuidadora lo suyo y lo del dueño y la hermana; la pareja solo con consentimiento vigente.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar",
+          "cuidador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 5,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/orden"
+          },
+          {
+            "$ref": "#/components/parameters/limite"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas que tu rol puede ver (RLS).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CuiCita"
+                  }
+                },
+                "example": [
+                  {
+                    "id": "a5900000-0000-4000-8000-000000000001",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "persona_id": "e0000000-0000-4000-8000-000000000001",
+                    "programada_en": "2026-11-20T10:00:00-06:00",
+                    "lugar": "Clínica de ejemplo",
+                    "nota": "Llevar estudios (ejemplo)",
+                    "creada_en": "2026-11-09T08:00:00-06:00"
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Base de datos · Cuidados"
+        ],
+        "operationId": "agregarCuiCitas",
+        "summary": "Agregar citas de Papá",
+        "description": "Dueño, cuidadora y hermana. `lugar` hasta 120 caracteres y `nota` hasta 500 (23514). No mandes lo que pone el servidor (`persona_id`, `creada_en`): sin permiso de columna, 42501.",
+        "x-roles": [
+          "dueno",
+          "familiar",
+          "cuidador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 5,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/alConflicto"
+          },
+          {
+            "$ref": "#/components/parameters/preferirAlSubir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CuiCita"
+                  },
+                  {
+                    "required": [
+                      "id",
+                      "hogar_id",
+                      "programada_en"
+                    ]
+                  }
+                ]
+              },
+              "example": {
+                "id": "a5900000-0000-4000-8000-000000000001",
+                "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                "programada_en": "2026-11-20T10:00:00-06:00",
+                "lugar": "Clínica de ejemplo",
+                "nota": "Llevar estudios (ejemplo)"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/Agregado"
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaCuidados"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoCuidados"
+          }
+        }
+      }
+    },
     "/rest/v1/cui_entregas": {
       "get": {
         "tags": [
@@ -13314,6 +13445,70 @@ window.ESPECIFICACION_GRAVITY = {
         }
       }
     },
+    "/rest/v1/rpc/cui_posponer_toma": {
+      "post": {
+        "tags": [
+          "Base de datos · Cuidados"
+        ],
+        "operationId": "cuiPosponerToma",
+        "summary": "Posponer una toma a la siguiente persona de turno",
+        "description": "Solo quien estaba de turno (dueño, cuidadora u hermana) a la hora programada de la toma, o a quien ya se la pasaron. La toma queda pendiente y pasa a la siguiente persona que `cui_quien_en_turno` devuelve en el próximo cambio de turno; quien la pasó ya no puede marcarla ni posponerla. Devuelve la persona. Fuera de turno, pareja, Casa o toma inexistente: 403 (42501). Toma ya marcada: 409 (55000). Sin nadie a quien pasarla: 400 (22023). La bitácora de auditoría guarda `cuidados.toma_pospuesta` sin datos clínicos.",
+        "x-roles": [
+          "dueno",
+          "familiar",
+          "cuidador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 5,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_toma"
+                ],
+                "properties": {
+                  "p_toma": {
+                    "$ref": "#/components/schemas/Uuid"
+                  }
+                }
+              },
+              "example": {
+                "p_toma": "a5600000-0000-4000-8000-000000000001"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "La persona a quien se pasó la toma.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Uuid"
+                },
+                "example": "e0000000-0000-4000-8000-000000000001"
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaCuidados"
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoCuidados"
+          }
+        }
+      }
+    },
     "/rest/v1/rpc/cui_dejar_instruccion": {
       "post": {
         "tags": [
@@ -13459,7 +13654,7 @@ window.ESPECIFICACION_GRAVITY = {
         ],
         "operationId": "cuiAtenderCambioUrgente",
         "summary": "Marcar un cambio urgente como atendido",
-        "description": "Quien lo recibe, el dueño o, si nadie estaba de turno, una cuidadora u hermana. Marca la hora y resuelve su aviso. Repetirlo no falla.",
+        "description": "Quien lo recibe, el dueño o, si nadie estaba de turno, una cuidadora u hermana. Marca la hora y quién lo atendió (`atendido_por`, lo pone el servidor) y resuelve su aviso. Repetirlo no falla ni cambia quién lo atendió.",
         "x-roles": [
           "dueno",
           "familiar",
@@ -18359,6 +18554,19 @@ window.ESPECIFICACION_GRAVITY = {
             ],
             "format": "date-time",
             "readOnly": true
+          },
+          "pospuesta_a": {
+            "$ref": "#/components/schemas/UuidONulo",
+            "readOnly": true,
+            "description": "A quién se pasó al posponerla (cuiPosponerToma)."
+          },
+          "pospuesta_en": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "readOnly": true
           }
         }
       },
@@ -18434,6 +18642,49 @@ window.ESPECIFICACION_GRAVITY = {
           }
         }
       },
+      "CuiCita": {
+        "type": "object",
+        "description": "Cita de Papá (solo agregar; la corrección es una fila nueva).",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "persona_id": {
+            "$ref": "#/components/schemas/Uuid",
+            "readOnly": true,
+            "description": "La pone el servidor: es tu persona."
+          },
+          "programada_en": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lugar": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "nota": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "creada_en": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "description": "Lo pone el servidor."
+          }
+        }
+      },
       "CuiEntrega": {
         "type": "object",
         "description": "Entrega de turno (solo agregar).",
@@ -18497,6 +18748,11 @@ window.ESPECIFICACION_GRAVITY = {
               "null"
             ],
             "format": "date-time"
+          },
+          "atendido_por": {
+            "$ref": "#/components/schemas/UuidONulo",
+            "readOnly": true,
+            "description": "Quién lo atendió. La pone el servidor."
           }
         }
       },
@@ -18675,4 +18931,4 @@ window.ESPECIFICACION_GRAVITY = {
     }
   }
 };
-window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:9f04b2b4';
+window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:206abfaf';

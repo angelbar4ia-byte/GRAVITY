@@ -97,7 +97,7 @@ begin
   end if;
   if not found or v_perfil is null
      or not (v_perfil = 'dueno'
-             or (v_perfil in ('cuidadora', 'hermana') and v_t.pospuesta_a = v_yo)
+             or (v_perfil in ('cuidadora', 'hermana') and coalesce(v_t.pospuesta_a = v_yo, false))
              or (v_perfil in ('cuidadora', 'hermana') and v_t.pospuesta_a is null
                  and exists (select 1 from public.cui_quien_en_turno(v_t.hogar_id, v_t.programada_para) q
                               where q.persona_id = v_yo
@@ -133,7 +133,7 @@ begin
   end if;
   -- Mismo 42501 exista o no la toma: solo quien estaba de turno a la hora de la toma (o a quien ya se la pasaron).
   if not found or v_perfil is null or v_yo is null or v_perfil not in ('dueno', 'cuidadora', 'hermana')
-     or not (case when v_t.pospuesta_a is not null then v_t.pospuesta_a = v_yo
+     or not (case when v_t.pospuesta_a is not null then coalesce(v_t.pospuesta_a = v_yo, false)
                   else exists (select 1 from public.cui_quien_en_turno(v_t.hogar_id, v_t.programada_para) q
                                 where q.persona_id = v_yo) end) then
     raise exception using errcode = '42501', message = 'No puedes posponer esta toma.';

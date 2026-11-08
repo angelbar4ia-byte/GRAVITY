@@ -5,7 +5,7 @@ import '../../../nucleo/contratos/roles.dart';
 import 'operacion_api.dart';
 
 /// Huella de api/openapi.yaml con la que se generó este archivo.
-const huellaEspecificacion = 'fnv1a32:9f04b2b4';
+const huellaEspecificacion = 'fnv1a32:206abfaf';
 
 /// Versión de la especificación (info.version).
 const versionEspecificacion = '0.6.0';
@@ -2293,7 +2293,7 @@ const gruposOperaciones = <GrupoOperaciones>[
   ),
   GrupoOperaciones(
     nombre: 'Base de datos · Cuidados',
-    descripcion: 'Tablas `cui_*` y funciones de Cuidados (Fase 5), según `supabase/migrations/20261113000000_cuidados_avisos.sql`, `20261114000000_cuidados_esquema.sql`, `20261115000000_cuidados_operaciones.sql`, `20261116000000_cuidados_matriz.sql`, `supabase/README.md` ("Cuidados (Fase 5)") y `docs/specs/fase-5-cuidados.md`. **Los permisos los decide el servidor** (`cui_puede`, RLS), no la pantalla: el perfil de cada quien (`cuiPerfil`) sale de su rol y de sus turnos. Dueño: todo. Pareja (coadministrador): turnos y resumen del día de Papá; medicamentos, tomas y comidas solo en lectura y solo con su consentimiento; nunca la bitácora de cuidados. Cuidadora: lee lo clínico, marca tomas **a la hora de su turno**, registra comidas en sus días, escribe bitácora y entregas. Hermana: lee, escribe bitácora y entregas, y ve el resumen mensual solo si el albacea la autorizó. Un cuidador o familiar **sin turnos** no tiene acceso, y una baja corta el acceso al instante. Casa (tablet y bocinas), la cuenta maestra y otros hogares no ven nada. **Los medicamentos, las comidas y la bitácora son datos clínicos: nunca a la IA en la nube, a las bocinas ni a la tablet pública** (D3, D6); los avisos no llevan texto. - **Solo agregar:** `cui_comidas`, `cui_bitacora` y `cui_entregas` (sin PATCH ni DELETE). Los gastos, los cambios urgentes y las tomas solo cambian por sus funciones; `cui_consentimientos` y `cui_autorizacion_resumen` no se escriben directo. - **Lo que pone el servidor** (de solo lectura; no se manda): `persona_id`, `registrada_por`, `de_persona`, `estado`, `confirmado_en` y los campos `*_en` (sin permiso de columna, 42501). - **Tope:** 300 registros propios en 24 horas por tabla (54000). - **Errores:** `23514` regla de la tabla (rango, largo, monto) → 400; `22023` dato inválido → 400; `23505` duplicado → 409; `55000` gasto ya resuelto → 500; `42501` sin permiso → 403; `54000` tope → 500. - **Ayudantes sin operación** (los usan las reglas): `cui_en_circulo` y `cui_puede_comida`.',
+    descripcion: 'Tablas `cui_*` y funciones de Cuidados (Fase 5), según `supabase/migrations/20261113000000_cuidados_avisos.sql`, `20261114000000_cuidados_esquema.sql`, `20261115000000_cuidados_operaciones.sql`, `20261116000000_cuidados_matriz.sql`, `supabase/README.md` ("Cuidados (Fase 5)") y `docs/specs/fase-5-cuidados.md`. **Los permisos los decide el servidor** (`cui_puede`, RLS), no la pantalla: el perfil de cada quien (`cuiPerfil`) sale de su rol y de sus turnos. Dueño: todo. Pareja (coadministrador): turnos y resumen del día de Papá; medicamentos, tomas y comidas solo en lectura y solo con su consentimiento; nunca la bitácora de cuidados. Cuidadora: lee lo clínico, marca tomas **a la hora de su turno**, registra comidas en sus días, escribe bitácora y entregas. Hermana: lee, escribe bitácora y entregas, y ve el resumen mensual solo si el albacea la autorizó. Un cuidador o familiar **sin turnos** no tiene acceso, y una baja corta el acceso al instante. Casa (tablet y bocinas), la cuenta maestra y otros hogares no ven nada. **Los medicamentos, las comidas y la bitácora son datos clínicos: nunca a la IA en la nube, a las bocinas ni a la tablet pública** (D3, D6); los avisos no llevan texto. - **Solo agregar:** `cui_comidas`, `cui_bitacora`, `cui_citas` y `cui_entregas` (sin PATCH ni DELETE). Los gastos, los cambios urgentes y las tomas solo cambian por sus funciones; `cui_consentimientos` y `cui_autorizacion_resumen` no se escriben directo. - **Lo que pone el servidor** (de solo lectura; no se manda): `persona_id`, `registrada_por`, `de_persona`, `estado`, `confirmado_en` y los campos `*_en` (sin permiso de columna, 42501). - **Tope:** 300 registros propios en 24 horas por tabla (54000). - **Errores:** `23514` regla de la tabla (rango, largo, monto) → 400; `22023` dato inválido → 400; `23505` duplicado → 409; `55000` gasto ya resuelto → 500; `42501` sin permiso → 403; `54000` tope → 500. - **Ayudantes sin operación** (los usan las reglas): `cui_en_circulo` y `cui_puede_comida`.',
     operaciones: [
       OperacionApi(
         id: 'leerCuiTurnos',
@@ -2423,6 +2423,28 @@ const gruposOperaciones = <GrupoOperaciones>[
         ruta: '/rest/v1/cui_bitacora',
         resumen: 'Agregar notas de la bitácora de cuidados',
         descripcion: 'Dueño, cuidadora y hermana. La nota lleva de 1 a 500 caracteres (23514). No mandes lo que pone el servidor (marcado de solo lectura): sin permiso de columna, 42501.',
+        roles: {Rol.dueno, Rol.familiar, Rol.cuidador},
+        escribe: true,
+        soloLocal: true,
+        fase: 5,
+      ),
+      OperacionApi(
+        id: 'leerCuiCitas',
+        metodo: MetodoHttp.get,
+        ruta: '/rest/v1/cui_citas',
+        resumen: 'Leer citas de Papá',
+        descripcion: 'Citas (dato clínico D3). SOLO AGREGAR. Mismas reglas de lectura que las notas de la bitácora de cuidados: dueño y hermana todas; la cuidadora lo suyo y lo del dueño y la hermana; la pareja solo con consentimiento vigente.',
+        roles: {Rol.dueno, Rol.coadministrador, Rol.familiar, Rol.cuidador},
+        escribe: false,
+        soloLocal: true,
+        fase: 5,
+      ),
+      OperacionApi(
+        id: 'agregarCuiCitas',
+        metodo: MetodoHttp.post,
+        ruta: '/rest/v1/cui_citas',
+        resumen: 'Agregar citas de Papá',
+        descripcion: 'Dueño, cuidadora y hermana. `lugar` hasta 120 caracteres y `nota` hasta 500 (23514). No mandes lo que pone el servidor (`persona_id`, `creada_en`): sin permiso de columna, 42501.',
         roles: {Rol.dueno, Rol.familiar, Rol.cuidador},
         escribe: true,
         soloLocal: true,
@@ -2561,6 +2583,17 @@ const gruposOperaciones = <GrupoOperaciones>[
         fase: 5,
       ),
       OperacionApi(
+        id: 'cuiPosponerToma',
+        metodo: MetodoHttp.post,
+        ruta: '/rest/v1/rpc/cui_posponer_toma',
+        resumen: 'Posponer una toma a la siguiente persona de turno',
+        descripcion: 'Solo quien estaba de turno (dueño, cuidadora u hermana) a la hora programada de la toma, o a quien ya se la pasaron. La toma queda pendiente y pasa a la siguiente persona que `cui_quien_en_turno` devuelve en el próximo cambio de turno; quien la pasó ya no puede marcarla ni posponerla. Devuelve la persona. Fuera de turno, pareja, Casa o toma inexistente: 403 (42501). Toma ya marcada: 409 (55000). Sin nadie a quien pasarla: 400 (22023). La bitácora de auditoría guarda `cuidados.toma_pospuesta` sin datos clínicos.',
+        roles: {Rol.dueno, Rol.familiar, Rol.cuidador},
+        escribe: true,
+        soloLocal: true,
+        fase: 5,
+      ),
+      OperacionApi(
         id: 'cuiDejarInstruccion',
         metodo: MetodoHttp.post,
         ruta: '/rest/v1/rpc/cui_dejar_instruccion',
@@ -2587,7 +2620,7 @@ const gruposOperaciones = <GrupoOperaciones>[
         metodo: MetodoHttp.post,
         ruta: '/rest/v1/rpc/cui_atender_cambio_urgente',
         resumen: 'Marcar un cambio urgente como atendido',
-        descripcion: 'Quien lo recibe, el dueño o, si nadie estaba de turno, una cuidadora u hermana. Marca la hora y resuelve su aviso. Repetirlo no falla.',
+        descripcion: 'Quien lo recibe, el dueño o, si nadie estaba de turno, una cuidadora u hermana. Marca la hora y quién lo atendió (`atendido_por`, lo pone el servidor) y resuelve su aviso. Repetirlo no falla ni cambia quién lo atendió.',
         roles: {Rol.dueno, Rol.familiar, Rol.cuidador},
         escribe: true,
         soloLocal: true,
