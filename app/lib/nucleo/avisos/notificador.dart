@@ -10,7 +10,9 @@ import 'catalogo_avisos.dart';
 enum AccionDeNotificacion {
   hecho('hecho', 'Hecho'),
   posponer10('posponer10', 'Posponer 10 min'),
-  omitir('omitir', 'Omitir');
+  omitir('omitir', 'Omitir'),
+  // Cuidados (spec fase-5 8g): la toma pasa a quien entre al siguiente turno.
+  posponerTurno('posponer_turno', 'Posponer al siguiente turno');
 
   const AccionDeNotificacion(this.id, this.etiqueta);
 

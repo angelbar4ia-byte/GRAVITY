@@ -11,6 +11,7 @@ import '../avisos/aviso.dart';
 import '../avisos/catalogo_avisos.dart';
 import '../avisos/notificador.dart';
 import '../seguridad/almacen_seguro.dart';
+import 'posponer_toma.dart';
 import 'turnos.dart';
 
 /// Quién sabe qué tomas y comidas vienen (Cuidados, con su copia local).
@@ -88,11 +89,17 @@ class ServicioRecordatoriosCuidados {
           id: id,
           titulo: r.titulo,
           canal: canalDe(r.tipo),
-          // Las horas silenciosas llegan sin sonido, pero llegan.
-          sonar: !preferencias.enSilencio(
-            HoraDelDia(r.cuando.hour, r.cuando.minute),
-          ),
+          // Spec fase-5 8g: tomas y comidas suenan siempre, también de noche
+          // (no se aplican las horas silenciosas). Las entregas de turno sí
+          // respetan el silencio.
+          sonar: r.tipo == 'recordatorio_entrega_turno' ||
+                  r.tipo == 'entrega_turno'
+              ? !preferencias.enSilencio(
+                  HoraDelDia(r.cuando.hour, r.cuando.minute),
+                )
+              : true,
           carga: r.clave,
+          acciones: accionesDeRecordatorio(r.tipo),
         ),
         r.cuando,
         zona: preferencias.zonaHoraria,

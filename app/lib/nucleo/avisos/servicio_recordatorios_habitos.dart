@@ -168,6 +168,8 @@ class ServicioRecordatoriosHabitos {
           cuando,
           zona: prefs.zonaHoraria,
         );
+      case AccionDeNotificacion.posponerTurno:
+        return; // es de Cuidados, no de Hábitos
       case AccionDeNotificacion.hecho || AccionDeNotificacion.omitir:
         if (sensible) return; // nunca se escribe lo sensible desde aquí
         await notificador.cancelar(id);

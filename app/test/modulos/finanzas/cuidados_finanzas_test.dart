@@ -7,7 +7,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:gravity/modulos/finanzas/casos_uso/gasto_cuidado.dart';
 import 'package:gravity/modulos/finanzas/datos/demostracion.dart';
 import 'package:gravity/modulos/finanzas/datos/repositorio.dart'
-    show ErrorFinanzas;
+    show ErrorFinanzas, RepositorioFinanzas;
+import 'package:gravity/modulos/finanzas/datos/repositorio_memoria.dart';
 import 'package:gravity/modulos/finanzas/pantallas/cuidados/resumen_mensual_cuidado.dart';
 
 import '../../diseno/ayuda_pruebas.dart';
@@ -163,6 +164,87 @@ void main() {
         () => pasar(g, libro: IdsDemostracion.libroDueno),
         throwsA(isA<ErrorFinanzas>()),
       );
+    });
+  });
+
+  group('confirmarGastoCuidado', () {
+    RepositorioFinanzasEnMemoria repo() => RepositorioFinanzasEnMemoria(
+      datos: hogar(),
+      personaId: dueno,
+      reloj: () => ahoraDePrueba,
+    );
+    GastoCuidado conf(GastoCuidado g) => GastoCuidado(
+      id: g.id,
+      fecha: g.fecha,
+      centavos: g.centavos,
+      registradoPor: g.registradoPor,
+      concepto: g.concepto,
+      esDePapa: g.esDePapa,
+      personaBajoCuidadoId: g.personaBajoCuidadoId,
+      estado: EstadoGastoCuidado.confirmado,
+    );
+    Future<ResultadoConfirmacionGasto> confirmar(
+      GastoCuidado g,
+      RepositorioFinanzas r,
+    ) => confirmarGastoCuidado(
+      g,
+      r,
+      confirmadoPor: dueno,
+      confirmadoEn: ahoraDePrueba,
+    );
+    int enLibro(RepositorioFinanzas r, String libro) => r.actual!.datos
+        .movimientos
+        .where((m) => r.actual!.datos.cuenta(m.cuentaOrigenId)?.libroId == libro)
+        .length;
+
+    test('confirmar agrega exactamente un movimiento', () async {
+      final r = repo();
+      final antes = r.actual!.datos.movimientos.length;
+      expect(
+        await confirmar(conf(gasto()), r),
+        ResultadoConfirmacionGasto.agregado,
+      );
+      final nuevos = r.actual!.datos.movimientos.skip(antes).toList();
+      expect(nuevos, hasLength(1));
+      expect(nuevos.single.monto, 85050);
+    });
+
+    test('confirmar dos veces no duplica', () async {
+      final r = repo();
+      await confirmar(conf(gasto()), r);
+      final n = r.actual!.datos.movimientos.length;
+      expect(
+        await confirmar(conf(gasto()), r),
+        ResultadoConfirmacionGasto.yaRegistrado,
+      );
+      expect(r.actual!.datos.movimientos, hasLength(n));
+    });
+
+    test('un gasto no confirmado no pasa', () async {
+      final r = repo();
+      final n = r.actual!.datos.movimientos.length;
+      for (final e in [
+        EstadoGastoCuidado.pendienteConfirmacion,
+        EstadoGastoCuidado.rechazado,
+      ]) {
+        expect(
+          await confirmar(gasto(estado: e), r),
+          ResultadoConfirmacionGasto.noConfirmado,
+        );
+      }
+      expect(r.actual!.datos.movimientos, hasLength(n));
+    });
+
+    test('gasto de Papá y de la casa van a sus libros', () async {
+      final r = repo();
+      final p0 = enLibro(r, libroPapa);
+      final c0 = enLibro(r, libroCasa);
+      await confirmar(conf(gasto(id: 'p')), r);
+      expect(enLibro(r, libroPapa), p0 + 1);
+      expect(enLibro(r, libroCasa), c0);
+      await confirmar(conf(gasto(id: 'c', esDePapa: false)), r);
+      expect(enLibro(r, libroPapa), p0 + 1);
+      expect(enLibro(r, libroCasa), c0 + 1);
     });
   });
 

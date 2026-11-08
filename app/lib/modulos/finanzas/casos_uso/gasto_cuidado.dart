@@ -22,7 +22,8 @@ library;
 import 'package:finanzas_dominio/finanzas_dominio.dart';
 
 import '../datos/ids.dart';
-import '../datos/repositorio.dart' show ErrorFinanzas;
+import '../datos/repositorio.dart'
+    show ErrorFinanzas, RepositorioFinanzas, ResultadoEscritura;
 import 'sugerencias.dart' show cuentasParaPagar;
 
 /// Estados de `cui_gastos` que importan aquí.
@@ -184,5 +185,116 @@ Movimiento gastoDeCuidadoAFinanzas(
         : (concepto.length > 200 ? concepto.substring(0, 200) : concepto),
     motivo: motivo,
     enNombreDe: enNombreDe,
+  );
+}
+
+/// Qué pasó al confirmar un gasto de cuidado en Finanzas.
+enum ResultadoConfirmacionGasto {
+  /// El gasto no está confirmado en Cuidados: no se agregó nada.
+  noConfirmado,
+
+  /// Ya estaba en el libro (reintento): no se duplicó.
+  yaRegistrado,
+
+  /// Se agregó al libro y ya está guardado.
+  agregado,
+
+  /// Se agregó y quedó en la cola sin conexión (sube al volver la señal).
+  enCola,
+}
+
+/// Nombre del libro compartido de la casa que se busca por omisión.
+const nombreLibroCasa = 'Gastos de la casa';
+
+/// Punto único para Cuidados: pasa a Finanzas el gasto [gasto] que el dueño
+/// acaba de **confirmar** (`cui_confirmar_gasto`).
+///
+/// - Solo actúa si [gasto] llega como `confirmado` (lo que dice el repositorio
+///   de Cuidados); en otro estado no agrega nada.
+/// - Gasto de Papá: al libro representado cuyo titular es la persona bajo
+///   cuidado. Gasto de la casa: a [libroCompartidoId] o, si falta, al libro
+///   compartido "Gastos de la casa" (o al único compartido del que
+///   [confirmadoPor] es miembro).
+/// - Idempotente: el id del movimiento sale del id del gasto; si ya está en el
+///   libro no se vuelve a agregar.
+///
+/// Lanza [ErrorFinanzas] si no hay libro, cuenta o permiso (ver
+/// [gastoDeCuidadoAFinanzas]).
+Future<ResultadoConfirmacionGasto> confirmarGastoCuidado(
+  GastoCuidado gasto,
+  RepositorioFinanzas repositorio, {
+  required String confirmadoPor,
+  DateTime? confirmadoEn,
+  String? libroCompartidoId,
+  String? cuentaOrigenId,
+}) async {
+  if (gasto.estado != EstadoGastoCuidado.confirmado) {
+    return ResultadoConfirmacionGasto.noConfirmado;
+  }
+  final datos = (repositorio.actual ?? await repositorio.cargar()).datos;
+
+  final id = idEstable(ClavesId.gastoCuidado(gasto.id));
+  if (datos.movimientos.any((m) => m.id == id)) {
+    return ResultadoConfirmacionGasto.yaRegistrado;
+  }
+
+  final String libroId;
+  if (gasto.esDePapa) {
+    final papa = gasto.personaBajoCuidadoId;
+    final libro = datos.libros
+        .where(
+          (l) =>
+              l.tipo == TipoLibro.representado &&
+              !l.archivado &&
+              papa != null &&
+              l.titularId == papa,
+        )
+        .firstOrNull;
+    if (libro == null) {
+      throw const ErrorFinanzas('No encuentro el libro de Papá.');
+    }
+    libroId = libro.id;
+  } else {
+    libroId = libroCompartidoId ?? _libroDeLaCasa(datos, confirmadoPor);
+  }
+
+  final ahora = confirmadoEn ?? DateTime.now();
+  // Cuidados ya lo confirmó; la función pura espera el gasto "por confirmar".
+  final movimiento = gastoDeCuidadoAFinanzas(
+    GastoCuidado(
+      id: gasto.id,
+      fecha: gasto.fecha,
+      centavos: gasto.centavos,
+      registradoPor: gasto.registradoPor,
+      concepto: gasto.concepto,
+      esDePapa: gasto.esDePapa,
+      personaBajoCuidadoId: gasto.personaBajoCuidadoId,
+    ),
+    datos: datos,
+    libroId: libroId,
+    confirmadoPor: confirmadoPor,
+    confirmadoEn: ahora,
+    cuentaOrigenId: cuentaOrigenId,
+  );
+  final r = await repositorio.agregarMovimientos([movimiento]);
+  return r == ResultadoEscritura.enCola
+      ? ResultadoConfirmacionGasto.enCola
+      : ResultadoConfirmacionGasto.agregado;
+}
+
+String _libroDeLaCasa(DatosFinanzas datos, String confirmadoPor) {
+  final compartidos = datos.libros
+      .where((l) => l.tipo == TipoLibro.compartido && !l.archivado)
+      .toList();
+  final porNombre = compartidos.where(
+    (l) => normalizarNombre(l.nombre) == normalizarNombre(nombreLibroCasa),
+  );
+  if (porNombre.length == 1) return porNombre.first.id;
+  final suyos = compartidos
+      .where((l) => l.miembros.any((m) => m.personaId == confirmadoPor))
+      .toList();
+  if (suyos.length == 1) return suyos.first.id;
+  throw const ErrorFinanzas(
+    'No sé a qué libro compartido va el gasto de la casa: elige uno.',
   );
 }
