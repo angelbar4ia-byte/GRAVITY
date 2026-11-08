@@ -72,7 +72,7 @@ final class RegistroHerramientas {
             h.nombre,
             'roles',
             'La matriz de permisos no deja al rol ${rol.name} '
-                '${_queNecesita(h)} ${nombreModulo(h.modulo)} (D5, D18)',
+                '${_queNecesita(h)} ${nombreModulo(h.moduloDePermiso)} (D5, D18)',
           );
         }
       }
@@ -137,7 +137,7 @@ final class RegistroHerramientas {
     }
     return puedeSobre(
       rol,
-      h.modulo,
+      h.moduloDePermiso,
       h.accion,
       esDeLaPersona: h.pertenencia == Pertenencia.propia,
       esMaestra: maestra,

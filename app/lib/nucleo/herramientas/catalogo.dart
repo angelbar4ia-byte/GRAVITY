@@ -6,6 +6,7 @@
 /// de solo local para Finanzas y Cuidados (D3).
 library;
 
+import 'alimentacion_voz.dart';
 import 'herramienta.dart';
 import 'navegacion.dart';
 import 'registro_herramientas.dart';
@@ -23,7 +24,7 @@ List<Herramienta> herramientasFase1() => [...navegacionFase1];
 List<Herramienta> herramientasFase3() => [...navegacionFase3];
 
 /// Todas las herramientas vigentes, en el orden en que se sugieren.
-List<Herramienta> herramientasDeGravity() => [...herramientasNavegacion];
+List<Herramienta> herramientasDeGravity() => [...herramientasNavegacion, ...herramientasVozAlimentacion];
 
 /// Registro con las herramientas de la Fase 0.
 RegistroHerramientas registroFase0() =>

@@ -223,7 +223,9 @@ class _SeccionMiembrosState extends ConsumerState<SeccionMiembros> {
                         key: ValueKey('miembro-${m.personaId}'),
                         contentPadding: EdgeInsets.zero,
                         leading: const Icon(Icons.person_outline),
-                        title: Text(m.nombre + (m.personaId == yo ? ' (tú)' : '')),
+                        title: Text(
+                          m.nombre + (m.personaId == yo ? ' (tú)' : ''),
+                        ),
                         subtitle: Text(
                           m.esMaestra
                               ? '${nombreRol(m.rol)} · cuenta maestra'

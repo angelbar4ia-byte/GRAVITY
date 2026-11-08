@@ -36,8 +36,8 @@ void main() {
     }
   });
 
-  test('solo Finanzas, Hábitos y Cuidados; nunca lo reservado de Hábitos', () {
-    const permitidos = {'finanzas', 'habitos', 'cuidados'};
+  test('Finanzas, Hábitos, Cuidados y la voz de Alimentación; nunca lo reservado de Hábitos', () {
+    const permitidos = {'finanzas', 'habitos', 'cuidados', 'alimentacion'};
     const reservadas = {
       'habitos.sos',
       'habitos.abrir_espiritual',

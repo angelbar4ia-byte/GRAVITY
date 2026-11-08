@@ -7,6 +7,7 @@ import '../../../app/sesion_efectiva.dart';
 import '../../../app/sesion_real.dart';
 import '../../../diseno/proveedores.dart' show relojProvider;
 import '../../../nucleo/contratos/roles.dart';
+import '../casos_uso/lectura_voz.dart';
 import '../casos_uso/servicio_alimentacion.dart';
 import '../datos/modelos.dart';
 import '../datos/repositorio.dart';
@@ -93,3 +94,27 @@ final listaComprasProvider = FutureProvider.family<List<ItemCompra>, MenuId>((
       .watch(servicioAlimentacionProvider)
       .listaCompras(m, ref.watch(semanaAlimentacionProvider));
 });
+
+/// Dónde va la receta que se cocina (memoria de la sesión, nada se guarda).
+final cocinaPasoAPasoProvider = Provider<CocinaPasoAPaso>(
+  (ref) => CocinaPasoAPaso(),
+);
+
+/// Contenido de las cinco herramientas de voz de Alimentación para
+/// `ContextoHerramienta.consultaLocal` (puente de Casa, D6). `null` si no es
+/// una de ellas o si falla la lectura.
+final consultaLocalAlimentacionProvider =
+    Provider<Future<String?> Function(String herramienta)>((ref) {
+      final lectura = LecturaVozAlimentacion(
+        ref.watch(repositorioAlimentacionProvider),
+        ref.watch(cocinaPasoAPasoProvider),
+        ahora: ref.read(relojProvider).ahora,
+      );
+      return (String herramienta) async {
+        try {
+          return await lectura.responder(herramienta);
+        } catch (_) {
+          return null;
+        }
+      };
+    });

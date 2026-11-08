@@ -1,4 +1,5 @@
-/// Interfaz de ejecución de la laptop (D8). Hoy no se conecta a nada real.
+/// Interfaz de ejecución de la laptop (D8). La implementación real de Windows
+/// está en `ejecutor_windows.dart`.
 library;
 
 import 'acciones.dart';
@@ -24,14 +25,5 @@ class EjecutorLaptopFalso implements EjecutorLaptop {
   Future<ResultadoEjecucion> ejecutar(Accion accion) async {
     ejecutadas.add(accion);
     return ResultadoEjecucion(exito: !fallar, resumen: fallar ? 'falló' : 'ok');
-  }
-}
-
-/// MARCADOR de la implementación real de Windows. No se implementa aquí:
-/// queda para cuando se conecte y se pruebe en la laptop. No ejecuta nada.
-class EjecutorLaptopWindows implements EjecutorLaptop {
-  @override
-  Future<ResultadoEjecucion> ejecutar(Accion accion) {
-    throw UnimplementedError('Pendiente: conectar y probar en la laptop.');
   }
 }

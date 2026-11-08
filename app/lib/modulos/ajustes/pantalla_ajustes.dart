@@ -18,6 +18,7 @@ import '../../nucleo/tablet/controlador_tablet.dart';
 import 'apariencia/pantalla_apariencia.dart';
 import 'copias/pantalla_copias.dart';
 import 'dispositivos/pantalla_dispositivos.dart';
+import 'google/tarjeta_google.dart';
 import 'habitos/pantalla_habitos_ajustes.dart';
 import 'notificaciones/pantalla_notificaciones.dart';
 import 'personas/pantalla_personas.dart';
@@ -86,6 +87,7 @@ class PantallaAjustes extends ConsumerWidget {
               minTileHeight: 64,
               onTap: () => context.go(rutaSeccion(seccion)),
             ),
+          SeccionGoogleAjustes(rol: sesion.rol, esMaestra: sesion.esMaestra),
           const Divider(),
           if (esTablet) ...[
             ListTile(

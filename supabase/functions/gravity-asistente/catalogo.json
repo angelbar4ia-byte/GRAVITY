@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "nota": "Herramientas que el modelo puede elegir. Espejo de app/lib/nucleo/herramientas (solo Finanzas, Hábitos y Cuidados, D3). Una prueba de la app (app/test/modulos/gravity/conversacion/catalogo_servidor_test.dart) falla si deja de coincidir con el registro. Las descripciones son genéricas: sin cifras, sin datos de salud. El resultado de una herramienta nunca vuelve al modelo: se ejecuta y se muestra en el dispositivo.",
+  "nota": "Herramientas que el modelo puede elegir. Espejo de app/lib/nucleo/herramientas (Finanzas, Hábitos y Cuidados, D3, y las cinco de voz de Alimentación, solo lectura). Una prueba de la app (app/test/modulos/gravity/conversacion/catalogo_servidor_test.dart) falla si deja de coincidir con el registro. Las descripciones son genéricas: sin cifras, sin datos de salud. El resultado de una herramienta nunca vuelve al modelo: se ejecuta y se muestra en el dispositivo.",
   "herramientas": [
     {
       "nombre": "finanzas.abrir",
@@ -104,6 +104,61 @@
         "casa"
       ],
       "descripcion": "Abre la pantalla de Cuidados."
+    },
+    {
+      "nombre": "alimentacion.receta_siguiente_paso",
+      "modulo": "alimentacion",
+      "roles": [
+        "dueno",
+        "coadministrador",
+        "familiar",
+        "casa"
+      ],
+      "descripcion": "Dice el siguiente paso de la receta que se está cocinando."
+    },
+    {
+      "nombre": "alimentacion.receta_paso_anterior",
+      "modulo": "alimentacion",
+      "roles": [
+        "dueno",
+        "coadministrador",
+        "familiar",
+        "casa"
+      ],
+      "descripcion": "Dice el paso anterior de la receta que se está cocinando."
+    },
+    {
+      "nombre": "alimentacion.receta_repetir_paso",
+      "modulo": "alimentacion",
+      "roles": [
+        "dueno",
+        "coadministrador",
+        "familiar",
+        "casa"
+      ],
+      "descripcion": "Repite el paso actual de la receta que se está cocinando."
+    },
+    {
+      "nombre": "alimentacion.que_cocino_hoy",
+      "modulo": "alimentacion",
+      "roles": [
+        "dueno",
+        "coadministrador",
+        "familiar",
+        "casa"
+      ],
+      "descripcion": "Dice qué platillos tocan hoy en el menú."
+    },
+    {
+      "nombre": "alimentacion.leer_lista_compras",
+      "modulo": "alimentacion",
+      "roles": [
+        "dueno",
+        "coadministrador",
+        "familiar",
+        "casa"
+      ],
+      "descripcion": "Dice qué falta por comprar, sin cantidades ni precios."
     }
   ]
 }

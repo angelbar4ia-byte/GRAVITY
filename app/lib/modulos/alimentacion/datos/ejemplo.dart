@@ -19,6 +19,10 @@ const platillosEjemplo = <Platillo>[
     Ingrediente('Avena', 50, 'g', _ab),
     Ingrediente('Leche', 250, 'ml', _lh),
     Ingrediente('Plátano', 1, 'pza', _fv),
+  ], pasos: [
+    'Calienta la leche en una olla pequeña a fuego bajo.',
+    'Agrega la avena y mueve hasta que espese.',
+    'Sirve en un plato hondo y pon encima el plátano en rodajas.',
   ]),
   Platillo('p-sandwich', 'Sándwich de jamón', [
     Ingrediente('Pan de caja', 2, 'reb', _pt),

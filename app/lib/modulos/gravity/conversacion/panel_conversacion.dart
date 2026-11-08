@@ -26,6 +26,7 @@ import 'acciones_google.dart';
 import 'cliente_google.dart';
 import 'conversacion.dart';
 import 'tarjeta_google.dart';
+import 'voz.dart';
 
 /// Roles que conversan libremente con GRAVITY (D5, spec de la Fase 6).
 const Set<Rol> rolesQueConversan = {
@@ -33,6 +34,10 @@ const Set<Rol> rolesQueConversan = {
   Rol.coadministrador,
   Rol.familiar,
 };
+
+final _vozDisponibleProvider = FutureProvider.autoDispose<bool>(
+  (ref) => ref.watch(vozEntradaProvider).disponible(),
+);
 
 class PanelConversacion extends ConsumerStatefulWidget {
   const PanelConversacion({super.key, this.compacto = false, this.navegar});
@@ -103,6 +108,31 @@ class _PanelConversacionState extends ConsumerState<PanelConversacion> {
     return resultado.contenido;
   }
 
+  bool _escuchando = false;
+
+  /// Escucha una frase y la manda como un mensaje normal (mismo camino y mismo
+  /// filtro de D3 que el texto escrito). La voz no confirma nada (D8).
+  Future<void> _escucharVoz() async {
+    if (_escuchando) {
+      setState(() => _escuchando = false);
+      await ref.read(vozEntradaProvider).detener();
+      return;
+    }
+    setState(() => _escuchando = true);
+    String? texto;
+    try {
+      texto = await ref.read(vozEntradaProvider).escuchar();
+    } catch (_) {
+      texto = null;
+    }
+    if (!mounted) return;
+    setState(() => _escuchando = false);
+    if (texto == null || texto.trim().isEmpty) return;
+    ref
+        .read(conversacionAsistenteProvider.notifier)
+        .enviar(texto, ejecutar: _ejecutar);
+  }
+
   void _enviar() {
     final texto = _control.text;
     if (texto.trim().isEmpty) return;
@@ -121,7 +151,17 @@ class _PanelConversacionState extends ConsumerState<PanelConversacion> {
     final v = ValoresDiseno.de(context);
     final e = v.espacio;
     final estado = ref.watch(conversacionAsistenteProvider);
-    ref.listen(conversacionAsistenteProvider, (_, _) {
+    ref.listen(conversacionAsistenteProvider, (anterior, nuevo) {
+      // Lectura en voz alta: solo si la persona la activó y solo la respuesta
+      // del asistente, nunca los mensajes locales (D3, D6).
+      if (ref.read(leerEnVozAltaProvider) &&
+          nuevo.mensajes.length > (anterior?.mensajes.length ?? 0)) {
+        for (final m in nuevo.mensajes.skip(anterior?.mensajes.length ?? 0)) {
+          if (m.autor == AutorMensaje.asistente) {
+            ref.read(vozSalidaProvider).hablar(m.texto);
+          }
+        }
+      }
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (_desplazamiento.hasClients) {
           _desplazamiento.jumpTo(_desplazamiento.position.maxScrollExtent);
@@ -216,6 +256,15 @@ class _PanelConversacionState extends ConsumerState<PanelConversacion> {
                   ),
                 ),
                 SizedBox(width: e),
+                if (ref.watch(_vozDisponibleProvider).value ?? false) ...[
+                  IconButton.outlined(
+                    key: const ValueKey('boton-microfono'),
+                    tooltip: _escuchando ? 'Dejar de escuchar' : 'Hablar',
+                    onPressed: estado.pensando ? null : _escucharVoz,
+                    icon: Icon(_escuchando ? Icons.mic : Icons.mic_none),
+                  ),
+                  SizedBox(width: e),
+                ],
                 IconButton.filled(
                   key: const ValueKey('boton-enviar-conversacion'),
                   tooltip: 'Enviar',
@@ -224,6 +273,25 @@ class _PanelConversacionState extends ConsumerState<PanelConversacion> {
                 ),
               ],
             ),
+            if (ref.watch(_vozDisponibleProvider).value ?? false)
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Leer las respuestas en voz alta',
+                      style: v.lectura(tamano: 13, color: v.textoTenue),
+                    ),
+                  ),
+                  Switch(
+                    key: const ValueKey('leer-en-voz-alta'),
+                    value: ref.watch(leerEnVozAltaProvider),
+                    onChanged: (activo) {
+                      ref.read(leerEnVozAltaProvider.notifier).fijar(activo);
+                      if (!activo) ref.read(vozSalidaProvider).detener();
+                    },
+                  ),
+                ],
+              ),
             SizedBox(height: e),
             Text(
               'No escribas cifras de dinero ni datos de salud: se ocultan antes '

@@ -575,7 +575,8 @@ class _DialogoFrase extends StatefulWidget {
 }
 
 class _DialogoFraseState extends State<_DialogoFrase> {
-  late final List<int> _posiciones = FraseDeRecuperacion.posicionesDeConfirmacion();
+  late final List<int> _posiciones =
+      FraseDeRecuperacion.posicionesDeConfirmacion();
   late final List<TextEditingController> _respuestas = [
     for (final _ in _posiciones) TextEditingController(),
   ];
@@ -647,7 +648,9 @@ class _DialogoFraseState extends State<_DialogoFrase> {
                   child: Text(
                     _error!,
                     key: const ValueKey('nube-confirma-error'),
-                    style: TextStyle(color: Theme.of(context).colorScheme.error),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
                   ),
                 ),
             ],

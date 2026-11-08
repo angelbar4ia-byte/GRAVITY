@@ -63,6 +63,7 @@ class Platillo {
     this.nombre,
     this.ingredientes, {
     this.duros = const [],
+    this.pasos = const [],
   });
   final String id;
   final String nombre;
@@ -70,6 +71,10 @@ class Platillo {
 
   /// Alimentos duros o crudos del platillo (para advertir en el menú de Papá).
   final List<String> duros;
+
+  /// Pasos de la receta, en orden. Vacío: el platillo no tiene receta escrita.
+  /// Para la bocina conviene redactarlos sin cifras (el filtro las rechaza).
+  final List<String> pasos;
 }
 
 /// Suplemento de un menú: nombre, dosis y horario (texto libre de ejemplo).
