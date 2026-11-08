@@ -24,10 +24,10 @@ final class FraseFija {
   /// Identificador de la escena virtual en el puente (sin acentos).
   final String id;
 
-  /// Lo que se dice: "Hey Google, <texto>".
+  /// Lo que se dice: "Hey Google, texto".
   final String texto;
 
-  /// Herramienta de GRAVITY a ejecutar (formato `<modulo>.<accion>`).
+  /// Herramienta de GRAVITY a ejecutar (formato `modulo.accion`).
   final String herramienta;
 
   /// Roles que pueden usarla.
