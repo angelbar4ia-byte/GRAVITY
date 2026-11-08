@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gravity/modulos/finanzas/datos/demostracion.dart';
+import 'package:gravity/nucleo/avisos/catalogo_avisos.dart';
 import 'package:gravity/modulos/finanzas/datos/fuente_tablas.dart';
 import 'package:gravity/modulos/finanzas/datos/transferencias.dart';
 import 'package:gravity/modulos/finanzas/estado/proveedores_transferencias.dart';
@@ -360,6 +361,18 @@ void main() {
         ),
         throwsA(isA<Exception>()),
       );
+    });
+  });
+
+  group('aviso de transferencia pendiente', () {
+    test('existe, es importante y es discreto (sin dígitos)', () {
+      final t = titulosDeAviso['transferencia_pendiente'];
+      expect(t, isNotNull);
+      expect(severidadDe('transferencia_pendiente'), SeveridadAviso.importante);
+      expect(canalDe('transferencia_pendiente'), CanalAviso.avisos);
+      expect(textoDeAvisoEsDiscreto(t!), isTrue);
+      expect(RegExp(r'[0-9]').hasMatch(t), isFalse);
+      expect(t.length, lessThanOrEqualTo(40));
     });
   });
 }

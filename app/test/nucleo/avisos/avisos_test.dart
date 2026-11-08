@@ -47,7 +47,7 @@ void main() {
 
     test('todo tipo tiene severidad y canal, y la lista es la de la especificación', () {
       expect(titulosDeAviso.keys.toSet(), severidadDeAviso.keys.toSet());
-      expect(titulosDeAviso, hasLength(28));
+      expect(titulosDeAviso, hasLength(29));
       expect(canalDe('compra_papa_albacea'), CanalAviso.avisos);
       expect(canalDe('reposicion_suplemento'), CanalAviso.avisos);
       expect(canalDe('votacion_abierta'), CanalAviso.informativos);
