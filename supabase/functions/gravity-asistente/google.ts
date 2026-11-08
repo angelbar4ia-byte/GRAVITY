@@ -154,7 +154,12 @@ export function armarMime(e: BorradorEntrada): string {
 }
 
 export class ClienteGoogle {
-  constructor(private readonly f: Fetch, private readonly acceso: string) {}
+  private readonly f: Fetch;
+  private readonly acceso: string;
+  constructor(f: Fetch, acceso: string) {
+    this.f = f;
+    this.acceso = acceso;
+  }
 
   private async llamar(url: string, init: { method?: string; body?: unknown } = {}): Promise<any> {
     const r = await this.f(url, {

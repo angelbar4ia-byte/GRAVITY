@@ -4,7 +4,8 @@
 // Reglas:
 //  1. El modelo solo recibe NOMBRES y descripciones genéricas de herramientas, y solo las que el rol
 //     del servidor puede usar y que son de Finanzas, Hábitos o Cuidados (catalogo.json).
-//  2. El resultado de una herramienta NUNCA vuelve al modelo: se ejecuta y se muestra en el dispositivo.
+//  2. El resultado de una herramienta NUNCA vuelve al modelo: se ejecuta y se muestra en el dispositivo. Esto incluye
+//     Gmail y Calendar (herramientas_google.ts): ni cuerpos, ni asuntos, ni cuántos resultados hubo.
 //  3. Lo que la persona escribe se limpia de montos y de medidas de salud antes de enviarse, y el
 //     contexto armado se revisa de nuevo: si aún tiene algo así, no se llama al proveedor.
 
@@ -30,7 +31,7 @@ export interface ContextoIa {
 }
 
 /** Módulos cuyas herramientas puede ver el modelo (D3, spec de la Fase 6). */
-export const MODULOS_PERMITIDOS = new Set(["finanzas", "habitos", "cuidados"]);
+export const MODULOS_PERMITIDOS = new Set(["finanzas", "habitos", "cuidados", "google"]);
 
 /** Roles que conversan libremente con GRAVITY (D5): cuidador y casa, no. */
 export const ROLES_QUE_CONVERSAN = new Set<string>(["dueno", "coadministrador", "familiar"]);

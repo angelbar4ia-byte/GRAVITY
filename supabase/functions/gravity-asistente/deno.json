@@ -1,4 +1,4 @@
 {
-  "tasks": { "probar": "deno test --allow-read asistente_test.ts" },
+  "tasks": { "probar": "deno test --allow-read asistente_test.ts google_test.ts" },
   "compilerOptions": { "strict": true }
 }

@@ -112,31 +112,39 @@ class ConversacionAsistente extends Notifier<EstadoConversacion> {
             sesion: state.sesion,
             historial: recientes,
           );
-      var mensajes = [
-        ...state.mensajes,
-        MensajeConversacion(AutorMensaje.asistente, r.texto),
-      ];
+      state = state.copiar(
+        mensajes: [
+          ...state.mensajes,
+          MensajeConversacion(AutorMensaje.asistente, r.texto),
+        ],
+      );
       final herramienta = r.herramienta;
       if (herramienta != null && ejecutar != null) {
+        // Se parte del estado vigente al terminar: la herramienta puede haber
+        // agregado sus propios mensajes (p. ej. Gmail y Calendar).
         try {
           final local = await ejecutar(herramienta);
           if (local != null && local.isNotEmpty) {
-            mensajes = [
-              ...mensajes,
-              MensajeConversacion(AutorMensaje.local, local),
-            ];
+            state = state.copiar(
+              mensajes: [
+                ...state.mensajes,
+                MensajeConversacion(AutorMensaje.local, local),
+              ],
+            );
           }
         } catch (_) {
-          mensajes = [
-            ...mensajes,
-            const MensajeConversacion(
-              AutorMensaje.error,
-              'No pude hacer eso en este dispositivo.',
-            ),
-          ];
+          state = state.copiar(
+            mensajes: [
+              ...state.mensajes,
+              const MensajeConversacion(
+                AutorMensaje.error,
+                'No pude hacer eso en este dispositivo.',
+              ),
+            ],
+          );
         }
       }
-      state = state.copiar(mensajes: mensajes, pensando: false);
+      state = state.copiar(pensando: false);
     } on ErrorAsistente catch (e) {
       state = state.copiar(
         mensajes: [
@@ -146,6 +154,15 @@ class ConversacionAsistente extends Notifier<EstadoConversacion> {
         pensando: false,
       );
     }
+  }
+
+  /// Agrega un mensaje solo de pantalla (resultado de una herramienta, aviso).
+  /// Nunca viaja al servidor como contexto (D3): ver [enviar].
+  void agregar(AutorMensaje autor, String texto) {
+    if (texto.isEmpty) return;
+    state = state.copiar(
+      mensajes: [...state.mensajes, MensajeConversacion(autor, texto)],
+    );
   }
 
   void limpiar() => state = EstadoConversacion(sesion: nuevoUuid());

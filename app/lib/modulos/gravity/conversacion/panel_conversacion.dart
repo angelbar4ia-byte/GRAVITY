@@ -22,7 +22,10 @@ import '../../../app/sesion_efectiva.dart';
 import '../../../diseno/diseno.dart';
 import '../../../nucleo/contratos/roles.dart';
 import '../../../nucleo/herramientas/herramientas.dart';
+import 'acciones_google.dart';
+import 'cliente_google.dart';
 import 'conversacion.dart';
+import 'tarjeta_google.dart';
 
 /// Roles que conversan libremente con GRAVITY (D5, spec de la Fase 6).
 const Set<Rol> rolesQueConversan = {
@@ -68,6 +71,12 @@ class _PanelConversacionState extends ConsumerState<PanelConversacion> {
   }
 
   Future<String?> _ejecutar(String herramienta) async {
+    // Gmail y Calendar corren en el servidor con la cuenta de la persona; el
+    // resultado se muestra aquí y nunca vuelve al asistente (D3).
+    if (esHerramientaGoogle(herramienta)) {
+      await ref.read(accionesGoogleProvider.notifier).iniciar(herramienta);
+      return null;
+    }
     final rol = ref.read(rolEfectivoProvider);
     if (rol == null) return null;
     final resultado = await _registro.ejecutar(
@@ -133,7 +142,8 @@ class _PanelConversacionState extends ConsumerState<PanelConversacion> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (estado.mensajes.isNotEmpty) ...[
+            if (estado.mensajes.isNotEmpty &&
+                ref.watch(accionesGoogleProvider) == null) ...[
               ConstrainedBox(
                 constraints: BoxConstraints(
                   maxHeight: widget.compacto ? 200 : 260,
@@ -150,6 +160,24 @@ class _PanelConversacionState extends ConsumerState<PanelConversacion> {
                       key: ValueKey('mensaje-conversacion-$i'),
                       mensaje: estado.mensajes[i],
                     ),
+                  ),
+                ),
+              ),
+              SizedBox(height: e * 1.5),
+            ],
+            if (ref.watch(accionesGoogleProvider) case final accion?) ...[
+              // Acotada y con desplazamiento: en la pantalla de la laptop el
+              // panel comparte la columna con el núcleo y no debe desbordar.
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: widget.compacto ? 520 : 300,
+                ),
+                child: SingleChildScrollView(
+                  child: TarjetaGoogle(
+                    key: ValueKey(
+                      'google-${accion.herramienta}-${accion.fase.name}',
+                    ),
+                    accion: accion,
                   ),
                 ),
               ),

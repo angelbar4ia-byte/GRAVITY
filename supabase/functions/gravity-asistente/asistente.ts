@@ -2,6 +2,7 @@
 // Dependencias, así se prueba con un proveedor falso (asistente_test.ts).
 import { armarContexto, ContextoSensibleError, type HerramientaCatalogo, ROLES_QUE_CONVERSAN, type Turno } from "./contexto.ts";
 import type { ProveedorIa } from "./proveedores.ts";
+import { atenderGoogle, CATALOGO_GOOGLE, esAccionGoogle, type DepsGoogle, type PeticionGoogle } from "./herramientas_google.ts";
 
 export interface Identidad {
   personaId: string;
@@ -18,7 +19,17 @@ export interface FilaBitacora {
   detalle: { sesion: string; proveedor: string; herramienta: string | null; resultado: string };
 }
 
+/** Fila de bitácora de las herramientas de Google: sin asuntos, cuerpos ni títulos. */
+export interface FilaBitacoraGoogle {
+  hogar_id: string;
+  persona_id: string;
+  accion: "gravity.google";
+  detalle: { sesion: string | null; herramienta: string; ambito: string; resultado: string };
+}
+
 export interface Dependencias {
+  /** Gmail y Calendar (Fase 6, parte 2). Ausente = no se ofrecen. */
+  google?: DepsGoogle;
   catalogo: HerramientaCatalogo[];
   /** Proveedor elegido (GRAVITY_IA_PROVEEDOR); null si el nombre no existe. */
   proveedor: ProveedorIa | null;
@@ -31,7 +42,7 @@ export interface Dependencias {
   bitacora: (fila: FilaBitacora) => Promise<void>;
 }
 
-export interface Peticion {
+export interface Peticion extends PeticionGoogle {
   mensaje?: unknown;
   sesion?: unknown;
   historial?: unknown;
@@ -63,6 +74,14 @@ function turnos(valor: unknown): Turno[] {
 }
 
 export async function responder(p: Peticion, d: Dependencias): Promise<Resultado> {
+  // Ejecutar una herramienta de Google (o conectar la cuenta): lo pide la app, nunca el modelo. El resultado va a la
+  // app y no pasa por el proveedor de IA.
+  if (esAccionGoogle(p)) {
+    if (!d.google) return error(503, "google_sin_configurar", "Google aún no está configurado en el servidor.");
+    const quien = await d.identidad();
+    if (!quien) return error(401, "no_autorizado", "Inicia sesión para usar Google.");
+    return atenderGoogle(p, quien, d.google);
+  }
   const mensaje = typeof p.mensaje === "string" ? p.mensaje.trim() : "";
   if (!mensaje) return error(400, "mensaje_vacio", "Escribe un mensaje.");
   if (mensaje.length > MAX_MENSAJE) return error(400, "mensaje_largo", `El mensaje pasa de ${MAX_MENSAJE} caracteres.`);
@@ -85,7 +104,7 @@ export async function responder(p: Peticion, d: Dependencias): Promise<Resultado
 
   let contexto;
   try {
-    contexto = armarContexto({ catalogo: d.catalogo, rol: yo.rol, mensaje, historial: turnos(p.historial) });
+    contexto = armarContexto({ catalogo: d.google ? [...d.catalogo, ...CATALOGO_GOOGLE] : d.catalogo, rol: yo.rol, mensaje, historial: turnos(p.historial) });
   } catch (e) {
     if (e instanceof ContextoSensibleError) return error(500, "contexto_sensible", "No se pudo preparar la consulta.");
     throw e;

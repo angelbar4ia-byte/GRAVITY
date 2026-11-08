@@ -44,10 +44,64 @@ falla si dejan de coincidir.
 Una fila por mensaje: quién (`persona_id`), cuándo (`registrado_en`) y en `detalle`:
 `{sesion, proveedor, herramienta, resultado}`. Nunca el texto de la conversación.
 
+## Gmail y Google Calendar (Fase 6, parte 2) — preparado, sin conectar
+
+Herramientas (`herramientas_google.ts`, adaptador en `google.ts`, cifrado en `cifrado.ts`):
+
+| Herramienta | Qué hace | Roles | Confirmación |
+|---|---|---|---|
+| `gmail.leer` | Lista los correos recientes de la bandeja | dueño, coadministrador, familiar | no (solo lee) |
+| `gmail.redactar` | Crea un **borrador** en el Gmail de la persona | ídem | el envío (`gmail.enviar`, interna) exige `confirmado: true` |
+| `calendario.ver` | Próximos eventos (1 a 14 días) | ídem y **Casa** (solo la cuenta de la casa) | no |
+| `calendario.crear` | Crea un evento | dueño, coadministrador, familiar | sin `confirmado: true` solo devuelve la vista previa y no llama a Google |
+
+Cuidadora: ninguna. Casa: solo `calendario.ver` de la **cuenta de la casa** y solo si el dueño lo aprobó
+(`google_acceso_casa`); nunca Gmail. "Hermana" es un familiar (D5).
+
+**Cómo se llaman.** El modelo solo elige el *nombre* (catálogo genérico, módulo `google`). La app lo ejecuta con
+`{accion: "herramienta", herramienta, parametros, confirmado, sesion}`; los parámetros los captura la persona en
+un formulario, no el modelo. La cuenta usada sale de la identidad que el servidor lee de la base, nunca de un id
+que mande la app: cada persona solo toca su correo. Conectar: `{accion: "google_url", ambito}` devuelve la URL de
+Google y `{accion: "google_codigo", codigo, estado}` guarda la cuenta (el `estado` va firmado, caduca a los 10
+minutos y liga el código a esa persona). La cuenta de la casa la conecta solo el dueño y pide solo
+`calendar.events.readonly`.
+
+**D3 — decisión: el contenido de Google NO vuelve al modelo.** Ni cuerpos, ni asuntos, ni cuántos resultados hubo.
+El servidor devuelve el resultado solo a la app (campo `local`), que lo muestra en pantalla; no entra al historial
+que viaja al servidor, ni a la bitácora. Se eligió esta opción (y no pasar el contenido por el filtro de
+`contexto.ts`) porque un filtro de expresiones regulares puede fallar con un correo (montos, medicamentos, datos de
+Cuidados en texto libre) y aquí no hay camino que pueda fallar. Si algún día el asistente debe "resumir" correos,
+será una decisión nueva (propuesta al dueño) y pasaría por `redactar`/`verificarContextoLimpio`.
+
+**Tokens.** Solo se guarda el token de renovación, cifrado con AES-256-GCM (`GOOGLE_TOKEN_KEY`) y ligado a la
+persona (AAD = `persona:ámbito`) en `public.google_cuentas` (migración `20261125000000`). RLS: cada persona ve
+solo su fila; ni ella lee `token_cifrado` desde la app; escribe solo el servidor. Bitácora (`gravity.google`): quién,
+cuándo, herramienta y resultado; nunca asuntos, destinatarios ni cuerpos.
+
+**Secretos del servidor** (sin valores en el repositorio):
+
+```
+supabase secrets set GOOGLE_CLIENT_ID=<id del cliente OAuth>
+supabase secrets set GOOGLE_CLIENT_SECRET=<secreto del cliente OAuth>
+supabase secrets set GOOGLE_REDIRECT_URI=<URI de redirección registrada en Google Cloud>
+supabase secrets set GOOGLE_TOKEN_KEY=$(openssl rand -base64 32)
+```
+Sin ellos la función responde `503 google_sin_configurar` / `google_sin_clave`. Sin cuenta conectada: `409
+sin_cuenta_google` ("Falta conectar tu cuenta de Google."). Cuenta revocada: `409 cuenta_google_caducada`.
+
+**Pasos de Google Cloud (los hace el dueño):** (1) crear un proyecto; (2) habilitar *Gmail API* y *Google Calendar
+API*; (3) pantalla de consentimiento OAuth: tipo *Externo*, en modo *Pruebas*, agregando como usuarios de prueba
+los correos de la familia y el de la casa (en Pruebas el token de renovación caduca a los 7 días; para uso
+continuo hay que publicar la app y, por usar el alcance restringido `gmail.readonly`, pasar la verificación de
+Google — decisión pendiente); (4) alcances: `gmail.readonly`, `gmail.compose`, `calendar.events`,
+`calendar.events.readonly`, `userinfo.email`; (5) credenciales: ID de cliente OAuth tipo *Aplicación web* con la
+URI de redirección elegida; (6) guardar los cuatro secretos de arriba. Falta decidir la URI de redirección y el
+botón "Conectar" de la app (no se conectó nada todavía).
+
 ## Pruebas (sin red)
 
 ```
-node --experimental-strip-types --test supabase/functions/gravity-asistente/asistente_test.ts
+node --experimental-strip-types --test supabase/functions/gravity-asistente/*_test.ts
 # o, con Deno:  cd supabase/functions/gravity-asistente && deno task probar
 ```
 
