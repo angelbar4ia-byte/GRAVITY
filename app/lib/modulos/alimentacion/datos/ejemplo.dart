@@ -157,3 +157,29 @@ List<EntradaMenu> menuEjemplo(MenuId menu) {
         EntradaMenu(dia: d, tiempo: t, platilloId: ids[d][t.index]),
   ];
 }
+
+/// Precios base **supuestos** (inventados, sin relevancia): arrancan marcados
+/// como base y se muestran "estimado". Algunos ingredientes quedan sin precio
+/// a propósito: sin precio no se calcula costo.
+List<PrecioIngrediente> preciosBaseEjemplo() {
+  PrecioIngrediente b(String n, String u, int centavos, [double por = 1]) =>
+      PrecioIngrediente(
+        clave: claveCompra(n, u),
+        centavos: centavos,
+        porCantidad: por,
+        esBase: true,
+      );
+  return [
+    b('Huevo', 'pza', 300),
+    b('Tortilla', 'pza', 100),
+    b('Avena', 'g', 3000, 1000),
+    b('Leche', 'ml', 2800, 1000),
+    b('Plátano', 'pza', 300),
+    b('Jitomate', 'pza', 400),
+    b('Zanahoria', 'pza', 250),
+    b('Calabacita', 'pza', 500),
+    b('Arroz', 'g', 2800, 1000),
+    b('Pechuga de pollo', 'g', 12000, 1000),
+    b('Pasta', 'g', 2500, 1000),
+  ];
+}

@@ -8,6 +8,7 @@ import '../../../app/sesion_real.dart';
 import '../../../diseno/proveedores.dart' show relojProvider;
 import '../../../nucleo/contratos/roles.dart';
 import '../casos_uso/lectura_voz.dart';
+import '../casos_uso/plan_familiar.dart';
 import '../casos_uso/servicio_alimentacion.dart';
 import '../datos/modelos.dart';
 import '../datos/repositorio.dart';
@@ -44,6 +45,39 @@ final servicioAlimentacionProvider = Provider<ServicioAlimentacion>((ref) {
     rol: s?.rol ?? Rol.casa,
     esMaestra: s?.esMaestra ?? false,
   );
+});
+
+final servicioPlanFamiliarProvider = Provider<ServicioPlanFamiliar>((ref) {
+  final s = ref.watch(sesionEfectivaProvider);
+  return ServicioPlanFamiliar(
+    ref.watch(repositorioAlimentacionProvider),
+    rol: s?.rol ?? Rol.casa,
+    esMaestra: s?.esMaestra ?? false,
+    personaId: s?.persona.id ?? '',
+    personaNombre: s?.persona.nombre ?? '',
+    ahora: ref.read(relojProvider).ahora,
+  );
+});
+
+/// Día del plan familiar que se está viendo.
+final diaPlanProvider = StateProvider<DateTime>((ref) {
+  final h = ref.read(relojProvider).ahora();
+  return DateTime(h.year, h.month, h.day);
+});
+
+final votacionPlanProvider = FutureProvider<VotacionPlan?>((ref) {
+  ref.watch(versionAlimentacionProvider);
+  return ref
+      .watch(servicioPlanFamiliarProvider)
+      .votacion(ref.watch(diaPlanProvider));
+});
+
+/// Menú del día de Papá para la cuenta Casa (D28): solo nombres de platillos.
+final menuDelDiaPapaProvider = FutureProvider<List<ComidaDelDia>>((ref) {
+  ref.watch(versionAlimentacionProvider);
+  return ref
+      .watch(servicioAlimentacionProvider)
+      .menuDelDiaPapa(ref.read(relojProvider).ahora());
 });
 
 /// Lunes de la semana que se está viendo.

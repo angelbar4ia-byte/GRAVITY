@@ -2,6 +2,9 @@
 /// de salud: solo qué se come y qué hay que comprar.
 library;
 
+import 'precios.dart';
+export 'precios.dart';
+
 enum TiempoComida {
   desayuno('Desayuno'),
   comida('Comida'),
@@ -64,6 +67,7 @@ class Platillo {
     this.ingredientes, {
     this.duros = const [],
     this.pasos = const [],
+    this.porciones = 1,
   });
   final String id;
   final String nombre;
@@ -75,6 +79,9 @@ class Platillo {
   /// Pasos de la receta, en orden. Vacío: el platillo no tiene receta escrita.
   /// Para la bocina conviene redactarlos sin cifras (el filtro las rechaza).
   final List<String> pasos;
+
+  /// Para cuántas porciones rinden los ingredientes.
+  final int porciones;
 }
 
 /// Suplemento de un menú: nombre, dosis y horario (texto libre de ejemplo).
@@ -111,12 +118,22 @@ class ItemCompra {
     required this.unidad,
     required this.seccion,
     required this.comprado,
+    this.precio,
   });
   final String nombre;
   final double cantidad;
   final String unidad;
   final SeccionCompra seccion;
   final bool comprado;
+
+  /// Precio del ingrediente (base o real) si se conoce; sin él no hay costo.
+  final PrecioIngrediente? precio;
+
+  /// Costo en centavos de esta cantidad, o `null` si no hay precio.
+  int? get costoCentavos => precio?.costoDe(cantidad);
+
+  /// `true` si el costo sale de un precio base supuesto (se muestra "estimado").
+  bool get costoEstimado => precio?.esBase ?? false;
 
   /// Clave estable para guardar la marca de comprado.
   String get clave => claveCompra(nombre, unidad);

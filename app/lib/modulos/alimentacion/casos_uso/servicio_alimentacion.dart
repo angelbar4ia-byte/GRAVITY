@@ -5,6 +5,7 @@ import '../../../nucleo/contratos/roles.dart';
 import '../datos/modelos.dart';
 import '../datos/perfiles.dart';
 import '../datos/repositorio.dart';
+import 'importar_recetas.dart';
 import 'lista_compras.dart';
 
 class PermisoDenegado implements Exception {
@@ -39,6 +40,14 @@ bool puedeVerMenu(Rol rol, MenuId menu, {bool esMaestra = false}) {
 bool puedeVerCompras(Rol rol, MenuId menu, {bool esMaestra = false}) =>
     puedeVerMenu(rol, menu, esMaestra: esMaestra) &&
     !(rol == Rol.familiar && !esMaestra);
+
+/// Una comida del día de Papá para la cuenta Casa (D28): solo el nombre del
+/// platillo. Sin perfil clínico, sin suplementos, sin alimentos duros.
+class ComidaDelDia {
+  const ComidaDelDia(this.tiempo, this.platillo);
+  final TiempoComida tiempo;
+  final String platillo;
+}
 
 class ServicioAlimentacion {
   ServicioAlimentacion(this._repo, {required this.rol, this.esMaestra = false});
@@ -114,7 +123,59 @@ class ServicioAlimentacion {
       menu: await _repo.menu(m, lunes),
       platillos: await _repo.platillos(),
       comprados: await _repo.comprados(m, lunes),
+      precios: await _repo.precios(),
     );
+  }
+
+  /// Guarda las recetas de una importación ya validada y revisada (dueño y
+  /// pareja). Reemplaza por id las que ya existían.
+  Future<int> importarRecetas(ResultadoImportacion r) async {
+    _exigirEdicion();
+    if (!r.valido) throw ArgumentError('La importación tiene errores.');
+    await _repo.guardarPlatillos([for (final x in r.recetas) x.platillo]);
+    return r.recetas.length;
+  }
+
+  /// Registra una compra real con precio: el precio pagado reemplaza al base
+  /// (o al de la compra anterior) y el renglón queda comprado.
+  Future<void> registrarCompra(
+    MenuId m,
+    DateTime semana,
+    String clave, {
+    required double cantidadComprada,
+    required int totalCentavos,
+  }) async {
+    _exigirEdicion();
+    if (!puedeVerCompras(rol, m, esMaestra: esMaestra)) {
+      throw const PermisoDenegado();
+    }
+    await _repo.guardarPrecio(
+      precioDeCompra(
+        clave: clave,
+        totalCentavos: totalCentavos,
+        cantidadComprada: cantidadComprada,
+      ),
+    );
+    await _repo.marcar(m, lunesDe(semana), clave, true);
+  }
+
+  /// Menú del día de Papá. Lo ve quien ve el menú de Papá y la cuenta Casa
+  /// (D28), y solo con los nombres de los platillos del día.
+  Future<List<ComidaDelDia>> menuDelDiaPapa(DateTime hoy) async {
+    final puede =
+        rol == Rol.casa || puedeVerMenu(rol, MenuId.papa, esMaestra: esMaestra);
+    if (!puede) throw const PermisoDenegado();
+    final dia = hoy.weekday - DateTime.monday;
+    final entradas = (await _repo.menu(MenuId.papa, lunesDe(hoy)))
+        .where((e) => e.dia == dia)
+        .toList()
+      ..sort((a, b) => a.tiempo.index.compareTo(b.tiempo.index));
+    final nombres = {for (final p in await _repo.platillos()) p.id: p.nombre};
+    return [
+      for (final e in entradas)
+        if (nombres[e.platilloId] != null)
+          ComidaDelDia(e.tiempo, nombres[e.platilloId]!),
+    ];
   }
 
   Future<void> marcar(

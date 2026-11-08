@@ -1,4 +1,5 @@
-/// Lista de compras de la semana, agrupada por sección. Sin precios.
+/// Lista de compras de la semana por pasillo, para usarla en el súper (el
+/// teléfono). Los precios base se rotulan "estimado"; sin precio no hay costo.
 library;
 
 import 'package:flutter/material.dart';
@@ -70,6 +71,83 @@ class PantallaListaCompras extends ConsumerWidget {
   }
 }
 
+String _textoPrecio(ItemCompra i) {
+  final c = i.costoCentavos;
+  if (c == null) return 'Sin precio';
+  return costoTexto(c, estimado: i.costoEstimado);
+}
+
+/// "12.50" o "12" -> centavos; `null` si no es un monto válido y positivo.
+int? centavosDeTexto(String t) {
+  final m = RegExp(r'^\s*\$?\s*(\d{1,7})(?:[.,](\d{1,2}))?\s*$').firstMatch(t);
+  if (m == null) return null;
+  final c = int.parse(m.group(1)!) * 100 +
+      (m.group(2) == null ? 0 : int.parse(m.group(2)!.padRight(2, '0')));
+  return c > 0 ? c : null;
+}
+
+Future<void> _registrar(BuildContext context, WidgetRef ref, ItemCompra i) async {
+  final menu = menuEfectivo(
+    ref.read(menuElegidoProvider),
+    ref.read(servicioAlimentacionProvider).menusConCompras,
+  );
+  if (menu == null) return;
+  final total = TextEditingController();
+  final cantidad = TextEditingController(text: cantidadTexto(i.cantidad));
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text('Compra de ${i.nombre}'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: cantidad,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: InputDecoration(labelText: 'Cantidad comprada (${i.unidad})'),
+          ),
+          TextField(
+            controller: total,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: const InputDecoration(labelText: 'Total pagado (pesos)'),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          child: const Text('Guardar compra'),
+        ),
+      ],
+    ),
+  );
+  final centavos = centavosDeTexto(total.text);
+  final cant = double.tryParse(cantidad.text.replaceAll(',', '.'));
+  if (ok != true) return;
+  if (centavos == null || cant == null || cant <= 0) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Escribe una cantidad y un total válidos.')),
+      );
+    }
+    return;
+  }
+  await ref
+      .read(servicioAlimentacionProvider)
+      .registrarCompra(
+        menu,
+        ref.read(semanaAlimentacionProvider),
+        i.clave,
+        cantidadComprada: cant,
+        totalCentavos: centavos,
+      );
+  ref.read(versionAlimentacionProvider.notifier).state++;
+}
+
 class _Contenido extends ConsumerWidget {
   const _Contenido({required this.menu, required this.items});
   final MenuId menu;
@@ -81,6 +159,7 @@ class _Contenido extends ConsumerWidget {
     final editar = ref.watch(puedeEditarAlimentacionProvider);
     final grupos = agruparPorSeccion(items);
     final hechos = items.where((i) => i.comprado).length;
+    final costo = costoDeLista(items);
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -92,12 +171,23 @@ class _Contenido extends ConsumerWidget {
             color: v.textoFuerte,
           ),
         ),
+        if (costo != null)
+          Text(
+            'Costo de la lista: ${costoTexto(costo.centavos, estimado: costo.estimado)}'
+            '${costo.sinPrecio > 0 ? ' · ${costo.sinPrecio} sin precio' : ''}',
+            style: v.lectura(tamano: 15, color: v.texto),
+          )
+        else
+          Text(
+            'Sin precios todavía: no se calcula el costo.',
+            style: v.lectura(tamano: 14, color: v.textoTenue),
+          ),
         const SizedBox(height: 8),
         for (final g in grupos.entries) ...[
           Padding(
             padding: const EdgeInsets.only(top: 12, bottom: 4),
             child: Text(
-              g.key.etiqueta,
+              'Pasillo · ${g.key.etiqueta}',
               style: v.titulo(tamano: 18, color: v.etiqueta),
             ),
           ),
@@ -128,7 +218,19 @@ class _Contenido extends ConsumerWidget {
                           : null,
                     ),
               ),
-              subtitle: i.comprado ? const Text('Comprado') : null,
+              subtitle: Text(
+                [
+                  if (i.comprado) 'Comprado',
+                  _textoPrecio(i),
+                ].join(' · '),
+              ),
+              secondary: editar
+                  ? IconButton(
+                      icon: const Icon(Icons.price_check_outlined),
+                      tooltip: 'Registrar compra con precio',
+                      onPressed: () => _registrar(context, ref, i),
+                    )
+                  : null,
             ),
         ],
       ],

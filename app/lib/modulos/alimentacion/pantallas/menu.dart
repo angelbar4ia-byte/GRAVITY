@@ -30,6 +30,19 @@ class PantallaMenuSemana extends ConsumerWidget {
       child: MarcoPantalla(
         titulo: 'Menú de la semana',
         acciones: [
+          if (ref.watch(servicioPlanFamiliarProvider).puedeVer)
+            IconButton(
+              icon: const Icon(Icons.how_to_vote_outlined),
+              tooltip: 'Plan familiar',
+              onPressed: () => context.go('${Rutas.alimentacion}/plan'),
+            ),
+          if (ref.watch(puedeEditarAlimentacionProvider))
+            IconButton(
+              icon: const Icon(Icons.upload_file_outlined),
+              tooltip: 'Importar recetas',
+              onPressed: () =>
+                  context.go('${Rutas.alimentacion}/importar-recetas'),
+            ),
           if (ref
               .watch(servicioAlimentacionProvider)
               .menusConCompras

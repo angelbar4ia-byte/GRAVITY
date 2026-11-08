@@ -561,11 +561,11 @@ void main() {
         ),
       );
       await t.pumpAndSettle();
-      expect(find.text('Frutas y verduras'), findsOneWidget);
+      expect(find.text('Pasillo · Frutas y verduras'), findsOneWidget);
       expect(find.textContaining('0 de'), findsOneWidget);
       await t.tap(find.byType(Checkbox).first);
       await t.pumpAndSettle();
-      expect(find.text('Comprado'), findsOneWidget);
+      expect(find.textContaining('Comprado'), findsOneWidget);
       expect(find.textContaining('1 de'), findsOneWidget);
     });
 
@@ -653,9 +653,9 @@ void main() {
         .where((l) => !l.trimLeft().startsWith('//'))
         .join('\n');
 
-    test('sin precios, IA, red ni servidor en el código', () {
+    test('sin IA, red ni servidor en el código (los precios son de la Fase 7)', () {
       final prohibidas = RegExp(
-        r"""precio|importe|[\s'"]\$\s?\d|gemini|openai|anthropic|package:http|dart:io""",
+        r"""[\s'"]\$\s?\d|gemini|openai|anthropic|package:http|dart:io""",
         caseSensitive: false,
       );
       expect(fuentes(), isNotEmpty);

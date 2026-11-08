@@ -4,9 +4,25 @@ library;
 
 import 'ejemplo.dart';
 import 'modelos.dart';
+import 'votacion.dart';
 
 abstract interface class RepositorioAlimentacion {
   Future<List<Platillo>> platillos();
+
+  /// Agrega o reemplaza (por id) platillos con receta: los importados.
+  Future<void> guardarPlatillos(List<Platillo> platillos);
+
+  /// Precio vigente por ingrediente, por `claveCompra`. Falta la clave = sin
+  /// precio (no se calcula costo).
+  Future<Map<String, PrecioIngrediente>> precios();
+
+  /// Guarda el precio de un ingrediente (base o real). Una compra real
+  /// reemplaza al base y las siguientes lo actualizan.
+  Future<void> guardarPrecio(PrecioIngrediente precio);
+
+  /// Votación del plan familiar de [dia] (sin hora), si existe.
+  Future<VotacionPlan?> votacion(DateTime dia);
+  Future<void> guardarVotacion(VotacionPlan votacion);
 
   /// Menú [menu] de la semana que empieza en [lunes].
   Future<List<EntradaMenu>> menu(MenuId menu, DateTime lunes);
@@ -29,6 +45,17 @@ abstract interface class RepositorioAlimentacion {
   Future<void> quitarSuplemento(MenuId menu, String id);
 }
 
+/// Nombres de tabla que el servidor debe tener para esta fase (migración
+/// 20261126 de backend). `ali_platillos` y `ali_compras_marcas` ya existen; a
+/// `ali_platillos` se le agregan `pasos text[]` y `porciones smallint`.
+abstract final class TablasAlimentacion {
+  static const platillos = 'ali_platillos';
+  static const precios = 'ali_precios';
+  static const votaciones = 'ali_votaciones';
+  static const propuestas = 'ali_propuestas';
+  static const votos = 'ali_votos';
+}
+
 String _k(MenuId m, DateTime lunes) =>
     '${m.name}|${lunes.year}-${lunes.month}-${lunes.day}';
 
@@ -38,6 +65,11 @@ class RepositorioAlimentacionEnMemoria implements RepositorioAlimentacion {
     DateTime? semanaEjemplo,
     bool conEjemplo = true,
   }) {
+    if (conEjemplo) {
+      for (final p in preciosBaseEjemplo()) {
+        _precios[p.clave] = p;
+      }
+    }
     for (final m in MenuId.values) {
       _supl[m] = conEjemplo ? [...suplementosEjemplo(m)] : [];
       if (conEjemplo && semanaEjemplo != null) {
@@ -54,9 +86,36 @@ class RepositorioAlimentacionEnMemoria implements RepositorioAlimentacion {
   final Map<String, Map<(int, TiempoComida), String>> _menu = {};
   final Map<String, Set<String>> _comprados = {};
   final Map<MenuId, List<Suplemento>> _supl = {};
+  final List<Platillo> _platillos = [...platillosEjemplo];
+  final Map<String, PrecioIngrediente> _precios = {};
+  final Map<String, VotacionPlan> _votaciones = {};
 
   @override
-  Future<List<Platillo>> platillos() async => platillosEjemplo;
+  Future<List<Platillo>> platillos() async => [..._platillos];
+
+  @override
+  Future<void> guardarPlatillos(List<Platillo> platillos) async {
+    for (final p in platillos) {
+      final i = _platillos.indexWhere((x) => x.id == p.id);
+      i < 0 ? _platillos.add(p) : _platillos[i] = p;
+    }
+  }
+
+  @override
+  Future<Map<String, PrecioIngrediente>> precios() async => {..._precios};
+
+  @override
+  Future<void> guardarPrecio(PrecioIngrediente precio) async =>
+      _precios[precio.clave] = precio;
+
+  String _kd(DateTime d) => '${d.year}-${d.month}-${d.day}';
+
+  @override
+  Future<VotacionPlan?> votacion(DateTime dia) async => _votaciones[_kd(dia)];
+
+  @override
+  Future<void> guardarVotacion(VotacionPlan v) async =>
+      _votaciones[_kd(v.dia)] = v;
 
   @override
   Future<List<EntradaMenu>> menu(MenuId menu, DateTime lunes) async => [
@@ -122,6 +181,16 @@ class RepositorioAlimentacionSinServidor implements RepositorioAlimentacion {
 
   @override
   Future<List<Platillo>> platillos() async => const [];
+  @override
+  Future<void> guardarPlatillos(List<Platillo> platillos) async => _no();
+  @override
+  Future<Map<String, PrecioIngrediente>> precios() async => const {};
+  @override
+  Future<void> guardarPrecio(PrecioIngrediente precio) async => _no();
+  @override
+  Future<VotacionPlan?> votacion(DateTime dia) async => null;
+  @override
+  Future<void> guardarVotacion(VotacionPlan votacion) async => _no();
   @override
   Future<List<EntradaMenu>> menu(MenuId menu, DateTime lunes) async => const [];
   @override
