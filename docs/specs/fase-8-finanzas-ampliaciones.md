@@ -1,6 +1,6 @@
 # Fase 8 · Bloque 1: Finanzas (ampliaciones)
 
-> v1.1, 8/nov/2026 (confirmación del receptor en transferencias a la casa: el otro adulto; Papá con aportación por el albacea; la casa tiene dos cuentas generales: la de Papá y la de la pareja). Aprobada para construir transferencias, casa con subcuentas, registro de aportantes y periodo de la aportación. La conciliación del PDF queda pendiente de saber los bancos. Base: D19 (libros por persona, albaceas), D24 (vista de Papá), D25, D28 (despensas) y las respuestas del dueño de hoy.
+> v1.2, 8/nov/2026 (transferencias a la casa van a una subcuenta; la referencia 50/25/25 se modifica por subcuenta; aviso al receptor). v1.1, 8/nov/2026 (confirmación del receptor en transferencias a la casa: el otro adulto; Papá con aportación por el albacea; la casa tiene dos cuentas generales: la de Papá y la de la pareja). Aprobada para construir transferencias, casa con subcuentas, registro de aportantes y periodo de la aportación. La conciliación del PDF queda pendiente de saber los bancos. Base: D19 (libros por persona, albaceas), D24 (vista de Papá), D25, D28 (despensas) y las respuestas del dueño de hoy.
 
 ## Alcance del bloque 1
 
@@ -34,6 +34,13 @@ Quedan para bloques posteriores (ya en el roadmap): simulador de deudas, estimad
 - **Confirma el receptor:** en transferencias a la casa confirma el **otro adulto** (si propone el dueño, confirma la pareja; si propone la pareja, confirma el dueño).
 - **Papá:** sus aportaciones pasan por el **albacea** (D19); su aportado aparece en la referencia cuando exista el registro de aportantes.
 - **Cuentas generales de la casa:** son **dos**: la cuenta general de **Papá** y la cuenta general de la **pareja**. *Pendiente de confirmar:* a cuál va la transferencia del dueño a la casa.
+
+## 1b. Respuestas del dueño (v1.2, 8/nov/2026)
+
+- **Receptor de la casa:** el **otro adulto** del libro de la casa confirma (sí).
+- **Referencia:** 50% Papá, 50% dueño y pareja, **por omisión**; se **puede modificar por subcuenta** (cada servicio puede tener su propia referencia).
+- **Transferencias a la casa:** van a una **subcuenta** (servicio), no a la cuenta general. El dueño elige la subcuenta destino al transferir.
+- **Aviso:** sí, el receptor recibe aviso de transferencia pendiente.
 
 ## 2a. Periodo de la aportación (respuesta del dueño, 8/nov/2026)
 
