@@ -61,6 +61,13 @@ Future<AlertaPrecio?> _compra(
   unidad: 'l',
 ).then((r) => r.alerta);
 
+class _RepoCodigoUsado extends RepositorioAlimentacionEnMemoria {
+  _RepoCodigoUsado() : super(semanaEjemplo: _lunes);
+  @override
+  Future<bool> guardarIngredienteConCodigo(Ingrediente ingrediente) async =>
+      throw const ErrorAlimentacionServidor('Ese código ya es de otro producto');
+}
+
 void main() {
   group('lector de código', () {
     test('lector falso devuelve un código y encuentra el ingrediente', () async {
@@ -175,6 +182,22 @@ void main() {
       final guardados = await repo.ingredientesConCodigo();
       expect(guardados.single.codigoBarras, '555');
       expect(guardados.single.nombre, 'Galletas');
+    });
+
+    testWidgets('código ya usado por otro producto muestra el aviso', (t) async {
+      await t.binding.setSurfaceSize(const Size(400, 9000));
+      addTearDown(() => t.binding.setSurfaceSize(null));
+      await t.pumpWidget(app(_RepoCodigoUsado(), LectorCodigoFalso('555')));
+      await t.pumpAndSettle();
+      await t.tap(find.byKey(const Key('escanear_codigo')));
+      await t.pumpAndSettle();
+      await t.enterText(find.byKey(const Key('captura_nombre')), 'Galletas');
+      await t.enterText(find.byKey(const Key('captura_unidad')), 'paq');
+      await t.tap(find.text('Guardar con el código'));
+      await t.pumpAndSettle();
+      expect(find.text('Ese código ya es de otro producto'), findsOneWidget);
+      expect(find.text('Código nuevo'), findsNothing);
+      expect(t.takeException(), isNull);
     });
 
     testWidgets('compra que sube más de 20% muestra la alerta local', (t) async {

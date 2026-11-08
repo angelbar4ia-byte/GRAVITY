@@ -12,7 +12,10 @@ import '../../../nucleo/contratos/rutas.dart';
 import '../casos_uso/lista_compras.dart';
 import '../casos_uso/servicio_alimentacion.dart'
     show RegistroCompra, ServicioAlimentacion;
+import '../../finanzas/datos/repositorio.dart' show ErrorFinanzas;
 import '../datos/modelos.dart';
+import '../datos/repositorio.dart'
+    show ErrorAlimentacionServidor, RepositorioAlimentacionEnMemoria;
 import '../estado/proveedores.dart';
 import 'historial_precios.dart';
 import 'hay_presupuesto.dart';
@@ -296,9 +299,13 @@ Future<void> _escanear(
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            r.enServidor
-                ? 'Producto guardado con su código.'
-                : 'El código se guarda cuando el servidor lo tenga.',
+            // Solo con el repositorio de memoria (sin servidor) el código
+            // queda pendiente; con el del servidor ya quedó guardado.
+            !r.enServidor ||
+                    ref.read(repositorioAlimentacionProvider)
+                        is RepositorioAlimentacionEnMemoria
+                ? 'El código se guarda cuando el servidor lo tenga.'
+                : 'Producto guardado con su código.',
           ),
         ),
       );
@@ -308,6 +315,14 @@ Future<void> _escanear(
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Escribe el nombre y la unidad.')),
       );
+    }
+  } on ErrorAlimentacionServidor catch (e) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.mensaje)));
+    }
+  } on ErrorFinanzas catch (e) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.mensaje)));
     }
   }
 }
