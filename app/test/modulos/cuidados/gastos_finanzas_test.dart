@@ -139,14 +139,15 @@ void main() {
           pasarGastoAFinanzas(fin, g, confirmadoPor: IdsDemostracion.dueno),
     );
     await o.registrarGasto(concepto: 'Pañales', centavos: 18550);
-    final id = (await o.gastos()).single.id;
+    final mio = (await o.gastos()).firstWhere((g) => g.concepto == 'Pañales');
+    final id = mio.id;
     final antes = fin.actual.datos.movimientos.length;
     expect(await o.resolverGasto(id, confirmar: true), isNull);
     expect(fin.actual.datos.movimientos.length, antes + 1);
     // El mismo gasto otra vez: Finanzas no duplica.
     await pasarGastoAFinanzas(
       fin,
-      (await o.gastos()).single,
+      mio.conEstado(EstadoGasto.confirmado),
       confirmadoPor: IdsDemostracion.dueno,
     );
     expect(fin.actual.datos.movimientos.length, antes + 1);
@@ -174,7 +175,10 @@ void main() {
       centavos: 100,
       ambito: AmbitoGasto.casa,
     );
-    expect((await o.gastos()).single.ambito, AmbitoGasto.casa);
+    expect(
+      (await o.gastos()).firstWhere((g) => g.concepto == 'Luz').ambito,
+      AmbitoGasto.casa,
+    );
   });
 
   Future<void> abrirHoja(

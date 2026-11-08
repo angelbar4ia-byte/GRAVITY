@@ -451,7 +451,9 @@ void main() {
       final c = _srv(d, _cuidadora, Rol.cuidador);
       final o = _srv(d, _dueno, Rol.dueno);
       await c.registrarGasto(concepto: 'Aseo', centavos: 5000);
-      await c.registrarGasto(
+      // La cuidadora solo registra cuidado; el gasto de casa lo hace la hermana.
+      final h = _srv(d, _hermana, Rol.cuidador, perfil: _perfilHermana);
+      await h.registrarGasto(
         concepto: 'Luz',
         centavos: 7000,
         ambito: AmbitoGasto.casa,
