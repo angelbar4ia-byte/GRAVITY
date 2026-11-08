@@ -1,6 +1,6 @@
 # Fase 7 · Alimentación completa (especificación)
 
-> v1.1, 8/nov/2026. Aprobada por el dueño. v1.1 añade sus respuestas sobre presupuesto, votación y precios. Base: roadmap (Fase 7), D23, D28 (confirmada: se construye aquí), D3, D19, D5 y la especificación de la Fase 4 (`fase-4-alimentacion.md`).
+> v1.2, 8/nov/2026. Aprobada por el dueño. v1.2 añade: cuenta de pago por omisión y elegible; fila de compra por función del servidor; mismo producto con distinta presentación se edita, la marca no crea producto nuevo. Base: roadmap (Fase 7), D23, D28 (confirmada: se construye aquí), D3, D19, D5 y la especificación de la Fase 4 (`fase-4-alimentacion.md`).
 
 ## 1. Alcance
 
@@ -56,6 +56,12 @@
 4. **Empate:** se resuelve con un **volado** (sorteo al cerrar la votación). Ya no se reabre el día.
 5. **Precios para el familiar:** están bien (lo necesita para armar el menú de una visita).
 6. **Cuenta maestra:** sí lee todas las despensas y listas (D19).
+
+## 5c. Respuestas del dueño (v1.2, 8/nov/2026)
+
+1. **Cuenta de pago:** la app pone una cuenta por omisión (dueño y pareja: su cuenta de efectivo o banco; Casa: el libro de la casa; Papá: sin cuenta, va al albacea), y la persona puede **elegir otra** al comprar.
+2. **Fila de compra:** dueño y pareja también agregan a la lista **por función del servidor** (no por inserción directa).
+3. **Ingredientes:** el mismo producto no se duplica por nombre. Si cambia la **unidad o la presentación** del empaque, se **edita el mismo ingrediente**. La **marca** no crea un producto nuevo.
 
 ## 5b. Decisiones pendientes
 
