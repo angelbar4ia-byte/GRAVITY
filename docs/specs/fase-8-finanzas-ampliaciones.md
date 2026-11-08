@@ -1,6 +1,6 @@
 # Fase 8 · Bloque 1: Finanzas (ampliaciones)
 
-> v0.1, 8/nov/2026. Borrador. Base: D19 (libros por persona, albaceas), D24 (vista de Papá), D25, D28 (despensas) y las respuestas del dueño de hoy.
+> v0.2, 8/nov/2026. Borrador (v0.2 agrega quién transfiere a quién y la estructura de cuentas de la casa). Base: D19 (libros por persona, albaceas), D24 (vista de Papá), D25, D28 (despensas) y las respuestas del dueño de hoy.
 
 ## Alcance del bloque 1
 
@@ -18,6 +18,17 @@ Quedan para bloques posteriores (ya en el roadmap): simulador de deudas, estimad
 - Ninguna transferencia cambia el libro de Papá sin el albacea (D19).
 - Dinero en centavos; libro solo-agregar: una transferencia rechazada o cancelada queda como registro, no se borra.
 
+### Quién transfiere a quién (respuesta del dueño, 8/nov/2026)
+
+- **Pareja → dueño**, **dueño → casa** y **pareja → casa** directamente.
+- Cada transferencia la **confirma el receptor**.
+
+### Estructura de cuentas de la casa (respuesta del dueño)
+
+- **Casa** es la **cuenta general**. Sus **subcuentas** son los servicios y gastos (luz, teléfono, etc.).
+- **Quien paga un servicio no importa:** el pago se registra en la subcuenta del servicio y la cuenta de casa lleva el **registro de quién aportó** a cada pago.
+- Cada aportación queda atribuida a una persona (dueño, pareja o Papá), con monto y fecha, para el reparto de referencia.
+
 ## 2. Aportación a la casa
 
 - **Referencia:** 50% de la aportación corresponde a Papá y 50% a ti y tu pareja (partes iguales entre ustedes dos).
@@ -34,9 +45,8 @@ Quedan para bloques posteriores (ya en el roadmap): simulador de deudas, estimad
 
 ## Preguntas abiertas
 
-1. **Transferencias:** ¿quién puede transferir a quién? (¿la pareja puede enviarte a ti y tú a Papá, o solo a la casa?)
-2. **Conciliación:** ¿qué bancos usas y en qué formato descargas tus estados de cuenta?
-3. **Aportación de referencia:** ¿se calcula por mes o por semana?
+1. **Conciliación:** ¿qué bancos usas y en qué formato descargas tus estados de cuenta?
+2. **Aportación de referencia:** ¿se calcula por mes o por semana?
 
 ## Trabajo por agente (cuando se apruebe)
 
