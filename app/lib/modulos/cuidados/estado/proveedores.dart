@@ -2,6 +2,7 @@
 /// permisos y el servicio.
 library;
 
+import 'package:finanzas_dominio/finanzas_dominio.dart' show Fecha, TipoLibro;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 
@@ -10,7 +11,11 @@ import '../../../diseno/proveedores.dart' show relojProvider;
 import '../../../nucleo/contratos/roles.dart';
 import '../../../nucleo/sesion/proveedores_sesion.dart';
 import '../../../nucleo/sesion/servicio_sesion_supabase.dart';
+import '../../finanzas/casos_uso/gasto_cuidado.dart' as fin;
 import '../../finanzas/datos/fuente_tablas.dart';
+import '../../finanzas/datos/repositorio.dart' show RepositorioFinanzas;
+import '../../finanzas/estado/proveedores.dart'
+    show repositorioFinanzasProvider;
 import '../casos_uso/horario_turnos.dart';
 import '../casos_uso/permisos_cuidados.dart';
 import '../casos_uso/servicio_cuidados.dart';
@@ -79,8 +84,44 @@ final servicioCuidadosProvider = Provider<ServicioCuidados>((ref) {
     personaId: s?.persona.id ?? '',
     nombre: s?.persona.nombre ?? '',
     ahora: reloj.ahora,
+    alConfirmarGasto: s == null
+        ? null
+        : (g) => pasarGastoAFinanzas(
+            ref.read(repositorioFinanzasProvider),
+            g,
+            confirmadoPor: s.persona.id,
+          ),
   );
 });
+
+/// Pasa a Finanzas un gasto de cuidado ya confirmado en el servidor. El libro
+/// de Papá se busca por su libro representado; Finanzas no duplica si se
+/// repite (id estable).
+Future<void> pasarGastoAFinanzas(
+  RepositorioFinanzas repo,
+  GastoCuidado g, {
+  required String confirmadoPor,
+}) async {
+  final datos = (repo.actual ?? await repo.cargar()).datos;
+  final papa = datos.libros
+      .where((l) => l.tipo == TipoLibro.representado && !l.archivado)
+      .map((l) => l.titularId)
+      .firstOrNull;
+  await fin.confirmarGastoCuidado(
+    fin.GastoCuidado(
+      id: g.id,
+      fecha: Fecha.deDateTime(g.fecha),
+      centavos: g.centavos,
+      registradoPor: g.registradoPor,
+      concepto: g.concepto,
+      esDePapa: g.ambito == AmbitoGasto.cuidado,
+      personaBajoCuidadoId: papa,
+      estado: fin.EstadoGastoCuidado.confirmado,
+    ),
+    repo,
+    confirmadoPor: confirmadoPor,
+  );
+}
 
 /// Contador para volver a pedir los datos tras cada cambio.
 final versionCuidadosProvider = StateProvider<int>((_) => 0);

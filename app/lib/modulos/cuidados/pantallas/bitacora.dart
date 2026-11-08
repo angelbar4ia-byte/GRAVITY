@@ -165,10 +165,11 @@ class _ListaGastos extends ConsumerWidget {
   }
 
   Future<void> _nuevo(BuildContext context, WidgetRef ref) async {
-    final r = await showModalBottomSheet<(String, int)>(
+    final casa = ref.read(permisosCuidadosProvider).registraGastoCasa;
+    final r = await showModalBottomSheet<(String, int, AmbitoGasto)>(
       context: context,
       isScrollControlled: true,
-      builder: (_) => const _HojaGasto(),
+      builder: (_) => _HojaGasto(ofreceCasa: casa),
     );
     if (r == null || !context.mounted) return;
     await ejecutarCuidados(
@@ -176,7 +177,7 @@ class _ListaGastos extends ConsumerWidget {
       ref,
       () => ref
           .read(servicioCuidadosProvider)
-          .registrarGasto(concepto: r.$1, centavos: r.$2),
+          .registrarGasto(concepto: r.$1, centavos: r.$2, ambito: r.$3),
       ok: 'Gasto registrado, pendiente de confirmación',
     );
   }
@@ -261,7 +262,10 @@ class _TarjetaGasto extends ConsumerWidget {
 }
 
 class _HojaGasto extends StatefulWidget {
-  const _HojaGasto();
+  const _HojaGasto({required this.ofreceCasa});
+
+  /// Solo la hermana y el dueño pueden registrar gastos de la casa.
+  final bool ofreceCasa;
 
   @override
   State<_HojaGasto> createState() => _HojaGastoState();
@@ -271,6 +275,7 @@ class _HojaGastoState extends State<_HojaGasto> {
   final _concepto = TextEditingController();
   final _monto = TextEditingController();
   String? _error;
+  AmbitoGasto _ambito = AmbitoGasto.cuidado;
 
   @override
   void dispose() {
@@ -286,7 +291,7 @@ class _HojaGastoState extends State<_HojaGasto> {
     } else if (c == null || c <= 0) {
       setState(() => _error = 'Escribe un monto válido, por ejemplo 150.50');
     } else {
-      Navigator.pop(context, (_concepto.text.trim(), c));
+      Navigator.pop(context, (_concepto.text.trim(), c, _ambito));
     }
   }
 
@@ -307,6 +312,22 @@ class _HojaGastoState extends State<_HojaGasto> {
           'Registrar gasto de cuidado',
           style: Theme.of(context).textTheme.titleLarge,
         ),
+        if (widget.ofreceCasa)
+          SegmentedButton<AmbitoGasto>(
+            key: const Key('ambito-gasto'),
+            segments: const [
+              ButtonSegment(
+                value: AmbitoGasto.cuidado,
+                label: Text('Cuidado de Papá'),
+              ),
+              ButtonSegment(
+                value: AmbitoGasto.casa,
+                label: Text('Gastos de la casa'),
+              ),
+            ],
+            selected: {_ambito},
+            onSelectionChanged: (v) => setState(() => _ambito = v.first),
+          ),
         TextField(
           controller: _concepto,
           autofocus: true,

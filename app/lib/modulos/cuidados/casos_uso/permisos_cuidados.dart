@@ -109,6 +109,10 @@ class PermisosCuidados {
 
   bool get veGastos => _lee('gastos');
   bool get registraGasto => _escribeEn('gastos');
+
+  /// Gastos "de la casa": la cuidadora solo registra cuidado; la hermana y el
+  /// dueño, también casa.
+  bool get registraGastoCasa => registraGasto && (_dueno || _hermana);
   bool get confirmaGasto => _dueno && !esMaestra;
 
   /// Resumen mensual: el dueño; la hermana solo con autorización.

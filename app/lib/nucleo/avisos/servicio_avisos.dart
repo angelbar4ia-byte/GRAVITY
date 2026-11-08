@@ -86,8 +86,11 @@ Presentacion decidirPresentacion({
   if (preferencias.tiposSilenciados.contains(tipo)) {
     return Presentacion.soloBandeja;
   }
-  // Cuidados (spec fase-5 8g): tomas y comidas de Papá siempre suenan.
-  if (tipo == 'recordatorio_toma' || tipo == 'recordatorio_comida') {
+  // Cuidados (spec fase-5 8g): tomas, comidas y el cambio urgente siempre
+  // suenan, también en horas silenciosas.
+  if (tipo == 'recordatorio_toma' ||
+      tipo == 'recordatorio_comida' ||
+      tipo == 'cambio_urgente_cuidados') {
     return Presentacion.sonar;
   }
   final enSilencio = preferencias.enSilencio(ahora);

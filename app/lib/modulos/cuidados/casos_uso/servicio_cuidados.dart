@@ -17,6 +17,16 @@ const textoRecordatorioGenerico = 'Hay un recordatorio en Cuidados';
 String _claveToma(String medicamentoId, DateTime hora) =>
     '$medicamentoId|${hora.millisecondsSinceEpoch ~/ 60000}';
 
+/// Paso de un gasto recién confirmado a Finanzas (lo arma el proveedor con el
+/// repositorio de Finanzas). Puede lanzar si no hay permiso, libro o cuenta.
+typedef PasarGastoAFinanzas = Future<void> Function(GastoCuidado confirmado);
+
+/// Aviso sobrio cuando el gasto quedó confirmado en Cuidados pero Finanzas no
+/// lo recibió (la confirmación del servidor no se revierte).
+const avisoGastoSinFinanzas =
+    'Gasto confirmado, pero no se pudo pasar a Finanzas. Revisa tu permiso '
+    'o inténtalo de nuevo más tarde.';
+
 class ServicioCuidados {
   ServicioCuidados(
     this._repo, {
@@ -24,7 +34,12 @@ class ServicioCuidados {
     required this.personaId,
     required this.nombre,
     required this.ahora,
+    this.alConfirmarGasto,
   });
+
+  /// Se llama una vez por gasto confirmado, después de que el servidor lo
+  /// guarda como confirmado.
+  final PasarGastoAFinanzas? alConfirmarGasto;
 
   final RepositorioCuidados _repo;
   final PermisosCuidados permisos;
@@ -363,6 +378,7 @@ class ServicioCuidados {
     AmbitoGasto ambito = AmbitoGasto.cuidado,
   }) async {
     _exigir(permisos.registraGasto);
+    _exigir(ambito == AmbitoGasto.cuidado || permisos.registraGastoCasa);
     if (concepto.trim().isEmpty) {
       throw const ErrorCuidados('Escribe en qué se gastó.');
     }
@@ -386,12 +402,28 @@ class ServicioCuidados {
     );
   }
 
-  Future<void> resolverGasto(String id, {required bool confirmar}) async {
+  /// Confirma o rechaza un gasto. Al confirmar, y ya guardado el estado en el
+  /// servidor, lo pasa a Finanzas. Devuelve un aviso si Finanzas no lo recibió
+  /// (la confirmación no se revierte); `null` si todo salió bien.
+  Future<String?> resolverGasto(String id, {required bool confirmar}) async {
     _exigir(permisos.confirmaGasto);
+    GastoCuidado? gasto;
+    if (confirmar && alConfirmarGasto != null) {
+      for (final g in await _repo.gastos()) {
+        if (g.id == id) gasto = g;
+      }
+    }
     await _repo.resolverGasto(
       id,
       confirmar ? EstadoGasto.confirmado : EstadoGasto.rechazado,
     );
+    if (gasto == null) return null;
+    try {
+      await alConfirmarGasto!(gasto.conEstado(EstadoGasto.confirmado));
+    } catch (_) {
+      return avisoGastoSinFinanzas;
+    }
+    return null;
   }
 
   // ---------------------------------------------------------------- Resumen

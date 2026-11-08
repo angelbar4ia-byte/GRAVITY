@@ -15,14 +15,16 @@ import '../estado/proveedores.dart';
 Future<bool> ejecutarCuidados(
   BuildContext context,
   WidgetRef ref,
-  Future<void> Function() accion, {
+  Future<Object?> Function() accion, {
   String ok = 'Listo, registrado',
 }) async {
   final mensajes = ScaffoldMessenger.of(context);
   try {
-    await accion();
+    final r = await accion();
     refrescarCuidados(ref);
-    mensajes.showSnackBar(SnackBar(content: Text(ok)));
+    // Un texto devuelto es un aviso (la acción se hizo, pero algo quedó
+    // pendiente): reemplaza al mensaje de éxito.
+    mensajes.showSnackBar(SnackBar(content: Text(r is String ? r : ok)));
     return true;
   } on ErrorCuidados catch (e) {
     mensajes.showSnackBar(SnackBar(content: Text(e.mensaje)));

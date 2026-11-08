@@ -207,6 +207,22 @@ void main() {
       );
     });
 
+    test('Cuidados: toma, comida y cambio urgente suenan también de noche', () {
+      for (final t in [
+        'recordatorio_toma',
+        'recordatorio_comida',
+        'cambio_urgente_cuidados',
+      ]) {
+        expect(decide(t, const HoraDelDia(23), hoy: 99), Presentacion.sonar);
+        expect(decide(t, const HoraDelDia(3)), Presentacion.sonar);
+      }
+      // La entrega de turno (informativa) sí respeta el silencio.
+      expect(
+        decide('entrega_turno', const HoraDelDia(23)),
+        Presentacion.silenciosa,
+      );
+    });
+
     test('las críticas no tienen tope', () {
       expect(
         decide('pago_vencido', const HoraDelDia(12), hoy: 99),
