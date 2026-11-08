@@ -79,10 +79,11 @@ void main() {
             .ejecutar(const AbrirArchivo(r'C:\Docs\mi recibo.pdf'));
         expect(r.exito, isTrue);
         expect(p.llamadas, [
-          (
+          [
             'rundll32.exe',
-            ['url.dll,FileProtocolHandler', r'C:\Docs\mi recibo.pdf'],
-          ),
+            'url.dll,FileProtocolHandler',
+            r'C:\Docs\mi recibo.pdf',
+          ],
         ]);
       },
     );
