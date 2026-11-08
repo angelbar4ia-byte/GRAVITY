@@ -75,6 +75,11 @@ const Map<String, String> titulosDeAviso = {
   'recordatorio_comida': 'Hora de la comida',
   'entrega_turno': 'Es hora de dejar tus notas',
   'cambio_urgente_cuidados': 'Cambio urgente en los cuidados',
+  // Alimentación (Fase 7): genéricos, sin cifras, nombres ni productos.
+  'compra_papa_albacea': 'Hay una compra esperando tu pago',
+  'votacion_abierta': 'Hay un menú por votar',
+  'votacion_empate': 'La votación del menú terminó en empate',
+  'reposicion_suplemento': 'Hay un suplemento por reponer',
   'base_80': 'Revisa el almacenamiento de GRAVITY',
   'base_90': 'Revisa el almacenamiento de GRAVITY',
 };
@@ -101,6 +106,11 @@ const Map<String, SeveridadAviso> severidadDeAviso = {
   'recordatorio_toma': SeveridadAviso.importante,
   'recordatorio_comida': SeveridadAviso.importante,
   'entrega_turno': SeveridadAviso.informativa,
+  // Alimentación: el pago y la reposición importan; la votación solo informa.
+  'compra_papa_albacea': SeveridadAviso.importante,
+  'reposicion_suplemento': SeveridadAviso.importante,
+  'votacion_abierta': SeveridadAviso.informativa,
+  'votacion_empate': SeveridadAviso.informativa,
   'partida_80': SeveridadAviso.informativa,
   'uso_limite': SeveridadAviso.informativa,
   'aportacion_pendiente': SeveridadAviso.informativa,
@@ -119,6 +129,15 @@ const Set<String> avisosDeCuidados = {
   'recordatorio_comida',
   'entrega_turno',
   'cambio_urgente_cuidados',
+};
+
+/// Tipos de Alimentación: los recibe también quien no ve dinero (familiar).
+/// Usan los canales generales por severidad (no hay canales propios).
+const Set<String> avisosDeAlimentacion = {
+  'compra_papa_albacea',
+  'votacion_abierta',
+  'votacion_empate',
+  'reposicion_suplemento',
 };
 
 /// Título para [tipo]; el genérico si no está en el catálogo.

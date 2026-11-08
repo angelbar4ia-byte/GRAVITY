@@ -47,7 +47,12 @@ void main() {
 
     test('todo tipo tiene severidad y canal, y la lista es la de la especificación', () {
       expect(titulosDeAviso.keys.toSet(), severidadDeAviso.keys.toSet());
-      expect(titulosDeAviso, hasLength(24));
+      expect(titulosDeAviso, hasLength(28));
+      expect(canalDe('compra_papa_albacea'), CanalAviso.avisos);
+      expect(canalDe('reposicion_suplemento'), CanalAviso.avisos);
+      expect(canalDe('votacion_abierta'), CanalAviso.informativos);
+      expect(canalDe('votacion_empate'), CanalAviso.informativos);
+      expect(avisosDeAlimentacion.every(titulosDeAviso.containsKey), isTrue);
       expect(canalDe('pago_proximo'), CanalAviso.urgentes);
       expect(canalDe('partida_100'), CanalAviso.avisos);
       expect(canalDe('partida_80'), CanalAviso.informativos);
@@ -62,6 +67,17 @@ void main() {
         'Hábitos · Reservados',
         'Hábitos · Revisión',
       ]);
+    });
+
+    test('los títulos de Alimentación no llevan dígitos ni nombres', () {
+      for (final tipo in avisosDeAlimentacion) {
+        final t = titulosDeAviso[tipo]!;
+        expect(RegExp(r'[0-9]').hasMatch(t), isFalse, reason: t);
+        expect(textoDeAvisoEsDiscreto(t), isTrue, reason: t);
+        for (final nombre in ['Papá', 'Mamá', 'Alex', 'Familiar']) {
+          expect(t, isNot(contains(nombre)), reason: t);
+        }
+      }
     });
 
     test(

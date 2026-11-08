@@ -373,8 +373,12 @@ class ServicioAvisos {
       await _mostrarGenerico();
       return;
     }
-    // Quien no ve dinero solo recibe los avisos de Cuidados.
-    if (!c.puedeRecibir && !avisosDeCuidados.contains(aviso.tipo)) return;
+    // Quien no ve dinero solo recibe los avisos de Cuidados y Alimentación.
+    if (!c.puedeRecibir &&
+        !avisosDeCuidados.contains(aviso.tipo) &&
+        !avisosDeAlimentacion.contains(aviso.tipo)) {
+      return;
+    }
     await _mostrar(aviso, persona);
   }
 

@@ -8,6 +8,7 @@ import 'package:gravity/modulos/alimentacion/datos/modelos.dart';
 import 'package:gravity/nucleo/contratos/roles.dart';
 import 'package:gravity/modulos/alimentacion/datos/votacion.dart';
 import 'package:gravity/modulos/finanzas/datos/fuente_tablas.dart';
+import 'package:gravity/modulos/finanzas/datos/repositorio.dart' show ErrorFinanzas;
 
 const _hogar = '00000000-0000-4000-8000-000000000001';
 const _yo = '00000000-0000-4000-8000-0000000000a1';
@@ -758,8 +759,9 @@ void main() {
       expect(await r.hayPresupuestoPara(99999), isFalse);
     });
 
-    test('el código de barras queda en memoria y no falla', () async {
+    test('guardar el código llama ali_guardar_codigo_barras', () async {
       final f = _Fuente();
+      f.funciones['ali_guardar_codigo_barras'] = (p) => p['p_codigo'];
       final r = _repo(f);
       final enServidor = await r.guardarIngredienteConCodigo(
         const Ingrediente(
@@ -767,12 +769,52 @@ void main() {
           1,
           'paq',
           SeccionCompra.otros,
-          codigoBarras: '555',
+          codigoBarras: '7501000000011',
         ),
       );
-      expect(enServidor, isFalse);
-      expect((await r.ingredientesConCodigo()).single.codigoBarras, '555');
-      expect(f.escrituras, isEmpty);
+      expect(enServidor, isTrue);
+      final id = f.tabla('ali_ingredientes').single['id'];
+      expect(f.llamadas.single.$1, 'ali_guardar_codigo_barras');
+      expect(f.llamadas.single.$2, {
+        'p_ingrediente': id,
+        'p_codigo': '7501000000011',
+      });
+      expect(f.escrituras, ['ali_ingredientes']);
+      // La columna no se escribe directo.
+      expect(f.tabla('ali_ingredientes').single.containsKey('codigo_barras'),
+          isFalse);
+    });
+
+    test('un código de otro producto (23505) sale sin error técnico', () async {
+      final f = _Fuente();
+      f.funciones['ali_guardar_codigo_barras'] = (p) => throw const ErrorFinanzas(
+        'Ya existe: Ese código ya pertenece a otro ingrediente del hogar.',
+      );
+      await expectLater(
+        _repo(f).guardarIngredienteConCodigo(
+          const Ingrediente('Galletas', 1, 'paq', SeccionCompra.otros,
+              codigoBarras: '7501000000011'),
+        ),
+        throwsA(
+          isA<ErrorAlimentacionServidor>().having(
+            (e) => e.mensaje,
+            'mensaje',
+            'Ese código ya es de otro producto',
+          ),
+        ),
+      );
+    });
+
+    test('el lector busca en codigo_barras de ali_ingredientes', () async {
+      final f = _Fuente();
+      f.tabla('ali_ingredientes').addAll([
+        {'id': _pl1, 'nombre': 'Galletas', 'unidad': 'paq',
+          'codigo_barras': '7501000000011'},
+        {'id': _o1, 'nombre': 'Sal', 'unidad': 'kg', 'codigo_barras': null},
+      ]);
+      final c = await _repo(f).ingredientesConCodigo();
+      expect(c.single.nombre, 'Galletas');
+      expect(c.single.codigoBarras, '7501000000011');
     });
 
     test('el servicio de Casa usa la RPC; el de compra, la cuenta por rol',

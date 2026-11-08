@@ -313,21 +313,47 @@ class RepositorioAlimentacionSupabase implements RepositorioAlimentacion {
   @override
   Future<void> guardarCompraPrecio(CompraPrecio compra) async {}
 
-  /// Catálogo con código de barras. El servidor aún no tiene la columna
-  /// `codigo_barras` (la agrega backend): mientras tanto queda en memoria de la
-  /// sesión y se pierde al cerrar la app.
-  final Map<String, Ingrediente> _codigosLocales = {};
-
+  /// Ingredientes del servidor con `codigo_barras` (la lectura normal de
+  /// `ali_ingredientes` ya trae la columna), para la búsqueda del lector.
   @override
   Future<List<Ingrediente>> ingredientesConCodigo() async => [
-    ..._codigosLocales.values,
+    for (final f in await _leer('ali_ingredientes'))
+      if ('${f['codigo_barras'] ?? ''}'.trim().isNotEmpty)
+        Ingrediente(
+          '${f['nombre']}',
+          1,
+          '${f['unidad']}',
+          pasilloDeTexto('${f['pasillo'] ?? ''}') ?? SeccionCompra.otros,
+          codigoBarras: '${f['codigo_barras']}'.trim(),
+        ),
   ];
 
-  /// Devuelve `false`: todavía no se guardó en el servidor.
+  /// `ali_guardar_codigo_barras(p_ingrediente, p_codigo)`: el código no se
+  /// escribe directo. Se busca el ingrediente por nombre (o se crea sin
+  /// precio) y el servidor valida formato (22023), permiso (42501) y que el
+  /// código no sea de otro ingrediente del hogar (23505, "Ya existe: ..." en
+  /// [FuenteTablas]). Devuelve `true`: quedó en el servidor.
   @override
   Future<bool> guardarIngredienteConCodigo(Ingrediente ingrediente) async {
-    _codigosLocales[ingrediente.clave] = ingrediente;
-    return false;
+    try {
+      final id = await _ingredientePorNombreOCrea(
+        ingrediente.nombre,
+        ingrediente.unidad,
+      );
+      await _rpc('ali_guardar_codigo_barras', {
+        'p_ingrediente': id,
+        'p_codigo': ingrediente.codigoBarras?.trim(),
+      });
+      return true;
+    } on ErrorFinanzas catch (e) {
+      throw ErrorAlimentacionServidor(
+        e.sinConexion
+            ? 'Sin conexión. Intenta de nuevo.'
+            : e.mensaje.startsWith('Ya existe')
+            ? 'Ese código ya es de otro producto'
+            : e.mensaje,
+      );
+    }
   }
 
   // ---------------------------------------------------------------- Votación
