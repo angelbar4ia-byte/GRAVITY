@@ -275,35 +275,62 @@ void main() {
   });
 
   group('sesión real sin tablas (F4-A6) y catálogo con permiso (F4-A4)', () {
-    test('Casa no lee el catálogo de platillos; quien ve algún menú, sí', () async {
-      expect(() => _srv(Rol.casa).platillos(), throwsA(isA<PermisoDenegado>()));
-      for (final r in [Rol.dueno, Rol.coadministrador, Rol.familiar, Rol.cuidador]) {
-        expect(await _srv(r).platillos(), isNotEmpty, reason: r.name);
-      }
-    });
+    test(
+      'Casa no lee el catálogo de platillos; quien ve algún menú, sí',
+      () async {
+        expect(
+          () => _srv(Rol.casa).platillos(),
+          throwsA(isA<PermisoDenegado>()),
+        );
+        for (final r in [
+          Rol.dueno,
+          Rol.coadministrador,
+          Rol.familiar,
+          Rol.cuidador,
+        ]) {
+          expect(await _srv(r).platillos(), isNotEmpty, reason: r.name);
+        }
+      },
+    );
 
     test('el repositorio sin servidor no inventa nada y no escribe', () async {
       const r = RepositorioAlimentacionSinServidor();
       expect(await r.platillos(), isEmpty);
       expect(await r.menu(MenuId.papa, _lunes), isEmpty);
       expect(await r.suplementos(MenuId.papa), isEmpty);
-      expect(() => r.guardarSuplemento(MenuId.papa, suplementosEjemplo(MenuId.papa).first),
-          throwsUnsupportedError);
+      expect(
+        () => r.guardarSuplemento(
+          MenuId.papa,
+          suplementosEjemplo(MenuId.papa).first,
+        ),
+        throwsUnsupportedError,
+      );
     });
 
-    testWidgets('menú con sesión real: "Sin menú todavía", sin ejemplos ni perfil', (t) async {
-      for (final rol in [Rol.dueno, Rol.familiar, Rol.cuidador]) {
-        await t.pumpWidget(_app(rol, const PantallaMenuSemana(), sinServidor: true));
-        await t.pumpAndSettle();
-        expect(find.text('Sin menú todavía'), findsOneWidget, reason: rol.name);
-        expect(find.textContaining('Alzheimer'), findsNothing);
-        expect(find.text('Proteína en polvo'), findsNothing);
-        expect(find.text('Huevos revueltos con frijoles'), findsNothing);
-      }
-    });
+    testWidgets(
+      'menú con sesión real: "Sin menú todavía", sin ejemplos ni perfil',
+      (t) async {
+        for (final rol in [Rol.dueno, Rol.familiar, Rol.cuidador]) {
+          await t.pumpWidget(
+            _app(rol, const PantallaMenuSemana(), sinServidor: true),
+          );
+          await t.pumpAndSettle();
+          expect(
+            find.text('Sin menú todavía'),
+            findsOneWidget,
+            reason: rol.name,
+          );
+          expect(find.textContaining('Alzheimer'), findsNothing);
+          expect(find.text('Proteína en polvo'), findsNothing);
+          expect(find.text('Huevos revueltos con frijoles'), findsNothing);
+        }
+      },
+    );
 
     testWidgets('lista con sesión real: "Sin menú todavía"', (t) async {
-      await t.pumpWidget(_app(Rol.dueno, const PantallaListaCompras(), sinServidor: true));
+      await t.pumpWidget(
+        _app(Rol.dueno, const PantallaListaCompras(), sinServidor: true),
+      );
       await t.pumpAndSettle();
       expect(find.text('Sin menú todavía'), findsOneWidget);
       expect(find.byType(Checkbox), findsNothing);

@@ -13,9 +13,9 @@ const _config = ConfigControlLaptop(
 );
 
 class _Proceso {
-  final llamadas = <(String, List<String>)>[];
+  final llamadas = <List<String>>[];
   Future<bool> lanzar(String e, List<String> a) async {
-    llamadas.add((e, a));
+    llamadas.add([e, ...a]);
     return true;
   }
 }
@@ -39,7 +39,9 @@ void main() {
       final p = _Proceso();
       final r = await _ej(p).ejecutar(const AbrirPrograma('calc.exe'));
       expect(r.exito, isTrue);
-      expect(p.llamadas, [('calc.exe', <String>[])]);
+      expect(p.llamadas, [
+        ['calc.exe'],
+      ]);
     });
 
     test('un programa no permitido no se abre', () async {

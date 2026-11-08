@@ -230,12 +230,5 @@ void main() {
         expect(texto.contains(s), isFalse, reason: s);
       }
     });
-
-    test('el ejecutor de Windows es solo un marcador', () {
-      expect(
-        () => EjecutorLaptopWindows().ejecutar(const GmailLeer()),
-        throwsUnimplementedError,
-      );
-    });
   });
 }

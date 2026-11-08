@@ -161,15 +161,8 @@ void main() {
       await d.registrarOracion(10);
       await d.registrarOracion(5);
       expect(await d.minutosDeOracion(DateTime.utc(2026, 11, 3)), 15);
-      await d.guardarNota(
-        '43:3:16',
-        'nota NOTA_PRIVADA',
-        version: 'rvr1909',
-      );
-      expect(
-        (await d.notasDeCapitulo(43, 3))[16],
-        contains('NOTA_PRIVADA'),
-      );
+      await d.guardarNota('43:3:16', 'nota NOTA_PRIVADA', version: 'rvr1909');
+      expect((await d.notasDeCapitulo(43, 3))[16], contains('NOTA_PRIVADA'));
       expect(almacen.datos.values.join(), isNot(contains('NOTA_PRIVADA')));
     });
   });

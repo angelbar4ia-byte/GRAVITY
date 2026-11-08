@@ -36,29 +36,32 @@ void main() {
       r.aFila(),
   ];
 
-  test('edita nombre, área, unidad, meta y motivo sin tocar registros ni racha', () async {
-    final antes = await registros();
-    final rachaAntes = (await s.hoyDe()).single.racha.actual;
-    final n = await s.editarObjetivo(
-      o,
-      titulo: '  Leer un libro ',
-      area: 'educacion',
-      unidad: 'capítulos',
-      metaValor: 2,
-      motivo: 'Aprender',
-    );
-    expect(n.id, o.id);
-    expect(n.titulo, 'Leer un libro');
-    expect(n.area, 'educacion');
-    expect(n.unidad, 'capítulos');
-    expect(n.metaValor, 2);
-    expect(n.fechaInicio, o.fechaInicio);
-    expect(await registros(), antes); // el libro de cumplimiento no cambia
-    final h = (await s.hoyDe()).single;
-    expect(h.objetivo.titulo, 'Leer un libro');
-    expect(h.racha.actual, rachaAntes);
-    expect(h.racha.actual, 3);
-  });
+  test(
+    'edita nombre, área, unidad, meta y motivo sin tocar registros ni racha',
+    () async {
+      final antes = await registros();
+      final rachaAntes = (await s.hoyDe()).single.racha.actual;
+      final n = await s.editarObjetivo(
+        o,
+        titulo: '  Leer un libro ',
+        area: 'educacion',
+        unidad: 'capítulos',
+        metaValor: 2,
+        motivo: 'Aprender',
+      );
+      expect(n.id, o.id);
+      expect(n.titulo, 'Leer un libro');
+      expect(n.area, 'educacion');
+      expect(n.unidad, 'capítulos');
+      expect(n.metaValor, 2);
+      expect(n.fechaInicio, o.fechaInicio);
+      expect(await registros(), antes); // el libro de cumplimiento no cambia
+      final h = (await s.hoyDe()).single;
+      expect(h.objetivo.titulo, 'Leer un libro');
+      expect(h.racha.actual, rachaAntes);
+      expect(h.racha.actual, 3);
+    },
+  );
 
   test('cambiar a días elegidos conserva el historial; vaciar unidad y motivo los limpia', () async {
     final antes = await registros();
@@ -81,24 +84,49 @@ void main() {
     expect(n.programadoEn(DateTime.utc(2026, 11, 2)), isTrue);
     expect(await registros(), antes);
     // volver a "todos los días" restablece la máscara
-    final t = await s.editarObjetivo(n, titulo: 'Leer', area: 'personal', frecuencia: Frecuencia.diaria);
+    final t = await s.editarObjetivo(
+      n,
+      titulo: 'Leer',
+      area: 'personal',
+      frecuencia: Frecuencia.diaria,
+    );
     expect(t.diasSemana, 127);
   });
 
   test('valida: nombre, área, días y meta', () async {
-    Future<void> intentar({String titulo = 'Leer', String area = 'personal', int? meta, Frecuencia? f, int? dias}) =>
-        s.editarObjetivo(o, titulo: titulo, area: area, metaValor: meta, frecuencia: f, diasSemana: dias);
+    Future<void> intentar({
+      String titulo = 'Leer',
+      String area = 'personal',
+      int? meta,
+      Frecuencia? f,
+      int? dias,
+    }) => s.editarObjetivo(
+      o,
+      titulo: titulo,
+      area: area,
+      metaValor: meta,
+      frecuencia: f,
+      diasSemana: dias,
+    );
     await expectLater(intentar(titulo: ' '), throwsArgumentError);
     await expectLater(intentar(titulo: 'x' * 121), throwsArgumentError);
     await expectLater(intentar(area: 'otra'), throwsArgumentError);
-    await expectLater(intentar(f: Frecuencia.diasSemana, dias: 0), throwsArgumentError);
+    await expectLater(
+      intentar(f: Frecuencia.diasSemana, dias: 0),
+      throwsArgumentError,
+    );
     await expectLater(intentar(meta: 0), throwsArgumentError);
     // lo inválido no se guardó
     expect((await s.hoyDe()).single.objetivo.titulo, 'Leer');
   });
 
   test('deshacer devuelve el objetivo original', () async {
-    final n = await s.editarObjetivo(o, titulo: 'Otra cosa', area: 'salud', metaValor: 3);
+    final n = await s.editarObjetivo(
+      o,
+      titulo: 'Otra cosa',
+      area: 'salud',
+      metaValor: 3,
+    );
     ahora = ahora.add(const Duration(minutes: 1));
     await s.restaurarObjetivo(o);
     final h = (await s.hoyDe()).single;

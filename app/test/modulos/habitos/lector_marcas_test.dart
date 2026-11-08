@@ -56,22 +56,28 @@ void main() {
     });
 
     test('color inexistente se rechaza; quitar subrayado', () async {
-      await expectLater(marcas.subrayar(43, 3, 16, 'negro'), throwsArgumentError);
+      await expectLater(
+        marcas.subrayar(43, 3, 16, 'negro'),
+        throwsArgumentError,
+      );
       await marcas.subrayar(43, 3, 16, 'verde');
       await marcas.quitarSubrayado(43, 3, 16);
       expect(await marcas.delCapitulo(43, 3), isEmpty);
     });
 
-    test('el marcador se alterna y no lleva color; subrayado y marcador conviven', () async {
-      expect(await marcas.alternarMarcador(19, 23, 1), isTrue);
-      await marcas.subrayar(19, 23, 1, 'azul');
-      var l = await marcas.delCapitulo(19, 23);
-      expect(l.length, 2);
-      expect(l.where((m) => !m.esSubrayado).single.color, isNull);
-      expect(await marcas.alternarMarcador(19, 23, 1), isFalse);
-      l = await marcas.delCapitulo(19, 23);
-      expect(l.single.esSubrayado, isTrue);
-    });
+    test(
+      'el marcador se alterna y no lleva color; subrayado y marcador conviven',
+      () async {
+        expect(await marcas.alternarMarcador(19, 23, 1), isTrue);
+        await marcas.subrayar(19, 23, 1, 'azul');
+        var l = await marcas.delCapitulo(19, 23);
+        expect(l.length, 2);
+        expect(l.where((m) => !m.esSubrayado).single.color, isNull);
+        expect(await marcas.alternarMarcador(19, 23, 1), isFalse);
+        l = await marcas.delCapitulo(19, 23);
+        expect(l.single.esSubrayado, isTrue);
+      },
+    );
 
     test('las marcas son por capítulo', () async {
       await marcas.subrayar(43, 3, 16, 'rosa');
@@ -121,44 +127,71 @@ void main() {
       await d.guardarNota('19:23:1', '   ');
       expect(await d.notasDeCapitulo(19, 23), isEmpty);
       await expectLater(d.guardarNota('mal', 'x'), throwsArgumentError);
-      await expectLater(d.guardarNota('19:23:1', 'x' * 4001), throwsArgumentError);
+      await expectLater(
+        d.guardarNota('19:23:1', 'x' * 4001),
+        throwsArgumentError,
+      );
     });
   });
 
-  Future<void> montar(WidgetTester t, List<ProveedorBiblia> biblias) => t.pumpWidget(
-    ProviderScope(
-      overrides: [
-        servicioSesionProvider.overrideWithValue(ServicioSesionFalso()),
-        repositorioAgendaProvider.overrideWithValue(repo),
-        bibliasProvider.overrideWith((ref) async => biblias),
-      ],
-      child: const MaterialApp(home: PantallaLector()),
-    ),
-  );
+  Future<void> montar(WidgetTester t, List<ProveedorBiblia> biblias) =>
+      t.pumpWidget(
+        ProviderScope(
+          overrides: [
+            servicioSesionProvider.overrideWithValue(ServicioSesionFalso()),
+            repositorioAgendaProvider.overrideWithValue(repo),
+            bibliasProvider.overrideWith((ref) async => biblias),
+          ],
+          child: const MaterialApp(home: PantallaLector()),
+        ),
+      );
 
-  testWidgets('el lector subraya un versículo y lo conserva al cambiar de versión', (t) async {
-    final sem = t.ensureSemantics();
-    await montar(t, [biblia('rvr1909'), biblia('kjv')]);
-    await t.pumpAndSettle();
-    expect(find.textContaining('rvr1909 uno de 43:1', findRichText: true), findsOneWidget);
-    await t.tap(find.textContaining('rvr1909 uno de 43:1', findRichText: true));
-    await t.pumpAndSettle();
-    expect(find.text('Subrayar'), findsOneWidget);
-    for (final c in coloresSubrayado) {
-      expect(find.text(nombreColor(c)), findsOneWidget); // seis colores, con su nombre
-    }
-    await t.tap(find.text('Amarillo'));
-    await t.pumpAndSettle();
-    expect((await marcas.delCapitulo(43, 1)).single.color, 'amarillo');
-    expect(find.bySemanticsLabel(RegExp('Versículo 1, subrayado')), findsOneWidget);
-    expect(find.text('Versículo 1 · subrayado amarillo'), findsOneWidget); // en palabras
-    // otra versión: la marca sigue en el mismo versículo
-    await t.tap(find.text('KJV'));
-    await t.pumpAndSettle();
-    expect(find.textContaining('kjv uno de 43:1', findRichText: true), findsOneWidget);
-    expect(find.bySemanticsLabel(RegExp('Versículo 1, subrayado')), findsOneWidget);
-    sem.dispose();
-  });
+  testWidgets(
+    'el lector subraya un versículo y lo conserva al cambiar de versión',
+    (t) async {
+      final sem = t.ensureSemantics();
+      await montar(t, [biblia('rvr1909'), biblia('kjv')]);
+      await t.pumpAndSettle();
+      expect(
+        find.textContaining('rvr1909 uno de 43:1', findRichText: true),
+        findsOneWidget,
+      );
+      await t.tap(
+        find.textContaining('rvr1909 uno de 43:1', findRichText: true),
+      );
+      await t.pumpAndSettle();
+      expect(find.text('Subrayar'), findsOneWidget);
+      for (final c in coloresSubrayado) {
+        expect(
+          find.text(nombreColor(c)),
+          findsOneWidget,
+        ); // seis colores, con su nombre
+      }
+      await t.tap(find.text('Amarillo'));
+      await t.pumpAndSettle();
+      expect((await marcas.delCapitulo(43, 1)).single.color, 'amarillo');
+      expect(
+        find.bySemanticsLabel(RegExp('Versículo 1, subrayado')),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Versículo 1 · subrayado amarillo'),
+        findsOneWidget,
+      ); // en palabras
+      // otra versión: la marca sigue en el mismo versículo
+      await t.tap(find.text('KJV'));
+      await t.pumpAndSettle();
+      expect(
+        find.textContaining('kjv uno de 43:1', findRichText: true),
+        findsOneWidget,
+      );
+      expect(
+        find.bySemanticsLabel(RegExp('Versículo 1, subrayado')),
+        findsOneWidget,
+      );
+      sem.dispose();
+    },
+  );
 
   testWidgets('quitar subrayado y poner marcador desde la hoja', (t) async {
     await marcas.subrayar(43, 1, 2, 'verde');
@@ -167,7 +200,10 @@ void main() {
     await t.tap(find.textContaining('rvr1909 dos de 43:1', findRichText: true));
     await t.pumpAndSettle();
     expect(find.text('Escribir una nota'), findsOneWidget);
-    expect(find.text('Reservada: se pide tu PIN'), findsOneWidget); // las notas no se escriben aquí
+    expect(
+      find.text('Reservada: se pide tu PIN'),
+      findsOneWidget,
+    ); // las notas no se escriben aquí
     await t.tap(find.text('Quitar subrayado'));
     await t.pumpAndSettle();
     expect(await marcas.delCapitulo(43, 1), isEmpty);
@@ -179,13 +215,16 @@ void main() {
     expect(find.text('Versículo 2 · marcador'), findsOneWidget);
   });
 
-  testWidgets('sin texto instalado, el lector dice qué falta y a quién avisar (E18)', (t) async {
-    await montar(t, const []);
-    await t.pumpAndSettle();
-    expect(find.text('Aún no hay texto bíblico'), findsOneWidget);
-    expect(find.text(mensajeSinTexto), findsOneWidget);
-    expect(mensajeSinTexto, contains('Avísale'));
-  });
+  testWidgets(
+    'sin texto instalado, el lector dice qué falta y a quién avisar (E18)',
+    (t) async {
+      await montar(t, const []);
+      await t.pumpAndSettle();
+      expect(find.text('Aún no hay texto bíblico'), findsOneWidget);
+      expect(find.text(mensajeSinTexto), findsOneWidget);
+      expect(mensajeSinTexto, contains('Avísale'));
+    },
+  );
 
   test('los colores de muestra salen del tema y son distintos', () {
     // seis tonos distintos, siempre con nombre

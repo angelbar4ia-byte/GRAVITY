@@ -13,11 +13,21 @@ final _miercoles = DateTime(2026, 11, 4, 12);
 LecturaVozAlimentacion _voz(
   RepositorioAlimentacion repo, [
   CocinaPasoAPaso? c,
-]) => LecturaVozAlimentacion(repo, c ?? CocinaPasoAPaso(), ahora: () => _miercoles);
+]) => LecturaVozAlimentacion(
+  repo,
+  c ?? CocinaPasoAPaso(),
+  ahora: () => _miercoles,
+);
 
 Future<RepositorioAlimentacionEnMemoria> _conAvena() async {
   final r = RepositorioAlimentacionEnMemoria(conEjemplo: false);
-  await r.asignar(MenuId.pareja, lunesDe(_miercoles), 2, TiempoComida.desayuno, 'p-avena');
+  await r.asignar(
+    MenuId.pareja,
+    lunesDe(_miercoles),
+    2,
+    TiempoComida.desayuno,
+    'p-avena',
+  );
   return r;
 }
 
@@ -65,8 +75,11 @@ void main() {
     test('no mencionan dinero', () {
       for (final n in nombres) {
         final d = registro.buscar(n, rol: Rol.dueno)!.descripcion.toLowerCase();
-        expect(d, isNot(matches(RegExp(r'dinero|\$|precio|costo|pesos'))) , reason: n)
-            ;
+        expect(
+          d,
+          isNot(matches(RegExp(r'dinero|\$|precio|costo|pesos'))),
+          reason: n,
+        );
       }
     });
 
@@ -94,16 +107,25 @@ void main() {
   });
 
   group('recetas', () {
-    test('sin menú de hoy responde que no hay receta, sin inventar pasos', () async {
-      final v = _voz(RepositorioAlimentacionEnMemoria(conEjemplo: false));
-      for (final n in nombres.take(3)) {
-        expect(await v.responder(n), sinRecetaVoz, reason: n);
-      }
-    });
+    test(
+      'sin menú de hoy responde que no hay receta, sin inventar pasos',
+      () async {
+        final v = _voz(RepositorioAlimentacionEnMemoria(conEjemplo: false));
+        for (final n in nombres.take(3)) {
+          expect(await v.responder(n), sinRecetaVoz, reason: n);
+        }
+      },
+    );
 
     test('platillo de hoy sin pasos escritos tampoco inventa pasos', () async {
       final r = RepositorioAlimentacionEnMemoria(conEjemplo: false);
-      await r.asignar(MenuId.pareja, lunesDe(_miercoles), 2, TiempoComida.comida, 'p-pollo');
+      await r.asignar(
+        MenuId.pareja,
+        lunesDe(_miercoles),
+        2,
+        TiempoComida.comida,
+        'p-pollo',
+      );
       expect(await _voz(r).responder(nombres[0]), sinRecetaVoz);
     });
 
@@ -136,7 +158,13 @@ void main() {
 
     test('nunca usa el menú de Papá', () async {
       final r = RepositorioAlimentacionEnMemoria(conEjemplo: false);
-      await r.asignar(MenuId.papa, lunesDe(_miercoles), 2, TiempoComida.desayuno, 'p-avena');
+      await r.asignar(
+        MenuId.papa,
+        lunesDe(_miercoles),
+        2,
+        TiempoComida.desayuno,
+        'p-avena',
+      );
       final v = _voz(r);
       expect(await v.responder(nombres[0]), sinRecetaVoz);
       expect(await v.responder(nombres[3]), 'No hay menú para hoy.');
@@ -149,27 +177,42 @@ void main() {
       expect(t, 'Hoy toca: Desayuno, Avena con fruta.');
     });
 
-    test('la lista no muestra precios ni cantidades y pasa el filtro', () async {
-      final r = RepositorioAlimentacionEnMemoria(semanaEjemplo: _miercoles);
-      final t = (await _voz(r).responder(nombres[4]))!;
-      expect(t, startsWith('Falta comprar: '));
-      expect(t, isNot(matches(RegExp(r'\d|\$|precio|pesos|costo'))));
-      expect(
-        FiltroBocina().validar(TipoMensajeBocina.listaCompras, t).aceptado,
-        isTrue,
-        reason: t,
-      );
-    });
+    test(
+      'la lista no muestra precios ni cantidades y pasa el filtro',
+      () async {
+        final r = RepositorioAlimentacionEnMemoria(semanaEjemplo: _miercoles);
+        final t = (await _voz(r).responder(nombres[4]))!;
+        expect(t, startsWith('Falta comprar: '));
+        expect(t, isNot(matches(RegExp(r'\d|\$|precio|pesos|costo'))));
+        expect(
+          FiltroBocina().validar(TipoMensajeBocina.listaCompras, t).aceptado,
+          isTrue,
+          reason: t,
+        );
+      },
+    );
 
     test('lo comprado ya no se lee; todo comprado y lista vacía', () async {
       final r = await _conAvena();
       expect(await _voz(r).responder(nombres[4]), contains('Avena'));
-      for (final i in platillosEjemplo.firstWhere((p) => p.id == 'p-avena').ingredientes) {
-        await r.marcar(MenuId.pareja, lunesDe(_miercoles), claveCompra(i.nombre, i.unidad), true);
+      for (final i
+          in platillosEjemplo
+              .firstWhere((p) => p.id == 'p-avena')
+              .ingredientes) {
+        await r.marcar(
+          MenuId.pareja,
+          lunesDe(_miercoles),
+          claveCompra(i.nombre, i.unidad),
+          true,
+        );
       }
-      expect(await _voz(r).responder(nombres[4]), 'Ya compraste todo lo de la lista.');
       expect(
-        await _voz(RepositorioAlimentacionEnMemoria(conEjemplo: false)).responder(nombres[4]),
+        await _voz(r).responder(nombres[4]),
+        'Ya compraste todo lo de la lista.',
+      );
+      expect(
+        await _voz(RepositorioAlimentacionEnMemoria(conEjemplo: false))
+            .responder(nombres[4]),
         'La lista de compras está vacía.',
       );
     });

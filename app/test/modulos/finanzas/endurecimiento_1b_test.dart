@@ -215,7 +215,9 @@ void main() {
         final motivo = find.byKey(const ValueKey('gasto-motivo'));
         await tester.ensureVisible(motivo);
         expect(
-          find.textContaining('Mínimo 3 caracteres, con al menos 2 letras o números'),
+          find.textContaining(
+            'Mínimo 3 caracteres, con al menos 2 letras o números',
+          ),
           findsOneWidget,
         );
         for (final corto in ['ab', '   a   ', '​​​​']) {
@@ -261,7 +263,9 @@ void main() {
       await tester.pumpAndSettle();
       final campo = find.byKey(const ValueKey('finanzas-dialogo-texto'));
       expect(
-        find.textContaining('Mínimo 3 caracteres, con al menos 2 letras o números'),
+        find.textContaining(
+          'Mínimo 3 caracteres, con al menos 2 letras o números',
+        ),
         findsOneWidget,
       );
       FilledButton anular() => tester.widget<FilledButton>(

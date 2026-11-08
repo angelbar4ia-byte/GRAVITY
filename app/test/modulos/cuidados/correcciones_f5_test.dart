@@ -81,10 +81,15 @@ void main() {
       final d = datosDeEjemploCuidados(_ahora)..gastos.clear();
       final x = _dueno(d, fallos: 1);
       await x.srv.registrarGasto(concepto: 'Pañales', centavos: 18550);
-      final id = (await x.srv.gastos()).firstWhere((g) => g.concepto == 'Pañales').id;
+      final id = (await x.srv.gastos())
+          .firstWhere((g) => g.concepto == 'Pañales')
+          .id;
       final antes = x.fin.actual.datos.movimientos.length;
 
-      expect(await x.srv.resolverGasto(id, confirmar: true), avisoGastoSinFinanzas);
+      expect(
+        await x.srv.resolverGasto(id, confirmar: true),
+        avisoGastoSinFinanzas,
+      );
       expect(await x.srv.gastosSinFinanzas(), {id});
       expect(x.fin.actual.datos.movimientos.length, antes);
 
@@ -102,15 +107,20 @@ void main() {
       expect(x.fin.actual.datos.movimientos.length, antes + 1);
     });
 
-    test('si el reintento falla otra vez, avisa y sigue ofreciéndose', () async {
-      final d = datosDeEjemploCuidados(_ahora)..gastos.clear();
-      final x = _dueno(d, fallos: 2);
-      await x.srv.registrarGasto(concepto: 'Gasas', centavos: 9000);
-      final id = (await x.srv.gastos()).firstWhere((g) => g.concepto == 'Gasas').id;
-      await x.srv.resolverGasto(id, confirmar: true);
-      expect(await x.srv.pasarGastoAFinanzas(id), avisoGastoSinFinanzas);
-      expect(await x.srv.gastosSinFinanzas(), {id});
-    });
+    test(
+      'si el reintento falla otra vez, avisa y sigue ofreciéndose',
+      () async {
+        final d = datosDeEjemploCuidados(_ahora)..gastos.clear();
+        final x = _dueno(d, fallos: 2);
+        await x.srv.registrarGasto(concepto: 'Gasas', centavos: 9000);
+        final id = (await x.srv.gastos())
+            .firstWhere((g) => g.concepto == 'Gasas')
+            .id;
+        await x.srv.resolverGasto(id, confirmar: true);
+        expect(await x.srv.pasarGastoAFinanzas(id), avisoGastoSinFinanzas);
+        expect(await x.srv.gastosSinFinanzas(), {id});
+      },
+    );
 
     test('solo el dueño; un gasto pendiente no se pasa', () async {
       final d = datosDeEjemploCuidados(_ahora);
@@ -129,10 +139,7 @@ void main() {
       await cui.registrarGasto(concepto: 'Guantes', centavos: 500);
       final id = (await cui.gastos()).first.id;
       expect(await cui.gastosSinFinanzas(), isEmpty);
-      expect(
-        () => cui.pasarGastoAFinanzas(id),
-        throwsA(isA<ErrorCuidados>()),
-      );
+      expect(() => cui.pasarGastoAFinanzas(id), throwsA(isA<ErrorCuidados>()));
       final x = _dueno(d);
       await expectLater(
         x.srv.pasarGastoAFinanzas(id),
@@ -141,34 +148,42 @@ void main() {
       expect(x.llamadas, isEmpty);
     });
 
-    testWidgets('la tarjeta ofrece "Pasar a Finanzas" solo al dueño', (t) async {
+    testWidgets('la tarjeta ofrece "Pasar a Finanzas" solo al dueño', (
+      t,
+    ) async {
       final d = datosDeEjemploCuidados(_ahora)..gastos.clear();
       final x = _dueno(d, fallos: 1);
       await x.srv.registrarGasto(concepto: 'Pañales', centavos: 18550);
-      final id = (await x.srv.gastos()).firstWhere((g) => g.concepto == 'Pañales').id;
+      final id = (await x.srv.gastos())
+          .firstWhere((g) => g.concepto == 'Pañales')
+          .id;
       await x.srv.resolverGasto(id, confirmar: true);
 
       await t.binding.setSurfaceSize(const Size(400, 3000));
       addTearDown(() => t.binding.setSurfaceSize(null));
-      Widget app(String persona, Rol rol, ServicioCuidados srv) => ProviderScope(
-        overrides: [
-          relojProvider.overrideWithValue(RelojFijo(_ahora)),
-          almacenSeguroProvider.overrideWithValue(AlmacenSeguroEnMemoria()),
-          servicioSesionProvider.overrideWithValue(ServicioSesionFalso()),
-          sesionEfectivaProvider.overrideWithValue(
-            Sesion(persona: Persona(id: persona, nombre: persona), rol: rol),
-          ),
-          repositorioCuidadosProvider.overrideWithValue(
-            RepositorioCuidadosEnMemoria(
-              datos: d,
-              personaId: persona,
-              rol: rol,
-            ),
-          ),
-          servicioCuidadosProvider.overrideWithValue(srv),
-        ],
-        child: const MaterialApp(home: PantallaBitacora()),
-      );
+      Widget app(String persona, Rol rol, ServicioCuidados srv) =>
+          ProviderScope(
+            overrides: [
+              relojProvider.overrideWithValue(RelojFijo(_ahora)),
+              almacenSeguroProvider.overrideWithValue(AlmacenSeguroEnMemoria()),
+              servicioSesionProvider.overrideWithValue(ServicioSesionFalso()),
+              sesionEfectivaProvider.overrideWithValue(
+                Sesion(
+                  persona: Persona(id: persona, nombre: persona),
+                  rol: rol,
+                ),
+              ),
+              repositorioCuidadosProvider.overrideWithValue(
+                RepositorioCuidadosEnMemoria(
+                  datos: d,
+                  personaId: persona,
+                  rol: rol,
+                ),
+              ),
+              servicioCuidadosProvider.overrideWithValue(srv),
+            ],
+            child: const MaterialApp(home: PantallaBitacora()),
+          );
 
       await t.pumpWidget(app('persona-dueno', Rol.dueno, x.srv));
       await t.pumpAndSettle();
@@ -240,10 +255,7 @@ void main() {
             servicioSesionProvider.overrideWithValue(ServicioSesionFalso()),
             sesionEfectivaProvider.overrideWithValue(
               const Sesion(
-                persona: Persona(
-                  id: 'persona-cuidadora',
-                  nombre: 'Cuidadora',
-                ),
+                persona: Persona(id: 'persona-cuidadora', nombre: 'Cuidadora'),
                 rol: Rol.cuidador,
               ),
             ),
@@ -275,6 +287,9 @@ void main() {
     ]) {
       expect(titulosDeAviso[tipo], isNot(contains('Papá')));
     }
-    expect(titulosDeAviso['recordatorio_toma'], 'Hora de un recordatorio de cuidado');
+    expect(
+      titulosDeAviso['recordatorio_toma'],
+      'Hora de un recordatorio de cuidado',
+    );
   });
 }

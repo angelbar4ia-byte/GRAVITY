@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
-import 'package:gravity/app/avisos/con_avisos.dart' show tipoEquipoAvisosProvider;
+import 'package:gravity/app/avisos/con_avisos.dart'
+    show tipoEquipoAvisosProvider;
 import 'package:gravity/app/sensibles/puerta_reservada.dart';
 import 'package:gravity/diseno/proveedores.dart' show RelojFijo, relojProvider;
 import 'package:gravity/modulos/habitos/casos_uso/servicio_eliminar.dart';
@@ -64,11 +65,19 @@ void main() {
       ),
       ahora: () => ahora,
     );
-    await eliminar.configurar(ConfigHabito(tipo: TipoHabito.cigarrillo, inicio: DateTime.utc(2026, 11, 1)));
+    await eliminar.configurar(
+      ConfigHabito(
+        tipo: TipoHabito.cigarrillo,
+        inicio: DateTime.utc(2026, 11, 1),
+      ),
+    );
   });
 
   Future<void> abrirHoy(WidgetTester t) async {
-    t.view.physicalSize = const Size(400, 1800); // todo a la vista: sin desplazar
+    t.view.physicalSize = const Size(
+      400,
+      1800,
+    ); // todo a la vista: sin desplazar
     t.view.devicePixelRatio = 1;
     addTearDown(t.view.reset);
     final router = GoRouter(
@@ -100,7 +109,9 @@ void main() {
           relojProvider.overrideWithValue(RelojFijo(ahora)),
           repositorioHabitosProvider.overrideWithValue(repo),
           servicioHabitosProvider.overrideWithValue(servicio),
-          repositorioAgendaProvider.overrideWithValue(RepositorioAgendaEnMemoria()),
+          repositorioAgendaProvider.overrideWithValue(
+            RepositorioAgendaEnMemoria(),
+          ),
           servicioEliminarProvider.overrideWithValue(eliminar),
         ],
         child: MaterialApp.router(
@@ -117,19 +128,24 @@ void main() {
     toques = 0; // se cuenta desde que Hoy ya está a la vista
   }
 
-  Future<RegistroHab?> registroDeHoy() async =>
-      (await repo.registros(DateTime.utc(2026, 11, 6), DateTime.utc(2026, 11, 6)))
-          .where((r) => r.objetivoId == objetivo.id)
-          .firstOrNull;
+  Future<RegistroHab?> registroDeHoy() async => (await repo.registros(
+    DateTime.utc(2026, 11, 6),
+    DateTime.utc(2026, 11, 6),
+  )).where((r) => r.objetivoId == objetivo.id).firstOrNull;
 
-  testWidgets('marcar un hábito: Hecho = 1 toque (con la meta precargada)', (t) async {
+  testWidgets('marcar un hábito: Hecho = 1 toque (con la meta precargada)', (
+    t,
+  ) async {
     await abrirHoy(t);
     await t.tap(find.byTooltip('Hecho'));
     await t.pumpAndSettle();
     expect(toques, 1);
     final r = (await registroDeHoy())!;
     expect(r.estado, EstadoRegistro.hecho);
-    expect(r.valor, 8); // un hábito con cantidad queda con su meta: 1 toque, ≤ 3
+    expect(
+      r.valor,
+      8,
+    ); // un hábito con cantidad queda con su meta: 1 toque, ≤ 3
   });
 
   testWidgets('posponer u omitir: 2 toques; Deshacer: 1 más', (t) async {
@@ -155,7 +171,9 @@ void main() {
     expect(find.text('SOS abierto'), findsOneWidget);
   });
 
-  testWidgets('consumo: Reservado → (+) = 2 toques (el PIN no cuenta)', (t) async {
+  testWidgets('consumo: Reservado → (+) = 2 toques (el PIN no cuenta)', (
+    t,
+  ) async {
     await abrirHoy(t);
     await t.tap(find.text('Reservado'));
     await t.pumpAndSettle();
@@ -171,7 +189,9 @@ void main() {
     expect((await eliminar.estado(TipoHabito.cigarrillo))!.hoy, 0);
   });
 
-  testWidgets('consumo de un hábito sin configurar avisa en vez de fallar', (t) async {
+  testWidgets('consumo de un hábito sin configurar avisa en vez de fallar', (
+    t,
+  ) async {
     await abrirHoy(t);
     await t.tap(find.text('Reservado'));
     await t.pumpAndSettle();
