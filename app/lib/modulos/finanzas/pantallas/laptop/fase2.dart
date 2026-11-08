@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 
 import '../fase2/vista_ahorro.dart';
 import '../fase2/vista_deudas.dart';
+import '../fase2/vista_simulador.dart';
+import '../fase2/vista_tarjetas.dart';
 import '../fase2/vista_vencimientos.dart';
 import 'marco_laptop.dart';
 
@@ -36,5 +38,25 @@ class PantallaVencimientos extends StatelessWidget {
   Widget build(BuildContext context) => MarcoFinanzasLaptop(
     seccion: SeccionFinanzas.vencimientos,
     builder: (context, c) => VistaVencimientos(contexto: c),
+  );
+}
+
+class PantallaSimulador extends StatelessWidget {
+  const PantallaSimulador({super.key});
+
+  @override
+  Widget build(BuildContext context) => MarcoFinanzasLaptop(
+    seccion: SeccionFinanzas.simulador,
+    builder: (context, c) => VistaSimulador(contexto: c),
+  );
+}
+
+class PantallaTarjetas extends StatelessWidget {
+  const PantallaTarjetas({super.key});
+
+  @override
+  Widget build(BuildContext context) => MarcoFinanzasLaptop(
+    seccion: SeccionFinanzas.tarjetas,
+    builder: (context, c) => VistaTarjetas(contexto: c),
   );
 }

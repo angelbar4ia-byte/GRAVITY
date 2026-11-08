@@ -29,6 +29,8 @@ enum SeccionFinanzas {
     Icons.event_repeat_outlined,
   ),
   deudas('deudas', 'Deudas', Icons.credit_card_outlined),
+  simulador('simulador', 'Simulador de deudas', Icons.compare_arrows),
+  tarjetas('tarjetas', 'Tarjetas y beneficios', Icons.credit_card),
   ahorro('ahorro', 'Ahorro y fondo', Icons.savings_outlined),
   transferencias('transferencias', 'Transferencias', Icons.swap_horiz),
   aportacion('aportacion', 'Aportación a la casa', Icons.home_outlined),
