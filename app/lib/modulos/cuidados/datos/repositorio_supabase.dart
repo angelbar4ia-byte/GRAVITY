@@ -182,7 +182,8 @@ class RepositorioCuidadosSupabase implements RepositorioCuidados {
     try {
       for (final f in await _leer('membresias')) {
         if (f['activa'] == false) continue;
-        if (f['rol'] == 'coadministrador') {
+        // F5-M5: la cuenta maestra que no es la dueña no es "la pareja".
+        if (f['rol'] == 'coadministrador' && f['es_maestra'] != true) {
           parejaId ??= f['persona_id'] as String?;
         }
       }

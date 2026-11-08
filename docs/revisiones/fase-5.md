@@ -119,3 +119,57 @@ Escribirlas en `supabase/tests/` (backend) y `app/test/` (cuidados/plataforma) c
 3. ¿Prefieres recordatorios programados varios días por adelantado en el teléfono, o un aviso empujado por el servidor al llegar la hora? (F5-I4)
 4. ¿Quieres cifrado de extremo a extremo para bitácora, citas o notas de Papá, como el diario de Hábitos (D13)? (Sección 6)
 5. ¿Las visitas de la hermana deben quitar al dueño del turno residual? (F5-M9)
+
+---
+
+# Segunda vuelta
+
+Revisor: agente calidad · Fecha: 8/nov/2026 · Alcance: migración `20261123000000_cuidados_revision.sql`, `supabase/tests/95_cuidados_maestra.sql`, `app/lib/modulos/cuidados`, `app/lib/app/avisos/recordatorios_cuidados.dart`, `app/lib/nucleo/avisos/catalogo_avisos.dart`, `app/test/modulos/cuidados/correcciones_f5_test.dart`, `app/test/app/recordatorios_cuidados_test.dart`. No modifiqué código ni pruebas.
+
+## Veredicto final: **APROBADA CON CONDICIONES**
+
+El bloqueante F5-B1 está cerrado en el servidor y con prueba. Quedan abiertos F5-I4 (recordatorios solo de hoy) y los menores no incluidos en esta ronda. Ninguno filtra dinero ni datos clínicos.
+
+## Pruebas corridas
+
+| Comando | Resultado |
+|---|---|
+| `bash supabase/tests/correr.sh` | **48 archivos, 2752 afirmaciones, todo pasa** (nuevo `95_cuidados_maestra.sql`: 41; los demás de Cuidados sin cambio) |
+| `flutter test` de `test/modulos/cuidados`, `test/nucleo/cuidados`, `test/app/recordatorios_cuidados_test.dart`, `horarios_comida_recordatorios_test.dart`, `cuidados_instrucciones_acceso_test.dart`, `cuidadora_solicitudes_test.dart`, `pantalla_segura_test.dart` | **176 pasan, 0 fallan** (antes 167; no corrí la suite completa) |
+
+## Bloqueante F5-B1: CERRADO
+
+Rehice el criterio con la base de pruebas y con los archivos:
+- **Migración.** `cui_es_maestra_ajena` (maestra vigente que no es dueña). `cui_perfil` la devuelve como `pareja` aunque exista una fila de consentimiento concedida. `cui_puede` le responde verdadero solo a `turnos`/`leer`; todo lo demás, falso. `cui_cambiar_consentimiento` da 42501 si la sesión es maestra ajena (a sí misma, para retirar o para otra persona). Un `update` retira los consentimientos que ya tuviera.
+- **Prueba (`95_cuidados_maestra.sql`).** Reproduce el peor caso, que es el que usé la primera vez: postgres le inserta a Marta un consentimiento concedido, y aun así ve 0 medicamentos, 0 tomas, 0 comidas, 0 bitácora, 0 citas, 0 gastos y 0 horarios de comida; ve los 11 turnos; los tres intentos de cambiar consentimiento dan 42501; insertar gastos (cuidado y casa), bitácora, citas, entregas, comidas, medicamentos y turnos da 42501; marcar toma, dejar instrucción, crear cambio urgente y fijar horario dan 42501. Contraprueba: la pareja sigue dando su consentimiento y leyendo (2 medicamentos), y la dueña que además es maestra conserva el perfil `dueno`, lee y registra gastos.
+- **Puertas laterales.** Revisé que las demás RPC (marcar, posponer, atender cambio, confirmar gasto, horarios, instrucciones) comparan contra `cui_perfil` o `cui_puede`; con el perfil `pareja` fijo de la maestra, ninguna le abre algo que la pareja sin consentimiento no tenga, y las que son de dueño/cuidadora/hermana la rechazan. La política de instrucciones ya excluía `es_maestra` (`20261120:30`).
+- **Observación (no bloquea).** La maestra sigue con perfil `pareja`, así que cualquier función que solo pregunte `cui_perfil is not null` (por ejemplo, el resumen del día con conteos, `operaciones.sql:300` y `v11.sql:53`) la trata como pareja sin consentimiento. Son conteos, no contenido; D19 dice "solo lectura total", así que no contradice. Si se quiere que no vea ni los conteos, hace falta una prueba y una guarda más (propuesta menor, ver F5-M10).
+
+## Estado de cada hallazgo
+
+| Hallazgo | Estado | Evidencia |
+|---|---|---|
+| **F5-B1** maestra se da consentimiento y escribe | **Cerrado** | Migración `20261123` y `95_cuidados_maestra.sql` (ver arriba) |
+| **F5-I1** cuidadora registra gastos de casa | **Cerrado** | Política `cui_gastos_agregar` con `ambito = 'cuidado' or perfil in (dueno, hermana, pareja, pareja_consentida)`. Prueba: Diana recibe 42501 en `casa` y puede en `cuidado`; Carla y Alex sí registran `casa` |
+| **F5-I2** gasto confirmado sin reintento a Finanzas | **Cerrado** | `bitacora.dart:249` ofrece "Pasar a Finanzas" solo al dueño en confirmados que no constan en el libro (`proveedores.dart:215`). `correcciones_f5_test.dart`: falla Finanzas, se reintenta y queda un solo movimiento; si el reintento falla se sigue ofreciendo; solo el dueño y un pendiente no se pasa; prueba de widget de la tarjeta |
+| **F5-I3** toma pospuesta no llega a quien sigue | **Cerrado** | `repositorio_supabase.dart:349-365` lee `pospuesta_a` y `pospuesta_turno_en`; `Toma.recordarEn` es la hora del turno que la recibe; `servicio_cuidados.dart:223` la lista el día del nuevo turno; `FuenteCuidadosRepositorio` programa con `recordarEn`. Pruebas: la cuidadora recibe el aviso a las 7:30 del día siguiente, el dueño que la pospuso ya no; la toma se ve como "Pospuesta por otra persona de turno" |
+| **F5-I4** recordatorios solo de hoy y solo al abrir | **Abierto** | `FuenteCuidadosRepositorio.proximos` sigue ignorando `dias` y leyendo solo `tomas(hoy)` y `comidas(hoy)` (`recordatorios_cuidados.dart:23-69`); sin tarea en segundo plano; la prueba de "hueco con la app cerrada" que recomendé no existe. La pregunta 3 al dueño sigue sin respuesta. Sigue siendo de recibir a tiempo, no de recibir de más |
+| **F5-I5** cron de tomas no documentado | **Cerrado (con límite)** | `cui_programar_cron_tomas()` (solo dueño o servidor; idempotente; `false` sin `pg_cron`) y párrafo nuevo en `supabase/README.md:610`. Prueba: la cuidadora y `anon` reciben 42501 y la dueña la invoca. Límite: sin `pg_cron` en la base de pruebas no se probó el `true` ni que el trabajo quede programado; verificar a mano al activar la extensión |
+| **F5-M2** cualquiera escribe su fila de consentimiento | **Parcial** | Maestra cerrada con prueba. Falta: el rol Casa (y cualquier miembro vigente) todavía puede guardar su propia fila (`cui_cambiar_consentimiento` solo exige `rol_en_hogar is not null` y `persona = yo`). Sin efecto, porque `cui_perfil` solo lee la fila para `coadministrador`; sin prueba. Se deja como menor |
+| **F5-M5** "la pareja" puede ser la maestra | **Abierto** | `repositorio_supabase.dart:185` sigue tomando el primer `coadministrador` activo (`parejaId ??= …`) sin excluir `es_maestra`; ninguna prueba lo cubre. La pantalla de consentimientos podría mostrar a la maestra como pareja si aparece antes. Arreglo de una línea |
+| **F5-M6** títulos con "Papá" | **Cerrado** | `catalogo_avisos.dart:74-75`: "Hora de un recordatorio de cuidado" y "Hora de la comida". Prueba `correcciones_f5_test.dart` (ninguno de los cuatro tipos de Cuidados contiene "Papá") |
+| **F5-M7** recordatorios en tablet pública | **Cerrado** | `reprogramarRecordatoriosCuidados(tabletPublica: true)` cancela y no programa; `con_avisos.dart:110` pasa el tipo de equipo. Prueba: primero se programa en el teléfono y, con la misma persona en tablet pública, `programadas` queda vacío |
+
+No se pidió revisar de nuevo y siguen como estaban: F5-M1 (oráculo entre hogares en funciones auxiliares), F5-M3 (consentimiento de Papá sin efecto), F5-M4 (rol real de la hermana), F5-M8 (textos de "Fase 5"), F5-M9 (bitácora de la hermana y turno residual en visitas).
+
+## Hallazgo nuevo
+
+- **F5-M10 (menor).** La maestra ajena mantiene perfil `pareja`; ve turnos (correcto) y, por funciones que solo piden perfil no nulo, conteos del día. Decidir si D19 también excluye eso y, si sí, agregar la guarda con prueba.
+
+## Condiciones para cerrar la fase
+
+1. **F5-I4:** que el dueño elija (recordatorios locales de 2 a 7 días o aviso empujado por el servidor) y se implemente con prueba; mientras tanto, documentar en la guía de la cuidadora que debe abrir la app antes de su turno.
+2. **F5-M5:** excluir `es_maestra` al elegir a la pareja, con una prueba.
+3. **Manual al activar `pg_cron`:** correr `select public.cui_programar_cron_tomas();` y confirmar que devuelve `true` y que el trabajo `cui-generar-tomas` existe.
+4. Mantener como pendientes con dueño asignado: F5-M1 a M4, M8, M9, M10, y las decisiones de cifrado (D13) y de tablet pública (D14) de la sección 6.
+5. Sin cambios: la entrega real de avisos (FCM) y la pantalla segura en dispositivo siguen como verificación manual.
