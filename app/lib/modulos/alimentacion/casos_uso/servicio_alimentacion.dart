@@ -229,6 +229,7 @@ class ServicioAlimentacion {
     String? nombre,
     String? unidad,
     CuentaCompra? cuenta,
+    String? cuentaPagoId,
   }) async {
     _exigirEdicion();
     if (!puedeVerCompras(rol, m, esMaestra: esMaestra)) {
@@ -257,11 +258,108 @@ class ServicioAlimentacion {
       compra: compra,
       precio: precio,
       cuenta: cuenta ?? cuentaPorOmision(rol, m),
+      cuentaPagoId: cuentaPagoId,
     );
     return RegistroCompra(
       alerta: alerta,
       pendienteAlbacea: r.pendienteAlbacea,
     );
+  }
+
+  /// Cuentas de pago que se ofrecen en [m] (nombres, sin saldos). La de
+  /// omisión viene marcada; la persona puede elegir otra. Papá: ninguna.
+  Future<List<CuentaPago>> cuentasDePago(MenuId m) async {
+    _exigirEdicion();
+    return _repo.cuentasDePago(cuentaPorOmision(rol, m));
+  }
+
+  /// La cuenta de pago a usar: la elegida si es una de las ofrecidas; si no, la
+  /// de omisión. Una elegida siempre gana a la omisión.
+  static CuentaPago? cuentaEfectiva(List<CuentaPago> ofrecidas, String? elegida) {
+    for (final c in ofrecidas) {
+      if (c.id == elegida) return c;
+    }
+    return ofrecidas.where((c) => c.porOmision).firstOrNull;
+  }
+
+  /// Agrega un ingrediente a la lista (dueño y pareja) por la función del
+  /// servidor.
+  Future<void> agregarALista({
+    required String nombre,
+    required String unidad,
+    required double cantidad,
+  }) async {
+    _exigirEdicion();
+    if (nombre.trim().isEmpty || unidad.trim().isEmpty || cantidad <= 0) {
+      throw ArgumentError('Falta el nombre, la unidad o una cantidad mayor que cero.');
+    }
+    await _repo.agregarALista(
+      nombre: nombre.trim(),
+      unidad: unidad.trim(),
+      cantidad: cantidad,
+    );
+  }
+
+  /// La ficha del ingrediente con ese nombre, si existe.
+  Future<FichaIngrediente?> ficha(String nombre) {
+    _exigirEdicion();
+    return _repo.ingredientePorNombre(nombre);
+  }
+
+  /// Edita unidad y presentación del MISMO ingrediente.
+  Future<FichaIngrediente> editarPresentacion({
+    required String ingredienteId,
+    required String unidad,
+    required String presentacion,
+  }) async {
+    _exigirEdicion();
+    if (unidad.trim().isEmpty) throw ArgumentError('Falta la unidad.');
+    return _repo.editarPresentacion(
+      ingredienteId: ingredienteId,
+      unidad: unidad,
+      presentacion: presentacion,
+    );
+  }
+
+  // ------------------------------------------------------------------ Albacea
+
+  /// Solo el albacea ve las compras de Papá pendientes de pago: dueño o
+  /// pareja (no la maestra) que además lo sea en el libro de Papá. La
+  /// suplente y el resto no.
+  Future<bool> puedeResolverSolicitudes() async =>
+      puedeEditar && await _repo.esAlbacea();
+
+  Future<void> _exigirAlbacea() async {
+    if (!await puedeResolverSolicitudes()) throw const PermisoDenegado();
+  }
+
+  Future<List<SolicitudPago>> solicitudesPendientes() async {
+    await _exigirAlbacea();
+    return _repo.solicitudesPendientes();
+  }
+
+  Future<List<CuentaPago>> cuentasDelLibroDePapa() async {
+    await _exigirAlbacea();
+    return _repo.cuentasDelLibroDePapa();
+  }
+
+  /// Aprueba con una cuenta del libro de Papá.
+  Future<void> aprobarSolicitud(String id, {required String cuentaPagoId}) async {
+    await _exigirAlbacea();
+    if (cuentaPagoId.isEmpty) throw ArgumentError('Elige la cuenta de pago.');
+    await _repo.resolverSolicitud(
+      solicitudId: id,
+      aprobar: true,
+      cuentaPagoId: cuentaPagoId,
+    );
+  }
+
+  /// Rechaza con motivo (mínimo 3 caracteres).
+  Future<void> rechazarSolicitud(String id, {required String motivo}) async {
+    await _exigirAlbacea();
+    final m = motivo.trim();
+    if (m.length < 3) throw ArgumentError('El motivo lleva al menos 3 caracteres.');
+    await _repo.resolverSolicitud(solicitudId: id, aprobar: false, motivo: m);
   }
 
   /// Compras reales de un ingrediente, de la más reciente a la más antigua.
@@ -309,7 +407,8 @@ class ServicioAlimentacion {
 
   /// Como [guardarIngredienteConCodigo], y dice si el servidor ya lo guardó
   /// (`enServidor`) o solo quedó en la memoria de la sesión.
-  Future<({Ingrediente ingrediente, bool enServidor})> guardarConCodigo({
+  Future<({Ingrediente ingrediente, bool enServidor, FichaIngrediente? existente})>
+  guardarConCodigo({
     required String codigo,
     required String nombre,
     required String unidad,
@@ -321,8 +420,13 @@ class ServicioAlimentacion {
       throw ArgumentError('Falta el código, el nombre o la unidad.');
     }
     final i = Ingrediente(nombre.trim(), 1, unidad.trim(), seccion, codigoBarras: c);
+    // Mismo nombre = mismo ingrediente: se abre el existente, no se crea otro.
+    final existente = await _repo.ingredientePorNombre(nombre);
+    if (existente != null) {
+      return (ingrediente: i, enServidor: true, existente: existente);
+    }
     final enServidor = await _repo.guardarIngredienteConCodigo(i);
-    return (ingrediente: i, enServidor: enServidor);
+    return (ingrediente: i, enServidor: enServidor, existente: null);
   }
 
   /// Menú del día de Papá. Lo ve quien ve el menú de Papá y la cuenta Casa

@@ -66,6 +66,49 @@ abstract interface class RepositorioAlimentacion {
     required CompraPrecio compra,
     required PrecioIngrediente precio,
     required CuentaCompra cuenta,
+    String? cuentaPagoId,
+  });
+
+  /// Cuentas de pago que se ofrecen para [cuenta] (la elegible de su libro
+  /// personal o del libro de la casa), con la de omisión marcada. Papá: vacío
+  /// (sin cuenta la compra va al albacea).
+  Future<List<CuentaPago>> cuentasDePago(CuentaCompra cuenta);
+
+  /// Agrega a la lista (`ali_agregar_a_lista`); nunca inserta en `ali_compras`.
+  Future<void> agregarALista({
+    required String nombre,
+    required String unidad,
+    required double cantidad,
+  });
+
+  /// El ingrediente del catálogo con ese nombre (sin importar mayúsculas), o
+  /// `null`. La marca y la unidad no cuentan: no hay duplicados por nombre.
+  Future<FichaIngrediente?> ingredientePorNombre(String nombre);
+
+  /// Cambia unidad y presentación del MISMO ingrediente
+  /// (`ali_editar_presentacion`); no crea otro.
+  Future<FichaIngrediente> editarPresentacion({
+    required String ingredienteId,
+    required String unidad,
+    required String presentacion,
+  });
+
+  /// `true` solo para el albacea vigente (no la suplente).
+  Future<bool> esAlbacea();
+
+  /// Compras de Papá pendientes de pago (solo las ve el albacea).
+  Future<List<SolicitudPago>> solicitudesPendientes();
+
+  /// Cuentas del libro de Papá para aprobar (solo nombres, sin saldos).
+  Future<List<CuentaPago>> cuentasDelLibroDePapa();
+
+  /// `ali_resolver_solicitud_pago`: aprueba con [cuentaPagoId] o rechaza con
+  /// [motivo].
+  Future<void> resolverSolicitud({
+    required String solicitudId,
+    required bool aprobar,
+    String? cuentaPagoId,
+    String? motivo,
   });
 
   /// Menú [menu] de la semana que empieza en [lunes].
@@ -147,6 +190,59 @@ class RepositorioAlimentacionEnMemoria implements RepositorioAlimentacion {
   /// Hace de servidor en memoria: el volado de `ali_cerrar_votaciones`.
   final bool Function() _volado;
 
+
+  final Map<String, FichaIngrediente> _fichas = {};
+  final List<(String, double, String)> listaAgregada = [];
+
+  @override
+  Future<List<CuentaPago>> cuentasDePago(CuentaCompra cuenta) async =>
+      cuenta == CuentaCompra.papa
+      ? const []
+      : [CuentaPago(id: 'cuenta-${cuenta.name}', nombre: 'Efectivo', porOmision: true)];
+
+  @override
+  Future<void> agregarALista({
+    required String nombre,
+    required String unidad,
+    required double cantidad,
+  }) async => listaAgregada.add((nombre, cantidad, unidad));
+
+  @override
+  Future<FichaIngrediente?> ingredientePorNombre(String nombre) async =>
+      _fichas[nombre.trim().toLowerCase()];
+
+  @override
+  Future<FichaIngrediente> editarPresentacion({
+    required String ingredienteId,
+    required String unidad,
+    required String presentacion,
+  }) async {
+    final e = _fichas.entries.where((x) => x.value.id == ingredienteId);
+    if (e.isEmpty) throw StateError('El ingrediente no existe.');
+    final f = FichaIngrediente(
+      id: ingredienteId,
+      nombre: e.first.value.nombre,
+      unidad: unidad,
+      presentacion: presentacion,
+    );
+    _fichas[e.first.key] = f;
+    return f;
+  }
+
+  @override
+  Future<bool> esAlbacea() async => false;
+  @override
+  Future<List<SolicitudPago>> solicitudesPendientes() async => const [];
+  @override
+  Future<List<CuentaPago>> cuentasDelLibroDePapa() async => const [];
+  @override
+  Future<void> resolverSolicitud({
+    required String solicitudId,
+    required bool aprobar,
+    String? cuentaPagoId,
+    String? motivo,
+  }) async {}
+
   @override
   Future<bool?> hayPresupuesto() async => hayPresupuestoSupuesto;
 
@@ -181,6 +277,7 @@ class RepositorioAlimentacionEnMemoria implements RepositorioAlimentacion {
     required CompraPrecio compra,
     required PrecioIngrediente precio,
     required CuentaCompra cuenta,
+    String? cuentaPagoId,
   }) async {
     _historial.add(compra);
     _precios[precio.clave] = precio;
@@ -234,6 +331,11 @@ class RepositorioAlimentacionEnMemoria implements RepositorioAlimentacion {
   @override
   Future<bool> guardarIngredienteConCodigo(Ingrediente ingrediente) async {
     _conCodigo[ingrediente.clave] = ingrediente;
+    _fichas[ingrediente.nombre.trim().toLowerCase()] = FichaIngrediente(
+      id: 'ing-${ingrediente.nombre.trim().toLowerCase()}',
+      nombre: ingrediente.nombre,
+      unidad: ingrediente.unidad,
+    );
     return true;
   }
 
@@ -344,6 +446,36 @@ class RepositorioAlimentacionSinServidor implements RepositorioAlimentacion {
     required CompraPrecio compra,
     required PrecioIngrediente precio,
     required CuentaCompra cuenta,
+    String? cuentaPagoId,
+  }) async => _no();
+  @override
+  Future<List<CuentaPago>> cuentasDePago(CuentaCompra cuenta) async => const [];
+  @override
+  Future<void> agregarALista({
+    required String nombre,
+    required String unidad,
+    required double cantidad,
+  }) async => _no();
+  @override
+  Future<FichaIngrediente?> ingredientePorNombre(String nombre) async => null;
+  @override
+  Future<FichaIngrediente> editarPresentacion({
+    required String ingredienteId,
+    required String unidad,
+    required String presentacion,
+  }) async => _no();
+  @override
+  Future<bool> esAlbacea() async => false;
+  @override
+  Future<List<SolicitudPago>> solicitudesPendientes() async => const [];
+  @override
+  Future<List<CuentaPago>> cuentasDelLibroDePapa() async => const [];
+  @override
+  Future<void> resolverSolicitud({
+    required String solicitudId,
+    required bool aprobar,
+    String? cuentaPagoId,
+    String? motivo,
   }) async => _no();
   @override
   Future<void> guardarVotacion(VotacionPlan votacion) async => _no();

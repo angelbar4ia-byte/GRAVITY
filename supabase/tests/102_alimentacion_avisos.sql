@@ -21,10 +21,10 @@ select pruebas.ok(not exists (select 1 from information_schema.columns where tab
 -- ---------------------------------------------------------------- compra de Papá: al albacea
 insert into public.ali_ingredientes (id, hogar_id, nombre, unidad, pasillo, precio_base_centavos)
 values ('a7100000-0000-4000-8000-0000000000f1', 'b0000000-0000-4000-8000-000000000001', 'Leche Zeta', 'l', 'Lácteos', 2500);
-select pruebas.como('ana@ejemplo.test');
-select pruebas.igual(pruebas.afecta($$insert into public.ali_compras (id, hogar_id, cuenta, ingrediente_id, cantidad) values
-  ('a7300000-0000-4000-8000-0000000000f1', 'b0000000-0000-4000-8000-000000000001', 'papa', 'a7100000-0000-4000-8000-0000000000f1', 4),
-  ('a7300000-0000-4000-8000-0000000000f2', 'b0000000-0000-4000-8000-000000000001', 'papa', 'a7100000-0000-4000-8000-0000000000f1', 2)$$), 2, 'Preparación: dos compras de Papá');
+select pruebas.como_postgres();
+select pruebas.igual(pruebas.afecta($$insert into public.ali_compras (id, hogar_id, cuenta, ingrediente_id, cantidad, solicitada_por) values
+  ('a7300000-0000-4000-8000-0000000000f1', 'b0000000-0000-4000-8000-000000000001', 'papa', 'a7100000-0000-4000-8000-0000000000f1', 4, pruebas.id_persona('ana@ejemplo.test')),
+  ('a7300000-0000-4000-8000-0000000000f2', 'b0000000-0000-4000-8000-000000000001', 'papa', 'a7100000-0000-4000-8000-0000000000f1', 2, pruebas.id_persona('ana@ejemplo.test'))$$), 2, 'Preparación: dos compras de Papá');
 select pruebas.como_postgres();
 select pruebas.igual(pg_temp.total('compra_papa_albacea'), 0, 'Pedir la compra no avisa todavía');
 select pruebas.como('alex@ejemplo.test');

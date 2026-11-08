@@ -132,28 +132,32 @@ select pruebas.igual(pruebas.cuenta($$select * from public.ali_despensa$$), 6, '
 select pruebas.igual(pruebas.afecta($$update public.ali_despensa set cantidad = 0$$), 0, 'y no escribe');
 
 -- ---------------------------------------------------------------- lista de compras: quién agrega y quién ve
+select pruebas.como_postgres();
+select pruebas.igual(pruebas.afecta($$insert into public.ali_compras (id, hogar_id, cuenta, ingrediente_id, cantidad, para_el, comprador_id, solicitada_por) values
+  ('a7300000-0000-4000-8000-000000000001', 'b0000000-0000-4000-8000-000000000001', 'dueno', 'a7100000-0000-4000-8000-000000000001', 2, current_date, pruebas.id_persona('ana@ejemplo.test'), pruebas.id_persona('ana@ejemplo.test')),
+  ('a7300000-0000-4000-8000-000000000002', 'b0000000-0000-4000-8000-000000000001', 'dueno', 'a7100000-0000-4000-8000-000000000001', 1, current_date, null, pruebas.id_persona('ana@ejemplo.test'))$$), 2,
+  'Preparación (la app ya no inserta directo; ver 104): lista de la dueña');
 select pruebas.como('ana@ejemplo.test');
-select pruebas.igual(pruebas.afecta($$insert into public.ali_compras (id, hogar_id, cuenta, ingrediente_id, cantidad, para_el, comprador_id) values
-  ('a7300000-0000-4000-8000-000000000001', 'b0000000-0000-4000-8000-000000000001', 'dueno', 'a7100000-0000-4000-8000-000000000001', 2, current_date, pruebas.id_persona('ana@ejemplo.test')),
-  ('a7300000-0000-4000-8000-000000000002', 'b0000000-0000-4000-8000-000000000001', 'dueno', 'a7100000-0000-4000-8000-000000000001', 1, current_date, null)$$), 2,
-  'La dueña arma su lista (quién compra y cuándo)');
 select pruebas.ok((select solicitada_por = pruebas.id_persona('ana@ejemplo.test') from public.ali_compras where id = 'a7300000-0000-4000-8000-000000000001'),
   'Queda quién la pidió (lo pone el servidor)');
 select pruebas.falla($$insert into public.ali_compras (hogar_id, cuenta, ingrediente_id, cantidad, comprado) values
   ('b0000000-0000-4000-8000-000000000001', 'dueno', 'a7100000-0000-4000-8000-000000000001', 1, true)$$, 'Nadie crea una compra ya marcada', '42501');
-select pruebas.igual(pruebas.afecta($$insert into public.ali_compras (id, hogar_id, cuenta, ingrediente_id, cantidad) values
-  ('a7300000-0000-4000-8000-000000000003', 'b0000000-0000-4000-8000-000000000001', 'papa', 'a7100000-0000-4000-8000-000000000003', 4),
-  ('a7300000-0000-4000-8000-000000000004', 'b0000000-0000-4000-8000-000000000001', 'papa', 'a7100000-0000-4000-8000-000000000004', 1),
-  ('a7300000-0000-4000-8000-000000000005', 'b0000000-0000-4000-8000-000000000001', 'casa', 'a7100000-0000-4000-8000-000000000004', 3)$$), 3,
-  'y las de Papá y de la casa');
+select pruebas.como_postgres();
+select pruebas.igual(pruebas.afecta($$insert into public.ali_compras (id, hogar_id, cuenta, ingrediente_id, cantidad, solicitada_por) values
+  ('a7300000-0000-4000-8000-000000000003', 'b0000000-0000-4000-8000-000000000001', 'papa', 'a7100000-0000-4000-8000-000000000003', 4, pruebas.id_persona('ana@ejemplo.test')),
+  ('a7300000-0000-4000-8000-000000000004', 'b0000000-0000-4000-8000-000000000001', 'papa', 'a7100000-0000-4000-8000-000000000004', 1, pruebas.id_persona('ana@ejemplo.test')),
+  ('a7300000-0000-4000-8000-000000000005', 'b0000000-0000-4000-8000-000000000001', 'casa', 'a7100000-0000-4000-8000-000000000004', 3, pruebas.id_persona('ana@ejemplo.test'))$$), 3,
+  'Preparación: las de Papá y de la casa');
+select pruebas.como('ana@ejemplo.test');
 select pruebas.falla($$insert into public.ali_compras (hogar_id, cuenta, ingrediente_id, cantidad) values
   ('b0000000-0000-4000-8000-000000000001', 'pareja', 'a7100000-0000-4000-8000-000000000001', 1)$$, 'Pero no la lista de la pareja', '42501');
 
 select pruebas.como('alex@ejemplo.test');
 select pruebas.igual(pruebas.cuenta($$select * from public.ali_compras where cuenta = 'dueno'$$), 0, 'La pareja no ve la lista del dueño');
 select pruebas.igual(pruebas.cuenta($$select * from public.ali_compras where cuenta in ('papa', 'casa')$$), 3, '… ve las de Papá y de la casa');
-select pruebas.igual(pruebas.afecta($$insert into public.ali_compras (id, hogar_id, cuenta, ingrediente_id, cantidad) values
-  ('a7300000-0000-4000-8000-000000000006', 'b0000000-0000-4000-8000-000000000001', 'pareja', 'a7100000-0000-4000-8000-000000000003', 2)$$), 1, 'Arma la suya');
+select pruebas.falla($$insert into public.ali_compras (id, hogar_id, cuenta, ingrediente_id, cantidad) values
+  ('a7300000-0000-4000-8000-000000000006', 'b0000000-0000-4000-8000-000000000001', 'pareja', 'a7100000-0000-4000-8000-000000000003', 2)$$, 'Ni la pareja inserta directo (va por ali_agregar_a_lista)', '42501');
+select pruebas.ok(public.ali_agregar_a_lista('b0000000-0000-4000-8000-000000000001', 'a7100000-0000-4000-8000-000000000003', 2) is not null, 'Arma la suya por función');
 select pruebas.falla($$insert into public.ali_compras (hogar_id, cuenta, ingrediente_id, cantidad) values
   ('b0000000-0000-4000-8000-000000000001', 'dueno', 'a7100000-0000-4000-8000-000000000001', 1)$$, 'y no la del dueño', '42501');
 
@@ -225,7 +229,7 @@ select pruebas.ok((select count(*) = 2 from public.fin_movimientos m where m.id 
 
 -- Sin precio: solo marca y sube el inventario; el precio queda como estaba.
 select pruebas.como('alex@ejemplo.test');
-select pruebas.igual((select public.ali_marcar_comprada('a7300000-0000-4000-8000-000000000006')) ->> 'estado_pago', 'sin_pago', 'La pareja marca la suya sin precio');
+select pruebas.igual((select public.ali_marcar_comprada((select id from public.ali_compras where cuenta = 'pareja' limit 1))) ->> 'estado_pago', 'sin_pago', 'La pareja marca la suya sin precio');
 select pruebas.ok((select precio_real_centavos is null and precio_es_base from public.ali_ingredientes where nombre = 'Leche'), 'Sin precio capturado, el ingrediente sigue con el BASE');
 select pruebas.ok((select cantidad = 8 from public.ali_despensa where cuenta = 'pareja' and ingrediente_id = 'a7100000-0000-4000-8000-000000000003'), 'y su despensa sube');
 

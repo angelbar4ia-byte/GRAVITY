@@ -21,6 +21,9 @@
 /// - `ali_votaciones`, `ali_votacion_opciones`, `ali_opcion_platillos`,
 ///   `ali_votos` (y `personas` para los nombres, si la sesión puede leerlas).
 ///
+/// La lista se escribe por RPC (`ali_agregar_a_lista`), no con INSERT en
+/// `ali_compras`.
+///
 /// Escritura directa (insert/upsert/delete, solo lo que el servidor permite):
 /// `ali_platillos`, `ali_recetas`, `ali_receta_pasos`, `ali_menu`,
 /// `ali_compras_marcas`, `ali_suplementos` y el **precio base** de
@@ -615,6 +618,7 @@ class RepositorioAlimentacionSupabase implements RepositorioAlimentacion {
     required CompraPrecio compra,
     required PrecioIngrediente precio,
     required CuentaCompra cuenta,
+    String? cuentaPagoId,
   }) async {
     try {
       final ingId = await _ingredienteDe(compra);
@@ -623,8 +627,9 @@ class RepositorioAlimentacionSupabase implements RepositorioAlimentacion {
         ingredienteId: ingId,
         cantidad: compra.cantidad,
         lunes: lunes,
+        unidadDe: compra.unidad,
       );
-      final origen = await _cuentaDePago(cuenta);
+      final origen = await _cuentaDePago(cuenta, cuentaPagoId);
       final r = await marcarComprada(
         compraId: compraId,
         montoCentavos: compra.totalCentavos,
@@ -640,23 +645,96 @@ class RepositorioAlimentacionSupabase implements RepositorioAlimentacion {
     }
   }
 
-  /// El ingrediente del servidor para la compra (lo crea sin precio si falta).
-  Future<String> _ingredienteDe(CompraPrecio compra) async {
+  static String _norm(String t) => t.trim().toLowerCase();
+
+  FichaIngrediente _ficha(Map<String, dynamic> f) => FichaIngrediente(
+    id: '${f['id']}',
+    nombre: '${f['nombre']}',
+    unidad: '${f['unidad']}',
+    presentacion: '${f['presentacion'] ?? ''}',
+  );
+
+  @override
+  Future<FichaIngrediente?> ingredientePorNombre(String nombre) async {
     for (final f in await _leer('ali_ingredientes')) {
-      if (claveCompra('${f['nombre']}', '${f['unidad']}') == compra.clave) {
-        return '${f['id']}';
-      }
+      if (_norm('${f['nombre']}') == _norm(nombre)) return _ficha(f);
     }
-    final id = _idServidor('ingrediente:${compra.clave}');
+    return null;
+  }
+
+  /// El ingrediente del servidor (por nombre: la unidad, la presentación y la
+  /// marca no lo distinguen). Lo crea sin precio solo si falta.
+  Future<String> _ingredientePorNombreOCrea(String nombre, String unidad) async {
+    final ya = await ingredientePorNombre(nombre);
+    if (ya != null) return ya.id;
+    final id = _idServidor('ingrediente:${_norm(nombre)}');
     await _guardar('ali_ingredientes', [
       {
         'id': id,
         'hogar_id': hogarId,
-        'nombre': compra.nombre,
-        'unidad': compra.unidad,
+        'nombre': nombre.trim(),
+        'unidad': unidad.trim(),
       },
     ]);
     return id;
+  }
+
+  Future<String> _ingredienteDe(CompraPrecio compra) =>
+      _ingredientePorNombreOCrea(compra.nombre, compra.unidad);
+
+  /// `ali_agregar_a_lista`: dueño y pareja agregan por función del servidor,
+  /// no con INSERT en `ali_compras`.
+  @override
+  Future<void> agregarALista({
+    required String nombre,
+    required String unidad,
+    required double cantidad,
+  }) async {
+    try {
+      final id = await _ingredientePorNombreOCrea(nombre, unidad);
+      await _rpc('ali_agregar_a_lista', {
+        'p_hogar_id': hogarId,
+        'p_ingrediente': id,
+        'p_cantidad': cantidad,
+        'p_unidad': unidad.trim(),
+      });
+    } on ErrorFinanzas catch (e) {
+      throw ErrorAlimentacionServidor(
+        e.sinConexion ? 'Sin conexión. Intenta de nuevo.' : e.mensaje,
+      );
+    }
+  }
+
+  /// `ali_editar_presentacion`: cambia unidad y presentación del mismo
+  /// ingrediente; nunca crea otro.
+  @override
+  Future<FichaIngrediente> editarPresentacion({
+    required String ingredienteId,
+    required String unidad,
+    required String presentacion,
+  }) async {
+    try {
+      await _rpc('ali_editar_presentacion', {
+        'p_ingrediente': ingredienteId,
+        'p_unidad': unidad.trim(),
+        'p_presentacion': presentacion.trim(),
+      });
+      for (final f in await _leer('ali_ingredientes')) {
+        if ('${f['id']}' == ingredienteId) {
+          return FichaIngrediente(
+            id: ingredienteId,
+            nombre: '${f['nombre']}',
+            unidad: unidad.trim(),
+            presentacion: presentacion.trim(),
+          );
+        }
+      }
+      throw const ErrorAlimentacionServidor('El ingrediente no existe.');
+    } on ErrorFinanzas catch (e) {
+      throw ErrorAlimentacionServidor(
+        e.sinConexion ? 'Sin conexión. Intenta de nuevo.' : e.mensaje,
+      );
+    }
   }
 
   /// La fila pendiente de `ali_compras` para ese ingrediente y cuenta, con la
@@ -666,6 +744,7 @@ class RepositorioAlimentacionSupabase implements RepositorioAlimentacion {
     required String ingredienteId,
     required double cantidad,
     required DateTime lunes,
+    required String unidadDe,
   }) async {
     final previas = [
       for (final c in await _leer('ali_compras'))
@@ -699,26 +778,30 @@ class RepositorioAlimentacionSupabase implements RepositorioAlimentacion {
       }
       return id;
     }
-    final id = _uuid.v4();
-    await _guardar('ali_compras', [
-      {
-        'id': id,
-        'hogar_id': hogarId,
-        'cuenta': cuenta,
-        'ingrediente_id': ingredienteId,
-        'cantidad': cantidad,
-        'para_el': _fechaSql(lunes),
-      },
-    ]);
-    return id;
+    // Dueño y pareja: la fila nace con la función del servidor, no con INSERT.
+    await _rpc('ali_agregar_a_lista', {
+      'p_hogar_id': hogarId,
+      'p_ingrediente': ingredienteId,
+      'p_cantidad': cantidad,
+      'p_unidad': unidadDe,
+    });
+    for (final c in await _leer('ali_compras')) {
+      if (c['cuenta'] == cuenta &&
+          '${c['ingrediente_id']}' == ingredienteId &&
+          c['comprado'] != true) {
+        return '${c['id']}';
+      }
+    }
+    throw const ErrorAlimentacionServidor('El servidor no devolvió la compra.');
   }
 
-  /// La cuenta de pago (de Finanzas) que pide `ali_marcar_comprada`: `dueno` y
-  /// `pareja` pagan de una cuenta líquida de su libro personal; `casa`, del
-  /// libro que el dueño eligió en `ali_ajustes`; `papa` va sin cuenta (el
-  /// servidor deja la solicitud al albacea). Si no hay cuenta, se avisa.
-  Future<String?> _cuentaDePago(CuentaCompra cuenta) async {
-    if (cuenta == CuentaCompra.papa) return null;
+  /// Cuentas de pago ofrecidas para [cuenta]: `dueno` y `pareja`, las activas
+  /// de su libro personal; `casa`, las del libro que el dueño eligió en
+  /// `ali_ajustes`; `papa`, ninguna (la compra va al albacea). La de omisión es
+  /// la primera de efectivo o banco por nombre. Solo ids y nombres, sin saldos.
+  @override
+  Future<List<CuentaPago>> cuentasDePago(CuentaCompra cuenta) async {
+    if (cuenta == CuentaCompra.papa) return const [];
     String? libro;
     if (cuenta == CuentaCompra.casa) {
       for (final a in await _leer('ali_ajustes')) {
@@ -736,19 +819,132 @@ class RepositorioAlimentacionSupabase implements RepositorioAlimentacion {
         }
       }
     }
-    if (libro != null) {
-      final cuentas = [
-        for (final c in await fuente.leer('fin_cuentas'))
-          if ('${c['libro_id']}' == libro &&
-              (c['tipo'] == 'efectivo' || c['tipo'] == 'banco') &&
-              (c['estado'] ?? 'activa') == 'activa')
-            c,
-      ]..sort((a, b) => '${a['nombre']}'.compareTo('${b['nombre']}'));
-      if (cuentas.isNotEmpty) return '${cuentas.first['id']}';
+    return libro == null ? const [] : await _cuentasDelLibro(libro);
+  }
+
+  Future<List<CuentaPago>> _cuentasDelLibro(String libro) async {
+    final filas = [
+      for (final c in await fuente.leer('fin_cuentas'))
+        if ('${c['libro_id']}' == libro &&
+            (c['estado'] ?? 'activa') == 'activa' &&
+            (c['clase'] == null ||
+                c['clase'] == 'activo' ||
+                c['clase'] == 'pasivo'))
+          c,
+    ]..sort((a, b) => '${a['nombre']}'.compareTo('${b['nombre']}'));
+    final liquidas = filas.where(
+      (c) => c['tipo'] == 'efectivo' || c['tipo'] == 'banco',
+    );
+    final omision = liquidas.isEmpty ? null : '${liquidas.first['id']}';
+    return [
+      for (final c in filas)
+        CuentaPago(
+          id: '${c['id']}',
+          nombre: '${c['nombre']}',
+          porOmision: '${c['id']}' == omision,
+        ),
+    ];
+  }
+
+  /// La cuenta de pago que pide `ali_marcar_comprada`: la que eligió la
+  /// persona si está entre las que se ofrecen; si no, la de omisión. Papá va
+  /// sin cuenta (solicitud al albacea). Si no hay cuenta, se avisa.
+  Future<String?> _cuentaDePago(CuentaCompra cuenta, String? elegida) async {
+    if (cuenta == CuentaCompra.papa) return elegida;
+    final ofrecidas = await cuentasDePago(cuenta);
+    if (elegida != null) {
+      if (ofrecidas.any((c) => c.id == elegida)) return elegida;
+      throw const ErrorAlimentacionServidor(
+        'Esa cuenta no está entre las que puedes usar para esta compra.',
+      );
     }
+    final omision = ofrecidas.where((c) => c.porOmision);
+    if (omision.isNotEmpty) return omision.first.id;
     throw const ErrorAlimentacionServidor(
       'No encontramos una cuenta de pago (efectivo o banco) en tu libro.',
     );
+  }
+
+  // ----------------------------------------------------------------- Albacea
+
+  /// El libro de Papá (representado y activo) más antiguo, como el servidor.
+  Future<String?> _libroDePapa() async {
+    final libros = [
+      for (final l in await fuente.leer('fin_libros'))
+        if (l['tipo'] == 'representado' && l['activo'] != false) l,
+    ]..sort((a, b) => '${a['creado_en']}'.compareTo('${b['creado_en']}'));
+    return libros.isEmpty ? null : '${libros.first['id']}';
+  }
+
+  /// Solo el albacea vigente: la suplente no (aunque el servidor la deje
+  /// escribir cuando el cargo queda vacío).
+  @override
+  Future<bool> esAlbacea() async {
+    final libro = await _libroDePapa();
+    if (libro == null) return false;
+    final ahora = DateTime.now().toUtc();
+    for (final m in await fuente.leer('fin_libro_miembros')) {
+      if ('${m['libro_id']}' == libro &&
+          '${m['persona_id']}' == personaId &&
+          m['papel'] == 'albacea' &&
+          (m['hasta'] == null ||
+              DateTime.parse('${m['hasta']}').isAfter(ahora))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @override
+  Future<List<SolicitudPago>> solicitudesPendientes() async {
+    if (!await esAlbacea()) return const [];
+    final compras = {
+      for (final c in await _leer('ali_compras')) '${c['id']}': c,
+    };
+    final ings = {
+      for (final f in await _leer('ali_ingredientes')) '${f['id']}': f,
+    };
+    return [
+      for (final s in await _leer('ali_solicitudes_pago'))
+        if (s['estado'] == 'pendiente' && compras['${s['compra_id']}'] != null)
+          SolicitudPago(
+            id: '${s['id']}',
+            ingrediente:
+                '${ings['${compras['${s['compra_id']}']!['ingrediente_id']}']?['nombre'] ?? 'Compra'}',
+            cantidad: _num(compras['${s['compra_id']}']!['cantidad']),
+            unidad:
+                '${ings['${compras['${s['compra_id']}']!['ingrediente_id']}']?['unidad'] ?? ''}',
+            montoCentavos: (s['monto_centavos'] as num).toInt(),
+          ),
+    ];
+  }
+
+  @override
+  Future<List<CuentaPago>> cuentasDelLibroDePapa() async {
+    final libro = await _libroDePapa();
+    if (libro == null || !await esAlbacea()) return const [];
+    return _cuentasDelLibro(libro);
+  }
+
+  @override
+  Future<void> resolverSolicitud({
+    required String solicitudId,
+    required bool aprobar,
+    String? cuentaPagoId,
+    String? motivo,
+  }) async {
+    try {
+      await resolverSolicitudPago(
+        solicitudId: solicitudId,
+        aprobar: aprobar,
+        cuentaOrigen: aprobar ? cuentaPagoId : null,
+        motivo: aprobar ? null : motivo,
+      );
+    } on ErrorFinanzas catch (e) {
+      throw ErrorAlimentacionServidor(
+        e.sinConexion ? 'Sin conexión. Intenta de nuevo.' : e.mensaje,
+      );
+    }
   }
 
   // ------------------------------------------------------------- Suplementos

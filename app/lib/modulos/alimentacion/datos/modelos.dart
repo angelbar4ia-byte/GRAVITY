@@ -183,6 +183,51 @@ enum CuentaCompra {
   final String etiqueta;
 }
 
+/// Cuenta de pago (de Finanzas) que se ofrece al comprar. Solo nombre: nunca
+/// saldo. [porOmision]: la que se propone antes de elegir.
+class CuentaPago {
+  const CuentaPago({
+    required this.id,
+    required this.nombre,
+    this.porOmision = false,
+  });
+  final String id;
+  final String nombre;
+  final bool porOmision;
+}
+
+/// Ingrediente del catálogo del hogar. La marca no es clave: lo identifica el
+/// nombre; unidad y presentación se editan sobre el mismo.
+class FichaIngrediente {
+  const FichaIngrediente({
+    required this.id,
+    required this.nombre,
+    required this.unidad,
+    this.presentacion = '',
+  });
+  final String id;
+  final String nombre;
+  final String unidad;
+  final String presentacion;
+}
+
+/// Compra de Papá pendiente de pago, que resuelve el albacea. Lleva lo
+/// comprado y su monto, nunca saldos.
+class SolicitudPago {
+  const SolicitudPago({
+    required this.id,
+    required this.ingrediente,
+    required this.cantidad,
+    required this.unidad,
+    required this.montoCentavos,
+  });
+  final String id;
+  final String ingrediente;
+  final double cantidad;
+  final String unidad;
+  final int montoCentavos;
+}
+
 /// Lo que dejó registrar una compra con precio real.
 class ResultadoCompra {
   const ResultadoCompra({this.pendienteAlbacea = false});
