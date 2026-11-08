@@ -686,7 +686,17 @@ void main() {
           esPerfil,
           reason: f.path,
         );
-        expect(enlaces.hasMatch(f.readAsStringSync()), isFalse, reason: f.path);
+        // Única excepción: la lectura corta para las bocinas (Fase 6b), que
+        // solo usa el menú de la pareja y no importa perfiles.dart.
+        final texto = f.readAsStringSync().replaceAll(
+          RegExp(r"import '[^']*casos_uso/lectura_voz\.dart';"),
+          '',
+        );
+        expect(enlaces.hasMatch(texto), isFalse, reason: f.path);
+        if (f.path.endsWith('casos_uso/lectura_voz.dart')) {
+          expect(texto.contains('perfiles.dart'), isFalse);
+          expect(texto.contains('MenuId.papa'), isFalse);
+        }
       }
     });
   });

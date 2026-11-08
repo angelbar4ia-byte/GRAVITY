@@ -84,7 +84,7 @@ const herramientaQueCocinoHoy = HerramientaVozAlimentacion(
 
 const herramientaLeerListaCompras = HerramientaVozAlimentacion(
   nombre: 'alimentacion.leer_lista_compras',
-  descripcion: 'Dice qué falta por comprar, sin cantidades ni precios.',
+  descripcion: 'Dice qué falta por comprar, solo los nombres.',
 );
 
 /// Las cinco herramientas que usa el puente de Casa.

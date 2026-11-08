@@ -158,7 +158,7 @@
         "familiar",
         "casa"
       ],
-      "descripcion": "Dice qué falta por comprar, sin cantidades ni precios."
+      "descripcion": "Dice qué falta por comprar, solo los nombres."
     }
   ]
 }
