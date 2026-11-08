@@ -15,6 +15,7 @@ import '../../nucleo/tablet/controlador_tablet.dart';
 import '../dispositivo.dart';
 import '../navegacion.dart';
 import '../sesion_efectiva.dart';
+import 'acceso_instrucciones_cuidados.dart';
 import 'acceso_vista_papa.dart';
 import 'marco_pantalla.dart';
 
@@ -40,6 +41,7 @@ class PantallaMas extends ConsumerWidget {
               onTap: () => context.go(rutaDeModulo(modulo)),
             ),
           if (rol == Rol.familiar) const AccesoPedirVistaPapa(),
+          const AccesosInstruccionesCuidados(),
           if (puedeAbrir(rol, Modulo.ajustes)) ...[
             const Divider(),
             ListTile(

@@ -14,6 +14,7 @@ import '../pantallas_externas.dart';
 import '../sesion_efectiva.dart';
 import '../tablet/pantalla_modo_casa.dart';
 import '../../modulos/finanzas/pantallas/vista_papa/tarjeta_vista_papa_dueno.dart';
+import 'acceso_instrucciones_cuidados.dart';
 import 'acceso_vista_papa.dart';
 import 'marco_pantalla.dart';
 
@@ -72,6 +73,15 @@ class _ConAccesosVistaPapa extends StatelessWidget {
         children: [
           const TarjetaVistaPapaDueno(),
           Expanded(child: hijo),
+          if (enLaptop) const Material(child: AccesosInstruccionesCuidados()),
+        ],
+      );
+    }
+    if (rol == Rol.coadministrador && enLaptop) {
+      return Column(
+        children: [
+          Expanded(child: hijo),
+          const Material(child: AccesosInstruccionesCuidados()),
         ],
       );
     }

@@ -221,6 +221,11 @@ class _Accesos extends ConsumerWidget {
             onPressed: () => context.go('${Rutas.cuidados}/medicamentos'),
           ),
           BotonGrande(
+            texto: 'Instrucciones',
+            icono: Icons.sticky_note_2_outlined,
+            onPressed: () => context.go('${Rutas.cuidados}/instrucciones'),
+          ),
+          BotonGrande(
             texto: 'Comidas',
             icono: Icons.restaurant_outlined,
             onPressed: () => context.go('${Rutas.cuidados}/comidas'),
