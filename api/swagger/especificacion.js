@@ -1,7 +1,7 @@
 // GENERADO por api/generar_dart.mjs a partir de api/openapi.yaml. No se edita a mano.
 // Permite abrir Swagger UI con doble clic (file://), donde el navegador no deja leer
 // ../openapi.yaml. Servida por http, la página lee openapi.yaml directamente.
-// huella: fnv1a32:f7f46f10
+// huella: fnv1a32:419dbe6d
 window.ESPECIFICACION_GRAVITY = {
   "openapi": "3.1.0",
   "info": {
@@ -12194,6 +12194,670 @@ window.ESPECIFICACION_GRAVITY = {
         }
       }
     },
+    "/rest/v1/fin_tarjetas": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerFinTarjetas",
+        "summary": "Leer las tarjetas",
+        "description": "Tarjetas de cada persona (banco, nombre, límite opcional, día de corte y día límite de pago). La lee quien lleva el libro de la tarjeta (la titular; la pareja, las de la casa; el dueño como albacea, las de Papá) y la maestra con su consulta vigente; la familiar, la cuidadora y Casa no ven nada, ni el suplente de Papá con albacea vigente. Sin escritura directa: se guarda con `fin_tarjeta_guardar`. No se borran: se dan de baja (`activa`).",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/orden"
+          },
+          {
+            "$ref": "#/components/parameters/limite"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas visibles para la sesión.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinTarjeta"
+                  }
+                },
+                "example": [
+                  {
+                    "id": "a1070000-0000-4000-8000-000000000001",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000011",
+                    "titular_id": "a0000000-0000-4000-8000-000000000002",
+                    "deuda_id": null,
+                    "banco": "Banco Ejemplo",
+                    "nombre": "Oro",
+                    "limite_centavos": 5000000,
+                    "corte_dia": 5,
+                    "limite_pago_dia": 25,
+                    "activa": true
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_tarjeta_beneficios": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerFinTarjetaBeneficios",
+        "summary": "Leer los beneficios de las tarjetas",
+        "description": "Puntos, cashback o meses sin intereses de cada tarjeta, con su vigencia. Descripción corta, sin cifras de saldo. Los ve quien ve la tarjeta (mismas reglas que `fin_tarjetas`). Sin escritura directa: se guarda con `fin_tarjeta_beneficio_guardar`.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/orden"
+          },
+          {
+            "$ref": "#/components/parameters/limite"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas visibles para la sesión.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinTarjetaBeneficio"
+                  }
+                },
+                "example": [
+                  {
+                    "id": "a1070000-0000-4000-8000-0000000000b1",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000011",
+                    "tarjeta_id": "a1070000-0000-4000-8000-000000000001",
+                    "tipo": "cashback",
+                    "descripcion": "Devolución en supermercados",
+                    "vigente_desde": "2026-11-01",
+                    "vigente_hasta": "2026-12-31",
+                    "activo": true
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/fin_tarjeta_guardar": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finTarjetaGuardar",
+        "summary": "Guardar una tarjeta (crear o actualizar)",
+        "description": "Crea o actualiza (idempotente por `p_id`) una tarjeta del libro. Solo quien administra el libro (la titular; el dueño como albacea de Papá; la pareja en la casa): 403 (42501) a la familiar, la cuidadora, Casa, la maestra y a quien no lleva el libro. 400 (22023) si la titular no lleva el libro o la deuda no es de clase tarjeta del mismo libro; 400 (23514) si un día no está entre 0 y 31. Una baja es `p_activa` en falso. La bitácora no guarda el límite.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_id",
+                  "p_libro",
+                  "p_titular",
+                  "p_banco",
+                  "p_nombre"
+                ],
+                "properties": {
+                  "p_id": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_libro": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_titular": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_banco": {
+                    "type": "string",
+                    "maxLength": 60
+                  },
+                  "p_nombre": {
+                    "type": "string",
+                    "maxLength": 60
+                  },
+                  "p_limite_centavos": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "int64",
+                    "minimum": 1
+                  },
+                  "p_corte_dia": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 0,
+                    "maximum": 31
+                  },
+                  "p_limite_pago_dia": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 0,
+                    "maximum": 31
+                  },
+                  "p_deuda": {
+                    "$ref": "#/components/schemas/UuidONulo"
+                  },
+                  "p_activa": {
+                    "type": "boolean"
+                  }
+                }
+              },
+              "example": {
+                "p_id": "a1070000-0000-4000-8000-000000000001",
+                "p_libro": "f1000000-0000-4000-8000-000000000011",
+                "p_titular": "a0000000-0000-4000-8000-000000000002",
+                "p_banco": "Banco Ejemplo",
+                "p_nombre": "Oro",
+                "p_limite_centavos": 5000000,
+                "p_corte_dia": 5,
+                "p_limite_pago_dia": 25
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "El id de la tarjeta.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Uuid"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/fin_tarjeta_beneficio_guardar": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finTarjetaBeneficioGuardar",
+        "summary": "Guardar un beneficio de tarjeta (crear o actualizar)",
+        "description": "Crea o actualiza (idempotente por `p_id`) un beneficio: `puntos`, `cashback` o `meses_sin_intereses`, con descripción corta (hasta 80 caracteres, sin \"$\" ni números de 4 dígitos o más) y vigencia. Solo quien administra el libro de la tarjeta: 403 (42501) a los demás. 400 (23514) si el tipo, la descripción o la vigencia no valen.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_id",
+                  "p_tarjeta",
+                  "p_tipo",
+                  "p_descripcion",
+                  "p_desde"
+                ],
+                "properties": {
+                  "p_id": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_tarjeta": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_tipo": {
+                    "type": "string",
+                    "enum": [
+                      "puntos",
+                      "cashback",
+                      "meses_sin_intereses"
+                    ]
+                  },
+                  "p_descripcion": {
+                    "type": "string",
+                    "maxLength": 80
+                  },
+                  "p_desde": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "p_hasta": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date"
+                  },
+                  "p_activo": {
+                    "type": "boolean"
+                  }
+                }
+              },
+              "example": {
+                "p_id": "a1070000-0000-4000-8000-0000000000b1",
+                "p_tarjeta": "a1070000-0000-4000-8000-000000000001",
+                "p_tipo": "cashback",
+                "p_descripcion": "Devolución en supermercados",
+                "p_desde": "2026-11-01",
+                "p_hasta": "2026-12-31"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "El id del beneficio.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Uuid"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/fin_deuda_datos_guardar": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finDeudaDatosGuardar",
+        "summary": "Fijar tasa, pago mínimo y fecha límite de una deuda",
+        "description": "Fija la tasa anual en puntos base (nula = pendiente: el simulador responde `falta_dato`), el pago mínimo en centavos, la fecha límite de pago y si el dato es verificado (de un estado de cuenta) o capturado a mano. Solo quien administra el libro: 403 (42501) a los demás (incluida la maestra). 400 (23514) si una deuda con costo queda sin tasa y sin marcarla pendiente; 400 (22023) si el mínimo es negativo. La bitácora no guarda tasas ni cifras.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_deuda",
+                  "p_pago_minimo_centavos"
+                ],
+                "properties": {
+                  "p_deuda": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_tasa_pb": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "p_pago_minimo_centavos": {
+                    "$ref": "#/components/schemas/Centavos"
+                  },
+                  "p_fecha_limite": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date"
+                  },
+                  "p_verificado": {
+                    "type": "boolean"
+                  }
+                }
+              },
+              "example": {
+                "p_deuda": "e5700000-0000-4000-8000-000000000001",
+                "p_tasa_pb": 4800,
+                "p_pago_minimo_centavos": 50000,
+                "p_fecha_limite": "2026-11-20",
+                "p_verificado": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Hecho."
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/fin_simular_estrategias": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finSimularEstrategias",
+        "summary": "Comparar bola de nieve, avalancha y vencimiento",
+        "description": "Para cada estrategia (`bola_de_nieve`, `avalancha`, `vencimiento`; o la de `p_estrategia`): capital pagado, intereses, total pagado, meses y orden de liquidación (ids de deuda). Las tres pagan el mismo capital; cambian el orden y el interés. Si falta un saldo, una tasa (o la fecha límite en `vencimiento`) devuelve `estado: falta_dato` y lo que falta en `falta`, sin cifras: no estima. `no_alcanza` = el presupuesto no cubre los mínimos o no liquida en 600 meses. `recomendada` marca la de menor interés; el pago lo confirma la persona. El presupuesto mensual por omisión es la suma de los abonos de las deudas (equivalente mensual, no menos que el mínimo). El cálculo es del servidor y nada sale a la IA (D3). Solo quien administra el libro (la titular; el dueño como albacea de Papá): 403 (42501) a los demás, incluida la maestra.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_libro"
+                ],
+                "properties": {
+                  "p_libro": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_estrategia": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "enum": [
+                      "bola_de_nieve",
+                      "avalancha",
+                      "vencimiento",
+                      null
+                    ]
+                  },
+                  "p_presupuesto_mensual": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "int64",
+                    "minimum": 0
+                  },
+                  "p_hoy": {
+                    "type": "string",
+                    "format": "date"
+                  }
+                }
+              },
+              "example": {
+                "p_libro": "f1000000-0000-4000-8000-000000000011",
+                "p_presupuesto_mensual": 300000
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Una fila por estrategia.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SimulacionEstrategia"
+                  }
+                },
+                "example": [
+                  {
+                    "estrategia": "avalancha",
+                    "estado": "ok",
+                    "falta": [],
+                    "capital_centavos": 1700000,
+                    "intereses_centavos": 250000,
+                    "total_pagado_centavos": 1950000,
+                    "meses": 7,
+                    "orden": [
+                      "e5700000-0000-4000-8000-000000000001",
+                      "e5700000-0000-4000-8000-000000000003",
+                      "e5700000-0000-4000-8000-000000000002"
+                    ],
+                    "vencidas_sin_liquidar_mes1": 0,
+                    "presupuesto_mensual_centavos": 300000,
+                    "recomendada": true
+                  }
+                ]
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/fin_estimar_intereses": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finEstimarIntereses",
+        "summary": "Estimar los intereses con el pago mínimo y con cada estrategia",
+        "description": "Intereses y meses con el pago mínimo (`pago_minimo`) y con cada estrategia, y cuánto se ahorra frente al mínimo. Sin dato (saldo, tasa o, solo para el mínimo, el pago mínimo) responde `estado: falta_dato` sin cifras. Mismas reglas de acceso que `fin_simular_estrategias` (403 a quien no lleva el libro y a la maestra). Nada sale a la IA (D3).",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_libro"
+                ],
+                "properties": {
+                  "p_libro": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_presupuesto_mensual": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "int64",
+                    "minimum": 0
+                  },
+                  "p_hoy": {
+                    "type": "string",
+                    "format": "date"
+                  }
+                }
+              },
+              "example": {
+                "p_libro": "f1000000-0000-4000-8000-000000000011",
+                "p_presupuesto_mensual": 300000
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Una fila por escenario.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EstimacionIntereses"
+                  }
+                },
+                "example": [
+                  {
+                    "escenario": "pago_minimo",
+                    "estado": "ok",
+                    "falta": [],
+                    "intereses_centavos": 900000,
+                    "meses": 41,
+                    "ahorro_vs_minimo_centavos": null
+                  }
+                ]
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/fin_deudas_puede_ver": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finDeudasPuedeVer",
+        "summary": "¿Puedo ver las tarjetas y beneficios de este libro?",
+        "description": "La regla de `fin_tarjetas` y `fin_tarjeta_beneficios` (D19). Verdadero si puedo leer el libro; en el de Papá, solo quien lo administra (el dueño como albacea; el suplente solo sin albacea vigente) y la maestra con su consulta vigente. La familiar (aun con vista temporal de Papá), la cuidadora y Casa reciben `false`.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_libro"
+                ],
+                "properties": {
+                  "p_libro": {
+                    "$ref": "#/components/schemas/Uuid"
+                  }
+                }
+              },
+              "example": {
+                "p_libro": "f1000000-0000-4000-8000-000000000011"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Verdadero o falso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
     "/rest/v1/rpc/fin_periodo_rango": {
       "post": {
         "tags": [
@@ -18251,6 +18915,260 @@ window.ESPECIFICACION_GRAVITY = {
           }
         }
       },
+      "FinTarjeta": {
+        "type": "object",
+        "description": "Tarjeta de una persona (su libro). Sin escritura directa, solo con `fin_tarjeta_guardar`.",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "libro_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "titular_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "deuda_id": {
+            "$ref": "#/components/schemas/UuidONulo"
+          },
+          "banco": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "limite_centavos": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "corte_dia": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 31
+          },
+          "limite_pago_dia": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 31
+          },
+          "activa": {
+            "type": "boolean"
+          },
+          "creada_por": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "creada_en": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "FinTarjetaBeneficio": {
+        "type": "object",
+        "description": "Beneficio de una tarjeta. Descripción corta sin cifras de saldo.",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "libro_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "tarjeta_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "puntos",
+              "cashback",
+              "meses_sin_intereses"
+            ]
+          },
+          "descripcion": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "vigente_desde": {
+            "type": "string",
+            "format": "date"
+          },
+          "vigente_hasta": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "activo": {
+            "type": "boolean"
+          },
+          "creado_por": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "creado_en": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "SimulacionEstrategia": {
+        "type": "object",
+        "description": "Resultado de una estrategia de pago. Con `estado` distinto de `ok` las cifras vienen nulas (no se estima).",
+        "properties": {
+          "estrategia": {
+            "type": "string",
+            "enum": [
+              "bola_de_nieve",
+              "avalancha",
+              "vencimiento"
+            ]
+          },
+          "estado": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "falta_dato",
+              "no_alcanza"
+            ]
+          },
+          "falta": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "saldo",
+                "tasa",
+                "fecha_limite",
+                "pago_minimo",
+                "presupuesto"
+              ]
+            }
+          },
+          "capital_centavos": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "intereses_centavos": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "total_pagado_centavos": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "meses": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "orden": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          },
+          "vencidas_sin_liquidar_mes1": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "presupuesto_mensual_centavos": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "recomendada": {
+            "type": "boolean"
+          }
+        }
+      },
+      "EstimacionIntereses": {
+        "type": "object",
+        "description": "Intereses con el pago mínimo o con una estrategia. Sin dato no se estima.",
+        "properties": {
+          "escenario": {
+            "type": "string",
+            "enum": [
+              "pago_minimo",
+              "bola_de_nieve",
+              "avalancha",
+              "vencimiento"
+            ]
+          },
+          "estado": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "falta_dato",
+              "no_alcanza"
+            ]
+          },
+          "falta": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "saldo",
+                "tasa",
+                "fecha_limite",
+                "pago_minimo",
+                "presupuesto"
+              ]
+            }
+          },
+          "intereses_centavos": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "meses": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "ahorro_vs_minimo_centavos": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          }
+        }
+      },
       "FinCasaSubcuenta": {
         "type": "object",
         "description": "Subcuenta de la casa (un servicio), una categoría de gasto con su fecha límite.",
@@ -20599,4 +21517,4 @@ window.ESPECIFICACION_GRAVITY = {
     }
   }
 };
-window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:f7f46f10';
+window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:419dbe6d';

@@ -44,6 +44,9 @@ const _rpcDeLectura = {
   // escriben (la aportación solo lee y suma).
   'finPeriodoRango',
   'finCasaAportacion',
+  'finDeudasPuedeVer',
+  'finSimularEstrategias',
+  'finEstimarIntereses',
   // D24: preguntas sobre la vista temporal de Papá (no escriben).
   'finVistaPapaVigente',
   'finVistaVigenteHogar',
