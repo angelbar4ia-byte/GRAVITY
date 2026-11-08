@@ -1,6 +1,6 @@
 # Fase 5 · Cuidados (especificación)
 
-> v1.5, 8/nov/2026 (respuestas del dueño sobre medicamentos de la hermana y bitácora de la pareja). Aprobada por el dueño con sus respuestas del mismo día. El documento de la app de cuidados actual se pospone a la siguiente sesión. Base: D2, D5, D18 y las respuestas del dueño a D5 (7/nov/2026). Pendiente: el documento de la app de cuidados actual (no está en el repositorio); mientras llega, esta especificación se apoya en la descripción del roadmap (Fase 5).
+> v1.6, 8/nov/2026 (respuestas del dueño sobre medicamentos de la hermana y bitácora de la pareja). Aprobada por el dueño con sus respuestas del mismo día. El documento de la app de cuidados actual se pospone a la siguiente sesión. Base: D2, D5, D18 y las respuestas del dueño a D5 (7/nov/2026). Pendiente: el documento de la app de cuidados actual (no está en el repositorio); mientras llega, esta especificación se apoya en la descripción del roadmap (Fase 5).
 
 ## 1. Alcance
 
@@ -92,6 +92,13 @@ Decisión del dueño (7/nov/2026): **sin PIN**. Si la voz no da seguridad para i
 
 - **Medicamentos:** la hermana puede **marcar y dar** los medicamentos durante **su turno** (martes por la tarde y visitas), igual que la cuidadora de turno.
 - **Pareja con consentimiento:** **sí ve la bitácora** de cuidados (con consentimiento explícito; sin consentimiento, no).
+
+## 8h. Respuestas del dueño (v1.6, 8/nov/2026)
+
+- **Horarios de comida:** desayuno 8:30, comida 14:00, colación 17:00 y cena 19:00 **por omisión**, pero **editables** por el dueño (el servidor los guarda por hogar; los recordatorios usan los guardados).
+- **Gastos de la casa:** es un gasto **compartido entre Papá, la pareja y el dueño**. Al confirmarlo, el dueño elige el libro compartido donde va (la lista de sus libros compartidos vigentes); no se adivina.
+- **Cuenta maestra:** no deja instrucciones (se mantiene).
+- **pg_cron:** el dueño lo activa en Supabase; las tomas se generan solas una vez activado.
 
 ## 8g. Noches y medicamentos (v1.5, 8/nov/2026)
 
