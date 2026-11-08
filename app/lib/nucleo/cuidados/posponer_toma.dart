@@ -30,7 +30,7 @@ String? tomaDeClave(String? clave) {
   return partes[2].isEmpty ? null : partes[2];
 }
 
-/// Llamada a hacer: `rpc` y `params` (`{'toma': <id>}`).
+/// Llamada a hacer: `rpc` y `params` (`{'p_toma': <id>}`).
 typedef LlamadaRpc = ({String rpc, Map<String, dynamic> params});
 
 /// Qué RPC llamar al tocar *Posponer al siguiente turno* en la notificación
@@ -39,5 +39,5 @@ LlamadaRpc? llamadaDePosponerToma(String? carga, AccionDeNotificacion accion) {
   if (accion != AccionDeNotificacion.posponerTurno) return null;
   final toma = tomaDeClave(carga);
   if (toma == null) return null;
-  return (rpc: rpcPosponerToma, params: {'toma': toma});
+  return (rpc: rpcPosponerToma, params: {'p_toma': toma});
 }

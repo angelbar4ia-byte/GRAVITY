@@ -81,7 +81,7 @@ void main() {
     final clave = 'cui:recordatorio_toma:t1:2026-11-02:2330';
     final l = llamadaDePosponerToma(clave, AccionDeNotificacion.posponerTurno)!;
     expect(l.rpc, 'cui_posponer_toma');
-    expect(l.params, {'toma': 't1'});
+    expect(l.params, {'p_toma': 't1'});
     expect(llamadaDePosponerToma(clave, AccionDeNotificacion.hecho), isNull);
     expect(
       llamadaDePosponerToma(
