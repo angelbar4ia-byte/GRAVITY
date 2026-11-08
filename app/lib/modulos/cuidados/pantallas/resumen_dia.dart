@@ -1,6 +1,6 @@
 /// Resumen del día de Papá (`cui_resumen_papa`): solo conteos, sin nombres,
-/// dosis ni notas. Lo ven el dueño y la pareja con consentimiento vigente; el
-/// resto, "no disponible". Texto grande y claro.
+/// dosis ni notas. Lo ven el dueño y la pareja, con o sin consentimiento (spec
+/// Fase 5, §4); el resto, "no disponible". Texto grande y claro.
 library;
 
 import 'package:flutter/material.dart';
@@ -25,8 +25,7 @@ class PantallaResumenDia extends ConsumerWidget {
         titulo: 'Resumen del día',
         cuerpo: !p.veResumenDelDia
             ? const SinAccesoCuidados(
-                detalle:
-                    'El resumen del día se ve con el consentimiento vigente.',
+                detalle: 'El resumen del día es del dueño y de la pareja.',
               )
             : cuando(
                 ref.watch(resumenDiaProvider),

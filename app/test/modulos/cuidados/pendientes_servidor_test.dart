@@ -247,7 +247,7 @@ void main() {
   });
 
   group('Resumen del día: acceso', () {
-    test('permisos: dueño y pareja con consentimiento; nadie más', () {
+    test('permisos: dueño y pareja, con o sin consentimiento; nadie más', () {
       bool ve(Rol rol, PerfilCuidados p, {bool maestra = false}) =>
           PermisosCuidados(
             rol: rol,
@@ -259,7 +259,8 @@ void main() {
         ve(Rol.coadministrador, const PerfilCuidados(consentimiento: true)),
         isTrue,
       );
-      expect(ve(Rol.coadministrador, const PerfilCuidados()), isFalse);
+      // Spec Fase 5, §4: la pareja ve el resumen sin consentimiento.
+      expect(ve(Rol.coadministrador, const PerfilCuidados()), isTrue);
       expect(
         ve(
           Rol.coadministrador,
@@ -333,13 +334,13 @@ void main() {
       expect(find.text('Programados'), findsOneWidget);
     });
 
-    testWidgets('la pareja sin consentimiento no los ve', (t) async {
+    testWidgets('la pareja sin consentimiento también los ve', (t) async {
       await t.pumpWidget(
         app(_pareja, Rol.coadministrador, const PerfilCuidados()),
       );
       await t.pumpAndSettle();
-      expect(find.text('Programados'), findsNothing);
-      expect(find.text('Esta sección no está disponible'), findsOneWidget);
+      expect(find.text('Programados'), findsOneWidget);
+      expect(find.text('Esta sección no está disponible'), findsNothing);
     });
 
     testWidgets('la hermana y la cuidadora no los ven', (t) async {

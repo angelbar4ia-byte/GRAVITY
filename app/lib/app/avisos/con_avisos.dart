@@ -10,10 +10,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../modulos/cuidados/estado/proveedores.dart'
-    show repositorioCuidadosProvider;
+    show repositorioCuidadosProvider, versionCuidadosProvider;
 import '../../nucleo/avisos/notificador.dart' show AccionDeNotificacion;
 import '../../nucleo/avisos/proveedores_avisos.dart';
 import 'accion_posponer_toma.dart';
+import 'recordatorios_cuidados.dart';
 import '../../nucleo/avisos/aviso.dart';
 import '../../nucleo/avisos/recordatorios.dart';
 import '../../nucleo/avisos/servicio_recordatorios_habitos.dart';
@@ -27,6 +28,7 @@ import '../../nucleo/seguridad/pin.dart' show rolVeDinero;
 import '../../nucleo/seguridad/proveedores_seguridad.dart';
 import '../../nucleo/sesion/proveedores_sesion.dart';
 import '../../nucleo/tablet/controlador_tablet.dart';
+import '../../diseno/proveedores.dart' show relojProvider;
 import '../dispositivo.dart';
 import '../navegacion.dart';
 import '../router.dart';
@@ -82,6 +84,34 @@ final recordatoriosHabitosProvider = Provider<ServicioRecordatoriosHabitos>((
     },
   );
 });
+
+/// Reprograma los recordatorios de Cuidados (tomas y comidas) de quien está
+/// de turno en este equipo. Sin sesión, solo cancela lo anterior.
+Future<void> reprogramarCuidadosDeEsteEquipo(WidgetRef ref) async {
+  try {
+    final sesion = ref.read(sesionEfectivaProvider);
+    PreferenciasAvisos prefs;
+    try {
+      prefs =
+          await ref.read(repositorioAvisosProvider)?.preferencias() ??
+          const PreferenciasAvisos();
+    } catch (_) {
+      prefs = const PreferenciasAvisos();
+    }
+    await reprogramarRecordatoriosCuidados(
+      repositorio: ref.read(repositorioCuidadosProvider),
+      notificador: ref.read(notificadorProvider),
+      almacen: ref.read(almacenSeguroProvider),
+      rol: sesion?.rol,
+      personaId: sesion?.persona.id,
+      esMaestra: sesion?.esMaestra ?? false,
+      ahora: ref.read(relojProvider).ahora(),
+      preferencias: prefs,
+    );
+  } catch (_) {
+    // Los recordatorios nunca rompen la app.
+  }
+}
 
 final servicioAvisosProvider = Provider<ServicioAvisos>((ref) {
   final notificador = ref.watch(notificadorProvider);
@@ -152,14 +182,17 @@ class _ConAvisosState extends ConsumerState<ConAvisos> {
             _persona = ref.read(contextoAvisosProvider).personaId;
             return servicio.alEntrarPersona();
           })
-          .then((_) => ref.read(recordatoriosHabitosProvider).reprogramar()),
+          .then((_) => ref.read(recordatoriosHabitosProvider).reprogramar())
+          .then((_) {
+            if (mounted) return reprogramarCuidadosDeEsteEquipo(ref);
+          }),
     );
     // La tarea diaria de los recordatorios de Hábitos (cada 12 h con la app
     // abierta; al reiniciar el teléfono los reprograma la biblioteca).
-    _diaria = Timer.periodic(
-      const Duration(hours: 12),
-      (_) => unawaited(ref.read(recordatoriosHabitosProvider).reprogramar()),
-    );
+    _diaria = Timer.periodic(const Duration(hours: 12), (_) {
+      unawaited(ref.read(recordatoriosHabitosProvider).reprogramar());
+      unawaited(reprogramarCuidadosDeEsteEquipo(ref));
+    });
   }
 
   Timer? _diaria;
@@ -188,7 +221,13 @@ class _ConAvisosState extends ConsumerState<ConAvisos> {
         _persona = actual.$1;
         if (_persona != null) await servicio.alEntrarPersona();
         await ref.read(recordatoriosHabitosProvider).reprogramar();
+        await reprogramarCuidadosDeEsteEquipo(ref);
       }());
+    });
+    // Cambia el turno o las tomas del día (se marcó, se pospuso, se guardó un
+    // turno): se vuelve a programar.
+    ref.listen(versionCuidadosProvider, (_, _) {
+      unawaited(reprogramarCuidadosDeEsteEquipo(ref));
     });
     return widget.child;
   }

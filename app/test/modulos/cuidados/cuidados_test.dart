@@ -922,6 +922,8 @@ void main() {
       final sin = _srv(d, _pareja, Rol.coadministrador);
       expect((await sin.turnosDeLaSemana()), isNotEmpty);
       expect((await sin.resumenDelDia())!.tomasTotal, 3);
+      // §4: la pantalla del resumen tampoco pide consentimiento a la pareja.
+      expect(sin.permisos.veResumenDelDia, isTrue);
       expect(await sin.dosisDelDia(), isEmpty);
       await sin.cambiarMiConsentimiento(true);
       final con = _srv(

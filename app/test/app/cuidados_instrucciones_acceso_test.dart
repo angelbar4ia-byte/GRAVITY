@@ -58,6 +58,16 @@ void main() {
       }
     });
 
+    test('la pareja sin consentimiento abre el resumen del día (spec §4)', () {
+      expect(ir(RutasApp.cuidadosResumenDia, Rol.coadministrador), isNull);
+      expect(
+        ir(RutasApp.cuidadosResumenDia, Rol.coadministrador, maestra: true),
+        Rutas.inicio,
+      );
+      expect(ir(RutasApp.cuidadosResumenDia, Rol.familiar), Rutas.inicio);
+      expect(ir(RutasApp.cuidadosResumenDia, Rol.casa), Rutas.inicio);
+    });
+
     test('el dueño abre las dos; el familiar ninguna', () {
       expect(ir(_instrucciones, Rol.dueno), isNull);
       expect(ir(_consentimientos, Rol.dueno), isNull);

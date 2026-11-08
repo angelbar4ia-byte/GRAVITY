@@ -123,10 +123,12 @@ class PermisosCuidados {
   /// Resumen del día de Papá (conteos): todo perfil.
   bool get veResumenPapa => tipo != null;
 
-  /// Pantalla "Resumen del día": el dueño y la pareja **con** consentimiento.
-  /// (La cuenta maestra no es dueña: no entra.)
-  bool get veResumenDelDia =>
-      !esMaestra && (_dueno || tipo == TipoPerfil.parejaConsentida);
+  /// Pantalla "Resumen del día" (solo conteos): el dueño y la pareja, **con o
+  /// sin consentimiento** (spec Fase 5, §4: la pareja ve "los turnos y el
+  /// resumen de Papá"; el consentimiento explícito es solo para la bitácora; el
+  /// servidor, migración 20261115, también lo da sin él). La cuenta maestra,
+  /// Casa, la cuidadora y la hermana no entran.
+  bool get veResumenDelDia => !esMaestra && (_dueno || _pareja);
 
   /// Laptop del dueño: medicamentos, citas, turnos, cuidadoras.
   bool get administra => _dueno && !esMaestra;

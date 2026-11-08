@@ -93,9 +93,10 @@ bool puedeAbrirConsentimientos(Rol rol, {bool esMaestra = false}) =>
     (rol == Rol.dueno || rol == Rol.coadministrador);
 
 /// Quién abre `/cuidados/resumen-dia`: misma regla que Consentimientos (dueño y
-/// pareja; la cuenta maestra de solo lectura no). El guardia no conoce el
-/// consentimiento: la **pantalla** solo muestra los conteos al dueño y a la
-/// pareja con consentimiento vigente; el servidor decide los datos.
+/// pareja; la cuenta maestra de solo lectura no). La pareja llega **sin
+/// consentimiento**: la especificación (Fase 5, §4) le da "los turnos y el
+/// resumen de Papá"; el consentimiento explícito es solo para la bitácora. El
+/// servidor decide los datos.
 bool puedeAbrirResumenDia(Rol rol, {bool esMaestra = false}) =>
     puedeAbrirConsentimientos(rol, esMaestra: esMaestra);
 
@@ -432,7 +433,8 @@ String? calcularRedireccion({
   if (ubicacion == RutasApp.cuidadosConsentimientos) {
     return puedeAbrirConsentimientos(rol, esMaestra: esMaestra) ? null : inicio;
   }
-  // Tercera excepción, igual de estrecha: el resumen del día (solo conteos).
+  // Tercera excepción, igual de estrecha: el resumen del día (solo conteos);
+  // la pareja entra sin consentimiento (spec Fase 5, §4).
   if (ubicacion == RutasApp.cuidadosResumenDia) {
     return puedeAbrirResumenDia(rol, esMaestra: esMaestra) ? null : inicio;
   }
