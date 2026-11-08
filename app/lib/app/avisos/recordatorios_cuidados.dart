@@ -1,7 +1,7 @@
 /// Conexión de los recordatorios de Cuidados con la app (spec Fase 5, §3, §7 y
-/// §8g): programa en este equipo las tomas y comidas de Papá **solo de quien
-/// está de turno**. Las tomas son las filas que ya existen en el servidor
-/// (`cui_tomas`); el cliente no genera ninguna.
+/// §8g): programa en este equipo las comidas de Papá **solo de quien está de
+/// turno**. Las tomas las avisa el servidor (`recordatorio_toma`); el cliente
+/// ya no las programa.
 library;
 
 import '../../nucleo/avisos/aviso.dart';
@@ -26,19 +26,8 @@ class FuenteCuidadosRepositorio implements FuenteDeEventosDeCuidado {
   }) async {
     final hoy = soloFecha(desde);
     final eventos = <t.EventoDeCuidado>[];
-    for (final toma in await repositorio.tomas(hoy)) {
-      if (toma.estado == EstadoToma.pendiente) {
-        eventos.add(
-          t.EventoDeCuidado(
-            tipo: 'recordatorio_toma',
-            objetoId: toma.id,
-            // Pospuesta: suena a la hora del turno que la recibió; solo quien
-            // esté de turno entonces la programa.
-            cuando: toma.recordarEn,
-          ),
-        );
-      }
-    }
+    // Las tomas ya no se programan en el cliente: el servidor genera el aviso
+    // `recordatorio_toma` y es la fuente. Aquí solo quedan las comidas.
     Map<TiempoComidaPapa, HoraComida> horas;
     try {
       horas = await repositorio.horariosComida();

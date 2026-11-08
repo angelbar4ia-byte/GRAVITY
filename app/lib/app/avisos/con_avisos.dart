@@ -115,6 +115,25 @@ Future<void> reprogramarCuidadosDeEsteEquipo(WidgetRef ref) async {
   }
 }
 
+/// Ruta a la que lleva tocar un aviso del servidor según su [tipo]: la toma de
+/// Cuidados abre Medicamentos; todo lo demás, la bandeja.
+String rutaAlAbrirAvisoDeTipo(String? tipo) =>
+    tipo == 'recordatorio_toma'
+    ? RutasApp.cuidadosMedicamentos
+    : RutasApp.avisos;
+
+/// Lee el aviso (la carga de un push es su id) para decidir adónde ir; si no
+/// se puede leer, abre la bandeja.
+Future<void> _abrirAvisoDelServidor(Ref ref, String? id) async {
+  String? tipo;
+  if (id != null) {
+    try {
+      tipo = (await ref.read(repositorioAvisosProvider)?.leer(id))?.tipo;
+    } catch (_) {}
+  }
+  ref.read(routerProvider).go(rutaAlAbrirAvisoDeTipo(tipo));
+}
+
 final servicioAvisosProvider = Provider<ServicioAvisos>((ref) {
   final notificador = ref.watch(notificadorProvider);
   final servicio = ServicioAvisos(
@@ -131,13 +150,17 @@ final servicioAvisosProvider = Provider<ServicioAvisos>((ref) {
     alAbrirAviso: (carga) {
       // Los recordatorios de Hábitos llevan su clave (`hab:…`); abrir uno lleva
       // a Hábitos (lo sensible pide el PIN allí), no a la bandeja de Finanzas.
-      ref
-          .read(routerProvider)
-          .go(
-            carga != null && carga.startsWith('hab:')
-                ? Rutas.habitos
-                : RutasApp.avisos,
-          );
+      if (carga != null && carga.startsWith('hab:')) {
+        ref.read(routerProvider).go(Rutas.habitos);
+        return;
+      }
+      // Cuidados: el aviso de toma (local o del servidor) abre Medicamentos;
+      // no escribe nada ni marca la toma desde el aviso.
+      if (carga != null && carga.startsWith('cui:recordatorio_toma:')) {
+        ref.read(routerProvider).go(RutasApp.cuidadosMedicamentos);
+        return;
+      }
+      unawaited(_abrirAvisoDelServidor(ref, carga));
     },
     alAccion: (carga, accion) {
       // Cuidados: *Posponer al siguiente turno* llama a cui_posponer_toma.

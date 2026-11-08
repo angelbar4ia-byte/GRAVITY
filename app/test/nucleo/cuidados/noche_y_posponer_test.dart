@@ -45,12 +45,12 @@ void main() {
     return [for (final p in n.programadas.values) p.notificacion];
   }
 
-  test('la toma de noche suena y ofrece posponer', () async {
-    final toma = (await programa()).firstWhere(
+  test('la toma NO se programa localmente (la avisa el servidor)', () async {
+    final tomas = (await programa()).where(
       (x) => x.titulo == 'Hora de un recordatorio de cuidado',
     );
-    expect(toma.sonar, isTrue);
-    expect(toma.acciones, [AccionDeNotificacion.posponerTurno]);
+    expect(tomas, isEmpty);
+    // El botón de posponer sigue existiendo para el aviso de toma.
     expect(AccionDeNotificacion.posponerTurno.etiqueta,
         textoPosponerAlSiguienteTurno);
   });

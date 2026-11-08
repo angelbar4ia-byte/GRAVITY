@@ -3,7 +3,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gravity/modulos/cuidados/datos/modelos.dart';
 import 'package:gravity/modulos/cuidados/datos/repositorio.dart';
+import 'package:gravity/app/avisos/con_avisos.dart' show rutaAlAbrirAvisoDeTipo;
 import 'package:gravity/app/avisos/recordatorios_cuidados.dart';
+import 'package:gravity/app/navegacion.dart' show RutasApp;
 import 'package:gravity/nucleo/avisos/aviso.dart';
 import 'package:gravity/nucleo/avisos/notificador.dart';
 import 'package:gravity/nucleo/contratos/roles.dart';
@@ -55,12 +57,20 @@ const _comida = 'Hora de la comida';
 
 void main() {
   pruebasRevisionFase5();
+  test('tocar el aviso de toma abre Medicamentos; los demás, la bandeja', () {
+    expect(rutaAlAbrirAvisoDeTipo('recordatorio_toma'),
+        RutasApp.cuidadosMedicamentos);
+    expect(rutaAlAbrirAvisoDeTipo('recordatorio_toma'),
+        '/cuidados/medicamentos');
+    expect(rutaAlAbrirAvisoDeTipo('pago_proximo'), RutasApp.avisos);
+    expect(rutaAlAbrirAvisoDeTipo(null), RutasApp.avisos);
+  });
   test(
-    'al entrar la cuidadora de turno se programan sus tomas y comidas',
+    'al entrar la cuidadora de turno se programan sus comidas, no las tomas',
     () async {
       final n = await _corre(Rol.cuidador);
-      // Toma de las 14:00 (a las 20:00 ya no está de turno).
-      expect(_cuando(n, _toma), [DateTime(2026, 11, 11, 14)]);
+      // Las tomas las avisa el servidor: nada local.
+      expect(_cuando(n, _toma), isEmpty);
       // Comida a las 14:00 y colación a las 17:00; desayuno ya pasó y la cena
       // (19:00) es del dueño.
       expect(_cuando(n, _comida).toList()..sort(), [
@@ -105,7 +115,7 @@ void main() {
 
   test('el dueño recibe lo de su franja (tarde y noche)', () async {
     final n = await _corre(Rol.dueno);
-    expect(_cuando(n, _toma), [DateTime(2026, 11, 11, 20)]);
+    expect(_cuando(n, _toma), isEmpty);
     expect(_cuando(n, _comida), [DateTime(2026, 11, 11, 19)]);
   });
 
@@ -233,7 +243,7 @@ Future<NotificadorEnMemoria> _corrIgual(
 }
 
 void pruebasRevisionFase5() {
-  test('F5-I3: la toma pospuesta suena a quien la recibe, a la hora de su turno',
+  test('F5-I3: la toma pospuesta tampoco se programa localmente (la avisa el servidor)',
       () async {
     final datos = datosDeEjemploCuidados(_ahora);
     _pospuestaALaCuidadora(datos);
@@ -242,7 +252,7 @@ void pruebasRevisionFase5() {
       Rol.cuidador,
       personasDemo.cuidadoraId,
     );
-    expect(_cuando(cuidadora, _toma), contains(DateTime(2026, 11, 12, 7, 30)));
+    expect(_cuando(cuidadora, _toma), isEmpty);
     // Quien la pospuso (el dueño) ya no la recibe: ni a las 20:00 ni después.
     final dueno = await _corrIgual(datos, Rol.dueno, personasDemo.duenoId);
     expect(_cuando(dueno, _toma), isEmpty);

@@ -172,18 +172,16 @@ void main() {
           return n;
         }
 
-        final cuidadora = await corre(_c);
-        final tomas = cuidadora.programadas.values.where(
-          (p) => p.notificacion.titulo == 'Hora de un recordatorio de cuidado',
-        );
-        expect(tomas.map((p) => p.cuando), [f(2, 10)]);
-        final hermana = await corre(_h);
-        expect(
-          hermana.programadas.values.where(
-            (p) => p.notificacion.titulo == 'Hora de un recordatorio de cuidado',
-          ),
-          hasLength(1),
-        );
+        // Las tomas NO se programan localmente (las avisa el servidor).
+        const tituloToma = 'Hora de un recordatorio de cuidado';
+        for (final quien in [_c, _d, _h]) {
+          expect(
+            (await corre(quien)).programadas.values.where(
+              (p) => p.notificacion.titulo == tituloToma,
+            ),
+            isEmpty,
+          );
+        }
         expect((await corre('otra_persona')).programadas, isEmpty);
         expect((await corre(null)).programadas, isEmpty);
       },

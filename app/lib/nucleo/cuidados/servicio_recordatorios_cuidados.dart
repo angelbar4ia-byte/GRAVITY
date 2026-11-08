@@ -1,5 +1,6 @@
-/// Programa en el teléfono de quien está de turno los recordatorios de Papá
-/// (tomas, comidas y entrega de turno). Local: sin servidor ni Firebase. Lo
+/// Programa en el teléfono de quien está de turno los recordatorios locales de
+/// Papá (comidas y entrega de turno; las TOMAS las avisa el servidor, ver
+/// [ServicioRecordatoriosCuidados.reprogramar]). Sin Firebase propio. Lo
 /// que se ve sale del catálogo (genérico, sin medicamento, cuerpo vacío).
 /// Quien no está de turno no recibe nada. Se reprograma al abrir la app, al
 /// sincronizar y al cambiar los turnos.
@@ -72,6 +73,14 @@ class ServicioRecordatoriosCuidados {
     } catch (_) {
       eventos = const [];
     }
+    // Las tomas ya NO se programan localmente: el servidor genera el aviso
+    // `recordatorio_toma` (push, objeto 'toma') y es la única fuente; hacerlo
+    // aquí también duplicaría el aviso. Las comidas y la entrega de turno
+    // siguen siendo locales. Posponer desde el aviso local sigue funcionando.
+    eventos = [
+      for (final e in eventos)
+        if (e.tipo != 'recordatorio_toma') e,
+    ];
     final lista = [
       ...recordatoriosParaCuidador(
         cuidador: cuidador,
