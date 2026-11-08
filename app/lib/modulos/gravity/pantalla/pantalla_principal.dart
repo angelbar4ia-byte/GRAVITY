@@ -16,6 +16,7 @@ import '../../../nucleo/contratos/roles.dart';
 import '../../../nucleo/contratos/rutas.dart';
 import '../../finanzas/estado/resumen_hoy.dart' show resumenFinanzasHoyProvider;
 import '../../finanzas/finanzas.dart' show TarjetaFinanzasHoy;
+import '../conversacion/panel_conversacion.dart';
 import 'resumen_gravity.dart';
 import 'saludo.dart';
 
@@ -109,7 +110,17 @@ class _DisenoAmplio extends StatelessWidget {
                   ),
                 ),
                 SizedBox(width: hueco),
-                const Expanded(flex: 2, child: _PanelNucleo()),
+                Expanded(
+                  flex: 2,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Expanded(child: _PanelNucleo()),
+                      SizedBox(height: hueco),
+                      const PanelConversacion(),
+                    ],
+                  ),
+                ),
                 SizedBox(width: hueco),
                 Expanded(
                   child: _ColumnaPaneles(
@@ -149,6 +160,8 @@ class _DisenoApilado extends StatelessWidget {
           const _Encabezado(),
           SizedBox(height: hueco),
           const _PanelNucleo(compacto: true),
+          SizedBox(height: hueco),
+          const PanelConversacion(compacto: true),
           SizedBox(height: hueco),
           barraOrdenes,
           SizedBox(height: hueco),

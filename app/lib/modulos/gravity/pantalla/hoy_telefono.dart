@@ -15,6 +15,7 @@ import '../../finanzas/finanzas.dart' show TarjetaFinanzasHoy;
 
 import 'package:go_router/go_router.dart';
 
+import '../conversacion/panel_conversacion.dart';
 import 'resumen_gravity.dart';
 
 class PantallaHoyTelefono extends ConsumerWidget {
@@ -40,6 +41,8 @@ class PantallaHoyTelefono extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
             children: [
               const _EncabezadoHoy(),
+              SizedBox(height: e * 2),
+              const PanelConversacion(compacto: true),
               SizedBox(height: e * 2),
               if (v.cuadricula)
                 // Estilo Bento: las tarjetas van en cuadrícula (2 columnas en el
