@@ -1,6 +1,6 @@
 # Fase 8 · Bloque 2: Deudas e intereses
 
-> v1.0, 8/nov/2026. Aprobada por el dueño. Base: D18, D19, D25 y la especificación de deudas de la Fase 2 (`fase-2-finanzas.md`). Las tasas y saldos vienen de los estados de cuenta en PDF (solo en la laptop; no se suben).
+> v1.1, 8/nov/2026. Aprobada por el dueño; v1.1 agrega las respuestas de construcción (regla del libro de Papá uniforme con la Fase 1; presupuesto mensual = suma de mínimos, editable; vencimiento con ciclos futuros). Base: D18, D19, D25 y la especificación de deudas de la Fase 2 (`fase-2-finanzas.md`). Las tasas y saldos vienen de los estados de cuenta en PDF (solo en la laptop; no se suben).
 
 ## Alcance
 
@@ -31,6 +31,12 @@
 3. La estrategia por vencimiento nunca deja una deuda vencida mientras haya liquidez (prueba con fechas límite).
 4. Un dato faltante bloquea solo la estrategia que lo necesita.
 5. Ninguna cifra de deuda ni tarjeta llega a la IA, a las bocinas ni a la tablet pública (D3).
+
+## Respuestas del dueño (v1.1, 8/nov/2026)
+
+1. **Libro de Papá:** la regla de deudas y tarjetas se **uniforma con la Fase 1**: el suplente lee el libro de Papá mientras no haya albacea vigente (D19).
+2. **Presupuesto mensual:** se **calcula** como la suma de los pagos mínimos, y la persona puede **pedir otro monto** en el simulador.
+3. **Vencimiento:** la estrategia **proyecta los ciclos futuros** de cada deuda, no solo la próxima fecha límite.
 
 ## Pendientes
 
