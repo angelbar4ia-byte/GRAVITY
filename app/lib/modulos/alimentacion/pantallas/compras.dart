@@ -10,11 +10,13 @@ import '../../../diseno/diseno.dart';
 import '../../../nucleo/contratos/roles.dart';
 import '../../../nucleo/contratos/rutas.dart';
 import '../casos_uso/lista_compras.dart';
-import '../casos_uso/servicio_alimentacion.dart' show RegistroCompra;
+import '../casos_uso/servicio_alimentacion.dart'
+    show RegistroCompra, ServicioAlimentacion;
 import '../datos/modelos.dart';
 import '../estado/proveedores.dart';
 import 'historial_precios.dart';
 import 'hay_presupuesto.dart';
+import 'solicitudes_papa.dart';
 import 'selector_menu.dart';
 
 class PantallaListaCompras extends ConsumerWidget {
@@ -97,7 +99,17 @@ Future<void> _registrar(BuildContext context, WidgetRef ref, ItemCompra i) async
   if (menu == null) return;
   final total = TextEditingController();
   final cantidad = TextEditingController(text: cantidadTexto(i.cantidad));
-  var cuenta = ref.read(servicioAlimentacionProvider).cuentaPorOmisionDe(menu);
+  final servicio = ref.read(servicioAlimentacionProvider);
+  final cuenta = servicio.cuentaPorOmisionDe(menu);
+  // Cuentas de pago: la de omisión viene marcada y la persona puede elegir otra.
+  var ofrecidas = const <CuentaPago>[];
+  try {
+    ofrecidas = await servicio.cuentasDePago(menu);
+  } on Exception {
+    // Sin cuentas legibles: el servidor avisará al guardar.
+  }
+  if (!context.mounted) return;
+  String? cuentaPagoId = ServicioAlimentacion.cuentaEfectiva(ofrecidas, null)?.id;
   final ok = await showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
@@ -115,18 +127,26 @@ Future<void> _registrar(BuildContext context, WidgetRef ref, ItemCompra i) async
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: const InputDecoration(labelText: 'Total pagado (pesos)'),
           ),
-          StatefulBuilder(
-            builder: (ctx, setState) => DropdownButtonFormField<CuentaCompra>(
-              key: const Key('cuenta_compra'),
-              initialValue: cuenta,
-              decoration: const InputDecoration(labelText: 'Cuenta de la compra'),
-              items: [
-                for (final c in CuentaCompra.values)
-                  DropdownMenuItem(value: c, child: Text(c.etiqueta)),
-              ],
-              onChanged: (c) => setState(() => cuenta = c ?? cuenta),
+          if (cuenta == CuentaCompra.papa)
+            const Padding(
+              padding: EdgeInsets.only(top: 12),
+              child: Text(
+                'Sin cuenta: la compra queda pendiente de pago del albacea.',
+              ),
+            )
+          else if (ofrecidas.isNotEmpty)
+            StatefulBuilder(
+              builder: (ctx, setState) => DropdownButtonFormField<String>(
+                key: const Key('cuenta_pago'),
+                initialValue: cuentaPagoId,
+                decoration: const InputDecoration(labelText: 'Pagar con'),
+                items: [
+                  for (final c in ofrecidas)
+                    DropdownMenuItem(value: c.id, child: Text(c.nombre)),
+                ],
+                onChanged: (c) => setState(() => cuentaPagoId = c),
+              ),
             ),
-          ),
         ],
       ),
       actions: [
@@ -165,6 +185,7 @@ Future<void> _registrar(BuildContext context, WidgetRef ref, ItemCompra i) async
           nombre: i.nombre,
           unidad: i.unidad,
           cuenta: cuenta,
+          cuentaPagoId: cuentaPagoId,
         );
   } on Exception catch (e) {
     if (context.mounted) {
@@ -266,6 +287,11 @@ Future<void> _escanear(
       nombre: nombre.text,
       unidad: unidad.text,
     );
+    final existente = r.existente;
+    if (existente != null && context.mounted) {
+      await _ficha(context, ref, existente);
+      return;
+    }
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -281,6 +307,151 @@ Future<void> _escanear(
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Escribe el nombre y la unidad.')),
+      );
+    }
+  }
+}
+
+/// Ficha de un ingrediente: se edita la unidad y la presentación del mismo
+/// ingrediente (la marca no cuenta como otro producto).
+Future<void> _ficha(
+  BuildContext context,
+  WidgetRef ref,
+  FichaIngrediente ficha,
+) async {
+  final unidad = TextEditingController(text: ficha.unidad);
+  final presentacion = TextEditingController(text: ficha.presentacion);
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(ficha.nombre),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text('Ya existe: se edita este mismo ingrediente.'),
+          TextField(
+            key: const Key('ficha_unidad'),
+            controller: unidad,
+            decoration: const InputDecoration(labelText: 'Unidad'),
+          ),
+          TextField(
+            key: const Key('ficha_presentacion'),
+            controller: presentacion,
+            decoration: const InputDecoration(
+              labelText: 'Presentación (bolsa 1 kg, caja 12 pzas...)',
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          child: const Text('Guardar'),
+        ),
+      ],
+    ),
+  );
+  if (ok != true || !context.mounted) return;
+  try {
+    await ref
+        .read(servicioAlimentacionProvider)
+        .editarPresentacion(
+          ingredienteId: ficha.id,
+          unidad: unidad.text,
+          presentacion: presentacion.text,
+        );
+    ref.read(versionAlimentacionProvider.notifier).state++;
+  } on Exception catch (e) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se guardó: $e')),
+      );
+    }
+  }
+}
+
+Future<void> _abrirFicha(
+  BuildContext context,
+  WidgetRef ref,
+  ItemCompra i,
+) async {
+  final f = await ref.read(servicioAlimentacionProvider).ficha(i.nombre);
+  if (!context.mounted) return;
+  if (f == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Este ingrediente aún no está en el servidor.')),
+    );
+    return;
+  }
+  await _ficha(context, ref, f);
+}
+
+/// Agrega un ingrediente a la lista (función del servidor).
+Future<void> _agregar(BuildContext context, WidgetRef ref) async {
+  final nombre = TextEditingController();
+  final cantidad = TextEditingController();
+  final unidad = TextEditingController();
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Agregar a la lista'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            key: const Key('agregar_nombre'),
+            controller: nombre,
+            decoration: const InputDecoration(labelText: 'Ingrediente'),
+          ),
+          TextField(
+            key: const Key('agregar_cantidad'),
+            controller: cantidad,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: const InputDecoration(labelText: 'Cantidad'),
+          ),
+          TextField(
+            key: const Key('agregar_unidad'),
+            controller: unidad,
+            decoration: const InputDecoration(labelText: 'Unidad (g, ml, pza...)'),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          child: const Text('Agregar'),
+        ),
+      ],
+    ),
+  );
+  if (ok != true || !context.mounted) return;
+  try {
+    await ref
+        .read(servicioAlimentacionProvider)
+        .agregarALista(
+          nombre: nombre.text,
+          unidad: unidad.text,
+          cantidad: double.tryParse(cantidad.text.replaceAll(',', '.')) ?? 0,
+        );
+    ref.read(versionAlimentacionProvider.notifier).state++;
+  } on Exception catch (e) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            e is ArgumentError
+                ? 'Escribe el ingrediente, la unidad y una cantidad válida.'
+                : 'No se agregó: $e',
+          ),
+        ),
       );
     }
   }
@@ -330,6 +501,24 @@ class _Contenido extends ConsumerWidget {
           Wrap(
             spacing: 8,
             children: [
+              OutlinedButton.icon(
+                key: const Key('agregar_a_lista'),
+                icon: const Icon(Icons.add_shopping_cart),
+                label: const Text('Agregar a la lista'),
+                onPressed: () => _agregar(context, ref),
+              ),
+              if (menu == MenuId.papa &&
+                  (ref.watch(esAlbaceaAlimentacionProvider).value ?? false))
+                OutlinedButton.icon(
+                  key: const Key('solicitudes_papa'),
+                  icon: const Icon(Icons.approval_outlined),
+                  label: const Text('Pagos pendientes de Papá'),
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const PantallaSolicitudesPapa(),
+                    ),
+                  ),
+                ),
               OutlinedButton.icon(
                 key: const Key('escanear_codigo'),
                 icon: const Icon(Icons.qr_code_scanner),
@@ -394,10 +583,20 @@ class _Contenido extends ConsumerWidget {
                 ].join(' · '),
               ),
               secondary: editar
-                  ? IconButton(
-                      icon: const Icon(Icons.price_check_outlined),
-                      tooltip: 'Registrar compra con precio',
-                      onPressed: () => _registrar(context, ref, i),
+                  ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit_outlined),
+                          tooltip: 'Ficha del ingrediente',
+                          onPressed: () => _abrirFicha(context, ref, i),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.price_check_outlined),
+                          tooltip: 'Registrar compra con precio',
+                          onPressed: () => _registrar(context, ref, i),
+                        ),
+                      ],
                     )
                   : null,
             ),

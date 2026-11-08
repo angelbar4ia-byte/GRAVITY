@@ -174,3 +174,22 @@ final hayPresupuestoProvider = FutureProvider.family<bool?, int?>((
       .watch(servicioAlimentacionProvider)
       .hayPresupuesto(montoCentavos: montoCentavos);
 });
+
+/// `true` solo para el albacea vigente de Papá (no la suplente).
+final esAlbaceaAlimentacionProvider = FutureProvider<bool>((ref) async {
+  ref.watch(versionAlimentacionProvider);
+  try {
+    return await ref
+        .watch(servicioAlimentacionProvider)
+        .puedeResolverSolicitudes();
+  } catch (_) {
+    return false;
+  }
+});
+
+/// Compras de Papá pendientes de pago (solo el albacea; los demás, lanza
+/// [PermisoDenegado]).
+final solicitudesPapaProvider = FutureProvider<List<SolicitudPago>>((ref) {
+  ref.watch(versionAlimentacionProvider);
+  return ref.watch(servicioAlimentacionProvider).solicitudesPendientes();
+});
