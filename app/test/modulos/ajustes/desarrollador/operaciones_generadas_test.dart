@@ -47,6 +47,8 @@ const _rpcDeLectura = {
   'finDeudasPuedeVer',
   'finSimularEstrategias',
   'finEstimarIntereses',
+  // Migración 20261136: avance de un objetivo (solo lee y calcula).
+  'finObjetivoAvance',
   // D24: preguntas sobre la vista temporal de Papá (no escriben).
   'finVistaPapaVigente',
   'finVistaVigenteHogar',

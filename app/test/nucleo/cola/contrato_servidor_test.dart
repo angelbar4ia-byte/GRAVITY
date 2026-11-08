@@ -117,6 +117,12 @@ const _soloLectura = {
   // suben por la cola.
   'fin_tarjetas',
   'fin_tarjeta_beneficios',
+  // Migración 20261136 (objetivos, inversiones, bienes y previsiones): solo por
+  // RPC, sin grant de INSERT directo; no suben por la cola.
+  'fin_objetivos',
+  'fin_inversiones',
+  'fin_bienes',
+  'fin_previsiones',
 };
 
 void main() {
