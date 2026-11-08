@@ -38,6 +38,12 @@ select pruebas.igual(
   'Papá (ejemplo)=5000, Alex Ejemplo=2500, Ana Ejemplo=2500', '1: referencia por omisión: Papá 50 %, dueño y pareja 25 % cada uno');
 select pruebas.igual(
   (select sum(parte_pb)::int from public.fin_casa_referencias), 10000, '1: las partes suman el 100 %');
+-- Subcuenta de apoyo para las rutas a la casa (la ampliación v1.2 la exige): Celular, sin estimado.
+select pruebas.como_postgres();
+insert into public.fin_casa_subcuentas (id, hogar_id, libro_id, categoria_id)
+values ('a1051000-0000-4000-8000-0000000000f1', 'b0000000-0000-4000-8000-000000000001',
+        'f1000000-0000-4000-8000-000000000001', 'c1000000-0000-4000-8000-000000000010');
+select pruebas.como('ana@ejemplo.test');
 
 -- ---------------------------------------------------------------- 2: periodos configurables
 select pruebas.como_postgres();
@@ -57,7 +63,7 @@ select pruebas.igual(public.fin_proponer_transferencia('a1050000-0000-4000-8000-
   'a1050000-0000-4000-8000-000000000001'::uuid, '3: pareja -> dueño se propone');
 -- pareja -> casa
 select pruebas.igual(public.fin_proponer_transferencia('a1050000-0000-4000-8000-000000000002',
-  'c4000000-0000-4000-8000-000000000001', null, 60000, '2026-11-10'),
+  'c4000000-0000-4000-8000-000000000001', null, 60000, '2026-11-10', null, 'a1051000-0000-4000-8000-0000000000f1'),
   'a1050000-0000-4000-8000-000000000002'::uuid, '3: pareja -> casa se propone');
 select pruebas.igual((select ruta from public.fin_transferencias where id = 'a1050000-0000-4000-8000-000000000001'), 'pareja_a_dueno', '3: ruta pareja_a_dueno');
 select pruebas.igual((select ruta from public.fin_transferencias where id = 'a1050000-0000-4000-8000-000000000002'), 'pareja_a_casa', '3: ruta pareja_a_casa');
@@ -91,7 +97,7 @@ select pruebas.igual((select count(*)::int from public.fin_transferencias), 2, '
 select pruebas.como('ana@ejemplo.test');
 -- dueño -> casa
 select pruebas.igual(public.fin_proponer_transferencia('a1050000-0000-4000-8000-000000000003',
-  'c3000000-0000-4000-8000-000000000001', null, 30000, '2026-11-10'),
+  'c3000000-0000-4000-8000-000000000001', null, 30000, '2026-11-10', null, 'a1051000-0000-4000-8000-0000000000f1'),
   'a1050000-0000-4000-8000-000000000003'::uuid, '3: dueño -> casa se propone');
 select pruebas.igual((select ruta from public.fin_transferencias where id = 'a1050000-0000-4000-8000-000000000003'), 'dueno_a_casa', '3: ruta dueno_a_casa');
 select pruebas.falla($$select public.fin_proponer_transferencia('a1050000-0000-4000-8000-000000000096',
@@ -245,7 +251,7 @@ select pruebas.como('alex@ejemplo.test');
 select public.fin_proponer_transferencia('a1050000-0000-4000-8000-000000000004',
   'c4000000-0000-4000-8000-000000000001', pruebas.id_persona('ana@ejemplo.test'), 20000, '2026-11-10', 'Prueba de rechazo');
 select public.fin_proponer_transferencia('a1050000-0000-4000-8000-000000000005',
-  'c4000000-0000-4000-8000-000000000001', null, 5000, '2026-11-10');
+  'c4000000-0000-4000-8000-000000000001', null, 5000, '2026-11-10', null, 'a1051000-0000-4000-8000-0000000000f1');
 select pruebas.como('ana@ejemplo.test');
 select pruebas.igual(public.fin_responder_transferencia('a1050000-0000-4000-8000-000000000004', 'rechazar'), null::uuid,
   '8: rechazar no devuelve movimiento');
@@ -340,7 +346,7 @@ select pruebas.falla($$insert into public.fin_casa_subcuentas (hogar_id, libro_i
 select pruebas.como('marta@ejemplo.test');
 select pruebas.igual((select count(*)::int from public.fin_casa_subcuentas), 0, '9: la cuenta maestra no lee sin consulta registrada');
 select pruebas.ok(public.fin_registrar_consulta_maestra('f1000000-0000-4000-8000-000000000001'), '9: la maestra registra su consulta de la casa');
-select pruebas.igual((select count(*)::int from public.fin_casa_subcuentas), 2, '9: con la consulta vigente, lee');
+select pruebas.igual((select count(*)::int from public.fin_casa_subcuentas), 3, '9: con la consulta vigente, lee');
 select pruebas.falla($$insert into public.fin_casa_subcuentas (hogar_id, libro_id, categoria_id)
   values ('b0000000-0000-4000-8000-000000000001', 'f1000000-0000-4000-8000-000000000001', 'c1000000-0000-4000-8000-000000000009')$$,
   '9: pero no escribe', '42501');

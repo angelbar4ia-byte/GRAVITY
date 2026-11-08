@@ -1,7 +1,7 @@
 // GENERADO por api/generar_dart.mjs a partir de api/openapi.yaml. No se edita a mano.
 // Permite abrir Swagger UI con doble clic (file://), donde el navegador no deja leer
 // ../openapi.yaml. Servida por http, la página lee openapi.yaml directamente.
-// huella: fnv1a32:33feca72
+// huella: fnv1a32:40cc92af
 window.ESPECIFICACION_GRAVITY = {
   "openapi": "3.1.0",
   "info": {
@@ -11439,7 +11439,7 @@ window.ESPECIFICACION_GRAVITY = {
         ],
         "operationId": "leerFinCasaReferencias",
         "summary": "Leer las partes de referencia de la aportación",
-        "description": "Parte de referencia por persona en puntos base (Papá 5000; dueño y pareja, 2500 cada uno). Es una referencia, no una obligación. La lee quien lee el libro de la casa. Quien administra el libro puede insertar o cambiar `parte_pb` (la suma del hogar no pasa de 10000; solo Papá, el dueño y la pareja; `23514`/`22023` en otro caso).",
+        "description": "Parte de referencia por persona en puntos base (Papá 5000; dueño y pareja, 2500 cada uno, en el reparto general: `subcuenta_id` nulo). Cada subcuenta puede tener su propio reparto (`subcuenta_id` con valor; suma por subcuenta hasta 10000). Es una referencia, no una obligación. La lee quien lee el libro de la casa. Quien administra el libro puede insertar o cambiar `parte_pb` del reparto general (la suma no pasa de 10000; solo Papá, el dueño y la pareja; `23514`/`22023` en otro caso); el de una subcuenta solo se fija con `fin_casa_fijar_referencia`.",
         "x-roles": [
           "dueno",
           "coadministrador"
@@ -11698,7 +11698,7 @@ window.ESPECIFICACION_GRAVITY = {
         ],
         "operationId": "finProponerTransferencia",
         "summary": "Proponer una transferencia entre personas (bloque 1)",
-        "description": "Desde tu libro personal, tres rutas y nada más: pareja a dueño, dueño a casa y pareja a casa (`p_destino_persona` nulo = la casa). Queda `pendiente`: sin la confirmación del receptor no hay movimiento. Idempotente por `p_id` (cola sin conexión; el mismo id con otro contenido es 409/23505). Responde 403 (42501) si la cuenta no es de tu libro personal, si eres la familiar, la cuidadora, la cuenta Casa o la maestra; 400 (22023) si la ruta no existe (incluido Papá: su libro lo mueve su albacea, D19), el monto no es mayor a cero, la cuenta no es de dinero activa o la casa aún no está configurada.",
+        "description": "Desde tu libro personal, tres rutas y nada más: pareja a dueño, dueño a casa y pareja a casa (`p_destino_persona` nulo = la casa). Queda `pendiente`: sin la confirmación del receptor no hay movimiento. Idempotente por `p_id` (cola sin conexión; el mismo id con otro contenido es 409/23505). Responde 403 (42501) si la cuenta no es de tu libro personal, si eres la familiar, la cuidadora, la cuenta Casa o la maestra; 400 (22023) si la ruta no existe (incluido Papá: su libro lo mueve su albacea, D19), el monto no es mayor a cero, la cuenta no es de dinero activa o la casa aún no está configurada. A la casa, `p_subcuenta` (una subcuenta activa de la casa del hogar) es obligatoria: sin ella o con una que no sea de la casa, 400 (22023); en pareja a dueño debe ir nula. Al proponer, el servidor genera el aviso `transferencia_pendiente` (importante) al receptor, sin monto ni nota; se cierra al responder.",
         "x-roles": [
           "dueno",
           "coadministrador"
@@ -11740,6 +11740,10 @@ window.ESPECIFICACION_GRAVITY = {
                       "null"
                     ],
                     "maxLength": 200
+                  },
+                  "p_subcuenta": {
+                    "$ref": "#/components/schemas/UuidONulo",
+                    "description": "Subcuenta (servicio) de la casa a la que va; obligatoria en dueño a casa y pareja a casa, nula en pareja a dueño."
                   }
                 }
               },
@@ -11959,6 +11963,66 @@ window.ESPECIFICACION_GRAVITY = {
         }
       }
     },
+    "/rest/v1/rpc/fin_casa_fijar_referencia": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finCasaFijarReferencia",
+        "summary": "Fijar la referencia de una persona en una subcuenta de la casa",
+        "description": "Solo el dueño. Fija la parte de referencia (puntos base) de una persona en una subcuenta de la casa; con `p_subcuenta` nulo, en el reparto general. Sin reparto propio, la subcuenta usa el general (50/25/25 por omisión); con él, solo ese reparto aplica a ese servicio. La suma por subcuenta no pasa de 10000: 400 (23514). 403 (42501) a la pareja, la familiar, la cuidadora, Casa y la maestra; 400 (22023) si la persona no es Papá, el dueño o la pareja, o la parte no está entre 0 y 10000. Es una referencia, no una deuda.",
+        "x-roles": [
+          "dueno"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_persona",
+                  "p_partes_pb"
+                ],
+                "properties": {
+                  "p_subcuenta": {
+                    "$ref": "#/components/schemas/UuidONulo"
+                  },
+                  "p_persona": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_partes_pb": {
+                    "$ref": "#/components/schemas/PuntosBase"
+                  }
+                }
+              },
+              "example": {
+                "p_subcuenta": "a1061000-0000-4000-8000-000000000001",
+                "p_persona": "a0000000-0000-4000-8000-000000000001",
+                "p_partes_pb": 5000
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Hecho."
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
     "/rest/v1/rpc/fin_casa_pagar_servicio": {
       "post": {
         "tags": [
@@ -12058,7 +12122,7 @@ window.ESPECIFICACION_GRAVITY = {
         ],
         "operationId": "finCasaAportacion",
         "summary": "Aportación de referencia y aportado del periodo, por persona",
-        "description": "Por persona, en el periodo de la casa que contiene la fecha: parte de referencia (`parte_pb`), aportación de referencia (estimado de las subcuentas por periodo por parte, en centavos), lo aportado (transferencias a la casa no anuladas y servicios pagados con su dinero) y la fecha límite más próxima (`vence_antes_de`). Es una referencia: la aportación es libre y no hay columna de deuda ni de faltante. Solo quien lee el libro de la casa (la maestra, con su consulta vigente); 403 (42501) a la familiar, la cuidadora y Casa.",
+        "description": "Por persona, en el periodo de la casa que contiene la fecha: parte de referencia (`parte_pb`), aportación de referencia (estimado de las subcuentas por periodo por parte, en centavos), lo aportado (transferencias a la casa no anuladas y servicios pagados con su dinero) y la fecha límite más próxima (`vence_antes_de`). Cada persona trae una fila de totales (`subcuenta_id` nulo; la referencia suma cada subcuenta con su reparto propio o el general) y, por cada subcuenta con reparto propio, una fila con su referencia y lo aportado a esa subcuenta. Es una referencia: la aportación es libre y no hay columna de deuda ni de faltante. Solo quien lee el libro de la casa (la maestra, con su consulta vigente); 403 (42501) a la familiar, la cuidadora y Casa.",
         "x-roles": [
           "dueno",
           "coadministrador"
@@ -12111,7 +12175,8 @@ window.ESPECIFICACION_GRAVITY = {
                     "aportado_centavos": 100000,
                     "desde": "2026-11-01",
                     "hasta": "2026-11-30",
-                    "vence_antes_de": "2026-12-05"
+                    "vence_antes_de": "2026-12-05",
+                    "subcuenta_id": null
                   }
                 ]
               }
@@ -18006,6 +18071,10 @@ window.ESPECIFICACION_GRAVITY = {
           },
           "movimiento_id": {
             "$ref": "#/components/schemas/UuidONulo"
+          },
+          "subcuenta_id": {
+            "$ref": "#/components/schemas/UuidONulo",
+            "description": "Subcuenta de la casa destino; nula solo en pareja_a_dueno (y en las filas anteriores a la v1.2)."
           }
         }
       },
@@ -18046,6 +18115,10 @@ window.ESPECIFICACION_GRAVITY = {
           },
           "persona_id": {
             "$ref": "#/components/schemas/Uuid"
+          },
+          "subcuenta_id": {
+            "$ref": "#/components/schemas/UuidONulo",
+            "description": "Nulo = reparto general del hogar; con valor = reparto propio de esa subcuenta (se fija con `fin_casa_fijar_referencia`)."
           },
           "parte_pb": {
             "$ref": "#/components/schemas/PuntosBase"
@@ -18224,6 +18297,10 @@ window.ESPECIFICACION_GRAVITY = {
               "null"
             ],
             "format": "date"
+          },
+          "subcuenta_id": {
+            "$ref": "#/components/schemas/UuidONulo",
+            "description": "Nulo = totales de la persona; con valor = su fila en una subcuenta con reparto propio."
           }
         }
       },
@@ -20434,4 +20511,4 @@ window.ESPECIFICACION_GRAVITY = {
     }
   }
 };
-window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:33feca72';
+window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:40cc92af';
