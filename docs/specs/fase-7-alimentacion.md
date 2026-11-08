@@ -1,6 +1,6 @@
 # Fase 7 · Alimentación completa (especificación)
 
-> v0.1, 8/nov/2026. Borrador para aprobación. Base: roadmap (Fase 7), D23, D28 (confirmada: se construye aquí), D3, D19, D5 y la especificación de la Fase 4 (`fase-4-alimentacion.md`).
+> v1.0, 8/nov/2026. Aprobada por el dueño con sus respuestas del mismo día. Base: roadmap (Fase 7), D23, D28 (confirmada: se construye aquí), D3, D19, D5 y la especificación de la Fase 4 (`fase-4-alimentacion.md`).
 
 ## 1. Alcance
 
@@ -40,7 +40,17 @@
 - **Cuidados:** las comidas de Papá (`cui_comidas`) se registran desde el plan; el resultado (comió, comió poco, rechazó) regresa a Alimentación (contrato v2.0, sección 6).
 - **Gravity asistente:** las herramientas de solo lectura ya existen (Fase 6b); el asistente no envía precios ni datos clínicos al proveedor.
 
-## 5. Decisiones pendientes del dueño
+## 5. Decisiones del dueño (8/nov/2026)
+
+1. **Recetas:** primero se importan desde archivo. Tu pareja y tú las pueden cargar; la IA puede ayudar a redactarlas (sin cifras para la bocina).
+2. **Precios:** cada ingrediente o platillo empieza con un **precio base supuesto** (sin mucha relevancia). Al registrar la **primera compra real**, el precio real reemplaza al base y se **actualiza** con las siguientes compras.
+3. **Lector de código de barras:** después de la lista de compras.
+4. **Lista de compras:** organizada **por pasillo**.
+5. **Votación del menú familiar:** dura **un día**. Si hay empate, cada quien puede **cambiar su voto**.
+
+## 5b. Decisiones pendientes
+
+- Ninguna por ahora.
 
 1. **Recetas:** ¿quién las carga? (tú, tu pareja, o ambas) y ¿cómo: pantalla en el teléfono o archivo importado?
 2. **Precios:** ¿los captura el usuario al comprar, o quieres una fuente externa? Si es externa, cuál (la verificamos antes de usarla).
