@@ -34,7 +34,6 @@ import '../../modulos/alimentacion/casos_uso/importar_recetas.dart'
     show pasilloDeTexto;
 import '../../modulos/alimentacion/casos_uso/servicio_alimentacion.dart'
     show ComidaDelDia;
-import '../../modulos/alimentacion/datos/historial_precios.dart';
 import '../../modulos/alimentacion/datos/modelos.dart';
 import '../../modulos/alimentacion/datos/repositorio.dart';
 import '../../modulos/alimentacion/datos/votacion.dart';
