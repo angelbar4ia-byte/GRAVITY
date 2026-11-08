@@ -27,6 +27,7 @@ import '../../datos/repositorio.dart';
 import '../../estado/proveedores.dart';
 import '../comunes.dart';
 import 'dialogos_libros.dart';
+import '../transferencias/aportacion_casa.dart';
 import 'marco_laptop.dart';
 
 class PantallaAjustesFinanzas extends StatelessWidget {
@@ -73,6 +74,8 @@ class _AjustesState extends ConsumerState<_Ajustes> {
         ),
         if (c.administraHogar && !c.permiso.comoMaestra)
           _DiasInhabiles(contexto: c),
+        if (c.rol == Rol.dueno && !c.permiso.comoMaestra)
+          const SelectorPeriodoAportacion(),
         _Libros(contexto: c),
         _Privacidad(contexto: c),
       ],

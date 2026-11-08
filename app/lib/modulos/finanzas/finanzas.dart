@@ -52,6 +52,8 @@ import 'pantallas/registro/hoja_gasto.dart';
 import 'pantallas/registro/hoja_ingreso_extra.dart';
 import 'pantallas/telefono/fase2_telefono.dart';
 import 'pantallas/telefono/pantallas_telefono.dart';
+import 'pantallas/transferencias/aportacion_casa.dart';
+import 'pantallas/transferencias/transferencias.dart';
 import 'pantallas/vista_papa/pedir_vista_papa.dart';
 
 export 'datos/repositorio_supabase.dart' show TiposCola;
@@ -174,6 +176,14 @@ List<RouteBase> rutasFinanzas() => [
         telefono: PantallaVencimientosTelefono(),
       ),
     ),
+  ),
+  GoRoute(
+    path: SeccionFinanzas.transferencias.segmento,
+    pageBuilder: _pagina((_) => const PantallaTransferencias()),
+  ),
+  GoRoute(
+    path: SeccionFinanzas.aportacion.segmento,
+    pageBuilder: _pagina((_) => const PantallaAportacionCasa()),
   ),
   // D24: el familiar pide ver las finanzas de Papá (vista temporal de 30 min).
   GoRoute(
