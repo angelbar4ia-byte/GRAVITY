@@ -1,6 +1,6 @@
 # Fase 8 · Bloque 1: Finanzas (ampliaciones)
 
-> v0.3, 8/nov/2026. Borrador (v0.3: estados de cuenta en PDF y periodo configurable de la aportación según ingreso y fechas límite). Base: D19 (libros por persona, albaceas), D24 (vista de Papá), D25, D28 (despensas) y las respuestas del dueño de hoy.
+> v1.0, 8/nov/2026. Aprobada para construir transferencias, casa con subcuentas, registro de aportantes y periodo de la aportación. La conciliación del PDF queda pendiente de saber los bancos. Base: D19 (libros por persona, albaceas), D24 (vista de Papá), D25, D28 (despensas) y las respuestas del dueño de hoy.
 
 ## Alcance del bloque 1
 
@@ -53,7 +53,7 @@ Quedan para bloques posteriores (ya en el roadmap): simulador de deudas, estimad
 
 2. **Bancos:** ¿qué bancos usas? (para ajustar la lectura del PDF de cada uno)
 
-## Trabajo por agente (cuando se apruebe)
+## Trabajo por agente (aprobado)
 
 - **finanzas:** transferencias con confirmación, aportación de referencia y conciliación en la laptop.
 - **backend:** tablas y RPC de transferencias, reglas por cuenta (D19), bitácora sin montos.
