@@ -128,16 +128,15 @@ enum ResultadoFrase { ejecutada, rolNoPermitido, fraseDesconocida }
 
 /// Traduce frases a herramientas respetando la tabla y el rol.
 final class TraductorFrases {
-  const TraductorFrases(this._ejecutor, {List<FraseFija> tabla = frasesFijas})
-    : _tabla = tabla;
+  const TraductorFrases(this._ejecutor, {this.tabla = frasesFijas});
 
   final EjecutorHerramienta _ejecutor;
-  final List<FraseFija> _tabla;
+  final List<FraseFija> tabla;
 
   Future<ResultadoFrase> procesar(EventoFrase evento) async {
     final n = normalizarFrase(evento.frase);
     FraseFija? frase;
-    for (final f in _tabla) {
+    for (final f in tabla) {
       if (f.id == evento.frase || normalizarFrase(f.texto) == n) {
         frase = f;
         break;

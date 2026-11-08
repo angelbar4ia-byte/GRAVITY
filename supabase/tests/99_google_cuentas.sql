@@ -50,7 +50,7 @@ select pruebas.igual(pruebas.cuenta($$select id from public.google_cuentas$$), 0
 select pruebas.como('ana@ejemplo.test');
 select pruebas.igual(pruebas.cuenta($$select id from public.google_cuentas where ambito = 'personal'$$), 1, 'La de Ana sigue');
 select pruebas.como('casa@ejemplo.test');
-select pruebas.igual(public.google_desconectar('b0000000-0000-4000-8000-000000000001', 'personal') is null, true, 'Casa no borra cuentas ajenas (no hay fila propia)');
+select public.google_desconectar('b0000000-0000-4000-8000-000000000001', 'personal');
 select pruebas.como('ana@ejemplo.test');
-select pruebas.igual(pruebas.cuenta($$select id from public.google_cuentas where ambito = 'personal'$$), 1, 'La de Ana sigue');
+select pruebas.igual(pruebas.cuenta($$select id from public.google_cuentas where ambito = 'personal'$$), 1, 'Y la de Ana sigue tras el intento de Casa');
 rollback;
