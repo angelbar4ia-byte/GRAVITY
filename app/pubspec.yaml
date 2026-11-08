@@ -72,6 +72,10 @@ dependencies:
   # Conexión real del equipo para el indicador "En línea" (E1, Fase 4): 7.3.2
   # del 1/oct/2026, con más de dos semanas de publicada.
   connectivity_plus: ^7.3.2
+  # Cámara para leer códigos de barras (Alimentación › Compras, solo Android):
+  # 7.4.2 del 14/sep/2026, con más de dos semanas de publicada (7.4.3 y 7.5.0
+  # son de fines de oct./nov. y aún no las cumplen).
+  mobile_scanner: 7.4.2
 
 dev_dependencies:
   flutter_test:

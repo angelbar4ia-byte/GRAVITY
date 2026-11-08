@@ -38,6 +38,8 @@ import '../../modulos/alimentacion/casos_uso/importar_recetas.dart'
     show pasilloDeTexto;
 import '../../modulos/alimentacion/datos/modelos.dart';
 import '../../modulos/alimentacion/datos/repositorio.dart';
+export '../../modulos/alimentacion/datos/repositorio.dart'
+    show ErrorAlimentacionServidor;
 import '../../modulos/alimentacion/datos/votacion.dart';
 import '../../modulos/finanzas/datos/fuente_tablas.dart';
 import '../../modulos/finanzas/datos/repositorio.dart' show ErrorFinanzas;
@@ -61,14 +63,6 @@ DateTime _soloFecha(Object? v) {
 }
 
 double _num(Object? v) => v is num ? v.toDouble() : double.parse('$v');
-
-/// Un fallo de Alimentación en el servidor, con mensaje para mostrar.
-class ErrorAlimentacionServidor implements Exception {
-  const ErrorAlimentacionServidor(this.mensaje);
-  final String mensaje;
-  @override
-  String toString() => mensaje;
-}
 
 class RepositorioAlimentacionSupabase implements RepositorioAlimentacion {
   RepositorioAlimentacionSupabase({
@@ -690,7 +684,10 @@ class RepositorioAlimentacionSupabase implements RepositorioAlimentacion {
 
   /// El ingrediente del servidor (por nombre: la unidad, la presentación y la
   /// marca no lo distinguen). Lo crea sin precio solo si falta.
-  Future<String> _ingredientePorNombreOCrea(String nombre, String unidad) async {
+  Future<String> _ingredientePorNombreOCrea(
+    String nombre,
+    String unidad,
+  ) async {
     final ya = await ingredientePorNombre(nombre);
     if (ya != null) return ya.id;
     final id = _idServidor('ingrediente:${_norm(nombre)}');

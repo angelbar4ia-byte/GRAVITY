@@ -149,6 +149,14 @@ abstract final class TablasAlimentacion {
 String _k(MenuId m, DateTime lunes) =>
     '${m.name}|${lunes.year}-${lunes.month}-${lunes.day}';
 
+/// Un fallo de Alimentación en el servidor, con mensaje para mostrar.
+class ErrorAlimentacionServidor implements Exception {
+  const ErrorAlimentacionServidor(this.mensaje);
+  final String mensaje;
+  @override
+  String toString() => mensaje;
+}
+
 class RepositorioAlimentacionEnMemoria implements RepositorioAlimentacion {
   /// [semanaEjemplo]: llena esa semana con el menú inventado de ambos menús.
   RepositorioAlimentacionEnMemoria({
@@ -190,7 +198,6 @@ class RepositorioAlimentacionEnMemoria implements RepositorioAlimentacion {
   /// Hace de servidor en memoria: el volado de `ali_cerrar_votaciones`.
   final bool Function() _volado;
 
-
   final Map<String, FichaIngrediente> _fichas = {};
   final List<(String, double, String)> listaAgregada = [];
 
@@ -198,7 +205,13 @@ class RepositorioAlimentacionEnMemoria implements RepositorioAlimentacion {
   Future<List<CuentaPago>> cuentasDePago(CuentaCompra cuenta) async =>
       cuenta == CuentaCompra.papa
       ? const []
-      : [CuentaPago(id: 'cuenta-${cuenta.name}', nombre: 'Efectivo', porOmision: true)];
+      : [
+          CuentaPago(
+            id: 'cuenta-${cuenta.name}',
+            nombre: 'Efectivo',
+            porOmision: true,
+          ),
+        ];
 
   @override
   Future<void> agregarALista({
@@ -257,10 +270,12 @@ class RepositorioAlimentacionEnMemoria implements RepositorioAlimentacion {
   @override
   Future<List<ComidaDelDia>> menuDelDiaPapa(DateTime hoy) async {
     final dia = hoy.weekday - DateTime.monday;
-    final entradas = (await menu(MenuId.papa, lunesDe(hoy)))
-        .where((e) => e.dia == dia)
-        .toList()
-      ..sort((a, b) => a.tiempo.index.compareTo(b.tiempo.index));
+    final entradas =
+        (await menu(
+            MenuId.papa,
+            lunesDe(hoy),
+          )).where((e) => e.dia == dia).toList()
+          ..sort((a, b) => a.tiempo.index.compareTo(b.tiempo.index));
     final nombres = {for (final p in _platillos) p.id: p.nombre};
     return [
       for (final e in entradas)
@@ -293,8 +308,7 @@ class RepositorioAlimentacionEnMemoria implements RepositorioAlimentacion {
           !v.abierta(ahora) &&
           v.ganadoraVoladoId == null &&
           (v.votos.isEmpty || v.hayEmpate)) {
-        _votaciones[e.key] =
-            v.conVolado(v.propuestas[_volado() ? 0 : 1].id);
+        _votaciones[e.key] = v.conVolado(v.propuestas[_volado() ? 0 : 1].id);
       }
     }
   }
@@ -325,8 +339,9 @@ class RepositorioAlimentacionEnMemoria implements RepositorioAlimentacion {
       _historial.add(compra);
 
   @override
-  Future<List<Ingrediente>> ingredientesConCodigo() async =>
-      [..._conCodigo.values];
+  Future<List<Ingrediente>> ingredientesConCodigo() async => [
+    ..._conCodigo.values,
+  ];
 
   @override
   Future<bool> guardarIngredienteConCodigo(Ingrediente ingrediente) async {
@@ -407,8 +422,9 @@ class RepositorioAlimentacionEnMemoria implements RepositorioAlimentacion {
 class RepositorioAlimentacionSinServidor implements RepositorioAlimentacion {
   const RepositorioAlimentacionSinServidor();
 
-  static Never _no() =>
-      throw UnsupportedError('Alimentación aún no tiene tablas en el servidor.');
+  static Never _no() => throw UnsupportedError(
+    'Alimentación aún no tiene tablas en el servidor.',
+  );
 
   @override
   Future<List<Platillo>> platillos() async => const [];
@@ -425,7 +441,8 @@ class RepositorioAlimentacionSinServidor implements RepositorioAlimentacion {
   @override
   Future<List<Ingrediente>> ingredientesConCodigo() async => const [];
   @override
-  Future<bool> guardarIngredienteConCodigo(Ingrediente ingrediente) async => _no();
+  Future<bool> guardarIngredienteConCodigo(Ingrediente ingrediente) async =>
+      _no();
   @override
   Future<VotacionPlan?> votacion(DateTime dia) async => null;
   @override
@@ -482,13 +499,22 @@ class RepositorioAlimentacionSinServidor implements RepositorioAlimentacion {
   @override
   Future<List<EntradaMenu>> menu(MenuId menu, DateTime lunes) async => const [];
   @override
-  Future<void> asignar(MenuId menu, DateTime lunes, int dia, TiempoComida tiempo,
-          String? platilloId) async =>
-      _no();
+  Future<void> asignar(
+    MenuId menu,
+    DateTime lunes,
+    int dia,
+    TiempoComida tiempo,
+    String? platilloId,
+  ) async => _no();
   @override
   Future<Set<String>> comprados(MenuId menu, DateTime lunes) async => const {};
   @override
-  Future<void> marcar(MenuId menu, DateTime lunes, String clave, bool comprado) async => _no();
+  Future<void> marcar(
+    MenuId menu,
+    DateTime lunes,
+    String clave,
+    bool comprado,
+  ) async => _no();
   @override
   Future<List<Suplemento>> suplementos(MenuId menu) async => const [];
   @override

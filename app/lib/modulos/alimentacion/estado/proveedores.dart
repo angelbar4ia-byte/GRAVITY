@@ -1,9 +1,11 @@
 library;
 
+import 'package:flutter/foundation.dart' show TargetPlatform, defaultTargetPlatform;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 
 import '../../../app/alimentacion/proveedor_alimentacion_supabase.dart';
+import '../../../app/router.dart' show navegadorCascaronKey;
 import '../../../app/sesion_efectiva.dart';
 import '../../../app/sesion_real.dart';
 import '../../../diseno/proveedores.dart' show relojProvider;
@@ -12,6 +14,7 @@ import '../casos_uso/lectura_voz.dart';
 import '../casos_uso/plan_familiar.dart';
 import '../casos_uso/servicio_alimentacion.dart';
 import '../datos/lector_codigo.dart';
+import '../datos/lector_codigo_camara.dart';
 import '../datos/modelos.dart';
 import '../datos/repositorio.dart';
 
@@ -51,10 +54,17 @@ final servicioAlimentacionProvider = Provider<ServicioAlimentacion>((ref) {
   );
 });
 
-/// Lector de código de barras. Por omisión no lee nada ni pide cámara; la
-/// implementación con cámara se conecta aquí cuando se elija el paquete.
+/// Plataforma en uso; inyectable en pruebas.
+final plataformaLectorProvider = Provider<TargetPlatform>(
+  (_) => defaultTargetPlatform,
+);
+
+/// Lector de código de barras: cámara en Android; en Windows no se usa cámara
+/// (sin lectura, se captura a mano). El permiso se pide solo al escanear.
 final lectorCodigoProvider = Provider<LectorCodigo>(
-  (_) => const LectorCodigoSinCamara(),
+  (ref) => ref.watch(plataformaLectorProvider) == TargetPlatform.android
+      ? LectorCodigoCamara(() => navegadorCascaronKey.currentContext)
+      : const LectorCodigoSinCamara(),
 );
 
 final servicioPlanFamiliarProvider = Provider<ServicioPlanFamiliar>((ref) {
