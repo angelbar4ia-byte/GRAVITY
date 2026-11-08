@@ -50,10 +50,11 @@ Iterable<DateTime> _cuando(NotificadorEnMemoria n, String titulo) => n
     .where((p) => p.notificacion.titulo == titulo)
     .map((p) => p.cuando);
 
-const _toma = 'Hora de la toma de Papá';
-const _comida = 'Hora de la comida de Papá';
+const _toma = 'Hora de un recordatorio de cuidado';
+const _comida = 'Hora de la comida';
 
 void main() {
+  pruebasRevisionFase5();
   test(
     'al entrar la cuidadora de turno se programan sus tomas y comidas',
     () async {
@@ -182,5 +183,94 @@ void main() {
       e.where((x) => x.objetoId == 'comida' && x.tipo == 'recordatorio_comida'),
       isEmpty,
     );
+  });
+}
+
+// Revisión Fase 5: F5-I3 (toma pospuesta) y F5-M7 (tablet pública).
+void _pospuestaALaCuidadora(DatosCuidadosMemoria datos) {
+  final id = datos.tomas.keys.firstWhere(
+    (k) => datos.tomas[k]!.programada == DateTime(2026, 11, 11, 20),
+  );
+  final t = datos.tomas[id]!;
+  datos.tomas[id] = Toma(
+    id: id,
+    medicamentoId: t.medicamentoId,
+    programada: t.programada,
+    estado: EstadoToma.pendiente,
+    registradaPor: '',
+    registradaPorNombre: '',
+    registradaEn: t.programada,
+    pospuestaA: personasDemo.cuidadoraId,
+    pospuestaTurnoEn: DateTime(2026, 11, 12, 7, 30),
+  );
+}
+
+Future<NotificadorEnMemoria> _corrIgual(
+  DatosCuidadosMemoria datos,
+  Rol rol,
+  String id, {
+  bool tabletPublica = false,
+  NotificadorEnMemoria? notificador,
+  AlmacenSeguroEnMemoria? almacen,
+}) async {
+  final n = notificador ?? NotificadorEnMemoria();
+  await reprogramarRecordatoriosCuidados(
+    repositorio: RepositorioCuidadosEnMemoria(
+      datos: datos,
+      personaId: id,
+      rol: rol,
+    ),
+    notificador: n,
+    almacen: almacen ?? AlmacenSeguroEnMemoria(),
+    rol: rol,
+    personaId: id,
+    esMaestra: false,
+    ahora: DateTime(2026, 11, 11, 19),
+    preferencias: const PreferenciasAvisos(),
+    tabletPublica: tabletPublica,
+  );
+  return n;
+}
+
+void pruebasRevisionFase5() {
+  test('F5-I3: la toma pospuesta suena a quien la recibe, a la hora de su turno',
+      () async {
+    final datos = datosDeEjemploCuidados(_ahora);
+    _pospuestaALaCuidadora(datos);
+    final cuidadora = await _corrIgual(
+      datos,
+      Rol.cuidador,
+      personasDemo.cuidadoraId,
+    );
+    expect(_cuando(cuidadora, _toma), contains(DateTime(2026, 11, 12, 7, 30)));
+    // Quien la pospuso (el dueño) ya no la recibe: ni a las 20:00 ni después.
+    final dueno = await _corrIgual(datos, Rol.dueno, personasDemo.duenoId);
+    expect(_cuando(dueno, _toma), isEmpty);
+  });
+
+  test('F5-M7: la tablet pública no programa recordatorios de cuidado',
+      () async {
+    final datos = datosDeEjemploCuidados(_ahora);
+    final n = NotificadorEnMemoria();
+    final almacen = AlmacenSeguroEnMemoria();
+    // Antes, en el teléfono: se programa.
+    await _corrIgual(
+      datos,
+      Rol.dueno,
+      personasDemo.duenoId,
+      notificador: n,
+      almacen: almacen,
+    );
+    expect(n.programadas, isNotEmpty);
+    // La misma persona dentro de la tablet pública: se cancela y no se programa.
+    await _corrIgual(
+      datos,
+      Rol.dueno,
+      personasDemo.duenoId,
+      tabletPublica: true,
+      notificador: n,
+      almacen: almacen,
+    );
+    expect(n.programadas, isEmpty);
   });
 }

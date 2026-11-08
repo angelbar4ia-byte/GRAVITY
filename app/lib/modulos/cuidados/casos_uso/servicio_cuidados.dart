@@ -29,6 +29,9 @@ typedef PasarGastoAFinanzas = Future<void> Function(
 
 /// Aviso sobrio cuando el gasto quedó confirmado en Cuidados pero Finanzas no
 /// lo recibió (la confirmación del servidor no se revierte).
+/// ¿Ya consta en Finanzas este gasto confirmado? (por su id estable).
+typedef GastoConstaEnFinanzas = Future<bool> Function(GastoCuidado confirmado);
+
 const avisoGastoSinFinanzas =
     'Gasto confirmado, pero no se pudo pasar a Finanzas. Revisa tu permiso '
     'o inténtalo de nuevo más tarde.';
@@ -41,7 +44,11 @@ class ServicioCuidados {
     required this.nombre,
     required this.ahora,
     this.alConfirmarGasto,
+    this.constaEnFinanzas,
   });
+
+  /// Dice si un gasto confirmado ya está en el libro de Finanzas.
+  final GastoConstaEnFinanzas? constaEnFinanzas;
 
   /// Se llama una vez por gasto confirmado, después de que el servidor lo
   /// guarda como confirmado.
@@ -207,6 +214,20 @@ class ServicioCuidados {
             toma: tomas[_claveToma(m.id, hora)],
           ),
         );
+      }
+    }
+    // Tomas pospuestas que llegaron a este día desde otro turno (F5-I3): no
+    // salen del horario del día, pero ya son de quien las recibe.
+    final vistas = {for (final s in salida) s.toma?.id};
+    for (final t in tomas.values) {
+      if (t.pospuestaA == null ||
+          t.estado != EstadoToma.pendiente ||
+          vistas.contains(t.id)) {
+        continue;
+      }
+      final m = meds.where((m) => m.id == t.medicamentoId).firstOrNull;
+      if (m != null) {
+        salida.add(Dosis(medicamento: m, hora: t.programada, toma: t));
       }
     }
     return salida..sort((a, b) => a.hora.compareTo(b.hora));
@@ -462,6 +483,59 @@ class ServicioCuidados {
     try {
       await alConfirmarGasto!(
         gasto.conEstado(EstadoGasto.confirmado),
+        libroCompartidoId: gasto.ambito == AmbitoGasto.casa
+            ? libroCompartidoId
+            : null,
+      );
+    } catch (_) {
+      return avisoGastoSinFinanzas;
+    }
+    return null;
+  }
+
+  /// Ids de los gastos confirmados que aún no constan en Finanzas (el paso
+  /// falló o se interrumpió). Solo para quien confirma (el dueño); vacío si no
+  /// hay forma de comprobarlo. Si no se puede leer Finanzas, no se ofrece nada.
+  Future<Set<String>> gastosSinFinanzas() async {
+    if (!permisos.confirmaGasto || constaEnFinanzas == null) return const {};
+    final salida = <String>{};
+    try {
+      for (final g in await _repo.gastos()) {
+        if (g.estado != EstadoGasto.confirmado) continue;
+        if (!await constaEnFinanzas!(g)) salida.add(g.id);
+      }
+    } catch (_) {
+      return const {};
+    }
+    return salida;
+  }
+
+  /// Reintenta el paso a Finanzas de un gasto **ya confirmado** (F5-I2). No
+  /// vuelve a confirmar en el servidor (daría 55000); Finanzas es idempotente
+  /// por id estable, así que repetir no duplica y "ya registrado" es éxito.
+  /// Devuelve un aviso si sigue sin pasar; `null` si quedó en Finanzas.
+  Future<String?> pasarGastoAFinanzas(
+    String id, {
+    String? libroCompartidoId,
+  }) async {
+    _exigir(permisos.confirmaGasto);
+    GastoCuidado? gasto;
+    for (final g in await _repo.gastos()) {
+      if (g.id == id) gasto = g;
+    }
+    if (gasto == null || gasto.estado != EstadoGasto.confirmado) {
+      throw const ErrorCuidados('Ese gasto no está confirmado.');
+    }
+    if (alConfirmarGasto == null) return avisoGastoSinFinanzas;
+    if (gasto.ambito == AmbitoGasto.casa &&
+        (libroCompartidoId == null || libroCompartidoId.isEmpty)) {
+      throw const ErrorCuidados(
+        'Elige el libro compartido donde va el gasto de la casa.',
+      );
+    }
+    try {
+      await alConfirmarGasto!(
+        gasto,
         libroCompartidoId: gasto.ambito == AmbitoGasto.casa
             ? libroCompartidoId
             : null,

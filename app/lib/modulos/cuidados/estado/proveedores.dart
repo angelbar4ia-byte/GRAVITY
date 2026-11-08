@@ -13,6 +13,7 @@ import '../../../nucleo/sesion/proveedores_sesion.dart';
 import '../../../nucleo/sesion/servicio_sesion_supabase.dart';
 import '../../finanzas/casos_uso/gasto_cuidado.dart' as fin;
 import '../../finanzas/datos/fuente_tablas.dart';
+import '../../finanzas/datos/ids.dart' as fin_ids;
 import '../../finanzas/datos/repositorio.dart' show RepositorioFinanzas;
 import '../../finanzas/estado/proveedores.dart'
     show repositorioFinanzasProvider;
@@ -84,6 +85,14 @@ final servicioCuidadosProvider = Provider<ServicioCuidados>((ref) {
     personaId: s?.persona.id ?? '',
     nombre: s?.persona.nombre ?? '',
     ahora: reloj.ahora,
+    constaEnFinanzas: s == null
+        ? null
+        : (g) async {
+            final repo = ref.read(repositorioFinanzasProvider);
+            final datos = (repo.actual ?? await repo.cargar()).datos;
+            final id = fin_ids.idEstable(fin_ids.ClavesId.gastoCuidado(g.id));
+            return datos.movimientos.any((m) => m.id == id);
+          },
     alConfirmarGasto: s == null
         ? null
         : (g, {libroCompartidoId}) => pasarGastoAFinanzas(
@@ -202,6 +211,9 @@ final resumenDiaProvider = FutureProvider<ResumenPapa?>((ref) {
 });
 final citasProvider = _datos((s) => s.citas());
 final gastosProvider = _datos((s) => s.gastos());
+
+/// Gastos confirmados que no constan en Finanzas (para "Pasar a Finanzas").
+final gastosSinFinanzasProvider = _datos((s) => s.gastosSinFinanzas());
 
 /// Mes que se está viendo en el resumen.
 final mesResumenProvider = StateProvider<DateTime>((ref) {

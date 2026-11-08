@@ -193,6 +193,11 @@ class _TarjetaGasto extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final pendiente = g.estado == EstadoGasto.pendiente;
+    // F5-I2: confirmado pero que no consta en Finanzas (solo quien confirma).
+    final sinFinanzas =
+        g.estado == EstadoGasto.confirmado &&
+        p.confirmaGasto &&
+        (ref.watch(gastosSinFinanzasProvider).value?.contains(g.id) ?? false);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -220,6 +225,30 @@ class _TarjetaGasto extends ConsumerWidget {
                 Expanded(child: Text(g.estado.etiqueta, style: t.titleSmall)),
               ],
             ),
+            if (sinFinanzas) ...[
+              const SizedBox(height: 8),
+              OutlinedButton(
+                onPressed: () async {
+                  String? libro;
+                  if (g.ambito == AmbitoGasto.casa) {
+                    libro = await showDialog<String>(
+                      context: context,
+                      builder: (_) => const _ElegirLibroCasa(),
+                    );
+                    if (libro == null || !context.mounted) return;
+                  }
+                  await ejecutarCuidados(
+                    context,
+                    ref,
+                    () => ref
+                        .read(servicioCuidadosProvider)
+                        .pasarGastoAFinanzas(g.id, libroCompartidoId: libro),
+                    ok: 'Gasto pasado a Finanzas',
+                  );
+                },
+                child: const Text('Pasar a Finanzas'),
+              ),
+            ],
             if (pendiente && p.confirmaGasto) ...[
               const SizedBox(height: 8),
               Row(

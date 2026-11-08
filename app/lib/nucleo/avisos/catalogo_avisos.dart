@@ -71,8 +71,8 @@ const Map<String, String> titulosDeAviso = {
   'recordatorio_cierre': 'Es hora de cerrar la semana',
   'solicitud_vista': 'Solicitud de vista: Familiar',
   // Cuidados (Fase 5, D6): genéricos, sin medicamento ni dato clínico.
-  'recordatorio_toma': 'Hora de la toma de Papá',
-  'recordatorio_comida': 'Hora de la comida de Papá',
+  'recordatorio_toma': 'Hora de un recordatorio de cuidado',
+  'recordatorio_comida': 'Hora de la comida',
   'entrega_turno': 'Es hora de dejar tus notas',
   'cambio_urgente_cuidados': 'Cambio urgente en los cuidados',
   'base_80': 'Revisa el almacenamiento de GRAVITY',

@@ -148,7 +148,7 @@ void main() {
         eventos: [toma(f(2, 10), 'ibuprofeno-400')],
         ahora: ahora,
       ).single;
-      expect(r.titulo, 'Hora de la toma de Papá');
+      expect(r.titulo, 'Hora de un recordatorio de cuidado');
       expect(r.titulo.toLowerCase(), isNot(contains('ibuprofeno')));
       expect(textoDeAvisoEsDiscreto(r.titulo), isTrue);
     });
@@ -174,13 +174,13 @@ void main() {
 
         final cuidadora = await corre(_c);
         final tomas = cuidadora.programadas.values.where(
-          (p) => p.notificacion.titulo == 'Hora de la toma de Papá',
+          (p) => p.notificacion.titulo == 'Hora de un recordatorio de cuidado',
         );
         expect(tomas.map((p) => p.cuando), [f(2, 10)]);
         final hermana = await corre(_h);
         expect(
           hermana.programadas.values.where(
-            (p) => p.notificacion.titulo == 'Hora de la toma de Papá',
+            (p) => p.notificacion.titulo == 'Hora de un recordatorio de cuidado',
           ),
           hasLength(1),
         );

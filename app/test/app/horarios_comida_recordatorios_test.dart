@@ -33,7 +33,7 @@ Future<NotificadorEnMemoria> _corre(DatosCuidadosMemoria datos) async {
 
 List<DateTime> _comidas(NotificadorEnMemoria n) =>
     n.programadas.values
-        .where((p) => p.notificacion.titulo == 'Hora de la comida de Papá')
+        .where((p) => p.notificacion.titulo == 'Hora de la comida')
         .map((p) => p.cuando)
         .toList()
       ..sort();

@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/pantallas/marco_pantalla.dart';
+import '../../../app/sesion_efectiva.dart';
 import '../../../diseno/diseno.dart';
 import '../../../nucleo/contratos/roles.dart';
 import '../datos/modelos.dart';
@@ -82,12 +83,21 @@ class _FilaDosis extends ConsumerWidget {
     final retrasada =
         dosis.estado == EstadoToma.pendiente &&
         dosis.hora.isBefore(ahora.subtract(const Duration(minutes: 30)));
+    final yo = ref.watch(sesionEfectivaProvider)?.persona.id;
+    final pospuesta = dosis.toma?.pospuestaA != null &&
+        dosis.estado == EstadoToma.pendiente;
     final (icono, texto) = switch (dosis.estado) {
       EstadoToma.dado => (Icons.check_circle, 'Ya se dio'),
       EstadoToma.noDado => (Icons.cancel_outlined, 'No se dio'),
       EstadoToma.pendiente => (
         Icons.schedule,
-        retrasada ? 'Pendiente · pasó la hora' : 'Pendiente',
+        pospuesta && dosis.toma!.pospuestaA == yo
+            ? 'Pospuesta por otra persona de turno'
+            : pospuesta
+            ? 'Pospuesta al siguiente turno'
+            : retrasada
+            ? 'Pendiente · pasó la hora'
+            : 'Pendiente',
       ),
     };
     return Card(

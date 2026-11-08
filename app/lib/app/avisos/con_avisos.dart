@@ -107,6 +107,8 @@ Future<void> reprogramarCuidadosDeEsteEquipo(WidgetRef ref) async {
       esMaestra: sesion?.esMaestra ?? false,
       ahora: ref.read(relojProvider).ahora(),
       preferencias: prefs,
+      tabletPublica:
+          ref.read(tipoEquipoAvisosProvider) == TipoEquipoAvisos.tabletPublica,
     );
   } catch (_) {
     // Los recordatorios nunca rompen la app.

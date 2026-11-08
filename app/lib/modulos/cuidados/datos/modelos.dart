@@ -217,6 +217,8 @@ class Toma {
     required this.registradaPorNombre,
     required this.registradaEn,
     this.motivo,
+    this.pospuestaA,
+    this.pospuestaTurnoEn,
   });
 
   final String id;
@@ -227,6 +229,24 @@ class Toma {
   final String registradaPorNombre;
   final DateTime registradaEn;
   final String? motivo;
+
+  /// Persona a quien se pasó la toma al posponerla (`cui_tomas.pospuesta_a`);
+  /// `null` si no se ha pospuesto.
+  final String? pospuestaA;
+
+  /// Inicio del turno de [pospuestaA] (`pospuesta_turno_en`): desde entonces
+  /// la toma es suya y a esa hora suena su recordatorio.
+  final DateTime? pospuestaTurnoEn;
+
+  /// Cuándo hay que recordarla: la hora del turno que la recibió si se
+  /// pospuso; si no, la hora programada.
+  DateTime get recordarEn => pospuestaTurnoEn ?? programada;
+
+  /// ¿Aparece en la lista de [dia]? Por su hora programada o, si se pospuso,
+  /// por el día del turno que la recibió.
+  bool esDelDia(DateTime dia) =>
+      soloFecha(programada) == dia ||
+      (pospuestaTurnoEn != null && soloFecha(pospuestaTurnoEn!) == dia);
 
   static String idDe(String medicamentoId, DateTime programada) =>
       idEstableCuidados('toma:$medicamentoId:${programada.toIso8601String()}');

@@ -294,7 +294,7 @@ class RepositorioCuidadosEnMemoria implements RepositorioCuidados {
     final d = soloFecha(dia);
     return [
       for (final t in datos.tomas.values)
-        if (soloFecha(t.programada) == d) t,
+        if (t.esDelDia(d)) t,
     ];
   }
 

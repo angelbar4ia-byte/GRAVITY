@@ -47,7 +47,7 @@ void main() {
 
   test('la toma de noche suena y ofrece posponer', () async {
     final toma = (await programa()).firstWhere(
-      (x) => x.titulo == 'Hora de la toma de Papá',
+      (x) => x.titulo == 'Hora de un recordatorio de cuidado',
     );
     expect(toma.sonar, isTrue);
     expect(toma.acciones, [AccionDeNotificacion.posponerTurno]);
@@ -57,7 +57,7 @@ void main() {
 
   test('la comida de noche también suena y no ofrece posponer', () async {
     final comida = (await programa()).firstWhere(
-      (x) => x.titulo == 'Hora de la comida de Papá',
+      (x) => x.titulo == 'Hora de la comida',
     );
     expect(comida.sonar, isTrue);
     expect(comida.acciones, isEmpty);

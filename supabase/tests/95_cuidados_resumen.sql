@@ -7,10 +7,14 @@ begin;
 select pruebas.como('diana@ejemplo.test');
 insert into public.cui_gastos (id, hogar_id, monto_centavos, concepto, fecha, ambito) values
   ('a5300000-0000-4000-8000-0000000000a1', 'b0000000-0000-4000-8000-000000000001', 12000, 'Cremas (ejemplo)',     '2026-11-03', 'cuidado'),
-  ('a5300000-0000-4000-8000-0000000000a2', 'b0000000-0000-4000-8000-000000000001',  5000, 'Detergente (ejemplo)', '2026-11-20', 'casa'),
   ('a5300000-0000-4000-8000-0000000000a3', 'b0000000-0000-4000-8000-000000000001',  4000, 'Guantes de octubre',   '2026-10-31', 'cuidado'),
   ('a5300000-0000-4000-8000-0000000000a4', 'b0000000-0000-4000-8000-000000000001',  3000, 'Se rechazará',         '2026-11-08', 'cuidado'),
   ('a5300000-0000-4000-8000-0000000000a5', 'b0000000-0000-4000-8000-000000000001',  2000, 'Sigue pendiente',      '2026-11-09', 'cuidado');
+-- F5-I1: el servidor ya no deja a la cuidadora registrar gastos de la casa; este de 5000 llega como dato previo (sin RLS).
+select pruebas.como_postgres();
+insert into public.cui_gastos (id, hogar_id, persona_id, monto_centavos, concepto, fecha, ambito) values
+  ('a5300000-0000-4000-8000-0000000000a2', 'b0000000-0000-4000-8000-000000000001', pruebas.id_persona('diana@ejemplo.test'),
+   5000, 'Detergente (ejemplo)', '2026-11-20', 'casa');
 select pruebas.como('carla@ejemplo.test');
 insert into public.cui_gastos (id, hogar_id, monto_centavos, concepto, fecha, ambito) values
   ('a5300000-0000-4000-8000-0000000000b1', 'b0000000-0000-4000-8000-000000000001', 18000, 'Despensa (hermana)', '2026-11-04', 'casa'),

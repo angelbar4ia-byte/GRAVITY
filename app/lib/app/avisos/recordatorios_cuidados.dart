@@ -32,7 +32,9 @@ class FuenteCuidadosRepositorio implements FuenteDeEventosDeCuidado {
           t.EventoDeCuidado(
             tipo: 'recordatorio_toma',
             objetoId: toma.id,
-            cuando: toma.programada,
+            // Pospuesta: suena a la hora del turno que la recibió; solo quien
+            // esté de turno entonces la programa.
+            cuando: toma.recordarEn,
           ),
         );
       }
@@ -120,7 +122,14 @@ Future<List<t.RecordatorioCuidado>> reprogramarRecordatoriosCuidados({
   required bool esMaestra,
   required DateTime ahora,
   required PreferenciasAvisos preferencias,
+  bool tabletPublica = false,
 }) async {
+  // D3/D14: la tablet pública no programa recordatorios de cuidado (nada
+  // clínico en un equipo compartido); solo se cancela lo anterior.
+  if (tabletPublica) {
+    rol = null;
+    personaId = null;
+  }
   String? clave;
   var turnos = t.turnosPorOmision;
   if (rol != null && personaId != null) {

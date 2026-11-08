@@ -345,7 +345,9 @@ class RepositorioCuidadosSupabase implements RepositorioCuidados {
     final nombres = await _mapaNombres();
     return [
       for (final f in filas)
-        if (soloFecha(_fecha(f['programada_para'])) == d)
+        if (soloFecha(_fecha(f['programada_para'])) == d ||
+            (_fechaOpc(f['pospuesta_turno_en']) != null &&
+                soloFecha(_fechaOpc(f['pospuesta_turno_en'])!) == d))
           Toma(
             id: f['id'] as String,
             medicamentoId: f['medicamento_id'] as String,
@@ -359,6 +361,8 @@ class RepositorioCuidadosSupabase implements RepositorioCuidados {
             registradaPorNombre: _quien(nombres, f['marcada_por']),
             registradaEn:
                 _fechaOpc(f['marcada_en']) ?? _fecha(f['programada_para']),
+            pospuestaA: f['pospuesta_a'] as String?,
+            pospuestaTurnoEn: _fechaOpc(f['pospuesta_turno_en']),
           ),
     ];
   }
