@@ -76,6 +76,11 @@ dependencies:
   # 7.4.2 del 14/sep/2026, con más de dos semanas de publicada (7.4.3 y 7.5.0
   # son de fines de oct./nov. y aún no las cumplen).
   mobile_scanner: 7.4.2
+  # Fase 8 bloque 4 (solo Android): dictado, foto de recibos y lectura de texto
+  # en el teléfono. Versiones con más de dos semanas de publicadas.
+  speech_to_text: 7.5.0
+  image_picker: 1.2.4
+  google_mlkit_text_recognition: 0.17.1
 
 dev_dependencies:
   flutter_test:

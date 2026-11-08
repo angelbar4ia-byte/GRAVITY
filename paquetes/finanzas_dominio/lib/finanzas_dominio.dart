@@ -41,6 +41,7 @@ export 'src/motivo.dart';
 export 'src/plan_guardado.dart';
 export 'src/presupuesto.dart';
 export 'src/proyeccion_deuda.dart';
+export 'src/reportes.dart';
 export 'src/resumen_cuidado.dart';
 export 'src/semana.dart';
 export 'src/seguimiento.dart';

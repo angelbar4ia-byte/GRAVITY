@@ -17,6 +17,7 @@ Future<void> pulsarMicrofono(WidgetTester tester) async {
 }
 
 void main() {
+  pruebasDictadoTelefono();
   testWidgets('el texto reconocido llega como un mensaje normal al asistente', (
     tester,
   ) async {
@@ -101,5 +102,16 @@ void main() {
     );
     expect(contenedor.read(accionesGoogleProvider), isNull);
     expect(cliente.llamadas.single.mensaje, 'sí, confirmo, envíalo');
+  });
+}
+
+void pruebasDictadoTelefono() {
+  test('el dictado real no pide permisos al abrir el panel', () async {
+    // disponible() no inicializa el motor (no toca micrófono ni permisos).
+    expect(await VozEntradaTelefono().disponible(), isTrue);
+  });
+
+  test('sin Android el dictado no está disponible', () async {
+    expect(await const VozEntradaNoDisponible().disponible(), isFalse);
   });
 }
