@@ -73,9 +73,8 @@ void main() {
     await tester.pump();
     expect(find.text(r'$1,330.00'), findsOneWidget);
 
-    await tester.ensureVisible(
-      find.byKey(const ValueKey('boton-modo-privado')),
-    );
+    // El encabezado quedó arriba, fuera de la vista.
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, 1000));
     await tester.pump();
     await tester.tap(find.byKey(const ValueKey('boton-modo-privado')));
     await tester.pump();
@@ -92,6 +91,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const ValueKey('finanzas-hoy-quedan-libro-ejemplo')),
       -200,
+      scrollable: find.byType(Scrollable).first,
     );
     await tester.tap(
       find.byKey(const ValueKey('finanzas-hoy-quedan-libro-ejemplo')),
