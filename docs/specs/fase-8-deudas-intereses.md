@@ -1,6 +1,6 @@
 # Fase 8 · Bloque 2: Deudas e intereses
 
-> v1.1, 8/nov/2026. Aprobada por el dueño; v1.1 agrega las respuestas de construcción (regla del libro de Papá uniforme con la Fase 1; presupuesto mensual = suma de mínimos, editable; vencimiento con ciclos futuros). Base: D18, D19, D25 y la especificación de deudas de la Fase 2 (`fase-2-finanzas.md`). Las tasas y saldos vienen de los estados de cuenta en PDF (solo en la laptop; no se suben).
+> Cerrada en lo técnico (8/nov/2026). Pendiente de confirmar: la regla de Papá (el suplente lee su libro también con albacea vigente, como fin_puede de la Fase 1). v1.1, 8/nov/2026. Aprobada por el dueño; v1.1 agrega las respuestas de construcción (regla del libro de Papá uniforme con la Fase 1; presupuesto mensual = suma de mínimos, editable; vencimiento con ciclos futuros). Base: D18, D19, D25 y la especificación de deudas de la Fase 2 (`fase-2-finanzas.md`). Las tasas y saldos vienen de los estados de cuenta en PDF (solo en la laptop; no se suben).
 
 ## Alcance
 
