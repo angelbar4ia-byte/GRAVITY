@@ -7180,6 +7180,550 @@ paths:
           $ref: '#/components/responses/SinSesion'
         '403':
           $ref: '#/components/responses/Prohibido'
+  /rest/v1/fin_transferencias:
+    get:
+      tags: [Base de datos · Finanzas]
+      operationId: leerFinTransferencias
+      summary: Leer las transferencias entre personas
+      description: >-
+        Solo lectura. Las ve quien la propuso, quien la recibe, los miembros de la casa si la recibe la casa y la cuenta maestra con su
+        consulta vigente; la cuidadora y Casa nada. Se escriben solo por `fin_proponer_transferencia`, `fin_responder_transferencia` y
+        `fin_cancelar_transferencia`; nunca se borran (rechazada o cancelada queda como registro). Su bitácora no lleva monto ni nota.
+
+      x-roles: [dueno, coadministrador]
+      x-escribe: false
+      x-solo-local: true
+      x-fase: 8
+      parameters:
+        - $ref: '#/components/parameters/select'
+        - $ref: '#/components/parameters/filtroId'
+        - $ref: '#/components/parameters/filtroHogar'
+        - $ref: '#/components/parameters/orden'
+        - $ref: '#/components/parameters/limite'
+      responses:
+        '200':
+          description: Filas visibles para la sesión.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FinTransferencia'
+              example:
+                - id: a1050000-0000-4000-8000-000000000001
+                  hogar_id: b0000000-0000-4000-8000-000000000001
+                  ruta: pareja_a_dueno
+                  estado: confirmada
+                  persona_origen_id: a0000000-0000-4000-8000-000000000002
+                  persona_destino_id: a0000000-0000-4000-8000-000000000001
+                  libro_origen_id: f1000000-0000-4000-8000-0000000000a2
+                  libro_destino_id: f1000000-0000-4000-8000-0000000000a1
+                  cuenta_origen_id: c4000000-0000-4000-8000-000000000001
+                  cuenta_destino_id: c3000000-0000-4000-8000-000000000001
+                  monto_centavos: 50000
+                  fecha: '2026-11-10'
+                  propuesta_por: a0000000-0000-4000-8000-000000000002
+                  propuesta_en: '2026-11-10T09:00:00-06:00'
+                  confirmada_por: a0000000-0000-4000-8000-000000000001
+                  respondida_por: a0000000-0000-4000-8000-000000000001
+                  respondida_en: '2026-11-10T09:05:00-06:00'
+                  movimiento_id: a1050000-0000-4000-8000-0000000000f1
+        '401':
+          $ref: '#/components/responses/SinSesion'
+  /rest/v1/fin_casa_config:
+    get:
+      tags: [Base de datos · Finanzas]
+      operationId: leerFinCasaConfig
+      summary: Leer la configuración de la casa
+      description: >-
+        Solo lectura: libro general de la casa y periodo de la aportación del hogar. Se cambia con `fin_casa_configurar`.
+
+      x-roles: [dueno, coadministrador]
+      x-escribe: false
+      x-solo-local: true
+      x-fase: 8
+      parameters:
+        - $ref: '#/components/parameters/select'
+        - $ref: '#/components/parameters/filtroId'
+        - $ref: '#/components/parameters/filtroHogar'
+        - $ref: '#/components/parameters/orden'
+        - $ref: '#/components/parameters/limite'
+      responses:
+        '200':
+          description: Filas visibles para la sesión.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FinCasaConfig'
+              example:
+                - hogar_id: b0000000-0000-4000-8000-000000000001
+                  libro_id: f1000000-0000-4000-8000-000000000001
+                  periodo: mes
+                  actualizado_por: a0000000-0000-4000-8000-000000000001
+                  actualizado_en: '2026-11-10T09:00:00-06:00'
+        '401':
+          $ref: '#/components/responses/SinSesion'
+  /rest/v1/fin_casa_referencias:
+    get:
+      tags: [Base de datos · Finanzas]
+      operationId: leerFinCasaReferencias
+      summary: Leer las partes de referencia de la aportación
+      description: >-
+        Parte de referencia por persona en puntos base (Papá 5000; dueño y pareja, 2500 cada uno). Es una referencia, no una obligación. La
+        lee quien lee el libro de la casa. Quien administra el libro puede insertar o cambiar `parte_pb` (la suma del hogar no pasa de 10000;
+        solo Papá, el dueño y la pareja; `23514`/`22023` en otro caso).
+
+      x-roles: [dueno, coadministrador]
+      x-escribe: false
+      x-solo-local: true
+      x-fase: 8
+      parameters:
+        - $ref: '#/components/parameters/select'
+        - $ref: '#/components/parameters/filtroId'
+        - $ref: '#/components/parameters/filtroHogar'
+        - $ref: '#/components/parameters/orden'
+        - $ref: '#/components/parameters/limite'
+      responses:
+        '200':
+          description: Filas visibles para la sesión.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FinCasaReferencia'
+              example:
+                - id: a1053000-0000-4000-8000-000000000001
+                  hogar_id: b0000000-0000-4000-8000-000000000001
+                  libro_id: f1000000-0000-4000-8000-000000000001
+                  persona_id: e0000000-0000-4000-8000-000000000001
+                  parte_pb: 5000
+                  actualizado_por: a0000000-0000-4000-8000-000000000001
+                  actualizado_en: '2026-11-10T09:00:00-06:00'
+        '401':
+          $ref: '#/components/responses/SinSesion'
+  /rest/v1/fin_casa_ingresos:
+    get:
+      tags: [Base de datos · Finanzas]
+      operationId: leerFinCasaIngresos
+      summary: Leer el ingreso por persona (dato personal)
+      description: >-
+        Dato personal (D3): lo lee y lo escribe quien lleva el libro de la persona (ella; la albacea en el caso de Papá, D19); el
+        suplente de Papá lo lee. La cuenta maestra lo lee con su consulta vigente y no escribe. La cuidadora, Casa y la familiar nada. Quien
+        puede escribir en ese libro puede insertar o cambiar `ingreso_centavos` y `periodo`. Su bitácora no lleva el monto.
+
+      x-roles: [dueno, coadministrador]
+      x-escribe: false
+      x-solo-local: true
+      x-fase: 8
+      parameters:
+        - $ref: '#/components/parameters/select'
+        - $ref: '#/components/parameters/filtroId'
+        - $ref: '#/components/parameters/filtroHogar'
+        - $ref: '#/components/parameters/orden'
+        - $ref: '#/components/parameters/limite'
+      responses:
+        '200':
+          description: Filas visibles para la sesión.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FinCasaIngreso'
+              example:
+                - id: a1054000-0000-4000-8000-000000000001
+                  hogar_id: b0000000-0000-4000-8000-000000000001
+                  libro_id: f1000000-0000-4000-8000-0000000000a1
+                  persona_id: a0000000-0000-4000-8000-000000000001
+                  ingreso_centavos: 3000000
+                  periodo: mes
+                  actualizado_por: a0000000-0000-4000-8000-000000000001
+                  actualizado_en: '2026-11-10T09:00:00-06:00'
+        '401':
+          $ref: '#/components/responses/SinSesion'
+  /rest/v1/fin_casa_subcuentas:
+    get:
+      tags: [Base de datos · Finanzas]
+      operationId: leerFinCasaSubcuentas
+      summary: Leer las subcuentas de la casa (servicios)
+      description: >-
+        Cada subcuenta es una categoría de gasto del hogar con su fecha límite (`dia_limite`, `proximo_vencimiento`) y un estimado por
+        ciclo (`cada_meses`). La lee quien lee el libro de la casa; quien lo administra (miembro) puede insertar y cambiar sus columnas. No se
+        borran: se desactivan (`activa`).
+
+      x-roles: [dueno, coadministrador]
+      x-escribe: false
+      x-solo-local: true
+      x-fase: 8
+      parameters:
+        - $ref: '#/components/parameters/select'
+        - $ref: '#/components/parameters/filtroId'
+        - $ref: '#/components/parameters/filtroHogar'
+        - $ref: '#/components/parameters/orden'
+        - $ref: '#/components/parameters/limite'
+      responses:
+        '200':
+          description: Filas visibles para la sesión.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FinCasaSubcuenta'
+              example:
+                - id: a1051000-0000-4000-8000-000000000002
+                  hogar_id: b0000000-0000-4000-8000-000000000001
+                  libro_id: f1000000-0000-4000-8000-000000000001
+                  categoria_id: c1000000-0000-4000-8000-000000000008
+                  activa: true
+                  dia_limite: 5
+                  cada_meses: 1
+                  proximo_vencimiento: '2026-12-05'
+                  monto_estimado_centavos: 30000
+        '401':
+          $ref: '#/components/responses/SinSesion'
+  /rest/v1/fin_casa_aportes:
+    get:
+      tags: [Base de datos · Finanzas]
+      operationId: leerFinCasaAportes
+      summary: Leer quién aportó a cada pago de servicio
+      description: >-
+        Solo agregar (por `fin_casa_pagar_servicio`): el aportante (quien pone el dinero) además de quien pagó. La lee quien lee el
+        libro de la casa.
+
+      x-roles: [dueno, coadministrador]
+      x-escribe: false
+      x-solo-local: true
+      x-fase: 8
+      parameters:
+        - $ref: '#/components/parameters/select'
+        - $ref: '#/components/parameters/filtroId'
+        - $ref: '#/components/parameters/filtroHogar'
+        - $ref: '#/components/parameters/orden'
+        - $ref: '#/components/parameters/limite'
+      responses:
+        '200':
+          description: Filas visibles para la sesión.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FinCasaAporte'
+              example:
+                - id: a1055000-0000-4000-8000-000000000001
+                  hogar_id: b0000000-0000-4000-8000-000000000001
+                  libro_id: f1000000-0000-4000-8000-000000000001
+                  subcuenta_id: a1051000-0000-4000-8000-000000000001
+                  movimiento_id: a1052000-0000-4000-8000-000000000001
+                  aportante_id: a0000000-0000-4000-8000-000000000002
+                  pagado_por: a0000000-0000-4000-8000-000000000001
+                  monto_centavos: 150000
+                  fecha: '2026-11-10'
+                  suma_al_aportado: false
+                  creado_en: '2026-11-10T09:00:00-06:00'
+        '401':
+          $ref: '#/components/responses/SinSesion'
+  /rest/v1/rpc/fin_proponer_transferencia:
+    post:
+      tags: [Base de datos · Finanzas]
+      operationId: finProponerTransferencia
+      summary: Proponer una transferencia entre personas (bloque 1)
+      description: >-
+        Desde tu libro personal, tres rutas y nada más: pareja a dueño, dueño a casa y pareja a casa
+        (`p_destino_persona` nulo = la casa). Queda `pendiente`: sin la confirmación del receptor no hay movimiento. Idempotente por `p_id`
+        (cola sin conexión; el mismo id con otro contenido es 409/23505). Responde 403 (42501) si la cuenta no es de tu libro personal, si eres
+        la familiar, la cuidadora, la cuenta Casa o la maestra; 400 (22023) si la ruta no existe (incluido Papá: su libro lo mueve su
+        albacea, D19), el monto no es mayor a cero, la cuenta no es de dinero activa o la casa aún no está configurada.
+
+      x-roles: [dueno, coadministrador]
+      x-escribe: true
+      x-solo-local: true
+      x-fase: 8
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [p_id, p_cuenta_origen, p_monto_centavos]
+              properties:
+                p_id:
+                  $ref: '#/components/schemas/Uuid'
+                p_cuenta_origen:
+                  $ref: '#/components/schemas/Uuid'
+                p_destino_persona:
+                  $ref: '#/components/schemas/UuidONulo'
+                p_monto_centavos:
+                  $ref: '#/components/schemas/CentavosPositivos'
+                p_fecha:
+                  type: string
+                  format: date
+                p_nota:
+                  type: [string, 'null']
+                  maxLength: 200
+            example:
+              p_id: a1050000-0000-4000-8000-000000000001
+              p_cuenta_origen: c4000000-0000-4000-8000-000000000001
+              p_destino_persona: e0000000-0000-4000-8000-000000000001
+              p_monto_centavos: 50000
+              p_fecha: '2026-11-10'
+              p_nota: Para el seguro
+      responses:
+        '200':
+          description: Id resultante.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Uuid'
+              example: a1050000-0000-4000-8000-000000000001
+        '400':
+          $ref: '#/components/responses/ReglaFinanzas'
+        '401':
+          $ref: '#/components/responses/SinSesion'
+        '403':
+          $ref: '#/components/responses/Prohibido'
+  /rest/v1/rpc/fin_responder_transferencia:
+    post:
+      tags: [Base de datos · Finanzas]
+      operationId: finResponderTransferencia
+      summary: Confirmar o rechazar una transferencia (receptor)
+      description: >-
+        Solo la recibe quien la recibe: la persona destino o, si es la casa, otro miembro de su libro (nunca quien la propuso). `confirmar`
+        registra UN movimiento de tipo `transferencia` entre los dos libros (`p_cuenta_destino` es opcional si el libro que recibe tiene una sola
+        cuenta de dinero activa). `rechazar` solo la cierra: queda como registro, sin movimiento. Repetir la misma respuesta no duplica nada.
+        403 (42501) a cualquier otra sesión (familiar, cuidadora, Casa, maestra); 400 (22023) si falta elegir la cuenta o no sirve;
+        409 (55000) si ya no está pendiente.
+
+      x-roles: [dueno, coadministrador]
+      x-escribe: true
+      x-solo-local: true
+      x-fase: 8
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [p_transferencia, p_accion]
+              properties:
+                p_transferencia:
+                  $ref: '#/components/schemas/Uuid'
+                p_accion:
+                  type: string
+                  enum: [confirmar, rechazar]
+                p_cuenta_destino:
+                  $ref: '#/components/schemas/UuidONulo'
+            example:
+              p_transferencia: a1050000-0000-4000-8000-000000000001
+              p_accion: confirmar
+              p_cuenta_destino: c3000000-0000-4000-8000-000000000001
+      responses:
+        '200':
+          description: Id del movimiento registrado (nulo si se rechazó).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UuidONulo'
+              example: a1050000-0000-4000-8000-0000000000f1
+        '400':
+          $ref: '#/components/responses/ReglaFinanzas'
+        '401':
+          $ref: '#/components/responses/SinSesion'
+        '403':
+          $ref: '#/components/responses/Prohibido'
+  /rest/v1/rpc/fin_cancelar_transferencia:
+    post:
+      tags: [Base de datos · Finanzas]
+      operationId: finCancelarTransferencia
+      summary: Cancelar una transferencia pendiente (quien la propuso)
+      description: >-
+        Solo quien la propuso y mientras siga pendiente. Queda `cancelada` como registro; no se borra y no genera movimiento. No devuelve
+        nada. 403 (42501) a cualquier otra sesión; 409 (55000) si ya fue respondida.
+
+      x-roles: [dueno, coadministrador]
+      x-escribe: true
+      x-solo-local: true
+      x-fase: 8
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [p_transferencia]
+              properties:
+                p_transferencia:
+                  $ref: '#/components/schemas/Uuid'
+            example:
+              p_transferencia: a1050000-0000-4000-8000-000000000005
+      responses:
+        '204':
+          description: Hecho.
+        '400':
+          $ref: '#/components/responses/ReglaFinanzas'
+        '401':
+          $ref: '#/components/responses/SinSesion'
+        '403':
+          $ref: '#/components/responses/Prohibido'
+  /rest/v1/rpc/fin_casa_configurar:
+    post:
+      tags: [Base de datos · Finanzas]
+      operationId: finCasaConfigurar
+      summary: Configurar la casa (libro general y periodo de la aportación)
+      description: >-
+        Designa el libro compartido de la casa y el periodo de la aportación (`semana`, `mes`, `bimestre`, `semestre` o `anual`). Solo quien
+        administra ese libro (miembro). La primera vez deja las partes de referencia por omisión (Papá 5000 pb; dueño y pareja, 2500 pb cada uno).
+        403 (42501) a la familiar, la cuidadora, Casa y la maestra; 400 (22023) si el libro no es compartido o la casa ya tiene otro; 400 (23514)
+        si el periodo no es uno de los cinco.
+
+      x-roles: [dueno, coadministrador]
+      x-escribe: true
+      x-solo-local: true
+      x-fase: 8
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [p_libro_casa]
+              properties:
+                p_libro_casa:
+                  $ref: '#/components/schemas/Uuid'
+                p_periodo:
+                  $ref: '#/components/schemas/FinPeriodoAportacion'
+            example:
+              p_libro_casa: f1000000-0000-4000-8000-000000000001
+              p_periodo: mes
+      responses:
+        '204':
+          description: Hecho.
+        '400':
+          $ref: '#/components/responses/ReglaFinanzas'
+        '401':
+          $ref: '#/components/responses/SinSesion'
+        '403':
+          $ref: '#/components/responses/Prohibido'
+  /rest/v1/rpc/fin_casa_pagar_servicio:
+    post:
+      tags: [Base de datos · Finanzas]
+      operationId: finCasaPagarServicio
+      summary: Pagar un servicio de la casa y registrar quién aportó
+      description: >-
+        Registra un movimiento de gasto de la subcuenta (servicio) y, además de quién lo paga, el APORTANTE (quien pone el dinero) en
+        `fin_casa_aportes`. Desde una cuenta de la casa: el aportante es un miembro de la casa o Papá (si lo lleva quien paga: su albacea, D19).
+        Desde un libro personal o el de Papá: el aportante es su titular. `p_id` es el id del movimiento (repetir la llamada no duplica). Devuelve el
+        id del aporte. 403 (42501) a la familiar, la cuidadora, Casa, la maestra, al suplente de Papá con albacea vigente y a quien no escribe en
+        ese libro; 400 (22023) si el aportante no corresponde o el monto no es mayor a cero.
+
+      x-roles: [dueno, coadministrador]
+      x-escribe: true
+      x-solo-local: true
+      x-fase: 8
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [p_id, p_subcuenta, p_cuenta_origen, p_monto_centavos]
+              properties:
+                p_id:
+                  $ref: '#/components/schemas/Uuid'
+                p_subcuenta:
+                  $ref: '#/components/schemas/Uuid'
+                p_cuenta_origen:
+                  $ref: '#/components/schemas/Uuid'
+                p_monto_centavos:
+                  $ref: '#/components/schemas/CentavosPositivos'
+                p_fecha:
+                  type: string
+                  format: date
+                p_aportante:
+                  $ref: '#/components/schemas/UuidONulo'
+                p_nota:
+                  type: [string, 'null']
+                  maxLength: 200
+            example:
+              p_id: a1052000-0000-4000-8000-000000000001
+              p_subcuenta: a1051000-0000-4000-8000-000000000001
+              p_cuenta_origen: c5000000-0000-4000-8000-000000000001
+              p_monto_centavos: 150000
+              p_fecha: '2026-11-10'
+              p_aportante: a0000000-0000-4000-8000-000000000002
+              p_nota: Luz de noviembre
+      responses:
+        '200':
+          description: Id resultante.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Uuid'
+              example: a1050000-0000-4000-8000-000000000001
+        '400':
+          $ref: '#/components/responses/ReglaFinanzas'
+        '401':
+          $ref: '#/components/responses/SinSesion'
+        '403':
+          $ref: '#/components/responses/Prohibido'
+  /rest/v1/rpc/fin_casa_aportacion:
+    post:
+      tags: [Base de datos · Finanzas]
+      operationId: finCasaAportacion
+      summary: Aportación de referencia y aportado del periodo, por persona
+      description: >-
+        Por persona, en el periodo de la casa que contiene la fecha: parte de referencia (`parte_pb`), aportación de referencia
+        (estimado de las subcuentas por periodo por parte, en centavos), lo aportado (transferencias a la casa no anuladas y servicios
+        pagados con su dinero) y la fecha límite más próxima (`vence_antes_de`). Es una referencia: la aportación es libre y no hay
+        columna de deuda ni de faltante. Solo quien lee el libro de la casa (la maestra, con su consulta vigente); 403 (42501) a la
+        familiar, la cuidadora y Casa.
+      x-roles: [dueno, coadministrador]
+      x-escribe: false
+      x-solo-local: true
+      x-fase: 8
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [p_hogar_id]
+              properties:
+                p_hogar_id:
+                  $ref: '#/components/schemas/Uuid'
+                p_fecha:
+                  type: string
+                  format: date
+            example:
+              p_hogar_id: b0000000-0000-4000-8000-000000000001
+              p_fecha: '2026-11-10'
+      responses:
+        '200':
+          description: Una fila por persona con parte de referencia.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CasaAportacion'
+              example:
+                - persona_id: a0000000-0000-4000-8000-000000000002
+                  parte_pb: 2500
+                  referencia_centavos: 22500
+                  aportado_centavos: 100000
+                  desde: '2026-11-01'
+                  hasta: '2026-11-30'
+                  vence_antes_de: '2026-12-05'
+        '400':
+          $ref: '#/components/responses/ReglaFinanzas'
+        '401':
+          $ref: '#/components/responses/SinSesion'
+        '403':
+          $ref: '#/components/responses/Prohibido'
   /rest/v1/fin_vistas_solicitadas:
     get:
       tags: [Base de datos · Finanzas]
@@ -10568,6 +11112,195 @@ components:
           format: date-time
         emitido_por:
           $ref: '#/components/schemas/UuidONulo'
+    FinPeriodoAportacion:
+      type: string
+      enum: [semana, mes, bimestre, semestre, anual]
+      description: Periodo de la aportación a la casa (semana en lunes; bimestre 1-2, 3-4…; semestre ene-jun / jul-dic).
+    FinTransferencia:
+      type: object
+      description: Transferencia entre personas (bloque 1). Se escribe solo por las RPC; rechazada o cancelada queda como registro.
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        hogar_id:
+          $ref: '#/components/schemas/Uuid'
+        ruta:
+          type: string
+          enum: [pareja_a_dueno, dueno_a_casa, pareja_a_casa]
+        estado:
+          type: string
+          enum: [pendiente, confirmada, rechazada, cancelada]
+        persona_origen_id:
+          $ref: '#/components/schemas/Uuid'
+        persona_destino_id:
+          $ref: '#/components/schemas/UuidONulo'
+        libro_origen_id:
+          $ref: '#/components/schemas/Uuid'
+        libro_destino_id:
+          $ref: '#/components/schemas/Uuid'
+        cuenta_origen_id:
+          $ref: '#/components/schemas/Uuid'
+        cuenta_destino_id:
+          $ref: '#/components/schemas/UuidONulo'
+        monto_centavos:
+          $ref: '#/components/schemas/CentavosPositivos'
+        fecha:
+          type: string
+          format: date
+        nota:
+          type: [string, 'null']
+          maxLength: 200
+        propuesta_por:
+          $ref: '#/components/schemas/Uuid'
+        propuesta_en:
+          type: string
+          format: date-time
+        confirmada_por:
+          $ref: '#/components/schemas/UuidONulo'
+        respondida_por:
+          $ref: '#/components/schemas/UuidONulo'
+        respondida_en:
+          type: [string, 'null']
+          format: date-time
+        movimiento_id:
+          $ref: '#/components/schemas/UuidONulo'
+    FinCasaConfig:
+      type: object
+      description: Configuración de la casa por hogar.
+      properties:
+        hogar_id:
+          $ref: '#/components/schemas/Uuid'
+        libro_id:
+          $ref: '#/components/schemas/Uuid'
+        periodo:
+          $ref: '#/components/schemas/FinPeriodoAportacion'
+        actualizado_por:
+          $ref: '#/components/schemas/UuidONulo'
+        actualizado_en:
+          type: string
+          format: date-time
+    FinCasaReferencia:
+      type: object
+      description: Parte de referencia de una persona en la aportación a la casa (puntos base).
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        hogar_id:
+          $ref: '#/components/schemas/Uuid'
+        libro_id:
+          $ref: '#/components/schemas/Uuid'
+        persona_id:
+          $ref: '#/components/schemas/Uuid'
+        parte_pb:
+          $ref: '#/components/schemas/PuntosBase'
+        actualizado_por:
+          $ref: '#/components/schemas/UuidONulo'
+        actualizado_en:
+          type: string
+          format: date-time
+    FinCasaIngreso:
+      type: object
+      description: Ingreso de una persona por periodo (dato personal, D3).
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        hogar_id:
+          $ref: '#/components/schemas/Uuid'
+        libro_id:
+          $ref: '#/components/schemas/Uuid'
+        persona_id:
+          $ref: '#/components/schemas/Uuid'
+        ingreso_centavos:
+          $ref: '#/components/schemas/CentavosNoNegativos'
+        periodo:
+          $ref: '#/components/schemas/FinPeriodoAportacion'
+        actualizado_por:
+          $ref: '#/components/schemas/UuidONulo'
+        actualizado_en:
+          type: string
+          format: date-time
+    FinCasaSubcuenta:
+      type: object
+      description: Subcuenta de la casa (un servicio), una categoría de gasto con su fecha límite.
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        hogar_id:
+          $ref: '#/components/schemas/Uuid'
+        libro_id:
+          $ref: '#/components/schemas/Uuid'
+        categoria_id:
+          $ref: '#/components/schemas/Uuid'
+        activa:
+          type: boolean
+        dia_limite:
+          type: [integer, 'null']
+          minimum: 1
+          maximum: 31
+        cada_meses:
+          type: integer
+          enum: [1, 2, 3, 6, 12]
+        proximo_vencimiento:
+          type: [string, 'null']
+          format: date
+        monto_estimado_centavos:
+          oneOf:
+            - $ref: '#/components/schemas/CentavosPositivos'
+            - type: 'null'
+        creada_por:
+          $ref: '#/components/schemas/UuidONulo'
+        creada_en:
+          type: string
+          format: date-time
+    FinCasaAporte:
+      type: object
+      description: Quién aportó a un pago de servicio de la casa. Solo agregar.
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        hogar_id:
+          $ref: '#/components/schemas/Uuid'
+        libro_id:
+          $ref: '#/components/schemas/Uuid'
+        subcuenta_id:
+          $ref: '#/components/schemas/Uuid'
+        movimiento_id:
+          $ref: '#/components/schemas/Uuid'
+        aportante_id:
+          $ref: '#/components/schemas/Uuid'
+        pagado_por:
+          $ref: '#/components/schemas/Uuid'
+        monto_centavos:
+          $ref: '#/components/schemas/CentavosPositivos'
+        fecha:
+          type: string
+          format: date
+        suma_al_aportado:
+          type: boolean
+        creado_en:
+          type: string
+          format: date-time
+    CasaAportacion:
+      type: object
+      description: Aportación de referencia y aportado de una persona en el periodo de la casa. Sin deuda ni faltante.
+      properties:
+        persona_id:
+          $ref: '#/components/schemas/Uuid'
+        parte_pb:
+          $ref: '#/components/schemas/PuntosBase'
+        referencia_centavos:
+          $ref: '#/components/schemas/CentavosNoNegativos'
+        aportado_centavos:
+          $ref: '#/components/schemas/CentavosNoNegativos'
+        desde:
+          type: string
+          format: date
+        hasta:
+          type: string
+          format: date
+        vence_antes_de:
+          type: [string, 'null']
+          format: date
     VistaSolicitada:
       type: object
       description: Una solicitud de vista temporal de Finanzas de Papá (D24). Sin montos ni cuentas.

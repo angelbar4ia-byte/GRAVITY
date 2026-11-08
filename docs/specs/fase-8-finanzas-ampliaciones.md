@@ -1,6 +1,6 @@
 # Fase 8 · Bloque 1: Finanzas (ampliaciones)
 
-> v1.0, 8/nov/2026. Aprobada para construir transferencias, casa con subcuentas, registro de aportantes y periodo de la aportación. La conciliación del PDF queda pendiente de saber los bancos. Base: D19 (libros por persona, albaceas), D24 (vista de Papá), D25, D28 (despensas) y las respuestas del dueño de hoy.
+> v1.1, 8/nov/2026 (confirmación del receptor en transferencias a la casa: el otro adulto; Papá con aportación por el albacea; la casa tiene dos cuentas generales: la de Papá y la de la pareja). Aprobada para construir transferencias, casa con subcuentas, registro de aportantes y periodo de la aportación. La conciliación del PDF queda pendiente de saber los bancos. Base: D19 (libros por persona, albaceas), D24 (vista de Papá), D25, D28 (despensas) y las respuestas del dueño de hoy.
 
 ## Alcance del bloque 1
 
@@ -28,6 +28,12 @@ Quedan para bloques posteriores (ya en el roadmap): simulador de deudas, estimad
 - **Casa** es la **cuenta general**. Sus **subcuentas** son los servicios y gastos (luz, teléfono, etc.).
 - **Quien paga un servicio no importa:** el pago se registra en la subcuenta del servicio y la cuenta de casa lleva el **registro de quién aportó** a cada pago.
 - Cada aportación queda atribuida a una persona (dueño, pareja o Papá), con monto y fecha, para el reparto de referencia.
+
+## 1a. Respuestas del dueño (v1.1, 8/nov/2026)
+
+- **Confirma el receptor:** en transferencias a la casa confirma el **otro adulto** (si propone el dueño, confirma la pareja; si propone la pareja, confirma el dueño).
+- **Papá:** sus aportaciones pasan por el **albacea** (D19); su aportado aparece en la referencia cuando exista el registro de aportantes.
+- **Cuentas generales de la casa:** son **dos**: la cuenta general de **Papá** y la cuenta general de la **pareja**. *Pendiente de confirmar:* a cuál va la transferencia del dueño a la casa.
 
 ## 2a. Periodo de la aportación (respuesta del dueño, 8/nov/2026)
 
