@@ -1,6 +1,6 @@
 # Fase 8 · Bloque 1: Finanzas (ampliaciones)
 
-> v0.2, 8/nov/2026. Borrador (v0.2 agrega quién transfiere a quién y la estructura de cuentas de la casa). Base: D19 (libros por persona, albaceas), D24 (vista de Papá), D25, D28 (despensas) y las respuestas del dueño de hoy.
+> v0.3, 8/nov/2026. Borrador (v0.3: estados de cuenta en PDF y periodo configurable de la aportación según ingreso y fechas límite). Base: D19 (libros por persona, albaceas), D24 (vista de Papá), D25, D28 (despensas) y las respuestas del dueño de hoy.
 
 ## Alcance del bloque 1
 
@@ -29,6 +29,12 @@ Quedan para bloques posteriores (ya en el roadmap): simulador de deudas, estimad
 - **Quien paga un servicio no importa:** el pago se registra en la subcuenta del servicio y la cuenta de casa lleva el **registro de quién aportó** a cada pago.
 - Cada aportación queda atribuida a una persona (dueño, pareja o Papá), con monto y fecha, para el reparto de referencia.
 
+## 2a. Periodo de la aportación (respuesta del dueño, 8/nov/2026)
+
+- El periodo de referencia es **configurable**: semana, mes, bimestre, semestre o año.
+- La referencia depende del **ingreso de cada persona** y de las **fechas límite de pago** de cada cuenta o subcuenta (servicios), para que la aportación caiga antes de cada vencimiento.
+- Los ingresos son datos personales: se guardan en el dispositivo o en el servidor con RLS por persona; no salen a la IA ni a las bocinas (D3).
+
 ## 2. Aportación a la casa
 
 - **Referencia:** 50% de la aportación corresponde a Papá y 50% a ti y tu pareja (partes iguales entre ustedes dos).
@@ -39,14 +45,13 @@ Quedan para bloques posteriores (ya en el roadmap): simulador de deudas, estimad
 ## 3. Conciliación con estados de cuenta
 
 - Se procesan **en la laptop**. Los archivos del banco **no se suben** a ningún servidor ni a la nube.
-- Formatos: por definir con el dueño (CSV u OFX son los comunes; el PDF requiere más trabajo).
+- Formato: **PDF** (los bancos entregan sus estados así). La lectura del PDF se hace en la laptop; el PDF nunca sale de ella.
 - Cada línea del estado se compara con los movimientos registrados: **coincide**, **falta en la app** o **falta en el banco**. Nada se borra; las diferencias se resuelven con un movimiento nuevo (solo-agregar).
 - Las cifras del estado no salen a la IA ni a las bocinas (D3).
 
 ## Preguntas abiertas
 
-1. **Conciliación:** ¿qué bancos usas y en qué formato descargas tus estados de cuenta?
-2. **Aportación de referencia:** ¿se calcula por mes o por semana?
+2. **Bancos:** ¿qué bancos usas? (para ajustar la lectura del PDF de cada uno)
 
 ## Trabajo por agente (cuando se apruebe)
 
