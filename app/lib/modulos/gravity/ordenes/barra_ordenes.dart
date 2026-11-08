@@ -350,6 +350,7 @@ class _BarraOrdenesState extends ConsumerState<BarraOrdenes> {
     final tema = Theme.of(context);
     final ejemplo = _interprete.ejemplo;
     final campo = TextField(
+      key: const ValueKey('campo-orden'),
       controller: _control,
       focusNode: _foco,
       onChanged: _alEscribir,
