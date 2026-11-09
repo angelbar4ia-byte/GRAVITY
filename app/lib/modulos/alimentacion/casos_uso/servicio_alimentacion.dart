@@ -8,6 +8,7 @@ import '../datos/perfiles.dart';
 import '../datos/repositorio.dart';
 import 'importar_recetas.dart';
 import 'lista_compras.dart';
+import 'sugerir_platillos.dart';
 
 export '../datos/modelos.dart' show ComidaDelDia;
 
@@ -77,8 +78,11 @@ class ServicioAlimentacion {
     required this.rol,
     this.esMaestra = false,
     DateTime Function()? ahora,
-  }) : _ahora = ahora ?? DateTime.now;
+    SugeridorRecetas? sugeridor,
+  }) : _ahora = ahora ?? DateTime.now,
+       _sugeridor = sugeridor ?? const SugeridorNoDisponible();
   final DateTime Function() _ahora;
+  final SugeridorRecetas _sugeridor;
   final RepositorioAlimentacion _repo;
   final Rol rol;
   final bool esMaestra;
@@ -230,10 +234,21 @@ class ServicioAlimentacion {
     String? unidad,
     CuentaCompra? cuenta,
     String? cuentaPagoId,
+    String? tiendaId,
   }) async {
     _exigirEdicion();
     if (!puedeVerCompras(rol, m, esMaestra: esMaestra)) {
       throw const PermisoDenegado();
+    }
+    // La tienda es obligatoria (Fase 8) y debe ser de la lista del hogar.
+    if (tiendaId == null || tiendaId.isEmpty) {
+      throw ArgumentError('Elige la tienda de la compra.');
+    }
+    final tienda = (await _repo.tiendas())
+        .where((t) => t.id == tiendaId)
+        .firstOrNull;
+    if (tienda == null) {
+      throw ArgumentError('La tienda no está en la lista del hogar.');
     }
     // Valida primero (ArgumentError) antes de armar la compra del historial.
     final precio = precioDeCompra(
@@ -249,6 +264,8 @@ class ServicioAlimentacion {
       totalCentavos: totalCentavos,
       cantidad: cantidadComprada,
       fecha: _ahora(),
+      tiendaId: tienda.id,
+      tienda: tienda.nombre,
     );
     final previas = historialDe(await _repo.historialCompras(), clave);
     final alerta = calcularAlerta(previas.isEmpty ? null : previas.first, compra);
@@ -264,6 +281,74 @@ class ServicioAlimentacion {
       alerta: alerta,
       pendienteAlbacea: r.pendienteAlbacea,
     );
+  }
+
+  // ------------------------------------------------------- Tiendas (Fase 8)
+
+  /// Tiendas del hogar, para elegir al registrar una compra.
+  Future<List<Tienda>> tiendas() async {
+    if (menusConCompras.isEmpty) throw const PermisoDenegado();
+    return _repo.tiendas();
+  }
+
+  /// Agrega una tienda a la lista del hogar (dueño y pareja). Nombre de 1 a
+  /// 60 caracteres; con el mismo nombre devuelve la que ya había.
+  Future<Tienda> agregarTienda(String nombre) async {
+    _exigirEdicion();
+    final n = nombre.trim();
+    if (n.isEmpty || n.length > maxCaracteresTienda) {
+      throw ArgumentError(
+        'El nombre de la tienda lleva de 1 a $maxCaracteresTienda caracteres.',
+      );
+    }
+    return _repo.agregarTienda(n);
+  }
+
+  /// Historial completo de compras reales del libro o lista de [m] (la misma
+  /// regla de la lista de compras). Las anteriores a la Fase 8 vienen sin
+  /// tienda.
+  Future<List<CompraPrecio>> historialCompleto(MenuId m) async {
+    if (!puedeVerCompras(rol, m, esMaestra: esMaestra)) {
+      throw const PermisoDenegado();
+    }
+    return _repo.historialCompleto(cuentaPorOmision(rol, m));
+  }
+
+  // ------------------------------------------- Platillos desde la despensa
+
+  /// Cuenta de la despensa que le toca a [rol]: Papá para quien solo ve su
+  /// menú (familiar, cuidadora); la cuenta Casa no ve platillos.
+  static CuentaCompra cuentaDeDespensa(Rol rol) => switch (rol) {
+    Rol.dueno => CuentaCompra.dueno,
+    Rol.coadministrador => CuentaCompra.pareja,
+    Rol.casa => CuentaCompra.casa,
+    Rol.familiar || Rol.cuidador => CuentaCompra.papa,
+  };
+
+  /// Despensa de **la cuenta que pide** (nunca la de otra).
+  Future<List<ItemDespensa>> despensa() async {
+    if (menusVisibles.isEmpty) throw const PermisoDenegado();
+    return _repo.despensa(cuentaDeDespensa(rol));
+  }
+
+  /// Platillos del catálogo contra la despensa de esta cuenta.
+  Future<List<PlatilloConDespensa>> platillosConLaDespensa() async =>
+      platillosConDespensa(await platillos(), await despensa());
+
+  /// Lo único que sale hacia la IA: ver [ContextoSugerencia].
+  Future<ContextoSugerencia> contextoDeSugerencia(String preferencias) async =>
+      ContextoSugerencia.de(await despensa(), preferencias);
+
+  /// "Sugerir con IA". Solo propone: **no guarda nada**. Para guardar, la
+  /// persona confirma y se llama [guardarSugerida].
+  Future<List<Platillo>> sugerirConIA(String preferencias) async =>
+      _sugeridor.sugerir(await contextoDeSugerencia(preferencias));
+
+  /// Guarda una receta sugerida tras la confirmación de la persona (dueño y
+  /// pareja), igual que una importada.
+  Future<void> guardarSugerida(Platillo receta) async {
+    _exigirEdicion();
+    await _repo.guardarPlatillos([receta]);
   }
 
   /// Cuentas de pago que se ofrecen en [m] (nombres, sin saldos). La de

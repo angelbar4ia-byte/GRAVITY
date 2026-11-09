@@ -51,17 +51,20 @@ Future<AlertaPrecio?> _compra(
   ServicioAlimentacion s,
   int centavos, {
   double cantidad = 1,
-}) => s
-    .registrarCompra(
-      MenuId.pareja,
-      _lunes,
-      claveCompra('Leche entera', 'l'),
-      cantidadComprada: cantidad,
-      totalCentavos: centavos,
-      nombre: 'Leche entera',
-      unidad: 'l',
-    )
-    .then((r) => r.alerta);
+}) async {
+  final tienda = await s.agregarTienda('Súper');
+  final r = await s.registrarCompra(
+    MenuId.pareja,
+    _lunes,
+    claveCompra('Leche entera', 'l'),
+    cantidadComprada: cantidad,
+    totalCentavos: centavos,
+    nombre: 'Leche entera',
+    unidad: 'l',
+    tiendaId: tienda.id,
+  );
+  return r.alerta;
+}
 
 class _RepoCodigoUsado extends RepositorioAlimentacionEnMemoria {
   _RepoCodigoUsado() : super(semanaEjemplo: _lunes);
@@ -234,6 +237,7 @@ void main() {
         platillos: await repo.platillos(),
       );
       final i = lista.first;
+      await repo.agregarTienda('Súper');
       await repo.guardarCompraPrecio(
         CompraPrecio(
           clave: i.clave,
@@ -251,6 +255,10 @@ void main() {
       final campos = find.byType(TextField);
       await t.enterText(campos.at(0), cantidadTexto(i.cantidad));
       await t.enterText(campos.at(1), '15');
+      await t.tap(find.byKey(const Key('tienda')));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Súper').last);
+      await t.pumpAndSettle();
       await t.tap(find.text('Guardar compra'));
       await t.pumpAndSettle();
       expect(find.byKey(const Key('alerta_precio')), findsOneWidget);

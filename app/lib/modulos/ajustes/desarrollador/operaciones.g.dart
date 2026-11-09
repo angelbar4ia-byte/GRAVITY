@@ -5,7 +5,7 @@ import '../../../nucleo/contratos/roles.dart';
 import 'operacion_api.dart';
 
 /// Huella de api/openapi.yaml con la que se generó este archivo.
-const huellaEspecificacion = 'fnv1a32:71b18355';
+const huellaEspecificacion = 'fnv1a32:f2613516';
 
 /// Versión de la especificación (info.version).
 const versionEspecificacion = '0.6.0';
@@ -3020,6 +3020,89 @@ const gruposOperaciones = <GrupoOperaciones>[
         escribe: false,
         soloLocal: true,
         fase: 5,
+      ),
+    ],
+  ),
+  GrupoOperaciones(
+    nombre: 'Base de datos · Alimentación (tiendas e historial)',
+    descripcion: 'Tiendas del hogar y análisis del historial de compra (Fase 8, ampliaciones 1, 3 y 4), según `supabase/migrations/20261138000000_alimentacion_tiendas.sql`, `supabase/README.md` ("Historial bloque ampliaciones") y `docs/specs/fase-8-alimentacion-ampliaciones.md`. Solo dueño y pareja (coadministrador); la maestra lee. La **tienda es obligatoria en toda compra nueva** (`aliMarcarComprada` con `p_tienda`, 22023 si falta); las compras anteriores se leen como "sin tienda". El historial usa solo **precios reales** (el precio base de supuesto no entra) y respeta la lista de cada cuenta (cada quien su libro y la de Papá y la casa que le toca; el familiar no ve precios). **Precios y compras nunca a la IA ni a las bocinas** (D3, D6). Errores: `22023` dato inválido (tienda faltante, desactivada o de otro hogar; eje, escala o rango) → 400; `42501` sin permiso → 403; `23503` una tienda con compras no se borra: se desactiva → 409.',
+    operaciones: [
+      OperacionApi(
+        id: 'leerAliTiendas',
+        metodo: MetodoHttp.get,
+        ruta: '/rest/v1/ali_tiendas',
+        resumen: 'Leer las tiendas del hogar',
+        descripcion: 'Lista de tiendas del hogar (dueño, pareja y maestra). No hay POST ni PATCH directos: se agrega con `aliAgregarTienda` y se desactiva con `aliTiendaActiva`. DELETE solo de una tienda sin compras (con compras, 409 / 23503).',
+        roles: {Rol.dueno, Rol.coadministrador},
+        escribe: false,
+        soloLocal: true,
+        fase: 8,
+      ),
+      OperacionApi(
+        id: 'borrarAliTiendas',
+        metodo: MetodoHttp.delete,
+        ruta: '/rest/v1/ali_tiendas',
+        resumen: 'Borrar una tienda sin compras',
+        descripcion: 'Dueño y pareja. Una tienda con compras no se borra (409, 23503): se desactiva con `aliTiendaActiva`.',
+        roles: {Rol.dueno, Rol.coadministrador},
+        escribe: true,
+        soloLocal: true,
+        fase: 8,
+      ),
+      OperacionApi(
+        id: 'aliAgregarTienda',
+        metodo: MetodoHttp.post,
+        ruta: '/rest/v1/rpc/ali_agregar_tienda',
+        resumen: 'Agregar una tienda a la lista del hogar',
+        descripcion: 'Dueño y pareja. El nombre lleva de 1 a 60 caracteres (22023); si ya existe (sin distinguir mayúsculas) devuelve esa y la reactiva.',
+        roles: {Rol.dueno, Rol.coadministrador},
+        escribe: true,
+        soloLocal: true,
+        fase: 8,
+      ),
+      OperacionApi(
+        id: 'aliTiendaActiva',
+        metodo: MetodoHttp.post,
+        ruta: '/rest/v1/rpc/ali_tienda_activa',
+        resumen: 'Activar o desactivar una tienda',
+        descripcion: 'Dueño y pareja. Una tienda desactivada deja de aceptar compras nuevas pero conserva su historial. P0002 si no existe o no se lee.',
+        roles: {Rol.dueno, Rol.coadministrador},
+        escribe: true,
+        soloLocal: true,
+        fase: 8,
+      ),
+      OperacionApi(
+        id: 'aliMarcarComprada',
+        metodo: MetodoHttp.post,
+        ruta: '/rest/v1/rpc/ali_marcar_comprada',
+        resumen: 'Marcar una compra de la lista (con tienda)',
+        descripcion: 'Marca la compra: precio real por unidad al ingrediente y al historial, sube la despensa y registra el gasto en el libro correcto (Papá: solicitud al albacea). Fase 8: `p_tienda` es obligatoria (tienda activa del hogar); sin ella, o con una desactivada o de otro hogar, 22023. Una compra marcada ya no se edita.',
+        roles: {Rol.dueno, Rol.coadministrador},
+        escribe: true,
+        soloLocal: true,
+        fase: 8,
+      ),
+      OperacionApi(
+        id: 'aliHistorialCompras',
+        metodo: MetodoHttp.post,
+        ruta: '/rest/v1/rpc/ali_historial_compras',
+        resumen: 'Historial de compras reales',
+        descripcion: 'Solo lectura. Compras marcadas con precio real: fecha local, ingrediente, tienda ("Sin tienda" para las anteriores a la Fase 8), precio unitario, cantidad y gasto. El precio base de supuesto no aparece. Cada cuenta ve solo lo de su lista (RLS); el familiar, la cuidadora y Casa reciben lista vacía. 22023 si el rango está al revés.',
+        roles: {Rol.dueno, Rol.coadministrador},
+        escribe: false,
+        soloLocal: true,
+        fase: 8,
+      ),
+      OperacionApi(
+        id: 'aliResumenHistorial',
+        metodo: MetodoHttp.post,
+        ruta: '/rest/v1/rpc/ali_resumen_historial',
+        resumen: 'Resumen del historial por eje',
+        descripcion: 'Solo lectura. Eje `tiempo` (`p_escala`: semana, mes, bimestre, semestre o anio; la clave es el inicio del periodo), `precio` (por ingrediente: primero, último, mínimo, máximo y variación porcentual), `producto` (por ingrediente) o `tienda` (`sin_tienda` para lo anterior a la Fase 8). Con el mismo rango y filtros los cuatro ejes suman lo mismo que las compras reales. 22023 si el eje o la escala no valen.',
+        roles: {Rol.dueno, Rol.coadministrador},
+        escribe: false,
+        soloLocal: true,
+        fase: 8,
       ),
     ],
   ),

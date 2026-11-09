@@ -26,6 +26,20 @@ abstract interface class RepositorioAlimentacion {
   Future<List<CompraPrecio>> historialCompras();
   Future<void> guardarCompraPrecio(CompraPrecio compra);
 
+  /// Tiendas del hogar (Fase 8), por nombre.
+  Future<List<Tienda>> tiendas();
+
+  /// Agrega una tienda a la lista del hogar (nombre 1 a 60). Si ya existe una
+  /// con ese nombre (sin importar mayúsculas), devuelve la existente.
+  Future<Tienda> agregarTienda(String nombre);
+
+  /// Historial completo de compras reales de [cuenta] (Fase 8): con cantidad,
+  /// total pagado y tienda. Nunca el precio base de supuesto.
+  Future<List<CompraPrecio>> historialCompleto(CuentaCompra cuenta);
+
+  /// Despensa de [cuenta] (solo la que tu rol puede leer; la RLS manda).
+  Future<List<ItemDespensa>> despensa(CuentaCompra cuenta);
+
   /// Ingredientes capturados a mano con su código de barras.
   Future<List<Ingrediente>> ingredientesConCodigo();
 
@@ -141,6 +155,8 @@ abstract final class TablasAlimentacion {
   static const ingredientes = 'ali_ingredientes';
   static const preciosHistorial = 'ali_precios_historial';
   static const compras = 'ali_compras';
+  static const tiendas = 'ali_tiendas';
+  static const despensa = 'ali_despensa';
   static const votaciones = 'ali_votaciones';
   static const opciones = 'ali_votacion_opciones';
   static const votos = 'ali_votos';
@@ -170,6 +186,18 @@ class RepositorioAlimentacionEnMemoria implements RepositorioAlimentacion {
         _precios[p.clave] = p;
       }
     }
+    if (conEjemplo) {
+      // Despensa de demostración (inventada), para ver "qué puedo cocinar".
+      for (final c in [CuentaCompra.dueno, CuentaCompra.pareja]) {
+        despensaMemoria[c] = const [
+          ItemDespensa(nombre: 'Huevo', unidad: 'pza', cantidad: 6),
+          ItemDespensa(nombre: 'Frijoles de la olla', unidad: 'taza', cantidad: 2),
+          ItemDespensa(nombre: 'Tortilla', unidad: 'pza', cantidad: 10),
+          ItemDespensa(nombre: 'Avena', unidad: 'g', cantidad: 500),
+          ItemDespensa(nombre: 'Leche', unidad: 'ml', cantidad: 1000),
+        ];
+      }
+    }
     for (final m in MenuId.values) {
       _supl[m] = conEjemplo ? [...suplementosEjemplo(m)] : [];
       if (conEjemplo && semanaEjemplo != null) {
@@ -189,6 +217,11 @@ class RepositorioAlimentacionEnMemoria implements RepositorioAlimentacion {
   final List<Platillo> _platillos = [...platillosEjemplo];
   final Map<String, PrecioIngrediente> _precios = {};
   final List<CompraPrecio> _historial = [];
+  final List<(CuentaCompra?, CompraPrecio)> _historialCuentas = [];
+  final List<Tienda> _tiendas = [];
+
+  /// Despensa por cuenta (la demostración y las pruebas la llenan).
+  final Map<CuentaCompra, List<ItemDespensa>> despensaMemoria = {};
   final Map<String, Ingrediente> _conCodigo = {};
   final Map<String, VotacionPlan> _votaciones = {};
 
@@ -295,6 +328,7 @@ class RepositorioAlimentacionEnMemoria implements RepositorioAlimentacion {
     String? cuentaPagoId,
   }) async {
     _historial.add(compra);
+    _historialCuentas.add((cuenta, compra));
     _precios[precio.clave] = precio;
     await marcar(menu, lunes, compra.clave, true);
     return const ResultadoCompra();
@@ -335,8 +369,36 @@ class RepositorioAlimentacionEnMemoria implements RepositorioAlimentacion {
   Future<List<CompraPrecio>> historialCompras() async => [..._historial];
 
   @override
-  Future<void> guardarCompraPrecio(CompraPrecio compra) async =>
-      _historial.add(compra);
+  Future<void> guardarCompraPrecio(CompraPrecio compra) async {
+    _historial.add(compra);
+    _historialCuentas.add((null, compra));
+  }
+
+  @override
+  Future<List<Tienda>> tiendas() async => [..._tiendas]
+    ..sort((a, b) => a.nombre.toLowerCase().compareTo(b.nombre.toLowerCase()));
+
+  @override
+  Future<Tienda> agregarTienda(String nombre) async {
+    final n = nombre.trim();
+    for (final t in _tiendas) {
+      if (t.nombre.toLowerCase() == n.toLowerCase()) return t;
+    }
+    final t = Tienda(id: 'tienda-${_tiendas.length + 1}', nombre: n);
+    _tiendas.add(t);
+    return t;
+  }
+
+  @override
+  Future<List<CompraPrecio>> historialCompleto(CuentaCompra cuenta) async => [
+    for (final (c, compra) in _historialCuentas)
+      if (c == null || c == cuenta) compra,
+  ];
+
+  @override
+  Future<List<ItemDespensa>> despensa(CuentaCompra cuenta) async => [
+    ...?despensaMemoria[cuenta],
+  ];
 
   @override
   Future<List<Ingrediente>> ingredientesConCodigo() async => [
@@ -438,6 +500,15 @@ class RepositorioAlimentacionSinServidor implements RepositorioAlimentacion {
   Future<List<CompraPrecio>> historialCompras() async => const [];
   @override
   Future<void> guardarCompraPrecio(CompraPrecio compra) async => _no();
+  @override
+  Future<List<Tienda>> tiendas() async => const [];
+  @override
+  Future<Tienda> agregarTienda(String nombre) async => _no();
+  @override
+  Future<List<CompraPrecio>> historialCompleto(CuentaCompra cuenta) async =>
+      const [];
+  @override
+  Future<List<ItemDespensa>> despensa(CuentaCompra cuenta) async => const [];
   @override
   Future<List<Ingrediente>> ingredientesConCodigo() async => const [];
   @override

@@ -14,6 +14,8 @@ class CompraPrecio {
     required this.totalCentavos,
     required this.cantidad,
     required this.fecha,
+    this.tiendaId,
+    this.tienda,
   }) : assert(totalCentavos > 0),
        assert(cantidad > 0);
 
@@ -23,6 +25,11 @@ class CompraPrecio {
   final int totalCentavos;
   final double cantidad;
   final DateTime fecha;
+
+  /// Tienda donde se compró (Fase 8). `null` = compra anterior a la captura de
+  /// tienda ("sin tienda"); desde la Fase 8 toda compra nueva la lleva.
+  final String? tiendaId;
+  final String? tienda;
 
   /// Centavos por una unidad (puede ser fraccionario).
   double get unitarioCentavos => totalCentavos / cantidad;

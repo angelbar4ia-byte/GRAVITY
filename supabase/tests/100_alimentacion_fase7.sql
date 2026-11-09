@@ -19,6 +19,8 @@ insert into public.ali_platillo_ingredientes (hogar_id, platillo_id, ingrediente
   ('b0000000-0000-4000-8000-000000000001', 'a1000000-0000-4000-8000-000000000001', 'a7100000-0000-4000-8000-000000000002', 2),
   ('b0000000-0000-4000-8000-000000000001', 'a1000000-0000-4000-8000-000000000002', 'a7100000-0000-4000-8000-000000000003', 1);
 insert into public.ali_ingredientes (hogar_id, nombre, unidad) values ('b0000000-0000-4000-8000-000000000002', 'Ingrediente del vecino', 'kg');
+-- Fase 8: toda compra nueva lleva tienda.
+insert into public.ali_tiendas (id, hogar_id, nombre) values ('a7500000-0000-4000-8000-000000000001', 'b0000000-0000-4000-8000-000000000001', 'Tienda de prueba');
 
 -- ---------------------------------------------------------------- catálogo y precio base
 select pruebas.como('ana@ejemplo.test');
@@ -185,17 +187,17 @@ select pruebas.falla($$select public.ali_marcar_comprada('a7300000-0000-4000-800
 
 -- ---------------------------------------------------------------- compra con precio real: reemplaza al base y dinero al libro correcto
 select pruebas.como('alex@ejemplo.test');
-select pruebas.falla($$select public.ali_marcar_comprada('a7300000-0000-4000-8000-000000000001', 5000, 'c4000000-0000-4000-8000-000000000002')$$,
+select pruebas.falla($$select public.ali_marcar_comprada('a7300000-0000-4000-8000-000000000001', 5000, 'c4000000-0000-4000-8000-000000000002', p_tienda => 'a7500000-0000-4000-8000-000000000001')$$,
   'La pareja no marca la lista del dueño', '42501');
 select pruebas.como('ana@ejemplo.test');
-select pruebas.falla($$select public.ali_marcar_comprada('a7300000-0000-4000-8000-000000000001', 5000)$$, 'Con monto hace falta la cuenta de pago', '22023');
-select pruebas.falla($$select public.ali_marcar_comprada('a7300000-0000-4000-8000-000000000001', 5000, 'c4000000-0000-4000-8000-000000000002')$$,
+select pruebas.falla($$select public.ali_marcar_comprada('a7300000-0000-4000-8000-000000000001', 5000, p_tienda => 'a7500000-0000-4000-8000-000000000001')$$, 'Con monto hace falta la cuenta de pago', '22023');
+select pruebas.falla($$select public.ali_marcar_comprada('a7300000-0000-4000-8000-000000000001', 5000, 'c4000000-0000-4000-8000-000000000002', p_tienda => 'a7500000-0000-4000-8000-000000000001')$$,
   'La compra del dueño sale de SU libro, no del de la pareja', '42501');
-select pruebas.falla($$select public.ali_marcar_comprada('a7300000-0000-4000-8000-000000000001', 0, 'c3000000-0000-4000-8000-000000000002')$$,
+select pruebas.falla($$select public.ali_marcar_comprada('a7300000-0000-4000-8000-000000000001', 0, 'c3000000-0000-4000-8000-000000000002', p_tienda => 'a7500000-0000-4000-8000-000000000001')$$,
   'El monto es mayor que cero', '22023');
-select pruebas.falla($$select public.ali_marcar_comprada('a7300000-0000-4000-8000-000000000001', null, 'c3000000-0000-4000-8000-000000000002')$$,
+select pruebas.falla($$select public.ali_marcar_comprada('a7300000-0000-4000-8000-000000000001', null, 'c3000000-0000-4000-8000-000000000002', p_tienda => 'a7500000-0000-4000-8000-000000000001')$$,
   'Sin monto no hay movimiento', '22023');
-select pruebas.igual((select public.ali_marcar_comprada('a7300000-0000-4000-8000-000000000001', 5000, 'c3000000-0000-4000-8000-000000000002')) ->> 'estado_pago',
+select pruebas.igual((select public.ali_marcar_comprada('a7300000-0000-4000-8000-000000000001', 5000, 'c3000000-0000-4000-8000-000000000002', p_tienda => 'a7500000-0000-4000-8000-000000000001')) ->> 'estado_pago',
   'movimiento', 'La dueña marca la compra con lo que pagó: 2 kg por 50.00 pesos');
 select pruebas.ok((select precio_real_centavos = 2500 and not precio_es_base and precio_vigente_centavos = 2500 and precio_base_centavos = 2100 and precio_real_en is not null
                      from public.ali_ingredientes where nombre = 'Arroz'),
@@ -210,12 +212,12 @@ select pruebas.ok((select cantidad = 2 from public.ali_despensa where cuenta = '
 select pruebas.ok((select estado_pago = 'movimiento' and comprado and monto_centavos = 5000 and comprado_por = pruebas.id_persona('ana@ejemplo.test') from public.ali_compras
                     where id = 'a7300000-0000-4000-8000-000000000001'), 'La compra queda marcada con quién y cuánto');
 select pruebas.igual((select count(*)::int from public.ali_precios_historial where ingrediente_id = 'a7100000-0000-4000-8000-000000000001'), 1, 'El historial guarda el precio capturado');
-select pruebas.falla($$select public.ali_marcar_comprada('a7300000-0000-4000-8000-000000000001', 5000, 'c3000000-0000-4000-8000-000000000002')$$,
+select pruebas.falla($$select public.ali_marcar_comprada('a7300000-0000-4000-8000-000000000001', 5000, 'c3000000-0000-4000-8000-000000000002', p_tienda => 'a7500000-0000-4000-8000-000000000001')$$,
   'Una compra no se marca dos veces', '22023');
 select pruebas.igual(pruebas.afecta($$update public.ali_compras set cantidad = 9 where id = 'a7300000-0000-4000-8000-000000000001'$$), 0, 'Marcada, ya no se edita');
 select pruebas.igual(pruebas.afecta($$delete from public.ali_compras where id = 'a7300000-0000-4000-8000-000000000001'$$), 0, '… ni se borra');
 -- La siguiente compra ACTUALIZA el real (no vuelve al base).
-select pruebas.igual((select public.ali_marcar_comprada('a7300000-0000-4000-8000-000000000002', 3000, 'c3000000-0000-4000-8000-000000000002')) ->> 'precio_real_centavos',
+select pruebas.igual((select public.ali_marcar_comprada('a7300000-0000-4000-8000-000000000002', 3000, 'c3000000-0000-4000-8000-000000000002', p_tienda => 'a7500000-0000-4000-8000-000000000001')) ->> 'precio_real_centavos',
   '3000', 'La segunda compra (1 kg a 30.00) actualiza el precio real');
 select pruebas.ok((select precio_real_centavos = 3000 and not precio_es_base from public.ali_ingredientes where nombre = 'Arroz'), 'El catálogo tiene el último precio real');
 select pruebas.igual((select count(*)::int from public.ali_precios_historial where ingrediente_id = 'a7100000-0000-4000-8000-000000000001'), 2, 'y el historial, los dos');
@@ -229,12 +231,12 @@ select pruebas.ok((select count(*) = 2 from public.fin_movimientos m where m.id 
 
 -- Sin precio: solo marca y sube el inventario; el precio queda como estaba.
 select pruebas.como('alex@ejemplo.test');
-select pruebas.igual((select public.ali_marcar_comprada((select id from public.ali_compras where cuenta = 'pareja' limit 1))) ->> 'estado_pago', 'sin_pago', 'La pareja marca la suya sin precio');
+select pruebas.igual((select public.ali_marcar_comprada((select id from public.ali_compras where cuenta = 'pareja' limit 1), p_tienda => 'a7500000-0000-4000-8000-000000000001')) ->> 'estado_pago', 'sin_pago', 'La pareja marca la suya sin precio');
 select pruebas.ok((select precio_real_centavos is null and precio_es_base from public.ali_ingredientes where nombre = 'Leche'), 'Sin precio capturado, el ingrediente sigue con el BASE');
 select pruebas.ok((select cantidad = 8 from public.ali_despensa where cuenta = 'pareja' and ingrediente_id = 'a7100000-0000-4000-8000-000000000003'), 'y su despensa sube');
 
 -- Compra de la casa: el libro compartido lo elige el dueño.
-select pruebas.falla($$select public.ali_marcar_comprada('a7300000-0000-4000-8000-000000000005', 1200, 'c5000000-0000-4000-8000-000000000001')$$,
+select pruebas.falla($$select public.ali_marcar_comprada('a7300000-0000-4000-8000-000000000005', 1200, 'c5000000-0000-4000-8000-000000000001', p_tienda => 'a7500000-0000-4000-8000-000000000001')$$,
   'Sin libro elegido por el dueño, la compra de la casa no se paga', '22023');
 select pruebas.falla($$insert into public.ali_ajustes (hogar_id, libro_casa_id) values ('b0000000-0000-4000-8000-000000000001', 'f1000000-0000-4000-8000-000000000001')$$,
   'La pareja no elige el libro de la casa', '42501');
@@ -244,9 +246,9 @@ select pruebas.falla($$insert into public.ali_ajustes (hogar_id, libro_casa_id) 
 select pruebas.igual(pruebas.afecta($$insert into public.ali_ajustes (hogar_id, libro_casa_id) values ('b0000000-0000-4000-8000-000000000001', 'f1000000-0000-4000-8000-000000000001')$$), 1,
   'El dueño elige "Gastos de la casa"');
 select pruebas.como('alex@ejemplo.test');
-select pruebas.falla($$select public.ali_marcar_comprada('a7300000-0000-4000-8000-000000000005', 1200, 'c4000000-0000-4000-8000-000000000002')$$,
+select pruebas.falla($$select public.ali_marcar_comprada('a7300000-0000-4000-8000-000000000005', 1200, 'c4000000-0000-4000-8000-000000000002', p_tienda => 'a7500000-0000-4000-8000-000000000001')$$,
   'La compra de la casa no sale de un libro personal', '42501');
-select pruebas.igual((select public.ali_marcar_comprada('a7300000-0000-4000-8000-000000000005', 1200, 'c5000000-0000-4000-8000-000000000002')) ->> 'estado_pago', 'movimiento',
+select pruebas.igual((select public.ali_marcar_comprada('a7300000-0000-4000-8000-000000000005', 1200, 'c5000000-0000-4000-8000-000000000002', p_tienda => 'a7500000-0000-4000-8000-000000000001')) ->> 'estado_pago', 'movimiento',
   'Sale del libro compartido que eligió el dueño');
 select pruebas.ok((select m.libro_origen_id = 'f1000000-0000-4000-8000-000000000001' and m.monto_centavos = 1200 from public.fin_movimientos m
                     join public.ali_compras c on c.movimiento_id = m.id where c.id = 'a7300000-0000-4000-8000-000000000005'), '… el movimiento está en el libro de la casa');
@@ -254,9 +256,9 @@ select pruebas.ok((select precio_real_centavos = 400 from public.ali_ingrediente
 
 -- Compra de Papá: solicitud al albacea.
 select pruebas.como('alex@ejemplo.test');
-select pruebas.falla($$select public.ali_marcar_comprada('a7300000-0000-4000-8000-000000000003', 1050, 'c6000000-0000-4000-8000-000000000002')$$,
+select pruebas.falla($$select public.ali_marcar_comprada('a7300000-0000-4000-8000-000000000003', 1050, 'c6000000-0000-4000-8000-000000000002', p_tienda => 'a7500000-0000-4000-8000-000000000001')$$,
   'La pareja (suplente) no paga directo del libro de Papá mientras haya albacea', '42501');
-select pruebas.igual((select public.ali_marcar_comprada('a7300000-0000-4000-8000-000000000003', 1050)) ->> 'estado_pago', 'solicitud',
+select pruebas.igual((select public.ali_marcar_comprada('a7300000-0000-4000-8000-000000000003', 1050, p_tienda => 'a7500000-0000-4000-8000-000000000001')) ->> 'estado_pago', 'solicitud',
   'Sin cuenta de pago, la compra de Papá queda como SOLICITUD al albacea');
 select pruebas.ok((select count(*) = 0 from public.fin_movimientos m where m.monto_centavos = 1050), 'Todavía no hay movimiento en el libro de Papá');
 select pruebas.ok((select precio_real_centavos = 263 from public.ali_ingredientes where nombre = 'Leche'), 'El precio real de la leche (10.50 entre 4 l, redondeado) ya cuenta');
@@ -280,12 +282,12 @@ select pruebas.ok((select estado_pago = 'movimiento' from public.ali_compras whe
 select pruebas.falla($$select public.ali_resolver_solicitud_pago((select id from public.ali_solicitudes_pago), true, 'c6000000-0000-4000-8000-000000000002')$$,
   'Una solicitud se resuelve una vez', '22023');
 -- La albacea compra algo de Papá y lo paga directo.
-select pruebas.igual((select public.ali_marcar_comprada('a7300000-0000-4000-8000-000000000004', 1800, 'c6000000-0000-4000-8000-000000000002')) ->> 'estado_pago', 'movimiento',
+select pruebas.igual((select public.ali_marcar_comprada('a7300000-0000-4000-8000-000000000004', 1800, 'c6000000-0000-4000-8000-000000000002', p_tienda => 'a7500000-0000-4000-8000-000000000001')) ->> 'estado_pago', 'movimiento',
   'La albacea, al marcar con la cuenta de Papá, aprueba y paga en el acto');
 -- Rechazo con motivo.
 select pruebas.igual(public.ali_solicitar_compra('b0000000-0000-4000-8000-000000000001', 'papa', 'a7100000-0000-4000-8000-000000000002', 1) is not null, true, 'Otra solicitud');
 select pruebas.como('alex@ejemplo.test');
-select pruebas.igual((select public.ali_marcar_comprada(id, 700) from public.ali_compras where ingrediente_id = 'a7100000-0000-4000-8000-000000000002' and cuenta = 'papa') ->> 'estado_pago',
+select pruebas.igual((select public.ali_marcar_comprada(id, 700, p_tienda => 'a7500000-0000-4000-8000-000000000001') from public.ali_compras where ingrediente_id = 'a7100000-0000-4000-8000-000000000002' and cuenta = 'papa') ->> 'estado_pago',
   'solicitud', 'La pareja la marca con precio: otra solicitud');
 select pruebas.como('ana@ejemplo.test');
 select pruebas.falla($$select public.ali_resolver_solicitud_pago((select id from public.ali_solicitudes_pago where estado = 'pendiente'), false, null, null, 'x')$$,

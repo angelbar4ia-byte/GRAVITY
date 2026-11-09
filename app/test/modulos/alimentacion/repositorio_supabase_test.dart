@@ -573,6 +573,8 @@ void main() {
       totalCentavos: 2800,
       cantidad: 1000,
       fecha: DateTime(2026, 11, 8),
+      tiendaId: '00000000-0000-4000-8000-0000000000e1',
+      tienda: 'Súper',
     );
     final precio = PrecioIngrediente.deCompra(
       clave: 'leche|ml',
@@ -650,6 +652,7 @@ void main() {
           'p_monto_centavos': 2800,
           'p_cuenta_origen': cuentaPago,
           'p_cuenta_gasto': null,
+          'p_tienda': '00000000-0000-4000-8000-0000000000e1',
         });
         // Solo la marca de la lista: nada de dinero, precio ni historial.
         expect(f.escrituras.toSet().intersection(sinDinero), isEmpty);
@@ -857,6 +860,10 @@ void main() {
         f.funciones['ali_marcar_comprada'] = (p) => {
           'estado_pago': 'solicitud',
         };
+        f.tabla('ali_tiendas').add({
+          'id': '00000000-0000-4000-8000-0000000000e1',
+          'nombre': 'Súper',
+        });
         final dueno = ServicioAlimentacion(_repo(f), rol: Rol.dueno);
         expect(dueno.cuentaPorOmisionDe(MenuId.papa), CuentaCompra.papa);
         expect(dueno.cuentaPorOmisionDe(MenuId.pareja), CuentaCompra.dueno);
@@ -868,6 +875,7 @@ void main() {
           totalCentavos: 2800,
           nombre: 'Leche',
           unidad: 'ml',
+          tiendaId: '00000000-0000-4000-8000-0000000000e1',
         );
         expect(r.pendienteAlbacea, isTrue);
         expect(f.llamadas.last.$1, 'ali_marcar_comprada');
@@ -896,6 +904,8 @@ void main() {
       totalCentavos: 2800,
       cantidad: 1000,
       fecha: DateTime(2026, 11, 8),
+      tiendaId: '00000000-0000-4000-8000-0000000000e1',
+      tienda: 'Súper',
     );
     final precio = PrecioIngrediente.deCompra(
       clave: 'leche|ml',

@@ -17,6 +17,8 @@ import '../datos/modelos.dart';
 import '../datos/repositorio.dart'
     show ErrorAlimentacionServidor, RepositorioAlimentacionEnMemoria;
 import '../estado/proveedores.dart';
+import 'despensa_platillos.dart';
+import 'historial_completo.dart';
 import 'historial_precios.dart';
 import 'hay_presupuesto.dart';
 import 'solicitudes_papa.dart';
@@ -111,8 +113,16 @@ Future<void> _registrar(BuildContext context, WidgetRef ref, ItemCompra i) async
   } on Exception {
     // Sin cuentas legibles: el servidor avisará al guardar.
   }
+  // Tiendas del hogar (la tienda es obligatoria).
+  var tiendas = <Tienda>[];
+  try {
+    tiendas = await servicio.tiendas();
+  } on Exception {
+    // Sin lista: se puede agregar una nueva en el diálogo.
+  }
   if (!context.mounted) return;
   String? cuentaPagoId = ServicioAlimentacion.cuentaEfectiva(ofrecidas, null)?.id;
+  String? tiendaId;
   final ok = await showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
@@ -129,6 +139,41 @@ Future<void> _registrar(BuildContext context, WidgetRef ref, ItemCompra i) async
             controller: total,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: const InputDecoration(labelText: 'Total pagado (pesos)'),
+          ),
+          StatefulBuilder(
+            builder: (ctx, setState) => Column(
+              children: [
+                DropdownButtonFormField<String>(
+                  key: const Key('tienda'),
+                  initialValue: tiendaId,
+                  isExpanded: true,
+                  decoration: const InputDecoration(labelText: 'Tienda'),
+                  items: [
+                    for (final t in tiendas)
+                      DropdownMenuItem(value: t.id, child: Text(t.nombre)),
+                  ],
+                  onChanged: (t) => setState(() => tiendaId = t),
+                ),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    key: const Key('agregar_tienda'),
+                    icon: const Icon(Icons.add_business_outlined),
+                    label: const Text('Agregar tienda'),
+                    onPressed: () async {
+                      final nueva = await _pedirTienda(ctx, servicio);
+                      if (nueva == null) return;
+                      setState(() {
+                        if (!tiendas.any((t) => t.id == nueva.id)) {
+                          tiendas = [...tiendas, nueva];
+                        }
+                        tiendaId = nueva.id;
+                      });
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
           if (cuenta == CuentaCompra.papa)
             const Padding(
@@ -175,6 +220,14 @@ Future<void> _registrar(BuildContext context, WidgetRef ref, ItemCompra i) async
     }
     return;
   }
+  if (tiendaId == null) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Elige la tienda de la compra.')),
+      );
+    }
+    return;
+  }
   final RegistroCompra registro;
   try {
     registro = await ref
@@ -189,6 +242,7 @@ Future<void> _registrar(BuildContext context, WidgetRef ref, ItemCompra i) async
           unidad: i.unidad,
           cuenta: cuenta,
           cuentaPagoId: cuentaPagoId,
+          tiendaId: tiendaId,
         );
   } on Exception catch (e) {
     if (context.mounted) {
@@ -217,6 +271,55 @@ Future<void> _registrar(BuildContext context, WidgetRef ref, ItemCompra i) async
         content: Text(alerta.texto),
       ),
     );
+  }
+}
+
+/// Pide el nombre de una tienda nueva (1 a 60) y la agrega a la lista del
+/// hogar. `null` si se cancela o falla.
+Future<Tienda?> _pedirTienda(
+  BuildContext context,
+  ServicioAlimentacion servicio,
+) async {
+  final nombre = TextEditingController();
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Tienda nueva'),
+      content: TextField(
+        key: const Key('nombre_tienda'),
+        controller: nombre,
+        maxLength: maxCaracteresTienda,
+        decoration: const InputDecoration(labelText: 'Nombre de la tienda'),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          key: const Key('guardar_tienda'),
+          onPressed: () => Navigator.pop(ctx, true),
+          child: const Text('Agregar'),
+        ),
+      ],
+    ),
+  );
+  if (ok != true || !context.mounted) return null;
+  try {
+    return await servicio.agregarTienda(nombre.text);
+  } on Exception catch (e) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            e is ArgumentError
+                ? 'El nombre de la tienda lleva de 1 a $maxCaracteresTienda caracteres.'
+                : 'No se agregó la tienda: $e',
+          ),
+        ),
+      );
+    }
+    return null;
   }
 }
 
@@ -552,6 +655,31 @@ class _Contenido extends ConsumerWidget {
               ),
             ],
           ),
+        Wrap(
+          spacing: 8,
+          children: [
+            OutlinedButton.icon(
+              key: const Key('historial_completo'),
+              icon: const Icon(Icons.insights_outlined),
+              label: const Text('Historial de compras'),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => PantallaHistorialCompleto(menu: menu),
+                ),
+              ),
+            ),
+            OutlinedButton.icon(
+              key: const Key('despensa_platillos'),
+              icon: const Icon(Icons.kitchen_outlined),
+              label: const Text('Cocinar con la despensa'),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const PantallaDespensaPlatillos(),
+                ),
+              ),
+            ),
+          ],
+        ),
         const SizedBox(height: 8),
         for (final g in grupos.entries) ...[
           Padding(

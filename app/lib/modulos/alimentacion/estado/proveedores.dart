@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 
 import '../../../app/alimentacion/proveedor_alimentacion_supabase.dart';
+import '../../../app/alimentacion/sugeridor_recetas_supabase.dart';
 import '../../../app/router.dart' show navegadorCascaronKey;
 import '../../../app/sesion_efectiva.dart';
 import '../../../app/sesion_real.dart';
@@ -13,6 +14,7 @@ import '../../../nucleo/contratos/roles.dart';
 import '../casos_uso/lectura_voz.dart';
 import '../casos_uso/plan_familiar.dart';
 import '../casos_uso/servicio_alimentacion.dart';
+import '../casos_uso/sugerir_platillos.dart';
 import '../datos/lector_codigo.dart';
 import '../datos/lector_codigo_camara.dart';
 import '../datos/modelos.dart';
@@ -44,6 +46,14 @@ final puedeEditarAlimentacionProvider = Provider<bool>((ref) {
   return s != null && puedeEditarAlimentacion(s.rol, esMaestra: s.esMaestra);
 });
 
+/// La función de la IA para "Sugerir con IA" (Fase 8). Vive en `app/`
+/// (guardia D3); sin sesión real, avisa que no está disponible.
+final sugeridorRecetasProvider = Provider<SugeridorRecetas>(
+  (ref) =>
+      ref.watch(sugeridorRecetasSupabaseProvider) ??
+      const SugeridorNoDisponible(),
+);
+
 final servicioAlimentacionProvider = Provider<ServicioAlimentacion>((ref) {
   final s = ref.watch(sesionEfectivaProvider);
   return ServicioAlimentacion(
@@ -51,8 +61,29 @@ final servicioAlimentacionProvider = Provider<ServicioAlimentacion>((ref) {
     rol: s?.rol ?? Rol.casa,
     esMaestra: s?.esMaestra ?? false,
     ahora: ref.read(relojProvider).ahora,
+    sugeridor: ref.watch(sugeridorRecetasProvider),
   );
 });
+
+/// Historial completo del libro o lista de [MenuId].
+final historialCompletoProvider =
+    FutureProvider.family<List<CompraPrecio>, MenuId>((ref, m) {
+      ref.watch(versionAlimentacionProvider);
+      return ref.watch(servicioAlimentacionProvider).historialCompleto(m);
+    });
+
+/// Tiendas del hogar.
+final tiendasProvider = FutureProvider<List<Tienda>>((ref) {
+  ref.watch(versionAlimentacionProvider);
+  return ref.watch(servicioAlimentacionProvider).tiendas();
+});
+
+/// Platillos contra la despensa de la cuenta que pide.
+final platillosConDespensaProvider =
+    FutureProvider<List<PlatilloConDespensa>>((ref) {
+      ref.watch(versionAlimentacionProvider);
+      return ref.watch(servicioAlimentacionProvider).platillosConLaDespensa();
+    });
 
 /// Plataforma en uso; inyectable en pruebas.
 final plataformaLectorProvider = Provider<TargetPlatform>(

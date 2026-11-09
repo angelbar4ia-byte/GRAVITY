@@ -1,7 +1,7 @@
 // GENERADO por api/generar_dart.mjs a partir de api/openapi.yaml. No se edita a mano.
 // Permite abrir Swagger UI con doble clic (file://), donde el navegador no deja leer
 // ../openapi.yaml. Servida por http, la página lee openapi.yaml directamente.
-// huella: fnv1a32:71b18355
+// huella: fnv1a32:f2613516
 window.ESPECIFICACION_GRAVITY = {
   "openapi": "3.1.0",
   "info": {
@@ -55,6 +55,10 @@ window.ESPECIFICACION_GRAVITY = {
     {
       "name": "Base de datos · Cuidados",
       "description": "Tablas `cui_*` y funciones de Cuidados (Fase 5), según `supabase/migrations/20261113000000_cuidados_avisos.sql`,\n`20261114000000_cuidados_esquema.sql`, `20261115000000_cuidados_operaciones.sql`,\n`20261116000000_cuidados_matriz.sql`, `supabase/README.md` (\"Cuidados (Fase 5)\") y\n`docs/specs/fase-5-cuidados.md`. **Los permisos los decide el servidor** (`cui_puede`, RLS), no la pantalla:\nel perfil de cada quien (`cuiPerfil`) sale de su rol y de sus turnos. Dueño: todo. Pareja\n(coadministrador): turnos y resumen del día de Papá; medicamentos, tomas y comidas solo en lectura y solo\ncon su consentimiento; nunca la bitácora de cuidados. Cuidadora: lee lo clínico, marca tomas **a la hora de\nsu turno**, registra comidas en sus días, escribe bitácora y entregas. Hermana: lee, escribe bitácora y\nentregas, y ve el resumen mensual solo si el albacea la autorizó. Un cuidador o familiar **sin turnos** no\ntiene acceso, y una baja corta el acceso al instante. Casa (tablet y bocinas), la cuenta maestra y otros\nhogares no ven nada. **Los medicamentos, las comidas y la bitácora son datos clínicos: nunca a la IA en la\nnube, a las bocinas ni a la tablet pública** (D3, D6); los avisos no llevan texto.\n\n- **Solo agregar:** `cui_comidas`, `cui_bitacora`, `cui_citas` y `cui_entregas` (sin PATCH ni DELETE). Los gastos, los\n  cambios urgentes y las tomas solo cambian por sus funciones; `cui_consentimientos` y\n  `cui_autorizacion_resumen` no se escriben directo.\n- **Lo que pone el servidor** (de solo lectura; no se manda): `persona_id`, `registrada_por`, `de_persona`,\n  `estado`, `confirmado_en` y los campos `*_en` (sin permiso de columna, 42501).\n- **Tope:** 300 registros propios en 24 horas por tabla (54000).\n- **Errores:** `23514` regla de la tabla (rango, largo, monto) → 400; `22023` dato inválido → 400; `23505`\n  duplicado → 409; `55000` gasto ya resuelto → 500; `42501` sin permiso → 403; `54000` tope → 500.\n- **Ayudantes sin operación** (los usan las reglas): `cui_en_circulo` y `cui_puede_comida`.\n"
+    },
+    {
+      "name": "Base de datos · Alimentación (tiendas e historial)",
+      "description": "Tiendas del hogar y análisis del historial de compra (Fase 8, ampliaciones 1, 3 y 4), según\n`supabase/migrations/20261138000000_alimentacion_tiendas.sql`, `supabase/README.md` (\"Historial\nbloque ampliaciones\") y `docs/specs/fase-8-alimentacion-ampliaciones.md`. Solo dueño y pareja\n(coadministrador); la maestra lee. La **tienda es obligatoria en toda compra nueva**\n(`aliMarcarComprada` con `p_tienda`, 22023 si falta); las compras anteriores se leen como \"sin tienda\".\nEl historial usa solo **precios reales** (el precio base de supuesto no entra) y respeta la lista de cada\ncuenta (cada quien su libro y la de Papá y la casa que le toca; el familiar no ve precios).\n**Precios y compras nunca a la IA ni a las bocinas** (D3, D6). Errores: `22023` dato inválido (tienda\nfaltante, desactivada o de otro hogar; eje, escala o rango) → 400; `42501` sin permiso → 403; `23503` una\ntienda con compras no se borra: se desactiva → 409.\n"
     },
     {
       "name": "Funciones del servidor",
@@ -16957,6 +16961,576 @@ window.ESPECIFICACION_GRAVITY = {
           }
         }
       }
+    },
+    "/rest/v1/ali_tiendas": {
+      "get": {
+        "tags": [
+          "Base de datos · Alimentación (tiendas e historial)"
+        ],
+        "operationId": "leerAliTiendas",
+        "summary": "Leer las tiendas del hogar",
+        "description": "Lista de tiendas del hogar (dueño, pareja y maestra). No hay POST ni PATCH directos: se agrega con `aliAgregarTienda` y se desactiva con `aliTiendaActiva`. DELETE solo de una tienda sin compras (con compras, 409 / 23503).",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/orden"
+          },
+          {
+            "$ref": "#/components/parameters/limite"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tiendas que tu rol puede ver (RLS).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AliTienda"
+                  }
+                },
+                "example": [
+                  {
+                    "id": "a7500000-0000-4000-8000-0000000009b1",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "nombre": "Mercado",
+                    "activa": true,
+                    "creada_por": null,
+                    "creada_en": "2026-11-09T12:00:00Z"
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Base de datos · Alimentación (tiendas e historial)"
+        ],
+        "operationId": "borrarAliTiendas",
+        "summary": "Borrar una tienda sin compras",
+        "description": "Dueño y pareja. Una tienda con compras no se borra (409, 23503): se desactiva con `aliTiendaActiva`.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filtroId"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Borrada."
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ReglaAlimentacion"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/ali_agregar_tienda": {
+      "post": {
+        "tags": [
+          "Base de datos · Alimentación (tiendas e historial)"
+        ],
+        "operationId": "aliAgregarTienda",
+        "summary": "Agregar una tienda a la lista del hogar",
+        "description": "Dueño y pareja. El nombre lleva de 1 a 60 caracteres (22023); si ya existe (sin distinguir mayúsculas) devuelve esa y la reactiva.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_hogar_id",
+                  "p_nombre"
+                ],
+                "properties": {
+                  "p_hogar_id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "p_nombre": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 60
+                  }
+                }
+              },
+              "example": {
+                "p_hogar_id": "b0000000-0000-4000-8000-000000000001",
+                "p_nombre": "Mercado"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "La tienda.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AliTiendaResultado"
+                },
+                "example": {
+                  "id": "a7500000-0000-4000-8000-0000000009b1",
+                  "nombre": "Mercado",
+                  "activa": true
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaAlimentacion"
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/ali_tienda_activa": {
+      "post": {
+        "tags": [
+          "Base de datos · Alimentación (tiendas e historial)"
+        ],
+        "operationId": "aliTiendaActiva",
+        "summary": "Activar o desactivar una tienda",
+        "description": "Dueño y pareja. Una tienda desactivada deja de aceptar compras nuevas pero conserva su historial. P0002 si no existe o no se lee.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_tienda",
+                  "p_activa"
+                ],
+                "properties": {
+                  "p_tienda": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "p_activa": {
+                    "type": "boolean"
+                  }
+                }
+              },
+              "example": {
+                "p_tienda": "a7500000-0000-4000-8000-0000000009b1",
+                "p_activa": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "La tienda.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AliTiendaResultado"
+                },
+                "example": {
+                  "id": "a7500000-0000-4000-8000-0000000009b1",
+                  "nombre": "Mercado",
+                  "activa": false
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaAlimentacion"
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/ali_marcar_comprada": {
+      "post": {
+        "tags": [
+          "Base de datos · Alimentación (tiendas e historial)"
+        ],
+        "operationId": "aliMarcarComprada",
+        "summary": "Marcar una compra de la lista (con tienda)",
+        "description": "Marca la compra: precio real por unidad al ingrediente y al historial, sube la despensa y registra el gasto en el libro correcto (Papá: solicitud al albacea). Fase 8: `p_tienda` es obligatoria (tienda activa del hogar); sin ella, o con una desactivada o de otro hogar, 22023. Una compra marcada ya no se edita.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_compra",
+                  "p_tienda"
+                ],
+                "properties": {
+                  "p_compra": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "p_monto_centavos": {
+                    "type": "integer",
+                    "format": "int64",
+                    "minimum": 1,
+                    "description": "Total pagado, en centavos."
+                  },
+                  "p_cuenta_origen": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "p_cuenta_gasto": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "p_tienda": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Obligatoria en toda compra nueva."
+                  }
+                }
+              },
+              "example": {
+                "p_compra": "a7300000-0000-4000-8000-0000000009c1",
+                "p_monto_centavos": 5600,
+                "p_cuenta_origen": "c3000000-0000-4000-8000-000000000002",
+                "p_tienda": "a7500000-0000-4000-8000-0000000009b1"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Estado del pago y precio real.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AliMarcarCompradaResultado"
+                },
+                "example": {
+                  "estado_pago": "movimiento",
+                  "movimiento_id": "a7400000-0000-4000-8000-000000000001",
+                  "solicitud_id": null,
+                  "precio_real_centavos": 2800
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaAlimentacion"
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/ali_historial_compras": {
+      "post": {
+        "tags": [
+          "Base de datos · Alimentación (tiendas e historial)"
+        ],
+        "operationId": "aliHistorialCompras",
+        "summary": "Historial de compras reales",
+        "description": "Solo lectura. Compras marcadas con precio real: fecha local, ingrediente, tienda (\"Sin tienda\" para las anteriores a la Fase 8), precio unitario, cantidad y gasto. El precio base de supuesto no aparece. Cada cuenta ve solo lo de su lista (RLS); el familiar, la cuidadora y Casa reciben lista vacía. 22023 si el rango está al revés.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_hogar_id",
+                  "p_desde",
+                  "p_hasta"
+                ],
+                "properties": {
+                  "p_hogar_id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "p_desde": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date"
+                  },
+                  "p_hasta": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date"
+                  },
+                  "p_ingrediente": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "uuid"
+                  },
+                  "p_tienda": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "uuid"
+                  }
+                }
+              },
+              "example": {
+                "p_hogar_id": "b0000000-0000-4000-8000-000000000001",
+                "p_desde": "2026-01-01",
+                "p_hasta": "2026-12-31",
+                "p_ingrediente": null,
+                "p_tienda": null
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Compras, de la más reciente a la más antigua.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AliHistorialCompra"
+                  }
+                },
+                "example": [
+                  {
+                    "compra_id": "a7300000-0000-4000-8000-0000000009c1",
+                    "fecha": "2026-11-09",
+                    "ingrediente_id": "a7100000-0000-4000-8000-0000000009a1",
+                    "ingrediente": "Arroz H",
+                    "unidad": "kg",
+                    "tienda_id": "a7500000-0000-4000-8000-0000000009b1",
+                    "tienda": "Mercado",
+                    "cuenta": "dueno",
+                    "precio_unitario_centavos": 2800,
+                    "cantidad": 2,
+                    "gasto_centavos": 5600
+                  }
+                ]
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaAlimentacion"
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/ali_resumen_historial": {
+      "post": {
+        "tags": [
+          "Base de datos · Alimentación (tiendas e historial)"
+        ],
+        "operationId": "aliResumenHistorial",
+        "summary": "Resumen del historial por eje",
+        "description": "Solo lectura. Eje `tiempo` (`p_escala`: semana, mes, bimestre, semestre o anio; la clave es el inicio del periodo), `precio` (por ingrediente: primero, último, mínimo, máximo y variación porcentual), `producto` (por ingrediente) o `tienda` (`sin_tienda` para lo anterior a la Fase 8). Con el mismo rango y filtros los cuatro ejes suman lo mismo que las compras reales. 22023 si el eje o la escala no valen.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_hogar_id",
+                  "p_desde",
+                  "p_hasta",
+                  "p_eje"
+                ],
+                "properties": {
+                  "p_hogar_id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "p_desde": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date"
+                  },
+                  "p_hasta": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date"
+                  },
+                  "p_eje": {
+                    "type": "string",
+                    "enum": [
+                      "tiempo",
+                      "precio",
+                      "producto",
+                      "tienda"
+                    ]
+                  },
+                  "p_escala": {
+                    "type": "string",
+                    "enum": [
+                      "semana",
+                      "mes",
+                      "bimestre",
+                      "semestre",
+                      "anio"
+                    ],
+                    "default": "mes"
+                  },
+                  "p_ingrediente": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "uuid"
+                  },
+                  "p_tienda": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "uuid"
+                  }
+                }
+              },
+              "example": {
+                "p_hogar_id": "b0000000-0000-4000-8000-000000000001",
+                "p_desde": "2026-01-01",
+                "p_hasta": "2026-12-31",
+                "p_eje": "tienda"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Un renglón por clave del eje.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AliResumenHistorial"
+                  }
+                },
+                "example": [
+                  {
+                    "clave": "a7500000-0000-4000-8000-0000000009b1",
+                    "etiqueta": "Mercado",
+                    "compras": 1,
+                    "cantidad": 2,
+                    "gasto_centavos": 5600,
+                    "precio_min_centavos": null,
+                    "precio_max_centavos": null,
+                    "precio_primero_centavos": null,
+                    "precio_ultimo_centavos": null,
+                    "variacion_pct": null
+                  }
+                ]
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaAlimentacion"
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -17321,6 +17895,22 @@ window.ESPECIFICACION_GRAVITY = {
               "message": "El cambio urgente lleva de 1 a 200 caracteres.",
               "details": null,
               "hint": null
+            }
+          }
+        }
+      },
+      "ReglaAlimentacion": {
+        "description": "No cumple una regla de negocio (22023: tienda faltante, desactivada o de otro hogar; nombre de tienda; eje, escala o rango del historial) o 23503 (una tienda con compras no se borra: se desactiva).",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorPostgrest"
+            },
+            "example": {
+              "code": "22023",
+              "message": "Indica en qué tienda compraste.",
+              "details": null,
+              "hint": "p_tienda"
             }
           }
         }
@@ -22710,8 +23300,205 @@ window.ESPECIFICACION_GRAVITY = {
             "type": "integer"
           }
         }
+      },
+      "AliTienda": {
+        "type": "object",
+        "required": [
+          "hogar_id",
+          "nombre"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "hogar_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nombre": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "activa": {
+            "type": "boolean"
+          },
+          "creada_por": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "readOnly": true
+          },
+          "creada_en": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        }
+      },
+      "AliTiendaResultado": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "activa": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AliMarcarCompradaResultado": {
+        "type": "object",
+        "properties": {
+          "estado_pago": {
+            "type": "string",
+            "enum": [
+              "sin_pago",
+              "movimiento",
+              "solicitud"
+            ]
+          },
+          "movimiento_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "solicitud_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "precio_real_centavos": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "AliHistorialCompra": {
+        "type": "object",
+        "properties": {
+          "compra_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date"
+          },
+          "ingrediente_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ingrediente": {
+            "type": "string"
+          },
+          "unidad": {
+            "type": "string"
+          },
+          "tienda_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "tienda": {
+            "type": "string",
+            "description": "\"Sin tienda\" para las compras anteriores a la Fase 8."
+          },
+          "cuenta": {
+            "type": "string",
+            "enum": [
+              "papa",
+              "dueno",
+              "pareja",
+              "casa"
+            ]
+          },
+          "precio_unitario_centavos": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "cantidad": {
+            "type": "number"
+          },
+          "gasto_centavos": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "AliResumenHistorial": {
+        "type": "object",
+        "properties": {
+          "clave": {
+            "type": "string"
+          },
+          "etiqueta": {
+            "type": "string"
+          },
+          "compras": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "cantidad": {
+            "type": "number"
+          },
+          "gasto_centavos": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "precio_min_centavos": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "precio_max_centavos": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "precio_primero_centavos": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "precio_ultimo_centavos": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "variacion_pct": {
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        }
       }
     }
   }
 };
-window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:71b18355';
+window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:f2613516';

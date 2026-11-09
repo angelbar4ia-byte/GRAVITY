@@ -5,6 +5,7 @@ library;
 import 'precios.dart';
 export 'precios.dart';
 export 'historial_precios.dart';
+export 'analisis_historial.dart';
 
 enum TiempoComida {
   desayuno('Desayuno'),
@@ -257,4 +258,27 @@ class CompraLista {
   final bool pendienteAlbacea;
 
   String get clave => claveCompra(nombre, unidad);
+}
+
+
+/// Tienda de la lista del hogar (Fase 8). La compra real se captura con una.
+class Tienda {
+  const Tienda({required this.id, required this.nombre});
+  final String id;
+  final String nombre;
+}
+
+/// Máximo de caracteres del nombre de una tienda (mínimo 1).
+const maxCaracteresTienda = 60;
+
+/// Un ingrediente de la despensa de una cuenta: solo nombre, unidad y cantidad.
+class ItemDespensa {
+  const ItemDespensa({
+    required this.nombre,
+    required this.unidad,
+    required this.cantidad,
+  });
+  final String nombre;
+  final String unidad;
+  final double cantidad;
 }

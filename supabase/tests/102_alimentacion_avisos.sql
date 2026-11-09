@@ -21,6 +21,7 @@ select pruebas.ok(not exists (select 1 from information_schema.columns where tab
 -- ---------------------------------------------------------------- compra de Papá: al albacea
 insert into public.ali_ingredientes (id, hogar_id, nombre, unidad, pasillo, precio_base_centavos)
 values ('a7100000-0000-4000-8000-0000000000f1', 'b0000000-0000-4000-8000-000000000001', 'Leche Zeta', 'l', 'Lácteos', 2500);
+insert into public.ali_tiendas (id, hogar_id, nombre) values ('a7500000-0000-4000-8000-000000000001', 'b0000000-0000-4000-8000-000000000001', 'Tienda de prueba');
 select pruebas.como_postgres();
 select pruebas.igual(pruebas.afecta($$insert into public.ali_compras (id, hogar_id, cuenta, ingrediente_id, cantidad, solicitada_por) values
   ('a7300000-0000-4000-8000-0000000000f1', 'b0000000-0000-4000-8000-000000000001', 'papa', 'a7100000-0000-4000-8000-0000000000f1', 4, pruebas.id_persona('ana@ejemplo.test')),
@@ -28,7 +29,7 @@ select pruebas.igual(pruebas.afecta($$insert into public.ali_compras (id, hogar_
 select pruebas.como_postgres();
 select pruebas.igual(pg_temp.total('compra_papa_albacea'), 0, 'Pedir la compra no avisa todavía');
 select pruebas.como('alex@ejemplo.test');
-select pruebas.igual((select public.ali_marcar_comprada('a7300000-0000-4000-8000-0000000000f1', 1050)) ->> 'estado_pago', 'solicitud', 'La pareja marca la compra de Papá: queda la solicitud');
+select pruebas.igual((select public.ali_marcar_comprada('a7300000-0000-4000-8000-0000000000f1', 1050, p_tienda => 'a7500000-0000-4000-8000-000000000001')) ->> 'estado_pago', 'solicitud', 'La pareja marca la compra de Papá: queda la solicitud');
 select pruebas.como_postgres();
 select pruebas.igual(pg_temp.n('ana@ejemplo.test', 'compra_papa_albacea'), 1, 'El albacea (Ana) recibe el aviso de la compra de Papá');
 select pruebas.igual(pg_temp.total('compra_papa_albacea'), 1, 'y nadie más: ni la suplente mientras haya albacea');
@@ -61,7 +62,7 @@ update public.fin_libro_miembros set hasta = now() where papel = 'albacea' and l
 select pruebas.como('carla@ejemplo.test');
 select pruebas.falla($$select public.ali_marcar_comprada('a7300000-0000-4000-8000-0000000000f2', 500)$$, 'La familiar no marca compras', '42501');
 select pruebas.como('alex@ejemplo.test');
-select pruebas.igual((select public.ali_marcar_comprada('a7300000-0000-4000-8000-0000000000f2', 500)) ->> 'estado_pago', 'solicitud', 'Otra compra de Papá');
+select pruebas.igual((select public.ali_marcar_comprada('a7300000-0000-4000-8000-0000000000f2', 500, p_tienda => 'a7500000-0000-4000-8000-000000000001')) ->> 'estado_pago', 'solicitud', 'Otra compra de Papá');
 select pruebas.como_postgres();
 select pruebas.igual(pg_temp.n('alex@ejemplo.test', 'compra_papa_albacea'), 1, 'Sin albacea vigente avisa a la suplente');
 select pruebas.igual(pg_temp.n('ana@ejemplo.test', 'compra_papa_albacea'), 1, 'y Ana no recibe uno más');

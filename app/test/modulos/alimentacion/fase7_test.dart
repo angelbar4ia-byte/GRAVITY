@@ -298,6 +298,7 @@ void main() {
       () async {
         final repo = RepositorioAlimentacionEnMemoria(semanaEjemplo: _lunes);
         final s = ServicioAlimentacion(repo, rol: Rol.dueno);
+        final tienda = (await repo.agregarTienda('Súper')).id;
         final clave = claveCompra('Huevo', 'pza');
         expect((await repo.precios())[clave]!.esBase, isTrue);
 
@@ -308,6 +309,7 @@ void main() {
           clave,
           cantidadComprada: 12,
           totalCentavos: 4800,
+          tiendaId: tienda,
         );
         var p = (await repo.precios())[clave]!;
         expect(p.esBase, isFalse);
@@ -328,6 +330,7 @@ void main() {
           clave,
           cantidadComprada: 6,
           totalCentavos: 3000,
+          tiendaId: tienda,
         );
         p = (await repo.precios())[clave]!;
         expect(p.esBase, isFalse);
@@ -347,6 +350,7 @@ void main() {
         final repo = RepositorioAlimentacionEnMemoria(semanaEjemplo: _lunes);
         final clave = claveCompra('Huevo', 'pza');
         final s = ServicioAlimentacion(repo, rol: Rol.dueno);
+        final tienda = (await repo.agregarTienda('Súper')).id;
         expect(
           () => s.registrarCompra(
             MenuId.pareja,
@@ -354,6 +358,7 @@ void main() {
             clave,
             cantidadComprada: 1,
             totalCentavos: 0,
+            tiendaId: tienda,
           ),
           throwsArgumentError,
         );

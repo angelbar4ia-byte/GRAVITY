@@ -307,6 +307,112 @@ class RepositorioAlimentacionSupabase implements RepositorioAlimentacion {
   @override
   Future<void> guardarCompraPrecio(CompraPrecio compra) async {}
 
+  // ------------------------------------------------- Tiendas e historial (F8)
+
+  /// `ali_tiendas` (id, hogar_id, nombre): la lista de tiendas del hogar.
+  @override
+  Future<List<Tienda>> tiendas() async =>
+      [
+        for (final f in await _leer('ali_tiendas'))
+          Tienda(id: '${f['id']}', nombre: '${f['nombre']}'),
+      ]..sort(
+        (a, b) => a.nombre.toLowerCase().compareTo(b.nombre.toLowerCase()),
+      );
+
+  /// Agrega a `ali_tiendas` (insert directo; la RLS del hogar decide quién).
+  /// Con el mismo nombre (sin mayúsculas) devuelve la que ya estaba.
+  @override
+  Future<Tienda> agregarTienda(String nombre) async {
+    final n = nombre.trim();
+    if (n.isEmpty || n.length > maxCaracteresTienda) {
+      throw const ErrorAlimentacionServidor(
+        'El nombre de la tienda lleva de 1 a $maxCaracteresTienda caracteres.',
+      );
+    }
+    try {
+      for (final t in await tiendas()) {
+        if (_norm(t.nombre) == _norm(n)) return t;
+      }
+      final id = _uuid.v4();
+      await _guardar('ali_tiendas', [
+        {'id': id, 'hogar_id': hogarId, 'nombre': n},
+      ]);
+      return Tienda(id: id, nombre: n);
+    } on ErrorFinanzas catch (e) {
+      throw ErrorAlimentacionServidor(
+        e.sinConexion ? 'Sin conexión. Intenta de nuevo.' : e.mensaje,
+      );
+    }
+  }
+
+  /// `ali_historial_compras(p_hogar_id, p_cuenta)`: una fila por compra real
+  /// (el servidor ya excluye el precio base). Se leen, con tolerancia a los
+  /// nombres, `ingrediente`/`nombre`, `unidad`, `cantidad`,
+  /// `monto_centavos`/`total_centavos`, `tienda_id`, `tienda` y
+  /// `fecha`/`comprada_en`. Las filas sin monto o cantidad válidos se omiten.
+  @override
+  Future<List<CompraPrecio>> historialCompleto(CuentaCompra cuenta) async {
+    try {
+      final r = await _rpc('ali_historial_compras', {
+        'p_hogar_id': hogarId,
+        'p_cuenta': cuenta.name,
+      });
+      final tiendasPorId = {for (final t in await tiendas()) t.id: t.nombre};
+      final out = <CompraPrecio>[];
+      for (final f in _filas(r)) {
+        final monto = f['monto_centavos'] ?? f['total_centavos'];
+        final cant = f['cantidad'];
+        final fecha = f['fecha'] ?? f['comprada_en'] ?? f['registrado_en'];
+        if (monto is! num || cant is! num || fecha == null) continue;
+        if (monto <= 0 || cant <= 0) continue;
+        final nombre = '${f['ingrediente'] ?? f['nombre'] ?? ''}';
+        final unidad = '${f['unidad'] ?? ''}';
+        final tid = f['tienda_id'] == null ? null : '${f['tienda_id']}';
+        out.add(
+          CompraPrecio(
+            clave: claveCompra(nombre, unidad),
+            nombre: nombre,
+            unidad: unidad,
+            totalCentavos: monto.toInt(),
+            cantidad: cant.toDouble(),
+            fecha: _fecha(fecha),
+            tiendaId: tid,
+            tienda: tid == null
+                ? null
+                : ('${f['tienda'] ?? ''}'.isNotEmpty
+                      ? '${f['tienda']}'
+                      : tiendasPorId[tid]),
+          ),
+        );
+      }
+      return out;
+    } on ErrorFinanzas catch (e) {
+      throw ErrorAlimentacionServidor(
+        e.sinConexion ? 'Sin conexión. Intenta de nuevo.' : e.mensaje,
+      );
+    }
+  }
+
+  /// Lectura de `ali_despensa` (cuenta, ingrediente_id, cantidad); la RLS
+  /// deja ver solo la despensa que tu rol puede leer.
+  @override
+  Future<List<ItemDespensa>> despensa(CuentaCompra cuenta) async {
+    final ings = {
+      for (final f in await _leer('ali_ingredientes')) '${f['id']}': f,
+    };
+    return [
+      for (final d in await _leer('ali_despensa'))
+        if (d['cuenta'] == cuenta.name &&
+            ings['${d['ingrediente_id']}'] != null &&
+            _num(d['cantidad']) > 0)
+          ItemDespensa(
+            nombre: '${ings['${d['ingrediente_id']}']!['nombre']}',
+            unidad: '${ings['${d['ingrediente_id']}']!['unidad']}',
+            cantidad: _num(d['cantidad']),
+          ),
+    ];
+  }
+
   /// Ingredientes del servidor con `codigo_barras` (la lectura normal de
   /// `ali_ingredientes` ya trae la columna), para la búsqueda del lector.
   @override
@@ -640,6 +746,11 @@ class RepositorioAlimentacionSupabase implements RepositorioAlimentacion {
     required CuentaCompra cuenta,
     String? cuentaPagoId,
   }) async {
+    // La tienda es obligatoria desde la Fase 8.
+    final tiendaId = compra.tiendaId;
+    if (tiendaId == null || !_esUuid(tiendaId)) {
+      throw const ErrorAlimentacionServidor('Elige la tienda de la compra.');
+    }
     try {
       final ingId = await _ingredienteDe(compra);
       final compraId = await _compraDe(
@@ -654,6 +765,7 @@ class RepositorioAlimentacionSupabase implements RepositorioAlimentacion {
         compraId: compraId,
         montoCentavos: compra.totalCentavos,
         cuentaOrigen: origen,
+        tiendaId: tiendaId,
       );
       await marcar(menu, lunes, compra.clave, true);
       final estado = r is Map ? r['estado_pago'] : null;
@@ -1020,11 +1132,13 @@ class RepositorioAlimentacionSupabase implements RepositorioAlimentacion {
     int? montoCentavos,
     String? cuentaOrigen,
     String? cuentaGasto,
+    String? tiendaId,
   }) => _rpc('ali_marcar_comprada', {
     'p_compra': compraId,
     'p_monto_centavos': montoCentavos,
     'p_cuenta_origen': cuentaOrigen,
     'p_cuenta_gasto': cuentaGasto,
+    'p_tienda': ?tiendaId,
   });
 
   /// `ali_solicitar_compra`: pide un ingrediente para la despensa de Papá
