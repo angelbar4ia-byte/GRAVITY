@@ -52,7 +52,7 @@ export function gemini(f: Fetch, modelo = "gemini-2.5-flash"): ProveedorIa {
           ...c.historial.map((t) => ({ role: t.de === "persona" ? "user" : "model", parts: [{ text: t.texto }] })),
           { role: "user", parts: [{ text: c.mensaje }] },
         ],
-        generationConfig: { maxOutputTokens: MAX_SALIDA },
+        generationConfig: { maxOutputTokens: c.maxSalida ?? MAX_SALIDA, ...(c.formatoJson ? { responseMimeType: "application/json" } : {}) },
       };
       if (c.herramientas.length > 0) {
         cuerpo.tools = [{
@@ -85,7 +85,7 @@ export function claude(f: Fetch, modelo = "claude-haiku-4-5"): ProveedorIa {
     async generar(c, clave) {
       const cuerpo: Record<string, unknown> = {
         model: modelo,
-        max_tokens: MAX_SALIDA,
+        max_tokens: c.maxSalida ?? MAX_SALIDA,
         system: c.sistema,
         messages: [
           ...c.historial.map((t) => ({ role: t.de === "persona" ? "user" : "assistant", content: t.texto })),
@@ -122,7 +122,7 @@ export function chatgpt(f: Fetch, modelo = "gpt-4o-mini"): ProveedorIa {
     async generar(c, clave) {
       const cuerpo: Record<string, unknown> = {
         model: modelo,
-        max_tokens: MAX_SALIDA,
+        max_tokens: c.maxSalida ?? MAX_SALIDA,
         messages: [
           { role: "system", content: c.sistema },
           ...c.historial.map((t) => ({ role: t.de === "persona" ? "user" : "assistant", content: t.texto })),

@@ -401,7 +401,7 @@ class RepositorioAlimentacionSupabase implements RepositorioAlimentacion {
   /// pendiente; la original queda revertida en el historial. Se busca la
   /// fila más reciente ya comprada de ese ingrediente en las cuentas del menú.
   @override
-  Future<void> regresarCompra({
+  Future<bool> regresarCompra({
     required MenuId menu,
     required DateTime lunes,
     required String clave,
@@ -436,11 +436,14 @@ class RepositorioAlimentacionSupabase implements RepositorioAlimentacion {
           'No encontramos esa compra en el servidor.',
         );
       }
-      await _rpc('ali_regresar_compra', {
+      final r = await _rpc('ali_regresar_compra', {
         'p_compra': '${elegida['id']}',
         'p_motivo': m,
       });
       await marcar(menu, lunes, clave, false);
+      final f = _filas(r);
+      return (r is Map && r['solicitud_retirada'] == true) ||
+          f.any((x) => x['solicitud_retirada'] == true);
     } on ErrorFinanzas catch (e) {
       throw _errorServidor(e);
     }

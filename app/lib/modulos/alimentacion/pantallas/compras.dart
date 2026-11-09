@@ -245,7 +245,7 @@ Future<void> _registrar(BuildContext context, WidgetRef ref, ItemCompra i) async
           cuentaPagoId: cuentaPagoId,
           tiendaId: tiendaId,
         );
-  } on Exception catch (e) {
+  } catch (e) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('No se registró la compra: $e')),
@@ -308,7 +308,7 @@ Future<Tienda?> _pedirTienda(
   if (ok != true || !context.mounted) return null;
   try {
     return await servicio.agregarTienda(nombre.text);
-  } on Exception catch (e) {
+  } catch (e) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -554,7 +554,7 @@ Future<void> _regresar(
   );
   if (ok != true || !context.mounted) return;
   try {
-    await ref
+    final retirada = await ref
         .read(servicioAlimentacionProvider)
         .regresarCompra(
           menu,
@@ -563,6 +563,17 @@ Future<void> _regresar(
           motivo: motivo.text,
         );
     ref.read(versionAlimentacionProvider.notifier).state++;
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            retirada
+                ? 'Compra regresada. Se retiró la solicitud al albacea.'
+                : 'Compra regresada.',
+          ),
+        ),
+      );
+    }
   } catch (e) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -614,6 +625,7 @@ Future<void> _agregar(BuildContext context, WidgetRef ref) async {
           child: const Text('Cancelar'),
         ),
         FilledButton(
+          key: const Key('confirmar_agregar'),
           onPressed: () => Navigator.pop(ctx, true),
           child: const Text('Agregar'),
         ),
@@ -630,7 +642,7 @@ Future<void> _agregar(BuildContext context, WidgetRef ref) async {
           cantidad: double.tryParse(cantidad.text.replaceAll(',', '.')) ?? 0,
         );
     ref.read(versionAlimentacionProvider.notifier).state++;
-  } on Exception catch (e) {
+  } catch (e) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

@@ -358,6 +358,67 @@ void main() {
     });
   });
 
+  group('Fase 8 v1.2: regreso, revertida y avisos de validación', () {
+    test('regresar dice si se retiró la solicitud al albacea', () async {
+      final (repo, s, _) = await _conCompra();
+      final clave = claveCompra('Huevo', 'pza');
+      repo.solicitudesPendientesMemoria.add(clave);
+      expect(await s.regresarCompra(MenuId.pareja, _lunes, clave, motivo: 'Mal precio'), isTrue);
+      await ServicioAlimentacion(repo, rol: Rol.dueno).registrarCompra(
+        MenuId.pareja, _lunes, clave, cantidadComprada: 12, totalCentavos: 4800,
+        tiendaId: (await s.tiendas()).first.id,
+      );
+      expect(await s.regresarCompra(MenuId.pareja, _lunes, clave, motivo: 'Otra vez'), isFalse);
+    });
+
+    test('servidor: solicitud_retirada del RPC llega al resultado', () async {
+      final f = FuenteTablasEnMemoria();
+      f.tabla('ali_ingredientes').add({'id': 'i1', 'nombre': 'Huevo', 'unidad': 'pza'});
+      f.tabla('ali_compras').add({
+        'id': _comp, 'cuenta': 'dueno', 'ingrediente_id': 'i1', 'comprado': true,
+        'comprado_en': '2026-11-03T10:00:00Z',
+      });
+      f.funciones['ali_regresar_compra'] =
+          (_) => {'compra_id': _comp, 'solicitud_retirada': true};
+      final repo = RepositorioAlimentacionSupabase(fuente: f, hogarId: _hogar, personaId: _yo);
+      expect(
+        await repo.regresarCompra(
+          menu: MenuId.pareja, lunes: _lunes,
+          clave: claveCompra('Huevo', 'pza'), motivo: 'Mal precio',
+        ),
+        isTrue,
+      );
+    });
+
+    testWidgets('diálogo agregar: nombre vacío muestra el aviso', (t) async {
+      await t.binding.setSurfaceSize(const Size(600, 3000));
+      addTearDown(() => t.binding.setSurfaceSize(null));
+      final (repo, _, _) = await _conCompra();
+      await t.pumpWidget(_app(repo, const PantallaListaCompras(), menu: MenuId.pareja));
+      await t.pumpAndSettle();
+      await t.tap(find.byKey(const Key('agregar_a_lista')));
+      await t.pumpAndSettle();
+      await t.tap(find.byKey(const Key('confirmar_agregar')));
+      await t.pumpAndSettle();
+      expect(find.textContaining('Escribe el ingrediente'), findsOneWidget);
+    });
+
+    testWidgets('diálogo de tienda: nombre vacío muestra el aviso', (t) async {
+      await t.binding.setSurfaceSize(const Size(600, 3000));
+      addTearDown(() => t.binding.setSurfaceSize(null));
+      final repo = RepositorioAlimentacionEnMemoria(semanaEjemplo: _lunes);
+      await t.pumpWidget(_app(repo, const PantallaListaCompras(), menu: MenuId.pareja));
+      await t.pumpAndSettle();
+      await t.tap(find.byTooltip('Registrar compra con precio').first);
+      await t.pumpAndSettle();
+      await t.tap(find.byKey(const Key('agregar_tienda')));
+      await t.pumpAndSettle();
+      await t.tap(find.byKey(const Key('guardar_tienda')));
+      await t.pumpAndSettle();
+      expect(find.textContaining('lleva de 1 a'), findsOneWidget);
+    });
+  });
+
   group('Porciones por persona', () {
     RepositorioAlimentacionEnMemoria repoConPorciones() {
       final r = RepositorioAlimentacionEnMemoria(semanaEjemplo: _lunes);

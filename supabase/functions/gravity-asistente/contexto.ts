@@ -28,6 +28,10 @@ export interface ContextoIa {
   historial: Turno[];
   mensaje: string;
   herramientas: Array<{ nombre: string; descripcion: string }>;
+  /** Tope de tokens de salida (por omisión el del adaptador). */
+  maxSalida?: number;
+  /** Pide al proveedor una salida JSON (si lo soporta). */
+  formatoJson?: boolean;
 }
 
 /** Módulos cuyas herramientas puede ver el modelo (D3, spec de la Fase 6). */

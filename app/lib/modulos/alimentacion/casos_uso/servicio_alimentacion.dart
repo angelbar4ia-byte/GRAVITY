@@ -325,8 +325,8 @@ class ServicioAlimentacion {
 
   /// Regresa una compra marcada (dueño y pareja): vuelve a pendiente y el
   /// historial conserva la original como revertida. [motivo]: 3 o más
-  /// caracteres.
-  Future<void> regresarCompra(
+  /// caracteres. Devuelve `true` si se retiró una solicitud al albacea.
+  Future<bool> regresarCompra(
     MenuId m,
     DateTime semana,
     String clave, {
@@ -342,7 +342,7 @@ class ServicioAlimentacion {
         'El motivo lleva al menos $minCaracteresMotivoRegreso caracteres.',
       );
     }
-    await _repo.regresarCompra(
+    return _repo.regresarCompra(
       menu: m,
       lunes: lunesDe(semana),
       clave: clave,

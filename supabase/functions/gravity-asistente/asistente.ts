@@ -2,6 +2,7 @@
 // Dependencias, así se prueba con un proveedor falso (asistente_test.ts).
 import { armarContexto, ContextoSensibleError, type HerramientaCatalogo, ROLES_QUE_CONVERSAN, type Turno } from "./contexto.ts";
 import type { ProveedorIa } from "./proveedores.ts";
+import { armarContextoRecetas, PeticionRecetasError, RespuestaRecetasError, validarContextoRecetas, validarRespuestaRecetas } from "./sugerir_recetas.ts";
 import { atenderGoogle, CATALOGO_GOOGLE, esAccionGoogle, type DepsGoogle, type PeticionGoogle } from "./herramientas_google.ts";
 
 export interface Identidad {
@@ -43,6 +44,8 @@ export interface Dependencias {
 }
 
 export interface Peticion extends PeticionGoogle {
+  /** `sugerir_recetas` (Alimentación) o las acciones de Google. */
+  contexto?: unknown;
   mensaje?: unknown;
   sesion?: unknown;
   historial?: unknown;
@@ -82,6 +85,7 @@ export async function responder(p: Peticion, d: Dependencias): Promise<Resultado
     if (!quien) return error(401, "no_autorizado", "Inicia sesión para usar Google.");
     return atenderGoogle(p, quien, d.google);
   }
+  if (p.accion === "sugerir_recetas") return sugerirRecetas(p, d);
   const mensaje = typeof p.mensaje === "string" ? p.mensaje.trim() : "";
   if (!mensaje) return error(400, "mensaje_vacio", "Escribe un mensaje.");
   if (mensaje.length > MAX_MENSAJE) return error(400, "mensaje_largo", `El mensaje pasa de ${MAX_MENSAJE} caracteres.`);
@@ -128,6 +132,45 @@ export async function responder(p: Peticion, d: Dependencias): Promise<Resultado
     return { estado: 200, cuerpo: { respuesta: texto, herramienta } };
   } catch {
     await registrar(null, "error_proveedor").catch(() => {});
+    return error(502, "proveedor_no_disponible", "GRAVITY no pudo consultar a la IA ahora. Inténtalo más tarde.");
+  }
+}
+
+/** Sugerir recetas con la despensa. No guarda nada: la app guarda solo si la persona confirma. */
+async function sugerirRecetas(p: Peticion, d: Dependencias): Promise<Resultado> {
+  let contexto;
+  try {
+    contexto = armarContextoRecetas(validarContextoRecetas(p.contexto));
+  } catch (e) {
+    if (e instanceof PeticionRecetasError) return error(e.codigo === "contexto_sensible" ? 500 : 400, e.codigo, e.message);
+    throw e;
+  }
+  const yo = await d.identidad();
+  if (!yo) return error(401, "no_autorizado", "Inicia sesión para pedir sugerencias.");
+  if (!ROLES_QUE_CONVERSAN.has(yo.rol)) return error(403, "rol_sin_conversacion", "Tu perfil no puede pedir sugerencias de recetas.");
+  if (!d.proveedor) return error(503, "proveedor_desconocido", "El proveedor de IA configurado no existe.");
+  if (!d.clave) return error(503, "sin_clave", "El asistente aún no está configurado: falta la clave del proveedor en el servidor.");
+  if (d.limiteDiario > 0 && (await d.usoHoy(yo.personaId)) >= d.limiteDiario) {
+    return error(429, "limite_diario", "Llegaste al límite de mensajes de hoy. Vuelve a intentarlo mañana.");
+  }
+  const registrar = (resultado: string) =>
+    d.bitacora({
+      hogar_id: yo.hogarId,
+      persona_id: yo.personaId,
+      accion: "gravity.asistente",
+      detalle: { sesion: "sugerir_recetas", proveedor: d.proveedor!.id, herramienta: "sugerir_recetas", resultado },
+    });
+  try {
+    const r = await d.proveedor.generar(contexto, d.clave);
+    const recetas = validarRespuestaRecetas(r.texto);
+    await registrar("ok");
+    return { estado: 200, cuerpo: { recetas } };
+  } catch (e) {
+    if (e instanceof RespuestaRecetasError) {
+      await registrar("respuesta_invalida").catch(() => {});
+      return error(502, "respuesta_invalida", "La IA devolvió recetas que no se pueden usar. Inténtalo otra vez.");
+    }
+    await registrar("error_proveedor").catch(() => {});
     return error(502, "proveedor_no_disponible", "GRAVITY no pudo consultar a la IA ahora. Inténtalo más tarde.");
   }
 }

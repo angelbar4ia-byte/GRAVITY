@@ -44,6 +44,24 @@ falla si dejan de coincidir.
 Una fila por mensaje: quién (`persona_id`), cuándo (`registrado_en`) y en `detalle`:
 `{sesion, proveedor, herramienta, resultado}`. Nunca el texto de la conversación.
 
+## Acción `sugerir_recetas` (Alimentación, Fase 8)
+
+Petición: `{accion: "sugerir_recetas", contexto: {ingredientes: [{nombre, cantidad_aprox, unidad}], preferencias}}`
+(hasta 60 ingredientes; preferencias de hasta 300 caracteres). Respuesta: `{recetas: [{titulo, porciones, pasos: [...],
+ingredientes: [{nombre, cantidad, unidad, pasillo?}]}]}` (formato del archivo de recetas v1; hasta 5 recetas).
+
+- **D3:** el contexto solo acepta `ingredientes` y `preferencias`; cualquier otro campo (perfil, alergias, textura, dieta
+  de Papá…) se descarta sin leerse y nunca llega al proveedor. Nombres y preferencias pasan por `redactar` y la revisión
+  final de `contexto.ts`. Código en `sugerir_recetas.ts`.
+- **Respuesta del modelo:** se valida como JSON estricto (tolera un bloque de código envolvente). Si no es válida:
+  `502 respuesta_invalida`, sin receta alguna. Petición mal formada: `400` (`ingredientes_invalidos`,
+  `demasiados_ingredientes`, `preferencias_largas`…).
+- **No guarda nada** en el servidor: la app guarda la receta solo si la persona confirma.
+- **Mismo proveedor y límites** que la conversación: `GRAVITY_IA_PROVEEDOR`, `GRAVITY_IA_LIMITE_DIARIO` (cada sugerencia
+  cuenta como un mensaje), mismos roles (dueño, coadministrador, familiar; cuidador y Casa: `403`). Sin clave: `503 sin_clave`
+  sin llamar al proveedor. Bitácora: quién, cuándo y `sugerir_recetas`/resultado; nunca el contenido.
+- Pide hasta 2500 tokens de salida (la conversación usa 400) y, con Gemini, `responseMimeType: application/json`.
+
 ## Gmail y Google Calendar (Fase 6, parte 2) — preparado, sin conectar
 
 Herramientas (`herramientas_google.ts`, adaptador en `google.ts`, cifrado en `cifrado.ts`):

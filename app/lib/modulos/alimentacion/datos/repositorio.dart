@@ -42,8 +42,9 @@ abstract interface class RepositorioAlimentacion {
 
   /// Regresa una compra marcada (`ali_regresar_compra`): vuelve a pendiente y
   /// la original queda en el historial como revertida. [motivo]: 3 o más
-  /// caracteres.
-  Future<void> regresarCompra({
+  /// caracteres. Devuelve `true` si se retiró una solicitud al albacea
+  /// (compra de Papá aún sin pagar).
+  Future<bool> regresarCompra({
     required MenuId menu,
     required DateTime lunes,
     required String clave,
@@ -243,6 +244,9 @@ class RepositorioAlimentacionEnMemoria implements RepositorioAlimentacion {
 
   /// Porciones por persona (el servidor las calcula; las pruebas las llenan).
   final List<PorcionPersona> porcionesMemoria = [];
+
+  /// Claves con solicitud al albacea sin resolver (pruebas).
+  final Set<String> solicitudesPendientesMemoria = {};
 
   /// Compras regresadas en memoria: (clave, motivo).
   final List<(String, String)> regresadas = [];
@@ -476,7 +480,7 @@ class RepositorioAlimentacionEnMemoria implements RepositorioAlimentacion {
   }
 
   @override
-  Future<void> regresarCompra({
+  Future<bool> regresarCompra({
     required MenuId menu,
     required DateTime lunes,
     required String clave,
@@ -512,6 +516,7 @@ class RepositorioAlimentacionEnMemoria implements RepositorioAlimentacion {
     }
     regresadas.add((clave, motivo.trim()));
     await marcar(menu, lunes, clave, false);
+    return solicitudesPendientesMemoria.remove(clave);
   }
 
   @override
@@ -639,7 +644,7 @@ class RepositorioAlimentacionSinServidor implements RepositorioAlimentacion {
   @override
   Future<ResultadoBorradoTienda> borrarTienda(String id) async => _no();
   @override
-  Future<void> regresarCompra({
+  Future<bool> regresarCompra({
     required MenuId menu,
     required DateTime lunes,
     required String clave,
