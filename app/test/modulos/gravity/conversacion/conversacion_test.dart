@@ -34,6 +34,10 @@ class ClienteFalso implements ClienteAsistente {
     if (e != null) throw e;
     return respuesta;
   }
+
+  @override
+  Future<Object?> sugerirRecetas(Map<String, Object?> contexto) async =>
+      throw UnimplementedError();
 }
 
 Future<void> escribir(WidgetTester tester, String texto) async {

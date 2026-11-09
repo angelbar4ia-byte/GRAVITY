@@ -1,7 +1,7 @@
 // GENERADO por api/generar_dart.mjs a partir de api/openapi.yaml. No se edita a mano.
 // Permite abrir Swagger UI con doble clic (file://), donde el navegador no deja leer
 // ../openapi.yaml. Servida por http, la página lee openapi.yaml directamente.
-// huella: fnv1a32:f2613516
+// huella: fnv1a32:0c803b5a
 window.ESPECIFICACION_GRAVITY = {
   "openapi": "3.1.0",
   "info": {
@@ -55,10 +55,6 @@ window.ESPECIFICACION_GRAVITY = {
     {
       "name": "Base de datos · Cuidados",
       "description": "Tablas `cui_*` y funciones de Cuidados (Fase 5), según `supabase/migrations/20261113000000_cuidados_avisos.sql`,\n`20261114000000_cuidados_esquema.sql`, `20261115000000_cuidados_operaciones.sql`,\n`20261116000000_cuidados_matriz.sql`, `supabase/README.md` (\"Cuidados (Fase 5)\") y\n`docs/specs/fase-5-cuidados.md`. **Los permisos los decide el servidor** (`cui_puede`, RLS), no la pantalla:\nel perfil de cada quien (`cuiPerfil`) sale de su rol y de sus turnos. Dueño: todo. Pareja\n(coadministrador): turnos y resumen del día de Papá; medicamentos, tomas y comidas solo en lectura y solo\ncon su consentimiento; nunca la bitácora de cuidados. Cuidadora: lee lo clínico, marca tomas **a la hora de\nsu turno**, registra comidas en sus días, escribe bitácora y entregas. Hermana: lee, escribe bitácora y\nentregas, y ve el resumen mensual solo si el albacea la autorizó. Un cuidador o familiar **sin turnos** no\ntiene acceso, y una baja corta el acceso al instante. Casa (tablet y bocinas), la cuenta maestra y otros\nhogares no ven nada. **Los medicamentos, las comidas y la bitácora son datos clínicos: nunca a la IA en la\nnube, a las bocinas ni a la tablet pública** (D3, D6); los avisos no llevan texto.\n\n- **Solo agregar:** `cui_comidas`, `cui_bitacora`, `cui_citas` y `cui_entregas` (sin PATCH ni DELETE). Los gastos, los\n  cambios urgentes y las tomas solo cambian por sus funciones; `cui_consentimientos` y\n  `cui_autorizacion_resumen` no se escriben directo.\n- **Lo que pone el servidor** (de solo lectura; no se manda): `persona_id`, `registrada_por`, `de_persona`,\n  `estado`, `confirmado_en` y los campos `*_en` (sin permiso de columna, 42501).\n- **Tope:** 300 registros propios en 24 horas por tabla (54000).\n- **Errores:** `23514` regla de la tabla (rango, largo, monto) → 400; `22023` dato inválido → 400; `23505`\n  duplicado → 409; `55000` gasto ya resuelto → 500; `42501` sin permiso → 403; `54000` tope → 500.\n- **Ayudantes sin operación** (los usan las reglas): `cui_en_circulo` y `cui_puede_comida`.\n"
-    },
-    {
-      "name": "Base de datos · Alimentación (tiendas e historial)",
-      "description": "Tiendas del hogar y análisis del historial de compra (Fase 8, ampliaciones 1, 3 y 4), según\n`supabase/migrations/20261138000000_alimentacion_tiendas.sql`, `supabase/README.md` (\"Historial\nbloque ampliaciones\") y `docs/specs/fase-8-alimentacion-ampliaciones.md`. Solo dueño y pareja\n(coadministrador); la maestra lee. La **tienda es obligatoria en toda compra nueva**\n(`aliMarcarComprada` con `p_tienda`, 22023 si falta); las compras anteriores se leen como \"sin tienda\".\nEl historial usa solo **precios reales** (el precio base de supuesto no entra) y respeta la lista de cada\ncuenta (cada quien su libro y la de Papá y la casa que le toca; el familiar no ve precios).\n**Precios y compras nunca a la IA ni a las bocinas** (D3, D6). Errores: `22023` dato inválido (tienda\nfaltante, desactivada o de otro hogar; eje, escala o rango) → 400; `42501` sin permiso → 403; `23503` una\ntienda con compras no se borra: se desactiva → 409.\n"
     },
     {
       "name": "Funciones del servidor",
@@ -16965,7 +16961,7 @@ window.ESPECIFICACION_GRAVITY = {
     "/rest/v1/ali_tiendas": {
       "get": {
         "tags": [
-          "Base de datos · Alimentación (tiendas e historial)"
+          "Base de datos"
         ],
         "operationId": "leerAliTiendas",
         "summary": "Leer las tiendas del hogar",
@@ -17025,7 +17021,7 @@ window.ESPECIFICACION_GRAVITY = {
       },
       "delete": {
         "tags": [
-          "Base de datos · Alimentación (tiendas e historial)"
+          "Base de datos"
         ],
         "operationId": "borrarAliTiendas",
         "summary": "Borrar una tienda sin compras",
@@ -17061,7 +17057,7 @@ window.ESPECIFICACION_GRAVITY = {
     "/rest/v1/rpc/ali_agregar_tienda": {
       "post": {
         "tags": [
-          "Base de datos · Alimentación (tiendas e historial)"
+          "Base de datos"
         ],
         "operationId": "aliAgregarTienda",
         "summary": "Agregar una tienda a la lista del hogar",
@@ -17133,7 +17129,7 @@ window.ESPECIFICACION_GRAVITY = {
     "/rest/v1/rpc/ali_tienda_activa": {
       "post": {
         "tags": [
-          "Base de datos · Alimentación (tiendas e historial)"
+          "Base de datos"
         ],
         "operationId": "aliTiendaActiva",
         "summary": "Activar o desactivar una tienda",
@@ -17203,7 +17199,7 @@ window.ESPECIFICACION_GRAVITY = {
     "/rest/v1/rpc/ali_marcar_comprada": {
       "post": {
         "tags": [
-          "Base de datos · Alimentación (tiendas e historial)"
+          "Base de datos"
         ],
         "operationId": "aliMarcarComprada",
         "summary": "Marcar una compra de la lista (con tienda)",
@@ -17292,7 +17288,7 @@ window.ESPECIFICACION_GRAVITY = {
     "/rest/v1/rpc/ali_historial_compras": {
       "post": {
         "tags": [
-          "Base de datos · Alimentación (tiendas e historial)"
+          "Base de datos"
         ],
         "operationId": "aliHistorialCompras",
         "summary": "Historial de compras reales",
@@ -17404,7 +17400,7 @@ window.ESPECIFICACION_GRAVITY = {
     "/rest/v1/rpc/ali_resumen_historial": {
       "post": {
         "tags": [
-          "Base de datos · Alimentación (tiendas e historial)"
+          "Base de datos"
         ],
         "operationId": "aliResumenHistorial",
         "summary": "Resumen del historial por eje",
@@ -23501,4 +23497,4 @@ window.ESPECIFICACION_GRAVITY = {
     }
   }
 };
-window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:f2613516';
+window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:0c803b5a';

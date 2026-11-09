@@ -56,6 +56,9 @@ const _rpcDeLectura = {
   'avisosPorcentajeBase',
   'habActiva',
   'habHogarDe',
+  // Migración 20261138: análisis del historial de compra (solo lectura).
+  'aliHistorialCompras',
+  'aliResumenHistorial',
   // Fase 5: preguntas y resúmenes de Cuidados (no escriben).
   'cuiPerfil',
   'cuiPuede',

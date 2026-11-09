@@ -16,47 +16,28 @@
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../modulos/alimentacion/casos_uso/sugerir_platillos.dart';
 import '../../modulos/alimentacion/datos/modelos.dart';
+import '../../modulos/gravity/conversacion/cliente_asistente.dart';
 import '../../nucleo/sesion/proveedores_sesion.dart';
 import '../../nucleo/sesion/servicio_sesion_supabase.dart';
 import '../sesion_efectiva.dart';
 
-/// Llama a la función con [cuerpo] y devuelve su respuesta ya decodificada.
-typedef InvocadorSugerencia =
-    Future<Object?> Function(Map<String, Object?> cuerpo);
-
+/// Usa el único cliente de IA de la app ([ClienteAsistente], acción
+/// `sugerir_recetas`); aquí no hay red propia.
 class SugeridorRecetasSupabase implements SugeridorRecetas {
-  SugeridorRecetasSupabase(this._invocar);
+  SugeridorRecetasSupabase(this._cliente);
 
-  final InvocadorSugerencia _invocar;
-
-  /// El cuerpo exacto que sale hacia la IA para [contexto].
-  static Map<String, Object?> cuerpoDe(ContextoSugerencia contexto) => {
-    'accion': 'sugerir_recetas',
-    'contexto': contexto.aJson(),
-  };
+  final ClienteAsistente _cliente;
 
   @override
   Future<List<Platillo>> sugerir(ContextoSugerencia contexto) async {
     final Object? r;
     try {
-      r = await _invocar(cuerpoDe(contexto));
-    } on FunctionException catch (e) {
-      final d = e.details;
-      throw ErrorSugerencia(
-        d is Map && d['mensaje'] is String
-            ? d['mensaje'] as String
-            : 'GRAVITY no está disponible ahora. Inténtalo más tarde.',
-      );
-    } on ErrorSugerencia {
-      rethrow;
-    } catch (_) {
-      throw const ErrorSugerencia(
-        'No pude comunicarme con GRAVITY. Revisa tu conexión.',
-      );
+      r = await _cliente.sugerirRecetas(contexto.aJson());
+    } on ErrorAsistente catch (e) {
+      throw ErrorSugerencia(e.mensaje);
     }
     return recetasSugeridas(r);
   }
@@ -68,9 +49,6 @@ final sugeridorRecetasSupabaseProvider = Provider<SugeridorRecetas?>((ref) {
   final servicio = ref.watch(servicioSesionProvider);
   if (sesion == null || servicio is! ServicioSesionSupabase) return null;
   return SugeridorRecetasSupabase(
-    (cuerpo) async => (await servicio.clienteActivo.functions.invoke(
-      'gravity-asistente',
-      body: cuerpo,
-    )).data,
+    ClienteAsistenteSupabase(() => servicio.clienteActivo),
   );
 });

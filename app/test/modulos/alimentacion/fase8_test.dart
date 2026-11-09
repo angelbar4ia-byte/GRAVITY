@@ -19,6 +19,7 @@ import 'package:gravity/modulos/alimentacion/estado/proveedores.dart';
 import 'package:gravity/modulos/alimentacion/pantallas/despensa_platillos.dart';
 import 'package:gravity/modulos/alimentacion/pantallas/historial_completo.dart';
 import 'package:gravity/modulos/finanzas/datos/fuente_tablas.dart';
+import 'package:gravity/modulos/gravity/conversacion/cliente_asistente.dart';
 import 'package:gravity/nucleo/contratos/roles.dart';
 import 'package:gravity/nucleo/seguridad/almacen_seguro.dart';
 import 'package:gravity/nucleo/seguridad/proveedores_seguridad.dart';
@@ -464,8 +465,8 @@ void main() {
 
     test('lo que sale por la red es exactamente el contexto', () async {
       Map<String, Object?>? enviado;
-      final sug = SugeridorRecetasSupabase((cuerpo) async {
-        enviado = cuerpo;
+      final sug = SugeridorRecetasSupabase(_ClienteRecetas((contexto) async {
+        enviado = {'accion': 'sugerir_recetas', 'contexto': contexto};
         return {
           'recetas': [
             {
@@ -478,7 +479,7 @@ void main() {
             },
           ],
         };
-      });
+      }));
       final s = ServicioAlimentacion(
         repoConDespensa(),
         rol: Rol.dueno,
@@ -605,3 +606,19 @@ Widget _app(
   ],
   child: MaterialApp(home: pantalla),
 );
+
+/// Cliente de IA falso: solo la acción `sugerir_recetas`.
+class _ClienteRecetas implements ClienteAsistente {
+  _ClienteRecetas(this._f);
+  final Future<Object?> Function(Map<String, Object?>) _f;
+
+  @override
+  Future<Object?> sugerirRecetas(Map<String, Object?> contexto) => _f(contexto);
+
+  @override
+  Future<RespuestaAsistente> preguntar({
+    required String mensaje,
+    required String sesion,
+    List<TurnoConversacion> historial = const [],
+  }) => throw UnimplementedError();
+}

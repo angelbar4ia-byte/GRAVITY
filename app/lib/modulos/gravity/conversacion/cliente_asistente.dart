@@ -55,6 +55,11 @@ abstract interface class ClienteAsistente {
     required String sesion,
     List<TurnoConversacion> historial = const [],
   });
+
+  /// Acción `sugerir_recetas` (Alimentación): manda el [contexto] (solo
+  /// ingredientes aproximados y preferencias escritas) y devuelve la respuesta
+  /// del servidor ya decodificada, sin validar. Lanza [ErrorAsistente].
+  Future<Object?> sugerirRecetas(Map<String, Object?> contexto);
 }
 
 /// Con la función de servidor de Supabase.
@@ -62,6 +67,30 @@ class ClienteAsistenteSupabase implements ClienteAsistente {
   ClienteAsistenteSupabase(this._cliente);
 
   final SupabaseClient Function() _cliente;
+
+  @override
+  Future<Object?> sugerirRecetas(Map<String, Object?> contexto) async {
+    try {
+      final r = await _cliente().functions.invoke(
+        'gravity-asistente',
+        body: {'accion': 'sugerir_recetas', 'contexto': contexto},
+      );
+      return r.data;
+    } on FunctionException catch (e) {
+      final d = e.details;
+      throw ErrorAsistente(
+        d is Map ? '${d['error'] ?? 'error'}' : 'error_${e.status}',
+        d is Map && d['mensaje'] is String
+            ? d['mensaje'] as String
+            : 'GRAVITY no está disponible ahora. Inténtalo más tarde.',
+      );
+    } catch (_) {
+      throw const ErrorAsistente(
+        'sin_conexion',
+        'No pude comunicarme con GRAVITY. Revisa tu conexión.',
+      );
+    }
+  }
 
   @override
   Future<RespuestaAsistente> preguntar({
@@ -117,6 +146,13 @@ class ClienteAsistenteSupabase implements ClienteAsistente {
 /// Sin servidor (modo demostración o Supabase sin preparar).
 class ClienteAsistenteNoDisponible implements ClienteAsistente {
   const ClienteAsistenteNoDisponible();
+
+  @override
+  Future<Object?> sugerirRecetas(Map<String, Object?> contexto) async =>
+      throw const ErrorAsistente(
+        'sin_servidor',
+        'La conversación necesita conexión con el servidor de GRAVITY.',
+      );
 
   @override
   Future<RespuestaAsistente> preguntar({
