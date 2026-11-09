@@ -52,6 +52,32 @@ class ServicioPlanFamiliar {
     }
   }
 
+  /// Nombres de platillo que esta persona puede ver en [vot]. Dueño, pareja y
+  /// familiar ven los de todas las propuestas; la cuenta Casa **solo** los de
+  /// la comida familiar ganadora (plan aprobado). Nunca el catálogo completo.
+  Future<Map<String, String>> nombresDePlatillos(VotacionPlan? vot) async {
+    _exigirVer();
+    if (vot == null) return const {};
+    final ids = rol == Rol.casa && !esMaestra
+        ? <String>{...?vot.ganador(ahora())?.platilloIds}
+        : <String>{for (final p in vot.propuestas) ...p.platilloIds};
+    if (ids.isEmpty) return const {};
+    try {
+      return {
+        for (final p in await _repo.platillos())
+          if (ids.contains(p.id)) p.id: p.nombre,
+      };
+    } catch (_) {
+      return const {};
+    }
+  }
+
+  /// ¿Esta propuesta muestra sus platillos a esta persona?
+  bool muestraPlatillosDe(VotacionPlan vot, PropuestaMenu p) {
+    if (rol != Rol.casa || esMaestra) return true;
+    return vot.ganador(ahora())?.id == p.id;
+  }
+
   Future<VotacionPlan?> votacion(DateTime dia) async {
     _exigirVer();
     final d = _soloDia(dia);

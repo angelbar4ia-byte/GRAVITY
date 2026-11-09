@@ -1,7 +1,7 @@
 // GENERADO por api/generar_dart.mjs a partir de api/openapi.yaml. No se edita a mano.
 // Permite abrir Swagger UI con doble clic (file://), donde el navegador no deja leer
 // ../openapi.yaml. Servida por http, la página lee openapi.yaml directamente.
-// huella: fnv1a32:0c803b5a
+// huella: fnv1a32:abb99e6f
 window.ESPECIFICACION_GRAVITY = {
   "openapi": "3.1.0",
   "info": {
@@ -17196,6 +17196,213 @@ window.ESPECIFICACION_GRAVITY = {
         }
       }
     },
+    "/rest/v1/rpc/ali_editar_tienda": {
+      "post": {
+        "tags": [
+          "Base de datos"
+        ],
+        "operationId": "aliEditarTienda",
+        "summary": "Editar el nombre de una tienda",
+        "description": "Dueño y pareja. Nombre de 1 a 60 caracteres, único por hogar sin distinguir mayúsculas (23505 si otra tienda ya lo usa). P0002 si no existe o no se lee; 42501 la cuenta maestra. Las compras anteriores siguen apuntando a la misma tienda.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_tienda",
+                  "p_nombre"
+                ],
+                "properties": {
+                  "p_tienda": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "p_nombre": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 60
+                  }
+                }
+              },
+              "example": {
+                "p_tienda": "a7500000-0000-4000-8000-0000000010b1",
+                "p_nombre": "Mercado de la esquina"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "La tienda con su nombre nuevo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AliTiendaResultado"
+                },
+                "example": {
+                  "id": "a7500000-0000-4000-8000-0000000010b1",
+                  "nombre": "Mercado de la esquina",
+                  "activa": true
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaAlimentacion"
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/ali_borrar_tienda": {
+      "post": {
+        "tags": [
+          "Base de datos"
+        ],
+        "operationId": "aliBorrarTienda",
+        "summary": "Borrar una tienda (o desactivarla si tiene compras)",
+        "description": "Dueño y pareja. Una tienda sin compras se borra y devuelve `borrada`; con compras (también regresadas) se desactiva en lugar de borrarse y devuelve `desactivada`, para no dejar el historial sin tienda. P0002 si no existe o no se lee; 42501 la cuenta maestra.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_tienda"
+                ],
+                "properties": {
+                  "p_tienda": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                }
+              },
+              "example": {
+                "p_tienda": "a7500000-0000-4000-8000-0000000010b3"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Qué pasó con la tienda.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "borrada",
+                    "desactivada"
+                  ]
+                },
+                "example": "borrada"
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaAlimentacion"
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/ali_regresar_compra": {
+      "post": {
+        "tags": [
+          "Base de datos"
+        ],
+        "operationId": "aliRegresarCompra",
+        "summary": "Regresar una compra marcada a pendiente",
+        "description": "Dueño y pareja (cada quien la compra de su lista; la de Papá ya pagada del libro de Papá, solo el albacea). Requiere un motivo de 3 caracteres visibles (23514). La compra vuelve a pendiente; el dinero se revierte con un contraasiento (anulación) en el libro, sin borrar nada; la fila de precio real del historial queda marcada como revertida y conserva la compra original; el inventario baja lo comprado. Una compra de Papá sin pagar retira su solicitud de la cola del albacea. Deja bitácora sin montos. 22023 si no está marcada; P0002 si no existe; 42501 sin permiso.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_compra",
+                  "p_motivo"
+                ],
+                "properties": {
+                  "p_compra": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "p_motivo": {
+                    "type": "string"
+                  }
+                }
+              },
+              "example": {
+                "p_compra": "a7300000-0000-4000-8000-0000000010c1",
+                "p_motivo": "Marqué la compra equivocada"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Lo que se hizo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AliRegresarCompraResultado"
+                },
+                "example": {
+                  "compra_id": "a7300000-0000-4000-8000-0000000010c1",
+                  "contraasiento_id": "f3000000-0000-4000-8000-0000000010d1",
+                  "solicitud_retirada": false
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaAlimentacion"
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
     "/rest/v1/rpc/ali_marcar_comprada": {
       "post": {
         "tags": [
@@ -17292,7 +17499,7 @@ window.ESPECIFICACION_GRAVITY = {
         ],
         "operationId": "aliHistorialCompras",
         "summary": "Historial de compras reales",
-        "description": "Solo lectura. Compras marcadas con precio real: fecha local, ingrediente, tienda (\"Sin tienda\" para las anteriores a la Fase 8), precio unitario, cantidad y gasto. El precio base de supuesto no aparece. Cada cuenta ve solo lo de su lista (RLS); el familiar, la cuidadora y Casa reciben lista vacía. 22023 si el rango está al revés.",
+        "description": "Solo lectura. Compras marcadas con precio real: fecha local, ingrediente, tienda (\"Sin tienda\" para las anteriores a la Fase 8), precio unitario, cantidad y gasto. Una compra rechazada por el albacea sigue aquí (solo cambia su estado de pago); una regresada también, con `revertida` verdadero. El precio base de supuesto no aparece. Cada cuenta ve solo lo de su lista (RLS); el familiar, la cuidadora y Casa reciben lista vacía. 22023 si el rango está al revés.",
         "x-roles": [
           "dueno",
           "coadministrador"
@@ -17379,7 +17586,8 @@ window.ESPECIFICACION_GRAVITY = {
                     "cuenta": "dueno",
                     "precio_unitario_centavos": 2800,
                     "cantidad": 2,
-                    "gasto_centavos": 5600
+                    "gasto_centavos": 5600,
+                    "revertida": false
                   }
                 ]
               }
@@ -23350,6 +23558,27 @@ window.ESPECIFICACION_GRAVITY = {
           }
         }
       },
+      "AliRegresarCompraResultado": {
+        "type": "object",
+        "properties": {
+          "compra_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "contraasiento_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Movimiento de anulación (nulo si la compra no movió dinero)."
+          },
+          "solicitud_retirada": {
+            "type": "boolean",
+            "description": "Verdadero si había una solicitud de Papá y salió de la cola del albacea."
+          }
+        }
+      },
       "AliMarcarCompradaResultado": {
         "type": "object",
         "properties": {
@@ -23435,6 +23664,10 @@ window.ESPECIFICACION_GRAVITY = {
           "gasto_centavos": {
             "type": "integer",
             "format": "int64"
+          },
+          "revertida": {
+            "type": "boolean",
+            "description": "Verdadero si la compra se regresó (ali_regresar_compra); los datos son los de la compra original y el resumen no la suma."
           }
         }
       },
@@ -23497,4 +23730,4 @@ window.ESPECIFICACION_GRAVITY = {
     }
   }
 };
-window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:0c803b5a';
+window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:abb99e6f';

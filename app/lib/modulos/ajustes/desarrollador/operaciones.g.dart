@@ -5,7 +5,7 @@ import '../../../nucleo/contratos/roles.dart';
 import 'operacion_api.dart';
 
 /// Huella de api/openapi.yaml con la que se generó este archivo.
-const huellaEspecificacion = 'fnv1a32:0c803b5a';
+const huellaEspecificacion = 'fnv1a32:abb99e6f';
 
 /// Versión de la especificación (info.version).
 const versionEspecificacion = '0.6.0';
@@ -661,6 +661,39 @@ const gruposOperaciones = <GrupoOperaciones>[
         fase: 8,
       ),
       OperacionApi(
+        id: 'aliEditarTienda',
+        metodo: MetodoHttp.post,
+        ruta: '/rest/v1/rpc/ali_editar_tienda',
+        resumen: 'Editar el nombre de una tienda',
+        descripcion: 'Dueño y pareja. Nombre de 1 a 60 caracteres, único por hogar sin distinguir mayúsculas (23505 si otra tienda ya lo usa). P0002 si no existe o no se lee; 42501 la cuenta maestra. Las compras anteriores siguen apuntando a la misma tienda.',
+        roles: {Rol.dueno, Rol.coadministrador},
+        escribe: true,
+        soloLocal: true,
+        fase: 8,
+      ),
+      OperacionApi(
+        id: 'aliBorrarTienda',
+        metodo: MetodoHttp.post,
+        ruta: '/rest/v1/rpc/ali_borrar_tienda',
+        resumen: 'Borrar una tienda (o desactivarla si tiene compras)',
+        descripcion: 'Dueño y pareja. Una tienda sin compras se borra y devuelve `borrada`; con compras (también regresadas) se desactiva en lugar de borrarse y devuelve `desactivada`, para no dejar el historial sin tienda. P0002 si no existe o no se lee; 42501 la cuenta maestra.',
+        roles: {Rol.dueno, Rol.coadministrador},
+        escribe: true,
+        soloLocal: true,
+        fase: 8,
+      ),
+      OperacionApi(
+        id: 'aliRegresarCompra',
+        metodo: MetodoHttp.post,
+        ruta: '/rest/v1/rpc/ali_regresar_compra',
+        resumen: 'Regresar una compra marcada a pendiente',
+        descripcion: 'Dueño y pareja (cada quien la compra de su lista; la de Papá ya pagada del libro de Papá, solo el albacea). Requiere un motivo de 3 caracteres visibles (23514). La compra vuelve a pendiente; el dinero se revierte con un contraasiento (anulación) en el libro, sin borrar nada; la fila de precio real del historial queda marcada como revertida y conserva la compra original; el inventario baja lo comprado. Una compra de Papá sin pagar retira su solicitud de la cola del albacea. Deja bitácora sin montos. 22023 si no está marcada; P0002 si no existe; 42501 sin permiso.',
+        roles: {Rol.dueno, Rol.coadministrador},
+        escribe: true,
+        soloLocal: true,
+        fase: 8,
+      ),
+      OperacionApi(
         id: 'aliMarcarComprada',
         metodo: MetodoHttp.post,
         ruta: '/rest/v1/rpc/ali_marcar_comprada',
@@ -676,7 +709,7 @@ const gruposOperaciones = <GrupoOperaciones>[
         metodo: MetodoHttp.post,
         ruta: '/rest/v1/rpc/ali_historial_compras',
         resumen: 'Historial de compras reales',
-        descripcion: 'Solo lectura. Compras marcadas con precio real: fecha local, ingrediente, tienda ("Sin tienda" para las anteriores a la Fase 8), precio unitario, cantidad y gasto. El precio base de supuesto no aparece. Cada cuenta ve solo lo de su lista (RLS); el familiar, la cuidadora y Casa reciben lista vacía. 22023 si el rango está al revés.',
+        descripcion: 'Solo lectura. Compras marcadas con precio real: fecha local, ingrediente, tienda ("Sin tienda" para las anteriores a la Fase 8), precio unitario, cantidad y gasto. Una compra rechazada por el albacea sigue aquí (solo cambia su estado de pago); una regresada también, con `revertida` verdadero. El precio base de supuesto no aparece. Cada cuenta ve solo lo de su lista (RLS); el familiar, la cuidadora y Casa reciben lista vacía. 22023 si el rango está al revés.',
         roles: {Rol.dueno, Rol.coadministrador},
         escribe: false,
         soloLocal: true,

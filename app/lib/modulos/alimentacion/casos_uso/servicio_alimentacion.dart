@@ -247,7 +247,7 @@ class ServicioAlimentacion {
     final tienda = (await _repo.tiendas())
         .where((t) => t.id == tiendaId)
         .firstOrNull;
-    if (tienda == null) {
+    if (tienda == null || !tienda.activa) {
       throw ArgumentError('La tienda no está en la lista del hogar.');
     }
     // Valida primero (ArgumentError) antes de armar la compra del historial.
@@ -302,6 +302,66 @@ class ServicioAlimentacion {
       );
     }
     return _repo.agregarTienda(n);
+  }
+
+  /// Cambia el nombre de una tienda (dueño y pareja). 1 a 60 caracteres.
+  Future<Tienda> editarTienda(String id, String nombre) async {
+    _exigirEdicion();
+    final n = nombre.trim();
+    if (n.isEmpty || n.length > maxCaracteresTienda) {
+      throw ArgumentError(
+        'El nombre de la tienda lleva de 1 a $maxCaracteresTienda caracteres.',
+      );
+    }
+    return _repo.editarTienda(id, n);
+  }
+
+  /// Borra una tienda (dueño y pareja). Con compras, el servidor la
+  /// desactiva en su lugar: el resultado lo dice para avisarlo.
+  Future<ResultadoBorradoTienda> borrarTienda(String id) async {
+    _exigirEdicion();
+    return _repo.borrarTienda(id);
+  }
+
+  /// Regresa una compra marcada (dueño y pareja): vuelve a pendiente y el
+  /// historial conserva la original como revertida. [motivo]: 3 o más
+  /// caracteres.
+  Future<void> regresarCompra(
+    MenuId m,
+    DateTime semana,
+    String clave, {
+    required String motivo,
+  }) async {
+    _exigirEdicion();
+    if (!puedeVerCompras(rol, m, esMaestra: esMaestra)) {
+      throw const PermisoDenegado();
+    }
+    final t = motivo.trim();
+    if (t.length < minCaracteresMotivoRegreso) {
+      throw ArgumentError(
+        'El motivo lleva al menos $minCaracteresMotivoRegreso caracteres.',
+      );
+    }
+    await _repo.regresarCompra(
+      menu: m,
+      lunes: lunesDe(semana),
+      clave: clave,
+      motivo: t,
+    );
+  }
+
+  /// Porciones recomendadas por persona del menú compartido de dueño y
+  /// pareja, por platillo. Solo quien ve ese menú; nunca el de Papá ni el
+  /// perfil de nadie. Vacío si el servidor no las da.
+  Future<Map<String, List<PorcionPersona>>> porcionesPorPlatillo(
+    DateTime semana,
+  ) async {
+    _exigirVer(MenuId.pareja);
+    final r = <String, List<PorcionPersona>>{};
+    for (final p in await _repo.porcionesRecomendadas(lunesDe(semana))) {
+      (r[p.platilloId] ??= []).add(p);
+    }
+    return r;
   }
 
   /// Historial completo de compras reales del libro o lista de [m] (la misma

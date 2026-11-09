@@ -123,6 +123,24 @@ final votacionPlanProvider = FutureProvider<VotacionPlan?>((ref) {
       .votacion(ref.watch(diaPlanProvider));
 });
 
+/// Nombres de platillo del plan del día que esta persona puede ver (Casa:
+/// solo los de la comida familiar ganadora).
+final nombresPlatillosPlanProvider = FutureProvider<Map<String, String>>((
+  ref,
+) async {
+  final vot = await ref.watch(votacionPlanProvider.future);
+  return ref.watch(servicioPlanFamiliarProvider).nombresDePlatillos(vot);
+});
+
+/// Porciones recomendadas por persona (menú compartido de dueño y pareja).
+final porcionesRecomendadasProvider =
+    FutureProvider<Map<String, List<PorcionPersona>>>((ref) {
+      ref.watch(versionAlimentacionProvider);
+      return ref
+          .watch(servicioAlimentacionProvider)
+          .porcionesPorPlatillo(ref.watch(semanaAlimentacionProvider));
+    });
+
 /// Menú del día de Papá para la cuenta Casa (D28): solo nombres de platillos.
 final menuDelDiaPapaProvider = FutureProvider<List<ComidaDelDia>>((ref) {
   ref.watch(versionAlimentacionProvider);

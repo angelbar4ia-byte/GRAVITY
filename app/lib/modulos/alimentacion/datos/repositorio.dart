@@ -33,6 +33,27 @@ abstract interface class RepositorioAlimentacion {
   /// con ese nombre (sin importar mayúsculas), devuelve la existente.
   Future<Tienda> agregarTienda(String nombre);
 
+  /// Cambia el nombre de una tienda (`ali_editar_tienda`).
+  Future<Tienda> editarTienda(String id, String nombre);
+
+  /// Borra una tienda (`ali_borrar_tienda`). Si tiene compras, el servidor la
+  /// desactiva en su lugar y responde `desactivada`.
+  Future<ResultadoBorradoTienda> borrarTienda(String id);
+
+  /// Regresa una compra marcada (`ali_regresar_compra`): vuelve a pendiente y
+  /// la original queda en el historial como revertida. [motivo]: 3 o más
+  /// caracteres.
+  Future<void> regresarCompra({
+    required MenuId menu,
+    required DateTime lunes,
+    required String clave,
+    required String motivo,
+  });
+
+  /// Porciones recomendadas por persona del menú compartido de dueño y pareja
+  /// (la semana de [lunes]). Vacío donde el servidor no responde.
+  Future<List<PorcionPersona>> porcionesRecomendadas(DateTime lunes);
+
   /// Historial completo de compras reales de [cuenta] (Fase 8): con cantidad,
   /// total pagado y tienda. Nunca el precio base de supuesto.
   Future<List<CompraPrecio>> historialCompleto(CuentaCompra cuenta);
@@ -220,6 +241,12 @@ class RepositorioAlimentacionEnMemoria implements RepositorioAlimentacion {
   final List<(CuentaCompra?, CompraPrecio)> _historialCuentas = [];
   final List<Tienda> _tiendas = [];
 
+  /// Porciones por persona (el servidor las calcula; las pruebas las llenan).
+  final List<PorcionPersona> porcionesMemoria = [];
+
+  /// Compras regresadas en memoria: (clave, motivo).
+  final List<(String, String)> regresadas = [];
+
   /// Despensa por cuenta (la demostración y las pruebas la llenan).
   final Map<CuentaCompra, List<ItemDespensa>> despensaMemoria = {};
   final Map<String, Ingrediente> _conCodigo = {};
@@ -390,6 +417,109 @@ class RepositorioAlimentacionEnMemoria implements RepositorioAlimentacion {
   }
 
   @override
+  Future<Tienda> editarTienda(String id, String nombre) async {
+    final n = nombre.trim();
+    final i = _tiendas.indexWhere((t) => t.id == id);
+    if (i < 0) throw const ErrorAlimentacionServidor('La tienda no existe.');
+    if (n.isEmpty || n.length > maxCaracteresTienda) {
+      throw const ErrorAlimentacionServidor(
+        'El nombre de la tienda lleva de 1 a $maxCaracteresTienda caracteres.',
+      );
+    }
+    if (_tiendas.any(
+      (t) => t.id != id && t.nombre.toLowerCase() == n.toLowerCase(),
+    )) {
+      throw const ErrorAlimentacionServidor('Ya hay una tienda con ese nombre.');
+    }
+    final nueva = Tienda(id: id, nombre: n, activa: _tiendas[i].activa);
+    _tiendas[i] = nueva;
+    // El historial conserva la tienda con su nombre nuevo.
+    for (var k = 0; k < _historialCuentas.length; k++) {
+      final (c, h) = _historialCuentas[k];
+      if (h.tiendaId == id) {
+        _historialCuentas[k] = (c, _conTienda(h, n));
+      }
+    }
+    for (var k = 0; k < _historial.length; k++) {
+      if (_historial[k].tiendaId == id) {
+        _historial[k] = _conTienda(_historial[k], n);
+      }
+    }
+    return nueva;
+  }
+
+  CompraPrecio _conTienda(CompraPrecio h, String nombre) => CompraPrecio(
+    clave: h.clave,
+    nombre: h.nombre,
+    unidad: h.unidad,
+    totalCentavos: h.totalCentavos,
+    cantidad: h.cantidad,
+    fecha: h.fecha,
+    tiendaId: h.tiendaId,
+    tienda: nombre,
+    compraId: h.compraId,
+    revertida: h.revertida,
+    cuentaPago: h.cuentaPago,
+  );
+
+  @override
+  Future<ResultadoBorradoTienda> borrarTienda(String id) async {
+    final i = _tiendas.indexWhere((t) => t.id == id);
+    if (i < 0) throw const ErrorAlimentacionServidor('La tienda no existe.');
+    final tieneCompras = _historialCuentas.any((e) => e.$2.tiendaId == id);
+    if (tieneCompras) {
+      _tiendas[i] = Tienda(id: id, nombre: _tiendas[i].nombre, activa: false);
+      return ResultadoBorradoTienda.desactivada;
+    }
+    _tiendas.removeAt(i);
+    return ResultadoBorradoTienda.borrada;
+  }
+
+  @override
+  Future<void> regresarCompra({
+    required MenuId menu,
+    required DateTime lunes,
+    required String clave,
+    required String motivo,
+  }) async {
+    if (motivo.trim().length < minCaracteresMotivoRegreso) {
+      throw const ErrorAlimentacionServidor(
+        'El motivo lleva al menos $minCaracteresMotivoRegreso caracteres.',
+      );
+    }
+    // La original se conserva en el historial como revertida.
+    for (var k = _historialCuentas.length - 1; k >= 0; k--) {
+      final (c, h) = _historialCuentas[k];
+      if (h.clave == clave && !h.revertida) {
+        final r = CompraPrecio(
+          clave: h.clave,
+          nombre: h.nombre,
+          unidad: h.unidad,
+          totalCentavos: h.totalCentavos,
+          cantidad: h.cantidad,
+          fecha: h.fecha,
+          tiendaId: h.tiendaId,
+          tienda: h.tienda,
+          compraId: h.compraId,
+          revertida: true,
+          cuentaPago: h.cuentaPago,
+        );
+        _historialCuentas[k] = (c, r);
+        final j = _historial.indexOf(h);
+        if (j >= 0) _historial[j] = r;
+        break;
+      }
+    }
+    regresadas.add((clave, motivo.trim()));
+    await marcar(menu, lunes, clave, false);
+  }
+
+  @override
+  Future<List<PorcionPersona>> porcionesRecomendadas(DateTime lunes) async => [
+    ...porcionesMemoria,
+  ];
+
+  @override
   Future<List<CompraPrecio>> historialCompleto(CuentaCompra cuenta) async => [
     for (final (c, compra) in _historialCuentas)
       if (c == null || c == cuenta) compra,
@@ -504,6 +634,20 @@ class RepositorioAlimentacionSinServidor implements RepositorioAlimentacion {
   Future<List<Tienda>> tiendas() async => const [];
   @override
   Future<Tienda> agregarTienda(String nombre) async => _no();
+  @override
+  Future<Tienda> editarTienda(String id, String nombre) async => _no();
+  @override
+  Future<ResultadoBorradoTienda> borrarTienda(String id) async => _no();
+  @override
+  Future<void> regresarCompra({
+    required MenuId menu,
+    required DateTime lunes,
+    required String clave,
+    required String motivo,
+  }) async => _no();
+  @override
+  Future<List<PorcionPersona>> porcionesRecomendadas(DateTime lunes) async =>
+      const [];
   @override
   Future<List<CompraPrecio>> historialCompleto(CuentaCompra cuenta) async =>
       const [];

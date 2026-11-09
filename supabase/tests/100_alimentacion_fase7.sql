@@ -338,9 +338,8 @@ select pruebas.igual(public.ali_votar((select id from public.ali_votaciones), (s
 select pruebas.igual((select cambios from public.ali_votos where persona_id = pruebas.id_persona('alex@ejemplo.test'))::int, 0, '… y no cuenta como cambio');
 select pruebas.igual(public.ali_cerrar_votaciones('b0000000-0000-4000-8000-000000000001'), 0, 'Antes de su hora la votación no cierra');
 select pruebas.como('casa@ejemplo.test');
-select pruebas.igual(pruebas.cuenta($$select * from public.ali_votaciones$$), 1, 'Casa VE el plan familiar');
-select pruebas.igual(pruebas.cuenta($$select * from public.ali_votacion_opciones$$), 2, '… sus propuestas');
-select pruebas.ok((select bool_and(platillos <> '{}') from public.ali_votacion_opciones), '… con los nombres de los platillos');
+select pruebas.igual(pruebas.cuenta($$select * from public.ali_votaciones$$), 0, 'Casa NO ve el plan familiar mientras la votación está abierta (v1.1: solo la comida familiar cerrada)');
+select pruebas.igual(pruebas.cuenta($$select * from public.ali_votacion_opciones$$), 0, '… ni sus propuestas');
 select pruebas.falla($$select public.ali_votar((select id from public.ali_votaciones), (select id from public.ali_votacion_opciones limit 1))$$, 'pero no vota', '42501');
 select pruebas.falla($$select public.ali_proponer_menu('b0000000-0000-4000-8000-000000000001', 'X', array['a1000000-0000-4000-8000-000000000001']::uuid[])$$, 'ni propone', '42501');
 select pruebas.como('diana@ejemplo.test');

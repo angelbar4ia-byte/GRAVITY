@@ -19,6 +19,7 @@ import '../datos/repositorio.dart'
 import '../estado/proveedores.dart';
 import 'despensa_platillos.dart';
 import 'historial_completo.dart';
+import 'tiendas.dart';
 import 'historial_precios.dart';
 import 'hay_presupuesto.dart';
 import 'solicitudes_papa.dart';
@@ -116,7 +117,7 @@ Future<void> _registrar(BuildContext context, WidgetRef ref, ItemCompra i) async
   // Tiendas del hogar (la tienda es obligatoria).
   var tiendas = <Tienda>[];
   try {
-    tiendas = await servicio.tiendas();
+    tiendas = [for (final t in await servicio.tiendas()) if (t.activa) t];
   } on Exception {
     // Sin lista: se puede agregar una nueva en el diálogo.
   }
@@ -508,6 +509,75 @@ Future<void> _abrirFicha(
   await _ficha(context, ref, f);
 }
 
+/// Regresa una compra marcada: pide el motivo (3 o más caracteres), la deja
+/// pendiente otra vez y el historial conserva la original como revertida.
+Future<void> _regresar(
+  BuildContext context,
+  WidgetRef ref,
+  MenuId menu,
+  ItemCompra i,
+) async {
+  final motivo = TextEditingController();
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Regresar compra'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '${i.nombre} vuelve a la lista como pendiente. La compra original '
+            'se queda en el historial como revertida.',
+          ),
+          TextField(
+            key: const Key('motivo_regreso'),
+            controller: motivo,
+            maxLength: 200,
+            decoration: const InputDecoration(
+              labelText: 'Motivo (3 caracteres o más)',
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          key: const Key('confirmar_regreso'),
+          onPressed: () => Navigator.pop(ctx, true),
+          child: const Text('Regresar'),
+        ),
+      ],
+    ),
+  );
+  if (ok != true || !context.mounted) return;
+  try {
+    await ref
+        .read(servicioAlimentacionProvider)
+        .regresarCompra(
+          menu,
+          ref.read(semanaAlimentacionProvider),
+          i.clave,
+          motivo: motivo.text,
+        );
+    ref.read(versionAlimentacionProvider.notifier).state++;
+  } catch (e) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            e is ArgumentError
+                ? 'Escribe el motivo (al menos $minCaracteresMotivoRegreso caracteres).'
+                : 'No se regresó la compra: $e',
+          ),
+        ),
+      );
+    }
+  }
+}
+
 /// Agrega un ingrediente a la lista (función del servidor).
 Future<void> _agregar(BuildContext context, WidgetRef ref) async {
   final nombre = TextEditingController();
@@ -638,6 +708,16 @@ class _Contenido extends ConsumerWidget {
                   ),
                 ),
               OutlinedButton.icon(
+                key: const Key('tiendas'),
+                icon: const Icon(Icons.storefront_outlined),
+                label: const Text('Tiendas'),
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const PantallaTiendas(),
+                  ),
+                ),
+              ),
+              OutlinedButton.icon(
                 key: const Key('escanear_codigo'),
                 icon: const Icon(Icons.qr_code_scanner),
                 label: const Text('Escanear código'),
@@ -734,6 +814,13 @@ class _Contenido extends ConsumerWidget {
                           tooltip: 'Ficha del ingrediente',
                           onPressed: () => _abrirFicha(context, ref, i),
                         ),
+                        if (i.comprado)
+                          IconButton(
+                            key: Key('regresar_${i.clave}'),
+                            icon: const Icon(Icons.undo),
+                            tooltip: 'Regresar compra',
+                            onPressed: () => _regresar(context, ref, menu, i),
+                          ),
                         IconButton(
                           icon: const Icon(Icons.price_check_outlined),
                           tooltip: 'Registrar compra con precio',

@@ -68,15 +68,12 @@ class _Estado extends ConsumerState<PantallaHistorialCompleto> {
                 if (todas.isEmpty) {
                   return const EstadoVacio(
                     mensaje: 'Sin compras con precio todavía',
-                    detalle:
-                        'Cuando registres una compra con precio y tienda aparecerá aquí.',
+                    detalle: 'Cuando registres una compra con precio y tienda aparecerá aquí.',
                     icono: Icons.history,
                   );
                 }
                 final resumen = resumirHistorial(todas, _filtro);
-                final productos = {
-                  for (final c in todas) c.clave: c.nombre,
-                };
+                final productos = {for (final c in todas) c.clave: c.nombre};
                 final tiendas = <String, String>{};
                 var haySinTienda = false;
                 for (final c in todas) {
@@ -186,50 +183,74 @@ class _Estado extends ConsumerState<PantallaHistorialCompleto> {
                         child: Text('Ninguna compra coincide con los filtros.'),
                       )
                     else ...[
-                      _Seccion(
-                        v,
-                        'Por ${_escala.etiqueta.toLowerCase()}',
-                        [
-                          for (final f in resumen.porPeriodo)
-                            ListTile(
-                              dense: true,
-                              contentPadding: EdgeInsets.zero,
-                              title: Text(f.etiqueta),
-                              subtitle: Text('${f.compras} compras'),
-                              trailing: Text(pesosTexto(f.totalCentavos)),
-                            ),
-                        ],
-                      ),
-                      _Seccion(
-                        v,
-                        'Por producto y precio',
-                        [
-                          for (final f in resumen.porProducto)
-                            ListTile(
-                              key: Key('producto_${f.clave}'),
-                              dense: true,
-                              contentPadding: EdgeInsets.zero,
-                              title: Text(f.nombre),
-                              subtitle: Text(_detalleProducto(f)),
-                              trailing: Text(pesosTexto(f.totalCentavos)),
-                            ),
-                        ],
-                      ),
-                      _Seccion(
-                        v,
-                        'Por tienda',
-                        [
-                          for (final f in resumen.porTienda)
-                            ListTile(
-                              dense: true,
-                              contentPadding: EdgeInsets.zero,
-                              title: Text(f.nombre),
-                              subtitle: Text('${f.compras} compras'),
-                              trailing: Text(pesosTexto(f.totalCentavos)),
-                            ),
-                        ],
-                      ),
+                      _Seccion(v, 'Por ${_escala.etiqueta.toLowerCase()}', [
+                        for (final f in resumen.porPeriodo)
+                          ListTile(
+                            dense: true,
+                            contentPadding: EdgeInsets.zero,
+                            title: Text(f.etiqueta),
+                            subtitle: Text('${f.compras} compras'),
+                            trailing: Text(pesosTexto(f.totalCentavos)),
+                          ),
+                      ]),
+                      _Seccion(v, 'Por producto y precio', [
+                        for (final f in resumen.porProducto)
+                          ListTile(
+                            key: Key('producto_${f.clave}'),
+                            dense: true,
+                            contentPadding: EdgeInsets.zero,
+                            title: Text(f.nombre),
+                            subtitle: Text(_detalleProducto(f)),
+                            trailing: Text(pesosTexto(f.totalCentavos)),
+                          ),
+                      ]),
+                      _Seccion(v, 'Por tienda', [
+                        for (final f in resumen.porTienda)
+                          ListTile(
+                            dense: true,
+                            contentPadding: EdgeInsets.zero,
+                            title: Text(f.nombre),
+                            subtitle: Text('${f.compras} compras'),
+                            trailing: Text(pesosTexto(f.totalCentavos)),
+                          ),
+                      ]),
                     ],
+                    _Seccion(v, 'Compras', [
+                      for (final c in [
+                        ...todas.where(
+                          (c) =>
+                              c.revertida ||
+                              filtrarHistorial(todas, _filtro).contains(c),
+                        ),
+                      ]..sort((a, b) => b.fecha.compareTo(a.fecha)))
+                        ListTile(
+                          key: Key(
+                            'compra_${c.clave}_${c.fecha.millisecondsSinceEpoch}',
+                          ),
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(
+                            '${c.nombre} · ${cantidadTexto(c.cantidad)} ${c.unidad}',
+                          ),
+                          subtitle: Text(
+                            [
+                              '${c.fecha.day}/${c.fecha.month}/${c.fecha.year}',
+                              c.tienda ?? etiquetaSinTienda,
+                              if (c.cuentaPago != null)
+                                'Pagada con ${c.cuentaPago}',
+                              if (c.revertida) 'Revertida',
+                            ].join(' · '),
+                          ),
+                          trailing: Text(
+                            pesosTexto(c.totalCentavos),
+                            style: c.revertida
+                                ? const TextStyle(
+                                    decoration: TextDecoration.lineThrough,
+                                  )
+                                : null,
+                          ),
+                        ),
+                    ]),
                   ],
                 );
               },

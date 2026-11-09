@@ -104,12 +104,10 @@ class _Votacion extends ConsumerWidget {
     final yo = ref.watch(sesionEfectivaProvider)?.persona.id;
     final vot = votacion;
     final estado = vot?.estado(ahora);
+    // Casa ve platillos solo en la comida familiar ganadora (Fase 8, 2b).
     final nombresPlatillos = ref
-        .watch(platillosProvider)
-        .maybeWhen(
-          data: (l) => {for (final p in l) p.id: p.nombre},
-          orElse: () => <String, String>{},
-        );
+        .watch(nombresPlatillosPlanProvider)
+        .maybeWhen(data: (m) => m, orElse: () => <String, String>{});
 
     String aviso() {
       if (vot == null) return 'Nadie ha propuesto un menú para este día.';
@@ -167,7 +165,8 @@ class _Votacion extends ConsumerWidget {
                     style: v.lectura(tamano: 14, color: v.textoTenue),
                   ),
                   for (final id in p.platilloIds)
-                    if (nombresPlatillos[id] != null)
+                    if (srv.muestraPlatillosDe(vot!, p) &&
+                        nombresPlatillos[id] != null)
                       Text(
                         '• ${nombresPlatillos[id]}',
                         style: v.lectura(tamano: 15, color: v.texto),

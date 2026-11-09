@@ -263,9 +263,45 @@ class CompraLista {
 
 /// Tienda de la lista del hogar (Fase 8). La compra real se captura con una.
 class Tienda {
-  const Tienda({required this.id, required this.nombre});
+  const Tienda({required this.id, required this.nombre, this.activa = true});
   final String id;
   final String nombre;
+
+  /// `false` = desactivada (tenía compras al borrarla): sigue en el historial
+  /// pero ya no se ofrece para compras nuevas.
+  final bool activa;
+}
+
+/// Lo que respondió el servidor al borrar una tienda (`ali_borrar_tienda`).
+enum ResultadoBorradoTienda {
+  borrada,
+
+  /// La tienda tiene compras: no se borró, se desactivó.
+  desactivada;
+
+  String get mensaje => switch (this) {
+    borrada => 'Tienda borrada.',
+    desactivada => 'La tienda tiene compras: se desactivó.',
+  };
+}
+
+/// Mínimo de caracteres del motivo al regresar una compra.
+const minCaracteresMotivoRegreso = 3;
+
+/// Porción recomendada de un platillo para una persona del menú compartido de
+/// dueño y pareja (un solo platillo, una porción por persona). La calcula el
+/// servidor; la app solo la muestra. Sin datos clínicos.
+class PorcionPersona {
+  const PorcionPersona({
+    required this.platilloId,
+    required this.cuenta,
+    required this.porciones,
+  });
+  final String platilloId;
+
+  /// `dueno` o `pareja`.
+  final CuentaCompra cuenta;
+  final double porciones;
 }
 
 /// Máximo de caracteres del nombre de una tienda (mínimo 1).

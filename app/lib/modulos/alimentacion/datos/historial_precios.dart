@@ -16,6 +16,9 @@ class CompraPrecio {
     required this.fecha,
     this.tiendaId,
     this.tienda,
+    this.compraId,
+    this.revertida = false,
+    this.cuentaPago,
   }) : assert(totalCentavos > 0),
        assert(cantidad > 0);
 
@@ -30,6 +33,17 @@ class CompraPrecio {
   /// tienda ("sin tienda"); desde la Fase 8 toda compra nueva la lleva.
   final String? tiendaId;
   final String? tienda;
+
+  /// Id de la compra en el servidor (para regresarla), si se conoce.
+  final String? compraId;
+
+  /// La compra se regresó: la original se conserva en el historial como
+  /// revertida y no cuenta en los totales.
+  final bool revertida;
+
+  /// Nombre de la cuenta de pago (si el albacea rechazó la solicitud de Papá,
+  /// la compra no sale del historial: solo cambia de cuenta).
+  final String? cuentaPago;
 
   /// Centavos por una unidad (puede ser fraccionario).
   double get unitarioCentavos => totalCentavos / cantidad;
@@ -75,7 +89,7 @@ AlertaPrecio? calcularAlerta(CompraPrecio? anterior, CompraPrecio nueva) {
 
 /// Compras de [clave], de la más reciente a la más antigua.
 List<CompraPrecio> historialDe(Iterable<CompraPrecio> todas, String clave) =>
-    todas.where((c) => c.clave == clave).toList()
+    todas.where((c) => c.clave == clave && !c.revertida).toList()
       ..sort((a, b) => b.fecha.compareTo(a.fecha));
 
 /// Centavos unitarios como pesos: "$28.00", o con tres decimales bajo $1.

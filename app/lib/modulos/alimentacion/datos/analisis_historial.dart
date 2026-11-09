@@ -200,7 +200,7 @@ class ResumenHistorial {
 List<CompraPrecio> filtrarHistorial(
   Iterable<CompraPrecio> todas,
   FiltroHistorial filtro,
-) => todas.where(filtro.admite).toList()
+) => todas.where((c) => !c.revertida && filtro.admite(c)).toList()
   ..sort((a, b) => b.fecha.compareTo(a.fecha));
 
 /// Resumen por los cuatro ejes. Cada eje suma [ResumenHistorial.totalCentavos].

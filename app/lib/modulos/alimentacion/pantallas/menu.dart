@@ -287,6 +287,13 @@ class _CeldaComida extends ConsumerWidget {
     final duros = textura
         ? (platillo?.duros ?? const <String>[])
         : const <String>[];
+    // Menú compartido de dueño y pareja: un platillo, una porción por persona.
+    final porciones = menu == MenuId.pareja && platillo != null
+        ? ref
+                  .watch(porcionesRecomendadasProvider)
+                  .maybeWhen(data: (m) => m[platillo!.id], orElse: () => null) ??
+              const <PorcionPersona>[]
+        : const <PorcionPersona>[];
     final contenido = ConstrainedBox(
       constraints: const BoxConstraints(minHeight: 48),
       child: Row(
@@ -309,6 +316,14 @@ class _CeldaComida extends ConsumerWidget {
                     color: nombre == null ? v.textoTenue : v.texto,
                   ),
                 ),
+                if (porciones.isNotEmpty)
+                  Text(
+                    'Porción recomendada: ${[
+                      for (final p in porciones) '${p.cuenta.etiqueta} ${cantidadTexto(p.porciones)}',
+                    ].join(' · ')}',
+                    key: Key('porciones_${platillo!.id}_${dia}_${tiempo.name}'),
+                    style: v.lectura(tamano: 13, color: v.textoTenue),
+                  ),
                 if (duros.isNotEmpty)
                   Row(
                     children: [

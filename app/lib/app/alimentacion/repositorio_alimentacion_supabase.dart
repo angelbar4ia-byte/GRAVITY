@@ -314,7 +314,11 @@ class RepositorioAlimentacionSupabase implements RepositorioAlimentacion {
   Future<List<Tienda>> tiendas() async =>
       [
         for (final f in await _leer('ali_tiendas'))
-          Tienda(id: '${f['id']}', nombre: '${f['nombre']}'),
+          Tienda(
+            id: '${f['id']}',
+            nombre: '${f['nombre']}',
+            activa: f['activa'] != false,
+          ),
       ]..sort(
         (a, b) => a.nombre.toLowerCase().compareTo(b.nombre.toLowerCase()),
       );
@@ -345,11 +349,136 @@ class RepositorioAlimentacionSupabase implements RepositorioAlimentacion {
     }
   }
 
+  /// `ali_editar_tienda(p_tienda, p_nombre)`: cambia el nombre (dueño y
+  /// pareja; el servidor valida 1 a 60 y que no se repita).
+  @override
+  Future<Tienda> editarTienda(String id, String nombre) async {
+    final n = nombre.trim();
+    if (n.isEmpty || n.length > maxCaracteresTienda) {
+      throw const ErrorAlimentacionServidor(
+        'El nombre de la tienda lleva de 1 a $maxCaracteresTienda caracteres.',
+      );
+    }
+    if (!_esUuid(id)) {
+      throw const ErrorAlimentacionServidor('La tienda no existe.');
+    }
+    try {
+      await _rpc('ali_editar_tienda', {'p_tienda': id, 'p_nombre': n});
+      return Tienda(id: id, nombre: n);
+    } on ErrorFinanzas catch (e) {
+      throw _errorServidor(e);
+    }
+  }
+
+  /// `ali_borrar_tienda(p_tienda)`: borra, o la desactiva si tiene compras
+  /// (responde `desactivada`).
+  @override
+  Future<ResultadoBorradoTienda> borrarTienda(String id) async {
+    if (!_esUuid(id)) {
+      throw const ErrorAlimentacionServidor('La tienda no existe.');
+    }
+    try {
+      final r = await _rpc('ali_borrar_tienda', {'p_tienda': id});
+      final texto = (r is Map
+              ? (r['resultado'] ?? r['estado'] ?? r['accion'])
+              : r)
+          .toString()
+          .toLowerCase();
+      return texto.contains('desactiv')
+          ? ResultadoBorradoTienda.desactivada
+          : ResultadoBorradoTienda.borrada;
+    } on ErrorFinanzas catch (e) {
+      throw _errorServidor(e);
+    }
+  }
+
+  ErrorAlimentacionServidor _errorServidor(ErrorFinanzas e) =>
+      ErrorAlimentacionServidor(
+        e.sinConexion ? 'Sin conexión. Intenta de nuevo.' : e.mensaje,
+      );
+
+  /// `ali_regresar_compra(p_compra, p_motivo)`: la compra marcada vuelve a
+  /// pendiente; la original queda revertida en el historial. Se busca la
+  /// fila más reciente ya comprada de ese ingrediente en las cuentas del menú.
+  @override
+  Future<void> regresarCompra({
+    required MenuId menu,
+    required DateTime lunes,
+    required String clave,
+    required String motivo,
+  }) async {
+    final m = motivo.trim();
+    if (m.length < minCaracteresMotivoRegreso) {
+      throw const ErrorAlimentacionServidor(
+        'El motivo lleva al menos $minCaracteresMotivoRegreso caracteres.',
+      );
+    }
+    try {
+      final ings = {
+        for (final f in await _leer('ali_ingredientes')) '${f['id']}': f,
+      };
+      final cuentas = _cuentasDe(menu);
+      Map<String, dynamic>? elegida;
+      for (final c in await _leer('ali_compras')) {
+        final ing = ings['${c['ingrediente_id']}'];
+        if (c['comprado'] != true ||
+            ing == null ||
+            !cuentas.contains(c['cuenta']) ||
+            claveCompra('${ing['nombre']}', '${ing['unidad']}') != clave) {
+          continue;
+        }
+        final a = '${c['comprado_en'] ?? ''}';
+        final b = '${elegida?['comprado_en'] ?? ''}';
+        if (elegida == null || a.compareTo(b) > 0) elegida = c;
+      }
+      if (elegida == null) {
+        throw const ErrorAlimentacionServidor(
+          'No encontramos esa compra en el servidor.',
+        );
+      }
+      await _rpc('ali_regresar_compra', {
+        'p_compra': '${elegida['id']}',
+        'p_motivo': m,
+      });
+      await marcar(menu, lunes, clave, false);
+    } on ErrorFinanzas catch (e) {
+      throw _errorServidor(e);
+    }
+  }
+
+  /// `ali_porciones_recomendadas(p_hogar_id, p_semana)`: filas
+  /// `platillo_id`, `cuenta` (`dueno`/`pareja`) y `porciones`. Si el servidor
+  /// no responde, no se muestran porciones.
+  @override
+  Future<List<PorcionPersona>> porcionesRecomendadas(DateTime lunes) async {
+    try {
+      final r = await _rpc('ali_porciones_recomendadas', {
+        'p_hogar_id': hogarId,
+        'p_semana': _fechaSql(lunes),
+      });
+      return [
+        for (final f in _filas(r))
+          if (f['platillo_id'] != null &&
+              f['porciones'] is num &&
+              (f['cuenta'] == 'dueno' || f['cuenta'] == 'pareja'))
+            PorcionPersona(
+              platilloId: '${f['platillo_id']}',
+              cuenta: f['cuenta'] == 'dueno'
+                  ? CuentaCompra.dueno
+                  : CuentaCompra.pareja,
+              porciones: (f['porciones'] as num).toDouble(),
+            ),
+      ];
+    } on ErrorFinanzas {
+      return const [];
+    }
+  }
+
   /// `ali_historial_compras(p_hogar_id, p_cuenta)`: una fila por compra real
   /// (el servidor ya excluye el precio base). Se leen, con tolerancia a los
   /// nombres, `ingrediente`/`nombre`, `unidad`, `cantidad`,
-  /// `monto_centavos`/`total_centavos`, `tienda_id`, `tienda` y
-  /// `fecha`/`comprada_en`. Las filas sin monto o cantidad válidos se omiten.
+  /// `monto_centavos`/`total_centavos`, `tienda_id`, `tienda`,
+  /// `fecha`/`comprada_en`, `compra_id`, `revertida` (o `estado`) y `cuenta_pago`. Las filas sin monto o cantidad válidos se omiten.
   @override
   Future<List<CompraPrecio>> historialCompleto(CuentaCompra cuenta) async {
     try {
@@ -382,6 +511,13 @@ class RepositorioAlimentacionSupabase implements RepositorioAlimentacion {
                 : ('${f['tienda'] ?? ''}'.isNotEmpty
                       ? '${f['tienda']}'
                       : tiendasPorId[tid]),
+            compraId: f['compra_id'] == null ? null : '${f['compra_id']}',
+            revertida:
+                f['revertida'] == true ||
+                '${f['estado'] ?? ''}'.toLowerCase() == 'revertida',
+            cuentaPago: '${f['cuenta_pago'] ?? ''}'.isNotEmpty
+                ? '${f['cuenta_pago']}'
+                : null,
           ),
         );
       }
