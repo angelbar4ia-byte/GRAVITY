@@ -1,6 +1,6 @@
 # Fase 8 · Alimentación (ampliaciones)
 
-> v1.1, 9/nov/2026. Respuestas del dueño: tiendas editables y borrables; Casa ve platillos solo en la comida familiar y en el menú de Papá; el menú de dueño y pareja es el mismo con porciones recomendadas por persona; compra rechazada no sale del historial (solo cambia de cuenta); se pueden regresar compras. v1.0, 9/nov/2026. Aprobada por el dueño: historial de compra completo y más platillos y recetas con ayuda de la IA y de la despensa. Base: especificación de la Fase 7 (v1.2), D3, D19, D23 y D28.
+> v1.2, 9/nov/2026 (respuestas del dueño sobre regresar compras de Papá y compras rechazadas; historial revertidas y porciones en la app; diálogos de compra y sugerencia con IA). v1.1, 9/nov/2026. Respuestas del dueño: tiendas editables y borrables; Casa ve platillos solo en la comida familiar y en el menú de Papá; el menú de dueño y pareja es el mismo con porciones recomendadas por persona; compra rechazada no sale del historial (solo cambia de cuenta); se pueden regresar compras. v1.0, 9/nov/2026. Aprobada por el dueño: historial de compra completo y más platillos y recetas con ayuda de la IA y de la despensa. Base: especificación de la Fase 7 (v1.2), D3, D19, D23 y D28.
 
 ## 1. Historial de compra (análisis completo)
 
@@ -30,6 +30,13 @@ Reglas:
 - **Menú de dueño y pareja:** es el **mismo menú**, con **porciones recomendadas** por persona.
 - **Compra rechazada por el albacea:** **no sale** del historial; solo **cambia de cuenta**.
 - **Regresar compras:** se puede deshacer una compra marcada (vuelve a pendiente) dejando registro; el historial conserva la compra original.
+
+## 2c. Respuestas del dueño (v1.2)
+
+- **Regresar compra de Papá:** la solicitud al albacea **se retira** de su cola y la compra vuelve a pendiente.
+- **Compra rechazada:** la compra vuelve a la **cuenta de efectivo** por omisión; la persona puede **elegir otra cuenta de gasto** en su lugar. La compra se queda en el historial.
+- **Historial:** las compras regresadas se muestran como **revertidas**.
+- **Sugerencia con IA:** el servidor del asistente debe aceptar la acción `sugerir_recetas`.
 
 ## 3. Criterios de aceptación
 
