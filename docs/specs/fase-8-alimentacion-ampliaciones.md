@@ -1,6 +1,6 @@
 # Fase 8 · Alimentación (ampliaciones)
 
-> v1.0, 9/nov/2026. Aprobada por el dueño: historial de compra completo y más platillos y recetas con ayuda de la IA y de la despensa. Base: especificación de la Fase 7 (v1.2), D3, D19, D23 y D28.
+> v1.1, 9/nov/2026. Respuestas del dueño: tiendas editables y borrables; Casa ve platillos solo en la comida familiar y en el menú de Papá; el menú de dueño y pareja es el mismo con porciones recomendadas por persona; compra rechazada no sale del historial (solo cambia de cuenta); se pueden regresar compras. v1.0, 9/nov/2026. Aprobada por el dueño: historial de compra completo y más platillos y recetas con ayuda de la IA y de la despensa. Base: especificación de la Fase 7 (v1.2), D3, D19, D23 y D28.
 
 ## 1. Historial de compra (análisis completo)
 
@@ -23,10 +23,20 @@ Reglas:
 - **Qué se envía a la IA:** solo nombres de ingredientes y cantidades aproximadas de la despensa, y las preferencias que la persona escriba. **Nunca** el perfil clínico de Papá, sus alergias, su textura ni su dieta (D3, D23).
 - Una receta sugerida por la IA **no se guarda** hasta que la persona la confirma.
 
+## 2b. Respuestas del dueño (v1.1)
+
+- **Tiendas:** se pueden **editar** y **borrar**. Una tienda con compras no se borra (se desactiva) para no dejar el historial sin tienda.
+- **Casa y platillos:** Casa ve platillos **solo** en la **comida familiar** (plan familiar aprobado) y en el **menú del día de Papá**.
+- **Menú de dueño y pareja:** es el **mismo menú**, con **porciones recomendadas** por persona.
+- **Compra rechazada por el albacea:** **no sale** del historial; solo **cambia de cuenta**.
+- **Regresar compras:** se puede deshacer una compra marcada (vuelve a pendiente) dejando registro; el historial conserva la compra original.
+
 ## 3. Criterios de aceptación
 
 1. El historial se puede filtrar por escala de tiempo, precio, producto y tienda, y las combinaciones dan el mismo total que la suma de compras reales.
 2. El precio base de supuesto no aparece en ningún análisis.
+3a. Editar o borrar tienda: al borrar una tienda con compras, se desactiva en su lugar.
+3b. Regresar una compra deja registro y no borra la original del historial.
 3. Una compra sin tienda no se guarda sin tienda (la tienda es obligatoria desde ahora; las compras anteriores quedan como "sin tienda").
 4. La sugerencia de platillos usa solo la despensa de la cuenta que la pide.
 5. Ningún dato clínico de Papá llega a la IA (prueba: el contexto enviado no contiene su perfil).
