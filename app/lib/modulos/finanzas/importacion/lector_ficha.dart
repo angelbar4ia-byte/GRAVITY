@@ -300,7 +300,8 @@ LecturaFicha leerFichaDeBytes(Uint8List bytes, {required String nombre}) {
             buscar(
                   (k) =>
                       k.startsWith('mensualidad') ||
-                      k.startsWith('pago mensual'),
+                      k.startsWith('pago mensual') ||
+                      k == 'cuota',
                 ) ??
                 '',
           ),

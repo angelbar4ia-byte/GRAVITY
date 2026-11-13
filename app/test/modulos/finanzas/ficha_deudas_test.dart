@@ -59,6 +59,7 @@ Uint8List _ficha({bool sinHojas = false}) {
     _fila(6, [('A', 'Monto original'), ('B', '#180000')]),
     _fila(7, [('A', 'Saldo actual'), ('B', '#120000')]),
     _fila(8, [('A', 'Tasa anual (%)'), ('B', '#0.18')]),
+    _fila(9, [('A', 'Cuota'), ('B', '#4500')]),
   ]);
   final msi = _hoja([
     _fila(4, [
@@ -123,6 +124,8 @@ void main() {
     expect(l.credito!.saldo, 12000000);
     // 0.18 sin "%" es una fracción: 18 %.
     expect(l.credito!.tasaPb, 1800);
+    // La ficha real llama 'Cuota' a la mensualidad del crédito.
+    expect(l.credito!.mensualidad, 450000);
     expect(l.credito!.permitePagoAnticipado, isNull);
     expect(l.msi, hasLength(1));
     expect(l.msi.single.fechaCompra, Fecha(2026, 9, 15));

@@ -31,6 +31,7 @@ Directory _raiz() {
 /// RPC de la base de datos que solo leen (no piden confirmación).
 const _rpcDeLectura = {
   'misPermisos',
+  'aliPorcionesRecomendadas',
   'finPuede',
   'finPuedeHogar',
   'finEsMiembro',

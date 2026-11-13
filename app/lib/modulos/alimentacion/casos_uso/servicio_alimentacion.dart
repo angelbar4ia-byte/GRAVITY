@@ -364,6 +364,26 @@ class ServicioAlimentacion {
     return r;
   }
 
+  /// Fija la porción recomendada de [cuenta] (dueño o pareja) para un platillo
+  /// del menú compartido. Solo dueño y pareja; de 0.25 a 20.
+  Future<void> fijarPorcion({
+    required String platilloId,
+    required DateTime semana,
+    required CuentaCompra cuenta,
+    required double porciones,
+  }) async {
+    _exigirEdicion();
+    if (porciones.isNaN || porciones < 0.25 || porciones > 20) {
+      throw ArgumentError('La porción va de 0.25 a 20.');
+    }
+    await _repo.fijarPorcion(
+      platilloId: platilloId,
+      lunes: lunesDe(semana),
+      cuenta: cuenta,
+      porciones: porciones,
+    );
+  }
+
   /// Historial completo de compras reales del libro o lista de [m] (la misma
   /// regla de la lista de compras). Las anteriores a la Fase 8 vienen sin
   /// tienda.

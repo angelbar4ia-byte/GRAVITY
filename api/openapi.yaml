@@ -10707,6 +10707,82 @@ paths:
           $ref: '#/components/responses/SinSesion'
         '403':
           $ref: '#/components/responses/Prohibido'
+  /rest/v1/rpc/ali_porciones_recomendadas:
+    post:
+      tags: [Base de datos]
+      operationId: aliPorcionesRecomendadas
+      summary: Porciones recomendadas por persona del menú compartido
+      description: >-
+        Dueño y pareja (quien lee el menú compartido). Devuelve una fila por platillo y persona (dueno o pareja) de la semana indicada; las porciones salen de las entradas del menú compartido. Casa, la familiar y la cuidadora no leen nada de este menú. Nunca devuelve datos clínicos.
+      x-roles: [dueno, coadministrador]
+      x-escribe: false
+      x-solo-local: true
+      x-fase: 8
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: ["p_hogar_id", "p_semana"]
+              properties:
+                p_hogar_id: {type: string, format: uuid}
+                p_semana: {type: string, format: date, description: Lunes de la semana.}
+            example: {"p_hogar_id": "b0000000-0000-4000-8000-000000000001", "p_semana": "2026-11-09"}
+      responses:
+        '200':
+          description: Filas de porciones por platillo y persona.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    platillo_id: {type: string, format: uuid}
+                    cuenta: {type: string, enum: [dueno, pareja]}
+                    porciones: {type: number, minimum: 0.25, maximum: 20}
+              example: [{"platillo_id": "a1000000-0000-4000-8000-000000000001", "cuenta": "dueno", "porciones": 1.5}]
+        '401':
+          $ref: '#/components/responses/SinSesion'
+  /rest/v1/rpc/ali_fijar_porcion:
+    post:
+      tags: [Base de datos]
+      operationId: aliFijarPorcion
+      summary: Fijar la porción recomendada de una persona para un platillo
+      description: >-
+        Dueño y pareja. Cambia solo la porción de dueno o de pareja, en todas las entradas del platillo de esa semana del menú compartido; la otra persona conserva la suya. De 0.25 a 20 (22023 si no). 22023 si la cuenta no es dueno ni pareja; P0002 si el platillo no está en el menú de esa semana; 42501 sin permiso. No mueve dinero. Deja bitácora sin montos.
+      x-roles: [dueno, coadministrador]
+      x-escribe: true
+      x-solo-local: true
+      x-fase: 8
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: ["p_hogar_id", "p_platillo", "p_semana", "p_cuenta", "p_porciones"]
+              properties:
+                p_hogar_id: {type: string, format: uuid}
+                p_platillo: {type: string, format: uuid}
+                p_semana: {type: string, format: date}
+                p_cuenta: {type: string, enum: [dueno, pareja]}
+                p_porciones: {type: number, minimum: 0.25, maximum: 20}
+            example: {"p_hogar_id": "b0000000-0000-4000-8000-000000000001", "p_platillo": "a1000000-0000-4000-8000-000000000001", "p_semana": "2026-11-09", "p_cuenta": "dueno", "p_porciones": 2}
+      responses:
+        '200':
+          description: Cuántas entradas del menú cambiaron.
+          content:
+            application/json:
+              schema: {type: integer, minimum: 1}
+              example: 2
+        '400':
+          $ref: '#/components/responses/ReglaAlimentacion'
+        '401':
+          $ref: '#/components/responses/SinSesion'
+        '403':
+          $ref: '#/components/responses/Prohibido'
   /rest/v1/rpc/ali_marcar_comprada:
     post:
       tags: [Base de datos]

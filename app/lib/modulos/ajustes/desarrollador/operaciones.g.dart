@@ -5,7 +5,7 @@ import '../../../nucleo/contratos/roles.dart';
 import 'operacion_api.dart';
 
 /// Huella de api/openapi.yaml con la que se generó este archivo.
-const huellaEspecificacion = 'fnv1a32:abb99e6f';
+const huellaEspecificacion = 'fnv1a32:81f3b464';
 
 /// Versión de la especificación (info.version).
 const versionEspecificacion = '0.6.0';
@@ -688,6 +688,28 @@ const gruposOperaciones = <GrupoOperaciones>[
         ruta: '/rest/v1/rpc/ali_regresar_compra',
         resumen: 'Regresar una compra marcada a pendiente',
         descripcion: 'Dueño y pareja (cada quien la compra de su lista; la de Papá ya pagada del libro de Papá, solo el albacea). Requiere un motivo de 3 caracteres visibles (23514). La compra vuelve a pendiente; el dinero se revierte con un contraasiento (anulación) en el libro, sin borrar nada; la fila de precio real del historial queda marcada como revertida y conserva la compra original; el inventario baja lo comprado. Una compra de Papá sin pagar retira su solicitud de la cola del albacea. Deja bitácora sin montos. 22023 si no está marcada; P0002 si no existe; 42501 sin permiso.',
+        roles: {Rol.dueno, Rol.coadministrador},
+        escribe: true,
+        soloLocal: true,
+        fase: 8,
+      ),
+      OperacionApi(
+        id: 'aliPorcionesRecomendadas',
+        metodo: MetodoHttp.post,
+        ruta: '/rest/v1/rpc/ali_porciones_recomendadas',
+        resumen: 'Porciones recomendadas por persona del menú compartido',
+        descripcion: 'Dueño y pareja (quien lee el menú compartido). Devuelve una fila por platillo y persona (dueno o pareja) de la semana indicada; las porciones salen de las entradas del menú compartido. Casa, la familiar y la cuidadora no leen nada de este menú. Nunca devuelve datos clínicos.',
+        roles: {Rol.dueno, Rol.coadministrador},
+        escribe: false,
+        soloLocal: true,
+        fase: 8,
+      ),
+      OperacionApi(
+        id: 'aliFijarPorcion',
+        metodo: MetodoHttp.post,
+        ruta: '/rest/v1/rpc/ali_fijar_porcion',
+        resumen: 'Fijar la porción recomendada de una persona para un platillo',
+        descripcion: 'Dueño y pareja. Cambia solo la porción de dueno o de pareja, en todas las entradas del platillo de esa semana del menú compartido; la otra persona conserva la suya. De 0.25 a 20 (22023 si no). 22023 si la cuenta no es dueno ni pareja; P0002 si el platillo no está en el menú de esa semana; 42501 sin permiso. No mueve dinero. Deja bitácora sin montos.',
         roles: {Rol.dueno, Rol.coadministrador},
         escribe: true,
         soloLocal: true,

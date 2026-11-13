@@ -55,6 +55,16 @@ abstract interface class RepositorioAlimentacion {
   /// (la semana de [lunes]). Vacío donde el servidor no responde.
   Future<List<PorcionPersona>> porcionesRecomendadas(DateTime lunes);
 
+  /// Fija la porción recomendada de [cuenta] para [platilloId] en la semana de
+  /// [lunes] (menú compartido de dueño y pareja). La otra persona conserva la
+  /// suya. De 0.25 a 20.
+  Future<void> fijarPorcion({
+    required String platilloId,
+    required DateTime lunes,
+    required CuentaCompra cuenta,
+    required double porciones,
+  });
+
   /// Historial completo de compras reales de [cuenta] (Fase 8): con cantidad,
   /// total pagado y tienda. Nunca el precio base de supuesto.
   Future<List<CompraPrecio>> historialCompleto(CuentaCompra cuenta);
@@ -525,6 +535,24 @@ class RepositorioAlimentacionEnMemoria implements RepositorioAlimentacion {
   ];
 
   @override
+  Future<void> fijarPorcion({
+    required String platilloId,
+    required DateTime lunes,
+    required CuentaCompra cuenta,
+    required double porciones,
+  }) async {
+    porcionesMemoria
+      ..removeWhere((p) => p.platilloId == platilloId && p.cuenta == cuenta)
+      ..add(
+        PorcionPersona(
+          platilloId: platilloId,
+          cuenta: cuenta,
+          porciones: porciones,
+        ),
+      );
+  }
+
+  @override
   Future<List<CompraPrecio>> historialCompleto(CuentaCompra cuenta) async => [
     for (final (c, compra) in _historialCuentas)
       if (c == null || c == cuenta) compra,
@@ -653,6 +681,13 @@ class RepositorioAlimentacionSinServidor implements RepositorioAlimentacion {
   @override
   Future<List<PorcionPersona>> porcionesRecomendadas(DateTime lunes) async =>
       const [];
+  @override
+  Future<void> fijarPorcion({
+    required String platilloId,
+    required DateTime lunes,
+    required CuentaCompra cuenta,
+    required double porciones,
+  }) async => _no();
   @override
   Future<List<CompraPrecio>> historialCompleto(CuentaCompra cuenta) async =>
       const [];

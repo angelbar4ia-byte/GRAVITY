@@ -9,6 +9,7 @@ import '../../../app/pantallas/marco_pantalla.dart';
 import '../../../diseno/diseno.dart';
 import '../../../nucleo/contratos/roles.dart';
 import '../../../nucleo/contratos/rutas.dart';
+import '../casos_uso/servicio_alimentacion.dart';
 import '../datos/perfiles.dart';
 import '../datos/modelos.dart';
 import '../estado/proveedores.dart';
@@ -324,6 +325,18 @@ class _CeldaComida extends ConsumerWidget {
                     key: Key('porciones_${platillo!.id}_${dia}_${tiempo.name}'),
                     style: v.lectura(tamano: 13, color: v.textoTenue),
                   ),
+                if (editable && menu == MenuId.pareja && platillo != null)
+                  TextButton.icon(
+                    key: Key('cambiar_porciones_${platillo!.id}_${dia}_${tiempo.name}'),
+                    icon: const Icon(Icons.tune, size: 16),
+                    label: const Text('Cambiar porciones'),
+                    onPressed: () => _cambiarPorciones(
+                      context,
+                      ref,
+                      platillo!,
+                      porciones,
+                    ),
+                  ),
                 if (duros.isNotEmpty)
                   Row(
                     children: [
@@ -553,4 +566,97 @@ class _Suplementos extends ConsumerWidget {
         );
     ref.read(versionAlimentacionProvider.notifier).state++;
   }
+}
+
+/// Texto de una porción para editar: "1.5", "0.25", "2.0" (sin redondear).
+String _textoPorcion(List<PorcionPersona> l, CuentaCompra c) {
+  for (final p in l) {
+    if (p.cuenta == c) return p.porciones.toString();
+  }
+  return '1.0';
+}
+
+/// Cambia la porción de dueño y de pareja de un platillo del menú compartido.
+/// Cada persona se guarda solo si cambió; la otra conserva la suya.
+Future<void> _cambiarPorciones(
+  BuildContext context,
+  WidgetRef ref,
+  Platillo platillo,
+  List<PorcionPersona> actuales,
+) async {
+  final semana = ref.read(semanaAlimentacionProvider);
+  final campos = {
+    for (final c in [CuentaCompra.dueno, CuentaCompra.pareja])
+      c: TextEditingController(text: _textoPorcion(actuales, c)),
+  };
+  final error = ValueNotifier<String?>(null);
+  await showDialog<void>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text('Porciones de ${platillo.nombre}'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final c in [CuentaCompra.dueno, CuentaCompra.pareja])
+            TextField(
+              controller: campos[c],
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: InputDecoration(labelText: c.etiqueta),
+            ),
+          ValueListenableBuilder<String?>(
+            valueListenable: error,
+            builder: (_, m, _) => m == null
+                ? const SizedBox.shrink()
+                : Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(m, key: const Key('error_porciones')),
+                  ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          onPressed: () async {
+            final servicio = ref.read(servicioAlimentacionProvider);
+            try {
+              for (final c in [CuentaCompra.dueno, CuentaCompra.pareja]) {
+                final nuevo = double.tryParse(
+                  campos[c]!.text.trim().replaceAll(',', '.'),
+                );
+                if (nuevo == null) {
+                  throw ArgumentError('Escribe una porción para ${c.etiqueta}.');
+                }
+                if (nuevo == double.tryParse(_textoPorcion(actuales, c))) {
+                  continue;
+                }
+                await servicio.fijarPorcion(
+                  platilloId: platillo.id,
+                  semana: semana,
+                  cuenta: c,
+                  porciones: nuevo,
+                );
+              }
+              ref.read(versionAlimentacionProvider.notifier).state++;
+              if (ctx.mounted) Navigator.of(ctx).pop();
+            } on ArgumentError catch (e) {
+              error.value = '${e.message}';
+            } on PermisoDenegado {
+              error.value = 'Solo dueño y pareja cambian las porciones.';
+            } catch (_) {
+              error.value = 'No se pudo guardar. Inténtalo más tarde.';
+            }
+          },
+          child: const Text('Guardar'),
+        ),
+      ],
+    ),
+  );
+  for (final c in campos.values) {
+    c.dispose();
+  }
+  error.dispose();
 }

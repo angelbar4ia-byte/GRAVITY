@@ -477,6 +477,28 @@ class RepositorioAlimentacionSupabase implements RepositorioAlimentacion {
     }
   }
 
+  /// `ali_fijar_porcion(p_hogar_id, p_platillo, p_semana, p_cuenta, p_porciones)`:
+  /// cambia solo la porción de [cuenta] en el menú compartido de la semana.
+  @override
+  Future<void> fijarPorcion({
+    required String platilloId,
+    required DateTime lunes,
+    required CuentaCompra cuenta,
+    required double porciones,
+  }) async {
+    try {
+      await _rpc('ali_fijar_porcion', {
+        'p_hogar_id': hogarId,
+        'p_platillo': platilloId,
+        'p_semana': _fechaSql(lunes),
+        'p_cuenta': cuenta == CuentaCompra.dueno ? 'dueno' : 'pareja',
+        'p_porciones': porciones,
+      });
+    } on ErrorFinanzas catch (e) {
+      throw _errorServidor(e);
+    }
+  }
+
   /// `ali_historial_compras(p_hogar_id, p_cuenta)`: una fila por compra real
   /// (el servidor ya excluye el precio base). Se leen, con tolerancia a los
   /// nombres, `ingrediente`/`nombre`, `unidad`, `cantidad`,
