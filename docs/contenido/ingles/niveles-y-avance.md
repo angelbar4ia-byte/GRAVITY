@@ -1,52 +1,74 @@
-# Niveles y avance por bimestre
+# Niveles y avance
 
-> Versión 0.2 (14/nov/2026). Ajustes del dueño aplicados (sección 6). Regla del dueño: **cada bimestre sube de nivel, solo si cumple todo lo que se pide; si no lo cumple, no sube.**
+> Versión 0.3 (14/nov/2026). Incluye el repaso inicial A1 → A2 (un mes) y las etiquetas oficiales del marco europeo (CEFR).
+> Regla del dueño: **cada bimestre sube de nivel, solo si cumple todo lo que se pide; si no lo cumple, no sube.**
 
 ## 1. Calendario
 
-| Bimestre | Semanas | Módulos | Nivel al terminar |
+| Bloque | Semanas del plan | Contenido | Nivel al cerrar | Tipo de cambio |
+|---|---|---|---|---|
+| Prueba de nivel | Semana 0 | Ubica el punto de partida | Confirma A1 o A2 | Diagnóstico |
+| **Repaso** | 1 a 4 | Repaso de A1 a A2 | **A2** | Sube de nivel |
+| Bimestre 1 | 5 a 12 (módulos 1 y 2) | Presente, pasado, experiencias | **B1** | Sube de nivel |
+| Bimestre 2 | 13 a 20 (módulos 3 y 4) | Planes, trabajo, opiniones | **B1+** | Sube de nivel |
+| Bimestre 3 | 21 a 28 (módulos 5 y 6) | Argumentación, relatos y fluidez | **B2** (solo con la prueba final tipo B2) | Sube de nivel |
+
+**Etiquetas:** todas son las del Marco Común Europeo (A1, A2, B1, B1+, B2). Según el [Consejo de Europa](https://www.coe.int/en/web/common-european-framework-reference-languages/cefr-descriptors-search), B1+ es un nivel intermedio del marco. El progreso interno (como "bimestre 1 completado") se registra aparte y no cambia la etiqueta oficial.
+
+**Duración total:** 28 semanas (7 meses). El Anexo A de Hábitos hablaba de 24 semanas; el repaso añade un mes al inicio.
+
+## 2. Repaso A1 → A2 (semanas 1 a 4)
+
+**Objetivo:** llegar a A2 sólido antes de empezar los módulos de B1.
+
+**Cómo se estudia:** la misma estructura diaria de 60 minutos (lunes a viernes), con las mismas reglas de constancia y tarjetas. Las lecciones del repaso siguen el formato de los módulos.
+
+| Semana | Tema | Gramática | Vocabulario |
 |---|---|---|---|
-| Inicio | Semana 0 | Prueba de nivel | Punto de partida (B1.1, confirmado por la prueba de nivel) |
-| 1 | 1 a 8 | 1 y 2 | **B1.2** |
-| 2 | 9 a 16 | 3 y 4 | **B1.3** |
-| 3 | 17 a 24 | 5 y 6 | **B2** (solo con la prueba final tipo B2) |
+| R1 | Quién soy y qué tengo | *to be*, pronombres, artículos *a / an / the*, plurales, *there is / there are* | familia, objetos de casa, números y fechas |
+| R2 | Mi vida diaria | presente simple (repaso), adverbios de frecuencia, *can / can't*, *like + -ing* | rutinas, habilidades, tiempo libre, lugares |
+| R3 | Lo que pasó y lo que quiero | pasado simple (regular e irregular, preguntas), *going to*, comparativos y superlativos | ciudad y transporte, experiencias, comida |
+| R4 | Prueba de A2 | futuro con *will* (básico), presente continuo, *some / any / much / many* | repaso general de las tres semanas |
 
-Los niveles B1.2 y B1.3 son **niveles internos de GRAVITY**, para ver el avance paso a paso. No son niveles oficiales del Marco Común Europeo. El único que se compara con el marco es B2, y se confirma con la prueba final.
+**Repaso de A2 al cierre (semana R4, viernes):** prueba de cuatro habilidades con la rúbrica, con 80 % o más en cada habilidad. Es el mismo formato que las pruebas de módulo.
 
-## 2. Requisitos para subir (todos, sin excepción)
+## 3. Requisitos para subir de nivel (todos)
 
-Un bimestre se aprueba cuando cumples **los cuatro** requisitos:
+Se aplican a cada bloque que sube de nivel (repaso, bimestre 1, bimestre 2 y bimestre 3):
 
-1. **Módulos aprobados.** Los dos módulos del bimestre se aprueban en su prueba de módulo con **80 % o más en cada habilidad** (rúbrica, `rubrica-evaluacion.md`).
-2. **Evaluación de bimestre.** Al terminar el bimestre, una prueba de cuatro habilidades que mezcla los dos módulos (escucha, lectura, escritura y habla) con **80 % o más en cada habilidad**.
-3. **Constancia.** Cada día de estudio del bimestre está completo o cubierto por un día de gracia. Los días de gracia son **tres por trimestre**; no se acumulan.
-4. **Minutos.** Los minutos estudiados en el bimestre son **al menos el 90 %** de los planeados (60 minutos × días de estudio del bimestre).
+1. **Pruebas aprobadas.** En el repaso, la prueba de A2. En cada bimestre, las pruebas de sus módulos, con **80 % o más en cada habilidad** (rúbrica, `rubrica-evaluacion.md`).
+2. **Evaluación de cierre.** Una prueba de cuatro habilidades al cerrar el bloque, con **80 % o más en cada habilidad**.
+3. **Constancia.** Cada día de estudio está completo o cubierto por un día de gracia. Los días de gracia son **tres por trimestre**; no se acumulan.
+4. **Minutos.** Al menos el **90 %** de los minutos planeados (60 minutos × días de estudio del bloque).
 
 Si cumples los cuatro, subes de nivel. Si no cumples uno, no subes, aunque cumplas los otros tres.
 
-## 3. Oportunidades y qué pasa si no subes
+## 4. Oportunidades y qué pasa si no subes
 
-- **Dos oportunidades para subir de nivel por bimestre.** Cada oportunidad es una evaluación de bimestre completa (requisito 2). Si las dos fallan, **bajas un nivel** (por ejemplo, de B1.3 a B1.2) y repites el bimestre desde las habilidades que no alcanzaste.
-- **Evaluación semanal de gracia.** La primera evaluación semanal fallida del bimestre no cuenta contra el estudiante: queda como día de gracia y se repite la semana.
-- **Entre oportunidades** debe pasar al menos una semana de práctica.
-- **La regla de la rúbrica sigue igual:** no se compensa una habilidad con otra.
-- **Dos bajas de nivel seguidas:** antes de continuar, el dueño revisa el plan con el estudiante (horario, carga, método). No se cambia la exigencia: se cambia el método.
+- **Dos oportunidades por bloque.** Cada oportunidad es una evaluación de cierre completa. Si las dos fallan, **bajas un nivel** y repites el bloque desde las habilidades que no alcanzaste (por ejemplo, de B1 a A2, o de A2 a A1 si fallas el repaso).
+- **Evaluación semanal de gracia.** La primera evaluación semanal fallida del bloque no cuenta: queda como día de gracia y se repite la semana.
+- **Entre oportunidades** pasa al menos una semana de práctica.
+- **La rúbrica no compensa:** una habilidad no suple a otra.
+- **Dos bajas de nivel seguidas:** el dueño revisa el plan con el estudiante (horario, carga, método). La exigencia no baja; cambia el método.
 
-## 4. Confirmación del nivel B2
+## 5. Confirmación de B2
 
-El nivel B2 solo se otorga cuando se aprueba la **prueba final tipo B2** (Anexo A.6, al terminar el módulo 6) con 80 % o más en cada habilidad, y además se cumplen los requisitos del bimestre 3. Sin esa prueba, el nivel más alto es B1.3.
+El nivel **B2** solo se otorga con la prueba final tipo B2 (Anexo A.6, al terminar el módulo 6), con 80 % o más en cada habilidad, y con los requisitos del bimestre 3 cumplidos. Sin esa prueba, el nivel más alto es B1+.
 
-## 5. Registro
+## 6. Registro
 
-Cada cierre de bimestre deja un registro con:
-- Puntaje por habilidad y por criterio, de cada prueba de módulo y de la evaluación de bimestre.
-- Días completos, días de gracia usados y minutos del bimestre frente a lo planeado.
-- Resultado: **subió** o **no subió**, con el requisito que faltó, si aplica.
+Cada cierre de bloque deja un registro con:
+- Puntaje por habilidad y por criterio de cada prueba.
+- Días completos, días de gracia usados y minutos frente a lo planeado.
+- Resultado: **subió** o **no subió**, con el requisito que faltó.
 
-El registro no se edita después del cierre; si hay un error, se anota como corrección con fecha.
+El registro no se edita después del cierre. Si hay un error, se anota como corrección con fecha.
 
-## 6. Decisiones del dueño (14/nov/2026)
+## 7. Decisiones registradas (14/nov/2026)
 
-1. **Requisitos:** aprobados. La primera evaluación semanal fallida del bimestre queda como gracia (sección 3).
-2. **Nombres de los niveles:** pendiente de aclarar. La respuesta "B1 primer bimestre" se puede leer como "el primer bimestre se queda en B1" o como otra cosa. Por ahora se mantienen B1.2 y B1.3. Confirma cuál quieres.
-3. **Oportunidades:** dos por bimestre; si fallas las dos, bajas un nivel.
+1. Repaso A1 → A2 de un mes antes del módulo 1: aprobado.
+2. Etiquetas oficiales del marco (A1, A2, B1, B1+, B2): aprobado.
+3. Dos oportunidades por bloque; si fallas las dos, bajas un nivel: aprobado.
+4. Primera evaluación semanal fallida del bloque como día de gracia: aprobado.
+
+**Pendiente de tu aprobación:** los temas del repaso (sección 2). Cuando los apruebes, redacto sus cuatro semanas con el mismo formato de los módulos.
