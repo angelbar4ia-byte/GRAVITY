@@ -16,11 +16,12 @@
 - El nivel B2 solo se otorga con la prueba final tipo B2 (`niveles-y-avance.md`, sección 5). Un simulacro no lo otorga.
 - Umbral del bimestre: el mismo para cualquier examen; la rúbrica es `rubrica-evaluacion.md`.
 
-## 3. Lo que decide el dueño
+## 3. Decisión registrada
 
-1. **¿Qué examen lleva el bimestre 3?** Cambridge B2 First, TOEFL, o ambos.
-2. **Si son ambos, ¿en qué modo?** Dos alternados (secundario cada cuatro semanas) o tres alternados, según `guia-multiexamen.md`.
-3. **Aprobación de la fuente de audio** para Listening de los dos exámenes (hasta entonces, el Listening se presenta en texto).
+- **Examen del bimestre:** ambos, en **modo de dos alternados** (`guia-multiexamen.md`, sección 3).
+- **Principal:** Cambridge B2 First (la opción propuesta en `cambridge-y-toefl.md` para el bimestre 3). **Supuesto de trabajo:** el dueño no indicó cuál es principal; si prefiere TOEFL, se invierten los roles.
+- **Secundario:** TOEFL iBT, un simulacro cada cuatro semanas (semanas 24 y 28 del calendario de 28 semanas).
+- **Pendiente:** aprobación de la fuente de audio para Listening de los dos exámenes (hasta entonces, el Listening se presenta en texto).
 
 ## 4. Lo que falta en cualquier caso
 

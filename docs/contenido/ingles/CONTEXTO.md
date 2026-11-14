@@ -32,7 +32,7 @@
 **Exámenes externos**
 - **Bimestre 1: Cambridge B1 Preliminary** (elegido por el dueño, porque su nivel es B1).
 - **Bimestre 2: TOEIC** (preparación con simulacros mensuales).
-- **Bimestre 3: Cambridge B2 First o TOEFL**, pendiente de decisión del dueño.
+- **Bimestre 3:** dos alternados. Principal Cambridge B2 First; secundario TOEFL cada cuatro semanas (supuesto: el dueño no indicó cuál es principal).
 - **Principio del dueño:** los tres exámenes (TOEIC, Cambridge y TOEFL) deben prepararse **por igual, sin perder calidad**. El usuario elige cuál lleva: uno, dos o tres alternados.
 - **Cuarta opción** (la recomendada por el dueño): combina lo mejor de cada examen y prepara para aprobar cualquiera de los tres oficiales. Es la referencia del sistema.
 
@@ -63,7 +63,7 @@
 
 ## 4. Decisiones pendientes
 
-1. **Bimestre 3:** Cambridge B2 First o TOEFL.
+1. **Bimestre 3:** confirmar cuál examen es principal (supuesto: B2 First) y aprobar la fuente de audio.
 2. **Simulacro completo de TOEIC:** escrito con el formato oficial. Faltan los ajustes de la sección de estado (letras de la clave, tiempos de Speaking, imágenes y audio).
 3. **Cambridge B1 Preliminary:** Listening con audio y Speaking con imágenes, cuando se apruebe el material. Parte 3 de Reading: **verificada** en el manual para profesores (5 preguntas, 4 opciones).
 4. **TOEFL:** audio y el formato de imágenes/video de Speaking cuando estén disponibles.
