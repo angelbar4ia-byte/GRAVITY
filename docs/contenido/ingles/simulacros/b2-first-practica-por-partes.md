@@ -228,5 +228,5 @@ Elige **una** tarea:
 ## Revisión antes de usar
 
 - Las claves de Reading y Listening se revisaron contra el texto y contra la gramática de cada hueco.
-- **Pendiente:** verificar en el manual de B2 First el número de opciones de Listening Parte 3 (aquí se practica con 5 opciones y 2 que no se usan); no se confirmó.
+- **Listening Parte 3:** verificada en el manual (cinco hablantes, ocho opciones). La sesión 10 practica una versión reducida (tres hablantes y cinco opciones).
 - El dueño revisa una tarea de Writing y una de Speaking antes de usarlas para calificar.

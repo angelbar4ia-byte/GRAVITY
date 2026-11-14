@@ -90,6 +90,6 @@ Fuente: [TOEFL iBT Test: 2026 Update, Test Blueprint and Specifications (ETS, PD
 
 ## 7. Pendiente
 
-- Confirmar el número de opciones de Listening Parte 3 de B2 First con el manual.
+- Listening Parte 3 de B2 First verificada en el manual: cinco hablantes y ocho opciones.
 - Construir los simulacros con este formato (desbloqueado: ya no depende de la red).
 - Decidir si TOEFL entra en el plan (solo si el objetivo es académico o universitario).

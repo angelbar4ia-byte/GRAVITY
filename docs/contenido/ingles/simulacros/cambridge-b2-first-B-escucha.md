@@ -2,7 +2,7 @@
 
 > **Contexto:** nota general en `../CONTEXTO.md`. Estado: Listening del simulacro B de B2 First, en texto. Audio pendiente de aprobación de la fuente.
 > Formato: [B2 First handbook (Cambridge English, PDF)](https://www.cambridgeenglish.org/Images/167791-b2-first-handbook.pdf). Parte 1: 8 preguntas de opción múltiple (3 opciones). Parte 2: 10 frases incompletas (hasta 3 palabras). Parte 3: 5 hablantes que se emparejan con opciones. Parte 4: 7 preguntas de opción múltiple (3 opciones).
-> **Limitación:** el audio se presenta como texto. Las opciones de la Parte 3 (8, A a H) son de diseño y se verifican con el manual.
+> **Limitación:** el audio se presenta como texto. Las opciones de la Parte 3 (8, A a H) coinciden con el manual oficial (cinco hablantes, ocho opciones).
 > **Preguntas originales de GRAVITY.**
 
 ## Parte 1 · Extractos cortos (preguntas 1 a 8)
@@ -122,7 +122,7 @@ Escucha la entrevista con una entrenadora de perros. Elige la respuesta correcta
 ## Revisión de la clave
 
 - Cada respuesta se comprobó contra el texto. En la Parte 3, cada hablante tiene una sola razón correcta y las opciones no usadas son D, E y F.
-- **Pendiente:** confirmar con el manual el número de opciones de la Parte 3.
+- **Verificado:** el manual oficial indica cinco hablantes y ocho opciones en la Parte 3.
 
 ## Umbral
 

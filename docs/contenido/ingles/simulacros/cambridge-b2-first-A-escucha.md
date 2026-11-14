@@ -2,7 +2,7 @@
 
 > **Contexto:** nota general en `../CONTEXTO.md`. Estado: Listening del simulacro A de B2 First, en texto. Audio pendiente de aprobación de la fuente.
 > Formato: [B2 First handbook (Cambridge English, PDF)](https://www.cambridgeenglish.org/Images/167791-b2-first-handbook.pdf). Listening: 4 partes, 30 preguntas. Parte 1: 8 preguntas de opción múltiple (3 opciones). Parte 2: 10 frases incompletas (hasta 3 palabras). Parte 3: 5 hablantes que se emparejan con opciones. Parte 4: 7 preguntas de opción múltiple (3 opciones).
-> **Limitación:** el audio se presenta como texto. El número de opciones de la Parte 3 (8, A a H) es el de este diseño; se verifica con el manual antes de aplicar la prueba.
+> **Limitación:** el audio se presenta como texto. El número de opciones de la Parte 3 (8, A a H) coincide con el manual oficial.
 > **Preguntas originales de GRAVITY.**
 
 ## Parte 1 · Extractos cortos (preguntas 1 a 8)
@@ -122,7 +122,7 @@ Escucha la entrevista con una restauradora de cuadros. Elige la respuesta correc
 ## Revisión de la clave
 
 - Cada respuesta se comprobó contra lo que dice el texto. En la Parte 3 se verificó que cada hablante tiene una sola razón correcta y que las opciones no usadas son D, F y H.
-- **Pendiente:** confirmar con el manual el número de opciones de la Parte 3. La Parte 1 se verifica con el audio del examen cuando esté disponible.
+- **Verificado:** el manual oficial indica cinco hablantes y ocho opciones en la Parte 3. La Parte 1 se verifica con el audio del examen cuando esté disponible.
 
 ## Umbral
 

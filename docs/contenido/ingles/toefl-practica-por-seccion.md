@@ -176,5 +176,5 @@ Responde con claridad y con detalles. Tienes unos 30 segundos por respuesta.
 
 - T-R3, pregunta 4: las opciones se corrigieron (la clave es C).
 - Las claves de Reading y Listening se revisaron contra el texto.
-- Los tiempos de cada sección son de referencia según la especificación de ETS; la extensión de Writing 11 y los tiempos de Speaking siguen por confirmar.
+- Los tiempos de cada sección son de referencia según la especificación de ETS; el formato y los tiempos de Writing y Speaking están verificados con la especificación. La extensión del correo y de la discusión no está en la especificación; se usa el criterio de GRAVITY (80 a 120 palabras).
 - El dueño revisa una tarea de Writing y una de Speaking antes de calificarlas.

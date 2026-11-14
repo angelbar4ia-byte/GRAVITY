@@ -226,5 +226,5 @@ Elige **una** tarea:
 ## Revisión antes de usar
 
 - Claves revisadas contra el texto y contra la gramática de cada hueco.
-- **Pendiente:** verificar en el manual de B2 First el número de opciones de Listening Parte 3; aquí se usa 5 opciones y 2 que no se usan, sin confirmar.
+- **Listening Parte 3:** verificada en el manual (cinco hablantes, ocho opciones). La sesión 25 practica una versión reducida (tres hablantes y cinco opciones).
 - El dueño revisa una tarea de Writing y una de Speaking antes de calificarlas.

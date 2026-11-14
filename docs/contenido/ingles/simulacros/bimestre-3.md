@@ -27,4 +27,4 @@
 
 - Práctica por partes para cada examen del bimestre (sesiones de una sola parte).
 - Retroalimentación de cada error, con la regla que lo explica.
-- Verificar en el manual de B2 First el número de opciones de Listening Parte 3.
+- Listening Parte 3 de B2 First: verificada en el manual (cinco hablantes, ocho opciones).
