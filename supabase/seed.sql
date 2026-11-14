@@ -552,3 +552,53 @@ select pg_temp.como('a0000000-0000-4000-8000-000000000003');
 insert into public.hab_objetivos (id, titulo, area, tipo, unidad, meta_valor, frecuencia, fecha_inicio, modificado_en) values
   ('f5000000-0000-4000-8000-000000000004', 'Orar cada noche (ejemplo)', 'espiritual', 'construir', null, null, 'diaria', '2026-10-19', '2026-10-19 08:00-06');
 select pg_temp.como(null);
+
+-- ------------------------------------------------------------ Fase 4: Alimentación (datos inventados, sin precios)
+select pg_temp.como('a0000000-0000-4000-8000-000000000001');
+insert into public.ali_platillos (id, hogar_id, nombre, ingredientes, duros) values
+  ('a1000000-0000-4000-8000-000000000001', 'b0000000-0000-4000-8000-000000000001', 'Avena con plátano (ejemplo)',
+   '[{"nombre": "Avena", "cantidad": 50, "unidad": "g", "seccion": "Despensa"}, {"nombre": "Plátano", "cantidad": 1, "unidad": "pieza", "seccion": "Frutas"}]', '{}'),
+  ('a1000000-0000-4000-8000-000000000002', 'b0000000-0000-4000-8000-000000000001', 'Ensalada con nueces (ejemplo)',
+   '[{"nombre": "Lechuga", "cantidad": 1, "unidad": "pieza", "seccion": "Verduras"}]', '{nueces}');
+insert into public.ali_menus (hogar_id, menu, perfil) values
+  ('b0000000-0000-4000-8000-000000000001', 'papa', '{"titulo": "Perfil de ejemplo (inventado)", "lineas": ["Dieta alta en proteínas (ejemplo)"], "texturaBlanda": true}'),
+  ('b0000000-0000-4000-8000-000000000001', 'pareja', '{"titulo": "Pareja y dueño (ejemplo)", "lineas": [], "texturaBlanda": false}');
+insert into public.ali_menu (id, hogar_id, menu, semana, dia, tiempo, platillo_id) values
+  ('a2000000-0000-4000-8000-000000000001', 'b0000000-0000-4000-8000-000000000001', 'papa', '2026-11-02', 0, 'desayuno', 'a1000000-0000-4000-8000-000000000001'),
+  ('a2000000-0000-4000-8000-000000000002', 'b0000000-0000-4000-8000-000000000001', 'pareja', '2026-11-02', 0, 'comida', 'a1000000-0000-4000-8000-000000000002');
+insert into public.ali_suplementos (id, hogar_id, menu, nombre, dosis, horario) values
+  ('a3000000-0000-4000-8000-000000000001', 'b0000000-0000-4000-8000-000000000001', 'papa', 'Suplemento de ejemplo', '1 cápsula (ejemplo)', 'Con el desayuno'),
+  ('a3000000-0000-4000-8000-000000000002', 'b0000000-0000-4000-8000-000000000001', 'pareja', 'Vitamina de ejemplo', '1 tableta (ejemplo)', 'Por la mañana');
+insert into public.ali_compras_marcas (hogar_id, menu, semana, clave) values
+  ('b0000000-0000-4000-8000-000000000001', 'papa', '2026-11-02', 'Avena|g');
+-- Fase 7: ingredientes con PRECIO BASE SUPUESTO (inventado, no es un dato real; se reemplaza con la primera compra real).
+insert into public.ali_ingredientes (id, hogar_id, nombre, unidad, pasillo, precio_base_centavos) values
+  ('a7000000-0000-4000-8000-000000000001', 'b0000000-0000-4000-8000-000000000001', 'Avena (ejemplo)',   'kg',    'Despensa',          4500),
+  ('a7000000-0000-4000-8000-000000000002', 'b0000000-0000-4000-8000-000000000001', 'Plátano (ejemplo)', 'pieza', 'Frutas y verduras',   400),
+  ('a7000000-0000-4000-8000-000000000003', 'b0000000-0000-4000-8000-000000000001', 'Lechuga (ejemplo)', 'pieza', 'Frutas y verduras',  2500);
+select pg_temp.como(null);
+
+-- ------------------------------------------------------------ Fase 5: Cuidados (turnos de la spec §3, datos inventados)
+-- Minutos desde medianoche; dia_semana 1 = lunes. Diana es la cuidadora; Carla (la hermana) cubre los martes por la tarde
+-- hasta las 7:00 del miércoles; el dueño cubre sábados y lunes por la tarde y todo el domingo. Las visitas de fin de semana
+-- de la hermana no son turnos.
+select pg_temp.como('a0000000-0000-4000-8000-000000000001');
+insert into public.cui_turnos (id, hogar_id, persona_id, dia_semana, inicio_min, fin_min, tipo)
+select t.id::uuid, 'b0000000-0000-4000-8000-000000000001', pg_temp.persona(t.usuario::uuid), t.dia, t.ini, t.fin, t.tipo
+from (values
+  ('a5100000-0000-4000-8000-000000000001', 'a0000000-0000-4000-8000-000000000004', 1,  540,  900, 'cuidadora'),
+  ('a5100000-0000-4000-8000-000000000002', 'a0000000-0000-4000-8000-000000000001', 1,  900, 1440, 'dueno'),
+  ('a5100000-0000-4000-8000-000000000003', 'a0000000-0000-4000-8000-000000000004', 2,  450,  900, 'cuidadora'),
+  ('a5100000-0000-4000-8000-000000000004', 'a0000000-0000-4000-8000-000000000003', 2,  900, 1440, 'hermana_visita'),
+  ('a5100000-0000-4000-8000-000000000005', 'a0000000-0000-4000-8000-000000000003', 3,    0,  420, 'hermana_visita'),
+  ('a5100000-0000-4000-8000-000000000006', 'a0000000-0000-4000-8000-000000000004', 3,  450, 1110, 'cuidadora'),
+  ('a5100000-0000-4000-8000-000000000007', 'a0000000-0000-4000-8000-000000000004', 4,  450, 1110, 'cuidadora'),
+  ('a5100000-0000-4000-8000-000000000008', 'a0000000-0000-4000-8000-000000000004', 5,  450, 1110, 'cuidadora'),
+  ('a5100000-0000-4000-8000-000000000009', 'a0000000-0000-4000-8000-000000000004', 6,  540,  900, 'cuidadora'),
+  ('a5100000-0000-4000-8000-00000000000a', 'a0000000-0000-4000-8000-000000000001', 6,  900, 1440, 'dueno'),
+  ('a5100000-0000-4000-8000-00000000000b', 'a0000000-0000-4000-8000-000000000001', 7,    0, 1440, 'dueno')
+) as t (id, usuario, dia, ini, fin, tipo);
+insert into public.cui_medicamentos (id, hogar_id, nombre, dosis, horas, notas) values
+  ('a5200000-0000-4000-8000-000000000001', 'b0000000-0000-4000-8000-000000000001', 'Medicamento A (ejemplo)', '1 tableta (ejemplo)', '{08:00,20:00}', 'Con alimento (ejemplo)'),
+  ('a5200000-0000-4000-8000-000000000002', 'b0000000-0000-4000-8000-000000000001', 'Medicamento B (ejemplo)', '1 cápsula (ejemplo)', '{14:00}', null);
+select pg_temp.como(null);

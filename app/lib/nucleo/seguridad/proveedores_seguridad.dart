@@ -36,4 +36,6 @@ final biometriaProvider = Provider<ServicioBiometria>(
 
 /// Reloj inyectable (esperas por intentos fallidos del PIN y bloqueo del
 /// teléfono).
-final relojSeguridadProvider = Provider<DateTime Function()>((ref) => DateTime.now);
+final relojSeguridadProvider = Provider<DateTime Function()>(
+  (ref) => DateTime.now,
+);

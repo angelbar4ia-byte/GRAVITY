@@ -69,6 +69,19 @@ const Map<String, String> titulosDeAviso = {
   'retiro_bolsa_compartida': 'Hay un movimiento por revisar',
   'resumen_lunes': 'Tu resumen de la semana está listo',
   'recordatorio_cierre': 'Es hora de cerrar la semana',
+  'solicitud_vista': 'Solicitud de vista: Familiar',
+  // Cuidados (Fase 5, D6): genéricos, sin medicamento ni dato clínico.
+  'recordatorio_toma': 'Hora de un recordatorio de cuidado',
+  'recordatorio_comida': 'Hora de la comida',
+  'entrega_turno': 'Es hora de dejar tus notas',
+  'cambio_urgente_cuidados': 'Cambio urgente en los cuidados',
+  // Alimentación (Fase 7): genéricos, sin cifras, nombres ni productos.
+  'compra_papa_albacea': 'Hay una compra esperando tu pago',
+  'votacion_abierta': 'Hay un menú por votar',
+  'votacion_empate': 'La votación del menú terminó en empate',
+  'reposicion_suplemento': 'Hay un suplemento por reponer',
+  // Transferencias (Fase 8): sin monto ni nota; el detalle va en la bandeja.
+  'transferencia_pendiente': 'Tienes una transferencia por confirmar.',
   'base_80': 'Revisa el almacenamiento de GRAVITY',
   'base_90': 'Revisa el almacenamiento de GRAVITY',
 };
@@ -88,6 +101,20 @@ const Map<String, SeveridadAviso> severidadDeAviso = {
   'fondo_bajo': SeveridadAviso.importante,
   'salida_libro_representado': SeveridadAviso.importante,
   'base_80': SeveridadAviso.importante,
+  // El receptor debe confirmar o rechazar con un botón (objeto 'transferencia').
+  'transferencia_pendiente': SeveridadAviso.importante,
+  // D24: el familiar pidió la vista temporal de Finanzas de Papá.
+  'solicitud_vista': SeveridadAviso.critica,
+  // Cuidados: el cambio urgente del dueño llega al instante a quien está de turno.
+  'cambio_urgente_cuidados': SeveridadAviso.critica,
+  'recordatorio_toma': SeveridadAviso.importante,
+  'recordatorio_comida': SeveridadAviso.importante,
+  'entrega_turno': SeveridadAviso.informativa,
+  // Alimentación: el pago y la reposición importan; la votación solo informa.
+  'compra_papa_albacea': SeveridadAviso.importante,
+  'reposicion_suplemento': SeveridadAviso.importante,
+  'votacion_abierta': SeveridadAviso.informativa,
+  'votacion_empate': SeveridadAviso.informativa,
   'partida_80': SeveridadAviso.informativa,
   'uso_limite': SeveridadAviso.informativa,
   'aportacion_pendiente': SeveridadAviso.informativa,
@@ -100,8 +127,26 @@ const Map<String, SeveridadAviso> severidadDeAviso = {
 /// Los que no cuentan para el tope diario de avisos no críticos.
 const Set<String> avisosFijos = {'resumen_lunes', 'recordatorio_cierre'};
 
+/// Tipos de Cuidados: los recibe también quien no ve dinero (el cuidador).
+const Set<String> avisosDeCuidados = {
+  'recordatorio_toma',
+  'recordatorio_comida',
+  'entrega_turno',
+  'cambio_urgente_cuidados',
+};
+
+/// Tipos de Alimentación: los recibe también quien no ve dinero (familiar).
+/// Usan los canales generales por severidad (no hay canales propios).
+const Set<String> avisosDeAlimentacion = {
+  'compra_papa_albacea',
+  'votacion_abierta',
+  'votacion_empate',
+  'reposicion_suplemento',
+};
+
 /// Título para [tipo]; el genérico si no está en el catálogo.
-String tituloDeAviso(String? tipo) => titulosDeAviso[tipo] ?? textoAvisoGenerico;
+String tituloDeAviso(String? tipo) =>
+    titulosDeAviso[tipo] ?? textoAvisoGenerico;
 
 SeveridadAviso severidadDe(String? tipo) =>
     severidadDeAviso[tipo] ?? SeveridadAviso.informativa;

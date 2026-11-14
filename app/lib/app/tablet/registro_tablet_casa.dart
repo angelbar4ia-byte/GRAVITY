@@ -117,7 +117,9 @@ Future<String?> registrarAlgoDeLaCasa(
   if (estado.usuarios.isEmpty) {
     ScaffoldMessenger.maybeOf(context)?.showSnackBar(
       const SnackBar(
-        content: Text('Agrega personas a la tablet para registrar a tu nombre.'),
+        content: Text(
+          'Agrega personas a la tablet para registrar a tu nombre.',
+        ),
       ),
     );
     return null;
@@ -196,7 +198,8 @@ Future<void> registrarAlgoPersonal(
   // Sigue dentro la misma persona (no venció el tiempo): se intenta subir con
   // su sesión antes de volver a la cuenta Casa.
   final actual = contenedor.read(controladorTabletProvider);
-  if (actual.soloAccion && actual.usuarioActivo?.personaId == persona.personaId) {
+  if (actual.soloAccion &&
+      actual.usuarioActivo?.personaId == persona.personaId) {
     try {
       await contenedor
           .read(colaSinConexionProvider)
@@ -243,11 +246,7 @@ class HojaRegistrarTabletCasa extends ConsumerWidget {
     final personales = [
       for (final opcion in opcionesDeRegistro)
         if (usuarios.any(
-          (u) => puedeRegistrarEn(
-            u.rol,
-            opcion.modulo,
-            esMaestra: u.esMaestra,
-          ),
+          (u) => puedeRegistrarEn(u.rol, opcion.modulo, esMaestra: u.esMaestra),
         ))
           opcion,
     ];

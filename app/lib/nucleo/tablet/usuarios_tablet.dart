@@ -164,7 +164,8 @@ class ConfiguracionTablet {
               regresoModoCasaPorOmision.inSeconds,
         ),
         contexto: (json['contexto'] as String?) ?? 'general',
-        tipo: TipoTablet.values
+        tipo:
+            TipoTablet.values
                 .where((t) => t.name == json['tipo'])
                 .firstOrNull ??
             TipoTablet.publica,
@@ -249,9 +250,12 @@ class RepositorioTablet {
   /// Descifra la credencial de la persona con su [pin]: devuelve la llave
   /// (para volver a cifrarla al renovarse) y la credencial, o `null` si no hay
   /// o el PIN no la abre.
-  Future<(LlavePin, String)?> leerCredencial(String personaId, String pin) async {
+  Future<(LlavePin, String)?> leerCredencial(
+    String personaId,
+    String pin,
+  ) async {
     final sobre = await _almacen.leer(claveCredencial(personaId));
-    return sobre == null ? null : CifradoPin.descifrar(pin, sobre);
+    return sobre == null ? null : CifradoPin.descifrarAsync(pin, sobre);
   }
 
   Future<bool> tieneCredencial(String personaId) async =>

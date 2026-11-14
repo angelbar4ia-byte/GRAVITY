@@ -87,7 +87,12 @@ DatosFinanzas datosDeDemostracion({required Fecha hoy}) {
   final cuentas = <Cuenta>[];
   final parametros = <ParametrosFinanzas>[];
   Cuenta cuenta(String nombre, TipoCuenta tipo, String? libro) {
-    final c = Cuenta(id: id(nombre), nombre: nombre, tipo: tipo, libroId: libro);
+    final c = Cuenta(
+      id: id(nombre),
+      nombre: nombre,
+      tipo: tipo,
+      libroId: libro,
+    );
     cuentas.add(c);
     return c;
   }
@@ -98,7 +103,11 @@ DatosFinanzas datosDeDemostracion({required Fecha hoy}) {
   for (final l in libros) {
     final ajustes = cuenta('Ajustes', TipoCuenta.ajustes, l.id);
     apertureras[l.id] = cuenta('Apertura', TipoCuenta.apertura, l.id);
-    porClasificar[l.id] = cuenta('Por clasificar', TipoCuenta.porClasificar, l.id);
+    porClasificar[l.id] = cuenta(
+      'Por clasificar',
+      TipoCuenta.porClasificar,
+      l.id,
+    );
     parametros.add(
       ParametrosFinanzas(
         libroId: l.id,
@@ -165,13 +174,16 @@ DatosFinanzas datosDeDemostracion({required Fecha hoy}) {
     'Combustible',
     'Transporte público',
   ], naturaleza: 'Mixta');
-  rubro('Salud', Prioridad.necesario, ['Medicinas', 'Consultas'],
-      naturaleza: 'Recurrente y eventual');
+  rubro('Salud', Prioridad.necesario, [
+    'Medicinas',
+    'Consultas',
+  ], naturaleza: 'Recurrente y eventual');
   rubro('Limpieza y mantenimiento del hogar', Prioridad.deseable, [
     'Productos de limpieza',
   ], naturaleza: 'Mixta');
-  rubro('Cuidado personal', Prioridad.deseable, ['Higiene personal'],
-      naturaleza: 'Mixta');
+  rubro('Cuidado personal', Prioridad.deseable, [
+    'Higiene personal',
+  ], naturaleza: 'Mixta');
   rubro('Entretenimiento', Prioridad.discrecional, [
     'Salidas',
     'Streaming y suscripciones',
@@ -180,8 +192,9 @@ DatosFinanzas datosDeDemostracion({required Fecha hoy}) {
   rubro('Tecnología y comunicaciones', Prioridad.deseable, [
     'Telefonía móvil',
   ], naturaleza: 'Mixta');
-  rubro('Seguros, impuestos y trámites', Prioridad.necesario, ['Impuestos'],
-      naturaleza: 'Fija y eventual');
+  rubro('Seguros, impuestos y trámites', Prioridad.necesario, [
+    'Impuestos',
+  ], naturaleza: 'Fija y eventual');
   final intereses = cuenta(
     'Intereses y cargos',
     TipoCuenta.gastoFinanciero,
@@ -193,7 +206,11 @@ DatosFinanzas datosDeDemostracion({required Fecha hoy}) {
   final efectivoCasa = cuenta('Efectivo de la casa', TipoCuenta.efectivo, casa);
   final tarjeta = cuenta('Tarjeta de crédito', TipoCuenta.tarjeta, casa);
   final prestamo = cuenta('Préstamo familiar', TipoCuenta.prestamo, casa);
-  final sueldoDueno = cuenta('Sueldo del dueño', TipoCuenta.origenIngreso, casa);
+  final sueldoDueno = cuenta(
+    'Sueldo del dueño',
+    TipoCuenta.origenIngreso,
+    casa,
+  );
   final sueldoPareja = cuenta(
     'Sueldo de la pareja',
     TipoCuenta.origenIngreso,
@@ -249,7 +266,9 @@ DatosFinanzas datosDeDemostracion({required Fecha hoy}) {
       nombre: 'Sueldo de la pareja (neto)',
       cuentaOrigenId: sueldoPareja.id,
       cuentaDestinoId: bancoCasa.id,
-      vigencias: [vig(ingPareja, 1400000, const CalendarioConfig.mensual([0]))],
+      vigencias: [
+        vig(ingPareja, 1400000, const CalendarioConfig.mensual([0])),
+      ],
     ),
     Ingreso(
       id: ingHonorarios,
@@ -260,7 +279,9 @@ DatosFinanzas datosDeDemostracion({required Fecha hoy}) {
       certeza: Certeza.probable,
       cuentaOrigenId: honorarios.id,
       cuentaDestinoId: bancoDueno.id,
-      vigencias: [vig(ingHonorarios, 300000, const CalendarioConfig.mensual([5]))],
+      vigencias: [
+        vig(ingHonorarios, 300000, const CalendarioConfig.mensual([5])),
+      ],
     ),
     Ingreso(
       id: ingClases,
@@ -324,28 +345,68 @@ DatosFinanzas datosDeDemostracion({required Fecha hoy}) {
     protegida: protegida,
   );
   final compromisos = [
-    fijo('Renta', 800000, Frecuencia.mensual, 'Vivienda y servicios',
-        'Renta o hipoteca', const CalendarioConfig.mensual([1], regla: enSuFecha),
-        protegida: true),
-    fijo('Luz', 90000, Frecuencia.bimestral, 'Vivienda y servicios', 'Luz',
-        CalendarioConfig.cadaMeses(Fecha(2026, 1, 10), 2, regla: enSuFecha),
-        protegida: true),
-    fijo('Agua', 30000, Frecuencia.mensual, 'Vivienda y servicios', 'Agua',
-        const CalendarioConfig.mensual([5], regla: enSuFecha),
-        protegida: true),
-    fijo('Internet', 40000, Frecuencia.mensual, 'Vivienda y servicios',
-        'Internet', const CalendarioConfig.mensual([20], regla: enSuFecha),
-        protegida: true),
-    fijo('Celular', 35000, Frecuencia.mensual, 'Tecnología y comunicaciones',
-        'Telefonía móvil', const CalendarioConfig.mensual([15], regla: enSuFecha)),
-    fijo('Reserva: placas y predial', 156000, Frecuencia.anual,
-        'Seguros, impuestos y trámites', 'Impuestos',
-        CalendarioConfig.cadaMeses(Fecha(2027, 1, 15), 12, regla: enSuFecha),
-        tipo: TipoCompromiso.reserva),
-    fijo('Celular personal', 25000, Frecuencia.mensual,
-        'Tecnología y comunicaciones', 'Telefonía móvil',
-        const CalendarioConfig.mensual([12], regla: enSuFecha),
-        libro: libroDueno),
+    fijo(
+      'Renta',
+      800000,
+      Frecuencia.mensual,
+      'Vivienda y servicios',
+      'Renta o hipoteca',
+      const CalendarioConfig.mensual([1], regla: enSuFecha),
+      protegida: true,
+    ),
+    fijo(
+      'Luz',
+      90000,
+      Frecuencia.bimestral,
+      'Vivienda y servicios',
+      'Luz',
+      CalendarioConfig.cadaMeses(Fecha(2026, 1, 10), 2, regla: enSuFecha),
+      protegida: true,
+    ),
+    fijo(
+      'Agua',
+      30000,
+      Frecuencia.mensual,
+      'Vivienda y servicios',
+      'Agua',
+      const CalendarioConfig.mensual([5], regla: enSuFecha),
+      protegida: true,
+    ),
+    fijo(
+      'Internet',
+      40000,
+      Frecuencia.mensual,
+      'Vivienda y servicios',
+      'Internet',
+      const CalendarioConfig.mensual([20], regla: enSuFecha),
+      protegida: true,
+    ),
+    fijo(
+      'Celular',
+      35000,
+      Frecuencia.mensual,
+      'Tecnología y comunicaciones',
+      'Telefonía móvil',
+      const CalendarioConfig.mensual([15], regla: enSuFecha),
+    ),
+    fijo(
+      'Reserva: placas y predial',
+      156000,
+      Frecuencia.anual,
+      'Seguros, impuestos y trámites',
+      'Impuestos',
+      CalendarioConfig.cadaMeses(Fecha(2027, 1, 15), 12, regla: enSuFecha),
+      tipo: TipoCompromiso.reserva,
+    ),
+    fijo(
+      'Celular personal',
+      25000,
+      Frecuencia.mensual,
+      'Tecnología y comunicaciones',
+      'Telefonía móvil',
+      const CalendarioConfig.mensual([12], regla: enSuFecha),
+      libro: libroDueno,
+    ),
   ];
 
   Sobre sobre(
@@ -363,21 +424,45 @@ DatosFinanzas datosDeDemostracion({required Fecha hoy}) {
     prioridad: prioridad,
   );
   final sobres = [
-    sobre('Alimentación', 150000, 'Alimentación', prioridad: Prioridad.necesario),
+    sobre(
+      'Alimentación',
+      150000,
+      'Alimentación',
+      prioridad: Prioridad.necesario,
+    ),
     sobre('Transporte', 70000, 'Transporte', prioridad: Prioridad.necesario),
     sobre('Salud', 30000, 'Salud'),
     sobre('Limpieza', 15000, 'Limpieza y mantenimiento del hogar'),
     sobre('Cuidado personal', 15000, 'Cuidado personal'),
-    sobre('Entretenimiento', 25000, 'Entretenimiento',
-        prioridad: Prioridad.discrecional),
+    sobre(
+      'Entretenimiento',
+      25000,
+      'Entretenimiento',
+      prioridad: Prioridad.discrecional,
+    ),
     sobre('Vestimenta', 20000, 'Vestimenta', prioridad: Prioridad.discrecional),
-    sobre('Gustos personales', 40000, 'Entretenimiento',
-        prioridad: Prioridad.discrecional, libro: libroDueno),
+    sobre(
+      'Gustos personales',
+      40000,
+      'Entretenimiento',
+      prioridad: Prioridad.discrecional,
+      libro: libroDueno,
+    ),
     sobre('Transporte', 30000, 'Transporte', libro: libroPareja),
-    sobre('Medicinas', 50000, 'Salud',
-        prioridad: Prioridad.necesario, libro: libroPapa),
-    sobre('Alimentación especial', 30000, 'Alimentación',
-        prioridad: Prioridad.necesario, libro: libroPapa),
+    sobre(
+      'Medicinas',
+      50000,
+      'Salud',
+      prioridad: Prioridad.necesario,
+      libro: libroPapa,
+    ),
+    sobre(
+      'Alimentación especial',
+      30000,
+      'Alimentación',
+      prioridad: Prioridad.necesario,
+      libro: libroPapa,
+    ),
   ];
 
   final deudas = [
@@ -422,7 +507,12 @@ DatosFinanzas datosDeDemostracion({required Fecha hoy}) {
       id: id('mov ${movimientos.length}'),
       tipo: tipo,
       fecha: fecha,
-      registradoEn: DateTime(fecha.anio, fecha.mes, fecha.dia, 9 + movimientos.length % 10),
+      registradoEn: DateTime(
+        fecha.anio,
+        fecha.mes,
+        fecha.dia,
+        9 + movimientos.length % 10,
+      ),
       cuentaOrigenId: origen,
       cuentaDestinoId: destino,
       monto: monto,
@@ -438,16 +528,66 @@ DatosFinanzas datosDeDemostracion({required Fecha hoy}) {
   }
 
   // Saldos iniciales.
-  mov(TipoMovimiento.apertura, apertura, apertureras[casa]!.id, bancoCasa.id, 300000);
-  mov(TipoMovimiento.apertura, apertura, apertureras[casa]!.id, efectivoCasa.id, 80000);
-  mov(TipoMovimiento.apertura, apertura, tarjeta.id, apertureras[casa]!.id, 600000);
-  mov(TipoMovimiento.apertura, apertura, prestamo.id, apertureras[casa]!.id, 300000);
-  mov(TipoMovimiento.apertura, apertura, apertureras[libroDueno]!.id, bancoDueno.id, 450000);
-  mov(TipoMovimiento.apertura, apertura, apertureras[libroDueno]!.id, efectivoDueno.id, 60000);
-  mov(TipoMovimiento.apertura, apertura, apertureras[libroPareja]!.id, bancoPareja.id, 250000,
-      por: pareja);
-  mov(TipoMovimiento.apertura, apertura, apertureras[libroPapa]!.id, bancoPapa.id, 420000,
-      realizadoPor: papa, enNombreDe: papa, motivo: 'Saldo de la cuenta de la pensión');
+  mov(
+    TipoMovimiento.apertura,
+    apertura,
+    apertureras[casa]!.id,
+    bancoCasa.id,
+    300000,
+  );
+  mov(
+    TipoMovimiento.apertura,
+    apertura,
+    apertureras[casa]!.id,
+    efectivoCasa.id,
+    80000,
+  );
+  mov(
+    TipoMovimiento.apertura,
+    apertura,
+    tarjeta.id,
+    apertureras[casa]!.id,
+    600000,
+  );
+  mov(
+    TipoMovimiento.apertura,
+    apertura,
+    prestamo.id,
+    apertureras[casa]!.id,
+    300000,
+  );
+  mov(
+    TipoMovimiento.apertura,
+    apertura,
+    apertureras[libroDueno]!.id,
+    bancoDueno.id,
+    450000,
+  );
+  mov(
+    TipoMovimiento.apertura,
+    apertura,
+    apertureras[libroDueno]!.id,
+    efectivoDueno.id,
+    60000,
+  );
+  mov(
+    TipoMovimiento.apertura,
+    apertura,
+    apertureras[libroPareja]!.id,
+    bancoPareja.id,
+    250000,
+    por: pareja,
+  );
+  mov(
+    TipoMovimiento.apertura,
+    apertura,
+    apertureras[libroPapa]!.id,
+    bancoPapa.id,
+    420000,
+    realizadoPor: papa,
+    enNombreDe: papa,
+    motivo: 'Saldo de la cuenta de la pensión',
+  );
 
   // Gastos de la semana (los del boceto: Alimentación $620, Transporte $510).
   Fecha dia(int i) {
@@ -455,22 +595,69 @@ DatosFinanzas datosDeDemostracion({required Fecha hoy}) {
     return f.despuesDe(hoy) ? hoy : f;
   }
 
-  mov(TipoMovimiento.gasto, dia(0), bancoCasa.id, g('Alimentación'), 42000,
-      categoria: s('Despensa y abarrotes'), nota: 'Súper');
-  mov(TipoMovimiento.gasto, dia(1), efectivoCasa.id, g('Alimentación'), 20000,
-      categoria: s('Frutas y verduras'), por: pareja);
-  mov(TipoMovimiento.gasto, dia(1), tarjeta.id, g('Transporte'), 51000,
-      categoria: s('Combustible'));
-  mov(TipoMovimiento.gasto, dia(0), efectivoDueno.id, g('Entretenimiento'), 18000,
-      categoria: s('Salidas'));
-  mov(TipoMovimiento.gasto, dia(0), bancoPapa.id, g('Salud'), 32000,
-      categoria: s('Medicinas'), realizadoPor: papa, enNombreDe: papa,
-      motivo: 'Medicinas del mes');
+  mov(
+    TipoMovimiento.gasto,
+    dia(0),
+    bancoCasa.id,
+    g('Alimentación'),
+    42000,
+    categoria: s('Despensa y abarrotes'),
+    nota: 'Súper',
+  );
+  mov(
+    TipoMovimiento.gasto,
+    dia(1),
+    efectivoCasa.id,
+    g('Alimentación'),
+    20000,
+    categoria: s('Frutas y verduras'),
+    por: pareja,
+  );
+  mov(
+    TipoMovimiento.gasto,
+    dia(1),
+    tarjeta.id,
+    g('Transporte'),
+    51000,
+    categoria: s('Combustible'),
+  );
+  mov(
+    TipoMovimiento.gasto,
+    dia(0),
+    efectivoDueno.id,
+    g('Entretenimiento'),
+    18000,
+    categoria: s('Salidas'),
+  );
+  mov(
+    TipoMovimiento.gasto,
+    dia(0),
+    bancoPapa.id,
+    g('Salud'),
+    32000,
+    categoria: s('Medicinas'),
+    realizadoPor: papa,
+    enNombreDe: papa,
+    motivo: 'Medicinas del mes',
+  );
   // Aportación de la pareja a la casa (transferencia entre libros).
-  mov(TipoMovimiento.transferencia, dia(0), bancoPareja.id, bancoCasa.id, 50000,
-      por: pareja, nota: 'Aportación a la casa');
-  mov(TipoMovimiento.gasto, dia(1), bancoCasa.id, intereses.id, 2400,
-      nota: 'Comisión bancaria');
+  mov(
+    TipoMovimiento.transferencia,
+    dia(0),
+    bancoPareja.id,
+    bancoCasa.id,
+    50000,
+    por: pareja,
+    nota: 'Aportación a la casa',
+  );
+  mov(
+    TipoMovimiento.gasto,
+    dia(1),
+    bancoCasa.id,
+    intereses.id,
+    2400,
+    nota: 'Comisión bancaria',
+  );
 
   final datos = DatosFinanzas(
     libros: libros,
@@ -527,7 +714,8 @@ DatosFinanzas datosDeLibros(
   Set<String> visibles, {
   bool conservarLibros = true,
 }) {
-  bool delLibro(String? libroId) => libroId != null && visibles.contains(libroId);
+  bool delLibro(String? libroId) =>
+      libroId != null && visibles.contains(libroId);
   final cuentas = [
     for (final c in d.cuentas)
       if (c.libroId == null || visibles.contains(c.libroId)) c,
@@ -536,26 +724,53 @@ DatosFinanzas datosDeLibros(
   bool movVisible(Movimiento m) =>
       delLibro(libroDeCuenta[m.cuentaOrigenId]) ||
       delLibro(libroDeCuenta[m.cuentaDestinoId]);
-  final semanas = [for (final s in d.semanas) if (delLibro(s.libroId)) s];
+  final semanas = [
+    for (final s in d.semanas)
+      if (delLibro(s.libroId)) s,
+  ];
   final semanasIds = {for (final s in semanas) s.id};
   return d.copiar(
     libros: [
       for (final l in d.libros)
         if (conservarLibros || visibles.contains(l.id)) l,
     ],
-    parametros: [for (final p in d.parametros) if (delLibro(p.libroId)) p],
+    parametros: [
+      for (final p in d.parametros)
+        if (delLibro(p.libroId)) p,
+    ],
     cuentas: cuentas,
-    ingresos: [for (final i in d.ingresos) if (delLibro(i.libroId)) i],
-    compromisos: [for (final c in d.compromisos) if (delLibro(c.libroId)) c],
-    sobres: [for (final s in d.sobres) if (delLibro(s.libroId)) s],
-    deudas: [for (final x in d.deudas) if (delLibro(x.libroId)) x],
+    ingresos: [
+      for (final i in d.ingresos)
+        if (delLibro(i.libroId)) i,
+    ],
+    compromisos: [
+      for (final c in d.compromisos)
+        if (delLibro(c.libroId)) c,
+    ],
+    sobres: [
+      for (final s in d.sobres)
+        if (delLibro(s.libroId)) s,
+    ],
+    deudas: [
+      for (final x in d.deudas)
+        if (delLibro(x.libroId)) x,
+    ],
     semanas: semanas,
-    cierres: [for (final c in d.cierres) if (semanasIds.contains(c.semanaId)) c],
-    ocurrencias: [for (final o in d.ocurrencias) if (delLibro(o.libroId)) o],
+    cierres: [
+      for (final c in d.cierres)
+        if (semanasIds.contains(c.semanaId)) c,
+    ],
+    ocurrencias: [
+      for (final o in d.ocurrencias)
+        if (delLibro(o.libroId)) o,
+    ],
     conciliaciones: [
       for (final c in d.conciliaciones)
         if (delLibro(c.libroId)) c,
     ],
-    movimientos: [for (final m in d.movimientos) if (movVisible(m)) m],
+    movimientos: [
+      for (final m in d.movimientos)
+        if (movVisible(m)) m,
+    ],
   );
 }

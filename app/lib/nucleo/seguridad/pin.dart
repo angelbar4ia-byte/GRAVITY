@@ -8,21 +8,23 @@
 /// en ese momento ([pinEsCortoParaSuRol]); cada lugar donde se escribe un PIN
 /// lo maneja con un resultado `debeCambiarPin`.
 ///
-/// ## Pendiente (siguiente ronda): costo del PIN en el teléfono
+/// ## Costo del PIN (D22, 6/nov/2026)
 ///
-/// El PIN se estira con 100 000 vueltas de PBKDF2 ([HashPin.iteracionesActuales],
-/// M9' de la revisión de la Fase 1b): ~0.3 s en una computadora. Entrar con el
-/// PIN en la tablet hace 2 o 3 derivaciones (verificar el hash, abrir el sobre y,
-/// la primera vez tras la actualización, rehacerlo), y todas corren hoy en el
-/// hilo de la interfaz. Decisión del dueño (31/oct): se dejan 100 000, sin subir
-/// ni bajar. Queda para la siguiente ronda (1) mover la derivación a un hilo
-/// aparte (`Isolate`), lo que vuelve asíncrono `desbloquearConPin`/`verificar`,
-/// y (2) **medirla en el Galaxy A52**. Calidad pide ≥ 600 000 vueltas o Argon2:
-/// la decisión depende de esa medición.
+/// El PIN se estira con **600 000 vueltas** de PBKDF2 ([HashPin.iteracionesActuales],
+/// respuesta P10 del dueño). Cada derivación corre en un hilo aparte (`Isolate`)
+/// para no congelar la pantalla: por eso `verificarAsync`, `crearAsync` y
+/// `derivarLlaveAsync` son las que usa la interfaz. Los hashes y sobres hechos
+/// con menos vueltas (10 000 y 100 000) siguen abriendo y se rehacen con las de
+/// hoy la próxima vez que su dueño escribe el PIN. La medición en la máquina de
+/// pruebas está en `test/nucleo/seguridad/pin_600k_test.dart`; la del Galaxy A52
+/// la hace el dueño con el medidor de la app.
 library;
 
 import 'dart:convert';
+import 'dart:isolate';
 import 'dart:math';
+import 'dart:typed_data';
+
 import '../contratos/roles.dart';
 import '../permisos/permisos.dart';
 import 'pbkdf2.dart';
@@ -126,18 +128,26 @@ String? errorDePinNuevoConfirmado(
   String pin,
   String confirmacion, {
   Rol? rol,
-}) => errorDePinNuevo(pin, rol: rol) ??
+}) =>
+    errorDePinNuevo(pin, rol: rol) ??
     (pin == confirmacion ? null : 'Los PIN no coinciden.');
 
 abstract final class HashPin {
   static const version = 'pbkdf2-sha256';
 
   /// Vueltas de PBKDF2 con las que se hacen los hashes y los sobres **nuevos**
-  /// (M9' de la revisión de la Fase 1b: eran 10 000; con un PIN de 6 dígitos
-  /// ese costo no frena a quien extraiga el almacenamiento). 100 000 con la
-  /// implementación de `pbkdf2.dart` tardan unos 0.3 s en una computadora y se
-  /// estima ~1 s en un teléfono medio.
-  static const iteracionesActuales = 100000;
+  /// (M9' de la revisión de la Fase 1b: eran 10 000; D22, 6/nov/2026: 600 000).
+  /// Con la implementación de `pbkdf2.dart` tardan ~1.5 s en una computadora
+  /// (ver la medición en `pin_600k_test.dart`); siempre en un hilo aparte.
+  static const iteracionesActuales = 600000;
+
+  /// Las de la ronda anterior (M9', 100 000): siguen verificándose y se rehacen.
+  static const iteraciones100k = 100000;
+
+  /// Desde cuántas vueltas la derivación se manda a un hilo aparte. Por debajo
+  /// (las pruebas usan 50) se hace en el mismo hilo: lanzar un `Isolate` cuesta
+  /// más que el cálculo y las pruebas de pantalla no esperan hilos reales.
+  static const vueltasParaHiloAparte = 5000;
 
   /// Las de los hashes y sobres anteriores: siguen verificándose (la cuenta de
   /// vueltas viaja en cada hash y en cada sobre) y se rehacen con
@@ -150,11 +160,7 @@ abstract final class HashPin {
   static const _bytesSal = 16;
 
   /// Hash con sal aleatoria: `pbkdf2-sha256$iteraciones$sal$hash` (base64).
-  static String crear(
-    String pin, {
-    int? iteraciones,
-    List<int>? sal,
-  }) {
+  static String crear(String pin, {int? iteraciones, List<int>? sal}) {
     if (!pinValido(pin)) {
       throw ArgumentError.value(pin, 'pin', 'Debe tener de 4 a 6 dígitos');
     }
@@ -203,6 +209,75 @@ abstract final class HashPin {
     var diferencia = 0;
     for (var i = 0; i < calculado.length; i++) {
       diferencia |= calculado[i] ^ esperado[i];
+    }
+    return diferencia == 0;
+  }
+
+  /// Como [crear], sin congelar la pantalla (hilo aparte con muchas vueltas).
+  static Future<String> crearAsync(
+    String pin, {
+    int? iteraciones,
+    List<int>? sal,
+  }) async {
+    if (!pinValido(pin)) {
+      throw ArgumentError.value(pin, 'pin', 'Debe tener de 4 a 6 dígitos');
+    }
+    final vueltas = iteraciones ?? iteracionesPorDefecto;
+    final salUsada = sal ?? _salAleatoria();
+    final hash = await _derivar(utf8.encode(pin), salUsada, vueltas);
+    return [
+      version,
+      '$vueltas',
+      base64Encode(salUsada),
+      base64Encode(hash),
+    ].join(r'$');
+  }
+
+  /// Como [verificar], sin congelar la pantalla (hilo aparte con muchas
+  /// vueltas). Es la que usa la interfaz.
+  static Future<bool> verificarAsync(String pin, String guardado) async {
+    final partes = guardado.split(r'$');
+    if (partes.length != 4 || partes[0] != version) return false;
+    final iteraciones = int.tryParse(partes[1]);
+    if (iteraciones == null || iteraciones < 1) return false;
+    final List<int> sal;
+    final List<int> esperado;
+    try {
+      sal = base64Decode(partes[2]);
+      esperado = base64Decode(partes[3]);
+    } on FormatException {
+      return false;
+    }
+    final calculado = await _derivar(utf8.encode(pin), sal, iteraciones);
+    return _iguales(calculado, esperado);
+  }
+
+  /// Como [derivarLlave], sin congelar la pantalla.
+  static Future<List<int>> derivarLlaveAsync(
+    String pin,
+    List<int> sal, {
+    int? iteraciones,
+  }) => _derivar(utf8.encode(pin), sal, iteraciones ?? iteracionesPorDefecto);
+
+  static Future<Uint8List> _derivar(
+    List<int> clave,
+    List<int> sal,
+    int vueltas,
+  ) {
+    if (vueltas < vueltasParaHiloAparte) {
+      return Future.value(pbkdf2HmacSha256(clave, sal, vueltas));
+    }
+    final c = Uint8List.fromList(clave);
+    final s = Uint8List.fromList(sal);
+    return Isolate.run(() => pbkdf2HmacSha256(c, s, vueltas));
+  }
+
+  /// Comparación en tiempo constante.
+  static bool _iguales(List<int> a, List<int> b) {
+    if (a.length != b.length) return false;
+    var diferencia = 0;
+    for (var i = 0; i < a.length; i++) {
+      diferencia |= a[i] ^ b[i];
     }
     return diferencia == 0;
   }

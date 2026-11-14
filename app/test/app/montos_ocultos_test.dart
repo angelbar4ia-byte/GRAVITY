@@ -631,8 +631,11 @@ void main() {
       expect(find.text('Elige tu PIN de 6 dígitos'), findsOneWidget);
       await cambiar(tester, '739150', '739150');
       expect(await resultado(), isTrue);
-      expect(bloqueo.comprobarPin('739150'), ResultadoBloqueo.abierto);
-      expect(bloqueo.comprobarPin('2468'), ResultadoBloqueo.pinIncorrecto);
+      expect(await bloqueo.comprobarPin('739150'), ResultadoBloqueo.abierto);
+      expect(
+        await bloqueo.comprobarPin('2468'),
+        ResultadoBloqueo.pinIncorrecto,
+      );
     });
   });
 
@@ -806,7 +809,10 @@ void main() {
         final bloqueo = contenedorDe(tester)
             .read(controladorBloqueoProvider.notifier);
         await bloqueo.listo;
-        expect(bloqueo.desbloquearConPin('284651'), ResultadoBloqueo.abierto);
+        expect(
+          await bloqueo.desbloquearConPin('284651'),
+          ResultadoBloqueo.abierto,
+        );
         await tester.pumpAndSettle();
         await irAPrivacidad(tester);
 
@@ -829,7 +835,7 @@ void main() {
           find.text('PIN actual incorrecto. No se cambió.'),
           findsOneWidget,
         );
-        expect(bloqueo.comprobarPin('284651'), ResultadoBloqueo.abierto);
+        expect(await bloqueo.comprobarPin('284651'), ResultadoBloqueo.abierto);
 
         // Apagarlo: el PIN pasa a ser el propio de los montos.
         await tester.ensureVisible(

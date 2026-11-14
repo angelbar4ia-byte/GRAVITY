@@ -101,6 +101,7 @@ class _NucleoGravityState extends State<NucleoGravity>
             borde: v.borde,
             panel: v.panel,
             pulso: widget.estado.pulso,
+            variante: v.nucleo,
           ),
         ),
       ),
@@ -117,6 +118,7 @@ class PintorNucleo extends CustomPainter {
     required this.borde,
     required this.panel,
     required this.pulso,
+    this.variante = VarianteNucleo.anillos,
   }) : super(repaint: animacion);
 
   final Animation<double> animacion;
@@ -125,8 +127,91 @@ class PintorNucleo extends CustomPainter {
   final Color panel;
   final double pulso;
 
+  /// Cada estilo trae su variante del núcleo (P14).
+  final VarianteNucleo variante;
+
   @override
   void paint(Canvas canvas, Size size) {
+    switch (variante) {
+      case VarianteNucleo.orbe:
+        _pintarOrbe(canvas, size);
+      case VarianteNucleo.cristal:
+        _pintarCristal(canvas, size);
+      case VarianteNucleo.anillos:
+        _pintarAnillos(canvas, size);
+    }
+  }
+
+  /// Glass: tres orbes de vidrio que flotan en órbita, cada uno con un
+  /// degradado radial suave, alrededor de un punto de luz.
+  void _pintarCristal(Canvas canvas, Size size) {
+    final t = animacion.value;
+    final c = size.center(Offset.zero);
+    final s = size.shortestSide / 320;
+    final giro = 2 * math.pi * 5 * t;
+    final flota = math.sin(2 * math.pi * 80 * t);
+    for (var i = 0; i < 3; i++) {
+      final angulo = (i.isEven ? giro : -giro) + i * 2 * math.pi / 3;
+      final orbita = (46 + 14 * i) * s;
+      final centro = c + Offset(math.cos(angulo), math.sin(angulo)) * orbita;
+      final radio = (78 - 10 * i) * s * (1 + 0.04 * pulso * flota);
+      canvas.drawCircle(
+        centro,
+        radio,
+        Paint()
+          ..shader = RadialGradient(
+            colors: [
+              Color.lerp(panel, acento, 0.55)!.withValues(alpha: 0.7),
+              acento.withValues(alpha: 0.06),
+            ],
+          ).createShader(Rect.fromCircle(center: centro, radius: radio)),
+      );
+    }
+    canvas
+      ..drawCircle(
+        c,
+        150 * s,
+        Paint()
+          ..color = borde
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.5 * s.clamp(0.6, 2.0),
+      )
+      ..drawCircle(c, 14 * s, Paint()..color = acento);
+  }
+
+  /// Bento: tres círculos rellenos y suaves que respiran, uno dentro de otro.
+  void _pintarOrbe(Canvas canvas, Size size) {
+    final t = animacion.value;
+    final c = size.center(Offset.zero);
+    final s = size.shortestSide / 320;
+    final respiro = (1 + math.sin(2 * math.pi * 80 * t)) / 2;
+    final amplitud = 0.04 + 0.06 * pulso;
+    for (var i = 0; i < 3; i++) {
+      final base = (140 - 44 * i) * s;
+      final radio = base * (1 + amplitud * respiro * (1 - i * 0.3));
+      canvas.drawCircle(
+        c,
+        radio,
+        Paint()
+          ..color = Color.lerp(
+            panel,
+            acento,
+            0.10 + 0.14 * i,
+          )!.withValues(alpha: 0.9),
+      );
+    }
+    canvas.drawCircle(
+      c,
+      150 * s,
+      Paint()
+        ..color = borde
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5 * s.clamp(0.6, 2.0),
+    );
+    canvas.drawCircle(c, 22 * s, Paint()..color = acento);
+  }
+
+  void _pintarAnillos(Canvas canvas, Size size) {
     final t = animacion.value;
     final c = size.center(Offset.zero);
     // Las medidas siguen al boceto (lienzo de 320).
@@ -220,5 +305,6 @@ class PintorNucleo extends CustomPainter {
       oldDelegate.borde != borde ||
       oldDelegate.panel != panel ||
       oldDelegate.pulso != pulso ||
+      oldDelegate.variante != variante ||
       oldDelegate.animacion != animacion;
 }

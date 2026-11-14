@@ -4,7 +4,7 @@
 # =============================================================================
 # Crea una base desechable, aplica la emulación de Supabase, las migraciones
 # (cada una en su transacción, como la CLI de Supabase), el seed y los
-# ayudantes; luego corre cada archivo NN_*.sql (NN de 10 a 99). Cada archivo
+# ayudantes; luego corre cada archivo NN_*.sql (NN de 10 a 99) y NNN_*.sql (100 en adelante). Cada archivo
 # de prueba corre dentro de begin/rollback, así que no afecta a los demás.
 #
 # Uso:
@@ -35,7 +35,7 @@ for arg in "$@"; do
 done
 
 if [[ ${#ARCHIVOS[@]} -eq 0 ]]; then
-  for f in "$DIR_PRUEBAS"/[1-9][0-9]_*.sql; do ARCHIVOS+=("$(basename "$f")"); done
+  for f in "$DIR_PRUEBAS"/[1-9][0-9]_*.sql "$DIR_PRUEBAS"/[1-9][0-9][0-9]_*.sql; do ARCHIVOS+=("$(basename "$f")"); done
 fi
 
 BD="gravity_pruebas_$$"

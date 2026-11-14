@@ -20,7 +20,8 @@ Uint8List bytesAleatorios(int n, [Random? azar]) {
 }
 
 /// base64url sin relleno.
-String aBase64Url(List<int> bytes) => base64UrlEncode(bytes).replaceAll('=', '');
+String aBase64Url(List<int> bytes) =>
+    base64UrlEncode(bytes).replaceAll('=', '');
 
 Uint8List desdeBase64Url(String texto) {
   final relleno = '=' * ((4 - texto.length % 4) % 4);
@@ -75,9 +76,12 @@ abstract final class SobreAes {
   }) {
     if (llave.length != 32) throw ArgumentError('La llave es de 32 bytes.');
     final iv = Uint8List.fromList(nonce ?? bytesAleatorios(bytesNonce));
-    final cifrado = _gcm(true, llave, iv, datosAsociados).process(
-      Uint8List.fromList(claro),
-    );
+    final cifrado = _gcm(
+      true,
+      llave,
+      iv,
+      datosAsociados,
+    ).process(Uint8List.fromList(claro));
     return Uint8List.fromList([version, ...iv, ...cifrado]);
   }
 
@@ -89,7 +93,11 @@ abstract final class SobreAes {
     List<int> datosAsociados = const [],
   }) {
     try {
-      return descifrarBytes(llave, desdeBase64Url(sobre), datosAsociados: datosAsociados);
+      return descifrarBytes(
+        llave,
+        desdeBase64Url(sobre),
+        datosAsociados: datosAsociados,
+      );
     } catch (_) {
       return null;
     }
@@ -119,15 +127,16 @@ abstract final class SobreAes {
     List<int> llave,
     Uint8List nonce,
     List<int> aad,
-  ) => GCMBlockCipher(AESEngine())..init(
-    cifrar,
-    AEADParameters(
-      KeyParameter(Uint8List.fromList(llave)),
-      128,
-      nonce,
-      Uint8List.fromList(aad),
-    ),
-  );
+  ) => GCMBlockCipher(AESEngine())
+    ..init(
+      cifrar,
+      AEADParameters(
+        KeyParameter(Uint8List.fromList(llave)),
+        128,
+        nonce,
+        Uint8List.fromList(aad),
+      ),
+    );
 }
 
 /// Datos asociados de un sobre (`gravity-hab-v1|persona|tipo|id|revision`).

@@ -68,8 +68,16 @@ void main() {
 
     test('un compartido sin miembros no es válido; con uno solo debe ser '
         'privado (2.ª ronda del 23/oct)', () {
-      Libro con(List<MiembroLibro> m, {VisibilidadLibro v = VisibilidadLibro.privada}) =>
-          Libro(id: 'c', nombre: 'C', tipo: TipoLibro.compartido, miembros: m, visibilidad: v);
+      Libro con(
+        List<MiembroLibro> m, {
+        VisibilidadLibro v = VisibilidadLibro.privada,
+      }) => Libro(
+        id: 'c',
+        nombre: 'C',
+        tipo: TipoLibro.compartido,
+        miembros: m,
+        visibilidad: v,
+      );
       const uno = [MiembroLibro(personaId: ana, papel: PapelLibro.miembro)];
       expect(() => con(const []).validar(hoy), throwsA(isA<ErrorLibros>()));
       expect(() => con(uno).validar(hoy), returnsNormally);
@@ -210,7 +218,11 @@ void main() {
         desde: Fecha(2026, 10, 1),
         hasta: dia,
       );
-      expect(m.vigenteEn(Fecha(2026, 9, 30)), isFalse, reason: 'antes de desde');
+      expect(
+        m.vigenteEn(Fecha(2026, 9, 30)),
+        isFalse,
+        reason: 'antes de desde',
+      );
       expect(m.vigenteEn(Fecha(2026, 10, 1)), isTrue, reason: 'día de desde');
       expect(m.vigenteEn(Fecha(2026, 10, 20)), isTrue);
       expect(m.vigenteEn(dia), isFalse, reason: 'día de hasta (exclusivo)');
@@ -227,25 +239,31 @@ void main() {
       );
     });
 
-    test('coincide con el servidor (hasta > ahora) al mandar el inicio del día',
-        () {
-      // El servidor: vigente si `hasta > ahora`; la app manda `hasta` como el
-      // inicio del día local, así que a cualquier hora del día de `hasta` ya
-      // no es vigente.
-      final inicioDelDia = DateTime(2026, 10, 21);
-      for (final hora in [0, 1, 12, 23]) {
-        final ahora = DateTime(2026, 10, 21, hora, 0, 1);
-        expect(inicioDelDia.isAfter(ahora), isFalse, reason: 'servidor $hora h');
-      }
-      expect(
-        MiembroLibro(
-          personaId: ana,
-          papel: PapelLibro.albacea,
-          hasta: dia,
-        ).vigenteEn(dia),
-        isFalse,
-      );
-    });
+    test(
+      'coincide con el servidor (hasta > ahora) al mandar el inicio del día',
+      () {
+        // El servidor: vigente si `hasta > ahora`; la app manda `hasta` como el
+        // inicio del día local, así que a cualquier hora del día de `hasta` ya
+        // no es vigente.
+        final inicioDelDia = DateTime(2026, 10, 21);
+        for (final hora in [0, 1, 12, 23]) {
+          final ahora = DateTime(2026, 10, 21, hora, 0, 1);
+          expect(
+            inicioDelDia.isAfter(ahora),
+            isFalse,
+            reason: 'servidor $hora h',
+          );
+        }
+        expect(
+          MiembroLibro(
+            personaId: ana,
+            papel: PapelLibro.albacea,
+            hasta: dia,
+          ).vigenteEn(dia),
+          isFalse,
+        );
+      },
+    );
 
     test('el día en que se va el albacea, escribe el suplente (y no él)', () {
       final libro = Libro(

@@ -1085,6 +1085,14 @@ void main() {
       'habitos.resumen_hoy',
     };
 
+    const voz = {
+      'alimentacion.receta_siguiente_paso',
+      'alimentacion.receta_paso_anterior',
+      'alimentacion.receta_repetir_paso',
+      'alimentacion.que_cocino_hoy',
+      'alimentacion.leer_lista_compras',
+    };
+
     test('exactamente las herramientas de cada rol', () {
       expect(nombres(Rol.dueno), {
         'gravity.abrir',
@@ -1095,6 +1103,7 @@ void main() {
         'casa.abrir',
         'ajustes.abrir',
         'ajustes.abrir_desarrollador',
+        ...voz,
       });
       expect(nombres(Rol.coadministrador), {
         'gravity.abrir',
@@ -1103,6 +1112,7 @@ void main() {
         'alimentacion.abrir',
         'casa.abrir',
         'ajustes.abrir',
+        ...voz,
       });
       expect(nombres(Rol.familiar), {
         'gravity.abrir',
@@ -1110,14 +1120,15 @@ void main() {
         'alimentacion.abrir',
         'casa.abrir',
         'ajustes.abrir',
+        ...voz,
       });
       // D18: la cuidadora solo tiene su bandeja de solicitudes.
       expect(nombres(Rol.cuidador), {'gravity.abrir_solicitudes'});
       expect(nombres(Rol.casa), {
         'gravity.abrir',
         'cuidados.abrir',
-        'alimentacion.abrir',
         'casa.abrir',
+        ...voz,
       });
     });
 
@@ -1675,14 +1686,15 @@ void main() {
       );
     });
 
-    test('el catálogo vigente es el de las Fases 0, 1 y 3', () {
+    test('el catálogo vigente es el de las Fases 0, 1 y 3 y la voz de Alimentación', () {
       expect(herramientasDeGravity().map((h) => h.nombre).toSet(), {
         ...herramientasFase0().map((h) => h.nombre),
         ...herramientasFase1().map((h) => h.nombre),
         ...herramientasFase3().map((h) => h.nombre),
+        ...herramientasVozAlimentacion.map((h) => h.nombre),
       });
       expect(registroFase0().todas, hasLength(8));
-      expect(registroDeGravity().todas, hasLength(22));
+      expect(registroDeGravity().todas, hasLength(27));
     });
   });
 

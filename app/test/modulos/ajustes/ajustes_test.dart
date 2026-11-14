@@ -64,6 +64,7 @@ void main() {
             SeccionAjustes.privacidad,
             SeccionAjustes.notificaciones,
           ],
+          reason: 'la maestra no tiene Hábitos, así que tampoco su nube',
         );
       },
     );
@@ -87,14 +88,40 @@ void main() {
     });
 
     test('los demás roles: lo propio, sin Personas ni Copias', () {
-      for (final rol in [Rol.coadministrador, Rol.familiar, Rol.cuidador]) {
+      for (final rol in [Rol.coadministrador, Rol.familiar]) {
         expect(seccionesVisibles(rol, TipoDispositivo.laptop), [
           SeccionAjustes.apariencia,
           SeccionAjustes.voz,
           SeccionAjustes.privacidad,
           SeccionAjustes.notificaciones,
+          SeccionAjustes.habitos,
         ], reason: '$rol');
       }
+      // El cuidador no usa Hábitos: sin su nube.
+      expect(seccionesVisibles(Rol.cuidador, TipoDispositivo.laptop), [
+        SeccionAjustes.apariencia,
+        SeccionAjustes.voz,
+        SeccionAjustes.privacidad,
+        SeccionAjustes.notificaciones,
+      ]);
+    });
+
+    test('Hábitos: la nube cifrada es de quien usa Hábitos', () {
+      for (final rol in [Rol.dueno, Rol.coadministrador, Rol.familiar]) {
+        expect(
+          seccionesVisibles(rol, TipoDispositivo.telefono),
+          contains(SeccionAjustes.habitos),
+          reason: '$rol',
+        );
+      }
+      for (final rol in [Rol.cuidador, Rol.casa]) {
+        expect(
+          seccionesVisibles(rol, TipoDispositivo.telefono),
+          isNot(contains(SeccionAjustes.habitos)),
+          reason: '$rol',
+        );
+      }
+      expect(rutaSeccion(SeccionAjustes.habitos), '/ajustes/habitos');
     });
 
     test('Casa no tiene Ajustes', () {
@@ -315,6 +342,12 @@ void main() {
       );
       await cola.rechazarPendientesDe('persona-quitada', motivoPersonaQuitada);
       await tester.pumpAndSettle();
+      // La lista de personas del hogar va arriba: se baja hasta el aviso.
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('aviso-purga-quitados')),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
       expect(
         find.byKey(const ValueKey('aviso-purga-quitados')),
         findsOneWidget,

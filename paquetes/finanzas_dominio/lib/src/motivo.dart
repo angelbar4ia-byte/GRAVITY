@@ -11,13 +11,18 @@ library;
 /// Mínimo de caracteres visibles de un motivo.
 const minimoCaracteresDeMotivo = 3;
 
+/// Mínimo de letras o dígitos entre esos caracteres (Fase 4, F4-3.1.3).
+const minimoLetrasODigitosDeMotivo = 2;
+
 /// Texto de ayuda para mostrar junto al campo del motivo.
-const ayudaDelMotivo = 'Al menos 3 letras o números (los espacios no cuentan).';
+const ayudaDelMotivo =
+    'Mínimo 3 caracteres, con al menos 2 letras o números (los espacios no '
+    'cuentan).';
 
 /// Mensaje cuando un motivo no alcanza.
 const mensajeMotivoCorto =
-    'El motivo necesita al menos 3 caracteres visibles (los espacios no '
-    'cuentan).';
+    'El motivo necesita al menos 3 caracteres visibles, con al menos 2 letras '
+    'o números y no todos iguales (los espacios no cuentan).';
 
 bool _invisible(int c) =>
     c <= 0x20 || // controles y espacio
@@ -49,7 +54,31 @@ int caracteresVisibles(String? texto) {
   return n;
 }
 
-/// `true` si [motivo] tiene al menos [minimoCaracteresDeMotivo] caracteres
-/// visibles.
-bool motivoValido(String? motivo) =>
-    caracteresVisibles(motivo) >= minimoCaracteresDeMotivo;
+final _letraODigito = RegExp(r'[\p{L}\p{N}]', unicode: true);
+
+/// Los caracteres visibles de [texto], uno por punto de código.
+List<String> _visibles(String? texto) => [
+  if (texto != null)
+    for (final c in texto.runes)
+      if (!_invisible(c)) String.fromCharCode(c),
+];
+
+/// Cuántos caracteres visibles de [texto] son letras o dígitos.
+int letrasODigitos(String? texto) =>
+    _visibles(texto).where(_letraODigito.hasMatch).length;
+
+/// `true` si [motivo] es un motivo válido (Fase 4, F4-3.1.3; es la regla de
+/// `fin_motivo_valido` en el servidor):
+///
+/// - al menos [minimoCaracteresDeMotivo] caracteres visibles,
+/// - de ellos, al menos [minimoLetrasODigitosDeMotivo] letras o dígitos
+///   (`___`, `...` y `---` no valen) y
+/// - no todos iguales (`aaa` no vale).
+bool motivoValido(String? motivo) {
+  final v = _visibles(motivo);
+  if (v.length < minimoCaracteresDeMotivo) return false;
+  if (v.where(_letraODigito.hasMatch).length < minimoLetrasODigitosDeMotivo) {
+    return false;
+  }
+  return v.toSet().length > 1;
+}

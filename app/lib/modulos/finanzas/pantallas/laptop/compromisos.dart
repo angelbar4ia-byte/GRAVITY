@@ -79,8 +79,10 @@ class _Compromisos extends ConsumerWidget {
     ];
     final orden = ordenDeAbonoExtra(planes);
     final grupo = hayGrupoPrioritario(planes);
-    final enGrupo = [for (final d in deudas) if (d.grupoPrioritario) d]
-      ..sort((a, b) => (a.ordenGrupo ?? 99).compareTo(b.ordenGrupo ?? 99));
+    final enGrupo = [
+      for (final d in deudas)
+        if (d.grupoPrioritario) d,
+    ]..sort((a, b) => (a.ordenGrupo ?? 99).compareTo(b.ordenGrupo ?? 99));
 
     Future<void> moverEnGrupo(Deuda d, int delta) async {
       final lista = [...enGrupo];
@@ -115,15 +117,22 @@ class _Compromisos extends ConsumerWidget {
                 FilaTabla(
                   etiquetaSemantica: x.nombre,
                   celdas: [
-                    CeldaTexto(x.nombre, detalle: x.protegida ? 'Protegido' : null),
-                    CeldaTexto(x.tipo == TipoCompromiso.fija ? 'Fijo' : 'Reserva'),
+                    CeldaTexto(
+                      x.nombre,
+                      detalle: x.protegida ? 'Protegido' : null,
+                    ),
+                    CeldaTexto(
+                      x.tipo == TipoCompromiso.fija ? 'Fijo' : 'Reserva',
+                    ),
                     CeldaMonto(x.monto, oculto: ocultos),
                     CeldaTexto(
                       x.calendario == null
                           ? nombreFrecuencia(x.frecuencia)
                           : descripcionCalendario(x.calendario!, salida: true),
                     ),
-                    CeldaTexto(proxima(x.pagosEntre(c.hoy, c.hoy.sumarDias(400), cal))),
+                    CeldaTexto(
+                      proxima(x.pagosEntre(c.hoy, c.hoy.sumarDias(400), cal)),
+                    ),
                   ],
                 ),
             ],
@@ -135,7 +144,9 @@ class _Compromisos extends ConsumerWidget {
           icono: Icons.mail_outline,
           child: TablaDensa(
             anchoMinimo: 640,
-            vacio: const Text('Sin sobres: agrégalos hasta el techo del presupuesto.'),
+            vacio: const Text(
+              'Sin sobres: agrégalos hasta el techo del presupuesto.',
+            ),
             columnas: const [
               ColumnaTabla('Sobre', flex: 3),
               ColumnaTabla('Por semana', numerica: true),
@@ -209,7 +220,9 @@ class _Compromisos extends ConsumerWidget {
                                   () => servicio.guardarDeuda(
                                     d.copiar(
                                       grupoPrioritario: x ?? false,
-                                      ordenGrupo: (x ?? false) ? enGrupo.length + 1 : null,
+                                      ordenGrupo: (x ?? false)
+                                          ? enGrupo.length + 1
+                                          : null,
                                     ),
                                   ),
                                 ),
@@ -219,19 +232,27 @@ class _Compromisos extends ConsumerWidget {
                                 IconButton(
                                   tooltip: 'Subir',
                                   iconSize: 18,
-                                  onPressed: () => intentar(context, () => moverEnGrupo(d, -1)),
+                                  onPressed: () => intentar(
+                                    context,
+                                    () => moverEnGrupo(d, -1),
+                                  ),
                                   icon: const Icon(Icons.arrow_upward),
                                 ),
                                 IconButton(
                                   tooltip: 'Bajar',
                                   iconSize: 18,
-                                  onPressed: () => intentar(context, () => moverEnGrupo(d, 1)),
+                                  onPressed: () => intentar(
+                                    context,
+                                    () => moverEnGrupo(d, 1),
+                                  ),
                                   icon: const Icon(Icons.arrow_downward),
                                 ),
                               ],
                             ],
                           )
-                        : CeldaTexto(d.grupoPrioritario ? '${d.ordenGrupo ?? '-'}' : '—'),
+                        : CeldaTexto(
+                            d.grupoPrioritario ? '${d.ordenGrupo ?? '-'}' : '—',
+                          ),
                   ],
                 ),
             ],
@@ -256,7 +277,8 @@ class _Compromisos extends ConsumerWidget {
                           'tu grupo prioritario.',
               ),
               const SizedBox(height: 8),
-              for (var i = 0; i < orden.length; i++) Text('${i + 1}. ${orden[i].nombre}'),
+              for (var i = 0; i < orden.length; i++)
+                Text('${i + 1}. ${orden[i].nombre}'),
             ],
           ),
         ),

@@ -226,6 +226,8 @@ void main() {
     await tester.tap(find.text('Privacidad'));
     await tester.pumpAndSettle();
     expect(find.text('Bloqueo del teléfono'), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const ValueKey('bloqueo-activo')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('bloqueo-activo')));
     await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const Key('bloqueo-pin')), '135792');
@@ -240,6 +242,10 @@ void main() {
 
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
     ahora = ahora.add(const Duration(minutes: 2));
+    // Vuelve por los estados intermedios, como lo hace Android: un campo de
+    // texto montado vigila que las transiciones sean válidas.
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pumpAndSettle();
     expect(find.byKey(pantallaBloqueo), findsOneWidget);

@@ -11,7 +11,12 @@ import 'package:flutter/services.dart' show AssetBundle, rootBundle;
 import 'package:habitos_dominio/habitos_dominio.dart';
 
 class ResultadoBusqueda {
-  const ResultadoBusqueda(this.libro, this.capitulo, this.versiculo, this.texto);
+  const ResultadoBusqueda(
+    this.libro,
+    this.capitulo,
+    this.versiculo,
+    this.texto,
+  );
   final int libro;
   final int capitulo;
   final int versiculo;
@@ -40,20 +45,29 @@ class BibliaJson implements ProveedorBiblia {
     }
     final libros = [
       for (final l in (m['libros']! as List))
-        [for (final c in (l as List)) (c as List).cast<String>()]
+        [for (final c in (l as List)) (c as List).cast<String>()],
     ];
     if (libros.length != 66) throw const FormatException('Faltan libros.');
     for (var i = 0; i < 66; i++) {
       if (libros[i].length != canon[i].capitulos) {
-        throw FormatException('${canon[i].nombre}: capítulos distintos del canon.');
+        throw FormatException(
+          '${canon[i].nombre}: capítulos distintos del canon.',
+        );
       }
     }
-    return BibliaJson._(m['version']! as String, m['nombre']! as String,
-        m['licencia']! as String, m['origen']! as String, libros);
+    return BibliaJson._(
+      m['version']! as String,
+      m['nombre']! as String,
+      m['licencia']! as String,
+      m['origen']! as String,
+      libros,
+    );
   }
 
   factory BibliaJson.deBytesGzip(List<int> bytes) => BibliaJson.deMapa(
-      (jsonDecode(utf8.decode(gzip.decode(bytes))) as Map).cast<String, Object?>());
+    (jsonDecode(utf8.decode(gzip.decode(bytes))) as Map)
+        .cast<String, Object?>(),
+  );
 
   @override
   final String id;
@@ -122,6 +136,8 @@ List<(int, String)>? pasaje(ProveedorBiblia p, ReferenciaBiblica r) {
   final v = p.capitulo(r.libro, r.capIni);
   if (v == null) return null;
   final a = r.verIni ?? 1;
-  final z = r.capFin == r.capIni ? (r.verFin ?? (r.verIni == null ? v.length : r.verIni!)) : v.length;
+  final z = r.capFin == r.capIni
+      ? (r.verFin ?? (r.verIni == null ? v.length : r.verIni!))
+      : v.length;
   return [for (var i = a; i <= z && i <= v.length; i++) (i, v[i - 1])];
 }

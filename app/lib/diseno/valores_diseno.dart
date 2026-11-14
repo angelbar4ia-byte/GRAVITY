@@ -26,6 +26,18 @@ abstract final class FuentesGravity {
   static const mono = 'IBMPlexMono';
 }
 
+/// Variante del núcleo animado de GRAVITY; cada estilo trae la suya (P14).
+enum VarianteNucleo {
+  /// Futurista: anillos punteados que giran.
+  anillos,
+
+  /// Glass: orbes translúcidos que flotan.
+  cristal,
+
+  /// Bento: orbes suaves que respiran.
+  orbe,
+}
+
 /// Densidad de la interfaz. La laptop es compacta, el teléfono cómodo y la
 /// tablet grande (sección 18); algunas personalidades la fijan (Cuidados, bici).
 enum Densidad {
@@ -105,6 +117,13 @@ class ValoresDiseno extends ThemeExtension<ValoresDiseno> {
     this.escalaLectura = 1,
     this.decoracion = true,
     this.altoContraste = false,
+    this.grosorBorde = 1,
+    this.marcasEsquina = true,
+    this.nucleo = VarianteNucleo.anillos,
+    this.cuadricula = false,
+    this.esmerilado = 0,
+    this.panelTranslucido,
+    this.fondoFin,
   });
 
   /// Claro u oscuro.
@@ -179,6 +198,33 @@ class ValoresDiseno extends ThemeExtension<ValoresDiseno> {
 
   /// Si es una variante de alto contraste (Cuidados y bici).
   final bool altoContraste;
+
+  /// Grosor de los bordes de paneles y tarjetas.
+  final double grosorBorde;
+
+  /// Si las tarjetas dibujan las marcas de esquina del HUD (solo Futurista).
+  final bool marcasEsquina;
+
+  /// Variante del núcleo animado de GRAVITY.
+  final VarianteNucleo nucleo;
+
+  /// Si las pantallas de resumen acomodan sus tarjetas en cuadrícula tipo
+  /// bento ([CuadriculaBento]) en lugar de una sola columna.
+  final bool cuadricula;
+
+  /// Radio del esmerilado (desenfoque) de los paneles de vidrio; cero es sin
+  /// esmerilar. Solo la laptop y la tablet lo usan: en el teléfono vale cero y
+  /// el panel es la versión translúcida **sólida** ([panel]), que no gasta
+  /// batería ni vuelve lenta la app (DISENO_UX_UI, sección 4).
+  final double esmerilado;
+
+  /// Color translúcido del panel de vidrio (con transparencia). `null` en los
+  /// estilos que no son de vidrio. Se dibuja sobre el fondo difuminado.
+  final Color? panelTranslucido;
+
+  /// Segundo color del fondo (el "fondo final" del degradado). `null` si el
+  /// fondo es liso.
+  final Color? fondoFin;
 
   /// Los valores de diseño del tema más cercano.
   ///
@@ -283,6 +329,14 @@ class ValoresDiseno extends ThemeExtension<ValoresDiseno> {
     double? escalaLectura,
     bool? decoracion,
     bool? altoContraste,
+    double? grosorBorde,
+    bool? marcasEsquina,
+    VarianteNucleo? nucleo,
+    bool? cuadricula,
+    double? esmerilado,
+    Color? panelTranslucido,
+    Color? fondoFin,
+    bool quitarVidrio = false,
   }) {
     return ValoresDiseno(
       brillo: brillo ?? this.brillo,
@@ -309,6 +363,15 @@ class ValoresDiseno extends ThemeExtension<ValoresDiseno> {
       escalaLectura: escalaLectura ?? this.escalaLectura,
       decoracion: decoracion ?? this.decoracion,
       altoContraste: altoContraste ?? this.altoContraste,
+      grosorBorde: grosorBorde ?? this.grosorBorde,
+      marcasEsquina: marcasEsquina ?? this.marcasEsquina,
+      nucleo: nucleo ?? this.nucleo,
+      cuadricula: cuadricula ?? this.cuadricula,
+      esmerilado: quitarVidrio ? 0 : esmerilado ?? this.esmerilado,
+      panelTranslucido: quitarVidrio
+          ? null
+          : panelTranslucido ?? this.panelTranslucido,
+      fondoFin: quitarVidrio ? null : fondoFin ?? this.fondoFin,
     );
   }
 
@@ -345,6 +408,13 @@ class ValoresDiseno extends ThemeExtension<ValoresDiseno> {
       escalaLectura: d(escalaLectura, other.escalaLectura),
       decoracion: mitad(decoracion, other.decoracion),
       altoContraste: mitad(altoContraste, other.altoContraste),
+      grosorBorde: d(grosorBorde, other.grosorBorde),
+      marcasEsquina: mitad(marcasEsquina, other.marcasEsquina),
+      nucleo: mitad(nucleo, other.nucleo),
+      cuadricula: mitad(cuadricula, other.cuadricula),
+      esmerilado: d(esmerilado, other.esmerilado),
+      panelTranslucido: Color.lerp(panelTranslucido, other.panelTranslucido, t),
+      fondoFin: Color.lerp(fondoFin, other.fondoFin, t),
     );
   }
 
@@ -375,7 +445,14 @@ class ValoresDiseno extends ThemeExtension<ValoresDiseno> {
           other.duracionAnimacion == duracionAnimacion &&
           other.escalaLectura == escalaLectura &&
           other.decoracion == decoracion &&
-          other.altoContraste == altoContraste;
+          other.altoContraste == altoContraste &&
+          other.grosorBorde == grosorBorde &&
+          other.marcasEsquina == marcasEsquina &&
+          other.nucleo == nucleo &&
+          other.cuadricula == cuadricula &&
+          other.esmerilado == esmerilado &&
+          other.panelTranslucido == panelTranslucido &&
+          other.fondoFin == fondoFin;
 
   @override
   int get hashCode => Object.hashAll([
@@ -403,6 +480,13 @@ class ValoresDiseno extends ThemeExtension<ValoresDiseno> {
     escalaLectura,
     decoracion,
     altoContraste,
+    grosorBorde,
+    marcasEsquina,
+    nucleo,
+    cuadricula,
+    esmerilado,
+    panelTranslucido,
+    fondoFin,
   ]);
 }
 

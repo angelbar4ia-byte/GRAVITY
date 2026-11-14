@@ -107,24 +107,25 @@ void main() {
       expect(soloRecordatoriosGenericos(Rol.casa, Modulo.cuidados), isTrue);
       expect(puede(Rol.casa, Modulo.cuidados, Accion.escribir), isFalse);
       expect(puedeAbrir(Rol.casa, Modulo.ajustes), isFalse);
-      expect(modulosNavegables(Rol.casa), [
-        Modulo.cuidados,
-        Modulo.alimentacion,
-        Modulo.casa,
-      ]);
+      // D23: Casa no ve Alimentación (la tablet pública no muestra el menú de Papá).
+      expect(modulosNavegables(Rol.casa), [Modulo.cuidados, Modulo.casa]);
     });
 
-    test('Familiar: hábitos propios, su parte de alimentación y casa', () {
-      expect(modulosNavegables(Rol.familiar), [
-        Modulo.habitos,
-        Modulo.alimentacion,
-        Modulo.casa,
-      ]);
-      expect(
-        puede(Rol.familiar, Modulo.alimentacion, Accion.escribir),
-        isFalse,
-      );
-    });
+    test(
+      'Familiar: hábitos propios, Alimentación (edita el menú de papá) y casa',
+      () {
+        expect(modulosNavegables(Rol.familiar), [
+          Modulo.habitos,
+          Modulo.alimentacion,
+          Modulo.casa,
+        ]);
+        // D23 (ajuste 6/nov): el familiar edita el menú de Papá, no el de la pareja.
+        expect(
+          puede(Rol.familiar, Modulo.alimentacion, Accion.escribir),
+          isTrue,
+        );
+      },
+    );
   });
 
   group('D17: solo los alcances del servidor; lo particular, por rol', () {

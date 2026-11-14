@@ -247,7 +247,10 @@ void main() {
         dispositivo: TipoDispositivo.laptop,
         sesion: sesionCon(Rol.dueno),
       );
-      await tester.enterText(find.byType(TextField), 'abre hábitos');
+      await tester.enterText(
+        find.byKey(const ValueKey('campo-orden')),
+        'abre hábitos',
+      );
       await tester.testTextInput.receiveAction(TextInputAction.done);
       await tester.pumpAndSettle();
       expect(ubicacion(tester), Rutas.habitos);

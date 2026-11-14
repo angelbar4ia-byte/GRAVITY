@@ -23,15 +23,18 @@ class RepositorioHabitosEnMemoria implements RepositorioHabitos {
   @override
   Future<void> guardarObjetivo(ObjetivoHab o) async {
     final v = _objetivos[o.id];
-    if (v != null && v.modificadoEn.isAfter(o.modificadoEn)) return; // último gana
+    if (v != null && v.modificadoEn.isAfter(o.modificadoEn)) {
+      return; // último gana
+    }
     _objetivos[o.id] = o;
   }
 
   @override
   Future<List<RegistroHab>> registros(DateTime desde, DateTime hasta) async => [
-        for (final r in _registros.values)
-          if (!r.fecha.isBefore(soloDia(desde)) && !r.fecha.isAfter(soloDia(hasta))) r
-      ];
+    for (final r in _registros.values)
+      if (!r.fecha.isBefore(soloDia(desde)) && !r.fecha.isAfter(soloDia(hasta)))
+        r,
+  ];
 
   @override
   Future<void> guardarRegistro(RegistroHab r) async {
@@ -49,9 +52,9 @@ class RepositorioHabitosSupabase implements RepositorioHabitos {
 
   @override
   Future<List<ObjetivoHab>> objetivos() async => [
-        for (final f in await _cliente().from('hab_objetivos').select())
-          ObjetivoHab.deFila(f)
-      ];
+    for (final f in await _cliente().from('hab_objetivos').select())
+      ObjetivoHab.deFila(f),
+  ];
 
   @override
   Future<void> guardarObjetivo(ObjetivoHab o) async =>
@@ -59,13 +62,14 @@ class RepositorioHabitosSupabase implements RepositorioHabitos {
 
   @override
   Future<List<RegistroHab>> registros(DateTime desde, DateTime hasta) async => [
-        for (final f in await _cliente()
+    for (final f
+        in await _cliente()
             .from('hab_registros')
             .select()
             .gte('fecha', desde.toIso8601String().substring(0, 10))
             .lte('fecha', hasta.toIso8601String().substring(0, 10)))
-          RegistroHab.deFila(f)
-      ];
+      RegistroHab.deFila(f),
+  ];
 
   @override
   Future<void> guardarRegistro(RegistroHab r) async =>

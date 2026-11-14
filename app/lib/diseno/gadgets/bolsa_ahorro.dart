@@ -213,7 +213,7 @@ class BolsaAhorro extends StatelessWidget {
         color: v.panel,
         shape: RoundedRectangleBorder(
           borderRadius: radio,
-          side: BorderSide(color: v.borde),
+          side: BorderSide(color: v.borde, width: v.grosorBorde),
         ),
         clipBehavior: Clip.antiAlias,
         child: alTocar == null

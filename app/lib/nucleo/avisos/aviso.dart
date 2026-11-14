@@ -184,7 +184,8 @@ class PreferenciasAvisos {
     horaVencimientos: horaVencimientos ?? this.horaVencimientos,
     resumenLunes: resumenLunes ?? this.resumenLunes,
     recordatorioCierreDia: recordatorioCierreDia ?? this.recordatorioCierreDia,
-    recordatorioCierreHora: recordatorioCierreHora ?? this.recordatorioCierreHora,
+    recordatorioCierreHora:
+        recordatorioCierreHora ?? this.recordatorioCierreHora,
     tiposSilenciados: tiposSilenciados ?? this.tiposSilenciados,
     pulseraTextoCorto: pulseraTextoCorto ?? this.pulseraTextoCorto,
     diasAvisoDeuda: diasAvisoDeuda ?? this.diasAvisoDeuda,
@@ -243,9 +244,12 @@ class PreferenciasAvisos {
       horaVencimientos: hora('hora_vencimientos', por.horaVencimientos),
       resumenLunes: hora('resumen_lunes', por.resumenLunes),
       recordatorioCierreDia:
-          (json['recordatorio_cierre_dia'] as int?) ?? por.recordatorioCierreDia,
-      recordatorioCierreHora:
-          hora('recordatorio_cierre_hora', por.recordatorioCierreHora),
+          (json['recordatorio_cierre_dia'] as int?) ??
+          por.recordatorioCierreDia,
+      recordatorioCierreHora: hora(
+        'recordatorio_cierre_hora',
+        por.recordatorioCierreHora,
+      ),
       tiposSilenciados: {
         for (final t in (json['tipos_silenciados'] as List?) ?? const []) '$t',
       },

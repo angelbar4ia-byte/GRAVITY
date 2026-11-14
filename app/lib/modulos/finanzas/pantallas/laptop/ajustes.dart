@@ -27,6 +27,7 @@ import '../../datos/repositorio.dart';
 import '../../estado/proveedores.dart';
 import '../comunes.dart';
 import 'dialogos_libros.dart';
+import '../transferencias/aportacion_casa.dart';
 import 'marco_laptop.dart';
 
 class PantallaAjustesFinanzas extends StatelessWidget {
@@ -73,6 +74,8 @@ class _AjustesState extends ConsumerState<_Ajustes> {
         ),
         if (c.administraHogar && !c.permiso.comoMaestra)
           _DiasInhabiles(contexto: c),
+        if (c.rol == Rol.dueno && !c.permiso.comoMaestra)
+          const SelectorPeriodoAportacion(),
         _Libros(contexto: c),
         _Privacidad(contexto: c),
       ],
@@ -559,10 +562,10 @@ class _FilaLibro extends ConsumerWidget {
       ),
       subtitle: Text(
         [
-          for (final m in l.vigentes(c.hoy))
-            '${c.carga.nombreDe(m.personaId)} (${nombrePapel(m.papel)}'
-                '${l.esAdministrador(m.personaId) ? ', administrador' : ''})',
-        ].join(', ') +
+              for (final m in l.vigentes(c.hoy))
+                '${c.carga.nombreDe(m.personaId)} (${nombrePapel(m.papel)}'
+                    '${l.esAdministrador(m.personaId) ? ', administrador' : ''})',
+            ].join(', ') +
             (compartido &&
                     l.papelDe(c.personaId, c.hoy) != null &&
                     l.vigentes(c.hoy).length == 1
@@ -570,7 +573,8 @@ class _FilaLibro extends ConsumerWidget {
                       'usarlo, archívalo.'
                 : ''),
       ),
-      trailing: l.tipo == dom.TipoLibro.representado &&
+      trailing:
+          l.tipo == dom.TipoLibro.representado &&
               (c.puedeNombrarAlbaceaEn(l, PapelLibro.albacea) ||
                   c.puedeNombrarAlbaceaEn(l, PapelLibro.albaceaSuplente))
           ? Wrap(

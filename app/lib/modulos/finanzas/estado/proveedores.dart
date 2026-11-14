@@ -9,13 +9,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show ProviderException;
 
 import '../../../app/sesion_efectiva.dart';
-import '../../../diseno/proveedores.dart' show horaActualProvider, relojProvider;
+import '../../../diseno/proveedores.dart'
+    show horaActualProvider, relojProvider;
 import '../../../nucleo/cola/proveedores_cola.dart';
 import '../../../nucleo/contratos/roles.dart';
 import '../../../nucleo/permisos/permisos.dart' as permisos;
 import '../../../nucleo/seguridad/proveedores_seguridad.dart';
 import '../../../nucleo/sesion/proveedores_sesion.dart';
 import '../../../nucleo/sesion/servicio_sesion_supabase.dart';
+import '../casos_uso/emisor_avisos.dart';
 import '../casos_uso/servicio_finanzas.dart';
 import '../datos/demostracion.dart';
 import '../datos/fuente_tablas.dart';
@@ -26,9 +28,7 @@ import '../datos/repositorio_supabase.dart';
 
 /// Hoy (fecha local), según el reloj de la app. Cambia solo al cambiar el día.
 final hoyFinanzasProvider = Provider<Fecha>(
-  (ref) => ref.watch(
-    horaActualProvider.select((t) => Fecha.deDateTime(t)),
-  ),
+  (ref) => ref.watch(horaActualProvider.select((t) => Fecha.deDateTime(t))),
 );
 
 /// Repositorio de la persona que usa la app ahora (en la tablet, la que
@@ -215,13 +215,17 @@ class ContextoFinanzas {
   /// **Solo lectura total** (respuestas del dueño del 23/oct/2026): la cuenta
   /// maestra que no es la dueña no registra ni administra nada, tampoco lo
   /// suyo; no tiene (+) ni órdenes que abran una hoja de registro.
-  bool get soloLecturaTotal => permisos.esSoloLectura(rol, esMaestra: esMaestra);
+  bool get soloLecturaTotal =>
+      permisos.esSoloLectura(rol, esMaestra: esMaestra);
 
   /// `true` si el libro activo es de la persona: es su titular, miembro o
   /// albacea vigente (no lo lee como cuenta maestra ni como lector de uno
   /// público).
   bool get esLibroPropio =>
-      libro != null && permiso.leer && !permiso.comoMaestra && !permiso.comoLector;
+      libro != null &&
+      permiso.leer &&
+      !permiso.comoMaestra &&
+      !permiso.comoLector;
 
   /// El libro activo está archivado: solo lectura para todos.
   bool get libroArchivado => libro?.archivado ?? false;
@@ -281,7 +285,9 @@ class ContextoFinanzas {
   bool administraMiembrosDe(Libro l) {
     if (l.tipo != TipoLibro.compartido || soloLecturaTotal) return false;
     if (l.esAdministrador(personaId)) return true;
-    return rol == Rol.dueno && l.papelDe(personaId, hoy) != null && !l.archivado;
+    return rol == Rol.dueno &&
+        l.papelDe(personaId, hoy) != null &&
+        !l.archivado;
   }
 
   /// `true` si la persona puede salirse de [l].
@@ -416,13 +422,23 @@ final contextoFinanzasProvider = Provider<AsyncValue<ContextoFinanzas>>((ref) {
   }
 });
 
+/// Emite los avisos que solo la app sabe calcular (`fin_emitir_aviso`, Fase 4).
+/// Guarda lo ya emitido en la sesión; se reinicia al cambiar de persona.
+final emisorAvisosFinanzasProvider = Provider<EmisorAvisosFinanzas>((ref) {
+  ref.watch(sesionEfectivaProvider.select((s) => s?.persona.id));
+  return EmisorAvisosFinanzas(reloj: ref.read(relojProvider).ahora);
+});
+
 /// Casos de uso con la persona y el reloj de ahora.
-final servicioFinanzasProvider = Provider<ServicioFinanzas>((ref) {
+final Provider<ServicioFinanzas>
+servicioFinanzasProvider = Provider<ServicioFinanzas>((ref) {
   final sesion = ref.watch(sesionEfectivaProvider);
   final reloj = ref.watch(relojProvider);
   final maestra = ref.watch(esMaestraFinanzasProvider);
   final rol = sesion?.rol;
-  return ServicioFinanzas(
+  final emisor = ref.watch(emisorAvisosFinanzasProvider);
+  late final ServicioFinanzas servicio;
+  servicio = ServicioFinanzas(
     repositorio: ref.watch(repositorioFinanzasProvider),
     personaId: sesion?.persona.id ?? '',
     hogarId: sesion?.hogarId ?? '',
@@ -430,7 +446,11 @@ final servicioFinanzasProvider = Provider<ServicioFinanzas>((ref) {
     soloLectura: rol != null && permisos.esSoloLectura(rol, esMaestra: maestra),
     esDueno: rol == Rol.dueno,
     reloj: reloj.ahora,
+    // Tras guardar algo que cambia la semana: emitir (sin esperar) los avisos
+    // de flujo negativo y abono bajo el mínimo.
+    alCambiarLibro: (libroId) => unawaited(emisor.emitir(servicio, libroId)),
   );
+  return servicio;
 });
 
 /// Cuánto vale una consulta registrada de la cuenta maestra: el servidor deja
@@ -481,9 +501,8 @@ final consultaMaestraProvider = FutureProvider.autoDispose.family<bool, String>(
 );
 
 /// Libros a los que ya se les revisó el cierre automático en esta sesión.
-final cierresRevisadosProvider = NotifierProvider<CierresRevisados, Set<String>>(
-  CierresRevisados.new,
-);
+final cierresRevisadosProvider =
+    NotifierProvider<CierresRevisados, Set<String>>(CierresRevisados.new);
 
 class CierresRevisados extends Notifier<Set<String>> {
   @override
@@ -497,11 +516,16 @@ class CierresRevisados extends Notifier<Set<String>> {
   void revisar(String libroId) {
     if (state.contains(libroId)) return;
     state = {...state, libroId};
+    final servicio = ref.read(servicioFinanzasProvider);
     unawaited(
-      ref
-          .read(servicioFinanzasProvider)
+      servicio
           .cerrarSemanasVencidas(libroId)
-          .catchError((_) => 0),
+          .catchError((_) => 0)
+          .then(
+            (_) => ref
+                .read(emisorAvisosFinanzasProvider)
+                .emitir(servicio, libroId),
+          ),
     );
   }
 }

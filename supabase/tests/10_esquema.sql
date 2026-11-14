@@ -62,7 +62,7 @@ select pruebas.igual(
 
 -- La matriz de la sección 5, con los cambios de D18 y D19 (Fase 1).
 select pruebas.igual((select count(*)::int from public.permisos_rol), 59,
-  'La matriz tiene 59 permisos (sección 5 + gravity alineado con la app + D18 y D19)');
+  'La matriz tiene 59 permisos (sección 5 + gravity alineado con la app + D18 y D19); la hermana es cuidadora (D5)');
 select pruebas.igual(
   (select string_agg(accion::text || '=' || alcance::text, ',' order by accion)
      from public.permisos_rol where rol = 'dueno' and modulo = 'finanzas'),
@@ -162,7 +162,7 @@ select pruebas.igual(
 select pruebas.igual(
   (select count(*)::int from pg_class c join pg_namespace n on n.oid = c.relnamespace
     where n.nspname = 'public' and c.relkind = 'v' and c.relname like 'fin\_v\_%'),
-  5, 'Existen fin_v_saldos, fin_v_gasto_semana y las tres de la Fase 2 (deuda_resumen, bolsa_saldo, estados_cuenta_vigentes)');
+  8, 'Existen fin_v_saldos, fin_v_gasto_semana, las tres de la Fase 2 (deuda_resumen, bolsa_saldo, estados_cuenta_vigentes) y las tres de vigentes del bloque 3 (inversiones, bienes, previsiones)');
 select pruebas.igual(
   (select coalesce(string_agg(c.relname, ', ' order by c.relname), '')
      from pg_class c join pg_namespace n on n.oid = c.relnamespace
@@ -174,7 +174,7 @@ select pruebas.igual(
 select pruebas.igual(
   (select count(*)::int from pg_class c join pg_namespace n on n.oid = c.relnamespace
     where n.nspname = 'public' and c.relkind = 'r' and c.relname like 'fin\_%'),
-  26, 'Las 26 tablas de Finanzas (21 de la Fase 1 y 5 de la Fase 2)');
+  39, 'Las 39 tablas de Finanzas (21 de la Fase 1, 5 de la Fase 2, 1 de la Fase 4, 6 del bloque 1, 2 del bloque 2 y 4 del bloque 3 de la fase 8)');
 select pruebas.igual(
   (select coalesce(string_agg(c.relname, ', ' order by c.relname), '')
      from pg_class c join pg_namespace n on n.oid = c.relnamespace

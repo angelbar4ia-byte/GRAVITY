@@ -25,50 +25,141 @@ enum DestinoAlerta {
 
 /// Catálogo de la Fase 2: un `tipo` por alerta.
 enum TipoAlerta {
-  pagoProximo('pago_proximo', NivelAlerta.critica, OrigenAlerta.servidorYLocal,
-      DestinoAlerta.miembrosDelLibro, 'Tienes un pago próximo'),
-  limiteTarjeta('limite_tarjeta', NivelAlerta.critica, OrigenAlerta.servidorYLocal,
-      DestinoAlerta.miembrosDelLibro, 'Vence un pago de tarjeta'),
-  pagoVencido('pago_vencido', NivelAlerta.critica, OrigenAlerta.servidor,
-      DestinoAlerta.miembrosDelLibro, 'Hay un pago sin registrar'),
-  protegidoRiesgo('protegido_riesgo', NivelAlerta.critica, OrigenAlerta.app,
-      DestinoAlerta.miembrosDelLibro, 'Un gasto protegido necesita atención'),
-  flujoNegativo('flujo_negativo', NivelAlerta.critica, OrigenAlerta.app,
-      DestinoAlerta.miembrosDelLibro, 'Revisa el flujo de la semana'),
-  abonoBajoMinimo('abono_bajo_minimo', NivelAlerta.critica, OrigenAlerta.app,
-      DestinoAlerta.miembrosDelLibro, 'Revisa tus pagos de deuda'),
-  partida100('partida_100', NivelAlerta.importante, OrigenAlerta.app,
-      DestinoAlerta.quienRegistroYTitular, 'Revisa una categoría'),
-  ingresoRetrasado('ingreso_retrasado', NivelAlerta.importante,
-      OrigenAlerta.servidor, DestinoAlerta.titularOAlbacea,
-      'Un ingreso no ha llegado'),
-  fondoBajo('fondo_bajo', NivelAlerta.importante, OrigenAlerta.app,
-      DestinoAlerta.titular, 'Revisa tu ahorro'),
-  salidaLibroRepresentado('salida_libro_representado', NivelAlerta.importante,
-      OrigenAlerta.servidor, DestinoAlerta.suplente,
-      'Hay un movimiento por revisar'),
-  base80('base_80', NivelAlerta.importante, OrigenAlerta.servidor,
-      DestinoAlerta.duenio, 'Revisa el almacenamiento de GRAVITY'),
-  base90('base_90', NivelAlerta.critica, OrigenAlerta.servidor,
-      DestinoAlerta.duenio, 'Revisa el almacenamiento de GRAVITY'),
-  partida80('partida_80', NivelAlerta.informativa, OrigenAlerta.app,
-      DestinoAlerta.quienRegistro, 'Una categoría se acerca a su límite'),
-  usoLimite('uso_limite', NivelAlerta.informativa, OrigenAlerta.app,
-      DestinoAlerta.titular, 'Revisa el uso de una tarjeta'),
-  aportacionPendiente('aportacion_pendiente', NivelAlerta.informativa,
-      OrigenAlerta.local, DestinoAlerta.titular, 'Hay ahorro por confirmar'),
-  conciliacionPendiente('conciliacion_pendiente', NivelAlerta.informativa,
-      OrigenAlerta.local, DestinoAlerta.titular, 'Falta conciliar el efectivo'),
-  retiroBolsaCompartida('retiro_bolsa_compartida', NivelAlerta.informativa,
-      OrigenAlerta.servidor, DestinoAlerta.otrosMiembros,
-      'Hay un movimiento por revisar'),
-  resumenLunes('resumen_lunes', NivelAlerta.informativa, OrigenAlerta.local,
-      DestinoAlerta.cadaPersona, 'Tu resumen de la semana está listo',
-      fija: true),
-  recordatorioCierre('recordatorio_cierre', NivelAlerta.informativa,
-      OrigenAlerta.local, DestinoAlerta.cadaPersona,
-      'Es hora de cerrar la semana',
-      fija: true);
+  pagoProximo(
+    'pago_proximo',
+    NivelAlerta.critica,
+    OrigenAlerta.servidorYLocal,
+    DestinoAlerta.miembrosDelLibro,
+    'Tienes un pago próximo',
+  ),
+  limiteTarjeta(
+    'limite_tarjeta',
+    NivelAlerta.critica,
+    OrigenAlerta.servidorYLocal,
+    DestinoAlerta.miembrosDelLibro,
+    'Vence un pago de tarjeta',
+  ),
+  pagoVencido(
+    'pago_vencido',
+    NivelAlerta.critica,
+    OrigenAlerta.servidor,
+    DestinoAlerta.miembrosDelLibro,
+    'Hay un pago sin registrar',
+  ),
+  protegidoRiesgo(
+    'protegido_riesgo',
+    NivelAlerta.critica,
+    OrigenAlerta.app,
+    DestinoAlerta.miembrosDelLibro,
+    'Un gasto protegido necesita atención',
+  ),
+  flujoNegativo(
+    'flujo_negativo',
+    NivelAlerta.critica,
+    OrigenAlerta.app,
+    DestinoAlerta.miembrosDelLibro,
+    'Revisa el flujo de la semana',
+  ),
+  abonoBajoMinimo(
+    'abono_bajo_minimo',
+    NivelAlerta.critica,
+    OrigenAlerta.app,
+    DestinoAlerta.miembrosDelLibro,
+    'Revisa tus pagos de deuda',
+  ),
+  partida100(
+    'partida_100',
+    NivelAlerta.importante,
+    OrigenAlerta.app,
+    DestinoAlerta.quienRegistroYTitular,
+    'Revisa una categoría',
+  ),
+  ingresoRetrasado(
+    'ingreso_retrasado',
+    NivelAlerta.importante,
+    OrigenAlerta.servidor,
+    DestinoAlerta.titularOAlbacea,
+    'Un ingreso no ha llegado',
+  ),
+  fondoBajo(
+    'fondo_bajo',
+    NivelAlerta.importante,
+    OrigenAlerta.app,
+    DestinoAlerta.titular,
+    'Revisa tu ahorro',
+  ),
+  salidaLibroRepresentado(
+    'salida_libro_representado',
+    NivelAlerta.importante,
+    OrigenAlerta.servidor,
+    DestinoAlerta.suplente,
+    'Hay un movimiento por revisar',
+  ),
+  base80(
+    'base_80',
+    NivelAlerta.importante,
+    OrigenAlerta.servidor,
+    DestinoAlerta.duenio,
+    'Revisa el almacenamiento de GRAVITY',
+  ),
+  base90(
+    'base_90',
+    NivelAlerta.critica,
+    OrigenAlerta.servidor,
+    DestinoAlerta.duenio,
+    'Revisa el almacenamiento de GRAVITY',
+  ),
+  partida80(
+    'partida_80',
+    NivelAlerta.informativa,
+    OrigenAlerta.app,
+    DestinoAlerta.quienRegistro,
+    'Una categoría se acerca a su límite',
+  ),
+  usoLimite(
+    'uso_limite',
+    NivelAlerta.informativa,
+    OrigenAlerta.app,
+    DestinoAlerta.titular,
+    'Revisa el uso de una tarjeta',
+  ),
+  aportacionPendiente(
+    'aportacion_pendiente',
+    NivelAlerta.informativa,
+    OrigenAlerta.local,
+    DestinoAlerta.titular,
+    'Hay ahorro por confirmar',
+  ),
+  conciliacionPendiente(
+    'conciliacion_pendiente',
+    NivelAlerta.informativa,
+    OrigenAlerta.local,
+    DestinoAlerta.titular,
+    'Falta conciliar el efectivo',
+  ),
+  retiroBolsaCompartida(
+    'retiro_bolsa_compartida',
+    NivelAlerta.informativa,
+    OrigenAlerta.servidor,
+    DestinoAlerta.otrosMiembros,
+    'Hay un movimiento por revisar',
+  ),
+  resumenLunes(
+    'resumen_lunes',
+    NivelAlerta.informativa,
+    OrigenAlerta.local,
+    DestinoAlerta.cadaPersona,
+    'Tu resumen de la semana está listo',
+    fija: true,
+  ),
+  recordatorioCierre(
+    'recordatorio_cierre',
+    NivelAlerta.informativa,
+    OrigenAlerta.local,
+    DestinoAlerta.cadaPersona,
+    'Es hora de cerrar la semana',
+    fija: true,
+  );
 
   const TipoAlerta(
     this.clave,
@@ -171,11 +262,14 @@ class PreferenciasAviso {
     if (topeDiario < 0 || topeDiario > 10) return 'El tope va de 0 a 10.';
     if (diasAntes.length > 3) return 'Máximo 3 avisos antes.';
     if (diasAntes.any((d) => d < 0 || d > 14)) return 'Los días van de 0 a 14.';
-    if (silencioDesde < 0 || silencioDesde > 23 ||
-        silencioHasta < 0 || silencioHasta > 23) {
+    if (silencioDesde < 0 ||
+        silencioDesde > 23 ||
+        silencioHasta < 0 ||
+        silencioHasta > 23) {
       return 'Las horas van de 0 a 23.';
     }
-    if (silencioDesde == silencioHasta) return 'Las horas silenciosas no pueden ser iguales.';
+    if (silencioDesde == silencioHasta)
+      return 'Las horas silenciosas no pueden ser iguales.';
     if (horaVencimientos < 0 || horaVencimientos > 23) return 'Hora inválida.';
     return null;
   }
@@ -198,7 +292,12 @@ List<DateTime> momentosDeVencimiento(
   final dia = DateTime(vencimiento.year, vencimiento.month, vencimiento.day);
   final lista = <DateTime>[];
   for (final d in {...prefs.diasAntes}) {
-    final m = DateTime(dia.year, dia.month, dia.day - d, prefs.horaVencimientos);
+    final m = DateTime(
+      dia.year,
+      dia.month,
+      dia.day - d,
+      prefs.horaVencimientos,
+    );
     if (ahora == null || !m.isBefore(ahora)) lista.add(m);
   }
   lista.sort();
@@ -206,7 +305,10 @@ List<DateTime> momentosDeVencimiento(
 }
 
 /// Momentos de un pago vencido sin registrar: al día siguiente y a los 3 días.
-List<DateTime> momentosDePagoVencido(DateTime vencimiento, PreferenciasAviso prefs) {
+List<DateTime> momentosDePagoVencido(
+  DateTime vencimiento,
+  PreferenciasAviso prefs,
+) {
   final dia = DateTime(vencimiento.year, vencimiento.month, vencimiento.day);
   return [
     for (final d in const [1, 3])
@@ -225,7 +327,9 @@ DateTime salidaDeAviso(
 ) {
   if (!prefs.esSilencio(enviarEn.hour)) return enviarEn;
   if (nivel == NivelAlerta.critica && prefs.criticasEnSilencio) return enviarEn;
-  final base = enviarEn.hour >= prefs.silencioDesde && prefs.silencioDesde > prefs.silencioHasta
+  final base =
+      enviarEn.hour >= prefs.silencioDesde &&
+          prefs.silencioDesde > prefs.silencioHasta
       ? DateTime(enviarEn.year, enviarEn.month, enviarEn.day + 1)
       : DateTime(enviarEn.year, enviarEn.month, enviarEn.day);
   return DateTime(base.year, base.month, base.day, prefs.silencioHasta);
@@ -282,8 +386,11 @@ PlanDelDia planearDia(List<AvisoPlan> avisos, PreferenciasAviso prefs) {
 }
 
 /// Pospone un aviso: 1 hora, o hasta mañana a la hora de los vencimientos.
-DateTime posponer(DateTime ahora, {required bool hastaManana, int horaManana = 9}) =>
-    hastaManana
+DateTime posponer(
+  DateTime ahora, {
+  required bool hastaManana,
+  int horaManana = 9,
+}) => hastaManana
     ? DateTime(ahora.year, ahora.month, ahora.day + 1, horaManana)
     : ahora.add(const Duration(hours: 1));
 

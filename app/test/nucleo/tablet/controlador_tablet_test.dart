@@ -258,7 +258,7 @@ void main() {
     expect(await vueltaGuardada(usuario.personaId, '135790'), 2);
 
     expect(
-      controlador.desbloquearConPin('no-existe', '135790'),
+      await controlador.desbloquearConPin('no-existe', '135790'),
       ResultadoDesbloqueo.noExiste,
     );
   });
@@ -381,12 +381,12 @@ void main() {
       final usuario = await agregar(controlador, Rol.familiar, pin: '1111');
       for (var i = 0; i < 4; i++) {
         expect(
-          controlador.desbloquearConPin(usuario.personaId, '9999'),
+          await controlador.desbloquearConPin(usuario.personaId, '9999'),
           ResultadoDesbloqueo.pinIncorrecto,
         );
       }
       expect(
-        controlador.desbloquearConPin(usuario.personaId, '9999'),
+        await controlador.desbloquearConPin(usuario.personaId, '9999'),
         ResultadoDesbloqueo.bloqueado,
       );
       expect(
@@ -395,12 +395,12 @@ void main() {
       );
       // Ni con el PIN correcto mientras dura el bloqueo.
       expect(
-        controlador.desbloquearConPin(usuario.personaId, '1111'),
+        await controlador.desbloquearConPin(usuario.personaId, '1111'),
         ResultadoDesbloqueo.bloqueado,
       );
       ahora = ahora.add(const Duration(seconds: 31));
       for (var i = 0; i < 5; i++) {
-        controlador.desbloquearConPin(usuario.personaId, '9999');
+        await controlador.desbloquearConPin(usuario.personaId, '9999');
       }
       expect(
         controlador.esperaRestante(usuario.personaId),
@@ -414,7 +414,7 @@ void main() {
       // Un acierto reinicia la cuenta: el siguiente bloqueo vuelve a 30 s.
       controlador.volverAModoCasa();
       for (var i = 0; i < 5; i++) {
-        controlador.desbloquearConPin(usuario.personaId, '9999');
+        await controlador.desbloquearConPin(usuario.personaId, '9999');
       }
       expect(
         controlador.esperaRestante(usuario.personaId),
@@ -480,7 +480,7 @@ void main() {
     expect(await vueltaGuardada(usuario.personaId, '246813'), isNull);
     expect(await vueltaGuardada(usuario.personaId, '739150'), 0);
     expect(
-      controlador.desbloquearConPin(usuario.personaId, '246813'),
+      await controlador.desbloquearConPin(usuario.personaId, '246813'),
       ResultadoDesbloqueo.pinIncorrecto,
     );
     expect(
@@ -548,7 +548,7 @@ void main() {
       Rol.cuidador,
     ]);
     expect(
-      controlador.desbloquearConPin(
+      await controlador.desbloquearConPin(
         usuarios.last.personaId,
         ControladorTablet.pinDeDemostracion,
       ),

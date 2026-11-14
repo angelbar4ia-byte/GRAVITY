@@ -31,6 +31,8 @@ Directory _raiz() {
 /// RPC de la base de datos que solo leen (no piden confirmación).
 const _rpcDeLectura = {
   'misPermisos',
+  'aliPorcionesRecomendadas',
+  'aliDetalleReembolso',
   'finPuede',
   'finPuedeHogar',
   'finEsMiembro',
@@ -40,9 +42,31 @@ const _rpcDeLectura = {
   'finSoloLectura',
   'finPuedeSalir',
   'finAdultosConFinanzas',
+  // Fase 8 (migración 20261132): rango del periodo y aportación calculada; no
+  // escriben (la aportación solo lee y suma).
+  'finPeriodoRango',
+  'finCasaAportacion',
+  'finDeudasPuedeVer',
+  'finSimularEstrategias',
+  'finEstimarIntereses',
+  // Migración 20261136: avance de un objetivo (solo lee y calcula).
+  'finObjetivoAvance',
+  // D24: preguntas sobre la vista temporal de Papá (no escriben).
+  'finVistaPapaVigente',
+  'finVistaVigenteHogar',
+  'finVistaVigenteLibro',
   'avisosPorcentajeBase',
   'habActiva',
   'habHogarDe',
+  // Migración 20261138: análisis del historial de compra (solo lectura).
+  'aliHistorialCompras',
+  'aliResumenHistorial',
+  // Fase 5: preguntas y resúmenes de Cuidados (no escriben).
+  'cuiPerfil',
+  'cuiPuede',
+  'cuiQuienEnTurno',
+  'cuiResumenMensual',
+  'cuiResumenPapa',
 };
 
 /// Libros solo-agregar de Finanzas: no tienen PATCH ni DELETE.
@@ -115,6 +139,7 @@ void main() {
       'Base de datos',
       'Base de datos · Finanzas',
       'Base de datos · Hábitos',
+      'Base de datos · Cuidados',
       'Funciones del servidor',
       'Puente de casa',
     ]);
@@ -166,7 +191,7 @@ void main() {
       final base = gruposOperaciones.where(
         (g) => g.nombre.startsWith('Base de datos'),
       );
-      expect(base, hasLength(3));
+      expect(base, hasLength(4));
       for (final o in base.expand((g) => g.operaciones)) {
         expect(o.soloLocal, isTrue, reason: o.id);
         final esLectura =
@@ -235,14 +260,33 @@ void main() {
         'asignarCuentaMaestra',
         'finCrearLibroRepresentado',
         'finNombrarAlbacea',
+        'finResponderVista',
+        // Fase 8 (migración 20261133): «Solo el dueño fija la referencia».
+        'finCasaFijarReferencia',
+      };
+      // D24 (fase 4): el familiar pide y consulta la vista temporal de Papá;
+      // el dueño la autoriza. Es la única excepción a «solo dueño y pareja».
+      const soloFamiliar = {
+        'finPedirVistaPapa',
+        'finVistaPapaVigente',
+        'finVistaVigenteHogar',
+        'finVistaVigenteLibro',
+        'finRegistrarConsultaVista',
       };
       for (final o in finanzas) {
         expect(o.soloLocal, isTrue, reason: o.id);
-        expect(o.fase, anyOf(1, 2), reason: o.id);
+        // 8 = ampliaciones de Finanzas (transferencias y casa, migraciones
+        // 20261132 y 20261133; docs/specs/fase-8-finanzas-ampliaciones.md).
+        expect(o.fase, anyOf(1, 2, 4, 8), reason: o.id);
         if (deTodos.contains(o.id)) {
           expect(o.roles, Rol.values.toSet(), reason: o.id);
         } else if (soloDueno.contains(o.id)) {
           expect(o.roles, {Rol.dueno}, reason: o.id);
+        } else if (o.id == 'leerFinVistasSolicitadas') {
+          // El familiar lee las suyas y el dueño las del hogar (D24).
+          expect(o.roles, {Rol.dueno, Rol.familiar}, reason: o.id);
+        } else if (soloFamiliar.contains(o.id)) {
+          expect(o.roles, {Rol.familiar}, reason: o.id);
         } else {
           expect(o.roles, {Rol.dueno, Rol.coadministrador}, reason: o.id);
         }
@@ -1114,6 +1158,7 @@ void main() {
               'finanzas.maestra_asignada',
               'finanzas.salida_libro_representado',
               'finanzas.albacea_nombrado',
+              'finanzas.consulta_vista',
             }),
           );
           final bitacora = _plano(_bloque(yaml, '/rest/v1/bitacora'));

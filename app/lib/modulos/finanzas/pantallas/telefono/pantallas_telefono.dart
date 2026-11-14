@@ -72,7 +72,8 @@ class _SemanaResumida extends ConsumerWidget {
           icono: Icons.waterfall_chart,
           accion: Semaforo(
             estado: estadoDe(v.indicadores.remanente),
-            etiqueta: 'Remanente ${formatearPuntosBase(v.indicadores.remanentePuntosBase, decimales: 1)}',
+            etiqueta:
+                'Remanente ${formatearPuntosBase(v.indicadores.remanentePuntosBase, decimales: 1)}',
             tamanoTexto: 12,
           ),
           child: Column(
@@ -165,6 +166,13 @@ class _SemanaResumida extends ConsumerWidget {
                       FilaMovimiento(movimiento: m, contexto: c),
                   ],
                 ),
+        ),
+        hueco,
+        OutlinedButton.icon(
+          key: const ValueKey('finanzas-ver-reportes'),
+          onPressed: () => context.go('${Rutas.finanzas}/reportes'),
+          icon: const Icon(Icons.assessment_outlined),
+          label: const Text('Reportes'),
         ),
       ],
     );

@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gravity/diseno/proveedores.dart' show RelojFijo, relojProvider;
 import 'package:gravity/modulos/habitos/casos_uso/servicio_habitos.dart';
 import 'package:gravity/modulos/habitos/datos/modelos.dart';
 import 'package:gravity/modulos/habitos/datos/repositorio.dart';
@@ -33,6 +34,9 @@ Future<void> montar(
     ProviderScope(
       overrides: [
         servicioSesionProvider.overrideWithValue(ServicioSesionFalso()),
+        // Reloj fijo (lunes 10:00): el aviso de revisión semanal de Hoy
+        // (sábado desde las 14:15) no debe empujar las filas fuera de pantalla.
+        relojProvider.overrideWithValue(RelojFijo(DateTime(2026, 11, 2, 10))),
         repositorioHabitosProvider.overrideWithValue(repo),
         servicioHabitosProvider.overrideWithValue(ServicioHabitos(repo)),
       ],
@@ -118,7 +122,8 @@ void main() {
       );
       final etiquetas = <String>[];
       void visitar(SemanticsNode n) {
-        if (n.label.contains('Leer un capítulo') && !n.label.contains('SIGUE')) {
+        if (n.label.contains('Leer un capítulo') &&
+            !n.label.contains('SIGUE')) {
           etiquetas.add(n.label);
         }
         n.visitChildren((c) {

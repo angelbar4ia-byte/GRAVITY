@@ -184,7 +184,7 @@ class TarjetaPlanLectura extends StatelessWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: v.panel,
-          border: Border.all(color: v.borde),
+          border: Border.all(color: v.borde, width: v.grosorBorde),
           borderRadius: BorderRadius.circular(v.radioMediano),
         ),
         child: Padding(
@@ -279,7 +279,7 @@ class TarjetaDevocional extends StatelessWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: v.panel,
-          border: Border.all(color: v.borde),
+          border: Border.all(color: v.borde, width: v.grosorBorde),
           borderRadius: BorderRadius.circular(v.radioMediano),
         ),
         child: Padding(

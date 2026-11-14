@@ -18,6 +18,8 @@ import '../../nucleo/tablet/controlador_tablet.dart';
 import 'apariencia/pantalla_apariencia.dart';
 import 'copias/pantalla_copias.dart';
 import 'dispositivos/pantalla_dispositivos.dart';
+import 'google/tarjeta_google.dart';
+import 'habitos/pantalla_habitos_ajustes.dart';
 import 'notificaciones/pantalla_notificaciones.dart';
 import 'personas/pantalla_personas.dart';
 import 'privacidad/pantalla_privacidad.dart';
@@ -33,6 +35,7 @@ Widget pantallaDeSeccion(SeccionAjustes seccion) => switch (seccion) {
   SeccionAjustes.privacidad => const PantallaPrivacidad(),
   SeccionAjustes.copias => const PantallaCopias(),
   SeccionAjustes.notificaciones => const PantallaNotificaciones(),
+  SeccionAjustes.habitos => const PantallaHabitosAjustes(),
   SeccionAjustes.desarrollador => MarcoPantalla(
     titulo: infoSecciones[SeccionAjustes.desarrollador]!.titulo,
     rutaAnterior: Rutas.ajustes,
@@ -84,6 +87,7 @@ class PantallaAjustes extends ConsumerWidget {
               minTileHeight: 64,
               onTap: () => context.go(rutaSeccion(seccion)),
             ),
+          SeccionGoogleAjustes(rol: sesion.rol, esMaestra: sesion.esMaestra),
           const Divider(),
           if (esTablet) ...[
             ListTile(

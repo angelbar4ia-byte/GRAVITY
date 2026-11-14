@@ -45,6 +45,15 @@ test("criterio 32: el cuerpo enviado es exactamente {v, id} con prioridad alta",
   assert.match(enviados[0].url, /fcm\.googleapis\.com\/v1\/projects\/proyecto-ejemplo\/messages:send$/);
 });
 
+test("Cuidados: un aviso de cambio urgente viaja igual, solo {v, id}, sin texto ni nada clínico (D6)", async () => {
+  const { dep, enviados } = crear([{ aviso_id: A2, intentos: 0, dispositivo_id: "d9", token: "tok9" }], [{ status: 200 }]);
+  await enviarLote(dep);
+  const m = enviados[0].cuerpo.message;
+  assert.deepEqual(m.data, { v: "1", id: A2 });
+  assert.equal("notification" in m, false);
+  assert.doesNotMatch(JSON.stringify(enviados[0].cuerpo), /cuidados|toma|comida|turno|urgente/i);
+});
+
 test("registra la entrega y el resultado; un solo aviso a varios dispositivos", async () => {
   const filas: Fila[] = [
     { aviso_id: A1, intentos: 0, dispositivo_id: "d1", token: "tok1" },

@@ -50,7 +50,9 @@ Future<Sesion> leerPerfilPorOmision(SupabaseClient cliente) async {
       .order('hogar_id');
   List<Map<String, dynamic>> membresias;
   try {
-    membresias = await leerMembresias('rol, hogar_id, desde, hasta, es_maestra');
+    membresias = await leerMembresias(
+      'rol, hogar_id, desde, hasta, es_maestra',
+    );
   } on PostgrestException catch (error) {
     // Servidor sin la columna de la cuenta maestra (D19) todavía: nadie es
     // maestra, pero se puede entrar.
@@ -98,7 +100,10 @@ Sesion sesionDesdeFila(Map<String, Object?> fila) {
   return Sesion(
     persona: Persona(
       id: personaId,
-      nombre: nombreParaMostrar(rol, (fila['nombre'] as String?) ?? 'Sin nombre'),
+      nombre: nombreParaMostrar(
+        rol,
+        (fila['nombre'] as String?) ?? 'Sin nombre',
+      ),
       correo: fila['correo'] as String?,
     ),
     rol: rol,
@@ -122,18 +127,68 @@ ErrorSesion traducirErrorSesion(Object error) {
 }
 
 /// Crea un cliente de Supabase aparte (sin guardar la sesión en el equipo).
-typedef CreadorCliente =
-    SupabaseClient Function(String url, String llave, {bool autoRenovar});
+typedef CreadorCliente = SupabaseClient Function(
+  String url,
+  String llave, {
+  bool autoRenovar,
+});
 
-SupabaseClient _clienteAparte(String url, String llave, {bool autoRenovar = false}) =>
-    SupabaseClient(
-      url,
-      llave,
-      authOptions: AuthClientOptions(autoRefreshToken: autoRenovar),
-    );
+SupabaseClient _clienteAparte(
+  String url,
+  String llave, {
+  bool autoRenovar = false,
+}) => SupabaseClient(
+  url,
+  llave,
+  authOptions: AuthClientOptions(autoRefreshToken: autoRenovar),
+);
+
+/// Traduce el error de `aceptar_invitacion` (o del registro) a un mensaje.
+ErrorSesion traducirErrorInvitacion(Object error) {
+  if (error is ErrorSesion) return error;
+  if (esErrorDeRed(error)) return ErrorSesion.sinConexion;
+  if (error is PostgrestException) {
+    return switch (error.code) {
+      '22023' => const ErrorSesion(
+        'El código no es válido o ya venció. Pide uno nuevo a quien te invitó.',
+      ),
+      '42501' => const ErrorSesion(
+        'La invitación es para otro correo, o tu correo aún no está '
+        'confirmado.',
+      ),
+      '23505' => const ErrorSesion('Ya perteneces a este hogar. Entra normal.'),
+      _ => ErrorSesion('No se pudo aceptar la invitación: ${error.message}'),
+    };
+  }
+  if (error is AuthException) {
+    if (error.code == 'email_not_confirmed') {
+      return const ErrorSesion(
+        'Aún no confirmas tu correo. Abre el enlace que te mandamos y vuelve '
+        'a intentar.',
+      );
+    }
+    if (error is AuthWeakPasswordException || error.code == 'weak_password') {
+      return const ErrorSesion(
+        'La contraseña es muy débil. Usa una más larga, con letras y números.',
+      );
+    }
+    if (error.code == 'user_already_exists') {
+      return const ErrorSesion(
+        'Ese correo ya tiene cuenta: elige "Ya tengo cuenta".',
+      );
+    }
+    final codigo = error.statusCode;
+    if (codigo == '400' || codigo == '401' || codigo == '422') {
+      return ErrorSesion.credencialesIncorrectas;
+    }
+    return ErrorSesion('No se pudo: ${error.message}');
+  }
+  debugPrint('Invitación: $error');
+  return const ErrorSesion('No se pudo aceptar la invitación. Intenta de nuevo.');
+}
 
 class ServicioSesionSupabase extends ServicioSesionEnMemoria
-    implements SesionesPorPersona {
+    implements SesionesPorPersona, AceptaInvitaciones {
   ServicioSesionSupabase({
     required this._cliente,
     required this._almacen,
@@ -186,18 +241,15 @@ class ServicioSesionSupabase extends ServicioSesionEnMemoria
 
   @override
   Future<void> iniciar() async {
-    _suscripcion ??= _cliente.auth.onAuthStateChange.listen(
-      (estado) {
-        if (estado.event == AuthChangeEvent.signedOut) {
-          unawaited(_almacen.borrar(claveSesionGuardada));
-          // Si es `salir()` quien cierra, ya limpia él (una sola vez).
-          final persona = _saliendo ? null : sesionActual?.persona.id;
-          if (persona != null) unawaited(_limpieza.alQuitarPersona(persona));
-          if (sesionActual != null) emitir(null);
-        }
-      },
-      onError: (Object error) => debugPrint('Sesión: $error'),
-    );
+    _suscripcion ??= _cliente.auth.onAuthStateChange.listen((estado) {
+      if (estado.event == AuthChangeEvent.signedOut) {
+        unawaited(_almacen.borrar(claveSesionGuardada));
+        // Si es `salir()` quien cierra, ya limpia él (una sola vez).
+        final persona = _saliendo ? null : sesionActual?.persona.id;
+        if (persona != null) unawaited(_limpieza.alQuitarPersona(persona));
+        if (sesionActual != null) emitir(null);
+      }
+    }, onError: (Object error) => debugPrint('Sesión: $error'));
     final usuario = _cliente.auth.currentUser;
     if (usuario == null) return;
     try {
@@ -243,6 +295,49 @@ class ServicioSesionSupabase extends ServicioSesionEnMemoria
         await _cerrarEnEsteEquipo(limpiar: false);
       }
       throw traducirErrorSesion(error);
+    }
+  }
+
+  @override
+  Future<ResultadoInvitacion> aceptarInvitacion({
+    required String token,
+    required String correo,
+    required String contrasena,
+    String? nombre,
+    required bool cuentaNueva,
+  }) async {
+    try {
+      if (cuentaNueva) {
+        final respuesta = await _cliente.auth.signUp(
+          email: correo.trim(),
+          password: contrasena,
+          data: {
+            if (nombre != null && nombre.trim().isNotEmpty)
+              'nombre': nombre.trim(),
+          },
+        );
+        // Con "confirmar correo" activo en el servidor no hay sesión hasta
+        // que abre el enlace que recibió.
+        if (respuesta.session == null) {
+          return const ResultadoInvitacion.faltaConfirmar();
+        }
+      } else {
+        await _cliente.auth.signInWithPassword(
+          email: correo.trim(),
+          password: contrasena,
+        );
+      }
+      await _cliente.rpc('aceptar_invitacion', params: {'p_token': token.trim()});
+      final sesion = await _lector(_cliente);
+      await _guardar(sesion);
+      emitir(sesion);
+      return ResultadoInvitacion.dentro(sesion);
+    } catch (error) {
+      if (_cliente.auth.currentUser != null && sesionActual == null) {
+        // Entró, pero no quedó dentro del hogar: no se deja la sesión a medias.
+        await _cerrarEnEsteEquipo(limpiar: false);
+      }
+      throw traducirErrorInvitacion(error);
     }
   }
 
@@ -361,24 +456,21 @@ class ServicioSesionSupabase extends ServicioSesionEnMemoria
 
     _clientePersona = cliente;
     _personaActiva = personaId;
-    _suscripcionPersona = cliente.auth.onAuthStateChange.listen(
-      (estado) {
-        if (!identical(_clientePersona, cliente)) return;
-        final abierta = estado.session;
-        if (estado.event == AuthChangeEvent.signedOut) {
-          // La sesión de la persona terminó (revocada): se avisa para volver
-          // a la cuenta del equipo.
-          _credenciales.add(null);
-          unawaited(cerrarSesionDePersona());
-        } else if (abierta != null &&
-            (estado.event == AuthChangeEvent.tokenRefreshed ||
-                estado.event == AuthChangeEvent.signedIn ||
-                estado.event == AuthChangeEvent.userUpdated)) {
-          _credenciales.add(jsonEncode(abierta.toJson()));
-        }
-      },
-      onError: (Object error) => debugPrint('Sesión de la persona: $error'),
-    );
+    _suscripcionPersona = cliente.auth.onAuthStateChange.listen((estado) {
+      if (!identical(_clientePersona, cliente)) return;
+      final abierta = estado.session;
+      if (estado.event == AuthChangeEvent.signedOut) {
+        // La sesión de la persona terminó (revocada): se avisa para volver
+        // a la cuenta del equipo.
+        _credenciales.add(null);
+        unawaited(cerrarSesionDePersona());
+      } else if (abierta != null &&
+          (estado.event == AuthChangeEvent.tokenRefreshed ||
+              estado.event == AuthChangeEvent.signedIn ||
+              estado.event == AuthChangeEvent.userUpdated)) {
+        _credenciales.add(jsonEncode(abierta.toJson()));
+      }
+    }, onError: (Object error) => debugPrint('Sesión de la persona: $error'));
     final vigente = cliente.auth.currentSession;
     return AperturaPersona(
       sesion: sesion,
@@ -425,18 +517,15 @@ class ServicioSesionSupabase extends ServicioSesionEnMemoria
     final cliente = _crearCliente(url, llavePublica, autoRenovar: true);
     // Se escucha ANTES de abrir: el servidor rota el refresh token al renovar
     // y la credencial nueva se entrega de inmediato, aunque lo que sigue falle.
-    final suscripcion = cliente.auth.onAuthStateChange.listen(
-      (estado) {
-        final abierta = estado.session;
-        if (abierta != null &&
-            (estado.event == AuthChangeEvent.tokenRefreshed ||
-                estado.event == AuthChangeEvent.signedIn ||
-                estado.event == AuthChangeEvent.userUpdated)) {
-          alRenovar(jsonEncode(abierta.toJson()));
-        }
-      },
-      onError: (Object error) => debugPrint('Sesión aparte: $error'),
-    );
+    final suscripcion = cliente.auth.onAuthStateChange.listen((estado) {
+      final abierta = estado.session;
+      if (abierta != null &&
+          (estado.event == AuthChangeEvent.tokenRefreshed ||
+              estado.event == AuthChangeEvent.signedIn ||
+              estado.event == AuthChangeEvent.userUpdated)) {
+        alRenovar(jsonEncode(abierta.toJson()));
+      }
+    }, onError: (Object error) => debugPrint('Sesión aparte: $error'));
     Future<void> soltar() async {
       await suscripcion.cancel();
       await cliente.dispose();

@@ -102,7 +102,8 @@ void main() {
       expect(
         revisiones.last,
         greaterThan(revisiones.first),
-        reason: 'revisiones subidas: $revisiones (el servidor acepta una mayor)',
+        reason:
+            'revisiones subidas: $revisiones (el servidor acepta una mayor)',
       );
     },
   );

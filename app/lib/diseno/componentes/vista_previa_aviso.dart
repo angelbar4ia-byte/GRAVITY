@@ -60,7 +60,7 @@ class VistaPreviaAviso extends StatelessWidget {
           DecoratedBox(
             decoration: BoxDecoration(
               color: Color.lerp(v.fondo, v.panel, 0.6),
-              border: Border.all(color: v.borde),
+              border: Border.all(color: v.borde, width: v.grosorBorde),
               borderRadius: BorderRadius.circular(
                 pulsera ? v.radioGrande * 2 : v.radioGrande,
               ),

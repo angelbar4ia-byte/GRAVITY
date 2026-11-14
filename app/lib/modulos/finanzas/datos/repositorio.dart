@@ -23,7 +23,10 @@ class PermisoServidor {
   final bool escribir;
   final bool administrar;
 
-  Map<String, Object?> aJson() => {'escribir': escribir, 'administrar': administrar};
+  Map<String, Object?> aJson() => {
+    'escribir': escribir,
+    'administrar': administrar,
+  };
 
   static PermisoServidor deJson(Map<Object?, Object?> j) => PermisoServidor(
     escribir: j['escribir'] == true,
@@ -115,16 +118,32 @@ enum ResultadoEscritura {
 
 /// Error con un mensaje listo para la interfaz.
 class ErrorFinanzas implements Exception {
-  const ErrorFinanzas(this.mensaje, {this.sinConexion = false});
+  const ErrorFinanzas(
+    this.mensaje, {
+    this.sinConexion = false,
+    this.topeAlcanzado = false,
+  });
 
   final String mensaje;
 
   /// No hubo conexión con el servidor.
   final bool sinConexion;
 
+  /// El servidor llegó a su tope de avisos del día (22023): no se reintenta
+  /// en bucle.
+  final bool topeAlcanzado;
+
   static const conexion = ErrorFinanzas(
     'Sin conexión: este cambio necesita señal. Inténtalo de nuevo cuando '
     'vuelva.',
+    sinConexion: true,
+  );
+
+  /// Estados de cuenta, aportaciones y retiros de ahorro: el servidor liga el
+  /// movimiento al guardarlo, así que no van por la cola (Fase 4, F4-3.7).
+  static const necesitaConexion = ErrorFinanzas(
+    'Esto necesita conexión: el servidor liga el movimiento al guardarlo. '
+    'Tus datos siguen aquí; intenta de nuevo cuando tengas señal.',
     sinConexion: true,
   );
 
@@ -143,6 +162,11 @@ abstract interface class RepositorioFinanzas {
   /// Carga todo lo que la persona puede ver. Sin conexión, devuelve lo último
   /// cargado (marcado [CargaFinanzas.desdeCopia]) o lanza [ErrorFinanzas].
   Future<CargaFinanzas> cargar();
+
+  /// Igual que [cargar], pero no deja copia local ni publica el estado. La
+  /// vista temporal de Papá (D24) la usa para que sus cifras no sobrevivan a
+  /// la autorización.
+  Future<CargaFinanzas> cargarSinPersistir();
 
   // --------------------------------------------- libro (solo agregar, cola)
 
@@ -270,4 +294,20 @@ abstract interface class RepositorioFinanzas {
   /// llamarla **antes** de pedir los datos de ese libro. Devuelve `false` si el
   /// libro es de la propia persona (no se registra nada).
   Future<bool> registrarConsultaMaestra(String libroId);
+
+  /// Emite un aviso de los que solo la app sabe calcular
+  /// (`fin_emitir_aviso`: `flujo_negativo`, `abono_bajo_minimo`…). **No lleva
+  /// dinero ni texto libre**: solo el tipo del catálogo, el objeto y una clave
+  /// estable. Es idempotente por `(persona, clave)`: repetir la misma clave
+  /// devuelve 0. Devuelve cuántos avisos creó. Necesita señal (nunca va a la
+  /// cola: no se guarda nada sin conexión) y lanza [ErrorFinanzas] con
+  /// `sinConexion` si no la hay, o con `topeAlcanzado` si el servidor ya llegó
+  /// a su tope de 60 por día.
+  Future<int> emitirAviso({
+    required String libroId,
+    required String tipo,
+    required String? objetoTipo,
+    required String? objetoId,
+    required String clave,
+  });
 }

@@ -11,6 +11,7 @@ import 'package:gravity/app/pantallas/registro_rapido.dart';
 import 'package:gravity/nucleo/contratos/dispositivo.dart';
 import 'package:gravity/nucleo/contratos/roles.dart';
 import 'package:gravity/nucleo/contratos/rutas.dart';
+import 'package:gravity/nucleo/permisos/permisos.dart' show puedeAbrir;
 import 'package:gravity/nucleo/seguridad/pantalla_segura.dart';
 
 import '../nucleo/seguridad/pantalla_segura_test.dart'
@@ -63,10 +64,28 @@ void main() {
       expect(esPantallaSensible(RutasApp.pendientes, Rol.familiar), isFalse);
     });
 
+    test(
+      'F4-A1: Alimentación (perfil clínico de Papá) solo para quien la abre',
+      () {
+        for (final ruta in [
+          Rutas.alimentacion,
+          '${Rutas.alimentacion}/compras',
+        ]) {
+          for (final rol in Rol.values) {
+            expect(
+              esPantallaSensible(ruta, rol),
+              puedeAbrir(rol, Modulo.alimentacion),
+              reason: '$ruta $rol',
+            );
+          }
+        }
+        expect(esPantallaSensible(Rutas.alimentacion, Rol.dueno), isTrue);
+      },
+    );
+
     test('lo demás se puede capturar', () {
       for (final ruta in [
         Rutas.habitos,
-        Rutas.alimentacion,
         Rutas.casa,
         Rutas.ajustes,
         RutasApp.mas,

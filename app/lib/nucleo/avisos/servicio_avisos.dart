@@ -37,6 +37,7 @@ class ContextoAvisos {
     this.esMaestra = false,
     this.puedeRecibir = true,
     this.usaHabitos = false,
+    this.recibeCuidados = false,
   });
 
   final TipoEquipoAvisos tipo;
@@ -52,6 +53,13 @@ class ContextoAvisos {
   /// `true` si la sesión usa Hábitos (dueño, coadministrador o familiar que no
   /// son la cuenta maestra): recibe sus recordatorios locales.
   final bool usaHabitos;
+
+  /// `true` para el cuidador (y el dueño, que cubre turnos): recibe solo los
+  /// avisos de Cuidados aunque no vea dinero.
+  final bool recibeCuidados;
+
+  /// Puede recibir avisos de algún tipo en este equipo.
+  bool get puedeRecibirAvisos => puedeRecibir || recibeCuidados;
 }
 
 /// Cómo se presenta un aviso (reglas 35 y 36).
@@ -77,6 +85,13 @@ Presentacion decidirPresentacion({
 }) {
   if (preferencias.tiposSilenciados.contains(tipo)) {
     return Presentacion.soloBandeja;
+  }
+  // Cuidados (spec fase-5 8g): tomas, comidas y el cambio urgente siempre
+  // suenan, también en horas silenciosas.
+  if (tipo == 'recordatorio_toma' ||
+      tipo == 'recordatorio_comida' ||
+      tipo == 'cambio_urgente_cuidados') {
+    return Presentacion.sonar;
   }
   final enSilencio = preferencias.enSilencio(ahora);
   final silencioso = enSilencio ? Presentacion.silenciosa : Presentacion.sonar;
@@ -191,7 +206,7 @@ class ServicioAvisos {
     final c = contexto();
     if (c.tipo == TipoEquipoAvisos.tabletPublica ||
         c.esMaestra ||
-        !c.puedeRecibir) {
+        !c.puedeRecibirAvisos) {
       return false;
     }
     if (c.tipo == TipoEquipoAvisos.laptop) return !porPush;
@@ -202,7 +217,8 @@ class ServicioAvisos {
     }
     // Tablet personal: apagada por omisión.
     final persona = c.personaId;
-    return persona != null && await almacen.leer(_claveActivado(persona)) == '1';
+    return persona != null &&
+        await almacen.leer(_claveActivado(persona)) == '1';
   }
 
   /// Si la persona activó los avisos en este equipo (teléfono: sí por
@@ -224,7 +240,7 @@ class ServicioAvisos {
     if (persona == null ||
         c.tipo == TipoEquipoAvisos.tabletPublica ||
         c.esMaestra ||
-        !c.puedeRecibir) {
+        !c.puedeRecibirAvisos) {
       return false;
     }
     await almacen.escribir(_claveActivado(persona), activar ? '1' : '0');
@@ -232,7 +248,8 @@ class ServicioAvisos {
       await alSalirPersona(conservarToken: true);
       return true;
     }
-    final permiso = await notificador.permisoConcedido() ||
+    final permiso =
+        await notificador.permisoConcedido() ||
         await notificador.pedirPermiso();
     await alEntrarPersona();
     return permiso;
@@ -247,7 +264,7 @@ class ServicioAvisos {
     if (c.personaId == null ||
         c.tipo == TipoEquipoAvisos.tabletPublica ||
         c.esMaestra ||
-        !c.puedeRecibir) {
+        !c.puedeRecibirAvisos) {
       return;
     }
     _preferencias = null;
@@ -354,6 +371,12 @@ class ServicioAvisos {
     }
     if (aviso == null) {
       await _mostrarGenerico();
+      return;
+    }
+    // Quien no ve dinero solo recibe los avisos de Cuidados y Alimentación.
+    if (!c.puedeRecibir &&
+        !avisosDeCuidados.contains(aviso.tipo) &&
+        !avisosDeAlimentacion.contains(aviso.tipo)) {
       return;
     }
     await _mostrar(aviso, persona);

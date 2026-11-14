@@ -82,7 +82,11 @@ class CascaronTablet extends ConsumerWidget {
                       onDestinationSelected: (indice) {
                         final destino = destinos[indice];
                         if (destino.esRegistrar) {
-                          mostrarHojaRegistrar(context, rol, esMaestra: esMaestra);
+                          mostrarHojaRegistrar(
+                            context,
+                            rol,
+                            esMaestra: esMaestra,
+                          );
                         } else if (destino.ruta != null) {
                           context.go(destino.ruta!);
                         }

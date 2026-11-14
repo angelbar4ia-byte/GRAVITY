@@ -5,12 +5,18 @@ void main() {
   const prefs = PreferenciasAviso();
 
   test('criticas del catalogo (regla 33)', () {
-    final criticas = TipoAlerta.values.where((t) => t.esCritica).map((t) => t.clave);
-    expect(
-      criticas.toSet(),
-      {'pago_proximo', 'limite_tarjeta', 'pago_vencido', 'protegido_riesgo',
-       'flujo_negativo', 'abono_bajo_minimo', 'base_90'},
-    );
+    final criticas = TipoAlerta.values
+        .where((t) => t.esCritica)
+        .map((t) => t.clave);
+    expect(criticas.toSet(), {
+      'pago_proximo',
+      'limite_tarjeta',
+      'pago_vencido',
+      'protegido_riesgo',
+      'flujo_negativo',
+      'abono_bajo_minimo',
+      'base_90',
+    });
     expect(TipoAlerta.partida80.nivel, NivelAlerta.informativa);
     expect(TipoAlerta.resumenLunes.fija, isTrue);
   });
@@ -19,31 +25,50 @@ void main() {
     final m = momentosDeVencimiento(DateTime(2026, 11, 10), prefs);
     expect(m, [DateTime(2026, 11, 7, 9), DateTime(2026, 11, 9, 9)]);
     final pasado = momentosDeVencimiento(
-      DateTime(2026, 11, 10), prefs, ahora: DateTime(2026, 11, 8),
+      DateTime(2026, 11, 10),
+      prefs,
+      ahora: DateTime(2026, 11, 8),
     );
     expect(pasado, [DateTime(2026, 11, 9, 9)]);
   });
 
   test('pago vencido: dia siguiente y a los 3 dias', () {
-    expect(momentosDePagoVencido(DateTime(2026, 11, 10), prefs),
-        [DateTime(2026, 11, 11, 9), DateTime(2026, 11, 13, 9)]);
+    expect(momentosDePagoVencido(DateTime(2026, 11, 10), prefs), [
+      DateTime(2026, 11, 11, 9),
+      DateTime(2026, 11, 13, 9),
+    ]);
   });
 
   test('criterio 37: critica a las 23:00 sale a las 07:00', () {
     final t = DateTime(2026, 11, 9, 23);
-    expect(salidaDeAviso(t, NivelAlerta.critica, prefs), DateTime(2026, 11, 10, 7));
     expect(
-      salidaDeAviso(t, NivelAlerta.critica, const PreferenciasAviso(criticasEnSilencio: true)),
+      salidaDeAviso(t, NivelAlerta.critica, prefs),
+      DateTime(2026, 11, 10, 7),
+    );
+    expect(
+      salidaDeAviso(
+        t,
+        NivelAlerta.critica,
+        const PreferenciasAviso(criticasEnSilencio: true),
+      ),
       t,
     );
     expect(
-      salidaDeAviso(t, NivelAlerta.informativa, const PreferenciasAviso(criticasEnSilencio: true)),
+      salidaDeAviso(
+        t,
+        NivelAlerta.informativa,
+        const PreferenciasAviso(criticasEnSilencio: true),
+      ),
       DateTime(2026, 11, 10, 7),
     );
-    expect(salidaDeAviso(DateTime(2026, 11, 9, 5), NivelAlerta.importante, prefs),
-        DateTime(2026, 11, 9, 7));
-    expect(salidaDeAviso(DateTime(2026, 11, 9, 12), NivelAlerta.critica, prefs),
-        DateTime(2026, 11, 9, 12));
+    expect(
+      salidaDeAviso(DateTime(2026, 11, 9, 5), NivelAlerta.importante, prefs),
+      DateTime(2026, 11, 9, 7),
+    );
+    expect(
+      salidaDeAviso(DateTime(2026, 11, 9, 12), NivelAlerta.critica, prefs),
+      DateTime(2026, 11, 9, 12),
+    );
   });
 
   test('tope diario de 3 no criticos; criticas sin tope; agrupado', () {
@@ -78,9 +103,15 @@ void main() {
   test('criterio 47: rangos invalidos se rechazan', () {
     expect(prefs.validar(), isNull);
     expect(const PreferenciasAviso(topeDiario: 11).validar(), isNotNull);
-    expect(const PreferenciasAviso(diasAntes: [1, 2, 3, 4]).validar(), isNotNull);
+    expect(
+      const PreferenciasAviso(diasAntes: [1, 2, 3, 4]).validar(),
+      isNotNull,
+    );
     expect(const PreferenciasAviso(diasAntes: [15]).validar(), isNotNull);
-    expect(const PreferenciasAviso(silencioDesde: 7, silencioHasta: 7).validar(), isNotNull);
+    expect(
+      const PreferenciasAviso(silencioDesde: 7, silencioHasta: 7).validar(),
+      isNotNull,
+    );
   });
 
   test('criterio 41: destinatarios por libro, nunca la maestra', () {
@@ -92,7 +123,10 @@ void main() {
     expect(r(LibroDestino.compartido, RolDestino.titular), isTrue);
     expect(r(LibroDestino.representado, RolDestino.albacea), isTrue);
     expect(r(LibroDestino.representado, RolDestino.suplente), isFalse);
-    expect(r(LibroDestino.representado, RolDestino.suplente, alb: false), isTrue);
+    expect(
+      r(LibroDestino.representado, RolDestino.suplente, alb: false),
+      isTrue,
+    );
     for (final l in LibroDestino.values) {
       expect(r(l, RolDestino.cuentaMaestra), isFalse);
       expect(r(l, RolDestino.otro), isFalse);

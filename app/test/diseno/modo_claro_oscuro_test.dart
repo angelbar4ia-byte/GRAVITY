@@ -111,17 +111,45 @@ void main() {
       return c;
     }
 
-    test('por defecto es automático: 19:42 da tema oscuro', () {
+    test('por defecto sigue el sol del lugar: 19:42 da tema oscuro', () {
       final c = contenedor(_a(19, 42));
       expect(
         c.read(preferenciaClaroOscuroProvider).modo,
-        ModoClaroOscuro.automaticoPorHora,
+        ModoClaroOscuro.automaticoSolar,
       );
       expect(c.read(modoTemaProvider), ThemeMode.dark);
     });
 
+    test('con el sol real: a las 18:00 de octubre sigue claro y a las 18:30 '
+        'ya es oscuro (en junio sigue claro a las 18:30)', () {
+      expect(contenedor(_a(18, 0)).read(modoTemaProvider), ThemeMode.light);
+      expect(contenedor(_a(18, 30)).read(modoTemaProvider), ThemeMode.dark);
+      expect(
+        contenedor(DateTime(2026, 6, 21, 18, 30)).read(modoTemaProvider),
+        ThemeMode.light,
+      );
+    });
+
+    test('el lugar cambia el resultado: entre el atardecer de la CDMX y el '
+        'de Cancún (más al este) es de noche en una y de día en la otra', () {
+      final fecha = DateTime(2026, 10, 20);
+      final cdmx = solDelDia(fecha, lugarSolarPorId('cdmx')).atardecerMin;
+      final cancun = solDelDia(fecha, lugarSolarPorId('cancun')).atardecerMin;
+      expect(cancun, greaterThan(cdmx));
+      final medio = (cdmx + cancun) ~/ 2;
+      final c = contenedor(_a(medio ~/ 60, medio % 60));
+      expect(c.read(modoTemaProvider), ThemeMode.dark);
+      c
+          .read(preferenciaClaroOscuroProvider.notifier)
+          .cambiarLugar(lugarSolarPorId('cancun'));
+      expect(c.read(modoTemaProvider), ThemeMode.light);
+    });
+
     test('editar el horario cambia el resultado al instante', () {
       final c = contenedor(_a(19, 42));
+      c
+          .read(preferenciaClaroOscuroProvider.notifier)
+          .cambiarModo(ModoClaroOscuro.automaticoPorHora);
       c
           .read(preferenciaClaroOscuroProvider.notifier)
           .cambiarHorario(
@@ -140,10 +168,39 @@ void main() {
     });
   });
 
-  testWidgets('el tema pasa a oscuro solo al dar las 19:00, sin reiniciar', (
-    tester,
-  ) async {
+  testWidgets('el tema pasa a oscuro solo al dar las 19:00 (horario fijo), '
+      'sin reiniciar', (tester) async {
     final reloj = RelojMovible(DateTime(2026, 10, 20, 18, 59, 30));
+    late Brightness brillo;
+    await montar(
+      tester,
+      Builder(
+        builder: (context) {
+          brillo = Theme.of(context).brightness;
+          return const SizedBox();
+        },
+      ),
+      reloj: reloj,
+    );
+    contenedorDe(tester, find.byType(SizedBox))
+        .read(preferenciaClaroOscuroProvider.notifier)
+        .cambiarModo(ModoClaroOscuro.automaticoPorHora);
+    await tester.pump();
+    await tester.pump(duracionCambioTema);
+    expect(brillo, Brightness.light);
+
+    reloj.momento = DateTime(2026, 10, 20, 19, 0, 0);
+    await tester.pump(const Duration(seconds: 31));
+    await tester.pump(duracionCambioTema);
+    expect(brillo, Brightness.dark);
+  });
+
+  testWidgets('con el sol real, el tema pasa a oscuro al ponerse el sol, sin '
+      'reiniciar', (tester) async {
+    final sol = solDelDia(DateTime(2026, 10, 20), lugarSolarPorDefecto);
+    DateTime a(int minutos, int seg) =>
+        DateTime(2026, 10, 20, minutos ~/ 60, minutos % 60, seg);
+    final reloj = RelojMovible(a(sol.atardecerMin - 1, 30));
     late Brightness brillo;
     await montar(
       tester,
@@ -157,7 +214,7 @@ void main() {
     );
     expect(brillo, Brightness.light);
 
-    reloj.momento = DateTime(2026, 10, 20, 19, 0, 0);
+    reloj.momento = a(sol.atardecerMin, 0);
     await tester.pump(const Duration(seconds: 31));
     await tester.pump(duracionCambioTema);
     expect(brillo, Brightness.dark);

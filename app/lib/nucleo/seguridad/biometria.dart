@@ -26,8 +26,12 @@ class BiometriaDispositivo implements ServicioBiometria {
   @override
   Future<bool> disponible() async {
     try {
-      return await _autenticacion.isDeviceSupported() &&
-          await _autenticacion.canCheckBiometrics;
+      if (!await _autenticacion.isDeviceSupported() ||
+          !await _autenticacion.canCheckBiometrics) {
+        return false;
+      }
+      // Con hardware pero sin ninguna huella registrada no hay nada que pedir.
+      return (await _autenticacion.getAvailableBiometrics()).isNotEmpty;
     } catch (error) {
       debugPrint('Huella no disponible: $error');
       return false;

@@ -94,7 +94,10 @@ class _MovimientosState extends ConsumerState<_Movimientos> {
       decoration: InputDecoration(labelText: etiqueta, isDense: true),
       items: [
         for (final (v, t) in opciones)
-          DropdownMenuItem<T>(value: v, child: Text(t, overflow: TextOverflow.ellipsis)),
+          DropdownMenuItem<T>(
+            value: v,
+            child: Text(t, overflow: TextOverflow.ellipsis),
+          ),
       ],
       onChanged: (v) => setState(() {
         alCambiar(v as T);
@@ -139,7 +142,8 @@ class _MovimientosState extends ConsumerState<_Movimientos> {
             ], (v) => _categoria = v),
             _filtro<TipoMovimiento?>('Tipo', _tipo, [
               (null, 'Todos'),
-              for (final t in TipoMovimiento.values) (t, nombreTipoMovimiento(t)),
+              for (final t in TipoMovimiento.values)
+                (t, nombreTipoMovimiento(t)),
             ], (v) => _tipo = v),
             _filtro<_Estado>('Estado', _estado, const [
               (_Estado.todos, 'Todos'),
@@ -171,7 +175,11 @@ class _MovimientosState extends ConsumerState<_Movimientos> {
                   CeldaTexto(textoDiaMes(m.fecha)),
                   CeldaTexto(conceptoDe(m, c.datos, vista)),
                   CeldaTexto(nombreTipoMovimiento(m.tipo)),
-                  CeldaMonto(efectoEnLibro(m, vista), oculto: ocultos, mostrarSigno: true),
+                  CeldaMonto(
+                    efectoEnLibro(m, vista),
+                    oculto: ocultos,
+                    mostrarSigno: true,
+                  ),
                   CeldaTexto(
                     vista.estaAnulado(m.id)
                         ? 'Anulado'
@@ -191,7 +199,9 @@ class _MovimientosState extends ConsumerState<_Movimientos> {
               Text('Página ${pagina + 1} de $paginas (${lista.length})'),
               IconButton(
                 tooltip: 'Anterior',
-                onPressed: pagina == 0 ? null : () => setState(() => _pagina = pagina - 1),
+                onPressed: pagina == 0
+                    ? null
+                    : () => setState(() => _pagina = pagina - 1),
                 icon: const Icon(Icons.chevron_left),
               ),
               IconButton(
@@ -272,17 +282,30 @@ class _Detalle extends ConsumerWidget {
         ),
         Monto(efectoEnLibro(m, vista), signo: true),
         dato('Fecha económica', textoFecha(m.fecha)),
-        dato('Registrado', '${fechaYHora(m.registradoEn)} por ${c.carga.nombreDe(m.registradoPor)}'),
-        if (m.enNombreDe != null) dato('En nombre de', c.carga.nombreDe(m.enNombreDe)),
+        dato(
+          'Registrado',
+          '${fechaYHora(m.registradoEn)} por ${c.carga.nombreDe(m.registradoPor)}',
+        ),
+        if (m.enNombreDe != null)
+          dato('En nombre de', c.carga.nombreDe(m.enNombreDe)),
         dato('De', vista.cuenta(m.cuentaOrigenId).nombre),
         dato('A', vista.cuenta(m.cuentaDestinoId).nombre),
-        if (m.categoriaId != null) dato('Categoría', c.datos.arbol.ruta(m.categoriaId!)),
+        if (m.categoriaId != null)
+          dato('Categoría', c.datos.arbol.ruta(m.categoriaId!)),
         if (m.nota != null) dato('Nota', m.nota!),
         if (m.motivo != null) dato('Motivo', m.motivo!),
-        if (m.grupoId != null) dato('Ticket dividido', 'Es una línea de un ticket con varios rubros'),
-        if (original != null) dato('Anula a', conceptoDe(original, c.datos, vista)),
+        if (m.grupoId != null)
+          dato(
+            'Ticket dividido',
+            'Es una línea de un ticket con varios rubros',
+          ),
+        if (original != null)
+          dato('Anula a', conceptoDe(original, c.datos, vista)),
         if (contra != null)
-          dato('Contraasiento', '${textoFecha(contra.fecha)} · ${contra.motivo ?? ''}'),
+          dato(
+            'Contraasiento',
+            '${textoFecha(contra.fecha)} · ${contra.motivo ?? ''}',
+          ),
         const SizedBox(height: 12),
         if (sePuedeAnular(m, vista, c))
           OutlinedButton.icon(

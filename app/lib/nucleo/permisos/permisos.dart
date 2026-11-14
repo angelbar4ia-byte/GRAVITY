@@ -191,10 +191,12 @@ const Map<Modulo, Map<Rol, Permiso>> matrizPermisos = {
   Modulo.alimentacion: {
     Rol.dueno: Permiso(Alcance.total, 'Total'),
     Rol.coadministrador: Permiso(Alcance.total, 'Total'),
+    // D23 (ajuste 6/nov): el familiar edita el menú de Papá, no el de la
+    // pareja. La cuidadora solo lee las comidas de Papá. Casa no ve nada.
     Rol.familiar: Permiso(
       Alcance.restringido,
-      'Leer su parte',
-      acciones: _leer,
+      'Leer y editar el menú de papá',
+      acciones: _leerYEscribir,
     ),
     Rol.cuidador: Permiso(
       Alcance.restringido,
@@ -202,11 +204,7 @@ const Map<Modulo, Map<Rol, Permiso>> matrizPermisos = {
       acciones: _leer,
       accesoDirecto: false,
     ),
-    Rol.casa: Permiso(
-      Alcance.restringido,
-      'Leer el menú y la lista',
-      acciones: _leer,
-    ),
+    Rol.casa: Permiso.ninguno(),
   },
   Modulo.casa: {
     Rol.dueno: Permiso(Alcance.total, 'Total'),

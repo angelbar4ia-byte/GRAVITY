@@ -9,19 +9,25 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../diseno/componentes/indicador_conexion.dart'
+    show conectividadProvider;
 import '../diseno/licencias.dart';
 import '../diseno/proveedores.dart'
     show
+        almacenAparienciaProvider,
         densidadBaseProvider,
         montosVisiblesProvider,
         personaEnPantallaProvider,
         revelarMontosProvider;
 import '../diseno/valores_diseno.dart' show densidadPara;
 
+import '../nucleo/rendimiento/medidor_arranque.dart';
+import 'conectividad_diseno.dart';
 import '../nucleo/base_local/base_local.dart';
 import '../nucleo/cola/bandeja_salida.dart';
 import '../nucleo/cola/cola_sin_conexion.dart';
 import '../nucleo/cola/enviador_supabase.dart';
+
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 import '../nucleo/avisos/fuente_push.dart';
@@ -34,11 +40,18 @@ import '../nucleo/configuracion/configuracion_entorno.dart';
 import '../nucleo/firebase/firebase.dart';
 import '../nucleo/invitaciones/invitaciones.dart';
 import '../nucleo/seguridad/almacen_seguro.dart';
-import '../nucleo/sensibles/mis_datos.dart' show funcionBorrarMisDatos, tipoColaBorrado;
-import '../nucleo/sensibles/subida_diferida.dart' show funcionSubirSobres, tipoColaSobres;
+import '../nucleo/sensibles/mis_datos.dart'
+    show funcionBorrarMisDatos, tipoColaBorrado;
+import '../nucleo/sensibles/subida_diferida.dart'
+    show funcionSubirSobres, tipoColaSobres;
+import '../nucleo/apariencia/almacen_apariencia_persistente.dart';
+import '../nucleo/conectividad/conectividad.dart';
+import '../nucleo/conectividad/conectividad_plus.dart';
+import '../nucleo/personas/personas_hogar.dart';
 import '../nucleo/seguridad/biometria.dart';
 import '../nucleo/seguridad/limpieza_local.dart';
 import '../nucleo/seguridad/pantalla_segura.dart';
+import '../nucleo/seguridad/protector_windows.dart';
 import '../nucleo/seguridad/proveedores_seguridad.dart';
 import '../nucleo/sesion/proveedores_sesion.dart';
 import '../nucleo/sesion/servicio_sesion_demostracion.dart';
@@ -48,7 +61,8 @@ import 'avisos/con_avisos.dart' show tipoEquipoAvisosProvider;
 import 'dispositivo.dart';
 import '../nucleo/sensibles/nube_habitos.dart';
 import 'sensibles/sensibles.dart';
-import '../nucleo/tablet/controlador_tablet.dart' show alEntrarConPinProvider, alSalirDeLaTabletProvider;
+import '../nucleo/tablet/controlador_tablet.dart'
+    show alEntrarConPinProvider, alSalirDeLaTabletProvider;
 import 'montos/montos_al_entrar.dart';
 import 'montos/revelar_montos.dart';
 import 'pantallas_externas.dart'
@@ -88,7 +102,8 @@ List<Override> conexionesDeLaApp() => [
     },
   ),
   alSalirDeLaTabletProvider.overrideWith(
-    (ref) => (persona) => ref.read(llavesHabitosProvider).olvidarEnMemoria(),
+    (ref) =>
+        (persona) => ref.read(llavesHabitosProvider).olvidarEnMemoria(),
   ),
   bandejaDeLaTabletProvider.overrideWith(
     (ref) => BandejaDeLaTabletConCola(
@@ -108,7 +123,9 @@ Future<List<Override>> prepararArranque({
   ConfiguracionEntorno configuracion =
       const ConfiguracionEntorno.desdeCompilacion(),
   BaseLocal Function() abrirBase = BaseLocal.enDispositivo,
+  MedidorArranque? medidor,
 }) async {
+  final m = medidor ?? medidorDeArranque;
   final plataforma = defaultTargetPlatform;
   final dispositivo =
       tipoDispositivoForzado(configuracion.dispositivoForzado) ??
@@ -116,9 +133,38 @@ Future<List<Override>> prepararArranque({
 
   Intl.defaultLocale = 'es_MX';
   registrarLicenciasFuentes();
-  await initializeDateFormatting('es_MX');
-
-  final firebase = await prepararFirebase(plataforma: plataforma);
+  // Los pasos que no dependen unos de otros arrancan juntos (y cada uno se
+  // mide): el arranque tarda lo del más lento, no la suma.
+  final fechas = m.medir(
+    'formato_de_fechas',
+    () => initializeDateFormatting('es_MX'),
+  );
+  final firebaseListo = m.medir(
+    'firebase',
+    () => prepararFirebase(plataforma: plataforma),
+  );
+  final aparienciaLista = m.medir(
+    'apariencia',
+    AlmacenAparienciaPersistente.abrir,
+  );
+  final supabaseListo = configuracion.tieneSupabase
+      ? m.medir('supabase_initialize', () async {
+          try {
+            await Supabase.initialize(
+              url: configuracion.supabaseUrl,
+              publishableKey: configuracion.supabaseLlavePublica,
+            );
+            return true;
+          } catch (error) {
+            debugPrint(
+              'No se pudo preparar Supabase; modo demostración: $error',
+            );
+            return false;
+          }
+        })
+      : Future.value(false);
+  await fechas;
+  final firebase = await firebaseListo;
   if (firebase == EstadoFirebase.activo) {
     // Mensajes con la app cerrada: solo el aviso genérico (ver el archivo).
     FirebaseMessaging.onBackgroundMessage(manejadorPushSegundoPlano);
@@ -135,14 +181,11 @@ Future<List<Override>> prepararArranque({
   ServicioSesion? sesion;
   Enviador enviador = const EnviadorSinServidor();
   RepositorioInvitaciones? invitaciones;
+  RepositorioPersonasHogar? personasDelHogar;
   Override? salidaSinPin;
   RepositorioAvisos? avisos;
-  if (configuracion.tieneSupabase) {
+  if (await supabaseListo) {
     try {
-      await Supabase.initialize(
-        url: configuracion.supabaseUrl,
-        publishableKey: configuracion.supabaseLlavePublica,
-      );
       final servicio = ServicioSesionSupabase(
         cliente: Supabase.instance.client,
         almacen: almacen,
@@ -155,6 +198,10 @@ Future<List<Override>> prepararArranque({
       avisos = RepositorioAvisosSupabase(() => servicio.clienteActivo);
       // Invitaciones (cuenta maestra): con la sesión de quien está dentro.
       invitaciones = RepositorioInvitacionesSupabase(
+        () => servicio.clienteActivo,
+      );
+      // Personas del hogar (baja y cambio de rol), con la sesión del dueño.
+      personasDelHogar = RepositorioPersonasHogarSupabase(
         () => servicio.clienteActivo,
       );
       // Bandeja de salida (D14, 23/oct): lo de quien ya salió de la tablet
@@ -189,7 +236,7 @@ Future<List<Override>> prepararArranque({
     limpieza = LimpiezaLocal(almacen);
     sesion = ServicioSesionDemostracion();
   }
-  await sesion.iniciar();
+  await m.medir('sesion', sesion.iniciar);
 
   return [
     ...conexionesDeLaApp(),
@@ -202,13 +249,22 @@ Future<List<Override>> prepararArranque({
     // sin PIN, la tablet y el cierre de sesión de la cuenta del equipo.
     bandejaDeSalidaProvider.overrideWithValue(limpieza.bandeja),
     // I11: en Android, FLAG_SECURE mientras hay dinero o datos clínicos a la
-    // vista; en Windows no hace falta nada.
-    protectorDePantallaProvider.overrideWithValue(
-      plataforma == TargetPlatform.android
-          ? const ProtectorDePantallaAndroid()
-          : const ProtectorDePantallaNulo(),
-    ),
+    // vista; en Windows, SetWindowDisplayAffinity (E15, P7: activo por
+    // omisión, editable en Ajustes › Privacidad).
+    protectorDePantallaProvider.overrideWithValue(switch (plataforma) {
+      TargetPlatform.android => const ProtectorDePantallaAndroid(),
+      TargetPlatform.windows => ProtectorDePantallaWindows(),
+      _ => const ProtectorDePantallaNulo(),
+    }),
     biometriaProvider.overrideWithValue(biometria),
+    // La apariencia de cada persona sobrevive al reinicio (P3).
+    almacenAparienciaProvider.overrideWithValue(await aparienciaLista),
+    // E1: el indicador "En línea" sale de la conexión real del equipo.
+    fuenteConectividadProvider.overrideWithValue(FuenteConectividadPlus()),
+    // El indicador de diseño muestra esa conexión real, con lo que falta subir.
+    conectividadProvider.overrideWith(
+      (ref) => ref.watch(conectividadRealDeDisenoProvider),
+    ),
     servicioSesionProvider.overrideWithValue(sesion),
     // Demostración: la cola vive en memoria; nada de lo de ejemplo queda en
     // el dispositivo ni se sube después (M16).
@@ -218,6 +274,8 @@ Future<List<Override>> prepararArranque({
     enviadorProvider.overrideWithValue(enviador),
     if (invitaciones != null)
       repositorioInvitacionesProvider.overrideWithValue(invitaciones),
+    if (personasDelHogar != null)
+      repositorioPersonasHogarProvider.overrideWithValue(personasDelHogar),
     ?salidaSinPin,
     // Avisos (Fase 2, D20): notificaciones del sistema en Android (teléfono y
     // tablets) y Windows (laptop, con la app abierta) y push solo en Android
@@ -228,7 +286,9 @@ Future<List<Override>> prepararArranque({
           plataforma == TargetPlatform.windows)
         notificadorProvider.overrideWithValue(NotificadorPlugin()),
       nubeDeHabitosProvider.overrideWithValue(
-        NubeDeHabitosSupabase(() => (sesion! as ServicioSesionSupabase).clienteActivo),
+        NubeDeHabitosSupabase(
+          () => (sesion! as ServicioSesionSupabase).clienteActivo,
+        ),
       ),
       if (firebase == EstadoFirebase.activo)
         fuentePushProvider.overrideWithValue(FuentePushFirebase()),

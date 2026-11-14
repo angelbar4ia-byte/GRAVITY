@@ -156,17 +156,13 @@ CostoDeDeber costoDeDeber(Iterable<DeudaPlan> deudas) {
     for (final d in con) d.saldo! * d.tasaAnualPuntosBase,
   ], puntosBaseEnCien * 52);
   final porDeuda = {for (var i = 0; i < con.length; i++) con[i].id: partes[i]};
-  return CostoDeDeber(
-    porDeuda,
-    partes.fold(0, (a, b) => a + b),
-    {
-      for (final d in con)
-        d.id: dividirRedondeando(
-          d.saldo! * d.tasaAnualPuntosBase,
-          puntosBaseEnCien * 12,
-        ),
-    },
-  );
+  return CostoDeDeber(porDeuda, partes.fold(0, (a, b) => a + b), {
+    for (final d in con)
+      d.id: dividirRedondeando(
+        d.saldo! * d.tasaAnualPuntosBase,
+        puntosBaseEnCien * 12,
+      ),
+  });
 }
 
 /// Uso del límite de una tarjeta (regla 7).

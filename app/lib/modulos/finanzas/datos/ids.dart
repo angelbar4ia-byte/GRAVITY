@@ -21,6 +21,10 @@ String idEstable(String clave) =>
 
 /// Claves de los ids estables. Cada una nombra lo que identifica.
 abstract final class ClavesId {
+  /// El movimiento de Finanzas que nace de confirmar un gasto de cuidado
+  /// (`cui_gastos.id`): confirmar dos veces o desde dos equipos da el mismo id.
+  static String gastoCuidado(String gastoId) => 'gasto-cuidado:$gastoId';
+
   /// La anulación de un movimiento: hay a lo más una (índice único en
   /// `anula_a`), así que "Deshacer" o "Anular" repetidos dan el mismo id.
   static String anulacion(String movimientoId) => 'anulacion:$movimientoId';
@@ -40,7 +44,8 @@ abstract final class ClavesId {
       'cuenta:$libroId:$tipo:${normalizarNombre(nombre)}';
 
   /// La semana activada de un libro (único `(libro_id, semana_inicio)`).
-  static String semana(String libroId, String lunes) => 'semana:$libroId:$lunes';
+  static String semana(String libroId, String lunes) =>
+      'semana:$libroId:$lunes';
 
   /// El cierre de una semana en su versión (único `(semana_id, version)`).
   static String cierre(String semanaId, int version) =>

@@ -179,7 +179,7 @@ class TarjetaDeuda extends StatelessWidget {
         color: v.panel,
         shape: RoundedRectangleBorder(
           borderRadius: radio,
-          side: BorderSide(color: v.borde),
+          side: BorderSide(color: v.borde, width: v.grosorBorde),
         ),
         clipBehavior: Clip.antiAlias,
         child: alTocar == null
@@ -210,7 +210,7 @@ class _Etiqueta extends StatelessWidget {
     final v = ValoresDiseno.de(context);
     return DecoratedBox(
       decoration: BoxDecoration(
-        border: Border.all(color: v.borde),
+        border: Border.all(color: v.borde, width: v.grosorBorde),
         borderRadius: BorderRadius.circular(v.radioChico),
       ),
       child: Padding(

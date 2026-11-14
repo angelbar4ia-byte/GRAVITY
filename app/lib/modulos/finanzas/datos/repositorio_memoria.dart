@@ -132,6 +132,9 @@ class RepositorioFinanzasEnMemoria implements RepositorioFinanzas {
     return _vista;
   }
 
+  @override
+  Future<CargaFinanzas> cargarSinPersistir() async => _vista;
+
   DatosFinanzas get _d => _carga.datos;
 
   void _publicar(DatosFinanzas datos, {Map<String, String>? personas}) {
@@ -151,10 +154,13 @@ class RepositorioFinanzasEnMemoria implements RepositorioFinanzas {
     var encontrado = false;
     final resultado = [
       for (final x in lista)
-        if (mismo(x)) () {
-          encontrado = true;
-          return nuevo;
-        }() else x,
+        if (mismo(x))
+          () {
+            encontrado = true;
+            return nuevo;
+          }()
+        else
+          x,
     ];
     if (!encontrado) resultado.add(nuevo);
     return resultado;
@@ -440,7 +446,9 @@ class RepositorioFinanzasEnMemoria implements RepositorioFinanzas {
       throw const ErrorFinanzas('No existe ese libro compartido.');
     }
     if (personaId == null || !libro.esAdministrador(personaId!)) {
-      throw const ErrorFinanzas('No tienes permiso para hacer eso en este libro.');
+      throw const ErrorFinanzas(
+        'No tienes permiso para hacer eso en este libro.',
+      );
     }
     return libro;
   }
@@ -511,7 +519,11 @@ class RepositorioFinanzasEnMemoria implements RepositorioFinanzas {
       (l) => l.copiar(
         miembros: [
           ...l.miembros,
-          MiembroLibro(personaId: persona, papel: PapelLibro.miembro, desde: hoy),
+          MiembroLibro(
+            personaId: persona,
+            papel: PapelLibro.miembro,
+            desde: hoy,
+          ),
         ],
       ),
     );
@@ -568,10 +580,12 @@ class RepositorioFinanzasEnMemoria implements RepositorioFinanzas {
       tipo: TipoLibro.representado,
       titularId: titular,
       miembros: [
-        if (yo != null)
-          MiembroLibro(personaId: yo, papel: PapelLibro.albacea),
+        if (yo != null) MiembroLibro(personaId: yo, papel: PapelLibro.albacea),
         if (suplenteId != null)
-          MiembroLibro(personaId: suplenteId, papel: PapelLibro.albaceaSuplente),
+          MiembroLibro(
+            personaId: suplenteId,
+            papel: PapelLibro.albaceaSuplente,
+          ),
       ],
     );
     final (cuentas, parametros) = _arranqueDeLibro(id);
@@ -612,11 +626,15 @@ class RepositorioFinanzasEnMemoria implements RepositorioFinanzas {
       );
     }
     if (personaId == libro.titularId) {
-      throw const ErrorFinanzas('La persona representada no es miembro de su libro.');
+      throw const ErrorFinanzas(
+        'La persona representada no es miembro de su libro.',
+      );
     }
     final hoy = Fecha.deDateTime(_reloj());
     final vigentes = libro.vigentes(hoy);
-    if (vigentes.any((m) => m.papel == papel && adultos.contains(m.personaId))) {
+    if (vigentes.any(
+      (m) => m.papel == papel && adultos.contains(m.personaId),
+    )) {
       throw const ErrorFinanzas(
         'Ese cargo ya lo ocupa alguien: quien lo tiene debe dejarlo primero.',
       );
@@ -748,6 +766,48 @@ class RepositorioFinanzasEnMemoria implements RepositorioFinanzas {
     consultasMaestra.add(libroId);
     _consultas[libroId] = _reloj();
     return true;
+  }
+
+  /// Avisos que la app emitió (para las pruebas): lo mismo que recibiría
+  /// `fin_emitir_aviso`, sin dinero ni texto libre.
+  final List<
+    ({
+      String libroId,
+      String tipo,
+      String? objetoTipo,
+      String? objetoId,
+      String clave,
+    })
+  >
+  avisosEmitidos = [];
+
+  /// Tope de `fin_emitir_aviso` por persona al día (el servidor: 60).
+  int topeAvisosPorDia = 60;
+
+  @override
+  Future<int> emitirAviso({
+    required String libroId,
+    required String tipo,
+    required String? objetoTipo,
+    required String? objetoId,
+    required String clave,
+  }) async {
+    _requiereConexion();
+    if (avisosEmitidos.any((a) => a.clave == clave)) return 0; // idempotente
+    if (avisosEmitidos.length >= topeAvisosPorDia) {
+      throw const ErrorFinanzas(
+        'Se llegó al tope de avisos al día por persona.',
+        topeAlcanzado: true,
+      );
+    }
+    avisosEmitidos.add((
+      libroId: libroId,
+      tipo: tipo,
+      objetoTipo: objetoTipo,
+      objetoId: objetoId,
+      clave: clave,
+    ));
+    return 1;
   }
 
   Future<void> cerrar() => _cambios.close();

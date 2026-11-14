@@ -42,7 +42,21 @@ void main() {
       caseSensitive: false,
     );
     final hallazgos = <String>[];
+    // Fase 6: el cliente de la conversación vive en UN archivo. Solo manda el
+    // mensaje y la sesión a la función de servidor y trae texto y el nombre
+    // de una herramienta; no recibe resultados de herramientas (la clave del
+    // proveedor está en el servidor).
+    // Fase 6b: los clientes de Google (conectar la cuenta, Gmail y Calendar)
+    // también llaman a funciones de NUESTRO servidor, nunca a un proveedor de
+    // IA ni con claves; su tráfico es el de gravity-asistente, sin dinero.
+    const clientesDeIa = {
+      'modulos/gravity/conversacion/cliente_asistente.dart',
+      'modulos/gravity/conversacion/cliente_google.dart',
+      'modulos/ajustes/google/conexion_google.dart',
+    };
     for (final f in _archivos('lib')) {
+      final ruta = f.path.replaceAll('\\', '/');
+      if (clientesDeIa.any(ruta.endsWith)) continue;
       final codigo = _sinComentarios(f.readAsStringSync());
       for (final m in patrones.allMatches(codigo)) {
         hallazgos.add('${f.path}: ${m.group(0)}');

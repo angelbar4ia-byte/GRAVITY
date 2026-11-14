@@ -17,16 +17,18 @@ import '../../estado/proveedores.dart';
 import '../comunes.dart';
 import '../registro/hoja_gasto.dart';
 
-Future<void> mostrarDialogoMovimiento(BuildContext context, ContextoFinanzas c) =>
-    showDialog<void>(
-      context: context,
-      builder: (_) => Dialog(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 640, maxHeight: 760),
-          child: DialogoMovimiento(contexto: c),
-        ),
-      ),
-    );
+Future<void> mostrarDialogoMovimiento(
+  BuildContext context,
+  ContextoFinanzas c,
+) => showDialog<void>(
+  context: context,
+  builder: (_) => Dialog(
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 640, maxHeight: 760),
+      child: DialogoMovimiento(contexto: c),
+    ),
+  ),
+);
 
 class _Linea {
   String? categoriaId;
@@ -79,7 +81,8 @@ class _DialogoMovimientoState extends ConsumerState<DialogoMovimiento> {
     for (final l in c.libros)
       if (c.permisoEn(l).escribir)
         for (final x in d.cuentasDe(l.id))
-          if (x.estado == EstadoCuenta.activa && x.clase == ClaseCuenta.activo) x,
+          if (x.estado == EstadoCuenta.activa && x.clase == ClaseCuenta.activo)
+            x,
   ];
 
   List<Categoria> get _categorias => [
@@ -124,7 +127,10 @@ class _DialogoMovimientoState extends ConsumerState<DialogoMovimiento> {
     decoration: const InputDecoration(labelText: 'Categoría'),
     items: [
       if (conPorClasificar)
-        const DropdownMenuItem<String?>(value: null, child: Text('Por clasificar')),
+        const DropdownMenuItem<String?>(
+          value: null,
+          child: Text('Por clasificar'),
+        ),
       for (final x in _categorias)
         DropdownMenuItem<String?>(value: x.id, child: Text(d.arbol.ruta(x.id))),
     ],
@@ -255,15 +261,28 @@ class _DialogoMovimientoState extends ConsumerState<DialogoMovimiento> {
             _origen,
             (v) => setState(() => _origen = v),
           ),
-          _desplegableCuenta('Entró a', recibir, _destino, (v) => setState(() => _destino = v)),
+          _desplegableCuenta(
+            'Entró a',
+            recibir,
+            _destino,
+            (v) => setState(() => _destino = v),
+          ),
           CampoMonto(controlador: _monto, etiqueta: 'Monto'),
         ];
       case TipoMovimiento.transferencia:
         return [
-          _desplegableCuenta('Sale de', recibir, _origen, (v) => setState(() => _origen = v)),
+          _desplegableCuenta(
+            'Sale de',
+            recibir,
+            _origen,
+            (v) => setState(() => _origen = v),
+          ),
           _desplegableCuenta(
             'Entra a (puede ser otro libro: aportación)',
-            [for (final x in _activosEscribibles()) if (x.id != _origen) x],
+            [
+              for (final x in _activosEscribibles())
+                if (x.id != _origen) x,
+            ],
             _destino,
             (v) => setState(() => _destino = v),
           ),
@@ -271,7 +290,12 @@ class _DialogoMovimientoState extends ConsumerState<DialogoMovimiento> {
         ];
       case TipoMovimiento.pagoDeuda:
         return [
-          _desplegableCuenta('Sale de', recibir, _origen, (v) => setState(() => _origen = v)),
+          _desplegableCuenta(
+            'Sale de',
+            recibir,
+            _origen,
+            (v) => setState(() => _origen = v),
+          ),
           _desplegableCuenta(
             'Deuda (tarjeta o préstamo)',
             _cuentasLibro((x) => x.clase == ClaseCuenta.pasivo),
@@ -293,7 +317,10 @@ class _DialogoMovimientoState extends ConsumerState<DialogoMovimiento> {
           ),
           _desplegableCuenta(
             'Regresó a',
-            [...recibir, ..._cuentasLibro((x) => x.clase == ClaseCuenta.pasivo)],
+            [
+              ...recibir,
+              ..._cuentasLibro((x) => x.clase == ClaseCuenta.pasivo),
+            ],
             _destino,
             (v) => setState(() => _destino = v),
           ),
@@ -344,15 +371,26 @@ class _DialogoMovimientoState extends ConsumerState<DialogoMovimiento> {
           padding: const EdgeInsets.all(24),
           shrinkWrap: true,
           children: [
-            Text('Registrar movimiento', style: Theme.of(context).textTheme.titleLarge),
-            Text('Libro: ${opcionDe(c.libro!, c.permiso, c.personaId).etiqueta}'),
+            Text(
+              'Registrar movimiento',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            Text(
+              'Libro: ${opcionDe(c.libro!, c.permiso, c.personaId).etiqueta}',
+            ),
             const SizedBox(height: 12),
             SegmentedButton<TipoMovimiento>(
               key: const ValueKey('movimiento-tipo'),
               showSelectedIcon: false,
               segments: const [
-                ButtonSegment(value: TipoMovimiento.gasto, label: Text('Gasto')),
-                ButtonSegment(value: TipoMovimiento.ingreso, label: Text('Ingreso')),
+                ButtonSegment(
+                  value: TipoMovimiento.gasto,
+                  label: Text('Gasto'),
+                ),
+                ButtonSegment(
+                  value: TipoMovimiento.ingreso,
+                  label: Text('Ingreso'),
+                ),
                 ButtonSegment(
                   value: TipoMovimiento.transferencia,
                   label: Text('Transferencia'),
@@ -361,7 +399,10 @@ class _DialogoMovimientoState extends ConsumerState<DialogoMovimiento> {
                   value: TipoMovimiento.pagoDeuda,
                   label: Text('Pago de deuda'),
                 ),
-                ButtonSegment(value: TipoMovimiento.reembolso, label: Text('Reembolso')),
+                ButtonSegment(
+                  value: TipoMovimiento.reembolso,
+                  label: Text('Reembolso'),
+                ),
                 ButtonSegment(
                   value: TipoMovimiento.reclasificacion,
                   label: Text('Clasificar'),

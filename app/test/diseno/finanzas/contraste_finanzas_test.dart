@@ -21,7 +21,7 @@ void _minimo(Color texto, Color fondo, double minimo, String que) {
 /// Todos los juegos de valores que pueden dibujar los componentes: cada estilo
 /// incluido, de día y de noche, con cada personalidad de la sección 5.
 Iterable<(String, ValoresDiseno)> _todos() sync* {
-  for (final estilo in estilosIncluidos) {
+  for (final estilo in [...estilosIncluidos, ...estilosEnPausa]) {
     for (final brillo in Brightness.values) {
       for (final p in PersonalidadModulo.todas) {
         yield (

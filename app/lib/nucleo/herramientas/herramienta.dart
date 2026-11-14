@@ -85,6 +85,12 @@ abstract class Herramienta {
   /// Roles que la pueden usar (D5). Fuera de estos roles la herramienta no existe.
   Set<Rol> get roles;
 
+  /// Módulo de cuya fila de la matriz de permisos depende la herramienta.
+  /// Por omisión, [modulo]. Las herramientas de voz de Alimentación (bocinas,
+  /// D6) lo fijan en Casa: la cuenta Casa no abre Alimentación, pero sí usa
+  /// la bocina de la casa (casa × casa × leer).
+  Modulo get moduloDePermiso => modulo;
+
   /// `true` si escribe datos: siempre pide confirmación antes de ejecutarse.
   bool get escribe;
 

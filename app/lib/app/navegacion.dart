@@ -14,9 +14,27 @@ import '../nucleo/permisos/permisos.dart';
 /// Rutas propias de la plataforma (además de las del contrato `Rutas`).
 abstract final class RutasApp {
   static const mas = '/mas';
+
+  /// D24: el familiar pide ver las finanzas de Papá. Única ruta de Finanzas
+  /// que el router deja abrir al familiar, y solo la pantalla de pedir.
+  static const vistaPapa = '${Rutas.finanzas}/vista-papa';
   static const cuidadosMedicamentos = '${Rutas.cuidados}/medicamentos';
   static const cuidadosComidas = '${Rutas.cuidados}/comidas';
   static const cuidadosBitacora = '${Rutas.cuidados}/bitacora';
+
+  /// Fase 5 (8f): instrucciones para la cuidadora principal.
+  static const cuidadosInstrucciones = '${Rutas.cuidados}/instrucciones';
+
+  /// Fase 5: consentimiento de la pareja y autorización de la hermana.
+  static const cuidadosConsentimientos = '${Rutas.cuidados}/consentimientos';
+
+  /// Resumen del día de Papá (solo conteos): la pareja con consentimiento y el
+  /// dueño.
+  static const cuidadosResumenDia = '${Rutas.cuidados}/resumen-dia';
+
+  /// "Tengo una invitación": registro y aceptación del código del dueño (E3,
+  /// Fase 4). Se abre **sin sesión**; con sesión, lleva al inicio.
+  static const invitacion = '/invitacion';
 
   /// Registros que el servidor no aceptó y requieren atención (I4).
   static const pendientes = '/pendientes';
@@ -55,6 +73,42 @@ bool esRutaReservadaDeHabitos(String ubicacion) {
   final primero = ubicacion.substring(base.length).split('/').first;
   return segmentosReservadosDeHabitos.contains(primero);
 }
+
+/// Quién abre `/cuidados/instrucciones` (8f). El guardia no conoce el perfil de
+/// Cuidados (lo dice el servidor, `cui_perfil`): deja pasar a los **roles** que
+/// pueden tener un perfil con acceso y la **pantalla** decide qué ve cada
+/// perfil (`PermisosCuidados`): dueño y pareja (coadministrador, con o sin
+/// consentimiento) y la hermana (cuidador) dejan instrucciones; la cuidadora
+/// principal (cuidador) las ve en solo lectura. Casa y la cuenta maestra no
+/// entran.
+bool puedeAbrirInstrucciones(Rol rol, {bool esMaestra = false}) =>
+    !esMaestra &&
+    (rol == Rol.dueno || rol == Rol.coadministrador || rol == Rol.cuidador);
+
+/// Quién abre `/cuidados/consentimientos`: la pareja (coadministrador) da o
+/// retira el suyo y el dueño ve el estado. La cuenta maestra que no es la
+/// dueña (solo lectura total, D19) no entra.
+bool puedeAbrirConsentimientos(Rol rol, {bool esMaestra = false}) =>
+    !esSoloLectura(rol, esMaestra: esMaestra) &&
+    (rol == Rol.dueno || rol == Rol.coadministrador);
+
+/// Quién abre `/cuidados/resumen-dia`: misma regla que Consentimientos (dueño y
+/// pareja; la cuenta maestra de solo lectura no). La pareja llega **sin
+/// consentimiento**: la especificación (Fase 5, §4) le da "los turnos y el
+/// resumen de Papá"; el consentimiento explícito es solo para la bitácora. El
+/// servidor decide los datos.
+bool puedeAbrirResumenDia(Rol rol, {bool esMaestra = false}) =>
+    puedeAbrirConsentimientos(rol, esMaestra: esMaestra);
+
+/// Accesos "Instrucciones" y "Consentimientos" de Más (teléfono y tablet) y
+/// de la franja de la laptop: los ven el dueño y la pareja. La hermana y la
+/// cuidadora (cuidador) llegan a Instrucciones desde su turno, no desde aquí.
+bool veAccesoInstrucciones(Rol rol, {bool esMaestra = false}) =>
+    puedeAbrirInstrucciones(rol, esMaestra: esMaestra) && rol != Rol.cuidador;
+
+/// Ver [veAccesoInstrucciones].
+bool veAccesoConsentimientos(Rol rol, {bool esMaestra = false}) =>
+    puedeAbrirConsentimientos(rol, esMaestra: esMaestra);
 
 /// Una pestaña de la barra inferior (teléfono) o del riel lateral (tablet).
 class Destino {
@@ -336,9 +390,15 @@ String? calcularRedireccion({
   bool esMaestra = false,
   bool enAccionDeTabletCasa = false,
 }) {
-  if (rol == null) return ubicacion == Rutas.entrar ? null : Rutas.entrar;
+  if (rol == null) {
+    return ubicacion == Rutas.entrar || ubicacion == RutasApp.invitacion
+        ? null
+        : Rutas.entrar;
+  }
   final inicio = inicioDe(rol);
-  if (ubicacion == Rutas.entrar) return inicio;
+  if (ubicacion == Rutas.entrar || ubicacion == RutasApp.invitacion) {
+    return inicio;
+  }
   if (ubicacion == Rutas.inicio) {
     if (enAccionDeTabletCasa) return null;
     return inicio == Rutas.inicio ? null : inicio;
@@ -355,6 +415,28 @@ String? calcularRedireccion({
     // La maestra nunca recibe avisos de dinero (regla 41); familiar, cuidador
     // y Casa tampoco ven nada de Finanzas.
     return puedeAbrir(rol, Modulo.finanzas) && !esMaestra ? null : inicio;
+  }
+  // D24 (excepción estrecha): solo el familiar, solo esta ruta exacta. La
+  // matriz de permisos no cambia: los datos los entrega el servidor (RLS)
+  // solo durante una vista autorizada.
+  if (rol == Rol.familiar && ubicacion == RutasApp.vistaPapa) return null;
+  // Fase 5 (excepción estrecha, solo estas tres rutas exactas): la pareja
+  // (coadministrador) no abre Cuidados sin consentimiento
+  // (dependeDelConsentimiento), pero siempre puede dejar instrucciones y dar o
+  // retirar su consentimiento. No se abre nada más de Cuidados: la bitácora,
+  // las entregas y lo clínico siguen bloqueados. Casa y la cuenta maestra se
+  // devuelven al inicio aunque Casa abra Cuidados (recordatorios genéricos).
+  // Los datos los protege el servidor (RLS).
+  if (ubicacion == RutasApp.cuidadosInstrucciones) {
+    return puedeAbrirInstrucciones(rol, esMaestra: esMaestra) ? null : inicio;
+  }
+  if (ubicacion == RutasApp.cuidadosConsentimientos) {
+    return puedeAbrirConsentimientos(rol, esMaestra: esMaestra) ? null : inicio;
+  }
+  // Tercera excepción, igual de estrecha: el resumen del día (solo conteos);
+  // la pareja entra sin consentimiento (spec Fase 5, §4).
+  if (ubicacion == RutasApp.cuidadosResumenDia) {
+    return puedeAbrirResumenDia(rol, esMaestra: esMaestra) ? null : inicio;
   }
   final modulo = moduloDeRuta(ubicacion);
   if (modulo != null && !puedeAbrir(rol, modulo)) return inicio;

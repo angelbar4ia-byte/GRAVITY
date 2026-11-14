@@ -84,6 +84,16 @@ class ErrorInvitacion implements Exception {
 }
 
 abstract interface class RepositorioInvitaciones {
+  /// Invita a [correo] con [rol] (coadministrador, familiar, cuidador o casa;
+  /// el dueño no se invita). Una sola invitación pendiente por correo: la
+  /// anterior se revoca. El código sale **una sola vez** (E3 de la Fase 4).
+  Future<InvitacionCreada> invitar({
+    required String hogarId,
+    required String correo,
+    required String rol,
+    int vigenciaDias = 7,
+  });
+
   /// Invita a [correo] como cuenta maestra: rol coadministrador con la marca
   /// de maestra. La persona es **otra** (no puede ser ya del hogar).
   Future<InvitacionCreada> crearCuentaMaestra({
@@ -134,6 +144,31 @@ class RepositorioInvitacionesSupabase implements RepositorioInvitaciones {
   }
 
   @override
+  Future<InvitacionCreada> invitar({
+    required String hogarId,
+    required String correo,
+    required String rol,
+    int vigenciaDias = 7,
+  }) => _seguro(() async {
+    final fila = _primera(
+      await _cliente().rpc(
+        'crear_invitacion',
+        params: {
+          'p_hogar_id': hogarId,
+          'p_correo': correo.trim(),
+          'p_rol': rol,
+          'p_vigencia_dias': vigenciaDias,
+        },
+      ),
+    );
+    return InvitacionCreada(
+      id: '${fila['invitacion_id']}',
+      token: '${fila['token']}',
+      expira: DateTime.parse('${fila['expira']}'),
+    );
+  });
+
+  @override
   Future<InvitacionCreada> crearCuentaMaestra({
     required String hogarId,
     required String correo,
@@ -159,34 +194,35 @@ class RepositorioInvitacionesSupabase implements RepositorioInvitaciones {
   });
 
   @override
-  Future<List<InvitacionPendiente>> pendientes(String hogarId) => _seguro(() async {
-    Future<List<Map<String, dynamic>>> leer(String columnas) => _cliente()
-        .from('invitaciones')
-        .select(columnas)
-        .eq('hogar_id', hogarId)
-        .isFilter('aceptada_en', null)
-        .isFilter('revocada_en', null);
-    List<Map<String, dynamic>> filas;
-    try {
-      filas = await leer('id, correo, rol, es_maestra, expira_en');
-    } on PostgrestException catch (error) {
-      // Servidor sin la columna de la maestra todavía: ninguna lo es.
-      if (error.code != '42703' && error.code != 'PGRST204') rethrow;
-      filas = await leer('id, correo, rol, expira_en');
-    }
-    final ahora = _reloj();
-    return [
-      for (final f in filas)
-        if (DateTime.parse('${f['expira_en']}').isAfter(ahora))
-          InvitacionPendiente(
-            id: '${f['id']}',
-            correo: '${f['correo']}',
-            rol: '${f['rol']}',
-            esMaestra: f['es_maestra'] == true,
-            expira: DateTime.parse('${f['expira_en']}'),
-          ),
-    ];
-  });
+  Future<List<InvitacionPendiente>> pendientes(String hogarId) =>
+      _seguro(() async {
+        Future<List<Map<String, dynamic>>> leer(String columnas) => _cliente()
+            .from('invitaciones')
+            .select(columnas)
+            .eq('hogar_id', hogarId)
+            .isFilter('aceptada_en', null)
+            .isFilter('revocada_en', null);
+        List<Map<String, dynamic>> filas;
+        try {
+          filas = await leer('id, correo, rol, es_maestra, expira_en');
+        } on PostgrestException catch (error) {
+          // Servidor sin la columna de la maestra todavía: ninguna lo es.
+          if (error.code != '42703' && error.code != 'PGRST204') rethrow;
+          filas = await leer('id, correo, rol, expira_en');
+        }
+        final ahora = _reloj();
+        return [
+          for (final f in filas)
+            if (DateTime.parse('${f['expira_en']}').isAfter(ahora))
+              InvitacionPendiente(
+                id: '${f['id']}',
+                correo: '${f['correo']}',
+                rol: '${f['rol']}',
+                esMaestra: f['es_maestra'] == true,
+                expira: DateTime.parse('${f['expira_en']}'),
+              ),
+        ];
+      });
 
   @override
   Future<void> revocar(String invitacionId) => _seguro(
@@ -197,18 +233,19 @@ class RepositorioInvitacionesSupabase implements RepositorioInvitaciones {
   );
 
   @override
-  Future<CuentaMaestraActual?> maestraActual(String hogarId) => _seguro(() async {
-    final respuesta = await _cliente().rpc(
-      'cuenta_maestra',
-      params: {'p_hogar_id': hogarId},
-    );
-    final fila = respuesta is List ? respuesta.firstOrNull : respuesta;
-    if (fila is! Map) return null;
-    return CuentaMaestraActual(
-      personaId: '${fila['persona_id']}',
-      nombre: '${fila['nombre_visible']}',
-    );
-  });
+  Future<CuentaMaestraActual?> maestraActual(String hogarId) =>
+      _seguro(() async {
+        final respuesta = await _cliente().rpc(
+          'cuenta_maestra',
+          params: {'p_hogar_id': hogarId},
+        );
+        final fila = respuesta is List ? respuesta.firstOrNull : respuesta;
+        if (fila is! Map) return null;
+        return CuentaMaestraActual(
+          personaId: '${fila['persona_id']}',
+          nombre: '${fila['nombre_visible']}',
+        );
+      });
 }
 
 /// En memoria: modo demostración (sin servidor) y pruebas. Aplica las reglas
@@ -233,6 +270,43 @@ class RepositorioInvitacionesEnMemoria implements RepositorioInvitaciones {
 
   /// Simula que no hay señal.
   bool sinConexion = false;
+
+  @override
+  Future<InvitacionCreada> invitar({
+    required String hogarId,
+    required String correo,
+    required String rol,
+    int vigenciaDias = 7,
+  }) async {
+    if (sinConexion) throw ErrorInvitacion.sinConexion;
+    if (rol == 'dueno' || !_rolesInvitables.contains(rol)) {
+      throw const ErrorInvitacion('Rol no válido para una invitación.');
+    }
+    final limpio = correo.trim().toLowerCase();
+    if (correosDeMiembros.contains(limpio)) {
+      throw const ErrorInvitacion('Ese correo ya es de una persona del hogar.');
+    }
+    _pendientes.removeWhere((i) => i.correo == limpio);
+    final id = 'invitacion-${_siguiente++}';
+    final expira = _reloj().add(Duration(days: vigenciaDias));
+    _pendientes.add(
+      InvitacionPendiente(
+        id: id,
+        correo: limpio,
+        rol: rol,
+        esMaestra: false,
+        expira: expira,
+      ),
+    );
+    return InvitacionCreada(id: id, token: 'token-de-ejemplo-$id', expira: expira);
+  }
+
+  static const _rolesInvitables = {
+    'coadministrador',
+    'familiar',
+    'cuidador',
+    'casa',
+  };
 
   @override
   Future<InvitacionCreada> crearCuentaMaestra({
@@ -261,7 +335,11 @@ class RepositorioInvitacionesEnMemoria implements RepositorioInvitaciones {
         expira: expira,
       ),
     );
-    return InvitacionCreada(id: id, token: 'token-de-ejemplo-$id', expira: expira);
+    return InvitacionCreada(
+      id: id,
+      token: 'token-de-ejemplo-$id',
+      expira: expira,
+    );
   }
 
   @override

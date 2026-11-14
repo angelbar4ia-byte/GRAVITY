@@ -115,7 +115,8 @@ class RepositorioAvisosSupabase implements RepositorioAvisos {
       .limit(100)
       .map(
         (filas) => [
-          for (final fila in filas) Aviso.desdeJson(fila.cast<String, Object?>()),
+          for (final fila in filas)
+            Aviso.desdeJson(fila.cast<String, Object?>()),
         ],
       );
 
@@ -127,7 +128,10 @@ class RepositorioAvisosSupabase implements RepositorioAvisos {
 
   @override
   Future<PreferenciasAvisos?> preferencias() async {
-    final fila = await _cliente().from('avisos_preferencias').select().maybeSingle();
+    final fila = await _cliente()
+        .from('avisos_preferencias')
+        .select()
+        .maybeSingle();
     return fila == null
         ? null
         : PreferenciasAvisos.desdeJson(fila.cast<String, Object?>());
@@ -203,8 +207,8 @@ class RepositorioAvisosEnMemoria implements RepositorioAvisos {
     _cambios.add(_ordenados());
   }
 
-  List<Aviso> _ordenados() => avisos.values.toList()
-    ..sort((a, b) => b.creadoEn.compareTo(a.creadoEn));
+  List<Aviso> _ordenados() =>
+      avisos.values.toList()..sort((a, b) => b.creadoEn.compareTo(a.creadoEn));
 
   @override
   Future<Aviso?> leer(String id) async {

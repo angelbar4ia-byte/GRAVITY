@@ -10,7 +10,28 @@ import 'package:flutter/painting.dart';
 
 import 'valores_diseno.dart';
 
+/// Qué tanto de la mancha de color se mezcla con el fondo (0 a 1). La mancha
+/// nunca es más clara ni más oscura que [SuperficiesDiseno.manchaFondo].
+const double mezclaMancha = 0.06;
+
 extension SuperficiesDiseno on ValoresDiseno {
+  /// Color de la mancha difuminada del fondo de vidrio: el segundo color del
+  /// fondo con un poco de acento. Es el color **más extremo** que el fondo
+  /// llega a tener (el degradado se dibuja con él como tope).
+  Color get manchaFondo =>
+      fondoFin == null ? fondo : Color.lerp(fondoFin, acento, mezclaMancha)!;
+
+  /// Los fondos sobre los que puede quedar cualquier cosa: el fondo, su
+  /// segundo color y la mancha. Las pruebas de contraste de los estilos de
+  /// vidrio revisan el texto contra **cada uno** (el peor caso).
+  List<Color> get fondosExtremos => [fondo, ?fondoFin, manchaFondo];
+
+  /// El panel de vidrio ya sobre [fondoExtremo] (lo que se ve con el
+  /// esmerilado). Sin vidrio, el panel liso.
+  Color panelSobre(Color fondoExtremo) => panelTranslucido == null
+      ? panel
+      : Color.alphaBlend(panelTranslucido!, fondoExtremo);
+
   /// Pista de barras, medidores y anillos (la parte "vacía"). En alto
   /// contraste el borde es muy marcado, así que la pista se aclara para que el
   /// avance se distinga de ella (3:1 o más).

@@ -188,6 +188,9 @@ void main() {
       nivel2: 'Luz',
       naturaleza: 'fija',
     );
-    expect(f.toString(), 'FilaPlantilla(fila 4: Vivienda y servicios > Luz · fija)');
+    expect(
+      f.toString(),
+      'FilaPlantilla(fila 4: Vivienda y servicios > Luz · fija)',
+    );
   });
 }

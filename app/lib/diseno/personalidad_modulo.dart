@@ -72,7 +72,7 @@ class PersonalidadModulo {
 
   /// Tipografía de números y montos; `null` conserva la del estilo. Finanzas
   /// la fija en una de ancho fijo para que las cifras se alineen en las tablas
-  /// aunque el estilo global use otra (p. ej. Anton en Swagger).
+  /// aunque el estilo global use otra.
   final String? fuenteNumeros;
 
   /// Excepción por función: siempre en alto contraste (Cuidados, bici).
@@ -269,6 +269,7 @@ class PersonalidadModulo {
       escalaLectura: escalaLectura,
       fuenteNumeros: fuenteNumeros,
       decoracion: sinDecoracion ? false : null,
+      quitarVidrio: sinDecoracion,
     );
   }
 
@@ -326,6 +327,7 @@ ValoresDiseno valoresAltoContraste(ValoresDiseno base) {
           alerta: const Color(0xFF6B4700),
           peligro: const Color(0xFF9B1C14),
           altoContraste: true,
+          quitarVidrio: true,
         )
       : base.copyWith(
           fondo: const Color(0xFF000000),
@@ -339,6 +341,7 @@ ValoresDiseno valoresAltoContraste(ValoresDiseno base) {
           alerta: const Color(0xFFFFD54F),
           peligro: const Color(0xFFFF8A80),
           altoContraste: true,
+          quitarVidrio: true,
         );
   final acento = razonContraste(base.acento, v.fondo) >= 7
       ? base.acento

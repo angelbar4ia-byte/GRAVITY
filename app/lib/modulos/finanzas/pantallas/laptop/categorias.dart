@@ -38,7 +38,9 @@ class PantallaCategorias extends StatelessWidget {
 Future<void> crearCategoria(BuildContext context, Categoria? padre) async {
   final nombre = await pedirTexto(
     context,
-    titulo: padre == null ? 'Nueva categoría' : 'Nueva dentro de ${padre.nombre}',
+    titulo: padre == null
+        ? 'Nueva categoría'
+        : 'Nueva dentro de ${padre.nombre}',
     etiqueta: 'Nombre',
     textoAccion: 'Crear',
   );
@@ -46,10 +48,9 @@ Future<void> crearCategoria(BuildContext context, Categoria? padre) async {
   final ref = ProviderScope.containerOf(context);
   await intentar(
     context,
-    () => ref.read(servicioFinanzasProvider).crearCategoria(
-      nombre: nombre,
-      padreId: padre?.id,
-    ),
+    () => ref
+        .read(servicioFinanzasProvider)
+        .crearCategoria(nombre: nombre, padreId: padre?.id),
   );
 }
 
@@ -75,10 +76,12 @@ class _CategoriasState extends ConsumerState<_Categorias> {
     final gastoPorCategoria = <String, int>{};
     for (final m in vista.movimientos) {
       if (!periodo.contiene(m.fecha) || m.categoriaId == null) continue;
-      final destino = vista.cuenta(m.cuentaDestinoId).clase == ClaseCuenta.gasto;
+      final destino =
+          vista.cuenta(m.cuentaDestinoId).clase == ClaseCuenta.gasto;
       final origen = vista.cuenta(m.cuentaOrigenId).clase == ClaseCuenta.gasto;
       final delta = (destino ? m.monto : 0) - (origen ? m.monto : 0);
-      gastoPorCategoria[m.categoriaId!] = (gastoPorCategoria[m.categoriaId!] ?? 0) + delta;
+      gastoPorCategoria[m.categoriaId!] =
+          (gastoPorCategoria[m.categoriaId!] ?? 0) + delta;
     }
     int gastoDe(String id) => arbol
         .conDescendientes(id)
@@ -94,7 +97,9 @@ class _CategoriasState extends ConsumerState<_Categorias> {
         mensaje: 'Aún no hay categorías.',
         detalle: 'Importa la plantilla (hoja Categorías) o crea las tuyas.',
         textoAccion: editable ? 'Importar datos' : null,
-        alAccionar: editable ? () => context.go(SeccionFinanzas.importar.ruta) : null,
+        alAccionar: editable
+            ? () => context.go(SeccionFinanzas.importar.ruta)
+            : null,
       );
     }
     return ContenidoLaptop(
@@ -138,7 +143,10 @@ class _CategoriasState extends ConsumerState<_Categorias> {
                       child: Column(
                         children: [
                           ListTile(
-                            title: _Titulo(categoria: sub, gasto: gastoDe(sub.id)),
+                            title: _Titulo(
+                              categoria: sub,
+                              gasto: gastoDe(sub.id),
+                            ),
                             trailing: editable ? _Menu(categoria: sub) : null,
                           ),
                           for (final det in arbol.hijas(sub.id))
@@ -147,8 +155,13 @@ class _CategoriasState extends ConsumerState<_Categorias> {
                                 padding: const EdgeInsets.only(left: 24),
                                 child: ListTile(
                                   dense: true,
-                                  title: _Titulo(categoria: det, gasto: gastoDe(det.id)),
-                                  trailing: editable ? _Menu(categoria: det) : null,
+                                  title: _Titulo(
+                                    categoria: det,
+                                    gasto: gastoDe(det.id),
+                                  ),
+                                  trailing: editable
+                                      ? _Menu(categoria: det)
+                                      : null,
                                 ),
                               ),
                         ],
@@ -183,7 +196,15 @@ class _Titulo extends StatelessWidget {
   );
 }
 
-enum _Accion { nueva, renombrar, protegida, prioridad, ocultar, archivar, eliminar }
+enum _Accion {
+  nueva,
+  renombrar,
+  protegida,
+  prioridad,
+  ocultar,
+  archivar,
+  eliminar,
+}
 
 class _Menu extends ConsumerWidget {
   const _Menu({required this.categoria});
@@ -209,26 +230,34 @@ class _Menu extends ConsumerWidget {
               inicial: x.nombre,
             );
             if (nombre != null && context.mounted) {
-              await intentar(context, () => servicio.cambiarCategoria(x.copiar(nombre: nombre)));
+              await intentar(
+                context,
+                () => servicio.cambiarCategoria(x.copiar(nombre: nombre)),
+              );
             }
           case _Accion.protegida:
             await intentar(
               context,
-              () => servicio.cambiarCategoria(x.copiar(protegida: !x.protegida)),
+              () =>
+                  servicio.cambiarCategoria(x.copiar(protegida: !x.protegida)),
             );
           case _Accion.prioridad:
-            final siguiente =
-                Prioridad.values[(x.prioridad.index + 1) % Prioridad.values.length];
+            final siguiente = Prioridad
+                .values[(x.prioridad.index + 1) % Prioridad.values.length];
             await intentar(
               context,
               () => servicio.cambiarCategoria(x.copiar(prioridad: siguiente)),
             );
           case _Accion.ocultar:
-            await intentar(context, () => servicio.cambiarCategoria(x.copiar(oculta: !x.oculta)));
+            await intentar(
+              context,
+              () => servicio.cambiarCategoria(x.copiar(oculta: !x.oculta)),
+            );
           case _Accion.archivar:
             await intentar(
               context,
-              () => servicio.cambiarCategoria(x.copiar(archivada: !x.archivada)),
+              () =>
+                  servicio.cambiarCategoria(x.copiar(archivada: !x.archivada)),
             );
           case _Accion.eliminar:
             if (await confirmar(
@@ -243,8 +272,15 @@ class _Menu extends ConsumerWidget {
         }
       },
       itemBuilder: (_) => [
-        if (x.nivel < 3) const PopupMenuItem(value: _Accion.nueva, child: Text('Nueva dentro…')),
-        const PopupMenuItem(value: _Accion.renombrar, child: Text('Renombrar…')),
+        if (x.nivel < 3)
+          const PopupMenuItem(
+            value: _Accion.nueva,
+            child: Text('Nueva dentro…'),
+          ),
+        const PopupMenuItem(
+          value: _Accion.renombrar,
+          child: Text('Renombrar…'),
+        ),
         PopupMenuItem(
           value: _Accion.protegida,
           child: Text(x.protegida ? 'Quitar protección' : 'Proteger'),
@@ -253,12 +289,18 @@ class _Menu extends ConsumerWidget {
           value: _Accion.prioridad,
           child: Text('Prioridad: ${nombrePrioridad(x.prioridad)} (cambiar)'),
         ),
-        PopupMenuItem(value: _Accion.ocultar, child: Text(x.oculta ? 'Mostrar' : 'Ocultar')),
+        PopupMenuItem(
+          value: _Accion.ocultar,
+          child: Text(x.oculta ? 'Mostrar' : 'Ocultar'),
+        ),
         PopupMenuItem(
           value: _Accion.archivar,
           child: Text(x.archivada ? 'Desarchivar' : 'Archivar'),
         ),
-        const PopupMenuItem(value: _Accion.eliminar, child: Text('Eliminar (sin datos)')),
+        const PopupMenuItem(
+          value: _Accion.eliminar,
+          child: Text('Eliminar (sin datos)'),
+        ),
       ],
     );
   }

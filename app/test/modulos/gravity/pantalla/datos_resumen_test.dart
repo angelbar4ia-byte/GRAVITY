@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gravity/app/sesion_efectiva.dart';
+import 'package:gravity/modulos/finanzas/estado/resumen_hoy.dart';
 import 'package:gravity/modulos/gravity/pantalla/hoy_telefono.dart';
 import 'package:gravity/modulos/gravity/pantalla/pantalla_principal.dart';
 import 'package:gravity/modulos/gravity/pantalla/resumen_gravity.dart';
@@ -73,6 +74,7 @@ void main() {
           tester,
           const PantallaPrincipalGravity(),
           datos: ResumenGravity.sinDatosTodavia,
+          finanzasHoy: ResumenFinanzasHoy.sinAcceso,
         );
         expect(tester.takeException(), isNull);
         expect(
@@ -83,10 +85,10 @@ void main() {
         expect(find.text('Sin datos todavía'), findsOneWidget);
         for (final llave in [
           'panel-hoy',
-          'panel-finanzas',
+          'finanzas-hoy',
           'panel-cuidados',
           'panel-avisos',
-          'monto-quedan',
+          'finanzas-hoy-quedan-libro-ejemplo',
         ]) {
           expect(find.byKey(ValueKey(llave)), findsNothing, reason: llave);
         }
@@ -112,6 +114,9 @@ void main() {
               ServicioSesionFalso.con(Rol.dueno),
             ),
             rolEfectivoProvider.overrideWithValue(Rol.dueno),
+            resumenFinanzasHoyProvider.overrideWithValue(
+              ResumenFinanzasHoy.sinAcceso,
+            ),
           ],
           child: const AppDePrueba(home: PantallaHoyTelefono()),
         ),

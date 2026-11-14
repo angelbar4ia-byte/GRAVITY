@@ -13,12 +13,14 @@ import 'package:finanzas_dominio/finanzas_dominio.dart'
         BolsaAhorro,
         NivelFondo,
         NivelAlerta;
-import 'package:finanzas_dominio/finanzas_dominio.dart' as dom
-    show BolsaAhorro;
+import 'package:finanzas_dominio/finanzas_dominio.dart' as dom show BolsaAhorro;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uuid/uuid.dart';
 
+import '../../../../nucleo/conectividad/conectividad.dart' show hayRedProvider;
 import '../../casos_uso/servicio_fase2.dart';
+import '../../datos/repositorio.dart' show ErrorFinanzas;
 import '../../importacion/lector_ficha.dart';
 import '../../importacion/lector_xlsx.dart' show ErrorArchivo;
 import '../../estado/proveedores.dart';
@@ -26,13 +28,22 @@ import '../../estado/proveedores_fase2.dart';
 import '../comunes.dart';
 import '../laptop/importar.dart' show ArchivoElegido, selectorArchivoProvider;
 
-class _Forma extends StatelessWidget {
+/// Marco de los formularios de la Fase 2. Con [necesitaSenal] (estados de
+/// cuenta, aportaciones y retiros de ahorro: el servidor liga el movimiento al
+/// guardarlo, F4-3.7):
+///
+/// - al abrir sin señal avisa *"Sin señal: podrás revisar, pero no guardar"* y
+///   deshabilita Guardar con la razón visible (no en silencio);
+/// - si la señal se cae al guardar, **no guarda nada**, no cierra ni borra lo
+///   escrito y dice en el mismo formulario qué pasó, con *Reintentar*.
+class _Forma extends ConsumerStatefulWidget {
   const _Forma({
     required this.titulo,
     required this.forma,
     required this.campos,
     required this.alGuardar,
     this.textoGuardar = 'Guardar',
+    this.necesitaSenal = false,
   });
 
   final String titulo;
@@ -40,41 +51,126 @@ class _Forma extends StatelessWidget {
   final List<Widget> campos;
   final Future<void> Function() alGuardar;
   final String textoGuardar;
+  final bool necesitaSenal;
 
   @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: Text(titulo),
-    content: SizedBox(
-      width: 480,
-      child: Form(
-        key: forma,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              for (final c in campos)
-                Padding(padding: const EdgeInsets.only(bottom: 8), child: c),
-            ],
+  ConsumerState<_Forma> createState() => _FormaState();
+}
+
+class _FormaState extends ConsumerState<_Forma> {
+  /// Mensaje de "necesita conexión" tras un intento fallido por falta de señal.
+  String? _sinSenal;
+  bool _guardando = false;
+
+  Future<void> _guardar() async {
+    if (!(widget.forma.currentState?.validate() ?? false)) return;
+    final navegador = Navigator.of(context);
+    setState(() {
+      _guardando = true;
+      _sinSenal = null;
+    });
+    try {
+      await widget.alGuardar();
+      navegador.pop();
+      return;
+    } on ErrorFinanzas catch (e) {
+      if (!mounted) return;
+      if (widget.necesitaSenal && e.sinConexion) {
+        setState(() => _sinSenal = ErrorFinanzas.necesitaConexion.mensaje);
+      } else {
+        avisarError(context, e);
+      }
+    } catch (e) {
+      if (mounted) avisarError(context, e);
+    }
+    if (mounted) setState(() => _guardando = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hayRed = ref.watch(hayRedProvider);
+    final sinSenal = widget.necesitaSenal && !hayRed;
+    final tema = Theme.of(context);
+    return AlertDialog(
+      title: Text(widget.titulo),
+      content: SizedBox(
+        width: 480,
+        child: Form(
+          key: widget.forma,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (sinSenal)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      key: const ValueKey('dialogo-sin-senal'),
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.cloud_off_outlined, size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Sin señal: podrás revisar, pero no guardar.',
+                            style: tema.textTheme.bodyMedium,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                for (final c in widget.campos)
+                  Padding(padding: const EdgeInsets.only(bottom: 8), child: c),
+                if (_sinSenal != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Row(
+                      key: const ValueKey('dialogo-necesita-conexion'),
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.wifi_off_outlined,
+                          size: 20,
+                          color: tema.colorScheme.error,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _sinSenal!,
+                            style: tema.textTheme.bodyMedium?.copyWith(
+                              color: tema.colorScheme.error,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),
-    ),
-    actions: [
-      TextButton(
-        onPressed: () => Navigator.pop(context),
-        child: const Text('Cancelar'),
-      ),
-      FilledButton(
-        key: const ValueKey('dialogo-guardar'),
-        onPressed: () async {
-          if (!(forma.currentState?.validate() ?? false)) return;
-          final navegador = Navigator.of(context);
-          if (await intentar(context, alGuardar)) navegador.pop();
-        },
-        child: Text(textoGuardar),
-      ),
-    ],
-  );
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancelar'),
+        ),
+        if (_sinSenal != null)
+          OutlinedButton(
+            key: const ValueKey('dialogo-reintentar'),
+            onPressed: _guardando ? null : _guardar,
+            child: const Text('Reintentar'),
+          ),
+        FilledButton(
+          key: const ValueKey('dialogo-guardar'),
+          // Sin señal queda deshabilitado, y el aviso de arriba dice por qué.
+          onPressed: _guardando || sinSenal ? null : _guardar,
+          child: Text(widget.textoGuardar),
+        ),
+      ],
+    );
+  }
 }
 
 class _CampoFecha extends StatelessWidget {
@@ -138,6 +234,7 @@ class _EstadoCuentaState extends ConsumerState<DialogoEstadoDeCuenta> {
   @override
   Widget build(BuildContext context) => _Forma(
     titulo: 'Estado de cuenta · ${widget.deuda.titulo}',
+    necesitaSenal: true,
     forma: _forma,
     campos: [
       _CampoFecha(
@@ -172,7 +269,10 @@ class _EstadoCuentaState extends ConsumerState<DialogoEstadoDeCuenta> {
         etiqueta: 'Intereses del periodo',
         obligatorio: false,
       ),
-      CampoPorcentaje(controlador: _tasa, etiqueta: 'Tasa anual (si la dice el estado)'),
+      CampoPorcentaje(
+        controlador: _tasa,
+        etiqueta: 'Tasa anual (si la dice el estado)',
+      ),
     ],
     alGuardar: () async {
       await ref
@@ -285,7 +385,10 @@ class _MsiState extends ConsumerState<DialogoMsi> {
         ),
         KeyedSubtree(
           key: const ValueKey('msi-total'),
-          child: CampoMonto(controlador: _total, etiqueta: 'Total de la compra'),
+          child: CampoMonto(
+            controlador: _total,
+            etiqueta: 'Total de la compra',
+          ),
         ),
         TextFormField(
           key: const ValueKey('msi-meses'),
@@ -301,7 +404,9 @@ class _MsiState extends ConsumerState<DialogoMsi> {
           key: const ValueKey('msi-dia'),
           controller: _dia,
           keyboardType: TextInputType.number,
-          decoration: const InputDecoration(labelText: 'Día del mes en que pagas'),
+          decoration: const InputDecoration(
+            labelText: 'Día del mes en que pagas',
+          ),
           validator: (v) {
             final n = int.tryParse(v ?? '');
             return n == null || n < 1 || n > 31 ? 'De 1 a 31' : null;
@@ -322,6 +427,7 @@ class _MsiState extends ConsumerState<DialogoMsi> {
         ),
         if (tarjetas.isNotEmpty)
           DropdownButtonFormField<String>(
+            isExpanded: true,
             initialValue: _tarjeta,
             decoration: const InputDecoration(labelText: 'Tarjeta (opcional)'),
             items: [
@@ -365,12 +471,23 @@ class _BolsaState extends ConsumerState<DialogoBolsa> {
   final _nombre = TextEditingController();
   final _monto = TextEditingController();
   final _saldo = TextEditingController();
+  // Porcentaje de los extras que se aparta (D25: 20 % por omisión).
+  final _extrasPct = TextEditingController(text: '20');
+  final Set<MetodoAhorro> _metodos = {};
   TipoBolsaAhorro _tipo = TipoBolsaAhorro.metaLibre;
   Fecha? _fecha;
 
+  /// Los métodos que alimentan la bolsa solos al cerrar la semana.
+  static const _metodosDeCierre = {
+    MetodoAhorro.porcentajeDeExtras: 'Extras',
+    MetodoAhorro.sobrePorCategoria: 'Sobre',
+    MetodoAhorro.sobranteSemanal: 'Sobrante',
+    MetodoAhorro.redondeo: 'Redondeo',
+  };
+
   @override
   void dispose() {
-    for (final c in [_nombre, _monto, _saldo]) {
+    for (final c in [_nombre, _monto, _saldo, _extrasPct]) {
       c.dispose();
     }
     super.dispose();
@@ -402,9 +519,11 @@ class _BolsaState extends ConsumerState<DialogoBolsa> {
           key: const ValueKey('bolsa-nombre'),
           controller: _nombre,
           decoration: const InputDecoration(labelText: 'Nombre'),
-          validator: (v) => (v ?? '').trim().isEmpty ? 'Escribe un nombre' : null,
+          validator: (v) =>
+              (v ?? '').trim().isEmpty ? 'Escribe un nombre' : null,
         ),
         DropdownButtonFormField<TipoBolsaAhorro>(
+          isExpanded: true,
           key: const ValueKey('bolsa-tipo'),
           initialValue: _tipo,
           decoration: const InputDecoration(labelText: 'Tipo'),
@@ -422,8 +541,7 @@ class _BolsaState extends ConsumerState<DialogoBolsa> {
               etiqueta: _tipo == TipoBolsaAhorro.reserva
                   ? 'Monto al año'
                   : 'Meta',
-              obligatorio:
-                  _tipo != TipoBolsaAhorro.metaLibre,
+              obligatorio: _tipo != TipoBolsaAhorro.metaLibre,
             ),
           ),
         if (_tipo == TipoBolsaAhorro.metaFecha)
@@ -438,6 +556,36 @@ class _BolsaState extends ConsumerState<DialogoBolsa> {
           etiqueta: 'Lo que ya tienes ahorrado',
           obligatorio: false,
         ),
+        Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: Text(
+            'Aparta solo al cerrar la semana',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ),
+        Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          children: [
+            for (final e in _metodosDeCierre.entries)
+              FilterChip(
+                key: ValueKey('bolsa-metodo-${e.key.clave}'),
+                label: Text(e.value),
+                selected: _metodos.contains(e.key),
+                onSelected: (sel) => setState(
+                  () => sel ? _metodos.add(e.key) : _metodos.remove(e.key),
+                ),
+              ),
+          ],
+        ),
+        if (_metodos.contains(MetodoAhorro.porcentajeDeExtras))
+          KeyedSubtree(
+            key: const ValueKey('bolsa-extras-pct'),
+            child: CampoPorcentaje(
+              controlador: _extrasPct,
+              etiqueta: '% de tus ingresos extra que se aparta',
+            ),
+          ),
       ],
       alGuardar: () async {
         final monto = centavosDeTexto(_monto.text);
@@ -453,6 +601,10 @@ class _BolsaState extends ConsumerState<DialogoBolsa> {
                   ? (_fecha ?? ref.read(hoyFinanzasProvider).sumarDias(365))
                   : null,
               saldoInicial: centavosDeTexto(_saldo.text) ?? 0,
+              metodos: _metodos.toList(),
+              aportePb: _metodos.contains(MetodoAhorro.porcentajeDeExtras)
+                  ? CampoPorcentaje.puntosBase(_extrasPct.text)
+                  : null,
             );
       },
     );
@@ -478,6 +630,10 @@ class _RetiroState extends ConsumerState<DialogoRetiro> {
   TipoRetiro _tipo = TipoRetiro.usoPrevisto;
   String? _cuenta;
   String? _bolsaDestino;
+
+  // Una vez por formulario: reintentar no duplica el retiro.
+  final String _movimientoId = const Uuid().v4();
+  final String _retiroId = const Uuid().v4();
 
   @override
   void dispose() {
@@ -508,9 +664,11 @@ class _RetiroState extends ConsumerState<DialogoRetiro> {
     return _Forma(
       titulo: 'Retirar de ${widget.bolsa.nombre}',
       textoGuardar: 'Retirar',
+      necesitaSenal: true,
       forma: _forma,
       campos: [
         DropdownButtonFormField<TipoRetiro>(
+          isExpanded: true,
           key: const ValueKey('retiro-tipo'),
           initialValue: _tipo,
           decoration: const InputDecoration(labelText: 'Motivo del retiro'),
@@ -526,6 +684,7 @@ class _RetiroState extends ConsumerState<DialogoRetiro> {
         ),
         if (_tipo == TipoRetiro.cambioDeDestino)
           DropdownButtonFormField<String>(
+            isExpanded: true,
             key: const ValueKey('retiro-bolsa'),
             initialValue: _bolsaDestino,
             decoration: const InputDecoration(labelText: 'A qué bolsa'),
@@ -538,6 +697,7 @@ class _RetiroState extends ConsumerState<DialogoRetiro> {
           )
         else
           DropdownButtonFormField<String>(
+            isExpanded: true,
             key: const ValueKey('retiro-cuenta'),
             initialValue: _cuenta,
             decoration: const InputDecoration(labelText: 'A qué cuenta'),
@@ -553,7 +713,9 @@ class _RetiroState extends ConsumerState<DialogoRetiro> {
           controller: _motivo,
           decoration: const InputDecoration(
             labelText: 'Motivo',
-            helperText: 'Al menos 3 letras o números.',
+            helperText: ayudaDelMotivo,
+            helperMaxLines: 3,
+            errorMaxLines: 3,
           ),
           validator: (v) => motivoValido(v) ? null : mensajeMotivoCorto,
         ),
@@ -567,6 +729,8 @@ class _RetiroState extends ConsumerState<DialogoRetiro> {
             motivo: _motivo.text,
             cuentaDestinoId: _cuenta,
             bolsaDestinoId: _bolsaDestino,
+            movimientoId: _movimientoId,
+            retiroId: _retiroId,
           ),
     );
   }
@@ -617,6 +781,7 @@ class _ConfirmarAportacionState
     return _Forma(
       titulo: 'Apartar para ${widget.nombreBolsa}',
       textoGuardar: 'Confirmar',
+      necesitaSenal: true,
       forma: _forma,
       campos: [
         KeyedSubtree(
@@ -624,6 +789,7 @@ class _ConfirmarAportacionState
           child: CampoMonto(controlador: _monto, etiqueta: 'Monto a apartar'),
         ),
         DropdownButtonFormField<String>(
+          isExpanded: true,
           key: const ValueKey('apartar-cuenta'),
           initialValue: _cuenta,
           decoration: const InputDecoration(labelText: 'De qué cuenta sale'),
@@ -737,7 +903,9 @@ class _FichaState extends ConsumerState<DialogoImportarFicha> {
                   child: Text(
                     _error!,
                     key: const ValueKey('ficha-error'),
-                    style: TextStyle(color: Theme.of(context).colorScheme.error),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
                   ),
                 ),
               if (l != null) ...[

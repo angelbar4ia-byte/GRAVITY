@@ -39,7 +39,9 @@ class PlanGuardado {
   static List<Map<String, Object?>> segmentos(List<Capitulo> caps) {
     final r = <Map<String, Object?>>[];
     for (final c in caps) {
-      if (r.isNotEmpty && r.last['libro'] == c.libro && r.last['cap_fin'] == c.cap - 1) {
+      if (r.isNotEmpty &&
+          r.last['libro'] == c.libro &&
+          r.last['cap_fin'] == c.cap - 1) {
         r.last['cap_fin'] = c.cap;
       } else {
         r.add({'libro': c.libro, 'cap_ini': c.cap, 'cap_fin': c.cap});
@@ -57,26 +59,26 @@ class PlanGuardado {
   };
 
   Map<String, Object?> aPlanJson(DateTime ahora) => {
-        'id': id,
-        'tipo': _tipos[plan.tipo],
-        'nombre': nombre,
-        'fecha_inicio': inicio.toIso8601String().substring(0, 10),
-        'dias_semana': mascara,
-        'version_biblica': version,
-        'estado': estado,
-        'libro': libro,
-        'modificado_en': ahora.toUtc().toIso8601String(),
-      };
+    'id': id,
+    'tipo': _tipos[plan.tipo],
+    'nombre': nombre,
+    'fecha_inicio': inicio.toIso8601String().substring(0, 10),
+    'dias_semana': mascara,
+    'version_biblica': version,
+    'estado': estado,
+    'libro': libro,
+    'modificado_en': ahora.toUtc().toIso8601String(),
+  };
 
   List<Map<String, Object?>> aDiasJson() => [
-        for (final d in plan.dias)
-          {
-            'dia': d.dia,
-            'fecha': d.fecha.toIso8601String().substring(0, 10),
-            'segmentos': segmentos(d.capitulos),
-            'estado': _estadosDia[d.estado],
-          }
-      ];
+    for (final d in plan.dias)
+      {
+        'dia': d.dia,
+        'fecha': d.fecha.toIso8601String().substring(0, 10),
+        'segmentos': segmentos(d.capitulos),
+        'estado': _estadosDia[d.estado],
+      },
+  ];
 }
 
 abstract interface class RepositorioAgenda {
@@ -89,6 +91,11 @@ abstract interface class RepositorioAgenda {
   Future<List<PlanGuardado>> planes();
   Future<void> crearPlan(PlanGuardado p, DateTime ahora);
   Future<void> guardarDiaPlan(PlanGuardado p, DiaPlan d);
+
+  /// Subrayados y marcadores de un capítulo (`libro:capítulo:`).
+  Future<List<MarcaBiblia>> marcas(int libro, int cap);
+  Future<void> guardarMarca(MarcaBiblia m);
+  Future<void> quitarMarca(String id);
 }
 
 class RepositorioAgendaEnMemoria implements RepositorioAgenda {
@@ -96,6 +103,7 @@ class RepositorioAgendaEnMemoria implements RepositorioAgenda {
   AjustesHab _ajustes = const AjustesHab();
   final Map<DateTime, RevisionHab> _revisiones = {};
   final Map<String, PlanGuardado> _planes = {};
+  final Map<String, MarcaBiblia> _marcas = {};
 
   @override
   Future<List<BloqueHab>> bloques() async => _bloques.values.toList();
@@ -104,17 +112,30 @@ class RepositorioAgendaEnMemoria implements RepositorioAgenda {
   @override
   Future<AjustesHab> ajustes() async => _ajustes;
   @override
-  Future<void> guardarAjustes(AjustesHab a, DateTime ahora) async => _ajustes = a;
+  Future<void> guardarAjustes(AjustesHab a, DateTime ahora) async =>
+      _ajustes = a;
   @override
-  Future<RevisionHab?> revision(DateTime lunes) async => _revisiones[soloDia(lunes)];
+  Future<RevisionHab?> revision(DateTime lunes) async =>
+      _revisiones[soloDia(lunes)];
   @override
-  Future<void> guardarRevision(RevisionHab r) async => _revisiones[soloDia(r.semana)] = r;
+  Future<void> guardarRevision(RevisionHab r) async =>
+      _revisiones[soloDia(r.semana)] = r;
   @override
   Future<List<PlanGuardado>> planes() async => _planes.values.toList();
   @override
-  Future<void> crearPlan(PlanGuardado p, DateTime ahora) async => _planes[p.id] = p;
+  Future<void> crearPlan(PlanGuardado p, DateTime ahora) async =>
+      _planes[p.id] = p;
   @override
   Future<void> guardarDiaPlan(PlanGuardado p, DiaPlan d) async {}
+  @override
+  Future<List<MarcaBiblia>> marcas(int libro, int cap) async => [
+    for (final m in _marcas.values)
+      if (m.referencia.startsWith('$libro:$cap:')) m,
+  ];
+  @override
+  Future<void> guardarMarca(MarcaBiblia m) async => _marcas[m.id] = m;
+  @override
+  Future<void> quitarMarca(String id) async => _marcas.remove(id);
 }
 
 class RepositorioAgendaSupabase implements RepositorioAgenda {
@@ -122,11 +143,14 @@ class RepositorioAgendaSupabase implements RepositorioAgenda {
   final SupabaseClient Function() _cliente;
 
   @override
-  Future<List<BloqueHab>> bloques() async =>
-      [for (final f in await _cliente().from('hab_bloques').select()) BloqueHab.deFila(f)];
+  Future<List<BloqueHab>> bloques() async => [
+    for (final f in await _cliente().from('hab_bloques').select())
+      BloqueHab.deFila(f),
+  ];
 
   @override
-  Future<void> guardarBloque(BloqueHab b) async => _cliente().from('hab_bloques').upsert(b.aFila());
+  Future<void> guardarBloque(BloqueHab b) async =>
+      _cliente().from('hab_bloques').upsert(b.aFila());
 
   @override
   Future<AjustesHab> ajustes() async {
@@ -137,7 +161,10 @@ class RepositorioAgendaSupabase implements RepositorioAgenda {
   @override
   Future<void> guardarAjustes(AjustesHab a, DateTime ahora) async {
     // La fila la crea el servidor; la app solo hace UPDATE de la propia.
-    await _cliente().from('hab_ajustes').update(a.aCambios(ahora)).not('persona_id', 'is', null);
+    await _cliente()
+        .from('hab_ajustes')
+        .update(a.aCambios(ahora))
+        .not('persona_id', 'is', null);
   }
 
   @override
@@ -166,14 +193,17 @@ class RepositorioAgendaSupabase implements RepositorioAgenda {
   }
 
   @override
-  Future<void> guardarRevision(RevisionHab r) async =>
-      _cliente().from('hab_revisiones').upsert(r.aFila(), onConflict: 'persona_id,semana');
+  Future<void> guardarRevision(RevisionHab r) async => _cliente()
+      .from('hab_revisiones')
+      .upsert(r.aFila(), onConflict: 'persona_id,semana');
 
   @override
   Future<List<PlanGuardado>> planes() async {
     final r = <PlanGuardado>[];
     for (final f in await _cliente().from('hab_planes_lectura').select()) {
-      final tipo = PlanGuardado._tipos.entries.firstWhere((e) => e.value == f['tipo']).key;
+      final tipo = PlanGuardado._tipos.entries
+          .firstWhere((e) => e.value == f['tipo'])
+          .key;
       final filas = await _cliente()
           .from('hab_plan_dias')
           .select()
@@ -187,42 +217,67 @@ class RepositorioAgendaSupabase implements RepositorioAgenda {
       };
       final dias = [
         for (final d in filas)
-          DiaPlan(
-            d['dia'] as int,
-            DateTime.parse(d['fecha'] as String),
-            [
-              for (final sg in (d['segmentos'] as List).cast<Map>())
-                for (var c = sg['cap_ini'] as int; c <= (sg['cap_fin'] as int); c++)
-                  Capitulo(sg['libro'] as int, c)
-            ],
-            estados[d['estado']] ?? EstadoDiaPlan.pendiente,
-          )
+          DiaPlan(d['dia'] as int, DateTime.parse(d['fecha'] as String), [
+            for (final sg in (d['segmentos'] as List).cast<Map>())
+              for (
+                var c = sg['cap_ini'] as int;
+                c <= (sg['cap_fin'] as int);
+                c++
+              )
+                Capitulo(sg['libro'] as int, c),
+          ], estados[d['estado']] ?? EstadoDiaPlan.pendiente),
       ];
-      r.add(PlanGuardado(
-        id: f['id'] as String,
-        nombre: f['nombre'] as String,
-        plan: PlanLectura(tipo, dias),
-        inicio: DateTime.parse(f['fecha_inicio'] as String),
-        mascara: f['dias_semana'] as int,
-        version: f['version_biblica'] as String,
-        libro: f['libro'] as int?,
-        estado: f['estado'] as String,
-      ));
+      r.add(
+        PlanGuardado(
+          id: f['id'] as String,
+          nombre: f['nombre'] as String,
+          plan: PlanLectura(tipo, dias),
+          inicio: DateTime.parse(f['fecha_inicio'] as String),
+          mascara: f['dias_semana'] as int,
+          version: f['version_biblica'] as String,
+          libro: f['libro'] as int?,
+          estado: f['estado'] as String,
+        ),
+      );
     }
     return r;
   }
 
   @override
-  Future<void> crearPlan(PlanGuardado p, DateTime ahora) async => _cliente()
-      .rpc('hab_crear_plan_lectura', params: {'p_plan': p.aPlanJson(ahora), 'p_dias': p.aDiasJson()});
+  Future<void> crearPlan(PlanGuardado p, DateTime ahora) async =>
+      _cliente().rpc(
+        'hab_crear_plan_lectura',
+        params: {'p_plan': p.aPlanJson(ahora), 'p_dias': p.aDiasJson()},
+      );
 
   @override
-  Future<void> guardarDiaPlan(PlanGuardado p, DiaPlan d) async => _cliente().from('hab_plan_dias').upsert({
+  Future<void> guardarDiaPlan(PlanGuardado p, DiaPlan d) async =>
+      _cliente().from('hab_plan_dias').upsert({
         'plan_id': p.id,
         'dia': d.dia,
         'fecha': d.fecha.toIso8601String().substring(0, 10),
         'segmentos': PlanGuardado.segmentos(d.capitulos),
         'estado': PlanGuardado._estadosDia[d.estado],
-        'hecho_en': d.estado == EstadoDiaPlan.hecho ? DateTime.now().toUtc().toIso8601String() : null,
+        'hecho_en': d.estado == EstadoDiaPlan.hecho
+            ? DateTime.now().toUtc().toIso8601String()
+            : null,
       });
+
+  @override
+  Future<List<MarcaBiblia>> marcas(int libro, int cap) async => [
+    for (final f
+        in await _cliente()
+            .from('hab_marcas_biblia')
+            .select()
+            .like('referencia', '$libro:$cap:%'))
+      MarcaBiblia.deFila(f),
+  ];
+
+  @override
+  Future<void> guardarMarca(MarcaBiblia m) async =>
+      _cliente().from('hab_marcas_biblia').upsert(m.aFila());
+
+  @override
+  Future<void> quitarMarca(String id) async =>
+      _cliente().from('hab_marcas_biblia').delete().eq('id', id);
 }

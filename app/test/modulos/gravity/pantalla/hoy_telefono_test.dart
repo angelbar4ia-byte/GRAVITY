@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gravity/diseno/diseno.dart';
+import 'package:gravity/modulos/finanzas/estado/resumen_hoy.dart';
 import 'package:gravity/modulos/gravity/pantalla/hoy_telefono.dart';
 import 'package:gravity/modulos/gravity/pantalla/resumen_gravity.dart';
 import 'package:gravity/nucleo/contratos/roles.dart';
@@ -10,6 +11,9 @@ import '../../../diseno/ayuda_pruebas.dart';
 Future<void> _verCuidados(WidgetTester tester) => tester.scrollUntilVisible(
   find.byKey(const ValueKey('tarjeta-cuidados')),
   200,
+  // Hay más de un Scrollable (el campo de la conversación tiene el suyo): el
+  // primero es la lista de la pantalla.
+  scrollable: find.byType(Scrollable).first,
 );
 
 void main() {
@@ -44,7 +48,7 @@ void main() {
     expect(find.text('3 de 5'), findsOneWidget);
     expect(find.text('Devocional'), findsOneWidget);
     expect(find.text('FINANZAS · SEMANA'), findsOneWidget);
-    expect(find.text('En verde'), findsOneWidget);
+    expect(find.text('En verde'), findsWidgets);
     expect(find.text(montoOculto), findsOneWidget);
     await _verCuidados(tester);
     expect(find.text('CUIDADOS'), findsOneWidget);
@@ -59,10 +63,19 @@ void main() {
     await montar(tester, const PantallaHoyTelefono());
     expect(find.text(r'$1,330.00'), findsNothing);
 
-    await tester.tap(find.byKey(const ValueKey('monto-quedan')));
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('finanzas-hoy-quedan-libro-ejemplo')),
+    );
+    await tester.pump();
+    await tester.tap(
+      find.byKey(const ValueKey('finanzas-hoy-quedan-libro-ejemplo')),
+    );
     await tester.pump();
     expect(find.text(r'$1,330.00'), findsOneWidget);
 
+    // El encabezado quedó arriba, fuera de la vista.
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, 1000));
+    await tester.pump();
     await tester.tap(find.byKey(const ValueKey('boton-modo-privado')));
     await tester.pump();
     expect(find.text(r'$1,330.00'), findsNothing);
@@ -76,10 +89,13 @@ void main() {
 
     // Con modo privado, tocar el monto no lo muestra.
     await tester.scrollUntilVisible(
-      find.byKey(const ValueKey('monto-quedan')),
+      find.byKey(const ValueKey('finanzas-hoy-quedan-libro-ejemplo')),
       -200,
+      scrollable: find.byType(Scrollable).first,
     );
-    await tester.tap(find.byKey(const ValueKey('monto-quedan')));
+    await tester.tap(
+      find.byKey(const ValueKey('finanzas-hoy-quedan-libro-ejemplo')),
+    );
     await tester.pump();
     expect(find.text(r'$1,330.00'), findsNothing);
   });
@@ -127,7 +143,7 @@ void main() {
       for (final tarjeta in [
         'tarjeta-sigue',
         'tarjeta-habitos',
-        'tarjeta-finanzas',
+        'finanzas-hoy',
         'tarjeta-cuidados',
       ]) {
         expect(find.byKey(ValueKey(tarjeta)), findsOneWidget, reason: tarjeta);
@@ -138,8 +154,11 @@ void main() {
       await montarComo(tester, Rol.familiar);
       expect(find.byKey(const ValueKey('tarjeta-sigue')), findsOneWidget);
       expect(find.byKey(const ValueKey('tarjeta-habitos')), findsOneWidget);
-      expect(find.byKey(const ValueKey('tarjeta-finanzas')), findsNothing);
-      expect(find.byKey(const ValueKey('monto-quedan')), findsNothing);
+      expect(find.byKey(const ValueKey('finanzas-hoy')), findsNothing);
+      expect(
+        find.byKey(const ValueKey('finanzas-hoy-quedan-libro-ejemplo')),
+        findsNothing,
+      );
       expect(find.byKey(const ValueKey('tarjeta-cuidados')), findsNothing);
       final texto = textoVisible(tester);
       for (final prohibido in [
@@ -156,7 +175,7 @@ void main() {
       tester,
     ) async {
       await montarComo(tester, Rol.casa);
-      expect(find.byKey(const ValueKey('tarjeta-finanzas')), findsNothing);
+      expect(find.byKey(const ValueKey('finanzas-hoy')), findsNothing);
       expect(find.byKey(const ValueKey('tarjeta-habitos')), findsNothing);
       expect(find.byKey(const ValueKey('tarjeta-sigue')), findsNothing);
       expect(find.byKey(const ValueKey('tarjeta-cuidados')), findsOneWidget);
@@ -180,9 +199,28 @@ void main() {
         tester,
         const PantallaHoyTelefono(),
         datos: const ResumenGravity(),
+        finanzasHoy: ResumenFinanzasHoy.sinAcceso,
       );
       expect(find.byKey(const ValueKey('hoy-vacio')), findsOneWidget);
       expect(find.text('Nada pendiente por hoy'), findsOneWidget);
+    });
+
+    testWidgets('sesión real con Finanzas sin plan ni movimientos: la tarjeta '
+        'dice "Sin datos todavía", sin cifras de ejemplo', (tester) async {
+      fijarVentana(tester, const Size(390, 844));
+      await montar(
+        tester,
+        const PantallaHoyTelefono(),
+        datos: ResumenGravity.sinDatosTodavia,
+        finanzasHoy: ResumenFinanzasHoy.noDisponible,
+      );
+      expect(find.byKey(const ValueKey('finanzas-hoy')), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('finanzas-hoy-sin-datos')),
+        findsOneWidget,
+      );
+      expect(find.text(r'$1,330.00'), findsNothing);
+      expect(find.text(montoOculto), findsNothing);
     });
 
     testWidgets('sesión real sin módulos conectados: "Sin datos todavía"', (
@@ -193,6 +231,7 @@ void main() {
         tester,
         const PantallaHoyTelefono(),
         datos: ResumenGravity.sinDatosTodavia,
+        finanzasHoy: ResumenFinanzasHoy.sinAcceso,
       );
       expect(find.byKey(const ValueKey('hoy-sin-datos')), findsOneWidget);
       expect(find.text('Sin datos todavía'), findsOneWidget);
@@ -201,9 +240,9 @@ void main() {
       for (final llave in [
         'tarjeta-sigue',
         'tarjeta-habitos',
-        'tarjeta-finanzas',
+        'finanzas-hoy',
         'tarjeta-cuidados',
-        'monto-quedan',
+        'finanzas-hoy-quedan-libro-ejemplo',
       ]) {
         expect(find.byKey(ValueKey(llave)), findsNothing, reason: llave);
       }

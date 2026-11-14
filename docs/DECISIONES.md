@@ -131,10 +131,14 @@ Cuando las decisiones confirmadas cambian el contrato, se reescribe `CONTRATO_CO
 - **Cada quien ve lo suyo** (21/oct/2026): el historial de GRAVITY y las finanzas personales son de cada persona, también para el dueño. Solo la **cuenta maestra** (D19) ve todo.
 - **Cuidadora y GRAVITY** (21/oct/2026): GRAVITY le recuerda sus actividades y le hace solicitudes; ella las **confirma** (hecho, no se pudo, con nota). También usa los **dispositivos de la casa** (Fase 6). No conversa libremente con GRAVITY ni ve nada de la familia.
 
-**Pendiente.**
-- Si la hermana ve el **resumen mensual del costo del cuidado** (p. ej. si comparten gastos).
-- Quién representa a papá para los consentimientos.
-- Si papá vive en la casa de las bocinas (afecta qué recordatorios se dicen en voz alta y en qué bocina).
+**Respondido por el dueño (7/nov/2026)** — detalles en `docs/specs/fase-5-cuidados.md`.
+- **Hermana:** ve el **registro mensual del costo del cuidado** y los **gastos de la casa**, excepto los que corresponden a la pareja y al dueño. El **albacea** autoriza los datos que ella ve.
+- **Consentimientos:** Papá, la pareja y el dueño. El albacea firma también por Papá.
+- **Papá y las bocinas:** Papá vive en la casa de las bocinas; los recordatorios en voz alta son genéricos (D6).
+- **Dueño:** cubre los domingos todo el día y la tarde de sábados y lunes. **Pareja:** ve turnos y resumen de Papá sin bitácora clínica hasta su consentimiento.
+- **Voz de la hermana:** sin PIN; si la voz no da seguridad, la app pide de nuevo su identidad.
+
+**Confirmado (7/nov/2026).** La voz **no** identifica de forma segura: la frase activa el modo y la app pide de nuevo la identidad (regla de arriba).
 
 ---
 
@@ -474,3 +478,73 @@ Desarrolla D13 con la especificación de la Fase 3 (`docs/specs/fase-3-habitos.m
 
 **Respuestas del dueño a la Fase 3 (1/nov/2026):** datos sensibles **solo en el teléfono por ahora**; **frase de 12 palabras** aprobada; la **fecha de inicio** de los planes de cigarrillo y azúcar la fija **cada miembro** cuando quiera; el arquitecto y el agente de hábitos **proponen** el SOS y los versículos de ánimo (el dueño los revisa); la **copia diaria de la laptop incluye las tablas en claro** de toda la familia, con aviso a la pareja; los **datos de una persona dada de baja se conservan sin acceso y se borran a los 90 días**.
 
+---
+
+## D22. Apariencia, PIN y alimentación urgente — confirmada (6/nov/2026)
+
+Respuestas del dueño a la especificación de la Fase 4 (`docs/specs/fase-4-pulido.md`, sección 14):
+- **Estilos:** por ahora Swagger y Glass; los demás después. Cada uno se aprueba al terminarlo. El estilo es por persona y la tablet de la casa tiene el suyo. Se edita en Configuración.
+- **Claro y oscuro:** cambian solos según el amanecer y el atardecer.
+- **Capturas en Windows:** bloqueadas por omisión, editable en Configuración.
+- **PIN:** 600 000 vueltas de cifrado, y desbloqueo por huella con los controles del teléfono.
+- **Alimentación:** entra en esta fase en versión mínima (menú de la semana y lista de compras).
+
+## D23. Alimentación: dos menús por hogar y perfil clínico de Papá — confirmada (6/nov/2026)
+
+- Dos menús por hogar: **menú de Papá** (perfil: adulto de 80 años con Alzheimer, alta en proteínas y aminoácidos, textura blanda) y **menú de la pareja y del dueño**.
+- Cuatro tiempos de comida, como en el Excel. Suplementos en ambos menús.
+- Ven el menú de Papá: dueño, pareja, cuidadora y familiar (familiar en solo lectura). Ven el menú de la pareja y del dueño: solo ellos.
+- Marcan "comprado": el dueño y la pareja.
+- El perfil de Papá es dato clínico (D3): no sale a la IA ni a las bocinas.
+- **Ajuste (6/nov/2026):** el familiar también **edita** el menú de Papá (no el de la pareja y del dueño). La cuidadora lo ve en solo lectura.
+
+## D24. Vista temporal de Finanzas de Papá para el familiar — confirmada (6/nov/2026)
+
+- El familiar **no** ve Finanzas de Papá de forma permanente. Puede **pedir** la vista; el dueño **autoriza por 30 minutos** o rechaza.
+- Durante la vista: **sin captura de pantalla, sin copiar, sin seleccionar y sin exportar**.
+- Cada solicitud y autorización va a la bitácora sin montos ni cuentas. El aviso al dueño usa el catálogo discreto (D20).
+- Excepción a D5 solo para esta vista temporal. Detalle en `docs/specs/fase-4-vista-temporal.md`.
+
+## D25. Finanzas: decisiones de la Fase 4 — confirmada (6/nov/2026)
+
+- **Hoy sin datos:** "Sin datos todavía" cuando el presupuesto no tiene plan ni movimientos.
+- **Extras:** se aparta el **20 %** por omisión (editable).
+- **Sobres por bolsa:** se prioriza **arrastrando** las bolsas de ahorro para darles prioridad, y el sobrante va a la primera bolsa de la lista.
+- **Recordatorios "días antes":** **más de uno** por vencimiento (se mantienen los días configurados en Ajustes › Notificaciones).
+- **Sin señal:** el aviso no se reenvía solo; pasa al siguiente cálculo (abrir el libro, guardar o Reintentar). Confirmado.
+
+## D26. Estilo Bento en lugar de Swagger — confirmada (6/nov/2026)
+
+- El dueño no aprobó el estilo **Swagger**. Se retira de las opciones de la app; el código se conserva sin usarse hasta que se decida.
+- El nuevo estilo es **Bento**: tarjetas en cuadrícula, esquinas redondeadas, fondo suave, un color de acento y letras limpias. Se propone así; el dueño lo aprueba al verlo, como cualquier estilo.
+- Glass sigue pendiente de construir hasta que Bento se apruebe.
+
+## D27. Eliminar Swagger, seguir con Glass, Bento en pausa — confirmada (7/nov/2026)
+
+- El estilo **Swagger** se **elimina** del proyecto (código, pruebas y fuentes que solo él usaba).
+- Se construye ahora el estilo **Glass** (día y noche), con la misma regla de contraste y letra grande.
+- El estilo **Bento** queda **en pausa**: no aparece en las opciones de la app hasta que el dueño decida retomarlo. Su código se conserva.
+- **Glass aprobado por el dueño (7/nov/2026).** Plataforma aplica el fondo degradado a toda la app.
+
+
+## D28. Alimentación: despensas por persona, menú del día para Casa, plan familiar y votación — confirmada (7/nov/2026)
+
+Cambia lo que ve Casa en D23. Se implementa en la fase donde se construya Alimentación completa (ver Estado de implementación).
+
+- **Qué ve cada cuenta:**
+  - **Casa:** solo el **menú de Papá** (del día) y el **plan familiar** (de la pareja y la familia).
+  - **Cuidador:** solo el **menú de Papá**.
+  - **Familiar:** su parte del plan familiar y la despensa de Papá (para armar el menú de una visita).
+- **Inventario por persona:** cada persona tiene su inventario de ingredientes. El inventario de **Papá** se separa del de la **pareja** y del de **tu cuenta**. Se actualiza al registrar compras.
+- **Compartir sobrantes:** la pareja y el dueño comparten lo que **sobra** de su inventario planeado por semana. No comparten lo que ya tienen planeado.
+- **Plan familiar como cuentas:** el plan para familia, pareja y Papá funciona como cuentas (cada plan con su inventario y sus compras).
+- **Menú familiar por votación:** una persona propone un menú. Otra da su propuesta. Ambas se envían a votación. El menú ganador evalúa los ingredientes faltantes.
+- **Ingredientes faltantes:** quien propone puede pedir la compra de uno o varios ingredientes faltantes. La compra sale del presupuesto del plan, y para Papá, del albacea (D19).
+- **Visitas:** el familiar elige ingredientes de la despensa de Papá y puede traer los que falten.
+- **Calendario:** la familia se reúne los martes, pero puede juntarse otro día, por lo general los fines de semana.
+- **Suplementos de Papá:** visibles para **todos** los que ven el menú de Papá, igual que los medicamentos en Cuidados. Cada toma se **confirma** (dado o no dado) de forma discreta, para que quien lo dio lo marque de verdad. Si nadie confirma la toma, se **solicita el recurso** (reposición del suplemento). **Casa solo ve las tomas; no las confirma.**
+
+### Estado de implementación
+- La matriz actual (migración 20261109 y espejo de la app) aún **no** refleja D28: Casa tiene sin acceso a Alimentación y el familiar edita el menú de Papá.
+- Pendiente: menú familiar y votación, inventario por persona, compras con albacea y permisos de Casa y cuidador.
+- **Confirmado (7/nov/2026): se construye en la Fase 7 (Alimentación).**

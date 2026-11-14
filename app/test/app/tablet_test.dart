@@ -286,12 +286,12 @@ void main() {
       sesion: sesionCasa(),
       almacen: await almacenConPersonas({Rol.dueno: '246813'}),
     );
-    await tester.tap(find.text('Alimentación'));
+    await tester.tap(find.text('Cuidados').first);
     await tester.pumpAndSettle();
-    expect(ubicacion(tester), Rutas.alimentacion);
+    expect(ubicacion(tester), Rutas.cuidados);
     await tester.pump(const Duration(minutes: 5));
     await tester.pumpAndSettle();
-    expect(ubicacion(tester), Rutas.alimentacion);
+    expect(ubicacion(tester), Rutas.cuidados);
   });
 
   testWidgets('volver al modo Casa a mano', (tester) async {

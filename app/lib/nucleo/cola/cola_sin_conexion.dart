@@ -753,17 +753,20 @@ class ColaSinConexion {
       String? error;
       var faltaDependencia = false;
       try {
-        resultado = await enviador.enviar(
-          PeticionEnvio(
-            id: registro.id,
-            tipo: registro.tipo,
-            carga: (jsonDecode(registro.carga) as Map).cast<String, Object?>(),
-            creadoEn: registro.creadoEn,
-            intento: intento,
-            personaId: registro.personaId,
-            origen: registro.origen ?? OrigenRegistro.propio,
-          ),
-        ).timeout(tiempoMaximoDeEnvio);
+        resultado = await enviador
+            .enviar(
+              PeticionEnvio(
+                id: registro.id,
+                tipo: registro.tipo,
+                carga: (jsonDecode(registro.carga) as Map)
+                    .cast<String, Object?>(),
+                creadoEn: registro.creadoEn,
+                intento: intento,
+                personaId: registro.personaId,
+                origen: registro.origen ?? OrigenRegistro.propio,
+              ),
+            )
+            .timeout(tiempoMaximoDeEnvio);
       } on RechazoEnvio catch (e) {
         resultado = ResultadoEnvio.rechazado;
         error = e.motivo;

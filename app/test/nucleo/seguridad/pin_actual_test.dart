@@ -143,15 +143,18 @@ void main() {
     test('la primera vez se activa sin pedir nada', () async {
       final (_, bloqueo) = await abrir(crear());
       expect(await bloqueo.configurarPin(elDueno), ResultadoBloqueo.abierto);
-      expect(bloqueo.comprobarPin(elDueno), ResultadoBloqueo.abierto);
+      expect(await bloqueo.comprobarPin(elDueno), ResultadoBloqueo.abierto);
     });
 
     test('cambiarlo sin el actual lanza y no cambia nada', () async {
       final (_, bloqueo) = await abrir(crear());
       await bloqueo.configurarPin(elDueno);
       await expectLater(bloqueo.configurarPin(elCurioso), throwsStateError);
-      expect(bloqueo.comprobarPin(elCurioso), ResultadoBloqueo.pinIncorrecto);
-      expect(bloqueo.comprobarPin(elDueno), ResultadoBloqueo.abierto);
+      expect(
+        await bloqueo.comprobarPin(elCurioso),
+        ResultadoBloqueo.pinIncorrecto,
+      );
+      expect(await bloqueo.comprobarPin(elDueno), ResultadoBloqueo.abierto);
     });
 
     test(
@@ -163,13 +166,19 @@ void main() {
           await bloqueo.configurarPin(elCurioso, actual: otroMas),
           ResultadoBloqueo.pinIncorrecto,
         );
-        expect(bloqueo.comprobarPin(elCurioso), ResultadoBloqueo.pinIncorrecto);
+        expect(
+          await bloqueo.comprobarPin(elCurioso),
+          ResultadoBloqueo.pinIncorrecto,
+        );
         expect(
           await bloqueo.configurarPin(elCurioso, actual: elDueno),
           ResultadoBloqueo.abierto,
         );
-        expect(bloqueo.comprobarPin(elCurioso), ResultadoBloqueo.abierto);
-        expect(bloqueo.comprobarPin(elDueno), ResultadoBloqueo.pinIncorrecto);
+        expect(await bloqueo.comprobarPin(elCurioso), ResultadoBloqueo.abierto);
+        expect(
+          await bloqueo.comprobarPin(elDueno),
+          ResultadoBloqueo.pinIncorrecto,
+        );
       },
     );
 

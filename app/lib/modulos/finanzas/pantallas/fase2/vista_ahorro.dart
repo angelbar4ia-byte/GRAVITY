@@ -14,7 +14,8 @@ import 'package:finanzas_dominio/finanzas_dominio.dart'
         BolsaAhorro,
         NivelFondo,
         NivelAlerta;
-import 'package:finanzas_dominio/finanzas_dominio.dart' as dom
+import 'package:finanzas_dominio/finanzas_dominio.dart'
+    as dom
     show BolsaAhorro, NivelFondo;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -123,7 +124,8 @@ class VistaAhorro extends ConsumerWidget {
                           .cambiarNivelFondo(
                             bolsas
                                 .firstWhere(
-                                  (b) => b.bolsa.tipo ==
+                                  (b) =>
+                                      b.bolsa.tipo ==
                                       TipoBolsaAhorro.fondoEmergencia,
                                 )
                                 .bolsa
@@ -156,7 +158,9 @@ class VistaAhorro extends ConsumerWidget {
                   _FilaPropuesta(
                     contexto: c,
                     aportacion: a,
-                    bolsa: bolsas.firstWhere((b) => b.bolsa.id == a.bolsaId).bolsa,
+                    bolsa: bolsas
+                        .firstWhere((b) => b.bolsa.id == a.bolsaId)
+                        .bolsa,
                   ),
               ],
             ),
@@ -233,35 +237,46 @@ class _FilaPropuesta extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 4),
-    child: Row(
+    // Con letra grande los botones bajan a su línea en vez de salirse.
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Expanded(child: Text(bolsa.nombre)),
-        Monto(aportacion.sugerido),
-        if (contexto.puedeEscribir) ...[
-          const SizedBox(width: 8),
-          FilledButton(
-            key: ValueKey('apartar-${aportacion.id}'),
-            onPressed: () => showDialog<void>(
-              context: context,
-              builder: (_) => DialogoConfirmarAportacion(
-                contexto: contexto,
-                aportacion: aportacion,
-                nombreBolsa: bolsa.nombre,
+        Row(
+          children: [
+            Expanded(child: Text(bolsa.nombre)),
+            const SizedBox(width: 8),
+            Monto(aportacion.sugerido),
+          ],
+        ),
+        if (contexto.puedeEscribir)
+          Wrap(
+            alignment: WrapAlignment.end,
+            spacing: 8,
+            children: [
+              FilledButton(
+                key: ValueKey('apartar-${aportacion.id}'),
+                onPressed: () => showDialog<void>(
+                  context: context,
+                  builder: (_) => DialogoConfirmarAportacion(
+                    contexto: contexto,
+                    aportacion: aportacion,
+                    nombreBolsa: bolsa.nombre,
+                  ),
+                ),
+                child: const Text('Apartar'),
               ),
-            ),
-            child: const Text('Apartar'),
+              TextButton(
+                key: ValueKey('posponer-${aportacion.id}'),
+                onPressed: () => intentar(
+                  context,
+                  () => ref
+                      .read(servicioFase2Provider)
+                      .posponerAportacion(aportacion.id),
+                ),
+                child: const Text('Después'),
+              ),
+            ],
           ),
-          TextButton(
-            key: ValueKey('posponer-${aportacion.id}'),
-            onPressed: () => intentar(
-              context,
-              () => ref
-                  .read(servicioFase2Provider)
-                  .posponerAportacion(aportacion.id),
-            ),
-            child: const Text('Después'),
-          ),
-        ],
       ],
     ),
   );

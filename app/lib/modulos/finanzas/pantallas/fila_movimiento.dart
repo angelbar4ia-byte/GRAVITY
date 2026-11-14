@@ -44,7 +44,7 @@ Future<bool> anularConMotivo(
         '$ayudaDelMotivo No se borra: se registra un contraasiento con el '
         'mismo monto y la misma fecha, y queda en la bitácora.',
     textoAccion: 'Anular',
-    minimoVisibles: minimoCaracteresDeMotivo,
+    esMotivo: true,
   );
   if (motivo == null || !context.mounted) return false;
   final ok = await intentar(
@@ -80,8 +80,10 @@ class FilaMovimiento extends ConsumerWidget {
     final detalles = [
       textoFecha(m.fecha),
       if (m.tipo == TipoMovimiento.gasto) vista.cuenta(m.cuentaOrigenId).nombre,
-      if (m.registradoPor != c.personaId) 'por ${c.carga.nombreDe(m.registradoPor)}',
-      if (m.enNombreDe != null) 'en nombre de ${c.carga.nombreDe(m.enNombreDe)}',
+      if (m.registradoPor != c.personaId)
+        'por ${c.carga.nombreDe(m.registradoPor)}',
+      if (m.enNombreDe != null)
+        'en nombre de ${c.carga.nombreDe(m.enNombreDe)}',
       if (anulado) 'Anulado',
       if (enCola) 'Por subir',
     ];

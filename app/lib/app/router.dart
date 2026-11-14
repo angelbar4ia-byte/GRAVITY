@@ -17,6 +17,7 @@ import 'navegacion.dart';
 import 'pantalla_segura.dart';
 import 'avisos/pantalla_bandeja_avisos.dart';
 import 'pantallas/pantalla_entrar.dart';
+import 'pantallas/pantalla_invitacion.dart';
 import 'pantallas/pantalla_inicio.dart';
 import 'pantallas/pantalla_mas.dart';
 import 'pantallas/pantalla_proximamente.dart';
@@ -32,9 +33,7 @@ final rutasFinanzasProvider = Provider<List<RouteBase>>(
 );
 
 /// Rutas de Hábitos (agente habitos, `pantallas_externas.dart`).
-final rutasHabitosProvider = Provider<List<RouteBase>>(
-  (ref) => rutasHabitos(),
-);
+final rutasHabitosProvider = Provider<List<RouteBase>>((ref) => rutasHabitos());
 
 final routerProvider = Provider<GoRouter>((ref) {
   // Cada cambio de rol (entrar, salir, PIN en la tablet) vuelve a evaluar
@@ -70,13 +69,16 @@ final routerProvider = Provider<GoRouter>((ref) {
 Page<void> _sinAnimacion(GoRouterState estado, Widget pantalla) =>
     NoTransitionPage<void>(key: estado.pageKey, child: pantalla);
 
-GoRoute _modulo(String ruta, Modulo modulo, {List<RouteBase> rutas = const []}) =>
-    GoRoute(
-      path: ruta,
-      pageBuilder: (context, estado) =>
-          _sinAnimacion(estado, PantallaProximamente.modulo(modulo)),
-      routes: rutas,
-    );
+GoRoute _modulo(
+  String ruta,
+  Modulo modulo, {
+  List<RouteBase> rutas = const [],
+}) => GoRoute(
+  path: ruta,
+  pageBuilder: (context, estado) =>
+      _sinAnimacion(estado, PantallaProximamente.modulo(modulo)),
+  routes: rutas,
+);
 
 /// Monta las rutas que exporta un módulo bajo [base] (p. ej. `/finanzas`).
 ///
@@ -107,9 +109,8 @@ List<RouteBase> montarRutasDeModulo(
     return [
       GoRoute(
         path: base,
-        redirect: (context, estado) => estado.uri.path == base
-            ? '$base/${primera.path}'
-            : null,
+        redirect: (context, estado) =>
+            estado.uri.path == base ? '$base/${primera.path}' : null,
         routes: resto,
       ),
     ];
@@ -120,7 +121,8 @@ List<RouteBase> montarRutasDeModulo(
     GoRoute(
       path: base,
       name: raiz.name,
-      pageBuilder: pageBuilder ??
+      pageBuilder:
+          pageBuilder ??
           (builder == null
               ? null
               : (context, estado) =>
@@ -135,20 +137,10 @@ List<RouteBase> montarRutasDeModulo(
   ];
 }
 
-GoRoute _cuidados(String segmento, String titulo, IconData icono) => GoRoute(
-  path: segmento,
-  pageBuilder: (context, estado) => _sinAnimacion(
-    estado,
-    PantallaProximamente(titulo: titulo, icono: icono, fase: 5),
-  ),
-);
-
 /// Navegador de las pantallas dentro del cascarón. Con él y el navegador raíz
 /// se cierran las hojas y diálogos de una persona al cambiar de persona en la
 /// tablet (revisión de la Fase 0, B2).
-final navegadorCascaronKey = GlobalKey<NavigatorState>(
-  debugLabel: 'cascaron',
-);
+final navegadorCascaronKey = GlobalKey<NavigatorState>(debugLabel: 'cascaron');
 
 /// Cierra todo lo que está encima de las pantallas (hojas, diálogos, menús y
 /// avisos), sin tocar las pantallas mismas.
@@ -169,6 +161,10 @@ List<RouteBase> rutasDeGravity({
     path: Rutas.entrar,
     builder: (context, estado) => const PantallaEntrar(),
   ),
+  GoRoute(
+    path: RutasApp.invitacion,
+    builder: (context, estado) => const PantallaInvitacion(),
+  ),
   ShellRoute(
     navigatorKey: navegadorCascaronKey,
     builder: (context, estado, child) => GuardiaDePantallaSegura(
@@ -181,35 +177,21 @@ List<RouteBase> rutasDeGravity({
         pageBuilder: (context, estado) =>
             _sinAnimacion(estado, const PantallaInicio()),
       ),
-      ...montarRutasDeModulo(
-        Rutas.finanzas,
-        finanzas,
-        modulo: Modulo.finanzas,
-      ),
+      ...montarRutasDeModulo(Rutas.finanzas, finanzas, modulo: Modulo.finanzas),
       if (habitos.isEmpty)
         _modulo(Rutas.habitos, Modulo.habitos)
       else
         ...montarRutasDeModulo(Rutas.habitos, habitos, modulo: Modulo.habitos),
-      GoRoute(
-        path: Rutas.cuidados,
-        pageBuilder: (context, estado) => _sinAnimacion(
-          estado,
-          const PantallaProximamente(
-            titulo: 'Mi turno',
-            icono: Icons.assignment_ind_outlined,
-            fase: 5,
-            detalle:
-                'Entrega de turno, siguiente medicamento, comidas y gastos '
-                'de cuidado.',
-          ),
-        ),
-        routes: [
-          _cuidados('medicamentos', 'Medicamentos', Icons.medication_outlined),
-          _cuidados('comidas', 'Comidas', Icons.restaurant_outlined),
-          _cuidados('bitacora', 'Bitácora', Icons.menu_book_outlined),
-        ],
+      ...montarRutasDeModulo(
+        Rutas.cuidados,
+        rutasCuidados(),
+        modulo: Modulo.cuidados,
       ),
-      _modulo(Rutas.alimentacion, Modulo.alimentacion),
+      ...montarRutasDeModulo(
+        Rutas.alimentacion,
+        rutasAlimentacion(),
+        modulo: Modulo.alimentacion,
+      ),
       _modulo(Rutas.casa, Modulo.casa),
       GoRoute(
         path: RutasApp.pendientes,

@@ -15,7 +15,9 @@ final notificadorProvider = Provider<NotificadorLocal>(
   (ref) => NotificadorEnMemoria(),
 );
 
-final fuentePushProvider = Provider<FuentePush>((ref) => const FuentePushNula());
+final fuentePushProvider = Provider<FuentePush>(
+  (ref) => const FuentePushNula(),
+);
 
 /// `null` sin servidor.
 final repositorioAvisosProvider = Provider<RepositorioAvisos?>((ref) => null);
@@ -28,9 +30,14 @@ final fuenteDeVencimientosProvider = Provider<FuenteDeVencimientos>(
 
 /// Detalle de un aviso dentro de la bandeja (con montos, ocultables). Lo
 /// aporta Finanzas; sin él, la bandeja muestra solo el título del catálogo.
-typedef ConstructorDetalleAviso = Widget Function(BuildContext context, Object aviso);
+typedef ConstructorDetalleAviso = Widget Function(
+  BuildContext context,
+  Object aviso,
+);
 
-final detalleDeAvisoProvider = Provider<ConstructorDetalleAviso?>((ref) => null);
+final detalleDeAvisoProvider = Provider<ConstructorDetalleAviso?>(
+  (ref) => null,
+);
 
 /// Hábitos lo sustituye con su copia local: qué recordar en los próximos 7 días.
 final fuenteDeRecordatoriosHabitosProvider =

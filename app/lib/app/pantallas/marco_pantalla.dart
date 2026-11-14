@@ -96,7 +96,8 @@ class MenuCuenta extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final sesion = ref.watch(sesionEfectivaProvider);
     if (sesion == null) return const SizedBox.shrink();
-    final esTablet = ref.watch(tipoDispositivoProvider) == TipoDispositivo.tablet;
+    final esTablet =
+        ref.watch(tipoDispositivoProvider) == TipoDispositivo.tablet;
     if (esTablet && sesion.rol == Rol.casa) return const SizedBox.shrink();
     final personal = ref.watch(
       controladorTabletProvider.select((e) => e.configuracion.esPersonal),
@@ -128,7 +129,9 @@ class MenuCuenta extends ConsumerWidget {
         if (esTablet)
           PopupMenuItem(
             value: _OpcionCuenta.modoCasa,
-            child: Text(personal ? 'Bloquear la tablet' : 'Volver al modo Casa'),
+            child: Text(
+              personal ? 'Bloquear la tablet' : 'Volver al modo Casa',
+            ),
           )
         else
           const PopupMenuItem(value: _OpcionCuenta.salir, child: Text('Salir')),

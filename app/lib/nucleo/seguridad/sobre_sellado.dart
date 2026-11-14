@@ -36,12 +36,11 @@ abstract final class SobreSellado {
 
   static SecureRandom _azar() {
     final semilla = Random.secure();
-    return FortunaRandom()
-      ..seed(
-        KeyParameter(
-          Uint8List.fromList(List<int>.generate(32, (_) => semilla.nextInt(256))),
-        ),
-      );
+    return FortunaRandom()..seed(
+      KeyParameter(
+        Uint8List.fromList(List<int>.generate(32, (_) => semilla.nextInt(256))),
+      ),
+    );
   }
 
   static Uint8List _enBytes(BigInt valor, int largo) {
@@ -140,9 +139,11 @@ abstract final class SobreSellado {
     final nonce = Uint8List.fromList(
       List<int>.generate(_bytesNonce, (_) => azar.nextInt(256)),
     );
-    final datos = _gcm(true, llave, nonce).process(
-      Uint8List.fromList(utf8.encode(texto)),
-    );
+    final datos = _gcm(
+      true,
+      llave,
+      nonce,
+    ).process(Uint8List.fromList(utf8.encode(texto)));
     llave.fillRange(0, llave.length, 0);
     return jsonEncode({
       'v': version,
@@ -165,7 +166,10 @@ abstract final class SobreSellado {
       final secreto = (ECDHBasicAgreement()..init(privada)).calculateAgreement(
         ECPublicKey(punto, _curva),
       );
-      final llave = _llaveSimetrica(secreto, Uint8List.fromList(efimeraPublica));
+      final llave = _llaveSimetrica(
+        secreto,
+        Uint8List.fromList(efimeraPublica),
+      );
       final claro = _gcm(
         false,
         llave,

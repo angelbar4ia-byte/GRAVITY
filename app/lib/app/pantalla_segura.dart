@@ -13,6 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../nucleo/contratos/roles.dart';
 import '../nucleo/contratos/rutas.dart';
 import '../nucleo/permisos/permisos.dart';
+import '../nucleo/seguridad/vista_papa_activa.dart';
 import '../nucleo/seguridad/pantalla_segura.dart';
 import 'navegacion.dart';
 import 'sesion_efectiva.dart';
@@ -41,7 +42,14 @@ bool esPantallaSensible(String ubicacion, Rol? rol) {
   // Bandeja de solicitudes de la cuidadora (medicamentos, citas…).
   if (_bajoRuta(ubicacion, RutasApp.solicitudes)) return veDatosClinicos(rol);
   // Sección reservada de Hábitos (regla 100): salud y oración.
-  if (esRutaReservadaDeHabitos(ubicacion)) return puedeAbrir(rol, Modulo.habitos);
+  if (esRutaReservadaDeHabitos(ubicacion)) {
+    return puedeAbrir(rol, Modulo.habitos);
+  }
+  // Alimentación: el menú de Papá lleva su perfil clínico (dieta, textura).
+  // Lo ve quien puede abrir Alimentación (F4-A1).
+  if (_bajoRuta(ubicacion, Rutas.alimentacion)) {
+    return puedeAbrir(rol, Modulo.alimentacion);
+  }
   // Bandeja de avisos: el detalle trae montos.
   if (_bajoRuta(ubicacion, RutasApp.avisos)) return veDinero(rol);
   // Registros que el servidor no aceptó: pueden ser gastos.
@@ -115,7 +123,10 @@ class GuardiaDePantallaSegura extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) => PantallaSegura(
-    activa: esPantallaSensible(ubicacion, ref.watch(rolEfectivoProvider)),
+    // D24: con la vista temporal de Papá vigente se protege toda la ventana.
+    activa:
+        ref.watch(vistaPapaActivaProvider) ||
+        esPantallaSensible(ubicacion, ref.watch(rolEfectivoProvider)),
     child: child,
   );
 }

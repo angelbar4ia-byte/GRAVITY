@@ -7,11 +7,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../nucleo/contratos/roles.dart';
+import '../componentes/cuadricula_bento.dart';
 import '../componentes/etiqueta_panel.dart';
+import '../esmerilado.dart';
+import '../componentes/indicador_conexion.dart';
 import '../componentes/monto_ocultable.dart';
 import '../componentes/semaforo.dart';
 import '../componentes/tarjeta_modulo.dart';
 import '../modo_claro_oscuro.dart';
+import '../solar.dart';
 import '../personalidad_modulo.dart';
 import '../proveedores.dart';
 import '../valores_diseno.dart';
@@ -20,7 +24,8 @@ class SeccionApariencia extends ConsumerWidget {
   const SeccionApariencia({super.key});
 
   static const _modos = {
-    ModoClaroOscuro.automaticoPorHora: 'Automático por hora',
+    ModoClaroOscuro.automaticoSolar: 'Amanecer y atardecer',
+    ModoClaroOscuro.automaticoPorHora: 'Horario fijo',
     ModoClaroOscuro.sistema: 'Del sistema',
     ModoClaroOscuro.claro: 'Siempre claro',
     ModoClaroOscuro.oscuro: 'Siempre oscuro',
@@ -44,10 +49,19 @@ class SeccionApariencia extends ConsumerWidget {
     final preferencia = ref.watch(preferenciaClaroOscuroProvider);
     final opciones = ref.watch(opcionesPersonalidadProvider);
     final titulo = SizedBox(height: e * 3);
+    final altoContraste = ref.watch(altoContrasteProvider);
+    final ahora = ref.watch(horaActualProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        Text(
+          'Tu apariencia se guarda solo para ti; la tablet de la casa tiene '
+          'la suya.',
+          key: const ValueKey('apariencia-por-persona'),
+          style: v.lectura(tamano: 13, color: v.textoTenue),
+        ),
+        titulo,
         const EtiquetaPanel('Estilo'),
         SizedBox(height: e),
         Wrap(
@@ -71,6 +85,33 @@ class SeccionApariencia extends ConsumerWidget {
             style: v.lectura(tamano: 14, color: v.textoTenue),
           ),
         ],
+        // Si el vidrio se apagó solo por rendimiento, se dice y se puede probar
+        // de nuevo (D27).
+        ListenableBuilder(
+          listenable: GestorEsmerilado.instancia,
+          builder: (context, _) => GestorEsmerilado.instancia.apagadoAutomatico
+              ? Padding(
+                  padding: EdgeInsets.only(top: e * 1.5),
+                  child: Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: e,
+                    runSpacing: e,
+                    children: [
+                      Text(
+                        'El esmerilado se apagó porque la app iba lenta.',
+                        key: const ValueKey('esmerilado-apagado'),
+                        style: v.lectura(tamano: 13, color: v.textoTenue),
+                      ),
+                      OutlinedButton(
+                        key: const ValueKey('esmerilado-reactivar'),
+                        onPressed: GestorEsmerilado.instancia.reactivar,
+                        child: const Text('Volver a probar'),
+                      ),
+                    ],
+                  ),
+                )
+              : const SizedBox.shrink(),
+        ),
         titulo,
         const EtiquetaPanel('Claro / oscuro'),
         SizedBox(height: e),
@@ -89,6 +130,33 @@ class SeccionApariencia extends ConsumerWidget {
               ),
           ],
         ),
+        if (preferencia.modo == ModoClaroOscuro.automaticoSolar) ...[
+          SizedBox(height: e * 1.5),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text('Lugar', style: v.lectura()),
+              DropdownButton<LugarSolar>(
+                key: const ValueKey('lugar-solar'),
+                value: preferencia.lugar,
+                isExpanded: true,
+                underline: const SizedBox(),
+                onChanged: (lugar) {
+                  if (lugar == null) return;
+                  ref
+                      .read(preferenciaClaroOscuroProvider.notifier)
+                      .cambiarLugar(lugar);
+                },
+                items: [
+                  for (final lugar in lugaresSolares)
+                    DropdownMenuItem(value: lugar, child: Text(lugar.nombre)),
+                ],
+              ),
+            ],
+          ),
+          SizedBox(height: e),
+          _TextoSol(sol: solDelDia(ahora, preferencia.lugar)),
+        ],
         if (preferencia.modo == ModoClaroOscuro.automaticoPorHora) ...[
           SizedBox(height: e * 1.5),
           Wrap(
@@ -116,6 +184,19 @@ class SeccionApariencia extends ConsumerWidget {
           ),
         ],
         titulo,
+        SwitchListTile(
+          key: const ValueKey('alto-contraste'),
+          contentPadding: EdgeInsets.zero,
+          title: Text('Alto contraste', style: v.lectura()),
+          subtitle: Text(
+            'Texto y estados a 7:1 en cualquier estilo, sin adornos.',
+            style: v.lectura(tamano: 13, color: v.textoTenue),
+          ),
+          value: altoContraste,
+          onChanged: (activo) =>
+              ref.read(altoContrasteProvider.notifier).fijar(activo),
+        ),
+        titulo,
         const EtiquetaPanel('Personalidad por módulo'),
         SizedBox(height: e),
         for (final MapEntry(key: modulo, value: nombre) in _modulos.entries)
@@ -129,6 +210,23 @@ class SeccionApariencia extends ConsumerWidget {
         SizedBox(height: e),
         const _VistaPrevia(),
       ],
+    );
+  }
+}
+
+/// "Amanecer 06:32 · Atardecer 18:10", con texto además del color.
+class _TextoSol extends StatelessWidget {
+  const _TextoSol({required this.sol});
+
+  final SolDelDia sol;
+
+  @override
+  Widget build(BuildContext context) {
+    final v = ValoresDiseno.de(context);
+    return Text(
+      'Hoy: amanecer ${sol.textoAmanecer} · atardecer ${sol.textoAtardecer}',
+      key: const ValueKey('texto-sol'),
+      style: v.lectura(tamano: 13, color: v.textoTenue),
     );
   }
 }
@@ -176,47 +274,54 @@ class _FilaPersonalidad extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final v = ValoresDiseno.de(context);
     final automatica = PersonalidadModulo.automatica(modulo);
+    final selector = DropdownButton<OpcionPersonalidad>(
+      key: ValueKey('personalidad-${modulo.name}'),
+      value: opcion,
+      isExpanded: true,
+      underline: const SizedBox(),
+      onChanged: (nueva) {
+        if (nueva == null) return;
+        ref.read(opcionesPersonalidadProvider.notifier).fijar(modulo, nueva);
+      },
+      items: const [
+        DropdownMenuItem(
+          value: OpcionPersonalidad.automatica,
+          child: Text('Automática'),
+        ),
+        DropdownMenuItem(
+          value: OpcionPersonalidad.igualAlEstilo,
+          child: Text('Igual al estilo'),
+        ),
+      ],
+    );
+    final textos = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(nombre, style: v.lectura(color: v.textoFuerte)),
+        Text(
+          automatica.tieneExcepciones
+              ? '${automatica.nombre} · siempre en alto contraste'
+              : automatica.nombre,
+          style: v.lectura(tamano: 13, color: v.textoTenue),
+        ),
+      ],
+    );
+    // Con letra grande el selector baja a su propia línea en lugar de cortarse.
+    final grande = MediaQuery.textScalerOf(context).scale(14) > 14 * 1.3;
     return Padding(
       padding: EdgeInsets.symmetric(vertical: v.espacio * 0.5),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: grande
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [textos, selector],
+            )
+          : Row(
               children: [
-                Text(nombre, style: v.lectura(color: v.textoFuerte)),
-                Text(
-                  automatica.tieneExcepciones
-                      ? '${automatica.nombre} · siempre en alto contraste'
-                      : automatica.nombre,
-                  style: v.lectura(tamano: 13, color: v.textoTenue),
-                ),
+                Expanded(child: textos),
+                SizedBox(width: v.espacio, child: null),
+                SizedBox(width: 150, child: selector),
               ],
             ),
-          ),
-          DropdownButton<OpcionPersonalidad>(
-            key: ValueKey('personalidad-${modulo.name}'),
-            value: opcion,
-            underline: const SizedBox(),
-            onChanged: (nueva) {
-              if (nueva == null) return;
-              ref
-                  .read(opcionesPersonalidadProvider.notifier)
-                  .fijar(modulo, nueva);
-            },
-            items: const [
-              DropdownMenuItem(
-                value: OpcionPersonalidad.automatica,
-                child: Text('Automática'),
-              ),
-              DropdownMenuItem(
-                value: OpcionPersonalidad.igualAlEstilo,
-                child: Text('Igual al estilo'),
-              ),
-            ],
-          ),
-        ],
-      ),
     );
   }
 }
@@ -227,7 +332,7 @@ class _VistaPrevia extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final v = ValoresDiseno.de(context);
-    return TarjetaModulo(
+    final finanzas = TarjetaModulo(
       key: const ValueKey('vista-previa'),
       titulo: 'Finanzas · semana',
       accion: const Semaforo(estado: EstadoSemaforo.verde),
@@ -248,6 +353,25 @@ class _VistaPrevia extends StatelessWidget {
           ),
         ],
       ),
+    );
+    // Con un estilo de cuadrícula, la vista previa muestra tres teselas.
+    if (!v.cuadricula) return finanzas;
+    return CuadriculaBento(
+      teselas: [
+        TeselaBento(columnas: 4, child: finanzas),
+        TeselaBento(
+          child: TarjetaModulo(
+            titulo: 'Hábitos',
+            child: Text('3 de 5 hoy', style: v.lectura(tamano: 16)),
+          ),
+        ),
+        TeselaBento(
+          child: TarjetaModulo(
+            titulo: 'Conexión',
+            child: const IndicadorConexion(estado: EstadoConexion.enLinea),
+          ),
+        ),
+      ],
     );
   }
 }

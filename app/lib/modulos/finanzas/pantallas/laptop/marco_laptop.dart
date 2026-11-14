@@ -13,6 +13,7 @@ import '../../../../diseno/diseno.dart';
 import '../../../../nucleo/contratos/roles.dart';
 import '../../../../nucleo/contratos/rutas.dart';
 import '../../estado/proveedores.dart';
+import '../../datos/patrimonio.dart' show permisoPatrimonio;
 import '../comunes.dart';
 
 /// Secciones de Finanzas en la laptop (especificación 6.1).
@@ -29,12 +30,18 @@ enum SeccionFinanzas {
     Icons.event_repeat_outlined,
   ),
   deudas('deudas', 'Deudas', Icons.credit_card_outlined),
+  simulador('simulador', 'Simulador de deudas', Icons.compare_arrows),
+  tarjetas('tarjetas', 'Tarjetas y beneficios', Icons.credit_card),
   ahorro('ahorro', 'Ahorro y fondo', Icons.savings_outlined),
-  vencimientos(
-    'vencimientos',
-    'Vencimientos',
-    Icons.calendar_month_outlined,
+  patrimonio(
+    'patrimonio',
+    'Objetivos e inversión',
+    Icons.account_balance_outlined,
   ),
+  reportes('reportes', 'Reportes', Icons.assessment_outlined),
+  transferencias('transferencias', 'Transferencias', Icons.swap_horiz),
+  aportacion('aportacion', 'Aportación a la casa', Icons.home_outlined),
+  vencimientos('vencimientos', 'Vencimientos', Icons.calendar_month_outlined),
   arranque('arranque', 'Asistente de arranque', Icons.rocket_launch_outlined),
   importar('importar', 'Importar datos', Icons.upload_file_outlined),
   ajustes('ajustes', 'Ajustes de Finanzas', Icons.tune);
@@ -66,6 +73,11 @@ enum SeccionFinanzas {
     SeccionFinanzas.arranque => c.puedeAdministrar,
     SeccionFinanzas.importar => c.administraHogar && !c.permiso.comoMaestra,
     SeccionFinanzas.ajustes => c.puedeAdministrar || c.administraHogar,
+    SeccionFinanzas.patrimonio => permisoPatrimonio(
+      c.permiso,
+      c.rol,
+      soloLectura: c.soloLecturaTotal,
+    ).ver,
     _ => true,
   };
 }
@@ -180,7 +192,12 @@ class _Principal extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: EdgeInsets.fromLTRB(v.espacio * 3, v.espacio * 2, v.espacio * 3, 0),
+          padding: EdgeInsets.fromLTRB(
+            v.espacio * 3,
+            v.espacio * 2,
+            v.espacio * 3,
+            0,
+          ),
           child: Wrap(
             spacing: 12,
             runSpacing: 8,
@@ -227,7 +244,12 @@ class _Principal extends StatelessWidget {
         ),
         if (conMenu)
           Padding(
-            padding: EdgeInsets.fromLTRB(v.espacio * 3, v.espacio, v.espacio * 3, 0),
+            padding: EdgeInsets.fromLTRB(
+              v.espacio * 3,
+              v.espacio,
+              v.espacio * 3,
+              0,
+            ),
             child: SelectorLibroFinanzas(contexto: contexto),
           ),
         SizedBox(height: v.espacio),
@@ -274,9 +296,7 @@ class Rejilla extends StatelessWidget {
       return Wrap(
         spacing: e,
         runSpacing: e,
-        children: [
-          for (final c in children) SizedBox(width: ancho, child: c),
-        ],
+        children: [for (final c in children) SizedBox(width: ancho, child: c)],
       );
     },
   );

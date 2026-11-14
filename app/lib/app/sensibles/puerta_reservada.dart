@@ -32,8 +32,9 @@ const minutosDeBloqueoReservado = 2;
 
 /// ¿Lo reservado está abierto ahora? Se cierra solo al pasar el tiempo sin uso
 /// y al cambiar la persona en pantalla.
-final reservadoAbiertoProvider =
-    NotifierProvider<ReservadoAbierto, bool>(ReservadoAbierto.new);
+final reservadoAbiertoProvider = NotifierProvider<ReservadoAbierto, bool>(
+  ReservadoAbierto.new,
+);
 
 class ReservadoAbierto extends Notifier<bool> {
   @override

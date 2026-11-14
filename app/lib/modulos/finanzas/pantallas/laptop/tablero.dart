@@ -109,13 +109,17 @@ class _Tablero extends ConsumerWidget {
           children: [
             TarjetaModulo(
               key: const ValueKey('tablero-cascada'),
-              titulo: '${textoSemana(semana)} · ${nombreEstadoSemana(v.estado)}',
+              titulo:
+                  '${textoSemana(semana)} · ${nombreEstadoSemana(v.estado)}',
               icono: Icons.waterfall_chart,
               accion: TextButton(
                 onPressed: () => context.go(SeccionFinanzas.semana.ruta),
                 child: const Text('Abrir semana'),
               ),
-              child: GadgetCascada(escalones: escalonesDe(v), montosOcultos: ocultos),
+              child: GadgetCascada(
+                escalones: escalonesDe(v),
+                montosOcultos: ocultos,
+              ),
             ),
             TarjetaModulo(
               titulo: 'Partidas',
@@ -132,10 +136,16 @@ class _Tablero extends ConsumerWidget {
                               asignadoCentavos: p.disponible,
                               gastadoCentavos: p.gastado,
                               montosOcultos: ocultos,
-                              ambarDesdePuntosBase:
-                                  v.planSemanal.parametros.umbrales.partidaAmbarDesde,
-                              rojoArribaDePuntosBase:
-                                  v.planSemanal.parametros.umbrales.partidaRojoArribaDe,
+                              ambarDesdePuntosBase: v
+                                  .planSemanal
+                                  .parametros
+                                  .umbrales
+                                  .partidaAmbarDesde,
+                              rojoArribaDePuntosBase: v
+                                  .planSemanal
+                                  .parametros
+                                  .umbrales
+                                  .partidaRojoArribaDe,
                             ),
                           ),
                       ],
@@ -162,7 +172,10 @@ class _Tablero extends ConsumerWidget {
                                   ? '${textoFecha(x.fecha.ajustada)} (era ${textoFecha(x.fecha.programada)})'
                                   : textoFecha(x.fecha.ajustada),
                             ),
-                            trailing: Monto(x.esEntrada ? x.monto : -x.monto, signo: true),
+                            trailing: Monto(
+                              x.esEntrada ? x.monto : -x.monto,
+                              signo: true,
+                            ),
                           ),
                       ],
                     ),
@@ -170,7 +183,9 @@ class _Tablero extends ConsumerWidget {
             TarjetaModulo(
               key: const ValueKey('tablero-flujo'),
               titulo: riesgo == null ? 'Flujo' : 'Alerta de flujo',
-              icono: riesgo == null ? Icons.timeline : Icons.warning_amber_rounded,
+              icono: riesgo == null
+                  ? Icons.timeline
+                  : Icons.warning_amber_rounded,
               child: riesgo == null
                   ? const Text(
                       'En las próximas semanas el saldo no baja de cero en el '

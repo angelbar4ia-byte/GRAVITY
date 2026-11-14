@@ -63,15 +63,14 @@ class AvisoBandejaDeSalida extends ConsumerWidget {
     if (ref.watch(tipoDispositivoProvider) != TipoDispositivo.tablet) {
       return const SizedBox.shrink();
     }
-    final estado = ref.watch(estadoBandejaProvider).value ?? EstadoBandeja.vacio;
+    final estado =
+        ref.watch(estadoBandejaProvider).value ?? EstadoBandeja.vacio;
     final caducados = ref.watch(caducadosDeLaBandejaProvider).value ?? 0;
     if (estado.porSubir == 0 && caducados == 0) return const SizedBox.shrink();
     final tema = Theme.of(context);
     final lineas = <String>[
       if (estado.porSubir > 0)
-        estado.porSubir == 1
-            ? '1 por subir'
-            : '${estado.porSubir} por subir',
+        estado.porSubir == 1 ? '1 por subir' : '${estado.porSubir} por subir',
       if (estado.seSubenSolos > 0)
         estado.seSubenSolos == estado.porSubir
             ? 'Se suben solos cuando haya señal; no hace falta el PIN.'

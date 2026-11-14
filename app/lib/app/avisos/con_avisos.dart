@@ -9,7 +9,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../modulos/cuidados/estado/proveedores.dart'
+    show repositorioCuidadosProvider, versionCuidadosProvider;
+import '../../nucleo/avisos/notificador.dart' show AccionDeNotificacion;
 import '../../nucleo/avisos/proveedores_avisos.dart';
+import 'accion_posponer_toma.dart';
+import 'recordatorios_cuidados.dart';
 import '../../nucleo/avisos/aviso.dart';
 import '../../nucleo/avisos/recordatorios.dart';
 import '../../nucleo/avisos/servicio_recordatorios_habitos.dart';
@@ -23,6 +28,7 @@ import '../../nucleo/seguridad/pin.dart' show rolVeDinero;
 import '../../nucleo/seguridad/proveedores_seguridad.dart';
 import '../../nucleo/sesion/proveedores_sesion.dart';
 import '../../nucleo/tablet/controlador_tablet.dart';
+import '../../diseno/proveedores.dart' show relojProvider;
 import '../dispositivo.dart';
 import '../navegacion.dart';
 import '../router.dart';
@@ -55,6 +61,7 @@ final contextoAvisosProvider = Provider<ContextoAvisos>((ref) {
     usaHabitos:
         rol != null &&
         puedeUsarHabitos(rol, esMaestra: sesion?.esMaestra ?? false),
+    recibeCuidados: rol == Rol.cuidador || rol == Rol.dueno,
   );
 });
 
@@ -78,6 +85,55 @@ final recordatoriosHabitosProvider = Provider<ServicioRecordatoriosHabitos>((
   );
 });
 
+/// Reprograma los recordatorios de Cuidados (tomas y comidas) de quien está
+/// de turno en este equipo. Sin sesión, solo cancela lo anterior.
+Future<void> reprogramarCuidadosDeEsteEquipo(WidgetRef ref) async {
+  try {
+    final sesion = ref.read(sesionEfectivaProvider);
+    PreferenciasAvisos prefs;
+    try {
+      prefs =
+          await ref.read(repositorioAvisosProvider)?.preferencias() ??
+          const PreferenciasAvisos();
+    } catch (_) {
+      prefs = const PreferenciasAvisos();
+    }
+    await reprogramarRecordatoriosCuidados(
+      repositorio: ref.read(repositorioCuidadosProvider),
+      notificador: ref.read(notificadorProvider),
+      almacen: ref.read(almacenSeguroProvider),
+      rol: sesion?.rol,
+      personaId: sesion?.persona.id,
+      esMaestra: sesion?.esMaestra ?? false,
+      ahora: ref.read(relojProvider).ahora(),
+      preferencias: prefs,
+      tabletPublica:
+          ref.read(tipoEquipoAvisosProvider) == TipoEquipoAvisos.tabletPublica,
+    );
+  } catch (_) {
+    // Los recordatorios nunca rompen la app.
+  }
+}
+
+/// Ruta a la que lleva tocar un aviso del servidor según su [tipo]: la toma de
+/// Cuidados abre Medicamentos; todo lo demás, la bandeja.
+String rutaAlAbrirAvisoDeTipo(String? tipo) =>
+    tipo == 'recordatorio_toma'
+    ? RutasApp.cuidadosMedicamentos
+    : RutasApp.avisos;
+
+/// Lee el aviso (la carga de un push es su id) para decidir adónde ir; si no
+/// se puede leer, abre la bandeja.
+Future<void> _abrirAvisoDelServidor(Ref ref, String? id) async {
+  String? tipo;
+  if (id != null) {
+    try {
+      tipo = (await ref.read(repositorioAvisosProvider)?.leer(id))?.tipo;
+    } catch (_) {}
+  }
+  ref.read(routerProvider).go(rutaAlAbrirAvisoDeTipo(tipo));
+}
+
 final servicioAvisosProvider = Provider<ServicioAvisos>((ref) {
   final notificador = ref.watch(notificadorProvider);
   final servicio = ServicioAvisos(
@@ -94,13 +150,33 @@ final servicioAvisosProvider = Provider<ServicioAvisos>((ref) {
     alAbrirAviso: (carga) {
       // Los recordatorios de Hábitos llevan su clave (`hab:…`); abrir uno lleva
       // a Hábitos (lo sensible pide el PIN allí), no a la bandeja de Finanzas.
-      ref
-          .read(routerProvider)
-          .go(carga != null && carga.startsWith('hab:') ? Rutas.habitos : RutasApp.avisos);
+      if (carga != null && carga.startsWith('hab:')) {
+        ref.read(routerProvider).go(Rutas.habitos);
+        return;
+      }
+      // Cuidados: el aviso de toma (local o del servidor) abre Medicamentos;
+      // no escribe nada ni marca la toma desde el aviso.
+      if (carga != null && carga.startsWith('cui:recordatorio_toma:')) {
+        ref.read(routerProvider).go(RutasApp.cuidadosMedicamentos);
+        return;
+      }
+      unawaited(_abrirAvisoDelServidor(ref, carga));
     },
-    alAccion: (carga, accion) => unawaited(
-      ref.read(recordatoriosHabitosProvider).alAccion(carga, accion),
-    ),
+    alAccion: (carga, accion) {
+      // Cuidados: *Posponer al siguiente turno* llama a cui_posponer_toma.
+      if (accion == AccionDeNotificacion.posponerTurno) {
+        unawaited(
+          posponerTomaDesdeAviso(
+            carga: carga,
+            accion: accion,
+            repositorio: ref.read(repositorioCuidadosProvider),
+            notificador: notificador,
+          ),
+        );
+        return;
+      }
+      unawaited(ref.read(recordatoriosHabitosProvider).alAccion(carga, accion));
+    },
   );
   ref.onDispose(() => unawaited(servicio.detener()));
   return servicio;
@@ -124,18 +200,24 @@ class _ConAvisosState extends ConsumerState<ConAvisos> {
     super.initState();
     final servicio = ref.read(servicioAvisosProvider);
     unawaited(
-      servicio.iniciar().then((_) {
-        if (!mounted) return Future<void>.value();
-        _persona = ref.read(contextoAvisosProvider).personaId;
-        return servicio.alEntrarPersona();
-      }).then((_) => ref.read(recordatoriosHabitosProvider).reprogramar()),
+      servicio
+          .iniciar()
+          .then((_) {
+            if (!mounted) return Future<void>.value();
+            _persona = ref.read(contextoAvisosProvider).personaId;
+            return servicio.alEntrarPersona();
+          })
+          .then((_) => ref.read(recordatoriosHabitosProvider).reprogramar())
+          .then((_) {
+            if (mounted) return reprogramarCuidadosDeEsteEquipo(ref);
+          }),
     );
     // La tarea diaria de los recordatorios de Hábitos (cada 12 h con la app
     // abierta; al reiniciar el teléfono los reprograma la biblioteca).
-    _diaria = Timer.periodic(
-      const Duration(hours: 12),
-      (_) => unawaited(ref.read(recordatoriosHabitosProvider).reprogramar()),
-    );
+    _diaria = Timer.periodic(const Duration(hours: 12), (_) {
+      unawaited(ref.read(recordatoriosHabitosProvider).reprogramar());
+      unawaited(reprogramarCuidadosDeEsteEquipo(ref));
+    });
   }
 
   Timer? _diaria;
@@ -164,7 +246,13 @@ class _ConAvisosState extends ConsumerState<ConAvisos> {
         _persona = actual.$1;
         if (_persona != null) await servicio.alEntrarPersona();
         await ref.read(recordatoriosHabitosProvider).reprogramar();
+        await reprogramarCuidadosDeEsteEquipo(ref);
       }());
+    });
+    // Cambia el turno o las tomas del día (se marcó, se pospuso, se guardó un
+    // turno): se vuelve a programar.
+    ref.listen(versionCuidadosProvider, (_, _) {
+      unawaited(reprogramarCuidadosDeEsteEquipo(ref));
     });
     return widget.child;
   }

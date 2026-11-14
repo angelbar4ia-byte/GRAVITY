@@ -42,16 +42,25 @@ class DocumentosSensibles {
     return lt == null || li == null ? null : (lt, li);
   }
 
-  Future<(Sobre, DocumentoSensible)?> _abrir(TipoSensible t, String clave) async {
+  Future<(Sobre, DocumentoSensible)?> _abrir(
+    TipoSensible t,
+    String clave,
+  ) async {
     final k = await _llaves(t);
     if (k == null) return null;
     final id = LlavesHabitos.idOpaco(k.$2, t, clave);
     final s = await sobres.leer(persona, id);
     if (s == null) return null;
     final m = descifrarDocumento(
-        llaveDeTipo: Uint8List.fromList(k.$1), persona: persona, sobre: s);
+      llaveDeTipo: Uint8List.fromList(k.$1),
+      persona: persona,
+      sobre: s,
+    );
     if (m == null) return null;
-    return (s, DocumentoSensible.deJson((m['doc']! as Map).cast<String, Object?>()));
+    return (
+      s,
+      DocumentoSensible.deJson((m['doc']! as Map).cast<String, Object?>()),
+    );
   }
 
   Future<DocumentoSensible> leer(TipoSensible t, String clave) async =>
@@ -63,7 +72,9 @@ class DocumentosSensibles {
     if (k == null) throw StateError('Sin llave para este tipo en este equipo.');
     final actual = await _abrir(t, clave);
     final doc = fusionarDocumentos(
-        actual?.$2 ?? const DocumentoSensible({}), DocumentoSensible({e.id: e}));
+      actual?.$2 ?? const DocumentoSensible({}),
+      DocumentoSensible({e.id: e}),
+    );
     final sobre = cifrarDocumento(
       llaveDeTipo: Uint8List.fromList(k.$1),
       llaveDeIds: Uint8List.fromList(k.$2),
@@ -80,15 +91,27 @@ class DocumentosSensibles {
   Future<void> quitar(TipoSensible t, String clave, String id) async {
     final v = (await leer(t, clave)).elementos[id];
     if (v == null) return;
-    await poner(t, clave,
-        ElementoDoc(id: id, clase: v.clase, modificadoEn: ahoraMs, eliminado: true));
+    await poner(
+      t,
+      clave,
+      ElementoDoc(
+        id: id,
+        clase: v.clase,
+        modificadoEn: ahoraMs,
+        eliminado: true,
+      ),
+    );
   }
 
   /// Elementos vivos de la [clase] en un documento.
-  Future<List<ElementoDoc>> vivos(TipoSensible t, String clave, String clase) async => [
-        for (final e in (await leer(t, clave)).elementos.values)
-          if (!e.eliminado && e.clase == clase) e
-      ];
+  Future<List<ElementoDoc>> vivos(
+    TipoSensible t,
+    String clave,
+    String clase,
+  ) async => [
+    for (final e in (await leer(t, clave)).elementos.values)
+      if (!e.eliminado && e.clase == clase) e,
+  ];
 
   /// Todos los documentos de un tipo, abiertos en memoria (exportar mis
   /// datos, revisión). Los que no abren se omiten.
@@ -97,10 +120,15 @@ class DocumentosSensibles {
     if (k == null) return {};
     final r = <String, DocumentoSensible>{};
     for (final s in await sobres.todos(persona, tipo: t)) {
-      final m = descifrarDocumento(llaveDeTipo: Uint8List.fromList(k.$1), persona: persona, sobre: s);
+      final m = descifrarDocumento(
+        llaveDeTipo: Uint8List.fromList(k.$1),
+        persona: persona,
+        sobre: s,
+      );
       if (m == null) continue;
-      r[m['clave']! as String] =
-          DocumentoSensible.deJson((m['doc']! as Map).cast<String, Object?>());
+      r[m['clave']! as String] = DocumentoSensible.deJson(
+        (m['doc']! as Map).cast<String, Object?>(),
+      );
     }
     return r;
   }

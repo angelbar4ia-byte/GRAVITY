@@ -6,6 +6,14 @@ library;
 
 enum Rol { dueno, coadministrador, familiar, cuidador, casa }
 
-enum Modulo { gravity, finanzas, habitos, cuidados, alimentacion, casa, ajustes }
+enum Modulo {
+  gravity,
+  finanzas,
+  habitos,
+  cuidados,
+  alimentacion,
+  casa,
+  ajustes,
+}
 
 enum Accion { leer, escribir, administrar }

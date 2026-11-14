@@ -66,10 +66,12 @@ class NotificadorPlugin implements NotificadorLocal {
               CanalAviso.habitosRevision => Importance.defaultImportance,
               CanalAviso.resumen => Importance.low,
             },
-            playSound: canal != CanalAviso.informativos &&
+            playSound:
+                canal != CanalAviso.informativos &&
                 canal != CanalAviso.resumen &&
                 canal != CanalAviso.habitosRevision,
-            enableVibration: canal != CanalAviso.informativos &&
+            enableVibration:
+                canal != CanalAviso.informativos &&
                 canal != CanalAviso.resumen &&
                 canal != CanalAviso.habitosRevision,
             // Vibración doble larga (urgentes) y corta (avisos y hábitos).

@@ -121,6 +121,7 @@ class ErrorSesion implements Exception {
   static const sinConexion = ErrorSesion(
     'Sin conexión. Intenta de nuevo cuando haya señal.',
   );
+
   /// El servidor no pudo atender ahora (límite de peticiones, tiempo agotado,
   /// algo inesperado): la credencial sigue buena y se reintenta más tarde.
   static const servidorOcupado = ErrorSesion(
@@ -258,6 +259,38 @@ abstract interface class SesionAparte {
 
   /// Cierra la sesión **sin revocarla** y devuelve la credencial vigente.
   Future<String?> cerrar();
+}
+
+/// Resultado de [AceptaInvitaciones.aceptarInvitacion].
+class ResultadoInvitacion {
+  const ResultadoInvitacion.dentro(Sesion this.sesion)
+    : faltaConfirmarCorreo = false;
+
+  /// La cuenta se creó, pero el servidor pide confirmar el correo antes de
+  /// aceptar la invitación: se confirma y se vuelve a intentar (el código
+  /// sigue valiendo).
+  const ResultadoInvitacion.faltaConfirmar()
+    : sesion = null,
+      faltaConfirmarCorreo = true;
+
+  /// Sesión abierta, con el rol de la invitación; `null` si falta confirmar.
+  final Sesion? sesion;
+  final bool faltaConfirmarCorreo;
+}
+
+/// Capacidad de los servicios con servidor: "Tengo una invitación" (E3 de la
+/// Fase 4). Crea la cuenta (o entra con la que ya tiene) y acepta la
+/// invitación con `aceptar_invitacion`; el servidor exige que el correo sea
+/// el invitado y esté confirmado. Lanza [ErrorSesion] con un mensaje listo
+/// para mostrar.
+abstract interface class AceptaInvitaciones {
+  Future<ResultadoInvitacion> aceptarInvitacion({
+    required String token,
+    required String correo,
+    required String contrasena,
+    String? nombre,
+    required bool cuentaNueva,
+  });
 }
 
 /// Capacidad extra del modo demostración: entrar con un rol elegido.

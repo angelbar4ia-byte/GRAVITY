@@ -71,7 +71,8 @@ EstadoDeCuenta estadoDeCuentaDeFila(Map<String, dynamic> f) => EstadoDeCuenta(
   cargos: entero(f['cargos_centavos']),
   tasaDeclaradaPb: enteroONulo(f['tasa_declarada_pb']),
   catPb: enteroONulo(f['cat_pb']),
-  registradoEn: horaDe(f['registrado_en']) ?? DateTime.fromMillisecondsSinceEpoch(0),
+  registradoEn:
+      horaDe(f['registrado_en']) ?? DateTime.fromMillisecondsSinceEpoch(0),
 );
 
 Map<String, Object?> filaBolsa(BolsaAhorro b, {required String hogarId}) => {
@@ -162,5 +163,6 @@ RetiroAhorro retiroDeFila(Map<String, dynamic> f) => RetiroAhorro(
   tipo: enumDe(TipoRetiro.values, f['tipo']),
   motivo: texto(f['motivo']),
   bolsaDestinoId: texto(f['bolsa_destino_id']),
-  registradoEn: horaDe(f['registrado_en']) ?? DateTime.fromMillisecondsSinceEpoch(0),
+  registradoEn:
+      horaDe(f['registrado_en']) ?? DateTime.fromMillisecondsSinceEpoch(0),
 );

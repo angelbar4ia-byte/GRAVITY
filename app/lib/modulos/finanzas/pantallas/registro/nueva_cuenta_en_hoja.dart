@@ -5,7 +5,12 @@
 library;
 
 import 'package:finanzas_dominio/finanzas_dominio.dart'
-    hide Semaforo, formatearCentavos, TipoLibro, VisibilidadLibro, puntosBaseEnCien;
+    hide
+        Semaforo,
+        formatearCentavos,
+        TipoLibro,
+        VisibilidadLibro,
+        puntosBaseEnCien;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -19,7 +24,11 @@ class NuevaCuentaEnHoja extends ConsumerStatefulWidget {
     super.key,
     required this.libroId,
     required this.alCrear,
-    this.tipos = const [TipoCuenta.efectivo, TipoCuenta.banco, TipoCuenta.tarjeta],
+    this.tipos = const [
+      TipoCuenta.efectivo,
+      TipoCuenta.banco,
+      TipoCuenta.tarjeta,
+    ],
   });
 
   final String libroId;

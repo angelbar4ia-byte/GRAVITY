@@ -10,7 +10,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/dispositivo.dart';
 import '../../../app/tablet/dialogo_agregar_persona.dart';
 import '../../../app/tablet/dialogo_pin.dart' show mensajeDesbloqueo;
-import '../../../nucleo/cola/proveedores_cola.dart' show purgaDeQuitadosProvider;
+import '../../../nucleo/cola/proveedores_cola.dart'
+    show purgaDeQuitadosProvider;
 import '../../../nucleo/contratos/dispositivo.dart';
 import '../../../nucleo/contratos/roles.dart';
 import '../../../nucleo/permisos/permisos.dart';
@@ -20,6 +21,7 @@ import '../../../nucleo/tablet/usuarios_tablet.dart';
 import '../marco_seccion.dart';
 import '../secciones_ajustes.dart';
 import 'seccion_cuenta_maestra.dart';
+import 'seccion_miembros.dart';
 
 /// Opciones del tiempo sin uso para regresar al modo Casa.
 const opcionesRegresoModoCasa = [
@@ -40,17 +42,20 @@ class PantallaPersonas extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final esTablet = ref.watch(tipoDispositivoProvider) == TipoDispositivo.tablet;
+    final esTablet =
+        ref.watch(tipoDispositivoProvider) == TipoDispositivo.tablet;
     final tema = Theme.of(context);
     return MarcoSeccion(
       seccion: SeccionAjustes.personas,
       hijos: [
         const NotaAjustes(
-          'Invitar y dar de baja personas llega con el esquema del servidor. '
           'Los permisos los aplica el servidor; aquí solo se muestran.',
           icono: Icons.person_add_alt,
         ),
         const SizedBox(height: 8),
+        // Invitar, cambiar de rol y dar de baja (E3, Fase 4).
+        const SeccionMiembros(),
+        const SizedBox(height: 16),
         // Solo el dueño (esta sección ya es solo del dueño): la cuenta maestra
         // es otra persona, de solo lectura total (D19, 23/oct).
         const SeccionCuentaMaestra(),
@@ -140,9 +145,8 @@ class _PersonasTablet extends ConsumerWidget {
                         usuario,
                       );
                       if (mensaje != null && context.mounted) {
-                        ScaffoldMessenger.of(
-                          context,
-                        ).showSnackBar(SnackBar(content: Text(mensaje)));
+                        ScaffoldMessenger.of(context)
+                            .showSnackBar(SnackBar(content: Text(mensaje)));
                       }
                     case 'quitar':
                       await controlador.quitarUsuario(usuario.personaId);

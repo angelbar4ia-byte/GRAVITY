@@ -27,11 +27,21 @@ ValoresDiseno valoresPara({
   required Brightness brillo,
   PersonalidadModulo personalidad = PersonalidadModulo.asistente,
   Densidad? densidadBase,
+  bool altoContrasteGlobal = false,
+  bool esmerilar = true,
 }) {
   final efectivo = personalidad.brilloEfectivo(brillo);
   var base = estilo.valores(efectivo);
   if (densidadBase != null) base = base.copyWith(densidad: densidadBase);
-  return personalidad.aplicar(base);
+  // El esmerilado cuesta batería: solo en laptop y tablet. En el teléfono el
+  // panel de vidrio queda en su versión translúcida sólida (esmerilado cero).
+  if (!esmerilar) base = base.copyWith(esmerilado: 0);
+  final valores = personalidad.aplicar(base);
+  // Modo alto (P6): 7:1 en todo, sin adornos; después de la personalidad, para
+  // que su acento tampoco baje el contraste.
+  return altoContrasteGlobal
+      ? valoresAltoContraste(valores).copyWith(decoracion: false)
+      : valores;
 }
 
 /// Atajo: valores + tema en un paso.
@@ -40,12 +50,16 @@ ThemeData temaPara({
   required Brightness brillo,
   PersonalidadModulo personalidad = PersonalidadModulo.asistente,
   Densidad? densidadBase,
+  bool altoContrasteGlobal = false,
+  bool esmerilar = true,
 }) => construirTema(
   valoresPara(
     estilo: estilo,
     brillo: brillo,
     personalidad: personalidad,
     densidadBase: densidadBase,
+    altoContrasteGlobal: altoContrasteGlobal,
+    esmerilar: esmerilar,
   ),
 );
 
@@ -107,7 +121,7 @@ ThemeData construirTema(ValoresDiseno v) {
   );
   final formaPanel = RoundedRectangleBorder(
     borderRadius: BorderRadius.circular(v.radioMediano),
-    side: BorderSide(color: v.borde),
+    side: BorderSide(color: v.borde, width: v.grosorBorde),
   );
   const tamanoMinimo = Size(zonaTactilMinima, zonaTactilMinima);
   final textoBoton = v.lectura(tamano: 14, peso: FontWeight.w600);
@@ -193,7 +207,7 @@ ThemeData construirTema(ValoresDiseno v) {
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         foregroundColor: v.texto,
-        side: BorderSide(color: v.borde),
+        side: BorderSide(color: v.borde, width: v.grosorBorde),
         minimumSize: tamanoMinimo,
         shape: forma,
         textStyle: textoBoton,
@@ -225,11 +239,11 @@ ThemeData construirTema(ValoresDiseno v) {
       labelStyle: TextStyle(color: v.textoTenue),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(v.radioChico),
-        borderSide: BorderSide(color: v.borde),
+        borderSide: BorderSide(color: v.borde, width: v.grosorBorde),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(v.radioChico),
-        borderSide: BorderSide(color: v.borde),
+        borderSide: BorderSide(color: v.borde, width: v.grosorBorde),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(v.radioChico),
@@ -239,7 +253,7 @@ ThemeData construirTema(ValoresDiseno v) {
     chipTheme: ChipThemeData(
       backgroundColor: v.panel,
       selectedColor: contenedorAcento,
-      side: BorderSide(color: v.borde),
+      side: BorderSide(color: v.borde, width: v.grosorBorde),
       labelStyle: v.lectura(tamano: 13),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(v.radioGrande),
@@ -293,7 +307,7 @@ ThemeData construirTema(ValoresDiseno v) {
     tooltipTheme: TooltipThemeData(
       decoration: BoxDecoration(
         color: v.panel,
-        border: Border.all(color: v.borde),
+        border: Border.all(color: v.borde, width: v.grosorBorde),
         borderRadius: BorderRadius.circular(v.radioChico),
       ),
       textStyle: v.lectura(tamano: 12),
@@ -312,7 +326,7 @@ ThemeData construirTema(ValoresDiseno v) {
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(v.radioGrande),
-        side: BorderSide(color: v.borde),
+        side: BorderSide(color: v.borde, width: v.grosorBorde),
       ),
     ),
     textSelectionTheme: TextSelectionThemeData(

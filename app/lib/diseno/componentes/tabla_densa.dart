@@ -230,7 +230,9 @@ class _Encabezado extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: v.encabezadoTabla,
-        border: Border(bottom: BorderSide(color: v.borde)),
+        border: Border(
+          bottom: BorderSide(color: v.borde, width: v.grosorBorde),
+        ),
       ),
       child: ConstrainedBox(
         constraints: BoxConstraints(minHeight: alto),

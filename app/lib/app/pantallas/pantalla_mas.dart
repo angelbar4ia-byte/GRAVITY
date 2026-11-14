@@ -15,6 +15,8 @@ import '../../nucleo/tablet/controlador_tablet.dart';
 import '../dispositivo.dart';
 import '../navegacion.dart';
 import '../sesion_efectiva.dart';
+import 'acceso_instrucciones_cuidados.dart';
+import 'acceso_vista_papa.dart';
 import 'marco_pantalla.dart';
 
 class PantallaMas extends ConsumerWidget {
@@ -24,7 +26,8 @@ class PantallaMas extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final rol = ref.watch(rolEfectivoProvider);
     if (rol == null) return const SizedBox.shrink();
-    final esTablet = ref.watch(tipoDispositivoProvider) == TipoDispositivo.tablet;
+    final esTablet =
+        ref.watch(tipoDispositivoProvider) == TipoDispositivo.tablet;
     return MarcoPantalla(
       titulo: 'Más',
       cuerpo: ListView(
@@ -37,6 +40,8 @@ class PantallaMas extends ConsumerWidget {
               minTileHeight: 56,
               onTap: () => context.go(rutaDeModulo(modulo)),
             ),
+          if (rol == Rol.familiar) const AccesoPedirVistaPapa(),
+          const AccesosInstruccionesCuidados(),
           if (puedeAbrir(rol, Modulo.ajustes)) ...[
             const Divider(),
             ListTile(
@@ -52,8 +57,9 @@ class PantallaMas extends ConsumerWidget {
               leading: const Icon(Icons.home_outlined),
               title: const Text('Volver al modo Casa'),
               minTileHeight: 56,
-              onTap: () =>
-                  ref.read(controladorTabletProvider.notifier).volverAModoCasa(),
+              onTap: () => ref
+                  .read(controladorTabletProvider.notifier)
+                  .volverAModoCasa(),
             )
           else if (!esTablet)
             ListTile(

@@ -28,27 +28,46 @@ void main() {
     miembros:
         miembros ??
         [
-          MiembroLibro(personaId: ana, papel: PapelLibro.miembro, desde: Fecha(2026, 1, 1)),
-          MiembroLibro(personaId: alex, papel: PapelLibro.miembro, desde: Fecha(2026, 2, 1)),
-          MiembroLibro(personaId: bea, papel: PapelLibro.miembro, desde: Fecha(2026, 3, 1)),
+          MiembroLibro(
+            personaId: ana,
+            papel: PapelLibro.miembro,
+            desde: Fecha(2026, 1, 1),
+          ),
+          MiembroLibro(
+            personaId: alex,
+            papel: PapelLibro.miembro,
+            desde: Fecha(2026, 2, 1),
+          ),
+          MiembroLibro(
+            personaId: bea,
+            papel: PapelLibro.miembro,
+            desde: Fecha(2026, 3, 1),
+          ),
         ],
   );
 
   group('Cuenta maestra con login propio: solo lectura total', () {
-    test('la maestra que no es la dueña no escribe ni administra, tampoco lo suyo', () {
-      final propio = permisoEnLibro(
-        librosEjemplo.firstWhere((l) => l.id == libroAna),
-        ana,
-        hoy: hoy,
-        esMaestra: true,
-        soloLectura: true,
-      );
-      expect(
-        (propio.leer, propio.escribir, propio.administrar),
-        (true, false, false),
-      );
-      expect(propio.comoMaestra, isFalse, reason: 'es su libro, no una consulta');
-    });
+    test(
+      'la maestra que no es la dueña no escribe ni administra, tampoco lo suyo',
+      () {
+        final propio = permisoEnLibro(
+          librosEjemplo.firstWhere((l) => l.id == libroAna),
+          ana,
+          hoy: hoy,
+          esMaestra: true,
+          soloLectura: true,
+        );
+        expect(
+          (propio.leer, propio.escribir, propio.administrar),
+          (true, false, false),
+        );
+        expect(
+          propio.comoMaestra,
+          isFalse,
+          reason: 'es su libro, no una consulta',
+        );
+      },
+    );
 
     test('en lo ajeno lee como maestra (con consulta) y tampoco escribe', () {
       final ajeno = permisoEnLibro(
@@ -83,16 +102,27 @@ void main() {
   });
 
   group('Libros compartidos: privados o públicos', () {
-    test('privado por omisión: un adulto del hogar que no es miembro no lo ve', () {
-      final libro = compartido();
-      expect(libro.visibilidad, VisibilidadLibro.privada);
-      final p = permisoEnLibro(libro, cris, hoy: hoy);
-      expect(p.leer, isFalse);
-    });
+    test(
+      'privado por omisión: un adulto del hogar que no es miembro no lo ve',
+      () {
+        final libro = compartido();
+        expect(libro.visibilidad, VisibilidadLibro.privada);
+        final p = permisoEnLibro(libro, cris, hoy: hoy);
+        expect(p.leer, isFalse);
+      },
+    );
 
     test('la cuenta maestra lee uno privado como maestra (con consulta)', () {
-      final p = permisoEnLibro(compartido(), maestra, hoy: hoy, esMaestra: true);
-      expect((p.leer, p.escribir, p.comoMaestra, p.comoLector), (true, false, true, false));
+      final p = permisoEnLibro(
+        compartido(),
+        maestra,
+        hoy: hoy,
+        esMaestra: true,
+      );
+      expect(
+        (p.leer, p.escribir, p.comoMaestra, p.comoLector),
+        (true, false, true, false),
+      );
     });
 
     test('público: los adultos con Finanzas lo leen sin escribir', () {
@@ -107,7 +137,10 @@ void main() {
 
     test('público: un rol sin Finanzas no lo lee', () {
       final libro = compartido(visibilidad: VisibilidadLibro.publica);
-      expect(permisoEnLibro(libro, cris, hoy: hoy, rolConFinanzas: false).leer, isFalse);
+      expect(
+        permisoEnLibro(libro, cris, hoy: hoy, rolConFinanzas: false).leer,
+        isFalse,
+      );
     });
 
     test('público: los miembros siguen escribiendo; el lector va al final del selector', () {
@@ -150,23 +183,40 @@ void main() {
       expect(libro.quedaPrivadoAlSalir(hoy), isFalse);
       final despues = libro.alSalirse(bea, hoy);
       expect(despues.activo, isTrue);
-      expect(despues.visibilidad, VisibilidadLibro.publica,
-          reason: 'con 2 miembros sigue como estaba');
+      expect(
+        despues.visibilidad,
+        VisibilidadLibro.publica,
+        reason: 'con 2 miembros sigue como estaba',
+      );
       expect(despues.vigentes(hoy).map((m) => m.personaId), [ana, alex]);
       final quienSeFue = permisoEnLibro(despues, bea, hoy: hoy);
-      expect((quienSeFue.escribir, quienSeFue.comoLector), (false, true),
-          reason: 'ya no es miembro: en un público solo lo lee');
+      expect(
+        (quienSeFue.escribir, quienSeFue.comoLector),
+        (false, true),
+        reason: 'ya no es miembro: en un público solo lo lee',
+      );
       expect(permisoEnLibro(despues, alex, hoy: hoy).escribir, isTrue);
     });
 
     List<MiembroLibro> dos() => [
-      MiembroLibro(personaId: ana, papel: PapelLibro.miembro, desde: Fecha(2026, 1, 1)),
-      MiembroLibro(personaId: alex, papel: PapelLibro.miembro, desde: Fecha(2026, 2, 1)),
+      MiembroLibro(
+        personaId: ana,
+        papel: PapelLibro.miembro,
+        desde: Fecha(2026, 1, 1),
+      ),
+      MiembroLibro(
+        personaId: alex,
+        papel: PapelLibro.miembro,
+        desde: Fecha(2026, 2, 1),
+      ),
     ];
 
     test('con 2 miembros, al salirse uno el presupuesto pasa a PRIVADO y sigue '
         'activo (ya no se archiva); el que queda es el administrador', () {
-      final libro = compartido(visibilidad: VisibilidadLibro.publica, miembros: dos());
+      final libro = compartido(
+        visibilidad: VisibilidadLibro.publica,
+        miembros: dos(),
+      );
       expect(libro.quedaPrivadoAlSalir(hoy), isTrue);
       final despues = libro.alSalirse(alex, hoy);
       expect(despues.archivado, isFalse);
@@ -174,15 +224,21 @@ void main() {
       expect(despues.visibilidad, VisibilidadLibro.privada);
       expect(despues.esAdministrador(ana), isTrue);
       final quedo = permisoEnLibro(despues, ana, hoy: hoy);
-      expect((quedo.leer, quedo.escribir, quedo.administrar), (true, true, true),
-          reason: 'quien se queda sigue registrando');
+      expect(
+        (quedo.leer, quedo.escribir, quedo.administrar),
+        (true, true, true),
+        reason: 'quien se queda sigue registrando',
+      );
       final fuera = permisoEnLibro(despues, alex, hoy: hoy);
       expect(fuera.leer, isFalse, reason: 'quien se sale pierde el acceso');
     });
 
     test('si el administrador se sale y solo eran 2, el que queda es el '
         'administrador y el libro pasa a privado', () {
-      final libro = compartido(visibilidad: VisibilidadLibro.publica, miembros: dos());
+      final libro = compartido(
+        visibilidad: VisibilidadLibro.publica,
+        miembros: dos(),
+      );
       final despues = libro.alSalirse(ana, hoy);
       expect(despues.esAdministrador(alex), isTrue);
       expect(despues.esAdministrador(ana), isFalse);
@@ -203,8 +259,14 @@ void main() {
       final libro = compartido(activo: false);
       final admin = permisoEnLibro(libro, ana, hoy: hoy);
       final otro = permisoEnLibro(libro, alex, hoy: hoy);
-      expect((admin.leer, admin.escribir, admin.administrar), (true, false, true));
-      expect((otro.leer, otro.escribir, otro.administrar), (true, false, false));
+      expect(
+        (admin.leer, admin.escribir, admin.administrar),
+        (true, false, true),
+      );
+      expect(
+        (otro.leer, otro.escribir, otro.administrar),
+        (true, false, false),
+      );
       final m = permisoEnLibro(libro, maestra, hoy: hoy, esMaestra: true);
       expect((m.leer, m.escribir, m.comoMaestra), (true, false, true));
       expect(() => libro.validar(hoy), returnsNormally);
@@ -218,13 +280,16 @@ void main() {
       expect(despues.esAdministrador(ana), isFalse);
     });
 
-    test('quien se sale un día ya no es vigente ese mismo día (hasta exclusivo)', () {
-      final despues = compartido().alSalirse(bea, hoy);
-      final fila = despues.miembros.firstWhere((m) => m.personaId == bea);
-      expect(fila.hasta, hoy);
-      expect(fila.vigenteEn(hoy), isFalse);
-      expect(fila.vigenteEn(hoy.sumarDias(-1)), isTrue);
-    });
+    test(
+      'quien se sale un día ya no es vigente ese mismo día (hasta exclusivo)',
+      () {
+        final despues = compartido().alSalirse(bea, hoy);
+        final fila = despues.miembros.firstWhere((m) => m.personaId == bea);
+        expect(fila.hasta, hoy);
+        expect(fila.vigenteEn(hoy), isFalse);
+        expect(fila.vigenteEn(hoy.sumarDias(-1)), isTrue);
+      },
+    );
 
     test('con un solo miembro el compartido es privado: público no vale', () {
       const unico = [MiembroLibro(personaId: ana, papel: PapelLibro.miembro)];
@@ -236,7 +301,10 @@ void main() {
         ).validar(hoy),
         throwsA(isA<ErrorLibros>()),
       );
-      expect(() => compartido(miembros: const []).validar(hoy), throwsA(isA<ErrorLibros>()));
+      expect(
+        () => compartido(miembros: const []).validar(hoy),
+        throwsA(isA<ErrorLibros>()),
+      );
     });
   });
 
@@ -245,23 +313,32 @@ void main() {
       final libro = LibroMovimientos(
         cuentas: const [
           Cuenta(id: 'banco', nombre: 'Banco', tipo: TipoCuenta.banco),
-          Cuenta(id: 'sueldo', nombre: 'Sueldo', tipo: TipoCuenta.origenIngreso),
+          Cuenta(
+            id: 'sueldo',
+            nombre: 'Sueldo',
+            tipo: TipoCuenta.origenIngreso,
+          ),
           Cuenta(id: 'ropa', nombre: 'Ropa', tipo: TipoCuenta.deGasto),
           Cuenta(id: 'apertura', nombre: 'Apertura', tipo: TipoCuenta.apertura),
         ],
       );
       final ahora = DateTime.utc(2026, 10, 20, 12);
-      Movimiento m(String id, TipoMovimiento tipo, String o, String d, int monto) =>
-          Movimiento(
-            id: id,
-            tipo: tipo,
-            fecha: Fecha(2026, 10, 20),
-            registradoEn: ahora,
-            cuentaOrigenId: o,
-            cuentaDestinoId: d,
-            monto: monto,
-            realizadoPor: ana,
-          );
+      Movimiento m(
+        String id,
+        TipoMovimiento tipo,
+        String o,
+        String d,
+        int monto,
+      ) => Movimiento(
+        id: id,
+        tipo: tipo,
+        fecha: Fecha(2026, 10, 20),
+        registradoEn: ahora,
+        cuentaOrigenId: o,
+        cuentaDestinoId: d,
+        monto: monto,
+        realizadoPor: ana,
+      );
       libro
         ..agregar(m('a', TipoMovimiento.apertura, 'apertura', 'banco', 100000))
         ..agregar(m('i', TipoMovimiento.ingreso, 'sueldo', 'banco', 50000))
@@ -269,23 +346,26 @@ void main() {
       return libro;
     }
 
-    test('una cuenta de gasto con saldo se archiva y ya no admite gastos nuevos', () {
-      final libro = libroConGasto();
-      expect(libro.saldo('ropa'), isNot(0));
-      libro.cambiarEstadoCuenta('ropa', EstadoCuenta.archivada);
-      expect(libro.cuenta('ropa').estado, EstadoCuenta.archivada);
-      final nuevo = Movimiento(
-        id: 'n',
-        tipo: TipoMovimiento.gasto,
-        fecha: Fecha(2026, 10, 21),
-        registradoEn: DateTime.utc(2026, 10, 21, 12),
-        cuentaOrigenId: 'banco',
-        cuentaDestinoId: 'ropa',
-        monto: 100,
-        realizadoPor: ana,
-      );
-      expect(() => libro.agregar(nuevo), throwsA(isA<ErrorLibro>()));
-    });
+    test(
+      'una cuenta de gasto con saldo se archiva y ya no admite gastos nuevos',
+      () {
+        final libro = libroConGasto();
+        expect(libro.saldo('ropa'), isNot(0));
+        libro.cambiarEstadoCuenta('ropa', EstadoCuenta.archivada);
+        expect(libro.cuenta('ropa').estado, EstadoCuenta.archivada);
+        final nuevo = Movimiento(
+          id: 'n',
+          tipo: TipoMovimiento.gasto,
+          fecha: Fecha(2026, 10, 21),
+          registradoEn: DateTime.utc(2026, 10, 21, 12),
+          cuentaOrigenId: 'banco',
+          cuentaDestinoId: 'ropa',
+          monto: 100,
+          realizadoPor: ana,
+        );
+        expect(() => libro.agregar(nuevo), throwsA(isA<ErrorLibro>()));
+      },
+    );
 
     test('una cuenta de ingreso con saldo se cierra', () {
       final libro = libroConGasto();

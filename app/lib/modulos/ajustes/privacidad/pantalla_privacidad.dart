@@ -14,6 +14,7 @@ import '../../../nucleo/seguridad/bloqueo.dart';
 import '../../../nucleo/seguridad/intentos.dart' show textoEspera;
 import '../../../nucleo/seguridad/montos.dart';
 import '../../../nucleo/seguridad/pin.dart';
+import '../../../nucleo/seguridad/protector_windows.dart';
 import '../../../nucleo/seguridad/proveedores_seguridad.dart';
 import '../../../nucleo/sesion/proveedores_sesion.dart';
 import '../../../nucleo/tablet/controlador_tablet.dart';
@@ -26,8 +27,9 @@ class PantallaPrivacidad extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final esTelefono =
-        ref.watch(tipoDispositivoProvider) == TipoDispositivo.telefono;
+    final dispositivo = ref.watch(tipoDispositivoProvider);
+    final esTelefono = dispositivo == TipoDispositivo.telefono;
+    final esLaptop = dispositivo == TipoDispositivo.laptop;
     return MarcoSeccion(
       seccion: SeccionAjustes.privacidad,
       hijos: [
@@ -37,6 +39,7 @@ class PantallaPrivacidad extends ConsumerWidget {
           const _BloqueoTelefono(),
           const SizedBox(height: 16),
         ],
+        if (esLaptop) ...[const _CapturasWindows(), const SizedBox(height: 16)],
         const NotaAjustes(
           'El dinero y los datos clínicos nunca van a la IA en la nube ni a las '
           'bocinas.',
@@ -59,6 +62,32 @@ class PantallaPrivacidad extends ConsumerWidget {
   }
 }
 
+/// Bloqueo de capturas y miniaturas en la laptop con Windows (E15, P7 del
+/// dueño, D22): activo por omisión; aquí se puede apagar.
+class _CapturasWindows extends ConsumerWidget {
+  const _CapturasWindows();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final activo = ref.watch(capturasBloqueadasProvider);
+    return Card(
+      child: SwitchListTile(
+        key: const ValueKey('privacidad-capturas'),
+        value: activo,
+        secondary: const Icon(Icons.screenshot_monitor_outlined),
+        title: const Text('Bloquear capturas de pantalla'),
+        subtitle: const Text(
+          'Las pantallas con dinero o datos clínicos no salen en capturas, '
+          'grabaciones, al compartir pantalla ni en la vista previa de la '
+          'barra de tareas.',
+        ),
+        onChanged: (valor) =>
+            ref.read(capturasBloqueadasProvider.notifier).fijar(valor),
+      ),
+    );
+  }
+}
+
 /// Ocultar los montos solos tras unos minutos sin uso (decisión del 23/oct):
 /// el tiempo es editable aquí y para volver a verlos se pide el PIN (en el
 /// teléfono, también la huella).
@@ -73,7 +102,9 @@ class _MontosOcultos extends ConsumerWidget {
     // Quién pide el PIN: la tablet (el de la persona), el bloqueo del teléfono
     // o uno propio. Se vuelve a leer al cambiar el bloqueo o la persona.
     ref.watch(controladorBloqueoProvider);
-    ref.watch(controladorTabletProvider.select((e) => e.usuarioActivo?.personaId));
+    ref.watch(
+      controladorTabletProvider.select((e) => e.usuarioActivo?.personaId),
+    );
     final fuente = controlador.fuente;
     return Card(
       key: const ValueKey('privacidad-montos'),
@@ -86,13 +117,19 @@ class _MontosOcultos extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
               child: Text('Montos', style: tema.textTheme.titleMedium),
             ),
-            ListTile(
-              title: const Text('Ocultar los montos tras'),
-              subtitle: const Text(
+            const ListTile(
+              title: Text('Ocultar los montos tras'),
+              subtitle: Text(
                 'Sin tocar la pantalla. Para volver a verlos se pide tu PIN.',
               ),
-              trailing: DropdownButton<Duration>(
+            ),
+            // Debajo del texto y a lo ancho (F4-X1): como `trailing` ocupaba
+            // todo el ancho con letra grande y desbordaba a 360 dp.
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: DropdownButton<Duration>(
                 key: const ValueKey('montos-ocultar-tras'),
+                isExpanded: true,
                 value: opcionesOcultarMontosTras.contains(estado.ocultarTras)
                     ? estado.ocultarTras
                     : null,
@@ -107,7 +144,9 @@ class _MontosOcultos extends ConsumerWidget {
                 onChanged: !estado.cargado
                     ? null
                     : (opcion) {
-                        if (opcion != null) controlador.fijarOcultarTras(opcion);
+                        if (opcion != null) {
+                          controlador.fijarOcultarTras(opcion);
+                        }
                       },
               ),
             ),
@@ -150,7 +189,8 @@ class _MontosOcultos extends ConsumerWidget {
                     pines.nuevo,
                     actual: pines.actual,
                   );
-                  if (resultado != ResultadoRevelar.revelado && context.mounted) {
+                  if (resultado != ResultadoRevelar.revelado &&
+                      context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
@@ -271,12 +311,26 @@ class _BloqueoTelefonoState extends ConsumerState<_BloqueoTelefono> {
               ),
               if (_hayHuella)
                 SwitchListTile(
+                  key: const ValueKey('bloqueo-huella'),
                   value: configuracion.huella,
                   title: const Text('Desbloquear con huella'),
                   subtitle: const Text(
                     'Con las huellas registradas en este teléfono.',
                   ),
-                  onChanged: controlador.fijarHuella,
+                  onChanged: (activar) async {
+                    if (!activar) return controlador.fijarHuella(false);
+                    // Para encenderla hay que identificarse con la huella.
+                    final ok = await controlador.activarHuella();
+                    if (!ok && context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'No se activó la huella. El PIN sigue funcionando.',
+                          ),
+                        ),
+                      );
+                    }
+                  },
                 ),
               ListTile(
                 title: const Text('Bloquear tras'),
@@ -389,7 +443,11 @@ class _DialogoPinBloqueoState extends State<_DialogoPinBloqueo> {
               : 'PIN (${textoDelLargoDelPin(widget.rol)})',
           const Key('bloqueo-pin'),
         ),
-        _campo(_confirmacion, 'Repite el PIN', const Key('bloqueo-confirmacion')),
+        _campo(
+          _confirmacion,
+          'Repite el PIN',
+          const Key('bloqueo-confirmacion'),
+        ),
         if (_error != null)
           Text(
             _error!,

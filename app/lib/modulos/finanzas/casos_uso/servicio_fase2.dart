@@ -78,10 +78,19 @@ class ResumenFondo {
 }
 
 class ServicioDeudasAhorro {
-  ServicioDeudasAhorro(this.base, {this.alRegistrarPago});
+  ServicioDeudasAhorro(this.base, {this.alRegistrarPago, this.hayRed});
 
   final ServicioFinanzas base;
   final AlRegistrarPago? alRegistrarPago;
+
+  /// Si hay red ahora (`null`: se supone que sí). Los estados de cuenta, las
+  /// aportaciones y los retiros **no se guardan sin señal** ni van a la cola:
+  /// se avisa antes de tocar nada (Fase 4, F4-3.7).
+  final bool Function()? hayRed;
+
+  void _exigirSenal() {
+    if (hayRed != null && !hayRed!()) throw ErrorFinanzas.necesitaConexion;
+  }
 
   DatosFinanzas get _d => base.datos;
 
@@ -95,7 +104,9 @@ class ServicioDeudasAhorro {
       if (!d.activa) continue;
       final saldo = saldoDeDeuda(_d, d);
       UsoDelLimite? uso;
-      final cuenta = d.cuentaPasivoId == null ? null : _d.cuenta(d.cuentaPasivoId!);
+      final cuenta = d.cuentaPasivoId == null
+          ? null
+          : _d.cuenta(d.cuentaPasivoId!);
       if (d.clase == ClaseDeuda.tarjeta && cuenta?.limiteCentavos != null) {
         var msiPendiente = 0;
         for (final m in _d.msiDe(libroId)) {
@@ -124,8 +135,7 @@ class ServicioDeudasAhorro {
   List<DeudaPlan> _planes(String libroId) => [
     for (final d in _d.deudasDe(libroId))
       if (d.activa)
-        if ((saldoDeDeuda(_d, d) ?? 1) > 0)
-          d.plan(saldo: saldoDeDeuda(_d, d)),
+        if ((saldoDeDeuda(_d, d) ?? 1) > 0) d.plan(saldo: saldoDeDeuda(_d, d)),
   ];
 
   /// Orden de pago por costo, con el motivo de cada lugar (reglas 1 a 4).
@@ -161,7 +171,9 @@ class ServicioDeudasAhorro {
       if (abonos.isEmpty) return null;
       return compararAbonoExtra(
         abonos: abonos,
-        remanenteSemanal: v.planSemanal.remanente < 0 ? 0 : v.planSemanal.remanente,
+        remanenteSemanal: v.planSemanal.remanente < 0
+            ? 0
+            : v.planSemanal.remanente,
         extraSemanal: extraSemanal,
         semanas: 156,
       );
@@ -171,9 +183,15 @@ class ServicioDeudasAhorro {
   }
 
   /// Captura la tasa de una deuda (la app no la inventa; regla 5).
-  Future<void> capturarTasa(String deudaId, int puntosBase, {int? catPb}) async {
+  Future<void> capturarTasa(
+    String deudaId,
+    int puntosBase, {
+    int? catPb,
+  }) async {
     final d = _deuda(deudaId);
-    if (puntosBase < 0) throw const ErrorFinanzas('La tasa no puede ser negativa.');
+    if (puntosBase < 0) {
+      throw const ErrorFinanzas('La tasa no puede ser negativa.');
+    }
     await base.guardarDeuda(
       d.copiar(tasaAnualPuntosBase: puntosBase, catPuntosBase: catPb),
     );
@@ -197,6 +215,7 @@ class ServicioDeudasAhorro {
     int? tasaDeclaradaPb,
     int? catPb,
   }) async {
+    _exigirSenal();
     final d = _deuda(deudaId);
     base.exigirEscribir(d.libroId);
     if (limitePago.antesDe(corte)) {
@@ -204,8 +223,13 @@ class ServicioDeudasAhorro {
         'La fecha límite de pago no puede ser antes del corte.',
       );
     }
-    if ([saldoAlCorte, pagoMinimo, pagoSinIntereses, intereses, cargos]
-        .any((x) => x < 0)) {
+    if ([
+      saldoAlCorte,
+      pagoMinimo,
+      pagoSinIntereses,
+      intereses,
+      cargos,
+    ].any((x) => x < 0)) {
       throw const ErrorFinanzas('Los montos no pueden ser negativos.');
     }
     final e = EstadoDeCuenta(
@@ -243,7 +267,9 @@ class ServicioDeudasAhorro {
     String? id,
   }) async {
     base.exigirAdministrar(libroId);
-    if (comercio.trim().isEmpty) throw const ErrorFinanzas('Escribe el comercio.');
+    if (comercio.trim().isEmpty) {
+      throw const ErrorFinanzas('Escribe el comercio.');
+    }
     if (total <= 0) throw const ErrorFinanzas('Escribe el total de la compra.');
     if (meses < 2 || meses > 48) {
       throw const ErrorFinanzas('Los meses van de 2 a 48.');
@@ -254,11 +280,15 @@ class ServicioDeudasAhorro {
     final cuotas = mensualidadesMsi(total, meses);
     final pendiente = pendienteDeMsi(cuotas, pagadas);
     var nombreCuenta = 'MSI ${comercio.trim()}';
-    for (var n = 2;
-        _d.cuentasDe(libroId).any(
-          (c) => normalizarNombre(c.nombre) == normalizarNombre(nombreCuenta),
-        );
-        n++) {
+    for (
+      var n = 2;
+      _d
+          .cuentasDe(libroId)
+          .any(
+            (c) => normalizarNombre(c.nombre) == normalizarNombre(nombreCuenta),
+          );
+      n++
+    ) {
       nombreCuenta = 'MSI ${comercio.trim()} ($n)';
     }
     final pasivo = await base.crearCuenta(
@@ -279,10 +309,9 @@ class ServicioDeudasAhorro {
       cuentaPasivoId: pasivo.id,
       abono: cuotas.first,
       frecuencia: Frecuencia.mensual,
-      calendario: CalendarioConfig.mensual(
-        [diaPago],
-        regla: ReglaDiaInhabil.sinCambio,
-      ),
+      calendario: CalendarioConfig.mensual([
+        diaPago,
+      ], regla: ReglaDiaInhabil.sinCambio),
       permitePagoAnticipado: false,
     );
     await base.guardarDeuda(deuda);
@@ -293,7 +322,9 @@ class ServicioDeudasAhorro {
       tarjetaDeudaId: tarjetaDeudaId,
       cuentaPasivoId: pasivo.id,
       comercio: comercio.trim(),
-      descripcion: descripcion?.trim().isEmpty ?? true ? null : descripcion!.trim(),
+      descripcion: descripcion?.trim().isEmpty ?? true
+          ? null
+          : descripcion!.trim(),
       fechaCompra: fechaCompra,
       montoTotal: total,
       mensualidades: meses,
@@ -327,7 +358,11 @@ class ServicioDeudasAhorro {
       motivo: motivo,
     );
     if (vencimiento != null) {
-      await base.marcarIngreso(d.libroId, vencimiento, EstadoOcurrencia.cumplida);
+      await base.marcarIngreso(
+        d.libroId,
+        vencimiento,
+        EstadoOcurrencia.cumplida,
+      );
       final objeto =
           objetoAvisoId ??
           idEstable(
@@ -347,9 +382,10 @@ class ServicioDeudasAhorro {
 
   int saldoDeBolsa(BolsaAhorro b) => _d.vista(b.libroId).saldo(b.cuentaId);
 
-  /// Gasto esencial semanal: lo de las partidas protegidas del plan (el
-  /// historial por cierre llega cuando el cierre guarde la marca de
-  /// "esencial"; hasta entonces se rotula *"según tu plan"*, regla 18).
+  /// Gasto esencial semanal (regla 18): el promedio **real** de las últimas 8
+  /// semanas cerradas en partidas protegidas (la marca de esencial queda en
+  /// la foto de cada semana). Mientras no haya ninguna semana cerrada, lo de
+  /// las partidas protegidas del plan, rotulado *"según tu plan"*.
   GastoEsencial gastoEsencial(String libroId, Semana semana) {
     final plan = armarPlanDelLibro(_d, libroId, semana);
     var esencial = 0;
@@ -364,7 +400,7 @@ class ServicioDeudasAhorro {
       }
     }
     return gastoEsencialSemanal(
-      esencialesPorSemanaCerrada: const [],
+      esencialesPorSemanaCerrada: esencialesPorSemanaCerrada(_d, libroId),
       presupuestoEsencial: esencial > 0 ? esencial : null,
       minimosDeDeudaSemanales: minimos,
       incluirMinimos: p.esencialesIncluyenMinimos,
@@ -373,7 +409,8 @@ class ServicioDeudasAhorro {
 
   /// El fondo de emergencia del libro (nulo si aún no se crea).
   ResumenFondo? fondo(String libroId, Semana semana) {
-    final b = _d.bolsasDe(libroId)
+    final b = _d
+        .bolsasDe(libroId)
         .where((x) => x.tipo == TipoBolsaAhorro.fondoEmergencia)
         .firstOrNull;
     if (b == null) return null;
@@ -435,6 +472,7 @@ class ServicioDeudasAhorro {
     int? nivel,
     int? aporteFijo,
     List<MetodoAhorro> metodos = const [],
+    int? aportePb,
     int saldoInicial = 0,
   }) async {
     base.exigirAdministrar(libroId);
@@ -469,6 +507,7 @@ class ServicioDeudasAhorro {
           ? (nivel ?? NivelFondo.porDefecto.numero)
           : null,
       aporteFijo: aporteFijo,
+      aportePb: aportePb,
       metodos: metodos,
     );
     await base.repositorio.guardarBolsa(b);
@@ -506,7 +545,11 @@ class ServicioDeudasAhorro {
           pasos.add(PasoDeAhorro(b.id, EtapaAhorro.colchon, colchon));
           final resto = m - (saldo > n1 ? saldo : n1);
           pasos.add(
-            PasoDeAhorro(b.id, EtapaAhorro.fondoHastaLaMeta, resto > 0 ? resto : 0),
+            PasoDeAhorro(
+              b.id,
+              EtapaAhorro.fondoHastaLaMeta,
+              resto > 0 ? resto : 0,
+            ),
           );
         case TipoBolsaAhorro.reserva:
           pasos.add(
@@ -517,8 +560,7 @@ class ServicioDeudasAhorro {
             ),
           );
         case TipoBolsaAhorro.metaFecha:
-          final semanas =
-              (semana.inicio.diasHasta(b.fechaMeta!) / 7).ceil();
+          final semanas = (semana.inicio.diasHasta(b.fechaMeta!) / 7).ceil();
           pasos.add(
             PasoDeAhorro(
               b.id,
@@ -532,13 +574,19 @@ class ServicioDeudasAhorro {
           );
         case TipoBolsaAhorro.metaLibre:
           var s = b.aporteFijo ?? 0;
-          if (b.metodos.contains(MetodoAhorro.reto52Semanas) && b.retoBase != null) {
-            final n = _d.aportaciones.where((a) => a.bolsaId == b.id).length + 1;
+          if (b.metodos.contains(MetodoAhorro.reto52Semanas) &&
+              b.retoBase != null) {
+            final n =
+                _d.aportaciones.where((a) => a.bolsaId == b.id).length + 1;
             if (n <= 52) s += retoDeSemana(n, b.retoBase!);
           }
           final falta = (b.meta ?? (1 << 40)) - saldo;
           pasos.add(
-            PasoDeAhorro(b.id, EtapaAhorro.metasSinFecha, s > falta ? falta : s),
+            PasoDeAhorro(
+              b.id,
+              EtapaAhorro.metasSinFecha,
+              s > falta ? falta : s,
+            ),
           );
       }
     }
@@ -564,12 +612,16 @@ class ServicioDeudasAhorro {
       remanente: remanente,
       pasos: _pasos(libroId, semana),
       hayDeudaConExtra: conExtra,
-      ahorroMinimoConDeuda: _d.parametrosDe(libroId).ahorroMinimoConDeudaPuntosBase,
+      ahorroMinimoConDeuda: _d
+          .parametrosDe(libroId)
+          .ahorroMinimoConDeudaPuntosBase,
     );
     for (final b in _d.bolsasDe(libroId)) {
       final id = idEstable(ClavesId.aportacionFila(b.id, guardada.id));
       final previa = _d.aportaciones.where((a) => a.id == id).firstOrNull;
-      if (previa != null && previa.estado != EstadoAportacion.propuesta) continue;
+      if (previa != null && previa.estado != EstadoAportacion.propuesta) {
+        continue;
+      }
       final sugerido = reparto.aportadoA(b.id);
       await base.repositorio.guardarAportacion(
         AportacionAhorro(
@@ -591,6 +643,7 @@ class ServicioDeudasAhorro {
     required String cuentaOrigenId,
     int? monto,
   }) async {
+    _exigirSenal();
     final a = _d.aportaciones.firstWhere(
       (x) => x.id == aportacionId,
       orElse: () => throw const ErrorFinanzas('No existe esa aportación.'),
@@ -598,7 +651,9 @@ class ServicioDeudasAhorro {
     final b = _bolsa(a.bolsaId);
     base.exigirEscribir(a.libroId);
     final cuanto = monto ?? a.sugerido;
-    if (cuanto <= 0) throw const ErrorFinanzas('Escribe un monto mayor que cero.');
+    if (cuanto <= 0) {
+      throw const ErrorFinanzas('Escribe un monto mayor que cero.');
+    }
     final quien = base.quienDe(a.libroId, null);
     final m = Movimiento(
       id: idEstable(ClavesId.aportacion(b.id, a.semanaId)),
@@ -631,7 +686,10 @@ class ServicioDeudasAhorro {
 
   /// Pospone u omite una aportación: lo no aportado queda pendiente sin
   /// castigo (regla 24).
-  Future<void> posponerAportacion(String aportacionId, {bool omitir = false}) async {
+  Future<void> posponerAportacion(
+    String aportacionId, {
+    bool omitir = false,
+  }) async {
     final a = _d.aportaciones.firstWhere(
       (x) => x.id == aportacionId,
       orElse: () => throw const ErrorFinanzas('No existe esa aportación.'),
@@ -649,6 +707,117 @@ class ServicioDeudasAhorro {
     );
   }
 
+  // ------------------------------------------------ ahorro automático (cierre)
+
+  /// Lo que el cierre de [semana] aparta solo, en el orden extras, sobre,
+  /// sobrante y redondeo (Fase 4, E16). Sale del ahorro que el motor ya
+  /// propone para el remanente (`destino.ahorro`), así que no se aparta dos
+  /// veces; mientras una deuda reciba abono extra solo cuenta el fondo de
+  /// emergencia (regla 16). [orden] es la prioridad que la persona arrastró
+  /// al cerrar (D25). Vacío si la semana tiene déficit o no hay bolsas
+  /// con esos métodos.
+  PlanAhorroDeCierre planAhorroDeCierre(
+    String libroId,
+    Semana semana, {
+    List<String> orden = const [],
+  }) {
+    final v = base.vista(libroId, semana);
+    final destino = v.real.destino;
+    if (destino.ahorro <= 0) return PlanAhorroDeCierre.vacio;
+    final conDeudaPorPagar = destino.abonosExtra.isNotEmpty;
+    return planearAhorroDeCierre(
+      remanente: destino.ahorro,
+      bolsas: [
+        for (final b in _d.bolsasDe(libroId))
+          if (!conDeudaPorPagar || b.tipo == TipoBolsaAhorro.fondoEmergencia) b,
+      ],
+      extras: extrasDeLaSemana(_d, libroId, semana),
+      sobre: sobreDeLaSemana(v),
+      gastos: gastosDeLaSemana(_d, libroId, semana),
+      orden: orden,
+    );
+  }
+
+  /// Ids estables de los movimientos automáticos de un cierre (uno por origen
+  /// y bolsa): cerrar dos veces la misma versión no duplica.
+  static String idAporteAutomatico(
+    String cierreId,
+    OrigenAporte o,
+    String bolsaId,
+  ) => idEstable(ClavesId.remanente(cierreId, 'auto-${o.clave}-$bolsaId'));
+
+  /// Crea los movimientos de ahorro automático del cierre [cierreId]: una
+  /// transferencia de [cuentaOrigenId] a la cuenta de cada bolsa, con el
+  /// origen en la nota (*"Ahorro automático · Redondeo · Celular"*). Los que
+  /// ya existen (mismo id) no se repiten. Sin señal quedan en la cola como
+  /// cualquier movimiento.
+  Future<List<Movimiento>> aplicarAhorroAutomatico({
+    required String libroId,
+    required PlanAhorroDeCierre plan,
+    required String cuentaOrigenId,
+    required String cierreId,
+    String? motivo,
+  }) async {
+    base.exigirEscribir(libroId);
+    if (plan.aportes.isEmpty) return const [];
+    final quien = base.quienDe(libroId, motivo);
+    final ya = {for (final m in _d.movimientos) m.id};
+    final nuevos = <Movimiento>[];
+    for (final a in plan.aportes) {
+      final bolsa = _bolsa(a.bolsaId);
+      final id = idAporteAutomatico(cierreId, a.origen, a.bolsaId);
+      if (ya.contains(id)) continue;
+      nuevos.add(
+        Movimiento(
+          id: id,
+          tipo: TipoMovimiento.transferencia,
+          fecha: base.hoy,
+          registradoEn: base.ahora,
+          cuentaOrigenId: cuentaOrigenId,
+          cuentaDestinoId: bolsa.cuentaId,
+          monto: a.monto,
+          realizadoPor: quien.realizadoPor,
+          registradoPor: base.personaId,
+          nota: 'Ahorro automático · ${a.origen.etiqueta} · ${bolsa.nombre}',
+          motivo: motivo?.trim(),
+          enNombreDe: quien.enNombreDe,
+        ),
+      );
+    }
+    if (nuevos.isNotEmpty) await base.repositorio.agregarMovimientos(nuevos);
+    return nuevos;
+  }
+
+  /// Los movimientos automáticos de un cierre que siguen vigentes (sin
+  /// anular), para mostrarlos o deshacerlos.
+  List<Movimiento> aportesAutomaticosDe(String libroId, String cierreId) {
+    final ids = {
+      for (final o in OrigenAporte.values)
+        for (final b in _d.bolsasDe(libroId))
+          idAporteAutomatico(cierreId, o, b.id),
+    };
+    final libro = _d.vista(libroId);
+    return [
+      for (final m in libro.movimientos)
+        if (ids.contains(m.id) && libro.contraasientoDe(m.id) == null) m,
+    ];
+  }
+
+  /// Deshace el ahorro automático de un cierre: una anulación con su
+  /// contraasiento por movimiento (nunca se borra). Devuelve cuántos
+  /// deshizo; repetirlo no hace nada.
+  Future<int> deshacerAhorroAutomatico({
+    required String libroId,
+    required String cierreId,
+  }) async {
+    var n = 0;
+    for (final m in aportesAutomaticosDe(libroId, cierreId)) {
+      await base.anular(m.id, motivo: 'Cierre de semana deshecho');
+      n++;
+    }
+    return n;
+  }
+
   /// Retira de una bolsa a [cuentaDestinoId] (o a [bolsaDestinoId] si cambia
   /// de destino). No cambia el patrimonio (criterio 26). El motivo lleva al
   /// menos 3 caracteres visibles.
@@ -659,10 +828,15 @@ class ServicioDeudasAhorro {
     required String motivo,
     String? cuentaDestinoId,
     String? bolsaDestinoId,
+    String? movimientoId,
+    String? retiroId,
   }) async {
+    _exigirSenal();
     final b = _bolsa(bolsaId);
     base.exigirEscribir(b.libroId);
-    if (monto <= 0) throw const ErrorFinanzas('Escribe un monto mayor que cero.');
+    if (monto <= 0) {
+      throw const ErrorFinanzas('Escribe un monto mayor que cero.');
+    }
     if (!motivoValido(motivo)) {
       throw const ErrorFinanzas(mensajeMotivoCorto);
     }
@@ -677,12 +851,15 @@ class ServicioDeudasAhorro {
       }
       destinoCuenta = otra.cuentaId;
     } else {
-      destinoCuenta = cuentaDestinoId ??
+      destinoCuenta =
+          cuentaDestinoId ??
           (throw const ErrorFinanzas('Elige a qué cuenta va el dinero.'));
     }
     final quien = base.quienDe(b.libroId, motivo);
+    // Los ids los fija el formulario una vez: reintentar tras perder la señal
+    // a medias no duplica el movimiento (idempotencia por id).
     final m = Movimiento(
-      id: base.nuevoId(),
+      id: movimientoId ?? base.nuevoId(),
       tipo: TipoMovimiento.transferencia,
       fecha: base.hoy,
       registradoEn: base.ahora,
@@ -698,13 +875,15 @@ class ServicioDeudasAhorro {
     if (r == ResultadoEscritura.enCola) throw ErrorFinanzas.conexion;
     await base.repositorio.agregarRetiro(
       RetiroAhorro(
-        id: base.nuevoId(),
+        id: retiroId ?? base.nuevoId(),
         libroId: b.libroId,
         bolsaId: b.id,
         movimientoId: m.id,
         tipo: tipo,
         motivo: motivo.trim(),
-        bolsaDestinoId: tipo == TipoRetiro.cambioDeDestino ? bolsaDestinoId : null,
+        bolsaDestinoId: tipo == TipoRetiro.cambioDeDestino
+            ? bolsaDestinoId
+            : null,
         registradoEn: base.ahora,
       ),
     );
@@ -723,7 +902,10 @@ extension ImportarFicha on ServicioDeudasAhorro {
   /// Crea lo de la [lectura] que aún no existe (los ids salen del ID de la
   /// ficha: reimportar no duplica). Cada tarjeta lleva su cuenta pasivo con el
   /// saldo como apertura; nada se inventa.
-  Future<ResultadoFicha> aplicarFicha(String libroId, LecturaFicha lectura) async {
+  Future<ResultadoFicha> aplicarFicha(
+    String libroId,
+    LecturaFicha lectura,
+  ) async {
     base.exigirAdministrar(libroId);
     final datos = base.datos;
     var creadas = 0;
@@ -734,9 +916,11 @@ extension ImportarFicha on ServicioDeudasAhorro {
     String nombreLibre(String nombre) {
       var candidato = nombre;
       var n = 2;
-      while (base.datos.cuentasDe(libroId).any(
-        (c) => normalizarNombre(c.nombre) == normalizarNombre(candidato),
-      )) {
+      while (base.datos
+          .cuentasDe(libroId)
+          .any(
+            (c) => normalizarNombre(c.nombre) == normalizarNombre(candidato),
+          )) {
         candidato = '$nombre ($n)';
         n++;
       }
@@ -773,10 +957,9 @@ extension ImportarFicha on ServicioDeudasAhorro {
           frecuencia: Frecuencia.mensual,
           calendario: t.limitePagoDia == null || t.limitePagoDia == 0
               ? null
-              : CalendarioConfig.mensual(
-                  [t.limitePagoDia!],
-                  regla: ReglaDiaInhabil.sinCambio,
-                ),
+              : CalendarioConfig.mensual([
+                  t.limitePagoDia!,
+                ], regla: ReglaDiaInhabil.sinCambio),
           tasaAnualPuntosBase: t.tasaPb ?? 0,
           catPuntosBase: t.catPb,
           corteDia: t.corteDia,
@@ -811,10 +994,9 @@ extension ImportarFicha on ServicioDeudasAhorro {
             frecuencia: Frecuencia.mensual,
             calendario: c.diaPago == null || c.diaPago == 0
                 ? null
-                : CalendarioConfig.mensual(
-                    [c.diaPago!],
-                    regla: ReglaDiaInhabil.siguienteDiaHabil,
-                  ),
+                : CalendarioConfig.mensual([
+                    c.diaPago!,
+                  ], regla: ReglaDiaInhabil.siguienteDiaHabil),
             tasaAnualPuntosBase: c.tasaPb ?? 0,
             montoOriginal: c.montoOriginal,
             // Nulo = verificar con la caja (regla 12).
@@ -843,7 +1025,9 @@ extension ImportarFicha on ServicioDeudasAhorro {
         id: id,
         tarjetaDeudaId: m.idTarjeta == null
             ? null
-            : (base.datos.deudas.any((d) => d.id == idDe('tarjetas', m.idTarjeta!))
+            : (base.datos.deudas.any(
+                    (d) => d.id == idDe('tarjetas', m.idTarjeta!),
+                  )
                   ? idDe('tarjetas', m.idTarjeta!)
                   : null),
       );

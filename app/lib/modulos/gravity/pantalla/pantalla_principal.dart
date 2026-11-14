@@ -13,6 +13,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../diseno/diseno.dart';
 import '../../../nucleo/contratos/roles.dart';
+import '../../../nucleo/contratos/rutas.dart';
+import '../../finanzas/estado/resumen_hoy.dart' show resumenFinanzasHoyProvider;
+import '../../finanzas/finanzas.dart' show TarjetaFinanzasHoy;
+import '../conversacion/panel_conversacion.dart';
 import 'resumen_gravity.dart';
 import 'saludo.dart';
 
@@ -40,26 +44,28 @@ class PantallaPrincipalGravity extends ConsumerWidget {
     final barra = barraOrdenes ?? const _BarraOrdenesMuestra();
     return Scaffold(
       backgroundColor: v.fondo,
-      body: SafeArea(
-        child: CallbackShortcuts(
-          bindings: {
-            const SingleActivator(
-              LogicalKeyboardKey.keyO,
-              control: true,
-              shift: true,
-            ): () =>
-                ref.read(modoPrivadoProvider.notifier).alternar(),
-          },
-          child: Focus(
-            autofocus: true,
-            child: LayoutBuilder(
-              builder: (context, limites) =>
-                  limites.maxWidth >= anchoParaTresColumnas(context)
-                  ? _DisenoAmplio(barraOrdenes: barra)
-                  : _DisenoApilado(
-                      barraOrdenes: barra,
-                      ancho: limites.maxWidth,
-                    ),
+      body: FondoEstilo(
+        child: SafeArea(
+          child: CallbackShortcuts(
+            bindings: {
+              const SingleActivator(
+                LogicalKeyboardKey.keyO,
+                control: true,
+                shift: true,
+              ): () =>
+                  ref.read(modoPrivadoProvider.notifier).alternar(),
+            },
+            child: Focus(
+              autofocus: true,
+              child: LayoutBuilder(
+                builder: (context, limites) =>
+                    limites.maxWidth >= anchoParaTresColumnas(context)
+                    ? _DisenoAmplio(barraOrdenes: barra)
+                    : _DisenoApilado(
+                        barraOrdenes: barra,
+                        ancho: limites.maxWidth,
+                      ),
+              ),
             ),
           ),
         ),
@@ -104,7 +110,17 @@ class _DisenoAmplio extends StatelessWidget {
                   ),
                 ),
                 SizedBox(width: hueco),
-                const Expanded(flex: 2, child: _PanelNucleo()),
+                Expanded(
+                  flex: 2,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Expanded(child: _PanelNucleo()),
+                      SizedBox(height: hueco),
+                      const PanelConversacion(),
+                    ],
+                  ),
+                ),
                 SizedBox(width: hueco),
                 Expanded(
                   child: _ColumnaPaneles(
@@ -145,6 +161,8 @@ class _DisenoApilado extends StatelessWidget {
           SizedBox(height: hueco),
           const _PanelNucleo(compacto: true),
           SizedBox(height: hueco),
+          const PanelConversacion(compacto: true),
+          SizedBox(height: hueco),
           barraOrdenes,
           SizedBox(height: hueco),
           _ColumnaPaneles(
@@ -180,7 +198,7 @@ class _ColumnaPaneles extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final v = ValoresDiseno.de(context);
     final resumen = ref.watch(resumenGravityProvider);
-    final visibles = paneles.where((p) => p.visible(resumen)).toList();
+    final visibles = paneles.where((p) => p.visible(resumen, ref)).toList();
     final columna = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -198,7 +216,7 @@ class _ColumnaPaneles extends ConsumerWidget {
 abstract class _Panel extends Widget {
   const _Panel();
 
-  bool visible(ResumenGravity resumen);
+  bool visible(ResumenGravity resumen, WidgetRef ref);
 }
 
 // --- Encabezado --------------------------------------------------------------
@@ -211,6 +229,15 @@ class _Encabezado extends ConsumerWidget {
     final v = ValoresDiseno.de(context);
     final ahora = ref.watch(horaActualProvider);
     final enLinea = ref.watch(resumenGravityProvider.select((r) => r.enLinea));
+    // Plataforma entrega la conectividad real (conectividadProvider); si el
+    // resumen dice que no hay conexión, eso manda.
+    final real = ref.watch(conectividadProvider);
+    final conexion = enLinea
+        ? real
+        : EstadoConectividad(
+            EstadoConexion.sinConexion,
+            pendientes: real.pendientes,
+          );
     final privado = ref.watch(modoPrivadoProvider);
     return Wrap(
       alignment: WrapAlignment.spaceBetween,
@@ -254,42 +281,11 @@ class _Encabezado extends ConsumerWidget {
           spacing: v.espacio * 1.5,
           runSpacing: v.espacio,
           children: [
-            _IndicadorConexion(enLinea: enLinea),
+            IndicadorConexionConectado(alternativo: conexion),
             _BotonModoPrivado(activo: privado),
           ],
         ),
       ],
-    );
-  }
-}
-
-class _IndicadorConexion extends StatelessWidget {
-  const _IndicadorConexion({required this.enLinea});
-
-  final bool enLinea;
-
-  @override
-  Widget build(BuildContext context) {
-    final v = ValoresDiseno.de(context);
-    final texto = enLinea ? 'En línea' : 'Sin conexión';
-    return Semantics(
-      label: 'Estado: $texto',
-      excludeSemantics: true,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: enLinea ? v.exito : v.alerta,
-            ),
-          ),
-          SizedBox(width: v.espacio),
-          Text(texto, style: v.lectura(tamano: 13, color: v.textoTenue)),
-        ],
-      ),
     );
   }
 }
@@ -359,7 +355,8 @@ class _PanelSinDatos extends ConsumerWidget implements _Panel {
   const _PanelSinDatos();
 
   @override
-  bool visible(ResumenGravity resumen) => resumen.sinDatos;
+  bool visible(ResumenGravity resumen, WidgetRef ref) =>
+      resumen.sinDatos && !ref.watch(resumenFinanzasHoyProvider).visible;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -382,7 +379,7 @@ class _PanelHoy extends ConsumerWidget implements _Panel {
   const _PanelHoy();
 
   @override
-  bool visible(ResumenGravity resumen) =>
+  bool visible(ResumenGravity resumen, WidgetRef ref) =>
       resumen.agenda.isNotEmpty || resumen.habitos.isNotEmpty;
 
   @override
@@ -438,7 +435,8 @@ class _PanelCuidados extends ConsumerWidget implements _Panel {
   const _PanelCuidados();
 
   @override
-  bool visible(ResumenGravity resumen) => resumen.cuidados != null;
+  bool visible(ResumenGravity resumen, WidgetRef ref) =>
+      resumen.cuidados != null;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -475,80 +473,25 @@ class _PanelCuidados extends ConsumerWidget implements _Panel {
 class _PanelFinanzas extends ConsumerWidget implements _Panel {
   const _PanelFinanzas();
 
+  /// Aparece si la persona lleva algún libro de Finanzas (el filtro por rol y
+  /// permiso lo hace el propio resumen); cifras reales locales, nunca de
+  /// ejemplo. Sin plan ni movimientos dice "Sin datos todavía".
   @override
-  bool visible(ResumenGravity resumen) => resumen.finanzas != null;
+  bool visible(ResumenGravity resumen, WidgetRef ref) =>
+      ref.watch(resumenFinanzasHoyProvider).visible;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final v = ValoresDiseno.de(context);
-    final f = ref.watch(resumenGravityProvider).finanzas!;
-    final ahora = ref.watch(horaActualProvider);
-    final privado = ref.watch(modoPrivadoProvider);
-    final ocultos = ref.watch(montosOcultosProvider);
-    final e = v.espacio;
-    return TarjetaModulo(
-      key: const ValueKey('panel-finanzas'),
-      titulo: 'Finanzas · semana ${semanaIso(ahora)}',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: Semaforo(estado: f.estado),
-          ),
-          SizedBox(height: e * 1.5),
-          Text('Quedan', style: v.lectura(tamano: 14, color: v.textoTenue)),
-          Row(
-            children: [
-              Expanded(
-                child: MontoOcultable(
-                  key: const ValueKey('monto-quedan'),
-                  centavos: f.quedanCentavos,
-                  oculto: ocultos,
-                  estilo: v.numero(
-                    tamano: 28,
-                    peso: FontWeight.w500,
-                    color: v.textoFuerte,
-                  ),
-                ),
-              ),
-              if (!privado && !ocultos) ...[
-                SizedBox(width: e),
-                OutlinedButton(
-                  key: const ValueKey('boton-ocultar-montos'),
-                  onPressed: () =>
-                      ref.read(montosVisiblesProvider.notifier).fijar(false),
-                  child: const Text('Ocultar'),
-                ),
-              ],
-            ],
-          ),
-          // Ocultos: la marca es también la forma de pedir verlos (PIN o
-          // huella).
-          if (ocultos) ...[
-            SizedBox(height: e * 0.5),
-            const Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: MarcaMontosOcultos(),
-            ),
-          ],
-          SizedBox(height: e * 1.5),
-          BarraProgreso(
-            etiqueta: 'Presupuesto usado',
-            valor: f.usado,
-            color: f.estado.color(v),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context, WidgetRef ref) => TarjetaFinanzasHoy(
+    alAbrir: () => GoRouter.maybeOf(context)?.go(Rutas.finanzas),
+  );
 }
 
 class _PanelAvisos extends ConsumerWidget implements _Panel {
   const _PanelAvisos();
 
   @override
-  bool visible(ResumenGravity resumen) => resumen.avisos.isNotEmpty;
+  bool visible(ResumenGravity resumen, WidgetRef ref) =>
+      resumen.avisos.isNotEmpty;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -637,7 +580,7 @@ class _PanelNucleo extends ConsumerWidget {
       key: const ValueKey('panel-nucleo'),
       decoration: BoxDecoration(
         color: superficie,
-        border: Border.all(color: v.borde),
+        border: Border.all(color: v.borde, width: v.grosorBorde),
         borderRadius: BorderRadius.circular(v.radioMediano),
       ),
       child: Padding(

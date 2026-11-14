@@ -146,7 +146,9 @@ class _HojaRegistrarGastoState extends ConsumerState<HojaRegistrarGasto> {
     if (libros.isEmpty) {
       return const MarcoHojaRegistro(
         titulo: 'Gasto',
-        cuerpo: Text('Solo lectura: no tienes un libro donde registrar gastos.'),
+        cuerpo: Text(
+          'Solo lectura: no tienes un libro donde registrar gastos.',
+        ),
       );
     }
     final libro = libros.firstWhere(
@@ -165,7 +167,8 @@ class _HojaRegistrarGastoState extends ConsumerState<HojaRegistrarGasto> {
       _categoriaId = sugerencias.ultimaCategoriaId;
     }
     _cuentaId ??= sugerencias.ultimaCuentaId;
-    if (_cuentaId != null && !sugerencias.cuentas.any((x) => x.id == _cuentaId)) {
+    if (_cuentaId != null &&
+        !sugerencias.cuentas.any((x) => x.id == _cuentaId)) {
       _cuentaId = sugerencias.ultimaCuentaId;
     }
     final representado = libro.tipo == dom.TipoLibro.representado;
@@ -320,8 +323,10 @@ class _HojaRegistrarGastoState extends ConsumerState<HojaRegistrarGasto> {
                 if (c.permisoEn(libro).administrar)
                   ActionChip(
                     key: const ValueKey('gasto-cuenta-nueva'),
-                    avatar: const Icon(Icons.add, size: 18),
-                    label: const Text('Cuenta nueva'),
+                    // Al final de la lista (Fase 4, E6/P13): corto y de 48 dp.
+                    tooltip: 'Agregar una cuenta a este libro',
+                    materialTapTargetSize: MaterialTapTargetSize.padded,
+                    label: const Text('+ Cuenta'),
                     onPressed: () => setState(() => _creandoCuenta = true),
                   ),
               ],
@@ -362,8 +367,11 @@ class _HojaRegistrarGastoState extends ConsumerState<HojaRegistrarGasto> {
               onChanged: (_) => setState(() {}),
               decoration: InputDecoration(
                 labelText: 'Motivo (obligatorio)',
-                helperText: '$ayudaDelMotivo Se registra en nombre de ${libro.nombre}.',
+                helperText:
+                    '$ayudaDelMotivo Se registra en nombre de ${libro.nombre}.',
                 helperMaxLines: 3,
+                errorText: errorDeMotivo(_motivo.text),
+                errorMaxLines: 3,
               ),
             ),
         ],

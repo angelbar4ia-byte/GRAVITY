@@ -166,13 +166,21 @@ class _Zip {
     final restante = maximoBytesDescomprimidos - _entregados;
     final tope = math.min(maximoBytesPorComponente, restante);
     if (e.descomprimido > tope && e.metodo == 0) {
-      throw const ErrorArchivo('Un componente del archivo es demasiado grande.');
+      throw const ErrorArchivo(
+        'Un componente del archivo es demasiado grande.',
+      );
     }
-    final crudo = Uint8List.sublistView(_bytes, e.inicio, e.inicio + e.comprimido);
+    final crudo = Uint8List.sublistView(
+      _bytes,
+      e.inicio,
+      e.inicio + e.comprimido,
+    );
     final Uint8List datos;
     if (e.metodo == 0) {
       if (crudo.length > tope) {
-        throw const ErrorArchivo('Un componente del archivo es demasiado grande.');
+        throw const ErrorArchivo(
+          'Un componente del archivo es demasiado grande.',
+        );
       }
       datos = crudo;
     } else {
@@ -420,7 +428,8 @@ class LibroXlsx {
     if (!_zip.contiene('xl/sharedStrings.xml')) return <String>[];
     final xml = _texto('xl/sharedStrings.xml');
     return [
-      for (final si in _bloques(xml, 'si')) _celdaValida(_textoDeRuns(si.contenido)),
+      for (final si in _bloques(xml, 'si'))
+        _celdaValida(_textoDeRuns(si.contenido)),
     ];
   }();
 
@@ -538,9 +547,13 @@ LibroXlsx leerXlsx(Uint8List bytes) {
   final rels = zip.leer('xl/_rels/workbook.xml.rels');
   if (workbook == null || rels == null) throw _noEsXlsx;
   final destinos = <String, String>{};
-  for (final r in _bloques(utf8.decode(rels, allowMalformed: true), 'Relationship')) {
+  for (final r in _bloques(
+    utf8.decode(rels, allowMalformed: true),
+    'Relationship',
+  )) {
     // Un destino externo (otro libro, una URL) nunca se sigue.
-    if ((_atributo(r.atributos, 'TargetMode') ?? '').toLowerCase() == 'external') {
+    if ((_atributo(r.atributos, 'TargetMode') ?? '').toLowerCase() ==
+        'external') {
       continue;
     }
     final id = _atributo(r.atributos, 'Id');
@@ -548,7 +561,10 @@ LibroXlsx leerXlsx(Uint8List bytes) {
     if (id != null && destino != null) destinos[id] = destino;
   }
   final hojas = <String, String>{};
-  for (final h in _bloques(utf8.decode(workbook, allowMalformed: true), 'sheet')) {
+  for (final h in _bloques(
+    utf8.decode(workbook, allowMalformed: true),
+    'sheet',
+  )) {
     final nombre = _atributo(h.atributos, 'name');
     final id = _atributo(h.atributos, 'r:id');
     final destino = id == null ? null : destinos[id];
@@ -615,7 +631,9 @@ LecturaPlantilla leerPlantillaDeBytes(
   String hoja = 'Categorías',
 }) {
   if (bytes.length > maximoBytesDeImportacion) {
-    throw const ErrorArchivo('El archivo pesa más de 10 MB: no es la plantilla.');
+    throw const ErrorArchivo(
+      'El archivo pesa más de 10 MB: no es la plantilla.',
+    );
   }
   try {
     return leerPlantillaCategorias(
@@ -644,7 +662,9 @@ Future<LecturaPlantilla> leerPlantillaDeRuta(
     throw ErrorArchivo('No encontré el archivo: ${archivo.path}');
   }
   if (await archivo.length() > maximoBytesDeImportacion) {
-    throw const ErrorArchivo('El archivo pesa más de 10 MB: no es la plantilla.');
+    throw const ErrorArchivo(
+      'El archivo pesa más de 10 MB: no es la plantilla.',
+    );
   }
   return leerPlantillaDeBytes(
     await archivo.readAsBytes(),
