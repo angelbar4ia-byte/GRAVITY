@@ -69,12 +69,12 @@ Lee el texto y responde las preguntas (A, B, C o D).
 
 > The Riverton Film Festival began in 1998 as a small event held in a school hall. Over the years, it has grown into one of the most respected showcases for independent filmmakers in the region. This year's festival received more than 600 submissions, although only forty were selected. What sets the event apart, according to its director, is its commitment to new voices. Many of the featured directors had never shown their work in public before. Some critics have argued that the festival focuses too heavily on dramatic films, leaving little room for comedy or documentaries. The director, however, insists that the selection committee considers every genre equally. Attendance has also changed. While early festivals relied almost entirely on local audiences, today visitors arrive from across the country, and ticket sales now cover most of the costs.
 
-31. What is the writer mainly doing? A) criticising the festival B) describing how the festival has developed C) comparing film festivals D) advertising a new event → **B**
-32. The word "showcases" is closest in meaning to: A) prizes B) events for displaying work C) cinemas D) schools → **B**
-33. What does the director say about the festival? A) It accepts only comedies. B) It is run by critics. C) It is committed to new voices. D) It has lost popularity. → **C**
+31. What is the writer mainly doing? A) describing how the festival has developed B) criticising the festival C) comparing film festivals D) advertising a new event → **A**
+32. The word "showcases" is closest in meaning to: A) prizes B) cinemas C) events for displaying work D) schools → **C**
+33. What does the director say about the festival? A) It accepts only comedies. B) It is run by critics. C) It has lost popularity. D) It is committed to new voices. → **D**
 34. What do some critics claim? A) The festival is too expensive. B) The festival favours dramatic films. C) The festival ignores local directors. D) The festival is too short. → **B**
-35. What has changed about the audience? A) It is now mostly children. B) It now comes from across the country. C) It is smaller than before. D) It no longer buys tickets. → **B**
-36. According to the text, how are most costs covered? A) Government grants B) Sponsorship C) Ticket sales D) Donations → **C**
+35. What has changed about the audience? A) It is now mostly children. B) It is smaller than before. C) It now comes from across the country. D) It no longer buys tickets. → **C**
+36. According to the text, how are most costs covered? A) Ticket sales B) Government grants C) Sponsorship D) Donations → **A**
 
 ## Parte 6 · Textos con oraciones omitidas (preguntas 37 a 42)
 
@@ -129,7 +129,7 @@ Lee los textos A a D. Para cada pregunta, escribe la letra del texto que contien
 | 2 (9–16) | 9 However · 10 and · 11 develop · 12 through · 13 often · 14 usually · 15 who · 16 and |
 | 3 (17–24) | 17 challenges · 18 health · 19 electric · 20 residents · 21 effective · 22 Unfortunately · 23 completion · 24 agreement |
 | 4 (25–30) | 25 last time I saw · 26 not as intelligent as · 27 mind not smoking · 28 not permitted in · 29 has been learning · 30 bound to |
-| 5 (31–36) | 31 B · 32 B · 33 C · 34 B · 35 B · 36 C |
+| 5 (31–36) | 31 A · 32 C · 33 D · 34 B · 35 C · 36 A |
 | 6 (37–42) | 37 A · 38 F · 39 B · 40 C · 41 D · 42 E |
 | 7 (43–52) | 43 A · 44 B · 45 D · 46 C · 47 B · 48 A · 49 C · 50 B · 51 D · 52 C |
 

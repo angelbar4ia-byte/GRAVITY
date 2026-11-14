@@ -100,13 +100,13 @@ Escucha la entrevista con una restauradora de cuadros. Elige la respuesta correc
 > **Interviewer:** Do you work alone?
 > **Patel:** Usually in a team. We have chemists, photographers and historians. Each person checks the others' decisions, which I think is essential.
 
-24. How did Dr Patel first become interested in restoration? A) by visiting museums B) by studying chemistry C) by helping in a workshop → **C**
-25. What does she say about the speed of the work? A) It is extremely slow. B) It is quicker than people think. C) It depends on the size of the painting. → **A**
+24. How did Dr Patel first become interested in restoration? A) by visiting museums B) by helping in a workshop C) by studying chemistry → **B**
+25. What does she say about the speed of the work? A) It is quicker than people think. B) It depends on the size of the painting. C) It is extremely slow. → **C**
 26. Why does the team avoid rushing? A) A mistake could be irreversible. B) The work is expensive. C) The team is slow. → **A**
-27. What is the most challenging part of her job? A) Deciding how far to restore. B) Finding the right paints. C) Working with photographers. → **A**
-28. What is the aim of the restoration? A) to make paintings look new B) to make paintings readable C) to sell the paintings → **B**
-29. Why does she keep the marks of age? A) They are cheaper to keep. B) Visitors demand it. C) They can be part of a painting's story. → **C**
-30. How does her team work? A) Each person works alone under supervision. B) Each member checks the others' decisions. C) They compete for credit. → **B**
+27. What is the most challenging part of her job? A) Finding the right paints. B) Working with photographers. C) Deciding how far to restore. → **C**
+28. What is the aim of the restoration? A) to make paintings readable B) to make paintings look new C) to sell the paintings → **A**
+29. Why does she keep the marks of age? A) They are cheaper to keep. B) They can be part of a painting's story. C) Visitors demand it. → **B**
+30. How does her team work? A) Each person works alone under supervision. B) They compete for credit. C) Each member checks the others' decisions. → **C**
 
 ---
 
@@ -117,7 +117,7 @@ Escucha la entrevista con una restauradora de cuadros. Elige la respuesta correc
 | 1 (1–8) | 1 A · 2 B · 3 A · 4 C · 5 B · 6 A · 7 C · 8 A |
 | 2 (9–18) | 9 decade · 10 relaxing · 11 balconies · 12 register · 13 neighbours · 14 throughout · 15 healthy · 16 choice · 17 two · 18 spring |
 | 3 (19–23) | 19 C · 20 E · 21 G · 22 A · 23 B |
-| 4 (24–30) | 24 C · 25 A · 26 A · 27 A · 28 B · 29 C · 30 B |
+| 4 (24–30) | 24 B · 25 C · 26 A · 27 C · 28 A · 29 B · 30 C |
 
 ## Revisión de la clave
 
