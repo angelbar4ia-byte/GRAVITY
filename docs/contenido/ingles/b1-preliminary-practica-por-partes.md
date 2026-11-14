@@ -18,7 +18,7 @@
 | B1-8 | Writing, Parte 2 · artículo o historia | Writing | 1 tarea |
 | B1-9 | Listening, Parte 1 · opción múltiple con dibujos | Listening | 3 |
 | B1-10 | Listening, Parte 3 · notas con huecos | Listening | 4 |
-| B1-11 | 1 B · 2 A · 3 C | Escucha la frase clave del hablante: "after five", "opposite the park", "only ten minutes from home". Las opciones incorrectas repiten una palabra del diálogo sin responder la pregunta. |
+| B1-11 | Listening, Parte 2 · opción múltiple (diálogos) | Listening | 3 |
 | B1-12 | Listening, Parte 4 · entrevista | Listening | 4 |
 | B1-13 | Speaking, Parte 1 · conversación | Speaking | 4 preguntas |
 | B1-14 | Speaking, Parte 2 · turno largo con fotos | Speaking | 1 turno |
@@ -202,7 +202,7 @@ La escuela quiere organizar un evento para recaudar fondos: una noche de pelícu
 | B1-7 y B1-8 | Rúbrica | Revisa que cubras cada punto del correo; en la historia, el tiempo verbal del pasado debe ser coherente. |
 | B1-9 | 1 A · 2 B · 3 C | Escucha la respuesta del segundo hablante, no solo la pregunta. "Under the table" responde a dónde. |
 | B1-10 | 1 lake · 2 car park · 3 water · 4 café | Responde con la palabra exacta que escuchas. |
-| B1-11 | 1 B · 2 C · 3 D (sobra A) | Lo que dice el hablante se relaciona con la razón de la lista aunque no la nombre ("packing boxes" indica mudanza). |
+| B1-11 | 1 B · 2 A · 3 C | Escucha la frase clave del hablante: "after five", "opposite the park", "only ten minutes from home". Las opciones incorrectas repiten una palabra del diálogo sin responder la pregunta. |
 | B1-12 | 1 A · 2 C · 3 A · 4 B | La respuesta correcta es lo que la persona dice explícitamente; las opciones incorrectas invierten lo que dijo. |
 | B1-13 a B1-16 | Rúbrica | Revisa fluidez, vocabulario, pronunciación y que respondas con detalles, no con una sola palabra. |
 
