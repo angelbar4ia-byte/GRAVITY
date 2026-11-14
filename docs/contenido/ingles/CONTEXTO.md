@@ -53,12 +53,13 @@
 | `simulacros/cambridge-y-toefl.md` | Plan de simulacros de Cambridge B1 y B2 First, y de TOEFL |
 | `simulacros/cambridge-b1-preliminary-A.md` | **Simulacro A completo** (Reading 32, Writing 2, Listening 25 en texto, Speaking 4 partes) con clave |
 | `simulacros/toefl-ibt-A.md` | **Simulacro A completo** (Reading 50, Listening 47 en texto, Writing 12, Speaking 11) con clave |
+| `simulacros/toeic-completo-escucha.md`, `toeic-completo-lectura.md`, `toeic-completo-hablar-escribir.md` | **TOEIC completo** (formato oficial: 100 Listening, 100 Reading, 11 Speaking, 8 Writing). Pendientes: reequilibrar letras correctas en Listening (partes 3 y 4) y Reading (Parte 5); revisar Reading 6 (146); tiempos de Speaking y extensión de Writing 8 contra el handbook; imágenes y audio |
 | `simulacros/guia-multiexamen.md` | Guía común: mismo paquete para TOEIC, Cambridge y TOEFL; tres modos de elección |
 
 ## 4. Decisiones pendientes
 
 1. **Bimestre 3:** Cambridge B2 First o TOEFL.
-2. **Simulacro completo de TOEIC:** en curso. Debe seguir el formato oficial (200 de L&R y 11 + 8 de S&W), con los tipos de tarea del handbook.
+2. **Simulacro completo de TOEIC:** escrito con el formato oficial. Faltan los ajustes de la sección de estado (letras de la clave, tiempos de Speaking, imágenes y audio).
 3. **Cambridge B1 Preliminary:** Listening con audio y Speaking con imágenes, cuando se apruebe el material. Parte 3 de Reading: confirmada en 4 opciones por pregunta, pero el número exacto de preguntas es una deducción de los totales.
 4. **TOEFL:** audio y el formato de imágenes/video de Speaking cuando estén disponibles.
 5. **Revisión de la Parte 2 de Writing de Cambridge:** elegir artículo o historia (formato del handbook).
