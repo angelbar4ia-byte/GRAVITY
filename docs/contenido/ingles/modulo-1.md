@@ -7,23 +7,23 @@
 
 ## Cómo funciona el módulo
 
-### Tiempo diario (60 minutos, lunes a sábado)
+### Tiempo diario (60 minutos, lunes a viernes)
 
 | Bloque | Min | Qué se hace |
 |---|---|---|
 | **Principal** (en casa) | 35 | Repaso espaciado (5) · lección nueva (10) · pronunciación en voz alta (8) · producción escrita o hablada (12) |
 | **Traslado** (camino al trabajo, solo audio o lectura en voz alta) | 25 | Escucha del texto del día (10) · repetición por frases (10) · repaso de tarjetas (5) |
 
-- El **domingo** es de descanso con inglés ligero opcional (15 min, versículo o canción). Cuenta para la racha, pero no es obligatorio.
+- El **sábado y el domingo** son de descanso. Inglés ligero opcional el domingo (15 min, versículo o canción): no cuenta para la racha ni para la meta.
 - Si un día no hay traslado, el bloque se sustituye por la escucha y la pronunciación en casa. El total sigue siendo 60 minutos.
 - Cada hora de estudio seguida, la app propone una pausa.
 
 ### Constancia (lo que hace que el hábito sea serio)
 
 - **Racha:** un día cuenta cuando completas el bloque principal y el traslado (o su sustituto).
-- **Día de gracia:** una vez por semana puedes saltar un día sin perder la racha. No se acumula.
+- **Día de gracia:** tres por trimestre puedes saltar un día laborable sin perder la racha. No se acumulan de un trimestre a otro.
 - **Si pierdes un día:** no se intenta recuperar con dos bloques seguidos. Al día siguiente se hace la lección que tocaba y el repaso espaciado de las palabras pendientes.
-- **Meta semanal (lunes):** escribe tres números: días completos (meta 6 de 6, con el día de gracia contado aparte), tarjetas de vocabulario repasadas (meta 60) y minutos de estudio (meta 360: 6 días de 60 minutos).
+- **Meta semanal (lunes):** escribe tres números: días completos (meta 5 de 5), tarjetas de vocabulario repasadas (meta 60) y minutos de estudio (meta 300: 5 días de 60 minutos).
 - **Revisión (domingo, 5 minutos):** compara tus números con la meta, escribe una frase sobre lo que te costó y una sobre lo que mejoró.
 
 ### Repaso espaciado
@@ -35,9 +35,9 @@
 
 ### Enfoques por día (Anexo A.3)
 
-Lunes gramática y vocabulario · martes escucha · miércoles pronunciación · jueves lectura y escritura · viernes conversación guiada · sábado repaso y mini prueba · domingo descanso e inglés ligero.
+Lunes gramática y vocabulario · martes escucha · miércoles pronunciación · jueves lectura y escritura · viernes conversación guiada y mini prueba de la semana. Sábado y domingo, descanso.
 
-**Viernes:** el Anexo A pide conversación con IA. En esta etapa no hay IA: la lección trae un guion para practicar en voz alta y un modelo de respuestas.
+**Viernes:** la mini prueba se hace al final de la sesión (5 minutos del bloque principal, en lugar del repaso espaciado). El Anexo A pide conversación con IA. En esta etapa no hay IA: la lección trae un guion para practicar en voz alta y un modelo de respuestas.
 
 ---
 
@@ -140,7 +140,7 @@ Lunes gramática y vocabulario · martes escucha · miércoles pronunciación ·
 
 ---
 
-### Mini prueba · Sábado · Semana 1 (se aprueba con 4 de 5)
+### Mini prueba · Viernes · Semana 1 (se aprueba con 4 de 5)
 
 1. He ___ (wake / wakes) up at seven. **→ wakes**
 2. We ___ (don't / doesn't) watch TV in the morning. **→ don't**
@@ -226,7 +226,7 @@ Muchas palabras de salud se entienden mejor cuando la sílaba fuerte está donde
 
 ---
 
-### Mini prueba · Sábado · Semana 2 (se aprueba con 4 de 5)
+### Mini prueba · Viernes · Semana 2 (se aprueba con 4 de 5)
 
 1. I ___ miss my breakfast. (never / always) **→ never**
 2. She ___ on time. (a: always is / b: is always) **→ b (is always)**
@@ -306,7 +306,7 @@ Practica en parejas: *walk / walking, cook / cooking, sleep / sleeping.* Di la s
 
 ---
 
-### Mini prueba · Sábado · Semana 3 (se aprueba con 4 de 5)
+### Mini prueba · Viernes · Semana 3 (se aprueba con 4 de 5)
 
 1. Mi hermana ___ (cook) ahora. **→ is cooking**
 2. ¿Cuál es correcta? *a) I am know the answer. b) I know the answer.* **→ b**
@@ -395,7 +395,7 @@ Practica en parejas: *walk / walking, cook / cooking, sleep / sleeping.* Di la s
 
 ---
 
-### Prueba de módulo · Sábado · Semana 4
+### Prueba de módulo · Viernes · Semana 4
 
 Se aprueba con **80 % o más en cada habilidad**. Si no, la semana siguiente vuelve a la lección que falló antes de avanzar al módulo 2.
 
@@ -419,14 +419,11 @@ Se aprueba con **80 % o más en cada habilidad**. Si no, la semana siguiente vue
 ## Resumen del módulo
 
 - **20 lecciones**, **3 mini pruebas** (semanas 1 a 3) y **1 prueba de módulo** (semana 4).
-- **Tiempo:** 60 minutos al día, de lunes a sábado. Domingo de descanso.
-- **Constancia:** racha, un día de gracia por semana, metas semanales y revisión del domingo.
+- **Tiempo:** 60 minutos al día, de lunes a viernes. Sábado y domingo de descanso.
+- **Constancia:** racha, tres días de gracia por trimestre, metas semanales y revisión del domingo.
 - **Vocabulario:** unas 60 tarjetas, con repaso espaciado.
 - **Gramática:** presente simple, adverbios de frecuencia, presente continuo, verbos de estado.
 - **Pronunciación:** final *-s*, sílaba tónica, sonido *-ing*.
 - **Interfaz en inglés al 10 %** (Anexo A.5): botones de navegación, *Today, Goals, Streak*. Se construye después.
 
-**Para revisar por ti:**
-1. ¿Te parecen 60 minutos al día, de lunes a sábado? Si prefieres 5 días, quito un día y el módulo sigue igual.
-2. ¿La meta semanal de 60 tarjetas y 330 minutos es razonable para empezar?
-3. ¿El día de gracia es una vez por semana?
+**Decisiones registradas (14/nov/2026):** 60 minutos diarios de lunes a viernes; sin sábado; tres días de gracia por trimestre. Pendiente de confirmar: la meta semanal de 60 tarjetas y 300 minutos.
