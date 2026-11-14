@@ -57,6 +57,7 @@
 | `simulacros/cambridge-b1-preliminary-B.md` | **Simulacro B completo** (Reading 32, Writing 2, Listening 25 en texto, Speaking 4 partes) con clave. Letras de Reading P1 reordenadas para evitar repetición. Pendientes: audio, imágenes de Speaking, aprobación de la fuente |
 | `simulacros/toefl-ibt-A.md` | **Simulacro A completo** (Reading 50, Listening 47 en texto, Writing 12, Speaking 11) con clave |
 | `simulacros/toefl-ibt-B.md` | **Simulacro B completo** (Reading 50, Listening 47 en texto, Writing 12, Speaking 11) con clave. Preguntas nuevas; letras de las claves revisadas (sin tres respuestas iguales seguidas). Pendientes: audio, imágenes, tiempos de Speaking y extensión de Writing 11 contra la especificación |
+| `simulacros/bimestre-3.md` | Índice del bimestre 3 (B2): qué existe para B2 First y TOEFL, y las decisiones pendientes del dueño (examen o modo de elección) |
 | `simulacros/toeic-completo-escucha.md`, `toeic-completo-lectura.md`, `toeic-completo-hablar-escribir.md` | **TOEIC completo** (formato oficial: 100 Listening, 100 Reading, 11 Speaking, 8 Writing). Pendientes: reequilibrar letras correctas en Listening (partes 3 y 4) y Reading (Parte 5); revisar Reading 6 (146); tiempos de Speaking y extensión de Writing 8 contra el handbook; imágenes y audio |
 | `simulacros/guia-multiexamen.md` | Guía común: mismo paquete para TOEIC, Cambridge y TOEFL; tres modos de elección |
 
