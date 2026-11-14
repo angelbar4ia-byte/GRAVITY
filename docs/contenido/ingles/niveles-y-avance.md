@@ -1,5 +1,7 @@
 # Niveles y avance
 
+> **Contexto:** nota general en `CONTEXTO.md` (ruta: `docs/contenido/ingles/`). Estado de este documento: versión 0.3 con las decisiones del dueño.
+
 > Versión 0.3 (14/nov/2026). Incluye el repaso inicial A1 → A2 (un mes) y las etiquetas oficiales del marco europeo (CEFR).
 > Regla del dueño: **cada bimestre sube de nivel, solo si cumple todo lo que se pide; si no lo cumple, no sube.**
 

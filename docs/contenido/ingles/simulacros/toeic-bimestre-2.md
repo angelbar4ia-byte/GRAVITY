@@ -18,6 +18,8 @@
 
 # Simulacros TOEIC · bimestre 2 (semanas 13 a 20)
 
+> **Contexto:** nota general en `../CONTEXTO.md`. Estado de este documento: simulacros A y B de práctica por partes; **no cumplen el formato completo** (ver sección 0).
+
 > Versión 0.1 (14/nov/2026), para revisión del dueño. Preguntas **originales de GRAVITY**, con el formato de las secciones oficiales (ver `formatos-oficiales.md`). No se reproducen preguntas de ETS.
 > Calendario: **Simulacro A** en la semana 16 y **Simulacro B** en la semana 20 (una vez al mes, según lo aprobado).
 

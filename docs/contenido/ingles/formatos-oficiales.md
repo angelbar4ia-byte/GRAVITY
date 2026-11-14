@@ -1,5 +1,7 @@
 # Formatos oficiales · TOEIC y Cambridge
 
+> **Contexto:** nota general en `CONTEXTO.md`. Estado de este documento: verificado con fuentes oficiales (ETS y Cambridge).
+
 > Versión 1.0 (14/nov/2026). Datos leídos de las fuentes oficiales indicadas en cada sección. Si ETS o Cambridge cambian el formato, este documento se actualiza antes de cambiar los simulacros.
 
 ## 1. TOEIC Listening & Reading

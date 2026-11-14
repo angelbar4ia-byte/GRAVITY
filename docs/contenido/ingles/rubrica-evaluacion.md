@@ -1,5 +1,7 @@
 # Rúbrica de evaluación · Inglés (módulos 1 a 6)
 
+> **Contexto:** nota general en `CONTEXTO.md` (ruta: `docs/contenido/ingles/`). Estado de este documento: borrador; pendiente de aprobación.
+
 > Versión 0.1 (14/nov/2026), para revisión del dueño. Aplica a las mini pruebas (viernes) y a las pruebas de módulo (semanas 4, 8, 12, 16, 20 y 24).
 > Esta rúbrica sirve para medir el avance del propio estudiante. **No es una certificación oficial.** Si más adelante quieres un certificado, el resultado final se contrasta con un examen oficial (TOEFL, IELTS o Cambridge), como dice el diseño de Hábitos (Anexo A.6).
 

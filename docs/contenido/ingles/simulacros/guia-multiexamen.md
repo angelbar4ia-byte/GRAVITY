@@ -1,5 +1,7 @@
 # Guía multiexamen · preparación para TOEIC, Cambridge y TOEFL
 
+> **Contexto:** nota general en `../CONTEXTO.md`. Estado de este documento: guía común para TOEIC, Cambridge y TOEFL; pendiente de aprobación.
+
 > Versión 0.1 (14/nov/2026), para aprobación del dueño. Opción recomendada: **un examen principal por bimestre, con un simulacro de otro formato cada cuatro semanas**. El usuario elige cuál lleva: uno, dos o tres, alternados.
 
 ## 1. Principio

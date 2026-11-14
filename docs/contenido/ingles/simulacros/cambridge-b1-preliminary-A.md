@@ -1,5 +1,7 @@
 # Simulacro A · Cambridge B1 Preliminary (bimestre 1, semana 8)
 
+> **Contexto:** nota general en `../CONTEXTO.md`. Estado de este documento: simulacro A completo; Listening en texto y Speaking sin imágenes hasta tener audio.
+
 > Versión 1.0 (14/nov/2026). **Preguntas originales de GRAVITY**, con el formato y el orden de partes del manual para profesores de B1 Preliminary (Cambridge English). No se reproducen preguntas de Cambridge.
 > Fuente del formato: [Cambridge English · B1 Preliminary, formato del examen](https://www.cambridgeenglish.org/exams-and-tests/preliminary/exam-format/) y el [manual para profesores](https://www.cambridgeenglish.org/Images/168150-b1-preliminary-teachers-handbook.pdf).
 > **Limitación en esta etapa:** Listening se presenta en texto (guion) hasta que se apruebe la fuente de audio. Las imágenes de Listening Parte 1 se describen con texto.

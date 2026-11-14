@@ -1,5 +1,7 @@
 # Simulacro A · TOEFL iBT (bimestre 3 o por elección del usuario)
 
+> **Contexto:** nota general en `../CONTEXTO.md`. Estado de este documento: simulacro A completo; Listening en texto hasta tener audio.
+
 > Versión 1.0 (14/nov/2026). **Preguntas originales de GRAVITY**, con los tipos de tarea y el número de ítems de la especificación 2026 de ETS. No se reproducen preguntas de ETS.
 > Fuente: [TOEFL iBT Test: 2026 Update, Test Blueprint and Specifications (ETS, PDF)](https://www.ets.org/content/dam/ets-org/pdfs/toefl/toefl-ibt-test-specifications-2026.pdf). La especificación advierte que puede cambiar antes del lanzamiento oficial.
 > **Limitación en esta etapa:** Listening se presenta en texto (guion) hasta que se apruebe el audio. Los tipos de tarea que dependen de audio o video se indican.

@@ -1,5 +1,7 @@
 # TOEIC completo · Speaking (11 preguntas) y Writing (8 preguntas)
 
+> **Contexto:** nota general en `../CONTEXTO.md`. Estado de este documento: TOEIC completo; pendiente verificar tiempos de Speaking, extensión de Writing 8 e imágenes.
+
 > Versión 1.0 (14/nov/2026). Formato: [TOEIC Speaking and Writing, handbook de ETS](https://www.ets.org/content/dam/ets-org/pdfs/toeic/toeic-speaking-writing-examinee-handbook.pdf). Speaking: 11 preguntas en unos 20 minutos, en cinco grupos (1–2 leer en voz alta; 3–4 describir una imagen; 5–7 responder; 8–10 responder con información; 11 opinar). Writing: 8 preguntas en unos 60 minutos (1–5 oración con imagen; 6–7 respuesta a una solicitud escrita; 8 ensayo de opinión).
 > **Preguntas originales de GRAVITY.** Las imágenes se describen con texto hasta tener archivos gráficos. Los tiempos de preparación y respuesta de Speaking se verifican en el handbook antes de aplicar la prueba.
 

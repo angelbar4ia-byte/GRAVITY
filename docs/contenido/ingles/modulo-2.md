@@ -1,5 +1,7 @@
 # Módulo 2 · Experiencias y pasado (semanas 5 a 8)
 
+> **Contexto:** nota general en `CONTEXTO.md` (ruta: `docs/contenido/ingles/`). Estado de este documento: **aprobado** (versión 1.0).
+
 > **Estado: aprobado por el dueño (14/nov/2026).** Versión 1.0.
 
 > Contenido propio de GRAVITY, redactado a partir del Anexo A (Hábitos §5.3). **Versión 0.1** para revisión del dueño (14/nov/2026).

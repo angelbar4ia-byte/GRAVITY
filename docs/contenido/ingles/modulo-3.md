@@ -1,5 +1,7 @@
 # Módulo 3 · Planes y metas (semanas 9 a 12)
 
+> **Contexto:** nota general en `CONTEXTO.md` (ruta: `docs/contenido/ingles/`). Estado de este documento: redactado; pendiente de revisión del dueño.
+
 > Contenido propio de GRAVITY, redactado a partir del Anexo A (Hábitos §5.3). **Versión 0.1** para revisión del dueño (14/nov/2026).
 > Reglas de tiempo, racha, tres días de gracia por trimestre, metas semanales y repaso espaciado: las del Módulo 1.
 > Lunes a viernes. Sábado y domingo, descanso. El viernes cierra la semana con la mini prueba (semanas 9 a 11) o la prueba del módulo (semana 12).
