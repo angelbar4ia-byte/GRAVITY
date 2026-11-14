@@ -36,19 +36,19 @@ C) The pool is always open after 3 p.m.
 > Sorry, I'm stuck in traffic. I'll be 20 minutes late. Start without me!
 
 What is the writer doing?
-A) Asking the reader to wait for a lift.
-B) Saying they will arrive late.
+A) Saying they will arrive late.
+B) Asking the reader to wait for a lift.
 C) Telling the reader to leave early.
-**Respuesta: B**
+**Respuesta: A**
 
 **3.** *(Anuncio en una tienda)*
 > Summer sale: all jackets half price this week only. Shoes not included.
 
 What is on sale?
 A) Shoes
-B) Jackets
-C) Everything in the shop
-**Respuesta: B**
+B) Everything in the shop
+C) Jackets
+**Respuesta: C**
 
 **4.** *(Postal)*
 > Dear Sam, We arrived in Lisbon yesterday. The weather is fantastic and the food is delicious. Love, Ana
@@ -63,10 +63,10 @@ C) On a train from Lisbon.
 > Contains nuts. Keep in a cool, dry place. Best before 12 May.
 
 Why should people be careful with this product?
-A) It contains nuts.
-B) It must be kept hot.
-C) It must be eaten today.
-**Respuesta: A**
+A) It must be kept hot.
+B) It must be eaten today.
+C) It contains nuts.
+**Respuesta: C**
 
 ## Parte 2 · Preguntas 6 a 10 · Relacionar (8 textos, 5 personas)
 
@@ -102,17 +102,17 @@ D) Her friend asked her to.
 
 **12.** How long does Maria run on Saturdays?
 A) Five minutes
-B) An hour
-C) All day
+B) All day
+C) An hour
 D) Half an hour
-**Respuesta: B**
+**Respuesta: C**
 
 **13.** What does Maria enjoy most?
-A) Meeting new people
-B) The feeling of freedom outside in the morning
+A) The feeling of freedom outside in the morning
+B) Meeting new people
 C) The cold winter weather
 D) Winning races
-**Respuesta: B**
+**Respuesta: A**
 
 **14.** What does Maria say about running in a city?
 A) She finds the park is always different.
@@ -123,10 +123,10 @@ D) She agrees it is boring.
 
 **15.** What does Maria say about winter?
 A) She runs more often in winter.
-B) She doesn't like the cold, but she has good clothes for it.
-C) She stops running in winter.
+B) She stops running in winter.
+C) She doesn't like the cold, but she has good clothes for it.
 D) She goes to the gym in winter.
-**Respuesta: B**
+**Respuesta: C**
 
 ## Parte 4 · Preguntas 16 a 20 · Insertar oraciones (7 oraciones, 5 espacios)
 
@@ -151,12 +151,12 @@ Lee el mensaje y elige la palabra o forma correcta para cada espacio.
 
 > Hi Anna, thanks for your message about the weekend. I'd love to come to the beach with you, but I **(21)** ____ working until Saturday afternoon. Could we go on Sunday instead? The weather **(22)** ____ to be better then. If you **(23)** ____ me your address, I can meet you at the bus station at nine. I **(24)** ____ been to the beach for almost two years, so I'm really looking forward to it. If it's sunny, we could have a picnic **(25)** ____ the beach. **(26)** ____ you bring some sandwiches? I'll bring the drinks. See you soon, Maria
 
-**21.** A) am  B) have  C) will  D) do → **A**
-**22.** A) is forecasting  B) is forecast  C) forecasts  D) forecast → **B**
-**23.** A) give  B) gave  C) will give  D) gives → **A**
-**24.** A) gone  B) been  C) went  D) go → **B**
-**25.** A) on  B) at  C) in  D) to → **A**
-**26.** A) Can  B) Are  C) Will  D) Do → **A**
+**21.**A) have B) will C) do D) am → **D**
+**22.**A) is forecasting B) forecasts C) forecast D) is forecast → **D**
+**23.**A) give B) gave C) will give D) gives → **A**
+**24.**A) gone B) went C) go D) been → **D**
+**25.**A) on B) at C) in D) to → **A**
+**26.**A) Are B) Can C) Will D) Do → **B**
 
 *Nota:* la pregunta 26 forma la pregunta *Can you bring some sandwiches?*, por eso la respuesta es **A**.
 
@@ -337,7 +337,7 @@ Una escuela debe elegir una actividad para el viaje de fin de año: visitar un m
 
 | Sección | Respuestas |
 |---|---|
-| Reading (32) | 1 B · 2 B · 3 B · 4 B · 5 A · 6 E · 7 F · 8 B · 9 H · 10 C · 11 B · 12 B · 13 B · 14 A · 15 B · 16 B · 17 F · 18 D · 19 C · 20 A · 21 A · 22 B · 23 A · 24 B · 25 A · 26 A · 27 work · 28 The · 29 showed · 30 is · 31 When · 32 to |
+| Reading (32) | 1 B · 2 A · 3 C · 4 B · 5 C · 6 E · 7 F · 8 B · 9 H · 10 C · 11 B · 12 C · 13 A · 14 A · 15 C · 16 B · 17 F · 18 D · 19 C · 20 A · 21 D · 22 D · 23 A · 24 D · 25 A · 26 B · 27 work · 28 The · 29 showed · 30 is · 31 When · 32 to |
 | Listening (25) | 1 A · 2 C · 3 B · 4 C · 5 A · 6 B · 7 C · 8 B · 9 A · 10 A · 11 C · 12 B · 13 C · 14 four · 15 ninety · 16 lake · 17 five · 18 waterproof · 19 water · 20 A · 21 B · 22 C · 23 B · 24 C · 25 A |
 | Writing | Rúbrica (2 tareas) |
 | Speaking | Rúbrica (4 partes) |

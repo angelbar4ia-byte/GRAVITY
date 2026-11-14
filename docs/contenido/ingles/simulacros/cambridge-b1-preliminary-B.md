@@ -13,7 +13,7 @@
 **1.** *(Letrero en la biblioteca)*
 > The library closes at six p.m. on Fridays. Books must be returned by five p.m. on that day.
 
-What time must books be returned on Friday? A) six p.m. B) seven p.m. C) five p.m. → **C**
+What time must books be returned on Friday? A) six p.m. B) five p.m. C) seven p.m. → **B**
 
 **2.** *(Mensaje de texto)*
 > Hi Sam, the train is cancelled today, so I'll take the bus. See you at seven, not six!
@@ -23,12 +23,12 @@ What has changed about the meeting? A) the time B) the reason C) the place → *
 **3.** *(Anuncio en una tienda)*
 > Free delivery on orders over thirty pounds. Delivery takes three to five working days.
 
-How long does delivery take? A) over a month B) three to five working days C) one day → **B**
+How long does delivery take? A) over a month B) one day C) three to five working days → **C**
 
 **4.** *(Correo de una maestra)*
 > Your homework is due on Monday, not Tuesday as I said earlier.
 
-When is the homework due? A) Monday B) Tuesday C) Wednesday → **A**
+When is the homework due? A) Tuesday B) Monday C) Wednesday → **B**
 
 **5.** *(Aviso en un parque)*
 > Dogs must be kept on a lead at all times. Please clean up after your pet.
@@ -65,20 +65,20 @@ A) that it was relaxing B) that it was too dangerous C) that it was expensive D)
 **→ B**
 
 **12.** Why did the writer decide to try cycling?
-A) A friend asked him to. B) He wanted to lose weight. C) The buses stopped running. D) The company offered him a bicycle.
-**→ D**
+A) A friend asked him to. B) He wanted to lose weight. C) The company offered him a bicycle. D) The buses stopped running.
+**→ C**
 
 **13.** How did the writer feel in the first few weeks?
-A) happy B) bored C) frightened D) confident
-**→ C**
+A) frightened B) happy C) bored D) confident
+**→ A**
 
 **14.** What does the writer say about arriving at work now?
-A) He is tired. B) He arrives late. C) He feels awake and relaxed. D) He takes the bus.
-**→ C**
+A) He feels awake and relaxed. B) He is tired. C) He arrives late. D) He takes the bus.
+**→ A**
 
 **15.** What advice does the writer give?
-A) Cycle on busy roads from the start. B) Buy an expensive bicycle. C) Avoid cycling in winter. D) Start on quiet streets and build up slowly.
-**→ D**
+A) Cycle on busy roads from the start. B) Buy an expensive bicycle. C) Start on quiet streets and build up slowly. D) Avoid cycling in winter.
+**→ C**
 
 ## Parte 4 · Preguntas 16 a 20 · Insertar oraciones (7 oraciones, 5 espacios)
 
@@ -101,12 +101,12 @@ G. Cooking can be a rewarding hobby for anyone.
 
 > Dear Mum, I'm writing to tell you about my new flat. It's **(21)** ___ the city centre, so I can walk to work. The kitchen is small, but it has a **(22)** ___ balcony where I can sit in the evening. My flatmates are very friendly; they **(23)** ___ me to dinner last Sunday. I'm still **(24)** ___ to the noise of the trams, but I'm getting used to it. I **(25)** ___ you can visit me soon. Let me know **(26)** ___ you're free next month. Love, Anna
 
-**21.** A) at B) on C) in D) by → **C**
-**22.** A) pleasure B) pleasant C) pleasantly D) pleasing → **B**
-**23.** A) invite B) invited C) inviting D) invitation → **B**
-**24.** A) used B) getting used C) use D) get used → **B**
+**21.** A) at B) on C) by D) in → **D**
+**22.** A) pleasure B) pleasantly C) pleasing D) pleasant → **D**
+**23.** A) invited B) invite C) inviting D) invitation → **A**
+**24.** A) used B) use C) get used D) getting used → **D**
 **25.** A) hope B) hoping C) hopes D) hoped → **A**
-**26.** A) that B) because C) if D) what → **C**
+**26.** A) that B) if C) because D) what → **B**
 
 ## Parte 6 · Preguntas 27 a 32 · Completar con una palabra
 
@@ -276,7 +276,7 @@ La escuela quiere organizar un evento para recaudar fondos: una noche de pelícu
 
 | Sección | Respuestas |
 |---|---|
-| Reading (32) | 1 C · 2 A · 3 B · 4 A · 5 C · 6 A · 7 F · 8 E · 9 C · 10 G · 11 B · 12 D · 13 C · 14 C · 15 D · 16 G · 17 C · 18 A · 19 D · 20 B · 21 C · 22 B · 23 B · 24 B · 25 A · 26 C · 27 had · 28 very · 29 how · 30 now · 31 When · 32 to |
+| Reading (32) | 1 B · 2 A · 3 C · 4 B · 5 C · 6 A · 7 F · 8 E · 9 C · 10 G · 11 B · 12 C · 13 A · 14 A · 15 C · 16 G · 17 C · 18 A · 19 D · 20 B · 21 D · 22 D · 23 A · 24 D · 25 A · 26 B · 27 had · 28 very · 29 how · 30 now · 31 When · 32 to |
 | Listening (25) | 1 A · 2 C · 3 A · 4 B · 5 C · 6 B · 7 C · 8 B · 9 A · 10 C · 11 A · 12 C · 13 B · 14 eight o'clock · 15 two · 16 waterfall · 17 ranger · 18 lake · 19 home · 20 B · 21 C · 22 A · 23 C · 24 B · 25 C |
 | Writing | Rúbrica (2 tareas) |
 | Speaking | Rúbrica (4 partes) |
