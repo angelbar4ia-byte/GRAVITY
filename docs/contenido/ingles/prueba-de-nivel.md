@@ -112,8 +112,8 @@ Una persona revisora la califica con la rúbrica, en uno de estos niveles:
 | Por debajo de A1 o A1 | Repaso desde la semana 1 (R1 a R4) | Empieza con el repaso completo. |
 | A2 | Repaso desde R3, o la prueba de A2 de R4 antes de empezar | Si aprueba la prueba de A2, pasa al bimestre 1. |
 | B1 | Bimestre 1 (módulo 1) | El repaso es opcional para esta persona. |
-| B1+ | Bimestre 2 (módulo 3) | **Propuesta:** se toma la prueba final del bimestre 1 como ubicación. Pendiente de aprobación del dueño. |
-| B2 | Bimestre 3 (módulo 5) | **Propuesta:** igual que B1+. El nivel B2 oficial solo se otorga con la prueba final tipo B2. Pendiente de aprobación. |
+| B1+ | Bimestre 2 (módulo 3) | **Aprobado por el dueño (14/nov/2026).** Salta solo si la prueba confirma B1+. Si no lo confirma, se ubica en su nivel real. |
+| B2 | Bimestre 3 (módulo 5) | **Aprobado por el dueño (14/nov/2026).** Salta solo si la prueba confirma B2. Si no lo confirma, se ubica en su nivel real. El nivel B2 oficial solo se otorga con la prueba final tipo B2. |
 
 ## 5. Clave (partes 1 a 3)
 
@@ -149,6 +149,6 @@ Esta prueba no se usa para decidir si dos personas pueden estudiar juntas. Cada 
 
 ## 7. Revisión antes de usar
 
-- Pendiente de aprobación del dueño: el plan de inicio de B1+ y B2 (sección 4), que propone saltar un bimestre a partir de la prueba de ubicación.
+- Aprobado por el dueño: el plan de inicio de B1+ y B2 (sección 4), con la condición de que el salto solo ocurre si la prueba lo confirma.
 - La escucha se hace en texto hasta que se apruebe el audio.
 - La escritura necesita una persona revisora con la rúbrica.
