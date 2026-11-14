@@ -1,6 +1,6 @@
 # Niveles y avance por bimestre
 
-> Versión 0.1 (14/nov/2026), para aprobación del dueño. Regla del dueño: **cada bimestre sube de nivel, solo si cumple todo lo que se pide; si no lo cumple, no sube.**
+> Versión 0.2 (14/nov/2026). Ajustes del dueño aplicados (sección 6). Regla del dueño: **cada bimestre sube de nivel, solo si cumple todo lo que se pide; si no lo cumple, no sube.**
 
 ## 1. Calendario
 
@@ -24,12 +24,13 @@ Un bimestre se aprueba cuando cumples **los cuatro** requisitos:
 
 Si cumples los cuatro, subes de nivel. Si no cumples uno, no subes, aunque cumplas los otros tres.
 
-## 3. Qué pasa si no subes
+## 3. Oportunidades y qué pasa si no subes
 
-- **El nivel no cambia.** No se pasa al bimestre siguiente.
-- **Repites el bimestre**, empezando por las lecciones de las habilidades que no alcanzaron el 80 %. La regla de la rúbrica sigue igual: no se compensa una habilidad con otra.
-- **Se aplica la evaluación de bimestre de nuevo** al terminar la repetición. Entre una evaluación y la siguiente debe pasar al menos una semana de práctica.
-- **Dos repeticiones seguidas del mismo bimestre:** antes de continuar, el dueño revisa el plan con el estudiante (horario, carga, método). No se cambia la exigencia: se cambia el método.
+- **Dos oportunidades para subir de nivel por bimestre.** Cada oportunidad es una evaluación de bimestre completa (requisito 2). Si las dos fallan, **bajas un nivel** (por ejemplo, de B1.3 a B1.2) y repites el bimestre desde las habilidades que no alcanzaste.
+- **Evaluación semanal de gracia.** La primera evaluación semanal fallida del bimestre no cuenta contra el estudiante: queda como día de gracia y se repite la semana.
+- **Entre oportunidades** debe pasar al menos una semana de práctica.
+- **La regla de la rúbrica sigue igual:** no se compensa una habilidad con otra.
+- **Dos bajas de nivel seguidas:** antes de continuar, el dueño revisa el plan con el estudiante (horario, carga, método). No se cambia la exigencia: se cambia el método.
 
 ## 4. Confirmación del nivel B2
 
@@ -44,8 +45,8 @@ Cada cierre de bimestre deja un registro con:
 
 El registro no se edita después del cierre; si hay un error, se anota como corrección con fecha.
 
-## 6. Preguntas para aprobación del dueño
+## 6. Decisiones del dueño (14/nov/2026)
 
-1. ¿Apruebas los cuatro requisitos tal como están, en particular el 90 % de los minutos y la evaluación de bimestre adicional a las pruebas de módulo?
-2. ¿Los niveles internos B1.2 y B1.3 te sirven, o prefieres solo B1 y B2?
-3. ¿Dos repeticiones seguidas antes de revisar el plan es el límite correcto?
+1. **Requisitos:** aprobados. La primera evaluación semanal fallida del bimestre queda como gracia (sección 3).
+2. **Nombres de los niveles:** pendiente de aclarar. La respuesta "B1 primer bimestre" se puede leer como "el primer bimestre se queda en B1" o como otra cosa. Por ahora se mantienen B1.2 y B1.3. Confirma cuál quieres.
+3. **Oportunidades:** dos por bimestre; si fallas las dos, bajas un nivel.
