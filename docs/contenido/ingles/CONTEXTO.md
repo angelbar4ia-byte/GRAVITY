@@ -63,6 +63,7 @@
 | `cobertura-practica.md` | Matriz de cobertura: programa (repaso, módulos 1 a 6) y exámenes (B1 Preliminary, B2 First, TOEFL, TOEIC), con lo que falta y el orden |
 | `b1-preliminary-practica-por-partes.md` | Práctica por partes de Cambridge B1 Preliminary (16 sesiones: Reading 1 a 6, Writing 1 y 2, Listening 1 a 4, Speaking 1 a 4), con clave y regla por error. Preguntas originales |
 | `toefl-practica-por-seccion.md` | Práctica de TOEFL iBT 2026 por sección y tipo de tarea (12 sesiones: Reading 3, Listening 4, Writing 3, Speaking 2), con clave y regla por error. Preguntas originales. Pendiente: audio y tiempos de Speaking |
+| `toeic-practica-por-partes.md` | Práctica de TOEIC por partes (Listening 1 a 4, Reading 5 a 7) en tres niveles: básico, intermedio, avanzado. El usuario elige el nivel de inicio. Preguntas originales. Pendiente: audio y fotografías |
 | `simulacros/toeic-completo-escucha.md`, `toeic-completo-lectura.md`, `toeic-completo-hablar-escribir.md` | **TOEIC completo** (formato oficial: 100 Listening, 100 Reading, 11 Speaking, 8 Writing). Pendientes: reequilibrar letras correctas en Listening (partes 3 y 4) y Reading (Parte 5); revisar Reading 6 (146); tiempos de Speaking y extensión de Writing 8 contra el handbook; imágenes y audio |
 | `simulacros/guia-multiexamen.md` | Guía común: mismo paquete para TOEIC, Cambridge y TOEFL; tres modos de elección |
 

@@ -22,7 +22,7 @@ Orden propuesto: redactar el módulo 3 (aprobación del dueño), luego el módul
 | **Cambridge B1 Preliminary** (bimestre 1) | `b1-preliminary-practica-por-partes.md` (sesiones B1-1 a B1-16) | `cambridge-b1-preliminary-A.md` | `cambridge-b1-preliminary-B.md` | Audio; imágenes de Speaking; Parte 3 de Reading y Listening por confirmar |
 | **Cambridge B2 First** (bimestre 3, principal) | `b2-first-practica-por-partes.md` (sesiones 1 a 15) y `b2-first-practica-por-partes-2.md` (sesiones 16 a 30) | `cambridge-b2-first-A-*` | `cambridge-b2-first-B-*` | Número de opciones de Listening Parte 3; audio |
 | **TOEFL iBT 2026** (bimestre 3, secundario) | `toefl-practica-por-seccion.md` (12 sesiones por tipo de tarea) | `toefl-ibt-A.md` | `toefl-ibt-B.md` | Práctica por sección (Reading, Listening, Writing, Speaking); audio |
-| **TOEIC** (bimestre 2) | **Pendiente** (hay 33 preguntas de práctica en `toeic-bimestre-2.md`) | `toeic-completo-*` (formato completo, con pendientes de letras, tiempos y audio) | — | Práctica por partes de las 7 partes de Listening y Reading |
+| **TOEIC** (bimestre 2) | `toeic-practica-por-partes.md` (7 partes, 3 niveles; el usuario elige el inicio). Hay 33 preguntas de práctica adicionales en `toeic-bimestre-2.md` | `toeic-completo-*` (formato completo, con pendientes de letras, tiempos y audio) | — | Práctica por partes de las 7 partes de Listening y Reading |
 
 ## 3. Siguiente en la lista
 
