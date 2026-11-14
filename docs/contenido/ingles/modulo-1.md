@@ -1,5 +1,7 @@
 # Módulo 1 · Rutinas, hábitos y salud (semanas 1 a 4)
 
+> **Estado: aprobado por el dueño (14/nov/2026).** Versión 1.0.
+
 > Contenido propio de GRAVITY, redactado a partir del Anexo A (Hábitos §5.3). **Versión 0.2** para revisión del dueño (14/nov/2026).
 > Mientras no se apruebe la fuente de audio, las escuchas se leen como texto.
 
