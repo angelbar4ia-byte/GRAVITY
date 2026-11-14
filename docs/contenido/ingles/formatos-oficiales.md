@@ -51,16 +51,20 @@ Fuente: [Cambridge English · B1 Preliminary, formato del examen](https://www.ca
 
 ## 4. Cambridge B2 First
 
-Fuente: [Cambridge English · B2 First, formato del examen](https://www.cambridgeenglish.org/exams-and-tests/first/exam-format/).
+Fuente: [B2 First handbook (Cambridge English, PDF)](https://www.cambridgeenglish.org/Images/167791-b2-first-handbook.pdf). Página de referencia: [Cambridge English · B2 First, formato del examen](https://www.cambridgeenglish.org/exams-and-tests/first/exam-format/).
 
 | Componente | Duración | Partes y preguntas |
 |---|---|---|
-| Reading and Use of English | 1 hora 15 minutos | 7 partes, 52 preguntas (40 % del total) |
-| Writing | 1 hora 20 minutos | 2 partes |
-| Listening | unos 40 minutos | 4 partes, 30 preguntas |
-| Speaking | 14 minutos por pareja (20 por grupo de tres) | 4 partes |
+| Reading and Use of English | 1 h 15 min | 7 partes, 52 preguntas |
+| Writing | 1 h 20 min | 2 partes (1 ensayo obligatorio, 1 a elegir de 3 tareas) |
+| Listening | unos 40 min | 4 partes, 30 preguntas |
+| Speaking | 14 min en pareja (20 en grupo de tres) | 4 partes |
 
-*Los pesos de Writing, Listening y Speaking no se confirmaron en la página consultada; solo se confirmó el 40 % de Reading and Use of English.*
+**Pesos (verificados en el handbook):** las cinco habilidades (Reading, Use of English, Writing, Listening y Speaking) tienen el mismo peso, es decir, 20 % cada una. Reading y Use of English juntos suman 40 %.
+
+**Partes de Reading and Use of English (verificadas):** 1 cloze de opción múltiple (8), 2 cloze con palabra abierta (8), 3 formación de palabras (8), 4 transformación con palabra clave (6), 5 lectura de opción múltiple (6), 6 textos con oraciones omitidas (6), 7 correspondencia de textos (10).
+
+**Partes de Listening (verificadas):** 1 extractos cortos (8), 2 frases incompletas (10), 3 emparejar hablantes (5), 4 entrevista (7).
 
 ## 5. TOEFL iBT (revisado)
 
@@ -86,6 +90,6 @@ Fuente: [TOEFL iBT Test: 2026 Update, Test Blueprint and Specifications (ETS, PD
 
 ## 7. Pendiente
 
-- Confirmar los pesos de Writing, Listening y Speaking de B2 First si el dueño decide usar el examen.
+- Confirmar el número de opciones de Listening Parte 3 de B2 First con el manual.
 - Construir los simulacros con este formato (desbloqueado: ya no depende de la red).
 - Decidir si TOEFL entra en el plan (solo si el objetivo es académico o universitario).
