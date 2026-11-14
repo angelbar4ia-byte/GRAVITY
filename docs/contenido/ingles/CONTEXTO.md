@@ -1,0 +1,85 @@
+# Contexto · Inglés (Hábitos, Fase 8 bloque 5)
+
+> Nota de respaldo para no perder el hilo. Fecha de corte: 14/nov/2026. Rama: `claude/zen-pasteur-b0jblz`. Se actualiza en cada cierre importante.
+
+## 1. Qué es y de dónde sale
+
+- Módulo de **inglés** dentro de Hábitos (GRAVITY). Diseño base: `docs/modulos/habitos/diseno-app-habitos.md`, §5.3 y Anexo A.
+- Especificación de este bloque: `docs/specs/fase-8-habitos-ampliaciones.md` (alcance 5a: aprobado por el dueño).
+- Alcance 5a: ruta de lecciones, prueba de nivel, vocabulario con repaso espaciado, gramática con ejercicios, métricas y racha. **Sin audio, sin pronunciación con reconocimiento de voz y sin IA en esta etapa.**
+
+## 2. Reglas aprobadas por el dueño
+
+**Tiempo y constancia**
+- 60 minutos diarios, **de lunes a viernes**. Sábado y domingo, descanso (el domingo, inglés ligero opcional que no cuenta).
+- Bloque principal 35 min (repaso 5, lección 10, pronunciación 8, producción 12) y traslado 25 min (escucha 10, repetición 10, tarjetas 5).
+- Racha: un día cuenta si se completan el principal y el traslado.
+- **Día de gracia: tres por trimestre** (no se acumulan).
+- Metas semanales: 5 de 5 días, 60 tarjetas, 300 minutos.
+- Revisión del domingo, 5 minutos.
+
+**Niveles y avance** (`niveles-y-avance.md`)
+- Calendario de 28 semanas: prueba de nivel (semana 0), **repaso A1 → A2 (semanas 1 a 4)**, bimestre 1 (módulos 1 y 2) → **B1**, bimestre 2 (módulos 3 y 4) → **B1+**, bimestre 3 (módulos 5 y 6) → **B2**, solo con la prueba final tipo B2.
+- Cada bloque sube de nivel solo si cumple **cuatro requisitos**: pruebas de módulo con 80 % por habilidad, evaluación de cierre con 80 % por habilidad, constancia con días de gracia, y al menos 90 % de los minutos planeados.
+- **Dos oportunidades por bloque.** Si fallas las dos, bajas un nivel.
+- La primera evaluación semanal fallida del bloque queda como día de gracia.
+
+**Evaluación** (`rubrica-evaluacion.md`)
+- Cuatro habilidades con el mismo peso (25 % cada una).
+- Escala 0 a 4 por criterio. Umbral 80 % por habilidad, sin compensar una con otra.
+- No es certificación oficial.
+
+**Exámenes externos**
+- **Bimestre 1: Cambridge B1 Preliminary** (elegido por el dueño, porque su nivel es B1).
+- **Bimestre 2: TOEIC** (preparación con simulacros mensuales).
+- **Bimestre 3: Cambridge B2 First o TOEFL**, pendiente de decisión del dueño.
+- **Principio del dueño:** los tres exámenes (TOEIC, Cambridge y TOEFL) deben prepararse **por igual, sin perder calidad**. El usuario elige cuál lleva: uno, dos o tres alternados.
+- **Cuarta opción** (la recomendada por el dueño): combina lo mejor de cada examen y prepara para aprobar cualquiera de los tres oficiales. Es la referencia del sistema.
+
+## 3. Estado de los documentos
+
+| Documento | Estado |
+|---|---|
+| `prueba-de-nivel.md` | Redactada, pendiente de revisión |
+| `modulo-1.md` | **Aprobado** (versión 1.0) |
+| `modulo-2.md` | **Aprobado** (versión 1.0) |
+| `modulo-3.md` | Redactado, pendiente de revisión |
+| `modulo-4` a `modulo-6` | Pendiente. Se redactan después de cada aprobación |
+| `rubrica-evaluacion.md` | Borrador, pendiente de aprobación |
+| `niveles-y-avance.md` | Versión 0.3 con las decisiones del dueño |
+| `toeic.md` | Método de preparación (decisiones registradas) |
+| `formatos-oficiales.md` | Verificado con fuentes oficiales: TOEIC (handbook de ETS), Cambridge B1 Preliminary y B2 First (Cambridge), TOEFL iBT 2026 (especificación de ETS) |
+| `simulacros/toeic-bimestre-2.md` | Simulacros A y B **de práctica por partes** (33 preguntas cada uno). **No cumplen el formato completo**; la revisión está en su sección 0 |
+| `simulacros/cambridge-y-toefl.md` | Plan de simulacros de Cambridge B1 y B2 First, y de TOEFL |
+| `simulacros/cambridge-b1-preliminary-A.md` | **Simulacro A completo** (Reading 32, Writing 2, Listening 25 en texto, Speaking 4 partes) con clave |
+| `simulacros/toefl-ibt-A.md` | **Simulacro A completo** (Reading 50, Listening 47 en texto, Writing 12, Speaking 11) con clave |
+| `simulacros/guia-multiexamen.md` | Guía común: mismo paquete para TOEIC, Cambridge y TOEFL; tres modos de elección |
+
+## 4. Decisiones pendientes
+
+1. **Bimestre 3:** Cambridge B2 First o TOEFL.
+2. **Simulacro completo de TOEIC:** en curso. Debe seguir el formato oficial (200 de L&R y 11 + 8 de S&W), con los tipos de tarea del handbook.
+3. **Cambridge B1 Preliminary:** Listening con audio y Speaking con imágenes, cuando se apruebe el material. Parte 3 de Reading: confirmada en 4 opciones por pregunta, pero el número exacto de preguntas es una deducción de los totales.
+4. **TOEFL:** audio y el formato de imágenes/video de Speaking cuando estén disponibles.
+5. **Revisión de la Parte 2 de Writing de Cambridge:** elegir artículo o historia (formato del handbook).
+6. **Equivalencias:** cómo se traduce un simulacro a la escala del examen oficial. Aún no acordado.
+
+## 5. Acceso y herramientas
+
+- **Red:** el entorno Default permite `www.ets.org` y `www.cambridgeenglish.org` (aprobado por el dueño el 14/nov/2026). Revertible si se pide.
+- **GitHub:** no se buscan repositorios de terceros con material de examen; el acceso de GitHub se limita al repositorio del proyecto.
+- **Material oficial** de ETS y Cambridge: se usa solo para formato. No se copian ni se redistribuyen preguntas.
+
+## 6. Pendientes fuera de inglés (proyecto GRAVITY)
+
+Lo que sigue pendiente en el proyecto, según el roadmap (`docs/ROADMAP.md`, sección de versiones 2.x):
+- Alimentación v1.6 y v1.7: falta la app del botón del albacea para autorizar el reembolso (ya se hizo el botón en el historial) y la prueba en dispositivo.
+- Finanzas bloque 1: conciliación de estados de cuenta en PDF (falta la lista de bancos).
+- Owner: activar `pg_cron`, clave de Gemini, despliegue de funciones de Supabase, Google Cloud para Gmail y Calendar, Home Assistant Green.
+- Prueba 99 de Cuidados: falla con la fecha actual; ya fallaba antes de cambios recientes.
+
+## 7. Cómo retomar
+
+1. Leer este archivo y `niveles-y-avance.md`.
+2. Confirmar qué simulacro sigue: **TOEIC completo** (Listening 100, Reading 100, Writing 8, Speaking 11), con el formato del handbook de ETS.
+3. Después: TOEFL y Cambridge con audio e imágenes en cuanto estén disponibles; la elección de examen del usuario se mantiene.
