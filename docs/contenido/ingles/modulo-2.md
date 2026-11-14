@@ -1,5 +1,7 @@
 # Módulo 2 · Experiencias y pasado (semanas 5 a 8)
 
+> **Estado: aprobado por el dueño (14/nov/2026).** Versión 1.0.
+
 > Contenido propio de GRAVITY, redactado a partir del Anexo A (Hábitos §5.3). **Versión 0.1** para revisión del dueño (14/nov/2026).
 > Las reglas de tiempo, racha, día de gracia (tres por trimestre), metas semanales y repaso espaciado son las del Módulo 1 y no cambian.
 > Lunes a viernes. Sábado y domingo, descanso. El viernes cierra la semana con la mini prueba y la conversación guiada.
