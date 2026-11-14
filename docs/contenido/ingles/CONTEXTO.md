@@ -74,7 +74,7 @@
 ## 4. Decisiones pendientes
 
 1. **Bimestre 3:** aprobar la fuente de audio para Listening de B2 First y TOEFL.
-2. **Simulacro completo de TOEIC:** escrito con el formato oficial. Faltan los ajustes de la sección de estado (letras de la clave, tiempos de Speaking, imágenes y audio).
+2. **Simulacro completo de TOEIC:** escrito con el formato oficial. Faltan los ajustes de la sección de estado (letras de la clave, imágenes y audio).
 3. **Cambridge B1 Preliminary:** Listening con audio y Speaking con imágenes, cuando se apruebe el material. Parte 3 de Reading: **verificada** en el manual para profesores (5 preguntas, 4 opciones).
 4. **TOEFL:** audio y el formato de imágenes/video de Speaking cuando estén disponibles.
 5. **Revisión de la Parte 2 de Writing de Cambridge:** elegir artículo o historia (formato del handbook).

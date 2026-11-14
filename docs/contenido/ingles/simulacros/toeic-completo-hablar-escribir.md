@@ -1,9 +1,14 @@
 # TOEIC completo · Speaking (11 preguntas) y Writing (8 preguntas)
 
-> **Contexto:** nota general en `../CONTEXTO.md`. Estado de este documento: TOEIC completo; pendiente verificar tiempos de Speaking, extensión de Writing 8 e imágenes.
+> **Contexto:** nota general en `../CONTEXTO.md`. Estado de este documento: TOEIC completo; tiempos de Speaking y Writing verificados en el handbook oficial; pendientes las imágenes.
 
 > Versión 1.0 (14/nov/2026). Formato: [TOEIC Speaking and Writing, handbook de ETS](https://www.ets.org/content/dam/ets-org/pdfs/toeic/toeic-speaking-writing-examinee-handbook.pdf). Speaking: 11 preguntas en unos 20 minutos, en cinco grupos (1–2 leer en voz alta; 3–4 describir una imagen; 5–7 responder; 8–10 responder con información; 11 opinar). Writing: 8 preguntas en unos 60 minutos (1–5 oración con imagen; 6–7 respuesta a una solicitud escrita; 8 ensayo de opinión).
-> **Preguntas originales de GRAVITY.** Las imágenes se describen con texto hasta tener archivos gráficos. Los tiempos de preparación y respuesta de Speaking se verifican en el handbook antes de aplicar la prueba.
+> **Preguntas originales de GRAVITY.** Las imágenes se describen con texto hasta tener archivos gráficos.
+
+**Tiempos oficiales (handbook de ETS, verificados):**
+- **Speaking:** 1 y 2, 45 s de preparación y 45 s para leer en voz alta. 3 y 4, 45 s de preparación y 30 s para describir. 5 y 6, 3 s de pausa y 15 s para responder; 7, 3 s y 30 s. 8 y 9, 45 s para estudiar el horario y 15 s para cada respuesta; 10, 3 s y 30 s. 11, 45 s de preparación y 60 s para opinar. En total, unos 20 minutos.
+- **Writing:** 1 a 5, 8 min en total para las cinco oraciones. 6 y 7, 10 min para cada respuesta de correo. 8, 30 min para planear, escribir y revisar el ensayo. En total, unos 60 minutos.
+- **Extensión de Writing 8:** el handbook dice que un ensayo efectivo tiene **un mínimo típico de 300 palabras**. El handbook no fija extensión para los correos (6 y 7); la de 30 a 50 palabras es criterio de GRAVITY.
 
 ---
 
@@ -83,7 +88,7 @@ Escribe una respuesta de 30 a 50 palabras. Indica si la nueva fecha te sirve y e
 
 **Pregunta 8.** Some people think that learning a foreign language is more important than learning computer skills. Others disagree. Which view do you agree with? Use specific reasons and examples to support your opinion.
 
-**Extensión:** entre 250 y 300 palabras (criterio de GRAVITY; la extensión oficial se verifica en el handbook antes de aplicar la prueba).
+**Extensión:** mínimo típico de 300 palabras, según el handbook oficial de ETS, con 30 minutos para planear, escribir y revisar.
 
 **Criterio:** tesis clara, dos o más razones con ejemplos, organización con introducción y conclusión, vocabulario variado y gramática precisa.
 
@@ -106,6 +111,6 @@ Escribe una respuesta de 30 a 50 palabras. Indica si la nueva fecha te sirve y e
 
 ## Pendientes antes de aplicar la prueba
 
-1. Verificar en el handbook los tiempos de preparación y respuesta de Speaking, y la extensión de Writing 8.
+1. Tiempos de Speaking y Writing: verificados en el handbook oficial.
 2. Archivos gráficos para las imágenes de Speaking 3–4 y Writing 1–5.
 3. Audio de Speaking 1–2 si se decide escucharlo como modelo.
