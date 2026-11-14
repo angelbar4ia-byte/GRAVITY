@@ -60,6 +60,8 @@
 | `simulacros/bimestre-3.md` | Índice del bimestre 3 (B2): qué existe para B2 First y TOEFL, y las decisiones pendientes del dueño (examen o modo de elección) |
 | `simulacros/b2-first-practica-por-partes.md` | Práctica por partes de B2 First (15 sesiones: Reading 1–7, Listening 1–4, Writing 1–2, Speaking 1–4), con clave y regla por error. Preguntas originales. Pendiente: verificar el número de opciones de Listening Parte 3 |
 | `simulacros/b2-first-practica-por-partes-2.md` | Segunda ronda de práctica por partes de B2 First (sesiones 16 a 30), con preguntas nuevas, clave y regla por error. Pendiente: verificar el número de opciones de Listening Parte 3 |
+| `cobertura-practica.md` | Matriz de cobertura: programa (repaso, módulos 1 a 6) y exámenes (B1 Preliminary, B2 First, TOEFL, TOEIC), con lo que falta y el orden |
+| `b1-preliminary-practica-por-partes.md` | Práctica por partes de Cambridge B1 Preliminary (16 sesiones: Reading 1 a 6, Writing 1 y 2, Listening 1 a 4, Speaking 1 a 4), con clave y regla por error. Preguntas originales |
 | `simulacros/toeic-completo-escucha.md`, `toeic-completo-lectura.md`, `toeic-completo-hablar-escribir.md` | **TOEIC completo** (formato oficial: 100 Listening, 100 Reading, 11 Speaking, 8 Writing). Pendientes: reequilibrar letras correctas en Listening (partes 3 y 4) y Reading (Parte 5); revisar Reading 6 (146); tiempos de Speaking y extensión de Writing 8 contra el handbook; imágenes y audio |
 | `simulacros/guia-multiexamen.md` | Guía común: mismo paquete para TOEIC, Cambridge y TOEFL; tres modos de elección |
 
