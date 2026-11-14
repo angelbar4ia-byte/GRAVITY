@@ -39,35 +39,35 @@ En cada palabra se muestran las primeras letras; completa el resto. Escribe la p
 **Texto 1 · Aviso de la alberca comunitaria**
 > Community pool. Saturday hours: 8 a.m. to 1 p.m. The pool is closed on Sundays for maintenance. Children under 12 must be accompanied by an adult. Swimming caps are required for all swimmers using the lanes.
 
-31. When is the pool closed? A) Saturdays B) Sundays C) Mornings → **B**
-32. Who must accompany children under 12? A) Lifeguards B) Teachers C) Adults → **C**
-33. What is required in the lanes? A) Swimming caps B) Goggles C) Floats → **A**
-34. What time does the pool open on Saturday? A) 1 p.m. B) 9 a.m. C) 8 a.m. → **C**
+31. When is the pool closed?A) Sundays B) Saturdays C) Mornings → **A**
+32. Who must accompany children under 12?A) Lifeguards B) Teachers C) Adults → **C**
+33. What is required in the lanes?A) Goggles B) Floats C) Swimming caps → **C**
+34. What time does the pool open on Saturday?A) 1 p.m. B) 8 a.m. C) 9 a.m. → **B**
 
 **Texto 2 · Correo de Priya a Tom**
 > From: Priya. To: Tom. Hi Tom, I'm sorry, but I can't come to the barbecue on Saturday. My sister is visiting from Canada, and we've planned a trip to the coast. Could we have lunch next week instead? I'm free on Tuesday or Wednesday. Also, could you bring the photos from the summer trip? I'd love to see them. Thanks, Priya.
 
-35. Why can't Priya come to the barbecue? A) She is ill B) Her sister is visiting C) She has to work → **B**
-36. What does Priya suggest? A) Having lunch next week B) Canceling the trip C) Going to a different restaurant → **A**
-37. Which days is Priya free? A) Monday or Tuesday B) Tuesday or Wednesday C) Saturday or Sunday → **B**
-38. What does Priya ask Tom to bring? A) Food B) Her bag C) Photos → **C**
-39. Where is Priya's sister from? A) Canada B) Ireland C) Mexico → **A**
-40. What is the email mainly about? A) Rescheduling a meeting with a friend B) Planning a barbecue C) Asking for a job → **A**
+35. Why can't Priya come to the barbecue?A) She is ill B) Her sister is visiting C) She has to work → **B**
+36. What does Priya suggest?A) Having lunch next week B) Canceling the trip C) Going to a different restaurant → **A**
+37. Which days is Priya free?A) Monday or Tuesday B) Saturday or Sunday C) Tuesday or Wednesday → **C**
+38. What does Priya ask Tom to bring?A) Food B) Her bag C) Photos → **C**
+39. Where is Priya's sister from?A) Ireland B) Canada C) Mexico → **B**
+40. What is the email mainly about?A) Planning a barbecue B) Rescheduling a meeting with a friend C) Asking for a job → **B**
 
 ## Tarea 3 · Leer un pasaje académico (R41 a R50)
 
 > Urban gardens are becoming more common in large cities. Many people have started growing vegetables on rooftops, balconies, and empty lots. These gardens offer more than fresh food. They can reduce the temperature of buildings during summer and collect rainwater, which lowers the pressure on drainage systems. Community gardens also bring neighbours together. Participants often share tools, seeds, and knowledge. However, creating an urban garden requires careful planning. The soil in cities is often polluted, so gardeners usually build raised beds filled with imported soil. Despite these challenges, researchers believe that urban agriculture will play a growing role in feeding city populations in the future.
 
-41. What is the main idea of the passage? A) Cities should ban farming. B) Urban gardens bring benefits and require planning. C) Rooftop gardens are too expensive. → **B**
-42. According to the passage, where do people grow vegetables? A) Only in parks B) On rooftops, balconies, and empty lots C) Inside factories → **B**
-43. What benefit for buildings is mentioned? A) They reduce temperature in summer. B) They increase noise. C) They lower prices. → **A**
-44. What does the passage say about rainwater? A) It is wasted. B) It can be collected, which reduces pressure on drainage. C) It must be paid for. → **B**
-45. What do participants in community gardens often do? A) Sell vegetables B) Share tools, seeds, and knowledge C) Build houses → **B**
-46. Why do gardeners often build raised beds? A) The soil in cities is often polluted. B) To make the gardens look nicer. C) To reduce water use. → **A**
-47. The word "challenges" is closest in meaning to: A) prizes B) difficulties C) rules → **B**
-48. What can be inferred about urban agriculture? A) It may become more important for cities. B) It will disappear. C) It is only a hobby. → **A**
-49. What does "imported soil" refer to? A) Soil from factories B) Soil brought from other places C) Soil from the city → **B**
-50. What is the author's attitude toward urban gardens? A) Negative B) Positive but realistic C) Indifferent → **B**
+41. What is the main idea of the passage?A) Cities should ban farming. B) Rooftop gardens are too expensive. C) Urban gardens bring benefits and require planning. → **C**
+42. According to the passage, where do people grow vegetables?A) Only in parks B) Inside factories C) On rooftops, balconies, and empty lots → **C**
+43. What benefit for buildings is mentioned?A) They increase noise. B) They reduce temperature in summer. C) They lower prices. → **B**
+44. What does the passage say about rainwater?A) It is wasted. B) It can be collected, which reduces pressure on drainage. C) It must be paid for. → **B**
+45. What do participants in community gardens often do?A) Sell vegetables B) Build houses C) Share tools, seeds, and knowledge → **C**
+46. Why do gardeners often build raised beds?A) The soil in cities is often polluted. B) To make the gardens look nicer. C) To reduce water use. → **A**
+47. The word "challenges" is closest in meaning to:A) difficulties B) prizes C) rules → **A**
+48. What can be inferred about urban agriculture?A) It will disappear. B) It may become more important for cities. C) It is only a hobby. → **B**
+49. What does "imported soil" refer to?A) Soil brought from other places B) Soil from factories C) Soil from the city → **A**
+50. What is the author's attitude toward urban gardens?A) Positive but realistic B) Negative C) Indifferent → **A**
 
 ---
 
@@ -79,21 +79,21 @@ En cada palabra se muestran las primeras letras; completa el resto. Escribe la p
 
 Escucha la frase y elige la mejor respuesta.
 
-**L1.** "Did you remember to bring your passport?" A) Yes, it's in my bag. B) I like the photo on it. C) Passports are expensive.
-**L2.** "Would you like some coffee?" A) I drink coffee every day. B) No, thanks, I'm fine. C) The café is closed.
-**L3.** "Can you pick up the package from the post office?" A) I posted it yesterday. B) The office is large. C) Yes, I'll go after work.
-**L4.** "Have you seen my keys?" A) I see them every day. B) Keys are expensive. C) They're on the table by the door.
-**L5.** "Why is the train late?" A) There was a signal problem. B) The train is blue. C) I like trains.
-**L6.** "How was the exam?" A) I took a bus. B) It was harder than I expected. C) The exam room was big.
-**L7.** "Do you mind if I open the window?" A) Not at all, go ahead. B) It's a nice window. C) The windows are made of glass.
-**L8.** "Shall we meet at the library at six?" A) The library closes at ten. B) Sounds good, see you there. C) I read a lot.
-**L9.** "I'm sorry I'm late." A) That's okay, we only just started. B) Sorry, I'm not sorry. C) The late train.
-**L10.** "Which one do you prefer, red or blue?" A) They're both red. B) I prefer the blue one. C) I'm preferred.
-**L11.** "Do you know where the nearest pharmacy is?" A) Yes, it's two streets down on the left. B) A pharmacy is a medicine. C) Pharmacies are big.
-**L12.** "Are you going to the conference next month?" A) I'm a conference room. B) Yes, I've already booked my ticket. C) The conference was a month ago.
-**L13.** "Could you help me move this table?" A) Tables are made of wood. B) I moved last year. C) Sure, let me put my bag down first.
-**L14.** "What's your favourite season?" A) Autumn, because the weather is cooler. B) Seasons are long. C) I season the food.
-**L15.** "The report is ready, isn't it?" A) Reports are long. B) Not yet, I need another hour. C) Yes, it's on the page.
+**L1.** "Did you remember to bring your passport?"A) Yes, it's in my bag. B) I like the photo on it. C) Passports are expensive.
+**L2.** "Would you like some coffee?"A) I drink coffee every day. B) No, thanks, I'm fine. C) The café is closed.
+**L3.** "Can you pick up the package from the post office?"A) Yes, I'll go after work. B) I posted it yesterday. C) The office is large.
+**L4.** "Have you seen my keys?"A) I see them every day. B) They're on the table by the door. C) Keys are expensive.
+**L5.** "Why is the train late?"A) There was a signal problem. B) The train is blue. C) I like trains.
+**L6.** "How was the exam?"A) I took a bus. B) The exam room was big. C) It was harder than I expected.
+**L7.** "Do you mind if I open the window?"A) It's a nice window. B) Not at all, go ahead. C) The windows are made of glass.
+**L8.** "Shall we meet at the library at six?"A) The library closes at ten. B) Sounds good, see you there. C) I read a lot.
+**L9.** "I'm sorry I'm late."A) That's okay, we only just started. B) Sorry, I'm not sorry. C) The late train.
+**L10.** "Which one do you prefer, red or blue?"A) They're both red. B) I'm preferred. C) I prefer the blue one.
+**L11.** "Do you know where the nearest pharmacy is?"A) A pharmacy is a medicine. B) Yes, it's two streets down on the left. C) Pharmacies are big.
+**L12.** "Are you going to the conference next month?"A) I'm a conference room. B) Yes, I've already booked my ticket. C) The conference was a month ago.
+**L13.** "Could you help me move this table?"A) Sure, let me put my bag down first. B) Tables are made of wood. C) I moved last year.
+**L14.** "What's your favourite season?"A) Seasons are long. B) Autumn, because the weather is cooler. C) I season the food.
+**L15.** "The report is ready, isn't it?"A) Not yet, I need another hour. B) Reports are long. C) Yes, it's on the page.
 
 ## Tarea 2 · Conversaciones (L16 a L25)
 
@@ -105,11 +105,11 @@ Escucha la frase y elige la mejor respuesta.
 > **W:** I think it starts at ten-fifteen because of the delay.
 > **M:** Oh good. I'll get a coffee first.
 
-16. Where are the speakers? A) In a lecture hall B) In a restaurant C) At a train station → **A**
-17. What is the man going to do? A) Leave the seat B) Get a coffee C) Call his professor → **B**
-18. When will the lecture start? A) At ten B) At ten-fifteen C) At ten-thirty → **B**
-19. What does the woman ask the man? A) If he is going to the biology lecture B) If he has a ticket C) If he knows the professor → **A**
-20. What does the man imply about the lecture? A) It is cancelled. B) It starts later than expected. C) It is in another building. → **B**
+16. Where are the speakers?A) In a restaurant B) In a lecture hall C) At a train station → **B**
+17. What is the man going to do?A) Leave the seat B) Call his professor C) Get a coffee → **C**
+18. When will the lecture start?A) At ten-fifteen B) At ten C) At ten-thirty → **A**
+19. What does the woman ask the man?A) If he has a ticket B) If he knows the professor C) If he is going to the biology lecture → **C**
+20. What does the man imply about the lecture?A) It is cancelled. B) It starts later than expected. C) It is in another building. → **B**
 
 **Conversación 2**
 > **M:** Hi, Lin. I'm looking for a book on local history for my project.
@@ -119,48 +119,48 @@ Escucha la frase y elige la mejor respuesta.
 > **M:** Really? I didn't know that.
 > **W:** Also, the university archive has a few old copies, but you need to ask for permission first.
 
-21. What is the man's problem? A) He cannot find a copy of the book. B) He lost his library card. C) His project is late. → **A**
-22. Why does the woman mention the bookshop? A) It has new books. B) It sells used books. C) It is closed. → **B**
-23. What does the woman say about the archive? A) It is open every day. B) It is free. C) It requires permission first. → **C**
-24. What did the man not know? A) The bookshop sells second-hand books. B) The archive has copies. C) The catalogue is online. → **A**
-25. What will the man probably do next? A) Ask for permission at the archive. B) Go to the bookshop on Park Street. C) Order the book online. → **B**
+21. What is the man's problem?A) He lost his library card. B) His project is late. C) He cannot find a copy of the book. → **C**
+22. Why does the woman mention the bookshop?A) It has new books. B) It is closed. C) It sells used books. → **C**
+23. What does the woman say about the archive?A) It is open every day. B) It requires permission first. C) It is free. → **B**
+24. What did the man not know?A) The archive has copies. B) The catalogue is online. C) The bookshop sells second-hand books. → **C**
+25. What will the man probably do next?A) Go to the bookshop on Park Street. B) Ask for permission at the archive. C) Order the book online. → **A**
 
 ## Tarea 3 · Anuncio (L26 a L31)
 
 > Attention, passengers. Train 402 to Leeds will depart from platform 6, not platform 4 as shown on the board. Passengers with reserved seats in coach C should move to coach D, which is at the front of the train. The buffet car is closed today for cleaning. We apologise for the inconvenience and thank you for your patience.
 
-26. Where will train 402 leave from? A) Platform 4 B) Platform 6 C) Platform 8 → **B**
-27. Where should passengers with reserved seats in coach C go? A) Coach A B) Coach B C) Coach D → **C**
-28. Where is coach D? A) At the back B) At the front C) In the middle → **B**
-29. Why is the buffet car closed? A) It is broken. B) It is being cleaned. C) There is no food. → **B**
-30. Why does the speaker apologise? A) The train is late. B) Passengers have experienced some inconvenience. C) The seats are full. → **B**
-31. What does the speaker ask passengers to do? A) Wait for a bus. B) Be patient. C) Change trains. → **B**
+26. Where will train 402 leave from?A) Platform 6 B) Platform 4 C) Platform 8 → **A**
+27. Where should passengers with reserved seats in coach C go?A) Coach A B) Coach B C) Coach D → **C**
+28. Where is coach D?A) At the front B) At the back C) In the middle → **A**
+29. Why is the buffet car closed?A) It is broken. B) There is no food. C) It is being cleaned. → **C**
+30. Why does the speaker apologise?A) The train is late. B) Passengers have experienced some inconvenience. C) The seats are full. → **B**
+31. What does the speaker ask passengers to do?A) Wait for a bus. B) Change trains. C) Be patient. → **C**
 
 ## Tarea 4 · Charlas académicas (L32 a L47)
 
 **Charla 1 · Abejas y polinización**
 > Good morning. Today I want to talk about bees and pollination. Bees visit flowers to collect nectar and pollen. As they move from flower to flower, they transfer pollen, which allows plants to produce seeds and fruit. Scientists estimate that a large share of the crops we eat depends on this process. However, bee populations have fallen in many regions due to pesticides, disease, and the loss of habitat. Researchers are now testing ways to create flower-rich areas in cities. One study showed that a small garden with native plants can support many more bees than a lawn. This suggests that even small changes can help.
 
-32. What is the main topic of the talk? A) Pesticide use B) Pollination and the decline of bees C) Honey production → **B**
-33. Why do bees visit flowers, according to the speaker? A) To make honey only B) To collect nectar and pollen C) To protect plants → **B**
-34. What does pollination allow plants to produce? A) Roots B) Leaves C) Seeds and fruit → **C**
-35. What causes the decline of bees? A) Pesticides, disease, and habitat loss B) Too many flowers C) Cold weather → **A**
-36. What do researchers test? A) New types of pesticide B) Ways to create flower-rich areas in cities C) Honey recipes → **B**
-37. What did one study find about a small garden? A) It supports more bees than a lawn. B) It has no bees. C) It is expensive. → **A**
-38. What does the speaker imply about small changes? A) They are not useful. B) They can help. C) They are too expensive. → **B**
-39. What is the speaker's attitude toward bee populations? A) Concerned B) Indifferent C) Amused → **A**
+32. What is the main topic of the talk?A) Pollination and the decline of bees B) Pesticide use C) Honey production → **A**
+33. Why do bees visit flowers, according to the speaker?A) To make honey only B) To protect plants C) To collect nectar and pollen → **C**
+34. What does pollination allow plants to produce?A) Roots B) Seeds and fruit C) Leaves → **B**
+35. What causes the decline of bees?A) Too many flowers B) Pesticides, disease, and habitat loss C) Cold weather → **B**
+36. What do researchers test?A) Ways to create flower-rich areas in cities B) New types of pesticide C) Honey recipes → **A**
+37. What did one study find about a small garden?A) It has no bees. B) It supports more bees than a lawn. C) It is expensive. → **B**
+38. What does the speaker imply about small changes?A) They can help. B) They are not useful. C) They are too expensive. → **A**
+39. What is the speaker's attitude toward bee populations?A) Indifferent B) Amused C) Concerned → **C**
 
 **Charla 2 · La historia de la bicicleta**
 > Let's talk about the history of the bicycle. The first bicycles, called hobby horses, had no pedals. People pushed themselves along with their feet. In the 1860s, pedals were added to the front wheel, and bicycles became faster. Later, the invention of the chain drive allowed the rear wheel to be powered. By the 1890s, the safety bicycle, with two wheels of equal size, had become popular. Its design is very similar to the bicycles we use today. Interestingly, the bicycle helped change society, because it gave people, especially women, more freedom to travel.
 
-40. What was special about the first bicycles? A) They had no pedals. B) They were electric. C) They had four wheels. → **A**
-41. When were pedals added to the front wheel? A) In the 1860s B) In the 1890s C) In the 1900s → **A**
-42. What did the chain drive allow? A) Faster brakes B) A lighter frame C) The rear wheel to be powered → **C**
-43. What is the main idea of the talk? A) The history of the bicycle and its social effects B) How to repair bicycles C) The best bicycle races → **A**
-44. What does "safety bicycle" refer to? A) A bicycle with a helmet B) A bicycle for children C) A bicycle with two wheels of equal size → **C**
-45. The speaker says the bicycle helped people: A) Save money B) Travel with more freedom C) Lose weight → **B**
-46. What does the speaker mean by "very similar" design? A) Modern bicycles look like the safety bicycle. B) All bicycles are identical. C) Bicycles have not changed. → **A**
-47. Which word best describes the tone of the talk? A) Informative B) Angry C) Humorous → **A**
+40. What was special about the first bicycles?A) They were electric. B) They had four wheels. C) They had no pedals. → **C**
+41. When were pedals added to the front wheel?A) In the 1890s B) In the 1860s C) In the 1900s → **B**
+42. What did the chain drive allow?A) The rear wheel to be powered B) Faster brakes C) A lighter frame → **A**
+43. What is the main idea of the talk?A) How to repair bicycles B) The best bicycle races C) The history of the bicycle and its social effects → **C**
+44. What does "safety bicycle" refer to?A) A bicycle with two wheels of equal size B) A bicycle with a helmet C) A bicycle for children → **A**
+45. The speaker says the bicycle helped people:A) Save money B) Travel with more freedom C) Lose weight → **B**
+46. What does the speaker mean by "very similar" design?A) All bicycles are identical. B) Bicycles have not changed. C) Modern bicycles look like the safety bicycle. → **C**
+47. Which word best describes the tone of the talk?A) Angry B) Informative C) Humorous → **B**
 
 ---
 
@@ -227,8 +227,8 @@ Responde cada pregunta con claridad y con detalles. Tienes unos 30 segundos por 
 
 | Sección | Respuestas |
 |---|---|
-| Reading (50) | **Tarea 1 (completar palabras):** 1 improve · 2 environment · 3 government · 4 available · 5 necessary · 6 significant · 7 community · 8 research · 9 experience · 10 economy · 11 knowledge · 12 century · 13 important · 14 schedule · 15 children · 16 behaviour · 17 possible · 18 learning · 19 history · 20 question · 21 hypothesis · 22 analysis · 23 variety · 24 evidence · 25 structure · 26 generate · 27 patterns · 28 theory · 29 sample · 30 identify. **Tarea 2:** 31 B · 32 C · 33 A · 34 C · 35 B · 36 A · 37 B · 38 C · 39 A · 40 A. **Tarea 3:** 41 B · 42 B · 43 A · 44 B · 45 B · 46 A · 47 B · 48 A · 49 B · 50 B. |
-| Listening (47) | **Tarea 1:** 1 A · 2 B · 3 C · 4 C · 5 A · 6 B · 7 A · 8 B · 9 A · 10 B · 11 A · 12 B · 13 C · 14 A · 15 B. **Tarea 2:** 16 A · 17 B · 18 B · 19 A · 20 B · 21 A · 22 B · 23 C · 24 A · 25 B. **Tarea 3:** 26 B · 27 C · 28 B · 29 B · 30 B · 31 B. **Tarea 4:** 32 B · 33 B · 34 C · 35 A · 36 B · 37 A · 38 B · 39 A · 40 A · 41 A · 42 C · 43 A · 44 C · 45 B · 46 A · 47 A. |
+| Reading (50) | **Tarea 1 (completar palabras):** 1 improve · 2 environment · 3 government · 4 available · 5 necessary · 6 significant · 7 community · 8 research · 9 experience · 10 economy · 11 knowledge · 12 century · 13 important · 14 schedule · 15 children · 16 behaviour · 17 possible · 18 learning · 19 history · 20 question · 21 hypothesis · 22 analysis · 23 variety · 24 evidence · 25 structure · 26 generate · 27 patterns · 28 theory · 29 sample · 30 identify. **Tarea 2:** 31 A · 32 C · 33 C · 34 B · 35 B · 36 A · 37 C · 38 C · 39 B · 40 B. **Tarea 3:** 41 C · 42 C · 43 B · 44 B · 45 C · 46 A · 47 A · 48 B · 49 A · 50 A. |
+| Listening (47) | **Tarea 1:** 1 A · 2 B · 3 A · 4 B · 5 A · 6 C · 7 B · 8 B · 9 A · 10 C · 11 B · 12 B · 13 A · 14 B · 15 A. **Tarea 2:** 16 B · 17 C · 18 A · 19 C · 20 B · 21 C · 22 C · 23 B · 24 C · 25 A. **Tarea 3:** 26 A · 27 C · 28 A · 29 C · 30 B · 31 C. **Tarea 4:** 32 A · 33 C · 34 B · 35 B · 36 A · 37 B · 38 A · 39 C · 40 C · 41 B · 42 A · 43 C · 44 A · 45 B · 46 C · 47 B. |
 | Writing (12) | **Tarea 1:** respuestas exactas (ver abajo). **Tareas 2 y 3:** rúbrica. |
 | Speaking (11) | **Tarea 1 y 2:** rúbrica de pronunciación, exactitud y fluidez. |
 

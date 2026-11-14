@@ -45,23 +45,23 @@ El examen oficial tiene 200 preguntas de Listening & Reading y 11 de Speaking, m
 Elige la respuesta más adecuada.
 
 1. Where is the copy machine?
-   a) It's on the second floor. b) Yes, I copied it. c) At nine o'clock.
-   **Respuesta: a**
-2. Why was the meeting moved?
-   a) In the main room. b) Because the manager is traveling. c) It was a good meeting.
+   a) Yes, I copied it. b) It's on the second floor. c) At nine o'clock.
    **Respuesta: b**
+2. Why was the meeting moved?
+   a) In the main room. b) It was a good meeting. c) Because the manager is traveling.
+   **Respuesta: c**
 3. Could you send me the invoice?
-   a) I'll send it this afternoon. b) It's a large invoice. c) No, I'm not sending.
-   **Respuesta: a**
+   a) It's a large invoice. b) I'll send it this afternoon. c) No, I'm not sending.
+   **Respuesta: b**
 4. Who is responsible for the report?
-   a) Carmen is. b) It's on the desk. c) Yes, it's responsible.
-   **Respuesta: a**
+   a) It's on the desk. b) Yes, it's responsible. c) Carmen is.
+   **Respuesta: c**
 5. When does the store open?
-   a) At nine on weekdays. b) In the store. c) It's open now.
-   **Respuesta: a**
+   a) In the store. b) It's open now. c) At nine on weekdays.
+   **Respuesta: c**
 6. Don't you want a ride to the station?
-   a) Yes, that would be great. b) The station is far away. c) I rode it yesterday.
-   **Respuesta: a**
+   a) The station is far away. b) Yes, that would be great. c) I rode it yesterday.
+   **Respuesta: b**
 
 ### Listening · Parte 3: conversaciones
 
@@ -74,14 +74,14 @@ Elige la respuesta más adecuada.
 > **M:** Twenty-five dollars.
 
 7. What does the woman want?
-   a) To cancel her flight b) To change her flight to Thursday c) To buy a ticket to Guadalajara d) To ask for a refund
-   **Respuesta: b**
+   a) To cancel her flight b) To buy a ticket to Guadalajara d) To ask for a refund c) To change her flight to Thursday
+   **Respuesta: c**
 8. Why does the man mention the cost?
-   a) The flight is cheaper. b) There is an extra fee. c) The seat is full. d) The woman must pay now.
-   **Respuesta: b**
+   a) The flight is cheaper. b) The seat is full. d) The woman must pay now. c) There is an extra fee.
+   **Respuesta: c**
 9. What time is the available flight?
-   a) 8 a.m. b) 8 p.m. c) Thursday at noon d) 9 a.m.
-   **Respuesta: a**
+   a) 8 p.m. b) 8 a.m. c) Thursday at noon d) 9 a.m.
+   **Respuesta: b**
 
 *Conversación 2*
 > **M:** Maria, did you finish the presentation for the client?
@@ -91,55 +91,55 @@ Elige la respuesta más adecuada.
 > **M:** No problem. I'll send them after lunch.
 
 10. What is the presentation for?
-    a) An employee b) A client c) A training d) A bank
-    **Respuesta: b**
+   a) A client b) An employee c) A training d) A bank
+   **Respuesta: a**
 11. What does the woman need?
-    a) A new laptop b) The sales figures c) A lunch d) A meeting room
-    **Respuesta: b**
+   a) A new laptop b) A lunch d) A meeting room c) The sales figures
+   **Respuesta: c**
 12. When will the man send the figures?
-    a) Before lunch b) After lunch c) At three d) Tomorrow
-    **Respuesta: b**
+   a) Before lunch b) After lunch c) At three d) Tomorrow
+   **Respuesta: b**
 
 ### Listening · Parte 4: charla
 
 > Good morning, everyone. This is a reminder that the office will close early this Friday at two in the afternoon for the staff party. Please save your work and make sure your computers are off by then. The building will be cleaned on Saturday, so remove any personal items from your desk before you leave. Thank you.
 
 13. What is the announcement about?
-    a) A holiday party b) An early closing c) A new building d) A cleaning schedule
-    **Respuesta: b**
+   a) A holiday party b) An early closing c) A new building d) A cleaning schedule
+   **Respuesta: b**
 14. What should employees do before they leave?
-    a) Call their manager b) Save their work and turn off their computers c) Bring food d) Pay for the party
-    **Respuesta: b**
+   a) Call their manager b) Bring food d) Pay for the party c) Save their work and turn off their computers
+   **Respuesta: c**
 15. When will the building be cleaned?
-    a) Friday morning b) Friday afternoon c) Saturday d) Monday
-    **Respuesta: c**
+   a) Saturday d) Monday b) Friday morning c) Friday afternoon
+   **Respuesta: a**
 
 ### Reading · Parte 5: oraciones incompletas
 
 16. The new software will ____ the process of ordering supplies.
-    a) simplify b) simplifies c) simplified d) simplification
-    **Respuesta: a** (después de *will* va el verbo base.)
+   a) simplify b) simplifies c) simplified d) simplification
+   **Respuesta: a**
 17. Ms. Lopez ____ the team meeting last week because she was ill.
-    a) missed b) miss c) missing d) misses
-    **Respuesta: a** (pasado para *last week*.)
+   a) miss b) missed c) missing d) misses
+   **Respuesta: b**
 18. Please send the signed contract ____ Thursday's deadline.
-    a) since b) before c) until d) during
-    **Respuesta: b**
+   a) before b) since c) until d) during
+   **Respuesta: a**
 19. The report is ____ than the one we wrote last year.
-    a) more detailed b) detailed c) most detailed d) detail
-    **Respuesta: a** (comparativo con *than*.)
+   a) more detailed b) detailed c) most detailed d) detail
+   **Respuesta: a**
 20. Employees ____ use the main entrance during the construction.
-    a) must b) must to c) mustn't to d) musted
-    **Respuesta: a** (*must* no lleva *to*.)
+   a) must to b) must c) mustn't to d) musted
+   **Respuesta: b**
 21. The company ____ its office in Monterrey since 2019.
-    a) has moved b) moved c) move d) is moving
-    **Respuesta: a** (*since* con presente perfecto.)
+   a) moved b) has moved c) move d) is moving
+   **Respuesta: b**
 22. ____ the printer is broken, please use the one on the second floor.
-    a) Although b) Because c) Unless d) However
-    **Respuesta: b** (causa.)
+   a) Because b) Although c) Unless d) However
+   **Respuesta: a**
 23. The manager asked us ____ the budget before Friday.
-    a) reviewing b) to review c) review d) reviewed
-    **Respuesta: b** (*asked + to + verbo*.)
+   a) reviewing b) to review c) review d) reviewed
+   **Respuesta: b**
 
 ### Reading · Parte 6: texto con huecos
 
@@ -148,14 +148,14 @@ Elige la respuesta más adecuada.
 >
 > Starting Monday, the north parking lot will be closed for repairs. Employees who usually park there (24) use the east lot instead. Shuttle buses will run every 15 minutes from the east lot to the main entrance. (25), please allow extra time in the morning. We apologize for any inconvenience and thank you for your patience. (26) questions, contact Facilities at extension 220. (27)
 
-24. a) should b) will c) might d) have to
-    **Respuesta: a** (recomendación.)
+24. a) will b) might c) should d) have to
+    **Respuesta: c** (recomendación.)
 25. a) Therefore b) However c) Although d) Meanwhile
     **Respuesta: a** (consecuencia de los cambios.)
-26. a) If you have b) Have you c) Having d) You have
-    **Respuesta: a**
-27. a) The repairs will take about three weeks. b) We look forward to hearing from you. c) Please do not park in the north lot. d) Lunch is served at noon.
-    **Respuesta: c** (encaja con el cierre del estacionamiento norte.)
+26. a) Have you b) Having c) You have d) If you have
+    **Respuesta: d**
+27. a) The repairs will take about three weeks. b) Please do not park in the north lot. c) We look forward to hearing from you. d) Lunch is served at noon.
+    **Respuesta: b** (encaja con el cierre del estacionamiento norte.)
 
 ### Reading · Parte 7: textos
 
@@ -163,14 +163,14 @@ Elige la respuesta más adecuada.
 > Riverside Cafe is looking for a part-time cashier. Hours are 15 to 20 per week, mainly on weekends. Applicants must be at least 18 years old, be able to work with a point-of-sale system, and speak English and Spanish. Interested candidates should bring a résumé to the cafe between 9 and 11 a.m. on Monday, or email it to jobs@riverside-cafe.example by Friday.
 
 28. How many hours per week is the job?
-    a) 15 to 20 b) 35 c) 9 to 11 d) 18
-    **Respuesta: a**
+   a) 35 b) 9 to 11 d) 18 c) 15 to 20
+   **Respuesta: c**
 29. Which skill is NOT required?
-    a) Using a point-of-sale system b) Speaking English and Spanish c) Driving d) Being at least 18
-    **Respuesta: c**
+   a) Driving d) Being at least 18 b) Using a point-of-sale system c) Speaking English and Spanish
+   **Respuesta: a**
 30. By which day can applicants email a résumé?
-    a) Monday b) Wednesday c) Friday d) The weekend
-    **Respuesta: c**
+   a) Friday d) The weekend b) Monday c) Wednesday
+   **Respuesta: a**
 
 *Texto B (memorando)*
 > **To:** Operations team
@@ -178,14 +178,14 @@ Elige la respuesta más adecuada.
 > We have discovered that the new inventory system counts items returned by customers twice. Until IT releases a fix next week, please record returns manually on the paper form in the back office. Do not enter them in the system. When the fix is installed, we will compare the paper records with the system to correct any mistakes.
 
 31. Why was the memo written?
-    a) To announce a new store b) To report a system problem c) To hire staff d) To close the office
-    **Respuesta: b**
+   a) To announce a new store b) To report a system problem c) To hire staff d) To close the office
+   **Respuesta: b**
 32. What should staff do with returns until the fix?
-    a) Enter them in the system b) Record them manually on paper c) Ignore them d) Send them to IT
-    **Respuesta: b**
+   a) Enter them in the system b) Ignore them d) Send them to IT c) Record them manually on paper
+   **Respuesta: c**
 33. What will happen after the fix is installed?
-    a) The records will be compared. b) The paper will be destroyed. c) Orders will be canceled. d) Staff will be trained.
-    **Respuesta: a**
+   a) The records will be compared. b) The paper will be destroyed. c) Orders will be canceled. d) Staff will be trained.
+   **Respuesta: a**
 
 > Nota: las preguntas 16 a 33 son de Reading; la numeración es continua desde Listening.
 
@@ -221,11 +221,11 @@ Un resultado debajo del umbral en cualquiera de las dos partes de un bloque cuen
    a) Yes, it's on Thursday. b) Mr. Vega is. c) In the training room.
    **Respuesta: b**
 2. Is the printer working now?
-   a) It printed last week. b) Yes, the technician fixed it. c) I like the color.
-   **Respuesta: b**
-3. Did you bring the keys?
-   a) They're in my bag. b) Keys are heavy. c) I'll bring it tomorrow.
+   a) Yes, the technician fixed it. b) It printed last week. c) I like the color.
    **Respuesta: a**
+3. Did you bring the keys?
+   a) Keys are heavy. b) They're in my bag. c) I'll bring it tomorrow.
+   **Respuesta: b**
 4. Where should I put these files?
    a) On the shelf by the door. b) Yes, they're files. c) They are expensive.
    **Respuesta: a**
@@ -233,8 +233,8 @@ Un resultado debajo del umbral en cualquiera de las dos partes de un bloque cuen
    a) Because of the holiday. b) At six o'clock. c) It's a big store.
    **Respuesta: a**
 6. Would you like to join us for lunch?
-   a) I've already eaten. b) Lunch was expensive. c) We join you.
-   **Respuesta: a**
+   a) Lunch was expensive. b) We join you. c) I've already eaten.
+   **Respuesta: c**
 
 ### Listening · Parte 3
 
@@ -247,8 +247,8 @@ Un resultado debajo del umbral en cualquiera de las dos partes de un bloque cuen
 > **W:** Remember we need the chairs by the twentieth.
 
 7. What does the man want to do?
-   a) Move the conference room b) Order chairs c) Hire a supplier d) Call a client
-   **Respuesta: b**
+   a) Order chairs b) Move the conference room c) Hire a supplier d) Call a client
+   **Respuesta: a**
 8. Which supplier did they use before?
    a) Office Plus b) The main store c) A new company d) Nobody knows
    **Respuesta: a**
@@ -264,55 +264,55 @@ Un resultado debajo del umbral en cualquiera de las dos partes de un bloque cuen
 > **M:** No, the same form works, but the date must be written clearly.
 
 10. What has changed?
-    a) The price b) The return period c) The form d) The staff
-    **Respuesta: b**
+   a) The price b) The return period c) The form d) The staff
+   **Respuesta: b**
 11. What does the man say about the form?
-    a) It must be redesigned. b) It can stay the same. c) It will be removed. d) It is too long.
-    **Respuesta: b**
+   a) It can stay the same. b) It must be redesigned. c) It will be removed. d) It is too long.
+   **Respuesta: a**
 12. What must be written clearly?
-    a) The customer's name b) The date c) The price d) The product
-    **Respuesta: b**
+   a) The customer's name b) The date c) The price d) The product
+   **Respuesta: b**
 
 ### Listening · Parte 4
 
 > Hello, this is the maintenance office. The elevator on the north side of the building will be out of service from Tuesday to Thursday for an inspection. Please use the south elevator or the stairs. Staff with mobility difficulties should contact Lucía at extension 310 to arrange access through the south entrance.
 
 13. Why is the elevator out of service?
-    a) Repairs b) An inspection c) Cleaning d) A power outage
-    **Respuesta: b**
+   a) Repairs b) Cleaning d) A power outage c) An inspection
+   **Respuesta: c**
 14. Which elevator can people use?
-    a) The north elevator b) The south elevator c) None d) Both
-    **Respuesta: b**
+   a) The north elevator b) None d) Both c) The south elevator
+   **Respuesta: c**
 15. Who should staff with mobility difficulties contact?
-    a) Maintenance b) Lucía c) The manager d) The guard
-    **Respuesta: b**
+   a) Maintenance b) Lucía c) The manager d) The guard
+   **Respuesta: b**
 
 ### Reading · Parte 5
 
 16. Our team ____ the new client database since January.
-    a) has used b) used c) uses d) using
-    **Respuesta: a**
+   a) used b) uses d) using c) has used
+   **Respuesta: c**
 17. The workshop was ____ because the trainer was sick.
-    a) cancelled b) cancel c) cancelling d) cancels
-    **Respuesta: a**
+   a) cancel b) cancelling d) cancels c) cancelled
+   **Respuesta: c**
 18. Please check your email ____ you leave the office today.
-    a) before b) until c) since d) during
-    **Respuesta: a**
+   a) before b) until c) since d) during
+   **Respuesta: a**
 19. The new office is ____ than the old one.
-    a) larger b) more large c) largest d) large
-    **Respuesta: a**
+   a) more large b) larger c) largest d) large
+   **Respuesta: b**
 20. Staff ____ wear badges in the building at all times.
-    a) should b) to c) must to d) shall to
-    **Respuesta: a**
+   a) should b) to c) must to d) shall to
+   **Respuesta: a**
 21. ____ the weather was bad, the event was a success.
-    a) Although b) Because c) Unless d) So
-    **Respuesta: a**
+   a) Because b) Unless d) So c) Although
+   **Respuesta: c**
 22. The director asked the team ____ a plan for the next quarter.
-    a) to prepare b) preparing c) prepare d) prepared
-    **Respuesta: a**
+   a) to prepare b) preparing c) prepare d) prepared
+   **Respuesta: a**
 23. We ____ the proposal next week, so please send feedback today.
-    a) will review b) reviewed c) review d) reviewing
-    **Respuesta: a**
+   a) reviewed b) review d) reviewing c) will review
+   **Respuesta: c**
 
 ### Reading · Parte 6
 
@@ -322,14 +322,14 @@ Un resultado debajo del umbral en cualquiera de las dos partes de un bloque cuen
 >
 > The sales targets for the next quarter have been updated. (24) the new numbers are higher, the team is confident. Please review your individual goals in the shared folder. If you have questions about your targets, (25) me directly by Wednesday. The negotiation training will take place on the 20th. (26) it is optional, I strongly recommend attending. (27) we all meet our goals, we will celebrate together at the end of the quarter.
 
-24. a) Although b) Because c) Unless d) While
-    **Respuesta: a**
-25. a) contact b) contacting c) to contact d) contacted
-    **Respuesta: a**
-26. a) Because b) Although c) Unless d) Until
+24. a) Because b) Unless c) Although d) While
+    **Respuesta: c**
+25. a) contacting b) contact c) to contact d) contacted
     **Respuesta: b**
-27. a) If b) Unless c) Since d) Even
-    **Respuesta: a**
+26. a) Because b) Unless c) Until d) Although
+    **Respuesta: d**
+27. a) Unless b) If c) Since d) Even
+    **Respuesta: b**
 
 ### Reading · Parte 7
 
@@ -337,14 +337,14 @@ Un resultado debajo del umbral en cualquiera de las dos partes de un bloque cuen
 > Green Valley Community Center is offering free computer classes for adults. Classes run on Tuesday and Thursday evenings from 6:30 to 8:00 for six weeks, starting October 7. Participants will learn basic word processing, email and internet use. No experience is required. To register, visit the front desk or call 555-0142 before September 30. Space is limited to 15 students per class.
 
 28. When do the classes take place?
-    a) In the mornings b) On Tuesday and Thursday evenings c) On weekends d) Only on Mondays
-    **Respuesta: b**
+   a) In the mornings b) On weekends d) Only on Mondays c) On Tuesday and Thursday evenings
+   **Respuesta: c**
 29. How long is the course?
-    a) Four weeks b) Six weeks c) Eight weeks d) Two months
-    **Respuesta: b**
+   a) Six weeks b) Four weeks c) Eight weeks d) Two months
+   **Respuesta: a**
 30. What is the registration deadline?
-    a) October 7 b) September 30 c) Every Tuesday d) There is no deadline
-    **Respuesta: b**
+   a) September 30 b) October 7 c) Every Tuesday d) There is no deadline
+   **Respuesta: a**
 
 *Texto D (correo)*
 > **From:** Mark Chen
@@ -354,14 +354,14 @@ Un resultado debajo del umbral en cualquiera de las dos partes de un bloque cuen
 > I placed order #4481 on August 12, but I have not received it. The tracking page says the package was delivered on August 18, but nothing arrived at my home. I would like a replacement or a refund. Please let me know what you need from me. Thank you, Mark.
 
 31. Why is Mark writing?
-    a) To change his address b) To report a missing order c) To cancel his account d) To ask for a discount
-    **Respuesta: b**
+   a) To change his address b) To cancel his account d) To ask for a discount c) To report a missing order
+   **Respuesta: c**
 32. What does the tracking page say?
-    a) The package is lost. b) It was delivered. c) It is still in transit. d) It was returned.
-    **Respuesta: b**
+   a) It was delivered. b) The package is lost. c) It is still in transit. d) It was returned.
+   **Respuesta: a**
 33. What does Mark want?
-    a) A replacement or a refund b) An apology only c) A new account d) Free shipping
-    **Respuesta: a**
+   a) An apology only b) A replacement or a refund c) A new account d) Free shipping
+   **Respuesta: b**
 
 ### Speaking (3 tareas)
 
