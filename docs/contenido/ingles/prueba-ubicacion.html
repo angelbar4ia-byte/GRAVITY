@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Prueba de ubicación de inglés</title>
+<style>
+/* Plan: una página de prueba sobria. Paleta neutra con un acento azul-verde.
+   Tipo: sistema, con cifras tabulares para los resultados. Diseño de una columna. */
+:root {
+  --bg: #f6f7f5; --fg: #1d2420; --muted: #5d6963; --card: #ffffff;
+  --line: #d8ddd9; --accent: #1f6f5c; --accent-fg: #ffffff; --warn: #8a5a00; --ok: #1f6f5c; --bad: #9a2f2f;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141917; --fg: #e8ece9; --muted: #a7b1ab; --card: #1d2420;
+    --line: #34403a; --accent: #5fc2a6; --accent-fg: #0f1412; --warn: #e0b35c; --ok: #5fc2a6; --bad: #f08a8a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141917; --fg: #e8ece9; --muted: #a7b1ab; --card: #1d2420;
+  --line: #34403a; --accent: #5fc2a6; --accent-fg: #0f1412; --warn: #e0b35c; --ok: #5fc2a6; --bad: #f08a8a;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+main { max-width: 680px; margin: 0 auto; padding-block: 24px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1 { font-size: 22px; margin: 0 0 6px; text-wrap: balance; }
+h2 { font-size: 17px; margin: 28px 0 8px; }
+p { margin: 8px 0; }
+.muted { color: var(--muted); font-size: 14px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin: 12px 0; }
+.ctx { border-left: 3px solid var(--accent); padding: 6px 12px; margin: 10px 0; background: var(--card); border-radius: 0 8px 8px 0; }
+.q { margin: 14px 0; }
+.q-text { font-weight: 600; margin-bottom: 4px; }
+.opts { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.opts label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.opts input { accent-color: var(--accent); }
+textarea { width: 100%; min-height: 120px; font: inherit; color: var(--fg); background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+button { font: inherit; font-weight: 600; background: var(--accent); color: var(--accent-fg); border: 0; border-radius: 8px; padding: 10px 18px; cursor: pointer; }
+button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.lvl { font-size: 34px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--accent); }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+td, th { text-align: left; padding: 6px 4px; border-bottom: 1px solid var(--line); }
+td.num, th.num { text-align: right; }
+.ok { color: var(--ok); } .bad { color: var(--bad); } .warn { color: var(--warn); }
+[hidden] { display: none !important; }
+.tablewrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Prueba de ubicación de inglés</h1>
+  <p class="muted">Contesta sola o solo. Dura unos 40 minutos. Tus respuestas se califican en esta misma página y no se envían a ningún lado.</p>
+  <div class="card">
+    <p><strong>Antes de empezar:</strong> no uses diccionario ni traductor, ni mires la clave. El resultado sirve para ubicarte; no es un examen oficial. Para un resultado oficial, usa el TOEIC Level Projector de ETS (gratis) o la prueba de Cambridge.</p>
+  </div>
+
+  <form id="prueba">
+    <h2>Parte 1 · Gramática y vocabulario</h2>
+    <div id="p1"></div>
+
+    <h2>Parte 2 · Lectura</h2>
+    <div id="p2"></div>
+
+    <h2>Parte 3 · Escucha (en texto)</h2>
+    <div id="p3"></div>
+
+    <h2>Parte 4 · Escritura (80 a 120 palabras)</h2>
+    <p class="muted">Escribe sobre un lugar que visitaste recientemente: dónde estuviste, cuándo, qué hiciste y qué opinas. Esta parte la revisa una persona con la rúbrica; no se califica aquí.</p>
+    <textarea id="escritura" aria-label="Tu texto de escritura"></textarea>
+
+    <p style="margin-top:20px"><button type="submit">Ver mi resultado</button></p>
+  </form>
+
+  <section id="resultado" hidden aria-live="polite"></section>
+</main>
+
+<script>
+const ITEMS = [
+  // Parte 1
+  {n:1,l:"A1",q:"My sister ___ a doctor.",o:["is","are","am"],a:0},
+  {n:2,l:"A1",q:"___ two books on the table.",o:["There is","There are","They are"],a:1},
+  {n:3,l:"A1",q:"I ___ from Mexico.",o:["am","is","are"],a:0},
+  {n:4,l:"A1",q:"She ___ coffee.",o:["don't like","doesn't like","isn't like"],a:1},
+  {n:5,l:"A1",q:"We have ___ apple.",o:["a","an","the"],a:1},
+  {n:6,l:"A2",q:"Last week we ___ to the beach.",o:["go","went","gone"],a:1},
+  {n:7,l:"A2",q:"I'm ___ visit my grandmother next Sunday.",o:["going to","will to","go"],a:0},
+  {n:8,l:"A2",q:"This road is ___ than the other one.",o:["more long","longest","longer"],a:2},
+  {n:9,l:"A2",q:"He ___ breakfast at 7 a.m. yesterday.",o:["had","has","have"],a:0},
+  {n:10,l:"A2",q:"Can you ___ me the time, please?",o:["say","tell","speak"],a:1},
+  {n:11,l:"B1",q:"Have you ___ your homework yet?",o:["finish","finished","finishing"],a:1},
+  {n:12,l:"B1",q:"She ___ in this city since 2019.",o:["has lived","lives","lived"],a:0},
+  {n:13,l:"B1",q:"We used to ___ in the sea every summer.",o:["swim","swimming","swam"],a:0},
+  {n:14,l:"B1",q:"Have you ever ___ sushi?",o:["eat","ate","eaten"],a:2},
+  {n:15,l:"B1",q:"He ___ here since last year, so he knows the area well.",o:["works","has worked","worked"],a:1},
+  {n:16,l:"B1+",q:"You ___ wear a helmet when you ride a bike; it's the law.",o:["must","might","would"],a:0},
+  {n:17,l:"B1+",q:"If it rains tomorrow, we ___ the picnic.",o:["cancel","will cancel","would cancel"],a:1},
+  {n:18,l:"B1+",q:"The book ___ I read last week was excellent.",o:["where","which","who"],a:1},
+  {n:19,l:"B1+",q:"She told me that she ___ busy the next day.",o:["is","was","has been"],a:1},
+  {n:20,l:"B1+",q:"I'm going to ___ my English to get a better job.",o:["improvement","improving","improve"],a:2},
+  {n:21,l:"B2",q:"The report ___ by the team last Monday.",o:["was written","wrote","has written"],a:0},
+  {n:22,l:"B2",q:"If I ___ more money, I would buy a house.",o:["have","would have","had"],a:2},
+  {n:23,l:"B2",q:"By the time we arrived, the film ___.",o:["had started","started","has started"],a:0},
+  {n:24,l:"B2",q:"He asked me where ___.",o:["did I work","I worked","worked I"],a:1},
+  {n:25,l:"B2",q:"She ___ smoking last year.",o:["gave in","gave up","gave out"],a:1},
+  // Parte 2
+  {n:26,l:"A2",p:"Marco lives in a small flat with his cat. Every morning he feeds the cat and walks to the bakery. He buys two rolls and eats one on the way to work.",q:"Where does Marco live?",o:["in a house","in a small flat","with his parents"],a:1},
+  {n:27,l:"A2",p:"Marco lives in a small flat with his cat. Every morning he feeds the cat and walks to the bakery. He buys two rolls and eats one on the way to work.",q:"What does Marco buy at the bakery?",o:["coffee","bread","two rolls"],a:2},
+  {n:28,l:"B1",p:"Lucia started running last year. At first she could only run for five minutes, but now she runs ten kilometres every Sunday. Her friends say she has changed a lot.",q:"How long could Lucia run at first?",o:["ten kilometres","five minutes","an hour"],a:1},
+  {n:29,l:"B1",p:"Lucia started running last year. At first she could only run for five minutes, but now she runs ten kilometres every Sunday. Her friends say she has changed a lot.",q:"What has changed for Lucia?",o:["She runs much farther now.","She moved to another city.","She stopped running."],a:0},
+  {n:30,l:"B2",p:"Although the proposal was initially rejected, the committee reconsidered after the company provided additional data showing a significant reduction in costs. The revised plan is now expected to be approved next month.",q:"Why was the proposal reconsidered?",o:["Additional data showed lower costs.","The company asked nicely.","The committee changed members."],a:0},
+  {n:31,l:"B2",p:"Although the proposal was initially rejected, the committee reconsidered after the company provided additional data showing a significant reduction in costs. The revised plan is now expected to be approved next month.",q:"What is expected next month?",o:["The plan will be rejected.","The revised plan is expected to be approved.","The company will close."],a:1},
+  // Parte 3
+  {n:32,l:"A2",p:"\"Hi, it's Sara. I'm at the station. The train to Puebla leaves at 3:15, not 3:50. See you at the café at 3.\"",q:"What time does the train leave?",o:["3:15","3:50","3:00"],a:0},
+  {n:33,l:"A2",p:"\"Hi, it's Sara. I'm at the station. The train to Puebla leaves at 3:15, not 3:50. See you at the café at 3.\"",q:"Where will they meet?",o:["the station","the café","the office"],a:1},
+  {n:34,l:"B1",p:"\"I'm calling about the apartment. It has two bedrooms, but the kitchen is quite small. The rent includes water and internet, which is a relief, though the building doesn't allow pets.\"",q:"What doesn't the building allow?",o:["pets","children","cars"],a:0},
+  {n:35,l:"B1",p:"\"I'm calling about the apartment. It has two bedrooms, but the kitchen is quite small. The rent includes water and internet, which is a relief, though the building doesn't allow pets.\"",q:"What is the problem with the kitchen?",o:["It's too big.","It has no sink.","It's too small."],a:2},
+];
+
+const LEVELS = [
+  {l:"A1", need:4, total:5},
+  {l:"A2", need:8, total:9},
+  {l:"B1", need:8, total:9},
+  {l:"B1+", need:4, total:5},
+  {l:"B2", need:6, total:7},
+];
+
+const PLAN = {
+  "A1": "Empieza con el repaso completo, desde la semana 1 (R1 a R4). Es el punto de partida para construir la base.",
+  "A2": "Empieza en el repaso desde R3. Al terminar R4, haz la prueba de A2; si la apruebas, pasa al bimestre 1.",
+  "B1": "Empieza en el bimestre 1 (módulo 1). El repaso es opcional.",
+  "B1+": "Propuesta: empieza en el bimestre 2 (módulo 3). Está pendiente de aprobación del dueño.",
+  "B2": "Propuesta: empieza en el bimestre 3 (módulo 5). El nivel B2 oficial solo se confirma con la prueba final. Pendiente de aprobación."
+};
+
+const form = document.getElementById("prueba");
+const LAST_PART = 25;
+function renderItems(containerId, from, to) {
+  const box = document.getElementById(containerId);
+  let lastCtx = null;
+  ITEMS.filter(it => it.n >= from && it.n <= to).forEach(it => {
+    if (it.p && it.p !== lastCtx) {
+      const c = document.createElement("div");
+      c.className = "ctx";
+      c.textContent = it.p;
+      box.appendChild(c);
+      lastCtx = it.p;
+    }
+    const wrap = document.createElement("fieldset");
+    wrap.className = "q";
+    wrap.style.border = "0"; wrap.style.padding = "0"; wrap.style.margin = "14px 0";
+    const legend = document.createElement("legend");
+    legend.className = "q-text";
+    legend.textContent = it.n + ". " + it.q;
+    wrap.appendChild(legend);
+    const row = document.createElement("div");
+    row.className = "opts";
+    it.o.forEach((txt, i) => {
+      const id = "q" + it.n + "_" + i;
+      const lab = document.createElement("label");
+      const inp = document.createElement("input");
+      inp.type = "radio"; inp.name = "q" + it.n; inp.value = String(i); inp.id = id;
+      lab.appendChild(inp);
+      lab.appendChild(document.createTextNode(" " + String.fromCharCode(97 + i) + ") " + txt));
+      row.appendChild(lab);
+    });
+    wrap.appendChild(row);
+    box.appendChild(wrap);
+  });
+}
+renderItems("p1", 1, 25);
+renderItems("p2", 26, 31);
+renderItems("p3", 32, 35);
+
+form.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const answers = {};
+  let unanswered = 0;
+  ITEMS.forEach(it => {
+    const sel = form.querySelector('input[name="q' + it.n + '"]:checked');
+    if (sel) answers[it.n] = Number(sel.value); else unanswered++;
+  });
+  renderResult(answers, unanswered);
+});
+
+function renderResult(answers, unanswered) {
+  const correctByItem = {};
+  ITEMS.forEach(it => { correctByItem[it.n] = answers[it.n] === it.a; });
+
+  const rows = LEVELS.map(lv => {
+    const its = ITEMS.filter(it => it.l === lv.l);
+    const correct = its.filter(it => correctByItem[it.n]).length;
+    const passed = correct >= lv.need;
+    return {l: lv.l, correct, total: its.length, need: lv.need, passed};
+  });
+
+  // Nivel alcanzado: el más alto cuyo nivel y todos los anteriores cumplen, sin compensar.
+  let reached = null;
+  for (const r of rows) {
+    if (r.passed) reached = r.l; else break;
+  }
+  const headline = reached ? reached : "Por debajo de A1";
+  const plan = reached ? PLAN[reached] : "Empieza con el repaso completo desde la semana 1 (R1 a R4).";
+
+  const tableRows = rows.map(r =>
+    '<tr><td>' + r.l + '</td><td class="num">' + r.correct + ' de ' + r.total + '</td><td class="num">mínimo ' + r.need + '</td><td class="' + (r.passed ? 'ok' : 'bad') + '">' + (r.passed ? 'Cumple' : 'No cumple') + '</td></tr>'
+  ).join("");
+
+  const note = unanswered > 0
+    ? '<p class="warn">Faltan ' + unanswered + ' respuestas. El resultado es parcial; contesta todas para un resultado completo.</p>'
+    : '';
+
+  const out = document.getElementById("resultado");
+  out.innerHTML =
+    '<h2>Tu resultado</h2>' +
+    note +
+    '<div class="card">' +
+      '<p class="muted">Nivel de ubicación</p>' +
+      '<p class="lvl">' + headline + '</p>' +
+      '<p>' + plan + '</p>' +
+    '</div>' +
+    '<h2>Detalle por nivel</h2>' +
+    '<div class="tablewrap"><table><thead><tr><th>Nivel</th><th class="num">Aciertos</th><th class="num">Requisito</th><th>Resultado</th></tr></thead><tbody>' + tableRows + '</tbody></table></div>' +
+    '<p class="muted">Regla: un nivel cuenta solo si cumples el 80 % de sus preguntas y el de todos los niveles anteriores. No se compensa un nivel bajo con uno alto.</p>' +
+    '<p class="muted">La escritura todavía no se califica aquí. Una persona revisora la evalúa con la rúbrica y puede confirmar o ajustar el nivel.</p>' +
+    '<p class="muted">Esta prueba no está validada contra las escalas oficiales. Úsala como orientación y confírmala con el TOEIC Level Projector de ETS antes de decidir.</p>' +
+    '<p><button type="button" id="repetir">Repetir la prueba</button></p>';
+  out.hidden = false;
+  out.scrollIntoView({behavior: "smooth", block: "start"});
+  document.getElementById("repetir").addEventListener("click", () => {
+    form.reset();
+    document.getElementById("escritura").value = "";
+    out.hidden = true;
+    window.scrollTo({top: 0, behavior: "smooth"});
+  });
+}
+</script>
+</main>
+</body>
+</html>

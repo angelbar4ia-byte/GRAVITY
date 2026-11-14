@@ -41,6 +41,7 @@
 | Documento | Estado |
 |---|---|
 | `prueba-de-nivel.md` | Redactada, pendiente de revisión |
+| `prueba-ubicacion.html` | Versión interactiva de la prueba de ubicación: cada persona la contesta sola y ve su nivel en la página. Publicada como artefacto privado. No guarda resultados en ningún servidor. Pendiente: validar contra las escalas oficiales |
 | `modulo-1.md` | **Aprobado** (versión 1.0) |
 | `modulo-2.md` | **Aprobado** (versión 1.0) |
 | `modulo-3.md` | Redactado, pendiente de revisión |
