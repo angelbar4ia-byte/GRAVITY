@@ -10,7 +10,7 @@
 | Prueba de nivel | — | — | `prueba-de-nivel.md` | No aplica |
 | Repaso A1 a A2 | semanas 1 a 4 | A1 → A2 | **Pendiente de redactar** | **Pendiente** |
 | Bimestre 1 | módulo 1 y 2 | B1 | `modulo-1.md` y `modulo-2.md` (aprobados) | **Pendiente** (la práctica de B1 Preliminary cubre el tipo de tarea) |
-| Bimestre 2 | módulo 3 y 4 | B1+ | `modulo-3.md` (redactado); **módulo 4 pendiente** | **Pendiente** |
+| Bimestre 2 | módulo 3 y 4 | B1+ | `modulo-3.md` (redactado, pendiente de aprobación); `modulo-4.md` (borrador v0.1, pendiente de revisión) | **Pendiente** (la práctica se hace después de la aprobación) |
 | Bimestre 3 | módulo 5 y 6 | B2 | **Pendientes** | **Pendiente** |
 
 Orden propuesto: redactar el módulo 3 (aprobación del dueño), luego el módulo 4, después el repaso A1 a A2 y por último los módulos 5 y 6. La práctica por partes del programa va después de cada módulo aprobado.

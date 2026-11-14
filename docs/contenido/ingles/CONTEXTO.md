@@ -44,7 +44,8 @@
 | `modulo-1.md` | **Aprobado** (versión 1.0) |
 | `modulo-2.md` | **Aprobado** (versión 1.0) |
 | `modulo-3.md` | Redactado, pendiente de revisión |
-| `modulo-4` a `modulo-6` | Pendiente. Se redactan después de cada aprobación |
+| `modulo-4.md` | **Borrador v0.1**, pendiente de revisión del dueño. Depende de la aprobación del módulo 3 (`modulo-3.md`, también pendiente) |
+| `modulo-5` a `modulo-6` | Pendiente. Se redactan después de cada aprobación |
 | `rubrica-evaluacion.md` | Borrador, pendiente de aprobación |
 | `niveles-y-avance.md` | Versión 0.3 con las decisiones del dueño |
 | `toeic.md` | Método de preparación (decisiones registradas) |
