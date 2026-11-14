@@ -1,6 +1,6 @@
 # Fase 8 · Bloque 5 — Hábitos: Inglés (núcleo)
 
-> v0.1 (14/nov/2026), **borrador para aprobación del dueño**. No hay código todavía.
+> v0.2 (14/nov/2026). **Alcance 5a aprobado por el dueño.** Contenido: `docs/contenido/ingles/` (prueba de nivel y módulo 1 para revisión; los módulos 2 a 6 se redactan después de cada revisión). Decisiones tomadas por omisión, pendientes de confirmar: 5 días a la semana, unos 15 minutos al día, recordatorio local discreto, inglés como área propia con su racha. Sin código todavía.
 > Fuente: `docs/modulos/habitos/diseno-app-habitos.md` §5.3 (Inglés) y Anexo A (plan de 24 semanas B1 → B2). Base: `fase-3-habitos.md`, D21 (datos sensibles) y las reglas de D3 y D6.
 
 ## Alcance de este bloque (5a)
