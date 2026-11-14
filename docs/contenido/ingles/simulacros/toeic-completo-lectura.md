@@ -1,6 +1,6 @@
 # TOEIC completo · Reading (100 preguntas, 75 minutos)
 
-> **Contexto:** nota general en `../CONTEXTO.md`. Estado de este documento: TOEIC completo; claves reequilibradas (14/nov/2026); pendiente revisión de la Parte 6 (146).
+> **Contexto:** nota general en `../CONTEXTO.md`. Estado de este documento: TOEIC completo; claves reequilibradas (14/nov/2026); Parte 6 revisada (144 y 146 con una sola respuesta).
 
 > Versión 1.0 (14/nov/2026). Formato: [TOEIC Listening and Reading, handbook de ETS](https://www.ets.org/content/dam/ets-org/pdfs/toeic/toeic-listening-reading-test-examinee-handbook.pdf): Parte 5 (30, oraciones incompletas), Parte 6 (16, textos con huecos), Parte 7 (54: 29 de textos sencillos y 25 de textos múltiples).
 > **Preguntas originales de GRAVITY.** No reproducen material de ETS.
@@ -74,14 +74,14 @@ Lee cada texto. Elige la opción que completa cada hueco.
 142. A) We look forward to your reply. B) The equipment is expensive. C) Our office is closed. D) The weather is cold. → **A**
 
 **Texto 4 · Mensaje interno sobre un proyecto (143 a 146)**
-> To: Project team. The deadline for the Morgan report has been moved to Friday. **(143)** ____ the team agrees on the final numbers by Wednesday, we can finish the layout on Thursday. Please send your sections to Anita **(144)** ____ noon on Tuesday. The client has asked for a summary, **(145)** ____ we will prepare one. **(146)** ____ questions, call me directly.
+> To: Project team. The deadline for the Morgan report has been moved to Friday. **(143)** ____ the team agrees on the final numbers by Wednesday, we can finish the layout on Thursday. Please send your sections to Anita **(144)** ____ noon on Tuesday. The client has asked for a summary, **(145)** ____ we will prepare one. If you have **(146)** ____ questions, call me directly.
 
 143. A) Unless B) If C) Although D) Because → **B**
-144. A) until B) since C) by D) at → **C**
+144. A) in B) since C) by D) for → **C**
 145. A) but B) yet C) or D) so → **D**
 146. A) Any B) Each C) Every D) Much → **A**
 
-> Nota de calidad: en la Parte 6 hay que revisar que la forma "Any" (146) y el hueco 144 ("by noon") tengan una sola respuesta. Se marca para revisión antes de usar.
+> Revisión de calidad: los huecos 144 y 146 tienen una sola respuesta posible (144: *by noon*; 146: *any questions*).
 
 ## Parte 7 · Lectura de textos (preguntas 147 a 200)
 

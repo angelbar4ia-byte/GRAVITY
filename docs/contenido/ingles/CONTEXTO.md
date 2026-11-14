@@ -45,6 +45,7 @@
 | `modulo-2.md` | **Aprobado** (versión 1.0) |
 | `modulo-3.md` | Redactado, pendiente de revisión |
 | `modulo-4.md` | **Borrador v0.1**, pendiente de revisión del dueño. Depende de la aprobación del módulo 3 (`modulo-3.md`, también pendiente) |
+| `prueba-de-nivel.md` | **Prueba de ubicación v0.2**: ubica a cada persona en A1, A2, B1, B1+ o B2 por separado (35 ítems automáticos y una tarea de escritura). Plan de inicio por resultado y reglas de emparejamiento en pareja (sin ajustar resultados). Pendiente: aprobación de saltos de bimestre (B1+ y B2) |
 | `modulo-5` a `modulo-6` | Pendiente. Se redactan después de cada aprobación |
 | `rubrica-evaluacion.md` | Borrador, pendiente de aprobación |
 | `niveles-y-avance.md` | Versión 0.3 con las decisiones del dueño |
