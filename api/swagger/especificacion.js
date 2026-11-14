@@ -1,7 +1,7 @@
 // GENERADO por api/generar_dart.mjs a partir de api/openapi.yaml. No se edita a mano.
 // Permite abrir Swagger UI con doble clic (file://), donde el navegador no deja leer
 // ../openapi.yaml. Servida por http, la página lee openapi.yaml directamente.
-// huella: fnv1a32:9d904617
+// huella: fnv1a32:ada20c79
 window.ESPECIFICACION_GRAVITY = {
   "openapi": "3.1.0",
   "info": {
@@ -17652,6 +17652,79 @@ window.ESPECIFICACION_GRAVITY = {
         }
       }
     },
+    "/rest/v1/rpc/ali_registrar_gasto_rechazado": {
+      "post": {
+        "tags": [
+          "Base de datos"
+        ],
+        "operationId": "aliRegistrarGastoRechazado",
+        "summary": "Registrar en mi libro personal el gasto de una compra de Papá rechazada dos veces",
+        "description": "Solo quien compró, tras el segundo rechazo del reembolso. La cuenta debe ser de su libro personal (22023 si no); si no se elige cuenta, 22023. El movimiento sale de esa cuenta y es de su libro: no toca el libro de Papá. Una sola vez por compra (22023). 42501 si no es quien compró. Deja bitácora sin montos.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_compra",
+                  "p_cuenta"
+                ],
+                "properties": {
+                  "p_compra": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "p_cuenta": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Cuenta de mi libro personal."
+                  },
+                  "p_cuenta_gasto": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "uuid",
+                    "description": "Cuenta de gasto de Alimentación (la de omisión si se omite)."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Id del movimiento registrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaAlimentacion"
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
     "/rest/v1/rpc/ali_marcar_comprada": {
       "post": {
         "tags": [
@@ -23979,4 +24052,4 @@ window.ESPECIFICACION_GRAVITY = {
     }
   }
 };
-window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:9d904617';
+window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:ada20c79';

@@ -5,7 +5,7 @@ import '../../../nucleo/contratos/roles.dart';
 import 'operacion_api.dart';
 
 /// Huella de api/openapi.yaml con la que se generó este archivo.
-const huellaEspecificacion = 'fnv1a32:9d904617';
+const huellaEspecificacion = 'fnv1a32:ada20c79';
 
 /// Versión de la especificación (info.version).
 const versionEspecificacion = '0.6.0';
@@ -820,6 +820,17 @@ const gruposOperaciones = <GrupoOperaciones>[
         ruta: '/rest/v1/rpc/ali_reenviar_solicitud',
         resumen: 'Reenviar una vez la solicitud de reembolso rechazada, con justificación',
         descripcion: 'Solo quien compró la compra de Papá. Una sola vez: la solicitud debe estar rechazada y no haber reenvío previo. La justificación lleva de 3 a 200 caracteres (23514). La nueva solicitud (intento 2) queda en la cola del albacea; la rechazada se conserva en el histórico. Si el reenvío también se rechaza, el gasto es de quien compró y no se registra en el libro de Papá. 22023 si ya se reenvió o no está rechazada; P0002 si no existe; 42501 si no es quien compró.',
+        roles: {Rol.dueno, Rol.coadministrador, Rol.familiar},
+        escribe: true,
+        soloLocal: true,
+        fase: 8,
+      ),
+      OperacionApi(
+        id: 'aliRegistrarGastoRechazado',
+        metodo: MetodoHttp.post,
+        ruta: '/rest/v1/rpc/ali_registrar_gasto_rechazado',
+        resumen: 'Registrar en mi libro personal el gasto de una compra de Papá rechazada dos veces',
+        descripcion: 'Solo quien compró, tras el segundo rechazo del reembolso. La cuenta debe ser de su libro personal (22023 si no); si no se elige cuenta, 22023. El movimiento sale de esa cuenta y es de su libro: no toca el libro de Papá. Una sola vez por compra (22023). 42501 si no es quien compró. Deja bitácora sin montos.',
         roles: {Rol.dueno, Rol.coadministrador, Rol.familiar},
         escribe: true,
         soloLocal: true,

@@ -48,6 +48,12 @@ Reglas:
 - **Histórico:** cada solicitud (cada intento, con su estado y su justificación) queda registrada. El resumen de Papá no suma las compras rechazadas.
 - Decisiones de construcción (v1.4): el reenvío lo hace solo quien compró, mediante `ali_reenviar_solicitud`; la guardia de compras deja pasar el paso "rechazada a solicitud" solo desde esa función. Migración `20261142000000`, pruebas `111` (ajustada), `113`, y `110` (el resumen ya no suma lo rechazado).
 
+## 2e. Gasto de quien compró (v1.5, respuesta del dueño del 14/nov/2026)
+
+- **Tras el segundo rechazo**, el gasto **se registra en una cuenta** de quien compró. Lo registra quien compró, desde una cuenta de su libro personal, con `ali_registrar_gasto_rechazado`. No se registra en el libro de Papá.
+- **Traspaso del pago:** si después se autoriza el reembolso, el pago se traspasa. **Pendiente:** el dueño define el mecanismo (una transferencia de una cuenta de Papá a quien compró, confirmada por esa persona, o reclasificar el gasto del libro personal al de Papá).
+- Construcción (v1.5): migración `20261143000000`, prueba `114`. La app todavía no tiene el botón para registrar el gasto.
+
 ## 3. Criterios de aceptación
 
 1. El historial se puede filtrar por escala de tiempo, precio, producto y tienda, y las combinaciones dan el mismo total que la suma de compras reales.
