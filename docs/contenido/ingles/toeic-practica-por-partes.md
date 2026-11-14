@@ -214,7 +214,7 @@ Tres niveles de dificultad, cada uno con las siete partes. La correspondencia co
 | 3 · Conversaciones | 1 B · 2 C · 3 A | 4 B · 5 A · 6 C | 7 B · 8 A · 9 B | Un dato exacto (hora, fecha, cantidad) se confirma en la frase del hablante; no lo deduzcas. |
 | 4 · Charlas | 1 B · 2 C · 3 A | 4 A · 5 C · 6 B | 7 C · 8 B · 9 C | El orador anuncia la información al principio o al final. Lee las opciones y busca la palabra clave en el texto. |
 | 5 · Oraciones | 1 B · 2 C · 3 B · 4 C | 5 A · 6 C · 7 A · 8 D | 9 A · 10 A · 11 B · 12 B | Revisa el tiempo y la concordancia: *wish* + pasado; *has + participio*; *if* + presente en la condicional; *not only* + inversión. |
-| 6 · Texto | 1 A · 2 B · 3 C · 4 B | 1 A · 2 B · 3 C · 4 A | 1 A · 2 B · 3 D · 4 A | Un hueco se decide por el significado de la oración completa y el texto alrededor. Revisa los conectores (*and*, *but*, *so*). |
+| 6 · Texto | 1 A · 2 A · 3 C · 4 B | 1 A · 2 B · 3 C · 4 D | 1 A · 2 B · 3 D · 4 A | Un hueco se decide por el significado de la oración completa y el texto alrededor. Revisa los conectores (*and*, *but*, *so*). |
 | 7 · Lectura | 1 A · 2 B · 3 C | 1 A · 2 C · 3 B | 1 B · 2 A · 3 C | La respuesta correcta aparece en el texto con otras palabras. Un dato sobre el futuro (*will*) se busca en la frase con esa forma. |
 
 > **Nota de la clave de Parte 1:** las respuestas del nivel intermedio son 4 A, 5 B y 6 D; las opciones se reordenaron para evitar repeticiones.
