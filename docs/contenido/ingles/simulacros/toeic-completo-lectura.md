@@ -79,7 +79,7 @@ Lee cada texto. Elige la opción que completa cada hueco.
 143. A) Unless B) If C) Although D) Because → **B**
 144. A) until B) since C) by D) at → **C**
 145. A) but B) yet C) or D) so → **D**
-146. A) Any B) Some C) All D) Each → **A**
+146. A) Any B) Each C) Every D) Much → **A**
 
 > Nota de calidad: en la Parte 6 hay que revisar que la forma "Any" (146) y el hueco 144 ("by noon") tengan una sola respuesta. Se marca para revisión antes de usar.
 
@@ -223,7 +223,7 @@ Lee cada texto. Elige la opción que completa cada hueco.
 
 1. **Parte 5:** reequilibrada (14/nov/2026).
 2. **Parte 6, pregunta 139:** corregida a *Unlike* (A). **Pregunta 136:** corregida a *but* (la frase pide un contraste).
-3. **Parte 6, preguntas 144 y 146:** revisadas; en 146, *Some* también encaja gramaticalmente. Antes de la aplicación real se cambia una de las opciones.
+3. **Parte 6, preguntas 144 y 146:** corregida 146: las opciones ahora son *Any / Each / Every / Much*; solo *Any* es gramatical con un sustantivo plural contable (*questions*).
 4. **Parte 7:** hay que confirmar que las preguntas de textos múltiples no dependan de inferencias ambiguas.
 
 ## Puntaje

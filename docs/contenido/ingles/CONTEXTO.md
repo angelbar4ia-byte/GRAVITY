@@ -60,7 +60,7 @@
 
 1. **Bimestre 3:** Cambridge B2 First o TOEFL.
 2. **Simulacro completo de TOEIC:** escrito con el formato oficial. Faltan los ajustes de la sección de estado (letras de la clave, tiempos de Speaking, imágenes y audio).
-3. **Cambridge B1 Preliminary:** Listening con audio y Speaking con imágenes, cuando se apruebe el material. Parte 3 de Reading: confirmada en 4 opciones por pregunta, pero el número exacto de preguntas es una deducción de los totales.
+3. **Cambridge B1 Preliminary:** Listening con audio y Speaking con imágenes, cuando se apruebe el material. Parte 3 de Reading: **verificada** en el manual para profesores (5 preguntas, 4 opciones).
 4. **TOEFL:** audio y el formato de imágenes/video de Speaking cuando estén disponibles.
 5. **Revisión de la Parte 2 de Writing de Cambridge:** elegir artículo o historia (formato del handbook).
 6. **Equivalencias:** cómo se traduce un simulacro a la escala del examen oficial. Aún no acordado.
@@ -70,6 +70,10 @@
 - **Red:** el entorno Default permite `www.ets.org` y `www.cambridgeenglish.org` (aprobado por el dueño el 14/nov/2026). Revertible si se pide.
 - **GitHub:** no se buscan repositorios de terceros con material de examen; el acceso de GitHub se limita al repositorio del proyecto.
 - **Material oficial** de ETS y Cambridge: se usa solo para formato. No se copian ni se redistribuyen preguntas.
+
+## 5b. Habilidad para idiomas
+
+- Se creó `.claude/skills/simulacro-examen-idioma/SKILL.md`: procedimiento para construir simulacros con formato oficial verificado, preguntas originales, claves reequilibradas y contexto. **Se aplica primero a inglés.** Otros idiomas se agregan después, en su propia carpeta, y solo cuando el dueño lo pida.
 
 ## 6. Pendientes fuera de inglés (proyecto GRAVITY)
 

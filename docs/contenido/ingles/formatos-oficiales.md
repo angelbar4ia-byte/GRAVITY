@@ -47,6 +47,8 @@ Fuente: [Cambridge English · B1 Preliminary, formato del examen](https://www.ca
 | Listening | 30 minutos (incluye 6 de transferencia) | 4 partes, 25 preguntas | 25 % |
 | Speaking | 14 minutos por pareja (15 a 17 por grupo de tres) | 4 partes | 25 % |
 
+> **Verificado después (14/nov/2026):** la Parte 3 de Reading de B1 Preliminary tiene 5 preguntas de opción múltiple con 4 opciones, según el manual para profesores.
+
 ## 4. Cambridge B2 First
 
 Fuente: [Cambridge English · B2 First, formato del examen](https://www.cambridgeenglish.org/exams-and-tests/first/exam-format/).
