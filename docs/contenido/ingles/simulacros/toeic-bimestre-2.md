@@ -1,3 +1,21 @@
+## 0. Revisión frente al formato oficial (14/nov/2026)
+
+**Resultado: no cumple el formato oficial completo.** Cumple parcialmente: las partes de texto de Listening y Reading, y tipos de tarea de Speaking y Writing. Las brechas son estas:
+
+| Sección | Oficial | Simulacro | Brecha |
+|---|---|---|---|
+| Listening | 100 preguntas en 4 partes, unos 45 min | 15 preguntas en 3 partes | Falta la Parte 1 (fotografías, 6 preguntas). Además, la proporción es 15 de 100, no la mitad |
+| Reading | 100 preguntas en 4 partes (Partes 5, 6 y 7 con textos sencillos y múltiples), 75 min | 18 preguntas | Falta la Parte 7 de textos múltiples (25 preguntas en 5 conjuntos) |
+| Speaking | 11 tareas en 5 grupos, unos 20 min | 3 tareas | Faltan leer en voz alta (1–2), describir una imagen (3–4), y 2 de las 3 respuestas con información (8–10) |
+| Writing | 8 tareas, unos 60 min | 3 tareas | Faltan las 5 oraciones con imagen (1–5) y 1 de las 2 solicitudes escritas (6–7) |
+
+**Error en la versión anterior de este documento:** decía que el simulacro era "la mitad del formato". No es cierto: son 33 de 200 preguntas de Listening y Reading (16 %), 3 de 11 tareas de Speaking y 3 de 8 de Writing.
+
+**Corrección propuesta:**
+- Renombrar estos simulacros como **"de práctica por partes"**: cada uno trabaja partes concretas del formato oficial, sin prometer proporción.
+- Para el bimestre 3, construir una versión **completa** con las partes que faltan, o usar el examen oficial de muestra de ETS como referencia de formato (sin copiar sus preguntas).
+- Las imágenes (Listening Parte 1, Speaking 3–4, Writing 1–5) requieren archivos gráficos. Hasta tenerlos, se describen en texto y se marcan como pendientes.
+
 # Simulacros TOEIC · bimestre 2 (semanas 13 a 20)
 
 > Versión 0.1 (14/nov/2026), para revisión del dueño. Preguntas **originales de GRAVITY**, con el formato de las secciones oficiales (ver `formatos-oficiales.md`). No se reproducen preguntas de ETS.
