@@ -49,6 +49,7 @@
 | `niveles-y-avance.md` | Versión 0.3 con las decisiones del dueño |
 | `toeic.md` | Método de preparación (decisiones registradas) |
 | `formatos-oficiales.md` | Verificado con fuentes oficiales: TOEIC (handbook de ETS), Cambridge B1 Preliminary y B2 First (Cambridge), TOEFL iBT 2026 (especificación de ETS) |
+| `simulacros/cambridge-b2-first-B-lectura.md`, `cambridge-b2-first-B-escucha.md`, `cambridge-b2-first-B-escritura-habla.md` | **B2 First simulacro B** completo en formato (Reading 52, Listening 30 en texto, Writing 2, Speaking 4). Pendientes: opciones de Listening Parte 3 (verificar), audio, imágenes |
 | `simulacros/cambridge-b2-first-A-lectura.md`, `cambridge-b2-first-A-escucha.md`, `cambridge-b2-first-A-escritura-habla.md` | **B2 First simulacro A** completo en formato verificado (Reading 52, Listening 30 en texto, Writing 2, Speaking 4). Pendientes: opciones de Listening Parte 3 (verificar), audio, imágenes de Speaking |
 | `simulacros/toeic-bimestre-2.md` | Simulacros A y B **de práctica por partes** (33 preguntas cada uno). **No cumplen el formato completo**; la revisión está en su sección 0 |
 | `simulacros/cambridge-y-toefl.md` | Plan de simulacros de Cambridge B1 y B2 First, y de TOEFL |
