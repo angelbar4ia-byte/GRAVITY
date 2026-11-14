@@ -54,6 +54,7 @@
 | `simulacros/toeic-bimestre-2.md` | Simulacros A y B **de práctica por partes** (33 preguntas cada uno). **No cumplen el formato completo**; la revisión está en su sección 0 |
 | `simulacros/cambridge-y-toefl.md` | Plan de simulacros de Cambridge B1 y B2 First, y de TOEFL |
 | `simulacros/cambridge-b1-preliminary-A.md` | **Simulacro A completo** (Reading 32, Writing 2, Listening 25 en texto, Speaking 4 partes) con clave |
+| `simulacros/cambridge-b1-preliminary-B.md` | **Simulacro B completo** (Reading 32, Writing 2, Listening 25 en texto, Speaking 4 partes) con clave. Letras de Reading P1 reordenadas para evitar repetición. Pendientes: audio, imágenes de Speaking, aprobación de la fuente |
 | `simulacros/toefl-ibt-A.md` | **Simulacro A completo** (Reading 50, Listening 47 en texto, Writing 12, Speaking 11) con clave |
 | `simulacros/toeic-completo-escucha.md`, `toeic-completo-lectura.md`, `toeic-completo-hablar-escribir.md` | **TOEIC completo** (formato oficial: 100 Listening, 100 Reading, 11 Speaking, 8 Writing). Pendientes: reequilibrar letras correctas en Listening (partes 3 y 4) y Reading (Parte 5); revisar Reading 6 (146); tiempos de Speaking y extensión de Writing 8 contra el handbook; imágenes y audio |
 | `simulacros/guia-multiexamen.md` | Guía común: mismo paquete para TOEIC, Cambridge y TOEFL; tres modos de elección |
