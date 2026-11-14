@@ -520,6 +520,28 @@ class ServicioAlimentacion {
   }
 
   /// Rechaza con motivo (mínimo 3 caracteres).
+  /// Compras de Papá rechazadas dos veces con su acción pendiente (v1.7).
+  Future<List<GastoRechazado>> gastosRechazados() => _repo.gastosRechazados();
+
+  /// Registra el gasto de quien compró en una cuenta de su libro personal.
+  Future<void> registrarGastoRechazado(String compraId, {required String cuentaId}) =>
+      _repo.registrarGastoRechazado(compraId: compraId, cuentaId: cuentaId);
+
+  /// Anula el propio gasto (contraasiento) tras la reclasificación. Motivo de 3 caracteres o más.
+  Future<void> anularGastoPropio(String compraId, {required String motivo}) async {
+    final m = motivo.trim();
+    if (m.length < 3) throw ArgumentError('El motivo lleva al menos 3 caracteres.');
+    await _repo.anularGastoPropio(compraId: compraId, motivo: m);
+  }
+
+  /// El albacea autoriza el reembolso por transferencia desde [cuentaPapaId].
+  Future<void> autorizarReembolso(String compraId, {required String cuentaPapaId}) =>
+      _repo.autorizarReembolso(compraId: compraId, cuentaPapaId: cuentaPapaId);
+
+  /// El albacea reclasifica el gasto al libro de Papá desde [cuentaPapaId].
+  Future<void> reclasificarGasto(String compraId, {required String cuentaPapaId}) =>
+      _repo.reclasificarGasto(compraId: compraId, cuentaPapaId: cuentaPapaId);
+
   /// Solicitudes rechazadas de compras de esta persona que aún puede reenviar.
   Future<List<SolicitudPago>> solicitudesRechazadasMias() =>
       _repo.solicitudesRechazadasMias();

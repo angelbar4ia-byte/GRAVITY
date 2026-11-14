@@ -148,6 +148,22 @@ abstract interface class RepositorioAlimentacion {
   /// Cuentas del libro de Papá para aprobar (solo nombres, sin saldos).
   Future<List<CuentaPago>> cuentasDelLibroDePapa();
 
+  /// Compras de Papá rechazadas dos veces con su acción pendiente: el albacea
+  /// reembolsa o reclasifica; quien compró registra su gasto o lo anula.
+  Future<List<GastoRechazado>> gastosRechazados();
+
+  /// Registra el gasto de quien compró en una cuenta de su libro personal.
+  Future<void> registrarGastoRechazado({required String compraId, required String cuentaId});
+
+  /// Anula el gasto de quien compró (contraasiento en su libro), tras la reclasificación.
+  Future<void> anularGastoPropio({required String compraId, required String motivo});
+
+  /// El albacea autoriza el reembolso: transferencia de una cuenta de Papá a quien compró.
+  Future<void> autorizarReembolso({required String compraId, required String cuentaPapaId});
+
+  /// El albacea reclasifica el gasto de quien compró al libro de Papá.
+  Future<void> reclasificarGasto({required String compraId, required String cuentaPapaId});
+
   /// Solicitudes de reembolso rechazadas de compras que hizo esta persona y que
   /// todavía puede reenviar una vez (v1.4).
   Future<List<SolicitudPago>> solicitudesRechazadasMias();
@@ -332,6 +348,16 @@ class RepositorioAlimentacionEnMemoria implements RepositorioAlimentacion {
   Future<List<SolicitudPago>> solicitudesPendientes() async => const [];
   @override
   Future<List<SolicitudPago>> solicitudesRechazadasMias() async => const [];
+  @override
+  Future<List<GastoRechazado>> gastosRechazados() async => const [];
+  @override
+  Future<void> registrarGastoRechazado({required String compraId, required String cuentaId}) async {}
+  @override
+  Future<void> anularGastoPropio({required String compraId, required String motivo}) async {}
+  @override
+  Future<void> autorizarReembolso({required String compraId, required String cuentaPapaId}) async {}
+  @override
+  Future<void> reclasificarGasto({required String compraId, required String cuentaPapaId}) async {}
   @override
   Future<void> reenviarSolicitud({
     required String solicitudId,
@@ -759,6 +785,16 @@ class RepositorioAlimentacionSinServidor implements RepositorioAlimentacion {
   Future<List<SolicitudPago>> solicitudesPendientes() async => const [];
   @override
   Future<List<SolicitudPago>> solicitudesRechazadasMias() async => const [];
+  @override
+  Future<List<GastoRechazado>> gastosRechazados() async => const [];
+  @override
+  Future<void> registrarGastoRechazado({required String compraId, required String cuentaId}) async => _no();
+  @override
+  Future<void> anularGastoPropio({required String compraId, required String motivo}) async => _no();
+  @override
+  Future<void> autorizarReembolso({required String compraId, required String cuentaPapaId}) async => _no();
+  @override
+  Future<void> reclasificarGasto({required String compraId, required String cuentaPapaId}) async => _no();
   @override
   Future<void> reenviarSolicitud({
     required String solicitudId,

@@ -301,42 +301,42 @@ class _Seccion extends StatelessWidget {
   );
 }
 
-/// Mis compras de Papá rechazadas por el albacea que puedo reenviar una vez
-/// con justificación. Si se rechazan otra vez, el gasto es mío.
+/// Compras de Papá rechazadas por el albacea y lo que toca hacer con cada una:
+/// reenviar (quien compró, una vez), registrar el gasto propio, anularlo tras
+/// la reclasificación (quien compró) o reembolsar / reclasificar (albacea).
 class _ReenviosRechazados extends ConsumerWidget {
   const _ReenviosRechazados();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final v = ValoresDiseno.de(context);
-    return ref.watch(solicitudesRechazadasMiasProvider).maybeWhen(
-      data: (lista) {
-        if (lista.isEmpty) return const SizedBox.shrink();
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Rechazadas por el albacea', style: v.lectura(tamano: 16, color: v.texto)),
-              Text(
-                'Puedes reenviar cada una una vez, con una justificación. Si se rechaza otra vez, el gasto es tuyo.',
-                style: v.lectura(tamano: 13, color: v.textoTenue),
+    final reenviables = ref
+        .watch(solicitudesRechazadasMiasProvider)
+        .maybeWhen(data: (l) => l, orElse: () => const <SolicitudPago>[]);
+    final gastos = ref
+        .watch(gastosRechazadosProvider)
+        .maybeWhen(data: (l) => l, orElse: () => const <GastoRechazado>[]);
+    if (reenviables.isEmpty && gastos.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Compras de Papá rechazadas', style: v.lectura(tamano: 16, color: v.texto)),
+          for (final s in reenviables)
+            ListTile(
+              key: Key('reenviar_${s.id}'),
+              contentPadding: EdgeInsets.zero,
+              title: Text('${s.ingrediente} · \$${(s.montoCentavos / 100).toStringAsFixed(2)}'),
+              subtitle: const Text('Puedes reenviarla una vez, con justificación.'),
+              trailing: TextButton(
+                onPressed: () => _reenviar(context, ref, s),
+                child: const Text('Reenviar'),
               ),
-              for (final s in lista)
-                ListTile(
-                  key: Key('reenviar_${s.id}'),
-                  contentPadding: EdgeInsets.zero,
-                  title: Text('${s.ingrediente} · \$${(s.montoCentavos / 100).toStringAsFixed(2)}'),
-                  trailing: TextButton(
-                    onPressed: () => _reenviar(context, ref, s),
-                    child: const Text('Reenviar'),
-                  ),
-                ),
-            ],
-          ),
-        );
-      },
-      orElse: () => const SizedBox.shrink(),
+            ),
+          for (final g in gastos) _FilaGasto(gasto: g),
+        ],
+      ),
     );
   }
 
@@ -381,8 +381,8 @@ class _ReenviosRechazados extends ConsumerWidget {
                 error.value = '${e.message}';
               } on PermisoDenegado {
                 error.value = 'Solo quien compró puede reenviarla.';
-              } catch (_) {
-                error.value = 'No se pudo reenviar. Ya se reenvió o inténtalo más tarde.';
+              } catch (e) {
+                error.value = '$e';
               }
             },
             child: const Text('Reenviar'),
@@ -391,6 +391,194 @@ class _ReenviosRechazados extends ConsumerWidget {
       ),
     );
     texto.dispose();
+    error.dispose();
+  }
+}
+
+/// Una compra de Papá con su acción pendiente.
+class _FilaGasto extends ConsumerWidget {
+  const _FilaGasto({required this.gasto});
+  final GastoRechazado gasto;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final monto = costoTexto(gasto.montoCentavos, estimado: false);
+    final (texto, boton, accion) = switch (gasto.accion) {
+      AccionGasto.reembolsar => (
+        'Rechazada dos veces: reembolsar o reclasificar',
+        'Decidir',
+        () => _albacea(context, ref),
+      ),
+      AccionGasto.registrar => (
+        'Rechazada: el gasto es tuyo. Regístralo en tu cuenta',
+        'Registrar',
+        () => _registrar(context, ref),
+      ),
+      AccionGasto.anular => (
+        'Reclasificado al libro de Papá: anula tu gasto',
+        'Anular',
+        () => _anular(context, ref),
+      ),
+    };
+    return ListTile(
+      key: Key('gasto_${gasto.accion.name}_${gasto.compraId}'),
+      contentPadding: EdgeInsets.zero,
+      title: Text('${gasto.ingrediente} · $monto'),
+      subtitle: Text(texto),
+      trailing: TextButton(onPressed: accion, child: Text(boton)),
+    );
+  }
+
+  void _mensaje(BuildContext context, String m) =>
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(m)));
+
+  void _listo(WidgetRef ref) => ref.read(versionAlimentacionProvider.notifier).state++;
+
+  Future<void> _albacea(BuildContext context, WidgetRef ref) async {
+    final servicio = ref.read(servicioAlimentacionProvider);
+    final cuentas = await servicio.cuentasDelLibroDePapa();
+    if (!context.mounted) return;
+    if (cuentas.isEmpty) {
+      _mensaje(context, 'El libro de Papá no tiene cuentas de pago.');
+      return;
+    }
+    String? elegida = ServicioAlimentacion.cuentaEfectiva(cuentas, null)?.id;
+    final opcion = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Reembolsar ${gasto.ingrediente}'),
+        content: StatefulBuilder(
+          builder: (ctx, setState) => DropdownButtonFormField<String>(
+            key: const Key('cuenta_papa_reembolso'),
+            initialValue: elegida,
+            items: [
+              for (final c in cuentas) DropdownMenuItem(value: c.id, child: Text(c.nombre)),
+            ],
+            onChanged: (c) => setState(() => elegida = c),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
+          TextButton(
+            key: const Key('reclasificar_papa'),
+            onPressed: () => Navigator.pop(ctx, 'reclasificar'),
+            child: const Text('Reclasificar al libro de Papá'),
+          ),
+          FilledButton(
+            key: const Key('transferir_reembolso'),
+            onPressed: () => Navigator.pop(ctx, 'transferir'),
+            child: const Text('Pagar por transferencia'),
+          ),
+        ],
+      ),
+    );
+    if (opcion == null || elegida == null || !context.mounted) return;
+    try {
+      if (opcion == 'transferir') {
+        await servicio.autorizarReembolso(gasto.compraId, cuentaPapaId: elegida!);
+        _mensaje(context, 'Transferencia propuesta. Quien compró la confirma.');
+      } else {
+        await servicio.reclasificarGasto(gasto.compraId, cuentaPapaId: elegida!);
+        _mensaje(context, 'Gasto reclasificado. Quien compró debe anular el suyo.');
+      }
+      _listo(ref);
+    } catch (e) {
+      _mensaje(context, '$e');
+    }
+  }
+
+  Future<void> _registrar(BuildContext context, WidgetRef ref) async {
+    final servicio = ref.read(servicioAlimentacionProvider);
+    final List<CuentaPago> cuentas;
+    try {
+      cuentas = await servicio.cuentasDePago(MenuId.pareja);
+    } catch (e) {
+      if (context.mounted) _mensaje(context, '$e');
+      return;
+    }
+    if (!context.mounted) return;
+    if (cuentas.isEmpty) {
+      _mensaje(context, 'No tienes cuentas para registrar el gasto.');
+      return;
+    }
+    String? elegida = ServicioAlimentacion.cuentaEfectiva(cuentas, null)?.id;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Registrar ${gasto.ingrediente}'),
+        content: StatefulBuilder(
+          builder: (ctx, setState) => DropdownButtonFormField<String>(
+            key: const Key('cuenta_gasto_propio'),
+            initialValue: elegida,
+            items: [
+              for (final c in cuentas) DropdownMenuItem(value: c.id, child: Text(c.nombre)),
+            ],
+            onChanged: (c) => setState(() => elegida = c),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Registrar')),
+        ],
+      ),
+    );
+    if (ok != true || elegida == null || !context.mounted) return;
+    try {
+      await servicio.registrarGastoRechazado(gasto.compraId, cuentaId: elegida!);
+      _listo(ref);
+    } catch (e) {
+      _mensaje(context, '$e');
+    }
+  }
+
+  Future<void> _anular(BuildContext context, WidgetRef ref) async {
+    final motivo = TextEditingController();
+    final error = ValueNotifier<String?>(null);
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Anular mi gasto: ${gasto.ingrediente}'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Se anula en tu libro y queda registrado en Papá.'),
+            TextField(
+              controller: motivo,
+              decoration: const InputDecoration(labelText: 'Motivo (3 caracteres o más)'),
+            ),
+            ValueListenableBuilder<String?>(
+              valueListenable: error,
+              builder: (_, m, _) => m == null
+                  ? const SizedBox.shrink()
+                  : Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(m, key: const Key('error_anular')),
+                    ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancelar')),
+          FilledButton(
+            onPressed: () async {
+              try {
+                await ref
+                    .read(servicioAlimentacionProvider)
+                    .anularGastoPropio(gasto.compraId, motivo: motivo.text);
+                _listo(ref);
+                if (ctx.mounted) Navigator.of(ctx).pop();
+              } on ArgumentError catch (e) {
+                error.value = '${e.message}';
+              } catch (e) {
+                error.value = '$e';
+              }
+            },
+            child: const Text('Anular'),
+          ),
+        ],
+      ),
+    );
+    motivo.dispose();
     error.dispose();
   }
 }

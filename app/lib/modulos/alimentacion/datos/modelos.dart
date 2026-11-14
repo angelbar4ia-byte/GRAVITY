@@ -318,3 +318,20 @@ class ItemDespensa {
   final String unidad;
   final double cantidad;
 }
+
+/// Qué toca hacer con una compra de Papá rechazada dos veces (Fase 8 v1.7).
+enum AccionGasto { reembolsar, registrar, anular }
+
+/// Compra de Papá rechazada dos veces con su acción pendiente.
+class GastoRechazado {
+  const GastoRechazado({
+    required this.compraId,
+    required this.accion,
+    required this.ingrediente,
+    required this.montoCentavos,
+  });
+  final String compraId;
+  final AccionGasto accion;
+  final String ingrediente;
+  final int montoCentavos;
+}

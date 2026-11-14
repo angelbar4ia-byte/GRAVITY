@@ -38,6 +38,54 @@ void _sembrar(FuenteTablasEnMemoria f) {
 }
 
 void main() {
+  group('gasto de quien compró (Fase 8 v1.7)', () {
+    test('quien compró ve registrar (rechazada final) y anular (ya reclasificada)', () async {
+      final f = FuenteTablasEnMemoria();
+      f.tablas['ali_ingredientes'] = [
+        {'id': 'i1', 'hogar_id': _hogar, 'nombre': 'Avena', 'unidad': 'g'},
+      ];
+      f.tablas['ali_compras'] = [
+        {'id': 'c1', 'hogar_id': _hogar, 'ingrediente_id': 'i1', 'cantidad': 2, 'cuenta': 'papa',
+         'estado_pago': 'rechazada', 'movimiento_id': null},
+        {'id': 'c2', 'hogar_id': _hogar, 'ingrediente_id': 'i1', 'cantidad': 1, 'cuenta': 'papa',
+         'estado_pago': 'movimiento', 'movimiento_id': 'm2'},
+      ];
+      f.tablas['ali_solicitudes_pago'] = [
+        {'id': 's1', 'hogar_id': _hogar, 'compra_id': 'c1', 'monto_centavos': 3000, 'estado': 'rechazada',
+         'intento': 2, 'solicitada_por': _yo, 'reclasificacion_movimiento_id': null, 'transferencia_id': null},
+        {'id': 's2', 'hogar_id': _hogar, 'compra_id': 'c2', 'monto_centavos': 1500, 'estado': 'rechazada',
+         'intento': 2, 'solicitada_por': _yo, 'reclasificacion_movimiento_id': 'mp2', 'transferencia_id': null},
+      ];
+      f.funciones['ali_detalle_reembolso'] = (_) => {
+        'reclasificacion': {'movimiento_papa_id': 'mp2', 'anulado_por_comprador': false},
+      };
+      final repo = RepositorioAlimentacionSupabase(fuente: f, hogarId: _hogar, personaId: _yo);
+      final g = await repo.gastosRechazados();
+      expect(g.map((x) => '${x.compraId}:${x.accion.name}'), ['c1:registrar', 'c2:anular']);
+    });
+
+    test('registrar y anular llaman a sus funciones del servidor', () async {
+      final f = FuenteTablasEnMemoria();
+      f.funciones['ali_registrar_gasto_rechazado'] = (_) => 'm1';
+      f.funciones['ali_anular_gasto_propio'] = (_) => 'a1';
+      final repo = RepositorioAlimentacionSupabase(fuente: f, hogarId: _hogar, personaId: _yo);
+      await repo.registrarGastoRechazado(compraId: 'c1', cuentaId: 'cu1');
+      await repo.anularGastoPropio(compraId: 'c2', motivo: 'Se pasó a Papá');
+      expect(f.llamadas[0].$1, 'ali_registrar_gasto_rechazado');
+      expect(f.llamadas[0].$2, {'p_compra': 'c1', 'p_cuenta': 'cu1'});
+      expect(f.llamadas[1].$1, 'ali_anular_gasto_propio');
+      expect(f.llamadas[1].$2, {'p_compra': 'c2', 'p_motivo': 'Se pasó a Papá'});
+    });
+
+    test('el motivo de anular lleva 3 caracteres o más, sin llamar al servidor', () async {
+      final r = RepositorioAlimentacionEnMemoria(semanaEjemplo: _lunes);
+      await expectLater(
+        ServicioAlimentacion(r, rol: Rol.dueno).anularGastoPropio('c2', motivo: '  ab '),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+  });
+
   group('reembolso de compras de Papá (Fase 8 v1.4)', () {
     test('quien compró ve solo sus rechazadas que aún puede reenviar', () async {
       final f = FuenteTablasEnMemoria();

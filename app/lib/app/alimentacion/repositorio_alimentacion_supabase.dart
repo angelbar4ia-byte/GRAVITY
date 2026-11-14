@@ -1259,6 +1259,94 @@ class RepositorioAlimentacionSupabase implements RepositorioAlimentacion {
     }
   }
 
+  /// Lee las compras de Papá rechazadas dos veces que el albacea o quien compró deben resolver.
+  @override
+  Future<List<GastoRechazado>> gastosRechazados() async {
+    final filas = await _leer('ali_solicitudes_pago');
+    final compras = {for (final c in await _leer('ali_compras')) '${c['id']}': c};
+    final ings = {for (final f in await _leer('ali_ingredientes')) '${f['id']}': f};
+    final albacea = await esAlbacea();
+    final out = <GastoRechazado>[];
+    for (final s in filas) {
+      if (s['intento'] != 2 || s['estado'] != 'rechazada') continue;
+      final c = compras['${s['compra_id']}'];
+      if (c == null || c['cuenta'] != 'papa') continue;
+      final nombre = '${ings['${c['ingrediente_id']}']?['nombre'] ?? 'Compra'}';
+      final monto = (s['monto_centavos'] as num).toInt();
+      final mia = s['solicitada_por'] == personaId;
+      final reclasificada = s['reclasificacion_movimiento_id'] != null;
+      if (albacea &&
+          c['estado_pago'] == 'movimiento' &&
+          !reclasificada &&
+          s['transferencia_id'] == null) {
+        out.add(GastoRechazado(
+          compraId: '${c['id']}',
+          accion: AccionGasto.reembolsar,
+          ingrediente: nombre,
+          montoCentavos: monto,
+        ));
+      }
+      if (mia && c['estado_pago'] == 'rechazada') {
+        out.add(GastoRechazado(
+          compraId: '${c['id']}',
+          accion: AccionGasto.registrar,
+          ingrediente: nombre,
+          montoCentavos: monto,
+        ));
+      }
+      if (mia && c['estado_pago'] == 'movimiento' && reclasificada) {
+        final d = await _rpc('ali_detalle_reembolso', {'p_compra': c['id']});
+        final r = d is Map ? d['reclasificacion'] : null;
+        final anulado = r is Map && r['anulado_por_comprador'] == true;
+        if (!anulado) {
+          out.add(GastoRechazado(
+            compraId: '${c['id']}',
+            accion: AccionGasto.anular,
+            ingrediente: nombre,
+            montoCentavos: monto,
+          ));
+        }
+      }
+    }
+    return out;
+  }
+
+  @override
+  Future<void> registrarGastoRechazado({required String compraId, required String cuentaId}) async {
+    try {
+      await _rpc('ali_registrar_gasto_rechazado', {'p_compra': compraId, 'p_cuenta': cuentaId});
+    } on ErrorFinanzas catch (e) {
+      throw _errorServidor(e);
+    }
+  }
+
+  @override
+  Future<void> anularGastoPropio({required String compraId, required String motivo}) async {
+    try {
+      await _rpc('ali_anular_gasto_propio', {'p_compra': compraId, 'p_motivo': motivo});
+    } on ErrorFinanzas catch (e) {
+      throw _errorServidor(e);
+    }
+  }
+
+  @override
+  Future<void> autorizarReembolso({required String compraId, required String cuentaPapaId}) async {
+    try {
+      await _rpc('ali_autorizar_reembolso', {'p_compra': compraId, 'p_cuenta_papa': cuentaPapaId});
+    } on ErrorFinanzas catch (e) {
+      throw _errorServidor(e);
+    }
+  }
+
+  @override
+  Future<void> reclasificarGasto({required String compraId, required String cuentaPapaId}) async {
+    try {
+      await _rpc('ali_reclasificar_gasto', {'p_compra': compraId, 'p_cuenta_papa': cuentaPapaId});
+    } on ErrorFinanzas catch (e) {
+      throw _errorServidor(e);
+    }
+  }
+
   @override
   Future<List<CuentaPago>> cuentasDelLibroDePapa() async {
     final libro = await _libroDePapa();

@@ -5,7 +5,7 @@ import '../../../nucleo/contratos/roles.dart';
 import 'operacion_api.dart';
 
 /// Huella de api/openapi.yaml con la que se generó este archivo.
-const huellaEspecificacion = 'fnv1a32:070acd12';
+const huellaEspecificacion = 'fnv1a32:47af5eb5';
 
 /// Versión de la especificación (info.version).
 const versionEspecificacion = '0.6.0';
@@ -862,6 +862,28 @@ const gruposOperaciones = <GrupoOperaciones>[
           Rol.casa,
         },
         escribe: false,
+        soloLocal: true,
+        fase: 8,
+      ),
+      OperacionApi(
+        id: 'aliReclasificarGasto',
+        metodo: MetodoHttp.post,
+        ruta: '/rest/v1/rpc/ali_reclasificar_gasto',
+        resumen: 'Reclasificar al libro de Papá el gasto de quien compró (rechazada dos veces)',
+        descripcion: 'Solo el albacea. La compra debe estar rechazada dos veces, con el gasto de quien compró registrado y sin reembolso por transferencia activo (22023). Registra el gasto en el libro de Papá, pagado desde la cuenta indicada, a su nombre. Quien compró anula el suyo después (ali_anular_gasto_propio). Una sola vez. 42501 si no es el albacea.',
+        roles: {Rol.dueno, Rol.coadministrador},
+        escribe: true,
+        soloLocal: true,
+        fase: 8,
+      ),
+      OperacionApi(
+        id: 'aliAnularGastoPropio',
+        metodo: MetodoHttp.post,
+        ruta: '/rest/v1/rpc/ali_anular_gasto_propio',
+        resumen: 'Anular mi gasto tras la reclasificación',
+        descripcion: 'Solo quien compró, después de que el albacea reclasificó la compra. Contraasiento en su libro personal (solo-agregar): no borra nada. Motivo de 3 caracteres o más (23514). Una sola vez (22023). 42501 si no es quien compró.',
+        roles: {Rol.dueno, Rol.coadministrador, Rol.familiar},
+        escribe: true,
         soloLocal: true,
         fase: 8,
       ),

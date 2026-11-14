@@ -61,6 +61,12 @@ Reglas:
 - **Quién compró siempre queda registrado** (`comprado_por` y `solicitada_por`), aunque el albacea sea quien lo pague o quien autorice el reembolso. `ali_detalle_reembolso` lo muestra.
 - Construcción: migración `20261144000000`, prueba `115`. La app todavía no tiene el botón del albacea para autorizar el reembolso ni la vista del detalle.
 
+## 2g. Opción B: reclasificar el gasto (v1.7, respuesta del dueño del 14/nov/2026)
+
+- **Ambas opciones (A y B).** A ya está (sección 2f). B: el albacea reclasifica el gasto de quien compró al libro de Papá, pagado desde una cuenta de Papá, a su nombre. Quien compró anula su gasto en su libro con un contraasiento (lo hace ella).
+- Orden: primero el albacea reclasifica; después quien compró anula. Entre tanto la app le muestra la acción pendiente. Quien compró siempre queda registrado (`comprado_por` y `solicitada_por`).
+- Construcción: migración `20261145000000`, prueba `116`; botones en el historial de compras (reembolsar, registrar, anular). Pendiente: el albacea no puede reabrir un reembolso que ya fue rechazado por transferencia.
+
 ## 3. Criterios de aceptación
 
 1. El historial se puede filtrar por escala de tiempo, precio, producto y tienda, y las combinaciones dan el mismo total que la suma de compras reales.

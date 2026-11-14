@@ -1,7 +1,7 @@
 // GENERADO por api/generar_dart.mjs a partir de api/openapi.yaml. No se edita a mano.
 // Permite abrir Swagger UI con doble clic (file://), donde el navegador no deja leer
 // ../openapi.yaml. Servida por http, la página lee openapi.yaml directamente.
-// huella: fnv1a32:070acd12
+// huella: fnv1a32:47af5eb5
 window.ESPECIFICACION_GRAVITY = {
   "openapi": "3.1.0",
   "info": {
@@ -17920,6 +17920,143 @@ window.ESPECIFICACION_GRAVITY = {
         }
       }
     },
+    "/rest/v1/rpc/ali_reclasificar_gasto": {
+      "post": {
+        "tags": [
+          "Base de datos"
+        ],
+        "operationId": "aliReclasificarGasto",
+        "summary": "Reclasificar al libro de Papá el gasto de quien compró (rechazada dos veces)",
+        "description": "Solo el albacea. La compra debe estar rechazada dos veces, con el gasto de quien compró registrado y sin reembolso por transferencia activo (22023). Registra el gasto en el libro de Papá, pagado desde la cuenta indicada, a su nombre. Quien compró anula el suyo después (ali_anular_gasto_propio). Una sola vez. 42501 si no es el albacea.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_compra",
+                  "p_cuenta_papa"
+                ],
+                "properties": {
+                  "p_compra": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "p_cuenta_papa": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Cuenta de dinero activa del libro de Papá."
+                  }
+                }
+              },
+              "example": {
+                "p_compra": "a7300000-0000-4000-8000-0000000017c1",
+                "p_cuenta_papa": "c6000000-0000-4000-8000-000000000002"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Id del movimiento de Papá por la reclasificación.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaAlimentacion"
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/ali_anular_gasto_propio": {
+      "post": {
+        "tags": [
+          "Base de datos"
+        ],
+        "operationId": "aliAnularGastoPropio",
+        "summary": "Anular mi gasto tras la reclasificación",
+        "description": "Solo quien compró, después de que el albacea reclasificó la compra. Contraasiento en su libro personal (solo-agregar): no borra nada. Motivo de 3 caracteres o más (23514). Una sola vez (22023). 42501 si no es quien compró.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_compra",
+                  "p_motivo"
+                ],
+                "properties": {
+                  "p_compra": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "p_motivo": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 200
+                  }
+                }
+              },
+              "example": {
+                "p_compra": "a7300000-0000-4000-8000-0000000017c1",
+                "p_motivo": "Se pasó al libro de Papá"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Id del contraasiento.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaAlimentacion"
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
     "/rest/v1/rpc/ali_marcar_comprada": {
       "post": {
         "tags": [
@@ -24247,4 +24384,4 @@ window.ESPECIFICACION_GRAVITY = {
     }
   }
 };
-window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:070acd12';
+window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:47af5eb5';
