@@ -520,6 +520,20 @@ class ServicioAlimentacion {
   }
 
   /// Rechaza con motivo (mínimo 3 caracteres).
+  /// Solicitudes rechazadas de compras de esta persona que aún puede reenviar.
+  Future<List<SolicitudPago>> solicitudesRechazadasMias() =>
+      _repo.solicitudesRechazadasMias();
+
+  /// Reenvía una vez una solicitud rechazada con una justificación de 3 a 200
+  /// caracteres. Lo registra el servidor (solo quien compró, una vez).
+  Future<void> reenviarSolicitud(String id, {required String justificacion}) async {
+    final j = justificacion.trim();
+    if (j.length < 3 || j.length > 200) {
+      throw ArgumentError('La justificación lleva de 3 a 200 caracteres.');
+    }
+    await _repo.reenviarSolicitud(solicitudId: id, justificacion: j);
+  }
+
   Future<void> rechazarSolicitud(String id, {required String motivo}) async {
     await _exigirAlbacea();
     final m = motivo.trim();

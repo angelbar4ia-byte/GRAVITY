@@ -1215,6 +1215,50 @@ class RepositorioAlimentacionSupabase implements RepositorioAlimentacion {
     ];
   }
 
+  /// Rechazadas de compras de esta persona que aún no se reenviaron (intento 1
+  /// sin intento 2 posterior).
+  @override
+  Future<List<SolicitudPago>> solicitudesRechazadasMias() async {
+    final filas = await _leer('ali_solicitudes_pago');
+    final reenviadas = {
+      for (final s in filas)
+        if (s['intento'] == 2 && s['estado'] != 'revertida') '${s['compra_id']}',
+    };
+    final compras = {for (final c in await _leer('ali_compras')) '${c['id']}': c};
+    final ings = {for (final f in await _leer('ali_ingredientes')) '${f['id']}': f};
+    return [
+      for (final s in filas)
+        if (s['estado'] == 'rechazada' &&
+            s['intento'] == 1 &&
+            s['solicitada_por'] == personaId &&
+            !reenviadas.contains('${s['compra_id']}') &&
+            compras['${s['compra_id']}'] != null)
+          SolicitudPago(
+            id: '${s['id']}',
+            ingrediente: '${ings['${compras['${s['compra_id']}']!['ingrediente_id']}']?['nombre'] ?? 'Compra'}',
+            cantidad: _num(compras['${s['compra_id']}']!['cantidad']),
+            unidad: '${ings['${compras['${s['compra_id']}']!['ingrediente_id']}']?['unidad'] ?? ''}',
+            montoCentavos: (s['monto_centavos'] as num).toInt(),
+          ),
+    ];
+  }
+
+  /// `ali_reenviar_solicitud(p_solicitud, p_justificacion)`: una sola vez.
+  @override
+  Future<void> reenviarSolicitud({
+    required String solicitudId,
+    required String justificacion,
+  }) async {
+    try {
+      await _rpc('ali_reenviar_solicitud', {
+        'p_solicitud': solicitudId,
+        'p_justificacion': justificacion,
+      });
+    } on ErrorFinanzas catch (e) {
+      throw _errorServidor(e);
+    }
+  }
+
   @override
   Future<List<CuentaPago>> cuentasDelLibroDePapa() async {
     final libro = await _libroDePapa();

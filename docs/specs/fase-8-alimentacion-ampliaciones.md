@@ -38,6 +38,16 @@ Reglas:
 - **Historial:** las compras regresadas se muestran como **revertidas**.
 - **Sugerencia con IA:** el servidor del asistente debe aceptar la acción `sugerir_recetas`.
 
+## 2d. Reembolso de compras de Papá (v1.4, respuestas del dueño del 14/nov/2026)
+
+- **Compra de Papá sin cuenta de pago = solicitud de reembolso** al albacea. Quien compró ya pagó con su dinero.
+- **Aprobada:** el albacea paga desde una cuenta de Papá (como hasta ahora).
+- **Rechazada:** no sale dinero de Papá. La compra queda como rechazada en el histórico. **No se elige cuenta** y no se asigna a la cuenta de efectivo de Papá (se quita ese valor por omisión de la v1.2).
+- **Reenvío:** quien compró puede reenviar la solicitud **una vez**, con una justificación de 3 a 200 caracteres. La solicitud nueva (intento 2) entra a la cola del albacea; la rechazada se conserva.
+- **Segundo rechazo:** el gasto es de quien compró. No se registra en el libro de Papá; la compra sigue en el histórico.
+- **Histórico:** cada solicitud (cada intento, con su estado y su justificación) queda registrada. El resumen de Papá no suma las compras rechazadas.
+- Decisiones de construcción (v1.4): el reenvío lo hace solo quien compró, mediante `ali_reenviar_solicitud`; la guardia de compras deja pasar el paso "rechazada a solicitud" solo desde esa función. Migración `20261142000000`, pruebas `111` (ajustada), `113`, y `110` (el resumen ya no suma lo rechazado).
+
 ## 3. Criterios de aceptación
 
 1. El historial se puede filtrar por escala de tiempo, precio, producto y tienda, y las combinaciones dan el mismo total que la suma de compras reales.

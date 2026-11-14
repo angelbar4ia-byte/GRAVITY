@@ -252,3 +252,9 @@ final solicitudesPapaProvider = FutureProvider<List<SolicitudPago>>((ref) {
   ref.watch(versionAlimentacionProvider);
   return ref.watch(servicioAlimentacionProvider).solicitudesPendientes();
 });
+
+/// Mis compras de Papá rechazadas que todavía puedo reenviar (v1.4).
+final solicitudesRechazadasMiasProvider = FutureProvider<List<SolicitudPago>>((ref) {
+  ref.watch(versionAlimentacionProvider);
+  return ref.watch(servicioAlimentacionProvider).solicitudesRechazadasMias();
+});

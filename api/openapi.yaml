@@ -10783,6 +10783,41 @@ paths:
           $ref: '#/components/responses/SinSesion'
         '403':
           $ref: '#/components/responses/Prohibido'
+  /rest/v1/rpc/ali_reenviar_solicitud:
+    post:
+      tags: [Base de datos]
+      operationId: aliReenviarSolicitud
+      summary: Reenviar una vez la solicitud de reembolso rechazada, con justificación
+      description: >-
+        Solo quien compró la compra de Papá. Una sola vez: la solicitud debe estar rechazada y no haber reenvío previo. La justificación lleva de 3 a 200 caracteres (23514). La nueva solicitud (intento 2) queda en la cola del albacea; la rechazada se conserva en el histórico. Si el reenvío también se rechaza, el gasto es de quien compró y no se registra en el libro de Papá. 22023 si ya se reenvió o no está rechazada; P0002 si no existe; 42501 si no es quien compró.
+      x-roles: [dueno, coadministrador, familiar]
+      x-escribe: true
+      x-solo-local: true
+      x-fase: 8
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: ["p_solicitud", "p_justificacion"]
+              properties:
+                p_solicitud: {type: string, format: uuid}
+                p_justificacion: {type: string, minLength: 3, maxLength: 200}
+            example: {"p_solicitud": "a7300000-0000-4000-8000-0000000013d1", "p_justificacion": "Era para la cena de la semana"}
+      responses:
+        '200':
+          description: Id de la solicitud reenviada (intento 2).
+          content:
+            application/json:
+              schema: {type: string, format: uuid}
+              example: "a7300000-0000-4000-8000-0000000013d2"
+        '400':
+          $ref: '#/components/responses/ReglaAlimentacion'
+        '401':
+          $ref: '#/components/responses/SinSesion'
+        '403':
+          $ref: '#/components/responses/Prohibido'
   /rest/v1/rpc/ali_marcar_comprada:
     post:
       tags: [Base de datos]

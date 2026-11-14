@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../diseno/diseno.dart';
 import '../../../nucleo/contratos/roles.dart';
+import '../casos_uso/servicio_alimentacion.dart';
 import '../datos/modelos.dart';
 import '../estado/proveedores.dart';
 
@@ -86,6 +87,7 @@ class _Estado extends ConsumerState<PantallaHistorialCompleto> {
                 return ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
+                    const _ReenviosRechazados(),
                     Text(
                       'Solo precios reales de compra (el precio estimado no entra).',
                       style: v.lectura(tamano: 14, color: v.textoTenue),
@@ -297,4 +299,98 @@ class _Seccion extends StatelessWidget {
       ...hijos,
     ],
   );
+}
+
+/// Mis compras de Papá rechazadas por el albacea que puedo reenviar una vez
+/// con justificación. Si se rechazan otra vez, el gasto es mío.
+class _ReenviosRechazados extends ConsumerWidget {
+  const _ReenviosRechazados();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final v = ValoresDiseno.de(context);
+    return ref.watch(solicitudesRechazadasMiasProvider).maybeWhen(
+      data: (lista) {
+        if (lista.isEmpty) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Rechazadas por el albacea', style: v.lectura(tamano: 16, color: v.texto)),
+              Text(
+                'Puedes reenviar cada una una vez, con una justificación. Si se rechaza otra vez, el gasto es tuyo.',
+                style: v.lectura(tamano: 13, color: v.textoTenue),
+              ),
+              for (final s in lista)
+                ListTile(
+                  key: Key('reenviar_${s.id}'),
+                  contentPadding: EdgeInsets.zero,
+                  title: Text('${s.ingrediente} · \$${(s.montoCentavos / 100).toStringAsFixed(2)}'),
+                  trailing: TextButton(
+                    onPressed: () => _reenviar(context, ref, s),
+                    child: const Text('Reenviar'),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+      orElse: () => const SizedBox.shrink(),
+    );
+  }
+
+  Future<void> _reenviar(BuildContext context, WidgetRef ref, SolicitudPago s) async {
+    final texto = TextEditingController();
+    final error = ValueNotifier<String?>(null);
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Reenviar: ${s.ingrediente}'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: texto,
+              maxLength: 200,
+              decoration: const InputDecoration(labelText: 'Justificación (3 a 200 caracteres)'),
+            ),
+            ValueListenableBuilder<String?>(
+              valueListenable: error,
+              builder: (_, m, _) => m == null
+                  ? const SizedBox.shrink()
+                  : Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(m, key: const Key('error_reenvio')),
+                    ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancelar')),
+          FilledButton(
+            onPressed: () async {
+              try {
+                await ref.read(servicioAlimentacionProvider).reenviarSolicitud(
+                      s.id,
+                      justificacion: texto.text,
+                    );
+                ref.read(versionAlimentacionProvider.notifier).state++;
+                if (ctx.mounted) Navigator.of(ctx).pop();
+              } on ArgumentError catch (e) {
+                error.value = '${e.message}';
+              } on PermisoDenegado {
+                error.value = 'Solo quien compró puede reenviarla.';
+              } catch (_) {
+                error.value = 'No se pudo reenviar. Ya se reenvió o inténtalo más tarde.';
+              }
+            },
+            child: const Text('Reenviar'),
+          ),
+        ],
+      ),
+    );
+    texto.dispose();
+    error.dispose();
+  }
 }

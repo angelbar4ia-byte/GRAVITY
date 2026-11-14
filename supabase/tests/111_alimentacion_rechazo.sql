@@ -1,4 +1,4 @@
--- Alimentación, Fase 8 v1.2 (migración 20261140): compra de Papá rechazada por el albacea y regresar compra de Papá.
+-- Alimentación, Fase 8 v1.2/v1.4 (migraciones 20261140 y 20261142): compra de Papá rechazada por el albacea (sin cuenta, sin dinero) y regresar compra de Papá.
 -- Seed: Ana dueña y albacea de Papá, Alex pareja. Libro de Papá: efectivo c6...02, banco c6...01. Cuenta de Ana: c3...02 (otro libro).
 begin;
 select pruebas.como_postgres();
@@ -27,39 +27,34 @@ select pruebas.igual(pruebas.cuenta($$select * from public.ali_solicitudes_pago 
 select pruebas.ok((select estado = 'revertida' from public.ali_solicitudes_pago where compra_id = 'a7300000-0000-4000-8000-0000000011c4'), '… queda revertida');
 select pruebas.ok((select not comprado and estado_pago = 'sin_pago' from public.ali_compras where id = 'a7300000-0000-4000-8000-0000000011c4'), '… y la compra vuelve a pendiente');
 
--- ---------------------------------------------------------------- rechazo: efectivo por omisión
+-- ---------------------------------------------------------------- rechazo: sin cuenta y sin dinero (v1.4)
 select pruebas.ok(public.ali_resolver_solicitud_pago((select id from public.ali_solicitudes_pago where compra_id = 'a7300000-0000-4000-8000-0000000011c1' and estado = 'pendiente'),
   false, null, null, 'Ya hay frijol') is null, 'El albacea rechaza sin elegir cuenta');
-select pruebas.ok((select estado_pago = 'rechazada' and cuenta_rechazo_id = 'c6000000-0000-4000-8000-000000000002' and comprado and monto_centavos = 3000
-                     from public.ali_compras where id = 'a7300000-0000-4000-8000-0000000011c1'), 'Vuelve a la cuenta de efectivo del libro de Papá por omisión');
+select pruebas.ok((select estado_pago = 'rechazada' and cuenta_rechazo_id is null and comprado and monto_centavos = 3000
+                     from public.ali_compras where id = 'a7300000-0000-4000-8000-0000000011c1'), 'La compra queda rechazada, sin cuenta asignada (ya no vuelve a efectivo de Papá)');
 select pruebas.igual(pruebas.cuenta($$select * from public.fin_movimientos where nota ilike 'Compra de la lista de Papá'$$), 0, 'No se mueve dinero');
 
--- ---------------------------------------------------------------- rechazo: otra cuenta del libro
-select pruebas.ok(public.ali_resolver_solicitud_pago((select id from public.ali_solicitudes_pago where compra_id = 'a7300000-0000-4000-8000-0000000011c2' and estado = 'pendiente'),
-  false, null, 'c6000000-0000-4000-8000-000000000001', 'Mejor de la cuenta de pensión') is null, 'El albacea rechaza y elige otra cuenta del libro');
-select pruebas.ok((select estado_pago = 'rechazada' and cuenta_rechazo_id = 'c6000000-0000-4000-8000-000000000001'
-                     from public.ali_compras where id = 'a7300000-0000-4000-8000-0000000011c2'), 'La compra usa la cuenta elegida');
-
--- ---------------------------------------------------------------- la cuenta debe ser del libro
-select pruebas.falla($$select public.ali_resolver_solicitud_pago((select id from public.ali_solicitudes_pago where compra_id = 'a7300000-0000-4000-8000-0000000011c3' and estado = 'pendiente'),
-  false, null, 'c3000000-0000-4000-8000-000000000002', 'Otra cuenta')$$, 'Una cuenta de otro libro no vale', '22023');
-select pruebas.falla($$select public.ali_resolver_solicitud_pago((select id from public.ali_solicitudes_pago where compra_id = 'a7300000-0000-4000-8000-0000000011c3' and estado = 'pendiente'),
-  false, null, gen_random_uuid(), 'Otra cuenta')$$, 'Una cuenta inexistente tampoco', '22023');
-select pruebas.ok((select estado = 'pendiente' from public.ali_solicitudes_pago where compra_id = 'a7300000-0000-4000-8000-0000000011c3'), 'La solicitud con error sigue pendiente');
+-- ---------------------------------------------------------------- rechazo: no se elige cuenta
+select pruebas.falla($$select public.ali_resolver_solicitud_pago((select id from public.ali_solicitudes_pago where compra_id = 'a7300000-0000-4000-8000-0000000011c2' and estado = 'pendiente'),
+  false, null, 'c6000000-0000-4000-8000-000000000001', 'Mejor de la cuenta de pensión')$$, 'Al rechazar no se elige cuenta', '22023');
+select pruebas.ok((select estado = 'pendiente' from public.ali_solicitudes_pago where compra_id = 'a7300000-0000-4000-8000-0000000011c2'), 'Con ese error la solicitud sigue pendiente');
+select pruebas.falla($$select public.ali_resolver_solicitud_pago((select id from public.ali_solicitudes_pago where compra_id = 'a7300000-0000-4000-8000-0000000011c2' and estado = 'pendiente'),
+  false, null, null, '')$$, 'Rechazar lleva motivo', '23514');
 select pruebas.como('alex@ejemplo.test');
 select pruebas.falla($$select public.ali_resolver_solicitud_pago((select id from public.ali_solicitudes_pago where compra_id = 'a7300000-0000-4000-8000-0000000011c3' and estado = 'pendiente'),
   false, null, null, 'No soy albacea')$$, 'La pareja no resuelve', '42501');
 
--- ---------------------------------------------------------------- sigue en el historial con su precio real
+-- ---------------------------------------------------------------- sigue en el historial, y no suma en el resumen de Papá
 select pruebas.como('ana@ejemplo.test');
-select pruebas.ok((select count(*) = 2 and sum(gasto_centavos) = 9000
+select pruebas.ok((select count(*) = 1 and sum(gasto_centavos) = 3000
                      from public.ali_historial_compras('b0000000-0000-4000-8000-000000000001', null, null, 'a7100000-0000-4000-8000-0000000011a1')
-                    where not revertida and compra_id in ('a7300000-0000-4000-8000-0000000011c1', 'a7300000-0000-4000-8000-0000000011c2')),
-  'Las dos compras rechazadas siguen en el historial con su precio real');
-select pruebas.ok((select precio_unitario_centavos = 3000 from public.ali_historial_compras('b0000000-0000-4000-8000-000000000001', null, null, 'a7100000-0000-4000-8000-0000000011a1')
-                    where compra_id = 'a7300000-0000-4000-8000-0000000011c1'), 'Con su precio unitario real');
+                    where not revertida and compra_id = 'a7300000-0000-4000-8000-0000000011c1'),
+  'La compra rechazada sigue en el historial con su precio real');
+select pruebas.ok((select sum(gasto_centavos) = 15000 from public.ali_resumen_historial('b0000000-0000-4000-8000-000000000001', null, null, 'producto')
+                    where clave = 'a7100000-0000-4000-8000-0000000011a1'),
+  'Y no suma en el resumen de Papá (solo las dos solicitudes pendientes: 6000 + 9000)');
 
 -- ---------------------------------------------------------------- regresar una rechazada limpia la cuenta
-select pruebas.ok(public.ali_regresar_compra('a7300000-0000-4000-8000-0000000011c2', 'La volví a pensar') is not null, 'La rechazada se puede regresar');
-select pruebas.ok((select cuenta_rechazo_id is null and not comprado from public.ali_compras where id = 'a7300000-0000-4000-8000-0000000011c2'), '… y se limpia la cuenta de rechazo');
+select pruebas.ok(public.ali_regresar_compra('a7300000-0000-4000-8000-0000000011c1', 'La volví a pensar') is not null, 'La rechazada se puede regresar');
+select pruebas.ok((select cuenta_rechazo_id is null and not comprado from public.ali_compras where id = 'a7300000-0000-4000-8000-0000000011c1'), '… y queda pendiente sin cuenta');
 rollback;

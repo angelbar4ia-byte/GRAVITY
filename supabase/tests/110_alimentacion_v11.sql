@@ -169,8 +169,8 @@ select pruebas.ok((select estado_pago = 'rechazada' and comprado and monto_centa
                      from public.ali_compras where id = 'a7300000-0000-4000-8000-0000000010c1'), 'La compra solo cambia su estado de pago: sigue marcada, con su monto y su tienda');
 select pruebas.ok((select count(*) = 1 and bool_and(precio_unitario_centavos = 550 and gasto_centavos = 1100)
                      from public.ali_historial_compras('b0000000-0000-4000-8000-000000000001', null, null, 'a7100000-0000-4000-8000-0000000010a2') where not revertida), 'La compra rechazada sigue en ali_historial_compras con su precio real');
-select pruebas.ok((select sum(compras) >= 1 and sum(gasto_centavos) >= 1100 from public.ali_resumen_historial('b0000000-0000-4000-8000-000000000001', null, null, 'producto')
-                    where clave = 'a7100000-0000-4000-8000-0000000010a2'), '… y cuenta en el resumen');
+select pruebas.ok(not exists (select 1 from public.ali_resumen_historial('b0000000-0000-4000-8000-000000000001', null, null, 'producto')
+                    where clave = 'a7100000-0000-4000-8000-0000000010a2'), '… pero no suma en el resumen de Papá (es gasto de quien compró, v1.4)');
 select pruebas.ok((select precio_real_centavos = 550 from public.ali_ingredientes where id = 'a7100000-0000-4000-8000-0000000010a2'), 'El precio real del ingrediente se conserva');
 
 -- ---------------------------------------------------------------- porciones recomendadas por persona (menú de dueño y pareja)

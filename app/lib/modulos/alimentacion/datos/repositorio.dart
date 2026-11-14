@@ -148,6 +148,16 @@ abstract interface class RepositorioAlimentacion {
   /// Cuentas del libro de Papá para aprobar (solo nombres, sin saldos).
   Future<List<CuentaPago>> cuentasDelLibroDePapa();
 
+  /// Solicitudes de reembolso rechazadas de compras que hizo esta persona y que
+  /// todavía puede reenviar una vez (v1.4).
+  Future<List<SolicitudPago>> solicitudesRechazadasMias();
+
+  /// Reenvía una vez la solicitud rechazada con [justificacion] (quien compró).
+  Future<void> reenviarSolicitud({
+    required String solicitudId,
+    required String justificacion,
+  });
+
   /// `ali_resolver_solicitud_pago`: aprueba con [cuentaPagoId] o rechaza con
   /// [motivo].
   Future<void> resolverSolicitud({
@@ -320,6 +330,13 @@ class RepositorioAlimentacionEnMemoria implements RepositorioAlimentacion {
   Future<bool> esAlbacea() async => false;
   @override
   Future<List<SolicitudPago>> solicitudesPendientes() async => const [];
+  @override
+  Future<List<SolicitudPago>> solicitudesRechazadasMias() async => const [];
+  @override
+  Future<void> reenviarSolicitud({
+    required String solicitudId,
+    required String justificacion,
+  }) async {}
   @override
   Future<List<CuentaPago>> cuentasDelLibroDePapa() async => const [];
   @override
@@ -740,6 +757,13 @@ class RepositorioAlimentacionSinServidor implements RepositorioAlimentacion {
   Future<bool> esAlbacea() async => false;
   @override
   Future<List<SolicitudPago>> solicitudesPendientes() async => const [];
+  @override
+  Future<List<SolicitudPago>> solicitudesRechazadasMias() async => const [];
+  @override
+  Future<void> reenviarSolicitud({
+    required String solicitudId,
+    required String justificacion,
+  }) async => _no();
   @override
   Future<List<CuentaPago>> cuentasDelLibroDePapa() async => const [];
   @override
