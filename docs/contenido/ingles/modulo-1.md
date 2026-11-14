@@ -1,16 +1,50 @@
 # Módulo 1 · Rutinas, hábitos y salud (semanas 1 a 4)
 
-> Contenido propio de GRAVITY, redactado a partir del Anexo A (diseño de Hábitos, §5.3). Versión 0.1 para revisión del dueño (14/nov/2026).
-> Cada semana: lunes a viernes, una lección por día, y el sábado la mini prueba. El domingo es inglés ligero (opcional).
+> Contenido propio de GRAVITY, redactado a partir del Anexo A (Hábitos §5.3). **Versión 0.2** para revisión del dueño (14/nov/2026).
 > Mientras no se apruebe la fuente de audio, las escuchas se leen como texto.
 
-**Enfoques por día (Anexo A.3):** lunes gramática y vocabulario · martes escucha · miércoles pronunciación · jueves lectura y escritura · viernes conversación guiada · sábado repaso y mini prueba · domingo inglés ligero.
+---
 
-**Nota sobre el viernes:** el Anexo A pide conversación con IA. En esta etapa (5a) no se usa IA: la lección trae un guion para practicar en voz alta y un modelo de respuestas. La conversación con IA queda para el bloque donde se conecte la IA.
+## Cómo funciona el módulo
+
+### Tiempo diario (60 minutos, lunes a sábado)
+
+| Bloque | Min | Qué se hace |
+|---|---|---|
+| **Principal** (en casa) | 35 | Repaso espaciado (5) · lección nueva (10) · pronunciación en voz alta (8) · producción escrita o hablada (12) |
+| **Traslado** (camino al trabajo, solo audio o lectura en voz alta) | 25 | Escucha del texto del día (10) · repetición por frases (10) · repaso de tarjetas (5) |
+
+- El **domingo** es de descanso con inglés ligero opcional (15 min, versículo o canción). Cuenta para la racha, pero no es obligatorio.
+- Si un día no hay traslado, el bloque se sustituye por la escucha y la pronunciación en casa. El total sigue siendo 60 minutos.
+- Cada hora de estudio seguida, la app propone una pausa.
+
+### Constancia (lo que hace que el hábito sea serio)
+
+- **Racha:** un día cuenta cuando completas el bloque principal y el traslado (o su sustituto).
+- **Día de gracia:** una vez por semana puedes saltar un día sin perder la racha. No se acumula.
+- **Si pierdes un día:** no se intenta recuperar con dos bloques seguidos. Al día siguiente se hace la lección que tocaba y el repaso espaciado de las palabras pendientes.
+- **Meta semanal (lunes):** escribe tres números: días completos (meta 6 de 6, con el día de gracia contado aparte), tarjetas de vocabulario repasadas (meta 60) y minutos de estudio (meta 360: 6 días de 60 minutos).
+- **Revisión (domingo, 5 minutos):** compara tus números con la meta, escribe una frase sobre lo que te costó y una sobre lo que mejoró.
+
+### Repaso espaciado
+
+- Cada lección deja de **6 a 8 tarjetas** (palabra en inglés, español y un ejemplo).
+- El repaso del día siguiente toma 3 tarjetas de la lección anterior y 2 de la semana.
+- Si fallas una tarjeta, vuelve al repaso del día siguiente. Si la aciertas dos veces seguidas, se aleja.
+- La app calcula los intervalos; aquí solo se indican las palabras de cada lección.
+
+### Enfoques por día (Anexo A.3)
+
+Lunes gramática y vocabulario · martes escucha · miércoles pronunciación · jueves lectura y escritura · viernes conversación guiada · sábado repaso y mini prueba · domingo descanso e inglés ligero.
+
+**Viernes:** el Anexo A pide conversación con IA. En esta etapa no hay IA: la lección trae un guion para practicar en voz alta y un modelo de respuestas.
 
 ---
 
 ## Semana 1 · Presente simple: rutinas
+
+**Meta de la semana:** hablar y escribir tu rutina con el presente simple.
+**Lo sabrás cuando:** escribas tres oraciones sin error de *-s* y respondas la mini prueba con 4 de 5.
 
 ### Lección 1 · Lunes · Gramática y vocabulario
 
@@ -21,7 +55,7 @@
 - *he / she / it* + verbo + **-s**: *She works at night.*
 - Preguntas con *do* o *does*: *Do you exercise? Does he sleep well?*
 
-**Vocabulario**
+**Vocabulario para tarjetas (8)**
 
 | Inglés | Español |
 |---|---|
@@ -42,23 +76,25 @@
 3. Ordena: *you / early / wake up / do?* **→ Do you wake up early?**
 4. My brother ___ (exercise / exercises) in the morning. **→ exercises**
 
+**Error común:** olvidar la *-s* con *he, she, it*. *She goes*, no ~~She go~~. Y con *don't / doesn't*: *He doesn't go*, no ~~He doesn't goes~~.
+
 **Tarea:** escribe tres oraciones sobre tu mañana.
 
 ---
 
-### Lección 2 · Martes · Escucha (texto por ahora)
-
-**Texto para leer en voz alta o en silencio:**
+### Lección 2 · Martes · Escucha (texto)
 
 > "Hi, I'm Lucía. On weekdays I wake up at 6:30. I don't have coffee; I drink water. My partner goes to the gym at 7. We have breakfast at 7:30, and then I go to work by bus."
 
 **Preguntas**
 1. ¿A qué hora se despierta Lucía? **→ 6:30**
-2. ¿Toma café? **→ No. (Toma agua.)**
+2. ¿Toma café? **→ No. Toma agua.**
 3. ¿Cómo va al trabajo? **→ En autobús (by bus).**
 4. ¿Quién va al gimnasio? **→ Su pareja (her partner).**
 
-**Tarea:** lee el texto dos veces y repite en voz alta las oraciones que empiezan con *I*.
+**Repetición por frases (traslado):** repite cada oración de *I* en voz alta, sin mirar el texto.
+
+**Tarjetas de hoy:** *partner, gym, weekday, coffee, bus* (y repaso de la lección 1).
 
 ---
 
@@ -66,16 +102,16 @@
 
 **Objetivo:** pronunciar bien la **-s** de la tercera persona.
 
-El final se pronuncia de tres maneras:
 - **/s/** después de sonidos sordos: *wakes, drinks, cooks*
 - **/z/** después de sonidos sonoros o vocales: *goes, plays, studies, does*
 - **/ɪz/** después de *s, sh, ch, x, z* (se añade una sílaba): *brushes, watches, washes*
 
-**Ejercicio:** clasifica estas palabras (escribe s, z o iz):
-*sleeps, wakes, brushes, studies, does*
+**Ejercicio:** clasifica estas palabras (escribe s, z o iz): *sleeps, wakes, brushes, studies, does*
 **→** sleeps **s** · wakes **s** · brushes **iz** · studies **z** · does **z**
 
-**Tarea:** lee en voz alta, despacio, estas tres oraciones: *She wakes up early. He watches the news. It goes well.* Compara tu lectura con esta versión escrita y marca las palabras que dudaste.
+**Tarea:** lee en voz alta, despacio: *She wakes up early. He watches the news. It goes well.* Marca las palabras que dudaste.
+
+**Error común:** decir *he watch* sin la *-es*. Recuerda: *watch → watches*.
 
 ---
 
@@ -87,47 +123,41 @@ El final se pronuncia de tres maneras:
 
 **Escribe 3 líneas** sobre tu mañana.
 
-**Lista para revisar tu texto**
+**Revisión de tu texto**
 - ¿Cada oración tiene sujeto y verbo?
 - ¿Usas **-s** con *he, she, it*?
-- ¿Empiezas cada oración con mayúscula y terminas con punto?
+- ¿Cada oración empieza con mayúscula y termina con punto?
 
 ---
 
-### Lección 5 · Viernes · Conversación guiada (guion, sin IA)
-
-**Practica en voz alta, con alguien o contigo mismo.**
+### Lección 5 · Viernes · Conversación guiada (guion)
 
 - A: *What time do you wake up?* → B: *I wake up at ___.*
 - A: *Do you exercise?* → B: *Yes, I do. / No, I don't.*
 - A: *What do you usually have for breakfast?* → B: *I usually have ___.*
 
-**Modelo de respuestas:** *I wake up at 6:30. Yes, I do. I usually have eggs and fruit.*
+**Modelo:** *I wake up at 6:30. Yes, I do. I usually have eggs and fruit.*
 
 ---
 
-### Mini prueba · Sábado · Semana 1
+### Mini prueba · Sábado · Semana 1 (se aprueba con 4 de 5)
 
 1. He ___ (wake / wakes) up at seven. **→ wakes**
 2. We ___ (don't / doesn't) watch TV in the morning. **→ don't**
-3. ¿Cómo se escribe la pregunta: *Tú haces ejercicio?* **→ Do you exercise?**
-4. Escribe la **-s** correcta: *she bru___ her teeth* (sonido /ɪz/). **→ brushes**
-5. Completa: *I ___ breakfast at eight.* (desayunar) **→ have**
+3. ¿Cómo se escribe la pregunta *¿Tú haces ejercicio?* **→ Do you exercise?**
+4. *She bru___ her teeth* (sonido /ɪz/). **→ brushes**
+5. *I ___ breakfast at eight.* **→ have**
 
-*Aprobado con 80 % o más (4 de 5).*
-
-### Inglés ligero · Domingo · Semana 1 (opcional)
-
-Lee en inglés, en voz alta, un versículo corto (King James, dominio público):
-> *"But his delight is in the law of the LORD; and in his law doth he meditate day and night."* (Psalm 1:2)
+**Si fallas:** cada error vuelve como tarjeta del repaso del lunes siguiente.
 
 ---
 
 ## Semana 2 · Adverbios de frecuencia y expresiones de tiempo
 
-### Lección 6 · Lunes · Gramática y vocabulario
+**Meta de la semana:** decir con qué frecuencia haces cada cosa, con el orden correcto.
+**Lo sabrás cuando:** tu diario tenga al menos dos adverbios bien colocados y la mini prueba quede en 4 de 5.
 
-**Objetivo:** decir con qué frecuencia haces algo.
+### Lección 6 · Lunes · Gramática y vocabulario
 
 **Adverbios de frecuencia** (de más a menos frecuente): *always* (siempre), *usually* (normalmente), *often* (a menudo), *sometimes* (a veces), *rarely* (casi nunca), *never* (nunca).
 
@@ -135,13 +165,17 @@ Lee en inglés, en voz alta, un versículo corto (King James, dominio público):
 - Antes del verbo principal: *I usually walk. She never skips breakfast.*
 - Después de *to be*: *He is always tired in the morning.*
 
-**Expresiones de tiempo** (van al inicio o al final): *every day* (todos los días), *on Mondays* (los lunes), *once a week* (una vez a la semana), *twice a month* (dos veces al mes).
+**Expresiones de tiempo** (al inicio o al final de la oración): *every day, on Mondays, once a week, twice a month.*
 
 **Ejercicios**
 1. Ordena: *I / often / drink / coffee.* **→ I often drink coffee.**
 2. Ordena: *He is / never / late.* **→ He is never late.**
 3. ¿Cuál es correcta? *a) She goes never to bed late. b) She never goes to bed late.* **→ b**
 4. Traduce: *Voy al gimnasio dos veces a la semana.* **→ I go to the gym twice a week.**
+
+**Error común:** poner el adverbio después del verbo: ~~She goes never~~. Va antes: *She never goes*.
+
+**Tarjetas de hoy:** *always, usually, often, sometimes, rarely, never* (6).
 
 ---
 
@@ -154,11 +188,13 @@ Lee en inglés, en voz alta, un versículo corto (King James, dominio público):
 2. ¿Salta el desayuno? **→ No, nunca.**
 3. ¿Cuándo corre? **→ A veces, los sábados.**
 
+**Tarjetas de hoy:** *warm-up, strength training, energy, skip, personal trainer* (5) y repaso de la lección 6.
+
 ---
 
 ### Lección 8 · Miércoles · Pronunciación: sílaba tónica
 
-**Objetivo:** poner el acento en la sílaba correcta. Muchas palabras de salud se entienden mejor así.
+Muchas palabras de salud se entienden mejor cuando la sílaba fuerte está donde debe.
 
 | Palabra | Sílaba tónica |
 |---|---|
@@ -168,13 +204,13 @@ Lee en inglés, en voz alta, un versículo corto (King James, dominio público):
 | **BREAK**-fast | 1 |
 | to-**MOR**-row | 2 |
 
-**Ejercicio:** di cada palabra en voz alta y marca la sílaba que suena más fuerte.
+**Ejercicio:** di cada palabra en voz alta y marca la sílaba más fuerte. Después di cada una en una frase.
+
+**Error común:** poner el acento igual en todas las sílabas. Una sílaba fuerte, las demás débiles.
 
 ---
 
 ### Lección 9 · Jueves · Lectura y escritura: diario
-
-**Modelo**
 
 > I usually walk after dinner. I rarely eat sweets, but sometimes I have fruit. I never skip breakfast on Mondays.
 
@@ -190,37 +226,34 @@ Lee en inglés, en voz alta, un versículo corto (King James, dominio público):
 
 ---
 
-### Mini prueba · Sábado · Semana 2
+### Mini prueba · Sábado · Semana 2 (se aprueba con 4 de 5)
 
 1. I ___ miss my breakfast. (never / always) **→ never**
 2. She ___ on time. (a: always is / b: is always) **→ b (is always)**
 3. Ordena: *we / on Fridays / cook / usually.* **→ We usually cook on Fridays.**
-4. ¿Cuál es el acento de *breakfast*? **→ En la primera sílaba (BREAK-fast).**
+4. ¿En qué sílaba va el acento de *breakfast*? **→ En la primera (BREAK-fast).**
 5. Traduce: *Casi nunca tomo refresco.* **→ I rarely drink soda.**
 
-*Aprobado con 80 % o más.*
-
-### Inglés ligero · Domingo · Semana 2 (opcional)
-
-> *"Keep thy heart with all diligence; for out of it are the issues of life."* (Proverbs 4:23, King James)
+**Revisión de la semana 2 (domingo):** tus números contra la meta. Si fallas más de dos tarjetas, la semana 3 empieza con 15 minutos de repaso extra en el bloque principal.
 
 ---
 
 ## Semana 3 · Presente continuo y comparación con el presente simple
 
-### Lección 11 · Lunes · Gramática y vocabulario
+**Meta de la semana:** distinguir lo que haces siempre de lo que pasa ahora.
+**Lo sabrás cuando:** en la mini prueba distingas los dos tiempos en 4 de 5 oraciones.
 
-**Objetivo:** hablar de lo que pasa ahora.
+### Lección 11 · Lunes · Gramática y vocabulario
 
 **Forma:** *am / is / are* + verbo con **-ing**
 - *I am walking. She is cooking. They are resting.*
-- Negativa: *I am not (I'm not) watching TV.*
+- Negativa: *I am not watching TV. (I'm not watching TV.)*
 
 **Ortografía del -ing:** *run → running* (dobla la consonante), *make → making* (quita la *e*), *lie → lying*.
 
 **Cuándo se usa:** *now, at the moment, right now, these days.*
 
-**Presente simple o continuo**
+**Simple o continuo**
 - Rutina: *I walk every day.* (simple)
 - Ahora: *I am walking now.* (continuo)
 
@@ -228,7 +261,11 @@ Lee en inglés, en voz alta, un versículo corto (King James, dominio público):
 1. Look! She ___ (run) in the park. **→ is running**
 2. I ___ (not / watch) TV now. **→ am not watching**
 3. They are ___ (make) dinner. **→ making**
-4. ¿Simple o continuo? *Every morning I ___ (drink) coffee.* **→ simple: drink**
+4. Every morning I ___ (drink) coffee. (simple o continuo) **→ drink (simple)**
+
+**Error común:** usar el continuo para una rutina: ~~I am drinking coffee every morning~~. Para rutinas, presente simple.
+
+**Tarjetas de hoy:** *right now, at the moment, these days, rest, cook, homework* (6).
 
 ---
 
@@ -245,17 +282,15 @@ Lee en inglés, en voz alta, un versículo corto (King James, dominio público):
 
 ### Lección 13 · Miércoles · Pronunciación: el sonido -ing
 
-**Objetivo:** en *-ing* el final es **/ɪŋ/**, sin sonido de *g*.
+En *-ing* el final es **/ɪŋ/**, sin sonido de *g*.
 
-Practica en parejas de palabras: *walk / walking, cook / cooking, sleep / sleeping.* Di la segunda palabra sin pronunciar la *g* final.
+Practica en parejas: *walk / walking, cook / cooking, sleep / sleeping.* Di la segunda palabra sin *g* final.
 
-**Frases para leer deprisa:** *I'm walking. We're cooking. They're sleeping.* (*I'm* = *I am*, *we're* = *we are*.)
+**Frases para leer deprisa:** *I'm walking. We're cooking. They're sleeping.*
 
 ---
 
 ### Lección 14 · Jueves · Lectura y escritura: diario
-
-**Modelo**
 
 > Right now I'm sitting at my desk and I'm drinking water. Usually I work until noon, but today I'm finishing early. I'm feeling good.
 
@@ -271,31 +306,28 @@ Practica en parejas de palabras: *walk / walking, cook / cooking, sleep / sleepi
 
 ---
 
-### Mini prueba · Sábado · Semana 3
+### Mini prueba · Sábado · Semana 3 (se aprueba con 4 de 5)
 
 1. Mi hermana ___ (cook) ahora. **→ is cooking**
 2. ¿Cuál es correcta? *a) I am know the answer. b) I know the answer.* **→ b**
-3. Escribe el -ing de *run*. **→ running**
-4. *Every day I ___ (go) to the gym.* **→ go**
-5. *At the moment we ___ (not / sleep).* **→ aren't sleeping**
-
-*Aprobado con 80 % o más.*
-
-### Inglés ligero · Domingo · Semana 3 (opcional)
-
-> *"Be still, and know that I am God."* (Psalm 46:10, King James)
+3. El -ing de *run*. **→ running**
+4. Every day I ___ (go) to the gym. **→ go**
+5. At the moment we ___ (not / sleep). **→ aren't sleeping**
 
 ---
 
 ## Semana 4 · Verbos de estado, salud y prueba de módulo
 
+**Meta de la semana:** hablar de cómo te sientes con los verbos correctos.
+**Lo sabrás cuando:** apruebes la prueba de módulo con 80 % o más en cada habilidad.
+
 ### Lección 16 · Lunes · Gramática y vocabulario
 
 **Verbos de estado** (no se usan en continuo): *like, love, hate, want, need, know, believe, understand, seem, have* (cuando significa tener).
 - Correcto: *I know the answer.* Incorrecto: ~~I am knowing the answer.~~
-- Correcto: *She has a headache.* (presente simple con *have*)
+- Correcto: *She has a headache.*
 
-**Vocabulario de salud**
+**Vocabulario de salud para tarjetas (8)**
 
 | Inglés | Español |
 |---|---|
@@ -307,13 +339,14 @@ Practica en parejas de palabras: *walk / walking, cook / cooking, sleep / sleepi
 | medicine | medicina |
 | doctor | doctor |
 | sleep badly | dormir mal |
-| feel well / feel sick | sentirse bien / sentirse mal |
 
 **Ejercicios**
 1. I ___ (know / am knowing) the answer. **→ know**
 2. She ___ (is having / has) a headache. **→ has**
-3. I ___ (feel / am feeling) tired today. **→ feel** (*feel* aquí describe el estado; se mantiene en simple)
-4. Traduce: *Me duele la cabeza.* **→ I have a headache.**
+3. Traduce: *Me duele la cabeza.* **→ I have a headache.**
+4. Traduce: *Necesito dormir más.* **→ I need to sleep more.**
+
+**Error común:** *I am having a headache* se entiende, pero en el módulo la forma base es *I have a headache*. Usa el presente simple.
 
 ---
 
@@ -341,13 +374,11 @@ Practica en parejas de palabras: *walk / walking, cook / cooking, sleep / sleepi
 | **HEAD**-ache | 1 |
 | **STOM**-ach-ache | 1 |
 
-**Ejercicio:** di las cuatro palabras en voz alta y marca la sílaba fuerte. Después di cada una en una frase: *I need a doctor. I need medicine.*
+**Ejercicio:** di cada palabra en una frase: *I need a doctor. I need medicine.*
 
 ---
 
 ### Lección 19 · Jueves · Lectura y escritura: cómo me siento
-
-**Modelo**
 
 > This week I feel tired in the morning. I know I don't sleep enough. I want to go to bed earlier and I need more water. I think I am getting better.
 
@@ -355,7 +386,7 @@ Practica en parejas de palabras: *walk / walking, cook / cooking, sleep / sleepi
 
 ---
 
-### Lección 20 · Viernes · Conversación guiada (guion: paciente y doctor)
+### Lección 20 · Viernes · Conversación guiada (paciente y doctor)
 
 - Doctor: *How do you feel?* → Tú: *I feel ___.*
 - Doctor: *Do you sleep well?* → Tú: *No, I don't. / Yes, I do.*
@@ -366,9 +397,10 @@ Practica en parejas de palabras: *walk / walking, cook / cooking, sleep / sleepi
 
 ### Prueba de módulo · Sábado · Semana 4
 
-Se aprueba con **80 % o más** en cada habilidad. Si no, se refuerza una semana antes del módulo 2.
+Se aprueba con **80 % o más en cada habilidad**. Si no, la semana siguiente vuelve a la lección que falló antes de avanzar al módulo 2.
 
 **Escucha (texto):** responde 3 preguntas sobre un texto de 4 oraciones de salud.
+
 **Lectura:** responde 4 preguntas sobre este texto:
 
 > Marco works in an office. He usually sits all day, so he walks during lunch. He has a headache when he doesn't drink water, so he always keeps a bottle on his desk. He wants to be fit by December.
@@ -378,15 +410,23 @@ Se aprueba con **80 % o más** en cada habilidad. Si no, se refuerza una semana 
 3. ¿Qué tiene siempre en el escritorio? **→ Una botella de agua.**
 4. ¿Qué quiere lograr? **→ Estar en forma para diciembre.**
 
-**Habla:** graba (o di en voz alta) un monólogo de 60 segundos sobre tu rutina de salud. Autoevalúate con esta lista: uso del presente simple y continuo, uso de -s, frecuencia.
-**Escritura:** escribe entre 60 y 80 palabras sobre tu rutina de salud de esta semana. Corrige con la lista del jueves.
+**Habla:** di en voz alta un monólogo de 60 segundos sobre tu rutina de salud. Autoevalúate: presente simple y continuo, *-s*, frecuencia.
+
+**Escritura:** escribe entre 60 y 80 palabras sobre tu rutina de salud de esta semana. Revisa con la lista de la lección 4.
 
 ---
 
 ## Resumen del módulo
 
-- 20 lecciones, 4 mini pruebas (semanas 1 a 3), 1 prueba de módulo (semana 4).
-- Gramática: presente simple, adverbios de frecuencia, presente continuo, verbos de estado.
-- Vocabulario: rutinas, salud, frecuencia.
-- Pronunciación: final -s, sílaba tónica, sonido -ing.
-- Interfaz en inglés al 10 % (Anexo A.5): botones y etiquetas de navegación (*Today, Goals, Streak*). Esa parte se construye después.
+- **20 lecciones**, **3 mini pruebas** (semanas 1 a 3) y **1 prueba de módulo** (semana 4).
+- **Tiempo:** 60 minutos al día, de lunes a sábado. Domingo de descanso.
+- **Constancia:** racha, un día de gracia por semana, metas semanales y revisión del domingo.
+- **Vocabulario:** unas 60 tarjetas, con repaso espaciado.
+- **Gramática:** presente simple, adverbios de frecuencia, presente continuo, verbos de estado.
+- **Pronunciación:** final *-s*, sílaba tónica, sonido *-ing*.
+- **Interfaz en inglés al 10 %** (Anexo A.5): botones de navegación, *Today, Goals, Streak*. Se construye después.
+
+**Para revisar por ti:**
+1. ¿Te parecen 60 minutos al día, de lunes a sábado? Si prefieres 5 días, quito un día y el módulo sigue igual.
+2. ¿La meta semanal de 60 tarjetas y 330 minutos es razonable para empezar?
+3. ¿El día de gracia es una vez por semana?
