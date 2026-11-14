@@ -9,4 +9,5 @@
 ## 7. Pendiente de construir
 
 - Simulacros TOEIC y Cambridge con el formato oficial (bloqueado por el punto 3).
-- Elegir el examen Cambridge por nivel: B1 Preliminary para el bimestre 1 y B2 First para el bimestre 3, según el dueño.
+- Cambridge B1 Preliminary para el bimestre 1: **elegido** (14/nov/2026). Bimestre 3: pendiente de decisión.
+- Examen TOEFL: revisado (ver `formatos-oficiales.md`, sección 5). Entra solo si el objetivo es académico.

@@ -58,14 +58,30 @@ Fuente: [Cambridge English · B2 First, formato del examen](https://www.cambridg
 
 *Los pesos de Writing, Listening y Speaking no se confirmaron en la página consultada; solo se confirmó el 40 % de Reading and Use of English.*
 
-## 5. Uso en GRAVITY
+## 5. TOEFL iBT (revisado)
+
+Fuente: [TOEFL iBT Test: 2026 Update, Test Blueprint and Specifications (ETS, PDF)](https://www.ets.org/content/dam/ets-org/pdfs/toefl/toefl-ibt-test-specifications-2026.pdf). Página de referencia: [ETS · TOEFL iBT](https://www.ets.org/toefl/test-takers/ibt/about/content.html). El documento advierte que las especificaciones "están sujetas a revisiones menores" hasta el lanzamiento oficial.
+
+| Sección | Preguntas o tareas | Tiempo estimado (según el documento) | Notas |
+|---|---|---|---|
+| Reading | 50 (30 de procesamiento de textos académicos y 20 de comprensión de textos variados) | 18 a 21 min en el módulo de ruta; módulo inferior 9 min; superior 21 min | Adaptativo en dos etapas |
+| Listening | 47 (25 a 29 de diálogos y 18 a 22 de charlas) | 18 min en el módulo de ruta; inferior 7 min; superior 11 min | Adaptativo en dos etapas |
+| Writing | 12 (10 de reconstrucción de oraciones y 2 de respuestas escritas) | 23 min | Lineal |
+| Speaking | 11 preguntas en formato de entrevista | 8 min | Lineal |
+
+- **Total de ítems:** 120. **Tiempo mínimo estimado:** 1 hora 23 minutos. **Máximo:** 1 hora 29 minutos.
+- **Niveles del marco:** el documento indica que la prueba cubre de A1 a C2.
+- **Enfoque:** académico y de la vida diaria, con más peso en contextos educativos. Para inglés de trabajo, TOEIC es el examen más cercano al objetivo.
+
+## 6. Uso en GRAVITY
 
 - **Simulacros TOEIC:** reproducen el orden y el número de preguntas de las secciones 1 y 2. Los simulacros se hacen con material de práctica, no con los exámenes reales.
-- **Simulacros Cambridge:** según el examen elegido por el dueño: B1 Preliminary en el bimestre 1 y B2 First en el bimestre 3, o como se decida.
+- **Simulacros Cambridge:** **B1 Preliminary en el bimestre 1** (decisión del 14/nov/2026, porque su nivel es B1, la meta de ese bimestre). El bimestre 3 queda por decidir entre B2 First y otro examen; el dueño puede cambiarlo.
 - **Los materiales de muestra** de ETS y de Cambridge son de uso personal. No se redistribuyen en el repositorio: se consultan y se practican.
 - **La rúbrica interna** (`rubrica-evaluacion.md`) no cambia. Los simulacros se califican con esa rúbrica; el formato oficial no sustituye la evaluación de GRAVITY.
 
-## 6. Pendiente
+## 7. Pendiente
 
 - Confirmar los pesos de Writing, Listening y Speaking de B2 First si el dueño decide usar el examen.
 - Construir los simulacros con este formato (desbloqueado: ya no depende de la red).
+- Decidir si TOEFL entra en el plan (solo si el objetivo es académico o universitario).
