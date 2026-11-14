@@ -19,7 +19,7 @@
 ## 3. Decisión registrada
 
 - **Examen del bimestre:** ambos, en **modo de dos alternados** (`guia-multiexamen.md`, sección 3).
-- **Principal:** Cambridge B2 First (la opción propuesta en `cambridge-y-toefl.md` para el bimestre 3). **Supuesto de trabajo:** el dueño no indicó cuál es principal; si prefiere TOEFL, se invierten los roles.
+- **Principal:** Cambridge B2 First, confirmado por el dueño.
 - **Secundario:** TOEFL iBT, un simulacro cada cuatro semanas (semanas 24 y 28 del calendario de 28 semanas).
 - **Pendiente:** aprobación de la fuente de audio para Listening de los dos exámenes (hasta entonces, el Listening se presenta en texto).
 
