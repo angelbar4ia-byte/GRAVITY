@@ -17,8 +17,8 @@
 | B1-7 | Writing, Parte 1 · correo de cuatro puntos | Writing | 1 tarea |
 | B1-8 | Writing, Parte 2 · artículo o historia | Writing | 1 tarea |
 | B1-9 | Listening, Parte 1 · opción múltiple con dibujos | Listening | 3 |
-| B1-10 | Listening, Parte 2 · frases incompletas | Listening | 4 |
-| B1-11 | Listening, Parte 3 · opción múltiple | Listening | 3 |
+| B1-10 | Listening, Parte 3 · notas con huecos | Listening | 4 |
+| B1-11 | 1 B · 2 A · 3 C | Escucha la frase clave del hablante: "after five", "opposite the park", "only ten minutes from home". Las opciones incorrectas repiten una palabra del diálogo sin responder la pregunta. |
 | B1-12 | Listening, Parte 4 · entrevista | Listening | 4 |
 | B1-13 | Speaking, Parte 1 · conversación | Speaking | 4 preguntas |
 | B1-14 | Speaking, Parte 2 · turno largo con fotos | Speaking | 1 turno |
@@ -117,7 +117,7 @@ Elige una:
 2. **W:** What time will we meet? **M:** Quarter past eight at the station. → A) quarter to eight B) quarter past eight C) eight
 3. **W:** Is the shop open on Sundays? **M:** No, only Monday to Saturday. → A) yes, always B) Sundays only C) no, Monday to Saturday only
 
-### B1-10 · Parte 2 · Frases incompletas (4 huecos)
+### B1-10 · Parte 3 · Notas con huecos (4 huecos)
 
 > We're going to cycle to the lake on Saturday. We'll leave from the school car park at nine. Please bring a water bottle and a waterproof jacket, because it may rain. Lunch will be at the café by the water.
 
@@ -126,15 +126,23 @@ Elige una:
 3. Bring a ________ bottle.
 4. Lunch will be at the ________.
 
-### B1-11 · Parte 3 · Opción múltiple con hablantes (3 hablantes, 4 opciones)
+### B1-11 · Parte 2 · Opción múltiple (3 diálogos, 3 opciones)
 
-> Para cada hablante (1 a 3), elige la razón de la lista (A a D). Sobra una opción.
+> Escucha cada diálogo y elige la respuesta correcta.
 
-**Opciones:** A) she is changing her job · B) she is moving house · C) she wants to study abroad · D) she had a bad experience
+**1.** **W:** Do you still want to borrow my bike?
+**M:** Yes, if it's not a problem. When can I pick it up?
+**W:** Come round after five.
+¿Cuándo puede recogerla el hombre? A) in the morning B) after five C) on Sunday
 
-1. "I'm packing boxes all week, because the flat is too small now."
-2. "I've been accepted onto a course in Canada, so I'll go next year."
-3. "I was ill for a week, and I'm just starting to feel normal again."
+**2.** **M:** Where's the post office, please?
+**W:** Go past the bank and turn left. It's opposite the park.
+¿Dónde está la oficina de correos? A) opposite the park B) next to the station C) behind the school
+
+**3.** **W:** I've got a new job, starting in September.
+**M:** That's great! Will you still live in town?
+**W:** Yes, the office is only ten minutes from home.
+¿Se va a mudar la mujer? A) Yes, she will move to another city. B) She has not decided yet. C) No, she will stay in the town.
 
 ### B1-12 · Parte 4 · Entrevista (4 preguntas, 3 opciones)
 

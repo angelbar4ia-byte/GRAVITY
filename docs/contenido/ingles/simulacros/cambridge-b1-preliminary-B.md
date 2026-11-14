@@ -178,32 +178,60 @@ A) in the morning B) in the afternoon C) all day → **B**
 > Excuse me, is this the bus to the station? / No, that one goes to the airport. Take the number twelve.
 A) the airport bus B) the station bus C) number twelve → **C**
 
-## Parte 2 · Preguntas 8 a 13 · Frases incompletas (una palabra o número)
+## Parte 2 · Preguntas 8 a 13 · Opción múltiple (3 opciones)
 
-> Last term our class went on a trip to the national park. We left school at eight o'clock in a large coach. The journey took about two hours, and the teacher had planned several activities. The first was a walk to a waterfall, which was longer than we expected. After lunch, we visited a visitor centre, where a ranger showed us the local animals. The best part was the boat ride on the lake. Everyone was tired on the way home, but they all agreed it was a fantastic day.
+*Cada diálogo tiene una frase de contexto, la pregunta y tres opciones.*
 
-**8.** The class left school at ________. **eight o'clock**
-**9.** The journey took about ________ hours. **two**
-**10.** The first activity was a walk to a ________. **waterfall**
-**11.** After lunch, a ________ showed them the local animals. **ranger**
-**12.** The best part was the boat ride on the ________. **lake**
-**13.** Everyone was tired on the way ________. **home**
+**8.** *Dos colegas hablan de un viaje.*
+> **A:** Are we still going to the seaside on Saturday?
+> **B:** Probably not. The weather forecast says it will rain all day.
+> **A:** Then let's go next weekend.
+¿Qué pasa con el viaje? A) It will happen on Saturday. B) It may be postponed. C) It has been cancelled for ever. → **B**
 
-## Parte 3 · Preguntas 14 a 19 · Opción múltiple (3 opciones)
+**9.** *Una mujer habla con el conductor de un autobús.*
+> **A:** Does this bus go to the hospital?
+> **B:** No, you need the number nine, from the other side of the road.
+¿Qué le dice el conductor? A) to take the number nine B) to wait here C) to walk to the hospital → **A**
 
-> **Man:** How did the interview go?
-> **Woman:** Honestly, better than I expected. They asked why I wanted the job, and I explained my experience with customers.
-> **Man:** Did they ask anything difficult?
-> **Woman:** Yes, they asked about a time I made a mistake. I talked about how I fixed it with a client.
-> **Man:** That sounds good. When will you know?
-> **Woman:** They said next week, but I'm not sure. Actually, I'm feeling quite nervous about it.
+**10.** *Dos amigos planean un picnic.*
+> **A:** Shall we bring sandwiches or buy food there?
+> **B:** Let's make sandwiches; the café is always full on Sundays.
+¿Qué van a hacer? A) cancel the picnic B) buy food at the café C) make sandwiches → **C**
 
-**14.** How did the interview go? A) badly B) better than expected C) the same as usual → **B**
-**15.** What did they ask her about? A) her salary B) her holidays C) why she wanted the job → **C**
-**16.** What difficult question did they ask? A) about a mistake she made B) about her family C) about her salary → **A**
-**17.** How did she answer that question? A) She said she never made mistakes. B) She explained how she fixed a mistake with a client. C) She refused to answer. → **B**
-**18.** When will she know the result? A) next week B) next month C) today → **A**
-**19.** How does she feel now? A) confident B) nervous C) bored → **B**
+**11.** *Un hombre habla de su vecino.*
+> **A:** Your neighbour is very quiet.
+> **B:** He used to be, but since he started playing the guitar, he's much more cheerful.
+¿Cómo ha cambiado el vecino? A) He is more cheerful. B) He has moved away. C) He is angry. → **A**
+
+**12.** *Una maestra habla con una estudiante.*
+> **A:** Did you hand in your essay?
+> **B:** Not yet. I need two more days, because my computer broke.
+> **A:** That's fine, but please don't leave it any later.
+¿Cuál es el problema de la estudiante? A) She lost her essay. B) She missed the class. C) Her computer broke. → **C**
+
+**13.** *Dos personas hablan de una película.*
+> **A:** Did you like the ending?
+> **B:** Honestly, no. I expected a happier one.
+> **A:** I thought it was realistic, though.
+¿Qué piensa la primera persona del final? A) He liked it. B) He was disappointed. C) He hadn't seen it. → **B**
+
+## Parte 3 · Preguntas 14 a 19 · Frases incompletas (una palabra o número)
+
+*Escucha las notas y completa cada hueco con una palabra o número del texto.*
+
+> Last term our class went on a trip to the national park. We left school at eight o'clock in a large coach. The journey took about two hours. The first activity was a walk to a waterfall. After lunch, a ranger showed us the local animals. The best part was the boat ride on the lake. Everyone was tired on the way home.
+
+**Notas: excursión al parque nacional**
+- Salimos de la escuela a las **(14)** ________ en un autobús grande.
+- El viaje duró unas **(15)** ________ horas.
+- La primera actividad fue una caminata a una **(16)** ________.
+- Después de comer, un **(17)** ________ nos enseñó los animales.
+- Lo mejor fue el paseo en bote por el **(18)** ________.
+- En el camino de regreso a **(19)** ________, todos estaban cansados.
+
+**Clave:** 14 eight o'clock · 15 two · 16 waterfall · 17 ranger · 18 lake · 19 home
+
+---
 
 ## Parte 4 · Preguntas 20 a 25 · Opción múltiple (3 opciones)
 
@@ -249,7 +277,7 @@ La escuela quiere organizar un evento para recaudar fondos: una noche de pelícu
 | Sección | Respuestas |
 |---|---|
 | Reading (32) | 1 C · 2 A · 3 B · 4 A · 5 C · 6 A · 7 F · 8 E · 9 C · 10 G · 11 B · 12 D · 13 C · 14 C · 15 D · 16 G · 17 C · 18 A · 19 D · 20 B · 21 C · 22 B · 23 B · 24 B · 25 A · 26 C · 27 had · 28 very · 29 how · 30 now · 31 When · 32 to |
-| Listening (25) | 1 A · 2 B · 3 C · 4 B · 5 C · 6 B · 7 C · 8 eight o'clock · 9 two · 10 waterfall · 11 ranger · 12 lake · 13 home · 14 B · 15 C · 16 A · 17 B · 18 A · 19 B · 20 B · 21 C · 22 A · 23 C · 24 B · 25 C |
+| Listening (25) | 1 A · 2 C · 3 A · 4 B · 5 C · 6 B · 7 C · 8 B · 9 A · 10 C · 11 A · 12 C · 13 B · 14 eight o'clock · 15 two · 16 waterfall · 17 ranger · 18 lake · 19 home · 20 B · 21 C · 22 A · 23 C · 24 B · 25 C |
 | Writing | Rúbrica (2 tareas) |
 | Speaking | Rúbrica (4 partes) |
 

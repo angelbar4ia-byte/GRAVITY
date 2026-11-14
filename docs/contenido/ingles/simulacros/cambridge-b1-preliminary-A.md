@@ -202,65 +202,90 @@ Escribe una historia que empiece con esta frase: *"When I opened the door, I cou
 
 ## Parte 1 · Preguntas 1 a 7 · Opción múltiple con imágenes
 
-*En el examen hay tres imágenes por pregunta. Aquí se describen con texto: A, B y C.*
+*Las imágenes se describen con texto (A, B, C).*
 
-**1.** *¿Qué pastel va a pedir la niña?* A) pastel de chocolate · B) pastel de zanahoria · C) pastel de queso
-> *Mum, can I have the chocolate cake?* / *Not that one, it's too sweet. What about the carrot cake?* / *Okay, that sounds nice.*
-**Respuesta: B**
+**1.** *¿Dónde están las llaves del coche?*
+> Where did you put the car keys? / In the kitchen drawer, next to the phone.
+A) in the kitchen drawer B) on the table C) in the car → **A**
 
-**2.** *¿A qué hora salen?* A) 6:30 · B) 7:00 · C) 7:30
-> *The film starts at half past seven.* / *Can we get there earlier?* / *Let's leave at seven.*
-**Respuesta: B**
+**2.** *¿A qué hora empieza la película?*
+> What time does the film start? / Half past seven. We should leave at seven to get popcorn.
+A) at six B) at seven C) at half past seven → **C**
 
-**3.** *¿Dónde está la bolsa?* A) en el asiento · B) debajo del asiento · C) en la cajuela
-> *I left my bag in the car.* / *Is it under the seat?* / *No, it's in the boot.*
-**Respuesta: C**
+**3.** *¿Cuándo abre el museo?*
+> Is the museum open on Mondays? / No, it's closed on Mondays, but it opens on Tuesday at ten.
+A) Monday at ten B) Tuesday at ten C) Tuesday at eleven → **B**
 
-**4.** *¿Cómo está el clima ahora?* A) lluvioso · B) soleado · C) nevando
-> *It was raining this morning, but now the sun is out.* / *Good, let's go to the park.*
-**Respuesta: B**
+**4.** *¿Dónde está la bolsa?*
+> Your bag is on the sofa. / Oh, thanks. I thought I'd left it in the hall.
+A) in the hall B) in the car C) on the sofa → **C**
 
-**5.** *¿En qué salón es la junta?* A) salón 12 · B) salón 21 · C) salón 22
-> *The meeting is in room 12, not 21.* / *Thanks, I'll tell Sam.*
-**Respuesta: A**
+**5.** *¿Qué opinó el hombre del concierto?*
+> Did you enjoy the concert? / It was okay, but the music was too loud for my taste.
+A) It was okay. B) It was excellent. C) He didn't go. → **A**
 
-**6.** *¿Cuál es el trabajo del hombre?* A) enfermero · B) farmacéutico · C) médico
-> *I work at the hospital, but I'm not a doctor. I help patients with their medicine.*
-**Respuesta: B**
+**6.** *¿Cuándo va a llover?*
+> The forecast says rain this afternoon. / Then let's take umbrellas and go in the morning.
+A) all day B) in the afternoon C) in the morning → **B**
 
-**7.** *¿Qué compra la mujer?* A) zapatos · B) chamarra · C) sombrero
-> *I wanted new shoes, but they were too expensive, so I bought a jacket instead.*
-**Respuesta: B**
+**7.** *¿Qué autobús deben tomar?*
+> Excuse me, is this the bus to the station? / No, that one goes to the airport. Take the number twelve.
+A) the airport bus B) the station bus C) number twelve → **C**
 
 ## Parte 2 · Preguntas 8 a 13 · Opción múltiple (3 opciones)
 
-> **Ana:** Are you still coming to the concert on Friday?
-> **Ben:** Yes, but I can't get there until eight.
-> **Ana:** That's late. The concert starts at seven thirty.
-> **Ben:** I know, but I'll meet you at the entrance.
-> **Ana:** Okay. Do you have the tickets?
-> **Ben:** No, you bought them, remember?
-> **Ana:** Oh yes, I've got them in my bag.
-> **Ben:** Great.
-> **Ana:** And bring a jacket. It gets cold after the show.
+*Cada diálogo tiene una frase de contexto, la pregunta y tres opciones.*
 
-**8.** ¿Cuál es el problema de Ben? A) No tiene dinero · **B) Llegará tarde** · C) Perdió los boletos → **B**
-**9.** ¿A qué hora empieza el concierto? A) 7:00 · **B) 7:30** · C) 8:00 → **B**
-**10.** ¿Quién tiene los boletos? A) Ben · **B) Ana** · C) Ninguno → **B**
-**11.** ¿Dónde se van a encontrar? A) En la parada del camión · **B) En la entrada** · C) En casa de Ana → **B**
-**12.** ¿Qué sugiere Ana? **A) Llevar una chamarra** · B) Comprar comida · C) Tomar un taxi → **A**
-**13.** ¿Qué dice Ben de los boletos? A) Él los compró · **B) Ana los compró** · C) Están agotados → **B**
+**8.** *Dos colegas hablan de una reunión.*
+> **A:** Is the meeting still at ten?
+> **B:** No, it moved to eleven because the manager is travelling.
+¿Cuándo es la reunión ahora? A) at ten B) at eleven C) tomorrow → **B**
 
-## Parte 3 · Preguntas 14 a 19 · Opción múltiple (3 opciones)
+**9.** *Una clienta habla con el dependiente de una tienda.*
+> **A:** Do you have this jacket in medium?
+> **B:** Let me check. We only have large left, I'm afraid.
+> **A:** Can you order one for me?
+> **B:** Yes, it'll take three days.
+¿Qué pide la clienta? A) to order a jacket B) for a refund C) for a different size → **A**
 
-> Good morning. The library will be closed next Monday for the holiday. On Tuesday it will open at nine instead of eight, and the café will be closed for repairs all week. Books can be returned in the box outside the main door, even when the library is closed. If you have any questions, please call the front desk on 555-0199 or go to the information desk on the first floor.
+**10.** *Una mujer habla con su compañero.*
+> **A:** Did you send the invoice?
+> **B:** Not yet. I'm waiting for the manager to sign it.
+> **A:** Okay, please send it before lunch.
+¿Qué espera el compañero? A) the manager's signature B) the lunch break C) a new invoice → **A**
 
-**14.** ¿Cuándo está cerrada la biblioteca? **A) el lunes** · B) el martes · C) el viernes → **A**
-**15.** ¿A qué hora abre el martes? A) a las ocho · **B) a las nueve** · C) a las diez → **B**
-**16.** ¿Por qué está cerrada la cafetería? A) por un día festivo · **B) por reparaciones** · C) porque no hay personal → **B**
-**17.** ¿Cómo se pueden devolver los libros? A) por correo · **B) en la caja de afuera** · C) en el mostrador → **B**
-**18.** ¿Cuál es el número de teléfono? A) 555-0119 · **B) 555-0199** · C) 555-0191 → **B**
-**19.** ¿Dónde está el módulo de información? A) en la planta baja · **B) en el primer piso** · C) en el segundo piso → **B**
+**11.** *Dos estudiantes hablan de su examen.*
+> **A:** How did the maths test go?
+> **B:** Better than I expected, but the last question was really hard.
+> **A:** At least you finished.
+¿Cómo se sintió el estudiante con el examen? A) disappointed B) bored C) pleasantly surprised → **C**
+
+**12.** *Una persona llama a una recepción.*
+> **A:** I'd like to book a room for two nights.
+> **B:** Of course, which dates?
+> **A:** Friday and Saturday, please.
+¿Qué quiere la persona que llama? A) to change a flight B) to book a room C) to cancel a booking → **B**
+
+**13.** *Un hombre habla de su nuevo trabajo.*
+> **A:** How's the new job?
+> **B:** Busy, but I like the team. The commute is the only problem; it takes an hour.
+¿Qué no le gusta del trabajo? A) the pay B) the team C) the commute → **C**
+
+## Parte 3 · Preguntas 14 a 19 · Frases incompletas (una palabra o número)
+
+*Escucha las notas y completa cada hueco con una palabra o número del texto.*
+
+> Hello everyone. Here are the details for the trip. We leave from platform four at half past seven. The coach ride takes about ninety minutes. Lunch is at the picnic area by the lake, and we return at five o'clock. Bring a waterproof jacket and some water.
+
+**Notas: excursión del viernes**
+- Salida: andén **(14)** ________.
+- El viaje en autobús dura unos **(15)** ________ minutos.
+- El almuerzo es en el área de picnic junto al **(16)** ________.
+- Regreso a las **(17)** ________ de la tarde.
+- Lleva una chamarra **(18)** ________.
+- Y un poco de **(19)** ________.
+
+**Clave:** 14 four · 15 ninety · 16 lake · 17 five · 18 waterproof · 19 water
 
 ## Parte 4 · Preguntas 20 a 25 · Opción múltiple (3 opciones)
 
@@ -273,12 +298,12 @@ Escribe una historia que empiece con esta frase: *"When I opened the door, I cou
 > **Interviewer:** And the hardest part?
 > **Jen:** Getting up at four o'clock! But I'm used to it now.
 
-**20.** ¿Qué hizo que Jen decidiera abrir la panadería? A) la sugerencia de una amiga · **B) un curso que tomó** · C) una oferta de una empresa → **B**
-**21.** ¿Cómo reaccionó su familia al principio? A) estaban contentos · **B) no estaban seguros** · C) estaban enojados → **B**
-**22.** ¿Qué le gusta más de su trabajo? A) los amaneceres · **B) conocer a los clientes** · C) cocinar en casa → **B**
-**23.** ¿Qué dice Jen de levantarse temprano? A) lo odia · **B) ya se acostumbró** · C) no trabaja en las mañanas → **B**
-**24.** ¿Qué hacen los clientes habituales? **A) Vienen todas las mañanas** · B) Le ayudan a hornear · C) Trabajan en la oficina → **A**
-**25.** ¿Dónde trabajaba Jen antes? A) en una panadería · **B) en una oficina** · C) en una escuela → **B**
+**20.** How did Jen start her bakery? A) She took a course. B) She inherited a bakery. C) She worked in a bakery. → **A**
+**21.** Why was leaving her job difficult? A) The salary was very high. B) Her family was not sure at first. C) She had no savings. → **B**
+**22.** What is the best part of the job? A) The early start. B) The money. C) Meeting customers. → **C**
+**23.** What is the hardest part? A) Writing reports. B) Getting up at four o'clock. C) Dealing with suppliers. → **B**
+**24.** How does Jen feel about the early mornings now? A) She has stopped working early. B) She still hates them. C) She has got used to them. → **C**
+**25.** How do the customers relate to Jen? A) They come every morning and have become friends. B) They rarely visit. C) They complain a lot. → **A**
 
 ---
 
@@ -313,7 +338,7 @@ Una escuela debe elegir una actividad para el viaje de fin de año: visitar un m
 | Sección | Respuestas |
 |---|---|
 | Reading (32) | 1 B · 2 B · 3 B · 4 B · 5 A · 6 E · 7 F · 8 B · 9 H · 10 C · 11 B · 12 B · 13 B · 14 A · 15 B · 16 B · 17 F · 18 D · 19 C · 20 A · 21 A · 22 B · 23 A · 24 B · 25 A · 26 A · 27 work · 28 The · 29 showed · 30 is · 31 When · 32 to |
-| Listening (25) | 1 B · 2 B · 3 C · 4 B · 5 A · 6 B · 7 B · 8 B · 9 B · 10 B · 11 B · 12 A · 13 B · 14 A · 15 B · 16 B · 17 B · 18 B · 19 B · 20 B · 21 B · 22 B · 23 B · 24 A · 25 B |
+| Listening (25) | 1 A · 2 C · 3 B · 4 C · 5 A · 6 B · 7 C · 8 B · 9 A · 10 A · 11 C · 12 B · 13 C · 14 four · 15 ninety · 16 lake · 17 five · 18 waterproof · 19 water · 20 A · 21 B · 22 C · 23 B · 24 C · 25 A |
 | Writing | Rúbrica (2 tareas) |
 | Speaking | Rúbrica (4 partes) |
 
