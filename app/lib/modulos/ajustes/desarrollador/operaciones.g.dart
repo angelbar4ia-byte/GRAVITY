@@ -5,7 +5,7 @@ import '../../../nucleo/contratos/roles.dart';
 import 'operacion_api.dart';
 
 /// Huella de api/openapi.yaml con la que se generó este archivo.
-const huellaEspecificacion = 'fnv1a32:ada20c79';
+const huellaEspecificacion = 'fnv1a32:070acd12';
 
 /// Versión de la especificación (info.version).
 const versionEspecificacion = '0.6.0';
@@ -833,6 +833,35 @@ const gruposOperaciones = <GrupoOperaciones>[
         descripcion: 'Solo quien compró, tras el segundo rechazo del reembolso. La cuenta debe ser de su libro personal (22023 si no); si no se elige cuenta, 22023. El movimiento sale de esa cuenta y es de su libro: no toca el libro de Papá. Una sola vez por compra (22023). 42501 si no es quien compró. Deja bitácora sin montos.',
         roles: {Rol.dueno, Rol.coadministrador, Rol.familiar},
         escribe: true,
+        soloLocal: true,
+        fase: 8,
+      ),
+      OperacionApi(
+        id: 'aliAutorizarReembolso',
+        metodo: MetodoHttp.post,
+        ruta: '/rest/v1/rpc/ali_autorizar_reembolso',
+        resumen: 'Autorizar el reembolso de una compra de Papá rechazada dos veces (transferencia)',
+        descripcion: 'Solo el albacea. La compra debe estar rechazada dos veces y quien compró debe haber registrado su gasto (22023). Propone una transferencia de una cuenta de Papá a quien compró (ruta papa_a_persona); quien compró la confirma con fin_responder_transferencia y el dinero llega a su cuenta. Una sola transferencia activa por compra. 42501 si no es el albacea; P0002 si la compra no es de Papá. La compra conserva quién la compró.',
+        roles: {Rol.dueno, Rol.coadministrador},
+        escribe: true,
+        soloLocal: true,
+        fase: 8,
+      ),
+      OperacionApi(
+        id: 'aliDetalleReembolso',
+        metodo: MetodoHttp.post,
+        ruta: '/rest/v1/rpc/ali_detalle_reembolso',
+        resumen:
+            'Detalle de una compra de Papá con sus intentos y su reembolso',
+        descripcion: 'Quien compró una compra, el albacea y quien pidió la solicitud la leen. Devuelve quién compró (comprado_por y solicitada_por), los intentos de la solicitud con su justificación y motivo, y el reembolso (transferencia, estado y monto). Así el histórico conserva quién hizo la compra inicial aunque el reembolso lo pague Papá. 42501 sin permiso; P0002 si no existe.',
+        roles: {
+          Rol.dueno,
+          Rol.coadministrador,
+          Rol.familiar,
+          Rol.cuidador,
+          Rol.casa,
+        },
+        escribe: false,
         soloLocal: true,
         fase: 8,
       ),

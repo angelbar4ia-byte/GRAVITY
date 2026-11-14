@@ -54,6 +54,13 @@ Reglas:
 - **Traspaso del pago:** si después se autoriza el reembolso, el pago se traspasa. **Pendiente:** el dueño define el mecanismo (una transferencia de una cuenta de Papá a quien compró, confirmada por esa persona, o reclasificar el gasto del libro personal al de Papá).
 - Construcción (v1.5): migración `20261143000000`, prueba `114`. La app todavía no tiene el botón para registrar el gasto.
 
+## 2f. Reembolso por transferencia y registro de quién compró (v1.6, respuesta del dueño del 14/nov/2026)
+
+- **Ambas opciones (A y B).** A (transferencia) se implementa ahora; B (reclasificar el gasto) queda por construir.
+- **A:** el albacea autoriza el reembolso y propone una transferencia de una cuenta de Papá a quien compró (ruta `papa_a_persona`). Quien compró la confirma y el dinero llega a su cuenta. En el libro de Papá el consumo queda **pagado por transferencia** (o en efectivo, según la cuenta que se use); no se duplica el dinero: el ingreso de quien compró compensa su gasto.
+- **Quién compró siempre queda registrado** (`comprado_por` y `solicitada_por`), aunque el albacea sea quien lo pague o quien autorice el reembolso. `ali_detalle_reembolso` lo muestra.
+- Construcción: migración `20261144000000`, prueba `115`. La app todavía no tiene el botón del albacea para autorizar el reembolso ni la vista del detalle.
+
 ## 3. Criterios de aceptación
 
 1. El historial se puede filtrar por escala de tiempo, precio, producto y tienda, y las combinaciones dan el mismo total que la suma de compras reales.

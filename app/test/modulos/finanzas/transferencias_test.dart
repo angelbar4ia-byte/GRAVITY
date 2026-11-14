@@ -40,7 +40,10 @@ void main() {
         RutaTransferencia.duenoACasa,
       ]);
       expect(rutasQueOfrece(ParteTransferencia.otra), isEmpty);
-      expect(RutaTransferencia.values, hasLength(3));
+      // La ruta de Papá (reembolso, Fase 8 v1.6) la propone el albacea desde el reembolso, no aquí.
+      expect(RutaTransferencia.values, hasLength(4));
+      expect(rutasQueOfrece(ParteTransferencia.dueno), isNot(contains(RutaTransferencia.papaAPersona)));
+      expect(rutasQueOfrece(ParteTransferencia.pareja), isNot(contains(RutaTransferencia.papaAPersona)));
     });
 
     test('la memoria rechaza una ruta que no es de la persona', () async {

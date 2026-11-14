@@ -1,7 +1,7 @@
 // GENERADO por api/generar_dart.mjs a partir de api/openapi.yaml. No se edita a mano.
 // Permite abrir Swagger UI con doble clic (file://), donde el navegador no deja leer
 // ../openapi.yaml. Servida por http, la página lee openapi.yaml directamente.
-// huella: fnv1a32:ada20c79
+// huella: fnv1a32:070acd12
 window.ESPECIFICACION_GRAVITY = {
   "openapi": "3.1.0",
   "info": {
@@ -17725,6 +17725,201 @@ window.ESPECIFICACION_GRAVITY = {
         }
       }
     },
+    "/rest/v1/rpc/ali_autorizar_reembolso": {
+      "post": {
+        "tags": [
+          "Base de datos"
+        ],
+        "operationId": "aliAutorizarReembolso",
+        "summary": "Autorizar el reembolso de una compra de Papá rechazada dos veces (transferencia)",
+        "description": "Solo el albacea. La compra debe estar rechazada dos veces y quien compró debe haber registrado su gasto (22023). Propone una transferencia de una cuenta de Papá a quien compró (ruta papa_a_persona); quien compró la confirma con fin_responder_transferencia y el dinero llega a su cuenta. Una sola transferencia activa por compra. 42501 si no es el albacea; P0002 si la compra no es de Papá. La compra conserva quién la compró.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_compra",
+                  "p_cuenta_papa"
+                ],
+                "properties": {
+                  "p_compra": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "p_cuenta_papa": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Cuenta de dinero activa del libro de Papá."
+                  }
+                }
+              },
+              "example": {
+                "p_compra": "a7300000-0000-4000-8000-0000000016c1",
+                "p_cuenta_papa": "c6000000-0000-4000-8000-000000000002"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Id de la transferencia de reembolso (pendiente de confirmación).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaAlimentacion"
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/ali_detalle_reembolso": {
+      "post": {
+        "tags": [
+          "Base de datos"
+        ],
+        "operationId": "aliDetalleReembolso",
+        "summary": "Detalle de una compra de Papá con sus intentos y su reembolso",
+        "description": "Quien compró una compra, el albacea y quien pidió la solicitud la leen. Devuelve quién compró (comprado_por y solicitada_por), los intentos de la solicitud con su justificación y motivo, y el reembolso (transferencia, estado y monto). Así el histórico conserva quién hizo la compra inicial aunque el reembolso lo pague Papá. 42501 sin permiso; P0002 si no existe.",
+        "x-roles": [
+          "dueno",
+          "coadministrador",
+          "familiar",
+          "cuidador",
+          "casa"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_compra"
+                ],
+                "properties": {
+                  "p_compra": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                }
+              },
+              "example": {
+                "p_compra": "a7300000-0000-4000-8000-0000000016c1"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Detalle de la compra.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "compra_id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "comprado_por": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "uuid"
+                    },
+                    "solicitada_por": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "uuid"
+                    },
+                    "estado_pago": {
+                      "type": "string"
+                    },
+                    "intentos": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "intento": {
+                            "type": "integer"
+                          },
+                          "estado": {
+                            "type": "string"
+                          },
+                          "justificacion": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "motivo": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    "reembolso": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "transferencia_id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "estado": {
+                          "type": "string"
+                        },
+                        "monto_centavos": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
     "/rest/v1/rpc/ali_marcar_comprada": {
       "post": {
         "tags": [
@@ -24052,4 +24247,4 @@ window.ESPECIFICACION_GRAVITY = {
     }
   }
 };
-window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:ada20c79';
+window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:070acd12';

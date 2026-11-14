@@ -23,7 +23,9 @@ import 'repositorio.dart';
 enum RutaTransferencia {
   parejaADueno('pareja_a_dueno', 'Pareja → dueño'),
   duenoACasa('dueno_a_casa', 'Dueño → casa'),
-  parejaACasa('pareja_a_casa', 'Pareja → casa');
+  parejaACasa('pareja_a_casa', 'Pareja → casa'),
+  /// Reembolso de una compra de Papá: la propone el albacea y la confirma quien compró (Fase 8 v1.6).
+  papaAPersona('papa_a_persona', 'Papá → persona');
 
   const RutaTransferencia(this.codigo, this.titulo);
 
@@ -32,7 +34,7 @@ enum RutaTransferencia {
   final String titulo;
 
   /// `true` si el destino es la cuenta general de la casa.
-  bool get esACasa => this != parejaADueno;
+  bool get esACasa => this == duenoACasa || this == parejaACasa;
 
   static RutaTransferencia? desdeCodigo(String? c) {
     for (final r in values) {

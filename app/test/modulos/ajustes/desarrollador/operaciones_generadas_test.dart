@@ -32,6 +32,7 @@ Directory _raiz() {
 const _rpcDeLectura = {
   'misPermisos',
   'aliPorcionesRecomendadas',
+  'aliDetalleReembolso',
   'finPuede',
   'finPuedeHogar',
   'finEsMiembro',
