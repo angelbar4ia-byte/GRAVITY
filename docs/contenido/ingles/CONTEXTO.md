@@ -41,7 +41,8 @@
 | Documento | Estado |
 |---|---|
 | `prueba-de-nivel.md` | Redactada, pendiente de revisión |
-| `prueba-ubicacion.html` | Versión interactiva de la prueba de ubicación: cada persona la contesta sola y ve su nivel en la página. Publicada como artefacto privado. No guarda resultados en ningún servidor. Pendiente: validar contra las escalas oficiales |
+| `prueba-ubicacion.html` | Versión interactiva de la prueba (artefacto privado). Se aplica una sola vez según la regla, pero la página sola no puede hacerla cumplir: eso va en la app. Pendiente: validar contra las escalas oficiales |
+| `especificacion-ubicacion-en-app.md` | Propuesta para que la prueba de ubicación viva dentro de la app, se aplique una sola vez por cuenta y defina el inicio del curso. Pendiente de aprobación e implementación; el repositorio de la app no está en esta sesión |
 | `modulo-1.md` | **Aprobado** (versión 1.0) |
 | `modulo-2.md` | **Aprobado** (versión 1.0) |
 | `modulo-3.md` | Redactado, pendiente de revisión |

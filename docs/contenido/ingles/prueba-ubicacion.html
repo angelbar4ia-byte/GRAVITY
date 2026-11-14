@@ -226,15 +226,9 @@ function renderResult(answers, unanswered) {
     '<p class="muted">Regla: un nivel cuenta solo si cumples el 80 % de sus preguntas y el de todos los niveles anteriores. No se compensa un nivel bajo con uno alto.</p>' +
     '<p class="muted">La escritura todavía no se califica aquí. Una persona revisora la evalúa con la rúbrica y puede confirmar o ajustar el nivel.</p>' +
     '<p class="muted">Esta prueba no está validada contra las escalas oficiales. Úsala como orientación y confírmala con el TOEIC Level Projector de ETS antes de decidir.</p>' +
-    '<p><button type="button" id="repetir">Repetir la prueba</button></p>';
+    '<p class="muted">Esta prueba se aplica una sola vez. Para registrar el nivel en el curso, hazlo desde la app, donde tu cuenta puede quedar marcada.</p>';
   out.hidden = false;
   out.scrollIntoView({behavior: "smooth", block: "start"});
-  document.getElementById("repetir").addEventListener("click", () => {
-    form.reset();
-    document.getElementById("escritura").value = "";
-    out.hidden = true;
-    window.scrollTo({top: 0, behavior: "smooth"});
-  });
 }
 </script>
 </main>

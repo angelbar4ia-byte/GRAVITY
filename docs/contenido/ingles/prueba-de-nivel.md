@@ -2,7 +2,7 @@
 
 > **Contexto:** nota general en `CONTEXTO.md` (ruta: `docs/contenido/ingles/`). Estado de este documento: **versión 0.2**, pendiente de revisión del dueño. Sustituye a la versión 0.1, que suponía que todos empezaban en B1.
 > Objetivo: ubicar a **cada persona** en su nivel real (A1, A2, B1, B1+ o B2), sin subir ni bajar resultados para emparejar a dos personas.
-> Duración: unos 40 minutos. Se puede repetir después de 30 días, o antes si la persona lo pide con motivo.
+> Duración: unos 40 minutos. **Se aplica una sola vez por persona.** Ver la sección 6 sobre dónde queda registrado el nivel.
 
 ## 1. Cómo se usa
 
@@ -144,7 +144,7 @@ Esta prueba no se usa para decidir si dos personas pueden estudiar juntas. Cada 
 2. **Mismo nivel, mismo módulo.** Si los dos llegan al mismo nivel, estudian juntos en el mismo módulo: lecciones, mini pruebas y conversación guiada en pareja.
 3. **Distinto nivel, sin límite.** Si no coinciden, cada uno sigue su nivel. Las actividades en pareja (conversación, retos del Anexo A) se hacen con el nivel que cada uno pueda; nadie frena el avance del otro.
 4. **Sin sacrificar la prueba.** La misma rúbrica, el mismo 80 % y la misma regla de avance para ambos.
-5. **Repetir cuando haya cambios.** Cualquiera puede repetir la prueba después de 30 días. Si sube de nivel, el emparejamiento se revisa.
+5. **Una sola aplicación.** Cada persona hace la prueba una vez. El nivel asignado es el punto de inicio del curso. No se repite.
 6. **Privacidad.** Cada persona decide si comparte su nivel con la pareja.
 
 ## 7. Revisión antes de usar
