@@ -1,6 +1,8 @@
 # Simulacro A · Cambridge B1 Preliminary (bimestre 1, semana 8)
 
-> **Contexto:** nota general en `../CONTEXTO.md`. Estado de este documento: simulacro A completo; Listening en texto y Speaking sin imágenes hasta tener audio.
+> **Formato reducido (revisión del 15/nov/2026).** Tiene las partes y el número de preguntas del examen oficial, pero los textos y los guiones son de 2.5 a 6 veces más cortos que los de la prueba de muestra del manual, y no hay audio. Sirve para practicar cada tipo de pregunta; **no indica si estás listo para el examen**. Algunas preguntas están en corrección. Detalle en `docs/revisiones/fase-8-ingles.md` (ING-B1 e ING-B2).
+
+> **Contexto:** nota general en `../CONTEXTO.md`. Estado de este documento: simulacro A en **formato reducido**; Listening en texto y Speaking sin imágenes hasta tener audio.
 
 > Versión 1.0 (14/nov/2026). **Preguntas originales de GRAVITY**, con el formato y el orden de partes del manual para profesores de B1 Preliminary (Cambridge English). No se reproducen preguntas de Cambridge.
 > Fuente del formato: [Cambridge English · B1 Preliminary, formato del examen](https://www.cambridgeenglish.org/exams-and-tests/preliminary/exam-format/) y el [manual para profesores](https://www.cambridgeenglish.org/Images/168150-b1-preliminary-teachers-handbook.pdf).

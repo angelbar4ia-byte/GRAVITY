@@ -1,6 +1,6 @@
 # Formatos oficiales · TOEIC y Cambridge
 
-> **Contexto:** nota general en `CONTEXTO.md`. Estado de este documento: verificado con fuentes oficiales (ETS y Cambridge).
+> **Contexto:** nota general en `CONTEXTO.md`. Estado de este documento: partes, número de preguntas y tiempos verificados con fuentes oficiales (ETS y Cambridge). **No incluye la longitud de los textos ni de los guiones**, que es donde la revisión del 15/nov/2026 encontró los simulacros fuera de formato (ING-B1); esas longitudes irán en los contratos del plan (paquete P1.1).
 
 > Versión 1.0 (14/nov/2026). Datos leídos de las fuentes oficiales indicadas en cada sección. Si ETS o Cambridge cambian el formato, este documento se actualiza antes de cambiar los simulacros.
 

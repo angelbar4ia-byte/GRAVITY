@@ -1,5 +1,7 @@
 # Cobertura de práctica · programa de inglés y exámenes
 
+> **Aviso (15/nov/2026).** Este documento es anterior a la revisión del bloque (`docs/revisiones/fase-8-ingles.md`). Donde dice simulacro "completo" debe leerse "formato reducido". Si el dueño aprueba el plan de ejecución (`docs/specs/fase-8-ingles-plan.md`), ese plan lo sustituye.
+
 > **Contexto:** nota general en `CONTEXTO.md`. Este documento dice qué existe, qué falta y en qué orden se cubre. Se actualiza cada vez que se agrega una pieza.
 > Versión 0.1 (14/nov/2026).
 

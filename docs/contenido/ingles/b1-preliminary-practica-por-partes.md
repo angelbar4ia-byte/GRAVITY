@@ -1,6 +1,8 @@
 # Cambridge B1 Preliminary · Práctica por partes (bimestre 1)
 
-> **Contexto:** nota general en `CONTEXTO.md`. Cobertura en `cobertura-practica.md`. Simulacros completos en `simulacros/cambridge-b1-preliminary-A.md` y `-B.md`.
+> **Práctica en formato reducido (revisión del 15/nov/2026).** Los textos y los guiones son más cortos que los del examen oficial y no hay audio. Parte de este contenido se repite en los simulacros, así que un buen resultado aquí y otro allá no son dos mediciones independientes. Detalle en `docs/revisiones/fase-8-ingles.md` (ING-B1 e ING-I1).
+
+> **Contexto:** nota general en `CONTEXTO.md`. Cobertura en `cobertura-practica.md`. Simulacros (formato reducido) en `simulacros/cambridge-b1-preliminary-A.md` y `-B.md`.
 > Formato: [B1 Preliminary, manual para profesores (Cambridge English, PDF)](https://www.cambridgeenglish.org/Images/168150-b1-preliminary-teachers-handbook.pdf). **Preguntas originales de GRAVITY**; no reproducen material de Cambridge.
 > **Cómo usarla:** una sesión por parte. Compara con la clave y lee la regla de cada error antes de la siguiente sesión. Umbral: 80 % de cada parte; si no se llega, se repite la parte la semana siguiente.
 

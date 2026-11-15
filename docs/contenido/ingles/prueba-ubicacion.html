@@ -52,6 +52,9 @@ td.num, th.num { text-align: right; }
 <body>
 <main>
   <h1>Prueba de ubicación de inglés</h1>
+  <div class="card" role="note" style="border-color: var(--warn);">
+    <p><strong class="warn">En revisión (15/nov/2026): no uses este resultado para decidir tu nivel.</strong> Al revisarla encontramos que esta prueba ubica de más: los bloques marcados B1+ y B2 miden en realidad gramática de A2 a B1, cada nivel se decide con pocas preguntas y la escucha se lee en lugar de oírse. Si ya la contestaste, toma el resultado como un techo: tu nivel real puede estar uno o dos niveles por debajo. La versión nueva vivirá dentro de la app, con audio y 12 preguntas por nivel.</p>
+  </div>
   <p class="muted">Contesta sola o solo. Dura unos 40 minutos. Tus respuestas se califican en esta misma página y no se envían a ningún lado.</p>
   <div class="card">
     <p><strong>Antes de empezar:</strong> no uses diccionario ni traductor, ni mires la clave. El resultado sirve para ubicarte; no es un examen oficial. Para un resultado oficial, usa el TOEIC Level Projector de ETS (gratis) o la prueba de Cambridge.</p>
@@ -219,6 +222,7 @@ function renderResult(answers, unanswered) {
     '<div class="card">' +
       '<p class="muted">Nivel de ubicación</p>' +
       '<p class="lvl">' + headline + '</p>' +
+      '<p class="warn"><strong>Prueba en revisión.</strong> Este resultado tiende a quedar por encima del nivel real, sobre todo si marca B1+ o B2. No lo uses para decidir dónde empezar.</p>' +
       '<p>' + plan + '</p>' +
     '</div>' +
     '<h2>Detalle por nivel</h2>' +

@@ -1,6 +1,8 @@
 # Simulacro A · TOEFL iBT (bimestre 3 o por elección del usuario)
 
-> **Contexto:** nota general en `../CONTEXTO.md`. Estado de este documento: simulacro A completo; Listening en texto hasta tener audio.
+> **Formato reducido (revisión del 15/nov/2026).** El número de preguntas por tarea es el de la especificación 2026 y la longitud de los textos está en su rango. Lo que **no** coincide es la estructura: "Completar palabras" aparece como raíces sueltas y no dentro de un texto; "Leer en la vida diaria" usa conjuntos de 4 y 6 preguntas en lugar de 2 y 3; la forma es lineal, no adaptativa en dos etapas; y no hay audio. Sirve para practicar; **no indica si estás listo para el examen**. Detalle en `docs/revisiones/fase-8-ingles.md` (ING-B1 e ING-B2).
+
+> **Contexto:** nota general en `../CONTEXTO.md`. Estado de este documento: simulacro A en **formato reducido**; Listening en texto hasta tener audio.
 
 > Versión 1.0 (14/nov/2026). **Preguntas originales de GRAVITY**, con los tipos de tarea y el número de ítems de la especificación 2026 de ETS. No se reproducen preguntas de ETS.
 > Fuente: [TOEFL iBT Test: 2026 Update, Test Blueprint and Specifications (ETS, PDF)](https://www.ets.org/content/dam/ets-org/pdfs/toefl/toefl-ibt-test-specifications-2026.pdf). La especificación advierte que puede cambiar antes del lanzamiento oficial.
@@ -79,21 +81,21 @@ En cada palabra se muestran las primeras letras; completa el resto. Escribe la p
 
 Escucha la frase y elige la mejor respuesta.
 
-**L1.** "Did you remember to bring your passport?"A) Yes, it's in my bag. B) I like the photo on it. C) Passports are expensive.
-**L2.** "Would you like some coffee?"A) I drink coffee every day. B) No, thanks, I'm fine. C) The café is closed.
-**L3.** "Can you pick up the package from the post office?"A) Yes, I'll go after work. B) I posted it yesterday. C) The office is large.
-**L4.** "Have you seen my keys?"A) I see them every day. B) They're on the table by the door. C) Keys are expensive.
-**L5.** "Why is the train late?"A) There was a signal problem. B) The train is blue. C) I like trains.
-**L6.** "How was the exam?"A) I took a bus. B) The exam room was big. C) It was harder than I expected.
-**L7.** "Do you mind if I open the window?"A) It's a nice window. B) Not at all, go ahead. C) The windows are made of glass.
-**L8.** "Shall we meet at the library at six?"A) The library closes at ten. B) Sounds good, see you there. C) I read a lot.
-**L9.** "I'm sorry I'm late."A) That's okay, we only just started. B) Sorry, I'm not sorry. C) The late train.
-**L10.** "Which one do you prefer, red or blue?"A) They're both red. B) I'm preferred. C) I prefer the blue one.
-**L11.** "Do you know where the nearest pharmacy is?"A) A pharmacy is a medicine. B) Yes, it's two streets down on the left. C) Pharmacies are big.
-**L12.** "Are you going to the conference next month?"A) I'm a conference room. B) Yes, I've already booked my ticket. C) The conference was a month ago.
-**L13.** "Could you help me move this table?"A) Sure, let me put my bag down first. B) Tables are made of wood. C) I moved last year.
-**L14.** "What's your favourite season?"A) Seasons are long. B) Autumn, because the weather is cooler. C) I season the food.
-**L15.** "The report is ready, isn't it?"A) Not yet, I need another hour. B) Reports are long. C) Yes, it's on the page.
+**L1.** "Did you remember to bring your passport?" A) Yes, it's in my bag. B) I like the photo on it. C) Passports are expensive.
+**L2.** "Would you like some coffee?" A) I drink coffee every day. B) No, thanks, I'm fine. C) The café is closed.
+**L3.** "Can you pick up the package from the post office?" A) Yes, I'll go after work. B) I posted it yesterday. C) The office is large.
+**L4.** "Have you seen my keys?" A) I see them every day. B) They're on the table by the door. C) Keys are expensive.
+**L5.** "Why is the train late?" A) There was a signal problem. B) The train is blue. C) I like trains.
+**L6.** "How was the exam?" A) I took a bus. B) The exam room was big. C) It was harder than I expected.
+**L7.** "Do you mind if I open the window?" A) It's a nice window. B) Not at all, go ahead. C) The windows are made of glass.
+**L8.** "Shall we meet at the library at six?" A) The library closes at ten. B) Sounds good, see you there. C) I read a lot.
+**L9.** "I'm sorry I'm late." A) That's okay, we only just started. B) Sorry, I'm not sorry. C) The late train.
+**L10.** "Which one do you prefer, red or blue?" A) They're both red. B) I'm preferred. C) I prefer the blue one.
+**L11.** "Do you know where the nearest pharmacy is?" A) A pharmacy is a medicine. B) Yes, it's two streets down on the left. C) Pharmacies are big.
+**L12.** "Are you going to the conference next month?" A) I'm a conference room. B) Yes, I've already booked my ticket. C) The conference was a month ago.
+**L13.** "Could you help me move this table?" A) Sure, let me put my bag down first. B) Tables are made of wood. C) I moved last year.
+**L14.** "What's your favourite season?" A) Seasons are long. B) Autumn, because the weather is cooler. C) I season the food.
+**L15.** "The report is ready, isn't it?" A) Not yet, I need another hour. B) Reports are long. C) Yes, it's on the page.
 
 ## Tarea 2 · Conversaciones (L16 a L25)
 

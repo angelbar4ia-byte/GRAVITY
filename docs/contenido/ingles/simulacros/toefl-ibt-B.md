@@ -1,6 +1,8 @@
 # Simulacro B · TOEFL iBT (bimestre 3 o por elección del usuario)
 
-> **Contexto:** nota general en `../CONTEXTO.md`. Estado de este documento: simulacro B completo; Listening en texto hasta tener audio.
+> **Formato reducido (revisión del 15/nov/2026).** El número de preguntas por tarea es el de la especificación 2026 y la longitud de los textos está en su rango. Lo que **no** coincide es la estructura: "Completar palabras" aparece como raíces sueltas y no dentro de un texto; "Leer en la vida diaria" usa conjuntos de 4 y 6 preguntas en lugar de 2 y 3; la forma es lineal, no adaptativa en dos etapas; y no hay audio. Sirve para practicar; **no indica si estás listo para el examen**. Detalle en `docs/revisiones/fase-8-ingles.md` (ING-B1 e ING-B2).
+
+> **Contexto:** nota general en `../CONTEXTO.md`. Estado de este documento: simulacro B en **formato reducido**; Listening en texto hasta tener audio.
 
 > Versión 1.0. **Preguntas originales de GRAVITY**, con los tipos de tarea y el número de ítems de la especificación 2026 de ETS. No se reproducen preguntas de ETS.
 > Fuente: [TOEFL iBT Test: 2026 Update, Test Blueprint and Specifications (ETS, PDF)](https://www.ets.org/content/dam/ets-org/pdfs/toefl/toefl-ibt-test-specifications-2026.pdf). La especificación advierte que puede cambiar antes del lanzamiento oficial.

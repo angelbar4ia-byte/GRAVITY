@@ -1,5 +1,7 @@
 # Cambridge B2 First · Práctica por partes (bimestre 3, principal)
 
+> **Práctica en formato reducido (revisión del 15/nov/2026).** Los textos y los guiones son más cortos que los del examen oficial y no hay audio. Parte de este contenido se repite en los simulacros, así que un buen resultado aquí y otro allá no son dos mediciones independientes. Detalle en `docs/revisiones/fase-8-ingles.md` (ING-B1 e ING-I1).
+
 > **Contexto:** nota general en `../CONTEXTO.md`. Índice del bimestre en `bimestre-3.md`. Esta práctica sigue la secuencia de `guia-multiexamen.md` (sección 4): una parte por sesión, retroalimentación de cada error y repetición si una parte queda debajo de 80 %.
 > Formato: [B2 First handbook (Cambridge English, PDF)](https://www.cambridgeenglish.org/Images/167791-b2-first-handbook.pdf). **Preguntas originales de GRAVITY**; no reproducen material de Cambridge.
 > **Cómo usarla:** haz una parte, luego compara con la clave y lee la **regla** de cada error antes de pasar a la siguiente. Anota el resultado por parte.

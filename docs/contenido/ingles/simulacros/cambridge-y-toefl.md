@@ -1,5 +1,7 @@
 # Simulacros Cambridge y TOEFL · plan
 
+> **Aviso (15/nov/2026).** Este documento es anterior a la revisión del bloque (`docs/revisiones/fase-8-ingles.md`). Donde dice simulacro "completo" debe leerse "formato reducido". Si el dueño aprueba el plan de ejecución (`docs/specs/fase-8-ingles-plan.md`), ese plan lo sustituye.
+
 > **Contexto:** nota general en `../CONTEXTO.md`. Estado de este documento: plan de simulacros; pendiente de aprobación.
 
 > Versión 0.1 (14/nov/2026), para aprobación del dueño. Formatos en `formatos-oficiales.md`. Las preguntas se construyen después de aprobar este plan, con el mismo criterio que los simulacros de TOEIC: preguntas originales de GRAVITY, sin reproducir material de ETS ni de Cambridge.

@@ -1,6 +1,8 @@
 # Cambridge B2 First · Simulacro A · Reading and Use of English (52 preguntas, 1 h 15 min)
 
-> **Contexto:** nota general en `../CONTEXTO.md`. Estado: simulacro A de B2 First en construcción. Reading and Use of English completo (formato verificado); Listening en `cambridge-b2-first-A-escucha.md`; Writing y Speaking en `cambridge-b2-first-A-escritura-habla.md`.
+> **Formato reducido (revisión del 15/nov/2026).** Tiene las partes y el número de preguntas del examen oficial, pero los textos y los guiones son de 2.5 a 6 veces más cortos que los de la prueba de muestra del manual, y no hay audio. Sirve para practicar cada tipo de pregunta; **no indica si estás listo para el examen**. Algunas preguntas están en corrección. Detalle en `docs/revisiones/fase-8-ingles.md` (ING-B1 e ING-B2).
+
+> **Contexto:** nota general en `../CONTEXTO.md`. Estado: simulacro A de B2 First en construcción. Reading and Use of English en **formato reducido** (partes y número de preguntas verificados en el manual); Listening en `cambridge-b2-first-A-escucha.md`; Writing y Speaking en `cambridge-b2-first-A-escritura-habla.md`.
 > Formato: [B2 First handbook (Cambridge English, PDF)](https://www.cambridgeenglish.org/Images/167791-b2-first-handbook.pdf). Reading and Use of English: 7 partes, 52 preguntas (Partes 1–4 de uso del idioma; 5–7 de lectura). Cada parte se verifica contra el manual.
 > **Preguntas originales de GRAVITY.** No reproducen material de Cambridge.
 

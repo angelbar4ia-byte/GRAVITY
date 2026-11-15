@@ -1,6 +1,8 @@
 # TOEIC · Práctica por partes (Listening 1 a 4 y Reading 5 a 7)
 
-> **Contexto:** nota general en `CONTEXTO.md`. Cobertura en `cobertura-practica.md`. Formato completo en `toeic-completo-escucha.md` y `toeic-completo-lectura.md`; Speaking y Writing en `toeic-completo-hablar-escribir.md`.
+> **Práctica en formato reducido (revisión del 15/nov/2026).** Los textos y los guiones son más cortos que los del examen oficial y no hay audio. Parte de este contenido se repite en los simulacros, así que un buen resultado aquí y otro allá no son dos mediciones independientes. Detalle en `docs/revisiones/fase-8-ingles.md` (ING-B1 e ING-I1).
+
+> **Contexto:** nota general en `CONTEXTO.md`. Cobertura en `cobertura-practica.md`. Todas las partes (formato reducido) en `simulacros/toeic-completo-escucha.md` y `simulacros/toeic-completo-lectura.md`; Speaking y Writing en `simulacros/toeic-completo-hablar-escribir.md`.
 > Formato: [TOEIC, handbook (ETS)](https://www.ets.org/toeic/test-takers/listening-reading.html). **Preguntas originales de GRAVITY**; no reproducen material de ETS.
 > **Limitación:** Listening se presenta en texto (guion y descripción de fotos) hasta que se apruebe el audio.
 

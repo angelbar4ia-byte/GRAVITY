@@ -1,5 +1,7 @@
 # Cambridge B2 First · Práctica por partes · Segunda ronda (sesiones 16 a 30)
 
+> **Práctica en formato reducido (revisión del 15/nov/2026).** Los textos y los guiones son más cortos que los del examen oficial y no hay audio. Parte de este contenido se repite en los simulacros, así que un buen resultado aquí y otro allá no son dos mediciones independientes. Detalle en `docs/revisiones/fase-8-ingles.md` (ING-B1 e ING-I1).
+
 > **Contexto:** nota general en `../CONTEXTO.md`. Primera ronda (sesiones 1 a 15) en `b2-first-practica-por-partes.md`. Índice del bimestre en `bimestre-3.md`.
 > Esta ronda repite la misma estructura con **preguntas nuevas**, para practicar una parte que quedó debajo de 80 % sin repetir los mismos textos. Sigue `guia-multiexamen.md` (sección 4).
 > Formato: [B2 First handbook (Cambridge English, PDF)](https://www.cambridgeenglish.org/Images/167791-b2-first-handbook.pdf). **Preguntas originales de GRAVITY**; no reproducen material de Cambridge.

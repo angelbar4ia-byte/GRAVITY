@@ -1,6 +1,8 @@
 # Cambridge B1 Preliminary · Simulacro B (bimestre 1, semana 12)
 
-> **Contexto:** nota general en `../CONTEXTO.md`. Estado: simulacro B de B1 Preliminary, completo en formato. Listening en texto hasta que haya audio; Speaking con imágenes descritas en texto.
+> **Formato reducido (revisión del 15/nov/2026).** Tiene las partes y el número de preguntas del examen oficial, pero los textos y los guiones son de 2.5 a 6 veces más cortos que los de la prueba de muestra del manual, y no hay audio. Sirve para practicar cada tipo de pregunta; **no indica si estás listo para el examen**. Algunas preguntas están en corrección. Detalle en `docs/revisiones/fase-8-ingles.md` (ING-B1 e ING-B2).
+
+> **Contexto:** nota general en `../CONTEXTO.md`. Estado: simulacro B de B1 Preliminary, en **formato reducido**. Listening en texto hasta que haya audio; Speaking con imágenes descritas en texto.
 > Formato: [B1 Preliminary, manual para profesores (Cambridge English, PDF)](https://www.cambridgeenglish.org/Images/168150-b1-preliminary-teachers-handbook.pdf). Reading: 6 partes, 32 preguntas (P1 cinco textos con 3 opciones; P2 cinco personas con ocho textos; P3 cinco preguntas con 4 opciones; P4 cinco oraciones de siete; P5 seis huecos con 4 opciones; P6 seis huecos con una palabra). Writing: 2 tareas. Listening: 4 partes, 25 preguntas. Speaking: 4 partes.
 > **Preguntas originales de GRAVITY.**
 

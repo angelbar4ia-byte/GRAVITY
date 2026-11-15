@@ -1,6 +1,8 @@
 # TOEFL iBT 2026 · Práctica por sección
 
-> **Contexto:** nota general en `CONTEXTO.md`. Cobertura en `cobertura-practica.md`. Simulacros completos en `simulacros/toefl-ibt-A.md` y `simulacros/toefl-ibt-B.md`.
+> **Práctica en formato reducido (revisión del 15/nov/2026).** Los textos y los guiones son más cortos que los del examen oficial y no hay audio. Parte de este contenido se repite en los simulacros, así que un buen resultado aquí y otro allá no son dos mediciones independientes. Detalle en `docs/revisiones/fase-8-ingles.md` (ING-B1 e ING-I1).
+
+> **Contexto:** nota general en `CONTEXTO.md`. Cobertura en `cobertura-practica.md`. Simulacros (formato reducido) en `simulacros/toefl-ibt-A.md` y `simulacros/toefl-ibt-B.md`.
 > Formato: [TOEFL iBT Test: 2026 Update, Test Blueprint and Specifications (ETS, PDF)](https://www.ets.org/content/dam/ets-org/pdfs/toefl/toefl-ibt-test-specifications-2026.pdf). La especificación puede cambiar antes del lanzamiento oficial.
 > **Preguntas originales de GRAVITY**; no reproducen material de ETS.
 > **Cómo usarla:** una sesión por tipo de tarea. Reading y Listening se califican con un punto por respuesta; Writing y Speaking con `rubrica-evaluacion.md`. Umbral: 80 % por sesión; si no se llega, se repite la semana siguiente.

@@ -1,5 +1,7 @@
 # Prueba de ubicación (examen inicial)
 
+> **En revisión (15/nov/2026): no usar para decidir el nivel.** La revisión del bloque encontró que esta prueba ubica de más: los bloques marcados "B1+" y "B2" miden en realidad gramática de A2 a B1, cada nivel se decide con 5 a 9 preguntas y la escucha es texto leído (ING-B5 en `docs/revisiones/fase-8-ingles.md`). La sustituirá la versión 3 del plan (paquete P2.1). Si ya la contestaste, toma el resultado como un techo: tu nivel real puede estar uno o dos niveles por debajo.
+
 > **Contexto:** nota general en `CONTEXTO.md` (ruta: `docs/contenido/ingles/`). Estado de este documento: **versión 0.2**, pendiente de revisión del dueño. Sustituye a la versión 0.1, que suponía que todos empezaban en B1.
 > Objetivo: ubicar a **cada persona** en su nivel real (A1, A2, B1, B1+ o B2), sin subir ni bajar resultados para emparejar a dos personas.
 > Duración: unos 40 minutos. **Se aplica una sola vez por persona.** Ver la sección 6 sobre dónde queda registrado el nivel.

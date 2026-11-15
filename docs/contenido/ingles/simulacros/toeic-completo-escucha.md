@@ -1,6 +1,8 @@
-# TOEIC completo · Listening (100 preguntas, unos 45 minutos)
+# TOEIC, todas las partes · Listening (100 preguntas, unos 45 minutos) · formato reducido
 
-> **Contexto:** nota general en `../CONTEXTO.md`. Estado de este documento: TOEIC completo; claves reequilibradas (14/nov/2026); pendiente audio e imágenes.
+> **Formato reducido (revisión del 15/nov/2026).** Tiene las cuatro partes y las 100 preguntas del examen oficial, pero las conversaciones y las charlas son unas 3 veces más cortas que las de la muestra oficial, y todo se lee en lugar de escucharse: así mide lectura, no escucha. Sirve para practicar cada tipo de pregunta; **no indica si estás listo para el examen**. Detalle en `docs/revisiones/fase-8-ingles.md` (ING-B1).
+
+> **Contexto:** nota general en `../CONTEXTO.md`. Estado de este documento: TOEIC con todas las partes, en **formato reducido**; claves reequilibradas (14/nov/2026); pendiente audio e imágenes.
 
 > Versión 1.0 (14/nov/2026). Formato: [TOEIC Listening and Reading, handbook de ETS](https://www.ets.org/content/dam/ets-org/pdfs/toeic/toeic-listening-reading-test-examinee-handbook.pdf): Parte 1 (6, fotografías), Parte 2 (25, pregunta-respuesta), Parte 3 (39, conversaciones de 3 preguntas), Parte 4 (30, charlas de 3 preguntas).
 > **Preguntas originales de GRAVITY.** No reproducen material de ETS.

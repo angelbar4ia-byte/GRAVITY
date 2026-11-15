@@ -1,5 +1,7 @@
 # Bimestre 3 · índice de simulacros (nivel B2)
 
+> **Aviso (15/nov/2026).** Este documento es anterior a la revisión del bloque (`docs/revisiones/fase-8-ingles.md`). Donde dice simulacro "completo" debe leerse "formato reducido". Si el dueño aprueba el plan de ejecución (`docs/specs/fase-8-ingles-plan.md`), ese plan lo sustituye.
+
 > **Contexto:** nota general en `../CONTEXTO.md`. Este documento reúne lo que ya existe para el bimestre 3 y lo que falta. **El examen que lleva el bimestre (Cambridge B2 First, TOEFL, o ambos en rotación) lo decide el dueño.** Hasta entonces, ambos paquetes quedan listos y ninguno se da por elegido.
 > Versión 0.1 (14/nov/2026). Modos de elección: ver `guia-multiexamen.md`, sección 3.
 

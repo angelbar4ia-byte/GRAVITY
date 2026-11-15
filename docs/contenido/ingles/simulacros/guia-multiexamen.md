@@ -1,5 +1,7 @@
 # Guía multiexamen · preparación para TOEIC, Cambridge y TOEFL
 
+> **Aviso (15/nov/2026).** Este documento es anterior a la revisión del bloque (`docs/revisiones/fase-8-ingles.md`). Donde dice simulacro "completo" debe leerse "formato reducido". Si el dueño aprueba el plan de ejecución (`docs/specs/fase-8-ingles-plan.md`), ese plan lo sustituye.
+
 > **Contexto:** nota general en `../CONTEXTO.md`. Estado de este documento: guía común para TOEIC, Cambridge y TOEFL; pendiente de aprobación.
 
 > Versión 0.1 (14/nov/2026), para aprobación del dueño. Opción recomendada: **un examen principal por bimestre, con un simulacro de otro formato cada cuatro semanas**. El usuario elige cuál lleva: uno, dos o tres, alternados.

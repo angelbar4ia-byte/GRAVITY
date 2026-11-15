@@ -1,6 +1,8 @@
 # Cambridge B2 First · Simulacro B · Writing y Speaking
 
-> **Contexto:** nota general en `../CONTEXTO.md`. Estado: Writing y Speaking del simulacro B de B2 First. Completos en formato; calificación con la rúbrica de GRAVITY. Reading en `cambridge-b2-first-B-lectura.md`; Listening en `cambridge-b2-first-B-escucha.md`.
+> **Formato reducido (revisión del 15/nov/2026).** Las tareas, la extensión y los tiempos son los del manual, pero las fotografías de Speaking se describen con texto y nadie hace de examinador. Sirve para practicar cada tarea; la calificación es una autoevaluación con la rúbrica, no una nota de examen.
+
+> **Contexto:** nota general en `../CONTEXTO.md`. Estado: Writing y Speaking del simulacro B de B2 First. En **formato reducido**; calificación con la rúbrica de GRAVITY. Reading en `cambridge-b2-first-B-lectura.md`; Listening en `cambridge-b2-first-B-escucha.md`.
 > Formato: [B2 First handbook (Cambridge English, PDF)](https://www.cambridgeenglish.org/Images/167791-b2-first-handbook.pdf). **Writing** (1 h 20 min): Parte 1, ensayo obligatorio de 140 a 190 palabras con texto de entrada de hasta 120 palabras; Parte 2, elegir una tarea entre tres (artículo, informe o correo) de 140 a 190 palabras. **Speaking** (14 min en pareja): 4 partes.
 > **Preguntas originales de GRAVITY.**
 

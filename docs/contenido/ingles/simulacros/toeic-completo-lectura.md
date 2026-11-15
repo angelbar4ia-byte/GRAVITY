@@ -1,6 +1,8 @@
-# TOEIC completo · Reading (100 preguntas, 75 minutos)
+# TOEIC, todas las partes · Reading (100 preguntas, 75 minutos) · formato reducido
 
-> **Contexto:** nota general en `../CONTEXTO.md`. Estado de este documento: TOEIC completo; claves reequilibradas (14/nov/2026); Parte 6 revisada (144 y 146 con una sola respuesta).
+> **Formato reducido (revisión del 15/nov/2026).** Tiene las partes 5 a 7 y las 100 preguntas del examen oficial, pero los textos de la Parte 7 miden la mitad o menos que los de la muestra oficial, y 41 oraciones se repiten en `toeic-bimestre-2.md`. Sirve para practicar cada tipo de pregunta; **no indica si estás listo para el examen**. Detalle en `docs/revisiones/fase-8-ingles.md` (ING-B1 e ING-I1).
+
+> **Contexto:** nota general en `../CONTEXTO.md`. Estado de este documento: TOEIC con todas las partes, en **formato reducido**; claves reequilibradas (14/nov/2026); Parte 6 revisada (144 y 146 con una sola respuesta).
 
 > Versión 1.0 (14/nov/2026). Formato: [TOEIC Listening and Reading, handbook de ETS](https://www.ets.org/content/dam/ets-org/pdfs/toeic/toeic-listening-reading-test-examinee-handbook.pdf): Parte 5 (30, oraciones incompletas), Parte 6 (16, textos con huecos), Parte 7 (54: 29 de textos sencillos y 25 de textos múltiples).
 > **Preguntas originales de GRAVITY.** No reproducen material de ETS.
