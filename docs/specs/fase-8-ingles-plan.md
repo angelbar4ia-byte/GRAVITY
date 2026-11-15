@@ -232,7 +232,7 @@ Flutter y Dart están en `/home/user/tools/flutter/bin`.
 **P0.1 · Etiquetas honestas** · habitos · **hecho el 15/nov/2026** por la sesión que integra
 - Entradas: revisión ING-B1 e ING-B5.
 - Hace: en el bloque de contexto de cada simulacro y de cada práctica, cambia "completo" por "formato reducido: mismo número de preguntas, textos más cortos y sin audio". En `prueba-de-nivel.md` añade "en revisión: no usar para decidir el nivel". Corrige ING-M4. No toca preguntas.
-- Hecho cuando: ningún encabezado de `docs/contenido/ingles/` afirma formato completo; el aviso está en la prueba. La página publicada la actualiza el arquitecto.
+- Hecho cuando: ningún encabezado de `docs/contenido/ingles/` afirma formato completo; el aviso está en la prueba y en la página publicada.
 
 **P0.2 · Decisiones del dueño** · arquitecto
 - Hace: recoge las respuestas de la sección 4, las registra aquí y en `docs/DECISIONES.md` (D29) y ajusta el resto del plan.
@@ -390,7 +390,7 @@ El piloto (P1.5) necesita además la herramienta completa (P1.2c) y la revisión
 | Ejemplos patrón | Escritos (15/nov/2026), en `borrador` | Nueve archivos en `data/ingles/ejemplos/`, descritos en la sección 12 del formato. Los resuelve a ciegas P1.4a |
 | Cuaderno a ciegas de los ejemplos | Generado (15/nov/2026) | `docs/contenido/ingles/generado/cuaderno-ejemplos-patron.md`, 40 preguntas sin respuestas. Lo genera `herramientas/ingles/transitorio/cuaderno_ejemplos.py` mientras no exista `exportar` |
 | Habilidad `simulacro-examen-idioma` | Actualizada y versionada (15/nov/2026) | Con las reglas de 5.6. Antes no estaba en git |
-| P0.1 Etiquetas honestas | Hecho (15/nov/2026) | 25 documentos y la copia de la página de ubicación. No se tocó ninguna pregunta |
+| P0.1 Etiquetas honestas | Hecho (15/nov/2026) | 25 documentos y la página de ubicación, tanto la copia del repositorio como la publicada (versión 4). No se tocó ninguna pregunta |
 | P0.2 a P0.4, fases 1 a 6 | Pendientes | Esperan la orden del dueño |
 
 ## Anexo B. Temario por escalón (propuesta para P1.3)

@@ -49,7 +49,7 @@
 | `docs/specs/fase-8-ingles-formato.md` y `data/ingles/ejemplos/` | Formato propuesto y nueve ejemplos patrón |
 | `modulo-1.md`, `modulo-2.md` | Temas aprobados por el dueño. Material para 5 a 10 minutos por día, no para 60 (ING-B4) |
 | `modulo-3.md`, `modulo-4.md` | Redactados, sin aprobar. Mismo problema de densidad |
-| `prueba-de-nivel.md` (v0.2) y `prueba-ubicacion.html` (publicada) | **En revisión: no usar para decidir el nivel.** Ubica de más (ING-B5). El aviso ya está en los dos archivos |
+| `prueba-de-nivel.md` (v0.2) y `prueba-ubicacion.html` (publicada) | **En revisión: no usar para decidir el nivel.** Ubica de más (ING-B5). El aviso ya está en los dos archivos y en la página publicada (versión 4) |
 | `rubrica-evaluacion.md` | Borrador. Falta confirmar qué significa aprobar (D-ING-6) |
 | `niveles-y-avance.md` (v0.3) | Vigente hasta la decisión D-ING-1 |
 | `formatos-oficiales.md` | Número de partes y de preguntas verificado con los manuales. Faltan las longitudes, que irán en los contratos |
