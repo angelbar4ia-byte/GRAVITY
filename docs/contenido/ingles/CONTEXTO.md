@@ -53,7 +53,7 @@
 | `rubrica-evaluacion.md` | Borrador. Falta confirmar qué significa aprobar (D-ING-6) |
 | `niveles-y-avance.md` (v0.3) | Vigente hasta la decisión D-ING-1 |
 | `formatos-oficiales.md` | Número de partes y de preguntas verificado con los manuales. Faltan las longitudes, que irán en los contratos |
-| Simulacros: B1 Preliminary A y B, B2 First A y B, TOEFL A y B, TOEIC completo | **Formato reducido.** Número de preguntas correcto; textos y guiones de 2.5 a 6 veces más cortos que los oficiales; sin audio; con preguntas inválidas listadas en la revisión (ING-B1, ING-B2) |
+| Simulacros: B1 Preliminary A y B, B2 First A y B, TOEFL A y B, TOEIC completo | **Formato reducido.** Número de preguntas correcto; textos y guiones de 2 a 6 veces más cortos que los oficiales; sin audio; con preguntas inválidas listadas en la revisión (ING-B1, ING-B2) |
 | Prácticas por partes (B1, B2 ×2, TOEFL, TOEIC) y `toeic-bimestre-2.md` | Reducidas. Comparten contenido entre sí y con los simulacros (ING-I1) |
 | `guia-multiexamen.md`, `cambridge-y-toefl.md`, `toeic.md`, `simulacros/bimestre-3.md`, `cobertura-practica.md` | Planes anteriores. Los sustituye el plan de ejecución |
 | `especificacion-ubicacion-en-app.md` | Corregida. La sustituye la fase 2 del plan |

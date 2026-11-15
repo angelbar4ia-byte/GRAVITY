@@ -1,0 +1,151 @@
+# Contrato de formato (gravity-ingles-v1, tipo formato). Generado en el paquete P1.1a.
+# - pagina_manual y medido.pagina son la numeración del PDF (no la impresa en la página).
+# - palabras_estimulo.origen: declarado (cifra del manual) o medido (medida en la prueba de muestra, +-15 %, redondeada a decenas;
+#   si la cifra medida es menor de 20 se redondea a unidades). Las medidas cuentan cada secuencia de letras, dígitos, apóstrofos o guiones
+#   e incluyen la numeración de los huecos.
+# - pendiente: true marca un dato que el manual no da o que no se pudo medir; nada se completó de memoria.
+# - Ninguna pregunta ni texto del manual se copia aquí: solo números, nombres de parte y páginas.
+esquema: gravity-ingles-v1
+tipo: formato
+id: toeic-sw
+estado: borrador
+nombre: TOEIC Speaking & Writing
+fuente: {titulo: TOEIC Speaking and Writing Tests Examinee Handbook (ETS), url: 'https://www.ets.org/content/dam/ets-org/pdfs/toeic/toeic-speaking-writing-examinee-handbook.pdf',
+  consultado: 2026-11-15}
+variante: en-US
+idioma_instrucciones: en
+totales: {tareas: 19, tareas_speaking: 11, tareas_writing: 8, pagina: 4, nota: 'El manual numera preguntas, no partes: los ids usan el rango de
+    preguntas (speaking-q1-2, writing-q6-7...). Las escalas de calificación son de 0 a 3, 0 a 4 o 0 a 5 según la tarea (p. 18 a 32).'}
+secciones:
+- id: speaking
+  minutos: 20
+  minutos_nota: Once tareas, unos 20 minutos (p. 4).
+  pagina: 4
+  tareas_total: 11
+  partes:
+  - id: speaking-q1-2
+    tarea: 'Leer un texto en voz alta: 45 s para prepararse y 45 s para leer'
+    tipo_pregunta: produccion
+    tipo_estimulo: texto
+    modalidad: habla
+    unidades: 2
+    preguntas_por_unidad: 1
+    preguntas_total: 2
+    palabras_estimulo: {min: 80, max: 110, origen: medido}
+    medido: {total: 94, muestras: 1, pagina: 17, nota: Texto de muestra}
+    puntos_por_pregunta:
+      min: 0
+      max: 3
+      criterios: [pronunciación, entonación y acentuación]
+      nota: dos puntuaciones, cada una de 0 a 3
+    pagina_manual: 4
+    tiempos_segundos: {preparar: 45, responder: 45}
+    pendiente: true
+    nota: Rango de palabras con una sola muestra.
+  - id: speaking-q3-4
+    tarea: 'Describir una imagen: 45 s para prepararse y 30 s para hablar'
+    tipo_pregunta: produccion
+    tipo_estimulo: imagen
+    modalidad: habla
+    unidades: 2
+    preguntas_por_unidad: 1
+    preguntas_total: 2
+    puntos_por_pregunta: {min: 0, max: 3}
+    pagina_manual: 4
+    tiempos_segundos: {preparar: 45, responder: 30}
+  - id: speaking-q5-7
+    tarea: 'Responder tres preguntas sobre un mismo tema: 3 s para prepararse y 15, 15 y 30 s para responder'
+    tipo_pregunta: produccion
+    tipo_estimulo: audio
+    modalidad: habla
+    unidades: 1
+    preguntas_por_unidad: 3
+    preguntas_total: 3
+    puntos_por_pregunta: {min: 0, max: 3}
+    pagina_manual: 4
+    tiempos_segundos:
+      preparar: 3
+      responder: [15, 15, 30]
+    pendiente: true
+    nota: El manual no declara la longitud de la introducción y las preguntas.
+  - id: speaking-q8-10
+    tarea: 'Responder tres preguntas con información dada (por ejemplo, un programa de eventos): 45 s para leerla, 3 s para prepararse y 15, 15
+      y 30 s para responder; la tercera pregunta se oye dos veces'
+    tipo_pregunta: produccion
+    tipo_estimulo: texto
+    modalidad: habla
+    unidades: 1
+    preguntas_por_unidad: 3
+    preguntas_total: 3
+    puntos_por_pregunta: {min: 0, max: 3}
+    pagina_manual: 4
+    tiempos_segundos:
+      estudiar: 45
+      preparar: 3
+      responder: [15, 15, 30]
+    reproducciones_pregunta_3: 2
+    pendiente: true
+    nota: La información dada es una imagen; no se midió.
+  - id: speaking-q11
+    tarea: 'Expresar una opinión: 45 s para pensar y 60 s para hablar'
+    tipo_pregunta: produccion
+    tipo_estimulo: consigna
+    modalidad: habla
+    unidades: 1
+    preguntas_por_unidad: 1
+    preguntas_total: 1
+    palabras_estimulo: {min: 40, max: 50, origen: medido}
+    medido: {total: 46, muestras: 1, pagina: 24, nota: Pregunta de muestra}
+    puntos_por_pregunta: {min: 0, max: 5}
+    pagina_manual: 4
+    tiempos_segundos: {preparar: 45, responder: 60}
+    pendiente: true
+    nota: Rango de palabras con una sola muestra.
+- id: writing
+  minutos: 60
+  minutos_nota: Ocho tareas, cerca de una hora (p. 5).
+  pagina: 5
+  tareas_total: 8
+  partes:
+  - id: writing-q1-5
+    tarea: 'Escribir una oración por imagen usando dos palabras dadas: 8 minutos para las cinco'
+    tipo_pregunta: produccion
+    tipo_estimulo: imagen
+    modalidad: escritura
+    unidades: 5
+    preguntas_por_unidad: 1
+    preguntas_total: 5
+    puntos_por_pregunta: {min: 0, max: 3}
+    pagina_manual: 5
+    tiempos_minutos: {las_cinco: 8}
+  - id: writing-q6-7
+    tarea: 'Responder a una solicitud escrita (correo): 10 minutos por correo; no se puede volver a la pregunta 6'
+    tipo_pregunta: produccion
+    tipo_estimulo: texto
+    modalidad: escritura
+    unidades: 2
+    preguntas_por_unidad: 1
+    preguntas_total: 2
+    palabras_estimulo: {min: 40, max: 50, origen: medido}
+    medido: {total: 45, muestras: 1, pagina: 29, nota: Un correo de muestra}
+    puntos_por_pregunta: {min: 0, max: 4}
+    pagina_manual: 5
+    tiempos_minutos: {cada_una: 10}
+    pendiente: true
+    nota: Rango de palabras con una sola muestra.
+  - id: writing-q8
+    tarea: 'Ensayo de opinión: 30 minutos; un ensayo eficaz suele tener al menos 300 palabras'
+    tipo_pregunta: produccion
+    tipo_estimulo: consigna
+    modalidad: escritura
+    unidades: 1
+    preguntas_por_unidad: 1
+    preguntas_total: 1
+    palabras_estimulo: {min: 30, max: 40, origen: medido}
+    medido: {total: 36, muestras: 1, pagina: 31, nota: Pregunta de muestra}
+    puntos_por_pregunta: {min: 0, max: 5}
+    pagina_manual: 5
+    palabras_respuesta: {min: 300, origen: declarado, pagina: 31, nota: '"típicamente un mínimo de 300 palabras"'}
+    tiempos_minutos: {total: 30}
+    pendiente: true
+    nota: Rango de palabras de la consigna con una sola muestra.

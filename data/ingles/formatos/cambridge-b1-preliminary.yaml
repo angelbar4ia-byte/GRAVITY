@@ -1,0 +1,207 @@
+# Contrato de formato (gravity-ingles-v1, tipo formato). Generado en el paquete P1.1a.
+# - pagina_manual y medido.pagina son la numeración del PDF (no la impresa en la página).
+# - palabras_estimulo.origen: declarado (cifra del manual) o medido (medida en la prueba de muestra, +-15 %, redondeada a decenas;
+#   si la cifra medida es menor de 20 se redondea a unidades). Las medidas cuentan cada secuencia de letras, dígitos, apóstrofos o guiones
+#   e incluyen la numeración de los huecos.
+# - pendiente: true marca un dato que el manual no da o que no se pudo medir; nada se completó de memoria.
+# - Ninguna pregunta ni texto del manual se copia aquí: solo números, nombres de parte y páginas.
+esquema: gravity-ingles-v1
+tipo: formato
+id: cambridge-b1-preliminary
+estado: borrador
+nombre: Cambridge B1 Preliminary
+fuente: {titulo: B1 Preliminary — Handbook for teachers (para exámenes desde 2020), url: 'https://www.cambridgeenglish.org/Images/168150-b1-preliminary-teachers-handbook.pdf',
+  consultado: 2026-11-15}
+variante: en-GB
+idioma_instrucciones: en
+totales: {preguntas_reading: 32, preguntas_listening: 25, pagina: 7}
+secciones:
+- id: reading
+  minutos: 45
+  pagina: 7
+  preguntas_total: 32
+  partes:
+  - id: reading-1
+    tarea: Cinco textos reales cortos (avisos, mensajes) con una pregunta de tres opciones sobre el mensaje principal
+    tipo_pregunta: opcion_multiple
+    tipo_estimulo: texto
+    unidades: 5
+    preguntas_por_unidad: 1
+    preguntas_total: 5
+    opciones: 3
+    palabras_estimulo: {min: 10, max: 40, origen: medido}
+    medido:
+      por_unidad: {min: 12, max: 31}
+      muestras: 5
+      pagina: 18
+      nota: 'Textos en imagen: lectura visual aproximada de las cinco muestras (alrededor de 12, 15, 17, 29 y 31 palabras)'
+    puntos_por_pregunta: 1
+    pagina_manual: 9
+  - id: reading-2
+    tarea: 'Cinco descripciones de personas y ocho textos cortos sobre un mismo tema: se empareja cada persona con el texto adecuado (A a H)'
+    tipo_pregunta: emparejar
+    tipo_estimulo: texto
+    unidades: 1
+    preguntas_por_unidad: 5
+    preguntas_total: 5
+    opciones: 8
+    palabras_estimulo: {min: 480, max: 650, origen: medido}
+    medido: {total: 568, muestras: 1, pagina: 19, nota: Ocho textos (414 palabras) más cinco descripciones (154)}
+    puntos_por_pregunta: 1
+    pagina_manual: 9
+  - id: reading-3
+    tarea: Texto largo con cinco preguntas de cuatro opciones (detalle, idea global, actitud y opinión)
+    tipo_pregunta: opcion_multiple
+    tipo_estimulo: texto
+    unidades: 1
+    preguntas_por_unidad: 5
+    preguntas_total: 5
+    opciones: 4
+    palabras_estimulo: {min: 300, max: 400, origen: medido}
+    medido: {total: 352, muestras: 1, pagina: 20}
+    puntos_por_pregunta: 1
+    pagina_manual: 9
+  - id: reading-4
+    tarea: Texto con cinco oraciones quitadas y ocho oraciones disponibles (A a H; tres sobran)
+    tipo_pregunta: oracion_omitida
+    tipo_estimulo: texto
+    unidades: 1
+    preguntas_por_unidad: 5
+    preguntas_total: 5
+    opciones: 8
+    palabras_estimulo: {min: 290, max: 390, origen: medido}
+    medido: {total: 339, muestras: 1, pagina: 21, nota: Texto 257 palabras más ocho oraciones 82}
+    puntos_por_pregunta: 1
+    pagina_manual: 9
+  - id: reading-5
+    tarea: 'Texto corto con seis huecos: se elige la palabra de cuatro opciones'
+    tipo_pregunta: hueco_opciones
+    tipo_estimulo: texto
+    unidades: 1
+    preguntas_por_unidad: 6
+    preguntas_total: 6
+    opciones: 4
+    palabras_estimulo: {min: 110, max: 140, origen: medido}
+    medido: {total: 125, muestras: 1, pagina: 22}
+    puntos_por_pregunta: 1
+    pagina_manual: 9
+  - id: reading-6
+    tarea: Texto corto con seis huecos de una palabra
+    tipo_pregunta: hueco_abierto
+    tipo_estimulo: texto
+    unidades: 1
+    preguntas_por_unidad: 6
+    preguntas_total: 6
+    palabras_estimulo: {min: 100, max: 130, origen: medido}
+    medido: {total: 116, muestras: 1, pagina: 22}
+    puntos_por_pregunta: 1
+    pagina_manual: 9
+- id: writing
+  minutos: 45
+  pagina: 7
+  tareas_total: 2
+  partes:
+  - id: writing-1
+    tarea: Responder a un correo con cuatro puntos obligatorios (tarea obligatoria)
+    tipo_pregunta: produccion
+    tipo_estimulo: texto
+    modalidad: escritura
+    unidades: 1
+    preguntas_por_unidad: 1
+    preguntas_total: 1
+    palabras_estimulo: {min: 100, max: 120, origen: declarado, pagina: 27}
+    puntos_por_pregunta: 20
+    pagina_manual: 25
+    palabras_respuesta: {aprox: 100, origen: declarado, pagina: 27}
+  - id: writing-2
+    tarea: Elegir entre un artículo y una historia
+    tipo_pregunta: produccion
+    tipo_estimulo: consigna
+    modalidad: escritura
+    unidades: 1
+    preguntas_por_unidad: 1
+    preguntas_total: 1
+    puntos_por_pregunta: 20
+    pagina_manual: 25
+    palabras_respuesta: {aprox: 100, origen: declarado, pagina: 28}
+    pendiente: true
+    nota: El manual no declara la longitud de la consigna; rango de palabras_estimulo pendiente. La tarea ofrece dos opciones (artículo o historia).
+- id: listening
+  minutos: 30
+  minutos_nota: Unos 30 minutos, más 6 para pasar las respuestas en papel o 2 para revisarlas en la versión digital (p. 42).
+  reproducciones_pagina: 44
+  preguntas_total: 25
+  partes:
+  - id: listening-1
+    tarea: Siete monólogos o diálogos cortos; se elige la imagen correcta (tres imágenes)
+    tipo_pregunta: opcion_multiple
+    tipo_estimulo: audio
+    unidades: 7
+    preguntas_por_unidad: 1
+    preguntas_total: 7
+    opciones: 3
+    reproducciones: 2
+    palabras_estimulo: {min: 70, max: 100, origen: medido}
+    medido:
+      por_unidad: {min: 83, max: 91}
+      muestras: 7
+      pagina: 53
+      nota: Solo turnos de habla (83 a 91 palabras por pieza). Transcripción en las páginas 53 a 55
+    puntos_por_pregunta: 1
+    pagina_manual: 42
+  - id: listening-2
+    tarea: Seis diálogos cortos con una pregunta de tres opciones sobre la idea general
+    tipo_pregunta: opcion_multiple
+    tipo_estimulo: audio
+    unidades: 6
+    preguntas_por_unidad: 1
+    preguntas_total: 6
+    opciones: 3
+    reproducciones: 2
+    palabras_estimulo: {min: 60, max: 120, origen: medido}
+    medido:
+      por_unidad: {min: 72, max: 105}
+      muestras: 6
+      pagina: 54
+      nota: 72, 90, 93, 99, 102 y 105 palabras de habla
+    puntos_por_pregunta: 1
+    pagina_manual: 42
+  - id: listening-3
+    tarea: Monólogo con seis huecos (una o dos palabras, un número, una fecha o una hora)
+    tipo_pregunta: completar_nota
+    tipo_estimulo: audio
+    unidades: 1
+    preguntas_por_unidad: 6
+    preguntas_total: 6
+    reproducciones: 2
+    palabras_estimulo: {min: 260, max: 350, origen: medido}
+    medido: {total: 306, muestras: 1, pagina: 54}
+    puntos_por_pregunta: 1
+    pagina_manual: 42
+  - id: listening-4
+    tarea: Entrevista con seis preguntas de tres opciones (significado, actitud y opinión)
+    tipo_pregunta: opcion_multiple
+    tipo_estimulo: audio
+    unidades: 1
+    preguntas_por_unidad: 6
+    preguntas_total: 6
+    opciones: 3
+    reproducciones: 2
+    palabras_estimulo: {min: 390, max: 520, origen: medido}
+    medido: {total: 455, muestras: 1, pagina: 55}
+    puntos_por_pregunta: 1
+    pagina_manual: 42
+- id: speaking
+  minutos: {min: 10, max: 12}
+  minutos_grupo_de_tres: {min: 15, max: 17}
+  pagina: 7
+  tareas_total: 4
+  partes:
+  - {id: speaking-1, tarea: El entrevistador hace preguntas a cada candidato por turnos, tipo_pregunta: produccion, tipo_estimulo: ninguno, modalidad: habla,
+    unidades: 1, preguntas_por_unidad: 1, preguntas_total: 1, pagina_manual: 57, minutos_parte: 2, nota: El manual no da número de preguntas.}
+  - {id: speaking-2, tarea: 'Turno largo: describir una fotografía en color durante cerca de un minuto', tipo_pregunta: produccion, tipo_estimulo: imagen,
+    modalidad: habla, unidades: 1, preguntas_por_unidad: 1, preguntas_total: 1, pagina_manual: 57, minutos_parte: 3}
+  - {id: speaking-3, tarea: 'Tarea de discusión con estímulo visual: sugerir, responder a sugerencias y negociar un acuerdo', tipo_pregunta: produccion,
+    tipo_estimulo: imagen, modalidad: habla, unidades: 1, preguntas_por_unidad: 1, preguntas_total: 1, pagina_manual: 57, minutos_parte: 4}
+  - {id: speaking-4, tarea: 'Conversación general: gustos, experiencias, opiniones, hábitos', tipo_pregunta: produccion, tipo_estimulo: ninguno,
+    modalidad: habla, unidades: 1, preguntas_por_unidad: 1, preguntas_total: 1, pagina_manual: 57, minutos_parte: 3}

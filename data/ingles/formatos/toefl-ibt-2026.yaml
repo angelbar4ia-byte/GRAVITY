@@ -1,0 +1,168 @@
+# Contrato de formato (gravity-ingles-v1, tipo formato). Generado en el paquete P1.1a.
+# - pagina_manual y medido.pagina son la numeración del PDF (no la impresa en la página).
+# - palabras_estimulo.origen: declarado (cifra del manual) o medido (medida en la prueba de muestra, +-15 %, redondeada a decenas;
+#   si la cifra medida es menor de 20 se redondea a unidades). Las medidas cuentan cada secuencia de letras, dígitos, apóstrofos o guiones
+#   e incluyen la numeración de los huecos.
+# - pendiente: true marca un dato que el manual no da o que no se pudo medir; nada se completó de memoria.
+# - Ninguna pregunta ni texto del manual se copia aquí: solo números, nombres de parte y páginas.
+esquema: gravity-ingles-v1
+tipo: formato
+id: toefl-ibt-2026
+estado: borrador
+nombre: TOEFL iBT (formato 2026)
+fuente: {titulo: 'TOEFL iBT Test: 2026 Update — Test Blueprint and Specifications', url: 'https://www.ets.org/content/dam/ets-org/pdfs/toefl/toefl-ibt-test-specifications-2026.pdf',
+  consultado: 2026-11-15}
+variante: en-US
+idioma_instrucciones: en
+totales: {items: 120, puntos_crudos: 145, minutos_min: 83, minutos_max: 89, pagina: 2, nota: 'Tiempo total estimado de 1 h 23 min a 1 h 29 min
+    (p. 2). Las especificaciones están sujetas a revisiones menores hasta el lanzamiento oficial (p. 3). Corrección a docs/contenido/ingles/formatos-oficiales.md:
+    en Reading el módulo inferior y el superior comparten 9 minutos; el ''21 min'' es el límite superior del módulo de ruta (18 a 21).'}
+secciones:
+- id: reading
+  minutos: 27
+  minutos_router: {min: 18, max: 21}
+  minutos_modulo: 9
+  adaptativo: dos etapas (módulo de ruta y módulo inferior o superior)
+  preguntas_total: 50
+  puntos_crudos: 35
+  pagina: 2
+  minutos_nota: 'Mínimo estimado: ruta 18 + módulo 9 = 27. El manual da un solo valor (9) para el módulo inferior y el superior (p. 2).'
+  restricciones: ['complete-the-words: 30 ítems', 'read-in-daily-life + read-an-academic-passage: 20 ítems en total (p. 2)', 50 ítems incluyen
+      ítems sin puntuar; 35 puntos crudos]
+  partes:
+  - id: reading-complete-the-words
+    tarea: 'Completar palabras: palabras con letras ocultas dentro de un texto (30 ítems, solo con pistas de forma y sintaxis)'
+    tipo_pregunta: completar_palabras
+    tipo_estimulo: texto
+    unidades: null
+    preguntas_por_unidad: null
+    preguntas_total: 30
+    palabras_estimulo: {min: 15, max: 200, origen: declarado, pagina: 9, nota: '"Los textos más fáciles tienen de 15 a 50 palabras; los más complejos
+        pueden llegar a 200." Cifra general de Reading, no por tarea.'}
+    puntos_por_pregunta: 1
+    pagina_manual: 4
+    pendiente: true
+    nota: 'El manual da 30 ítems pero no dice cuántos textos ni cuántos huecos por texto: unidades y preguntas_por_unidad quedan pendientes. El
+      rango 15 a 200 es el general de Reading.'
+  - id: reading-read-in-daily-life
+    tarea: 'Leer en la vida diaria: textos cortos no académicos (señal, menú, correo, publicación) en conjuntos de 2 y de 3 preguntas'
+    tipo_pregunta: opcion_multiple
+    tipo_estimulo: texto
+    unidades: null
+    preguntas_por_unidad: {min: 2, max: 3}
+    preguntas_total: {min: 5, max: 15}
+    palabras_estimulo: {min: 15, max: 200, origen: declarado, pagina: 9, nota: '"Los textos más fáciles tienen de 15 a 50 palabras; los más complejos
+        pueden llegar a 200." Cifra general de Reading, no por tarea.'}
+    puntos_por_pregunta: 1
+    pagina_manual: 4
+    pendiente: true
+    nota: Entre las dos tareas de lectura suman 20 ítems (p. 2 y 4). El manual no dice cuántas opciones tiene cada pregunta ni cuántos conjuntos
+      hay.
+  - id: reading-read-an-academic-passage
+    tarea: 'Leer un pasaje académico: ideas principales, detalles, inferencias y estructura retórica'
+    tipo_pregunta: opcion_multiple
+    tipo_estimulo: texto
+    unidades: null
+    preguntas_por_unidad: null
+    preguntas_total: {min: 5, max: 15}
+    palabras_estimulo: {min: 15, max: 200, origen: declarado, pagina: 9, nota: '"Los textos más fáciles tienen de 15 a 50 palabras; los más complejos
+        pueden llegar a 200." Cifra general de Reading, no por tarea.'}
+    puntos_por_pregunta: 1
+    pagina_manual: 4
+    pendiente: true
+    nota: Entre las dos tareas de lectura suman 20 ítems (p. 2 y 4). El manual no da el número de preguntas por pasaje ni las opciones.
+- id: listening
+  minutos: 25
+  minutos_router: 18
+  minutos_modulo_inferior: 7
+  minutos_modulo_superior: 11
+  adaptativo: dos etapas (módulo de ruta y módulo inferior o superior)
+  preguntas_total: 47
+  puntos_crudos: 35
+  pagina: 2
+  minutos_nota: 'Mínimo estimado: ruta 18 + módulo inferior 7 = 25; con el superior, 29 (p. 2).'
+  restricciones: ['diálogos (choose-a-response + conversation): 25 a 29 ítems', 'monólogos (announcement + academic-talk): 18 a 22 ítems', las
+      grabaciones se oyen una sola vez (p. 12)]
+  partes:
+  - id: listening-listen-and-choose-a-response
+    tarea: 'Escuchar y elegir una respuesta: un solo intercambio entre dos personas'
+    tipo_pregunta: opcion_multiple
+    tipo_estimulo: audio
+    unidades: null
+    preguntas_por_unidad: 1
+    preguntas_total: {min: 15, max: 19}
+    reproducciones: 1
+    puntos_por_pregunta: 1
+    pagina_manual: 5
+    pendiente: true
+    nota: 'Enunciados breves: no más de seis sílabas acentuadas (p. 12); el manual no da cifra de palabras. Opciones pendientes.'
+  - id: listening-listen-to-a-conversation
+    tarea: Escuchar una conversación corta entre dos personas
+    tipo_pregunta: opcion_multiple
+    tipo_estimulo: audio
+    unidades: null
+    preguntas_por_unidad: null
+    preguntas_total: 10
+    reproducciones: 1
+    palabras_estimulo: {max: 250, origen: declarado, pagina: 12, nota: El manual da el máximo general del audio (250 palabras; los intermedios
+        suelen tener de 35 a 100) pero no lo reparte por tarea (p. 12).}
+    puntos_por_pregunta: 1
+    pagina_manual: 5
+    pendiente: true
+    nota: Unidades, preguntas por unidad y opciones pendientes.
+  - id: listening-listen-to-an-announcement
+    tarea: Escuchar un anuncio del aula o del campus
+    tipo_pregunta: opcion_multiple
+    tipo_estimulo: audio
+    unidades: null
+    preguntas_por_unidad: null
+    preguntas_total: {min: 6, max: 10}
+    reproducciones: 1
+    palabras_estimulo: {max: 250, origen: declarado, pagina: 12, nota: El manual da el máximo general del audio (250 palabras; los intermedios
+        suelen tener de 35 a 100) pero no lo reparte por tarea (p. 12).}
+    puntos_por_pregunta: 1
+    pagina_manual: 5
+    pendiente: true
+    nota: Unidades, preguntas por unidad y opciones pendientes.
+  - id: listening-listen-to-an-academic-talk
+    tarea: 'Escuchar una charla académica: ideas principales y de apoyo, inferencias'
+    tipo_pregunta: opcion_multiple
+    tipo_estimulo: audio
+    unidades: null
+    preguntas_por_unidad: null
+    preguntas_total: {min: 8, max: 16}
+    reproducciones: 1
+    palabras_estimulo: {max: 250, origen: declarado, pagina: 12, nota: El manual da el máximo general del audio (250 palabras; los intermedios
+        suelen tener de 35 a 100) pero no lo reparte por tarea (p. 12).}
+    puntos_por_pregunta: 1
+    pagina_manual: 5
+    pendiente: true
+    nota: Unidades, preguntas por unidad y opciones pendientes.
+- id: writing
+  minutos: 23
+  preguntas_total: 12
+  puntos_crudos: 20
+  lineal: true
+  pagina: 2
+  partes:
+  - {id: writing-build-a-sentence, tarea: 'Armar una oración: reconstruir oraciones con estructura gramatical adecuada', tipo_pregunta: ordenar_palabras,
+    tipo_estimulo: ninguno, modalidad: escritura, unidades: 10, preguntas_por_unidad: 1, preguntas_total: 10, puntos_por_pregunta: 1, pagina_manual: 6}
+  - {id: writing-write-an-email, tarea: Escribir un correo (texto de varias oraciones), tipo_pregunta: produccion, tipo_estimulo: consigna, modalidad: escritura,
+    unidades: 1, preguntas_por_unidad: 1, preguntas_total: 1, puntos_por_pregunta: 5, pagina_manual: 6, pendiente: true, nota: El manual no da
+      longitud de la consigna ni de la respuesta.}
+  - {id: writing-write-for-an-academic-discussion, tarea: Escribir para una discusión académica (párrafo con argumento sustentado), tipo_pregunta: produccion,
+    tipo_estimulo: consigna, modalidad: escritura, unidades: 1, preguntas_por_unidad: 1, preguntas_total: 1, puntos_por_pregunta: 5, pagina_manual: 6,
+    pendiente: true, nota: El manual no da longitud de la consigna ni de la respuesta.}
+- id: speaking
+  minutos: 8
+  preguntas_total: 11
+  puntos_crudos: 55
+  lineal: true
+  pagina: 2
+  partes:
+  - {id: speaking-listen-and-repeat, tarea: Escuchar y repetir oraciones, tipo_pregunta: repetir, tipo_estimulo: audio, modalidad: habla, unidades: 7,
+    preguntas_por_unidad: 1, preguntas_total: 7, puntos_por_pregunta: 5, pagina_manual: 7, pendiente: true, nota: El manual no da longitud de
+      las oraciones; solo que crecen en longitud y complejidad (p. 17).}
+  - {id: speaking-take-an-interview, tarea: 'Tomar una entrevista: responder preguntas con elaboración', tipo_pregunta: produccion, tipo_estimulo: audio,
+    modalidad: habla, unidades: 4, preguntas_por_unidad: 1, preguntas_total: 4, puntos_por_pregunta: 5, pagina_manual: 7, pendiente: true, nota: El
+      manual no da tiempos de respuesta.}

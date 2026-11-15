@@ -2,7 +2,7 @@
 
 > **Contexto:** nota general en `CONTEXTO.md`. Estado de este documento: partes, número de preguntas y tiempos verificados con fuentes oficiales (ETS y Cambridge). **No incluye la longitud de los textos ni de los guiones**, que es donde la revisión del 15/nov/2026 encontró los simulacros fuera de formato (ING-B1); esas longitudes irán en los contratos del plan (paquete P1.1).
 
-> Versión 1.0 (14/nov/2026). Datos leídos de las fuentes oficiales indicadas en cada sección. Si ETS o Cambridge cambian el formato, este documento se actualiza antes de cambiar los simulacros.
+> Versión 1.1 (15/nov/2026). Datos leídos de las fuentes oficiales indicadas en cada sección. Corregidos dos datos que el paquete P1.1a encontró mal copiados: la duración de Speaking de B1 Preliminary (10 a 12 minutos por pareja; página 57 del manual) y el segundo módulo de Reading de TOEFL (9 minutos, sea inferior o superior; página 2 de la especificación). La fuente con página de cada dato son ahora los contratos de `data/ingles/formatos/`. Si ETS o Cambridge cambian el formato, este documento se actualiza antes de cambiar los simulacros.
 
 ## 1. TOEIC Listening & Reading
 
@@ -45,7 +45,7 @@ Fuente: [Cambridge English · B1 Preliminary, formato del examen](https://www.ca
 | Reading | 45 minutos | 6 partes, 32 preguntas | 25 % |
 | Writing | 45 minutos | 2 partes, 2 preguntas | 25 % |
 | Listening | 30 minutos (incluye 6 de transferencia) | 4 partes, 25 preguntas | 25 % |
-| Speaking | 14 minutos por pareja (15 a 17 por grupo de tres) | 4 partes | 25 % |
+| Speaking | 10 a 12 minutos por pareja (15 a 17 por grupo de tres) | 4 partes | 25 % |
 
 > **Verificado después (14/nov/2026):** la Parte 3 de Reading de B1 Preliminary tiene 5 preguntas de opción múltiple con 4 opciones, según el manual para profesores.
 
@@ -72,7 +72,7 @@ Fuente: [TOEFL iBT Test: 2026 Update, Test Blueprint and Specifications (ETS, PD
 
 | Sección | Preguntas o tareas | Tiempo estimado (según el documento) | Notas |
 |---|---|---|---|
-| Reading | 50 (30 de procesamiento de textos académicos y 20 de comprensión de textos variados) | 18 a 21 min en el módulo de ruta; módulo inferior 9 min; superior 21 min | Adaptativo en dos etapas |
+| Reading | 50 (30 de procesamiento de textos académicos y 20 de comprensión de textos variados) | 18 a 21 min en el módulo de ruta; 9 min en el segundo módulo, sea el inferior o el superior | Adaptativo en dos etapas |
 | Listening | 47 (25 a 29 de diálogos y 18 a 22 de charlas) | 18 min en el módulo de ruta; inferior 7 min; superior 11 min | Adaptativo en dos etapas |
 | Writing | 12 (10 de reconstrucción de oraciones y 2 de respuestas escritas) | 23 min | Lineal |
 | Speaking | 11 preguntas en formato de entrevista | 8 min | Lineal |

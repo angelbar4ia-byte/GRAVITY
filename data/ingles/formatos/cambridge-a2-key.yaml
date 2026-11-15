@@ -1,0 +1,226 @@
+# Contrato de formato (gravity-ingles-v1, tipo formato). Generado en el paquete P1.1a.
+# - pagina_manual y medido.pagina son la numeración del PDF (no la impresa en la página).
+# - palabras_estimulo.origen: declarado (cifra del manual) o medido (medida en la prueba de muestra, +-15 %, redondeada a decenas;
+#   si la cifra medida es menor de 20 se redondea a unidades). Las medidas cuentan cada secuencia de letras, dígitos, apóstrofos o guiones
+#   e incluyen la numeración de los huecos.
+# - pendiente: true marca un dato que el manual no da o que no se pudo medir; nada se completó de memoria.
+# - Ninguna pregunta ni texto del manual se copia aquí: solo números, nombres de parte y páginas.
+esquema: gravity-ingles-v1
+tipo: formato
+id: cambridge-a2-key
+estado: borrador
+nombre: Cambridge A2 Key
+fuente: {titulo: 'A2 Key — Handbook for teachers, for exams from 2020', url: 'https://www.cambridgeenglish.org/Images/504505-a2-key-handbook-2020.pdf',
+  consultado: 2026-11-15}
+variante: en-GB
+idioma_instrucciones: en
+totales: {preguntas_reading_writing: 32, preguntas_listening: 25, pagina: 7, nota: 'Reading 30 preguntas (6+7+5+6+6) y dos tareas de escritura
+    de 15 puntos: 32 ítems en 7 partes (p. 7). Reading 1 a 5 valen 1 punto por pregunta; Writing 6 y 7 valen 30 de los 60 puntos del papel (p.
+    12).'}
+secciones:
+- id: reading
+  minutos: 40
+  minutos_nota: Reading and Writing es un solo papel de 60 minutos (p. 9). El manual sugiere unos 40 para Reading y 20 para Writing (p. 11 y p.
+    12).
+  papel: reading-writing
+  minutos_papel: 60
+  preguntas_total: 30
+  partes:
+  - id: reading-1
+    tarea: Seis textos cortos reales (avisos, mensajes, carteles) con una pregunta de tres opciones sobre el mensaje principal
+    tipo_pregunta: opcion_multiple
+    tipo_estimulo: texto
+    unidades: 6
+    preguntas_por_unidad: 1
+    preguntas_total: 6
+    opciones: 3
+    palabras_estimulo: {min: 10, max: 30, origen: medido}
+    medido:
+      por_unidad: {min: 13, max: 28}
+      muestras: 6
+      pagina: 16
+      nota: Textos en imagen, contados a partir de la transcripción visual de las seis muestras
+    puntos_por_pregunta: 1
+    pagina_manual: 9
+  - id: reading-2
+    tarea: 'Siete preguntas sobre tres textos cortos del mismo tema: ¿qué texto lo dice?'
+    tipo_pregunta: correspondencia
+    tipo_estimulo: texto
+    unidades: 1
+    preguntas_por_unidad: 7
+    preguntas_total: 7
+    opciones: 3
+    palabras_estimulo: {min: 200, max: 270, origen: medido}
+    medido: {total: 237, muestras: 1, pagina: 17, nota: 'Tres textos: 79, 77 y 79 palabras'}
+    puntos_por_pregunta: 1
+    pagina_manual: 9
+  - id: reading-3
+    tarea: Un texto largo con cinco preguntas de tres opciones (detalle e idea principal)
+    tipo_pregunta: opcion_multiple
+    tipo_estimulo: texto
+    unidades: 1
+    preguntas_por_unidad: 5
+    preguntas_total: 5
+    opciones: 3
+    palabras_estimulo: {min: 210, max: 290, origen: medido}
+    medido: {total: 251, muestras: 1, pagina: 18}
+    puntos_por_pregunta: 1
+    pagina_manual: 9
+  - id: reading-4
+    tarea: 'Texto informativo con seis huecos: se elige la palabra de tres opciones'
+    tipo_pregunta: hueco_opciones
+    tipo_estimulo: texto
+    unidades: 1
+    preguntas_por_unidad: 6
+    preguntas_total: 6
+    opciones: 3
+    palabras_estimulo: {min: 100, max: 140, origen: medido}
+    medido: {total: 121, muestras: 1, pagina: 19}
+    puntos_por_pregunta: 1
+    pagina_manual: 9
+  - id: reading-5
+    tarea: Correo (a veces con su respuesta) con seis huecos de una palabra
+    tipo_pregunta: hueco_abierto
+    tipo_estimulo: texto
+    unidades: 1
+    preguntas_por_unidad: 6
+    preguntas_total: 6
+    palabras_estimulo: {min: 100, max: 140, origen: medido}
+    medido: {total: 123, muestras: 1, pagina: 19}
+    puntos_por_pregunta: 1
+    pagina_manual: 9
+- id: writing
+  minutos: 20
+  papel: reading-writing
+  minutos_papel: 60
+  tareas_total: 2
+  partes:
+  - id: writing-6
+    tarea: Correo o nota guiada de 25 palabras o más, con tres puntos obligatorios
+    tipo_pregunta: produccion
+    tipo_estimulo: consigna
+    modalidad: escritura
+    unidades: 1
+    preguntas_por_unidad: 1
+    preguntas_total: 1
+    puntos_por_pregunta: 15
+    pagina_manual: 9
+    palabras_respuesta: {min: 25, origen: declarado, pagina: 9}
+    pendiente: true
+    nota: La consigna es corta y trae viñetas; no se midió su longitud porque el manual no la declara. Rango de palabras_estimulo pendiente.
+  - id: writing-7
+    tarea: Historia de 35 palabras o más a partir de tres imágenes
+    tipo_pregunta: produccion
+    tipo_estimulo: imagen
+    modalidad: escritura
+    unidades: 1
+    preguntas_por_unidad: 1
+    preguntas_total: 1
+    puntos_por_pregunta: 15
+    pagina_manual: 9
+    palabras_respuesta: {min: 35, origen: declarado, pagina: 9}
+- id: listening
+  minutos: 30
+  minutos_nota: Unos 30 minutos, incluidos 6 para pasar las respuestas (p. 26).
+  reproducciones_pagina: 28
+  preguntas_total: 25
+  partes:
+  - id: listening-1
+    tarea: Cinco diálogos cortos; se elige la imagen correcta (tres imágenes)
+    tipo_pregunta: opcion_multiple
+    tipo_estimulo: audio
+    unidades: 5
+    preguntas_por_unidad: 1
+    preguntas_total: 5
+    opciones: 3
+    reproducciones: 2
+    palabras_estimulo: {min: 30, max: 60, origen: medido}
+    medido:
+      por_unidad: {min: 36, max: 56}
+      muestras: 5
+      pagina: 36
+      nota: Solo turnos de habla; 56, 53, 54, 53 y 36 palabras. Transcripción en las páginas 36 y 37
+    puntos_por_pregunta: 1
+    pagina_manual: 26
+  - id: listening-2
+    tarea: Monólogo con cinco huecos en una hoja de notas (una palabra, número, fecha u hora)
+    tipo_pregunta: completar_nota
+    tipo_estimulo: audio
+    unidades: 1
+    preguntas_por_unidad: 5
+    preguntas_total: 5
+    reproducciones: 2
+    palabras_estimulo: {min: 140, max: 190, origen: medido}
+    medido: {total: 167, muestras: 1, pagina: 36}
+    puntos_por_pregunta: 1
+    pagina_manual: 26
+  - id: listening-3
+    tarea: Diálogo informal con cinco preguntas de tres opciones
+    tipo_pregunta: opcion_multiple
+    tipo_estimulo: audio
+    unidades: 1
+    preguntas_por_unidad: 5
+    preguntas_total: 5
+    opciones: 3
+    reproducciones: 2
+    palabras_estimulo: {min: 160, max: 210, origen: medido}
+    medido: {total: 185, muestras: 1, pagina: 36}
+    puntos_por_pregunta: 1
+    pagina_manual: 26
+  - id: listening-4
+    tarea: Cinco monólogos o diálogos cortos con una pregunta de tres opciones cada uno
+    tipo_pregunta: opcion_multiple
+    tipo_estimulo: audio
+    unidades: 5
+    preguntas_por_unidad: 1
+    preguntas_total: 5
+    opciones: 3
+    reproducciones: 2
+    palabras_estimulo: {min: 50, max: 70, origen: medido}
+    medido:
+      por_unidad: {min: 59, max: 63}
+      muestras: 5
+      pagina: 37
+      nota: 59, 63, 59, 60 y 60 palabras de habla
+    puntos_por_pregunta: 1
+    pagina_manual: 26
+  - id: listening-5
+    tarea: 'Diálogo largo: se emparejan cinco elementos con una lista de ocho opciones (A a H)'
+    tipo_pregunta: emparejar
+    tipo_estimulo: audio
+    unidades: 1
+    preguntas_por_unidad: 5
+    preguntas_total: 5
+    opciones: 8
+    reproducciones: 2
+    palabras_estimulo: {min: 130, max: 180, origen: medido}
+    medido: {total: 154, muestras: 1, pagina: 37}
+    puntos_por_pregunta: 1
+    pagina_manual: 26
+- id: speaking
+  minutos: {min: 8, max: 10}
+  pagina: 7
+  tareas_total: 2
+  partes:
+  - id: speaking-1
+    tarea: El entrevistador hace preguntas a cada candidato por turnos (datos personales y de hecho)
+    tipo_pregunta: produccion
+    tipo_estimulo: ninguno
+    modalidad: habla
+    unidades: 1
+    preguntas_por_unidad: 1
+    preguntas_total: 1
+    pagina_manual: 39
+    minutos_parte: {min: 3, max: 4}
+    nota: El manual no da número de preguntas.
+  - id: speaking-2
+    tarea: Conversación entre candidatos a partir de un estímulo visual (gustos, disgustos, razones)
+    tipo_pregunta: produccion
+    tipo_estimulo: imagen
+    modalidad: habla
+    unidades: 1
+    preguntas_por_unidad: 1
+    preguntas_total: 1
+    pagina_manual: 39
+    minutos_parte: {min: 5, max: 6}
+    nota: El manual no da número de preguntas.

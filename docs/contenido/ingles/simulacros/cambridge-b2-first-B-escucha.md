@@ -1,6 +1,6 @@
 # Cambridge B2 First · Simulacro B · Listening (30 preguntas, unos 40 minutos)
 
-> **Formato reducido (revisión del 15/nov/2026).** Tiene las partes y el número de preguntas del examen oficial, pero el guion completo es unas 6 veces más corto que el de la prueba de muestra del manual y se lee en lugar de escucharse: así mide lectura, no escucha. Sirve para practicar cada tipo de pregunta; **no indica si estás listo para el examen**. Detalle en `docs/revisiones/fase-8-ingles.md` (ING-B1).
+> **Formato reducido (revisión del 15/nov/2026).** Tiene las partes y el número de preguntas del examen oficial, pero el guion completo es unas 5 veces más corto que el de la prueba de muestra del manual y se lee en lugar de escucharse: así mide lectura, no escucha. Sirve para practicar cada tipo de pregunta; **no indica si estás listo para el examen**. Detalle en `docs/revisiones/fase-8-ingles.md` (ING-B1).
 
 > **Contexto:** nota general en `../CONTEXTO.md`. Estado: Listening del simulacro B de B2 First, en texto. Audio pendiente de aprobación de la fuente.
 > Formato: [B2 First handbook (Cambridge English, PDF)](https://www.cambridgeenglish.org/Images/167791-b2-first-handbook.pdf). Parte 1: 8 preguntas de opción múltiple (3 opciones). Parte 2: 10 frases incompletas (hasta 3 palabras). Parte 3: 5 hablantes que se emparejan con opciones. Parte 4: 7 preguntas de opción múltiple (3 opciones).

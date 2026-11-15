@@ -1,6 +1,6 @@
 # Simulacro A · Cambridge B1 Preliminary (bimestre 1, semana 8)
 
-> **Formato reducido (revisión del 15/nov/2026).** Tiene las partes y el número de preguntas del examen oficial, pero los textos y los guiones son de 2.5 a 6 veces más cortos que los de la prueba de muestra del manual, y no hay audio. Sirve para practicar cada tipo de pregunta; **no indica si estás listo para el examen**. Algunas preguntas están en corrección. Detalle en `docs/revisiones/fase-8-ingles.md` (ING-B1 e ING-B2).
+> **Formato reducido (revisión del 15/nov/2026).** Tiene las partes y el número de preguntas del examen oficial, pero los textos y los guiones son de 2.5 a 5 veces más cortos que los de la prueba de muestra del manual, y no hay audio. Sirve para practicar cada tipo de pregunta; **no indica si estás listo para el examen**. Algunas preguntas están en corrección. Detalle en `docs/revisiones/fase-8-ingles.md` (ING-B1 e ING-B2).
 
 > **Contexto:** nota general en `../CONTEXTO.md`. Estado de este documento: simulacro A en **formato reducido**; Listening en texto y Speaking sin imágenes hasta tener audio.
 

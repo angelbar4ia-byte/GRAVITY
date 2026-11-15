@@ -13,7 +13,7 @@ El plan que corrige estos hallazgos está en `docs/specs/fase-8-ingles-plan.md`.
 
 Lo que más pesa:
 
-1. Los simulacros "completos" tienen el número correcto de preguntas, pero sus textos y guiones son entre 2.5 y 6 veces más cortos que los del examen oficial, y la comprensión auditiva se hace leyendo. Aprobar uno de estos simulacros no indica que se aprobaría el examen.
+1. Los simulacros "completos" tienen el número correcto de preguntas, pero sus textos y guiones son entre 2 y 6 veces más cortos que los del examen oficial, y la comprensión auditiva se hace leyendo. Aprobar uno de estos simulacros no indica que se aprobaría el examen.
 2. Hay partes enteras con preguntas inválidas: varias respuestas correctas con una sola aceptada, preguntas que no piden nada y textos con oraciones omitidas cuya clave no es coherente.
 3. Los módulos enseñan gramática de nivel A2 y prometen cerrar en B1, B1+ y B2. Con 5 horas a la semana, el calendario de 28 semanas suma 140 horas; subir un nivel completo cada 8 semanas no es realista.
 4. El plan exige 60 minutos diarios, pero cada lección tiene material para unos 5 a 10 minutos.
@@ -43,17 +43,19 @@ Nada de esto impide empezar a construir la app. Sí obliga a fijar antes el form
 
 | Examen y parte | Muestra oficial | Forma A | Forma B | Veces más corto |
 |---|---|---|---|---|
-| B2 First · Reading 5 (texto largo, opción múltiple) | ≈ 1,030 (el texto solo, ≈ 700) | 311 (texto 137) | 316 (texto 114) | 3.3 (texto: 5 a 6) |
-| B2 First · Reading 6 (oraciones omitidas) | ≈ 670 | 239 | 199 | 3 |
+| B2 First · Reading 5 (texto largo, opción múltiple) | ≈ 1,030 (el texto solo, 670) | 311 (texto 137) | 316 (texto 114) | 3.3 (texto: 5 a 6) |
+| B2 First · Reading 6 (oraciones omitidas) | 569 (texto 479 y oraciones 90) | 239 | 199 | 2.4 a 2.9 |
 | B2 First · Reading 7 (correspondencia) | ≈ 770 | 305 | 289 | 2.6 |
-| B2 First · Listening, guion completo | ≈ 3,200 | ≈ 480 | ≈ 510 | 6 |
-| B1 Preliminary · Reading 2 (personas y textos) | ≈ 640 | 196 | 184 | 3.3 |
-| B1 Preliminary · Reading 3 (texto y opción múltiple) | ≈ 670 (el texto solo, ≈ 390) | 254 (texto 100) | 253 (texto 100) | 2.6 (texto: 4) |
-| B1 Preliminary · Listening, guion completo | ≈ 2,400 | ≈ 400 | ≈ 415 | 6 |
-| TOEIC · Parte 3, cada conversación | ≈ 110 a 160 | ≈ 46 | — | 2.5 a 3.5 |
-| TOEIC · Parte 4, cada charla | ≈ 100 a 140 | ≈ 38 | — | 3 |
+| B2 First · Listening, guion completo | ≈ 2,640 de habla (≈ 3,250 con el narrador) | ≈ 480 | ≈ 510 | 5 |
+| B1 Preliminary · Reading 2 (personas y textos) | 568 (textos 414 y descripciones 154) | 196 | 184 | 3 |
+| B1 Preliminary · Reading 3 (texto y opción múltiple) | ≈ 670 (el texto solo, 352) | 254 (texto 100) | 253 (texto 100) | 2.6 (texto: 3.5) |
+| B1 Preliminary · Listening, guion completo | ≈ 1,940 de habla (≈ 2,400 con el narrador) | ≈ 400 | ≈ 415 | casi 5 |
+| TOEIC · Parte 3, cada conversación | 98 y 114 (las dos muestras del manual) | 42 de mediana (32 a 52) | — | unas 2.5 |
+| TOEIC · Parte 4, cada charla | 87 (la única muestra del manual) | 38 de mediana (36 a 42) | — | 2.3 |
 | TOEIC · Parte 7, textos sencillos | 78 y 104 en los dos más cortos de la muestra | 28 a 66 | — | 2 o más |
 | TOEIC · Parte 7, conjuntos de dos o tres textos | más de 160 en el fragmento extraído | 58 a 73 en total | — | más de 2 |
+
+> **Corrección (15/nov/2026).** Siete filas de esta tabla se volvieron a medir con los contratos del paquete P1.1a (`data/ingles/formatos/`), que citan la página de cada dato. La primera versión contaba el guion oficial de Listening con las frases del narrador, daba unas 390 palabras al texto de Reading 3 de B1 (mide 352), contaba instrucciones en Reading 2 y Reading 6, y sobrestimaba las muestras de TOEIC. El hallazgo se mantiene. Lo que cambia: en escucha la proporción máxima baja de 6 a 5, y en TOEIC queda entre 2 y 3.
 
 **Evidencia: modalidad.** Toda la comprensión auditiva se presenta como texto para leer. Eso mide lectura, no escucha.
 

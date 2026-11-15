@@ -1,0 +1,155 @@
+# Contrato de formato (gravity-ingles-v1, tipo formato). Generado en el paquete P1.1a.
+# - pagina_manual y medido.pagina son la numeración del PDF (no la impresa en la página).
+# - palabras_estimulo.origen: declarado (cifra del manual) o medido (medida en la prueba de muestra, +-15 %, redondeada a decenas;
+#   si la cifra medida es menor de 20 se redondea a unidades). Las medidas cuentan cada secuencia de letras, dígitos, apóstrofos o guiones
+#   e incluyen la numeración de los huecos.
+# - pendiente: true marca un dato que el manual no da o que no se pudo medir; nada se completó de memoria.
+# - Ninguna pregunta ni texto del manual se copia aquí: solo números, nombres de parte y páginas.
+esquema: gravity-ingles-v1
+tipo: formato
+id: toeic-lr
+estado: borrador
+nombre: TOEIC Listening & Reading
+fuente: {titulo: TOEIC Listening and Reading Test Examinee Handbook (ETS), url: 'https://www.ets.org/content/dam/ets-org/pdfs/toeic/toeic-listening-reading-test-examinee-handbook.pdf',
+  consultado: 2026-11-15}
+variante: en-US
+idioma_instrucciones: en
+totales: {preguntas: 200, preguntas_listening: 100, preguntas_reading: 100, pagina: 7, nota: 'Dos horas, 200 preguntas de opción múltiple. La
+    puntuación es una escala convertida del número de aciertos, no puntos por pregunta (p. 11).'}
+secciones:
+- id: listening
+  minutos: 45
+  minutos_nota: Unos 45 minutos (p. 7). Cada grabación se oye una sola vez (p. 18 y p. 20).
+  pagina: 7
+  preguntas_total: 100
+  partes:
+  - id: listening-1
+    tarea: 'Fotografías: cuatro enunciados hablados por imagen; se elige el que la describe mejor'
+    tipo_pregunta: opcion_multiple
+    tipo_estimulo: imagen
+    unidades: 6
+    preguntas_por_unidad: 1
+    preguntas_total: 6
+    opciones: 4
+    reproducciones: 1
+    palabras_estimulo: {min: 10, max: 40, origen: medido}
+    medido:
+      por_unidad: {min: 16, max: 31}
+      muestras: 2
+      pagina: 19
+      nota: Palabras de los cuatro enunciados hablados de cada ítem; solo hay dos muestras
+    pagina_manual: 18
+    pendiente: true
+    nota: Rango de palabras con solo dos muestras; confirmar con una forma de práctica oficial.
+  - id: listening-2
+    tarea: 'Pregunta-respuesta: una pregunta o enunciado y tres respuestas habladas'
+    tipo_pregunta: opcion_multiple
+    tipo_estimulo: audio
+    unidades: 25
+    preguntas_por_unidad: 1
+    preguntas_total: 25
+    opciones: 3
+    reproducciones: 1
+    palabras_estimulo: {min: 10, max: 30, origen: medido}
+    medido:
+      por_unidad: {min: 17, max: 24}
+      muestras: 4
+      pagina: 20
+      nota: Palabras del enunciado más las tres respuestas habladas
+    pagina_manual: 20
+  - id: listening-3
+    tarea: Conversaciones entre dos o más personas; tres preguntas por conversación (algunas con gráfico)
+    tipo_pregunta: opcion_multiple
+    tipo_estimulo: audio
+    unidades: 13
+    preguntas_por_unidad: 3
+    preguntas_total: 39
+    opciones: 4
+    reproducciones: 1
+    palabras_estimulo: {min: 80, max: 130, origen: medido}
+    medido:
+      por_unidad: {min: 98, max: 114}
+      muestras: 2
+      pagina: 20
+      nota: 'Dos conversaciones de muestra: 114 y 98 palabras de habla (páginas 20 a 21)'
+    pagina_manual: 7
+  - id: listening-4
+    tarea: Charlas de un solo hablante; tres preguntas por charla
+    tipo_pregunta: opcion_multiple
+    tipo_estimulo: audio
+    unidades: 10
+    preguntas_por_unidad: 3
+    preguntas_total: 30
+    opciones: 4
+    reproducciones: 1
+    palabras_estimulo: {min: 70, max: 100, origen: medido}
+    medido: {total: 87, muestras: 1, pagina: 22, nota: Una charla de muestra}
+    pagina_manual: 7
+    pendiente: true
+    nota: Rango de palabras con una sola muestra; confirmar con una forma de práctica oficial.
+- id: reading
+  minutos: 75
+  pagina: 7
+  nota: La Parte 7 se divide en dos entradas del contrato (reading-7-single y reading-7-multiple) porque tienen forma distinta (p. 7).
+  preguntas_total: 100
+  partes:
+  - id: reading-5
+    tarea: 'Oraciones incompletas: una palabra o frase falta; cuatro opciones'
+    tipo_pregunta: hueco_opciones
+    tipo_estimulo: ninguno
+    unidades: 30
+    preguntas_por_unidad: 1
+    preguntas_total: 30
+    opciones: 4
+    palabras_estimulo: {min: 9, max: 21, origen: medido}
+    medido:
+      por_unidad: {min: 11, max: 18}
+      muestras: 5
+      pagina: 23
+      nota: Palabras de la oración sin las opciones; cinco muestras
+    pagina_manual: 7
+  - id: reading-6
+    tarea: 'Completar textos: textos con huecos (palabra, frase u oración); cuatro opciones'
+    tipo_pregunta: hueco_opciones
+    tipo_estimulo: texto
+    unidades: 4
+    preguntas_por_unidad: 4
+    preguntas_total: 16
+    opciones: 4
+    palabras_estimulo: {min: 90, max: 120, origen: medido}
+    medido: {total: 107, muestras: 1, pagina: 24, nota: Un correo de muestra con cuatro huecos (una de las preguntas elige una oración)}
+    pagina_manual: 7
+    pendiente: true
+    nota: 'El manual da 16 preguntas pero no dice cuántos textos son. Las 4 por texto salen de la muestra (preguntas 131 a 134): unidades queda
+      inferido, no declarado. Rango de palabras con una sola muestra.'
+  - id: reading-7-single
+    tarea: Textos sencillos (aviso, mensaje, artículo, correo, cadena de mensajes) con dos a cuatro preguntas cada uno
+    tipo_pregunta: opcion_multiple
+    tipo_estimulo: texto
+    unidades: 10
+    preguntas_por_unidad: {min: 2, max: 4}
+    preguntas_total: 29
+    opciones: 4
+    palabras_estimulo: {min: 60, max: 160, origen: medido}
+    medido:
+      por_unidad: {min: 72, max: 135}
+      muestras: 2
+      pagina: 25
+      nota: Dos muestras (anuncio de 72 y cadena de mensajes de 135, con nombres y horas), leídas de la imagen
+    pagina_manual: 7
+    pendiente: true
+    nota: 'Parte 7 no cabe en preguntas_por_unidad fijo: son 10 textos con 2 a 4 preguntas y 29 en total. Solo hay dos muestras y son de las más
+      cortas: el máximo del rango queda pendiente.'
+  - id: reading-7-multiple
+    tarea: Conjuntos de dos o tres textos con cinco preguntas por conjunto
+    tipo_pregunta: opcion_multiple
+    tipo_estimulo: texto
+    unidades: 5
+    preguntas_por_unidad: 5
+    preguntas_total: 25
+    opciones: 4
+    palabras_estimulo: {min: 260, max: 360, origen: medido}
+    medido: {total: 310, muestras: 1, pagina: 26, nota: 'Un conjunto triple de muestra (anuncio, carrito de compra y correo), leído de las imágenes'}
+    pagina_manual: 7
+    pendiente: true
+    nota: Solo hay una muestra de conjunto triple y ninguna de conjunto doble; rango por confirmar.
