@@ -1,7 +1,7 @@
 # Revisión de calidad — Fase 8, bloque 5 (Hábitos · Inglés)
 
 Revisor: arquitecto (sesión de análisis) · Fecha: 14/nov/2026 · Árbol: `856e48c` (rama `claude/zen-pasteur-b0jblz`).
-Alcance: `docs/contenido/ingles/` completo (30 documentos, unas 8,500 líneas), `docs/specs/fase-8-habitos-ampliaciones.md` (bloque 5a, v0.4), el Anexo A de `docs/modulos/habitos/diseno-app-habitos.md`, la habilidad `.claude/skills/simulacro-examen-idioma/` y el estado del módulo Hábitos en la app. Los manuales oficiales usados para comparar están citados en `docs/contenido/ingles/formatos-oficiales.md`.
+Alcance: `docs/contenido/ingles/` completo (34 documentos y una página web, unas 6,700 líneas), `docs/specs/fase-8-habitos-ampliaciones.md` (bloque 5a, v0.4), el Anexo A de `docs/modulos/habitos/diseno-app-habitos.md`, la habilidad `.claude/skills/simulacro-examen-idioma/` y el estado del módulo Hábitos en la app. Los manuales oficiales usados para comparar están citados en `docs/contenido/ingles/formatos-oficiales.md`.
 
 El plan que corrige estos hallazgos está en `docs/specs/fase-8-ingles-plan.md`. Los códigos entre paréntesis (por ejemplo, P1.2) son paquetes de ese plan.
 
@@ -106,7 +106,7 @@ Otros casos:
 Un texto de escucha de 40 palabras dura unos 15 segundos; el plan le asigna 10 minutos, más 10 de repetición. El bloque de traslado (25 minutos, solo audio) no se puede hacer sin audio. La especificación 5a hablaba de lecciones de 5 a 10 minutos y unos 15 minutos al día; después se aprobó una hora diaria y el contenido no creció.
 
 **Consecuencia.** El requisito de "90 % de los minutos planeados" para subir de nivel no se puede cumplir estudiando: solo dejando correr el tiempo.
-**Corrige:** plantilla de sesión de 60 minutos con mínimos por bloque que el validador comprueba (P1.1, P1.2: V20 y V21), audio del dispositivo (fase 3) y reescritura por semanas (fase 4).
+**Corrige:** plantilla de sesión de 60 minutos con mínimos por bloque que el validador comprueba (P1.1, P1.2: V21 y V22), audio del dispositivo (fase 3) y reescritura por semanas (fase 4).
 
 ### ING-B5. La prueba de ubicación es única, corta y ubica de más
 
@@ -136,7 +136,7 @@ Oraciones en inglés de 7 palabras o más que aparecen en dos archivos:
 | `toefl-ibt-A.md` con la práctica y con `toefl-ibt-B.md` | 5 y 4 | Frases de repetición y la primera pregunta de Listening |
 
 **Consecuencia.** La segunda oportunidad de una evaluación no es una medición nueva: la persona ya vio las preguntas.
-**Corrige:** comprobación de duplicados entre formas y entre banco de práctica y formas (P1.2: V18 y V19).
+**Corrige:** comprobación de duplicados entre formas y entre banco de práctica y formas (P1.2: V19 y V20).
 
 ### ING-I2. Distractores absurdos que regalan la respuesta
 En `toefl-ibt-B.md`, Listening tarea 1: "I shoe the horse", "Pens are written", "Lived well.", "Tiredness is a feeling." Nadie los elegiría. En el examen real, las opciones incorrectas son respuestas plausibles a otra pregunta parecida.
@@ -179,6 +179,7 @@ Además, las semanas se numeran distinto según el documento: los módulos usan 
 - Se creó la rama `claude/ubicacion-ingles` en el repositorio de Hábitos. Por D10 ese repositorio es historial archivado: todo vive en GRAVITY. La nota `especificacion-ubicacion-en-app.md` afirmaba que la app no tenía código; el módulo Hábitos existe en `app/lib/modulos/habitos` desde la Fase 3.
 - La rama `claude/integracion-ingles-main` de GRAVITY contiene solo un commit de merge sobre `main` y sigue abierta.
 - `CONTEXTO.md` tenía filas duplicadas y pasos de retoma ya cumplidos.
+- La habilidad `.claude/skills/simulacro-examen-idioma/` nunca estuvo en git: `.gitignore` solo dejaba pasar `.claude/agents/`. Se habría perdido al cerrar el entorno. **Corregido el 15/nov/2026.**
 - La regla de redactar cada módulo solo después de aprobar el anterior convierte al dueño en cuello de botella de un tema que él mismo declara no dominar: los módulos 3 y 4 llevan pendientes desde su redacción.
 
 **Corrige:** P0.1, P0.3 y P0.4, y decisión D-ING-4 (aprobar plantillas y muestras en lugar de cada documento).

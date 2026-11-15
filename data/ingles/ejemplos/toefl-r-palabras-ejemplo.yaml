@@ -1,0 +1,40 @@
+# Ejemplo patrón · TOEFL iBT 2026 · Reading, "Complete the Words"
+# Muestra: las palabras se completan DENTRO de un texto. La primera oración va
+# entera para dar contexto; la parte oculta de cada palabra va entre llaves y la
+# app muestra una casilla por letra. Cada palabra tiene una sola solución con
+# ese número de letras.
+esquema: gravity-ingles-v1
+tipo: unidad
+id: ej-toefl-r-palabras-0001
+estado: borrador
+formato: toefl-ibt-2026
+parte: reading-complete-the-words
+nivel: B1
+variante: en-US
+origen: nuevo
+estimulo:
+  tipo: texto
+  titulo: "Reading the rings"
+  texto: |
+    Trees keep a record of the past. Each year, a tree adds a new la{yer} of
+    wood under its bark, and these layers can be se{en} as rings when the
+    tree is cut. In a wet year the ring is wide; in a dry year it is
+    nar{row}. By meas{uring} the rings, res{earchers} can des{cribe} the
+    climate of a reg{ion} hundreds of years ago. The same met{hod} is used
+    to find the a{ge} of old wooden buil{dings}.
+preguntas:
+  - id: ej-toefl-r-palabras-0001-a
+    tipo: completar_palabras
+    habilidad: lectura
+    porque: "Cada palabra se deduce de su oración y de la forma que exige la gramática; el número de casillas descarta las alternativas."
+    pistas:
+      - {palabra: "layer", porque: "'A new … of wood'; la oración sigue con 'these layers'."}
+      - {palabra: "seen", porque: "Pasiva con 'can be': participio de 'see'."}
+      - {palabra: "narrow", porque: "Contraste con 'wide' en la primera mitad de la oración."}
+      - {palabra: "measuring", porque: "'By' + verbo en -ing; el objeto es 'the rings'."}
+      - {palabra: "researchers", porque: "Sujeto plural de 'can describe'; ocho letras ocultas."}
+      - {palabra: "describe", porque: "Verbo base tras 'can', con 'the climate' como objeto."}
+      - {palabra: "region", porque: "'The climate of a …', sustantivo singular."}
+      - {palabra: "method", porque: "'The same … is used': retoma el procedimiento de medir los anillos."}
+      - {palabra: "age", porque: "'Find the … of old wooden buildings': dos letras ocultas."}
+      - {palabra: "buildings", porque: "'Old wooden …', sustantivo plural."}

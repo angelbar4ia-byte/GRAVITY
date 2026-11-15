@@ -1,0 +1,49 @@
+# Ejemplo patrón · Curso · B1.1, semana 1 · Audio de traslado A (monólogo)
+# Muestra: guion con la longitud de la etapa B1 (200 a 350 palabras), cargado de
+# la gramática de la semana: rutina en presente simple, lo temporal y lo que
+# cambia en presente continuo, y verbos de estado. Sin preguntas: se usa para
+# escuchar y repetir en el traslado.
+esquema: gravity-ingles-v1
+tipo: unidad
+id: ej-b1-1-s01-audio-a
+estado: borrador
+formato: gravity-sesion-60
+parte: traslado-audio
+nivel: B1
+variante: en-US
+origen: nuevo
+estimulo:
+  tipo: audio
+  titulo: "A different kind of month"
+  reproducciones: 2
+  guion:
+    - voz: M1
+      texto: >-
+        Hi, I'm Daniel. I work for a small design company downtown. Normally,
+        my days are all the same. I get up at six thirty, I take the bus at
+        seven fifteen, and I start work at eight. I usually have lunch at my
+        desk, and I never leave the office before six.
+    - voz: M1
+      texto: >-
+        But this month is different. The company is painting the whole
+        building, so we're all working from home. I'm using the kitchen table
+        as my desk, and my cat thinks it belongs to her. At the moment, she's
+        sleeping on my keyboard.
+    - voz: M1
+      texto: >-
+        Some things are getting better. I'm not spending two hours a day on
+        the bus, so I'm sleeping more, and I'm cooking real food instead of
+        buying sandwiches. I'm even running every morning, because my sister
+        and I are training for a ten-kilometer race in March.
+    - voz: M1
+      texto: >-
+        Other things are harder. I miss my coworkers. We talk online every
+        day, but it isn't the same. I also work longer now. At the office, I
+        know when the day ends. At home, I don't.
+    - voz: M1
+      texto: >-
+        My boss wants us back at the office on the first of next month.
+        Honestly, I don't know how I feel about that. I love my new mornings,
+        and I don't want to lose them. Maybe I'll ask her if I can work from
+        home on Fridays. What do you think? Does that sound like a good plan?
+preguntas: []

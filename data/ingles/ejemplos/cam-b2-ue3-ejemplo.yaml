@@ -1,0 +1,90 @@
+# Ejemplo patrón · Cambridge B2 First · Reading and Use of English, parte 3
+# Muestra: toda respuesta exige transformar la palabra base (plural, prefijo
+# negativo, sufijo de sustantivo, adverbio). Ninguna respuesta es igual a la base.
+esquema: gravity-ingles-v1
+tipo: unidad
+id: ej-cam-b2-ue3-0001
+estado: borrador
+formato: cambridge-b2-first
+parte: use-of-english-3
+nivel: B2
+variante: en-GB
+origen: nuevo
+estimulo:
+  tipo: texto
+  titulo: "In praise of boredom"
+  texto: |
+    Most of us do everything we can to avoid being bored. We fill every
+    spare moment with our phones, and the idea of sitting quietly with our
+    own {1} seems almost {2}. Yet a growing number of {3} believe that
+    boredom is far from useless. In fact, it may be exactly what our brains
+    need.
+
+    In one study, volunteers were asked to copy numbers from a phone book,
+    a task chosen for its complete lack of {4}. Afterwards, they were {5}
+    good at finding new uses for everyday objects, and did much better than
+    a second group who had not been bored first. The {6} seems to be that a
+    bored mind starts to wander, and a wandering mind makes {7}
+    connections.
+
+    None of this means that boredom is always pleasant, or that we should
+    go looking for it. But the next time
+    you are stuck in a queue, it may be worth leaving your phone in your
+    pocket. Your {8} might thank you.
+preguntas:
+  - id: ej-cam-b2-ue3-0001-1
+    tipo: formacion_palabra
+    habilidad: vocabulario
+    hueco: 1
+    base: "THINK"
+    aceptadas: ["thoughts"]
+    porque: "Tras 'our own' va un sustantivo; la colocación es 'alone with your own thoughts', en plural."
+  - id: ej-cam-b2-ue3-0001-2
+    tipo: formacion_palabra
+    habilidad: vocabulario
+    hueco: 2
+    base: "BEAR"
+    aceptadas: ["unbearable"]
+    porque: "Adjetivo tras 'seems almost'; el sentido es negativo porque evitamos aburrirnos."
+  - id: ej-cam-b2-ue3-0001-3
+    tipo: formacion_palabra
+    habilidad: vocabulario
+    hueco: 3
+    base: "PSYCHOLOGY"
+    aceptadas: ["psychologists"]
+    porque: "'A growing number of' pide un sustantivo de persona en plural, sujeto de 'believe'."
+  - id: ej-cam-b2-ue3-0001-4
+    tipo: formacion_palabra
+    habilidad: vocabulario
+    hueco: 4
+    base: "EXCITE"
+    aceptadas: ["excitement"]
+    porque: "'Lack of' va seguido de un sustantivo abstracto."
+  - id: ej-cam-b2-ue3-0001-5
+    tipo: formacion_palabra
+    habilidad: vocabulario
+    hueco: 5
+    base: "SURPRISE"
+    aceptadas: ["surprisingly"]
+    porque: "Adverbio que modifica al adjetivo 'good'."
+  - id: ej-cam-b2-ue3-0001-6
+    tipo: formacion_palabra
+    habilidad: vocabulario
+    hueco: 6
+    base: "EXPLAIN"
+    aceptadas: ["explanation"]
+    porque: "Sustantivo singular tras 'The', sujeto de 'seems'."
+  - id: ej-cam-b2-ue3-0001-7
+    tipo: formacion_palabra
+    habilidad: vocabulario
+    hueco: 7
+    base: "EXPECT"
+    aceptadas: ["unexpected"]
+    porque: "Adjetivo ante 'connections'; una mente que divaga hace conexiones que nadie espera, de ahí el prefijo negativo."
+  - id: ej-cam-b2-ue3-0001-8
+    tipo: formacion_palabra
+    habilidad: vocabulario
+    hueco: 8
+    base: "CREATE"
+    aceptadas: ["creativity"]
+    porque: "Sustantivo abstracto tras 'Your'; el texto trata de la capacidad de crear, no de una creación concreta."

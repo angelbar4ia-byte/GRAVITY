@@ -1,0 +1,36 @@
+# Ejemplo patrón · Curso · B1.1, semana 1 · Audio de traslado B (diálogo)
+# Muestra: dos voces, turnos cortos y naturales, la misma gramática de la semana
+# en preguntas y respuestas. Sin preguntas: se usa para escuchar y repetir.
+esquema: gravity-ingles-v1
+tipo: unidad
+id: ej-b1-1-s01-audio-b
+estado: borrador
+formato: gravity-sesion-60
+parte: traslado-audio
+nivel: B1
+variante: en-US
+origen: nuevo
+estimulo:
+  tipo: audio
+  titulo: "A call at the bus stop"
+  reproducciones: 2
+  guion:
+    - {voz: F1, texto: "Hi, Marco, it's Laura. Are you busy? What are you doing?"}
+    - {voz: M1, texto: "Hi! I'm waiting for the bus. It's late again. It's always late on Mondays."}
+    - {voz: F1, texto: "The bus? You usually drive to work."}
+    - {voz: M1, texto: "I know, but my car is at the garage this week, so I'm taking the bus. It isn't so bad. I'm reading a lot more."}
+    - {voz: F1, texto: "Really? What are you reading?"}
+    - {voz: M1, texto: "A book about sleep. Did you know that most adults need eight hours a night? I only sleep six."}
+    - {voz: F1, texto: "Me too. I'm trying to go to bed earlier these days, but I always look at my phone first."}
+    - {voz: M1, texto: "Everybody does that. So, why are you calling? Do you need something?"}
+    - {voz: F1, texto: "Yes, actually. I'm looking for a gym. You go to that one near the park, don't you?"}
+    - {voz: M1, texto: "I do. I go three times a week, usually after work. It has a pool, and it doesn't cost much."}
+    - {voz: F1, texto: "That sounds perfect. Is it very busy in the evenings?"}
+    - {voz: M1, texto: "It's getting busier, because a lot of new people are joining this month. But the mornings are quiet."}
+    - {voz: F1, texto: "I don't like mornings. You know that."}
+    - {voz: M1, texto: "I remember! Listen, my bus is coming. Do you want to come with me on Thursday? You can try it for free."}
+    - {voz: F1, texto: "I'd love to. What time do you finish work?"}
+    - {voz: M1, texto: "At six. Let's meet at the entrance at six thirty."}
+    - {voz: F1, texto: "Great. See you on Thursday, Marco. Have a good day."}
+    - {voz: M1, texto: "You too. Bye!"}
+preguntas: []

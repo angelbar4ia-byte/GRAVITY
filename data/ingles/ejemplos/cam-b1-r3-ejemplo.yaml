@@ -1,0 +1,126 @@
+# Ejemplo patrón · Cambridge B1 Preliminary · Reading, parte 3
+# Muestra: longitud oficial del texto, cinco preguntas de cuatro opciones en el
+# orden del texto (la última, global), una sola respuesta defendible y la razón
+# de cada opción. La primera opción es siempre la correcta; el sorteo lo hace
+# la herramienta.
+esquema: gravity-ingles-v1
+tipo: unidad
+id: ej-cam-b1-r3-0001
+estado: borrador
+formato: cambridge-b1-preliminary
+parte: reading-3
+nivel: B1
+variante: en-GB
+origen: nuevo
+estimulo:
+  tipo: texto
+  titulo: "A year without my car"
+  texto: |
+    by Elena Marsh
+
+    Twelve months ago, I sold my car. It wasn't a brave decision about the
+    environment, although people often think so. The truth is less
+    interesting: the car needed expensive repairs, and I simply didn't have
+    the money. I spent the first week wondering how I would cope, especially
+    with the weekly shopping and my daughter's swimming lessons on the other
+    side of town.
+
+    At first, everything took longer. I had to learn the bus timetable, and I
+    missed more than one bus because I arrived at the stop a minute late. My
+    neighbour Tom saw me carrying heavy bags one rainy evening and offered to
+    lend me his old bicycle. I hadn't ridden one since I was a teenager, and I
+    was sure I would fall off in front of the whole street. I didn't, although
+    my first journey to the supermarket was slow and rather frightening.
+
+    What surprised me most was not the exercise or the fresh air. It was how
+    much I began to notice. From a car, a town is just roads and traffic
+    lights. On a bicycle, I discovered a bakery that opens at six, a path
+    along the river that I had never seen, and a small park where I now stop
+    to read. I also started talking to people. When you wait for a bus every
+    morning, you get to know the other passengers, and some of them have
+    become friends.
+
+    Of course, it isn't perfect. In winter, cycling in the dark is unpleasant,
+    and buses on Sundays are so rare that visiting my parents in their village
+    takes half the day. Twice this year I have had to ask a friend to drive me
+    somewhere, and I hated asking. I also know that I am lucky: I live in a
+    town where shops and schools are close. For people in the countryside,
+    giving up a car is not a real choice.
+
+    So, will I buy another car? My daughter asks me this every time it rains.
+    A year ago, I would have said yes immediately. Now I am not so sure. I have
+    saved more money than I expected, and I feel healthier than I have for
+    years. But the main reason is harder to explain. I feel that I live in my
+    town now, instead of just driving through it. Perhaps I will change my
+    mind one day, but for the moment, the bicycle stays.
+preguntas:
+  - id: ej-cam-b1-r3-0001-a
+    tipo: opcion_multiple
+    habilidad: lectura
+    foco: detalle
+    enunciado: "Why did Elena sell her car?"
+    opciones:
+      - texto: "She could not afford to have it repaired."
+        porque: "Párrafo 1: 'the car needed expensive repairs, and I simply didn't have the money'."
+      - texto: "She wanted to protect the environment."
+        porque_no: "Lo niega al inicio: 'It wasn't a brave decision about the environment'."
+      - texto: "She thought cycling would make her healthier."
+        porque_no: "La salud aparece al final como resultado, no como motivo; la bicicleta llegó después de vender el coche."
+      - texto: "Her daughter no longer needed lifts to her lessons."
+        porque_no: "Las clases de natación de su hija eran justo una de sus preocupaciones."
+  - id: ej-cam-b1-r3-0001-b
+    tipo: opcion_multiple
+    habilidad: lectura
+    foco: actitud_opinion
+    enunciado: "How did Elena feel when Tom offered her his bicycle?"
+    opciones:
+      - texto: "afraid of looking foolish in front of her neighbours"
+        porque: "Párrafo 2: 'I was sure I would fall off in front of the whole street'."
+      - texto: "annoyed that he had noticed her problems"
+        porque_no: "Tom la ve con las bolsas y la ayuda; ella no expresa molestia."
+      - texto: "confident, because she used to cycle a lot"
+        porque_no: "No montaba desde la adolescencia y estaba segura de que se caería."
+      - texto: "worried that the bicycle was too old to use"
+        porque_no: "La bicicleta es 'old', pero su miedo es caerse, no el estado de la bicicleta."
+  - id: ej-cam-b1-r3-0001-c
+    tipo: opcion_multiple
+    habilidad: lectura
+    foco: detalle
+    enunciado: "What surprised Elena most about life without a car?"
+    opciones:
+      - texto: "She became aware of places she had never noticed before."
+        porque: "Párrafo 3: 'What surprised me most… was how much I began to notice', con la panadería, el sendero y el parque."
+      - texto: "She enjoyed the exercise more than she had expected."
+        porque_no: "Lo descarta de forma expresa: 'not the exercise or the fresh air'."
+      - texto: "She made friends with the people who live on her street."
+        porque_no: "Los amigos nuevos son pasajeros del autobús, y lo presenta como algo adicional ('I also…')."
+      - texto: "She found that buses were quicker than driving."
+        porque_no: "Dice lo contrario en el párrafo 2: al principio todo tardaba más."
+  - id: ej-cam-b1-r3-0001-d
+    tipo: opcion_multiple
+    habilidad: lectura
+    foco: actitud_opinion
+    enunciado: "What does Elena say about the difficulties of not having a car?"
+    opciones:
+      - texto: "She dislikes having to depend on other people for lifts."
+        porque: "Párrafo 4: 'I have had to ask a friend to drive me somewhere, and I hated asking'."
+      - texto: "She has stopped visiting her parents on Sundays."
+        porque_no: "La visita le toma medio día, pero no dice que haya dejado de ir."
+      - texto: "She thinks cycling is too dangerous in bad weather."
+        porque_no: "Dice que en invierno es 'unpleasant' por la oscuridad; no habla de peligro ni de mal tiempo."
+      - texto: "She believes everybody could manage without a car."
+        porque_no: "Afirma lo contrario para quien vive en el campo: 'not a real choice'."
+  - id: ej-cam-b1-r3-0001-e
+    tipo: opcion_multiple
+    habilidad: lectura
+    foco: idea_principal
+    enunciado: "What would Elena be most likely to say to a friend?"
+    opciones:
+      - texto: "I never planned it, but giving up my car has changed how I feel about the place where I live."
+        porque: "Une el inicio (vendió el coche por dinero) con el final: 'I feel that I live in my town now, instead of just driving through it'."
+      - texto: "Selling my car was a mistake, and I'm saving up to buy a new one."
+        porque_no: "Al final decide que, por ahora, 'the bicycle stays'."
+      - texto: "I gave up my car to help the planet, and I think everyone should do the same."
+        porque_no: "Ni fue por el planeta ni cree que todos puedan hacerlo."
+      - texto: "Life without a car is easy once you have learned the bus timetable."
+        porque_no: "El párrafo 4 enumera lo que sigue siendo difícil: 'it isn't perfect'."

@@ -12,6 +12,11 @@ Llevar a código el diseño `docs/modulos/habitos/diseno-app-habitos.md` (Anexo 
 ## Carpetas propias
 `paquetes/habitos_dominio`, `app/lib/modulos/habitos`, `docs/specs/fase-3-*`.
 
+## Bloque de inglés (Fase 8, bloque 5)
+Plan: `docs/specs/fase-8-ingles-plan.md`. Formato: `docs/specs/fase-8-ingles-formato.md`. Habilidad: `simulacro-examen-idioma`.
+Carpetas para este bloque, además de las propias: `data/ingles/`, `herramientas/ingles/`, `docs/contenido/ingles/`, `docs/specs/fase-8-habitos-*` y `docs/specs/fase-8-ingles-formato.md`.
+Reglas: las de la sección 5.6 del plan. La primera opción de cada pregunta es la correcta; nada se usa dos veces; no escribas estados por encima de `validado`.
+
 ## Reglas propias
 - Tono sin culpa; acción diaria en 3 toques o menos.
 - Datos sensibles con los dos modos de D13 (cifrado en la nube o solo en el teléfono); nada se envía a la IA.

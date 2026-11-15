@@ -115,7 +115,7 @@ preguntas:
 | `correspondencia` | ¿En qué texto se dice…? | `enunciado`, `respuesta`, `evidencia` | La unidad lleva `textos` con id (V11) |
 | `emparejar` | Personas con textos, hablantes con frases | `elemento`, `respuesta`, `evidencia` | La unidad lleva `opciones` con id; las sobrantes llevan `porque_no` |
 | `completar_nota` | Notas con huecos al escuchar | `hueco`, `aceptadas` | Una a tres palabras o un número, tal como se oye |
-| `completar_palabras` | Palabras cortadas dentro de un texto (TOEFL) | — (los huecos van en el texto: `im{prove}`) | Siempre con texto alrededor (V14) |
+| `completar_palabras` | Palabras cortadas dentro de un texto (TOEFL) | `pistas` (una por hueco, en orden); los huecos van en el texto: `im{prove}` | Siempre con texto alrededor; la app muestra una casilla por letra oculta (V14) |
 | `ordenar_palabras` | Construir una oración | `palabras`, `aceptadas` | — |
 | `respuesta_corta` | Ejercicios del curso (transformar, traducir) | `enunciado`, `aceptadas` | — |
 | `repetir` | Escuchar y repetir | `frases` | — |
@@ -261,8 +261,8 @@ bloques:
     tarea: {}             # pregunta de tipo produccion
   - tipo: traslado
     minutos: 25
-    audio: b1-1-s01-audio-a   # unidad de audio de la semana
-    frases: []                # 12 o más para repetir
+    audios: [b1-1-s01-audio-a, b1-1-s01-audio-b]   # los dos audios de la semana
+    frases: []                # 20 o más para repetir
 tarjetas: []                  # 8 por sesión de lunes a jueves
 ```
 
@@ -273,11 +273,11 @@ Mínimos por bloque (V21). El viernes cambia la lección por conversación guiad
 | Lección (10) | Explicación, 6 ejemplos, error común y 10 preguntas | Audio propio con 8 preguntas | Explicación del sonido y 12 elementos | Texto con 6 preguntas | Diálogo guiado de 8 turnos con variantes |
 | Pronunciación (8) | 10 elementos | 10 elementos | 10 elementos | 10 elementos | 10 elementos |
 | Producción (12) | Tarea con cotejo y modelo | Igual | Igual | Tarea escrita con cotejo y modelo | Monólogo o diálogo grabado |
-| Traslado (25) | Audio de la semana, 12 frases, tarjetas | Igual | Igual | Igual | Igual |
+| Traslado (25) | Los dos audios de la semana (dos veces cada uno), 20 frases para repetir y tarjetas en audio | Igual | Igual | Igual | Igual |
 | Tarjetas nuevas | 8 | 8 | 8 | 8 | 0 |
 | Mini prueba | — | — | — | — | 10 preguntas, se aprueba con 8 |
 
-Cada semana tiene al menos dos audios de traslado distintos. Longitudes por etapa:
+Cada semana tiene dos audios de traslado distintos (un monólogo y un diálogo), que se repiten durante la semana: volver a oír el mismo audio es parte del método. Longitudes por etapa:
 
 | Etapa | Lectura (palabras) | Audio (palabras) | Escritura (palabras) | Habla (segundos) |
 |---|---|---|---|---|
@@ -286,7 +286,7 @@ Cada semana tiene al menos dos audios de traslado distintos. Longitudes por etap
 | B1 | 200 a 350 | 200 a 350 | 80 a 120 | 60 a 90 |
 | B2 | 350 a 550 | 350 a 500 | 140 a 190 | 90 a 120 |
 
-Cálculo de minutos (V22): opción múltiple o hueco, 40 segundos; respuesta corta, ordenar o transformar, 60; escucha, palabras ÷ 150 por el número de reproducciones, más 40 por pregunta; cada frase para repetir, 30; cada elemento de pronunciación, 30; cada tarjeta nueva, 30; producción, los minutos declarados si trae consigna, cotejo y modelo. El tiempo estimado de cada bloque debe llegar al 70 % del declarado, y el total quedar entre 54 y 66 minutos.
+Cálculo de minutos (V22): explicación, palabras ÷ 150; cada ejemplo, 15 segundos; opción múltiple o hueco, 40; respuesta corta, ordenar o transformar, 60; escucha, palabras ÷ 150 por el número de reproducciones, más 40 segundos por pregunta; cada frase para repetir, 30; cada elemento de pronunciación, 30; cada tarjeta nueva, 15; repaso y tarjetas en audio, los minutos declarados; producción, los minutos declarados si trae consigna, cotejo y modelo. El tiempo estimado de cada bloque debe quedar entre el 70 % y el 150 % del declarado, y el total entre 54 y 66 minutos.
 
 ## 8. Niveles
 
@@ -354,13 +354,26 @@ Error = impide `validado`. Aviso = se reporta y no impide.
 | V19 | Ningún estímulo ni enunciado se repite entre unidades (similitud de 0.85 o más); una unidad no aparece en dos formas del mismo formato, ni en práctica y en forma | Error |
 | V20 | Las unidades de ubicación y de puertas no se usan en ningún otro lugar | Error |
 | V21 | Cada sesión cumple los mínimos por bloque de la sección 7 | Error |
-| V22 | Minutos estimados por bloque al 70 % o más del declarado; total entre 54 y 66 | Error |
-| V23 | Tarjetas: id único en el curso, traducción presente y `ejemplo` que contiene la palabra | Error |
+| V22 | Minutos estimados por bloque entre el 70 % y el 150 % del declarado; total entre 54 y 66 | Error |
+| V23 | Tarjetas: id único en el curso, traducción presente y `ejemplo` que contiene la palabra o una forma suya | Error |
 | V24 | Estados: `validado` sin errores; `revisado` con revisión a ciegas vigente (misma huella) y sin disputas; `aprobado` solo desde `revisado` | Error |
 | V25 | Solo se compila lo que está en `revisado` o `aprobado` | Error |
 | V26 | Los encabezados de estado, fidelidad y audio de lo exportado los escribe la herramienta | Error |
 
-## 12. Lo que queda fuera de esta versión
+## 12. Ejemplos patrón
+
+En `data/ingles/ejemplos/`. Marcan el nivel de calidad que se exige y sirven de casos buenos para las pruebas del validador.
+
+| Archivo | Qué enseña |
+|---|---|
+| `cam-b1-r3-ejemplo.yaml` | Lectura de B1 Preliminary con longitud oficial (406 palabras), cinco preguntas en el orden del texto, la última global, y la razón de cada opción |
+| `cam-b2-ue2-ejemplo.yaml` | Hueco abierto de B2 First solo con palabras gramaticales y con todas las respuestas válidas |
+| `cam-b2-ue3-ejemplo.yaml` | Formación de palabras de B2 First: todas las respuestas transforman la base |
+| `toefl-r-palabras-ejemplo.yaml` | "Complete the Words" de TOEFL dentro de un texto, con una sola solución por hueco |
+| `audio-b1-1-s01-a-ejemplo.yaml`, `audio-b1-1-s01-b-ejemplo.yaml` | Guiones de traslado de B1 (monólogo y diálogo) cargados de la gramática de la semana |
+| `sesion-b1-1-s01-lun-ejemplo.yaml` | Sesión de lunes de 60 minutos: 11 preguntas con explicación, 12 elementos de pronunciación, tarea con cotejo y modelo, 20 frases y 8 tarjetas. Estimación: 58 minutos |
+
+## 13. Lo que queda fuera de esta versión
 
 - Archivos de audio grabado y fotografías. El audio se genera en el dispositivo a partir del guion (plan, fase 3). Las imágenes se describen en texto hasta que haya archivos con licencia clara.
 - Calificación con IA de escritura y habla. Se evalúa con lista de cotejo, modelo y revisión en pareja; la IA se especifica aparte, después de la Fase 6.

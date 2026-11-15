@@ -67,7 +67,7 @@ El plan es más rápido que la estimación de Cambridge. Lo normal será repetir
 
 ### 3.2 Sesión de 60 minutos real
 
-Se respetan los tiempos aprobados (principal 35: repaso 5, lección 10, pronunciación 8, producción 12; traslado 25: escucha 10, repetición 10, tarjetas 5). Cada bloque tiene **mínimos de contenido** que el validador comprueba: por ejemplo, 10 preguntas en la lección del lunes, audio de 200 a 350 palabras en B1, 12 frases para repetir y una tarea de producción con lista de cotejo y respuesta modelo. Detalle en el formato, sección 7.
+Se respetan los tiempos aprobados (principal 35: repaso 5, lección 10, pronunciación 8, producción 12; traslado 25: escucha 10, repetición 10, tarjetas 5). Cada bloque tiene **mínimos de contenido** que el validador comprueba: por ejemplo, 10 preguntas en la lección del lunes, dos audios de 200 a 350 palabras en B1, 20 frases para repetir y una tarea de producción con lista de cotejo y respuesta modelo. Detalle en el formato, sección 7.
 
 ### 3.3 Ubicación: una vez, pero justa
 
@@ -286,7 +286,7 @@ Flutter y Dart están en `/home/user/tools/flutter/bin`.
 
 ### Fase 4 · Curso por escalones · depende de aprobar el piloto
 
-- **Unidad de trabajo:** una semana. El autor (habitos) entrega 5 sesiones, 2 audios de traslado, 32 tarjetas y la mini prueba. El revisor (calidad) la resuelve a ciegas.
+- **Unidad de trabajo:** una semana. El autor (habitos) entrega 5 sesiones, los 2 audios de traslado, 32 tarjetas y la mini prueba, siguiendo el ejemplo `sesion-b1-1-s01-lun-ejemplo.yaml`. El revisor (calidad) la resuelve a ciegas.
 - **Por escalón:** 8 semanas más su puerta, con tres formas (dos oportunidades y una reserva).
 - **Orden inicial:** B1.1, A2.1, B1.2, A2.2, B1.3, A1.1, A1.2, B2.1 a B2.4. Tras la ubicación real del dueño y de su pareja, sube al frente el escalón donde caiga cada uno.
 - **Ritmo:** el contenido va dos semanas por delante de quien estudia. No hace falta terminar el curso para empezar a usarlo.
@@ -366,8 +366,8 @@ En paralelo: fase 4 (primeras dos semanas de B1.1 y de A2.1) y, con D-ING-3, fas
 |---|---|---|
 | Revisión del bloque | Hecho (14/nov/2026) | `docs/revisiones/fase-8-ingles.md` |
 | Formato `gravity-ingles-v1` | Propuesto (14/nov/2026) | `docs/specs/fase-8-ingles-formato.md` |
-| Ejemplos patrón | En curso | `data/ingles/ejemplos/` |
-| Habilidad `simulacro-examen-idioma` | En curso | Con las reglas de 5.6 |
+| Ejemplos patrón | Hecho (15/nov/2026) | Siete archivos en `data/ingles/ejemplos/`; descritos en la sección 12 del formato |
+| Habilidad `simulacro-examen-idioma` | Actualizada y versionada (15/nov/2026) | Con las reglas de 5.6. Antes no estaba en git |
 | P0.1 a P0.4, fases 1 a 6 | Pendientes | Esperan la orden del dueño |
 
 ## Anexo B. Temario por escalón (propuesta para P1.3)

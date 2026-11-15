@@ -1,0 +1,237 @@
+# Ejemplo patrón · Curso · B1.1, semana 1, lunes (gramática y vocabulario)
+# Muestra: una sesión de 60 minutos con contenido para llenarlos. Respeta los
+# tiempos aprobados: principal 35 (repaso 5, lección 10, pronunciación 8,
+# producción 12) y traslado 25. Minutos estimados con las reglas del formato:
+# lección 13.8, pronunciación 6, producción 12, traslado 21.3, repaso 5 → 58.
+esquema: gravity-ingles-v1
+tipo: sesion
+id: ej-b1-1-s01-lun
+estado: borrador
+escalon: B1.1
+semana: 1
+dia: lunes
+enfoque: gramatica_vocabulario
+variante: en-US
+titulo: "Siempre o solo por ahora"
+puedo: "Puedo contar mi rutina y decir qué es distinto esta semana o este mes."
+temas: [gram.presente_simple_vs_continuo, gram.verbos_de_estado]
+bloques:
+  - tipo: repaso
+    minutos: 5
+
+  - tipo: leccion
+    minutos: 10
+    explicacion: |
+      En inglés hay dos presentes y no significan lo mismo.
+
+      Presente simple (I work): lo que es siempre así. Hábitos, horarios y
+      hechos. Suele ir con usually, always, never, every day, twice a week.
+
+      Presente continuo (I'm working): lo que no es siempre así. Tiene tres usos:
+      1. Lo que pasa ahora mismo: She's sleeping on my keyboard.
+      2. Lo temporal, aunque no pase en este segundo: We're working from home this month.
+      3. Lo que está cambiando: It's getting busier.
+
+      Verbos de estado: know, understand, believe, want, need, like, love, hate,
+      belong, own, seem. No describen una acción, sino una situación. Van en
+      presente simple aunque hablen de este momento: I know the answer.
+
+      La pregunta que decide: ¿es así siempre o solo por ahora? Siempre: simple.
+      Por ahora: continuo.
+    ejemplos:
+      - {en: "I take the bus at seven fifteen.", es: "Tomo el autobús a las siete y cuarto."}
+      - {en: "This week I'm taking the bus because my car is at the garage.", es: "Esta semana voy en autobús porque mi coche está en el taller."}
+      - {en: "She works downtown, but this month she's working from home.", es: "Trabaja en el centro, pero este mes está trabajando desde casa."}
+      - {en: "The gym is getting busier.", es: "El gimnasio se está llenando cada vez más."}
+      - {en: "I don't understand this message.", es: "No entiendo este mensaje."}
+      - {en: "This jacket belongs to my sister.", es: "Esta chamarra es de mi hermana."}
+      - {en: "Do you need a ride?", es: "¿Necesitas que te lleve?"}
+    error_comun:
+      mal: "I'm knowing the answer."
+      bien: "I know the answer."
+      porque: "Know es un verbo de estado: describe lo que sabes, no algo que estás haciendo."
+    preguntas:
+      - id: ej-b1-1-s01-lun-01
+        tipo: opcion_multiple
+        habilidad: gramatica
+        enunciado: "Marta ___ in a bank, but this month she ___ from home."
+        opciones:
+          - texto: "works / is working"
+            porque: "Trabajar en el banco es lo permanente (simple); 'this month' marca algo temporal (continuo)."
+          - texto: "is working / works"
+            porque_no: "Invierte los usos: lo permanente quedaría como temporal y lo temporal como hábito."
+          - texto: "works / works"
+            porque_no: "'This month' indica una situación temporal y pide el continuo en la segunda parte."
+      - id: ej-b1-1-s01-lun-02
+        tipo: opcion_multiple
+        habilidad: gramatica
+        enunciado: "Look! It ___ to rain."
+        opciones:
+          - texto: "'s starting"
+            porque: "'Look!' señala algo que está pasando en este momento."
+          - texto: "starts"
+            porque_no: "El simple describe lo habitual; aquí la lluvia empieza ahora."
+          - texto: "start"
+            porque_no: "Con 'it' el simple llevaría -s, y de todos modos la acción ocurre ahora."
+      - id: ej-b1-1-s01-lun-03
+        tipo: opcion_multiple
+        habilidad: gramatica
+        enunciado: "I ___ what you mean."
+        opciones:
+          - texto: "understand"
+            porque: "Understand es un verbo de estado: va en simple aunque hable de este momento."
+          - texto: "'m understanding"
+            porque_no: "Los verbos de estado casi nunca van en continuo."
+          - texto: "understanding"
+            porque_no: "Le falta el auxiliar, y aun con él sería un verbo de estado en continuo."
+      - id: ej-b1-1-s01-lun-04
+        tipo: opcion_multiple
+        habilidad: gramatica
+        enunciado: "The price of coffee ___ at the moment."
+        opciones:
+          - texto: "is rising"
+            porque: "'At the moment' y un cambio en curso piden el continuo."
+          - texto: "rises"
+            porque_no: "El simple diría que siempre sube; 'at the moment' habla de ahora."
+          - texto: "rise"
+            porque_no: "El sujeto es singular y la situación es actual, no habitual."
+      - id: ej-b1-1-s01-lun-05
+        tipo: opcion_multiple
+        habilidad: gramatica
+        enunciado: "My brother ___ three languages."
+        opciones:
+          - texto: "speaks"
+            porque: "Es un hecho permanente sobre él: presente simple con -s."
+          - texto: "is speaking"
+            porque_no: "Diría que los habla en este instante, y nadie habla tres idiomas a la vez."
+          - texto: "speak"
+            porque_no: "Con 'my brother' (he) falta la -s."
+      - id: ej-b1-1-s01-lun-06
+        tipo: opcion_multiple
+        habilidad: gramatica
+        enunciado: "Be quiet, please. The baby ___."
+        opciones:
+          - texto: "is sleeping"
+            porque: "La petición de silencio se refiere a lo que pasa ahora."
+          - texto: "sleeps"
+            porque_no: "Describiría un hábito del bebé, no la razón para callar en este momento."
+          - texto: "sleep"
+            porque_no: "Con 'the baby' falta la -s, y la acción ocurre ahora."
+      - id: ej-b1-1-s01-lun-07
+        tipo: respuesta_corta
+        habilidad: gramatica
+        enunciado: "This apartment ___ (belong) to my aunt."
+        aceptadas: ["belongs"]
+        porque: "Belong es verbo de estado; con 'this apartment' (it) lleva -s."
+      - id: ej-b1-1-s01-lun-08
+        tipo: respuesta_corta
+        habilidad: gramatica
+        enunciado: "We ___ (stay) with friends until our new house is ready."
+        aceptadas: ["are staying", "'re staying"]
+        porque: "Situación temporal con final a la vista ('until…'): continuo."
+      - id: ej-b1-1-s01-lun-09
+        tipo: respuesta_corta
+        habilidad: gramatica
+        enunciado: "Escribe la pregunta: how often / you / go / to the gym"
+        aceptadas: ["How often do you go to the gym?"]
+        porque: "La frecuencia habla de un hábito: presente simple con 'do' antes del sujeto."
+      - id: ej-b1-1-s01-lun-10
+        tipo: respuesta_corta
+        habilidad: gramatica
+        enunciado: "I ___ (not / need) a ride today, thanks."
+        aceptadas: ["don't need", "do not need"]
+        porque: "Need es verbo de estado: simple aunque la oración hable de hoy."
+      - id: ej-b1-1-s01-lun-11
+        tipo: respuesta_corta
+        habilidad: gramatica
+        enunciado: "She ___ (walk) to work this week because her car is at the garage."
+        aceptadas: ["is walking", "'s walking"]
+        porque: "'This week' marca algo temporal: continuo."
+
+  - tipo: pronunciacion
+    minutos: 8
+    foco: "Contracciones del presente: I'm, you're, she's, isn't, aren't, don't, doesn't"
+    elementos:
+      - {texto: "I'm working.", nota: "I'm es una sola sílaba: /aɪm/."}
+      - {texto: "You're waiting.", nota: "You're se reduce; no se dice 'you are' completo."}
+      - {texto: "She's sleeping.", nota: "She's termina en sonido de z: /ʃiːz/."}
+      - {texto: "He's reading.", nota: "He's: /hiːz/, con z final."}
+      - {texto: "It's getting late.", nota: "It's: /ɪts/, la t y la s juntas."}
+      - {texto: "We're training.", nota: "We're se reduce a una sílaba."}
+      - {texto: "They're painting.", nota: "They're suena igual que 'there'."}
+      - {texto: "He isn't coming.", nota: "Isn't tiene dos sílabas y el acento va en la primera: /ˈɪzənt/."}
+      - {texto: "We aren't staying.", nota: "Aren't es una sola sílaba."}
+      - {texto: "I don't know.", nota: "Don't: /doʊnt/; la t casi no se oye antes de 'know'."}
+      - {texto: "She doesn't drive.", nota: "Doesn't: /ˈdʌzənt/; la primera vocal es la de 'but'."}
+      - {texto: "What's happening?", nota: "What's es una sílaba; la voz baja al final de la pregunta."}
+
+  - tipo: produccion
+    minutos: 12
+    tarea:
+      id: ej-b1-1-s01-lun-prod
+      tipo: produccion
+      habilidad: escritura
+      modalidad: escritura
+      consigna: >-
+        Write 80 to 100 words in two paragraphs. Paragraph 1: your normal
+        weekday routine. Paragraph 2: what is different this week or this
+        month, and why.
+      extension: {min: 80, max: 100, unidad: palabras}
+      puntos_obligatorios:
+        - "Tu rutina normal, en presente simple."
+        - "Lo que es distinto por ahora, en presente continuo."
+        - "Al menos un verbo de estado (know, want, need, like, love, miss)."
+      cotejo:
+        - "Usé presente simple para mi rutina, con -s en he, she, it."
+        - "Usé presente continuo con una señal de tiempo: this week, this month, at the moment, these days."
+        - "Ningún verbo de estado está en continuo."
+        - "Tiene entre 80 y 100 palabras, en dos párrafos."
+        - "Cada oración empieza con mayúscula y termina con punto."
+      modelo: |
+        I'm a nurse, and I normally work nights. I start at ten p.m. and finish
+        at six in the morning. I usually sleep until two, and then I cook,
+        clean, and go to the gym. I never drink coffee after midnight.
+
+        This month is different. I'm working days because a coworker is sick.
+        I'm getting up at five, and I'm having breakfast with my kids for the
+        first time in years. I love it, but I'm sleeping badly, and I miss the
+        quiet of the night shift. I don't know which schedule I prefer.
+      errores_tipicos:
+        - {mal: "I'm usually getting up at five.", bien: "I usually get up at five.", porque: "Es un hábito: presente simple."}
+        - {mal: "This month I work days.", bien: "This month I'm working days.", porque: "Es temporal: presente continuo."}
+        - {mal: "I'm not knowing which I prefer.", bien: "I don't know which I prefer.", porque: "Know es verbo de estado."}
+
+  - tipo: traslado
+    minutos: 25
+    audios: [ej-b1-1-s01-audio-a, ej-b1-1-s01-audio-b]
+    frases:
+      - "Normally, my days are all the same."
+      - "I usually have lunch at my desk."
+      - "But this month is different."
+      - "We're all working from home."
+      - "At the moment, she's sleeping on my keyboard."
+      - "Some things are getting better."
+      - "I'm not spending two hours a day on the bus."
+      - "We're training for a race in March."
+      - "I miss my coworkers."
+      - "I don't know how I feel about that."
+      - "What are you doing?"
+      - "I'm waiting for the bus."
+      - "You usually drive to work."
+      - "My car is at the garage this week."
+      - "I'm reading a lot more."
+      - "I only sleep six hours."
+      - "I'm trying to go to bed earlier these days."
+      - "I go three times a week, usually after work."
+      - "It's getting busier."
+      - "What time do you finish work?"
+
+tarjetas:
+  - {id: ej-b1-1-t-0001, en: "at the moment", es: "en este momento", ejemplo: "At the moment, I'm working from home."}
+  - {id: ej-b1-1-t-0002, en: "these days", es: "últimamente, estos días", ejemplo: "I'm sleeping better these days."}
+  - {id: ej-b1-1-t-0003, en: "temporary", es: "temporal", ejemplo: "It's a temporary job, just for the summer."}
+  - {id: ej-b1-1-t-0004, en: "belong to", es: "pertenecer a, ser de", ejemplo: "This bike belongs to my neighbor."}
+  - {id: ej-b1-1-t-0005, en: "coworker", es: "compañero de trabajo", ejemplo: "My coworkers are very friendly."}
+  - {id: ej-b1-1-t-0006, en: "schedule", es: "horario", ejemplo: "My schedule changes every week."}
+  - {id: ej-b1-1-t-0007, en: "get better", es: "mejorar", ejemplo: "My English is getting better."}
+  - {id: ej-b1-1-t-0008, en: "miss", es: "extrañar", ejemplo: "I miss my friends from school."}

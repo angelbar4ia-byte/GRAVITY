@@ -1,7 +1,8 @@
 # Especificación · Prueba de ubicación dentro de la app
 
 > **Contexto:** nota general en `CONTEXTO.md`. La prueba y su regla de emparejamiento están en `prueba-de-nivel.md`. Versión interactiva en `prueba-ubicacion.html`.
-> Estado: **propuesta, pendiente de aprobación del dueño y de implementación en la app**. Esta sesión no tiene acceso al repositorio de la app (Hábitos), así que lo que sigue no está implementado.
+> Estado: **propuesta; la sustituye la fase 2 del plan** (`docs/specs/fase-8-ingles-plan.md`, paquetes P2.1 a P2.4).
+> **Corrección (15/nov/2026):** esta nota decía que la app no tenía código y que vivía en el repositorio de Hábitos. No es así: por D1 y D10 la app es GRAVITY y el módulo Hábitos existe en `app/lib/modulos/habitos` desde la Fase 3. Lo que falta es el bloque de inglés.
 
 ## 1. Regla
 
@@ -25,7 +26,7 @@
 
 ## 4. Pendientes para implementarlo
 
-1. Decidir la plataforma: la app de Hábitos (Flutter) o una página integrada en ella. Confirmar que el repositorio de Hábitos esté disponible para trabajar en él.
+1. Construirla en GRAVITY, dentro del módulo Hábitos (plan, fase 2). La prueba actual se rehace antes (paquete P2.1), porque ubica de más (revisión, ING-B5).
 2. Definir el modelo de datos del perfil: campos de nivel, fecha, versión y estado de escritura.
 3. Aprobar los saltos a B1+ y B2 desde la prueba (propuesta en `prueba-de-nivel.md`, sección 4).
 4. Revisar la copia de la prueba en la app con la misma clave y reglas que este documento.

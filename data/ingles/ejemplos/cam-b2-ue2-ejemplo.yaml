@@ -1,0 +1,91 @@
+# Ejemplo patrón · Cambridge B2 First · Reading and Use of English, parte 2
+# Muestra: huecos de palabra gramatical (preposiciones, relativos, partículas,
+# conectores), con TODAS las respuestas válidas en `aceptadas`. Ningún hueco
+# pide una palabra de contenido con varias alternativas.
+esquema: gravity-ingles-v1
+tipo: unidad
+id: ej-cam-b2-ue2-0001
+estado: borrador
+formato: cambridge-b2-first
+parte: use-of-english-2
+nivel: B2
+variante: en-GB
+origen: nuevo
+estimulo:
+  tipo: texto
+  titulo: "The return of the night train"
+  texto: |
+    Twenty years ago, sleeper trains seemed to belong to the past. Cheap
+    flights had made them look slow and old-fashioned, and one route after
+    {1} was closed. Many people assumed they would disappear completely.
+    Today, however, night trains are coming back, and the most popular
+    services are often sold {2} weeks in advance.
+
+    There are several reasons {3} this change. Many travellers are worried
+    about the effect that flying has {4} the environment. Others simply
+    enjoy the experience: you fall asleep in one country and wake up in
+    another, and you do it {5} having to queue at an airport. A night on the
+    train can also save the cost of a hotel room, {6} makes the journey
+    better value than it first appears.
+
+    Not everything is perfect. The carriages on some routes have been in
+    service {7} the 1980s, and delays are common. Tickets can also cost
+    more than a budget flight. Even {8}, passenger numbers keep rising, and
+    several companies have ordered new trains.
+preguntas:
+  - id: ej-cam-b2-ue2-0001-1
+    tipo: hueco_abierto
+    habilidad: gramatica
+    hueco: 1
+    clase: gramatical
+    aceptadas: ["another"]
+    porque: "Expresión fija 'one … after another': una ruta tras otra."
+  - id: ej-cam-b2-ue2-0001-2
+    tipo: hueco_abierto
+    habilidad: gramatica
+    hueco: 2
+    clase: gramatical
+    aceptadas: ["out"]
+    porque: "Verbo frasal 'be sold out': agotarse. Con 'are … sold' solo cabe la partícula 'out'."
+  - id: ej-cam-b2-ue2-0001-3
+    tipo: hueco_abierto
+    habilidad: gramatica
+    hueco: 3
+    clase: gramatical
+    aceptadas: ["for", "behind"]
+    porque: "'Reasons for' y 'reasons behind' son las dos preposiciones que acepta 'reason' con un sustantivo."
+  - id: ej-cam-b2-ue2-0001-4
+    tipo: hueco_abierto
+    habilidad: gramatica
+    hueco: 4
+    clase: gramatical
+    aceptadas: ["on", "upon"]
+    porque: "'Have an effect on something'. 'Upon' es la variante formal."
+  - id: ej-cam-b2-ue2-0001-5
+    tipo: hueco_abierto
+    habilidad: gramatica
+    hueco: 5
+    clase: gramatical
+    aceptadas: ["without"]
+    porque: "'Do it without + -ing': lo haces sin tener que hacer fila."
+  - id: ej-cam-b2-ue2-0001-6
+    tipo: hueco_abierto
+    habilidad: gramatica
+    hueco: 6
+    clase: gramatical
+    aceptadas: ["which"]
+    porque: "Relativo tras coma que retoma toda la idea anterior; 'that' no puede ir después de coma."
+  - id: ej-cam-b2-ue2-0001-7
+    tipo: hueco_abierto
+    habilidad: gramatica
+    hueco: 7
+    clase: gramatical
+    aceptadas: ["since"]
+    porque: "Presente perfecto con el punto de inicio: 'have been in service since the 1980s'."
+  - id: ej-cam-b2-ue2-0001-8
+    tipo: hueco_abierto
+    habilidad: gramatica
+    hueco: 8
+    clase: gramatical
+    aceptadas: ["so"]
+    porque: "Conector fijo 'Even so': aun así, pese a los problemas mencionados."

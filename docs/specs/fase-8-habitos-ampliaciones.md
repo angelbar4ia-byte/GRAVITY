@@ -1,5 +1,7 @@
 # Fase 8 · Bloque 5 — Hábitos: Inglés (núcleo)
 
+> **Aviso (15/nov/2026).** Esta especificación (v0.4) quedó atrás respecto a decisiones posteriores del dueño: hora diaria, ubicación de A1 a B2 aplicada una sola vez, y simulacros de examen. La revisión del bloque está en `docs/revisiones/fase-8-ingles.md` y el plan para ponerla al día, en `docs/specs/fase-8-ingles-plan.md` (paquete P0.3: versión 0.5). Mientras tanto, donde este documento contradiga al plan, vale lo que el dueño decidió después.
+
 > v0.4 (14/nov/2026). **Módulos 1 y 2 aprobados por el dueño.** Módulo 3 (planes y metas) redactado, en revisión. Rúbrica de evaluación (`docs/contenido/ingles/rubrica-evaluacion.md`) en revisión: la evaluación del estudiante se mide con ella, no es certificación oficial. Los módulos 4 a 6 se redactan después de cada aprobación.
 >
 > v0.3 (14/nov/2026). Módulo 1 aprobado.
