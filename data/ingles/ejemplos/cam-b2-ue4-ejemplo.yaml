@@ -1,0 +1,74 @@
+# Ejemplo patrón · Cambridge B2 First · Reading and Use of English, parte 4
+# Muestra: transformaciones con palabra clave. La clave va DENTRO de la
+# respuesta, sin cambios, y no aparece en el resto de la segunda oración.
+# Cada respuesta tiene de 2 a 5 palabras (una contracción cuenta como dos) y
+# conserva las palabras de la oración original, salvo las que la clave obliga
+# a cambiar: no se aceptan sinónimos que nadie pidió. `aceptadas` lista TODAS
+# las formas válidas; `porque` dice también qué intento frecuente no vale.
+# En el examen cada pregunta vale 2 puntos, uno por mitad; aquí es todo o nada.
+esquema: gravity-ingles-v1
+tipo: unidad
+id: ej-cam-b2-ue4-0001
+estado: borrador
+formato: cambridge-b2-first
+parte: use-of-english-4
+nivel: B2
+variante: en-GB
+origen: nuevo
+estimulo:
+  tipo: ninguno
+preguntas:
+  - id: ej-cam-b2-ue4-0001-1
+    tipo: transformacion
+    habilidad: gramatica
+    original: "The sequel is less entertaining than the first film."
+    clave: "AS"
+    antes: "The sequel is"
+    despues: "the first film."
+    aceptadas: ["not as entertaining as", "not so entertaining as"]
+    porque: "'Less … than' equivale a 'not as … as'; con negación también vale 'not so … as'. Añadir 'nearly' o 'quite' cambiaría el grado, así que no se acepta."
+  - id: ej-cam-b2-ue4-0001-2
+    tipo: transformacion
+    habilidad: gramatica
+    original: "I'm sure Maria forgot about the meeting."
+    clave: "MUST"
+    antes: "Maria"
+    despues: "about the meeting."
+    aceptadas: ["must have forgotten", "must've forgotten"]
+    porque: "Deducción segura sobre el pasado: 'must' + 'have' + participio. 'Must forget' habla de una obligación y 'must forgot' no existe. La clave es MUST y no HAVE a propósito: con HAVE también cabría 'will have forgotten'."
+  - id: ej-cam-b2-ue4-0001-3
+    tipo: transformacion
+    habilidad: gramatica
+    original: "I regret not studying harder at school."
+    clave: "WISH"
+    antes: "I"
+    despues: "harder at school."
+    aceptadas: ["wish I had studied", "wish I'd studied", "wish that I had studied", "wish that I'd studied"]
+    porque: "Lamentar algo del pasado: 'wish' + pasado perfecto. 'Wish I studied' hablaría del presente y cambia el sentido."
+  - id: ej-cam-b2-ue4-0001-4
+    tipo: transformacion
+    habilidad: gramatica
+    original: "People say that the old castle is haunted."
+    clave: "SAID"
+    antes: "The old castle"
+    despues: "haunted."
+    aceptadas: ["is said to be"]
+    porque: "Pasiva con verbo de opinión: sujeto + 'is said' + 'to be'. El tiempo sigue al original ('say', presente): 'was said to be' no vale."
+  - id: ej-cam-b2-ue4-0001-5
+    tipo: transformacion
+    habilidad: gramatica
+    original: "A mechanic is repairing my car at the moment."
+    clave: "HAVING"
+    antes: "I"
+    despues: "at the moment."
+    aceptadas: ["am having my car repaired"]
+    porque: "Causativa 'have something done' en presente continuo: otra persona hace el trabajo. 'Am having repaired my car' tiene mal el orden."
+  - id: ej-cam-b2-ue4-0001-6
+    tipo: transformacion
+    habilidad: gramatica
+    original: "I can't wait to see my cousins again."
+    clave: "FORWARD"
+    antes: "I'm really"
+    despues: "my cousins again."
+    aceptadas: ["looking forward to seeing"]
+    porque: "Expresión fija 'look forward to' seguida de -ing, porque ese 'to' es preposición. 'Looking forward to see' es el error típico."

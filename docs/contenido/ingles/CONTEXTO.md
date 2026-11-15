@@ -6,8 +6,9 @@
 
 - El inglés es un bloque del módulo **Hábitos** dentro de la app única **GRAVITY** (D1 y D10). Diseño base: `docs/modulos/habitos/diseno-app-habitos.md`, §5.3 y Anexo A. Especificación: `docs/specs/fase-8-habitos-ampliaciones.md` (bloque 5a, v0.4; quedó atrás respecto a decisiones posteriores).
 - **Revisión completa del bloque (14 y 15/nov/2026):** `docs/revisiones/fase-8-ingles.md`. Veredicto: buena base de borradores, **no apto todavía** como curso ni como preparación de examen. Cinco hallazgos bloqueantes y nueve importantes, con mediciones.
-- **Plan de ejecución:** `docs/specs/fase-8-ingles-plan.md`. Propuesto; espera las decisiones D-ING-1 a 8 del dueño. Lo ejecuta el equipo de agentes (Sonnet 5.5).
-- **Formato de contenido `gravity-ingles-v1`:** `docs/specs/fase-8-ingles-formato.md`. Ejemplos patrón en `data/ingles/ejemplos/`.
+- **Plan de ejecución:** `docs/specs/fase-8-ingles-plan.md` (versión 0.2). Propuesto; espera las decisiones D-ING-1 a 8 del dueño. Lo ejecuta el equipo de agentes (Sonnet 5.5). Los encargos del primer lote están escritos en su anexo D.
+- **Formato de contenido `gravity-ingles-v1`:** `docs/specs/fase-8-ingles-formato.md` (versión 0.2). Nueve ejemplos patrón en `data/ingles/ejemplos/`, en borrador, y su cuaderno a ciegas en `docs/contenido/ingles/generado/`.
+- **Paquete P0.1 hecho (15/nov/2026):** simulacros y prácticas dicen "formato reducido"; la prueba de nivel y la página dicen "en revisión".
 - **En la app todavía no hay código de inglés.** El módulo Hábitos sí existe (`app/lib/modulos/habitos`, `paquetes/habitos_dominio`) y el sistema de diseño ya tiene el submódulo `ingles`.
 
 ## 2. Reglas aprobadas por el dueño (vigentes)
@@ -45,10 +46,10 @@
 |---|---|
 | `docs/revisiones/fase-8-ingles.md` | Revisión del bloque, con evidencia |
 | `docs/specs/fase-8-ingles-plan.md` | Plan de ejecución, propuesto |
-| `docs/specs/fase-8-ingles-formato.md` y `data/ingles/ejemplos/` | Formato propuesto y siete ejemplos patrón |
+| `docs/specs/fase-8-ingles-formato.md` y `data/ingles/ejemplos/` | Formato propuesto y nueve ejemplos patrón |
 | `modulo-1.md`, `modulo-2.md` | Temas aprobados por el dueño. Material para 5 a 10 minutos por día, no para 60 (ING-B4) |
 | `modulo-3.md`, `modulo-4.md` | Redactados, sin aprobar. Mismo problema de densidad |
-| `prueba-de-nivel.md` (v0.2) y `prueba-ubicacion.html` (publicada) | **En revisión: no usar para decidir el nivel.** Ubica de más (ING-B5) |
+| `prueba-de-nivel.md` (v0.2) y `prueba-ubicacion.html` (publicada) | **En revisión: no usar para decidir el nivel.** Ubica de más (ING-B5). El aviso ya está en los dos archivos |
 | `rubrica-evaluacion.md` | Borrador. Falta confirmar qué significa aprobar (D-ING-6) |
 | `niveles-y-avance.md` (v0.3) | Vigente hasta la decisión D-ING-1 |
 | `formatos-oficiales.md` | Número de partes y de preguntas verificado con los manuales. Faltan las longitudes, que irán en los contratos |
@@ -93,5 +94,5 @@ Están en el plan, sección 4, con recomendación en cada una:
 
 1. Leer la revisión y el plan.
 2. Si el dueño ya respondió las decisiones: registrarlas (paquete P0.2) y lanzar el segundo lote del plan (sección 8).
-3. Si no ha respondido: lanzar el primer lote, que no depende de ninguna decisión (P0.1, P1.1, P1.2a y P1.4).
-4. Cada paquete se lanza con el encargo tipo de la sección 5.3 del plan.
+3. Si no ha respondido: lanzar el primer lote, que no depende de ninguna decisión (P1.1a, P1.2a y P1.4a). Sus encargos están en el anexo D del plan.
+4. Los demás paquetes se lanzan con el encargo tipo de la sección 5.3 del plan.

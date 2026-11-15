@@ -6,7 +6,7 @@
 
 | Carpeta | Contenido | Estado |
 |---|---|---|
-| `ejemplos/` | Siete archivos patrón: marcan la calidad exigida y serán casos de prueba del validador | Escritos; pendientes de resolución a ciegas |
+| `ejemplos/` | Nueve archivos patrón: marcan la calidad exigida y serán casos de prueba del validador | Escritos, en `borrador`; pendientes de resolución a ciegas (paquete P1.4a). Su cuaderno sin respuestas: `docs/contenido/ingles/generado/cuaderno-ejemplos-patron.md` |
 | `formatos/`, `niveles.yaml`, `unidades/`, `formas/`, `curso/`, `revisiones/` | Los crea el plan (paquetes P1.1, P1.3 y siguientes) | Aún no existen |
 
 ## Reglas

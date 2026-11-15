@@ -1,0 +1,95 @@
+# Ejemplo patrón · Cambridge B2 First · Reading and Use of English, parte 6
+# Muestra: texto con seis oraciones quitadas y una que sobra. Cada oración
+# colocada declara su `ancla`: lo que la ata a la oración anterior Y a la
+# siguiente (pronombres, conectores, cifras, cronología). Si una oración solo
+# se ata por un lado, puede caber en dos huecos y la pregunta está mal.
+# La sobrante usa palabras del texto, pero lo contradice: `porque_no`.
+# Las oraciones se escriben en el orden de los huecos; la letra se sortea al
+# exportar. Longitud: texto y oraciones juntos, dentro del rango del contrato.
+esquema: gravity-ingles-v1
+tipo: unidad
+id: ej-cam-b2-r6-0001
+estado: borrador
+formato: cambridge-b2-first
+parte: reading-6
+nivel: B2
+variante: en-GB
+origen: nuevo
+estimulo:
+  tipo: texto
+  titulo: "The boat in the school yard"
+  texto: |
+    When the fishing boat Maren was pulled out of the harbour for the last
+    time, nobody in Port Ellan expected to see her on the water again. She
+    was sixty years old, most of her paint had gone, and two of her planks
+    had rotted through. The harbour master wanted her moved before the
+    winter storms arrived. {1} Instead, a retired woodwork teacher called
+    Hugh Lester offered the owner a small sum and had her delivered, on the
+    back of a lorry, to the yard of the local secondary school.
+
+    Hugh's idea was simple. He would repair the boat with any pupils who
+    wanted to help, working after lessons on two afternoons a week. The
+    head teacher agreed, although she warned him not to be disappointed,
+    and he put up a notice expecting five or six volunteers. {2} Most of
+    them had never held a saw, and several admitted that they had only
+    come because a friend had.
+
+    The first stage was slow. Before anything could be mended, the old
+    paint had to be removed by hand and every piece of rotten wood cut
+    away. The pupils went home each evening with dust in their hair and
+    sore hands. It was cold, dirty work with nothing to show for it, and
+    by the third week Hugh was worried that the group would lose interest.
+    {3} By the end of the first month, only fourteen were still turning up.
+
+    Those fourteen, however, turned out to be the ones who mattered. Hugh
+    stopped giving instructions to the whole group and began teaching each
+    pupil a single skill properly. One girl learnt to soften new planks
+    with steam so that they could be bent to follow the curve of the boat.
+    {4} Hugh says he has rarely seen young people so proud of doing one
+    thing well.
+
+    Not everyone in the town approved. A letter in the local newspaper
+    complained that a school yard was no place for a building site, a
+    neighbour objected to the noise, and one mother asked whether
+    fourteen-year-olds should be using sharp tools at all. {5} After the
+    meeting, the complaints stopped, and two of the parents who had come to
+    criticise went home having promised to help with the painting.
+
+    The Maren went back into the water eighteen months after she had left
+    it. Half the town came to watch, and the pupils who had rebuilt her
+    were the first on board. {6} Hugh, standing on the harbour wall with
+    the head teacher, did not go with them. 'It was never my boat,' he
+    says. 'It was theirs from the day they picked up the tools.'
+
+    Today the Maren belongs to a sailing club for young people, and a
+    second old boat is already standing in the school yard. Hugh insists
+    that he is too old to lead another project and that somebody else will
+    have to take over. The pupils, who have heard him say this before, have
+    already chosen the name.
+preguntas:
+  - id: ej-cam-b2-r6-0001-a
+    tipo: oracion_omitida
+    habilidad: lectura
+    porque: "Cada oración se coloca por lo que retoma de la oración anterior y por lo que prepara para la siguiente; ninguna cabe en otro hueco sin romper una referencia o el orden del tiempo."
+    oraciones:
+      - texto: "The usual fate of a boat in that condition is to be broken up and burnt."
+        hueco: 1
+        ancla: "'That condition' retoma la pintura perdida y las tablas podridas. 'Instead', en la oración siguiente, opone lo que hizo Hugh a ese destino habitual."
+      - texto: "On the first afternoon, twenty-three teenagers were waiting for him in the yard."
+        hueco: 2
+        ancla: "'Twenty-three' contrasta con los 'five or six volunteers' que esperaba. 'Most of them', después, necesita ese grupo como referente. 'The first afternoon' solo cabe al inicio del proyecto, antes de 'the third week'."
+      - texto: "He was right to be concerned, because the numbers soon began to fall."
+        hueco: 3
+        ancla: "'Concerned' retoma 'Hugh was worried'. 'The numbers … fall' prepara 'only fourteen were still turning up'."
+      - texto: "Another became so good at sealing the gaps between them that the others used to stop and watch him."
+        hueco: 4
+        ancla: "'Another' continúa la serie que abre 'One girl'. 'Them' son las 'new planks'. Los dos casos explican 'so proud of doing one thing well'."
+      - texto: "Hugh's answer was to invite his critics to a meeting in the yard, where the pupils explained the work themselves."
+        hueco: 5
+        ancla: "'His critics' son quienes escribieron la carta, el vecino y la madre. 'After the meeting', en la oración siguiente, exige que antes se haya hablado de una reunión."
+      - texto: "They took her out past the harbour wall and around the bay before bringing her back."
+        hueco: 6
+        ancla: "'They' son los alumnos que subieron primero; 'her' es el Maren, ya en el agua. 'Did not go with them', después, necesita que alguien haya salido."
+      - texto: "Unfortunately, the owner refused to sell her at any price."
+        sobrante: true
+        porque_no: "Tienta en el hueco 1 porque habla del dueño, pero la oración siguiente dice que Hugh le pagó y recibió el barco: el dueño sí vendió. En los demás huecos no hay nada a lo que 'the owner' pueda referirse."

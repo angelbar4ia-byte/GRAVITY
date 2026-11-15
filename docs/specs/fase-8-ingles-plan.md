@@ -1,6 +1,6 @@
 # Plan de ejecución — Fase 8, bloque 5 (Hábitos · Inglés)
 
-> Versión 0.1 (14/nov/2026). **Propuesta para aprobación del dueño.**
+> Versión 0.2 (15/nov/2026). **Propuesta para aprobación del dueño.** Lo que cambió desde la 0.1 está en el anexo C.
 > Ejecuta: el equipo de agentes del roadmap (sección 11), todos en **Sonnet 5.5** por la regla 11.1.10. Orquesta e integra: el arquitecto.
 > Base: revisión `docs/revisiones/fase-8-ingles.md` (5 bloqueantes, 9 importantes) y formato `docs/specs/fase-8-ingles-formato.md`.
 > No cambia ninguna decisión confirmada por su cuenta: lo que requiere al dueño está en la sección 4.
@@ -72,7 +72,18 @@ Se respetan los tiempos aprobados (principal 35: repaso 5, lección 10, pronunci
 ### 3.3 Ubicación: una vez, pero justa
 
 - **48 preguntas**, 12 por etapa (6 de gramática y vocabulario, 3 de lectura, 3 de escucha con audio), alineadas al temario. Una etapa se alcanza con 10 de 12 y con todas las anteriores alcanzadas. La app deja de preguntar tras la primera etapa no alcanzada.
-- El resultado decide **la etapa de entrada**: se empieza en el primer escalón de la etapa siguiente a la última alcanzada.
+- El resultado decide **el escalón de entrada**:
+
+  | Última etapa alcanzada | Entra en |
+  |---|---|
+  | Ninguna | A1.1 |
+  | A1 | A2.1 |
+  | A2 | B1.1 |
+  | B1 | B2.1 |
+  | B2 | B2.1, con derecho a presentar de inmediato la puerta de la etapa B2 (forma completa tipo B2 First). Doce preguntas no bastan para dar B2 por ganado |
+
+- **El margen de error, con números.** Con 12 preguntas por etapa y corte en 10, quien domina el 70 % de una etapa la alcanza una de cada cuatro veces (25 %), y quien domina el 90 % se queda fuera una de cada nueve (11 %). Quien domina la mitad casi nunca la alcanza (2 %), y adivinando es prácticamente imposible. Es un cálculo binomial que supone preguntas independientes. Una prueba corta no puede dar más precisión; por eso el resultado se corrige después con evidencia.
+- **La ubicación lleva escucha y es única:** no se abre hasta que el audio funcione en el dispositivo (P3.2a). Sin escucha ubicaría de más a quien lee bien y entiende poco al oído, y ese error ya no se podría corregir repitiéndola.
 - No se repite. Los errores de ubicación se corrigen con evidencia, no con otra prueba de ubicación:
   - **Hacia arriba, puerta anticipada:** en la semana 2 de un escalón se puede presentar su puerta. Con 90 % o más en cada habilidad se pasa al siguiente escalón. No gasta ninguna de las dos oportunidades.
   - **Hacia abajo, descenso por evidencia:** dos mini pruebas seguidas por debajo de 50 % bajan un escalón, sin penalización.
@@ -107,7 +118,7 @@ Cada quien tiene su ruta. Si coinciden de escalón, comparten calendario y activ
 |---|---|---|---|
 | D-ING-1 | Escalera de 11 escalones; la etiqueta del marco europeo se obtiene en la puerta de la etapa | **Sí.** Mantiene tu regla y hace verdadera la etiqueta | No se redacta contenido nuevo de curso |
 | D-ING-2 | Hora diaria con la plantilla nueva. Mientras no haya audio, cuenta solo el bloque principal (35 minutos) y el requisito del 90 % se calcula sobre eso | **Sí** | Igual que D-ING-1 |
-| D-ING-3 | Audio con la voz del dispositivo (`flutter_tts`) | **Sí.** Se puede cambiar después por audio grabado | La escucha sigue en texto y los simulacros quedan como reducidos |
+| D-ING-3 | Audio con la voz del dispositivo (`flutter_tts`) | **Sí.** Se puede cambiar después por audio grabado | La escucha sigue en texto, los simulacros quedan como reducidos y la ubicación no se puede abrir, porque lleva escucha |
 | D-ING-4 | Apruebas plantillas y muestras; el contenido pasa con validación, revisión a ciegas y muestreo de calidad | **Sí.** Hoy los módulos 3 y 4 esperan tu lectura y tú mismo dices que no es tu tema | Cada pieza espera tu aprobación, como ahora |
 | D-ING-5 | Ubicación única con puerta anticipada y descenso por evidencia | **Sí.** Y no usar la página publicada para decidir el nivel hasta la versión 3 | La ubicación no se construye |
 | D-ING-6 | En escritura y habla, aprobar es promedio de 3.2 sobre 4 y ningún criterio debajo de 3: sacar 3 en todo **no** aprueba. Pruebas objetivas de 10 preguntas o más por habilidad | **Confirmar.** Es lo que ya dice el 80 %, escrito con todas sus letras | Se aplica el 80 % como está |
@@ -137,6 +148,7 @@ Todos los agentes ya están fijados en Sonnet 5.5 en su definición. La sesión 
 - Un paquete cabe en una sola corrida de un agente: una semana de curso (5 sesiones), una parte de un examen (hasta 12 unidades) o un módulo de código con sus pruebas. Si no cabe, se parte.
 - Todo paquete de contenido recorre el mismo camino: **autor → `validar` → cuaderno → revisor a ciegas → `comparar` → correcciones → integración**.
 - Un commit por paquete, hecho por el arquitecto.
+- **Patrón antes que serie.** Ninguna parte de examen ni tipo de sesión se produce en serie sin un ejemplo patrón. Si falta (la lista está en la sección 12 del formato), el primer paquete de esa parte entrega **una sola** unidad candidata, que resuelven a ciegas dos agentes y revisa el arquitecto; solo después se escriben las demás. Un modelo imita mejor un buen ejemplo que una regla.
 
 ### 5.3 Encargo tipo
 
@@ -156,7 +168,7 @@ No hagas commit. No cambies decisiones: si te falta una, detente y dilo en el re
 Reporte: el de la sección 5.4 del plan.
 ```
 
-Para el revisor a ciegas, el encargo solo incluye la ruta del cuaderno exportado y la del archivo de respuestas que debe escribir. No recibe la ruta de las fuentes.
+**El revisor a ciegas no necesita abrir ningún archivo.** Recibe el cuaderno dentro del encargo y devuelve sus respuestas dentro del reporte, en un bloque YAML con la forma de la sección 9 del formato; el arquitecto las guarda en `docs/revisiones/ingles/`. El encargo le prohíbe leer `data/ingles/` y cualquier clave exportada. Para que eso no dependa solo de su palabra, se lanza en un árbol de trabajo aislado, creado desde el último commit (opción `isolation: worktree` al lanzar el agente): como el autor no hace commit, las unidades nuevas no existen ahí. Con lo que ya tiene commit, como los ejemplos patrón, el único control es la instrucción, y el reporte del revisor debe decir qué archivos abrió.
 
 ### 5.4 Reporte de cada agente
 
@@ -210,14 +222,14 @@ Flutter y Dart están en `/home/user/tools/flutter/bin`.
 | 0 · Orden y decisiones | Dejar de afirmar lo que no es cierto y destrabar decisiones | P0.1 a P0.4 | D-ING-1 a 8 |
 | 1 · Rieles | Formato, contratos, herramienta, niveles, revisión a ciegas y piloto | P1.1 a P1.5 | Aprobar el piloto |
 | 2 · Ubicación y núcleo en la app | Ubicarse una vez y estudiar la sesión del día | P2.1 a P2.6 | Proyecto de Supabase (pendiente desde la Fase 0) |
-| 3 · Audio y habla | Escuchar de verdad; traslado solo con audio; grabarse | P3.1 a P3.3 | D-ING-3 y probar en el teléfono |
+| 3 · Audio y habla | Escuchar de verdad (la ubicación lo necesita); traslado solo con audio; grabarse | P3.1 a P3.3 | D-ING-3 y probar en el teléfono |
 | 4 · Curso por escalones | Producir el curso, siempre dos semanas por delante de quien estudia | Por semana | Muestreo |
 | 5 · Exámenes | Formas con fidelidad completa y semáforo | Por examen y parte | Muestreo |
 | 6 · Pareja y extras | Estudiar juntos, revisión cruzada, IA opcional | Por definir | Especificación propia |
 
 ### Fase 0 · Orden y decisiones
 
-**P0.1 · Etiquetas honestas** · habitos
+**P0.1 · Etiquetas honestas** · habitos · **hecho el 15/nov/2026** por la sesión que integra
 - Entradas: revisión ING-B1 e ING-B5.
 - Hace: en el bloque de contexto de cada simulacro y de cada práctica, cambia "completo" por "formato reducido: mismo número de preguntas, textos más cortos y sin audio". En `prueba-de-nivel.md` añade "en revisión: no usar para decidir el nivel". Corrige ING-M4. No toca preguntas.
 - Hecho cuando: ningún encabezado de `docs/contenido/ingles/` afirma formato completo; el aviso está en la prueba. La página publicada la actualiza el arquitecto.
@@ -234,33 +246,35 @@ Flutter y Dart están en `/home/user/tools/flutter/bin`.
 
 ### Fase 1 · Rieles
 
-**P1.1 · Contratos de formato** · habitos
-- Entradas: manuales oficiales citados en `formatos-oficiales.md`, más el manual de A2 Key.
-- Hace: `data/ingles/formatos/` con `cambridge-a2-key`, `cambridge-b1-preliminary`, `cambridge-b2-first`, `toeic-lr`, `toeic-sw`, `toefl-ibt-2026`, `gravity-sesion-60`, `gravity-ubicacion` y `gravity-escalon`. Cada dato con la página del manual. Lo que no se pueda leer queda como pendiente; no se completa de memoria.
-- Hecho cuando: `validar data/ingles/formatos` sin errores y calidad contrasta 10 datos al azar de cada contrato con el PDF.
+**P1.1 · Contratos de formato** · habitos · dos subpaquetes
+- Entradas: manuales oficiales citados en `formatos-oficiales.md`, más el manual de A2 Key. Se descargan a una carpeta temporal fuera del repositorio; no se suben ni se copian sus preguntas.
+- P1.1a (no espera decisiones): contratos de los exámenes oficiales en `data/ingles/formatos/`: `cambridge-a2-key`, `cambridge-b1-preliminary`, `cambridge-b2-first`, `toeic-lr`, `toeic-sw` y `toefl-ibt-2026`. Cada dato con la página del manual. Si el manual declara la longitud de un texto, se usa esa cifra; si no, se mide en su prueba de muestra y se anota la medida. Lo que no se pueda leer queda como pendiente; no se completa de memoria.
+- P1.1b (depende de D-ING-1, D-ING-2 y D-ING-5): contratos propios `gravity-sesion-60`, `gravity-ubicacion` y `gravity-escalon`, con los mínimos por bloque de la sección 7 del formato y las reglas de la sección 3.3 de este plan.
+- Hecho cuando: `validar data/ingles/formatos` sin errores (mientras no exista la herramienta: los archivos se leen como YAML y el arquitecto los revisa) y calidad contrasta 10 datos al azar de cada contrato oficial con el PDF.
 
 **P1.2 · Herramienta `herramientas/ingles`** · habitos · tres subpaquetes en serie
-- P1.2a: modelo, lectura de YAML, comprobaciones V01 a V14 y estados básicos (V24), orden `validar`.
-- P1.2b: contratos y fidelidad (V15 a V20), orden `informe`.
-- P1.2c: `exportar` con sorteo (V06, V26), `comparar` con huella (V24), sesiones (V21 a V23) y `compilar` (V25).
-- Hecho cuando: lo de "Herramienta" en 5.5, y `README.md` con todas las órdenes.
+- P1.2a: modelo, lectura de YAML, comprobaciones V01 a V14 (salvo V06, que pertenece a `exportar`) y estados básicos (V24), orden `validar`. No espera a P1.1 ni a P1.3: se prueba con contratos y niveles de prueba guardados en `herramientas/ingles/test/`, escritos según las secciones 6 y 8 del formato. Si falta el contrato de una unidad o `data/ingles/niveles.yaml`, `validar` lo dice ("sin contrato", "sin niveles") y no inventa ninguno: es aviso en un archivo en `borrador` y error de `validado` en adelante.
+- P1.2b: contratos y fidelidad (V15 a V20), orden `informe`. Necesita P1.1a integrado.
+- P1.2c: `exportar` con sorteo (V06, V26), `comparar` con huella (V24), sesiones (V21 a V23) y `compilar` (V25). Los mínimos de la sesión se leen del contrato `gravity-sesion-60` (P1.1b), no del código. Al terminar, se borra `herramientas/ingles/transitorio/`, que solo existe para generar cuadernos mientras falta `exportar`.
+- Hecho cuando: lo de "Herramienta" en 5.5, y `README.md` con todas las órdenes. Los ejemplos patrón pasan V01 a V14 al cerrar P1.2a y todas las comprobaciones al cerrar P1.2c. Si un ejemplo no pasa, el agente lo reporta: se corrige el ejemplo o la regla con el arquitecto, nunca se relaja una comprobación en silencio.
 
 **P1.3 · Matriz de niveles** · habitos; revisa calidad · depende de D-ING-1
 - Hace: `data/ingles/niveles.yaml` con los 11 escalones (gramática, funciones, vocabulario y descriptores "puedo" por habilidad), las listas controladas, y `niveles-y-avance.md` en versión 0.4 con la escalera, la puerta anticipada y el descenso.
 - Hecho cuando: cada tema de gramática es "nuevo" en un solo escalón; cada escalón tiene descriptores para las cuatro habilidades; calidad contrasta 10 temas al azar con el manual del examen de su etapa.
 
-**P1.4 · Revisión a ciegas y habilidades** · calidad (protocolo), arquitecto (habilidades)
-- Hace: una corrida de punta a punta con un ejemplo patrón (exportar, resolver, comparar). Crea la habilidad `leccion-idioma` (cómo redactar una sesión) junto a `simulacro-examen-idioma`, ya actualizada.
-- Hecho cuando: la revisión queda escrita en `data/ingles/revisiones/` y una disputa provocada a propósito se detecta.
+**P1.4 · Revisión a ciegas y habilidades** · calidad (protocolo), arquitecto (habilidades) · dos subpaquetes
+- P1.4a (no espera a la herramienta): calidad resuelve a ciegas los ejemplos patrón objetivos, a partir del cuaderno `docs/contenido/ingles/generado/cuaderno-ejemplos-patron.md`, que no trae respuestas ni explicaciones. El arquitecto compara a mano; cada disputa corrige el ejemplo antes de que nadie lo imite. Los ejemplos los escribió la sesión que hizo este plan, así que también a ellos les toca el principio 5. El arquitecto crea la habilidad `leccion-idioma` (cómo redactar una sesión), junto a `simulacro-examen-idioma`, ya actualizada.
+- P1.4b (depende de P1.2c): la misma corrida de punta a punta, ahora con la herramienta (`exportar`, resolver, `comparar`).
+- Hecho cuando: (a) ningún ejemplo patrón tiene disputas abiertas y las respuestas quedan en `docs/revisiones/ingles/`; (b) `comparar` deja la revisión en `data/ingles/revisiones/` y detecta una disputa provocada a propósito.
 
-**P1.5 · Piloto vertical** · habitos, calidad y dueño · depende de P1.1 a P1.4, D-ING-1, D-ING-2 y D-ING-4
+**P1.5 · Piloto vertical** · habitos, calidad y dueño · depende de P1.1 a P1.4, D-ING-1, D-ING-2, D-ING-4 y D-ING-5
 - Hace: (1) la semana 1 de B1.1 completa, con la plantilla de 60 minutos; (2) una unidad de Reading 3 y una de Listening 3 de B1 Preliminary con longitud oficial; (3) 12 preguntas de ubicación, 3 por etapa.
 - Hecho cuando: todo en `revisado`; cuadernos exportados; el dueño aprueba la plantilla o pide cambios en una sola ronda.
 
 ### Fase 2 · Ubicación y núcleo en la app
 
 **P2.1 · Prueba de ubicación, versión 3** · habitos; calidad resuelve a ciegas con dos agentes distintos · depende de P1.3 y P1.5
-- Hace: banco de 72 preguntas (18 por etapa) y forma de 48, con el contrato `gravity-ubicacion`.
+- Hace: banco de 72 preguntas (18 por etapa) y forma de 48, con el contrato `gravity-ubicacion`. Las de escucha llevan guion para el audio del dispositivo.
 - Hecho cuando: las dos resoluciones a ciegas coinciden con la clave en todas las preguntas; V20 sin errores.
 
 **P2.2 · Servidor** · backend · depende de P0.3
@@ -269,8 +283,8 @@ Flutter y Dart están en `/home/user/tools/flutter/bin`.
 **P2.3 · Dominio** · habitos · depende de P0.3
 - Hace: repaso espaciado, sesión completa y minutos, puertas (80 % por habilidad, dos oportunidades, días de gracia, 90 % de minutos), ubicación, puerta anticipada y descenso. Con pruebas de los casos límite.
 
-**P2.4 · Pantallas y plataforma** · habitos, diseno y plataforma · depende de P2.2, P2.3 y `compilar`
-- Hace: Inicio de inglés, Ubicación (se puede pausar y reanudar, no reiniciar), Sesión del día, Tarjetas y Progreso. Recursos en `app/assets/ingles/`, cola sin conexión y recordatorio local discreto. Sin audio, el traslado aparece como "disponible cuando haya audio" y no cuenta minutos.
+**P2.4 · Pantallas y plataforma** · habitos, diseno y plataforma · depende de P2.2, P2.3 y `compilar`; la pantalla de Ubicación, además, de P3.2a
+- Hace: Inicio de inglés, Ubicación (se puede pausar y reanudar, no reiniciar), Sesión del día, Tarjetas y Progreso. Recursos en `app/assets/ingles/`, cola sin conexión y recordatorio local discreto. Sin audio, el traslado aparece como "disponible cuando haya audio" y no cuenta minutos, y la Ubicación no se ofrece: la pantalla explica cómo instalar una voz en inglés.
 
 **P2.5 · Herramientas y API** · asistente
 - Hace: `habitos.ingles_hoy`, navegación y OpenAPI de lo nuevo.
@@ -280,9 +294,12 @@ Flutter y Dart están en `/home/user/tools/flutter/bin`.
 
 ### Fase 3 · Audio y habla · depende de D-ING-3
 
+El reproductor (P3.1, P3.2a y P3.3) está en la ruta crítica: la ubicación lleva escucha y no se abre sin él. Se construye en paralelo con la fase 2, no después.
+
 - **P3.1 · Especificación** · plataforma y habitos: interfaz de fuente de audio, reproductor (reproducciones según contrato, velocidad 0.8 y 1.0, guion oculto hasta contestar) y grabación local.
-- **P3.2 · Construcción** · plataforma (paquete y permisos) y habitos (bloques de escucha, repetición y traslado solo con audio), con una fuente de audio simulada para las pruebas.
-- **P3.3 · Verificación en dispositivo** · dueño: voces en inglés instaladas en el Galaxy A52 y en Windows, sin conexión. Conviene hacerla antes de producir muchos guiones.
+- **P3.2a · Reproductor** · plataforma (paquete de voz y permisos) y habitos (bloque de escucha), con una fuente de audio simulada para las pruebas.
+- **P3.2b · Repetición, traslado y grabación** · habitos y plataforma: repetir frases, traslado solo con audio y grabación local para el habla.
+- **P3.3 · Verificación en dispositivo** · dueño: voces en inglés instaladas en el Galaxy A52 y en Windows, sin conexión. Se hace en cuanto exista P3.2a y antes de producir muchos guiones.
 
 ### Fase 4 · Curso por escalones · depende de aprobar el piloto
 
@@ -328,14 +345,18 @@ Especificación primero: emparejamiento por escalón, actividades en pareja, rev
 **Ruta crítica hasta el primer uso real** (el dueño y su pareja se ubican en la app y empiezan su escalón):
 
 ```
-D-ING-1,2,4,5 ─► P1.3 ─► P1.5 (piloto) ─► P2.1 (ubicación) ─┐
-P1.1 ─► P1.2a ─► P1.2b ─► P1.2c ─────────────────────────────┼─► P2.4 (pantallas) ─► primer uso
-P0.3 ─► P2.2 (servidor) y P2.3 (dominio) ────────────────────┘
-En paralelo: fase 4 (primeras dos semanas de B1.1 y de A2.1) y, con D-ING-3, fase 3 (audio)
+D-ING-1,2,4,5 ─► P1.1b y P1.3 ─► P1.5 (piloto) ─► P2.1 (ubicación) ────┐
+P1.1a y P1.2a ─► P1.2b ─► P1.2c ─► P1.4b ──────────────────────────────┤
+P0.2 ─► P0.3 ─► P2.2 (servidor) y P2.3 (dominio) ──────────────────────┼─► P2.4 (pantallas) ─► primer uso
+D-ING-3 ─► P3.1 ─► P3.2a (reproductor) ─► P3.3 (prueba en el teléfono) ┘
+En paralelo: fase 4 (primeras dos semanas de B1.1 y de A2.1)
 ```
 
-**Primer lote, sin esperar ninguna decisión:** P0.1, P1.1, P1.2a y P1.4.
-**Segundo lote, con D-ING-1, 2 y 4:** P1.2b, P1.2c, P1.3, P0.3 y P1.5.
+El piloto (P1.5) necesita además la herramienta completa (P1.2c) y la revisión a ciegas probada (P1.4b).
+
+**Primer lote, sin esperar ninguna decisión:** P1.1a, P1.2a y P1.4a. Sus encargos están escritos en el anexo D. P0.1 ya está hecho.
+**Segundo lote, con D-ING-1, 2, 4 y 5:** P0.2, P0.3, P1.1b, P1.2b, P1.2c, P1.3, P1.4b y, al final, P1.5.
+**Con D-ING-3:** P3.1 y P3.2a, en paralelo con la fase 2.
 
 ## 9. Riesgos
 
@@ -365,10 +386,12 @@ En paralelo: fase 4 (primeras dos semanas de B1.1 y de A2.1) y, con D-ING-3, fas
 | Paquete | Estado | Nota |
 |---|---|---|
 | Revisión del bloque | Hecho (14/nov/2026) | `docs/revisiones/fase-8-ingles.md` |
-| Formato `gravity-ingles-v1` | Propuesto (14/nov/2026) | `docs/specs/fase-8-ingles-formato.md` |
-| Ejemplos patrón | Hecho (15/nov/2026) | Siete archivos en `data/ingles/ejemplos/`; descritos en la sección 12 del formato |
+| Formato `gravity-ingles-v1` | Propuesto (versión 0.2, 15/nov/2026) | `docs/specs/fase-8-ingles-formato.md` |
+| Ejemplos patrón | Escritos (15/nov/2026), en `borrador` | Nueve archivos en `data/ingles/ejemplos/`, descritos en la sección 12 del formato. Los resuelve a ciegas P1.4a |
+| Cuaderno a ciegas de los ejemplos | Generado (15/nov/2026) | `docs/contenido/ingles/generado/cuaderno-ejemplos-patron.md`, 40 preguntas sin respuestas. Lo genera `herramientas/ingles/transitorio/cuaderno_ejemplos.py` mientras no exista `exportar` |
 | Habilidad `simulacro-examen-idioma` | Actualizada y versionada (15/nov/2026) | Con las reglas de 5.6. Antes no estaba en git |
-| P0.1 a P0.4, fases 1 a 6 | Pendientes | Esperan la orden del dueño |
+| P0.1 Etiquetas honestas | Hecho (15/nov/2026) | 25 documentos y la copia de la página de ubicación. No se tocó ninguna pregunta |
+| P0.2 a P0.4, fases 1 a 6 | Pendientes | Esperan la orden del dueño |
 
 ## Anexo B. Temario por escalón (propuesta para P1.3)
 
@@ -385,3 +408,141 @@ En paralelo: fase 4 (primeras dos semanas de B1.1 y de A2.1) y, con D-ING-3, fas
 | B2.2 | Modales de deducción en presente y pasado, tercera condicional y mixtas, *wish / if only* | Especular, lamentar y plantear hipótesis | Nuevo |
 | B2.3 | Pasiva avanzada (*have something done*, pasiva con verbos de opinión), gerundios e infinitivos, verbos de reporte, relativas y participios | Informar, reportar y describir procesos | Nuevo |
 | B2.4 | Conectores de contraste, causa y propósito; énfasis (*what I need is…*); formación de palabras; colocaciones y verbos frasales por tema | Argumentar por escrito (ensayo, informe, reseña) y en debate. **Puerta B2** | Nuevo |
+
+## Anexo C. Qué cambió en la versión 0.2
+
+1. **Dependencias corregidas.** En la 0.1, el primer lote incluía trabajo que sí dependía de decisiones o de la herramienta: los contratos propios y la corrida de punta a punta de la revisión a ciegas. Ahora P1.1 y P1.4 se parten en a y b, y el segundo lote pide también D-ING-5.
+2. **Ubicación.** Tabla de entrada por resultado, incluido quien alcanza B2. Margen de error calculado. El audio entra en la ruta crítica, porque la ubicación lleva escucha y es única.
+3. **Revisor a ciegas aislado** (5.3): recibe el cuaderno en el encargo, devuelve las respuestas en el reporte y trabaja en un árbol aislado.
+4. **Patrón antes que serie** (5.2), y dos ejemplos patrón más: transformaciones y oraciones omitidas de B2 First.
+5. **P1.2a** ya no espera contratos ni niveles: usa archivos de prueba y avisa cuando faltan.
+6. **P0.1 hecho.**
+7. **Anexo D:** encargos del primer lote, listos para lanzar.
+
+## Anexo D. Encargos del primer lote
+
+Los tres se pueden lanzar a la vez: escriben en carpetas distintas. Cada bloque se pasa tal cual al agente indicado.
+
+### D.1 · P1.1a · agente `habitos`
+
+```
+Ejecuta el paquete P1.1a del plan de inglés: contratos de los exámenes oficiales.
+
+Lee primero, en este orden:
+1. CLAUDE.md y docs/ROADMAP.md, sección 11.1.
+2. docs/specs/fase-8-ingles-plan.md: secciones 2 y 5, y la ficha de P1.1.
+3. docs/specs/fase-8-ingles-formato.md: secciones 3, 4.2 y 6.
+4. docs/contenido/ingles/formatos-oficiales.md: enlaces a los manuales y lo ya verificado.
+
+Tu carpeta para este paquete: data/ingles/formatos/. No escribas fuera de ella.
+
+Entregables: seis archivos YAML, uno por examen: cambridge-a2-key, cambridge-b1-preliminary,
+cambridge-b2-first, toeic-lr, toeic-sw y toefl-ibt-2026. Cada uno con todas sus secciones y
+partes. En cada parte: tarea, tipo_pregunta (uno de la tabla 4.2 del formato), unidades,
+preguntas_por_unidad, opciones, reproducciones si es de escucha, palabras_estimulo {min, max}
+y pagina_manual.
+
+Cómo:
+- Descarga cada manual desde www.cambridgeenglish.org o www.ets.org a una carpeta temporal
+  fuera del repositorio. Son los únicos dominios permitidos. El de A2 Key está en
+  https://www.cambridgeenglish.org/Images/504505-a2-key-handbook-2020.pdf; los demás, en
+  formatos-oficiales.md y en el encabezado de los simulacros.
+- Si un manual no se puede descargar o un dato no aparece, no lo completes de memoria:
+  marca el dato con pendiente: true y dilo en el reporte.
+- palabras_estimulo: si el manual declara la longitud, usa esa cifra. Si no, cuenta las
+  palabras del texto o del guion de esa parte en la prueba de muestra del manual, guarda la
+  medida en un campo medido y fija el rango en la medida menos 15 % y más 15 %, redondeado
+  a decenas.
+- No copies al repositorio ninguna pregunta ni texto del manual: solo números, nombres de
+  parte y páginas.
+- Todos los archivos quedan en estado: borrador.
+
+Hecho cuando:
+- Los seis archivos se leen como YAML sin errores.
+- Cada parte tiene pagina_manual, o pendiente: true con su explicación en el reporte.
+- El total de preguntas de cada contrato coincide con formatos-oficiales.md. Si no coincide,
+  explícalo en el reporte con la página del manual.
+
+No hagas commit. No cambies decisiones: si te falta una, detente y dilo en el reporte.
+Reporte: el de la sección 5.4 del plan, más una tabla por examen con parte, preguntas,
+palabras medidas y página.
+```
+
+### D.2 · P1.2a · agente `habitos` (otra instancia)
+
+```
+Ejecuta el paquete P1.2a del plan de inglés: primera parte de la herramienta herramientas/ingles.
+
+Lee primero, en este orden:
+1. CLAUDE.md y docs/ROADMAP.md, sección 11.1.
+2. docs/specs/fase-8-ingles-plan.md: secciones 2 y 5, y la ficha de P1.2.
+3. docs/specs/fase-8-ingles-formato.md completo. Las comprobaciones están en la sección 11.
+4. herramientas/biblia (misma forma de paquete) y los nueve archivos de data/ingles/ejemplos/.
+
+Tu carpeta para este paquete: herramientas/ingles/. No escribas fuera de ella y no toques
+herramientas/ingles/transitorio/.
+
+Entregables:
+- Paquete Dart con bin/ingles.dart, lib/, test/, pubspec.yaml, analysis_options.yaml y
+  README.md. Única dependencia nueva permitida: yaml.
+- Orden validar [ruta]: lee los YAML de la ruta (por defecto, data/ingles), aplica V01 a V14
+  salvo V06, y la parte de V24 que no depende de revisiones (un archivo en validado no puede
+  tener errores). Imprime una línea por hallazgo (archivo, código, error o aviso, mensaje en
+  español) y un resumen. Sale con 1 si hay errores.
+- Contratos y niveles de prueba dentro de test/, escritos según las secciones 6 y 8 del formato.
+- Pruebas: por cada comprobación, al menos un caso bueno y un caso malo. El caso malo se
+  construye en la prueba a partir de un caso bueno, cambiando un solo dato.
+
+Reglas:
+- Si falta el contrato de una unidad o data/ingles/niveles.yaml, validar avisa ("sin contrato",
+  "sin niveles") y sigue. Es aviso en borrador y error de validado en adelante. No crees esos
+  archivos en data/ingles.
+- No cambies los ejemplos patrón. Si uno no pasa una comprobación, no relajes la comprobación:
+  repórtalo con el archivo, el código y tu lectura de quién tiene razón.
+- exportar, comparar, compilar e informe son de P1.2b y P1.2c. No las escribas ahora, pero
+  deja el modelo listo para ellas.
+
+Hecho cuando (desde herramientas/ingles, con /home/user/tools/flutter/bin en el PATH):
+- dart analyze: sin problemas.
+- dart test: todo en verde.
+- dart run bin/ingles.dart validar ../../data/ingles/ejemplos: cero errores, o la lista de
+  los que consideras defectos del ejemplo.
+
+No hagas commit. No cambies decisiones: si te falta una, detente y dilo en el reporte.
+Reporte: el de la sección 5.4 del plan, con la salida completa de los tres comandos.
+```
+
+### D.3 · P1.4a · agente `calidad`, en árbol aislado
+
+Se lanza con `isolation: worktree`. Donde dice `<CUADERNO>` se pega completo el archivo `docs/contenido/ingles/generado/cuaderno-ejemplos-patron.md`.
+
+```
+Vas a resolver a ciegas un cuaderno de preguntas de inglés. Tu trabajo es encontrar las
+preguntas que están mal: las que tienen dos respuestas defendibles, ninguna, o una clave
+que alguien podría discutir.
+
+Reglas:
+- No abras data/ingles/ ni ningún archivo del repositorio. No busques la clave. Todo lo que
+  necesitas está abajo. Si aun así abres algo, anótalo en archivos_abiertos.
+- Sigue las instrucciones del propio cuaderno. Contesta todo.
+- En huecos abiertos, formación de palabras, transformaciones y respuestas cortas, escribe
+  todas las respuestas que consideres válidas en inglés británico (Cambridge) o americano
+  (TOEFL y curso), según indique cada unidad.
+- En cada pregunta intenta defender una segunda respuesta. Si lo logras, anótala en
+  otras_validas y explica por qué en nota. No seas indulgente: una pregunta discutible es un
+  hallazgo, no un problema tuyo.
+- En observaciones, di si el texto, el nivel o las instrucciones no corresponden al examen
+  que la unidad dice imitar.
+
+Entrega: un bloque YAML por unidad, con la forma que pide el cuaderno. No escribas archivos.
+
+<CUADERNO>
+```
+
+### D.4 · Qué hace quien integra al recibir los reportes
+
+1. Corre él mismo los comandos de "hecho cuando" de P1.1a y P1.2a. No da por bueno el reporte.
+2. Guarda cada bloque de P1.4a en `docs/revisiones/ingles/<objeto>-calidad.yaml`.
+3. Compara con la clave: `python3 herramientas/ingles/transitorio/cuaderno_ejemplos.py --clave`. En opción múltiple y en oraciones omitidas, la letra debe coincidir. En las demás, cada respuesta del revisor debe estar en `aceptadas`. Toda respuesta que no esté, y toda `otras_validas`, es una disputa.
+4. Cada disputa se cierra de una de dos formas: se añade la respuesta a `aceptadas` si de verdad es válida, o se reescribe la pregunta para que deje de serlo. No se discute con el revisor. Después se genera el cuaderno otra vez y lo resuelve un agente distinto.
+5. Un commit por paquete, y se actualiza el anexo A.

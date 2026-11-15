@@ -5,6 +5,8 @@ Alcance: `docs/contenido/ingles/` completo (34 documentos y una página web, una
 
 El plan que corrige estos hallazgos está en `docs/specs/fase-8-ingles-plan.md`. Los códigos entre paréntesis (por ejemplo, P1.2) son paquetes de ese plan.
 
+> **Actualización (15/nov/2026).** El paquete P0.1 ya se aplicó: los simulacros y las prácticas dicen "formato reducido" y la prueba de ubicación dice "en revisión". Ningún hallazgo queda cerrado por eso: cambió la etiqueta, no el contenido. ING-M4 sí quedó corregido.
+
 ## 1. Veredicto
 
 **No apto todavía para usarse como curso ni como preparación de examen. Sí es una buena base de borradores.** Hay cinco hallazgos bloqueantes. Ninguno es de código: son de validez del contenido y de calibración.

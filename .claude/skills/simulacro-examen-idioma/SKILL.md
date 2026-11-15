@@ -35,8 +35,8 @@ description: Construye y revisa unidades, prácticas y simulacros de examen de i
 | Texto con huecos y opciones | Las cuatro opciones son palabras distintas de la misma categoría, no formas del mismo verbo |
 | Hueco abierto | Solo palabras gramaticales (preposiciones, artículos, auxiliares, pronombres, conectores, partículas). Se listan todas las respuestas válidas. Si caben más de tres palabras de contenido, el hueco está mal elegido |
 | Formación de palabras | Toda respuesta transforma la base. Hay prefijos negativos, plurales y cambios de categoría |
-| Transformación con palabra clave | La palabra clave va dentro de la respuesta, sin cambios, y no aparece fuera del hueco |
-| Oraciones omitidas | Cada oración colocada declara su `ancla`: el pronombre, conector o repetición que la fija a ese hueco y a ningún otro |
+| Transformación con palabra clave | La palabra clave va dentro de la respuesta, sin cambios, y no aparece fuera del hueco. De 2 a 5 palabras (una contracción cuenta como dos). El marco se escribe para cerrar alternativas, y si quedan varias formas válidas se listan todas |
+| Oraciones omitidas | Cada oración colocada declara su `ancla`: lo que la ata a la oración anterior **y** a la siguiente. Atada por un solo lado, puede caber en dos huecos. La sobrante usa palabras del texto, pero lo contradice |
 | Correspondencia | Cada respuesta cita su `evidencia`. Las respuestas se reparten entre los textos |
 | Completar palabras (TOEFL) | Siempre dentro de un texto, con la primera oración completa |
 | Escucha | Guion con voces, longitud del contrato y reproducciones del contrato. El guion no aparece en el cuaderno |
@@ -51,16 +51,18 @@ description: Construye y revisa unidades, prácticas y simulacros de examen de i
 
 ## Procedimiento del revisor a ciegas
 
-1. Recibes solo el cuaderno exportado, sin clave. No abras `data/ingles/unidades`.
+1. Recibes solo el cuaderno, dentro de tu encargo y sin clave. No abras `data/ingles/` ni ninguna clave exportada. Si abres algo, anótalo en `archivos_abiertos`.
 2. Contesta todo. En huecos abiertos, formación de palabras y transformaciones, escribe todas las respuestas que consideres válidas.
-3. Por cada pregunta, intenta defender una segunda opción. Si lo logras, anótala en `otras_validas`.
-4. Guarda el archivo de respuestas en `docs/revisiones/ingles/` con el formato de la sección 9 del formato.
-5. El integrador corre `comparar`. Las disputas vuelven al autor; no se discuten.
+3. Por cada pregunta, intenta defender una segunda opción. Si lo logras, anótala en `otras_validas`. Una pregunta discutible es un hallazgo: no la dejes pasar.
+4. Devuelve las respuestas en tu reporte, en un bloque YAML con la forma de la sección 9 del formato. Quien integra las guarda en `docs/revisiones/ingles/`.
+5. Quien integra corre `comparar`. Las disputas vuelven al autor; no se discuten.
 
 ## Mientras no exista la herramienta
 
 Hasta que se construya `herramientas/ingles` (paquete P1.2 del plan):
 - Escribe en el formato `gravity-ingles-v1` igualmente, copiando la estructura de los ejemplos patrón.
+- Si la parte que vas a escribir no tiene ejemplo patrón, entrega una sola unidad candidata y espera su revisión antes de escribir más (plan, sección 5.2).
+- El cuaderno a ciegas de los ejemplos lo genera `herramientas/ingles/transitorio/cuaderno_ejemplos.py`.
 - Revisa a mano las reglas de la tabla anterior y cuenta las palabras de cada estímulo contra el contrato.
 - No marques ningún archivo por encima de `borrador`.
 

@@ -1,6 +1,6 @@
 # Especificación — Formato de contenido `gravity-ingles-v1`
 
-> Versión 0.1 (14/nov/2026), **propuesta**. Parte del plan `docs/specs/fase-8-ingles-plan.md` (paquetes P1.1 y P1.2). Nace de la revisión `docs/revisiones/fase-8-ingles.md` (hallazgos ING-B1, ING-B2, ING-B4, ING-I1, ING-I3 e ING-I4).
+> Versión 0.2 (15/nov/2026), **propuesta**. Parte del plan `docs/specs/fase-8-ingles-plan.md` (paquetes P1.1 y P1.2). Nace de la revisión `docs/revisiones/fase-8-ingles.md` (hallazgos ING-B1, ING-B2, ING-B4, ING-I1, ING-I3 e ING-I4).
 > Precedente en el proyecto: `herramientas/biblia` y el formato `gravity-biblia-v1` (contenido con formato versionado, validador en Dart y salida a `app/assets`).
 
 ## 1. Para qué sirve
@@ -15,7 +15,7 @@ Hoy el contenido de inglés es Markdown con la respuesta junto a la pregunta. La
 
 Reglas de base:
 1. Las fuentes se escriben a mano (o las escribe un agente). Lo generado **nunca** se edita a mano.
-2. Ninguna fuente dice "completo", "verificado" ni "aprobado por su cuenta": el estado y la fidelidad los calcula la herramienta (V24 a V26).
+2. Ninguna fuente afirma por su cuenta que está "completa", "verificada" o "aprobada": el estado y la fidelidad los comprueba la herramienta (V24 a V26).
 3. La letra de la opción correcta no existe en la fuente. Se sortea al exportar y al compilar (V06).
 
 ## 2. Carpetas
@@ -32,6 +32,7 @@ data/ingles/
   ejemplos/                            unidades patrón; también son casos de prueba del validador
 herramientas/ingles/                   paquete Dart: validar, exportar, compilar, comparar, informe
 docs/contenido/ingles/generado/        cuadernos y claves exportados (no editar)
+docs/revisiones/ingles/                respuestas de quien resuelve a ciegas (las guarda quien integra)
 app/assets/ingles/                     contenido compilado (no editar)
 ```
 
@@ -110,7 +111,7 @@ preguntas:
 | `hueco_opciones` | Texto con huecos y opciones (Cambridge, TOEIC 5 y 6) | `hueco`, `opciones` | El texto marca los huecos como `{1}`, `{2}`… |
 | `hueco_abierto` | Una palabra por hueco | `hueco`, `aceptadas`, `clase` | Se listan **todas** las respuestas válidas; `clase: gramatical` donde el contrato lo pide (V09) |
 | `formacion_palabra` | Palabra derivada | `hueco`, `base`, `aceptadas` | Ninguna aceptada es igual a la base (V07) |
-| `transformacion` | Segunda oración con palabra clave | `original`, `clave`, `antes`, `despues`, `aceptadas` | La clave va dentro de la respuesta y no fuera (V08) |
+| `transformacion` | Segunda oración con palabra clave | `original`, `clave`, `antes`, `despues`, `aceptadas` | La clave va dentro de la respuesta y no fuera; de 2 a 5 palabras, y una contracción cuenta como dos; se conservan las palabras del original que la clave no obliga a cambiar (V08) |
 | `oracion_omitida` | Texto con oraciones quitadas | `oraciones` (cada una con `hueco` y `ancla`, o `sobrante: true` y `porque_no`) | Cada oración declara la pista de cohesión que la fija (V10) |
 | `correspondencia` | ¿En qué texto se dice…? | `enunciado`, `respuesta`, `evidencia` | La unidad lleva `textos` con id (V11) |
 | `emparejar` | Personas con textos, hablantes con frases | `elemento`, `respuesta`, `evidencia` | La unidad lleva `opciones` con id; las sobrantes llevan `porque_no` |
@@ -295,12 +296,13 @@ Cálculo de minutos (V22): explicación, palabras ÷ 150; cada ejemplo, 15 segun
 ## 9. Resolución a ciegas
 
 1. El integrador exporta el cuaderno de la unidad o de la forma, sin respuestas.
-2. Un agente distinto del autor recibe **solo** el cuaderno y escribe un archivo de respuestas:
+2. Un agente distinto del autor recibe **solo** el cuaderno, dentro de su encargo, y devuelve sus respuestas en el reporte. Quien integra las guarda en `docs/revisiones/ingles/<objeto>-<agente>.yaml`:
 
 ```yaml
 objeto: cam-b1-r3-0001
 agente: calidad
 fecha: 2026-11-15
+archivos_abiertos: []      # lo que leyó además del cuaderno; debe quedar vacía
 respuestas:
   cam-b1-r3-0001-a: {respuesta: "B", seguridad: alta, otras_validas: []}
   cam-b1-r3-0001-b: {respuesta: "D", seguridad: media, otras_validas: ["A"], nota: "A también se puede defender por la línea 12."}
@@ -311,7 +313,9 @@ observaciones:
 3. `comparar` cruza las respuestas con la fuente y escribe el resultado en `data/ingles/revisiones/<id>/`, con la **huella** del contenido revisado. Cada pregunta queda en `coincide`, `disputa` (respuesta distinta, o el revisor declara otra opción válida) o `resuelto` (disputa cerrada con un cambio y una nueva revisión).
 4. Si la unidad cambia después, la huella deja de coincidir y la revisión caduca (V24).
 
-En huecos abiertos, formación de palabra y transformaciones, el revisor escribe todas las respuestas que considere válidas; las que falten en `aceptadas` son disputa.
+En huecos abiertos, formación de palabra y transformaciones, el revisor escribe todas las respuestas que considere válidas; las que falten en `aceptadas` son disputa. En `oracion_omitida`, la respuesta es un mapa de hueco a letra; en `completar_palabras`, la lista de palabras completas en el orden del texto.
+
+Mientras no exista `exportar`, el cuaderno de los ejemplos patrón lo genera `herramientas/ingles/transitorio/cuaderno_ejemplos.py`, con las opciones en orden alfabético.
 
 ## 10. Herramienta `herramientas/ingles`
 
@@ -369,12 +373,19 @@ En `data/ingles/ejemplos/`. Marcan el nivel de calidad que se exige y sirven de 
 | `cam-b1-r3-ejemplo.yaml` | Lectura de B1 Preliminary con longitud oficial (406 palabras), cinco preguntas en el orden del texto, la última global, y la razón de cada opción |
 | `cam-b2-ue2-ejemplo.yaml` | Hueco abierto de B2 First solo con palabras gramaticales y con todas las respuestas válidas |
 | `cam-b2-ue3-ejemplo.yaml` | Formación de palabras de B2 First: todas las respuestas transforman la base |
+| `cam-b2-ue4-ejemplo.yaml` | Transformaciones con palabra clave de B2 First: marco que cierra las alternativas, todas las formas válidas y el intento frecuente que no vale |
+| `cam-b2-r6-ejemplo.yaml` | Oraciones omitidas de B2 First (599 palabras): cada oración atada por los dos lados y una sobrante que contradice el texto |
 | `toefl-r-palabras-ejemplo.yaml` | "Complete the Words" de TOEFL dentro de un texto, con una sola solución por hueco |
 | `audio-b1-1-s01-a-ejemplo.yaml`, `audio-b1-1-s01-b-ejemplo.yaml` | Guiones de traslado de B1 (monólogo y diálogo) cargados de la gramática de la semana |
 | `sesion-b1-1-s01-lun-ejemplo.yaml` | Sesión de lunes de 60 minutos: 11 preguntas con explicación, 12 elementos de pronunciación, tarea con cotejo y modelo, 20 frases y 8 tarjetas. Estimación: 58 minutos |
+
+Los nueve están en `borrador`: los escribió la sesión que hizo el plan y nadie los ha resuelto a ciegas todavía (paquete P1.4a). Su cuaderno sin respuestas está en `docs/contenido/ingles/generado/cuaderno-ejemplos-patron.md`.
+
+**Faltan patrones** de: texto con huecos y opciones (B2 First parte 1; TOEIC partes 5 y 6), correspondencia (B2 First parte 7), emparejar (B1 Preliminary, Reading 2), completar notas al escuchar (B1 Preliminary, Listening 3), escucha con opción múltiple, las sesiones de martes a viernes, y las partes propias de TOEIC y de TOEFL. Se escriben con la regla "patrón antes que serie" del plan (sección 5.2).
 
 ## 13. Lo que queda fuera de esta versión
 
 - Archivos de audio grabado y fotografías. El audio se genera en el dispositivo a partir del guion (plan, fase 3). Las imágenes se describen en texto hasta que haya archivos con licencia clara.
 - Calificación con IA de escritura y habla. Se evalúa con lista de cotejo, modelo y revisión en pareja; la IA se especifica aparte, después de la Fase 6.
+- Crédito parcial en las transformaciones. El examen oficial da dos puntos por pregunta, uno por cada mitad; aquí la pregunta se califica completa, que es más estricto.
 - Otros idiomas. El formato no depende del inglés: bastará otra carpeta (`data/<idioma>/`) y sus contratos cuando el dueño lo pida.
