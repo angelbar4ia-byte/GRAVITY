@@ -116,7 +116,7 @@ preguntas:
 | `correspondencia` | ¿En qué texto se dice…? | `enunciado`, `respuesta`, `evidencia` | La unidad lleva `textos` con id (V11) |
 | `emparejar` | Personas con textos, hablantes con frases | `elemento`, `respuesta`, `evidencia` | La unidad lleva `opciones` con id; las sobrantes llevan `porque_no` |
 | `completar_nota` | Notas con huecos al escuchar | `hueco`, `aceptadas` | Una a tres palabras o un número, tal como se oye |
-| `completar_palabras` | Palabras cortadas dentro de un texto (TOEFL) | `pistas` (una por hueco, en orden); los huecos van en el texto: `im{prove}` | Siempre con texto alrededor; la app muestra una casilla por letra oculta (V14) |
+| `completar_palabras` | Palabras cortadas dentro de un texto (TOEFL) | `pistas` (una por hueco, en orden); los huecos van en el texto: `im{prove}` | Siempre con texto alrededor; la app muestra una casilla por letra oculta. Se oculta el final de la palabra según la regla `ocultar` del contrato; hoy, la segunda mitad, como criterio provisional (V14) |
 | `ordenar_palabras` | Construir una oración | `palabras`, `aceptadas` | — |
 | `respuesta_corta` | Ejercicios del curso (transformar, traducir) | `enunciado`, `aceptadas` | — |
 | `repetir` | Escuchar y repetir | `frases` | — |
@@ -355,7 +355,7 @@ Error = impide `validado`. Aviso = se reporta y no impide.
 | V11 | Correspondencia y emparejar: la respuesta apunta a un texto u opción existente y trae `evidencia`; ningún texto concentra más de la mitad de las respuestas | Error y aviso |
 | V12 | `porque` de al menos 6 palabras en toda pregunta objetiva; en el curso, `porque_no` en cada distractor | Error |
 | V13 | `nivel`, `habilidad`, `foco` y `temas` pertenecen a `niveles.yaml` | Error |
-| V14 | Completar palabras: cada hueco oculta de 2 a 8 letras y hay al menos 4 palabras completas por cada hueco | Error |
+| V14 | Completar palabras: cada hueco oculta la segunda mitad de la palabra (la mayor si el número de letras es impar), de 2 a 8 letras, y hay al menos 4 palabras completas por cada hueco | Error |
 | V15 | Palabras del estímulo dentro del rango del contrato (en audio, solo los turnos de habla); fuera de rango, o con el rango pendiente, la forma queda como `reducida` | Aviso en la unidad; decide la fidelidad de la forma |
 | V16 | Audio: voces declaradas, `reproducciones` igual al contrato; el cuaderno no imprime el guion | Error |
 | V17 | En formas de examen, enunciados y opciones en inglés (detecta palabras en español) | Error |
@@ -382,9 +382,9 @@ En `data/ingles/ejemplos/`. Marcan el nivel de calidad que se exige y sirven de 
 | `cam-b2-r6-ejemplo.yaml` | Oraciones omitidas de B2 First (599 palabras): cada oración atada por los dos lados y una sobrante que contradice el texto |
 | `toefl-r-palabras-ejemplo.yaml` | "Complete the Words" de TOEFL dentro de un texto, con una sola solución por hueco |
 | `audio-b1-1-s01-a-ejemplo.yaml`, `audio-b1-1-s01-b-ejemplo.yaml` | Guiones de traslado de B1 (monólogo y diálogo) cargados de la gramática de la semana |
-| `sesion-b1-1-s01-lun-ejemplo.yaml` | Sesión de lunes de 60 minutos: 11 preguntas con explicación, 12 elementos de pronunciación, tarea con cotejo y modelo, 20 frases y 8 tarjetas. Estimación: 58 minutos |
+| `sesion-b1-1-s01-lun-ejemplo.yaml` | Sesión de lunes de 60 minutos: 11 preguntas con explicación, 12 elementos de pronunciación, tarea con cotejo y modelo, 20 frases y 8 tarjetas. Estimación: 59 minutos |
 
-Los nueve están en `borrador`. Los escribió la sesión que hizo el plan. Un agente los resolvió a ciegas el 15/nov/2026: coincidió con la clave en las 40 preguntas y defendió una segunda respuesta en 6, que se reescribieron (`docs/revisiones/ingles/ronda-1-resultado.md`). Falta la ronda 2, con otro agente, sobre las preguntas corregidas. Su cuaderno sin respuestas está en `docs/contenido/ingles/generado/cuaderno-ejemplos-patron.md`.
+Los nueve están en `borrador`. Los escribió la sesión que hizo el plan. Dos agentes los resolvieron a ciegas el 15/nov/2026, uno tras otro: los dos coincidieron con la clave en las 40 preguntas. El primero defendió una segunda respuesta en 6 y el segundo en 2; todas se reescribieron (`docs/revisiones/ingles/ronda-1-resultado.md` y `ronda-2-resultado.md`). Las preguntas cambiadas en la ronda 2 esperan una tercera. Su cuaderno sin respuestas está en `docs/contenido/ingles/generado/cuaderno-ejemplos-patron.md`.
 
 **Faltan patrones** de: texto con huecos y opciones (B2 First parte 1; TOEIC partes 5 y 6), correspondencia (B2 First parte 7), emparejar (B1 Preliminary, Reading 2), completar notas al escuchar (B1 Preliminary, Listening 3), escucha con opción múltiple, las sesiones de martes a viernes, y las partes propias de TOEIC y de TOEFL. Se escriben con la regla "patrón antes que serie" del plan (sección 5.2).
 

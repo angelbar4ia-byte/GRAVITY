@@ -2,7 +2,9 @@
 # Muestra: las palabras se completan DENTRO de un texto. La primera oración va
 # entera para dar contexto; la parte oculta de cada palabra va entre llaves y la
 # app muestra una casilla por letra. Cada palabra tiene una sola solución con
-# ese número de letras.
+# ese número de letras. Se oculta la segunda mitad de la palabra (la mitad
+# mayor si el número de letras es impar). Es un criterio provisional: la
+# especificación oficial solo dice "partially missing words".
 esquema: gravity-ingles-v1
 tipo: unidad
 id: ej-toefl-r-palabras-0001
@@ -19,9 +21,9 @@ estimulo:
     Trees keep a record of the past. Each year, a tree adds a new la{yer} of
     wood under its bark, and these layers can be se{en} as rings when the
     tree is cut. In a wet year the ring is wide; in a dry year it is
-    nar{row}. By meas{uring} the rings, res{earchers} can des{cribe} the
+    nar{row}. By meas{uring} the rings, resea{rchers} can desc{ribe} the
     climate of a reg{ion} hundreds of years ago. The same met{hod} is used
-    to find the a{ge} of old wooden buil{dings}.
+    to find the age of old woo{den} buil{dings}.
 preguntas:
   - id: ej-toefl-r-palabras-0001-a
     tipo: completar_palabras
@@ -32,9 +34,9 @@ preguntas:
       - {palabra: "seen", porque: "Pasiva con 'can be': participio de 'see'."}
       - {palabra: "narrow", porque: "Contraste con 'wide' en la primera mitad de la oración."}
       - {palabra: "measuring", porque: "'By' + verbo en -ing; el objeto es 'the rings'."}
-      - {palabra: "researchers", porque: "Sujeto plural de 'can describe'; ocho letras ocultas."}
+      - {palabra: "researchers", porque: "Sujeto plural de 'can describe'; seis letras ocultas."}
       - {palabra: "describe", porque: "Verbo base tras 'can', con 'the climate' como objeto."}
       - {palabra: "region", porque: "'The climate of a …', sustantivo singular."}
       - {palabra: "method", porque: "'The same … is used': retoma el procedimiento de medir los anillos."}
-      - {palabra: "age", porque: "'Find the … of old wooden buildings': dos letras ocultas."}
+      - {palabra: "wooden", porque: "'Old … buildings': adjetivo de material, como todo el texto, que habla de madera."}
       - {palabra: "buildings", porque: "'Old wooden …', sustantivo plural."}

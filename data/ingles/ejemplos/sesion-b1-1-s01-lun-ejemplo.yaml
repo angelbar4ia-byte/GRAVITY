@@ -2,7 +2,7 @@
 # Muestra: una sesión de 60 minutos con contenido para llenarlos. Respeta los
 # tiempos aprobados: principal 35 (repaso 5, lección 10, pronunciación 8,
 # producción 12) y traslado 25. Minutos estimados con las reglas del formato:
-# lección 13.8, pronunciación 6, producción 12, traslado 21.3, repaso 5 → 58.
+# lección 12.3, pronunciación 6, producción 12, traslado 23.3, repaso 5 → 58.6.
 esquema: gravity-ingles-v1
 tipo: sesion
 id: ej-b1-1-s01-lun
@@ -71,8 +71,8 @@ bloques:
             porque: "'Look!' señala algo que está pasando en este momento."
           - texto: "starts"
             porque_no: "El simple describe lo habitual; aquí la lluvia empieza ahora."
-          - texto: "start"
-            porque_no: "Con 'it' el simple llevaría -s, y de todos modos la acción ocurre ahora."
+          - texto: "is start"
+            porque_no: "El continuo se forma con be + verbo en -ing: 'is starting', no 'is start'."
       - id: ej-b1-1-s01-lun-03
         tipo: opcion_multiple
         habilidad: gramatica
@@ -82,8 +82,8 @@ bloques:
             porque: "Understand es un verbo de estado: va en simple aunque hable de este momento."
           - texto: "'m understanding"
             porque_no: "Los verbos de estado casi nunca van en continuo."
-          - texto: "understanding"
-            porque_no: "Le falta el auxiliar, y aun con él sería un verbo de estado en continuo."
+          - texto: "am understand"
+            porque_no: "Error frecuente del hispanohablante, como 'I am agree': el presente simple no lleva 'am'."
       - id: ej-b1-1-s01-lun-04
         tipo: opcion_multiple
         habilidad: gramatica
@@ -93,30 +93,20 @@ bloques:
             porque: "'At the moment' y un cambio en curso piden el continuo."
           - texto: "rises"
             porque_no: "El simple diría que siempre sube; 'at the moment' habla de ahora."
-          - texto: "rise"
-            porque_no: "El sujeto es singular y la situación es actual, no habitual."
+          - texto: "rising"
+            porque_no: "Le falta el auxiliar: el continuo necesita 'is' antes de 'rising'."
       - id: ej-b1-1-s01-lun-05
-        tipo: opcion_multiple
+        tipo: respuesta_corta
         habilidad: gramatica
-        enunciado: "My brother ___ three languages."
-        opciones:
-          - texto: "speaks"
-            porque: "Es un hecho permanente sobre él: presente simple con -s."
-          - texto: "is speaking"
-            porque_no: "Diría que los habla en este instante, y nadie habla tres idiomas a la vez."
-          - texto: "speak"
-            porque_no: "Con 'my brother' (he) falta la -s."
+        enunciado: "My brother ___ (speak) three languages."
+        aceptadas: ["speaks"]
+        porque: "Es un hecho permanente sobre él: presente simple, con -s porque el sujeto es 'he'."
       - id: ej-b1-1-s01-lun-06
-        tipo: opcion_multiple
+        tipo: respuesta_corta
         habilidad: gramatica
-        enunciado: "Be quiet, please. The baby ___."
-        opciones:
-          - texto: "is sleeping"
-            porque: "La petición de silencio se refiere a lo que pasa ahora."
-          - texto: "sleeps"
-            porque_no: "Describiría un hábito del bebé, no la razón para callar en este momento."
-          - texto: "sleep"
-            porque_no: "Con 'the baby' falta la -s, y la acción ocurre ahora."
+        enunciado: "Be quiet, please. The baby ___ (sleep)."
+        aceptadas: ["is sleeping", "'s sleeping"]
+        porque: "La petición de silencio se refiere a lo que pasa ahora mismo: continuo."
       - id: ej-b1-1-s01-lun-07
         tipo: respuesta_corta
         habilidad: gramatica
@@ -132,9 +122,9 @@ bloques:
       - id: ej-b1-1-s01-lun-09
         tipo: respuesta_corta
         habilidad: gramatica
-        enunciado: "Escribe la pregunta en presente simple: how often / you / go / to the gym"
-        aceptadas: ["How often do you go to the gym?"]
-        porque: "La frecuencia habla de un hábito: presente simple con 'do' antes del sujeto."
+        enunciado: "Let's go home. It ___ (get) dark."
+        aceptadas: ["is getting", "'s getting"]
+        porque: "Algo que está cambiando en este momento: continuo (el tercer uso de la explicación)."
       - id: ej-b1-1-s01-lun-10
         tipo: respuesta_corta
         habilidad: gramatica

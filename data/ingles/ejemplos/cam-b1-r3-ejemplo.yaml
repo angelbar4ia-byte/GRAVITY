@@ -116,7 +116,7 @@ preguntas:
     foco: idea_principal
     enunciado: "What would Elena be most likely to say to a friend?"
     opciones:
-      - texto: "I never planned it, but giving up my car has changed how I feel about the place where I live."
+      - texto: "It wasn't really my choice, but giving up my car has changed how I feel about the place where I live."
         porque: "Une el inicio (vendió el coche por dinero) con el final: 'I feel that I live in my town now, instead of just driving through it'."
       - texto: "Selling my car was a mistake, and I'm saving up to buy a new one."
         porque_no: "Al final decide que, por ahora, 'the bicycle stays'."

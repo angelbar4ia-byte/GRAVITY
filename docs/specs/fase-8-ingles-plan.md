@@ -392,7 +392,7 @@ El piloto (P1.5) necesita además la herramienta completa (P1.2c) y la revisión
 | Habilidad `simulacro-examen-idioma` | Actualizada y versionada (15/nov/2026) | Con las reglas de 5.6. Antes no estaba en git |
 | P0.1 Etiquetas honestas | Hecho (15/nov/2026) | 25 documentos y la página de ubicación, tanto la copia del repositorio como la publicada (versión 4). No se tocó ninguna pregunta |
 | P1.1a Contratos de exámenes | Hecho (15/nov/2026), en `borrador` | Seis contratos en `data/ingles/formatos/`, cada dato con su página. Quedan 24 datos pendientes, casi todos de TOEIC y TOEFL, porque sus manuales traen pocas muestras. Falta el contraste de calidad (10 datos por contrato) |
-| P1.4a Revisión a ciegas de los ejemplos | Ronda 1 hecha (15/nov/2026) | 40 de 40 coinciden con la clave; 6 segundas respuestas defendibles, todas reescritas. Falta la ronda 2 con otro agente. Detalle en `docs/revisiones/ingles/ronda-1-resultado.md` |
+| P1.4a Revisión a ciegas de los ejemplos | Rondas 1 y 2 hechas (15/nov/2026) | En las dos, 40 de 40 coinciden con la clave. Segundas respuestas defendibles: 6 en la ronda 1 y 2 en la ronda 2, todas reescritas. Falta la ronda 3 sobre lo cambiado. Detalle en `docs/revisiones/ingles/` |
 | Habilidad `leccion-idioma` | Creada (15/nov/2026) | `.claude/skills/leccion-idioma/`. Propuesta hasta la decisión D-ING-2 |
 | P1.2a Validador | Pendiente | El lanzamiento del agente fue negado dos veces por el sistema de permisos de la sesión. No se reintenta: espera que el dueño autorice el agente o pida que lo construya la sesión que integra |
 | P0.2 a P0.4, P1.1b, P1.2b en adelante | Pendientes | Esperan las decisiones del dueño |

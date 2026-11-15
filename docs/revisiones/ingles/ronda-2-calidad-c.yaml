@@ -1,0 +1,120 @@
+# Revisión a ciegas · ejemplos patrón · ronda 2 · revisor: calidad-c
+# Cuaderno resuelto: el generado tras las correcciones de la ronda 1 (commit a6c4f98),
+# pegado completo dentro del encargo. El agente trabajó en un árbol aislado y no abrió
+# ningún archivo: su única llamada a herramientas fue la entrega del reporte.
+# Respuestas tal como las devolvió; las guardó quien integra.
+# Resultado de la comparación con la clave: ronda-2-resultado.md.
+objeto: ej-cam-b1-r3-0001
+agente: calidad-c
+fecha: 2026-11-15
+archivos_abiertos: []
+respuestas:
+  ej-cam-b1-r3-0001-a: {respuesta: "B", seguridad: alta, otras_validas: []}
+  ej-cam-b1-r3-0001-b: {respuesta: "A", seguridad: alta, otras_validas: []}
+  ej-cam-b1-r3-0001-c: {respuesta: "A", seguridad: alta, otras_validas: []}
+  ej-cam-b1-r3-0001-d: {respuesta: "B", seguridad: alta, otras_validas: []}
+  ej-cam-b1-r3-0001-e: {respuesta: "B", seguridad: media, otras_validas: [], nota: "B dice 'I never planned it'. Ella vendió el coche por dinero, así que es coherente. La parte discutible es 'planned', no la clave. A y D contradicen el texto de forma clara."}
+observaciones:
+  - "El texto tiene unas 430 palabras. Es largo para B1 Preliminary Reading Part 3, que ronda 300-400, así que queda en el límite alto."
+  - "Hay vocabulario de B2 en el texto: 'give up a car is not a real choice', 'instead of just driving through it'. El nivel sube hacia el final."
+  - "El enunciado de la 'e' (What would Elena be most likely to say...) no es de Preliminary. En el examen real la última pregunta suele ser de actitud o de opinión del autor."
+  - "Los distractores de la 'd' (C 'has stopped visiting her parents', D 'cycling too dangerous in bad weather') se descartan fácil. La clave B sale casi literal de 'I hated asking'."
+---
+objeto: ej-cam-b2-ue2-0001
+agente: calidad-c
+fecha: 2026-11-15
+archivos_abiertos: []
+respuestas:
+  ej-cam-b2-ue2-0001-1: {respuesta: ["another"], seguridad: alta, otras_validas: []}
+  ej-cam-b2-ue2-0001-2: {respuesta: ["out"], seguridad: alta, otras_validas: []}
+  ej-cam-b2-ue2-0001-3: {respuesta: ["for"], seguridad: media, otras_validas: ["behind"], nota: "'reasons behind this change' es natural y completamente válida. Cambridge aceptaría ambas. Hay que dar 'behind' en la clave o cambiar el contexto."}
+  ej-cam-b2-ue2-0001-4: {respuesta: ["on"], seguridad: alta, otras_validas: []}
+  ej-cam-b2-ue2-0001-5: {respuesta: ["without"], seguridad: alta, otras_validas: []}
+  ej-cam-b2-ue2-0001-6: {respuesta: ["which"], seguridad: alta, otras_validas: []}
+  ej-cam-b2-ue2-0001-7: {respuesta: ["since"], seguridad: alta, otras_validas: []}
+  ej-cam-b2-ue2-0001-8: {respuesta: ["None"], seguridad: media, otras_validas: ["Neither"], nota: "Se listan tres problemas (vagones viejos, retrasos, precio). 'None' es lo esperado. Quien cuente solo dos (vagones/retrasos y precio) puede poner 'Neither'. Es una ambigüedad menor."}
+observaciones:
+  - "Es un buen cloze B2, con longitud y registro correctos (unos 190 palabras)."
+  - "El hueco 3 tiene doble respuesta real ('for' y 'behind')."
+  - "El hueco 8 depende de cuántos problemas cuente el alumno."
+---
+objeto: ej-cam-b2-ue3-0001
+agente: calidad-c
+fecha: 2026-11-15
+archivos_abiertos: []
+respuestas:
+  ej-cam-b2-ue3-0001-1: {respuesta: ["thoughts"], seguridad: alta, otras_validas: [], nota: "'thinking' no encaja con el verbo 'drift by' ni con 'own'."}
+  ej-cam-b2-ue3-0001-2: {respuesta: ["unbearable"], seguridad: alta, otras_validas: []}
+  ej-cam-b2-ue3-0001-3: {respuesta: ["psychologists"], seguridad: alta, otras_validas: []}
+  ej-cam-b2-ue3-0001-4: {respuesta: ["excitement"], seguridad: alta, otras_validas: []}
+  ej-cam-b2-ue3-0001-5: {respuesta: ["surprisingly"], seguridad: alta, otras_validas: []}
+  ej-cam-b2-ue3-0001-6: {respuesta: ["explanation"], seguridad: alta, otras_validas: []}
+  ej-cam-b2-ue3-0001-7: {respuesta: ["unexpected"], seguridad: alta, otras_validas: []}
+  ej-cam-b2-ue3-0001-8: {respuesta: ["creativity"], seguridad: alta, otras_validas: []}
+observaciones:
+  - "El texto es correcto para Part 3. Hay ocho huecos, con mezcla de prefijos y sufijos."
+  - "El hueco 7 ('unexpected connections') exige negativo con prefijo. Es habitual en Cambridge y es justo."
+  - "Hay un salto raro de párrafo ('But the next time' queda en una línea aparte). Es solo de formato."
+---
+objeto: ej-cam-b2-ue4-0001
+agente: calidad-c
+fecha: 2026-11-15
+archivos_abiertos: []
+respuestas:
+  ej-cam-b2-ue4-0001-1: {respuesta: ["the best book I have", "the best book I've"], seguridad: alta, otras_validas: [], nota: "'I've' cuenta como dos palabras, así que ambas versiones suman 5. Hay que aceptar las dos formas en la clave."}
+  ej-cam-b2-ue4-0001-2: {respuesta: ["must have forgotten"], seguridad: alta, otras_validas: []}
+  ej-cam-b2-ue4-0001-3: {respuesta: ["wish I had studied", "wish I'd studied"], seguridad: alta, otras_validas: [], nota: "Con la contracción son 3 palabras, dentro del límite de 2 a 5."}
+  ej-cam-b2-ue4-0001-4: {respuesta: ["is said to be"], seguridad: media, otras_validas: ["is said to have been"], nota: "'is said to have been haunted' es gramatical, pero cambia el significado (pasado). La clave debe ser solo 'is said to be'. Si el corrector acepta 'to have been', hay que decidirlo antes."}
+  ej-cam-b2-ue4-0001-5: {respuesta: ["having my car"], seguridad: alta, otras_validas: ["having the car"], nota: "'the car' pierde el posesivo del original. Es discutible, y lo estricto es 'my car'."}
+  ej-cam-b2-ue4-0001-6: {respuesta: ["looking forward to seeing"], seguridad: alta, otras_validas: []}
+observaciones:
+  - "El ítem 1 tiene la clave en dos formas (con y sin contracción). Debe figurar así en la clave."
+  - "El ítem 4 es el menos limpio: 'to have been' puede discutirse."
+  - "El ítem 5 es demasiado fácil para B2 y ocurre en el nivel B1. Los ítems 5 y 6 son más de nivel inferior."
+---
+objeto: ej-cam-b2-r6-0001
+agente: calidad-c
+fecha: 2026-11-15
+archivos_abiertos: []
+respuestas:
+  ej-cam-b2-r6-0001-a: {respuesta: {1: "E", 2: "D", 3: "B", 4: "A", 5: "C", 6: "F"}, seguridad: alta, otras_validas: [], nota: "G es la sobrante, y encaja en 1 solo a medias, pero no resiste: 'refused to sell her' contradice 'offered a small sum' y 'delivered'. Se discute si G es un distractor demasiado obvio. En 4, 'Another' en A se apoya en 'One girl' y 'them' en 'planks'. Ninguna oración cabe razonablemente en dos huecos."}
+observaciones:
+  - "El texto tiene unos 560 palabras. Es correcto para First Reading Part 6 (gapped text)."
+  - "La pista del hueco 1 es 'Instead,', y E la resuelve. G es una sobrante débil porque la contradicción es evidente."
+  - "El hueco 3 se resuelve por 'By the end of the first month, only fourteen', que sirve de señal ya sin ambigüedad. Es un poco fácil."
+  - "En 6, F no se relaciona con ningún distractor. Pero la historia final ('did not go with them') lo marca muy claro."
+---
+objeto: ej-toefl-r-palabras-0001
+agente: calidad-c
+fecha: 2026-11-15
+archivos_abiertos: []
+respuestas:
+  ej-toefl-r-palabras-0001-a: {respuesta: ["layer", "seen", "narrow", "measuring", "researchers", "describe", "region", "method", "age", "buildings"], seguridad: alta, otras_validas: [], nota: "Contados los guiones bajos de cada hueco: coinciden con las letras que faltan en todas las palabras de la clave. 'a__' admite solo 'age' de forma razonable."}
+observaciones:
+  - "El texto, de unas 90 palabras, queda en la longitud del Complete the Words del TOEFL 2026. El tema (anillos de árboles) es de nivel adecuado."
+  - "En el examen real se da más o menos la mitad de cada palabra. Aquí hay palabras donde falta casi toda la palabra ('a__' deja 2 de 3 letras; 'res________' deja 8 de 11). Es más difícil que el real."
+  - "El hueco 9 'a__' es el más débil: con una sola letra y contexto corto, 'age' es la única razonable, pero es de lo más pobre del bloque."
+  - "El hueco 4 'meas_____' acepta solo 'measuring'. 'measures' tendría solo 3 letras de hueco."
+---
+objeto: ej-b1-1-s01-lun
+agente: calidad-c
+fecha: 2026-11-15
+archivos_abiertos: []
+respuestas:
+  ej-b1-1-s01-lun-01: {respuesta: "B", seguridad: alta, otras_validas: []}
+  ej-b1-1-s01-lun-02: {respuesta: "A", seguridad: alta, otras_validas: []}
+  ej-b1-1-s01-lun-03: {respuesta: "B", seguridad: alta, otras_validas: []}
+  ej-b1-1-s01-lun-04: {respuesta: "A", seguridad: alta, otras_validas: []}
+  ej-b1-1-s01-lun-05: {respuesta: "C", seguridad: alta, otras_validas: []}
+  ej-b1-1-s01-lun-06: {respuesta: "A", seguridad: alta, otras_validas: []}
+  ej-b1-1-s01-lun-07: {respuesta: ["belongs"], seguridad: alta, otras_validas: []}
+  ej-b1-1-s01-lun-08: {respuesta: ["are staying", "'re staying"], seguridad: alta, otras_validas: [], nota: "La clave debe aceptar la forma contraída 'We're staying'."}
+  ej-b1-1-s01-lun-09: {respuesta: ["How often do you go to the gym?"], seguridad: alta, otras_validas: [], nota: "Hay que decidir cómo se trata mayúscula y signo de interrogación."}
+  ej-b1-1-s01-lun-10: {respuesta: ["don't need", "do not need"], seguridad: alta, otras_validas: []}
+  ej-b1-1-s01-lun-11: {respuesta: ["is walking", "'s walking"], seguridad: alta, otras_validas: [], nota: "La clave debe aceptar 'She's walking'."}
+observaciones:
+  - "Los distractores de 02, 04, 05 y 06 ('start', 'rise', 'speak', 'sleep') son formas sin -s con sujeto de tercera persona. Se descartan solo por concordancia, no por la regla de la lección."
+  - "En 03 el distractor C 'understanding' no es forma finita. Es un distractor muy débil."
+  - "En 05, 'is speaking three languages' sería posible solo con un contexto raro. En la práctica es única."
+  - "La 09 es muy mecánica para B1.1 y no usa la regla de la lección. La 07 y la 10 sí sirven bien para el verbo de estado."
+  - "Falta un ítem que ponga a prueba el uso 3 (lo que cambia) en hueco abierto. Solo la 04 lo toca."

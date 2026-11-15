@@ -44,6 +44,9 @@ secciones:
     pendiente: true
     nota: 'El manual da 30 ítems pero no dice cuántos textos ni cuántos huecos por texto: unidades y preguntas_por_unidad quedan pendientes. El
       rango 15 a 200 es el general de Reading.'
+    ocultar: {regla: segunda_mitad, pendiente: true, nota: 'Añadido al integrar (15/nov/2026). Ni la especificación ni la página de Reading de ETS dicen
+        cuánto de cada palabra se oculta: solo "partially missing words". Se adopta la mitad final (la mayor si el número de letras es impar),
+        que es la convención de este tipo de prueba, hasta ver una muestra oficial.'}
   - id: reading-read-in-daily-life
     tarea: 'Leer en la vida diaria: textos cortos no académicos (señal, menú, correo, publicación) en conjuntos de 2 y de 3 preguntas'
     tipo_pregunta: opcion_multiple

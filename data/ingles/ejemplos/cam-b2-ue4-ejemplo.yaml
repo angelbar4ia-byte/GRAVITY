@@ -50,21 +50,21 @@ preguntas:
   - id: ej-cam-b2-ue4-0001-4
     tipo: transformacion
     habilidad: gramatica
-    original: "People say that the old castle is haunted."
+    original: "People say that the old castle is still haunted."
     clave: "SAID"
     antes: "The old castle"
-    despues: "haunted."
+    despues: "still haunted."
     aceptadas: ["is said to be"]
-    porque: "Pasiva con verbo de opinión: sujeto + 'is said' + 'to be'. El tiempo sigue al original ('say', presente): 'was said to be' no vale."
+    porque: "Pasiva con verbo de opinión: sujeto + 'is said' + 'to be'. El tiempo sigue al original ('say', presente): 'was said to be' no vale. El 'still' impide 'is said to have been', que hablaría del pasado y que la segunda revisión a ciegas propuso."
   - id: ej-cam-b2-ue4-0001-5
     tipo: transformacion
     habilidad: gramatica
-    original: "A mechanic is repairing my car at the moment."
-    clave: "HAVING"
-    antes: "I'm"
-    despues: "repaired at the moment."
-    aceptadas: ["having my car", "having the car"]
-    porque: "Causativa 'have something done' en presente continuo: otra persona hace el trabajo, y el objeto va antes del participio. El participio queda fuera del hueco para que no quepan sinónimos ('fixed', 'mended'), que la revisión a ciegas propuso."
+    original: "The local garage services my car every year."
+    clave: "HAVE"
+    antes: "I"
+    despues: "by the local garage every year."
+    aceptadas: ["have my car serviced", "have the car serviced"]
+    porque: "Causativa 'have something done': otra persona hace el trabajo; el objeto va antes del participio y el tiempo sigue al original (presente simple). 'Service' no tiene un sinónimo exacto, y 'by the local garage' obliga al participio. Dos versiones anteriores cayeron en la revisión a ciegas: con 'repaired' cabían 'fixed' y 'mended', y con el participio fuera del hueco la pregunta quedaba fácil para B2."
   - id: ej-cam-b2-ue4-0001-6
     tipo: transformacion
     habilidad: gramatica

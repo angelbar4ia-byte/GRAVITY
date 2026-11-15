@@ -92,7 +92,7 @@ Read the text and choose the correct answer for each question.
    - D) She thinks cycling is too dangerous in bad weather.
 - `ej-cam-b1-r3-0001-e` What would Elena be most likely to say to a friend?
    - A) I gave up my car to help the planet, and I think everyone should do the same.
-   - B) I never planned it, but giving up my car has changed how I feel about the place where I live.
+   - B) It wasn't really my choice, but giving up my car has changed how I feel about the place where I live.
    - C) Life without a car is easy once you have learned the bus timetable.
    - D) Selling my car was a mistake, and I'm saving up to buy a new one.
 
@@ -119,9 +119,9 @@ Read the text and think of the word which best fits each gap. Use only **one** w
 >
 > Not everything is perfect. The carriages on some routes have been in
 > service ever (7) ________ the 1980s, and delays are common. Tickets can also
-> cost more than a budget flight. (8) ________ of these problems, however, has
-> stopped passenger numbers from rising, and several companies have
-> ordered new trains.
+> cost more than a budget flight. (8) ________ of these three problems,
+> however, has stopped passenger numbers from rising, and several
+> companies have ordered new trains.
 
 Identificadores: `ej-cam-b2-ue2-0001-1`, `ej-cam-b2-ue2-0001-2`, `ej-cam-b2-ue2-0001-3`, `ej-cam-b2-ue2-0001-4`, `ej-cam-b2-ue2-0001-5`, `ej-cam-b2-ue2-0001-6`, `ej-cam-b2-ue2-0001-7`, `ej-cam-b2-ue2-0001-8`
 
@@ -147,9 +147,8 @@ Read the text. Use the word given in capitals to form a word that fits in the ga
 > connections.
 >
 > None of this means that boredom is always pleasant, or that we should
-> go looking for it. But the next time
-> you are stuck in a queue, it may be worth leaving your phone in your
-> pocket. Your (8) ________ might thank you.
+> go looking for it. But the next time you are stuck in a queue, it may
+> be worth leaving your phone in your pocket. Your (8) ________ might thank you.
 
 - `ej-cam-b2-ue3-0001-1` hueco 1: **THINK**
 - `ej-cam-b2-ue3-0001-2` hueco 2: **BEAR**
@@ -175,12 +174,12 @@ Complete the second sentence so that it has a similar meaning to the first sente
 - `ej-cam-b2-ue4-0001-3` I regret not studying harder at school.
    **WISH**
    I ________________ harder at school.
-- `ej-cam-b2-ue4-0001-4` People say that the old castle is haunted.
+- `ej-cam-b2-ue4-0001-4` People say that the old castle is still haunted.
    **SAID**
-   The old castle ________________ haunted.
-- `ej-cam-b2-ue4-0001-5` A mechanic is repairing my car at the moment.
-   **HAVING**
-   I'm ________________ repaired at the moment.
+   The old castle ________________ still haunted.
+- `ej-cam-b2-ue4-0001-5` The local garage services my car every year.
+   **HAVE**
+   I ________________ by the local garage every year.
 - `ej-cam-b2-ue4-0001-6` I can't wait to see my cousins again.
    **FORWARD**
    I'm really ________________ my cousins again.
@@ -262,9 +261,9 @@ Complete the words. Each underscore is one missing letter.
 > Trees keep a record of the past. Each year, a tree adds a new (1) la___ of
 > wood under its bark, and these layers can be (2) se__ as rings when the
 > tree is cut. In a wet year the ring is wide; in a dry year it is
-> (3) nar___. By (4) meas_____ the rings, (5) res________ can (6) des_____ the
+> (3) nar___. By (4) meas_____ the rings, (5) resea______ can (6) desc____ the
 > climate of a (7) reg___ hundreds of years ago. The same (8) met___ is used
-> to find the (9) a__ of old wooden (10) buil_____.
+> to find the age of old (9) woo___ (10) buil_____.
 
 Identificador: `ej-toefl-r-palabras-0001-a` (responde con la lista de palabras completas, en orden)
 
@@ -296,27 +295,21 @@ Lee la explicación y contesta. En las de opción múltiple, elige una letra; en
    - B) works / is working
    - C) works / works
 - `ej-b1-1-s01-lun-02` Look! It ___ to rain.
-   - A) 's starting
-   - B) start
+   - A) is start
+   - B) 's starting
    - C) starts
 - `ej-b1-1-s01-lun-03` I ___ what you mean.
-   - A) 'm understanding
-   - B) understand
-   - C) understanding
+   - A) am understand
+   - B) 'm understanding
+   - C) understand
 - `ej-b1-1-s01-lun-04` The price of coffee ___ at the moment.
    - A) is rising
-   - B) rise
-   - C) rises
-- `ej-b1-1-s01-lun-05` My brother ___ three languages.
-   - A) is speaking
-   - B) speak
-   - C) speaks
-- `ej-b1-1-s01-lun-06` Be quiet, please. The baby ___.
-   - A) is sleeping
-   - B) sleep
-   - C) sleeps
+   - B) rises
+   - C) rising
+- `ej-b1-1-s01-lun-05` My brother ___ (speak) three languages.
+- `ej-b1-1-s01-lun-06` Be quiet, please. The baby ___ (sleep).
 - `ej-b1-1-s01-lun-07` This apartment ___ (belong) to my aunt.
 - `ej-b1-1-s01-lun-08` We ___ (stay) with friends until our new house is ready.
-- `ej-b1-1-s01-lun-09` Escribe la pregunta en presente simple: how often / you / go / to the gym
+- `ej-b1-1-s01-lun-09` Let's go home. It ___ (get) dark.
 - `ej-b1-1-s01-lun-10` I ___ (not / need) a ride today, thanks.
 - `ej-b1-1-s01-lun-11` She ___ (walk) to work this week because her car is at the garage.

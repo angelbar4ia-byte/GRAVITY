@@ -30,9 +30,9 @@ estimulo:
 
     Not everything is perfect. The carriages on some routes have been in
     service ever {7} the 1980s, and delays are common. Tickets can also
-    cost more than a budget flight. {8} of these problems, however, has
-    stopped passenger numbers from rising, and several companies have
-    ordered new trains.
+    cost more than a budget flight. {8} of these three problems,
+    however, has stopped passenger numbers from rising, and several
+    companies have ordered new trains.
 preguntas:
   - id: ej-cam-b2-ue2-0001-1
     tipo: hueco_abierto
@@ -89,4 +89,4 @@ preguntas:
     hueco: 8
     clase: gramatical
     aceptadas: ["None"]
-    porque: "'None of these problems … has stopped': ninguno de los tres problemas frenó el aumento. 'Few' pediría 'have', 'neither' solo vale para dos, y 'one' o 'each' contradicen el resto del texto. Antes el hueco era 'Even so', y la revisión a ciegas mostró que 'Even then' también cabía."
+    porque: "'None of these three problems … has stopped': ninguno frenó el aumento. 'Few' pediría 'have', 'neither' solo vale para dos (por eso el texto dice 'three': la segunda revisión a ciegas propuso 'neither'), y 'one' o 'each' contradicen el resto del texto. Antes el hueco era 'Even so', y la revisión a ciegas mostró que 'Even then' también cabía."
