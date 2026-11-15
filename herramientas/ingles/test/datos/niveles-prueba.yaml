@@ -1,0 +1,11 @@
+# Niveles de prueba. El formato (sección 8) no fija los nombres de los campos;
+# estos son los que lee la herramienta (lib/src/modelo/niveles.dart).
+esquema: gravity-ingles-v1
+tipo: niveles
+id: niveles-prueba
+estado: borrador
+niveles: [A1, A2, B1, B2]
+escalones: [B1.1, B1.2]
+habilidades: [lectura, escucha, escritura, gramatica, vocabulario, pronunciacion]
+focos: [detalle, actitud_opinion]
+temas: [gram.presente_simple_vs_continuo]

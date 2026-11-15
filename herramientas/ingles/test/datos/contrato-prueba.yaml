@@ -1,0 +1,53 @@
+# Contrato de prueba (escrito según las secciones 6 y 6.1 del formato). No es
+# de ningún examen: solo da a cada comprobación una parte con la que medirse.
+esquema: gravity-ingles-v1
+tipo: formato
+id: prueba-examen
+estado: borrador
+nombre: "Examen de prueba"
+fuente: {titulo: "Manual de prueba", url: "https://example.org/manual.pdf", consultado: 2026-01-01}
+variante: en-GB
+idioma_instrucciones: en
+secciones:
+  - id: lectura
+    minutos: 30
+    partes:
+      - {id: p-om, tarea: "Opción múltiple de cuatro opciones", tipo_pregunta: opcion_multiple, tipo_estimulo: texto, unidades: 1, preguntas_por_unidad: 2, opciones: 4, palabras_estimulo: {min: 10, max: 400, origen: declarado}, pagina_manual: 1}
+      - {id: p-om8, tarea: "Ocho preguntas de cuatro opciones", tipo_pregunta: opcion_multiple, tipo_estimulo: texto, unidades: 1, preguntas_por_unidad: 8, opciones: 4, pagina_manual: 1}
+      - {id: p-om-pendiente, tarea: "Opciones pendientes", tipo_pregunta: opcion_multiple, tipo_estimulo: texto, unidades: 1, pendiente: true, pagina_manual: 1}
+      - {id: p-ho, tarea: "Cloze de opciones", tipo_pregunta: hueco_opciones, tipo_estimulo: texto, unidades: 1, preguntas_por_unidad: 2, opciones: 4, pagina_manual: 1}
+      - {id: p-ha, tarea: "Cloze abierto", tipo_pregunta: hueco_abierto, tipo_estimulo: texto, unidades: 1, preguntas_por_unidad: 2, pagina_manual: 1}
+      - {id: p-fp, tarea: "Formación de palabras", tipo_pregunta: formacion_palabra, tipo_estimulo: texto, unidades: 1, preguntas_por_unidad: 2, pagina_manual: 1}
+      - {id: p-tr, tarea: "Transformación", tipo_pregunta: transformacion, tipo_estimulo: ninguno, unidades: 2, preguntas_por_unidad: 1, pagina_manual: 1}
+      - {id: p-tr-3a4, tarea: "Transformación de 3 a 4 palabras", tipo_pregunta: transformacion, tipo_estimulo: ninguno, unidades: 1, preguntas_por_unidad: 1, palabras_respuesta: {min: 3, max: 4, origen: declarado}, pagina_manual: 1}
+      - {id: p-oo, tarea: "Oraciones omitidas: tres huecos y cuatro oraciones", tipo_pregunta: oracion_omitida, tipo_estimulo: texto, unidades: 1, preguntas_por_unidad: 3, opciones: 4, pagina_manual: 1}
+      - {id: p-co, tarea: "Correspondencia con cuatro textos", tipo_pregunta: correspondencia, tipo_estimulo: texto, unidades: 1, preguntas_por_unidad: 4, opciones: 4, pagina_manual: 1}
+      - {id: p-em, tarea: "Emparejar con cinco opciones", tipo_pregunta: emparejar, tipo_estimulo: texto, unidades: 1, preguntas_por_unidad: 3, opciones: 5, pagina_manual: 1}
+  - id: escucha
+    minutos: 20
+    partes:
+      - {id: p-cn, tarea: "Notas con huecos", tipo_pregunta: completar_nota, tipo_estimulo: audio, unidades: 1, preguntas_por_unidad: 2, reproducciones: 2, pagina_manual: 2}
+  - id: palabras
+    minutos: 10
+    partes:
+      - id: p-cp
+        tarea: "Completar palabras dentro de un texto"
+        tipo_pregunta: completar_palabras
+        tipo_estimulo: texto
+        unidades: 1
+        pagina_manual: 3
+        ocultar: {regla: segunda_mitad}
+      - id: p-cp-provisional
+        tarea: "Completar palabras, regla provisional"
+        tipo_pregunta: completar_palabras
+        tipo_estimulo: texto
+        unidades: 1
+        pagina_manual: 3
+        ocultar: {regla: segunda_mitad, pendiente: true}
+      - id: p-cp-otra
+        tarea: "Completar palabras, regla que la herramienta no conoce"
+        tipo_pregunta: completar_palabras
+        tipo_estimulo: texto
+        unidades: 1
+        pagina_manual: 3
+        ocultar: {regla: primera_letra}

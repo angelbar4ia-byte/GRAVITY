@@ -1,0 +1,15 @@
+# Contrato de prueba para la sesión del curso (el real es gravity-sesion-60,
+# paquete P1.1b). Solo existe para que la sesión de prueba tenga contrato.
+esquema: gravity-ingles-v1
+tipo: formato
+id: gravity-sesion-60
+estado: borrador
+nombre: "Sesión de 60 minutos (prueba)"
+fuente: {titulo: "Formato gravity-ingles-v1, sección 7", url: "https://example.org/formato", consultado: 2026-01-01}
+variante: en-US
+idioma_instrucciones: es
+secciones:
+  - id: sesion
+    minutos: 60
+    partes:
+      - {id: traslado-audio, tarea: "Audio de traslado", tipo_pregunta: repetir, tipo_estimulo: audio, unidades: 2, reproducciones: 2}
