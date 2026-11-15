@@ -5,6 +5,8 @@
 # conserva las palabras de la oración original, salvo las que la clave obliga
 # a cambiar: no se aceptan sinónimos que nadie pidió. `aceptadas` lista TODAS
 # las formas válidas; `porque` dice también qué intento frecuente no vale.
+# Dos recursos para cerrar alternativas: que la respuesta ocupe ya las cinco
+# palabras, y dejar fuera del hueco la palabra que admite sinónimos.
 # En el examen cada pregunta vale 2 puntos, uno por mitad; aquí es todo o nada.
 esquema: gravity-ingles-v1
 tipo: unidad
@@ -21,12 +23,12 @@ preguntas:
   - id: ej-cam-b2-ue4-0001-1
     tipo: transformacion
     habilidad: gramatica
-    original: "The sequel is less entertaining than the first film."
-    clave: "AS"
-    antes: "The sequel is"
-    despues: "the first film."
-    aceptadas: ["not as entertaining as", "not so entertaining as"]
-    porque: "'Less … than' equivale a 'not as … as'; con negación también vale 'not so … as'. Añadir 'nearly' o 'quite' cambiaría el grado, así que no se acepta."
+    original: "I have never read a better book than this one."
+    clave: "BEST"
+    antes: "This is"
+    despues: "ever read."
+    aceptadas: ["the best book I have", "the best book I've"]
+    porque: "Superlativo + presente perfecto: 'the best book I have ever read'. La respuesta ocupa justo las cinco palabras, así que no cabe ningún añadido. La versión anterior ('not as entertaining as') dejaba sitio para 'nearly' o 'quite', y la revisión a ciegas lo encontró."
   - id: ej-cam-b2-ue4-0001-2
     tipo: transformacion
     habilidad: gramatica
@@ -59,10 +61,10 @@ preguntas:
     habilidad: gramatica
     original: "A mechanic is repairing my car at the moment."
     clave: "HAVING"
-    antes: "I"
-    despues: "at the moment."
-    aceptadas: ["am having my car repaired"]
-    porque: "Causativa 'have something done' en presente continuo: otra persona hace el trabajo. 'Am having repaired my car' tiene mal el orden."
+    antes: "I'm"
+    despues: "repaired at the moment."
+    aceptadas: ["having my car", "having the car"]
+    porque: "Causativa 'have something done' en presente continuo: otra persona hace el trabajo, y el objeto va antes del participio. El participio queda fuera del hueco para que no quepan sinónimos ('fixed', 'mended'), que la revisión a ciegas propuso."
   - id: ej-cam-b2-ue4-0001-6
     tipo: transformacion
     habilidad: gramatica

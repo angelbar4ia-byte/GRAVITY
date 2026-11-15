@@ -43,9 +43,8 @@ Read the text and choose the correct answer for each question.
 > side of town.
 >
 > At first, everything took longer. I had to learn the bus timetable, and I
-> missed more than one bus because I arrived at the stop a minute late. My
-> neighbour Tom saw me carrying heavy bags one rainy evening and offered to
-> lend me his old bicycle. I hadn't ridden one since I was a teenager, and I
+> missed more than one bus. My neighbour Tom saw me carrying heavy bags and
+> offered to lend me his old bicycle. I hadn't ridden one since I was a teenager, and I
 > was sure I would fall off in front of the whole street. I didn't, although
 > my first journey to the supermarket was slow and rather frightening.
 >
@@ -119,9 +118,10 @@ Read the text and think of the word which best fits each gap. Use only **one** w
 > better value than it first appears.
 >
 > Not everything is perfect. The carriages on some routes have been in
-> service (7) ________ the 1980s, and delays are common. Tickets can also cost
-> more than a budget flight. Even (8) ________, passenger numbers keep rising, and
-> several companies have ordered new trains.
+> service ever (7) ________ the 1980s, and delays are common. Tickets can also
+> cost more than a budget flight. (8) ________ of these problems, however, has
+> stopped passenger numbers from rising, and several companies have
+> ordered new trains.
 
 Identificadores: `ej-cam-b2-ue2-0001-1`, `ej-cam-b2-ue2-0001-2`, `ej-cam-b2-ue2-0001-3`, `ej-cam-b2-ue2-0001-4`, `ej-cam-b2-ue2-0001-5`, `ej-cam-b2-ue2-0001-6`, `ej-cam-b2-ue2-0001-7`, `ej-cam-b2-ue2-0001-8`
 
@@ -134,8 +134,8 @@ Read the text. Use the word given in capitals to form a word that fits in the ga
 **In praise of boredom**
 
 > Most of us do everything we can to avoid being bored. We fill every
-> spare moment with our phones, and the idea of sitting quietly with our
-> own (1) ________ seems almost (2) ________. Yet a growing number of (3) ________ believe that
+> spare moment with our phones, and the idea of sitting quietly while our
+> own (1) ________ drift by seems almost (2) ________. Yet a growing number of (3) ________ believe that
 > boredom is far from useless. In fact, it may be exactly what our brains
 > need.
 >
@@ -166,9 +166,9 @@ Read the text. Use the word given in capitals to form a word that fits in the ga
 
 Complete the second sentence so that it has a similar meaning to the first sentence, using the word given. Do not change the word given. Use between **two and five words**, including the word given. Contractions count as two words.
 
-- `ej-cam-b2-ue4-0001-1` The sequel is less entertaining than the first film.
-   **AS**
-   The sequel is ________________ the first film.
+- `ej-cam-b2-ue4-0001-1` I have never read a better book than this one.
+   **BEST**
+   This is ________________ ever read.
 - `ej-cam-b2-ue4-0001-2` I'm sure Maria forgot about the meeting.
    **MUST**
    Maria ________________ about the meeting.
@@ -180,7 +180,7 @@ Complete the second sentence so that it has a similar meaning to the first sente
    The old castle ________________ haunted.
 - `ej-cam-b2-ue4-0001-5` A mechanic is repairing my car at the moment.
    **HAVING**
-   I ________________ at the moment.
+   I'm ________________ repaired at the moment.
 - `ej-cam-b2-ue4-0001-6` I can't wait to see my cousins again.
    **FORWARD**
    I'm really ________________ my cousins again.
@@ -317,6 +317,6 @@ Lee la explicación y contesta. En las de opción múltiple, elige una letra; en
    - C) sleeps
 - `ej-b1-1-s01-lun-07` This apartment ___ (belong) to my aunt.
 - `ej-b1-1-s01-lun-08` We ___ (stay) with friends until our new house is ready.
-- `ej-b1-1-s01-lun-09` Escribe la pregunta: how often / you / go / to the gym
+- `ej-b1-1-s01-lun-09` Escribe la pregunta en presente simple: how often / you / go / to the gym
 - `ej-b1-1-s01-lun-10` I ___ (not / need) a ride today, thanks.
 - `ej-b1-1-s01-lun-11` She ___ (walk) to work this week because her car is at the garage.

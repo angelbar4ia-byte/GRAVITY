@@ -168,7 +168,7 @@ No hagas commit. No cambies decisiones: si te falta una, detente y dilo en el re
 Reporte: el de la sección 5.4 del plan.
 ```
 
-**El revisor a ciegas no necesita abrir ningún archivo.** Recibe el cuaderno dentro del encargo y devuelve sus respuestas dentro del reporte, en un bloque YAML con la forma de la sección 9 del formato; el arquitecto las guarda en `docs/revisiones/ingles/`. El encargo le prohíbe leer `data/ingles/` y cualquier clave exportada. Para que eso no dependa solo de su palabra, se lanza en un árbol de trabajo aislado, creado desde el último commit (opción `isolation: worktree` al lanzar el agente): como el autor no hace commit, las unidades nuevas no existen ahí. Con lo que ya tiene commit, como los ejemplos patrón, el único control es la instrucción, y el reporte del revisor debe decir qué archivos abrió.
+**El revisor a ciegas no necesita abrir ningún archivo.** Recibe el cuaderno dentro del encargo y devuelve sus respuestas dentro del reporte, en un bloque YAML con la forma de la sección 9 del formato; el arquitecto las guarda en `docs/revisiones/ingles/`. El encargo le prohíbe leer `data/ingles/` y cualquier clave exportada. Para que eso no dependa solo de su palabra, se lanza en un árbol de trabajo aislado (opción `isolation: worktree` al lanzar el agente), donde las unidades nuevas no existen. **Nunca se le da una ruta:** en la primera corrida el árbol aislado no contenía el cuaderno, el agente salió a buscarlo al árbol principal y el aislamiento dejó de servir. El reporte del revisor debe decir qué archivos abrió.
 
 ### 5.4 Reporte de cada agente
 
@@ -391,7 +391,10 @@ El piloto (P1.5) necesita además la herramienta completa (P1.2c) y la revisión
 | Cuaderno a ciegas de los ejemplos | Generado (15/nov/2026) | `docs/contenido/ingles/generado/cuaderno-ejemplos-patron.md`, 40 preguntas sin respuestas. Lo genera `herramientas/ingles/transitorio/cuaderno_ejemplos.py` mientras no exista `exportar` |
 | Habilidad `simulacro-examen-idioma` | Actualizada y versionada (15/nov/2026) | Con las reglas de 5.6. Antes no estaba en git |
 | P0.1 Etiquetas honestas | Hecho (15/nov/2026) | 25 documentos y la página de ubicación, tanto la copia del repositorio como la publicada (versión 4). No se tocó ninguna pregunta |
-| P0.2 a P0.4, fases 1 a 6 | Pendientes | Esperan la orden del dueño |
+| P1.1a Contratos de exámenes | Hecho (15/nov/2026), en `borrador` | Seis contratos en `data/ingles/formatos/`, cada dato con su página. Quedan 24 datos pendientes, casi todos de TOEIC y TOEFL, porque sus manuales traen pocas muestras. Falta el contraste de calidad (10 datos por contrato) |
+| P1.4a Revisión a ciegas de los ejemplos | Ronda 1 hecha (15/nov/2026) | 40 de 40 coinciden con la clave; 6 segundas respuestas defendibles, todas reescritas. Falta la ronda 2 con otro agente. Detalle en `docs/revisiones/ingles/ronda-1-resultado.md` |
+| P1.2a Validador | Pendiente | El primer lanzamiento fue negado por el sistema de permisos |
+| P0.2 a P0.4, P1.1b, P1.2b en adelante | Pendientes | Esperan las decisiones del dueño |
 
 ## Anexo B. Temario por escalón (propuesta para P1.3)
 
@@ -418,6 +421,12 @@ El piloto (P1.5) necesita además la herramienta completa (P1.2c) y la revisión
 5. **P1.2a** ya no espera contratos ni niveles: usa archivos de prueba y avisa cuando faltan.
 6. **P0.1 hecho.**
 7. **Anexo D:** encargos del primer lote, listos para lanzar.
+
+**Lo que enseñó la primera corrida (15/nov/2026):**
+- Medir con página corrige al que escribió de memoria: los contratos bajaron tres cifras de la revisión (el guion de Listening se había contado con el narrador; el texto de Reading 3 de B1 mide 352 palabras, no 390; las muestras de TOEIC son más cortas).
+- La revisión a ciegas encuentra lo que el autor no ve: seis preguntas de los ejemplos patrón admitían una segunda respuesta.
+- Dos recursos cierran casi todas las disputas de respuesta abierta: que la respuesta ocupe ya el máximo de palabras, y dejar fuera del hueco la palabra que admite sinónimos.
+- Al revisor no se le dan rutas (5.3).
 
 ## Anexo D. Encargos del primer lote
 
@@ -514,7 +523,7 @@ Reporte: el de la sección 5.4 del plan, con la salida completa de los tres coma
 
 ### D.3 · P1.4a · agente `calidad`, en árbol aislado
 
-Se lanza con `isolation: worktree`. Donde dice `<CUADERNO>` se pega completo el archivo `docs/contenido/ingles/generado/cuaderno-ejemplos-patron.md`.
+Se lanza con `isolation: worktree`. Donde dice `<CUADERNO>` se pega completo el archivo `docs/contenido/ingles/generado/cuaderno-ejemplos-patron.md`; no se sustituye por su ruta (ver 5.3).
 
 ```
 Vas a resolver a ciegas un cuaderno de preguntas de inglés. Tu trabajo es encontrar las

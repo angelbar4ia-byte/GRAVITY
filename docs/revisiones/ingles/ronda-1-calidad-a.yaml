@@ -1,0 +1,124 @@
+# Revisión a ciegas · ejemplos patrón · ronda 1 · revisor: calidad-a
+# Cuaderno resuelto: docs/contenido/ingles/generado/cuaderno-ejemplos-patron.md,
+# tal como estaba en el commit 1d35e94 (antes de las correcciones de esta ronda).
+# Respuestas tal como las devolvió el agente en su reporte; las guardó quien integra.
+# El agente declara que solo abrió el cuaderno. Lo leyó en el árbol principal porque
+# en su árbol aislado el archivo no existía (ver ronda-1-resultado.md).
+# Resultado de la comparación con la clave: ronda-1-resultado.md.
+objeto: ej-cam-b1-r3-0001
+agente: calidad-a
+fecha: 2026-11-15
+archivos_abiertos: []
+respuestas:
+  ej-cam-b1-r3-0001-a: {respuesta: "B", seguridad: alta, otras_validas: []}
+  ej-cam-b1-r3-0001-b: {respuesta: "A", seguridad: alta, otras_validas: []}
+  ej-cam-b1-r3-0001-c: {respuesta: "A", seguridad: alta, otras_validas: []}
+  ej-cam-b1-r3-0001-d: {respuesta: "B", seguridad: alta, otras_validas: []}
+  ej-cam-b1-r3-0001-e: {respuesta: "B", seguridad: alta, otras_validas: []}
+observaciones:
+  - "Sin segunda respuesta defendible. En c, B queda descartada por 'not the exercise' y D porque los amigos son pasajeros del autobús, no vecinos de la calle."
+  - "El texto tiene unas 440 palabras. Es largo para el Reading Part 3 de B1 Preliminary (suele rondar 350-400) y tiene algún término B2 ('unpleasant', 'frightening' están bien). No es grave."
+  - "La pregunta e (qué diría la autora) es un formato correcto de Cambridge para la última pregunta."
+---
+objeto: ej-cam-b2-ue2-0001
+agente: calidad-a
+fecha: 2026-11-15
+archivos_abiertos: []
+respuestas:
+  ej-cam-b2-ue2-0001-1: {respuesta: ["another"], seguridad: alta, otras_validas: []}
+  ej-cam-b2-ue2-0001-2: {respuesta: ["out"], seguridad: alta, otras_validas: []}
+  ej-cam-b2-ue2-0001-3: {respuesta: ["for"], seguridad: alta, otras_validas: ["behind"]}
+  ej-cam-b2-ue2-0001-4: {respuesta: ["on"], seguridad: alta, otras_validas: []}
+  ej-cam-b2-ue2-0001-5: {respuesta: ["without"], seguridad: alta, otras_validas: []}
+  ej-cam-b2-ue2-0001-6: {respuesta: ["which"], seguridad: alta, otras_validas: []}
+  ej-cam-b2-ue2-0001-7: {respuesta: ["since"], seguridad: alta, otras_validas: ["from"]}
+  ej-cam-b2-ue2-0001-8: {respuesta: ["so"], seguridad: media, otras_validas: ["then"]}
+observaciones:
+  - "Hueco 8: 'Even so' y 'Even then' son ambos naturales y con el mismo sentido concesivo. Dos respuestas claras, la clave debe aceptar las dos."
+  - "Hueco 3: 'reasons for this change' y 'reasons behind this change' son ambos correctos. Un examinador de Cambridge aceptaría los dos."
+  - "Hueco 7: 'in service since the 1980s' es la clave evidente, pero 'from the 1980s' es defendible, aunque menos idiomática con present perfect. Gana 'since'; conviene decidir si 'from' se acepta."
+  - "Hueco 2: 'sold out' es la única opción razonable. Hueco 1 solo admite 'another'."
+  - "Nivel y longitud corresponden a Use of English Part 2 de B2 First: 8 huecos y texto breve."
+---
+objeto: ej-cam-b2-ue3-0001
+agente: calidad-a
+fecha: 2026-11-15
+archivos_abiertos: []
+respuestas:
+  ej-cam-b2-ue3-0001-1: {respuesta: ["thoughts"], seguridad: media, otras_validas: ["thinking"]}
+  ej-cam-b2-ue3-0001-2: {respuesta: ["unbearable"], seguridad: alta, otras_validas: []}
+  ej-cam-b2-ue3-0001-3: {respuesta: ["psychologists"], seguridad: alta, otras_validas: []}
+  ej-cam-b2-ue3-0001-4: {respuesta: ["excitement"], seguridad: alta, otras_validas: []}
+  ej-cam-b2-ue3-0001-5: {respuesta: ["surprisingly"], seguridad: alta, otras_validas: []}
+  ej-cam-b2-ue3-0001-6: {respuesta: ["explanation"], seguridad: alta, otras_validas: []}
+  ej-cam-b2-ue3-0001-7: {respuesta: ["unexpected"], seguridad: alta, otras_validas: []}
+  ej-cam-b2-ue3-0001-8: {respuesta: ["creativity"], seguridad: media, otras_validas: []}
+observaciones:
+  - "Hueco 1 (THINK): 'our own thoughts' es la lectura más natural, pero 'our own thinking' también funciona. Dos respuestas defendibles."
+  - "Hueco 8 (CREATE): 'creativity' es la única que cabe. 'Your creative ...' exigiría un sustantivo detrás, y 'creations' no encaja de forma natural."
+  - "Hueco 5: 'surprisingly good' exige adverbio. Hueco 3: el plural 'psychologists' se deduce de 'believe'."
+  - "Formato correcto para Part 3 de B2 First: 8 huecos, una palabra por hueco, cambios que exigen prefijo, plural y adverbio."
+---
+objeto: ej-cam-b2-ue4-0001
+agente: calidad-a
+fecha: 2026-11-15
+archivos_abiertos: []
+respuestas:
+  ej-cam-b2-ue4-0001-1: {respuesta: ["not as entertaining as"], seguridad: media, otras_validas: ["not nearly as entertaining as", "not quite as entertaining as", "nowhere near as entertaining as", "not half as entertaining as"]}
+  ej-cam-b2-ue4-0001-2: {respuesta: ["must have forgotten"], seguridad: alta, otras_validas: []}
+  ej-cam-b2-ue4-0001-3: {respuesta: ["wish I had studied", "wish I'd studied"], seguridad: alta, otras_validas: []}
+  ej-cam-b2-ue4-0001-4: {respuesta: ["is said to be"], seguridad: alta, otras_validas: []}
+  ej-cam-b2-ue4-0001-5: {respuesta: ["am having my car repaired"], seguridad: media, otras_validas: ["am having my car fixed", "am having the car repaired", "am having the car fixed", "'m having my car repaired"]}
+  ej-cam-b2-ue4-0001-6: {respuesta: ["looking forward to seeing"], seguridad: alta, otras_validas: []}
+observaciones:
+  - "Ítem 1: hay varias respuestas correctas. Con 'nearly', 'quite', 'half' o 'nowhere near' el sentido es el mismo. Se necesita una lista de variantes o una regla explícita en la clave."
+  - "Ítem 5: 'repaired' y 'fixed' son sinónimos naturales (y 'my' o 'the'). Además, 'I ___ at the moment' deja ambiguo si 'm cuenta como una o dos palabras. Con 'am having my car repaired' son exactamente 5 palabras, el límite. Si se acepta 'm, se pasa de 5 por la regla de contracciones."
+  - "Ítem 3: 'wish I had studied' y 'wish I'd studied' son equivalentes. 'wish I'd studied' es de 4 palabras con la regla de contracciones, dentro del límite."
+  - "Ítem 4: 'is said to be' es única. 'was said to be' o 'is said to have been' cambian el tiempo."
+  - "Ítem 6: 'looking forward to seeing' es única."
+---
+objeto: ej-cam-b2-r6-0001
+agente: calidad-a
+fecha: 2026-11-15
+archivos_abiertos: []
+respuestas:
+  ej-cam-b2-r6-0001-a: {respuesta: {1: "E", 2: "D", 3: "B", 4: "A", 5: "C", 6: "F"}, seguridad: alta, otras_validas: []}
+observaciones:
+  - "Probé cada oración en cada hueco. G es la sobrante. Contradice 'Instead, ... offered the owner a small sum' del hueco 1: si el dueño no vende a ningún precio, Hugh no puede comprársela. G no cabe en ningún otro hueco."
+  - "Ninguna oración cabe razonablemente en dos huecos. Los candidatos son: E solo en el hueco 1 (por 'Instead'); D solo en el 2 ('Most of them' = los adolescentes); B solo en el 3 (retoma 'worried'); A solo en el 4 ('Another' exige un alumno anterior y 'them' son los tablones); C solo en el 5 ('the meeting'); F solo en el 6 (primer viaje, Hugh 'did not go with them')."
+  - "Las pistas son fuertes y bien distribuidas. G es un distractor tentador pero descartable con rigor."
+  - "Longitud (unas 480 palabras) y formato (6 huecos, 7 oraciones, una sobrante) son propios de Part 6 de B2 First."
+---
+objeto: ej-toefl-r-palabras-0001
+agente: calidad-a
+fecha: 2026-11-15
+archivos_abiertos: []
+respuestas:
+  ej-toefl-r-palabras-0001-a: {respuesta: ["layer", "seen", "narrow", "measuring", "researchers", "describe", "region", "method", "age", "buildings"], seguridad: alta, otras_validas: []}
+observaciones:
+  - "Cada hueco tiene una sola palabra posible por prefijo y longitud. Comprobé alternativas: 'age' frente a 'are/ate', 'seen' frente a 'seem', 'layer' frente a 'lakes'; el contexto descarta todas."
+  - "Hueco 4: 'measuring' (tras 'By') es la única forma con la longitud pedida, y 'measures' no encaja gramaticalmente."
+  - "Hueco 6: 'describe' es la única compatible con 'des' + 5 letras y con 'the climate'."
+  - "El texto es correcto para B1 y para el formato de 10 palabras de TOEFL 2026, pero 'researchers' y 'climate' están en el límite alto de B1."
+---
+objeto: ej-b1-1-s01-lun
+agente: calidad-a
+fecha: 2026-11-15
+archivos_abiertos: []
+respuestas:
+  ej-b1-1-s01-lun-01: {respuesta: "B", seguridad: alta, otras_validas: []}
+  ej-b1-1-s01-lun-02: {respuesta: "A", seguridad: alta, otras_validas: []}
+  ej-b1-1-s01-lun-03: {respuesta: "B", seguridad: alta, otras_validas: []}
+  ej-b1-1-s01-lun-04: {respuesta: "A", seguridad: alta, otras_validas: []}
+  ej-b1-1-s01-lun-05: {respuesta: "C", seguridad: alta, otras_validas: []}
+  ej-b1-1-s01-lun-06: {respuesta: "A", seguridad: alta, otras_validas: []}
+  ej-b1-1-s01-lun-07: {respuesta: ["belongs"], seguridad: alta, otras_validas: []}
+  ej-b1-1-s01-lun-08: {respuesta: ["are staying", "'re staying"], seguridad: alta, otras_validas: []}
+  ej-b1-1-s01-lun-09: {respuesta: ["How often do you go to the gym?"], seguridad: media, otras_validas: ["How often are you going to the gym?"]}
+  ej-b1-1-s01-lun-10: {respuesta: ["don't need", "do not need"], seguridad: alta, otras_validas: []}
+  ej-b1-1-s01-lun-11: {respuesta: ["is walking", "'s walking"], seguridad: alta, otras_validas: []}
+observaciones:
+  - "Ítem 09: 'How often are you going to the gym?' es gramatical con sentido de 'últimamente, estos días'. Contradice el foco de la lección ('how often' = hábito = presente simple), pero en una respuesta libre un alumno podría defenderla. Conviene que el corrector no la acepte y que la clave lo diga. Además, hay que decidir si mayúscula inicial y signo de interrogación son obligatorios; la instrucción no lo dice."
+  - "Ítem 03: 'I'm understanding' es hoy aceptable en ciertos contextos ('I'm understanding more and more'), pero la lección lo descarta como verbo de estado y aquí no cabe. Ítem 05: 'is speaking three languages' no es natural."
+  - "Ítem 08: 'stay' aquí no es verbo de estado y 'until ... ready' marca lo temporal. Ítems 08, 10 y 11: las contracciones y formas completas son todas válidas y la clave debe listarlas."
+  - "El nivel corresponde a B1.1 de curso. La instrucción 'Escribe la pregunta' mezcla español con ejemplos en inglés, lo que es coherente con una lección en español."

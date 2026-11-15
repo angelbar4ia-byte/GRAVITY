@@ -1,5 +1,6 @@
 # Ejemplo patrón · Cambridge B1 Preliminary · Reading, parte 3
-# Muestra: longitud oficial del texto, cinco preguntas de cuatro opciones en el
+# Muestra: texto dentro del rango del contrato (300 a 400 palabras; la muestra
+# oficial mide unas 350), cinco preguntas de cuatro opciones en el
 # orden del texto (la última, global), una sola respuesta defendible y la razón
 # de cada opción. La primera opción es siempre la correcta; el sorteo lo hace
 # la herramienta.
@@ -26,9 +27,8 @@ estimulo:
     side of town.
 
     At first, everything took longer. I had to learn the bus timetable, and I
-    missed more than one bus because I arrived at the stop a minute late. My
-    neighbour Tom saw me carrying heavy bags one rainy evening and offered to
-    lend me his old bicycle. I hadn't ridden one since I was a teenager, and I
+    missed more than one bus. My neighbour Tom saw me carrying heavy bags and
+    offered to lend me his old bicycle. I hadn't ridden one since I was a teenager, and I
     was sure I would fall off in front of the whole street. I didn't, although
     my first journey to the supermarket was slow and rather frightening.
 

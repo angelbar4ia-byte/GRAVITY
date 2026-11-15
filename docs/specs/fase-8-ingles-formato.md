@@ -160,7 +160,7 @@ secciones:
     unidades: [cam-b1-r3-0001]
 ```
 
-La **fidelidad** de una forma no se escribe: la calcula la herramienta. Es `completa` solo si cada parte tiene el número de unidades y de preguntas del contrato, todos los estímulos están dentro de su rango de palabras y las partes de escucha tienen audio. En cualquier otro caso es `reducida`, y así se muestra en el cuaderno y en la app.
+La **fidelidad** de una forma no se escribe: la calcula la herramienta. Es `completa` solo si cada parte tiene el número de unidades y de preguntas del contrato, todos los estímulos están dentro de su rango de palabras, las partes de escucha tienen audio y el contrato no tiene datos pendientes en las partes que usa. En cualquier otro caso es `reducida`, y así se muestra en el cuaderno y en la app.
 
 ## 6. Contrato de formato
 
@@ -203,28 +203,29 @@ secciones:
         pagina_manual: 45
 ```
 
-Rangos iniciales de palabras, medidos en la prueba de muestra de cada manual (el paquete P1.1 los confirma, con página, antes de fijarlos):
+Los seis contratos de exámenes oficiales existen desde el 15/nov/2026 (paquete P1.1a), en `borrador`. **Los rangos de palabras viven solo ahí:** este documento ya no los repite, para que no haya dos fuentes.
 
-| Examen | Parte | Palabras del estímulo |
-|---|---|---|
-| B1 Preliminary | Reading 1 (cada texto corto) | 20 a 60 |
-| | Reading 2 (cinco descripciones y ocho textos, en total) | 520 a 680 |
-| | Reading 3 | 330 a 430 |
-| | Reading 4 (texto y ocho oraciones) | 300 a 400 |
-| | Reading 5 y Reading 6 (cada texto) | 100 a 150 |
-| | Listening completo (guion) | 2,000 a 2,600 |
-| B2 First | Use of English 1, 2 y 3 (cada texto) | 150 a 190 |
-| | Reading 5 | 550 a 700 |
-| | Reading 6 (texto y siete oraciones) | 550 a 650 |
-| | Reading 7 (textos en total) | 550 a 700 |
-| | Listening completo (guion) | 2,600 a 3,200 |
-| TOEIC | Parte 3 (cada conversación) | 90 a 150 |
-| | Parte 4 (cada charla) | 90 a 140 |
-| | Parte 6 (cada texto) | 80 a 130 |
-| | Parte 7, texto sencillo | 80 a 300 |
-| | Parte 7, conjunto de dos o tres textos (en total) | 250 a 450 |
-| TOEFL iBT 2026 | Lectura (cada texto) | 15 a 200 |
-| | Escucha (cada audio) | hasta 250 |
+### 6.1 Campos de una parte
+
+| Campo | Qué es |
+|---|---|
+| `id` | `<sección>-<número de parte oficial>`. En B2 First, `use-of-english-1` a `-4` y `reading-5` a `-7`. Donde el examen no numera partes, el nombre de la tarea en inglés (TOEFL) o el rango de preguntas (`speaking-q1-2` en TOEIC) |
+| `tarea`, `tipo_pregunta`, `tipo_estimulo`, `modalidad` | Qué se pide, con los tipos de la sección 4 |
+| `unidades`, `preguntas_por_unidad`, `preguntas_total` | Cuántas unidades y preguntas. `preguntas_por_unidad` puede ser `{min, max}` cuando los conjuntos varían (Parte 7 de TOEIC) |
+| `opciones`, `reproducciones`, `puntos_por_pregunta` | Opciones por pregunta, veces que se oye el audio y puntos, cuando el manual los da |
+| `palabras_estimulo` | `{min, max, origen}`. `origen: declarado` si el manual da la cifra; `origen: medido` si se contó en su prueba de muestra |
+| `medido` | La medida de origen: `total` o `por_unidad`, `muestras`, `pagina` y `nota` |
+| `palabras_respuesta`, `tiempos_segundos`, `tiempos_minutos`, `minutos_parte` | Para escritura y habla |
+| `pagina_manual` | Página del PDF (no la impresa) de donde sale el dato |
+| `pendiente: true` y `nota` | El manual no da el dato, o el rango sale de muy pocas muestras |
+
+En la sección: `minutos` (número o `{min, max}`), `preguntas_total` o `tareas_total`, y lo propio de cada examen (`minutos_router` y `minutos_modulo` en TOEFL, `minutos_grupo_de_tres` en Cambridge). En la raíz, `totales`.
+
+### 6.2 Reglas de los rangos
+
+1. **De dónde sale un rango.** Si el manual declara la longitud, se usa esa cifra. Si no, se cuenta en su prueba de muestra y el rango es la medida menos 15 % y más 15 %, redondeado a decenas.
+2. **Qué se cuenta.** En un texto, sus palabras, con los números de hueco. En un audio, **solo los turnos de habla**: las frases del narrador y las instrucciones no cuentan (en el formato, los turnos con `voz: N`). La transcripción oficial de un Listening completo mide un 20 a 25 % más con el narrador que sin él.
+3. **Un dato pendiente no decide nada.** Mientras una parte tenga `pendiente: true`, la comprobación de longitud (V15) da aviso en lugar de error, y una forma que use esa parte no puede ser de fidelidad `completa`.
 
 ## 7. Sesión del curso (60 minutos)
 
@@ -315,6 +316,10 @@ observaciones:
 
 En huecos abiertos, formación de palabra y transformaciones, el revisor escribe todas las respuestas que considere válidas; las que falten en `aceptadas` son disputa. En `oracion_omitida`, la respuesta es un mapa de hueco a letra; en `completar_palabras`, la lista de palabras completas en el orden del texto.
 
+**Cómo se compara una respuesta escrita con `aceptadas`** (en `comparar` y en la app): sin distinguir mayúsculas, sin espacios repetidos, con apóstrofo recto o curvo, y sin el punto o el signo de interrogación final. Todo lo demás debe coincidir.
+
+Un mismo archivo puede traer las respuestas de varias unidades, como documentos YAML separados por `---` (una ronda completa de un revisor).
+
 Mientras no exista `exportar`, el cuaderno de los ejemplos patrón lo genera `herramientas/ingles/transitorio/cuaderno_ejemplos.py`, con las opciones en orden alfabético.
 
 ## 10. Herramienta `herramientas/ingles`
@@ -351,7 +356,7 @@ Error = impide `validado`. Aviso = se reporta y no impide.
 | V12 | `porque` de al menos 6 palabras en toda pregunta objetiva; en el curso, `porque_no` en cada distractor | Error |
 | V13 | `nivel`, `habilidad`, `foco` y `temas` pertenecen a `niveles.yaml` | Error |
 | V14 | Completar palabras: cada hueco oculta de 2 a 8 letras y hay al menos 4 palabras completas por cada hueco | Error |
-| V15 | Palabras del estímulo dentro del rango del contrato; fuera de rango, la forma queda como `reducida` | Aviso en la unidad; decide la fidelidad de la forma |
+| V15 | Palabras del estímulo dentro del rango del contrato (en audio, solo los turnos de habla); fuera de rango, o con el rango pendiente, la forma queda como `reducida` | Aviso en la unidad; decide la fidelidad de la forma |
 | V16 | Audio: voces declaradas, `reproducciones` igual al contrato; el cuaderno no imprime el guion | Error |
 | V17 | En formas de examen, enunciados y opciones en inglés (detecta palabras en español) | Error |
 | V18 | No se mezclan grafías británicas y americanas de la lista de control en una unidad | Aviso |
@@ -370,7 +375,7 @@ En `data/ingles/ejemplos/`. Marcan el nivel de calidad que se exige y sirven de 
 
 | Archivo | Qué enseña |
 |---|---|
-| `cam-b1-r3-ejemplo.yaml` | Lectura de B1 Preliminary con longitud oficial (406 palabras), cinco preguntas en el orden del texto, la última global, y la razón de cada opción |
+| `cam-b1-r3-ejemplo.yaml` | Lectura de B1 Preliminary dentro del rango del contrato (394 palabras; rango 300 a 400), cinco preguntas en el orden del texto, la última global, y la razón de cada opción |
 | `cam-b2-ue2-ejemplo.yaml` | Hueco abierto de B2 First solo con palabras gramaticales y con todas las respuestas válidas |
 | `cam-b2-ue3-ejemplo.yaml` | Formación de palabras de B2 First: todas las respuestas transforman la base |
 | `cam-b2-ue4-ejemplo.yaml` | Transformaciones con palabra clave de B2 First: marco que cierra las alternativas, todas las formas válidas y el intento frecuente que no vale |
@@ -379,7 +384,7 @@ En `data/ingles/ejemplos/`. Marcan el nivel de calidad que se exige y sirven de 
 | `audio-b1-1-s01-a-ejemplo.yaml`, `audio-b1-1-s01-b-ejemplo.yaml` | Guiones de traslado de B1 (monólogo y diálogo) cargados de la gramática de la semana |
 | `sesion-b1-1-s01-lun-ejemplo.yaml` | Sesión de lunes de 60 minutos: 11 preguntas con explicación, 12 elementos de pronunciación, tarea con cotejo y modelo, 20 frases y 8 tarjetas. Estimación: 58 minutos |
 
-Los nueve están en `borrador`: los escribió la sesión que hizo el plan y nadie los ha resuelto a ciegas todavía (paquete P1.4a). Su cuaderno sin respuestas está en `docs/contenido/ingles/generado/cuaderno-ejemplos-patron.md`.
+Los nueve están en `borrador`. Los escribió la sesión que hizo el plan. Un agente los resolvió a ciegas el 15/nov/2026: coincidió con la clave en las 40 preguntas y defendió una segunda respuesta en 6, que se reescribieron (`docs/revisiones/ingles/ronda-1-resultado.md`). Falta la ronda 2, con otro agente, sobre las preguntas corregidas. Su cuaderno sin respuestas está en `docs/contenido/ingles/generado/cuaderno-ejemplos-patron.md`.
 
 **Faltan patrones** de: texto con huecos y opciones (B2 First parte 1; TOEIC partes 5 y 6), correspondencia (B2 First parte 7), emparejar (B1 Preliminary, Reading 2), completar notas al escuchar (B1 Preliminary, Listening 3), escucha con opción múltiple, las sesiones de martes a viernes, y las partes propias de TOEIC y de TOEFL. Se escriben con la regla "patrón antes que serie" del plan (sección 5.2).
 

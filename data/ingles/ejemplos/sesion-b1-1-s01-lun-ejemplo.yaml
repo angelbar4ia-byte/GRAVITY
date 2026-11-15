@@ -132,7 +132,7 @@ bloques:
       - id: ej-b1-1-s01-lun-09
         tipo: respuesta_corta
         habilidad: gramatica
-        enunciado: "Escribe la pregunta: how often / you / go / to the gym"
+        enunciado: "Escribe la pregunta en presente simple: how often / you / go / to the gym"
         aceptadas: ["How often do you go to the gym?"]
         porque: "La frecuencia habla de un hábito: presente simple con 'do' antes del sujeto."
       - id: ej-b1-1-s01-lun-10

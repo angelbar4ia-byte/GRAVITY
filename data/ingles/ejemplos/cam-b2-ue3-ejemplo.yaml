@@ -15,8 +15,8 @@ estimulo:
   titulo: "In praise of boredom"
   texto: |
     Most of us do everything we can to avoid being bored. We fill every
-    spare moment with our phones, and the idea of sitting quietly with our
-    own {1} seems almost {2}. Yet a growing number of {3} believe that
+    spare moment with our phones, and the idea of sitting quietly while our
+    own {1} drift by seems almost {2}. Yet a growing number of {3} believe that
     boredom is far from useless. In fact, it may be exactly what our brains
     need.
 
@@ -38,7 +38,7 @@ preguntas:
     hueco: 1
     base: "THINK"
     aceptadas: ["thoughts"]
-    porque: "Tras 'our own' va un sustantivo; la colocación es 'alone with your own thoughts', en plural."
+    porque: "Hace falta un sustantivo en plural: el verbo 'drift' va sin -s. 'Thinking' es singular y pediría 'drifts'; la revisión a ciegas lo propuso cuando el texto decía 'with our own …'."
   - id: ej-cam-b2-ue3-0001-2
     tipo: formacion_palabra
     habilidad: vocabulario
