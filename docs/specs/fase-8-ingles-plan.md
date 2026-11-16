@@ -153,6 +153,9 @@ Las que se aprueben se registran en `docs/DECISIONES.md` como una decisión nuev
 | D-ING-9 | **Que corrija una IA** (opcional por función) la escritura y el habla de las puertas, y **no iniciar el curso hasta que la fase 6 esté completamente integrada** | 16/nov/2026 | Confirmada. Mueve la fase 6 a la ruta crítica |
 | D-ING-10 | **«Esperamos a que la IA esté para calificar y no iniciamos el curso»**: ninguna etiqueta provisional, porque nadie empieza antes | 16/nov/2026 | Confirmada |
 | D-ING-11 | Si la persona no activa la IA: la escritura y el habla de la puerta **van a la pareja y a la IA, o esperan a que la IA se active**. Las partes objetivas siguen | 16/nov/2026 | Confirmada. P6.0 lo especifica |
+| D-ING-12 | **Asistencia:** solo se pueden faltar **10 minutos por día** y **3 días completos**. Si se pasa de eso, no se completa el curso y hay que repetirlo (leído como: repetir el escalón; a confirmar) | 16/nov/2026 | Confirmada, con una lectura mía |
+| D-ING-13 | **Sin conexión:** completar esa parte de la especificación. **Dictado en modo local.** Texto, transcripción y voz: los tres se quedan en el dispositivo | 16/nov/2026 | Confirmada |
+| D-ING-14 | **El examen del viernes es de repaso; hay que poner pruebas por unidad** (pruebas intermedias que bloquean) | 16/nov/2026 | Confirmada. Cambia la propuesta de P0.3 |
 | D-ING-8 | **Sí, borrar las dos ramas sobrantes** (`claude/integracion-ingles-main` y `claude/ubicacion-ingles`) | 16/nov/2026 | Confirmada. **Sin ejecutar:** el servidor rechazó el borrado (403); ver P0.4 |
 
 ### 4.2 Reglas de borde y dos preguntas abiertas (16/nov/2026)
