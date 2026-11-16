@@ -6,7 +6,7 @@
 
 - El inglés es un bloque del módulo **Hábitos** dentro de la app única **GRAVITY** (D1 y D10). Diseño base: `docs/modulos/habitos/diseno-app-habitos.md`, §5.3 y Anexo A. Especificación: `docs/specs/fase-8-habitos-ampliaciones.md` (bloque 5a, v0.4; quedó atrás respecto a decisiones posteriores).
 - **Revisión completa del bloque (14 y 15/nov/2026):** `docs/revisiones/fase-8-ingles.md`. Veredicto: buena base de borradores, **no apto todavía** como curso ni como preparación de examen. Cinco hallazgos bloqueantes y nueve importantes, con mediciones.
-- **Plan de ejecución:** `docs/specs/fase-8-ingles-plan.md` (versión 0.3). Lo ejecuta el equipo de agentes (Sonnet 5.5). El dueño ya confirmó D-ING-2 (hora diaria con mínimos), D-ING-3 en principio (audio generado en el dispositivo) y D-ING-4 (aprobación por muestras), registradas en D29. **D-ING-1** espera una propuesta revisada de 13 escalones (anexo E del plan, con la investigación de horas por nivel) y D-ING-5 a 8 no se le han presentado todavía. El primer lote ya se ejecutó (anexo A).
+- **Plan de ejecución:** `docs/specs/fase-8-ingles-plan.md` (versión 0.4). Lo ejecuta el equipo de agentes (Sonnet 5.5). El dueño confirmó D-ING-1 a 6 (escalera de 13 escalones, hora diaria con mínimos, tres vías de audio y motor de voz de GRAVITY, aprobación por muestras, ubicación de 12 preguntas por nivel y criterio de aprobar), registradas en D29. Faltan D-ING-7 y 8. El primer lote y P1.2b ya se ejecutaron (anexo A).
 - **Herramienta `herramientas/ingles`:** orden `validar` (V01 a V14 sin V06), 169 pruebas en verde. Faltan `exportar`, `comparar`, `compilar` e `informe`. Mientras tanto, `herramientas/ingles/transitorio/` genera el cuaderno a ciegas y compara las rondas.
 - **Formato de contenido `gravity-ingles-v1`:** `docs/specs/fase-8-ingles-formato.md` (versión 0.3). Nueve ejemplos patrón en `data/ingles/ejemplos/`, en borrador, y su cuaderno a ciegas en `docs/contenido/ingles/generado/`.
 - **Paquete P0.1 hecho (15/nov/2026):** simulacros y prácticas dicen "formato reducido"; la prueba de nivel y la página dicen "en revisión".
@@ -24,8 +24,8 @@
 **Niveles y avance** (`niveles-y-avance.md`, v0.3)
 - Regla de fondo: **cada bimestre se sube de nivel solo si se cumple todo; si no, no se sube.**
 - Cuatro requisitos: pruebas de módulo con 80 % por habilidad, evaluación de cierre con 80 % por habilidad, constancia con días de gracia y al menos 90 % de los minutos planeados.
-- **Dos oportunidades por bloque.** Si fallan las dos, se baja un nivel. La primera evaluación semanal fallida del bloque queda como día de gracia.
-- Calendario vigente de 28 semanas: repaso A1 → A2 (4 semanas), bimestre 1 → B1, bimestre 2 → B1+, bimestre 3 → B2.
+- **Dos oportunidades por bloque.** Si fallan las dos, se baja un nivel (ahora, un escalón). La primera evaluación semanal fallida del bloque queda como día de gracia.
+- **Calendario (D-ING-1, 16/nov/2026): escalera de 13 escalones de 8 semanas y 40 horas** (A1 ×2, A2 ×3, B1 ×4, B2 ×4), con puertas de etapa de formato oficial a las 200, 360 y 520 horas acumuladas. Sustituye al calendario de 28 semanas.
 
 **Ubicación y pareja**
 - La prueba de ubicación se aplica **una sola vez** y vive dentro de la app; de ahí empieza el curso.
@@ -34,6 +34,7 @@
 
 **Evaluación** (`rubrica-evaluacion.md`)
 - Cuatro habilidades con el mismo peso. Escala 0 a 4 por criterio. Umbral 80 % por habilidad, sin compensar.
+- **Aprobar escritura y habla (D-ING-6):** promedio ponderado de 80 % y «gramática del tema» en 3 o más. Las pruebas objetivas llevan 10 preguntas o más por habilidad.
 
 **Exámenes**
 - Cambridge (B1 Preliminary y B2 First), TOEIC y TOEFL se preparan **por igual, sin perder calidad**. El usuario elige cuál lleva.
@@ -52,25 +53,19 @@
 | `modulo-3.md`, `modulo-4.md` | Redactados, sin aprobar. Mismo problema de densidad |
 | `prueba-de-nivel.md` (v0.2) y `prueba-ubicacion.html` (publicada) | **En revisión: no usar para decidir el nivel.** Ubica de más (ING-B5). El aviso ya está en los dos archivos y en la página publicada (versión 4) |
 | `rubrica-evaluacion.md` | Borrador. Falta confirmar qué significa aprobar (D-ING-6) |
-| `niveles-y-avance.md` (v0.3) | Vigente hasta la decisión D-ING-1 |
+| `niveles-y-avance.md` (v0.3) | Vigente salvo el calendario de 28 semanas, que sustituye la escalera de 13 escalones (D29). La versión 0.4 (paquete P1.3) lo reescribe |
 | `formatos-oficiales.md` | Número de partes y de preguntas verificado con los manuales. Faltan las longitudes, que irán en los contratos |
 | Simulacros: B1 Preliminary A y B, B2 First A y B, TOEFL A y B, TOEIC completo | **Formato reducido.** Número de preguntas correcto; textos y guiones de 2 a 6 veces más cortos que los oficiales; sin audio; con preguntas inválidas listadas en la revisión (ING-B1, ING-B2) |
 | Prácticas por partes (B1, B2 ×2, TOEFL, TOEIC) y `toeic-bimestre-2.md` | Reducidas. Comparten contenido entre sí y con los simulacros (ING-I1) |
 | `guia-multiexamen.md`, `cambridge-y-toefl.md`, `toeic.md`, `simulacros/bimestre-3.md`, `cobertura-practica.md` | Planes anteriores. Los sustituye el plan de ejecución |
 | `especificacion-ubicacion-en-app.md` | Corregida. La sustituye la fase 2 del plan |
 
-## 4. Decisiones que esperan al dueño
+## 4. Decisiones
 
-Están en el plan, sección 4, con recomendación en cada una:
+D-ING-1 a 6 están **confirmadas** (15 y 16/nov/2026) y registradas en `docs/DECISIONES.md` (D29). Esperan al dueño:
 
-1. D-ING-1: escalera de escalones; etiqueta del marco europeo al pasar la puerta de la etapa.
-2. D-ING-2: hora diaria con la plantilla nueva.
-3. D-ING-3: audio con la voz del dispositivo.
-4. D-ING-4: aprobar plantillas y muestras en lugar de cada documento.
-5. D-ING-5: ubicación única con puerta anticipada y descenso por evidencia.
-6. D-ING-6: qué significa aprobar con la rúbrica.
-7. D-ING-7: orden de producción y de exámenes.
-8. D-ING-8: limpieza de ramas.
+1. D-ING-7: orden de producción y de exámenes.
+2. D-ING-8: limpieza de ramas.
 
 ## 5. Acceso y herramientas
 
@@ -95,6 +90,6 @@ Están en el plan, sección 4, con recomendación en cada una:
 ## 8. Cómo retomar
 
 1. Leer la revisión y el plan.
-2. Si el dueño ya respondió D-ING-1 y D-ING-5: registrarlas (paquete P0.2) y lanzar lo que espera (sección 8 del plan).
-3. Mientras no responda: lanzar P1.2b, que solo necesita lo ya hecho. Los encargos del primer lote, ya ejecutado, están en el anexo D del plan y sirven de modelo.
+2. Lanzar lo que ya puede salir (sección 8 del plan): P1.1b, P1.3, P0.3 y P3.0. Los encargos del primer lote, ya ejecutado, están en el anexo D del plan y sirven de modelo.
+3. Registrar D-ING-7 y D-ING-8 cuando el dueño responda.
 4. Los demás paquetes se lanzan con el encargo tipo de la sección 5.3 del plan.

@@ -1,6 +1,6 @@
 # Plan de ejecución — Fase 8, bloque 5 (Hábitos · Inglés)
 
-> Versión 0.3 (16/nov/2026). **Propuesta para aprobación del dueño**, con tres decisiones ya confirmadas (4.1). Lo que cambió desde la 0.1 está en el anexo C.
+> Versión 0.4 (16/nov/2026). **Aprobado en lo esencial por el dueño** (D-ING-1 a 6, sección 4.1); faltan D-ING-7 y D-ING-8. Lo que cambió desde la 0.1 está en el anexo C.
 > Ejecuta: el equipo de agentes del roadmap (sección 11), todos en **Sonnet 5.5** por la regla 11.1.10. Orquesta e integra: el arquitecto.
 > Base: revisión `docs/revisiones/fase-8-ingles.md` (5 bloqueantes, 9 importantes) y formato `docs/specs/fase-8-ingles-formato.md`.
 > No cambia ninguna decisión confirmada por su cuenta: lo que requiere al dueño está en la sección 4.
@@ -41,16 +41,18 @@ Palabras que usa este plan:
 
 ### 3.1 Escalera de niveles
 
-Se conserva la regla del dueño: **cada bimestre se sube si se cumple todo; si no, no se sube**. Lo que cambia es qué se sube: un **escalón**. La etiqueta del marco europeo se obtiene al pasar la puerta de la etapa, que tiene formato de examen oficial.
+Se conserva la regla del dueño: **cada 8 semanas se sube si se cumple todo; si no, no se sube**. Lo que cambia es qué se sube: un **escalón**. La etiqueta del marco europeo se obtiene al pasar la puerta de la etapa, que tiene formato de examen oficial. **Confirmado por el dueño el 16/nov/2026 (D-ING-1): 13 escalones de 8 semanas y 40 horas**, alineados a las horas guiadas de Cambridge (anexo E).
 
-| Etapa | Escalones (8 semanas cada uno) | Puerta de la etapa |
-|---|---|---|
-| A1 | A1.1, A1.2 | Prueba interna de A1 |
-| A2 | A2.1, A2.2 | Forma completa tipo **A2 Key** |
-| B1 | B1.1, B1.2, B1.3 | Forma completa tipo **B1 Preliminary** |
-| B2 | B2.1, B2.2, B2.3, B2.4 | Forma completa tipo **B2 First** |
+| Etapa | Escalones (8 semanas y 40 horas cada uno) | Horas acumuladas al pasar la puerta | Puerta de la etapa |
+|---|---|---|---|
+| A1 | A1.1, A1.2 | 80 | Prueba interna de A1 |
+| A2 | A2.1, A2.2, A2.3 | 200 | Forma completa tipo **A2 Key** |
+| B1 | B1.1, B1.2, B1.3, B1.4 | 360 | Forma completa tipo **B1 Preliminary** |
+| B2 | B2.1, B2.2, B2.3, B2.4 | 520 | Forma completa tipo **B2 First** |
 
-- Los seis módulos del Anexo A (y los temas ya aprobados de los módulos 1 y 2) son la etapa B1: B1.1 = módulos 1 y 2, B1.2 = módulos 3 y 4, B1.3 = módulos 5 y 6. Se reescriben con profundidad de B1 y con la plantilla de 60 minutos.
+- **Dos oportunidades en cada puerta de escalón.** Cada una es una evaluación de cierre completa. Si no se aprueba ninguna, **se baja un escalón** y se repite desde las habilidades no alcanzadas (regla ya aprobada, `niveles-y-avance.md`, sección 4; el dueño la recordó el 16/nov/2026). La primera evaluación semanal fallida del bloque queda como día de gracia, y entre oportunidades pasa al menos una semana de práctica.
+
+- Los seis módulos del Anexo A (y los temas ya aprobados de los módulos 1 y 2) son semilla de la etapa B1: B1.1 = módulos 1 y 2, B1.2 = módulos 3 y 4, B1.3 y B1.4 = módulos 5 y 6 repartidos. Se reescriben con profundidad de B1 y con la plantilla de 60 minutos.
 - El repaso A1 → A2 de un mes deja de ser un bloque para todos: quien salga ubicado en A2 hace los escalones de A2; quien salga en B1 con huecos de A2 recibe repaso dirigido en sus primeras semanas.
 - TOEIC y TOEFL son rutas de preparación opcionales que se abren desde B1.2 y B2.1. No son puertas.
 - El temario de cada escalón está en el anexo B.
@@ -59,11 +61,11 @@ Se conserva la regla del dueño: **cada bimestre se sube si se cumple todo; si n
 
 | Empiezas en | Para llegar a | Escalones | Semanas | Horas | Horas guiadas acumuladas que estima Cambridge para ese nivel |
 |---|---|---|---|---|---|
-| Cero | A2 | 4 | 32 | 160 | 180 a 200 |
-| A2 | B1 | 3 | 24 | 120 (280 acumuladas) | 350 a 400 |
-| B1 | B2 | 4 | 32 | 160 (440 acumuladas) | 500 a 600 |
+| Cero | A2 | 5 | 40 | 200 | 180 a 200 |
+| A2 | B1 | 4 | 32 | 160 (360 acumuladas) | 350 a 400 |
+| B1 | B2 | 4 | 32 | 160 (520 acumuladas) | 500 a 600 |
 
-El plan es más rápido que la estimación de Cambridge. Lo normal será repetir algún escalón, y eso no es un fracaso: es lo que dice la medición.
+El plan coincide con la guía de Cambridge: desde cero son unos dos años a una hora diaria de lunes a viernes. Una hora con una app sin maestro probablemente rinde menos que una hora de clase, así que 520 horas es el piso y no el techo. Lo normal será repetir algún escalón, y eso no es un fracaso: es lo que dice la medición.
 
 ### 3.2 Sesión de 60 minutos real
 
@@ -116,12 +118,12 @@ Cada quien tiene su ruta. Si coinciden de escalón, comparten calendario y activ
 
 | # | Decisión | Recomendación | Mientras no respondas |
 |---|---|---|---|
-| D-ING-1 | Escalera de 11 escalones; la etiqueta del marco europeo se obtiene en la puerta de la etapa | **Sí.** Mantiene tu regla y hace verdadera la etiqueta | No se redacta contenido nuevo de curso |
+| D-ING-1 | Escalera de 13 escalones de 8 semanas (propuesta revisada, anexo E); la etiqueta del marco europeo se obtiene en la puerta de la etapa | **Sí.** Mantiene tu regla y la alinea con las horas de Cambridge | No se redacta contenido nuevo de curso |
 | D-ING-2 | Hora diaria con la plantilla nueva. Mientras no haya audio, cuenta solo el bloque principal (35 minutos) y el requisito del 90 % se calcula sobre eso | **Sí** | Igual que D-ING-1 |
 | D-ING-3 | Audio con la voz del dispositivo (`flutter_tts`) | **Sí.** Se puede cambiar después por audio grabado | La escucha sigue en texto, los simulacros quedan como reducidos y la ubicación no se puede abrir, porque lleva escucha |
 | D-ING-4 | Apruebas plantillas y muestras; el contenido pasa con validación, revisión a ciegas y muestreo de calidad | **Sí.** Hoy los módulos 3 y 4 esperan tu lectura y tú mismo dices que no es tu tema | Cada pieza espera tu aprobación, como ahora |
 | D-ING-5 | Ubicación única con puerta anticipada y descenso por evidencia | **Sí.** Y no usar la página publicada para decidir el nivel hasta la versión 3 | La ubicación no se construye |
-| D-ING-6 | En escritura y habla, aprobar es promedio de 3.2 sobre 4 y ningún criterio debajo de 3: sacar 3 en todo **no** aprueba. Pruebas objetivas de 10 preguntas o más por habilidad | **Confirmar.** Es lo que ya dice el 80 %, escrito con todas sus letras | Se aplica el 80 % como está |
+| D-ING-6 | En escritura y habla, aprobar es promedio ponderado de 3.2 sobre 4 (80 %) y «gramática del tema» en 3 o más: sacar 3 en todo **no** aprueba. Pruebas objetivas de 10 preguntas o más por habilidad | **Sí.** (Cambié mi recomendación anterior, «ningún criterio bajo 3», por ser dura con criterios chicos) | Se aplica el 80 % como está |
 | D-ING-7 | Orden: primero B1.1 y la ubicación; después A2.1. Exámenes: B1 Preliminary, A2 Key, TOEIC, B2 First, TOEFL | **Sí.** Se reordena con el resultado real de la ubicación | Se sigue este orden |
 | D-ING-8 | Borrar la rama `claude/ubicacion-ingles` del repositorio archivado de Hábitos y la rama `claude/integracion-ingles-main`. Llevar el trabajo a `main` por pull request cuando lo pidas | **Sí** | Las ramas quedan como están |
 
@@ -131,11 +133,13 @@ Las que se aprueben se registran en `docs/DECISIONES.md` como una decisión nuev
 
 | # | Respuesta | Fecha | Estado |
 |---|---|---|---|
-| D-ING-1 | **Sin decidir.** Pidió investigar cómo estructuran el avance los institutos y los exámenes: "tal vez son cumplir ciertas horas, para realizar un examen de avance de nivel" | 15/nov/2026 | Investigación en el anexo E. **Propuesta revisada:** 13 escalones alineados a las horas de Cambridge, en lugar de 11 |
+| D-ING-1 | **Sí, 13 escalones**, después de pedir y ver la investigación de horas por nivel (anexo E). Recordó que cada puerta tiene **dos oportunidades** y que, si no se aprueba, se baja un escalón | 16/nov/2026 | Confirmada |
 | D-ING-2 | **Sí, con mínimos** | 15/nov/2026 | Confirmada |
-| D-ING-3 | **Sí**, voz del dispositivo o "la voz de GRAVITY", con una duda: si hay un modelo de voz que se pueda descargar | 15/nov/2026 | Confirmada en principio. La duda está respondida en el anexo F: sí existen; el motor se decide al probarlos en el teléfono |
+| D-ING-3 | Pidió **las tres vías de audio** (voz del dispositivo, modelo descargable y audio pregrabado) y **empezar también el motor de voz de GRAVITY** | 16/nov/2026 | Confirmada. Ver fase 3 y anexo F |
 | D-ING-4 | **Sí, por muestras** | 15/nov/2026 | Confirmada |
-| D-ING-5 a 8 | Todavía no se le han presentado una por una | | Pendientes |
+| D-ING-5 | **Sí, 12 preguntas por nivel** | 16/nov/2026 | Confirmada |
+| D-ING-6 | **Promedio de 80 % y «gramática del tema» en 3 o más**; en las pruebas objetivas, 10 preguntas o más por habilidad | 16/nov/2026 | Confirmada |
+| D-ING-7 y 8 | Todavía no se le han presentado | | Pendientes |
 
 ## 5. Cómo se ejecuta con Sonnet
 
@@ -229,10 +233,10 @@ Flutter y Dart están en `/home/user/tools/flutter/bin`.
 
 | Fase | Para qué | Paquetes | Necesita del dueño |
 |---|---|---|---|
-| 0 · Orden y decisiones | Dejar de afirmar lo que no es cierto y destrabar decisiones | P0.1 a P0.4 | D-ING-1 a 8 |
+| 0 · Orden y decisiones | Dejar de afirmar lo que no es cierto y destrabar decisiones | P0.1 a P0.4 | D-ING-7 y 8 (las otras seis, confirmadas) |
 | 1 · Rieles | Formato, contratos, herramienta, niveles, revisión a ciegas y piloto | P1.1 a P1.5 | Aprobar el piloto |
 | 2 · Ubicación y núcleo en la app | Ubicarse una vez y estudiar la sesión del día | P2.1 a P2.6 | Proyecto de Supabase (pendiente desde la Fase 0) |
-| 3 · Audio y habla | Escuchar de verdad (la ubicación lo necesita); traslado solo con audio; grabarse | P3.1 a P3.3 | D-ING-3 y probar en el teléfono |
+| 3 · Audio y habla | Escuchar de verdad (la ubicación lo necesita); motor de voz de GRAVITY; traslado solo con audio; grabarse | P3.0 a P3.3 | Elegir de oído en el teléfono |
 | 4 · Curso por escalones | Producir el curso, siempre dos semanas por delante de quien estudia | Por semana | Muestreo |
 | 5 · Exámenes | Formas con fidelidad completa y semáforo | Por examen y parte | Muestreo |
 | 6 · Pareja y extras | Estudiar juntos, revisión cruzada, IA opcional | Por definir | Especificación propia |
@@ -269,7 +273,7 @@ Flutter y Dart están en `/home/user/tools/flutter/bin`.
 - Hecho cuando: lo de "Herramienta" en 5.5, y `README.md` con todas las órdenes. Los ejemplos patrón pasan V01 a V14 al cerrar P1.2a y todas las comprobaciones al cerrar P1.2c. Si un ejemplo no pasa, el agente lo reporta: se corrige el ejemplo o la regla con el arquitecto, nunca se relaja una comprobación en silencio.
 
 **P1.3 · Matriz de niveles** · habitos; revisa calidad · depende de D-ING-1
-- Hace: `data/ingles/niveles.yaml` con los 11 escalones (gramática, funciones, vocabulario y descriptores "puedo" por habilidad), las listas controladas, y `niveles-y-avance.md` en versión 0.4 con la escalera, la puerta anticipada y el descenso.
+- Hace: `data/ingles/niveles.yaml` con los 13 escalones (gramática, funciones, vocabulario y descriptores "puedo" por habilidad), las listas controladas, y `niveles-y-avance.md` en versión 0.4 con la escalera, la puerta anticipada y el descenso.
 - Hecho cuando: cada tema de gramática es "nuevo" en un solo escalón; cada escalón tiene descriptores para las cuatro habilidades; calidad contrasta 10 temas al azar con el manual del examen de su etapa.
 
 **P1.4 · Revisión a ciegas y habilidades** · calidad (protocolo), arquitecto (habilidades) · dos subpaquetes
@@ -302,20 +306,23 @@ Flutter y Dart están en `/home/user/tools/flutter/bin`.
 **P2.6 · Revisión de calidad de la fase** · calidad
 - Revisa: privacidad (Hábitos es personal), reglas por persona, una sola ubicación, estudio sin red y accesibilidad.
 
-### Fase 3 · Audio y habla · depende de D-ING-3
+### Fase 3 · Audio y habla · D-ING-3 confirmada (16/nov/2026)
 
-El reproductor (P3.1, P3.2a y P3.3) está en la ruta crítica: la ubicación lleva escucha y no se abre sin él. Se construye en paralelo con la fase 2, no después.
+El dueño pidió **las tres vías de audio** (voz del dispositivo, modelo de voz descargable y audio pregrabado) y **empezar también el motor de voz de GRAVITY**: un solo componente de voz para el curso, el asistente y, si D6 se confirma, las bocinas. La app ya define la interfaz `VozSalida` en `app/lib/modulos/gravity/conversacion/voz.dart`, sin implementación (hoy solo dicta, con `speech_to_text`). Las bocinas hablan por el servicio de texto a voz de Home Assistant (`puente_casa.dart`). El motor implementa `VozSalida` una vez y el curso la usa.
 
-- **P3.1 · Especificación** · plataforma y habitos: interfaz de fuente de audio, reproductor (reproducciones según contrato, velocidad 0.8 y 1.0, guion oculto hasta contestar) y grabación local.
-- **P3.2a · Reproductor** · plataforma (paquete de voz y permisos) y habitos (bloque de escucha), con una fuente de audio simulada para las pruebas.
+El reproductor y el motor (P3.0 a P3.3) están en la ruta crítica: la ubicación lleva escucha y no se abre sin ellos. Se construyen en paralelo con la fase 2, no después.
+
+- **P3.0 · Especificación del motor de voz de GRAVITY** · asistente (redacta), con plataforma y habitos (revisan): `docs/specs/fase-8-motor-de-voz.md`. Trae: la interfaz ampliada (varias voces con nombre, velocidad, parar, avance), las tres fuentes y cómo elegir entre ellas, la gestión de modelos descargables (tamaño visible, descarga solo con aviso, borrar, comprobación de integridad, registro de la licencia de cada voz), las reglas de D3 y D6 (al motor solo llega texto ya filtrado) y los paquetes que el dueño tiene que aprobar. Lo que no se puede verificar sin red (tamaño y licencia de cada voz, calidad, velocidad en el Galaxy A52) queda como lista de pendientes, con la forma de verificarlo.
+- **P3.1 · Especificación del reproductor del curso** · habitos y plataforma: reproducciones según contrato, velocidad 0.8 y 1.0, guion oculto hasta contestar y grabación local. Usa el motor de P3.0.
+- **P3.2a · Reproductor y motor** · plataforma (paquetes y permisos), asistente (motor) y habitos (bloque de escucha), con una fuente simulada para las pruebas. Primero la voz del dispositivo; el modelo descargable y el audio pregrabado entran detrás de la misma interfaz.
 - **P3.2b · Repetición, traslado y grabación** · habitos y plataforma: repetir frases, traslado solo con audio y grabación local para el habla.
-- **P3.3 · Verificación en dispositivo** · dueño: voces en inglés instaladas en el Galaxy A52 y en Windows, sin conexión. Se hace en cuanto exista P3.2a y antes de producir muchos guiones.
+- **P3.3 · Prueba en el teléfono** · dueño: comparar las tres vías con la misma frase del curso en el Galaxy A52 y en Windows, y elegir de oído. Se hace en cuanto exista P3.2a y antes de producir muchos guiones.
 
 ### Fase 4 · Curso por escalones · depende de aprobar el piloto
 
 - **Unidad de trabajo:** una semana. El autor (habitos) entrega 5 sesiones, los 2 audios de traslado, 32 tarjetas y la mini prueba, siguiendo el ejemplo `sesion-b1-1-s01-lun-ejemplo.yaml`. El revisor (calidad) la resuelve a ciegas.
 - **Por escalón:** 8 semanas más su puerta, con tres formas (dos oportunidades y una reserva).
-- **Orden inicial:** B1.1, A2.1, B1.2, A2.2, B1.3, A1.1, A1.2, B2.1 a B2.4. Tras la ubicación real del dueño y de su pareja, sube al frente el escalón donde caiga cada uno.
+- **Orden inicial** (a confirmar con D-ING-7): B1.1, A2.1, B1.2, A2.2, B1.3, A2.3, B1.4, A1.1, A1.2, B2.1 a B2.4. Tras la ubicación real del dueño y de su pareja, sube al frente el escalón donde caiga cada uno.
 - **Ritmo:** el contenido va dos semanas por delante de quien estudia. No hace falta terminar el curso para empezar a usarlo.
 - **Semillas:** los módulos 1 y 2 aprobados dan los temas de B1.1; el 3 y el 4, de B1.2.
 
@@ -366,14 +373,16 @@ El piloto (P1.5) necesita además la herramienta completa (P1.2c) y la revisión
 
 **Primer lote: hecho** (15/nov/2026): P0.1, P1.1a, P1.2a y P1.4a. Sus encargos están en el anexo D.
 **Puede salir ya, con D-ING-2 y 4 confirmadas:** P1.2b (comprobaciones de longitud, fidelidad y duplicados, y el informe). Solo necesita lo que ya existe.
-**Espera D-ING-1 y D-ING-5:** P1.1b (contratos propios), P1.3 (matriz de niveles), P1.2c, P1.4b, P0.2, P0.3 y, al final, P1.5.
-**Espera la elección del motor de voz (anexo F):** P3.1 y P3.2a, en paralelo con la fase 2.
+**Ya pueden salir** (D-ING-1 a 6 confirmadas): P1.1b (contratos propios), P1.3 (matriz de niveles), P0.3 (especificación v0.5 del bloque) y P3.0 (motor de voz).
+**Después:** P1.2c (necesita P1.1b), P1.4b (necesita P1.2c), P2.x (necesitan P0.3 y P1.x) y, al final, P1.5.
+**Espera D-ING-8:** P0.4 (ramas).
+**Espera D-ING-7:** el orden de producción de la fase 4 y de los exámenes de la fase 5.
 
 ## 9. Riesgos
 
 | Riesgo | Cómo se controla |
 |---|---|
-| El volumen es grande: 11 escalones y 6 exámenes | Producir por delante de quien estudia, no todo antes de empezar. Priorizar por la ubicación real |
+| El volumen es grande: 13 escalones y 6 exámenes | Producir por delante de quien estudia, no todo antes de empezar. Priorizar por la ubicación real |
 | Preguntas de B2 escritas por agentes | Ejemplos patrón, resolución a ciegas doble en ubicación y puertas, muestreo del dueño con el cuaderno |
 | La voz del dispositivo suena mal o no está instalada | Interfaz de fuente de audio y verificación temprana (P3.3). Hay modelos de voz descargables como alternativa (anexo F) |
 | Los revisores a ciegas son del mismo modelo y comparten puntos ciegos | Muestreo del dueño (D-ING-4), puerta de etapa con formato oficial y, antes de cualquier uso oficial, una revisión humana de las puertas |
@@ -407,19 +416,23 @@ El piloto (P1.5) necesita además la herramienta completa (P1.2c) y la revisión
 | P1.4a Revisión a ciegas de los ejemplos | Hecho (15/nov/2026), tres rondas | La respuesta principal coincide con la clave en 40, 40 y 31 preguntas. Segundas respuestas defendibles: 6, 2 y 0, todas reescritas. Detalle en `docs/revisiones/ingles/`. Los ejemplos siguen en `borrador` hasta que existan `niveles.yaml` y el contrato de sesión |
 | Habilidad `leccion-idioma` | Creada (15/nov/2026) | `.claude/skills/leccion-idioma/`. Propuesta hasta la decisión D-ING-2 |
 | P1.2a Validador | Hecho (15/nov/2026) | `herramientas/ingles`: orden `validar` con V01 a V14 (sin V06) y la parte de V24 que no depende de revisiones. 169 pruebas en verde, 0 errores sobre `data/ingles`. Lo escribió el agente `habitos` con autorización expresa del dueño; al integrar se sembraron siete defectos en una copia y los detectó todos. Sus 12 hallazgos están resueltos en el formato 0.3 o asignados a P1.1b, P1.2b, P1.2c y P1.3 |
-| P0.2 a P0.4, P1.1b, P1.2b en adelante | Pendientes | Esperan las decisiones del dueño |
+| P0.2 Decisiones del dueño | Hecho (16/nov/2026) | Registradas en 4.1 y en `docs/DECISIONES.md` (D29). Se ajustó el plan a 13 escalones |
+| P1.2b Longitud, fidelidad, duplicados e informe | Hecho (16/nov/2026) | V15 a V20, fidelidad por forma y orden `informe`. 371 pruebas en verde. Al integrar se sembraron defectos y V17 no detectó un español hecho de palabras de contenido: se le agregó una segunda señal (tildes) con cinco pruebas |
+| P0.3, P0.4, P1.1b, P1.2c, P1.3, P3.0 en adelante | Pendientes | P0.3, P1.1b, P1.3 y P3.0 pueden salir ya. P0.4 espera D-ING-8 y la fase 5, D-ING-7 |
 
-## Anexo B. Temario por escalón (propuesta para P1.3)
+## Anexo B. Temario por escalón (propuesta para P1.3; el reparto de A2.2 y A2.3 y de B1.3 y B1.4 es mío y P1.3 lo ajusta con el manual del examen de la etapa)
 
 | Escalón | Gramática nueva | Puedo… | Origen |
 |---|---|---|---|
 | A1.1 | *to be*, pronombres, *a / an / the*, plurales, *this / that*, posesivos, *there is / are*, presente simple en afirmativa; números, horas y fechas | Presentarme y hablar de mi familia y mis cosas | Repaso R1 |
 | A1.2 | Presente simple en negativa y pregunta, adverbios de frecuencia, *can*, *like + -ing*, imperativos, preposiciones de lugar y tiempo, *some / any* | Describir mi día y pedir datos simples | Repaso R2 |
 | A2.1 | Presente simple y continuo, pasado simple, *was / were*, contables e incontables, comparativos y superlativos, *going to* | Contar lo que hice, comparar y hablar de planes | Repaso R3 |
-| A2.2 | Presente perfecto (experiencias; *just, already, yet*), *will*, *have to / must / should*, pasado continuo, primera condicional (inicio), *too / enough*, relativos (inicio) | Contar experiencias, dar consejos y predecir. **Puerta A2** | Repaso R4 |
+| A2.2 | Presente perfecto (experiencias; *just, already, yet*), *will*, *have to / must / should* | Contar experiencias, dar consejos y predecir | Repaso R4 |
+| A2.3 | Pasado continuo, primera condicional (inicio), *too / enough*, relativos (inicio) y repaso para la puerta | Contar lo que pasaba y plantear condiciones simples. **Puerta A2** | Nuevo: P1.3 lo define |
 | B1.1 | Presentes a fondo (estado y acción, situaciones temporales), pasado simple y continuo, presente perfecto frente a pasado simple, *for / since*, *used to*, preguntas de sujeto | Describir rutinas, salud y experiencias con detalle | Módulos 1 y 2 |
 | B1.2 | Futuros (*will*, *going to*, presente continuo, oraciones de tiempo), primera condicional, modales de obligación, consejo, permiso y habilidad, preguntas indirectas, verbo + *-ing* o infinitivo, correos de trabajo | Explicar planes y metas; resolver situaciones de trabajo | Módulos 3 y 4 |
-| B1.3 | Comparaciones (*as… as*, *much / far*), pasiva en presente y pasado, segunda condicional, pasado perfecto, estilo indirecto, relativas, verbos frasales frecuentes | Opinar y defender una idea; contar una historia de dos minutos. **Puerta B1** | Módulos 5 y 6 |
+| B1.3 | Comparaciones (*as… as*, *much / far*), pasiva en presente y pasado, segunda condicional | Comparar, describir procesos y hablar de situaciones imaginarias | Módulos 5 y 6 |
+| B1.4 | Pasado perfecto, estilo indirecto, relativas, verbos frasales frecuentes y repaso para la puerta | Opinar y defender una idea; contar una historia de dos minutos. **Puerta B1** | Módulos 5 y 6, y nuevo |
 | B2.1 | Presente perfecto continuo, tiempos narrativos, futuro continuo y perfecto, *used to / would / be used to* | Narrar con matices; hablar de cambios y tendencias | Nuevo |
 | B2.2 | Modales de deducción en presente y pasado, tercera condicional y mixtas, *wish / if only* | Especular, lamentar y plantear hipótesis | Nuevo |
 | B2.3 | Pasiva avanzada (*have something done*, pasiva con verbos de opinión), gerundios e infinitivos, verbos de reporte, relativas y participios | Informar, reportar y describir procesos | Nuevo |
@@ -601,7 +614,7 @@ Entrega: un bloque YAML por unidad, con la forma que pide el cuaderno. No escrib
 3. **El plan de 11 escalones llegaba antes que las guías.** Con 40 horas por escalón: la puerta de A2 quedaba en 160 horas (guía: 180 a 200), la de B1 en 280 (guía: 350 a 400) y la de B2 en 440 (guía: 500 a 600). Es entre 11 % y 30 % menos de lo que Cambridge calcula. Y sus horas son de clase con maestro; una hora sola con una app seguramente rinde menos.
 4. **Los exámenes oficiales no usan el 80 %.** Cambridge da la nota con una escala por bandas, y ETS dice que sus mínimos son guías. El 80 % por habilidad es un margen de seguridad propio, razonable para decir "estás listo", pero **no equivale a aprobar el examen real**. El plan ya lo dice en el semáforo; conviene no confundirlos.
 
-### E.3 Propuesta revisada para D-ING-1: 13 escalones
+### E.3 D-ING-1: 13 escalones (aprobada por el dueño el 16/nov/2026)
 
 | Etapa | Escalones (40 horas cada uno) | Horas acumuladas al pasar la puerta | Guía de Cambridge |
 |---|---|---|---|
@@ -628,6 +641,15 @@ Entrega: un bloque YAML por unidad, con la forma que pide el cuaderno. No escrib
 | B. Modelo descargable | Voces neuronales que corren sin conexión dentro de la app: Piper y Kokoro, con la biblioteca sherpa-onnx (Apache-2.0) y paquetes de Flutter ya existentes. Una misma voz en teléfono y laptop, y varias voces para los diálogos | Decenas de MB por voz. Vi apps de ejemplo de 40 a 129 MB con una voz incluida | Mejor que la A en general; no la he oído | Tamaño de cada modelo, **licencia de cada voz** (no la verifiqué), velocidad en el Galaxy A52 |
 | C. Audio pregrabado | Se generan los audios con la vía B en la laptop y se empaquetan en la app | Unos 90 a 120 MB para todo el curso, en formato Opus (cálculo mío: unos 300 audios de 1.6 minutos; no medido). Se podrían bajar por escalón | Fija y revisable antes de entregarla | Que la licencia de la voz permita distribuir el audio generado |
 
-- **"La voz de GRAVITY" todavía no existe como componente.** D6 dice que GRAVITY "genera la voz" para las bocinas, pero no elige el motor. La app tiene `speech_to_text` (entender lo que dices) y ningún motor para hablar. Lo razonable es elegir un solo motor que sirva a las bocinas y al curso.
+- **"La voz de GRAVITY" todavía no existe como componente.** D6 dice que GRAVITY "genera la voz" para las bocinas, pero no elige el motor. La app tiene `speech_to_text` (entender lo que dices) y la interfaz `VozSalida` (`app/lib/modulos/gravity/conversacion/voz.dart`), sin implementación; las bocinas hablan por el servicio de texto a voz de Home Assistant (`puente_casa.dart`). Lo razonable es un solo motor que implemente `VozSalida` y sirva al curso, al asistente y, si D6 se confirma, a las bocinas.
 - **Por qué no se pudo probar:** el entorno solo llega a ets.org y cambridgeenglish.org; Hugging Face y GitHub, donde están los modelos, están bloqueados.
+- **Decisión del dueño (16/nov/2026):** las tres vías, y empezar también el motor de voz de GRAVITY (fase 3, paquete P3.0). Lo que sigue era mi recomendación y queda como el modo de elegir.
 - **Recomendación:** no cerrar el motor todavía. El guion es lo que importa y la voz va detrás de una interfaz intercambiable (sección 3.5). En la prueba en el teléfono (P3.3) se compara la voz del dispositivo contra una voz descargable con la misma frase del curso, y el dueño elige de oído. Si la del teléfono no tiene voces suficientes para los diálogos, la B o la C pasan a ser la primera opción.
+
+### Cambios de la versión 0.4 (16/nov/2026)
+
+1. **Seis decisiones confirmadas** (4.1). Quedan D-ING-7 (orden) y D-ING-8 (ramas).
+2. **13 escalones en lugar de 11** (3.1, anexo B): un escalón más en A2 y otro en B1, para que las puertas queden en 200, 360 y 520 horas, dentro de la guía de Cambridge.
+3. **Fase 3 ampliada:** las tres vías de audio y el motor de voz de GRAVITY, con el paquete P3.0.
+4. **D-ING-6 cambió de recomendación:** «gramática del tema» en 3 o más en lugar de «ningún criterio bajo 3».
+5. **La segunda parte del validador (P1.2b) terminó** y el formato pasó a 0.4 con lo que encontró.

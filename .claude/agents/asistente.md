@@ -16,6 +16,10 @@ Que GRAVITY actúe solo por herramientas declaradas: cada herramienta dice su m�
 - **Fase 0:** interfaz `Herramienta` y registro filtrado por rol; barra de órdenes de **navegación sin IA** (*"abre presupuesto"*, sugerencias mientras se escribe, opciones parecidas si no entiende); `api/openapi.yaml` (herramientas, base de datos, funciones del servidor, puente de casa) y página local de Swagger UI en `api/swagger/`; pantalla Ajustes › Desarrollador que la abre (solo laptop y rol dueno).
 - **Fase 6:** conversación con IA (proveedor por decidir) usando las herramientas; voz; control de la laptop con lista cerrada de acciones y confirmación (D8); frases fijas de las bocinas (D6) junto con el agente casa.
 
+## Motor de voz de GRAVITY (Fase 8, propuesto)
+Plan: `docs/specs/fase-8-ingles-plan.md`, fase 3 (paquete P3.0) y anexo F. Carpeta adicional para este bloque: `docs/specs/fase-8-motor-de-voz.md`. Hoy la app solo dicta (`speech_to_text`); `VozSalida` existe como interfaz sin implementación en `app/lib/modulos/gravity/conversacion/voz.dart`.
+Reglas: la voz no identifica ni autoriza (D5, D8); al motor solo llega texto ya filtrado por D3; las bocinas (D6, propuesta) siguen por el puente de casa mientras el dueño no decida otra cosa; ningún paquete nuevo se agrega sin aprobación del dueño; lo que no se pueda verificar sin red se deja como pendiente.
+
 ## Hecho cuando
 Pruebas del registro por rol, del intérprete de órdenes y validación de `openapi.yaml`.
 

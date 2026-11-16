@@ -31,7 +31,7 @@ Cuando las decisiones confirmadas cambian el contrato, se reescribe `CONTRATO_CO
 | D21 | Datos sensibles de Hábitos: llaves, frase de recuperación y modos | Confirmada (1/nov/2026; tablet personal como el teléfono) |
 | D20 | Infraestructura de avisos genérica (FCM discreto, bandeja, preferencias) | Confirmada (31/oct/2026) |
 | D19 | Finanzas por persona, cuentas compartidas, albaceas y cuenta maestra | Confirmada (21/oct; ampliada 23/oct; detalles propuestos) |
-| D29 | Inglés: cómo se produce, revisa y aprueba el contenido | Parcial: confirmadas la hora diaria, el audio (en principio) y la aprobación por muestras (15/nov/2026) |
+| D29 | Inglés: escalera, hora diaria, audio, ubicación, criterio de aprobar y aprobación por muestras | Confirmada en lo esencial (15 y 16/nov/2026); pendientes el orden de producción y la limpieza de ramas |
 
 ---
 
@@ -552,17 +552,18 @@ Cambia lo que ve Casa en D23. Se implementa en la fase donde se construya Alimen
 
 ---
 
-## D29. Inglés: cómo se produce, revisa y aprueba el contenido — parcial (15/nov/2026)
+## D29. Inglés: escalera, hora diaria, audio, ubicación, criterio de aprobar y aprobación por muestras — confirmada en lo esencial (15 y 16/nov/2026)
 
-Fuente: `docs/specs/fase-8-ingles-plan.md` (plan de ejecución, sección 4) y la revisión `docs/revisiones/fase-8-ingles.md`. Afecta al bloque 5 de la Fase 8 (Hábitos, inglés).
+Fuente: `docs/specs/fase-8-ingles-plan.md` (plan de ejecución, sección 4) y la revisión `docs/revisiones/fase-8-ingles.md`. Afecta al bloque 5 de la Fase 8 (Hábitos, inglés). **Sustituye** el calendario de 28 semanas de `docs/contenido/ingles/niveles-y-avance.md`; lo demás de ese documento sigue vigente.
 
-**Confirmadas por el dueño (15/nov/2026):**
-- **La hora diaria se llena con práctica (D-ING-2).** Se mantienen los 60 minutos de lunes a viernes y los bloques ya aprobados (principal de 35 minutos y traslado de 25), y cada bloque trae un mínimo de contenido que una herramienta comprueba. Mientras la app no tenga audio, solo cuenta el bloque principal (35 minutos) y el requisito del 90 % se calcula sobre eso.
-- **El dueño aprueba plantillas y muestras (D-ING-4).** Aprueba las plantillas y una muestra (por ejemplo, la primera semana completa). El resto pasa por un validador, la resolución a ciegas por otro agente y un muestreo de calidad. Puede vetar cualquier pieza cuando quiera.
-- **Audio generado en el dispositivo (D-ING-3), en principio.** La app lee los guiones con una voz generada en el dispositivo, detrás de una interfaz que permita cambiar el motor. Qué motor (la voz del dispositivo o un modelo de voz descargable, y su relación con la voz de GRAVITY de D6) se decide al probar en el teléfono.
+**Confirmadas por el dueño:**
+- **Escalera de 13 escalones (D-ING-1, 16/nov/2026).** Cada escalón dura 8 semanas y 40 horas (una hora diaria de lunes a viernes). A1 tiene 2 escalones, A2 tiene 3, B1 tiene 4 y B2 tiene 4. La etiqueta del marco europeo se gana al pasar la puerta de la etapa, una prueba con formato de examen oficial (A2 Key, B1 Preliminary, B2 First), a las 200, 360 y 520 horas acumuladas, que coinciden con las horas guiadas que estima Cambridge (180 a 200, 350 a 400 y 500 a 600). Se mantiene la regla de subir solo si se cumple todo, con **dos oportunidades** por puerta: si no se aprueba ninguna, se baja un escalón. Los exámenes oficiales no piden horas; las horas marcan el ritmo y quien demuestre el nivel antes (90 % en cada habilidad) avanza. Investigación en el anexo E del plan.
+- **La hora diaria se llena con práctica (D-ING-2, 15/nov/2026).** Se mantienen los 60 minutos de lunes a viernes y los bloques aprobados (principal de 35 minutos y traslado de 25), y cada bloque trae un mínimo de contenido que una herramienta comprueba. Mientras la app no tenga audio, solo cuenta el bloque principal (35 minutos) y el requisito del 90 % se calcula sobre eso.
+- **Audio (D-ING-3, 16/nov/2026).** Las tres vías: voz del dispositivo, modelo de voz descargable y audio pregrabado, detrás de una misma interfaz, y el dueño elige de oído en una prueba en su teléfono. Además se empieza el **motor de voz de GRAVITY**, un solo componente de voz para el curso, el asistente y, si D6 se confirma, las bocinas. Lo que se pueda verificar solo con red (tamaño y licencia de cada voz) queda como pendiente de la especificación.
+- **El dueño aprueba plantillas y muestras (D-ING-4, 15/nov/2026).** Aprueba las plantillas y una muestra (por ejemplo, la primera semana completa). El resto pasa por un validador, la resolución a ciegas por otro agente y un muestreo de calidad. Puede vetar cualquier pieza cuando quiera.
+- **Ubicación única de 12 preguntas por nivel (D-ING-5, 16/nov/2026).** Se aplica una sola vez, dentro de la app: 6 de gramática y vocabulario, 3 de lectura y 3 de escucha con audio por nivel. Se alcanza un nivel con 10 de 12 y todos los anteriores. Los errores se corrigen con evidencia: hacia arriba, una puerta anticipada en la semana 2 de un escalón (90 % en cada habilidad, sin gastar oportunidades); hacia abajo, dos mini pruebas seguidas por debajo de 50 % bajan un escalón sin penalización.
+- **Aprobar escritura y habla (D-ING-6, 16/nov/2026).** Promedio ponderado de 80 % de la rúbrica y el criterio «gramática del tema» en 3 o más de 4. Las pruebas objetivas llevan 10 preguntas o más por habilidad.
 
-**Pendientes:**
-- D-ING-1: escalera de escalones. El dueño pidió antes investigar cómo estructuran el avance los institutos y los exámenes; el resultado y una propuesta revisada de 13 escalones están en el anexo E del plan.
-- D-ING-5 (ubicación única), D-ING-6 (qué significa aprobar con la rúbrica), D-ING-7 (orden de producción) y D-ING-8 (limpieza de ramas).
+**Pendientes:** D-ING-7 (orden de producción y de exámenes) y D-ING-8 (limpieza de ramas).
 
-**Qué cambia:** hasta que se decida D-ING-1 no se redacta contenido nuevo de curso. Lo que ya está confirmado se puede construir: la herramienta de validación (en construcción), la revisión a ciegas y la plantilla de sesión.
+**Qué cambia:** se puede redactar contenido de curso con la matriz de 13 escalones (paquete P1.3). La herramienta de validación (`herramientas/ingles`) ya existe. El motor de voz tiene paquete propio (P3.0).

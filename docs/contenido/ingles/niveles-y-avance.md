@@ -5,6 +5,8 @@
 > Versión 0.3 (14/nov/2026). Incluye el repaso inicial A1 → A2 (un mes) y las etiquetas oficiales del marco europeo (CEFR).
 > Regla del dueño: **cada bimestre sube de nivel, solo si cumple todo lo que se pide; si no lo cumple, no sube.**
 
+> **Aviso (16/nov/2026).** El calendario de 28 semanas de este documento queda **sustituido** por la escalera de 13 escalones de 8 semanas (decisión D29; plan de ejecución, sección 3.1). Siguen vigentes los cuatro requisitos, las dos oportunidades (si fallan las dos, se baja un escalón), el día de gracia y las tres de gracia por trimestre. La versión 0.4 (paquete P1.3) lo reescribe.
+
 ## 1. Calendario
 
 | Bloque | Semanas del plan | Contenido | Nivel al cerrar | Tipo de cambio |
