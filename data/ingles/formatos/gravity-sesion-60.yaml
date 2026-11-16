@@ -1,0 +1,259 @@
+# Contrato propio de GRAVITY (gravity-ingles-v1, tipo formato). Generado en el paquete P1.1b.
+# - Su fuente no es un manual sino los documentos del proyecto. Cada dato lleva un campo origen con el documento y la sección de donde
+#   sale, o con la decisión del dueño (D29: D-ING-2). Siglas: «formato 0.4» = docs/specs/fase-8-ingles-formato.md; «plan 0.4» =
+#   docs/specs/fase-8-ingles-plan.md; «D29» = docs/DECISIONES.md. Un origen puesto en un bloque cubre los datos de ese bloque que no
+#   traen el suyo.
+# - pendiente: true marca un dato que esos documentos no dan. Nada se completó por cuenta propia: la nota dice qué falta y, cuando hay
+#   una lectura razonable, la da como propuesta, nunca como dato.
+# - palabras_estimulo.por_nivel: rango por etapa (A1, A2, B1 y B2, cada una con min y max). Lo leerá P1.2c. La versión actual del
+#   validador (P1.2b) no lo lee: con solo por_nivel, el informe muestra «sin rango» para esa parte y V15 no compara.
+# - Los minutos de cada bloque están una sola vez: en secciones[].minutos y en partes[].minutos_parte.
+# - Una unidad de este formato (los audios de traslado) declara formato: gravity-sesion-60 y parte: traslado-audio.
+# - Los rangos de las cuatro etapas se escriben una sola vez (anclas &audio_a1 a &audio_b2) y la tabla longitudes_por_etapa los reutiliza.
+esquema: gravity-ingles-v1
+tipo: formato
+id: gravity-sesion-60
+estado: borrador
+nombre: Sesión del curso de 60 minutos
+fuente:
+  titulo: "Formato gravity-ingles-v1 0.4, sección 7 (sesión del curso) y sección 11 (V21 a V23); plan de ejecución 0.4, secciones 3.2 y 6 (fase 4); D29 (D-ING-2)"
+  url: docs/specs/fase-8-ingles-formato.md
+  consultado: 2026-11-16
+documentos:
+  - {ruta: docs/specs/fase-8-ingles-formato.md, version: "0.4", fecha: 2026-11-16}
+  - {ruta: docs/specs/fase-8-ingles-plan.md, version: "0.4", fecha: 2026-11-16}
+  - {ruta: docs/DECISIONES.md, version: D29, fecha: 2026-11-16}
+  - {ruta: data/ingles/ejemplos/sesion-b1-1-s01-lun-ejemplo.yaml, version: borrador, fecha: 2026-11-15}
+variante: en-US
+variante_origen: "plan 0.4, anexo D.3 («americano (TOEFL y curso)») y los ejemplos patrón del curso (variante: en-US)"
+idioma_instrucciones: es
+idioma_instrucciones_origen: "formato 0.4, sección 7: la explicación de la lección va en español; los ejemplos, en inglés con su traducción"
+totales:
+  minutos: 60
+  minutos_principal: 35
+  minutos_traslado: 25
+  sesiones_por_semana: 5
+  origen: "formato 0.4, sección 7, párrafo inicial («bloque principal de 35 minutos ... y traslado de 25»); plan 0.4, sección 3.2; D29 (D-ING-2)"
+secciones:
+  - id: principal
+    minutos: 35
+    origen: "formato 0.4, sección 7, párrafo inicial («bloque principal de 35 minutos»); D29 (D-ING-2)"
+    partes:
+      - id: repaso
+        tarea: "Repaso de las tarjetas pendientes (lo arma la app); el viernes lo ocupa la mini prueba"
+        minutos_parte: 5
+        origen: "formato 0.4, sección 7, párrafo inicial (repaso 5) y ejemplo de sesión (bloque repaso: «lo arma la app con las tarjetas pendientes»)"
+        por_dia:
+          viernes:
+            sustituido_por: mini_prueba
+            ver: viernes
+            origen: "formato 0.4, sección 7, párrafo previo a la tabla: «la mini prueba ocupa el lugar del repaso»"
+      - id: leccion
+        tarea: "Lección del día: explicación en español, ejemplos y preguntas con su razón; el contenido cambia según el día"
+        minutos_parte: 10
+        origen: "formato 0.4, sección 7, párrafo inicial (lección 10) y tabla de mínimos, fila «Lección (10)»"
+        por_dia:
+          lunes:
+            explicacion: true
+            ejemplos: {min: 6}
+            error_comun: true
+            preguntas: {min: 10}
+            origen: "formato 0.4, sección 7, tabla de mínimos, fila «Lección (10)», columna «Lunes: gramática y vocabulario»"
+          martes:
+            estimulo: {tipo: audio, nombre_en_la_tabla: "audio propio"}
+            preguntas: {min: 8}
+            origen: "formato 0.4, sección 7, tabla de mínimos, fila «Lección (10)», columna «Martes: escucha»"
+            pendiente: true
+            nota: "El formato no define dónde va el audio propio dentro del bloque lección (hoy el bloque solo trae explicacion, ejemplos, error_comun y preguntas), ni cuántas reproducciones tiene, ni si es una unidad aparte. Propuesta, no aplicada: un estímulo dentro del bloque con la forma de una unidad de audio y la longitud de la tabla por etapa."
+          miercoles:
+            explicacion_del_sonido: true
+            elementos: {min: 12}
+            origen: "formato 0.4, sección 7, tabla de mínimos, fila «Lección (10)», columna «Miércoles: pronunciación»"
+            pendiente: true
+            nota: "El formato no define dónde van los 12 elementos dentro del bloque lección (hoy solo el bloque de pronunciación tiene elementos)."
+          jueves:
+            estimulo: {tipo: texto}
+            preguntas: {min: 6}
+            origen: "formato 0.4, sección 7, tabla de mínimos, fila «Lección (10)», columna «Jueves: lectura y escritura»"
+            pendiente: true
+            nota: "El formato no define dónde va el texto dentro del bloque lección ni cómo se cuenta su tiempo de lectura en V22 (ver estimacion_de_minutos.lectura)."
+          viernes:
+            sustituida_por: conversacion_guiada
+            ver: viernes
+            origen: "formato 0.4, sección 7, párrafo previo a la tabla («El viernes cambia la lección por conversación guiada») y columna «Viernes: conversación»"
+      - id: pronunciacion
+        tarea: "Pronunciación: foco del día y elementos para practicar en voz alta"
+        tipo_pregunta: pronunciacion
+        minutos_parte: 8
+        origen: "formato 0.4, sección 7, párrafo inicial (pronunciación 8) y tabla de mínimos, fila «Pronunciación (8)»"
+        por_dia:
+          lunes: {elementos: {min: 10}}
+          martes: {elementos: {min: 10}}
+          miercoles: {elementos: {min: 10}}
+          jueves: {elementos: {min: 10}}
+          viernes: {elementos: {min: 10}}
+        conflicto_con_v22:
+          pendiente: true
+          minimo_efectivo: 12
+          nota: "Con 10 elementos de 30 segundos la estimación es 5.0 minutos, el 62.5 % de 8; V22 pide al menos el 70 % (5.6 minutos), así que el mínimo efectivo es 12 elementos (6.0 minutos, 75 %). V21 aceptaría una sesión que V22 rechaza. El ejemplo patrón del lunes tiene 12. Calculado con las constantes de este contrato; el arquitecto decide si la tabla sube a 12."
+          origen: "cálculo con formato 0.4, sección 7 (tabla de mínimos y cálculo de minutos)"
+      - id: produccion
+        tarea: "Tarea de producción con consigna, lista de cotejo y respuesta modelo"
+        tipo_pregunta: produccion
+        minutos_parte: 12
+        origen: "formato 0.4, sección 7, párrafo inicial (producción 12) y tabla de mínimos, fila «Producción (12)»"
+        requiere: [consigna, cotejo, modelo]
+        requiere_origen: "formato 0.4, sección 4.2 (tipo produccion: «siempre con lista de cotejo y respuesta modelo») y sección 7 (cálculo de minutos)"
+        extension: {segun: longitudes_por_etapa, escritura: escritura_palabras, habla: habla_segundos}
+        extension_origen: "formato 0.4, sección 7, tabla de longitudes por etapa (columnas Escritura y Habla)"
+        por_dia:
+          lunes: {tarea: true}
+          martes: {tarea: true}
+          miercoles: {tarea: true}
+          jueves: {tarea: true, modalidad: escritura}
+          viernes: {ver: viernes}
+        modalidad_de_lunes_a_miercoles:
+          pendiente: true
+          nota: "La tabla dice «tarea con cotejo y modelo» sin decir si es escrita o hablada. El ejemplo patrón del lunes es escrita (80 a 100 palabras)."
+  - id: traslado
+    minutos: 25
+    origen: "formato 0.4, sección 7, párrafo inicial («traslado de 25: escucha 10, repetición 10, tarjetas 5»); D29 (D-ING-2)"
+    solo_con_audio:
+      valor: true
+      origen: "plan 0.4, sección 6, P2.4 («sin audio, el traslado aparece como disponible cuando haya audio y no cuenta minutos») y P3.2b"
+    partes:
+      - id: traslado-audio
+        tarea: "Escucha: los dos audios de la semana (un monólogo y un diálogo), dos veces cada uno, sin preguntas"
+        tipo_estimulo: audio
+        unidades: 2
+        preguntas_por_unidad: 0
+        reproducciones: 2
+        palabras_estimulo:
+          por_nivel:
+            A1: &audio_a1 {min: 60, max: 120}
+            A2: &audio_a2 {min: 120, max: 200}
+            B1: &audio_b1 {min: 200, max: 350}
+            B2: &audio_b2 {min: 350, max: 500}
+          origen: "formato 0.4, sección 7, tabla de longitudes por etapa, columna «Audio (palabras)»"
+          se_cuenta: solo_turnos_de_habla
+          se_cuenta_origen: "formato 0.4, sección 6.2, regla 2 (la voz N no cuenta)"
+        voces: [F1, F2, M1, M2, N]
+        voces_origen: "formato 0.4, sección 4.1"
+        minutos_parte: 10
+        origen: "formato 0.4, sección 7, párrafo inicial (escucha 10) y tabla de mínimos, fila «Traslado (25)»: dos audios de la semana, dos veces cada uno"
+        por_semana:
+          audios: 2
+          monologo: 1
+          dialogo: 1
+          distintos_entre_si: true
+          los_mismos_en_las_cinco_sesiones: true
+          origen: "formato 0.4, sección 7: «dos audios de traslado distintos (un monólogo y un diálogo), que se repiten durante la semana»; plan 0.4, sección 6, fase 4 (2 audios de traslado por semana)"
+        criterio_monologo_y_dialogo:
+          pendiente: true
+          nota: "El formato dice «un monólogo y un diálogo» pero no cómo se comprueba. Propuesta, no aplicada: monólogo = una sola voz sin contar N; diálogo = al menos dos voces sin contar N. Los ejemplos patrón la cumplen (el A usa M1; el B usa F1 y M1)."
+      - id: traslado-repeticion
+        tarea: "Repetición: frases para escuchar y repetir en voz alta"
+        tipo_pregunta: repetir
+        minutos_parte: 10
+        frases: {min: 20}
+        todos_los_dias: true
+        origen: "formato 0.4, sección 7, párrafo inicial (repetición 10) y tabla de mínimos, fila «Traslado (25)»: 20 frases para repetir"
+      - id: traslado-tarjetas
+        tarea: "Tarjetas en audio"
+        minutos_parte: 5
+        todos_los_dias: true
+        origen: "formato 0.4, sección 7, párrafo inicial (tarjetas 5) y tabla de mínimos, fila «Traslado (25)»: tarjetas en audio"
+dias:
+  origen: "formato 0.4, sección 7, encabezado de la tabla de mínimos"
+  lista:
+    - {dia: lunes, etiqueta: "gramática y vocabulario", enfoque: gramatica_vocabulario}
+    - {dia: martes, etiqueta: escucha}
+    - {dia: miercoles, etiqueta: pronunciación}
+    - {dia: jueves, etiqueta: "lectura y escritura"}
+    - {dia: viernes, etiqueta: conversación}
+  enfoque_origen: "El enfoque del lunes, del ejemplo patrón sesion-b1-1-s01-lun-ejemplo.yaml"
+  enfoque:
+    pendiente: true
+    nota: "El formato no fija los identificadores de enfoque de martes a viernes. Propuesta, no aplicada: escucha, pronunciacion, lectura_escritura y conversacion."
+longitudes_por_etapa:
+  origen: "formato 0.4, sección 7, tabla de longitudes por etapa"
+  A1: {lectura_palabras: {min: 60, max: 120}, audio_palabras: *audio_a1, escritura_palabras: {min: 30, max: 50}, habla_segundos: {min: 30, max: 45}}
+  A2: {lectura_palabras: {min: 120, max: 200}, audio_palabras: *audio_a2, escritura_palabras: {min: 50, max: 80}, habla_segundos: {min: 45, max: 60}}
+  B1: {lectura_palabras: {min: 200, max: 350}, audio_palabras: *audio_b1, escritura_palabras: {min: 80, max: 120}, habla_segundos: {min: 60, max: 90}}
+  B2: {lectura_palabras: {min: 350, max: 550}, audio_palabras: *audio_b2, escritura_palabras: {min: 140, max: 190}, habla_segundos: {min: 90, max: 120}}
+estimacion_de_minutos:
+  origen: "formato 0.4, sección 7, «Cálculo de minutos (V22)»"
+  explicacion: {palabras_por_minuto: 150}
+  ejemplo: {segundos: 15}
+  preguntas:
+    opcion_multiple_o_hueco: {segundos: 40, tipos: [opcion_multiple, hueco_opciones, hueco_abierto]}
+    respuesta_corta_ordenar_o_transformar: {segundos: 60, tipos: [respuesta_corta, ordenar_palabras, transformacion]}
+    tipos_de_hueco:
+      pendiente: true
+      nota: "El formato dice «opción múltiple o hueco, 40» sin precisar qué tipos de hueco. Aquí se leen hueco_opciones y hueco_abierto. Confirmar."
+    otros_tipos:
+      pendiente: true
+      nota: "El formato no da tiempo por pregunta para formacion_palabra, completar_nota, completar_palabras, correspondencia, emparejar ni oracion_omitida dentro de una lección. El ejemplo patrón solo usa opcion_multiple y respuesta_corta."
+  escucha: {palabras_por_minuto: 150, multiplicar_por: reproducciones, segundos_por_pregunta: 40}
+  lectura:
+    pendiente: true
+    nota: "El formato no dice cómo se cuenta el tiempo de leer el texto de la lección del jueves. Propuesta, no aplicada: palabras ÷ 150, como la explicación. Con esa lectura y 6 preguntas de 40 segundos, la lección del jueves en B1 estima de 5.3 a 6.3 minutos, por debajo del 70 % (7 minutos)."
+  frase_para_repetir: {segundos: 30}
+  elemento_de_pronunciacion: {segundos: 30}
+  tarjeta_nueva: {segundos: 15}
+  minutos_declarados: [repaso, tarjetas_en_audio]
+  produccion: {minutos: declarados, condicion: [consigna, cotejo, modelo]}
+  por_bloque:
+    repaso: [minutos_declarados]
+    leccion: [explicacion, ejemplos, preguntas, escucha, lectura, elementos_de_pronunciacion]
+    pronunciacion: [elementos_de_pronunciacion]
+    produccion: [produccion]
+    traslado: [escucha, frases_para_repetir, tarjetas_nuevas, tarjetas_en_audio]
+  por_bloque_origen: "ejemplo patrón sesion-b1-1-s01-lun-ejemplo.yaml, cabecera: lección 12.3, pronunciación 6, producción 12, traslado 23.3 y repaso 5 suman 58.6. La repartición de los elementos de la lección y del traslado sale de ahí"
+tolerancias_de_minutos:
+  por_bloque: {minimo_porcentaje: 70, maximo_porcentaje: 150}
+  total: {min: 54, max: 66}
+  origen: "formato 0.4, sección 7, última oración de «Cálculo de minutos (V22)»; plan 0.4, sección 10 (toda sesión estima entre 54 y 66 minutos)"
+tarjetas_nuevas:
+  por_dia: {lunes: 8, martes: 8, miercoles: 8, jueves: 8, viernes: 0}
+  por_semana: 32
+  origen: "formato 0.4, sección 7, tabla de mínimos, fila «Tarjetas nuevas» y ejemplo de sesión («8 por sesión de lunes a jueves»); plan 0.4, sección 6, fase 4 (32 tarjetas por semana)"
+  se_cuentan_en_el_bloque:
+    provisional: traslado
+    pendiente: true
+    nota: "El formato no dice en qué bloque se cuentan los 15 segundos de cada tarjeta nueva. El ejemplo patrón del lunes los suma al traslado: su cabecera da traslado 23.3 = audios 6.3 + frases 10 + tarjetas nuevas 2 + tarjetas en audio 5. Confirmar."
+  tarjeta:
+    campos: [id, en, es, ejemplo]
+    id_unico_en: todo_el_curso
+    el_ejemplo_contiene_la_palabra_o_una_forma_suya: true
+    origen: "formato 0.4, sección 11, V23 (id único en el curso, traducción presente y ejemplo que contiene la palabra o una forma suya); los nombres de los campos, del ejemplo patrón del lunes"
+semana:
+  sesiones: 5
+  dias: [lunes, martes, miercoles, jueves, viernes]
+  audios_de_traslado: 2
+  tarjetas_nuevas: 32
+  mini_pruebas: 1
+  origen: "plan 0.4, sección 6, fase 4 («Unidad de trabajo: una semana»: 5 sesiones, 2 audios de traslado, 32 tarjetas y la mini prueba)"
+viernes:
+  origen: "formato 0.4, sección 7, párrafo previo a la tabla y columna «Viernes: conversación»"
+  cambios:
+    - {bloque: leccion, cambia_por: conversacion_guiada, detalle: "diálogo guiado de 8 turnos con variantes"}
+    - {bloque: repaso, cambia_por: mini_prueba, detalle: "10 preguntas, se aprueba con 8"}
+    - {bloque: produccion, cambia_a: "monólogo o diálogo grabado", modalidad: habla}
+    - {tarjetas_nuevas: 0}
+  mini_prueba: {preguntas: 10, aprobar_con: 8, ocupa_el_lugar_de: repaso}
+  conversacion_guiada: {turnos: {min: 8}, con_variantes: true}
+  estructura_de_la_conversacion_guiada:
+    pendiente: true
+    nota: "El formato todavía no define esta estructura (sección 12: «la del viernes además necesita definir su estructura de conversación guiada»). No se inventa: faltan los campos del bloque, qué son las variantes y cuánto cuenta cada turno en V22."
+  estructura_de_la_mini_prueba:
+    pendiente: true
+    nota: "El formato fija 10 preguntas y aprobar con 8, pero no dice dónde vive la mini prueba (una forma de uso mini, o dentro de la sesión del viernes: hoy los tipos de bloque no incluyen la mini prueba), qué formato la contiene, ni cuántos minutos cuenta en V22."
+  estimacion_de_minutos:
+    pendiente: true
+    nota: "V22 no se puede calcular para el viernes mientras falten la estructura de la conversación guiada y los minutos de la mini prueba."
+sin_audio:
+  cuentan: [principal]
+  no_cuentan: [traslado]
+  minutos_que_cuentan_al_dia: 35
+  origen: "D29 (D-ING-2: mientras la app no tenga audio, solo cuenta el bloque principal); plan 0.4, sección 6, P2.4"
