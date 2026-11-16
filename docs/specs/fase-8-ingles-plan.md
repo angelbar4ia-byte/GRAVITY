@@ -1,6 +1,6 @@
 # Plan de ejecución — Fase 8, bloque 5 (Hábitos · Inglés)
 
-> Versión 0.5 (16/nov/2026). **Aprobado por el dueño** (D-ING-1 a 8, sección 4.1). Queda por terminar una ejecución: borrar dos ramas, que el servidor rechazó. Lo que cambió desde la 0.1 está en el anexo C.
+> Versión 0.6 (16/nov/2026). **Aprobado por el dueño** (D-ING-1 a 10, sección 4.1). **El curso no arranca hasta que la fase 6 (pareja y corrección con IA) esté integrada** (D-ING-9 y 10). Queda por terminar una ejecución: borrar dos ramas, que el servidor rechazó. Lo que cambió desde la 0.1 está en el anexo C.
 > Ejecuta: el equipo de agentes del roadmap (sección 11), todos en **Sonnet 5.5** por la regla 11.1.10. Orquesta e integra: el arquitecto.
 > Base: revisión `docs/revisiones/fase-8-ingles.md` (5 bloqueantes, 9 importantes) y formato `docs/specs/fase-8-ingles-formato.md`.
 > No cambia ninguna decisión confirmada por su cuenta: lo que requiere al dueño está en la sección 4.
@@ -112,7 +112,17 @@ Se respetan los tiempos aprobados (principal 35: repaso 5, lección 10, pronunci
 
 ### 3.7 Pareja
 
-Cada quien tiene su ruta. Si coinciden de escalón, comparten calendario y actividades. Si no, cada uno sigue la suya y hay un reto semanal que no depende del nivel. Es la fase 6 y necesita su propia especificación, porque hoy el progreso es privado.
+Cada quien tiene su ruta. Si coinciden de escalón, comparten calendario y actividades. Si no, cada uno sigue la suya y hay un reto semanal que no depende del nivel. Es la fase 6, que ahora está en la ruta crítica del primer uso (D-ING-9): necesita su propia especificación (P6.0), porque hoy el progreso es privado.
+
+### 3.8 Corrección con IA (propuesta a especificar en P6.0)
+
+El dueño decidió (16/nov/2026, D-ING-9) que la escritura y el habla de las puertas las corrige una IA, **opcional por función**, y que el curso no arranca hasta que esto esté integrado. Lo que se sabe y lo que falta decidir:
+
+- **Qué corrige:** las tareas de escritura y de habla con la rúbrica (criterios, pesos, escala de 0 a 4 y «gramática del tema» en 3 o más). Las pruebas objetivas las sigue corrigiendo el programa.
+- **Qué sale del dispositivo:** el texto escrito y, para el habla, la **transcripción** que hace el propio dispositivo. La pronunciación no se puede juzgar bien desde un texto: o se declara como lo que es (autoevaluación con lista de cotejo) o el dueño decide que el audio salga del dispositivo con su consentimiento. No se decide aquí.
+- **Reglas que se mantienen:** nada de dinero ni datos clínicos a la IA en la nube (D3), con el filtro del servidor antes de que salga cualquier texto; la clave del proveedor nunca va dentro de la app; Hábitos es personal y la cuenta maestra no lo lee (D21); la IA es opcional y se activa por función.
+- **Qué depende del dueño:** la IA de GRAVITY es el asistente con proveedor conectable (Gemini por defecto), y el roadmap deja pendientes del dueño la **clave de Gemini**, el **despliegue de la función del asistente** y el **proyecto de Google Cloud**. Sin eso, esta fase no puede cerrarse.
+- **Cómo se sabe que califica bien:** se compara con revisión humana en una muestra antes de confiar en ella (P6.4).
 
 ## 4. Decisiones que necesita el dueño
 
@@ -140,6 +150,8 @@ Las que se aprueben se registran en `docs/DECISIONES.md` como una decisión nuev
 | D-ING-5 | **Sí, 12 preguntas por nivel** | 16/nov/2026 | Confirmada |
 | D-ING-6 | **Promedio de 80 % y «gramática del tema» en 3 o más**; en las pruebas objetivas, 10 preguntas o más por habilidad | 16/nov/2026 | Confirmada |
 | D-ING-7 | **«Comenzamos con A2.1 y ubicación».** El curso arranca por A2.1 y por la ubicación, no por B1.1. El orden de los exámenes no lo eligió: lo ajusté yo (A2 Key antes que B1 Preliminary, porque la primera puerta de etapa que se encuentra quien empieza en A2.1 es la de A2) | 16/nov/2026 | Confirmada, con un ajuste mío al orden de exámenes |
+| D-ING-9 | **Que corrija una IA** (opcional por función) la escritura y el habla de las puertas, y **no iniciar el curso hasta que la fase 6 esté completamente integrada** | 16/nov/2026 | Confirmada. Mueve la fase 6 a la ruta crítica |
+| D-ING-10 | **«Esperamos a que la IA esté para calificar y no iniciamos el curso»**: ninguna etiqueta provisional, porque nadie empieza antes | 16/nov/2026 | Confirmada |
 | D-ING-8 | **Sí, borrar las dos ramas sobrantes** (`claude/integracion-ingles-main` y `claude/ubicacion-ingles`) | 16/nov/2026 | Confirmada. **Sin ejecutar:** el servidor rechazó el borrado (403); ver P0.4 |
 
 ### 4.2 Reglas de borde y dos preguntas abiertas (16/nov/2026)
@@ -157,9 +169,9 @@ El agente que escribió los contratos propios encontró casos que ningún docume
 
 **Quedan para P0.3** (especificación del bloque en la app): qué semana y con qué forma se usa la puerta anticipada y cómo se mide el 90 % en escritura y habla; cuándo se usa la forma de reserva; si el escalón lleva pruebas intermedias además de la puerta (hoy no); la estructura de la conversación guiada del viernes; si las 3 preguntas de lectura y las 3 de escucha de la ubicación comparten un texto o un audio (propuesta: un texto con 3 preguntas y un audio con 3, que se oye dos veces); y el crédito parcial en preguntas objetivas (hoy no hay).
 
-**Preguntas para el dueño** (las dos que pesan):
-1. **¿Quién califica la escritura y el habla de las puertas?** Mientras no exista la revisión en pareja ni la corrección con IA, la persona se autocalifica con la lista de cotejo y el modelo. Para decidir si sube de escalón, es la parte más fácil de inflar.
-2. **¿Se acepta que la etiqueta de la puerta de etapa (A2, B1, B2) quede como «provisional» mientras escritura y habla se autocalifiquen?**
+**Las dos preguntas que pesaban, resueltas por el dueño el 16/nov/2026:**
+1. **Quién califica la escritura y el habla de las puertas** → una IA, opcional por función (D-ING-9). El curso no arranca hasta que esté integrada.
+2. **Etiqueta provisional** → no hace falta: el dueño prefiere esperar a la IA y no iniciar el curso antes (D-ING-10).
 
 ## 5. Cómo se ejecuta con Sonnet
 
@@ -272,7 +284,7 @@ Flutter y Dart están en `/home/user/tools/flutter/bin`.
 - Hace: recoge las respuestas de la sección 4, las registra aquí y en `docs/DECISIONES.md` (D29) y ajusta el resto del plan.
 
 **P0.3 · Especificación v0.5 del bloque** · habitos (redacta), arquitecto (integra) · depende de P0.2
-- Hace: reescribe el bloque 5 de `docs/specs/fase-8-habitos-ampliaciones.md` en sub-bloques (5a núcleo en la app, 5b audio y habla, 5c ubicación, 5d exámenes, 5e pareja). Resuelve las contradicciones de ING-I7, fija el modelo de datos `ing_*`, numera los criterios de aceptación y deja una sola numeración de semanas (1 a 8 dentro de cada escalón).
+- Hace: reescribe el bloque 5 de `docs/specs/fase-8-habitos-ampliaciones.md` en sub-bloques (5a núcleo en la app, 5b audio y habla, 5c ubicación, 5d exámenes, 5e pareja y corrección con IA, que se desarrolla en P6.0). Incluye las reglas de borde de la sección 4.2. Resuelve las contradicciones de ING-I7, fija el modelo de datos `ing_*`, numera los criterios de aceptación y deja una sola numeración de semanas (1 a 8 dentro de cada escalón).
 - Hecho cuando: cada criterio se puede probar; calidad no encuentra contradicciones con `DECISIONES.md`.
 
 **P0.4 · Ramas** · arquitecto · D-ING-8 confirmada
@@ -344,7 +356,7 @@ El reproductor y el motor (P3.0 a P3.3) están en la ruta crítica: la ubicació
 - **Unidad de trabajo:** una semana. El autor (habitos) entrega 5 sesiones, los 2 audios de traslado, 32 tarjetas y la mini prueba, siguiendo el ejemplo `sesion-b1-1-s01-lun-ejemplo.yaml`. El revisor (calidad) la resuelve a ciegas.
 - **Por escalón:** 8 semanas más su puerta, con tres formas (dos oportunidades y una reserva).
 - **Orden inicial** (D-ING-7, 16/nov/2026): A2.1 y la ubicación; después A2.2, A2.3 y B1.1 a B1.4; luego A1.1, A1.2 y B2.1 a B2.4. Tras la ubicación real del dueño y de su pareja, sube al frente el escalón donde caiga cada uno.
-- **Ritmo:** el contenido va dos semanas por delante de quien estudia. No hace falta terminar el curso para empezar a usarlo.
+- **Ritmo:** como el curso no arranca hasta que la fase 6 esté integrada (D-ING-9), la producción no tiene prisa. Primero va el piloto (P1.5) y A2.1; el resto se produce cuando se acerque el arranque y, una vez que alguien estudie, siempre va dos semanas por delante.
 - **Semillas:** los módulos 1 y 2 aprobados dan los temas de B1.1; el 3 y el 4, de B1.2.
 
 ### Fase 5 · Exámenes · depende de la fase 1
@@ -357,9 +369,15 @@ Cuatro pasos por examen, cada uno por partes:
 
 Orden (D-ING-7, con un ajuste mío): A2 Key (puerta de A2), B1 Preliminary (puerta de B1), TOEIC Listening y Reading, B2 First (puerta de B2), TOEFL iBT 2026, TOEIC Speaking y Writing.
 
-### Fase 6 · Pareja y extras
+### Fase 6 · Pareja y corrección con IA · en la ruta crítica del primer uso (D-ING-9 y 10)
 
-Especificación primero: emparejamiento por escalón, actividades en pareja, revisión cruzada de habla y escritura con lista de cotejo, y qué ve cada quien del otro, con consentimiento. La corrección con IA es opcional y posterior; no toca dinero ni datos clínicos, pero necesita su propia especificación.
+El dueño decidió el 16/nov/2026 que **el curso no empieza hasta que esta fase esté completamente integrada**: la escritura y el habla de las puertas las corrige una IA, y no se muestra ninguna etiqueta provisional porque nadie empieza antes. Hasta entonces se construye todo lo demás (rieles, ubicación, audio, piloto) y se produce el primer tramo del curso, pero nadie estudia. La fase usa el asistente de GRAVITY y depende de lo que el roadmap deja pendiente del dueño (clave de Gemini, despliegue de la función y proyecto de Google Cloud). Los paquetes son **propuesta**: el dueño decidió el principio, no el reparto.
+
+- **P6.0 · Especificación de la pareja y de la corrección con IA** · habitos (redacta), con asistente (proveedor, filtro de D3 y claves), backend (reglas por persona y consentimiento) y calidad (privacidad): `docs/specs/fase-8-habitos-pareja-y-correccion.md`. Trae lo de 3.7 y 3.8: qué sale hacia la IA y qué no, cómo se califica con la rúbrica, qué se hace con el habla, la calibración, la revisión cruzada en pareja como opción, qué ve cada quien del otro (con consentimiento) y los emparejamientos de escalones distintos.
+- **P6.1 · Servidor** · backend: tablas de pareja y consentimiento, de entregas y de correcciones, con reglas por persona. La cuenta maestra no lee (D21).
+- **P6.2 · Función de IA** · asistente: la herramienta que corrige con la rúbrica, con el filtro de D3 antes de que salga texto, límites de uso y registro de coste. Depende de la clave de Gemini y del despliegue de la función (pendientes del dueño).
+- **P6.3 · Pantallas** · habitos y diseno: entregar la tarea, ver la corrección, compararla con la autoevaluación y revisar a la pareja.
+- **P6.4 · Calibración y revisión de calidad** · calidad: unos 20 textos y transcripciones con nota humana contra la nota de la IA, umbral de acuerdo aceptable y revisión de privacidad.
 
 ## 7. Qué pasa con lo que ya existe
 
@@ -380,21 +398,22 @@ Especificación primero: emparejamiento por escalón, actividades en pareja, rev
 
 ## 8. Orden y primer lote
 
-**Ruta crítica hasta el primer uso real** (el dueño y su pareja se ubican en la app y empiezan su escalón):
+**Ruta crítica hasta el primer uso real** (el dueño y su pareja se ubican en la app y empiezan su escalón). **El primer uso es después de la fase 6** (D-ING-9):
 
 ```
 D-ING-1,2,4,5 ─► P1.1b y P1.3 ─► P1.5 (piloto) ─► P2.1 (ubicación) ────┐
 P1.1a y P1.2a ─► P1.2b ─► P1.2c ─► P1.4b ──────────────────────────────┤
-P0.2 ─► P0.3 ─► P2.2 (servidor) y P2.3 (dominio) ──────────────────────┼─► P2.4 (pantallas) ─► primer uso
-D-ING-3 ─► P3.1 ─► P3.2a (reproductor) ─► P3.3 (prueba en el teléfono) ┘
-En paralelo: fase 4 (primeras dos semanas de B1.1 y de A2.1)
+P0.2 ─► P0.3 ─► P2.2 (servidor) y P2.3 (dominio) ──────────────────────┼─► P2.4 (pantallas) ─┐
+D-ING-3 ─► P3.0 ─► P3.1 ─► P3.2a ─► P3.3 (prueba en el teléfono) ──────┘                    │
+P0.3 ─► P6.0 ─► P6.1 y P6.2 (clave de Gemini y despliegue: del dueño) ─► P6.3 ─► P6.4 ──────┴─► primer uso
+En paralelo: el piloto de A2.1; el resto de la fase 4 se produce cuando se acerque el arranque
 ```
 
 El piloto (P1.5) necesita además la herramienta completa (P1.2c) y la revisión a ciegas probada (P1.4b).
 
 **Primer lote: hecho** (15/nov/2026): P0.1, P1.1a, P1.2a y P1.4a. Sus encargos están en el anexo D.
 **Puede salir ya, con D-ING-2 y 4 confirmadas:** P1.2b (comprobaciones de longitud, fidelidad y duplicados, y el informe). Solo necesita lo que ya existe.
-**Ya pueden salir** (D-ING-1 a 6 confirmadas): P1.1b (contratos propios), P1.3 (matriz de niveles), P0.3 (especificación v0.5 del bloque) y P3.0 (motor de voz).
+**Hechos o en curso** (D-ING-1 a 10 confirmadas): P1.1b (contratos propios) y P3.0 (motor de voz), hechos; P1.3 (matriz de niveles), en curso. **Siguen:** P0.3 (especificación v0.5 del bloque) y P6.0 (pareja y corrección con IA), que es condición del primer uso.
 **Después:** P1.2c (necesita P1.1b), P1.4b (necesita P1.2c), P2.x (necesitan P0.3 y P1.x) y, al final, P1.5.
 **Sin terminar:** P0.4 (borrar las dos ramas), que el servidor rechazó. Lo termina el dueño desde GitHub.
 
@@ -410,6 +429,8 @@ El piloto (P1.5) necesita además la herramienta completa (P1.2c) y la revisión
 | La especificación de TOEFL 2026 puede cambiar | Contrato con fecha de consulta; se revisa antes de producir sus formas |
 | El dueño como cuello de botella | D-ING-4 |
 | Documentos que se contradicen | Una fuente y un informe generado |
+| El primer uso depende de pendientes del dueño: clave de Gemini, despliegue de la función del asistente y Google Cloud | Se le avisa con la lista; la fase 6 no puede cerrar sin ellos |
+| La IA califica con generosidad o dureza sin que nadie lo note | P6.4: unos 20 textos con nota humana, umbral de acuerdo y muestreo continuo |
 | Derechos de autor | Todo el contenido es propio. Los contratos citan la página del manual; no copian texto |
 
 ## 10. Cuándo se da por cerrado el bloque
@@ -421,6 +442,7 @@ El piloto (P1.5) necesita además la herramienta completa (P1.2c) y la revisión
 - Toda sesión estima entre 54 y 66 minutos.
 - Una sola ubicación por persona, comprobada en el servidor.
 - Suites de la app, del dominio y del servidor en verde, y revisión de calidad sin bloqueantes.
+- La corrección con IA de escritura y habla está calibrada contra revisión humana y el dueño activó la función.
 
 ## Anexo A. Estado de los paquetes
 
@@ -440,7 +462,9 @@ El piloto (P1.5) necesita además la herramienta completa (P1.2c) y la revisión
 | P1.2b Longitud, fidelidad, duplicados e informe | Hecho (16/nov/2026) | V15 a V20, fidelidad por forma y orden `informe`. 371 pruebas en verde. Al integrar se sembraron defectos y V17 no detectó un español hecho de palabras de contenido: se le agregó una segunda señal (tildes) con cinco pruebas |
 | P1.1b Contratos propios de GRAVITY | Hecho (16/nov/2026), en `borrador` | `gravity-sesion-60`, `gravity-ubicacion` y `gravity-escalon`. Cada dato lleva su origen (un documento del proyecto o una decisión del dueño) y quedan 42 marcas `pendiente: true`, cada una con su nota. `validar` da 0 errores y desaparecen los avisos de «sin contrato». Al integrar se recalibraron los mínimos de la sesión (martes, miércoles, jueves y pronunciación), que según el propio contrato estimaban entre 44 % y 69 % del bloque y chocaban con V22. Los puntos abiertos de borde van a P0.3 y a dos preguntas al dueño (sección 4.2) |
 | P0.4 Ramas | Sin terminar (16/nov/2026) | D-ING-8 confirmada, pero el servidor respondió 403 al borrar. Lo termina el dueño (ver P0.4) |
-| P0.3, P1.1b, P1.2c, P1.3, P3.0 en adelante | P1.1b y P3.0 en curso; los demás pendientes | P0.3 y P1.3 pueden salir ya |
+| P3.0 Especificación del motor de voz | Hecha (16/nov/2026), en borrador | `docs/specs/fase-8-motor-de-voz.md`, 965 líneas, 45 criterios, 16 pendientes de verificación y 12 preguntas al dueño. No toca ningún paquete ni D6. Las huellas de los paquetes coinciden con pub.dev |
+| P1.3 Matriz de niveles | En curso (16/nov/2026) | Agente habitos |
+| P0.3, P6.0, P1.2c y los demás | Pendientes | P0.3 y P6.0 salen cuando termine P1.3, para no pegar con el límite de uso |
 
 ## Anexo B. Temario por escalón (propuesta para P1.3; el reparto de A2.2 y A2.3 y de B1.3 y B1.4 es mío y P1.3 lo ajusta con el manual del examen de la etapa)
 
@@ -664,7 +688,7 @@ Entrega: un bloque YAML por unidad, con la forma que pide el cuaderno. No escrib
 | C. Audio pregrabado | Se generan los audios con la vía B en la laptop y se empaquetan en la app | Unos 90 a 120 MB para todo el curso, en formato Opus (cálculo mío: unos 300 audios de 1.6 minutos; no medido). Se podrían bajar por escalón | Fija y revisable antes de entregarla | Que la licencia de la voz permita distribuir el audio generado |
 
 - **"La voz de GRAVITY" todavía no existe como componente.** D6 dice que GRAVITY "genera la voz" para las bocinas, pero no elige el motor. La app tiene `speech_to_text` (entender lo que dices) y la interfaz `VozSalida` (`app/lib/modulos/gravity/conversacion/voz.dart`), sin implementación; las bocinas hablan por el servicio de texto a voz de Home Assistant (`puente_casa.dart`). Lo razonable es un solo motor que implemente `VozSalida` y sirva al curso, al asistente y, si D6 se confirma, a las bocinas.
-- **Por qué no se pudo probar:** el entorno solo llega a ets.org y cambridgeenglish.org; Hugging Face y GitHub, donde están los modelos, están bloqueados.
+- **Qué se pudo y qué no (corregido el 16/nov/2026):** la primera redacción decía que el entorno solo llegaba a ets.org y cambridgeenglish.org. Era inexacto: también llega a pub.dev, a `raw.githubusercontent.com` y a los archivos de los *releases* de GitHub, y no a Hugging Face. Con eso el agente de P3.0 midió tamaños y leyó licencias de varias voces candidatas (`docs/specs/fase-8-motor-de-voz.md`, sección 9). Lo que sigue sin probarse es el sonido y la velocidad en un teléfono real: el sistema de permisos negó instalar y ejecutar un motor de síntesis aquí.
 - **Decisión del dueño (16/nov/2026):** las tres vías, y empezar también el motor de voz de GRAVITY (fase 3, paquete P3.0). Lo que sigue era mi recomendación y queda como el modo de elegir.
 - **Recomendación:** no cerrar el motor todavía. El guion es lo que importa y la voz va detrás de una interfaz intercambiable (sección 3.5). En la prueba en el teléfono (P3.3) se compara la voz del dispositivo contra una voz descargable con la misma frase del curso, y el dueño elige de oído. Si la del teléfono no tiene voces suficientes para los diálogos, la B o la C pasan a ser la primera opción.
 
@@ -680,3 +704,10 @@ Entrega: un bloque YAML por unidad, con la forma que pide el cuaderno. No escrib
 
 1. **D-ING-7 y D-ING-8 confirmadas.** El curso arranca por **A2.1** y la ubicación. El piloto (P1.5) pasa a la semana 1 de A2.1 y a unidades de A2 Key. Yo ajusté el orden de los exámenes (A2 Key antes que B1 Preliminary); el dueño no lo eligió.
 2. **P0.4 quedó sin terminar:** el borrado de ramas en el servidor da 403 desde esta sesión. Se anotan los pasos para que lo haga el dueño.
+
+### Cambios de la versión 0.6 (16/nov/2026)
+
+1. **D-ING-9 y D-ING-10: el curso no arranca hasta que la fase 6 esté integrada.** La corrección de escritura y habla la hace una IA, opcional por función. La fase 6 pasa a la ruta crítica del primer uso, con paquetes propuestos P6.0 a P6.4 y una sección 3.8 que fija lo ya sabido. Depende de pendientes del dueño (clave de Gemini, despliegue de la función, Google Cloud).
+2. **La producción del curso ya no tiene prisa:** primero el piloto y A2.1; el resto cuando se acerque el arranque.
+3. **P3.0 y P1.1b hechos.** La especificación del motor de voz pasó a tener 45 criterios de aceptación.
+4. **Corrección de un error mío:** dije que el entorno no llegaba a GitHub. Sí llega (releases y archivos sin procesar), y a pub.dev; no llega a Hugging Face.

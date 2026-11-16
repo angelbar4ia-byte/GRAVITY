@@ -62,14 +62,15 @@
 
 ## 4. Decisiones
 
-D-ING-1 a 8 están **confirmadas** (15 y 16/nov/2026) y registradas en `docs/DECISIONES.md` (D29). Dos puntos a tener presentes:
+D-ING-1 a 10 están **confirmadas** (15 y 16/nov/2026) y registradas en `docs/DECISIONES.md` (D29). Puntos a tener presentes:
 
+0. **El curso NO arranca hasta que la fase 6 (pareja y corrección con IA) esté integrada** (D-ING-9 y 10, 16/nov/2026). Mientras tanto se construye todo lo demás y se produce el piloto y A2.1. Depende de pendientes del dueño: clave de Gemini, despliegue de la función del asistente y Google Cloud.
 1. **Orden (D-ING-7):** el curso arranca por **A2.1** y la ubicación. El orden de los exámenes (A2 Key primero) lo ajusté yo; el dueño no lo eligió.
 2. **Ramas (D-ING-8):** aprobada, pero **sin ejecutar**: el servidor rechazó el borrado (403). Ver la sección 6.
 
 ## 5. Acceso y herramientas
 
-- **Red:** el entorno permite `www.ets.org` y `www.cambridgeenglish.org` (aprobado por el dueño el 14/nov/2026). Otros dominios, como la página de soporte de Cambridge, no.
+- **Red:** el entorno permite `www.ets.org` y `www.cambridgeenglish.org` (aprobado por el dueño el 14/nov/2026), y además alcanza pub.dev, `raw.githubusercontent.com` y los archivos de los *releases* de GitHub. No alcanza Hugging Face, la página de soporte de Cambridge ni el sitio de Macmillan. Borrar ramas en el servidor da 403.
 - **Flutter y Dart:** en `/home/user/tools/flutter/bin`. La suite de la app corre aquí: 3033 pruebas en verde el 14/nov/2026.
 - **Manuales oficiales:** se descargan a una carpeta temporal para leer el formato. No se suben al repositorio ni se copian sus preguntas.
 - **Habilidad:** `.claude/skills/simulacro-examen-idioma/`. Desde el 15/nov/2026 está versionada (antes `.gitignore` la dejaba fuera y se habría perdido).
@@ -90,6 +91,6 @@ D-ING-1 a 8 están **confirmadas** (15 y 16/nov/2026) y registradas en `docs/DEC
 ## 8. Cómo retomar
 
 1. Leer la revisión y el plan.
-2. Lanzar lo que ya puede salir (sección 8 del plan): P1.1b y P3.0 (si no han terminado), P1.3 y P0.3. Los encargos del primer lote, ya ejecutado, están en el anexo D del plan y sirven de modelo.
+2. Lanzar lo que sigue (sección 8 del plan): P0.3 y P6.0 cuando termine P1.3. P1.1b y P3.0 ya están hechos. Los encargos del primer lote, ya ejecutado, están en el anexo D del plan y sirven de modelo.
 3. Cuando el dueño pida el pull request a `main`, abrirlo (no antes).
 4. Los demás paquetes se lanzan con el encargo tipo de la sección 5.3 del plan.
