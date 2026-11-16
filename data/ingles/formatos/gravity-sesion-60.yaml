@@ -9,7 +9,7 @@
 #   validador (P1.2b) no lo lee: con solo por_nivel, el informe muestra «sin rango» para esa parte y V15 no compara.
 # - Los minutos de cada bloque están una sola vez: en secciones[].minutos y en partes[].minutos_parte.
 # - Una unidad de este formato (los audios de traslado) declara formato: gravity-sesion-60 y parte: traslado-audio.
-# - Los rangos de las cuatro etapas se escriben una sola vez (anclas &audio_a1 a &audio_b2) y la tabla longitudes_por_etapa los reutiliza.
+# - El rango de audio de cada etapa se escribe una sola vez (anclas &audio_a1 a &audio_b2) y la tabla longitudes_por_etapa lo reutiliza.
 esquema: gravity-ingles-v1
 tipo: formato
 id: gravity-sesion-60
@@ -61,24 +61,24 @@ secciones:
             origen: "formato 0.4, sección 7, tabla de mínimos, fila «Lección (10)», columna «Lunes: gramática y vocabulario»"
           martes:
             estimulo: {tipo: audio, nombre_en_la_tabla: "audio propio"}
-            preguntas: {min: 8}
+            preguntas: {min: 10}
             origen: "formato 0.4, sección 7, tabla de mínimos, fila «Lección (10)», columna «Martes: escucha»"
             pendiente: true
             nota: "El formato no define dónde va el audio propio dentro del bloque lección (hoy el bloque solo trae explicacion, ejemplos, error_comun y preguntas), ni cuántas reproducciones tiene, ni si es una unidad aparte. Propuesta, no aplicada: un estímulo dentro del bloque con la forma de una unidad de audio y la longitud de la tabla por etapa."
           miercoles:
             explicacion_del_sonido: true
-            elementos: {min: 12}
+            elementos: {min: 14}
             origen: "formato 0.4, sección 7, tabla de mínimos, fila «Lección (10)», columna «Miércoles: pronunciación»"
             pendiente: true
             nota: "El formato no define dónde van los 12 elementos dentro del bloque lección (hoy solo el bloque de pronunciación tiene elementos)."
           jueves:
             estimulo: {tipo: texto}
-            preguntas: {min: 6}
+            preguntas: {min: 10}
             origen: "formato 0.4, sección 7, tabla de mínimos, fila «Lección (10)», columna «Jueves: lectura y escritura»"
             pendiente: true
             nota: "El formato no define dónde va el texto dentro del bloque lección ni cómo se cuenta su tiempo de lectura en V22 (ver estimacion_de_minutos.lectura)."
           viernes:
-            sustituida_por: conversacion_guiada
+            sustituido_por: conversacion_guiada
             ver: viernes
             origen: "formato 0.4, sección 7, párrafo previo a la tabla («El viernes cambia la lección por conversación guiada») y columna «Viernes: conversación»"
       - id: pronunciacion
@@ -87,23 +87,22 @@ secciones:
         minutos_parte: 8
         origen: "formato 0.4, sección 7, párrafo inicial (pronunciación 8) y tabla de mínimos, fila «Pronunciación (8)»"
         por_dia:
-          lunes: {elementos: {min: 10}}
-          martes: {elementos: {min: 10}}
-          miercoles: {elementos: {min: 10}}
-          jueves: {elementos: {min: 10}}
-          viernes: {elementos: {min: 10}}
+          lunes: {elementos: {min: 12}}
+          martes: {elementos: {min: 12}}
+          miercoles: {elementos: {min: 12}}
+          jueves: {elementos: {min: 12}}
+          viernes: {elementos: {min: 12}}
         conflicto_con_v22:
-          pendiente: true
-          minimo_efectivo: 12
-          nota: "Con 10 elementos de 30 segundos la estimación es 5.0 minutos, el 62.5 % de 8; V22 pide al menos el 70 % (5.6 minutos), así que el mínimo efectivo es 12 elementos (6.0 minutos, 75 %). V21 aceptaría una sesión que V22 rechaza. El ejemplo patrón del lunes tiene 12. Calculado con las constantes de este contrato; el arquitecto decide si la tabla sube a 12."
-          origen: "cálculo con formato 0.4, sección 7 (tabla de mínimos y cálculo de minutos)"
+          resuelto: true
+          resolucion: "El 16/nov/2026 el arquitecto subió el mínimo de 10 a 12 elementos (formato 0.4, sección 7, calibración): 12 elementos de 30 segundos son 6.0 minutos, el 75 % de 8."
+          origen: "cálculo del agente de contratos (P1.1b) con formato 0.4, sección 7; decisión del arquitecto"
       - id: produccion
         tarea: "Tarea de producción con consigna, lista de cotejo y respuesta modelo"
         tipo_pregunta: produccion
         minutos_parte: 12
         origen: "formato 0.4, sección 7, párrafo inicial (producción 12) y tabla de mínimos, fila «Producción (12)»"
         requiere: [consigna, cotejo, modelo]
-        requiere_origen: "formato 0.4, sección 4.2 (tipo produccion: «siempre con lista de cotejo y respuesta modelo») y sección 7 (cálculo de minutos)"
+        requiere_origen: "formato 0.4, sección 4.2 (tipo produccion: «Siempre con lista de cotejo y respuesta modelo») y sección 7 (cálculo de minutos)"
         extension: {segun: longitudes_por_etapa, escritura: escritura_palabras, habla: habla_segundos}
         extension_origen: "formato 0.4, sección 7, tabla de longitudes por etapa (columnas Escritura y Habla)"
         por_dia:
@@ -117,10 +116,10 @@ secciones:
           nota: "La tabla dice «tarea con cotejo y modelo» sin decir si es escrita o hablada. El ejemplo patrón del lunes es escrita (80 a 100 palabras)."
   - id: traslado
     minutos: 25
-    origen: "formato 0.4, sección 7, párrafo inicial («traslado de 25: escucha 10, repetición 10, tarjetas 5»); D29 (D-ING-2)"
+    origen: "formato 0.4, sección 7, párrafo inicial («traslado de 25 (escucha 10, repetición 10, tarjetas 5)»); D29 (D-ING-2)"
     solo_con_audio:
       valor: true
-      origen: "plan 0.4, sección 6, P2.4 («sin audio, el traslado aparece como disponible cuando haya audio y no cuenta minutos») y P3.2b"
+      origen: "plan 0.4, sección 6, P2.4 (sin audio, el traslado aparece como disponible cuando haya audio y no cuenta minutos) y P3.2b"
     partes:
       - id: traslado-audio
         tarea: "Escucha: los dos audios de la semana (un monólogo y un diálogo), dos veces cada uno, sin preguntas"
@@ -197,7 +196,7 @@ estimacion_de_minutos:
   escucha: {palabras_por_minuto: 150, multiplicar_por: reproducciones, segundos_por_pregunta: 40}
   lectura:
     pendiente: true
-    nota: "El formato no dice cómo se cuenta el tiempo de leer el texto de la lección del jueves. Propuesta, no aplicada: palabras ÷ 150, como la explicación. Con esa lectura y 6 preguntas de 40 segundos, la lección del jueves en B1 estima de 5.3 a 6.3 minutos, por debajo del 70 % (7 minutos)."
+    nota: "El formato no dice cómo se cuenta el tiempo de leer el texto de la lección del jueves. Propuesta, no aplicada: palabras ÷ 150, como la explicación. Con 6 preguntas de 40 segundos la lección del jueves estimaba de 4.4 a 7.7 minutos según la etapa, por debajo del 70 % (7 minutos); por eso el 16/nov/2026 el mínimo del jueves subió a 10 preguntas (con lectura y 10 preguntas: de 7.1 a 10.4 minutos). Sigue pendiente la fórmula de lectura definitiva: la calibra el piloto de A2.1 (P1.5)."
   frase_para_repetir: {segundos: 30}
   elemento_de_pronunciacion: {segundos: 30}
   tarjeta_nueva: {segundos: 15}
@@ -239,8 +238,8 @@ viernes:
   cambios:
     - {bloque: leccion, cambia_por: conversacion_guiada, detalle: "diálogo guiado de 8 turnos con variantes"}
     - {bloque: repaso, cambia_por: mini_prueba, detalle: "10 preguntas, se aprueba con 8"}
-    - {bloque: produccion, cambia_a: "monólogo o diálogo grabado", modalidad: habla}
-    - {tarjetas_nuevas: 0}
+    - {bloque: produccion, cambia_por: monologo_o_dialogo_grabado, modalidad: habla, detalle: "monólogo o diálogo grabado"}
+    - {bloque: tarjetas_nuevas, cambia_por: ninguna, cantidad: 0}
   mini_prueba: {preguntas: 10, aprobar_con: 8, ocupa_el_lugar_de: repaso}
   conversacion_guiada: {turnos: {min: 8}, con_variantes: true}
   estructura_de_la_conversacion_guiada:

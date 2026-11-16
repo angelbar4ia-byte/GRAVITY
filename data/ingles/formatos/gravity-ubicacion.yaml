@@ -1,0 +1,266 @@
+# Contrato propio de GRAVITY (gravity-ingles-v1, tipo formato). Generado en el paquete P1.1b.
+# - Su fuente no es un manual sino los documentos del proyecto. Cada dato lleva un campo origen con el documento y la sección de donde
+#   sale, o con la decisión del dueño (D29: D-ING-5). Siglas: «formato 0.4» = docs/specs/fase-8-ingles-formato.md; «plan 0.4» =
+#   docs/specs/fase-8-ingles-plan.md; «D29» = docs/DECISIONES.md. Un origen puesto en un bloque cubre los datos de ese bloque que no
+#   traen el suyo.
+# - pendiente: true marca un dato que esos documentos no dan. Nada se completó por cuenta propia: la nota dice qué falta y, cuando hay
+#   una lectura razonable, la da como propuesta, nunca como dato. Una parte pendiente da aviso en V15 y no puede ser de fidelidad completa.
+# - Cada etapa es una sección con tres partes (gramática y vocabulario, lectura y escucha), no una sola parte: una parte del contrato
+#   admite un solo tipo de estímulo, un solo rango de palabras y un solo número de reproducciones (V15, V16 y la fidelidad). Las 12
+#   preguntas de la etapa son la suma de sus tres partes (6 + 3 + 3).
+# - Los rangos de palabras repiten, por etapa, la tabla de longitudes de la sección 7 del formato (el encargo P1.1b manda aplicarla a la
+#   ubicación). Si cambia allí, cambia aquí y en gravity-sesion-60.
+esquema: gravity-ingles-v1
+tipo: formato
+id: gravity-ubicacion
+estado: borrador
+nombre: Prueba de ubicación única de GRAVITY
+fuente:
+  titulo: "Plan de ejecución 0.4, secciones 3.3 y 4.1 y fichas de P2.1 y P2.4; D29 (D-ING-5); formato 0.4, secciones 5, 7 y 11 (V20)"
+  url: docs/specs/fase-8-ingles-plan.md
+  consultado: 2026-11-16
+documentos:
+  - {ruta: docs/specs/fase-8-ingles-plan.md, version: "0.4", fecha: 2026-11-16}
+  - {ruta: docs/specs/fase-8-ingles-formato.md, version: "0.4", fecha: 2026-11-16}
+  - {ruta: docs/DECISIONES.md, version: D29, fecha: 2026-11-16}
+variante: en-US
+variante_origen: "plan 0.4, anexo D.3 («americano (TOEFL y curso)»): la ubicación se alinea con el temario del curso"
+idioma_instrucciones: es
+idioma_instrucciones_origen: "prueba de nivel vigente (docs/contenido/ingles/prueba-de-nivel.md, 0.2): instrucciones en español y preguntas en inglés; se conserva ese precedente"
+totales:
+  etapas: 4
+  preguntas_por_etapa: 12
+  preguntas: 48
+  origen: "plan 0.4, sección 3.3, primera viñeta («48 preguntas, 12 por etapa»); D29 (D-ING-5)"
+secciones:
+  - id: a1
+    etapa: A1
+    orden: 1
+    preguntas_total: 12
+    origen: "plan 0.4, sección 3.3, primera viñeta (6 de gramática y vocabulario, 3 de lectura y 3 de escucha con audio); D29 (D-ING-5)"
+    partes:
+      - id: a1-gramatica-vocabulario
+        tarea: "Seis preguntas sueltas de gramática y vocabulario del temario de A1"
+        tipo_pregunta: opcion_multiple
+        tipo_estimulo: ninguno
+        unidades: 6
+        preguntas_por_unidad: 1
+        preguntas_total: 6
+        opciones: 4
+        origen: "plan 0.4, sección 3.3 y D29 (D-ING-5): 6 de gramática y vocabulario por etapa; opciones: encargo P1.1b (formato 0.4, sección 4.2 deja 3 o 4 a cada contrato)"
+        nota: "Se lee como seis preguntas sueltas, sin texto: el plan dice «preguntas» y no menciona ningún texto para este grupo. Cada una cuenta como una unidad."
+      - id: a1-lectura
+        tarea: "Un texto de la longitud de A1 con tres preguntas de lectura"
+        tipo_pregunta: opcion_multiple
+        tipo_estimulo: texto
+        unidades: 1
+        preguntas_por_unidad: 3
+        preguntas_total: 3
+        opciones: 4
+        palabras_estimulo: {min: 60, max: 120, origen: "formato 0.4, sección 7"}
+        origen: "plan 0.4, sección 3.3 y D29 (D-ING-5): 3 de lectura por etapa; longitud: formato 0.4, sección 7, tabla de longitudes, aplicada por el encargo P1.1b"
+        pendiente: true
+        nota: "El plan y D29 dan 3 preguntas de lectura por etapa pero no dicen si comparten un texto o si cada una tiene el suyo. Se escribe como un texto con tres preguntas, como propuesta: tres textos de la longitud de la etapa alargarían mucho una prueba de 48 preguntas. Confirmar."
+      - id: a1-escucha
+        tarea: "Un audio de la longitud de A1 con tres preguntas de escucha"
+        tipo_pregunta: opcion_multiple
+        tipo_estimulo: audio
+        unidades: 1
+        preguntas_por_unidad: 3
+        preguntas_total: 3
+        opciones: 4
+        palabras_estimulo: {min: 60, max: 120, origen: "formato 0.4, sección 7"}
+        voces: [F1, F2, M1, M2, N]
+        voces_origen: "formato 0.4, sección 4.1"
+        con_guion: true
+        guion_oculto_hasta_contestar: true
+        origen: "plan 0.4, sección 3.3 y D29 (D-ING-5): 3 de escucha con audio por etapa; guion para el audio del dispositivo: plan 0.4, ficha de P2.1; guion oculto: plan 0.4, sección 3.5"
+        pendiente: true
+        nota: "Falta lo mismo que en a1-lectura (un audio con tres preguntas es una propuesta) y cuántas veces se oye el audio: reproducciones no se declara. Cambridge y el traslado del curso usan 2; TOEIC, 1."
+  - id: a2
+    etapa: A2
+    orden: 2
+    preguntas_total: 12
+    origen: "plan 0.4, sección 3.3, primera viñeta; D29 (D-ING-5)"
+    partes:
+      - id: a2-gramatica-vocabulario
+        tarea: "Seis preguntas sueltas de gramática y vocabulario del temario de A2"
+        tipo_pregunta: opcion_multiple
+        tipo_estimulo: ninguno
+        unidades: 6
+        preguntas_por_unidad: 1
+        preguntas_total: 6
+        opciones: 4
+        origen: "plan 0.4, sección 3.3 y D29 (D-ING-5); opciones: encargo P1.1b"
+        nota: "Igual que a1-gramatica-vocabulario."
+      - id: a2-lectura
+        tarea: "Un texto de la longitud de A2 con tres preguntas de lectura"
+        tipo_pregunta: opcion_multiple
+        tipo_estimulo: texto
+        unidades: 1
+        preguntas_por_unidad: 3
+        preguntas_total: 3
+        opciones: 4
+        palabras_estimulo: {min: 120, max: 200, origen: "formato 0.4, sección 7"}
+        origen: "plan 0.4, sección 3.3 y D29 (D-ING-5); longitud: formato 0.4, sección 7, tabla de longitudes, aplicada por el encargo P1.1b"
+        pendiente: true
+        nota: "Igual que a1-lectura: un texto con tres preguntas es una propuesta."
+      - id: a2-escucha
+        tarea: "Un audio de la longitud de A2 con tres preguntas de escucha"
+        tipo_pregunta: opcion_multiple
+        tipo_estimulo: audio
+        unidades: 1
+        preguntas_por_unidad: 3
+        preguntas_total: 3
+        opciones: 4
+        palabras_estimulo: {min: 120, max: 200, origen: "formato 0.4, sección 7"}
+        voces: [F1, F2, M1, M2, N]
+        voces_origen: "formato 0.4, sección 4.1"
+        con_guion: true
+        guion_oculto_hasta_contestar: true
+        origen: "plan 0.4, sección 3.3 y D29 (D-ING-5); guion para el audio del dispositivo: plan 0.4, ficha de P2.1; guion oculto: plan 0.4, sección 3.5"
+        pendiente: true
+        nota: "Igual que a1-escucha: un audio con tres preguntas es una propuesta y no se declara cuántas veces se oye."
+  - id: b1
+    etapa: B1
+    orden: 3
+    preguntas_total: 12
+    origen: "plan 0.4, sección 3.3, primera viñeta; D29 (D-ING-5)"
+    partes:
+      - id: b1-gramatica-vocabulario
+        tarea: "Seis preguntas sueltas de gramática y vocabulario del temario de B1"
+        tipo_pregunta: opcion_multiple
+        tipo_estimulo: ninguno
+        unidades: 6
+        preguntas_por_unidad: 1
+        preguntas_total: 6
+        opciones: 4
+        origen: "plan 0.4, sección 3.3 y D29 (D-ING-5); opciones: encargo P1.1b"
+        nota: "Igual que a1-gramatica-vocabulario."
+      - id: b1-lectura
+        tarea: "Un texto de la longitud de B1 con tres preguntas de lectura"
+        tipo_pregunta: opcion_multiple
+        tipo_estimulo: texto
+        unidades: 1
+        preguntas_por_unidad: 3
+        preguntas_total: 3
+        opciones: 4
+        palabras_estimulo: {min: 200, max: 350, origen: "formato 0.4, sección 7"}
+        origen: "plan 0.4, sección 3.3 y D29 (D-ING-5); longitud: formato 0.4, sección 7, tabla de longitudes, aplicada por el encargo P1.1b"
+        pendiente: true
+        nota: "Igual que a1-lectura: un texto con tres preguntas es una propuesta."
+      - id: b1-escucha
+        tarea: "Un audio de la longitud de B1 con tres preguntas de escucha"
+        tipo_pregunta: opcion_multiple
+        tipo_estimulo: audio
+        unidades: 1
+        preguntas_por_unidad: 3
+        preguntas_total: 3
+        opciones: 4
+        palabras_estimulo: {min: 200, max: 350, origen: "formato 0.4, sección 7"}
+        voces: [F1, F2, M1, M2, N]
+        voces_origen: "formato 0.4, sección 4.1"
+        con_guion: true
+        guion_oculto_hasta_contestar: true
+        origen: "plan 0.4, sección 3.3 y D29 (D-ING-5); guion para el audio del dispositivo: plan 0.4, ficha de P2.1; guion oculto: plan 0.4, sección 3.5"
+        pendiente: true
+        nota: "Igual que a1-escucha: un audio con tres preguntas es una propuesta y no se declara cuántas veces se oye."
+  - id: b2
+    etapa: B2
+    orden: 4
+    preguntas_total: 12
+    origen: "plan 0.4, sección 3.3, primera viñeta; D29 (D-ING-5)"
+    partes:
+      - id: b2-gramatica-vocabulario
+        tarea: "Seis preguntas sueltas de gramática y vocabulario del temario de B2"
+        tipo_pregunta: opcion_multiple
+        tipo_estimulo: ninguno
+        unidades: 6
+        preguntas_por_unidad: 1
+        preguntas_total: 6
+        opciones: 4
+        origen: "plan 0.4, sección 3.3 y D29 (D-ING-5); opciones: encargo P1.1b"
+        nota: "Igual que a1-gramatica-vocabulario."
+      - id: b2-lectura
+        tarea: "Un texto de la longitud de B2 con tres preguntas de lectura"
+        tipo_pregunta: opcion_multiple
+        tipo_estimulo: texto
+        unidades: 1
+        preguntas_por_unidad: 3
+        preguntas_total: 3
+        opciones: 4
+        palabras_estimulo: {min: 350, max: 550, origen: "formato 0.4, sección 7"}
+        origen: "plan 0.4, sección 3.3 y D29 (D-ING-5); longitud: formato 0.4, sección 7, tabla de longitudes, aplicada por el encargo P1.1b"
+        pendiente: true
+        nota: "Igual que a1-lectura: un texto con tres preguntas es una propuesta."
+      - id: b2-escucha
+        tarea: "Un audio de la longitud de B2 con tres preguntas de escucha"
+        tipo_pregunta: opcion_multiple
+        tipo_estimulo: audio
+        unidades: 1
+        preguntas_por_unidad: 3
+        preguntas_total: 3
+        opciones: 4
+        palabras_estimulo: {min: 350, max: 500, origen: "formato 0.4, sección 7"}
+        voces: [F1, F2, M1, M2, N]
+        voces_origen: "formato 0.4, sección 4.1"
+        con_guion: true
+        guion_oculto_hasta_contestar: true
+        origen: "plan 0.4, sección 3.3 y D29 (D-ING-5); guion para el audio del dispositivo: plan 0.4, ficha de P2.1; guion oculto: plan 0.4, sección 3.5"
+        pendiente: true
+        nota: "Igual que a1-escucha: un audio con tres preguntas es una propuesta y no se declara cuántas veces se oye."
+orden_de_etapas:
+  etapas: [A1, A2, B1, B2]
+  origen: "plan 0.4, sección 3.3 y D29 (D-ING-5): una etapa se alcanza con todas las anteriores alcanzadas; la app deja de preguntar tras la primera no alcanzada"
+corte:
+  aciertos_minimos: 10
+  de: 12
+  por_etapa: true
+  etapas_anteriores_alcanzadas: true
+  origen: "plan 0.4, sección 3.3, primera viñeta («Una etapa se alcanza con 10 de 12 y con todas las anteriores alcanzadas»); D29 (D-ING-5)"
+parada:
+  despues_de: primera_etapa_no_alcanzada
+  origen: "plan 0.4, sección 3.3, primera viñeta («La app deja de preguntar tras la primera etapa no alcanzada»)"
+aplicacion:
+  una_sola_vez: true
+  repetible: false
+  un_registro_por_persona: true
+  lo_hace_cumplir: servidor
+  pausar_y_reanudar: true
+  reiniciar: false
+  origen: "plan 0.4, sección 3.3 (viñetas «No se repite» y «En el servidor, una persona solo puede tener un registro de ubicación»); D29 (D-ING-5: «Se aplica una sola vez, dentro de la app»); pausar y reanudar: plan 0.4, sección 6, P2.4"
+requiere_audio:
+  valor: true
+  origen: "plan 0.4, sección 3.3 («no se abre hasta que el audio funcione en el dispositivo (P3.2a)») y sección 6, P2.4 (sin audio, la pantalla explica cómo instalar una voz en inglés)"
+unidades_exclusivas:
+  uso_de_la_forma: ubicacion
+  valor: true
+  origen: "plan 0.4, sección 3.3 («Las preguntas de ubicación no se usan en ningún otro lugar»); formato 0.4, sección 11, V20"
+alineacion_al_temario:
+  requerida: true
+  origen: "plan 0.4, sección 3.3, primera viñeta («alineadas al temario»)"
+  nota: "El temario lo define niveles.yaml (P1.3). Cómo se comprueba que una pregunta es de su etapa está por definir."
+banco:
+  preguntas_por_etapa: 18
+  preguntas_total: 72
+  forma: {preguntas_por_etapa: 12, preguntas_total: 48}
+  origen: "plan 0.4, sección 6, ficha de P2.1 («banco de 72 preguntas (18 por etapa) y forma de 48»)"
+  composicion_del_banco:
+    pendiente: true
+    nota: "El plan dice 18 por etapa y 12 en la forma, pero no cómo se reparten las 18 entre gramática y vocabulario, lectura y escucha. Un reparto proporcional a 6 + 3 + 3 (9 + 4.5 + 4.5) no es entero, y las de lectura y escucha dependen de cuántas preguntas lleve cada texto o audio."
+entrada:
+  origen: "plan 0.4, sección 3.3, tabla de entrada (columnas «Última etapa alcanzada» y «Entra en»)"
+  casos:
+    - {ultima_etapa_alcanzada: ninguna, entra_en: A1.1}
+    - {ultima_etapa_alcanzada: A1, entra_en: A2.1}
+    - {ultima_etapa_alcanzada: A2, entra_en: B1.1}
+    - {ultima_etapa_alcanzada: B1, entra_en: B2.1}
+    - ultima_etapa_alcanzada: B2
+      entra_en: B2.1
+      puerta_inmediata: {etapa: B2, formato: cambridge-b2-first, fidelidad: completa}
+      nota: "Con derecho a presentar de inmediato la puerta de la etapa B2 (forma completa tipo B2 First). Doce preguntas no bastan para dar B2 por ganado."
+correccion_por_evidencia:
+  puerta_anticipada: {ver: gravity-escalon}
+  descenso_por_evidencia: {ver: gravity-escalon}
+  repetir_la_ubicacion: false
+  origen: "plan 0.4, sección 3.3 («Los errores de ubicación se corrigen con evidencia, no con otra prueba de ubicación»); D29 (D-ING-5)"

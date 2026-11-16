@@ -142,6 +142,25 @@ Las que se aprueben se registran en `docs/DECISIONES.md` como una decisión nuev
 | D-ING-7 | **«Comenzamos con A2.1 y ubicación».** El curso arranca por A2.1 y por la ubicación, no por B1.1. El orden de los exámenes no lo eligió: lo ajusté yo (A2 Key antes que B1 Preliminary, porque la primera puerta de etapa que se encuentra quien empieza en A2.1 es la de A2) | 16/nov/2026 | Confirmada, con un ajuste mío al orden de exámenes |
 | D-ING-8 | **Sí, borrar las dos ramas sobrantes** (`claude/integracion-ingles-main` y `claude/ubicacion-ingles`) | 16/nov/2026 | Confirmada. **Sin ejecutar:** el servidor rechazó el borrado (403); ver P0.4 |
 
+### 4.2 Reglas de borde y dos preguntas abiertas (16/nov/2026)
+
+El agente que escribió los contratos propios encontró casos que ningún documento resuelve. **Resueltos por el arquitecto** (dentro de lo ya aprobado; el dueño puede vetarlos):
+
+| Caso | Resolución |
+|---|---|
+| ¿El último escalón de cada etapa tiene además su propia puerta? | No. La puerta de etapa **es** la puerta de ese escalón (A2.3, B1.4 y B2.4); la de A1.2 es una prueba interna. Son 13 puertas y 39 formas (3 por puerta) |
+| Primera oportunidad | Al final de la semana 8. Las 80, 200, 360 y 520 horas suponen aprobar a la primera |
+| Fallar las dos oportunidades en A1.1, donde no hay escalón abajo | Se repite A1.1 y, a la segunda caída seguida, el dueño revisa el plan (regla ya aprobada de dos bajas seguidas) |
+| Bajar un escalón que cierra una etapa | La etiqueta ya ganada se conserva; se repite ese escalón y se vuelve a presentar su puerta |
+| Inglés del curso | Americano (TOEFL y curso); los exámenes de Cambridge, británico. Supuesto que el dueño puede vetar |
+| Mínimos de martes, miércoles, jueves y pronunciación | Subidos a 10, 14, 10 y 12 para que V21 y V22 no choquen. Provisionales: los calibra el piloto de A2.1 |
+
+**Quedan para P0.3** (especificación del bloque en la app): qué semana y con qué forma se usa la puerta anticipada y cómo se mide el 90 % en escritura y habla; cuándo se usa la forma de reserva; si el escalón lleva pruebas intermedias además de la puerta (hoy no); la estructura de la conversación guiada del viernes; si las 3 preguntas de lectura y las 3 de escucha de la ubicación comparten un texto o un audio (propuesta: un texto con 3 preguntas y un audio con 3, que se oye dos veces); y el crédito parcial en preguntas objetivas (hoy no hay).
+
+**Preguntas para el dueño** (las dos que pesan):
+1. **¿Quién califica la escritura y el habla de las puertas?** Mientras no exista la revisión en pareja ni la corrección con IA, la persona se autocalifica con la lista de cotejo y el modelo. Para decidir si sube de escalón, es la parte más fácil de inflar.
+2. **¿Se acepta que la etiqueta de la puerta de etapa (A2, B1, B2) quede como «provisional» mientras escritura y habla se autocalifiquen?**
+
 ## 5. Cómo se ejecuta con Sonnet
 
 ### 5.1 Quién hace qué
@@ -271,7 +290,7 @@ Flutter y Dart están en `/home/user/tools/flutter/bin`.
 **P1.2 · Herramienta `herramientas/ingles`** · habitos · tres subpaquetes en serie
 - P1.2a: modelo, lectura de YAML, comprobaciones V01 a V14 (salvo V06, que pertenece a `exportar`) y estados básicos (V24), orden `validar`. No espera a P1.1 ni a P1.3: se prueba con contratos y niveles de prueba guardados en `herramientas/ingles/test/`, escritos según las secciones 6 y 8 del formato. Si falta el contrato de una unidad o `data/ingles/niveles.yaml`, `validar` lo dice ("sin contrato", "sin niveles") y no inventa ninguno: es aviso en un archivo en `borrador` y error de `validado` en adelante.
 - P1.2b: contratos y fidelidad (V15 a V20), orden `informe`. Necesita P1.1a integrado.
-- P1.2c: `exportar` con sorteo (V06, V26), `comparar` con huella (V24), sesiones (V21 a V23) y `compilar` (V25). Los mínimos de la sesión se leen del contrato `gravity-sesion-60` (P1.1b), no del código. Al terminar, se borra `herramientas/ingles/transitorio/`, que solo existe para generar cuadernos mientras falta `exportar`.
+- P1.2c: `exportar` con sorteo (V06, V26), `comparar` con huella (V24), sesiones (V21 a V23) y `compilar` (V25). Además debe aprender a leer los contratos propios de P1.1b: `palabras_estimulo.por_nivel` (rango por etapa, que hoy el informe muestra como «sin rango»), `por_dia` de cada parte, `estimacion_de_minutos`, `tolerancias_de_minutos`, `tarjetas_nuevas` y `sin_audio`; los bloques `mini_prueba` y de conversación guiada; y los `pendiente: true` a cualquier profundidad, no solo en la parte. Puede añadir V27, una comprobación de consistencia de los contratos propios (sumas de minutos, 13 escalones, horas = 40 × escalones, 6 + 3 + 3 = 12 preguntas por etapa de ubicación, y rangos de longitud iguales entre la sesión y la ubicación). Y los puntos de la revisión de P1.2b: V02 comprueba que la unidad de una forma sea de la parte y del formato de su sección, V16 deja las voces fuera de lista a V01, la fidelidad de una práctica se evalúa solo sobre las partes que incluye y el informe suma cobertura por etapa. Los mínimos de la sesión se leen del contrato `gravity-sesion-60` (P1.1b), no del código. Al terminar, se borra `herramientas/ingles/transitorio/`, que solo existe para generar cuadernos mientras falta `exportar`.
 - Hecho cuando: lo de "Herramienta" en 5.5, y `README.md` con todas las órdenes. Los ejemplos patrón pasan V01 a V14 al cerrar P1.2a y todas las comprobaciones al cerrar P1.2c. Si un ejemplo no pasa, el agente lo reporta: se corrige el ejemplo o la regla con el arquitecto, nunca se relaja una comprobación en silencio.
 
 **P1.3 · Matriz de niveles** · habitos; revisa calidad · depende de D-ING-1
@@ -419,6 +438,7 @@ El piloto (P1.5) necesita además la herramienta completa (P1.2c) y la revisión
 | P1.2a Validador | Hecho (15/nov/2026) | `herramientas/ingles`: orden `validar` con V01 a V14 (sin V06) y la parte de V24 que no depende de revisiones. 169 pruebas en verde, 0 errores sobre `data/ingles`. Lo escribió el agente `habitos` con autorización expresa del dueño; al integrar se sembraron siete defectos en una copia y los detectó todos. Sus 12 hallazgos están resueltos en el formato 0.3 o asignados a P1.1b, P1.2b, P1.2c y P1.3 |
 | P0.2 Decisiones del dueño | Hecho (16/nov/2026) | Registradas en 4.1 y en `docs/DECISIONES.md` (D29). Se ajustó el plan a 13 escalones |
 | P1.2b Longitud, fidelidad, duplicados e informe | Hecho (16/nov/2026) | V15 a V20, fidelidad por forma y orden `informe`. 371 pruebas en verde. Al integrar se sembraron defectos y V17 no detectó un español hecho de palabras de contenido: se le agregó una segunda señal (tildes) con cinco pruebas |
+| P1.1b Contratos propios de GRAVITY | Hecho (16/nov/2026), en `borrador` | `gravity-sesion-60`, `gravity-ubicacion` y `gravity-escalon`. Cada dato lleva su origen (un documento del proyecto o una decisión del dueño) y quedan 42 marcas `pendiente: true`, cada una con su nota. `validar` da 0 errores y desaparecen los avisos de «sin contrato». Al integrar se recalibraron los mínimos de la sesión (martes, miércoles, jueves y pronunciación), que según el propio contrato estimaban entre 44 % y 69 % del bloque y chocaban con V22. Los puntos abiertos de borde van a P0.3 y a dos preguntas al dueño (sección 4.2) |
 | P0.4 Ramas | Sin terminar (16/nov/2026) | D-ING-8 confirmada, pero el servidor respondió 403 al borrar. Lo termina el dueño (ver P0.4) |
 | P0.3, P1.1b, P1.2c, P1.3, P3.0 en adelante | P1.1b y P3.0 en curso; los demás pendientes | P0.3 y P1.3 pueden salir ya |
 

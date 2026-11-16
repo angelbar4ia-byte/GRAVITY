@@ -1,0 +1,273 @@
+# Contrato propio de GRAVITY (gravity-ingles-v1, tipo formato). Generado en el paquete P1.1b.
+# - Su fuente no es un manual sino los documentos del proyecto. Cada dato lleva un campo origen con el documento y la sección de donde
+#   sale, o con la decisión del dueño (D29: D-ING-1, D-ING-2, D-ING-5 y D-ING-6). Siglas: «formato 0.4» =
+#   docs/specs/fase-8-ingles-formato.md; «plan 0.4» = docs/specs/fase-8-ingles-plan.md; «D29» = docs/DECISIONES.md; «rúbrica 0.1» =
+#   docs/contenido/ingles/rubrica-evaluacion.md; «niveles-y-avance 0.3» = docs/contenido/ingles/niveles-y-avance.md. Un origen puesto
+#   en un bloque cubre los datos de ese bloque que no traen el suyo.
+# - pendiente: true marca un dato que esos documentos no dan. Nada se completó por cuenta propia: la nota dice qué falta y, cuando hay
+#   una lectura razonable, la da como propuesta, nunca como dato. Una parte pendiente da aviso en V15 y no puede ser de fidelidad completa.
+# - Este contrato describe la puerta interna (escalón y puerta de A1) en secciones[] y las reglas de las puertas en los bloques de abajo.
+#   La puerta de A2, B1 y B2 usa el contrato del examen (campo etapas[].puerta.formato); aquí solo se dice cuál y cómo se aprueba.
+# - Las formas de este contrato son de uso escalon o etapa (formato 0.4, sección 5); sus unidades son exclusivas (V20).
+esquema: gravity-ingles-v1
+tipo: formato
+id: gravity-escalon
+estado: borrador
+nombre: Puerta de escalón y de etapa de GRAVITY
+fuente:
+  titulo: "Plan de ejecución 0.4, secciones 3.1, 3.3, 3.4 y 6 (fase 4) y anexo E; D29 (D-ING-1, D-ING-2, D-ING-5 y D-ING-6); rúbrica de evaluación 0.1, secciones 1 a 5; niveles y avance 0.3, secciones 3 y 4, con su aviso del 16/nov/2026; formato 0.4, sección 7"
+  url: docs/specs/fase-8-ingles-plan.md
+  consultado: 2026-11-16
+documentos:
+  - {ruta: docs/specs/fase-8-ingles-plan.md, version: "0.4", fecha: 2026-11-16}
+  - {ruta: docs/specs/fase-8-ingles-formato.md, version: "0.4", fecha: 2026-11-16}
+  - {ruta: docs/DECISIONES.md, version: D29, fecha: 2026-11-16}
+  - {ruta: docs/contenido/ingles/rubrica-evaluacion.md, version: "0.1", fecha: 2026-11-14}
+  - {ruta: docs/contenido/ingles/niveles-y-avance.md, version: "0.3", fecha: 2026-11-14, nota: "con el aviso del 16/nov/2026: el calendario de 28 semanas queda sustituido por la escalera de 13 escalones; lo demás sigue vigente"}
+variante: en-US
+variante_origen: "plan 0.4, anexo D.3 («americano (TOEFL y curso)»): la puerta interna evalúa el curso. Las puertas con formato de examen usan la variante de su contrato (en-GB en Cambridge)"
+idioma_instrucciones: es
+idioma_instrucciones_origen: "formato 0.4, sección 7 (el curso se explica en español); precedente de prueba-de-nivel.md 0.2 (instrucciones en español, preguntas en inglés)"
+totales:
+  escalones: 13
+  horas_por_escalon: 40
+  horas_totales: 520
+  etapas: 4
+  habilidades: 4
+  formas_por_puerta: 3
+  origen: "D29 (D-ING-1: 13 escalones de 8 semanas y 40 horas); plan 0.4, secciones 3.1 y 6 (fase 4: tres formas por escalón)"
+secciones:
+  - id: evaluacion-de-cierre
+    origen: "D29 (D-ING-1 y D-ING-6); plan 0.4, sección 3.1 («Cada una es una evaluación de cierre completa»); niveles-y-avance 0.3, sección 4"
+    partes:
+      - id: lectura
+        habilidad: lectura
+        tarea: "Prueba objetiva de lectura"
+        tipo_estimulo: texto
+        preguntas_total: {min: 10}
+        origen: "D29 (D-ING-6): pruebas objetivas con 10 preguntas o más por habilidad; rúbrica 0.1, sección 3.1 (lectura y escucha son objetivas)"
+        pendiente: true
+        nota: "El plan y D29 solo fijan 10 preguntas o más. No dicen cuántos textos, cuántas opciones por pregunta, qué tipos de pregunta ni qué longitud tienen los textos. Propuesta, no aplicada: la longitud de lectura de la etapa en la tabla de la sección 7 del formato, como en la ubicación."
+      - id: escucha
+        habilidad: escucha
+        tarea: "Prueba objetiva de escucha"
+        tipo_estimulo: audio
+        preguntas_total: {min: 10}
+        origen: "D29 (D-ING-6): pruebas objetivas con 10 preguntas o más por habilidad; rúbrica 0.1, sección 3.1 (lectura y escucha son objetivas)"
+        pendiente: true
+        nota: "Falta lo mismo que en lectura y, además, cuántas veces se oye cada audio. Propuesta, no aplicada: la longitud de audio de la etapa en la tabla de la sección 7 del formato."
+      - id: escritura
+        habilidad: escritura
+        tarea: "Tarea de escritura calificada con la rúbrica"
+        tipo_pregunta: produccion
+        tipo_estimulo: consigna
+        modalidad: escritura
+        origen: "D29 (D-ING-6); rúbrica 0.1, sección 3.2; formato 0.4, sección 4.1 (la consigna es el estímulo de las tareas de escritura y habla)"
+        pendiente: true
+        nota: "No se dice cuántas tareas de escritura lleva la puerta ni su extensión. Propuesta, no aplicada: una tarea con la extensión de la etapa (columna Escritura de la tabla de la sección 7 del formato)."
+      - id: habla
+        habilidad: habla
+        tarea: "Tarea de habla calificada con la rúbrica"
+        tipo_pregunta: produccion
+        tipo_estimulo: consigna
+        modalidad: habla
+        origen: "D29 (D-ING-6); rúbrica 0.1, sección 3.3; formato 0.4, sección 4.1"
+        pendiente: true
+        nota: "No se dice cuántas tareas de habla lleva la puerta ni su duración. Propuesta, no aplicada: una tarea con la duración de la etapa (columna Habla de la tabla de la sección 7 del formato)."
+escalera:
+  escalones_total: 13
+  semanas_por_escalon: 8
+  horas_por_escalon: 40
+  dias_por_semana: 5
+  minutos_por_dia: 60
+  horas_totales: 520
+  origen: "D29 (D-ING-1: «13 escalones ... Cada escalón dura 8 semanas y 40 horas (una hora diaria de lunes a viernes)»); plan 0.4, sección 3.1"
+etapas:
+  - id: A1
+    escalones: [A1.1, A1.2]
+    escalon_de_cierre: A1.2
+    horas_acumuladas: 80
+    puerta: {tipo: interna, formato: gravity-escalon, nombre: "Prueba interna de A1"}
+    guia_cambridge_horas:
+      pendiente: true
+      nota: "El plan no pudo confirmar una guía de Cambridge para A1 (anexo E.3)."
+    origen: "D29 (D-ING-1); plan 0.4, sección 3.1 (tabla de etapas) y anexo E.3"
+  - id: A2
+    escalones: [A2.1, A2.2, A2.3]
+    escalon_de_cierre: A2.3
+    horas_acumuladas: 200
+    puerta: {tipo: examen, formato: cambridge-a2-key, fidelidad_requerida: completa}
+    guia_cambridge_horas: {min: 180, max: 200, estado_de_la_fuente: "resultado de búsqueda; no se abrió la página oficial (plan 0.4, anexo E.1)"}
+    origen: "D29 (D-ING-1: «a las 200, 360 y 520 horas acumuladas»); plan 0.4, sección 3.1 (tabla de etapas) y anexo E.3"
+  - id: B1
+    escalones: [B1.1, B1.2, B1.3, B1.4]
+    escalon_de_cierre: B1.4
+    horas_acumuladas: 360
+    puerta: {tipo: examen, formato: cambridge-b1-preliminary, fidelidad_requerida: completa}
+    guia_cambridge_horas: {min: 350, max: 400, estado_de_la_fuente: "resultado de búsqueda; no se abrió la página oficial (plan 0.4, anexo E.1)"}
+    origen: "D29 (D-ING-1); plan 0.4, sección 3.1 (tabla de etapas) y anexo E.3"
+  - id: B2
+    escalones: [B2.1, B2.2, B2.3, B2.4]
+    escalon_de_cierre: B2.4
+    horas_acumuladas: 520
+    puerta: {tipo: examen, formato: cambridge-b2-first, fidelidad_requerida: completa}
+    guia_cambridge_horas: {min: 500, max: 600, estado_de_la_fuente: "resultado de búsqueda; no se abrió la página oficial (plan 0.4, anexo E.1)"}
+    origen: "D29 (D-ING-1); plan 0.4, sección 3.1 (tabla de etapas) y anexo E.3"
+puerta_de_etapa:
+  etiqueta_del_marco_europeo: "se gana al pasar la puerta de la etapa"
+  origen: "D29 (D-ING-1); plan 0.4, sección 3.1"
+  ocupa_el_lugar_de_la_puerta_del_escalon_de_cierre:
+    pendiente: true
+    nota: "Ningún documento dice si el último escalón de cada etapa (A1.2, A2.3, B1.4 y B2.4) tiene además su propia puerta interna o si la puerta de la etapa ocupa ese lugar. Se lee lo segundo (el plan define el escalón como «tramo de 8 semanas con su prueba al final»), pero no está dicho. Cambia cuántas formas hay que escribir: 39 en un caso, 51 en el otro."
+  aviso_al_estudiante:
+    texto: "Aprobar la puerta no equivale a aprobar el examen oficial: el 80 % por habilidad es un margen de seguridad propio de GRAVITY."
+    origen: "plan 0.4, anexo E.2, punto 4"
+habilidades:
+  lista: [lectura, escucha, escritura, habla]
+  peso_en_el_resultado: 25
+  tipo_de_prueba: {lectura: objetiva, escucha: objetiva, escritura: rubrica, habla: rubrica}
+  origen: "rúbrica 0.1, secciones 1 y 3 (cuatro habilidades con el mismo peso; lectura y escucha objetivas, escritura y habla con criterios); D29 (D-ING-6). El peso no entra en aprobar: no se compensa entre habilidades"
+habilidades_en_formas_de_examen:
+  lectura: [reading, reading-use-of-english]
+  escucha: [listening]
+  escritura: [writing]
+  habla: [speaking]
+  origen: "contratos cambridge-a2-key, cambridge-b1-preliminary y cambridge-b2-first (paquete P1.1a): identificadores de sección"
+  use_of_english:
+    pendiente: true
+    nota: "Las partes use-of-english-1 a 4 de B2 First están en la sección reading-use-of-english, junto a Reading, como en el manual; aquí cuentan dentro de lectura. Es una lectura del contrato, no una decisión del dueño."
+aprobar:
+  origen: "D29 (D-ING-1 y D-ING-6); rúbrica 0.1, secciones 2 y 3; niveles-y-avance 0.3, sección 3"
+  puerta_aprobada_si: todas_las_habilidades_aprobadas
+  por_habilidad: {porcentaje_minimo: 80, compensa_entre_habilidades: false}
+  objetivas:
+    habilidades: [lectura, escucha]
+    preguntas_minimas: 10
+    se_califica: porcentaje_de_aciertos
+    credito_parcial:
+      pendiente: true
+      nota: "La rúbrica 0.1 (sección 3.1) da 0.5 a una respuesta parcialmente correcta; el formato 0.4 (sección 13) dice que aquí cada pregunta se califica completa. Se aplica lo del formato (sin crédito parcial) hasta que P1.3 ajuste la rúbrica."
+  escritura_y_habla:
+    se_califica: rubrica
+    promedio_ponderado: {porcentaje_minimo: 80, escala_maxima: 4, suma_ponderada_minima: 320, suma_ponderada_maxima: 400}
+    criterio_obligatorio: {id: gramatica_del_tema, minimo: 3, de: 4}
+    deben_cumplirse_las_dos: true
+    sacar_3_en_todo_aprueba: false
+    nota_de_calculo: "Con pesos enteros que suman 100, la suma ponderada es la suma de peso × puntaje (máximo 400) y se compara con 320 en enteros, sin decimales."
+    origen: "D29 (D-ING-6: promedio ponderado de 80 % de la rúbrica y gramática del tema en 3 o más de 4); plan 0.4, sección 4 (D-ING-6: «sacar 3 en todo no aprueba»)"
+rubrica:
+  origen: "rúbrica 0.1, secciones 2 y 3; D29 (D-ING-6)"
+  escala: {min: 0, max: 4}
+  puntajes:
+    - {puntaje: 4, significado: "dominado: sin errores que cambien el sentido; el error ocasional no se repite"}
+    - {puntaje: 3, significado: "sólido: errores menores que no afectan la comprensión"}
+    - {puntaje: 2, significado: "en progreso: errores frecuentes en el tema, pero se entiende la idea"}
+    - {puntaje: 1, significado: "inicial: la idea se entiende solo con esfuerzo; faltan estructuras básicas"}
+    - {puntaje: 0, significado: "no logrado: no responde o no se entiende"}
+  escritura:
+    origen: "rúbrica 0.1, sección 3.2"
+    criterios:
+      - {id: gramatica_del_tema, nombre: "Gramática del tema", peso: 40}
+      - {id: vocabulario, nombre: "Vocabulario", peso: 20}
+      - {id: coherencia, nombre: "Coherencia", peso: 20}
+      - {id: puntuacion_y_mayusculas, nombre: "Puntuación y mayúsculas", peso: 10}
+      - {id: extension, nombre: "Extensión", peso: 10}
+    extension_por_etapa:
+      pendiente: true
+      nota: "La rúbrica 0.1 fija la extensión en 60 a 80 palabras (pruebas de módulo, anteriores a las etapas) y dice que menos de 50 palabras se califica como 1 en coherencia. Con D29 la extensión es la de la etapa (tabla de longitudes de la sección 7 del formato) y falta decir cómo se traslada la regla del 1 en coherencia. Lo ajusta P1.3 (plan 0.4, sección 7, fila rubrica-evaluacion.md)."
+  habla:
+    origen: "rúbrica 0.1, sección 3.3"
+    criterios:
+      - {id: gramatica_del_tema, nombre: "Gramática del tema", peso: 35}
+      - {id: pronunciacion_del_tema, nombre: "Pronunciación del módulo", peso: 25}
+      - {id: fluidez, nombre: "Fluidez", peso: 25}
+      - {id: vocabulario, nombre: "Vocabulario", peso: 15}
+  ejemplos_de_calculo:
+    origen: "cálculo con los pesos de la rúbrica 0.1 (secciones 3.2 y 3.3) y la regla de D29 (D-ING-6); el caso de 3 en todo, de plan 0.4, sección 4 (D-ING-6)"
+    casos:
+      - {tarea: escritura, puntajes: {gramatica_del_tema: 3, vocabulario: 3, coherencia: 3, puntuacion_y_mayusculas: 3, extension: 3}, suma_ponderada: 300, aprueba: false, motivo: "3 en todo no aprueba: 300 es menos de 320"}
+      - {tarea: escritura, puntajes: {gramatica_del_tema: 3, vocabulario: 4, coherencia: 4, puntuacion_y_mayusculas: 4, extension: 4}, suma_ponderada: 360, aprueba: true}
+      - {tarea: escritura, puntajes: {gramatica_del_tema: 2, vocabulario: 4, coherencia: 4, puntuacion_y_mayusculas: 4, extension: 4}, suma_ponderada: 320, aprueba: false, motivo: "el promedio llega a 320, pero gramática del tema está por debajo de 3"}
+      - {tarea: habla, puntajes: {gramatica_del_tema: 3, pronunciacion_del_tema: 4, fluidez: 4, vocabulario: 4}, suma_ponderada: 365, aprueba: true}
+      - {tarea: habla, puntajes: {gramatica_del_tema: 2, pronunciacion_del_tema: 4, fluidez: 4, vocabulario: 4}, suma_ponderada: 330, aprueba: false, motivo: "el promedio pasa de 320, pero gramática del tema está por debajo de 3"}
+  quien_califica_escritura_y_habla:
+    pendiente: true
+    nota: "El plan dice que el habla se graba en el dispositivo y se autoevalúa con lista de cotejo y modelo (sección 3.5) y que la revisión cruzada en pareja llega en la fase 6; la rúbrica 0.1 (sección 4) pide además una revisión y repetir la prueba si la diferencia con la autoevaluación pasa de un punto por criterio. Ningún documento dice quién califica la puerta mientras no exista la revisión en pareja ni la IA: sin eso, la puerta de escritura y habla se autocalifica."
+    origen: "plan 0.4, sección 3.5 y sección 6 (fase 6); rúbrica 0.1, sección 4"
+oportunidades:
+  por_puerta: 2
+  cada_una: evaluacion_de_cierre_completa
+  si_no_se_aprueba_ninguna: {baja_escalones: 1, se_repite_desde: "las habilidades no alcanzadas"}
+  entre_oportunidades: {semanas_de_practica_minimas: 1}
+  dos_bajas_seguidas: {accion: "el dueño revisa el plan con el estudiante (horario, carga, método)", la_exigencia_no_baja: true}
+  origen: "D29 (D-ING-1: dos oportunidades por puerta; si no se aprueba ninguna, se baja un escalón); plan 0.4, sección 3.1; niveles-y-avance 0.3, sección 4 (vigente: D29, «lo demás de ese documento sigue vigente»)"
+  primera_oportunidad:
+    pendiente: true
+    nota: "El plan no dice en qué semana se presenta la primera oportunidad (¿al final de la semana 8?) ni si la puerta cuenta dentro de las 40 horas del escalón o se suma. Las 80, 200, 360 y 520 horas suponen aprobar a la primera, al final de la semana 8."
+  en_el_primer_escalon:
+    pendiente: true
+    nota: "No se dice qué pasa si se fallan las dos oportunidades en A1.1, donde no hay un escalón más abajo."
+  al_bajar_a_un_escalon_de_cierre_de_etapa:
+    pendiente: true
+    nota: "No se dice si, al bajar de B1.1 a A2.3 (por ejemplo), hay que volver a presentar la puerta de la etapa A2 ni si se pierde la etiqueta ganada."
+formas:
+  por_puerta: 3
+  oportunidades: 2
+  reserva: 1
+  usos: {escalon: "puerta de cada escalón", etapa: "puerta de la etapa (A1: interna; A2, B1 y B2: formato de examen)"}
+  no_comparten_unidades_entre_si: true
+  unidades_exclusivas: true
+  origen: "plan 0.4, sección 6 (fase 4: «tres formas (dos oportunidades y una reserva)»), sección 3.4 (dos formas completas más una de reserva), glosario de la sección 1 («Dos formas del mismo examen no comparten nada») y formato 0.4, sección 11 (V20)"
+  uso_de_la_reserva:
+    pendiente: true
+    nota: "No se dice cuándo se usa la forma de reserva (¿si una forma se invalida?, ¿al repetir un escalón tras bajar?, ¿en la puerta anticipada?)."
+puerta_anticipada:
+  semana: 2
+  del_escalon: el_que_se_esta_cursando
+  porcentaje_minimo_por_habilidad: 90
+  gasta_oportunidades: false
+  efecto: pasa_al_siguiente_escalon
+  origen: "D29 (D-ING-5); plan 0.4, sección 3.3 (viñeta «Hacia arriba, puerta anticipada») y anexo E.3 («al menos 90 % en cada habilidad»)"
+  escritura_y_habla:
+    pendiente: true
+    nota: "No se dice cómo se aplica el 90 % a escritura y habla (¿suma ponderada de 360 sobre 400?, ¿y gramática del tema en 3 o más?)."
+  formas_e_intentos:
+    pendiente: true
+    nota: "El plan dice «en la semana 2»: no dice si también se puede presentar después, cuántas veces ni con cuál de las tres formas."
+descenso_por_evidencia:
+  mini_pruebas_seguidas: 2
+  por_debajo_de_porcentaje: 50
+  efecto: {baja_escalones: 1, penalizacion: ninguna}
+  origen: "D29 (D-ING-5); plan 0.4, sección 3.3 (viñeta «Hacia abajo, descenso por evidencia»)"
+mini_prueba:
+  dia: viernes
+  preguntas: 10
+  aprobar_con: 8
+  califica: gramatica_y_vocabulario
+  origen: "formato 0.4, sección 7, tabla de mínimos, fila «Mini prueba» (10 preguntas, se aprueba con 8); rúbrica 0.1, sección 1 (las mini pruebas califican solo gramática y vocabulario)"
+  si_no_se_aprueba:
+    los_errores_vuelven_como: tarjetas_del_repaso_de_la_semana_siguiente
+    origen: "rúbrica 0.1, sección 5 (con 5 preguntas: por debajo de 4 de 5, el mismo 80 %)"
+  primera_fallida_del_bloque:
+    cuenta: false
+    queda_como: dia_de_gracia
+    se_repite_la_semana: true
+    origen: "plan 0.4, sección 3.1; niveles-y-avance 0.3, sección 4 («Evaluación semanal de gracia»)"
+  estructura: {ver: "gravity-sesion-60, bloque viernes (estructura pendiente)"}
+requisitos_para_subir:
+  regla: "se sube solo si se cumplen los cuatro; si falta uno, no se sube aunque se cumplan los otros tres"
+  origen: "niveles-y-avance 0.3, sección 3 (vigente: aviso del 16/nov/2026 y D29); D29 (D-ING-1: «Se mantiene la regla de subir solo si se cumple todo»)"
+  revisar_en: "P1.3 (niveles-y-avance 0.4)"
+  pruebas_aprobadas:
+    pendiente: true
+    nota: "niveles-y-avance 0.3 pide aprobar las pruebas de cada módulo (semanas 4, 8, 12...) y además la evaluación de cierre. D29 no define pruebas intermedias en el escalón de 8 semanas: el plan lo define como «tramo de 8 semanas con su prueba al final» (sección 1). Hasta que P1.3 lo defina, el único requisito de prueba es la puerta."
+  evaluacion_de_cierre: {habilidades: 4, porcentaje_minimo_por_habilidad: 80}
+  constancia:
+    cada_dia_de_estudio: "completo o cubierto por un día de gracia"
+    dias_de_gracia_por_trimestre: 3
+    se_acumulan: false
+  minutos:
+    porcentaje_minimo: 90
+    minutos_planeados_por_dia: 60
+    dias_de_estudio_por_semana: 5
+    sin_audio: {minutos_planeados_por_dia: 35, origen: "D29 (D-ING-2: mientras la app no tenga audio, solo cuenta el bloque principal y el 90 % se calcula sobre eso)"}

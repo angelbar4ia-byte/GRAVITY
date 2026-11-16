@@ -278,12 +278,14 @@ Mínimos por bloque (V21). El viernes cambia la lección por conversación guiad
 
 | Bloque | Lunes: gramática y vocabulario | Martes: escucha | Miércoles: pronunciación | Jueves: lectura y escritura | Viernes: conversación |
 |---|---|---|---|---|---|
-| Lección (10) | Explicación, 6 ejemplos, error común y 10 preguntas | Audio propio con 8 preguntas | Explicación del sonido y 12 elementos | Texto con 6 preguntas | Diálogo guiado de 8 turnos con variantes |
-| Pronunciación (8) | 10 elementos | 10 elementos | 10 elementos | 10 elementos | 10 elementos |
+| Lección (10) | Explicación, 6 ejemplos, error común y 10 preguntas | Audio propio con 10 preguntas | Explicación del sonido y 14 elementos | Texto con 10 preguntas | Diálogo guiado de 8 turnos con variantes |
+| Pronunciación (8) | 12 elementos | 12 elementos | 12 elementos | 12 elementos | 12 elementos |
 | Producción (12) | Tarea con cotejo y modelo | Igual | Igual | Tarea escrita con cotejo y modelo | Monólogo o diálogo grabado |
 | Traslado (25) | Los dos audios de la semana (dos veces cada uno), 20 frases para repetir y tarjetas en audio | Igual | Igual | Igual | Igual |
 | Tarjetas nuevas | 8 | 8 | 8 | 8 | 0 |
 | Mini prueba | — | — | — | — | 10 preguntas, se aprueba con 8 |
+
+**Calibración (16/nov/2026).** Los mínimos de la tabla subieron en martes (de 8 a 10 preguntas), miércoles (de 12 a 14 elementos), jueves (de 6 a 10 preguntas) y pronunciación (de 10 a 12 elementos). Con la fórmula de minutos de abajo, los anteriores estimaban entre el 44 % y el 69 % del bloque, por debajo del 70 % que exige V22: V21 habría aceptado sesiones que V22 rechaza (lo encontró el agente de contratos, paquete P1.1b). Son provisionales: el piloto de A2.1 (P1.5) los calibra con contenido real.
 
 Cada semana tiene dos audios de traslado distintos (un monólogo y un diálogo), que se repiten durante la semana: volver a oír el mismo audio es parte del método. Longitudes por etapa:
 
