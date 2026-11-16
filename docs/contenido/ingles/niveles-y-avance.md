@@ -172,7 +172,7 @@ El registro no se edita después del cierre. Si hay un error, se anota como corr
 - Qué es un trimestre para los días de gracia (calendario o desde el primer día de estudio).
 
 **Para P6.0 (pareja y corrección con IA):**
-- Qué pasa con la puerta si la persona no activa la corrección con IA, que es opcional por función.
+- Qué pasa con la puerta si la persona no activa la corrección con IA: **resuelto por el dueño (D-ING-11)**: escritura y habla van a la pareja y a la IA, o esperan a que la IA se active; falta especificar el flujo.
 - Cómo se hace el habla de las partes en pareja de los exámenes sin otra persona, y qué se hace con la pronunciación (que no se juzga bien desde un texto).
 
 **Para quien ajuste `rubrica-evaluacion.md` (versión 0.1):** las mini pruebas son de 10 preguntas y se aprueba con 8 (la rúbrica dice 4 de 5); no hay pruebas de módulo en el escalón; no hay crédito parcial (la rúbrica da 0.5); la extensión del texto es la de la etapa (la rúbrica dice 60 a 80 palabras); y la autoevaluación del habla ya no es quien decide (D-ING-9). También falta decir cómo pasa a las etapas la regla de calificar con 1 en coherencia un texto de menos de 50 palabras. Y `gravity-escalon.yaml` todavía marca como pendiente quién califica escritura y habla, que D-ING-9 resolvió.

@@ -152,6 +152,7 @@ Las que se aprueben se registran en `docs/DECISIONES.md` como una decisión nuev
 | D-ING-7 | **«Comenzamos con A2.1 y ubicación».** El curso arranca por A2.1 y por la ubicación, no por B1.1. El orden de los exámenes no lo eligió: lo ajusté yo (A2 Key antes que B1 Preliminary, porque la primera puerta de etapa que se encuentra quien empieza en A2.1 es la de A2) | 16/nov/2026 | Confirmada, con un ajuste mío al orden de exámenes |
 | D-ING-9 | **Que corrija una IA** (opcional por función) la escritura y el habla de las puertas, y **no iniciar el curso hasta que la fase 6 esté completamente integrada** | 16/nov/2026 | Confirmada. Mueve la fase 6 a la ruta crítica |
 | D-ING-10 | **«Esperamos a que la IA esté para calificar y no iniciamos el curso»**: ninguna etiqueta provisional, porque nadie empieza antes | 16/nov/2026 | Confirmada |
+| D-ING-11 | Si la persona no activa la IA: la escritura y el habla de la puerta **van a la pareja y a la IA, o esperan a que la IA se active**. Las partes objetivas siguen | 16/nov/2026 | Confirmada. P6.0 lo especifica |
 | D-ING-8 | **Sí, borrar las dos ramas sobrantes** (`claude/integracion-ingles-main` y `claude/ubicacion-ingles`) | 16/nov/2026 | Confirmada. **Sin ejecutar:** el servidor rechazó el borrado (403); ver P0.4 |
 
 ### 4.2 Reglas de borde y dos preguntas abiertas (16/nov/2026)
