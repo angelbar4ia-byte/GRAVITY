@@ -439,7 +439,13 @@ La reserva, entonces, **se usa en tres casos**: la anticipada, el reemplazo de u
 | Etiquetas «sin audio» y 35 minutos | 3.3: solo respaldo si el audio falla; sin audio las puertas, la ubicación y la escucha no se ofrecen (4) |
 | Inglés americano en el curso y británico en Cambridge; los cuatro temas movidos; `needn't`; los mínimos recalibrados | Son de contenido: la app lee la `variante` del contenido compilado y no decide nada de esto |
 
-**3.7.13 Sin la corrección con IA, no hay puerta (P5-24).** La escritura y el habla de las puertas las corrige una IA, opcional por función (D-ING-9). **Para presentar una puerta, la anticipada o la puerta inmediata de B2, la persona debe tener activada la corrección de escritura y habla** (Ajustes › Inglés) y un equipo que pueda reproducir audio, grabar y transcribir (4). Si no, la puerta no se ofrece y la pantalla lo explica (*«Para presentar la puerta necesitas activar la corrección de escritura y habla»*); las sesiones diarias siguen igual. Mientras falte una corrección (`enCorreccion`), **no se muestra veredicto ni etiqueta** (D-ING-10); se pueden ver los resultados objetivos como resultados, no como veredicto. Los días de espera se cubren con sesiones de repaso del escalón (armadas como las de la práctica, sin elegir habilidad) que cuentan para la constancia y los minutos del ciclo; el veredicto mueve a la persona el lunes siguiente. Qué más pasa si la persona nunca la activa, y cómo se resuelve el habla en pareja, es de P6.0.
+**3.7.13 Sin la IA activada: pareja, o espera (D-ING-11, P5-24).** La escritura y el habla de las puertas las corrige una IA, opcional por función (D-ING-9). **Decidido por el dueño (D-ING-11): si la persona no activa la IA, la escritura y el habla de la puerta van a la pareja y a la IA, o esperan a que la IA se active. Lectura y escucha siguen (se califican en el dispositivo). No hay autocalificación:** la lista de cotejo de la persona nunca decide un puntaje de puerta.
+
+- **Lectura y escucha** se presentan y califican siempre, con o sin IA.
+- **Escritura y habla** se entregan igual. Con la IA activada, se corrigen con ella (7.1). Sin ella, la entrega queda en `enCorreccion` hasta que **(a)** la persona active la IA, o **(b)** llegue la corrección de la pareja y de la IA que define P6.0 (con consentimiento, 7.2). Una puerta no tiene veredicto hasta tener las cuatro habilidades calificadas por alguien distinto de quien la presenta.
+- Un equipo que no pueda grabar y transcribir (4.4) puede presentar lectura y escucha; el habla espera a otro equipo (el teléfono).
+- Mientras falte una corrección **no se muestra veredicto ni etiqueta** (D-ING-10); se ven los resultados objetivos como resultados, no como veredicto. Los días de espera se cubren con sesiones de repaso del escalón (armadas como las de la práctica, sin elegir habilidad) que cuentan para la constancia y los minutos del ciclo; el veredicto mueve a la persona el lunes siguiente (T13 a T18).
+- La pantalla lo explica sin reproche: *«Tu lectura y tu escucha ya están. Falta la corrección de tu escritura y tu habla: activa la corrección o espera a la de tu pareja.»* Cómo se reparten las entregas entre pareja e IA y qué ve cada quien es de P6.0.
 
 ### 3.8 Pantallas, flujos y tono
 
@@ -701,7 +707,7 @@ Mientras el contrato de un examen tenga datos pendientes, sus formas salen **red
 | Qué | Cómo |
 |---|---|
 | **Activar la corrección** | Un interruptor `correccion_ia` en Ajustes › Inglés (`ing_perfil`, 8.2), **apagado por omisión**. P6.0 puede dividirlo por habilidad. Es la forma de la regla *«IA opcional por función»* (D-ING-9) |
-| **Entregar una tarea** | Desde el bloque de producción (tarea diaria) o desde un turno de puerta: escritura (el texto) o habla (la grabación y su transcripción, 4.3 y 4.4) › *Entregar*. Una entrega no se edita después. En una **tarea diaria** la corrección con IA es opcional (*Pedir corrección*) y **no cuenta para ninguna puerta**; en una **puerta** es obligatoria (3.7.13) |
+| **Entregar una tarea** | Desde el bloque de producción (tarea diaria) o desde un turno de puerta: escritura (el texto) o habla (la grabación y su transcripción, 4.3 y 4.4) › *Entregar*. Una entrega no se edita después. En una **tarea diaria** la corrección con IA es opcional (*Pedir corrección*) y **no cuenta para ninguna puerta**; en una **puerta** la corrige la IA o, si la persona no la activó, la pareja y la IA; nunca la persona misma (3.7.13) |
 | **Saber qué se envía** | Antes de enviar, una pantalla dice qué sale y a dónde: *«Se enviará este texto para corregirlo. No se envía tu voz.»* y un botón *Enviar* / *Ahora no* |
 | **Ver una corrección** | Pantalla con los criterios de la rúbrica (0 a 4 cada uno), la suma sobre 400, «gramática del tema» y las observaciones; y al lado, su **autoevaluación con la lista de cotejo**. Las observaciones se guardan solo en el dispositivo |
 | **Esperar** | Estado `enCorreccion` (3.7.2): sin veredicto ni etiqueta (D-ING-10). Sin conexión, la petición queda guardada y se reintenta al volver la red |
@@ -728,7 +734,7 @@ Que lo escrito y lo grabado **no se vea en la laptop ni se respalde en la nube**
 1. El formato de lo que se manda a la función y de lo que vuelve (criterios, escala, límites, coste, versión de la rúbrica).
 2. **La pronunciación**: qué se hace con un criterio que un texto no juzga (4.4).
 3. **El habla en pareja** de los exámenes (A2 Key parte 2, B1 partes 3 y 4, B2 parte 3) cuando no hay otra persona.
-4. Qué pasa con la puerta si la persona **nunca** activa la corrección. Aquí: no se ofrece y se explica (3.7.13).
+4. Cómo llegan la escritura y el habla de la puerta a la **pareja** cuando la persona no activa la IA (D-ING-11): qué ve ella, con qué consentimiento y qué rúbrica usa. Aquí: la entrega espera en `enCorreccion` (3.7.13).
 5. Cómo trata la IA los errores del reconocedor de voz (4.4).
 6. **Pareja:** calendario compartido si coinciden de escalón, reto semanal que no depende del nivel, revisión cruzada, qué ve cada quien del otro **con consentimiento**, y los emparejamientos de escalones distintos (plan 3.7). **Mientras P6.0 no exista, ninguna pantalla ni tabla de este bloque comparte nada**: el dueño no lee lo de la pareja ni al revés (CA-5m-02).
 7. La **calibración** de la IA contra revisión humana antes de confiar en ella (P6.4) y las tablas de pareja y consentimiento (P6.1), con la misma regla: la cuenta maestra no lee (D21).
@@ -737,7 +743,7 @@ Que lo escrito y lo grabado **no se vea en la laptop ni se respalde en la nube**
 
 - **El curso no empieza hasta que la fase 6 del plan esté integrada**; no hay etiqueta provisional, porque nadie empieza antes. Se mantienen D3, D21 y que la clave del proveedor nunca va dentro de la app.
 - **Cómo se impone en la app (Propuesta P5-24, parte 2):** una **bandera de compilación `INGLES_ARRANQUE`**, apagada por omisión, junto a las que ya lee `ConfiguracionEntorno` (`app/lib/nucleo/configuracion/configuracion_entorno.dart:6-20`). Apagada, **no se ofrece nada que empiece el curso**: ni *Tu punto de partida*, ni la ubicación, ni la sesión; el contenido puede estar ya en `app/assets/ingles/` (el piloto) sin ninguna entrada que lo abra. La enciende el arquitecto cuando P6.1 a P6.4 estén integradas, estén cumplidos los pendientes del dueño que ya figuran en el roadmap (la **clave de Gemini**, el **despliegue de la función del asistente** y el **proyecto de Google Cloud**: `docs/ROADMAP.md`, control de cambios, versión 1.7; `docs/DECISIONES.md:568`) y el dueño lo apruebe.
-- **El curso funciona sin IA, salvo las puertas.** Sesiones, tarjetas, mini pruebas, ubicación y práctica por partes no la usan (plan, sección 1, punto 4); solo la escritura y el habla de las puertas la necesitan (3.7.13).
+- **El curso funciona sin IA.** Sesiones, tarjetas, mini pruebas, ubicación, práctica por partes y la lectura y escucha de las puertas no la usan (plan, sección 1, punto 4). La escritura y el habla de las puertas las corrige la IA, o la pareja y la IA, o esperan (D-ING-11, 3.7.13).
 
 ## 8. Modelo de datos `ing_*`
 
@@ -956,7 +962,7 @@ Es la **propuesta** de tablas que escribirá `backend` en P2.2. No contiene SQL:
 | Audio del curso | **Sí** | La reproducción no usa la red (motor, R8) |
 | Grabar y transcribir | **Sí**, si el equipo reconoce inglés en el dispositivo (4.4) | Nada de esto sale del dispositivo |
 | Ubicación | **Sí**, ya empezada | Para **empezar**, si hay red, se comprueba que no exista otra (5.3) |
-| Puertas y simulacros (turnos) | **Sí** | La **corrección con IA no**: la entrega queda en espera (3.7.13) |
+| Puertas y simulacros (turnos) | **Sí** | La **corrección no**: escritura y habla quedan en espera de la IA o de la pareja (3.7.13) |
 | Práctica por partes | **Sí** | |
 | Corrección con IA, sincronizar con otro equipo, descargar voces o paquetes de audio | **No** | Necesitan red; las descargas, solo con aviso (motor, 4.2) |
 
@@ -1068,7 +1074,7 @@ Numeración: `CA-5a-nn` núcleo, `CA-5b-nn` audio y habla, `CA-5c-nn` ubicación
 | CA-5a-38 | **Forma que toca** (P5-12): anticipada → C; oportunidades → la primera no presentada en A, B, C; con las tres presentadas, la de hace más tiempo; una forma retirada se salta; sin ninguna, la puerta no se ofrece | `forma_que_toca_test.dart` |
 | CA-5a-39 | **Turnos** (P5-15): A2 Key en 2 turnos de 90 y 10 minutos; B1 Preliminary en 2 de 90 y 42; B2 First en 3 de 75, 80 y 54; una puerta de escalón en 1; ningún turno parte una sección ni un papel; el día de un turno acredita 3 600 segundos y queda completo | `turnos_puerta_test.dart` |
 | CA-5a-40 | **Turno no presentado:** no caduca, se ofrece el siguiente día de estudio y el día en que faltó queda sin completar | `turnos_puerta_test.dart` |
-| CA-5a-41 | **Sin corrección con IA no hay puerta** (P5-24): con el interruptor apagado, o sin equipo que grabe y transcriba, la puerta, la anticipada y la inmediata de B2 no se ofrecen, la pantalla dice por qué y las sesiones diarias siguen | `puerta_sin_ia_test.dart` (app) |
+| CA-5a-41 | **Sin IA, no hay autocalificación** (P5-24, D-ING-11): con el interruptor apagado, lectura y escucha de una puerta se presentan y califican; escritura y habla se entregan y quedan en `enCorreccion`; ninguna ruta ni caso de uso acepta un puntaje de escritura o habla de la propia persona; al activar la IA, las entregas en espera se envían | `puerta_sin_ia_test.dart` (app) y `aprobar_puerta_test.dart` |
 | CA-5a-42 | **En corrección:** no hay veredicto ni etiqueta; los días de espera quedan como `espera` y cuentan para la constancia y los minutos del ciclo | `en_correccion_test.dart` |
 | CA-5a-43 | **3 toques o menos:** de Hoy a estar dentro del primer sub-bloque pendiente hay 2 toques; *Continuar* abre el siguiente pendiente; las rutas de 3.8 existen | `toques_ingles_test.dart` (como `app/test/modulos/habitos/toques_habitos_test.dart`) |
 | CA-5a-44 | **Sin culpa:** ningún texto del catálogo `MensajesIngles` contiene una palabra de `MensajesHabitos.prohibidas` ni usa rojo; los textos de 3.8 salen del catálogo | `mensajes_ingles_test.dart` |
@@ -1232,7 +1238,7 @@ Nada de esta lista se cambia aquí. Donde una propuesta de esta versión toca un
 | **D-ING-8:** borrar dos ramas (sin ejecutar) | `docs/DECISIONES.md:569` | No aplica |
 | **D-ING-9:** la escritura y el habla de las puertas las corrige una **IA, opcional por función**; D3, D21 y la clave fuera de la app se mantienen | `docs/DECISIONES.md:568`; plan 3.8 | 3.7.13, 7 |
 | **D-ING-10:** el curso **no arranca** hasta que la fase 6 esté integrada; **ninguna etiqueta provisional** | `docs/DECISIONES.md:568`; plan 4.1 | 3.7.13, 7.3 |
-| **Plan 4.2:** la puerta de etapa **es** la del último escalón (13 puertas, 39 formas); primera oportunidad al final de la semana 8; fallar las dos en A1.1 repite A1.1 y la segunda caída seguida lleva a revisar el plan; bajar a un escalón de cierre conserva la etiqueta; la puerta cuenta dentro de las 40 horas; B1+ no se otorga; los 35 minutos solo de respaldo | Plan, sección 4.2 | 3.7.12 (una fila por caso) |
+| **D-ING-11 (coordinador, tras esta redacción):** si la persona no activa la IA, la escritura y el habla de la puerta van a la pareja y a la IA, o esperan a que la IA se active; lectura y escucha siguen; no hay autocalificación | Mensaje del coordinador del 16/nov/2026; aún no figura en `docs/DECISIONES.md` | 3.7.13, 7.1, 7.2 |\n| **Plan 4.2:** la puerta de etapa **es** la del último escalón (13 puertas, 39 formas); primera oportunidad al final de la semana 8; fallar las dos en A1.1 repite A1.1 y la segunda caída seguida lleva a revisar el plan; bajar a un escalón de cierre conserva la etiqueta; la puerta cuenta dentro de las 40 horas; B1+ no se otorga; los 35 minutos solo de respaldo | Plan, sección 4.2 | 3.7.12 (una fila por caso) |
 | **Reglas del dueño vigentes:** 60 minutos de lunes a viernes; un día completo es principal más traslado; **tres días de gracia por trimestre, sin acumularse**; los cuatro requisitos para subir (pruebas, evaluación de cierre, constancia y 90 % de minutos); *«si pierdes un día, no se recupera con dos bloques seguidos»* | `docs/contenido/ingles/niveles-y-avance.md`, secciones 4 y 5; `CONTEXTO.md` | 3.3, 3.4, 3.7.4 |
 | **D3:** nada de dinero ni datos clínicos a la IA en la nube; el modelo no ve cifras | `docs/DECISIONES.md:77-87` | R1, 7.1 |
 | **D5 y D21:** Hábitos es personal; la cuenta maestra no lo lee; las tablas `hab_*` no escriben en la bitácora; la tablet personal funciona como el teléfono y la pública no muestra Hábitos | `docs/DECISIONES.md:111-142` y `:470-480` | R2, R3, 3.8, 8.3 |
@@ -1268,7 +1274,7 @@ Todo lo que esta versión resuelve por su cuenta, en un solo lugar, para que el 
 | P5-21 | Ubicación: un texto con 3 preguntas y un audio con 3 que se oye dos veces; sin cronómetro ni retroalimentación; respuestas de una en una al servidor; comprobación al empezar si hay red | 5.2, 5.3 | Tres textos y tres audios, una reproducción, o con retroalimentación |
 | P5-22 | La transcripción es solo en el dispositivo, comprobada antes; si no se puede garantizar, el habla pasa a autoevaluación | 4.4 | Permitir reconocimiento en la nube (rompe R4) |
 | P5-23 | Grabaciones: carpeta privada, fuera de la copia de Android, 30 días (o hasta 30 días tras el veredicto en una puerta) | 4.3 | Otra retención |
-| P5-24 | Sin la corrección con IA activada no se presenta una puerta; mientras falte, no hay veredicto; `INGLES_ARRANQUE` apagada impide empezar el curso | 3.7.13, 7.3 | Una etiqueta provisional (D-ING-10 la prohíbe) |
+| P5-24 | Sin la IA activada, escritura y habla de la puerta esperan (pareja e IA, o activación; D-ING-11) y lectura y escucha siguen; sin autocalificación; mientras falte, no hay veredicto; `INGLES_ARRANQUE` apagada impide empezar el curso | 3.7.13, 7.3 | Una etiqueta provisional (D-ING-10 la prohíbe) |
 | P5-25 | Semáforo por tabla de cuatro condiciones, solo con formas completas, en modo examen y con audio; la práctica por partes no suma | 6.4, 6.5 | Otra regla de colores |
 | P5-26 | El inglés no se ofrece en la tablet pública | 3.8 | Permitirlo con nombre y PIN |
 | P5-27 | Metas semanales (5 días, 300 minutos, 60 repasos) informativas | 3.3 | Que alguna bloquee |

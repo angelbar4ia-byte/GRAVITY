@@ -470,7 +470,8 @@ El piloto (P1.5) necesita además la herramienta completa (P1.2c) y la revisión
 | P0.4 Ramas | Sin terminar (16/nov/2026) | D-ING-8 confirmada, pero el servidor respondió 403 al borrar. Lo termina el dueño (ver P0.4) |
 | P3.0 Especificación del motor de voz | Hecha (16/nov/2026), en borrador | `docs/specs/fase-8-motor-de-voz.md`, 965 líneas, 45 criterios, 16 pendientes de verificación y 12 preguntas al dueño. No toca ningún paquete ni D6. Las huellas de los paquetes coinciden con pub.dev |
 | P1.3 Matriz de niveles | Hecho (16/nov/2026), en `borrador` | `data/ingles/niveles.yaml` (13 escalones, 97 temas, 7 habilidades, 24 focos, 5 enfoques; A2.1 a A2.3 semana por semana) y `niveles-y-avance.md` 0.4. Al integrar: solo se tocaron esos dos archivos; `validar` da 0 errores y desaparecen los avisos «sin niveles»; 10 citas de página de los manuales se comprobaron contra los PDF; ninguna secuencia de 6 palabras copiada de los manuales ni del marco. 47 temas quedan `pendiente: true` por no tener inventario de manual |
-| P0.3, P6.0, P1.2c y los demás | Pendientes | P0.3 y P6.0 pueden salir ya, de uno en uno para no pegar con el límite de uso |
+| P0.3 Especificación v0.5 del bloque en la app | Hecha (16/nov/2026), en borrador | `docs/specs/fase-8-habitos-ampliaciones.md`, 1 335 líneas: sub-bloques 5a a 5e, 12 tablas `ing_*`, 111 criterios de aceptación, 29 propuestas y 8 preguntas al dueño. Revisado: solo cambió ese archivo y no hay términos obsoletos |
+| P6.0, P1.2c y los demás | Pendientes | P6.0 puede salir ya |
 
 ## Anexo B. Temario por escalón (propuesta para P1.3; el reparto de A2.2 y A2.3 y de B1.3 y B1.4 es mío y P1.3 lo ajusta con el manual del examen de la etapa)
 
