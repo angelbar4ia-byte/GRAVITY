@@ -156,6 +156,7 @@ Las que se aprueben se registran en `docs/DECISIONES.md` como una decisión nuev
 | D-ING-12 | **Asistencia:** solo se pueden faltar **10 minutos por día** y **3 días completos**. Si se pasa de eso, no se completa el curso y hay que repetirlo (leído como: repetir el escalón; a confirmar) | 16/nov/2026 | Confirmada, con una lectura mía |
 | D-ING-13 | **Sin conexión:** completar esa parte de la especificación. **Dictado en modo local.** Texto, transcripción y voz: los tres se quedan en el dispositivo | 16/nov/2026 | Confirmada |
 | D-ING-14 | **El examen del viernes es de repaso; hay que poner pruebas por unidad** (pruebas intermedias que bloquean) | 16/nov/2026 | Confirmada. Cambia la propuesta de P0.3 |
+| D-ING-15 | **IA en la nube para el texto escrito** (sin tiempo real, con permiso en cada envío y filtro de privacidad). **Habla: conversación con la IA para corregir y ayudar a hablar con claridad; se empieza por texto** (voz a texto en el teléfono, solo el texto va a la IA, ella responde en voz alta) **y el audio a la nube se decide después.** Prioridad: eficiente y barato. Sustituye a D-ING-13 en lo de texto y transcripción; la grabación de voz se queda en el teléfono | 16/nov/2026 | Confirmada |
 | D-ING-8 | **Sí, borrar las dos ramas sobrantes** (`claude/integracion-ingles-main` y `claude/ubicacion-ingles`) | 16/nov/2026 | Confirmada. **Sin ejecutar:** el servidor rechazó el borrado (403); ver P0.4 |
 
 ### 4.2 Reglas de borde y dos preguntas abiertas (16/nov/2026)
