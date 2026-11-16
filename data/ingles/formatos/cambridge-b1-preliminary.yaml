@@ -94,6 +94,8 @@ secciones:
     preguntas_total: 6
     palabras_estimulo: {min: 100, max: 130, origen: medido}
     medido: {total: 116, muestras: 1, pagina: 22}
+    clase: gramatical
+    nota_clase: 'El manual dice que se mide el conocimiento de estructuras gramaticales (p. 9). GRAVITY escribe solo huecos gramaticales para que cada uno tenga una respuesta única o una lista corta y completa.'
     puntos_por_pregunta: 1
     pagina_manual: 9
 - id: writing

@@ -1,6 +1,6 @@
 # Plan de ejecución — Fase 8, bloque 5 (Hábitos · Inglés)
 
-> Versión 0.2 (15/nov/2026). **Propuesta para aprobación del dueño.** Lo que cambió desde la 0.1 está en el anexo C.
+> Versión 0.3 (16/nov/2026). **Propuesta para aprobación del dueño**, con tres decisiones ya confirmadas (4.1). Lo que cambió desde la 0.1 está en el anexo C.
 > Ejecuta: el equipo de agentes del roadmap (sección 11), todos en **Sonnet 5.5** por la regla 11.1.10. Orquesta e integra: el arquitecto.
 > Base: revisión `docs/revisiones/fase-8-ingles.md` (5 bloqueantes, 9 importantes) y formato `docs/specs/fase-8-ingles-formato.md`.
 > No cambia ninguna decisión confirmada por su cuenta: lo que requiere al dueño está en la sección 4.
@@ -125,7 +125,17 @@ Cada quien tiene su ruta. Si coinciden de escalón, comparten calendario y activ
 | D-ING-7 | Orden: primero B1.1 y la ubicación; después A2.1. Exámenes: B1 Preliminary, A2 Key, TOEIC, B2 First, TOEFL | **Sí.** Se reordena con el resultado real de la ubicación | Se sigue este orden |
 | D-ING-8 | Borrar la rama `claude/ubicacion-ingles` del repositorio archivado de Hábitos y la rama `claude/integracion-ingles-main`. Llevar el trabajo a `main` por pull request cuando lo pidas | **Sí** | Las ramas quedan como están |
 
-Las que se aprueben se registran en `docs/DECISIONES.md` como una decisión nueva (D29).
+Las que se aprueben se registran en `docs/DECISIONES.md` como una decisión nueva (D29, ya abierta con las confirmadas).
+
+### 4.1 Respuestas del dueño
+
+| # | Respuesta | Fecha | Estado |
+|---|---|---|---|
+| D-ING-1 | **Sin decidir.** Pidió investigar cómo estructuran el avance los institutos y los exámenes: "tal vez son cumplir ciertas horas, para realizar un examen de avance de nivel" | 15/nov/2026 | Investigación en el anexo E. **Propuesta revisada:** 13 escalones alineados a las horas de Cambridge, en lugar de 11 |
+| D-ING-2 | **Sí, con mínimos** | 15/nov/2026 | Confirmada |
+| D-ING-3 | **Sí**, voz del dispositivo o "la voz de GRAVITY", con una duda: si hay un modelo de voz que se pueda descargar | 15/nov/2026 | Confirmada en principio. La duda está respondida en el anexo F: sí existen; el motor se decide al probarlos en el teléfono |
+| D-ING-4 | **Sí, por muestras** | 15/nov/2026 | Confirmada |
+| D-ING-5 a 8 | Todavía no se le han presentado una por una | | Pendientes |
 
 ## 5. Cómo se ejecuta con Sonnet
 
@@ -354,9 +364,10 @@ En paralelo: fase 4 (primeras dos semanas de B1.1 y de A2.1)
 
 El piloto (P1.5) necesita además la herramienta completa (P1.2c) y la revisión a ciegas probada (P1.4b).
 
-**Primer lote, sin esperar ninguna decisión:** P1.1a, P1.2a y P1.4a. Sus encargos están escritos en el anexo D. P0.1 ya está hecho.
-**Segundo lote, con D-ING-1, 2, 4 y 5:** P0.2, P0.3, P1.1b, P1.2b, P1.2c, P1.3, P1.4b y, al final, P1.5.
-**Con D-ING-3:** P3.1 y P3.2a, en paralelo con la fase 2.
+**Primer lote: hecho** (15/nov/2026): P0.1, P1.1a, P1.2a y P1.4a. Sus encargos están en el anexo D.
+**Puede salir ya, con D-ING-2 y 4 confirmadas:** P1.2b (comprobaciones de longitud, fidelidad y duplicados, y el informe). Solo necesita lo que ya existe.
+**Espera D-ING-1 y D-ING-5:** P1.1b (contratos propios), P1.3 (matriz de niveles), P1.2c, P1.4b, P0.2, P0.3 y, al final, P1.5.
+**Espera la elección del motor de voz (anexo F):** P3.1 y P3.2a, en paralelo con la fase 2.
 
 ## 9. Riesgos
 
@@ -364,7 +375,8 @@ El piloto (P1.5) necesita además la herramienta completa (P1.2c) y la revisión
 |---|---|
 | El volumen es grande: 11 escalones y 6 exámenes | Producir por delante de quien estudia, no todo antes de empezar. Priorizar por la ubicación real |
 | Preguntas de B2 escritas por agentes | Ejemplos patrón, resolución a ciegas doble en ubicación y puertas, muestreo del dueño con el cuaderno |
-| La voz del dispositivo suena mal o no está instalada | Interfaz de fuente de audio y verificación temprana (P3.3) |
+| La voz del dispositivo suena mal o no está instalada | Interfaz de fuente de audio y verificación temprana (P3.3). Hay modelos de voz descargables como alternativa (anexo F) |
+| Los revisores a ciegas son del mismo modelo y comparten puntos ciegos | Muestreo del dueño (D-ING-4), puerta de etapa con formato oficial y, antes de cualquier uso oficial, una revisión humana de las puertas |
 | No hay población para calibrar la dificultad | Zonas en lugar de puntajes; ubicación corregida con evidencia; registro de aciertos por pregunta para retirar las que fallen sin razón |
 | La especificación de TOEFL 2026 puede cambiar | Contrato con fecha de consulta; se revisa antes de producir sus formas |
 | El dueño como cuello de botella | D-ING-4 |
@@ -386,15 +398,15 @@ El piloto (P1.5) necesita además la herramienta completa (P1.2c) y la revisión
 | Paquete | Estado | Nota |
 |---|---|---|
 | Revisión del bloque | Hecho (14/nov/2026) | `docs/revisiones/fase-8-ingles.md` |
-| Formato `gravity-ingles-v1` | Propuesto (versión 0.2, 15/nov/2026) | `docs/specs/fase-8-ingles-formato.md` |
+| Formato `gravity-ingles-v1` | Propuesto (versión 0.3, 16/nov/2026) | `docs/specs/fase-8-ingles-formato.md`. La 0.3 recoge lo que encontró el validador |
 | Ejemplos patrón | Escritos (15/nov/2026), en `borrador` | Nueve archivos en `data/ingles/ejemplos/`, descritos en la sección 12 del formato. Los resuelve a ciegas P1.4a |
 | Cuaderno a ciegas de los ejemplos | Generado (15/nov/2026) | `docs/contenido/ingles/generado/cuaderno-ejemplos-patron.md`, 40 preguntas sin respuestas. Lo genera `herramientas/ingles/transitorio/cuaderno_ejemplos.py` mientras no exista `exportar` |
 | Habilidad `simulacro-examen-idioma` | Actualizada y versionada (15/nov/2026) | Con las reglas de 5.6. Antes no estaba en git |
 | P0.1 Etiquetas honestas | Hecho (15/nov/2026) | 25 documentos y la página de ubicación, tanto la copia del repositorio como la publicada (versión 4). No se tocó ninguna pregunta |
 | P1.1a Contratos de exámenes | Hecho (15/nov/2026), en `borrador` | Seis contratos en `data/ingles/formatos/`, cada dato con su página. Quedan 24 datos pendientes, casi todos de TOEIC y TOEFL, porque sus manuales traen pocas muestras. Falta el contraste de calidad (10 datos por contrato) |
-| P1.4a Revisión a ciegas de los ejemplos | Rondas 1 y 2 hechas (15/nov/2026) | En las dos, 40 de 40 coinciden con la clave. Segundas respuestas defendibles: 6 en la ronda 1 y 2 en la ronda 2, todas reescritas. Falta la ronda 3 sobre lo cambiado. Detalle en `docs/revisiones/ingles/` |
+| P1.4a Revisión a ciegas de los ejemplos | Hecho (15/nov/2026), tres rondas | La respuesta principal coincide con la clave en 40, 40 y 31 preguntas. Segundas respuestas defendibles: 6, 2 y 0, todas reescritas. Detalle en `docs/revisiones/ingles/`. Los ejemplos siguen en `borrador` hasta que existan `niveles.yaml` y el contrato de sesión |
 | Habilidad `leccion-idioma` | Creada (15/nov/2026) | `.claude/skills/leccion-idioma/`. Propuesta hasta la decisión D-ING-2 |
-| P1.2a Validador | Pendiente | El lanzamiento del agente fue negado dos veces por el sistema de permisos de la sesión. No se reintenta: espera que el dueño autorice el agente o pida que lo construya la sesión que integra |
+| P1.2a Validador | Hecho (15/nov/2026) | `herramientas/ingles`: orden `validar` con V01 a V14 (sin V06) y la parte de V24 que no depende de revisiones. 169 pruebas en verde, 0 errores sobre `data/ingles`. Lo escribió el agente `habitos` con autorización expresa del dueño; al integrar se sembraron siete defectos en una copia y los detectó todos. Sus 12 hallazgos están resueltos en el formato 0.3 o asignados a P1.1b, P1.2b, P1.2c y P1.3 |
 | P0.2 a P0.4, P1.1b, P1.2b en adelante | Pendientes | Esperan las decisiones del dueño |
 
 ## Anexo B. Temario por escalón (propuesta para P1.3)
@@ -556,3 +568,66 @@ Entrega: un bloque YAML por unidad, con la forma que pide el cuaderno. No escrib
 3. Compara con la clave: `python3 herramientas/ingles/transitorio/cuaderno_ejemplos.py --clave`. En opción múltiple y en oraciones omitidas, la letra debe coincidir. En las demás, cada respuesta del revisor debe estar en `aceptadas`. Toda respuesta que no esté, y toda `otras_validas`, es una disputa.
 4. Cada disputa se cierra de una de dos formas: se añade la respuesta a `aceptadas` si de verdad es válida, o se reescribe la pregunta para que deje de serlo. No se discute con el revisor. Después se genera el cuaderno otra vez y lo resuelve un agente distinto.
 5. Un commit por paquete, y se actualiza el anexo A.
+
+### Cambios de la versión 0.3 (16/nov/2026)
+
+1. **Tres decisiones confirmadas** (4.1): D-ING-2, D-ING-3 en principio y D-ING-4. D-ING-1 espera la investigación de horas por nivel (anexo E).
+2. **Investigación de cómo estructuran el avance** institutos y exámenes (anexo E) y respuesta sobre las voces descargables (anexo F).
+3. **El primer lote terminó.** Lo que enseñó el validador está en el formato 0.3: `puntos_por_pregunta` puede ser rango, `palabras_respuesta` en las transformaciones, `clase` en los huecos abiertos, `nota` del audio para completar notas, unidades del contrato frente a archivos, y las contracciones.
+4. **Riesgo nuevo:** los revisores a ciegas son del mismo modelo (sección 9).
+
+## Anexo E. Cómo estructuran el avance los institutos y los exámenes
+
+> Investigación del 16/nov/2026, a petición del dueño ("puedes investigar cómo están estructurados... Macmillan, Cambridge, TOEIC y TOEFL; tal vez son cumplir ciertas horas, para realizar un examen de avance de nivel").
+> Marcas: **leído** = abrí el documento oficial; **resultado de búsqueda** = vi la cifra en un resumen de búsqueda sin abrir la página; **no confirmado** = no pude comprobarlo.
+
+### E.1 Lo que se encontró
+
+| Tema | Hallazgo | Fuente | Estado |
+|---|---|---|---|
+| Horas por nivel (Cambridge) | Horas guiadas acumuladas desde cero: A2 180 a 200, B1 350 a 400, B2 500 a 600. Pasar de un nivel al siguiente toma unas 200 horas guiadas, y Cambridge las llama guía: cada quien puede necesitar más o menos | Página de ayuda de Cambridge y guía de Cambridge University Press, vistas como resultados de búsqueda (el sitio de ayuda está bloqueado en este entorno) | Resultado de búsqueda, coincide con otras fuentes |
+| Un instituto real | UNAM (ENES Morelia): un nivel por semestre, 120 horas por nivel (90 de clase y 30 de estudio) | Documento de la ENES Morelia, visto como resultado de búsqueda | Resultado de búsqueda |
+| Referencias comerciales | EF: de 100 a 150 horas de A1 a A2, de 100 a 200 de A2 a B1, de 150 a 200 de B1 a B2. Otro sitio: 80, 160 y 180 clases | Blogs de EF y de languagecourse.net | Resultado de búsqueda, menos fiable |
+| Macmillan | **No pude confirmar cómo estructura sus niveles.** Su sitio está bloqueado en este entorno y las búsquedas no dieron horas por nivel. Solo vi que Language Hub tiene seis niveles de A1 a C1 y que un curso antiguo suyo (*move*) cuenta 15 horas por módulo | Catálogo de Macmillan | No confirmado |
+| Cambridge, notas | Escala de Cambridge: en B1 Preliminary, 140 a 152 es B1; 153 a 159, B1 alto; 160 a 170, B2. En B2 First, 160 a 172 es B2; 173 a 179, B2 alto; 180 a 190, C1. En A2 Key, 120 a 139 es A2; 140 a 150, B1 | cambridgeenglish.org, páginas de resultados | **Leído** |
+| TOEIC | ETS recomienda puntajes mínimos por habilidad: Listening A2 110, B1 275, B2 400 (de 495); Reading A2 115, B1 275, B2 385 (de 495); Speaking A2 90, B1 120, B2 160 (de 200); Writing A2 70, B1 120, B2 150 (de 200). Y dice que son "guidelines, as ETS does not recommend the use of rigid cut scores" | ETS, *Mapping the TOEIC tests on the CEFR* | **Leído** |
+| TOEFL iBT 2026 | Escala nueva de 1 a 6 en pasos de 0.5: A1 1 a 1.5, A2 2 a 2.5, B1 3 a 3.5, B2 4 a 4.5, C1 5 a 5.5, C2 6. Se reporta junto a la escala anterior de 0 a 120 | ETS, informe de abril de 2026 sobre la escala por bandas | **Leído** |
+| Horas por punto de TOEIC | No hay cifra oficial. Reglas prácticas de fuentes no oficiales: unas 200 a 300 horas por cada 100 puntos, y las fuentes se contradicen | Varios, entre ellos artículos que citan a Saegusa (1985) | No confirmado; no se usa |
+
+### E.2 Lo que significa
+
+1. **Tu intuición es correcta para los institutos y falsa para los exámenes.** Los institutos estructuran cada nivel por horas (de unas 80 a 200 por nivel, según la fuente) y lo cierran con un examen interno. Los exámenes oficiales **no piden horas**: cualquiera puede presentarlos. Cambridge, ETS y TOEFL miden el nivel con una escala de puntajes; las horas son solo una guía de cuánto suele tomar.
+2. **Lo que ya aprobaste es la misma estructura.** Tu regla (cada bimestre, subir solo si cumples todo) ya pide horas (al menos el 90 % de los minutos planeados) y examen (80 % por habilidad). El escalón de 8 semanas y 40 horas es un "nivel de instituto" pequeño.
+3. **El plan de 11 escalones llegaba antes que las guías.** Con 40 horas por escalón: la puerta de A2 quedaba en 160 horas (guía: 180 a 200), la de B1 en 280 (guía: 350 a 400) y la de B2 en 440 (guía: 500 a 600). Es entre 11 % y 30 % menos de lo que Cambridge calcula. Y sus horas son de clase con maestro; una hora sola con una app seguramente rinde menos.
+4. **Los exámenes oficiales no usan el 80 %.** Cambridge da la nota con una escala por bandas, y ETS dice que sus mínimos son guías. El 80 % por habilidad es un margen de seguridad propio, razonable para decir "estás listo", pero **no equivale a aprobar el examen real**. El plan ya lo dice en el semáforo; conviene no confundirlos.
+
+### E.3 Propuesta revisada para D-ING-1: 13 escalones
+
+| Etapa | Escalones (40 horas cada uno) | Horas acumuladas al pasar la puerta | Guía de Cambridge |
+|---|---|---|---|
+| A1 | A1.1, A1.2 | 80 | no la pude confirmar |
+| A2 | A2.1, A2.2, A2.3 | **200** | 180 a 200 |
+| B1 | B1.1, B1.2, B1.3, B1.4 | **360** | 350 a 400 |
+| B2 | B2.1, B2.2, B2.3, B2.4 | **520** | 500 a 600 |
+
+- Total: **13 escalones**, 520 horas, unos dos años desde cero a una hora diaria de lunes a viernes. Quien entre ubicado al inicio de B1 llega a la puerta de B2 en 8 escalones, unos 15 meses, aprobando todo a la primera.
+- **Qué se mantiene:** el escalón de 8 semanas, tu regla de subir solo si se cumple todo, la puerta de etapa con formato de examen oficial, la puerta anticipada y el descenso por evidencia.
+- **Qué cambia:** hay dos escalones más (uno en A2 y uno en B1), y por eso el temario del anexo B se reparte en 13 y no en 11.
+- **Las horas son un ritmo, no un candado.** Las horas de una etapa fijan el ritmo y el 90 % de minutos ya es requisito, pero quien demuestra el nivel antes (puerta anticipada, al menos 90 % en cada habilidad) avanza. Cambridge lo dice igual: las horas son una guía.
+- **El 520 es el piso, no el techo.** Quien tarde más no falló: la propia ruta ya prevé repetir escalones.
+
+## Anexo F. Voces descargables para el audio
+
+> Pregunta del dueño (15/nov/2026), al aprobar el audio: "no tenemos un modelo de voz que podamos descargar?"
+
+**Respuesta corta: sí existen, pero no los pude probar aquí.**
+
+| Vía | Qué es | Pesa | Calidad | Pendiente de verificar |
+|---|---|---|---|---|
+| A. Voz del dispositivo | La que ya traen Android y Windows (`flutter_tts`) | Nada | Variable. Hay pocas voces distintas, y los diálogos del curso necesitan F1, F2, M1 y M2 | Qué voces en inglés hay en el Galaxy A52 y en Windows, y si funcionan sin conexión |
+| B. Modelo descargable | Voces neuronales que corren sin conexión dentro de la app: Piper y Kokoro, con la biblioteca sherpa-onnx (Apache-2.0) y paquetes de Flutter ya existentes. Una misma voz en teléfono y laptop, y varias voces para los diálogos | Decenas de MB por voz. Vi apps de ejemplo de 40 a 129 MB con una voz incluida | Mejor que la A en general; no la he oído | Tamaño de cada modelo, **licencia de cada voz** (no la verifiqué), velocidad en el Galaxy A52 |
+| C. Audio pregrabado | Se generan los audios con la vía B en la laptop y se empaquetan en la app | Unos 90 a 120 MB para todo el curso, en formato Opus (cálculo mío: unos 300 audios de 1.6 minutos; no medido). Se podrían bajar por escalón | Fija y revisable antes de entregarla | Que la licencia de la voz permita distribuir el audio generado |
+
+- **"La voz de GRAVITY" todavía no existe como componente.** D6 dice que GRAVITY "genera la voz" para las bocinas, pero no elige el motor. La app tiene `speech_to_text` (entender lo que dices) y ningún motor para hablar. Lo razonable es elegir un solo motor que sirva a las bocinas y al curso.
+- **Por qué no se pudo probar:** el entorno solo llega a ets.org y cambridgeenglish.org; Hugging Face y GitHub, donde están los modelos, están bloqueados.
+- **Recomendación:** no cerrar el motor todavía. El guion es lo que importa y la voz va detrás de una interfaz intercambiable (sección 3.5). En la prueba en el teléfono (P3.3) se compara la voz del dispositivo contra una voz descargable con la misma frase del curso, y el dueño elige de oído. Si la del teléfono no tiene voces suficientes para los diálogos, la B o la C pasan a ser la primera opción.

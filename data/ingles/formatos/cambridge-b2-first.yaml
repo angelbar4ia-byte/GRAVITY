@@ -44,6 +44,8 @@ secciones:
     preguntas_total: 8
     palabras_estimulo: {min: 130, max: 180, origen: medido}
     medido: {total: 157, muestras: 1, pagina: 21}
+    clase: gramatical
+    nota_clase: 'El manual dice que el foco principal es la gramática, con algo de vocabulario (p. 9). GRAVITY escribe solo huecos gramaticales para que cada uno tenga una respuesta única o una lista corta y completa.'
     puntos_por_pregunta: 1
     pagina_manual: 9
   - id: use-of-english-3
@@ -65,6 +67,7 @@ secciones:
     preguntas_por_unidad: 1
     preguntas_total: 6
     palabras_estimulo: {min: 6, max: 15, origen: medido}
+    palabras_respuesta: {min: 2, max: 5, origen: declarado, pagina: 22, nota: 'Incluida la palabra clave. Una contracción cuenta como dos palabras (manual, p. 22).'}
     medido:
       por_unidad: {min: 7, max: 13}
       muestras: 6

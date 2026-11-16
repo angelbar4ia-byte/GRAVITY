@@ -6,8 +6,9 @@
 
 - El inglés es un bloque del módulo **Hábitos** dentro de la app única **GRAVITY** (D1 y D10). Diseño base: `docs/modulos/habitos/diseno-app-habitos.md`, §5.3 y Anexo A. Especificación: `docs/specs/fase-8-habitos-ampliaciones.md` (bloque 5a, v0.4; quedó atrás respecto a decisiones posteriores).
 - **Revisión completa del bloque (14 y 15/nov/2026):** `docs/revisiones/fase-8-ingles.md`. Veredicto: buena base de borradores, **no apto todavía** como curso ni como preparación de examen. Cinco hallazgos bloqueantes y nueve importantes, con mediciones.
-- **Plan de ejecución:** `docs/specs/fase-8-ingles-plan.md` (versión 0.2). Propuesto; espera las decisiones D-ING-1 a 8 del dueño. Lo ejecuta el equipo de agentes (Sonnet 5.5). Los encargos del primer lote están escritos en su anexo D.
-- **Formato de contenido `gravity-ingles-v1`:** `docs/specs/fase-8-ingles-formato.md` (versión 0.2). Nueve ejemplos patrón en `data/ingles/ejemplos/`, en borrador, y su cuaderno a ciegas en `docs/contenido/ingles/generado/`.
+- **Plan de ejecución:** `docs/specs/fase-8-ingles-plan.md` (versión 0.3). Lo ejecuta el equipo de agentes (Sonnet 5.5). El dueño ya confirmó D-ING-2 (hora diaria con mínimos), D-ING-3 en principio (audio generado en el dispositivo) y D-ING-4 (aprobación por muestras), registradas en D29. **D-ING-1** espera una propuesta revisada de 13 escalones (anexo E del plan, con la investigación de horas por nivel) y D-ING-5 a 8 no se le han presentado todavía. El primer lote ya se ejecutó (anexo A).
+- **Herramienta `herramientas/ingles`:** orden `validar` (V01 a V14 sin V06), 169 pruebas en verde. Faltan `exportar`, `comparar`, `compilar` e `informe`. Mientras tanto, `herramientas/ingles/transitorio/` genera el cuaderno a ciegas y compara las rondas.
+- **Formato de contenido `gravity-ingles-v1`:** `docs/specs/fase-8-ingles-formato.md` (versión 0.3). Nueve ejemplos patrón en `data/ingles/ejemplos/`, en borrador, y su cuaderno a ciegas en `docs/contenido/ingles/generado/`.
 - **Paquete P0.1 hecho (15/nov/2026):** simulacros y prácticas dicen "formato reducido"; la prueba de nivel y la página dicen "en revisión".
 - **En la app todavía no hay código de inglés.** El módulo Hábitos sí existe (`app/lib/modulos/habitos`, `paquetes/habitos_dominio`) y el sistema de diseño ya tiene el submódulo `ingles`.
 
@@ -87,12 +88,13 @@ Están en el plan, sección 4, con recomendación en cada una:
 ## 7. Pendientes fuera de inglés
 
 - Prueba SQL `99_cuidados_recordatorios.sql`: falla porque la función usa `now()` y la prueba usa fechas fijas. Hay que decidir cuál cambia.
+- `docs/DECISIONES.md`: el índice del principio no lista D22 a D28 (sí existen sus secciones).
 - `flutter analyze`: 7 avisos informativos (Alimentación, Finanzas y una prueba), sin errores.
 - Lo que depende del dueño según el roadmap: proyecto de Supabase, Firebase, `pg_cron`, clave de Gemini y Google Cloud.
 
 ## 8. Cómo retomar
 
 1. Leer la revisión y el plan.
-2. Si el dueño ya respondió las decisiones: registrarlas (paquete P0.2) y lanzar el segundo lote del plan (sección 8).
-3. Si no ha respondido: lanzar el primer lote, que no depende de ninguna decisión (P1.1a, P1.2a y P1.4a). Sus encargos están en el anexo D del plan.
+2. Si el dueño ya respondió D-ING-1 y D-ING-5: registrarlas (paquete P0.2) y lanzar lo que espera (sección 8 del plan).
+3. Mientras no responda: lanzar P1.2b, que solo necesita lo ya hecho. Los encargos del primer lote, ya ejecutado, están en el anexo D del plan y sirven de modelo.
 4. Los demás paquetes se lanzan con el encargo tipo de la sección 5.3 del plan.

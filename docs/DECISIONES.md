@@ -31,6 +31,7 @@ Cuando las decisiones confirmadas cambian el contrato, se reescribe `CONTRATO_CO
 | D21 | Datos sensibles de Hábitos: llaves, frase de recuperación y modos | Confirmada (1/nov/2026; tablet personal como el teléfono) |
 | D20 | Infraestructura de avisos genérica (FCM discreto, bandeja, preferencias) | Confirmada (31/oct/2026) |
 | D19 | Finanzas por persona, cuentas compartidas, albaceas y cuenta maestra | Confirmada (21/oct; ampliada 23/oct; detalles propuestos) |
+| D29 | Inglés: cómo se produce, revisa y aprueba el contenido | Parcial: confirmadas la hora diaria, el audio (en principio) y la aprobación por muestras (15/nov/2026) |
 
 ---
 
@@ -548,3 +549,20 @@ Cambia lo que ve Casa en D23. Se implementa en la fase donde se construya Alimen
 - La matriz actual (migración 20261109 y espejo de la app) aún **no** refleja D28: Casa tiene sin acceso a Alimentación y el familiar edita el menú de Papá.
 - Pendiente: menú familiar y votación, inventario por persona, compras con albacea y permisos de Casa y cuidador.
 - **Confirmado (7/nov/2026): se construye en la Fase 7 (Alimentación).**
+
+---
+
+## D29. Inglés: cómo se produce, revisa y aprueba el contenido — parcial (15/nov/2026)
+
+Fuente: `docs/specs/fase-8-ingles-plan.md` (plan de ejecución, sección 4) y la revisión `docs/revisiones/fase-8-ingles.md`. Afecta al bloque 5 de la Fase 8 (Hábitos, inglés).
+
+**Confirmadas por el dueño (15/nov/2026):**
+- **La hora diaria se llena con práctica (D-ING-2).** Se mantienen los 60 minutos de lunes a viernes y los bloques ya aprobados (principal de 35 minutos y traslado de 25), y cada bloque trae un mínimo de contenido que una herramienta comprueba. Mientras la app no tenga audio, solo cuenta el bloque principal (35 minutos) y el requisito del 90 % se calcula sobre eso.
+- **El dueño aprueba plantillas y muestras (D-ING-4).** Aprueba las plantillas y una muestra (por ejemplo, la primera semana completa). El resto pasa por un validador, la resolución a ciegas por otro agente y un muestreo de calidad. Puede vetar cualquier pieza cuando quiera.
+- **Audio generado en el dispositivo (D-ING-3), en principio.** La app lee los guiones con una voz generada en el dispositivo, detrás de una interfaz que permita cambiar el motor. Qué motor (la voz del dispositivo o un modelo de voz descargable, y su relación con la voz de GRAVITY de D6) se decide al probar en el teléfono.
+
+**Pendientes:**
+- D-ING-1: escalera de escalones. El dueño pidió antes investigar cómo estructuran el avance los institutos y los exámenes; el resultado y una propuesta revisada de 13 escalones están en el anexo E del plan.
+- D-ING-5 (ubicación única), D-ING-6 (qué significa aprobar con la rúbrica), D-ING-7 (orden de producción) y D-ING-8 (limpieza de ramas).
+
+**Qué cambia:** hasta que se decida D-ING-1 no se redacta contenido nuevo de curso. Lo que ya está confirmado se puede construir: la herramienta de validación (en construcción), la revisión a ciegas y la plantilla de sesión.

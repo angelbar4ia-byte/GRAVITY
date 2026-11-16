@@ -1,0 +1,83 @@
+# Revisión a ciegas · ejemplos patrón · ronda 3 · revisor: calidad-d
+# Cuaderno resuelto: el regenerado tras la ronda 2 (commit adabf70), solo las cinco unidades
+# que cambiaron, pegado completo dentro del encargo. El agente trabajó en un árbol aislado y no
+# abrió ningún archivo: su única llamada a herramientas fue la entrega del reporte.
+# Respuestas tal como las devolvió; las guardó quien integra.
+# Resultado de la comparación con la clave: ronda-3-resultado.md.
+objeto: ej-cam-b1-r3-0001
+agente: calidad-d
+fecha: 2026-11-15
+archivos_abiertos: []
+respuestas:
+  ej-cam-b1-r3-0001-a: {respuesta: "B", seguridad: alta, otras_validas: []}
+  ej-cam-b1-r3-0001-b: {respuesta: "A", seguridad: alta, otras_validas: []}
+  ej-cam-b1-r3-0001-c: {respuesta: "A", seguridad: alta, otras_validas: []}
+  ej-cam-b1-r3-0001-d: {respuesta: "B", seguridad: alta, otras_validas: []}
+  ej-cam-b1-r3-0001-e: {respuesta: "B", seguridad: alta, otras_validas: []}
+observaciones:
+  - "El texto (unas 420 palabras) es algo largo y el vocabulario (frightening, unpleasant, giving up a car is not a real choice) roza B2; el B1 Preliminary suele andar en 350-400 palabras. Aceptable."
+  - "La pregunta c es la más delicada: la opción D (amigos) usa 'people who live on her street', pero en el texto los amigos son los pasajeros del autobús; distractor válido pero cercano. B (el ejercicio) se descarta por 'not the exercise'."
+  - "Las opciones de la e son frases largas, como en el examen real; correcto."
+---
+objeto: ej-cam-b2-ue2-0001
+agente: calidad-d
+fecha: 2026-11-15
+archivos_abiertos: []
+respuestas:
+  ej-cam-b2-ue2-0001-1: {respuesta: ["another"], seguridad: alta, otras_validas: []}
+  ej-cam-b2-ue2-0001-2: {respuesta: ["out"], seguridad: alta, otras_validas: []}
+  ej-cam-b2-ue2-0001-3: {respuesta: ["for"], seguridad: alta, otras_validas: ["behind"], nota: "'reasons for this change' y 'reasons behind this change' son ambas correctas y dicen lo mismo. Hallazgo: dos respuestas válidas."}
+  ej-cam-b2-ue2-0001-4: {respuesta: ["on"], seguridad: alta, otras_validas: []}
+  ej-cam-b2-ue2-0001-5: {respuesta: ["without"], seguridad: alta, otras_validas: []}
+  ej-cam-b2-ue2-0001-6: {respuesta: ["which"], seguridad: alta, otras_validas: []}
+  ej-cam-b2-ue2-0001-7: {respuesta: ["since"], seguridad: alta, otras_validas: []}
+  ej-cam-b2-ue2-0001-8: {respuesta: ["None"], seguridad: media, otras_validas: [], nota: "'Neither' no sirve (son tres problemas). 'Not one' son dos palabras. Solo 'None'. Con mayúscula inicial; la clave debe ser insensible a mayúsculas."}
+observaciones:
+  - "El hueco 3 admite for y behind: ajustar el contexto (por ejemplo 'the main reason ___ this change' sigue admitiendo ambas) o aceptar las dos en la clave."
+  - "El hueco 2 (sold out) es un phrasal verb de nivel adecuado. Formato y nivel acordes con el Part 2 de B2 First."
+---
+objeto: ej-cam-b2-ue4-0001
+agente: calidad-d
+fecha: 2026-11-15
+archivos_abiertos: []
+respuestas:
+  ej-cam-b2-ue4-0001-1: {respuesta: ["the best book I have", "the best book I've"], seguridad: alta, otras_validas: [], nota: "'I've' cuenta dos palabras: the best book I've = 5. Ambas formas caben en el límite."}
+  ej-cam-b2-ue4-0001-2: {respuesta: ["must have forgotten"], seguridad: alta, otras_validas: [], nota: "'must have forgot' es no estándar; no se acepta."}
+  ej-cam-b2-ue4-0001-3: {respuesta: ["wish I had studied", "wish I'd studied"], seguridad: alta, otras_validas: [], nota: "'wish I had worked' cambia el verbo; no cuenta."}
+  ej-cam-b2-ue4-0001-4: {respuesta: ["is said to be"], seguridad: alta, otras_validas: [], nota: "'is said to still be' deja el 'still' duplicado y no encaja con el texto fijo."}
+  ej-cam-b2-ue4-0001-5: {respuesta: ["have my car serviced"], seguridad: alta, otras_validas: ["have the car serviced"], nota: "'have the car serviced' dice lo mismo; el original dice 'my car'. Hallazgo menor. 'get my car serviced' no usa HAVE."}
+  ej-cam-b2-ue4-0001-6: {respuesta: ["looking forward to seeing"], seguridad: alta, otras_validas: [], nota: "'looking forward to seeing' son 4 palabras. 'to see' es incorrecto."}
+observaciones:
+  - "La 5 tiene variante (my/the car); conviene incluirla en la clave. Los tipos de transformación (superlativo, must have, wish, pasiva impersonal, causativa, expresión fija) son los habituales de B2 First."
+  - "Las claves deben admitir contracciones (I've, I'd), que cuentan como dos palabras."
+---
+objeto: ej-toefl-r-palabras-0001
+agente: calidad-d
+fecha: 2026-11-15
+archivos_abiertos: []
+respuestas:
+  ej-toefl-r-palabras-0001-a: {respuesta: ["layer", "seen", "narrow", "measuring", "researchers", "describe", "region", "method", "wooden", "buildings"], seguridad: alta, otras_validas: [], nota: "Todos los conteos de guiones cuadran (la+3 letras... layer=la+yer, measuring=meas+uring, researchers=resea+rchers, describe=desc+ribe, buildings=buil+dings). En (9) 'wood' + '(10) buildings' no cuadra por longitud; solo 'wooden'. En (8) 'metal' no cuadra."}
+observaciones:
+  - "Formato distinto al TOEFL 2026 real: allí se da la primera mitad de cada palabra y los guiones pueden no coincidir letra por letra; aquí cada guion es una letra, lo que facilita demasiado. Además muchas palabras están muy recortadas (la___, se__): el real deja al menos la mitad."
+  - "El texto es técnico (tree rings, climate of a region) y las palabras (measuring, researchers, describe) están más cerca de B2 que de B1. El real tiene unas diez palabras en un párrafo académico de ~100 palabras; aquí es acorde."
+  - "Es muy corto para 'reading' en general; es una sola tarea, correcto para la parte."
+---
+objeto: ej-b1-1-s01-lun
+agente: calidad-d
+fecha: 2026-11-15
+archivos_abiertos: []
+respuestas:
+  ej-b1-1-s01-lun-01: {respuesta: "B", seguridad: alta, otras_validas: []}
+  ej-b1-1-s01-lun-02: {respuesta: "B", seguridad: alta, otras_validas: []}
+  ej-b1-1-s01-lun-03: {respuesta: "C", seguridad: alta, otras_validas: [], nota: "'I'm understanding' existe en inglés real en contextos de proceso ('I'm understanding more every day'), pero aquí la lección lo trata como verbo de estado y no hay contexto de cambio. Defendible solo débilmente."}
+  ej-b1-1-s01-lun-04: {respuesta: "A", seguridad: alta, otras_validas: []}
+  ej-b1-1-s01-lun-05: {respuesta: ["speaks"], seguridad: alta, otras_validas: []}
+  ej-b1-1-s01-lun-06: {respuesta: ["is sleeping", "'s sleeping"], seguridad: alta, otras_validas: []}
+  ej-b1-1-s01-lun-07: {respuesta: ["belongs"], seguridad: alta, otras_validas: []}
+  ej-b1-1-s01-lun-08: {respuesta: ["are staying", "'re staying"], seguridad: alta, otras_validas: [], nota: "'stay' en presente simple no encaja con 'until our new house is ready' (temporal, no habitual)."}
+  ej-b1-1-s01-lun-09: {respuesta: ["is getting", "'s getting"], seguridad: alta, otras_validas: []}
+  ej-b1-1-s01-lun-10: {respuesta: ["do not need", "don't need"], seguridad: alta, otras_validas: []}
+  ej-b1-1-s01-lun-11: {respuesta: ["is walking", "'s walking"], seguridad: alta, otras_validas: []}
+observaciones:
+  - "La lección es coherente con las preguntas. Solo la 03 es discutible por 'I'm understanding' en inglés actual; conviene mantener el contexto 'what you mean' y que la lección diga que 'understand' va en simple en este sentido."
+  - "La 02 y la 09 usan 'getting/starting' como cambio; correcto con la regla 3 de la lección. Nivel B1 adecuado."

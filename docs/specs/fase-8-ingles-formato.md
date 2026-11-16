@@ -1,6 +1,6 @@
 # Especificación — Formato de contenido `gravity-ingles-v1`
 
-> Versión 0.2 (15/nov/2026), **propuesta**. Parte del plan `docs/specs/fase-8-ingles-plan.md` (paquetes P1.1 y P1.2). Nace de la revisión `docs/revisiones/fase-8-ingles.md` (hallazgos ING-B1, ING-B2, ING-B4, ING-I1, ING-I3 e ING-I4).
+> Versión 0.3 (15/nov/2026), **propuesta**. La 0.3 recoge lo que encontró el validador al leer los ejemplos y los contratos (informe del paquete P1.2a). Parte del plan `docs/specs/fase-8-ingles-plan.md` (paquetes P1.1 y P1.2). Nace de la revisión `docs/revisiones/fase-8-ingles.md` (hallazgos ING-B1, ING-B2, ING-B4, ING-I1, ING-I3 e ING-I4).
 > Precedente en el proyecto: `herramientas/biblia` y el formato `gravity-biblia-v1` (contenido con formato versionado, validador en Dart y salida a `app/assets`).
 
 ## 1. Para qué sirve
@@ -98,7 +98,7 @@ preguntas:
 | `tipo` | Campos | Reglas |
 |---|---|---|
 | `texto` | `titulo` (opcional), `texto` | Longitud dentro del rango del contrato (V15) |
-| `audio` | `guion` (lista de turnos con `voz` y `texto`), `reproducciones` | Voces: `F1`, `F2`, `M1`, `M2`, `N` (narrador). El cuaderno no imprime el guion (V16) |
+| `audio` | `guion` (lista de turnos con `voz` y `texto`), `reproducciones`, y `nota` si las preguntas son `completar_nota` | Voces: `F1`, `F2`, `M1`, `M2`, `N` (narrador). El cuaderno no imprime el guion (V16). `nota` es el texto con huecos `{1}`, `{2}`… que ve el estudiante mientras escucha |
 | `imagen` | `descripcion`, `archivo` (opcional) | Mientras no haya archivo, la app muestra la descripción y la forma no puede ser de fidelidad completa |
 | `consigna` | `texto` | Para tareas de escritura y habla |
 | `ninguno` | — | Preguntas sueltas (por ejemplo, oraciones de la Parte 5 de TOEIC) |
@@ -115,7 +115,7 @@ preguntas:
 | `oracion_omitida` | Texto con oraciones quitadas | `oraciones` (cada una con `hueco` y `ancla`, o `sobrante: true` y `porque_no`) | Cada oración declara la pista de cohesión que la fija (V10) |
 | `correspondencia` | ¿En qué texto se dice…? | `enunciado`, `respuesta`, `evidencia` | La unidad lleva `textos` con id (V11) |
 | `emparejar` | Personas con textos, hablantes con frases | `elemento`, `respuesta`, `evidencia` | La unidad lleva `opciones` con id; las sobrantes llevan `porque_no` |
-| `completar_nota` | Notas con huecos al escuchar | `hueco`, `aceptadas` | Una a tres palabras o un número, tal como se oye |
+| `completar_nota` | Notas con huecos al escuchar | `hueco`, `aceptadas` | Una a tres palabras o un número, tal como se oye. Los huecos están en la `nota` del estímulo (V02 comprueba que cada `hueco` exista ahí) |
 | `completar_palabras` | Palabras cortadas dentro de un texto (TOEFL) | `pistas` (una por hueco, en orden); los huecos van en el texto: `im{prove}` | Siempre con texto alrededor; la app muestra una casilla por letra oculta. Se oculta el final de la palabra según la regla `ocultar` del contrato; hoy, la segunda mitad, como criterio provisional (V14) |
 | `ordenar_palabras` | Construir una oración | `palabras`, `aceptadas` | — |
 | `respuesta_corta` | Ejercicios del curso (transformar, traducir) | `enunciado`, `aceptadas` | — |
@@ -123,7 +123,11 @@ preguntas:
 | `pronunciacion` | Pares mínimos, sílaba tónica | `foco`, `elementos` | — |
 | `produccion` | Escritura o habla | `modalidad`, `consigna`, `extension`, `puntos_obligatorios`, `cotejo`, `modelo`, `errores_tipicos` | Siempre con lista de cotejo y respuesta modelo |
 
-Toda pregunta objetiva lleva `porque` (por qué esa es la respuesta, con la evidencia del estímulo). En el curso, cada distractor lleva además `porque_no` (V12).
+Toda pregunta lleva `habilidad` (de la lista de `niveles.yaml`). Toda pregunta objetiva lleva `porque` (por qué esa es la respuesta, con la evidencia del estímulo). En el curso, cada distractor lleva además `porque_no` (V12).
+
+Tres precisiones de V12: (1) en `correspondencia` y `emparejar`, la `evidencia` cumple el papel del `porque` y también debe tener al menos 6 palabras; (2) en `completar_palabras`, la pregunta lleva su `porque` y cada pista lleva el suyo, pero el de la pista puede ser corto; (3) en las preguntas abiertas, `porque` explica también qué intento frecuente no vale.
+
+**Unidades del contrato frente a archivos.** Un archivo es una unidad con un solo estímulo. Cuando el contrato pide varias «unidades» sin estímulo (las transformaciones de B2 First, las oraciones sueltas de TOEIC Parte 5), un archivo con `estimulo: ninguno` aporta tantas unidades como preguntas lleve. Cuando cada una tiene su propio estímulo (los extractos de Listening 1), cada una es su archivo. La fidelidad cuenta preguntas y estímulos por parte, no archivos.
 
 Ejemplo de hueco abierto y de formación de palabra, tal como deben quedar:
 
@@ -212,10 +216,11 @@ Los seis contratos de exámenes oficiales existen desde el 15/nov/2026 (paquete 
 | `id` | `<sección>-<número de parte oficial>`. En B2 First, `use-of-english-1` a `-4` y `reading-5` a `-7`. Donde el examen no numera partes, el nombre de la tarea en inglés (TOEFL) o el rango de preguntas (`speaking-q1-2` en TOEIC) |
 | `tarea`, `tipo_pregunta`, `tipo_estimulo`, `modalidad` | Qué se pide, con los tipos de la sección 4 |
 | `unidades`, `preguntas_por_unidad`, `preguntas_total` | Cuántas unidades y preguntas. `preguntas_por_unidad` puede ser `{min, max}` cuando los conjuntos varían (Parte 7 de TOEIC) |
-| `opciones`, `reproducciones`, `puntos_por_pregunta` | Opciones por pregunta, veces que se oye el audio y puntos, cuando el manual los da |
+| `opciones`, `reproducciones`, `puntos_por_pregunta` | Opciones por pregunta, veces que se oye el audio y puntos, cuando el manual los da. `puntos_por_pregunta` es un número o un rango `{min, max}` (TOEIC Speaking y Writing se califica de 0 a 3, 4 o 5) |
+| `clase`, `nota_clase` | `gramatical` en los huecos abiertos de Cambridge: el manual dice que miden sobre todo gramática y algo de vocabulario, y GRAVITY escribe solo huecos gramaticales para que cada uno tenga una respuesta única. V09 lo exige a las preguntas de esa parte |
 | `palabras_estimulo` | `{min, max, origen}`. `origen: declarado` si el manual da la cifra; `origen: medido` si se contó en su prueba de muestra |
 | `medido` | La medida de origen: `total` o `por_unidad`, `muestras`, `pagina` y `nota` |
-| `palabras_respuesta`, `tiempos_segundos`, `tiempos_minutos`, `minutos_parte` | Para escritura y habla |
+| `palabras_respuesta`, `tiempos_segundos`, `tiempos_minutos`, `minutos_parte` | Para escritura, habla y transformaciones. `palabras_respuesta` es `{min, max}` o `{aprox}`; en las transformaciones de B2 First es `{min: 2, max: 5}`, que V08 lee |
 | `pagina_manual` | Página del PDF (no la impresa) de donde sale el dato |
 | `pendiente: true` y `nota` | El manual no da el dato, o el rango sale de muy pocas muestras |
 
@@ -225,7 +230,8 @@ En la sección: `minutos` (número o `{min, max}`), `preguntas_total` o `tareas_
 
 1. **De dónde sale un rango.** Si el manual declara la longitud, se usa esa cifra. Si no, se cuenta en su prueba de muestra y el rango es la medida menos 15 % y más 15 %, redondeado a decenas.
 2. **Qué se cuenta.** En un texto, sus palabras, con los números de hueco. En un audio, **solo los turnos de habla**: las frases del narrador y las instrucciones no cuentan (en el formato, los turnos con `voz: N`). La transcripción oficial de un Listening completo mide un 20 a 25 % más con el narrador que sin él.
-3. **Un dato pendiente no decide nada.** Mientras una parte tenga `pendiente: true`, la comprobación de longitud (V15) da aviso en lugar de error, y una forma que use esa parte no puede ser de fidelidad `completa`.
+3. **Contracciones.** Para contar las palabras de una respuesta, la contracción cuenta como dos (*I'd* = *I would*). El apóstrofo-s se parte solo tras un pronombre o adverbio de una lista corta (*it's*, *there's*, *what's*); un posesivo (*Maria's*) cuenta como una palabra. La regla es una heurística: la aplica una sola función del validador.
+4. **Un dato pendiente no decide nada.** Mientras una parte tenga `pendiente: true`, la comprobación de longitud (V15) da aviso en lugar de error, y una forma que use esa parte no puede ser de fidelidad `completa`.
 
 ## 7. Sesión del curso (60 minutos)
 
@@ -292,7 +298,7 @@ Cálculo de minutos (V22): explicación, palabras ÷ 150; cada ejemplo, 15 segun
 
 ## 8. Niveles
 
-`data/ingles/niveles.yaml` contiene la escalera (escalones y etapas), el temario de cada escalón y las listas controladas de `habilidad`, `foco` y `temas`. Su contenido se define en el plan (sección 3.1 y paquete P1.3).
+`data/ingles/niveles.yaml` contiene la escalera (escalones y etapas), el temario de cada escalón y las listas controladas de `habilidad`, `foco` y `temas`. Su contenido se define en el plan (sección 3.1 y paquete P1.3). El validador espera estas claves de primer nivel, cada una como lista de textos o de bloques con `id`: `niveles`, `escalones`, `habilidades`, `focos` y `temas`. Si P1.3 elige otros nombres, se cambia en un solo archivo del validador.
 
 ## 9. Resolución a ciegas
 
@@ -338,7 +344,7 @@ dart test
 
 ## 11. Catálogo de comprobaciones
 
-Error = impide `validado`. Aviso = se reporta y no impide.
+Error = impide `validado`. Aviso = se reporta y no impide. Cuando falta el contrato de una unidad (`sin contrato`, bajo V02) o falta `niveles.yaml` (`sin niveles`, bajo V13), es aviso en `borrador` y error desde `validado`.
 
 | Código | Qué comprueba | Tipo |
 |---|---|---|
@@ -386,7 +392,7 @@ En `data/ingles/ejemplos/`. Marcan el nivel de calidad que se exige y sirven de 
 
 Los nueve están en `borrador`. Los escribió la sesión que hizo el plan. Dos agentes los resolvieron a ciegas el 15/nov/2026, uno tras otro: los dos coincidieron con la clave en las 40 preguntas. El primero defendió una segunda respuesta en 6 y el segundo en 2; todas se reescribieron (`docs/revisiones/ingles/ronda-1-resultado.md` y `ronda-2-resultado.md`). Las preguntas cambiadas en la ronda 2 esperan una tercera. Su cuaderno sin respuestas está en `docs/contenido/ingles/generado/cuaderno-ejemplos-patron.md`.
 
-**Faltan patrones** de: texto con huecos y opciones (B2 First parte 1; TOEIC partes 5 y 6), correspondencia (B2 First parte 7), emparejar (B1 Preliminary, Reading 2), completar notas al escuchar (B1 Preliminary, Listening 3), escucha con opción múltiple, las sesiones de martes a viernes, y las partes propias de TOEIC y de TOEFL. Se escriben con la regla "patrón antes que serie" del plan (sección 5.2).
+**Faltan patrones** de: texto con huecos y opciones (B2 First parte 1; TOEIC partes 5 y 6), correspondencia (B2 First parte 7), emparejar (B1 Preliminary, Reading 2), completar notas al escuchar (B1 Preliminary, Listening 3, con su `nota`), escucha con opción múltiple, las sesiones de martes a viernes (la del viernes además necesita definir su estructura de conversación guiada, que el formato todavía no fija), y las partes propias de TOEIC y de TOEFL. Se escriben con la regla "patrón antes que serie" del plan (sección 5.2).
 
 ## 13. Lo que queda fuera de esta versión
 

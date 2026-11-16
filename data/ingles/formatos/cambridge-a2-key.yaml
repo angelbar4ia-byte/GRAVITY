@@ -87,6 +87,8 @@ secciones:
     preguntas_total: 6
     palabras_estimulo: {min: 100, max: 140, origen: medido}
     medido: {total: 123, muestras: 1, pagina: 19}
+    clase: gramatical
+    nota_clase: 'Decisión de GRAVITY, no del manual: solo huecos gramaticales, para que cada uno tenga una respuesta única o una lista corta y completa.'
     puntos_por_pregunta: 1
     pagina_manual: 9
 - id: writing
