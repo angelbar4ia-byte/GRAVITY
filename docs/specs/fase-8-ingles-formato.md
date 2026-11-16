@@ -1,6 +1,6 @@
 # Especificación — Formato de contenido `gravity-ingles-v1`
 
-> Versión 0.3 (15/nov/2026), **propuesta**. La 0.3 recoge lo que encontró el validador al leer los ejemplos y los contratos (informe del paquete P1.2a). Parte del plan `docs/specs/fase-8-ingles-plan.md` (paquetes P1.1 y P1.2). Nace de la revisión `docs/revisiones/fase-8-ingles.md` (hallazgos ING-B1, ING-B2, ING-B4, ING-I1, ING-I3 e ING-I4).
+> Versión 0.4 (16/nov/2026), **propuesta**. La 0.3 recogió lo que encontró el validador al leer los ejemplos y los contratos (paquete P1.2a); la 0.4, lo que encontró la segunda parte (P1.2b: longitud, fidelidad, duplicados e informe). Parte del plan `docs/specs/fase-8-ingles-plan.md` (paquetes P1.1 y P1.2). Nace de la revisión `docs/revisiones/fase-8-ingles.md` (hallazgos ING-B1, ING-B2, ING-B4, ING-I1, ING-I3 e ING-I4).
 > Precedente en el proyecto: `herramientas/biblia` y el formato `gravity-biblia-v1` (contenido con formato versionado, validador en Dart y salida a `app/assets`).
 
 ## 1. Para qué sirve
@@ -98,7 +98,7 @@ preguntas:
 | `tipo` | Campos | Reglas |
 |---|---|---|
 | `texto` | `titulo` (opcional), `texto` | Longitud dentro del rango del contrato (V15) |
-| `audio` | `guion` (lista de turnos con `voz` y `texto`), `reproducciones`, y `nota` si las preguntas son `completar_nota` | Voces: `F1`, `F2`, `M1`, `M2`, `N` (narrador). El cuaderno no imprime el guion (V16). `nota` es el texto con huecos `{1}`, `{2}`… que ve el estudiante mientras escucha |
+| `audio` | `guion` (lista de turnos con `voz` y `texto`), `reproducciones`, `nota` si las preguntas son `completar_nota`, e `imagen` (`descripcion`, `archivo` opcional) si el audio va con una fotografía (TOEIC Parte 1) | Voces: `F1`, `F2`, `M1`, `M2`, `N` (narrador). El cuaderno no imprime el guion (V16). `nota` es el texto con huecos `{1}`, `{2}`… que ve el estudiante mientras escucha |
 | `imagen` | `descripcion`, `archivo` (opcional) | Mientras no haya archivo, la app muestra la descripción y la forma no puede ser de fidelidad completa |
 | `consigna` | `texto` | Para tareas de escritura y habla |
 | `ninguno` | — | Preguntas sueltas (por ejemplo, oraciones de la Parte 5 de TOEIC) |
@@ -108,7 +108,7 @@ preguntas:
 | `tipo` | Para qué | Campos propios | Regla clave |
 |---|---|---|---|
 | `opcion_multiple` | Lectura, escucha, gramática | `enunciado`, `opciones` | La primera opción es la correcta; 3 o 4 según el contrato (V03, V04) |
-| `hueco_opciones` | Texto con huecos y opciones (Cambridge, TOEIC 5 y 6) | `hueco`, `opciones` | El texto marca los huecos como `{1}`, `{2}`… |
+| `hueco_opciones` | Texto con huecos y opciones (Cambridge, TOEIC 5 y 6) | `hueco`, `opciones`, y `oracion` si el estímulo es `ninguno` | El texto marca los huecos como `{1}`, `{2}`… Cuando no hay texto (TOEIC Parte 5: una oración por pregunta), la oración con su `{1}` va en `oracion` |
 | `hueco_abierto` | Una palabra por hueco | `hueco`, `aceptadas`, `clase` | Se listan **todas** las respuestas válidas; `clase: gramatical` donde el contrato lo pide (V09) |
 | `formacion_palabra` | Palabra derivada | `hueco`, `base`, `aceptadas` | Ninguna aceptada es igual a la base (V07) |
 | `transformacion` | Segunda oración con palabra clave | `original`, `clave`, `antes`, `despues`, `aceptadas` | La clave va dentro de la respuesta y no fuera; de 2 a 5 palabras, y una contracción cuenta como dos; se conservan las palabras del original que la clave no obliga a cambiar (V08) |
@@ -164,7 +164,7 @@ secciones:
     unidades: [cam-b1-r3-0001]
 ```
 
-La **fidelidad** de una forma no se escribe: la calcula la herramienta. Es `completa` solo si cada parte tiene el número de unidades y de preguntas del contrato, todos los estímulos están dentro de su rango de palabras, las partes de escucha tienen audio y el contrato no tiene datos pendientes en las partes que usa. En cualquier otro caso es `reducida`, y así se muestra en el cuaderno y en la app.
+La **fidelidad** de una forma no se escribe: la calcula la herramienta. Es `completa` solo si cada parte tiene el número de unidades y de preguntas del contrato, todos los estímulos están dentro de su rango de palabras, las partes de escucha tienen audio y el contrato no tiene datos pendientes en las partes que usa. **Alcance:** una forma de uso `simulacro`, `etapa`, `escalon` o `ubicacion` debe traer **todas** las partes del contrato; una de uso `practica` o `mini` se evalúa solo sobre las partes que incluye, y dice cuáles son, para que una práctica de una sola parte pueda ser completa en esa parte sin presentarse como examen entero. En cualquier otro caso es `reducida`, y así se muestra en el cuaderno y en la app.
 
 ## 6. Contrato de formato
 
@@ -229,7 +229,7 @@ En la sección: `minutos` (número o `{min, max}`), `preguntas_total` o `tareas_
 ### 6.2 Reglas de los rangos
 
 1. **De dónde sale un rango.** Si el manual declara la longitud, se usa esa cifra. Si no, se cuenta en su prueba de muestra y el rango es la medida menos 15 % y más 15 %, redondeado a decenas.
-2. **Qué se cuenta.** En un texto, sus palabras, con los números de hueco. En un audio, **solo los turnos de habla**: las frases del narrador y las instrucciones no cuentan (en el formato, los turnos con `voz: N`). La transcripción oficial de un Listening completo mide un 20 a 25 % más con el narrador que sin él.
+2. **Qué se cuenta.** En un texto, sus palabras, con los números de hueco, **más el material de lectura que acompaña al texto**: los `textos` y `opciones` con id, el `elemento` de cada emparejar y las oraciones de las oraciones omitidas con la sobrante (así lo miden los contratos: B1 Reading 4 es el texto más ocho oraciones). En las transformaciones, la oración `original`. Una consigna se mide como un texto. En un audio, **solo los turnos de habla**: las frases del narrador y las instrucciones no cuentan (en el formato, los turnos con `voz: N`). La transcripción oficial de un Listening completo mide un 20 a 25 % más con el narrador que sin él.
 3. **Contracciones.** Para contar las palabras de una respuesta, la contracción cuenta como dos (*I'd* = *I would*). El apóstrofo-s se parte solo tras un pronombre o adverbio de una lista corta (*it's*, *there's*, *what's*); un posesivo (*Maria's*) cuenta como una palabra. La regla es una heurística: la aplica una sola función del validador.
 4. **Un dato pendiente no decide nada.** Mientras una parte tenga `pendiente: true`, la comprobación de longitud (V15) da aviso en lugar de error, y una forma que use esa parte no puede ser de fidelidad `completa`.
 
@@ -349,7 +349,7 @@ Error = impide `validado`. Aviso = se reporta y no impide. Cuando falta el contr
 | Código | Qué comprueba | Tipo |
 |---|---|---|
 | V01 | Esquema: campos obligatorios, tipos y valores de las listas controladas | Error |
-| V02 | Identificadores únicos en todo `data/ingles`; el id de cada pregunta empieza con el de su unidad; toda referencia existe | Error |
+| V02 | Identificadores únicos en todo `data/ingles`; el id de cada pregunta empieza con el de su unidad; toda referencia existe; la unidad de una forma es del formato de la forma y de la parte de su sección | Error |
 | V03 | Número de opciones según el contrato de la parte; opciones distintas entre sí (sin contar mayúsculas, espacios ni puntuación) | Error |
 | V04 | Una sola correcta: la primera opción, con `porque`; en preguntas abiertas, `aceptadas` no vacía | Error |
 | V05 | En partes de 8 preguntas o más, la correcta es la opción más larga en menos de la mitad | Aviso |
@@ -363,10 +363,10 @@ Error = impide `validado`. Aviso = se reporta y no impide. Cuando falta el contr
 | V13 | `nivel`, `habilidad`, `foco` y `temas` pertenecen a `niveles.yaml` | Error |
 | V14 | Completar palabras: cada hueco oculta la segunda mitad de la palabra (la mayor si el número de letras es impar), de 2 a 8 letras, y hay al menos 4 palabras completas por cada hueco | Error |
 | V15 | Palabras del estímulo dentro del rango del contrato (en audio, solo los turnos de habla); fuera de rango, o con el rango pendiente, la forma queda como `reducida` | Aviso en la unidad; decide la fidelidad de la forma |
-| V16 | Audio: voces declaradas, `reproducciones` igual al contrato; el cuaderno no imprime el guion | Error |
+| V16 | Audio: `reproducciones` igual al contrato de la parte (las voces fuera de la lista ya las rechaza V01); el cuaderno no imprime el guion | Error |
 | V17 | En formas de examen, enunciados y opciones en inglés (detecta palabras en español) | Error |
 | V18 | No se mezclan grafías británicas y americanas de la lista de control en una unidad | Aviso |
-| V19 | Ningún estímulo ni enunciado se repite entre unidades (similitud de 0.85 o más); una unidad no aparece en dos formas del mismo formato, ni en práctica y en forma | Error |
+| V19 | Ningún estímulo ni enunciado se repite entre unidades: una oración de 7 palabras o más en dos archivos, o dos textos con similitud de Jaccard de 0.85 o más sobre trigramas de palabras; una unidad no aparece en dos formas del mismo formato, ni en práctica y en forma. **Excepción:** las frases para repetir de una sesión pueden salir de sus propios audios (los de `audios:`), porque el método pide repetir lo que se escuchó; dos sesiones de la misma semana pueden repetir frases de los audios que comparten | Error |
 | V20 | Las unidades de ubicación y de puertas no se usan en ningún otro lugar | Error |
 | V21 | Cada sesión cumple los mínimos por bloque de la sección 7 | Error |
 | V22 | Minutos estimados por bloque entre el 70 % y el 150 % del declarado; total entre 54 y 66 | Error |
@@ -385,7 +385,7 @@ En `data/ingles/ejemplos/`. Marcan el nivel de calidad que se exige y sirven de 
 | `cam-b2-ue2-ejemplo.yaml` | Hueco abierto de B2 First solo con palabras gramaticales y con todas las respuestas válidas |
 | `cam-b2-ue3-ejemplo.yaml` | Formación de palabras de B2 First: todas las respuestas transforman la base |
 | `cam-b2-ue4-ejemplo.yaml` | Transformaciones con palabra clave de B2 First: marco que cierra las alternativas, todas las formas válidas y el intento frecuente que no vale |
-| `cam-b2-r6-ejemplo.yaml` | Oraciones omitidas de B2 First (599 palabras): cada oración atada por los dos lados y una sobrante que contradice el texto |
+| `cam-b2-r6-ejemplo.yaml` | Oraciones omitidas de B2 First (603 palabras con la regla del contrato): cada oración atada por los dos lados y una sobrante que contradice el texto |
 | `toefl-r-palabras-ejemplo.yaml` | "Complete the Words" de TOEFL dentro de un texto, con una sola solución por hueco |
 | `audio-b1-1-s01-a-ejemplo.yaml`, `audio-b1-1-s01-b-ejemplo.yaml` | Guiones de traslado de B1 (monólogo y diálogo) cargados de la gramática de la semana |
 | `sesion-b1-1-s01-lun-ejemplo.yaml` | Sesión de lunes de 60 minutos: 11 preguntas con explicación, 12 elementos de pronunciación, tarea con cotejo y modelo, 20 frases y 8 tarjetas. Estimación: 59 minutos |

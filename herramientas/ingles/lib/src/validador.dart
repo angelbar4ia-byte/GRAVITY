@@ -13,6 +13,12 @@ import 'comprobaciones/v11_correspondencia.dart';
 import 'comprobaciones/v12_porque.dart';
 import 'comprobaciones/v13_niveles.dart';
 import 'comprobaciones/v14_completar_palabras.dart';
+import 'comprobaciones/v15_longitud.dart';
+import 'comprobaciones/v16_audio.dart';
+import 'comprobaciones/v17_idioma.dart';
+import 'comprobaciones/v18_grafias.dart';
+import 'comprobaciones/v19_duplicados.dart';
+import 'comprobaciones/v20_exclusivas.dart';
 import 'comprobaciones/v24_estados.dart';
 import 'contexto.dart';
 import 'hallazgo.dart';
@@ -21,8 +27,8 @@ import 'modelo/leer.dart';
 
 typedef Comprobacion = List<Hallazgo> Function(Archivo a, Contexto c);
 
-/// Las comprobaciones de P1.2a, en orden. V06 pertenece a `exportar`; V15 en
-/// adelante, a P1.2b y P1.2c. V24 se aplica aparte, al final, porque mira lo
+/// Las comprobaciones de P1.2a y P1.2b, en orden. V06 pertenece a `exportar` y
+/// V21 a V23, V25 y V26 a P1.2c. V24 se aplica aparte, al final, porque mira lo
 /// que dejaron las demás.
 const List<Comprobacion> comprobaciones = [
   v01,
@@ -38,6 +44,12 @@ const List<Comprobacion> comprobaciones = [
   v12,
   v13,
   v14,
+  v15,
+  v16,
+  v17,
+  v18,
+  v19,
+  v20,
 ];
 
 /// Lo que devuelve `validar`.

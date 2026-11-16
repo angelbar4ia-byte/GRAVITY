@@ -1,10 +1,13 @@
+import 'duplicados.dart';
 import 'modelo/archivo.dart';
 import 'modelo/formato.dart';
 import 'modelo/niveles.dart';
 import 'modelo/pregunta.dart';
+import 'usos.dart';
 
 /// Todo lo que una comprobación puede necesitar de los demás archivos de la
-/// carpeta validada: los contratos, los niveles y los ids de todo el conjunto.
+/// carpeta validada: los contratos, los niveles y los ids de todo el conjunto,
+/// y lo que solo se ve en conjunto (repeticiones y usos de las unidades).
 class Contexto {
   Contexto(this.archivos) {
     for (final a in archivos) {
@@ -21,6 +24,14 @@ class Contexto {
 
   /// `data/ingles/niveles.yaml`, si existe (el primero que se encuentre).
   Niveles? niveles;
+
+  /// Qué comparte cada unidad o sesión con otras (V19, reglas a y b). Se
+  /// calcula la primera vez que se pide y sirve a todos los archivos.
+  late final IndiceDuplicados duplicados = IndiceDuplicados(archivos);
+
+  /// En qué formas y sesiones se usa cada unidad (V19, regla c, y V20). Se
+  /// calcula la primera vez que se pide.
+  late final UsoDeUnidades usos = UsoDeUnidades(archivos);
 
   final Map<String, Formato> _contratos = {};
   final Map<String, Archivo> _porId = {};

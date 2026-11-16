@@ -44,15 +44,15 @@ Doc opcionMultiple() => {
 /// larga en `masLargas` de las ocho.
 Doc ochoPreguntas({int masLargas = 1}) => {
       ..._base('t-om8-0001', 'p-om8'),
-      'estimulo': {'tipo': 'texto', 'texto': 'Un texto largo para ocho preguntas sobre su contenido.'},
+      'estimulo': {'tipo': 'texto', 'texto': 'A long text with eight questions about its content.'},
       'preguntas': [
         for (var i = 0; i < 8; i++)
           _opcion(
             't-om8-0001-$i',
-            'Pregunta $i?',
+            'Question $i?',
             i < masLargas
-                ? ['una respuesta mucho más larga que cualquiera', 'corta uno', 'corta dos', 'corta tres']
-                : ['corta', 'una distracción bastante más larga', 'otra distracción bastante más larga', 'una tercera distracción larga'],
+                ? ['an answer much longer than any other', 'short one', 'short two', 'short three']
+                : ['short', 'a distractor that is quite a bit longer', 'another distractor that is quite a bit longer', 'a third long distractor'],
           ),
       ],
     };
