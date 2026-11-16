@@ -53,7 +53,7 @@
 | `modulo-3.md`, `modulo-4.md` | Redactados, sin aprobar. Mismo problema de densidad |
 | `prueba-de-nivel.md` (v0.2) y `prueba-ubicacion.html` (publicada) | **En revisión: no usar para decidir el nivel.** Ubica de más (ING-B5). El aviso ya está en los dos archivos y en la página publicada (versión 4) |
 | `rubrica-evaluacion.md` | Borrador. Falta confirmar qué significa aprobar (D-ING-6) |
-| `niveles-y-avance.md` (v0.3) | Vigente salvo el calendario de 28 semanas, que sustituye la escalera de 13 escalones (D29). La versión 0.4 (paquete P1.3) lo reescribe |
+| `niveles-y-avance.md` (v0.4) y `data/ingles/niveles.yaml` | Borrador: la escalera de 13 escalones, las puertas y la matriz de temas. Se aprueban por muestras (D-ING-4); la primera muestra es A2.1 |
 | `formatos-oficiales.md` | Número de partes y de preguntas verificado con los manuales. Faltan las longitudes, que irán en los contratos |
 | Simulacros: B1 Preliminary A y B, B2 First A y B, TOEFL A y B, TOEIC completo | **Formato reducido.** Número de preguntas correcto; textos y guiones de 2 a 6 veces más cortos que los oficiales; sin audio; con preguntas inválidas listadas en la revisión (ING-B1, ING-B2) |
 | Prácticas por partes (B1, B2 ×2, TOEFL, TOEIC) y `toeic-bimestre-2.md` | Reducidas. Comparten contenido entre sí y con los simulacros (ING-I1) |

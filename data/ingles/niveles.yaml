@@ -1,0 +1,1217 @@
+# Matriz de niveles de GRAVITY (gravity-ingles-v1, tipo niveles). Paquete P1.3.
+# - Contiene la escalera de 13 escalones, el temario de cada uno y las listas controladas (habilidades, focos de pregunta,
+#   enfoques del día y temas de gramática). La herramienta lee cinco claves de primer nivel (niveles, escalones, habilidades,
+#   focos y temas; V13); las demás las ignora y son para quien produce el curso.
+# - El curso no arranca hasta que la fase 6 (pareja y corrección con IA) esté integrada (D-ING-9 y D-ING-10, en D29): esta matriz es
+#   contenido para producir, no para estudiar todavía.
+# - Siglas: «plan 0.6» = docs/specs/fase-8-ingles-plan.md; «formato 0.4» = docs/specs/fase-8-ingles-formato.md; «D29» =
+#   docs/DECISIONES.md; «anexo B» = anexo B del plan (propuesta de temario por escalón); «anexo A» = anexo A del diseño de Hábitos
+#   (docs/modulos/habitos/diseno-app-habitos.md, seis módulos de inglés); «A2 Key» y «B1 Preliminary» = los manuales del profesor
+#   de Cambridge citados en los contratos de data/ingles/formatos/.
+# - Honestidad sobre el origen. La asignación de cada tema a una etapa es criterio de diseño. Se respalda así:
+#     en_manual: ids de contrato cuyo manual (inventario de estructuras) nombra el tema. Lo leyó y lo comprobó el autor con la página
+#                del manual (bloque manuales y bloque cobertura_de_manuales); calidad contrasta una muestra.
+#     pendiente: true = su etapa no la respalda ningún inventario que el proyecto tenga (todo A1 y todo B2, que no tienen inventario,
+#                y lo que A2 Key o B1 Preliminary no nombran). Hay que contrastarlo con el English Grammar Profile y con las listas de
+#                Cambridge cuando alguien tenga red. Un tema sin pendiente tiene su etapa respaldada por el manual de esa etapa.
+#   El manual solo respalda que un tema esté visto a más tardar al cerrar la etapa; el reparto entre los escalones de una misma
+#   etapa es diseño de GRAVITY y por eso todos los escalones llevan pendiente: true con su nota.
+# - Reglas que cumple este archivo (las comprueba un script de P1.3 fuera del repositorio; conviene pasarlas a V27):
+#     1. Los 13 escalones están en el orden de la escalera y cada uno trae etapa, 40 horas, 8 semanas, puerta y descriptores «puedo»
+#        de lectura, escucha, escritura y habla.
+#     2. Cada tema de gramática es nuevo en un solo escalón (gramatica_nueva). Un escalón solo retoma temas de escalones anteriores
+#        (gramatica_que_se_retoma).
+#     3. Todo lo que el inventario del manual de una etapa nombra está visto, a más tardar, al cerrar esa etapa (A2.3 y B1.4).
+#     4. Todos los valores de nivel, escalón, habilidad, foco, enfoque y tema que usan los ejemplos están en estas listas.
+#     5. Los datos de etapas, horas y puertas son los mismos de gravity-escalon.yaml.
+# - Los descriptores «puedo» están escritos para GRAVITY, con palabras propias; no copian el marco europeo ni ningún manual.
+esquema: gravity-ingles-v1
+tipo: niveles
+id: niveles
+estado: borrador
+nombre: "Matriz de niveles: escalera de 13 escalones, temario y listas controladas"
+documentos:
+  - {ruta: docs/specs/fase-8-ingles-plan.md, version: "0.6", fecha: 2026-11-16}
+  - {ruta: docs/specs/fase-8-ingles-formato.md, version: "0.4", fecha: 2026-11-16}
+  - {ruta: docs/DECISIONES.md, version: D29, fecha: 2026-11-16}
+  - {ruta: data/ingles/formatos/gravity-escalon.yaml, version: borrador, fecha: 2026-11-16}
+  - {ruta: data/ingles/formatos/gravity-sesion-60.yaml, version: borrador, fecha: 2026-11-16}
+  - {ruta: data/ingles/formatos/gravity-ubicacion.yaml, version: borrador, fecha: 2026-11-16}
+  - {ruta: docs/contenido/ingles/niveles-y-avance.md, version: "0.3", fecha: 2026-11-14, nota: "la versión 0.4 es del mismo paquete"}
+  - {ruta: docs/contenido/ingles/modulo-1.md a modulo-4.md, version: "1.0 y 0.1", fecha: 2026-11-14, nota: "semilla de B1.1 y B1.2"}
+  - {ruta: docs/modulos/habitos/diseno-app-habitos.md, version: "anexo A", fecha: 2026-11-14, nota: "los seis módulos de inglés (A.4) y el vocabulario transversal"}
+totales:
+  escalones: 13
+  etapas: 4
+  semanas_por_escalon: 8
+  horas_por_escalon: 40
+  horas_totales: 520
+  origen: "D29 (D-ING-1); plan 0.6, sección 3.1; gravity-escalon.yaml (totales y escalera)"
+descriptores_puedo:
+  origen: "Escritos para GRAVITY con palabras propias, en primera persona y en español. No copian los descriptores del marco europeo ni los de ningún manual. Los manuales de A2 Key, B1 Preliminary y B2 First solo se consultaron para alinear lo que cada puerta de etapa mide."
+  longitudes: "Las cifras de palabras y de segundos son las de la tabla por etapa de gravity-sesion-60 (longitudes_por_etapa): A1 lectura y audio 60 a 120, escritura 30 a 50, habla 30 a 45 s; A2 120 a 200, 50 a 80, 45 a 60 s; B1 200 a 350, 80 a 120, 60 a 90 s; B2 350 a 550 de lectura, 350 a 500 de audio, 140 a 190, 90 a 120 s. Los tres escalones de cierre con examen oficial (A2.3, B1.4 y B2.4) se alinean además con el contrato de su examen."
+  cuatro_habilidades: [lectura, escucha, escritura, habla]
+
+niveles:
+  - id: A1
+    escalones: [A1.1, A1.2]
+    escalon_de_cierre: A1.2
+    horas_acumuladas: 80
+    puerta: {tipo: interna, formato: gravity-escalon, nombre: "Prueba interna de A1"}
+    origen: "gravity-escalon.yaml (etapas); D29 (D-ING-1); plan 0.6, sección 3.1. A1 no tiene examen oficial en la escalera: su etiqueta la da la prueba interna."
+  - id: A2
+    escalones: [A2.1, A2.2, A2.3]
+    escalon_de_cierre: A2.3
+    horas_acumuladas: 200
+    puerta: {tipo: examen, formato: cambridge-a2-key, fidelidad_requerida: completa}
+    origen: "gravity-escalon.yaml (etapas); D29 (D-ING-1)"
+  - id: B1
+    escalones: [B1.1, B1.2, B1.3, B1.4]
+    escalon_de_cierre: B1.4
+    horas_acumuladas: 360
+    puerta: {tipo: examen, formato: cambridge-b1-preliminary, fidelidad_requerida: completa}
+    origen: "gravity-escalon.yaml (etapas); D29 (D-ING-1)"
+  - id: B2
+    escalones: [B2.1, B2.2, B2.3, B2.4]
+    escalon_de_cierre: B2.4
+    horas_acumuladas: 520
+    puerta: {tipo: examen, formato: cambridge-b2-first, fidelidad_requerida: completa}
+    origen: "gravity-escalon.yaml (etapas); D29 (D-ING-1)"
+
+escalones:
+  # ---------------------------------------------------------------- A1 (sin inventario de manual: todo es diseño)
+  - id: A1.1
+    etapa: A1
+    orden: 1
+    nombre: "Presentarme y hablar de mis cosas"
+    entrada_por_ubicacion: "Ninguna etapa alcanzada (gravity-ubicacion.yaml, tabla de entrada)"
+    horas: 40
+    semanas: 8
+    horas_acumuladas_al_cerrar: 40
+    horas_acumuladas_al_pasar_la_puerta_de_etapa: 80
+    puerta: {tipo: escalon, formato: gravity-escalon}
+    gramatica_nueva: [gram.verbo_to_be, gram.pronombres_sujeto, gram.articulos_a_an_the, gram.plurales, gram.demostrativos,
+      gram.adjetivos_posesivos, gram.there_is_are, gram.presente_simple_afirmativa, gram.palabras_interrogativas_basicas,
+      gram.adjetivos_calificativos]
+    gramatica_que_se_retoma: []
+    funciones:
+      - "Saludar y despedirme"
+      - "Presentarme y presentar a otra persona"
+      - "Dar y pedir datos personales (nombre, edad, país, teléfono)"
+      - "Deletrear mi nombre y pedir que me repitan algo"
+      - "Contar, decir la hora y decir la fecha"
+      - "Decir quién es mi familia y cómo son las personas"
+      - "Decir qué hay en un lugar y dónde está algo"
+    vocabulario:
+      - "Datos personales, países y nacionalidades"
+      - "Números, horas, días, meses y fechas"
+      - "Familia y personas"
+      - "La casa, los cuartos y los objetos"
+      - "Colores, ropa y descripciones simples"
+      - "Comida y bebida básicas"
+      - "Frases para pedir ayuda y repetir en clase"
+    puedo:
+      lectura: "Puedo leer una ficha, un letrero o un mensaje muy corto y encontrar el nombre, la edad, el país, la hora o el precio que busco."
+      escucha: "Puedo entender saludos, presentaciones y preguntas personales muy simples cuando me hablan despacio y me repiten si lo pido."
+      escritura: "Puedo llenar un formulario con mis datos y escribir de 30 a 50 palabras sobre mí y mi familia con frases muy sencillas."
+      habla: "Puedo saludar, presentarme y preguntar y decir datos personales con frases muy cortas, pidiendo que me repitan cuando no entiendo."
+    origen:
+      gramatica: "Anexo B del plan (fila A1.1), que a su vez sale del repaso R1 de niveles-y-avance 0.3, sección 2 (temas del repaso que el dueño nunca aprobó y que D29 no confirma). Añadí palabras interrogativas básicas y adjetivos calificativos, que el anexo B no nombraba y el manual de A2 Key lista (PDF p. 52)."
+      funciones: "Diseño de GRAVITY a partir del anexo B; el proyecto no tiene lista de funciones de A1."
+      vocabulario: "Anexo B (números, horas y fechas; familia y objetos de casa del repaso R1) y diseño de GRAVITY."
+      puedo: "Diseño de GRAVITY (ver descriptores_puedo)."
+    pendiente: true
+    nota: "Todo A1 es diseño: el proyecto no tiene inventario de A1 (los contratos empiezan en A2 Key). Contrastar con el English Grammar Profile y con las listas de Cambridge para A1 el reparto entre A1.1 y A1.2."
+
+  - id: A1.2
+    etapa: A1
+    orden: 2
+    nombre: "Mi día y lo que sé hacer"
+    horas: 40
+    semanas: 8
+    horas_acumuladas_al_cerrar: 80
+    horas_acumuladas_al_pasar_la_puerta_de_etapa: 80
+    puerta: {tipo: interna, formato: gravity-escalon, nombre: "Prueba interna de A1"}
+    gramatica_nueva: [gram.presente_simple_negativa_y_pregunta, gram.adverbios_de_frecuencia, gram.can_habilidad, gram.gusto_mas_ing,
+      gram.imperativos, gram.preposiciones_de_lugar, gram.preposiciones_de_tiempo, gram.some_any, gram.posesivo_s,
+      gram.pronombres_objeto]
+    gramatica_que_se_retoma: [gram.verbo_to_be, gram.pronombres_sujeto, gram.articulos_a_an_the, gram.plurales, gram.adjetivos_posesivos,
+      gram.there_is_are, gram.presente_simple_afirmativa, gram.palabras_interrogativas_basicas]
+    funciones:
+      - "Hablar de mi rutina y de mis horarios"
+      - "Decir con qué frecuencia hago algo"
+      - "Decir lo que sé hacer y lo que no sé hacer"
+      - "Expresar gustos y preferencias sencillas"
+      - "Dar y seguir instrucciones cortas"
+      - "Decir dónde y cuándo ocurre algo"
+      - "Pedir y ofrecer algo de comer o de beber"
+    vocabulario:
+      - "Rutinas y horarios"
+      - "Habilidades y pasatiempos"
+      - "Deportes y tiempo libre"
+      - "Lugares de la ciudad y cómo llegar"
+      - "Transporte básico"
+      - "Compras y comida con cantidades simples"
+    puedo:
+      lectura: "Puedo leer un texto de 60 a 100 palabras sobre la rutina de una persona o un horario y decir qué hace, cuándo y dónde."
+      escucha: "Puedo seguir una conversación lenta sobre rutinas, gustos y cosas que alguien sabe hacer, y entender instrucciones cortas."
+      escritura: "Puedo escribir de 30 a 50 palabras sobre mi día, lo que me gusta y lo que sé hacer, con frases simples."
+      habla: "Puedo describir mi rutina y mis gustos durante 30 a 45 segundos, pedir algo sencillo y dar una instrucción corta."
+    origen:
+      gramatica: "Anexo B del plan (fila A1.2), que sale del repaso R2 de niveles-y-avance 0.3 (tampoco aprobado por el dueño). Añadí el posesivo 's y los pronombres de objeto: el manual de A2 Key los lista (PDF p. 52) y no tenían escalón en el anexo B."
+      funciones: "Diseño de GRAVITY a partir del anexo B."
+      vocabulario: "Repaso R2 (rutinas, habilidades, tiempo libre y lugares) y diseño de GRAVITY."
+      puedo: "Diseño de GRAVITY (ver descriptores_puedo)."
+    pendiente: true
+    nota: "Todo A1 es diseño. Contrastar con el English Grammar Profile. La puerta es la prueba interna de A1 (gravity-escalon): no hay examen oficial de A1 en la escalera, así que su etiqueta no equivale a ninguna certificación."
+
+  # ---------------------------------------------------------------- A2 (puerta de etapa: A2 Key; el curso arranca aquí, D-ING-7)
+  - id: A2.1
+    etapa: A2
+    orden: 3
+    nombre: "Lo que pasó, lo que pasa y lo que voy a hacer"
+    entrada_por_ubicacion: "Última etapa alcanzada: A1 (gravity-ubicacion.yaml, tabla de entrada)"
+    horas: 40
+    semanas: 8
+    horas_acumuladas_al_cerrar: 120
+    horas_acumuladas_al_pasar_la_puerta_de_etapa: 200
+    puerta: {tipo: escalon, formato: gravity-escalon}
+    gramatica_nueva: [gram.presente_continuo, gram.verbos_de_estado, gram.was_were, gram.pasado_simple_afirmativa,
+      gram.pasado_simple_negativa_y_pregunta, gram.contables_e_incontables, gram.pronombres_posesivos_e_indefinidos,
+      gram.comparativos_y_superlativos, gram.going_to, gram.conectores_basicos]
+    gramatica_que_se_retoma: [gram.verbo_to_be, gram.presente_simple_afirmativa, gram.presente_simple_negativa_y_pregunta,
+      gram.adverbios_de_frecuencia, gram.can_habilidad, gram.gusto_mas_ing, gram.preposiciones_de_tiempo, gram.some_any,
+      gram.pronombres_objeto, gram.adjetivos_calificativos, gram.plurales, gram.posesivo_s]
+    funciones:
+      - "Decir qué hago ahora y qué hacen otras personas"
+      - "Distinguir lo que hago siempre de lo que pasa en este momento"
+      - "Contar lo que hice ayer, el fin de semana o en mis vacaciones"
+      - "Comparar personas, lugares y cosas"
+      - "Preguntar y hablar de cantidades al comprar o cocinar"
+      - "Decir mis planes e intenciones"
+      - "Dar razones sencillas (porque, así que)"
+    vocabulario:
+      - "Actividades de casa y trabajo en este momento"
+      - "Gustos, opiniones y sentimientos"
+      - "Fin de semana y vacaciones"
+      - "Salidas, eventos y entretenimiento"
+      - "Comida, compras y cantidades"
+      - "Ciudad, lugares y transporte"
+      - "Planes, citas y tiempo libre"
+    puedo:
+      lectura: "Puedo leer un mensaje largo, una anécdota o un anuncio de 120 a 150 palabras y entender qué pasó, cuándo y a quién, y qué se planea hacer."
+      escucha: "Puedo entender, si me hablan con claridad y sin prisa, un relato corto sobre lo que alguien hizo o va a hacer."
+      escritura: "Puedo escribir de 50 a 70 palabras contando lo que hice y lo que voy a hacer, y comparar dos cosas."
+      habla: "Puedo contar en unos 45 segundos lo que hice, comparar dos opciones y decir qué voy a hacer, con razones sencillas."
+    origen:
+      gramatica: "Anexo B del plan (fila A2.1), que sale del repaso R3 de niveles-y-avance 0.3, ajustado con el inventario de A2 Key (PDF p. 51 a 53): se añaden pronombres posesivos e indefinidos y conectores básicos, que el manual lista y el anexo B no nombraba. El presente continuo y los verbos de estado quedan aquí (el manual lista «verbos que no se usan en continuo»); lo que B1.1 hace con ellos es contrastar usos."
+      funciones: "Lista de funciones de A2 Key (PDF p. 51), reescrita con palabras propias y repartida entre A2.1, A2.2 y A2.3 por diseño."
+      vocabulario: "Temas de A2 Key (PDF p. 53), un campo por semana, y vocabulario transversal del anexo A.4 (viajes y vida diaria)."
+      puedo: "Diseño de GRAVITY (ver descriptores_puedo)."
+    pendiente: true
+    nota: "El manual de A2 Key respalda que todo esté visto al cerrar A2.3, no el reparto entre A2.1, A2.2 y A2.3, que es diseño. Contrastar con el English Grammar Profile: presente continuo, verbos de estado, contables e incontables y going to en este escalón. Carga alta: 10 temas nuevos en 7 semanas de contenido; la calibra el piloto de A2.1 (P1.5). La semana 1 retoma A1, porque la ubicación solo exige 10 de 12 en A1. Detalle por semana en temario_por_semana."
+
+  - id: A2.2
+    etapa: A2
+    orden: 4
+    nombre: "Experiencias, obligaciones y consejos"
+    horas: 40
+    semanas: 8
+    horas_acumuladas_al_cerrar: 160
+    horas_acumuladas_al_pasar_la_puerta_de_etapa: 200
+    puerta: {tipo: escalon, formato: gravity-escalon}
+    gramatica_nueva: [gram.will_futuro, gram.have_to_must_mustnt, gram.should_consejo, gram.presente_perfecto_experiencias,
+      gram.presente_perfecto_just_already_yet, gram.could_peticiones_y_habilidad_pasada, gram.would_like_y_sugerencias,
+      gram.verbo_mas_infinitivo, gram.adverbios_de_modo_y_grado]
+    gramatica_que_se_retoma: [gram.going_to, gram.presente_continuo, gram.verbos_de_estado, gram.was_were, gram.pasado_simple_afirmativa,
+      gram.pasado_simple_negativa_y_pregunta, gram.can_habilidad, gram.imperativos, gram.gusto_mas_ing,
+      gram.adverbios_de_frecuencia, gram.contables_e_incontables, gram.conectores_basicos]
+    funciones:
+      - "Hablar de experiencias de vida (¿alguna vez has…?)"
+      - "Dar noticias recientes y decir qué ya hice y qué todavía no"
+      - "Predecir, decidir en el momento, prometer y ofrecer ayuda"
+      - "Expresar obligación, prohibición y necesidad"
+      - "Dar y pedir consejos"
+      - "Pedir con cortesía, ofrecer, invitar y sugerir"
+      - "Hablar de cómo me siento y de mi salud"
+      - "Decir cómo hago algo y qué espero o quiero hacer"
+    vocabulario:
+      - "Clima y naturaleza"
+      - "Trabajo, reglas y servicios"
+      - "Salud, medicina y ejercicio"
+      - "Viajes y experiencias"
+      - "Casa, recados y tareas pendientes"
+      - "Restaurantes, tiendas y servicios"
+      - "Sentimientos y relaciones con otras personas"
+    puedo:
+      lectura: "Puedo leer un texto de unas 150 palabras sobre experiencias, reglas o consejos y entender las ideas y lo que se recomienda."
+      escucha: "Puedo entender un mensaje de voz o una conversación sobre experiencias, obligaciones y consejos, aunque tenga que oírlo dos veces."
+      escritura: "Puedo escribir de 50 a 80 palabras contando una experiencia o dando un consejo con sus razones."
+      habla: "Puedo hablar de 45 a 60 segundos sobre algo que he vivido, dar un consejo y hacer una petición o una invitación con cortesía."
+    origen:
+      gramatica: "Anexo B del plan (fila A2.2: presente perfecto de experiencias y con just, already y yet; will; have to, must y should), que sale del repaso R4 de niveles-y-avance 0.3, ajustado con el inventario de A2 Key (PDF p. 51 y 52): se añaden peticiones y ofrecimientos (could, would like, shall), infinitivo tras verbos y adverbios de modo y grado, que el manual lista y el anexo B no nombraba. May (posibilidad) y need entran dentro de will_futuro y have_to_must_mustnt."
+      funciones: "Lista de funciones de A2 Key (PDF p. 51), reescrita con palabras propias."
+      vocabulario: "Temas de A2 Key (PDF p. 53), un campo por semana, y vocabulario transversal del anexo A.4 (salud y viajes)."
+      puedo: "Diseño de GRAVITY (ver descriptores_puedo)."
+    pendiente: true
+    nota: "Todos los temas tienen respaldo del manual de A2 Key; el reparto dentro de A2 es diseño. Contrastar con el English Grammar Profile el orden entre el presente perfecto, will y los modales. Detalle por semana en temario_por_semana."
+
+  - id: A2.3
+    etapa: A2
+    orden: 5
+    nombre: "Historias, condiciones y cómo se hacen las cosas"
+    horas: 40
+    semanas: 8
+    horas_acumuladas_al_cerrar: 200
+    horas_acumuladas_al_pasar_la_puerta_de_etapa: 200
+    puerta: {tipo: examen, formato: cambridge-a2-key, fidelidad_requerida: completa}
+    gramatica_nueva: [gram.pasado_continuo, gram.condicional_primera, gram.relativas_who_which_that, gram.sintagma_nominal_basico,
+      gram.presente_perfecto_for_since, gram.pasiva_presente_y_pasado, gram.oraciones_con_that,
+      gram.futuro_con_presente_continuo_y_simple, gram.gerundio_y_preposiciones, gram.too_y_enough]
+    gramatica_que_se_retoma: [gram.presente_simple_afirmativa, gram.presente_continuo, gram.verbos_de_estado, gram.pasado_simple_afirmativa,
+      gram.pasado_simple_negativa_y_pregunta, gram.presente_perfecto_experiencias, gram.presente_perfecto_just_already_yet,
+      gram.will_futuro, gram.going_to, gram.have_to_must_mustnt, gram.comparativos_y_superlativos, gram.verbo_mas_infinitivo,
+      gram.gusto_mas_ing, gram.adjetivos_calificativos, gram.posesivo_s, gram.conectores_basicos, gram.adverbios_de_modo_y_grado]
+    funciones:
+      - "Contar lo que pasaba mientras ocurría otra cosa"
+      - "Plantear condiciones y sus consecuencias"
+      - "Describir personas, cosas y lugares con más detalle (la persona que…, el lugar donde…)"
+      - "Decir desde cuándo y por cuánto tiempo hago o tengo algo"
+      - "Decir cómo se hace o se hizo algo sin nombrar a quien lo hace"
+      - "Decir lo que pienso, espero y sé (I think that…)"
+      - "Hablar de citas, arreglos y horarios"
+      - "Decir que algo es demasiado o es suficiente"
+    vocabulario:
+      - "Historias y noticias"
+      - "Condiciones y consecuencias de la vida diaria"
+      - "Personas, objetos y lugares: cómo son y para qué sirven"
+      - "Etapas de la vida, estudios y trabajo"
+      - "Productos, lugares conocidos y procesos"
+      - "Horarios, citas y transporte público"
+      - "Idiomas, estudios y comunicación"
+    puedo:
+      lectura: "Puedo leer avisos, mensajes y un texto de unas 200 palabras y encontrar lo que necesito, y completar un texto corto con las palabras que le faltan."
+      escucha: "Puedo entender anuncios, diálogos y mensajes sobre hechos y planes cotidianos y anotar datos como horas, nombres y lugares."
+      escritura: "Puedo escribir un mensaje o un correo de 25 palabras o más que cubra tres puntos, y una historia de 35 palabras o más a partir de tres imágenes."
+      habla: "Puedo contestar preguntas personales y conversar con otra persona sobre gustos y razones, de forma sencilla pero comprensible, durante unos 8 a 10 minutos."
+    origen:
+      gramatica: "Anexo B del plan (fila A2.3: pasado continuo, primera condicional, too y enough, relativos), ajustado con el inventario de A2 Key (PDF p. 52 y 53): el presente perfecto con for y since (el anexo B lo ponía en B1.1) y la pasiva en presente y pasado simple (el anexo B la ponía en B1.3) pasan aquí porque el manual los lista y la puerta de A2 puede preguntarlos; se añaden además las subordinadas con that, el presente continuo y simple con sentido de futuro, el gerundio tras preposición y el sintagma nominal básico. B1.1 y B1.3 los retoman y los amplían."
+      funciones: "Lista de funciones de A2 Key (PDF p. 51), reescrita con palabras propias."
+      vocabulario: "Temas de A2 Key (PDF p. 53) y diseño de GRAVITY."
+      puedo: "Contrato cambridge-a2-key (Writing 6 y 7: 25 y 35 palabras como mínimo; Speaking de 8 a 10 minutos) y diseño de GRAVITY (ver descriptores_puedo)."
+    pendiente: true
+    nota: "Escalón de cierre de A2: su puerta es la forma completa tipo A2 Key (unos 100 minutos según el contrato: se reparte en varias sesiones; lo define P0.3). El manual respalda todos los temas; el reparto es diseño. Carga alta: 10 temas en 7 semanas; el piloto lo calibra. Detalle por semana en temario_por_semana."
+
+  # ---------------------------------------------------------------- B1 (puerta de etapa: B1 Preliminary)
+  - id: B1.1
+    etapa: B1
+    orden: 6
+    nombre: "Rutinas, cambios y experiencias a fondo"
+    entrada_por_ubicacion: "Última etapa alcanzada: A2 (gravity-ubicacion.yaml, tabla de entrada)"
+    horas: 40
+    semanas: 8
+    horas_acumuladas_al_cerrar: 240
+    horas_acumuladas_al_pasar_la_puerta_de_etapa: 360
+    puerta: {tipo: escalon, formato: gravity-escalon}
+    gramatica_nueva: [gram.presente_simple_vs_continuo, gram.verbos_de_estado_y_accion, gram.pasado_simple_vs_continuo,
+      gram.presente_perfecto_vs_pasado_simple, gram.used_to, gram.preguntas_de_sujeto_y_objeto, gram.pronombres_reflexivos]
+    gramatica_que_se_retoma: [gram.presente_simple_afirmativa, gram.presente_simple_negativa_y_pregunta, gram.adverbios_de_frecuencia,
+      gram.presente_continuo, gram.verbos_de_estado, gram.pasado_simple_afirmativa, gram.pasado_simple_negativa_y_pregunta,
+      gram.was_were, gram.pasado_continuo, gram.presente_perfecto_experiencias, gram.presente_perfecto_just_already_yet,
+      gram.presente_perfecto_for_since, gram.pronombres_objeto, gram.palabras_interrogativas_basicas]
+    funciones:
+      - "Describir mi rutina y lo que cambió este mes"
+      - "Distinguir lo permanente de lo temporal y de lo que está cambiando"
+      - "Hablar de salud, hábitos y cómo me siento"
+      - "Contar experiencias y decir por qué importan hoy"
+      - "Decir cómo eran las cosas antes y cómo son ahora"
+      - "Hacer preguntas de seguimiento (¿con quién fuiste?, ¿quién te lo dijo?)"
+    vocabulario:
+      - "Rutinas, hábitos y salud: ejercicio, sueño y alimentación"
+      - "Cuerpo, síntomas y visita al médico"
+      - "Vida diaria: horarios, turnos y tareas"
+      - "Experiencias: viajes, estudios y logros"
+      - "Cambios en mi vida: antes y ahora"
+      - "Sentimientos, opiniones y bienestar"
+    puedo:
+      lectura: "Puedo leer un artículo o una carta de 200 a 250 palabras sobre la vida diaria y distinguir lo habitual, lo temporal y lo que está cambiando."
+      escucha: "Puedo seguir un relato o una charla sobre rutinas y experiencias, a velocidad normal pero clara, y captar los detalles."
+      escritura: "Puedo escribir de 80 a 100 palabras sobre mi rutina y lo que es distinto este mes, o sobre una experiencia pasada y por qué importa hoy."
+      habla: "Puedo hablar un minuto sobre mis hábitos y mis experiencias y contestar preguntas de seguimiento."
+    origen:
+      gramatica: "Anexo B del plan (fila B1.1) y módulos 1 y 2 aprobados por el dueño (semilla), que en gramática son de nivel A2 (revisión ING-B3): aquí se retoman y se profundizan. Lo nuevo son los contrastes y los usos, no las formas. El ejemplo patrón sesion-b1-1-s01-lun-ejemplo.yaml usa gram.presente_simple_vs_continuo (nuevo aquí) y gram.verbos_de_estado (se retoma: lo introduce A2.1). Reflexivos y enfáticos se añaden porque el manual de B1 Preliminary los lista (PDF p. 73)."
+      funciones: "Lista de funciones de B1 Preliminary (PDF p. 72) y módulos 1 y 2, reescritas con palabras propias."
+      vocabulario: "Temas de B1 Preliminary (PDF p. 74) y vocabulario transversal del anexo A.4 (salud, gimnasio y alimentación)."
+      puedo: "Diseño de GRAVITY (ver descriptores_puedo)."
+    pendiente: true
+    nota: "Los contrastes de tiempos (presente simple frente a continuo, pasado simple frente a continuo, presente perfecto frente a pasado simple), los verbos de estado y acción y las preguntas de sujeto no están nombrados como tales en el manual de B1 Preliminary (que lista los tiempos desde A2): contrastar con el English Grammar Profile. El resto de los temas tiene respaldo del manual."
+
+  - id: B1.2
+    etapa: B1
+    orden: 7
+    nombre: "Planes, trabajo y comunicación"
+    horas: 40
+    semanas: 8
+    horas_acumuladas_al_cerrar: 280
+    horas_acumuladas_al_pasar_la_puerta_de_etapa: 360
+    puerta: {tipo: escalon, formato: gravity-escalon}
+    gramatica_nueva: [gram.formas_de_futuro_contraste, gram.oraciones_de_tiempo, gram.condicional_cero, gram.condicional_primera_ampliada,
+      gram.modales_ampliados, gram.preguntas_indirectas, gram.patrones_verbales_ing_e_infinitivo, gram.preposiciones_dependientes]
+    gramatica_que_se_retoma: [gram.will_futuro, gram.going_to, gram.futuro_con_presente_continuo_y_simple, gram.presente_continuo,
+      gram.condicional_primera, gram.have_to_must_mustnt, gram.should_consejo, gram.could_peticiones_y_habilidad_pasada,
+      gram.would_like_y_sugerencias, gram.verbo_mas_infinitivo, gram.gusto_mas_ing, gram.gerundio_y_preposiciones,
+      gram.conectores_basicos, gram.oraciones_con_that, gram.palabras_interrogativas_basicas, gram.presente_simple_negativa_y_pregunta,
+      gram.pasado_simple_negativa_y_pregunta]
+    funciones:
+      - "Explicar planes y metas y cómo pienso lograrlas"
+      - "Decidir, predecir y prometer con la forma de futuro adecuada"
+      - "Plantear condiciones, advertencias y acuerdos"
+      - "Pedir y dar permiso, obligación y consejo con distintos grados de cortesía"
+      - "Hacer preguntas educadas e indirectas"
+      - "Escribir correos de trabajo: saludo, motivo, petición y cierre"
+      - "Participar en una reunión o una entrevista breve: opinar, sugerir, pedir aclaración y cerrar"
+    vocabulario:
+      - "Trabajo y empleo: puestos, horarios y entrevistas"
+      - "Reuniones, correos y agenda"
+      - "Metas, finanzas básicas y ahorro"
+      - "Servicios, trámites y gestiones"
+      - "Tiempo libre y planes"
+      - "Lenguas, comunicación y relaciones con otras personas"
+      - "Lugares de trabajo y de servicio"
+    puedo:
+      lectura: "Puedo leer correos y avisos de trabajo de 200 a 250 palabras y entender qué se pide, para cuándo y qué pasa si no se cumple."
+      escucha: "Puedo entender una reunión corta o un mensaje de voz de trabajo y anotar decisiones, fechas y tareas pendientes."
+      escritura: "Puedo escribir un correo de 80 a 120 palabras con saludo, motivo, petición y cierre, en un tono cortés."
+      habla: "Puedo explicar mis planes y metas, hacer preguntas indirectas y resolver un problema sencillo en una llamada o una reunión breve."
+    rutas_opcionales:
+      - {formatos: [toeic-lr, toeic-sw], se_abre_desde: B1.2, no_es_puerta: true,
+        origen: "plan 0.6, sección 3.1 («TOEIC y TOEFL son rutas de preparación opcionales que se abren desde B1.2 y B2.1»)",
+        pendiente: true, nota: "El plan nombra los dos exámenes y los dos escalones sin decir cuál va con cuál; se lee en el mismo orden: TOEIC desde B1.2 y TOEFL desde B2.1."}
+    origen:
+      gramatica: "Anexo B del plan (fila B1.2) y módulos 3 y 4 (semilla; redactados, sin aprobar, y con D-ING-4 no necesitan aprobación por separado). Los futuros y la primera condicional se introducen en A2; aquí se contrastan y se amplían. Se añaden, porque el manual de B1 Preliminary los lista (PDF p. 73 y 74): condicional de tipo 0, oraciones de tiempo, might y ought to, verbo más objeto más infinitivo y las preposiciones que acompañan a verbos, sustantivos y adjetivos."
+      funciones: "Lista de funciones de B1 Preliminary (PDF p. 72) y módulos 3 y 4, reescritas con palabras propias."
+      vocabulario: "Temas de B1 Preliminary (PDF p. 74) y vocabulario transversal del anexo A.4 (trabajo y finanzas básicas)."
+      puedo: "Diseño de GRAVITY (ver descriptores_puedo)."
+    pendiente: true
+    nota: "El contraste de formas de futuro y las ampliaciones de la primera condicional (unless, as long as) no están nombrados en el manual de B1 Preliminary: contrastar con el English Grammar Profile, igual que had better, be able to y be allowed to dentro de modales_ampliados. El resto de los temas tiene respaldo del manual."
+
+  - id: B1.3
+    etapa: B1
+    orden: 8
+    nombre: "Comparar, explicar procesos y situaciones imaginarias"
+    horas: 40
+    semanas: 8
+    horas_acumuladas_al_cerrar: 320
+    horas_acumuladas_al_pasar_la_puerta_de_etapa: 360
+    puerta: {tipo: escalon, formato: gravity-escalon}
+    gramatica_nueva: [gram.comparaciones_ampliadas, gram.pasiva_ampliada, gram.condicional_segunda, gram.objeto_directo_e_indirecto,
+      gram.so_neither_too_either, gram.too_enough_con_infinitivo, gram.conectores_de_causa_resultado_y_proposito]
+    gramatica_que_se_retoma: [gram.comparativos_y_superlativos, gram.pasiva_presente_y_pasado, gram.condicional_primera,
+      gram.condicional_primera_ampliada, gram.too_y_enough, gram.conectores_basicos, gram.will_futuro, gram.modales_ampliados,
+      gram.sintagma_nominal_basico, gram.relativas_who_which_that, gram.presente_perfecto_vs_pasado_simple]
+    funciones:
+      - "Comparar opciones y justificar una elección"
+      - "Dar y defender una opinión"
+      - "Describir cómo funciona algo y cómo se hace un proceso"
+      - "Hablar de situaciones imaginarias y dar consejos (si yo fuera tú…)"
+      - "Estar de acuerdo y en desacuerdo con lo que otra persona dice"
+      - "Dar razones y explicar para qué se hace algo"
+      - "Pedir y dar cosas o servicios (dame, mándame, muéstrales…)"
+    vocabulario:
+      - "Medio ambiente y naturaleza"
+      - "Transporte y movilidad en la ciudad"
+      - "Casa, vivienda y mudanza"
+      - "Compras, consumo y precios"
+      - "Deportes y competencias"
+      - "Aparatos, tecnología y cómo funcionan"
+    puedo:
+      lectura: "Puedo leer un texto de 250 a 300 palabras que compara opciones o explica cómo se hace algo y entender las diferencias y los pasos."
+      escucha: "Puedo entender una explicación hablada de cómo funciona algo o de una situación hipotética y captar la opinión de quien habla."
+      escritura: "Puedo escribir de 80 a 120 palabras comparando dos opciones o diciendo qué haría yo en una situación imaginaria."
+      habla: "Puedo comparar, describir un proceso paso a paso y hablar de situaciones imaginarias durante 60 a 90 segundos."
+    origen:
+      gramatica: "Anexo B del plan (fila B1.3) y módulo 5 del anexo A (comparativos, pasiva, segunda condicional; semilla). Todos los temas tienen respaldo del manual de B1 Preliminary (PDF p. 73 y 74). Los conectores de causa, resultado y propósito (because, since, as, so that, in order to) salen de lo que el anexo B ponía en B2.4: el manual de B1 Preliminary los lista, así que se ven antes de la puerta de B1. La pasiva en presente y pasado simple, que el anexo B ponía aquí, pasa a A2.3 (la lista el manual de A2 Key); aquí se amplía con la pasiva con modales."
+      funciones: "Lista de funciones de B1 Preliminary (PDF p. 72), reescrita con palabras propias, y módulo 5 del anexo A."
+      vocabulario: "Temas de B1 Preliminary (PDF p. 74) y diseño de GRAVITY."
+      puedo: "Diseño de GRAVITY (ver descriptores_puedo)."
+    pendiente: true
+    nota: "Respaldo del manual de B1 Preliminary para todos los temas; el reparto dentro de B1 es diseño. Falta contrastar con el English Grammar Profile las ampliaciones que el manual no nombra (much y far con el comparativo, la pasiva con will). La pronunciación del módulo 5 (sonido th, vocales largas y cortas) está en el anexo A."
+
+  - id: B1.4
+    etapa: B1
+    orden: 9
+    nombre: "Relatos, opiniones y repaso para la puerta"
+    horas: 40
+    semanas: 8
+    horas_acumuladas_al_cerrar: 360
+    horas_acumuladas_al_pasar_la_puerta_de_etapa: 360
+    puerta: {tipo: examen, formato: cambridge-b1-preliminary, fidelidad_requerida: completa}
+    gramatica_nueva: [gram.pasado_perfecto, gram.estilo_indirecto, gram.relativas_ampliadas, gram.verbos_frasales_frecuentes,
+      gram.causativo_have_get, gram.was_were_going_to, gram.sintagmas_nominales_complejos, gram.adjetivos_compuestos]
+    gramatica_que_se_retoma: [gram.pasado_simple_vs_continuo, gram.pasado_continuo, gram.presente_perfecto_vs_pasado_simple, gram.used_to,
+      gram.relativas_who_which_that, gram.sintagma_nominal_basico, gram.preguntas_indirectas, gram.condicional_segunda,
+      gram.pasiva_ampliada, gram.patrones_verbales_ing_e_infinitivo, gram.preposiciones_dependientes, gram.oraciones_con_that,
+      gram.objeto_directo_e_indirecto, gram.conectores_de_causa_resultado_y_proposito]
+    funciones:
+      - "Contar una historia en orden, con antecedentes y desenlace"
+      - "Repetir o contar lo que otra persona dijo"
+      - "Opinar y defender una idea con ejemplos"
+      - "Describir una fotografía y negociar una decisión con otra persona"
+      - "Dar detalles con cláusulas de relativo (el hombre que…, la casa cuyo…)"
+      - "Hablar de servicios que me hacen otras personas (I had my car repaired)"
+      - "Decir lo que iba a hacer y no hice"
+    vocabulario:
+      - "Entretenimiento, cine, libros y medios"
+      - "Personas: carácter y relaciones"
+      - "Ropa, moda y estilo"
+      - "Comida, restaurantes y recetas"
+      - "Clima, estaciones y fenómenos naturales"
+      - "Pasatiempos y aficiones"
+      - "Identidad, cultura y tradiciones"
+    puedo:
+      lectura: "Puedo leer un texto de unas 350 palabras y entender los detalles, la idea global y la actitud de quien escribe, y completar un texto con las oraciones o palabras que le faltan."
+      escucha: "Puedo entender mensajes, diálogos, notas y una entrevista de unos tres minutos y captar detalles, opiniones y actitudes."
+      escritura: "Puedo escribir un correo de unas 100 palabras que conteste cuatro puntos y un artículo o una historia de unas 100 palabras."
+      habla: "Puedo describir una fotografía, acordar una decisión con otra persona y conversar sobre mis gustos y mis experiencias, durante 10 a 12 minutos."
+    origen:
+      gramatica: "Anexo B del plan (fila B1.4) y módulo 6 del anexo A (pasado perfecto, estilo indirecto, relativas y phrasal verbs; semilla), ajustados con el inventario de B1 Preliminary (PDF p. 73 y 74): el causativo have/get (el anexo B lo ponía en B2.3), was/were going to, los sintagmas nominales complejos y los adjetivos compuestos se añaden porque el manual los lista. El pasado perfecto no está en el inventario de B1 Preliminary: viene del módulo 6 que el dueño planteó (diseño)."
+      funciones: "Lista de funciones de B1 Preliminary (PDF p. 72) y módulo 6 del anexo A, reescritas con palabras propias."
+      vocabulario: "Temas de B1 Preliminary (PDF p. 74) y diseño de GRAVITY."
+      puedo: "Contrato cambridge-b1-preliminary (Writing 1 y 2 de unas 100 palabras; Speaking de 10 a 12 minutos por pareja) y diseño de GRAVITY (ver descriptores_puedo)."
+    pendiente: true
+    nota: "Escalón de cierre de B1: su puerta es la forma completa tipo B1 Preliminary (unos 130 minutos según el contrato: se reparte en varias sesiones; lo define P0.3). El pasado perfecto y las relativas ampliadas (whose, relativo omitido, cláusulas con coma) no están en el inventario del manual: contrastar con el English Grammar Profile. El resto de los temas tiene respaldo del manual."
+
+  # ---------------------------------------------------------------- B2 (sin inventario de manual: todo es diseño del anexo B)
+  - id: B2.1
+    etapa: B2
+    orden: 10
+    nombre: "Narrar con matices y hablar de cambios"
+    entrada_por_ubicacion: "Última etapa alcanzada: B1 o B2 (gravity-ubicacion.yaml, tabla de entrada; quien alcanza B2 puede presentar de inmediato la puerta de B2)"
+    horas: 40
+    semanas: 8
+    horas_acumuladas_al_cerrar: 400
+    horas_acumuladas_al_pasar_la_puerta_de_etapa: 520
+    puerta: {tipo: escalon, formato: gravity-escalon}
+    gramatica_nueva: [gram.presente_perfecto_continuo, gram.tiempos_narrativos, gram.futuro_continuo_y_perfecto,
+      gram.used_to_would_be_used_to]
+    gramatica_que_se_retoma: [gram.pasado_simple_vs_continuo, gram.pasado_perfecto, gram.presente_perfecto_vs_pasado_simple,
+      gram.presente_perfecto_for_since, gram.used_to, gram.formas_de_futuro_contraste, gram.will_futuro, gram.going_to,
+      gram.estilo_indirecto]
+    funciones:
+      - "Narrar con matices: antecedentes, duración y resultados"
+      - "Hablar de cambios, tendencias y evolución"
+      - "Hablar de lo que estaré haciendo o habré logrado en el futuro"
+      - "Contrastar costumbres de antes con las de ahora"
+      - "Resumir y contar noticias"
+      - "Describir una experiencia larga con detalles"
+    vocabulario:
+      - "Cambios y tendencias: aumentar, bajar y estabilizarse"
+      - "Noticias y medios"
+      - "Trayectoria profesional y educación"
+      - "Tecnología y vida moderna"
+      - "Ciudad y sociedad"
+      - "Emociones y carácter: matices"
+    puedo:
+      lectura: "Puedo leer artículos y relatos de 350 a 450 palabras, seguir la secuencia de los hechos y entender qué cambió y por qué."
+      escucha: "Puedo seguir un relato o una charla de 350 a 400 palabras a velocidad natural y captar los hechos, su orden y la actitud de quien habla."
+      escritura: "Puedo escribir de 140 a 160 palabras narrando una experiencia o describiendo un cambio, con los hechos en orden y la duración clara."
+      habla: "Puedo hablar unos 90 segundos narrando un hecho con sus antecedentes y sus consecuencias, y comentar cambios y tendencias."
+    rutas_opcionales:
+      - {formatos: [toefl-ibt-2026], se_abre_desde: B2.1, no_es_puerta: true,
+        origen: "plan 0.6, sección 3.1 («TOEIC y TOEFL son rutas de preparación opcionales que se abren desde B1.2 y B2.1»)",
+        pendiente: true, nota: "Ver la nota de la ruta opcional de B1.2: el emparejamiento de exámenes y escalones es una lectura."}
+    origen:
+      gramatica: "Anexo B del plan (fila B2.1). El manual de B2 First no trae inventario de estructuras (su glosario dice que las listas existen en los niveles inferiores, PDF p. 37 y 84): todo B2 es diseño."
+      funciones: "Anexo B del plan y diseño de GRAVITY; el manual de B2 First no trae lista de funciones."
+      vocabulario: "Diseño de GRAVITY; vocabulario transversal del anexo A.4."
+      puedo: "Diseño de GRAVITY (ver descriptores_puedo)."
+    pendiente: true
+    nota: "Todo B2 es diseño: contrastar con el English Grammar Profile y con las listas de Cambridge. B2 queda con menos temas que A2 y B1 porque cada uno es más grande y porque el anexo B no propuso más; no se inventaron temas sin respaldo."
+
+  - id: B2.2
+    etapa: B2
+    orden: 11
+    nombre: "Suponer, lamentar y plantear hipótesis"
+    horas: 40
+    semanas: 8
+    horas_acumuladas_al_cerrar: 440
+    horas_acumuladas_al_pasar_la_puerta_de_etapa: 520
+    puerta: {tipo: escalon, formato: gravity-escalon}
+    gramatica_nueva: [gram.modales_de_deduccion, gram.condicional_tercera, gram.condicionales_mixtas, gram.wish_e_if_only]
+    gramatica_que_se_retoma: [gram.modales_ampliados, gram.condicional_cero, gram.condicional_primera_ampliada, gram.condicional_segunda,
+      gram.pasado_perfecto, gram.tiempos_narrativos, gram.presente_perfecto_continuo, gram.have_to_must_mustnt, gram.should_consejo]
+    funciones:
+      - "Especular sobre el presente y sobre el pasado (must be, can't have been…)"
+      - "Lamentar y expresar arrepentimiento"
+      - "Hablar de lo que no pasó y de lo que habría pasado"
+      - "Plantear hipótesis y sus consecuencias"
+      - "Expresar deseos sobre el presente y sobre el pasado"
+      - "Criticar y disculparme con matices"
+    vocabulario:
+      - "Decisiones, riesgos y consecuencias"
+      - "Emociones y arrepentimiento"
+      - "Evidencias, deducciones y misterios"
+      - "Oportunidades perdidas y trayectoria"
+      - "Salud, hábitos y estilo de vida"
+      - "Relaciones y conflictos"
+    puedo:
+      lectura: "Puedo leer textos de 400 a 500 palabras con hipótesis y suposiciones y distinguir lo que es un hecho de lo que es una conjetura."
+      escucha: "Puedo entender una conversación o un programa de 350 a 450 palabras en el que se especula, se lamenta o se imagina qué habría pasado."
+      escritura: "Puedo escribir de 140 a 170 palabras explicando qué habría hecho de otra manera y qué lamento, con hipótesis claras."
+      habla: "Puedo hablar de 90 a 120 segundos especulando sobre una situación, lamentando algo del pasado y planteando qué pasaría si fuera distinto."
+    origen:
+      gramatica: "Anexo B del plan (fila B2.2). Todo B2 es diseño."
+      funciones: "Anexo B del plan y diseño de GRAVITY."
+      vocabulario: "Diseño de GRAVITY."
+      puedo: "Diseño de GRAVITY (ver descriptores_puedo)."
+    pendiente: true
+    nota: "Todo B2 es diseño. Contrastar con el English Grammar Profile los modales de deducción en pasado, la tercera condicional, las condicionales mixtas y wish."
+
+  - id: B2.3
+    etapa: B2
+    orden: 12
+    nombre: "Informar, reportar y describir procesos"
+    horas: 40
+    semanas: 8
+    horas_acumuladas_al_cerrar: 480
+    horas_acumuladas_al_pasar_la_puerta_de_etapa: 520
+    puerta: {tipo: escalon, formato: gravity-escalon}
+    gramatica_nueva: [gram.pasiva_avanzada, gram.gerundios_e_infinitivos_avanzados, gram.verbos_de_reporte,
+      gram.participios_y_relativas_reducidas]
+    gramatica_que_se_retoma: [gram.pasiva_presente_y_pasado, gram.pasiva_ampliada, gram.causativo_have_get, gram.estilo_indirecto,
+      gram.patrones_verbales_ing_e_infinitivo, gram.relativas_who_which_that, gram.relativas_ampliadas,
+      gram.sintagmas_nominales_complejos, gram.preguntas_indirectas, gram.verbos_frasales_frecuentes]
+    funciones:
+      - "Informar de lo que dijeron o decidieron otras personas"
+      - "Describir procesos y cómo se hace algo"
+      - "Atribuir información sin comprometerme (se dice que…, se cree que…)"
+      - "Hablar de servicios y de cosas que se hacen por uno"
+      - "Dar detalles con cláusulas de relativo y de participio"
+      - "Resumir una noticia o un informe"
+    vocabulario:
+      - "Ciencia, tecnología e industria"
+      - "Noticias, política y sociedad"
+      - "Procesos, fabricación y servicios"
+      - "Verbos de reporte: admitir, negar, sugerir, insistir y advertir"
+      - "Salud y medio ambiente en informes"
+      - "Trabajo y organizaciones"
+    puedo:
+      lectura: "Puedo leer informes, noticias y artículos de 450 a 550 palabras y entender quién dijo qué, qué se hizo y cómo funciona un proceso."
+      escucha: "Puedo entender un reportaje o una entrevista de 400 a 500 palabras y seguir lo que se informa, lo que se atribuye a otros y las opiniones."
+      escritura: "Puedo escribir de 150 a 180 palabras un informe breve o una noticia que describa un proceso y cuente lo que dijeron otras personas."
+      habla: "Puedo informar a otra persona, durante 90 a 120 segundos, de lo que dijeron o decidieron otros y de cómo se hace algo."
+    origen:
+      gramatica: "Anexo B del plan (fila B2.3), con una diferencia: el causativo have/get (el anexo B lo ponía aquí como «have something done») pasó a B1.4 porque el manual de B1 Preliminary lo lista (PDF p. 73); aquí se retoma dentro de la pasiva avanzada. Todo B2 es diseño."
+      funciones: "Anexo B del plan y diseño de GRAVITY."
+      vocabulario: "Diseño de GRAVITY."
+      puedo: "Diseño de GRAVITY (ver descriptores_puedo)."
+    pendiente: true
+    nota: "Todo B2 es diseño. Contrastar con el English Grammar Profile la pasiva con verbos de opinión y de reporte, los participios y las relativas reducidas."
+
+  - id: B2.4
+    etapa: B2
+    orden: 13
+    nombre: "Argumentar por escrito y en debate"
+    horas: 40
+    semanas: 8
+    horas_acumuladas_al_cerrar: 520
+    horas_acumuladas_al_pasar_la_puerta_de_etapa: 520
+    puerta: {tipo: examen, formato: cambridge-b2-first, fidelidad_requerida: completa}
+    gramatica_nueva: [gram.conectores_de_contraste_y_concesion, gram.conectores_formales_de_causa_resultado_y_proposito,
+      gram.enfasis_con_oraciones_hendidas, gram.formacion_de_palabras, gram.colocaciones_y_expresiones_fijas,
+      gram.verbos_frasales_por_tema]
+    gramatica_que_se_retoma: [gram.conectores_de_causa_resultado_y_proposito, gram.oraciones_de_tiempo, gram.verbos_frasales_frecuentes,
+      gram.adjetivos_compuestos, gram.comparaciones_ampliadas, gram.condicional_segunda, gram.condicional_tercera,
+      gram.condicionales_mixtas, gram.wish_e_if_only, gram.preposiciones_dependientes, gram.pasiva_avanzada, gram.verbos_de_reporte]
+    funciones:
+      - "Argumentar a favor y en contra con ejemplos"
+      - "Contrastar ideas y hacer concesiones"
+      - "Explicar causas, resultados y propósitos con un registro formal"
+      - "Enfatizar lo que importa (lo que necesito es…)"
+      - "Escribir un ensayo, un informe, una reseña, un artículo, un correo o una carta"
+      - "Debatir, llegar a un acuerdo y defender mi opinión"
+    vocabulario:
+      - "Ensayo y debate: opinión, argumento y evidencia"
+      - "Colocaciones frecuentes por tema: trabajo, educación, salud y medio ambiente"
+      - "Familias de palabras: prefijos y sufijos"
+      - "Verbos frasales por tema"
+      - "Reseñas, informes y artículos"
+      - "Conectores formales e informales"
+    puedo:
+      lectura: "Puedo leer artículos largos de más de 500 palabras, seguir el argumento, el tono y la organización, y completar textos con la palabra, la forma o la oración que falta."
+      escucha: "Puedo entender entrevistas, charlas y extractos de tres o cuatro minutos y captar opiniones, actitudes, propósito y acuerdo o desacuerdo entre quienes hablan."
+      escritura: "Puedo escribir de 140 a 190 palabras un ensayo con mi postura y otro texto a elección (artículo, correo, carta, reseña o informe), con conectores y un registro adecuado."
+      habla: "Puedo describir y comparar fotografías, debatir con otra persona hasta llegar a una decisión y defender mi opinión, durante unos 14 minutos."
+    origen:
+      gramatica: "Anexo B del plan (fila B2.4). Los conectores de contraste y los formales de causa, resultado y propósito son la parte de B2 de lo que el anexo B llamaba «contraste, causa y propósito» (la parte básica de causa y propósito pasó a B1.3). Respaldo parcial del manual de B2 First en las tareas de Use of English: colocaciones, verbos frasales y conectores (partes 1 y 2, PDF p. 12 y 13), formación de palabras (parte 3, PDF p. 14) y una gama de estructuras en las transformaciones (parte 4, PDF p. 15). Todo B2 es diseño."
+      funciones: "Anexo B del plan y diseño de GRAVITY; tareas de Writing de B2 First (ensayo y una tarea a elegir), según el contrato."
+      vocabulario: "Diseño de GRAVITY y tareas de Use of English de B2 First (PDF p. 12 a 14)."
+      puedo: "Contrato cambridge-b2-first (Writing de 140 a 190 palabras; Speaking de 14 minutos por pareja) y diseño de GRAVITY (ver descriptores_puedo)."
+    pendiente: true
+    nota: "Escalón de cierre de B2: su puerta es la forma completa tipo B2 First (unos 209 minutos según el contrato: 75 de Reading and Use of English, 80 de Writing, 40 de Listening y 14 de Speaking; se reparte en varias sesiones, lo define P0.3). Todo B2 es diseño; contrastar con el English Grammar Profile."
+
+habilidades:
+  - {id: lectura, nombre: "Lectura", grupo: comunicativa, cuenta_en_la_puerta: true, prueba: objetiva,
+    origen: "gravity-escalon.yaml (habilidades); rúbrica 0.1, sección 3.1"}
+  - {id: escucha, nombre: "Escucha", grupo: comunicativa, cuenta_en_la_puerta: true, prueba: objetiva,
+    origen: "gravity-escalon.yaml (habilidades); rúbrica 0.1, sección 3.1"}
+  - {id: escritura, nombre: "Escritura", grupo: comunicativa, cuenta_en_la_puerta: true, prueba: rubrica,
+    origen: "gravity-escalon.yaml (habilidades); rúbrica 0.1, sección 3.2"}
+  - {id: habla, nombre: "Habla", grupo: comunicativa, cuenta_en_la_puerta: true, prueba: rubrica,
+    origen: "gravity-escalon.yaml (habilidades); rúbrica 0.1, sección 3.3"}
+  - {id: gramatica, nombre: "Gramática", grupo: sistema_de_la_lengua, cuenta_en_la_puerta: false,
+    origen: "ejemplos patrón (sesion-b1-1-s01-lun, cam-b2-ue2 y cam-b2-ue4); rúbrica 0.1, sección 1 (las mini pruebas califican gramática y vocabulario)",
+    nota: "Etiqueta de la pregunta, no de la puerta: las partes de gramática de una forma de examen cuentan dentro de lectura (gravity-escalon.yaml, habilidades_en_formas_de_examen, pendiente)."}
+  - {id: vocabulario, nombre: "Vocabulario", grupo: sistema_de_la_lengua, cuenta_en_la_puerta: false,
+    origen: "ejemplo cam-b2-ue3; rúbrica 0.1, sección 1",
+    nota: "Igual que gramatica."}
+  - {id: pronunciacion, nombre: "Pronunciación", grupo: sistema_de_la_lengua, cuenta_en_la_puerta: false, pendiente: true,
+    origen: "formato 0.4, sección 4.2 (tipo pronunciacion lleva habilidad)",
+    nota: "Ningún ejemplo la usa todavía. En el habla de la puerta es un criterio de la rúbrica (pronunciacion_del_tema)."}
+
+focos:
+  # Comprensión de lectura y de escucha
+  - {id: idea_principal, nombre: "Idea principal o mensaje global", para: [lectura, escucha],
+    origen: "ejemplo cam-b1-r3-ejemplo.yaml; contratos cambridge-a2-key y cambridge-b1-preliminary (tareas de idea global y de mensaje principal)"}
+  - {id: detalle, nombre: "Un dato concreto del texto o del audio", para: [lectura, escucha],
+    origen: "ejemplo cam-b1-r3-ejemplo.yaml; contrato cambridge-a2-key (reading-3)"}
+  - {id: actitud_opinion, nombre: "Actitud u opinión de quien escribe o habla", para: [lectura, escucha],
+    origen: "ejemplo cam-b1-r3-ejemplo.yaml; contrato cambridge-b1-preliminary (reading-3 y listening-4)"}
+  - {id: inferencia, nombre: "Lo que el texto sugiere sin decirlo", para: [lectura, escucha], pendiente: true,
+    origen: "propuesta de P1.3 a partir de la descripción de Reading parte 5 de B2 First (manual, PDF p. 16)"}
+  - {id: proposito_y_funcion, nombre: "Para qué se escribe o se dice algo", para: [lectura, escucha], pendiente: true,
+    origen: "propuesta de P1.3 a partir de las tareas de escucha y de mensajes cortos de los contratos de Cambridge"}
+  - {id: vocabulario_en_contexto, nombre: "Significado de una palabra o frase por su contexto", para: [lectura, escucha], pendiente: true,
+    origen: "propuesta de P1.3 (preguntas de significado en cambridge-b1-preliminary, listening-4)"}
+  - {id: organizacion_y_cohesion, nombre: "Cómo se organiza el texto: orden, referencias y conectores", para: [lectura], pendiente: true,
+    origen: "propuesta de P1.3 a partir de las partes de oraciones omitidas de B1 Preliminary y B2 First"}
+  - {id: busqueda_de_informacion, nombre: "Localizar qué texto dice algo (correspondencia)", para: [lectura, escucha], pendiente: true,
+    origen: "propuesta de P1.3 a partir de reading-2 de A2 Key y B1 Preliminary y reading-7 de B2 First"}
+  - {id: acuerdo_entre_hablantes, nombre: "Si dos hablantes coinciden o no", para: [escucha], pendiente: true,
+    origen: "propuesta de P1.3 para B2 (cambridge-b2-first, listening-4)"}
+  # Gramática y vocabulario
+  - {id: forma_de_la_estructura, nombre: "Forma correcta de la estructura del tema", para: [gramatica], pendiente: true,
+    origen: "propuesta de P1.3 (preguntas de gramática del ejemplo sesion-b1-1-s01-lun)"}
+  - {id: eleccion_entre_estructuras, nombre: "Elegir entre dos estructuras que se parecen", para: [gramatica], pendiente: true,
+    origen: "propuesta de P1.3 (contrastes de tiempos de B1.1)"}
+  - {id: orden_de_palabras, nombre: "Orden de los elementos de la oración o de la pregunta", para: [gramatica], pendiente: true,
+    origen: "propuesta de P1.3 (tipo ordenar_palabras del formato 0.4)"}
+  - {id: palabra_funcional, nombre: "Palabra gramatical que falta: artículo, preposición, auxiliar o pronombre", para: [gramatica], pendiente: true,
+    origen: "propuesta de P1.3 a partir de los huecos abiertos de los tres contratos de Cambridge (clase gramatical)"}
+  - {id: conector, nombre: "Conector que une ideas", para: [gramatica, lectura], pendiente: true,
+    origen: "propuesta de P1.3 a partir de Use of English de B2 First (manual, PDF p. 12 y 13)"}
+  - {id: colocacion, nombre: "Palabra que acompaña a otra de forma natural", para: [vocabulario], pendiente: true,
+    origen: "propuesta de P1.3 a partir de Use of English parte 1 de B2 First (manual, PDF p. 12)"}
+  - {id: verbo_frasal, nombre: "Verbo frasal o verbo con preposición", para: [vocabulario, gramatica], pendiente: true,
+    origen: "propuesta de P1.3 a partir de B1 Preliminary (inventario, PDF p. 73) y Use of English de B2 First"}
+  - {id: formacion_de_palabras, nombre: "Palabra derivada: prefijos, sufijos y cambios internos", para: [vocabulario], pendiente: true,
+    origen: "propuesta de P1.3 a partir de Use of English parte 3 de B2 First (manual, PDF p. 14)"}
+  - {id: parafrasis, nombre: "Decir lo mismo con otra estructura", para: [gramatica], pendiente: true,
+    origen: "propuesta de P1.3 a partir de Use of English parte 4 de B2 First (manual, PDF p. 15)"}
+  - {id: registro, nombre: "Registro formal o informal", para: [gramatica, vocabulario, escritura], pendiente: true,
+    origen: "propuesta de P1.3 (correos de trabajo de B1.2 y tareas de B2.4)"}
+  # Producción de escritura y de habla
+  - {id: mensaje_o_nota, nombre: "Mensaje, nota o correo corto", para: [escritura], pendiente: true,
+    origen: "propuesta de P1.3 a partir de writing-6 de A2 Key y writing-1 de B1 Preliminary"}
+  - {id: descripcion, nombre: "Descripción de personas, lugares, objetos o procesos", para: [escritura, habla], pendiente: true,
+    origen: "propuesta de P1.3 a partir de speaking-2 de B1 Preliminary y de las funciones de B1.3"}
+  - {id: narracion, nombre: "Narración de hechos en orden", para: [escritura, habla], pendiente: true,
+    origen: "propuesta de P1.3 a partir de writing-7 de A2 Key y writing-2 de B1 Preliminary"}
+  - {id: opinion_y_argumento, nombre: "Opinión y argumentación", para: [escritura, habla], pendiente: true,
+    origen: "propuesta de P1.3 a partir de writing-1 de B2 First y del módulo 5"}
+  - {id: intercambio_hablado, nombre: "Intercambio hablado con otra persona", para: [habla], pendiente: true,
+    origen: "propuesta de P1.3 a partir de speaking de los tres contratos de Cambridge"}
+
+enfoques:
+  - {id: gramatica_vocabulario, dia: lunes, origen: "ejemplo sesion-b1-1-s01-lun-ejemplo.yaml; gravity-sesion-60.yaml (dias)"}
+  - {id: escucha, dia: martes, pendiente: true, origen: "gravity-sesion-60.yaml (dias.enfoque): propuesta que ese contrato deja pendiente"}
+  - {id: pronunciacion, dia: miercoles, pendiente: true, origen: "gravity-sesion-60.yaml (dias.enfoque): propuesta que ese contrato deja pendiente"}
+  - {id: lectura_escritura, dia: jueves, pendiente: true, origen: "gravity-sesion-60.yaml (dias.enfoque): propuesta que ese contrato deja pendiente"}
+  - {id: conversacion, dia: viernes, pendiente: true, origen: "gravity-sesion-60.yaml (dias.enfoque): propuesta que ese contrato deja pendiente"}
+
+# Temas de gramática. El escalón donde cada uno es nuevo está en gramatica_nueva de ese escalón (una sola fuente); los comentarios
+# de grupo son solo para leer. categoria: tiempos_verbales, formas_del_verbo, modales, oraciones_y_conectores,
+# sustantivos_y_determinantes, pronombres, adjetivos_y_adverbios, preposiciones, preguntas, lexico.
+temas:
+  # A1.1
+  - {id: gram.verbo_to_be, nombre: "Verbo to be", categoria: formas_del_verbo, alcance: "Presente: afirmativa, negativa, pregunta y respuestas cortas.", en_manual: [], pendiente: true}
+  - {id: gram.pronombres_sujeto, nombre: "Pronombres personales sujeto", categoria: pronombres, alcance: "I, you, he, she, it, we, they; it para la hora y el clima.", en_manual: [cambridge-a2-key], pendiente: true}
+  - {id: gram.articulos_a_an_the, nombre: "Artículos a, an y the", categoria: sustantivos_y_determinantes, alcance: "Uso básico con sustantivos contables y con los incontables más comunes.", en_manual: [cambridge-a2-key], pendiente: true}
+  - {id: gram.plurales, nombre: "Plurales regulares e irregulares", categoria: sustantivos_y_determinantes, alcance: "-s, -es, -ies y los irregulares más frecuentes.", en_manual: [cambridge-a2-key], pendiente: true}
+  - {id: gram.demostrativos, nombre: "this, that, these y those", categoria: pronombres, alcance: "Como pronombre y como determinante.", en_manual: [cambridge-a2-key], pendiente: true}
+  - {id: gram.adjetivos_posesivos, nombre: "Adjetivos posesivos", categoria: pronombres, alcance: "my, your, his, her, its, our, their.", en_manual: [cambridge-a2-key], pendiente: true}
+  - {id: gram.there_is_are, nombre: "there is y there are", categoria: formas_del_verbo, alcance: "Afirmativa, negativa y pregunta, para decir qué hay y dónde.", en_manual: [cambridge-a2-key], pendiente: true}
+  - {id: gram.presente_simple_afirmativa, nombre: "Presente simple: afirmativa", categoria: tiempos_verbales, alcance: "Hábitos y hechos, con la -s de la tercera persona.", en_manual: [cambridge-a2-key], pendiente: true}
+  - {id: gram.palabras_interrogativas_basicas, nombre: "Palabras interrogativas básicas", categoria: preguntas, alcance: "What, where, who, how old y how much con to be.", en_manual: [cambridge-a2-key], pendiente: true}
+  - {id: gram.adjetivos_calificativos, nombre: "Adjetivos calificativos", categoria: adjetivos_y_adverbios, alcance: "Color, tamaño y nacionalidad; antes del sustantivo y después de to be.", en_manual: [cambridge-a2-key], pendiente: true}
+  # A1.2
+  - {id: gram.presente_simple_negativa_y_pregunta, nombre: "Presente simple: negativa y pregunta", categoria: tiempos_verbales, alcance: "Don't y doesn't; do y does; preguntas con palabra interrogativa (también whose, which, why y when) y respuestas cortas.", en_manual: [cambridge-a2-key], pendiente: true}
+  - {id: gram.adverbios_de_frecuencia, nombre: "Adverbios de frecuencia", categoria: adjetivos_y_adverbios, alcance: "Always, usually, often, sometimes, never y su lugar en la oración; how often.", en_manual: [cambridge-a2-key], pendiente: true}
+  - {id: gram.can_habilidad, nombre: "can y can't para la habilidad", categoria: modales, alcance: "Lo que sé y no sé hacer, y permiso simple.", en_manual: [cambridge-a2-key], pendiente: true}
+  - {id: gram.gusto_mas_ing, nombre: "Gustos con -ing", categoria: formas_del_verbo, alcance: "Like, love, hate y enjoy más verbo con -ing.", en_manual: [cambridge-a2-key], pendiente: true}
+  - {id: gram.imperativos, nombre: "Imperativos", categoria: formas_del_verbo, alcance: "Afirmativo y negativo, para instrucciones y avisos.", en_manual: [cambridge-a2-key], pendiente: true}
+  - {id: gram.preposiciones_de_lugar, nombre: "Preposiciones de lugar y dirección", categoria: preposiciones, alcance: "In, on, at, under, next to, in front of, between; to, from y left y right.", en_manual: [cambridge-a2-key], pendiente: true}
+  - {id: gram.preposiciones_de_tiempo, nombre: "Preposiciones de tiempo", categoria: preposiciones, alcance: "At, on, in y during con horas, días, meses y partes del día.", en_manual: [cambridge-a2-key], pendiente: true}
+  - {id: gram.some_any, nombre: "some y any", categoria: sustantivos_y_determinantes, alcance: "Con plurales y con incontables, en afirmativa, negativa y pregunta.", en_manual: [cambridge-a2-key], pendiente: true}
+  - {id: gram.posesivo_s, nombre: "El posesivo 's", categoria: sustantivos_y_determinantes, alcance: "'s con una persona y s' con plurales.", en_manual: [cambridge-a2-key], pendiente: true}
+  - {id: gram.pronombres_objeto, nombre: "Pronombres personales objeto", categoria: pronombres, alcance: "Me, you, him, her, it, us, them.", en_manual: [cambridge-a2-key], pendiente: true}
+  # A2.1
+  - {id: gram.presente_continuo, nombre: "Presente continuo", categoria: tiempos_verbales, alcance: "Lo que pasa ahora y estos días: forma, ortografía de -ing y contraste básico con el presente simple.", en_manual: [cambridge-a2-key]}
+  - {id: gram.verbos_de_estado, nombre: "Verbos que no se usan en continuo", categoria: tiempos_verbales, alcance: "Know, want, need, like, love, understand y believe: van en presente simple aunque hablen de ahora.", en_manual: [cambridge-a2-key]}
+  - {id: gram.was_were, nombre: "Pasado de to be", categoria: formas_del_verbo, alcance: "Was y were: afirmativa, negativa y pregunta.", en_manual: [cambridge-a2-key]}
+  - {id: gram.pasado_simple_afirmativa, nombre: "Pasado simple: afirmativa", categoria: tiempos_verbales, alcance: "Verbos regulares (ortografía de -ed) e irregulares más frecuentes; expresiones de tiempo pasado (yesterday, last week, ago).", en_manual: [cambridge-a2-key]}
+  - {id: gram.pasado_simple_negativa_y_pregunta, nombre: "Pasado simple: negativa y pregunta", categoria: tiempos_verbales, alcance: "Didn't y did con el verbo en forma base; preguntas con palabra interrogativa.", en_manual: [cambridge-a2-key]}
+  - {id: gram.contables_e_incontables, nombre: "Sustantivos contables e incontables", categoria: sustantivos_y_determinantes, alcance: "How much y how many; much, many, a lot of, a few, a little, all y every; sustantivos abstractos.", en_manual: [cambridge-a2-key]}
+  - {id: gram.pronombres_posesivos_e_indefinidos, nombre: "Pronombres posesivos e indefinidos", categoria: pronombres, alcance: "Mine, yours, his, hers, ours, theirs; something, anything, nothing, someone, anyone, everybody.", en_manual: [cambridge-a2-key]}
+  - {id: gram.comparativos_y_superlativos, nombre: "Comparativos y superlativos", categoria: adjetivos_y_adverbios, alcance: "De adjetivos y de adverbios, regulares e irregulares (better, worse, farther).", en_manual: [cambridge-a2-key]}
+  - {id: gram.going_to, nombre: "Futuro con going to", categoria: tiempos_verbales, alcance: "Planes e intenciones; predicciones con evidencia.", en_manual: [cambridge-a2-key]}
+  - {id: gram.conectores_basicos, nombre: "Conectores básicos", categoria: oraciones_y_conectores, alcance: "And, but, or, because, so, when y los de secuencia (first, then, next).", en_manual: [cambridge-a2-key]}
+  # A2.2
+  - {id: gram.will_futuro, nombre: "Futuro con will", categoria: modales, alcance: "Decisiones en el momento, predicciones, promesas y ofrecimientos; may para la posibilidad.", en_manual: [cambridge-a2-key]}
+  - {id: gram.have_to_must_mustnt, nombre: "have to, must y mustn't", categoria: modales, alcance: "Obligación, prohibición y necesidad (need to); don't have to y needn't solo para reconocerlos.", en_manual: [cambridge-a2-key]}
+  - {id: gram.should_consejo, nombre: "should para el consejo", categoria: modales, alcance: "Should y shouldn't para dar y pedir consejos.", en_manual: [cambridge-a2-key]}
+  - {id: gram.presente_perfecto_experiencias, nombre: "Presente perfecto: experiencias", categoria: tiempos_verbales, alcance: "Have y has más participio; ever y never; been y gone; participios irregulares frecuentes.", en_manual: [cambridge-a2-key]}
+  - {id: gram.presente_perfecto_just_already_yet, nombre: "Presente perfecto con just, already y yet", categoria: tiempos_verbales, alcance: "Noticias recientes y cosas hechas o pendientes.", en_manual: [cambridge-a2-key]}
+  - {id: gram.could_peticiones_y_habilidad_pasada, nombre: "could y can para pedir y para la habilidad pasada", categoria: modales, alcance: "Can I y could you para pedir y pedir permiso; could para lo que sabía hacer antes.", en_manual: [cambridge-a2-key]}
+  - {id: gram.would_like_y_sugerencias, nombre: "would like, shall y let's", categoria: modales, alcance: "I'd like, would you like, shall I y shall we, let's y why don't we, para ofrecer, invitar y sugerir.", en_manual: [cambridge-a2-key]}
+  - {id: gram.verbo_mas_infinitivo, nombre: "Verbo más infinitivo", categoria: formas_del_verbo, alcance: "Want, need, hope, decide, plan y would like más to; infinitivo tras algunos adjetivos (glad to, easy to).", en_manual: [cambridge-a2-key]}
+  - {id: gram.adverbios_de_modo_y_grado, nombre: "Adverbios de modo y de grado", categoria: adjetivos_y_adverbios, alcance: "Slowly, quietly, well, fast y hard; very, quite, really y rather; su lugar en la oración.", en_manual: [cambridge-a2-key]}
+  # A2.3
+  - {id: gram.pasado_continuo, nombre: "Pasado continuo", categoria: tiempos_verbales, alcance: "Was y were más -ing; acciones paralelas y acción interrumpida por el pasado simple (when y while).", en_manual: [cambridge-a2-key]}
+  - {id: gram.condicional_primera, nombre: "Primera condicional", categoria: oraciones_y_conectores, alcance: "If más presente simple, will más verbo base; condiciones reales y posibles.", en_manual: [cambridge-a2-key, cambridge-b1-preliminary]}
+  - {id: gram.relativas_who_which_that, nombre: "Relativas con who, which, that y where", categoria: oraciones_y_conectores, alcance: "Para personas, cosas y lugares; relativas restrictivas sencillas.", en_manual: [cambridge-a2-key, cambridge-b1-preliminary]}
+  - {id: gram.sintagma_nominal_basico, nombre: "Sintagma nominal básico", categoria: sustantivos_y_determinantes, alcance: "Sustantivos compuestos, orden de los adjetivos, participios como adjetivos (bored, boring) y a friend of mine.", en_manual: [cambridge-a2-key]}
+  - {id: gram.presente_perfecto_for_since, nombre: "Presente perfecto con for y since", categoria: tiempos_verbales, alcance: "Duración hasta hoy; how long; for con un periodo y since con un punto en el tiempo.", en_manual: [cambridge-a2-key]}
+  - {id: gram.pasiva_presente_y_pasado, nombre: "Pasiva en presente y pasado simple", categoria: formas_del_verbo, alcance: "Is y are, was y were más participio; con y sin by.", en_manual: [cambridge-a2-key, cambridge-b1-preliminary]}
+  - {id: gram.oraciones_con_that, nombre: "Oraciones subordinadas con that", categoria: oraciones_y_conectores, alcance: "Tras think, know, believe, hope, say, tell y sure; el that se puede omitir.", en_manual: [cambridge-a2-key]}
+  - {id: gram.futuro_con_presente_continuo_y_simple, nombre: "Presente continuo y presente simple con sentido de futuro", categoria: tiempos_verbales, alcance: "Citas y arreglos con presente continuo; horarios con presente simple.", en_manual: [cambridge-a2-key]}
+  - {id: gram.gerundio_y_preposiciones, nombre: "Gerundio y preposiciones", categoria: formas_del_verbo, alcance: "Gerundio tras preposición y como sujeto; by bus, on foot e in a hurry; with y by para el instrumento; about y like.", en_manual: [cambridge-a2-key]}
+  - {id: gram.too_y_enough, nombre: "too y enough", categoria: adjetivos_y_adverbios, alcance: "Too más adjetivo y enough; la versión con infinitivo se amplía en B1.3.", en_manual: [cambridge-a2-key]}
+  # B1.1
+  - {id: gram.presente_simple_vs_continuo, nombre: "Presente simple frente a continuo, a fondo", categoria: tiempos_verbales, alcance: "Lo habitual, lo que pasa ahora, lo temporal y lo que está cambiando.", en_manual: [], pendiente: true}
+  - {id: gram.verbos_de_estado_y_accion, nombre: "Verbos de estado y de acción", categoria: tiempos_verbales, alcance: "Verbos con dos usos: have, think, see, taste, feel y be (I have a car; I'm having lunch).", en_manual: [], pendiente: true}
+  - {id: gram.pasado_simple_vs_continuo, nombre: "Pasado simple frente a continuo", categoria: tiempos_verbales, alcance: "El escenario y los hechos de una historia; when y while.", en_manual: [], pendiente: true}
+  - {id: gram.presente_perfecto_vs_pasado_simple, nombre: "Presente perfecto frente a pasado simple", categoria: tiempos_verbales, alcance: "Tiempo que llega a hoy frente a tiempo terminado; señales de tiempo; resultados presentes.", en_manual: [], pendiente: true}
+  - {id: gram.used_to, nombre: "used to", categoria: modales, alcance: "Costumbres y estados del pasado que ya no son ciertos; didn't use to.", en_manual: [cambridge-b1-preliminary]}
+  - {id: gram.preguntas_de_sujeto_y_objeto, nombre: "Preguntas de sujeto y de objeto", categoria: preguntas, alcance: "Who called you? frente a Who did you call?; preposición al final (Who did you go with?).", en_manual: [], pendiente: true}
+  - {id: gram.pronombres_reflexivos, nombre: "Pronombres reflexivos y enfáticos", categoria: pronombres, alcance: "Myself, yourself, themselves; by myself; uso enfático.", en_manual: [cambridge-b1-preliminary]}
+  # B1.2
+  - {id: gram.formas_de_futuro_contraste, nombre: "Formas de futuro: cuál elegir", categoria: tiempos_verbales, alcance: "Will, going to, presente continuo y presente simple: decisión, plan, arreglo, horario y predicción.", en_manual: [], pendiente: true}
+  - {id: gram.oraciones_de_tiempo, nombre: "Oraciones de tiempo", categoria: oraciones_y_conectores, alcance: "When, while, until, before, after y as soon as; presente simple con sentido de futuro.", en_manual: [cambridge-b1-preliminary]}
+  - {id: gram.condicional_cero, nombre: "Condicional cero", categoria: oraciones_y_conectores, alcance: "If más presente, presente: verdades generales y resultados constantes.", en_manual: [cambridge-b1-preliminary]}
+  - {id: gram.condicional_primera_ampliada, nombre: "Primera condicional ampliada", categoria: oraciones_y_conectores, alcance: "Unless y as long as; imperativo o modal en la cláusula de resultado.", en_manual: [], pendiente: true}
+  - {id: gram.modales_ampliados, nombre: "Modales ampliados", categoria: modales, alcance: "Might, ought to, had better, be able to y be allowed to; mustn't frente a don't have to.", en_manual: [cambridge-b1-preliminary]}
+  - {id: gram.preguntas_indirectas, nombre: "Preguntas indirectas e incrustadas", categoria: preguntas, alcance: "Could you tell me where…?; do you know if…?; I wonder what…; el verbo va en orden de afirmativa.", en_manual: [cambridge-b1-preliminary]}
+  - {id: gram.patrones_verbales_ing_e_infinitivo, nombre: "Patrones verbales con -ing o infinitivo", categoria: formas_del_verbo, alcance: "Verbos con -ing, con infinitivo o con los dos y su sentido (stop, remember, try); verbo más objeto más infinitivo (want you to).", en_manual: [cambridge-b1-preliminary]}
+  - {id: gram.preposiciones_dependientes, nombre: "Preposiciones que acompañan a otras palabras", categoria: preposiciones, alcance: "Tras sustantivos, adjetivos y verbos (interested in, depend on, wait for, good at) y frases como at the end of e in the middle of.", en_manual: [cambridge-b1-preliminary]}
+  # B1.3
+  - {id: gram.comparaciones_ampliadas, nombre: "Comparaciones ampliadas", categoria: adjetivos_y_adverbios, alcance: "(not) as … as; much, far y a bit con el comparativo; the same as y different from.", en_manual: [cambridge-b1-preliminary]}
+  - {id: gram.pasiva_ampliada, nombre: "Pasiva ampliada", categoria: formas_del_verbo, alcance: "Pasiva con modales (must be done) y con will; preguntas en pasiva; el agente con by.", en_manual: [cambridge-b1-preliminary]}
+  - {id: gram.condicional_segunda, nombre: "Segunda condicional", categoria: oraciones_y_conectores, alcance: "If más pasado simple, would más verbo base; if I were you.", en_manual: [cambridge-b1-preliminary]}
+  - {id: gram.objeto_directo_e_indirecto, nombre: "Objeto directo e indirecto", categoria: formas_del_verbo, alcance: "Give, send, show, bring y take con dos objetos, con y sin to.", en_manual: [cambridge-b1-preliminary]}
+  - {id: gram.so_neither_too_either, nombre: "so, neither, too y either", categoria: oraciones_y_conectores, alcance: "Estar de acuerdo o en desacuerdo: So do I, Neither do I, Me too, Me neither.", en_manual: [cambridge-b1-preliminary]}
+  - {id: gram.too_enough_con_infinitivo, nombre: "too y enough con infinitivo", categoria: adjetivos_y_adverbios, alcance: "Too … to y not … enough to.", en_manual: [cambridge-b1-preliminary]}
+  - {id: gram.conectores_de_causa_resultado_y_proposito, nombre: "Conectores de causa, resultado y propósito", categoria: oraciones_y_conectores, alcance: "Because, since, as, so, so that, in order to y to más verbo; either … or.", en_manual: [cambridge-b1-preliminary]}
+  # B1.4
+  - {id: gram.pasado_perfecto, nombre: "Pasado perfecto", categoria: tiempos_verbales, alcance: "Had más participio; lo que ya había pasado antes de otro momento del pasado.", en_manual: [], pendiente: true}
+  - {id: gram.estilo_indirecto, nombre: "Estilo indirecto", categoria: oraciones_y_conectores, alcance: "Afirmaciones, preguntas y órdenes con say, ask y tell; cambio de tiempo y de pronombres.", en_manual: [cambridge-b1-preliminary]}
+  - {id: gram.relativas_ampliadas, nombre: "Relativas ampliadas", categoria: oraciones_y_conectores, alcance: "Whose; relativo omitido; cláusulas no restrictivas con coma.", en_manual: [], pendiente: true}
+  - {id: gram.verbos_frasales_frecuentes, nombre: "Verbos frasales frecuentes", categoria: lexico, alcance: "Los más comunes, separables e inseparables, en contexto.", en_manual: [cambridge-b1-preliminary]}
+  - {id: gram.causativo_have_get, nombre: "Causativo con have y get", categoria: formas_del_verbo, alcance: "I had my car repaired; I got my hair cut.", en_manual: [cambridge-b1-preliminary]}
+  - {id: gram.was_were_going_to, nombre: "was going to y were going to", categoria: tiempos_verbales, alcance: "Lo que iba a hacer y no hice.", en_manual: [cambridge-b1-preliminary]}
+  - {id: gram.sintagmas_nominales_complejos, nombre: "Sintagmas nominales complejos", categoria: sustantivos_y_determinantes, alcance: "Sustantivo con adjetivos antes y con preposiciones o relativas después.", en_manual: [cambridge-b1-preliminary]}
+  - {id: gram.adjetivos_compuestos, nombre: "Adjetivos compuestos", categoria: lexico, alcance: "Well-known, part-time, old-fashioned, five-minute.", en_manual: [cambridge-b1-preliminary]}
+  # B2.1
+  - {id: gram.presente_perfecto_continuo, nombre: "Presente perfecto continuo", categoria: tiempos_verbales, alcance: "Have been más -ing: duración y resultados visibles; contraste con el presente perfecto simple.", en_manual: [], pendiente: true}
+  - {id: gram.tiempos_narrativos, nombre: "Tiempos narrativos", categoria: tiempos_verbales, alcance: "Pasado simple, continuo, perfecto y perfecto continuo juntos en un relato.", en_manual: [], pendiente: true}
+  - {id: gram.futuro_continuo_y_perfecto, nombre: "Futuro continuo y futuro perfecto", categoria: tiempos_verbales, alcance: "Will be más -ing y will have más participio.", en_manual: [], pendiente: true}
+  - {id: gram.used_to_would_be_used_to, nombre: "used to, would y be used to", categoria: modales, alcance: "Costumbres pasadas con used to y would; estar acostumbrado a con be used to y get used to más -ing.", en_manual: [], pendiente: true}
+  # B2.2
+  - {id: gram.modales_de_deduccion, nombre: "Modales de deducción", categoria: modales, alcance: "Must, might, could y can't para el presente y para el pasado (must have been).", en_manual: [], pendiente: true}
+  - {id: gram.condicional_tercera, nombre: "Tercera condicional", categoria: oraciones_y_conectores, alcance: "If más pasado perfecto, would have más participio; lo que no ocurrió.", en_manual: [], pendiente: true}
+  - {id: gram.condicionales_mixtas, nombre: "Condicionales mixtas", categoria: oraciones_y_conectores, alcance: "Condición pasada con resultado presente y condición presente con resultado pasado.", en_manual: [], pendiente: true}
+  - {id: gram.wish_e_if_only, nombre: "wish e if only", categoria: oraciones_y_conectores, alcance: "Deseos sobre el presente (pasado simple) y sobre el pasado (pasado perfecto); wish más would.", en_manual: [], pendiente: true}
+  # B2.3
+  - {id: gram.pasiva_avanzada, nombre: "Pasiva avanzada", categoria: formas_del_verbo, alcance: "Pasiva con verbos de opinión y de reporte (It is said that…, He is believed to…), en perfecto y en continuo; el causativo dentro de la pasiva.", en_manual: [], pendiente: true}
+  - {id: gram.gerundios_e_infinitivos_avanzados, nombre: "Gerundios e infinitivos avanzados", categoria: formas_del_verbo, alcance: "Infinitivo perfecto, infinitivo pasivo y gerundio perfecto; verbos que cambian de sentido; it's no use y it's worth más -ing.", en_manual: [], pendiente: true}
+  - {id: gram.verbos_de_reporte, nombre: "Verbos de reporte", categoria: oraciones_y_conectores, alcance: "Admit, deny, suggest, insist, warn, explain y advise, cada uno con su patrón.", en_manual: [], pendiente: true}
+  - {id: gram.participios_y_relativas_reducidas, nombre: "Participios y relativas reducidas", categoria: oraciones_y_conectores, alcance: "Cláusulas de participio (Walking home, I…; the man standing there) y relativas sin pronombre ni verbo auxiliar.", en_manual: [], pendiente: true}
+  # B2.4
+  - {id: gram.conectores_de_contraste_y_concesion, nombre: "Conectores de contraste y concesión", categoria: oraciones_y_conectores, alcance: "Although, even though, despite, in spite of, whereas, however, nevertheless y on the other hand.", en_manual: [], pendiente: true}
+  - {id: gram.conectores_formales_de_causa_resultado_y_proposito, nombre: "Conectores formales de causa, resultado y propósito", categoria: oraciones_y_conectores, alcance: "Because of, due to, owing to, as a result, consequently, therefore, so as to e in case.", en_manual: [], pendiente: true}
+  - {id: gram.enfasis_con_oraciones_hendidas, nombre: "Énfasis con oraciones hendidas", categoria: oraciones_y_conectores, alcance: "What I need is…; It was … that….", en_manual: [], pendiente: true}
+  - {id: gram.formacion_de_palabras, nombre: "Formación de palabras", categoria: lexico, alcance: "Prefijos, sufijos y cambios internos; familias de palabras; negativos y plurales.", en_manual: [], pendiente: true}
+  - {id: gram.colocaciones_y_expresiones_fijas, nombre: "Colocaciones y expresiones fijas", categoria: lexico, alcance: "Colocaciones frecuentes por tema y frases fijas y de enlace.", en_manual: [], pendiente: true}
+  - {id: gram.verbos_frasales_por_tema, nombre: "Verbos frasales por tema", categoria: lexico, alcance: "Verbos frasales agrupados por tema, con sus sentidos más comunes.", en_manual: [], pendiente: true}
+
+# Cómo se reparten las 8 semanas de cualquier escalón. El detalle semana por semana de A2.1, A2.2 y A2.3 está en temario_por_semana
+# (D-ING-7: el curso arranca por A2.1; los demás escalones no llevan ese detalle todavía).
+plan_de_las_8_semanas:
+  semanas_de_contenido: [1, 2, 3, 4, 5, 6, 7]
+  semana_de_repaso_y_puerta: 8
+  primera_oportunidad_de_la_puerta: "Al final de la semana 8"
+  puerta_anticipada: "En la semana 2 del escalón que se cursa, con 90 % o más en cada habilidad y sin gastar oportunidades"
+  mini_prueba: "Cada viernes: 10 preguntas de gramática y vocabulario; se aprueba con 8 (gravity-escalon.yaml, mini_prueba)"
+  origen: "plan 0.6, sección 4.2 (primera oportunidad al final de la semana 8) y sección 3.3 (puerta anticipada en la semana 2); gravity-escalon.yaml"
+  pendiente: true
+  nota: "Que las semanas 1 a 7 sean de contenido nuevo y la 8 de repaso y puerta es una propuesta de P1.3, no un dato: el plan no dice si la puerta cuenta dentro de las 40 horas del escalón (gravity-escalon.yaml, primera_oportunidad). Se propone que sí, porque las 80, 200, 360 y 520 horas suponen aprobar a la primera al final de la semana 8. La puerta de etapa dura lo que dura su examen (unos 100, 130 y 209 minutos en A2 Key, B1 Preliminary y B2 First, según los contratos) y no cabe en una sesión: cómo se reparte lo decide P0.3."
+
+# Detalle por semana de los tres escalones de A2. Es una propuesta de P1.3 que calibra el piloto de A2.1 (P1.5); no sale de ningún manual.
+# Cada tema de gramatica_nueva de un escalón aparece en una sola semana; retoma lista lo que esa semana vuelve a usar y que ya apareció.
+# El campo de vocabulario de las semanas 1 a 7 es uno de los de la lista vocabulario del escalón. La producción respeta las longitudes
+# de A2 (escritura de 50 a 80 palabras; habla de 45 a 60 segundos); los mínimos de Writing 6 y 7 son los del examen, no los del curso.
+temario_por_semana:
+  A2.1:
+    - semana: 1
+      titulo: "Ahora mismo"
+      gramatica_nueva: [gram.presente_continuo]
+      retoma: [gram.verbo_to_be, gram.presente_simple_afirmativa, gram.presente_simple_negativa_y_pregunta, gram.adverbios_de_frecuencia]
+      vocabulario: "Actividades de casa y trabajo en este momento"
+      funcion: "Decir qué estoy haciendo y qué hacen otras personas, y preguntarlo. Semana puente: repasa lo de A1 con vocabulario nuevo."
+      pronunciacion: "Terminación -ing sin g final y contracciones I'm, you're y she's"
+      produccion: "Escritura de 50 palabras: un mensaje a un amigo contando qué haces y con quién estás. Habla de 45 segundos: lo que se ve o se hace en mi casa ahora."
+    - semana: 2
+      titulo: "Siempre o ahora"
+      gramatica_nueva: [gram.verbos_de_estado]
+      retoma: [gram.presente_continuo, gram.presente_simple_afirmativa, gram.presente_simple_negativa_y_pregunta, gram.gusto_mas_ing]
+      vocabulario: "Gustos, opiniones y sentimientos"
+      funcion: "Distinguir lo que hago siempre de lo que pasa ahora, y decir lo que quiero, necesito, sé y pienso."
+      pronunciacion: "Final -s de la tercera persona: /s/, /z/ y /ɪz/"
+      produccion: "Escritura de 50 a 60 palabras comparando mi rutina con lo que pasa esta semana. Habla de 45 segundos sobre lo que me gusta y lo que quiero."
+    - semana: 3
+      titulo: "Ayer"
+      gramatica_nueva: [gram.was_were, gram.pasado_simple_afirmativa]
+      retoma: [gram.verbo_to_be, gram.preposiciones_de_tiempo, gram.plurales]
+      vocabulario: "Fin de semana y vacaciones"
+      funcion: "Contar lo que hice ayer o el fin de semana y dónde estuve."
+      pronunciacion: "Los tres sonidos de -ed: /t/, /d/ y /ɪd/"
+      produccion: "Escritura de 50 a 70 palabras sobre mi último fin de semana. Habla de 45 segundos contando qué hice."
+    - semana: 4
+      titulo: "¿Y qué hiciste?"
+      gramatica_nueva: [gram.pasado_simple_negativa_y_pregunta]
+      retoma: [gram.pasado_simple_afirmativa, gram.was_were, gram.palabras_interrogativas_basicas, gram.presente_simple_negativa_y_pregunta]
+      vocabulario: "Salidas, eventos y entretenimiento"
+      funcion: "Hacer y contestar preguntas sobre lo que pasó y decir lo que no hice. Más verbos irregulares."
+      pronunciacion: "did you como /dɪdʒu/ y la entonación de las preguntas"
+      produccion: "Escritura de 60 palabras: una entrevista corta con seis preguntas y respuestas sobre un evento. Habla de 45 segundos: una conversación con preguntas y respuestas en pasado."
+    - semana: 5
+      titulo: "Cosas y cantidades"
+      gramatica_nueva: [gram.contables_e_incontables, gram.pronombres_posesivos_e_indefinidos]
+      retoma: [gram.some_any, gram.plurales, gram.articulos_a_an_the, gram.pronombres_objeto, gram.posesivo_s]
+      vocabulario: "Comida, compras y cantidades"
+      funcion: "Preguntar cuánto y cuántos, comprar, hablar de lo que hay o falta y decir de quién es algo."
+      pronunciacion: "Formas débiles de a, of y some (/səm/)"
+      produccion: "Escritura de 50 a 60 palabras: una lista de compras con cantidades y un mensaje para quien las compra. Habla de 45 segundos: comprar en una tienda."
+    - semana: 6
+      titulo: "Comparar"
+      gramatica_nueva: [gram.comparativos_y_superlativos]
+      retoma: [gram.adjetivos_calificativos, gram.verbo_to_be, gram.was_were, gram.there_is_are]
+      vocabulario: "Ciudad, lugares y transporte"
+      funcion: "Comparar lugares, transportes y personas y decir cuál es el mejor o el más…"
+      pronunciacion: "Terminaciones -er y -est, y la /ə/ débil de than"
+      produccion: "Escritura de 60 a 80 palabras comparando dos ciudades o dos transportes. Habla de 45 a 60 segundos comparando dos opciones."
+    - semana: 7
+      titulo: "Planes"
+      gramatica_nueva: [gram.going_to, gram.conectores_basicos]
+      retoma: [gram.presente_continuo, gram.preposiciones_de_tiempo, gram.can_habilidad, gram.pasado_simple_afirmativa]
+      vocabulario: "Planes, citas y tiempo libre"
+      funcion: "Decir mis planes e intenciones y dar razones con because y so."
+      pronunciacion: "going to y su forma rápida /ˈgənə/, para reconocerla y no para producirla"
+      produccion: "Escritura de 60 a 80 palabras sobre mis planes del próximo mes, con razones. Habla de 45 a 60 segundos."
+    - semana: 8
+      titulo: "Repaso y puerta de escalón"
+      gramatica_nueva: []
+      retoma: [gram.presente_continuo, gram.verbos_de_estado, gram.pasado_simple_afirmativa, gram.pasado_simple_negativa_y_pregunta,
+        gram.contables_e_incontables, gram.comparativos_y_superlativos, gram.going_to, gram.conectores_basicos]
+      vocabulario: "Repaso de los siete campos del escalón"
+      funcion: "Contar en orden lo que hice, lo que hago y lo que voy a hacer."
+      pronunciacion: "Repaso de los sonidos de las semanas 1 a 7"
+      produccion: "La tarea de la puerta: escritura de 50 a 80 palabras y habla de 45 a 60 segundos (gravity-escalon). Primera oportunidad al final de la semana."
+  A2.2:
+    - semana: 1
+      titulo: "Mañana y más adelante"
+      gramatica_nueva: [gram.will_futuro]
+      retoma: [gram.going_to, gram.presente_continuo, gram.verbos_de_estado]
+      vocabulario: "Clima y naturaleza"
+      funcion: "Predecir, decidir en el momento, prometer y ofrecer ayuda, y decir qué puede pasar (may)."
+      pronunciacion: "Contracciones 'll y won't"
+      produccion: "Escritura de 50 a 70 palabras con predicciones para el próximo año. Habla de 45 segundos: ofrecer ayuda y prometer algo."
+    - semana: 2
+      titulo: "Debo y no debo"
+      gramatica_nueva: [gram.have_to_must_mustnt]
+      retoma: [gram.imperativos, gram.can_habilidad, gram.will_futuro]
+      vocabulario: "Trabajo, reglas y servicios"
+      funcion: "Decir lo que es obligatorio, lo que está prohibido y lo que hace falta."
+      pronunciacion: "have to como /ˈhæftə/ y el acento en mustn't"
+      produccion: "Escritura de 50 a 60 palabras con las reglas de un lugar. Habla de 45 segundos explicando las reglas de mi trabajo o de mi casa."
+    - semana: 3
+      titulo: "Mi consejo"
+      gramatica_nueva: [gram.should_consejo]
+      retoma: [gram.have_to_must_mustnt, gram.will_futuro, gram.imperativos, gram.can_habilidad]
+      vocabulario: "Salud, medicina y ejercicio"
+      funcion: "Pedir y dar consejos sobre salud, estudio y trabajo."
+      pronunciacion: "Acento de oración en los consejos: should y shouldn't"
+      produccion: "Escritura de 60 a 80 palabras: la respuesta a un amigo que pide un consejo. Habla de 45 segundos dando tres consejos."
+    - semana: 4
+      titulo: "¿Alguna vez?"
+      gramatica_nueva: [gram.presente_perfecto_experiencias]
+      retoma: [gram.pasado_simple_afirmativa, gram.pasado_simple_negativa_y_pregunta, gram.was_were, gram.gusto_mas_ing]
+      vocabulario: "Viajes y experiencias"
+      funcion: "Contar experiencias de vida sin decir cuándo pasaron y preguntar por las de otras personas."
+      pronunciacion: "have y has débiles y enlaces (I've been)"
+      produccion: "Escritura de 60 a 80 palabras: tres cosas que he hecho y una que nunca he hecho. Habla de 45 segundos preguntando Have you ever…?"
+    - semana: 5
+      titulo: "Noticias recientes"
+      gramatica_nueva: [gram.presente_perfecto_just_already_yet]
+      retoma: [gram.presente_perfecto_experiencias, gram.pasado_simple_afirmativa, gram.contables_e_incontables]
+      vocabulario: "Casa, recados y tareas pendientes"
+      funcion: "Dar noticias recientes y decir lo que ya hice y lo que todavía no."
+      pronunciacion: "Acento en just, already y yet dentro de la frase"
+      produccion: "Escritura de 50 a 70 palabras: una lista de pendientes y un mensaje sobre lo que ya hice. Habla de 45 segundos: ya hice y todavía no."
+    - semana: 6
+      titulo: "Pedir, ofrecer y sugerir"
+      gramatica_nueva: [gram.could_peticiones_y_habilidad_pasada, gram.would_like_y_sugerencias]
+      retoma: [gram.can_habilidad, gram.will_futuro, gram.should_consejo, gram.conectores_basicos]
+      vocabulario: "Restaurantes, tiendas y servicios"
+      funcion: "Pedir con cortesía, aceptar y rechazar, invitar y sugerir."
+      pronunciacion: "Entonación de las peticiones y de las sugerencias"
+      produccion: "Escritura de 50 a 70 palabras: una invitación y su respuesta. Habla de 45 a 60 segundos: un diálogo en un restaurante o una tienda."
+    - semana: 7
+      titulo: "Quiero hacerlo bien"
+      gramatica_nueva: [gram.verbo_mas_infinitivo, gram.adverbios_de_modo_y_grado]
+      retoma: [gram.gusto_mas_ing, gram.adverbios_de_frecuencia, gram.can_habilidad, gram.going_to]
+      vocabulario: "Sentimientos y relaciones con otras personas"
+      funcion: "Decir qué quiero, espero o decido hacer y cómo hago las cosas."
+      pronunciacion: "to débil en want to, hope to y decide to; acento en los adverbios de modo"
+      produccion: "Escritura de 60 a 80 palabras sobre cómo soy con mis amigos y qué espero de ellos. Habla de 45 a 60 segundos."
+    - semana: 8
+      titulo: "Repaso y puerta de escalón"
+      gramatica_nueva: []
+      retoma: [gram.will_futuro, gram.have_to_must_mustnt, gram.should_consejo, gram.presente_perfecto_experiencias,
+        gram.presente_perfecto_just_already_yet, gram.would_like_y_sugerencias, gram.verbo_mas_infinitivo]
+      vocabulario: "Repaso de los siete campos del escalón"
+      funcion: "Hablar de experiencias, obligaciones y consejos en una misma conversación."
+      pronunciacion: "Repaso de los sonidos de las semanas 1 a 7"
+      produccion: "La tarea de la puerta: escritura de 50 a 80 palabras y habla de 45 a 60 segundos (gravity-escalon). Primera oportunidad al final de la semana."
+  A2.3:
+    - semana: 1
+      titulo: "Mientras tanto"
+      gramatica_nueva: [gram.pasado_continuo]
+      retoma: [gram.pasado_simple_afirmativa, gram.pasado_simple_negativa_y_pregunta, gram.presente_continuo, gram.was_were]
+      vocabulario: "Historias y noticias"
+      funcion: "Contar lo que pasaba y lo que ocurrió mientras tanto."
+      pronunciacion: "was y were débiles (/wəz/ y /wər/) y la terminación -ing"
+      produccion: "Escritura de 50 a 70 palabras: una historia a partir de tres imágenes, con el formato de Writing 7 de A2 Key (en el examen bastan 35 palabras). Habla de 45 segundos: contar la historia."
+    - semana: 2
+      titulo: "Si pasa esto"
+      gramatica_nueva: [gram.condicional_primera]
+      retoma: [gram.will_futuro, gram.presente_simple_afirmativa, gram.going_to, gram.conectores_basicos]
+      vocabulario: "Condiciones y consecuencias de la vida diaria"
+      funcion: "Plantear condiciones, advertencias y promesas."
+      pronunciacion: "Ritmo y pausa después de la cláusula con if"
+      produccion: "Escritura de 50 a 80 palabras con condiciones y consecuencias. Habla de 45 segundos: mis planes según el clima o el tiempo libre."
+    - semana: 3
+      titulo: "La persona que…"
+      gramatica_nueva: [gram.relativas_who_which_that, gram.sintagma_nominal_basico]
+      retoma: [gram.adjetivos_calificativos, gram.comparativos_y_superlativos, gram.posesivo_s]
+      vocabulario: "Personas, objetos y lugares: cómo son y para qué sirven"
+      funcion: "Describir personas, cosas y lugares con más detalle."
+      pronunciacion: "Acento en who y which, y en los participios -ed y -ing (bored, boring)"
+      produccion: "Escritura de 50 a 80 palabras: un mensaje con tres puntos obligatorios, con el formato de Writing 6 de A2 Key (en el examen bastan 25 palabras). Habla de 45 segundos describiendo a una persona."
+    - semana: 4
+      titulo: "¿Cuánto tiempo?"
+      gramatica_nueva: [gram.presente_perfecto_for_since]
+      retoma: [gram.presente_perfecto_experiencias, gram.presente_perfecto_just_already_yet, gram.pasado_simple_afirmativa]
+      vocabulario: "Etapas de la vida, estudios y trabajo"
+      funcion: "Decir desde cuándo y por cuánto tiempo hago o tengo algo."
+      pronunciacion: "for débil (/fər/) y since claro"
+      produccion: "Escritura de 50 a 80 palabras: cuánto tiempo llevo en mi casa, mi trabajo o mis estudios. Habla de 45 segundos con preguntas How long…?"
+    - semana: 5
+      titulo: "Se hace así"
+      gramatica_nueva: [gram.pasiva_presente_y_pasado]
+      retoma: [gram.pasado_simple_afirmativa, gram.was_were, gram.verbo_to_be]
+      vocabulario: "Productos, lugares conocidos y procesos"
+      funcion: "Decir cómo se hace o se hizo algo, dónde se fabrica o quién lo inventó, sin nombrar a quien lo hace."
+      pronunciacion: "Acento en el participio (made, built, spoken)"
+      produccion: "Escritura de 60 a 80 palabras describiendo un producto o un lugar famoso. Habla de 45 segundos presentando un lugar."
+    - semana: 6
+      titulo: "Creo que… y quedamos a las ocho"
+      gramatica_nueva: [gram.oraciones_con_that, gram.futuro_con_presente_continuo_y_simple]
+      retoma: [gram.going_to, gram.will_futuro, gram.presente_continuo, gram.verbos_de_estado]
+      vocabulario: "Horarios, citas y transporte público"
+      funcion: "Decir lo que pienso, espero y sé; hablar de citas y de horarios."
+      pronunciacion: "that débil (/ðət/) y el enlace en I think that"
+      produccion: "Escritura de 50 a 80 palabras: un correo para quedar con un amigo, con tres puntos obligatorios (formato de Writing 6). Habla de 45 a 60 segundos: proponer un plan y acordar la hora."
+    - semana: 7
+      titulo: "Demasiado, suficiente y todo junto"
+      gramatica_nueva: [gram.gerundio_y_preposiciones, gram.too_y_enough]
+      retoma: [gram.gusto_mas_ing, gram.verbo_mas_infinitivo, gram.adverbios_de_modo_y_grado, gram.preposiciones_de_lugar]
+      vocabulario: "Idiomas, estudios y comunicación"
+      funcion: "Hablar de lo que se me da bien y de lo que es demasiado o suficiente, y practicar las partes del examen."
+      pronunciacion: "Acento en good at, interested in y too más adjetivo"
+      produccion: "Práctica por partes de A2 Key (lectura, escucha, escritura 6 y 7, habla 1 y 2) repartida en dos sesiones, con escritura de 50 a 80 palabras y habla de 45 a 60 segundos."
+    - semana: 8
+      titulo: "Repaso y puerta de etapa (A2 Key)"
+      gramatica_nueva: []
+      retoma: [gram.pasado_continuo, gram.condicional_primera, gram.relativas_who_which_that, gram.presente_perfecto_for_since,
+        gram.pasiva_presente_y_pasado, gram.oraciones_con_that, gram.futuro_con_presente_continuo_y_simple, gram.gerundio_y_preposiciones,
+        gram.too_y_enough]
+      vocabulario: "Repaso de los siete campos del escalón"
+      funcion: "Repasar las cuatro habilidades con el formato de A2 Key."
+      pronunciacion: "Repaso de los sonidos de las semanas 1 a 7"
+      produccion: "La puerta de etapa: forma completa tipo A2 Key (lectura, escritura, escucha y habla), de unos 100 minutos, repartida en varias sesiones; primera oportunidad al final de la semana. Lo define P0.3."
+
+# Los manuales que se consultaron para respaldar la etapa de cada tema. Solo se leyeron; no se copia su texto. Las páginas son las del PDF
+# (como en los contratos), no las impresas.
+manuales:
+  cambridge-a2-key:
+    contrato: cambridge-a2-key
+    titulo: "A2 Key — Handbook for teachers, for exams from 2020"
+    seccion: "Language specifications: funciones, inventario de áreas gramaticales, temas y léxico"
+    pagina_manual: {desde: 51, hasta: 53}
+    paginas_impresas: "49 a 51"
+    consultado: 2026-11-16
+    nota: "El manual dice que quien se examina verá formas fuera de la lista, en las que no se le evalúa directamente."
+  cambridge-b1-preliminary:
+    contrato: cambridge-b1-preliminary
+    titulo: "B1 Preliminary — Handbook for teachers (para exámenes desde 2020)"
+    seccion: "Language specifications: funciones, inventario de áreas gramaticales, temas y léxico"
+    pagina_manual: {desde: 72, hasta: 74}
+    paginas_impresas: "70 a 72"
+    consultado: 2026-11-16
+    nota: "Su inventario incluye todo el de A2 Key; en cobertura_de_manuales solo se anota lo que agrega."
+  cambridge-b2-first:
+    contrato: cambridge-b2-first
+    titulo: "B2 First — Handbook for teachers (para exámenes desde 2015)"
+    seccion: "No trae inventario de estructuras. Se usaron la descripción de las partes 1 a 4 de Reading and Use of English (PDF p. 12 a 15), Reading parte 5 (p. 16) y los glosarios de las escalas (p. 37 y 84)."
+    consultado: 2026-11-16
+    nota: "Los glosarios de las escalas (PDF p. 37 y 84) advierten que, donde hay especificación de lenguaje en los niveles inferiores (A2 Key y B1 Preliminary), quien se examina puede controlar solo las formas más simples de lo listado. Por eso la profundidad con que se enseña cada tema en A2 y B1 es criterio de diseño, y todo B2 queda con pendiente: true."
+  declaracion: "El respaldo es solo de etapa: dice que un tema debe estar visto a más tardar al cerrar A2.3 (A2 Key) o B1.4 (B1 Preliminary). No respalda en qué escalón de la etapa se ve ni con qué profundidad."
+
+# Cobertura de los inventarios. Cada elemento del inventario (resumido con palabras propias) apunta a los temas que lo cubren, y todos esos
+# temas son nuevos a más tardar en el escalón de cierre de la etapa del manual (regla 3 del encabezado).
+cobertura_de_manuales:
+  nota: "Un elemento del inventario puede quedar cubierto por varios temas, y un tema puede cubrir varios elementos. Los elementos del inventario que solo se reconocen y no se producen (needn't, el genitivo doble, las formas fuera de la lista) están dentro del alcance del tema que los nombra."
+  cambridge-a2-key:
+    cierra_en: A2.3
+    inventario: "Language specifications, áreas gramaticales (PDF p. 51 a 53)"
+    items:
+      - {elemento: "can: habilidad, peticiones y permiso", pagina_manual: 51, temas: [gram.can_habilidad, gram.could_peticiones_y_habilidad_pasada]}
+      - {elemento: "could: habilidad y peticiones corteses", pagina_manual: 51, temas: [gram.could_peticiones_y_habilidad_pasada]}
+      - {elemento: "would: peticiones corteses", pagina_manual: 51, temas: [gram.would_like_y_sugerencias]}
+      - {elemento: "will: futuro", pagina_manual: 51, temas: [gram.will_futuro]}
+      - {elemento: "shall: sugerencia y ofrecimiento", pagina_manual: 51, temas: [gram.would_like_y_sugerencias]}
+      - {elemento: "should: consejo", pagina_manual: 51, temas: [gram.should_consejo]}
+      - {elemento: "may: posibilidad", pagina_manual: 51, temas: [gram.will_futuro]}
+      - {elemento: "have (got) to y must: obligación", pagina_manual: 51, temas: [gram.have_to_must_mustnt]}
+      - {elemento: "mustn't, need y needn't: prohibición, necesidad y falta de necesidad", pagina_manual: 52, temas: [gram.have_to_must_mustnt]}
+      - {elemento: "Presente simple: estados, hábitos, procesos y sentido de futuro; verbos que no se usan en continuo", pagina_manual: 52, temas: [gram.presente_simple_afirmativa, gram.presente_simple_negativa_y_pregunta, gram.verbos_de_estado, gram.futuro_con_presente_continuo_y_simple]}
+      - {elemento: "Presente continuo: acciones presentes y sentido de futuro", pagina_manual: 52, temas: [gram.presente_continuo, gram.futuro_con_presente_continuo_y_simple]}
+      - {elemento: "Presente perfecto simple: just, yet, already, never y ever; for y since", pagina_manual: 52, temas: [gram.presente_perfecto_experiencias, gram.presente_perfecto_just_already_yet, gram.presente_perfecto_for_since]}
+      - {elemento: "Pasado simple", pagina_manual: 52, temas: [gram.was_were, gram.pasado_simple_afirmativa, gram.pasado_simple_negativa_y_pregunta]}
+      - {elemento: "Pasado continuo: acciones paralelas y acción interrumpida por el pasado simple", pagina_manual: 52, temas: [gram.pasado_continuo]}
+      - {elemento: "Futuro con going to", pagina_manual: 52, temas: [gram.going_to]}
+      - {elemento: "Futuro con will y shall: ofrecimientos, promesas y predicciones", pagina_manual: 52, temas: [gram.will_futuro, gram.would_like_y_sugerencias]}
+      - {elemento: "Formas afirmativa, interrogativa y negativa; preguntas y respuestas cortas", pagina_manual: 52, temas: [gram.verbo_to_be, gram.presente_simple_negativa_y_pregunta, gram.pasado_simple_negativa_y_pregunta]}
+      - {elemento: "Imperativos", pagina_manual: 52, temas: [gram.imperativos]}
+      - {elemento: "Infinitivos con y sin to tras verbos y adjetivos", pagina_manual: 52, temas: [gram.verbo_mas_infinitivo]}
+      - {elemento: "Gerundios tras verbos y preposiciones; gerundio como sujeto y como objeto", pagina_manual: 52, temas: [gram.gusto_mas_ing, gram.gerundio_y_preposiciones]}
+      - {elemento: "Pasiva en presente y pasado simple", pagina_manual: 52, temas: [gram.pasiva_presente_y_pasado]}
+      - {elemento: "Oración principal y oración coordinada", pagina_manual: 52, temas: [gram.conectores_basicos]}
+      - {elemento: "Subordinadas tras sure y certain, tras know, think, believe y hope, y tras say y tell", pagina_manual: 52, temas: [gram.oraciones_con_that]}
+      - {elemento: "Subordinadas con if, when, where y because", pagina_manual: 52, temas: [gram.condicional_primera, gram.conectores_basicos, gram.relativas_who_which_that]}
+      - {elemento: "Palabras interrogativas (what, where, when, who, whose, which, how, how much, how many, how often, how long y why) en los tiempos y modales de la lista", pagina_manual: 52, temas: [gram.palabras_interrogativas_basicas, gram.presente_simple_negativa_y_pregunta, gram.pasado_simple_negativa_y_pregunta, gram.contables_e_incontables, gram.presente_perfecto_for_since, gram.adverbios_de_frecuencia]}
+      - {elemento: "Sustantivos: plural regular e irregular; contables e incontables con some y any; abstractos", pagina_manual: 52, temas: [gram.plurales, gram.some_any, gram.contables_e_incontables]}
+      - {elemento: "Sustantivos compuestos, genitivo ('s y s') y genitivo doble", pagina_manual: 52, temas: [gram.sintagma_nominal_basico, gram.posesivo_s]}
+      - {elemento: "Pronombres personales (sujeto, objeto y posesivo) e impersonales it y there", pagina_manual: 52, temas: [gram.pronombres_sujeto, gram.pronombres_objeto, gram.pronombres_posesivos_e_indefinidos, gram.there_is_are]}
+      - {elemento: "Pronombres demostrativos, cuantitativos e indefinidos", pagina_manual: 52, temas: [gram.demostrativos, gram.pronombres_posesivos_e_indefinidos]}
+      - {elemento: "Pronombres relativos who, which y that", pagina_manual: 52, temas: [gram.relativas_who_which_that]}
+      - {elemento: "Determinantes a y the con contables e incontables", pagina_manual: 52, temas: [gram.articulos_a_an_the]}
+      - {elemento: "Adjetivos: color, tamaño, forma, calidad y nacionalidad; predicativos y atributivos", pagina_manual: 52, temas: [gram.adjetivos_calificativos]}
+      - {elemento: "Adjetivos posesivos y demostrativos", pagina_manual: 52, temas: [gram.adjetivos_posesivos, gram.demostrativos]}
+      - {elemento: "Adjetivos cuantitativos: some, any, many, much, a few, a lot of, all, other y every", pagina_manual: 52, temas: [gram.some_any, gram.contables_e_incontables]}
+      - {elemento: "Comparativo y superlativo, regulares e irregulares (de adjetivos y de adverbios)", pagina_manual: 52, temas: [gram.comparativos_y_superlativos]}
+      - {elemento: "Orden de los adjetivos y participios como adjetivos", pagina_manual: 52, temas: [gram.sintagma_nominal_basico]}
+      - {elemento: "Adverbios de modo, con formas regulares e irregulares", pagina_manual: 52, temas: [gram.adverbios_de_modo_y_grado]}
+      - {elemento: "Adverbios de frecuencia y su lugar en la oración", pagina_manual: 52, temas: [gram.adverbios_de_frecuencia]}
+      - {elemento: "Adverbios de tiempo definido (now, last week) e indefinido (already, just, yet)", pagina_manual: 52, temas: [gram.pasado_simple_afirmativa, gram.presente_perfecto_just_already_yet]}
+      - {elemento: "Adverbios de grado: very, too y rather", pagina_manual: 52, temas: [gram.adverbios_de_modo_y_grado, gram.too_y_enough]}
+      - {elemento: "Adverbios de lugar, de dirección y de secuencia (first, next)", pagina_manual: 52, temas: [gram.preposiciones_de_lugar, gram.conectores_basicos]}
+      - {elemento: "Preposiciones de lugar, de tiempo y de dirección", pagina_manual: 53, temas: [gram.preposiciones_de_lugar, gram.preposiciones_de_tiempo]}
+      - {elemento: "Preposiciones de instrumento y varias (by, with, like, about); frases preposicionales; preposiciones antes de sustantivos y adjetivos", pagina_manual: 53, temas: [gram.gerundio_y_preposiciones, gram.preposiciones_de_lugar]}
+      - {elemento: "Conectores: and, but y or; when, where, because e if", pagina_manual: 53, temas: [gram.conectores_basicos, gram.condicional_primera, gram.relativas_who_which_that]}
+  cambridge-b1-preliminary:
+    cierra_en: B1.4
+    inventario: "Language specifications, áreas gramaticales (PDF p. 72 a 74); aquí solo lo que agrega al inventario de A2 Key y lo que se repite de él con tema propio en B1"
+    items:
+      - {elemento: "might: posibilidad; ought to: obligación", pagina_manual: 73, temas: [gram.modales_ampliados]}
+      - {elemento: "used to más infinitivo: costumbres del pasado", pagina_manual: 73, temas: [gram.used_to]}
+      - {elemento: "was/were going to", pagina_manual: 73, temas: [gram.was_were_going_to]}
+      - {elemento: "Pasiva modal, además de la pasiva en presente y pasado simple", pagina_manual: 73, temas: [gram.pasiva_presente_y_pasado, gram.pasiva_ampliada]}
+      - {elemento: "Verbo más objeto más infinitivo", pagina_manual: 73, temas: [gram.patrones_verbales_ing_e_infinitivo]}
+      - {elemento: "give, take, send, bring y show con objeto directo e indirecto", pagina_manual: 73, temas: [gram.objeto_directo_e_indirecto]}
+      - {elemento: "Causativo con have y get", pagina_manual: 73, temas: [gram.causativo_have_get]}
+      - {elemento: "so y nor con auxiliares", pagina_manual: 73, temas: [gram.so_neither_too_either]}
+      - {elemento: "Patrones verbales compuestos", pagina_manual: 73, temas: [gram.patrones_verbales_ing_e_infinitivo]}
+      - {elemento: "Verbos frasales y verbos con preposición", pagina_manual: 73, temas: [gram.verbos_frasales_frecuentes, gram.preposiciones_dependientes]}
+      - {elemento: "Condicionales de tipo 0, 1 y 2", pagina_manual: 73, temas: [gram.condicional_cero, gram.condicional_primera, gram.condicional_segunda]}
+      - {elemento: "Estilo indirecto simple: afirmaciones, preguntas y órdenes con say, ask y tell", pagina_manual: 73, temas: [gram.estilo_indirecto]}
+      - {elemento: "Preguntas indirectas e incrustadas (know, wonder)", pagina_manual: 73, temas: [gram.preguntas_indirectas]}
+      - {elemento: "Sintagmas nominales complejos", pagina_manual: 73, temas: [gram.sintagmas_nominales_complejos]}
+      - {elemento: "Pronombres reflexivos y enfáticos", pagina_manual: 73, temas: [gram.pronombres_reflexivos]}
+      - {elemento: "Pronombres relativos who, which y that (se repiten del inventario de A2)", pagina_manual: 73, temas: [gram.relativas_who_which_that]}
+      - {elemento: "(not) as … as; not … enough to; too … to", pagina_manual: 74, temas: [gram.comparaciones_ampliadas, gram.too_enough_con_infinitivo]}
+      - {elemento: "Adjetivos compuestos", pagina_manual: 74, temas: [gram.adjetivos_compuestos]}
+      - {elemento: "Adverbios de oración: too y either", pagina_manual: 74, temas: [gram.so_neither_too_either]}
+      - {elemento: "Frases preposicionales y preposiciones tras sustantivos, adjetivos y verbos", pagina_manual: 74, temas: [gram.preposiciones_dependientes]}
+      - {elemento: "Conectores: either … or; when, while, until, before, after y as soon as", pagina_manual: 74, temas: [gram.oraciones_de_tiempo, gram.conectores_de_causa_resultado_y_proposito]}
+      - {elemento: "Conectores: because, since, as y for; so that e (in order) to", pagina_manual: 74, temas: [gram.conectores_de_causa_resultado_y_proposito]}
+  # Los temas de vocabulario de cada manual (A2 Key PDF p. 53 y B1 Preliminary PDF p. 74; los nombres están traducidos con palabras propias) y el campo de
+  # vocabulario donde se ve. Los 20 de A2 Key quedan vistos al cerrar A2.2 y los 24 de B1 Preliminary, al cerrar B1.4.
+  temas_de_vocabulario:
+    cambridge-a2-key:
+      - {tema: "Ropa", escalon: A1.1, campo: "Colores, ropa y descripciones simples"}
+      - {tema: "Vida diaria", escalon: A1.2, campo: "Rutinas y horarios"}
+      - {tema: "Entretenimiento y medios", escalon: A2.1, campo: "Salidas, eventos y entretenimiento"}
+      - {tema: "Comida y bebida", escalon: A1.1, campo: "Comida y bebida básicas"}
+      - {tema: "Salud, medicina y ejercicio", escalon: A2.2, campo: "Salud, medicina y ejercicio"}
+      - {tema: "Pasatiempos y ocio", escalon: A1.2, campo: "Habilidades y pasatiempos"}
+      - {tema: "Casa y hogar", escalon: A1.1, campo: "La casa, los cuartos y los objetos"}
+      - {tema: "Idioma", escalon: A1.1, campo: "Frases para pedir ayuda y repetir en clase"}
+      - {tema: "Personas", escalon: A1.1, campo: "Familia y personas"}
+      - {tema: "Sentimientos, opiniones y experiencias personales", escalon: A2.1, campo: "Gustos, opiniones y sentimientos"}
+      - {tema: "Identificación personal", escalon: A1.1, campo: "Datos personales, países y nacionalidades"}
+      - {tema: "Lugares y edificios", escalon: A1.2, campo: "Lugares de la ciudad y cómo llegar"}
+      - {tema: "Servicios", escalon: A2.2, campo: "Trabajo, reglas y servicios"}
+      - {tema: "Compras", escalon: A1.2, campo: "Compras y comida con cantidades simples"}
+      - {tema: "Interacción social", escalon: A2.2, campo: "Sentimientos y relaciones con otras personas"}
+      - {tema: "Deporte", escalon: A1.2, campo: "Deportes y tiempo libre"}
+      - {tema: "El mundo natural", escalon: A2.2, campo: "Clima y naturaleza"}
+      - {tema: "Transporte", escalon: A1.2, campo: "Transporte básico"}
+      - {tema: "Viajes y vacaciones", escalon: A2.1, campo: "Fin de semana y vacaciones"}
+      - {tema: "Clima", escalon: A2.2, campo: "Clima y naturaleza"}
+    cambridge-b1-preliminary:
+      - {tema: "Ropa", escalon: B1.4, campo: "Ropa, moda y estilo"}
+      - {tema: "Vida diaria", escalon: B1.1, campo: "Vida diaria: horarios, turnos y tareas"}
+      - {tema: "Educación", escalon: B1.1, campo: "Experiencias: viajes, estudios y logros"}
+      - {tema: "Entretenimiento y medios", escalon: B1.4, campo: "Entretenimiento, cine, libros y medios"}
+      - {tema: "Medio ambiente", escalon: B1.3, campo: "Medio ambiente y naturaleza"}
+      - {tema: "Comida y bebida", escalon: B1.4, campo: "Comida, restaurantes y recetas"}
+      - {tema: "Tiempo libre", escalon: B1.2, campo: "Tiempo libre y planes"}
+      - {tema: "Salud, medicina y ejercicio", escalon: B1.1, campo: "Cuerpo, síntomas y visita al médico"}
+      - {tema: "Pasatiempos y ocio", escalon: B1.4, campo: "Pasatiempos y aficiones"}
+      - {tema: "Casa y hogar", escalon: B1.3, campo: "Casa, vivienda y mudanza"}
+      - {tema: "Idioma", escalon: B1.2, campo: "Lenguas, comunicación y relaciones con otras personas"}
+      - {tema: "Personas", escalon: B1.4, campo: "Personas: carácter y relaciones"}
+      - {tema: "Sentimientos, experiencias y opiniones personales", escalon: B1.1, campo: "Sentimientos, opiniones y bienestar"}
+      - {tema: "Identificación personal", escalon: B1.4, campo: "Identidad, cultura y tradiciones"}
+      - {tema: "Lugares y edificios", escalon: B1.2, campo: "Lugares de trabajo y de servicio"}
+      - {tema: "Relaciones con otras personas", escalon: B1.2, campo: "Lenguas, comunicación y relaciones con otras personas"}
+      - {tema: "Servicios", escalon: B1.2, campo: "Servicios, trámites y gestiones"}
+      - {tema: "Compras", escalon: B1.3, campo: "Compras, consumo y precios"}
+      - {tema: "Interacción social", escalon: B1.2, campo: "Reuniones, correos y agenda"}
+      - {tema: "Deporte", escalon: B1.3, campo: "Deportes y competencias"}
+      - {tema: "El mundo natural", escalon: B1.3, campo: "Medio ambiente y naturaleza"}
+      - {tema: "Transporte", escalon: B1.3, campo: "Transporte y movilidad en la ciudad"}
+      - {tema: "Viajes y vacaciones", escalon: B1.1, campo: "Experiencias: viajes, estudios y logros"}
+      - {tema: "Clima", escalon: B1.4, campo: "Clima, estaciones y fenómenos naturales"}

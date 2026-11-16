@@ -117,8 +117,9 @@ puerta_de_etapa:
   etiqueta_del_marco_europeo: "se gana al pasar la puerta de la etapa"
   origen: "D29 (D-ING-1); plan 0.4, sección 3.1"
   ocupa_el_lugar_de_la_puerta_del_escalon_de_cierre:
-    pendiente: true
-    nota: "Ningún documento dice si el último escalón de cada etapa (A1.2, A2.3, B1.4 y B2.4) tiene además su propia puerta interna o si la puerta de la etapa ocupa ese lugar. Se lee lo segundo (el plan define el escalón como «tramo de 8 semanas con su prueba al final»), pero no está dicho. Cambia cuántas formas hay que escribir: 39 en un caso, 51 en el otro."
+    resuelto: true
+    resolucion: "La puerta de etapa es la puerta del último escalón de la etapa (A2.3, B1.4 y B2.4); la de A1.2 es una prueba interna. Son 13 puertas y 39 formas (3 por puerta). Resuelto por el arquitecto el 16/nov/2026; el dueño puede vetarlo."
+    origen: "plan 0.6, sección 4.2"
   aviso_al_estudiante:
     texto: "Aprobar la puerta no equivale a aprobar el examen oficial: el 80 % por habilidad es un margen de seguridad propio de GRAVITY."
     origen: "plan 0.4, anexo E.2, punto 4"
@@ -191,9 +192,10 @@ rubrica:
       - {tarea: habla, puntajes: {gramatica_del_tema: 3, pronunciacion_del_tema: 4, fluidez: 4, vocabulario: 4}, suma_ponderada: 365, aprueba: true}
       - {tarea: habla, puntajes: {gramatica_del_tema: 2, pronunciacion_del_tema: 4, fluidez: 4, vocabulario: 4}, suma_ponderada: 330, aprueba: false, motivo: "el promedio pasa de 320, pero gramática del tema está por debajo de 3"}
   quien_califica_escritura_y_habla:
-    pendiente: true
-    nota: "El plan dice que el habla se graba en el dispositivo y se autoevalúa con lista de cotejo y modelo (sección 3.5) y que la revisión cruzada en pareja llega en la fase 6; la rúbrica 0.1 (sección 4) pide además una revisión y repetir la prueba si la diferencia con la autoevaluación pasa de un punto por criterio. Ningún documento dice quién califica la puerta mientras no exista la revisión en pareja ni la IA: sin eso, la puerta de escritura y habla se autocalifica."
-    origen: "plan 0.4, sección 3.5 y sección 6 (fase 6); rúbrica 0.1, sección 4"
+    resuelto: true
+    resolucion: "Una IA, opcional por función (D-ING-9, 16/nov/2026). El curso no arranca hasta que la fase 6 (pareja y corrección con IA) esté completamente integrada (D-ING-9 y D-ING-10), así que no hay etiqueta provisional."
+    pendiente_para_P6_0: "Qué pasa con la puerta si la persona no activa la corrección con IA, que es opcional por función; cómo se hace el habla de las partes en pareja de los exámenes (A2 Key parte 2, B1 partes 3 y 4, B2 parte 3) sin otra persona; qué se hace con la pronunciación, que no se juzga bien desde un texto."
+    origen: "D29 (D-ING-9 y D-ING-10); plan 0.6, secciones 3.8 y 4.1"
 oportunidades:
   por_puerta: 2
   cada_una: evaluacion_de_cierre_completa
@@ -202,14 +204,17 @@ oportunidades:
   dos_bajas_seguidas: {accion: "el dueño revisa el plan con el estudiante (horario, carga, método)", la_exigencia_no_baja: true}
   origen: "D29 (D-ING-1: dos oportunidades por puerta; si no se aprueba ninguna, se baja un escalón); plan 0.4, sección 3.1; niveles-y-avance 0.3, sección 4 (vigente: D29, «lo demás de ese documento sigue vigente»)"
   primera_oportunidad:
-    pendiente: true
-    nota: "El plan no dice en qué semana se presenta la primera oportunidad (¿al final de la semana 8?) ni si la puerta cuenta dentro de las 40 horas del escalón o se suma. Las 80, 200, 360 y 520 horas suponen aprobar a la primera, al final de la semana 8."
+    resuelto: true
+    resolucion: "Al final de la semana 8. La puerta cuenta dentro de las 40 horas del escalón: las semanas 1 a 7 son de contenido y la 8, de repaso y puerta. Las puertas de etapa duran lo que su examen (unos 100, 130 y 209 minutos) y se reparten en varias sesiones de la semana 8. Resuelto por el arquitecto el 16/nov/2026; el dueño puede vetarlo."
+    origen: "plan 0.6, sección 4.2; niveles-y-avance 0.4, sección 3.3"
   en_el_primer_escalon:
-    pendiente: true
-    nota: "No se dice qué pasa si se fallan las dos oportunidades en A1.1, donde no hay un escalón más abajo."
+    resuelto: true
+    resolucion: "Se repite A1.1 y, a la segunda caída seguida, el dueño revisa el plan (regla ya aprobada de dos bajas seguidas)."
+    origen: "plan 0.6, sección 4.2"
   al_bajar_a_un_escalon_de_cierre_de_etapa:
-    pendiente: true
-    nota: "No se dice si, al bajar de B1.1 a A2.3 (por ejemplo), hay que volver a presentar la puerta de la etapa A2 ni si se pierde la etiqueta ganada."
+    resuelto: true
+    resolucion: "La etiqueta ya ganada se conserva; se repite ese escalón y se vuelve a presentar su puerta."
+    origen: "plan 0.6, sección 4.2"
 formas:
   por_puerta: 3
   oportunidades: 2

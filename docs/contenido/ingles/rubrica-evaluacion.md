@@ -2,6 +2,8 @@
 
 > **Contexto:** nota general en `CONTEXTO.md` (ruta: `docs/contenido/ingles/`). Estado de este documento: borrador; pendiente de aprobación.
 
+> **Aviso (16/nov/2026).** Esta versión 0.1 es anterior a las decisiones D29. Los criterios, los pesos y la escala de 0 a 4 siguen vigentes. Quedan desfasados, y los ajusta el paquete P0.3: la mini prueba es de 10 preguntas y se aprueba con 8 (aquí, 4 de 5); el escalón no tiene pruebas de módulo; no hay crédito parcial en las preguntas objetivas (aquí, 0.5); la extensión del texto es la de la etapa (aquí, 60 a 80 palabras); y quien califica escritura y habla es una IA, opcional por función (D-ING-9), no la autoevaluación. La regla de aprobar es la de D-ING-6: promedio ponderado de 80 % y «gramática del tema» en 3 o más.
+
 > Versión 0.1 (14/nov/2026), para revisión del dueño. Aplica a las mini pruebas (viernes) y a las pruebas de módulo (semanas 4, 8, 12, 16, 20 y 24).
 > Esta rúbrica sirve para medir el avance del propio estudiante. **No es una certificación oficial.** Si más adelante quieres un certificado, el resultado final se contrasta con un examen oficial (TOEFL, IELTS o Cambridge), como dice el diseño de Hábitos (Anexo A.6).
 

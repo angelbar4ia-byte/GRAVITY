@@ -8,7 +8,8 @@
 |---|---|---|
 | `ejemplos/` | Nueve archivos patrón: marcan la calidad exigida y serán casos de prueba del validador | Escritos, en `borrador`; pendientes de resolución a ciegas (paquete P1.4a). Su cuaderno sin respuestas: `docs/contenido/ingles/generado/cuaderno-ejemplos-patron.md` |
 | `formatos/` | Nueve contratos: seis de exámenes oficiales (A2 Key, B1 Preliminary, B2 First, TOEIC L&R, TOEIC S&W y TOEFL iBT 2026, cada dato con la página del manual) y tres propios de GRAVITY (`gravity-sesion-60`, `gravity-ubicacion`, `gravity-escalon`, cada dato con su origen en un documento del proyecto o en una decisión del dueño) | En `borrador`. Quedan datos marcados `pendiente: true`, con su nota |
-| `niveles.yaml`, `unidades/`, `formas/`, `curso/`, `revisiones/` | Los crea el plan (paquetes P1.3 y siguientes) | Aún no existen |
+| `niveles.yaml` | La matriz de los 13 escalones: temas de gramática (97, cada uno nuevo en un solo escalón), funciones, vocabulario, descriptores «puedo» de las cuatro habilidades, las listas controladas y la cobertura de los manuales de A2 Key y B1 Preliminary, con la página de cada elemento. A2.1 a A2.3 con el detalle semana por semana | En `borrador`. 47 de los 97 temas llevan `pendiente: true` (todo A1, todo B2 y 9 de B1): son criterio de diseño y falta contrastarlos con el English Grammar Profile |
+| `unidades/`, `formas/`, `curso/`, `revisiones/` | Los crea el plan (paquetes siguientes) | Aún no existen |
 
 ## Reglas
 
