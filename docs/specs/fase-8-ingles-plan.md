@@ -1,6 +1,6 @@
 # Plan de ejecución — Fase 8, bloque 5 (Hábitos · Inglés)
 
-> Versión 0.4 (16/nov/2026). **Aprobado en lo esencial por el dueño** (D-ING-1 a 6, sección 4.1); faltan D-ING-7 y D-ING-8. Lo que cambió desde la 0.1 está en el anexo C.
+> Versión 0.5 (16/nov/2026). **Aprobado por el dueño** (D-ING-1 a 8, sección 4.1). Queda por terminar una ejecución: borrar dos ramas, que el servidor rechazó. Lo que cambió desde la 0.1 está en el anexo C.
 > Ejecuta: el equipo de agentes del roadmap (sección 11), todos en **Sonnet 5.5** por la regla 11.1.10. Orquesta e integra: el arquitecto.
 > Base: revisión `docs/revisiones/fase-8-ingles.md` (5 bloqueantes, 9 importantes) y formato `docs/specs/fase-8-ingles-formato.md`.
 > No cambia ninguna decisión confirmada por su cuenta: lo que requiere al dueño está en la sección 4.
@@ -124,7 +124,7 @@ Cada quien tiene su ruta. Si coinciden de escalón, comparten calendario y activ
 | D-ING-4 | Apruebas plantillas y muestras; el contenido pasa con validación, revisión a ciegas y muestreo de calidad | **Sí.** Hoy los módulos 3 y 4 esperan tu lectura y tú mismo dices que no es tu tema | Cada pieza espera tu aprobación, como ahora |
 | D-ING-5 | Ubicación única con puerta anticipada y descenso por evidencia | **Sí.** Y no usar la página publicada para decidir el nivel hasta la versión 3 | La ubicación no se construye |
 | D-ING-6 | En escritura y habla, aprobar es promedio ponderado de 3.2 sobre 4 (80 %) y «gramática del tema» en 3 o más: sacar 3 en todo **no** aprueba. Pruebas objetivas de 10 preguntas o más por habilidad | **Sí.** (Cambié mi recomendación anterior, «ningún criterio bajo 3», por ser dura con criterios chicos) | Se aplica el 80 % como está |
-| D-ING-7 | Orden: primero B1.1 y la ubicación; después A2.1. Exámenes: B1 Preliminary, A2 Key, TOEIC, B2 First, TOEFL | **Sí.** Se reordena con el resultado real de la ubicación | Se sigue este orden |
+| D-ING-7 | Orden: primero la ubicación y un escalón de partida; después los demás. Exámenes: los de las puertas de etapa primero (A2 Key, B1 Preliminary), luego TOEIC, B2 First y TOEFL | **Sí.** Se reordena con el resultado real de la ubicación | Se sigue este orden |
 | D-ING-8 | Borrar la rama `claude/ubicacion-ingles` del repositorio archivado de Hábitos y la rama `claude/integracion-ingles-main`. Llevar el trabajo a `main` por pull request cuando lo pidas | **Sí** | Las ramas quedan como están |
 
 Las que se aprueben se registran en `docs/DECISIONES.md` como una decisión nueva (D29, ya abierta con las confirmadas).
@@ -139,7 +139,8 @@ Las que se aprueben se registran en `docs/DECISIONES.md` como una decisión nuev
 | D-ING-4 | **Sí, por muestras** | 15/nov/2026 | Confirmada |
 | D-ING-5 | **Sí, 12 preguntas por nivel** | 16/nov/2026 | Confirmada |
 | D-ING-6 | **Promedio de 80 % y «gramática del tema» en 3 o más**; en las pruebas objetivas, 10 preguntas o más por habilidad | 16/nov/2026 | Confirmada |
-| D-ING-7 y 8 | Todavía no se le han presentado | | Pendientes |
+| D-ING-7 | **«Comenzamos con A2.1 y ubicación».** El curso arranca por A2.1 y por la ubicación, no por B1.1. El orden de los exámenes no lo eligió: lo ajusté yo (A2 Key antes que B1 Preliminary, porque la primera puerta de etapa que se encuentra quien empieza en A2.1 es la de A2) | 16/nov/2026 | Confirmada, con un ajuste mío al orden de exámenes |
+| D-ING-8 | **Sí, borrar las dos ramas sobrantes** (`claude/integracion-ingles-main` y `claude/ubicacion-ingles`) | 16/nov/2026 | Confirmada. **Sin ejecutar:** el servidor rechazó el borrado (403); ver P0.4 |
 
 ## 5. Cómo se ejecuta con Sonnet
 
@@ -255,8 +256,9 @@ Flutter y Dart están en `/home/user/tools/flutter/bin`.
 - Hace: reescribe el bloque 5 de `docs/specs/fase-8-habitos-ampliaciones.md` en sub-bloques (5a núcleo en la app, 5b audio y habla, 5c ubicación, 5d exámenes, 5e pareja). Resuelve las contradicciones de ING-I7, fija el modelo de datos `ing_*`, numera los criterios de aceptación y deja una sola numeración de semanas (1 a 8 dentro de cada escalón).
 - Hecho cuando: cada criterio se puede probar; calidad no encuentra contradicciones con `DECISIONES.md`.
 
-**P0.4 · Ramas** · arquitecto · depende de D-ING-8
+**P0.4 · Ramas** · arquitecto · D-ING-8 confirmada
 - Hace: borra las dos ramas indicadas y, cuando el dueño lo pida, abre el pull request a `main`.
+- **Estado (16/nov/2026): sin terminar.** El dueño aprobó borrar `claude/integracion-ingles-main` (GRAVITY) y `claude/ubicacion-ingles` (Hábitos). La ejecución **no se pudo hacer desde esta sesión**: el servidor respondió 403 a los tres intentos de borrado (el acceso de la sesión no permite borrar ramas). Solo se borró la copia local de la primera. Para terminarlo: en GitHub, Branches, icono de papelera de cada una; o, desde una terminal propia, `git push origin --delete claude/integracion-ingles-main` en GRAVITY y `git push origin --delete claude/ubicacion-ingles` en Hábitos. Antes de borrar se comprobó que no pierden nada: la primera solo trae un commit de unión con `main`, y la segunda, una nota que ya está reescrita en GRAVITY.
 
 ### Fase 1 · Rieles
 
@@ -282,7 +284,7 @@ Flutter y Dart están en `/home/user/tools/flutter/bin`.
 - Hecho cuando: (a) ningún ejemplo patrón tiene disputas abiertas y las respuestas quedan en `docs/revisiones/ingles/`; (b) `comparar` deja la revisión en `data/ingles/revisiones/` y detecta una disputa provocada a propósito.
 
 **P1.5 · Piloto vertical** · habitos, calidad y dueño · depende de P1.1 a P1.4, D-ING-1, D-ING-2, D-ING-4 y D-ING-5
-- Hace: (1) la semana 1 de B1.1 completa, con la plantilla de 60 minutos; (2) una unidad de Reading 3 y una de Listening 3 de B1 Preliminary con longitud oficial; (3) 12 preguntas de ubicación, 3 por etapa.
+- Hace: (1) la semana 1 de **A2.1** completa, con la plantilla de 60 minutos (D-ING-7); (2) una unidad de Reading 3 y una de Listening 3 de **A2 Key** con longitud oficial (contrato `cambridge-a2-key`); (3) 12 preguntas de ubicación, 3 por etapa. Los ejemplos patrón de sesión y de audio que existen son de B1.1: sirven de plantilla, pero la longitud y la gramática de A2.1 se escriben nuevas.
 - Hecho cuando: todo en `revisado`; cuadernos exportados; el dueño aprueba la plantilla o pide cambios en una sola ronda.
 
 ### Fase 2 · Ubicación y núcleo en la app
@@ -322,7 +324,7 @@ El reproductor y el motor (P3.0 a P3.3) están en la ruta crítica: la ubicació
 
 - **Unidad de trabajo:** una semana. El autor (habitos) entrega 5 sesiones, los 2 audios de traslado, 32 tarjetas y la mini prueba, siguiendo el ejemplo `sesion-b1-1-s01-lun-ejemplo.yaml`. El revisor (calidad) la resuelve a ciegas.
 - **Por escalón:** 8 semanas más su puerta, con tres formas (dos oportunidades y una reserva).
-- **Orden inicial** (a confirmar con D-ING-7): B1.1, A2.1, B1.2, A2.2, B1.3, A2.3, B1.4, A1.1, A1.2, B2.1 a B2.4. Tras la ubicación real del dueño y de su pareja, sube al frente el escalón donde caiga cada uno.
+- **Orden inicial** (D-ING-7, 16/nov/2026): A2.1 y la ubicación; después A2.2, A2.3 y B1.1 a B1.4; luego A1.1, A1.2 y B2.1 a B2.4. Tras la ubicación real del dueño y de su pareja, sube al frente el escalón donde caiga cada uno.
 - **Ritmo:** el contenido va dos semanas por delante de quien estudia. No hace falta terminar el curso para empezar a usarlo.
 - **Semillas:** los módulos 1 y 2 aprobados dan los temas de B1.1; el 3 y el 4, de B1.2.
 
@@ -334,7 +336,7 @@ Cuatro pasos por examen, cada uno por partes:
 3. **Dos formas completas y una de reserva**, que no comparten nada entre sí ni con el banco de práctica.
 4. **Práctica por partes** generada desde el banco.
 
-Orden: B1 Preliminary (también es la puerta de B1), A2 Key (puerta de A2), TOEIC Listening y Reading, B2 First (puerta de B2), TOEFL iBT 2026, TOEIC Speaking y Writing.
+Orden (D-ING-7, con un ajuste mío): A2 Key (puerta de A2), B1 Preliminary (puerta de B1), TOEIC Listening y Reading, B2 First (puerta de B2), TOEFL iBT 2026, TOEIC Speaking y Writing.
 
 ### Fase 6 · Pareja y extras
 
@@ -375,8 +377,7 @@ El piloto (P1.5) necesita además la herramienta completa (P1.2c) y la revisión
 **Puede salir ya, con D-ING-2 y 4 confirmadas:** P1.2b (comprobaciones de longitud, fidelidad y duplicados, y el informe). Solo necesita lo que ya existe.
 **Ya pueden salir** (D-ING-1 a 6 confirmadas): P1.1b (contratos propios), P1.3 (matriz de niveles), P0.3 (especificación v0.5 del bloque) y P3.0 (motor de voz).
 **Después:** P1.2c (necesita P1.1b), P1.4b (necesita P1.2c), P2.x (necesitan P0.3 y P1.x) y, al final, P1.5.
-**Espera D-ING-8:** P0.4 (ramas).
-**Espera D-ING-7:** el orden de producción de la fase 4 y de los exámenes de la fase 5.
+**Sin terminar:** P0.4 (borrar las dos ramas), que el servidor rechazó. Lo termina el dueño desde GitHub.
 
 ## 9. Riesgos
 
@@ -418,7 +419,8 @@ El piloto (P1.5) necesita además la herramienta completa (P1.2c) y la revisión
 | P1.2a Validador | Hecho (15/nov/2026) | `herramientas/ingles`: orden `validar` con V01 a V14 (sin V06) y la parte de V24 que no depende de revisiones. 169 pruebas en verde, 0 errores sobre `data/ingles`. Lo escribió el agente `habitos` con autorización expresa del dueño; al integrar se sembraron siete defectos en una copia y los detectó todos. Sus 12 hallazgos están resueltos en el formato 0.3 o asignados a P1.1b, P1.2b, P1.2c y P1.3 |
 | P0.2 Decisiones del dueño | Hecho (16/nov/2026) | Registradas en 4.1 y en `docs/DECISIONES.md` (D29). Se ajustó el plan a 13 escalones |
 | P1.2b Longitud, fidelidad, duplicados e informe | Hecho (16/nov/2026) | V15 a V20, fidelidad por forma y orden `informe`. 371 pruebas en verde. Al integrar se sembraron defectos y V17 no detectó un español hecho de palabras de contenido: se le agregó una segunda señal (tildes) con cinco pruebas |
-| P0.3, P0.4, P1.1b, P1.2c, P1.3, P3.0 en adelante | Pendientes | P0.3, P1.1b, P1.3 y P3.0 pueden salir ya. P0.4 espera D-ING-8 y la fase 5, D-ING-7 |
+| P0.4 Ramas | Sin terminar (16/nov/2026) | D-ING-8 confirmada, pero el servidor respondió 403 al borrar. Lo termina el dueño (ver P0.4) |
+| P0.3, P1.1b, P1.2c, P1.3, P3.0 en adelante | P1.1b y P3.0 en curso; los demás pendientes | P0.3 y P1.3 pueden salir ya |
 
 ## Anexo B. Temario por escalón (propuesta para P1.3; el reparto de A2.2 y A2.3 y de B1.3 y B1.4 es mío y P1.3 lo ajusta con el manual del examen de la etapa)
 
@@ -653,3 +655,8 @@ Entrega: un bloque YAML por unidad, con la forma que pide el cuaderno. No escrib
 3. **Fase 3 ampliada:** las tres vías de audio y el motor de voz de GRAVITY, con el paquete P3.0.
 4. **D-ING-6 cambió de recomendación:** «gramática del tema» en 3 o más en lugar de «ningún criterio bajo 3».
 5. **La segunda parte del validador (P1.2b) terminó** y el formato pasó a 0.4 con lo que encontró.
+
+### Cambios de la versión 0.5 (16/nov/2026)
+
+1. **D-ING-7 y D-ING-8 confirmadas.** El curso arranca por **A2.1** y la ubicación. El piloto (P1.5) pasa a la semana 1 de A2.1 y a unidades de A2 Key. Yo ajusté el orden de los exámenes (A2 Key antes que B1 Preliminary); el dueño no lo eligió.
+2. **P0.4 quedó sin terminar:** el borrado de ramas en el servidor da 403 desde esta sesión. Se anotan los pasos para que lo haga el dueño.

@@ -62,10 +62,10 @@
 
 ## 4. Decisiones
 
-D-ING-1 a 6 están **confirmadas** (15 y 16/nov/2026) y registradas en `docs/DECISIONES.md` (D29). Esperan al dueño:
+D-ING-1 a 8 están **confirmadas** (15 y 16/nov/2026) y registradas en `docs/DECISIONES.md` (D29). Dos puntos a tener presentes:
 
-1. D-ING-7: orden de producción y de exámenes.
-2. D-ING-8: limpieza de ramas.
+1. **Orden (D-ING-7):** el curso arranca por **A2.1** y la ubicación. El orden de los exámenes (A2 Key primero) lo ajusté yo; el dueño no lo eligió.
+2. **Ramas (D-ING-8):** aprobada, pero **sin ejecutar**: el servidor rechazó el borrado (403). Ver la sección 6.
 
 ## 5. Acceso y herramientas
 
@@ -78,7 +78,7 @@ D-ING-1 a 6 están **confirmadas** (15 y 16/nov/2026) y registradas en `docs/DEC
 ## 6. Ramas
 
 - Trabajo: `claude/zen-pasteur-b0jblz`.
-- Sobran, a la espera de D-ING-8: `claude/integracion-ingles-main` (solo un commit de merge sobre `main`) y `claude/ubicacion-ingles` en el repositorio de Hábitos, que por D10 es historial archivado.
+- **Sobran y el dueño aprobó borrarlas (D-ING-8), pero el servidor lo rechazó (403) desde la sesión:** `claude/integracion-ingles-main` en GRAVITY (solo un commit de unión con `main`; ya no existe la copia local) y `claude/ubicacion-ingles` en el repositorio de Hábitos (una nota ya reescrita en GRAVITY; es historial archivado por D10). Para terminarlo: en GitHub, Branches, icono de papelera; o `git push origin --delete <rama>` desde una terminal propia.
 
 ## 7. Pendientes fuera de inglés
 
@@ -90,6 +90,6 @@ D-ING-1 a 6 están **confirmadas** (15 y 16/nov/2026) y registradas en `docs/DEC
 ## 8. Cómo retomar
 
 1. Leer la revisión y el plan.
-2. Lanzar lo que ya puede salir (sección 8 del plan): P1.1b, P1.3, P0.3 y P3.0. Los encargos del primer lote, ya ejecutado, están en el anexo D del plan y sirven de modelo.
-3. Registrar D-ING-7 y D-ING-8 cuando el dueño responda.
+2. Lanzar lo que ya puede salir (sección 8 del plan): P1.1b y P3.0 (si no han terminado), P1.3 y P0.3. Los encargos del primer lote, ya ejecutado, están en el anexo D del plan y sirven de modelo.
+3. Cuando el dueño pida el pull request a `main`, abrirlo (no antes).
 4. Los demás paquetes se lanzan con el encargo tipo de la sección 5.3 del plan.

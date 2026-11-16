@@ -31,7 +31,7 @@ Cuando las decisiones confirmadas cambian el contrato, se reescribe `CONTRATO_CO
 | D21 | Datos sensibles de Hábitos: llaves, frase de recuperación y modos | Confirmada (1/nov/2026; tablet personal como el teléfono) |
 | D20 | Infraestructura de avisos genérica (FCM discreto, bandeja, preferencias) | Confirmada (31/oct/2026) |
 | D19 | Finanzas por persona, cuentas compartidas, albaceas y cuenta maestra | Confirmada (21/oct; ampliada 23/oct; detalles propuestos) |
-| D29 | Inglés: escalera, hora diaria, audio, ubicación, criterio de aprobar y aprobación por muestras | Confirmada en lo esencial (15 y 16/nov/2026); pendientes el orden de producción y la limpieza de ramas |
+| D29 | Inglés: escalera, hora diaria, audio, ubicación, criterio de aprobar, aprobación por muestras, orden y ramas | Confirmada (15 y 16/nov/2026); el borrado de dos ramas quedó sin ejecutar |
 
 ---
 
@@ -552,7 +552,7 @@ Cambia lo que ve Casa en D23. Se implementa en la fase donde se construya Alimen
 
 ---
 
-## D29. Inglés: escalera, hora diaria, audio, ubicación, criterio de aprobar y aprobación por muestras — confirmada en lo esencial (15 y 16/nov/2026)
+## D29. Inglés: escalera, hora diaria, audio, ubicación, criterio de aprobar, aprobación por muestras, orden y ramas — confirmada (15 y 16/nov/2026)
 
 Fuente: `docs/specs/fase-8-ingles-plan.md` (plan de ejecución, sección 4) y la revisión `docs/revisiones/fase-8-ingles.md`. Afecta al bloque 5 de la Fase 8 (Hábitos, inglés). **Sustituye** el calendario de 28 semanas de `docs/contenido/ingles/niveles-y-avance.md`; lo demás de ese documento sigue vigente.
 
@@ -564,6 +564,7 @@ Fuente: `docs/specs/fase-8-ingles-plan.md` (plan de ejecución, sección 4) y la
 - **Ubicación única de 12 preguntas por nivel (D-ING-5, 16/nov/2026).** Se aplica una sola vez, dentro de la app: 6 de gramática y vocabulario, 3 de lectura y 3 de escucha con audio por nivel. Se alcanza un nivel con 10 de 12 y todos los anteriores. Los errores se corrigen con evidencia: hacia arriba, una puerta anticipada en la semana 2 de un escalón (90 % en cada habilidad, sin gastar oportunidades); hacia abajo, dos mini pruebas seguidas por debajo de 50 % bajan un escalón sin penalización.
 - **Aprobar escritura y habla (D-ING-6, 16/nov/2026).** Promedio ponderado de 80 % de la rúbrica y el criterio «gramática del tema» en 3 o más de 4. Las pruebas objetivas llevan 10 preguntas o más por habilidad.
 
-**Pendientes:** D-ING-7 (orden de producción y de exámenes) y D-ING-8 (limpieza de ramas).
+- **Orden de producción (D-ING-7, 16/nov/2026).** El curso arranca por **A2.1** y la ubicación; luego A2.2, A2.3 y B1.1 a B1.4; luego A1 y B2. Tras la ubicación real, sube al frente el escalón donde caiga cada persona. Exámenes: A2 Key, B1 Preliminary, TOEIC, B2 First, TOEFL (este orden de exámenes lo ajustó el arquitecto para que coincida con empezar en A2.1; el dueño no lo eligió).
+- **Ramas (D-ING-8, 16/nov/2026).** Se aprueba borrar `claude/integracion-ingles-main` (GRAVITY) y `claude/ubicacion-ingles` (Hábitos). **Sin ejecutar:** el servidor rechazó el borrado desde la sesión (403); lo termina el dueño desde GitHub. Llevar el trabajo a `main` por pull request se hace solo cuando el dueño lo pida.
 
 **Qué cambia:** se puede redactar contenido de curso con la matriz de 13 escalones (paquete P1.3). La herramienta de validación (`herramientas/ingles`) ya existe. El motor de voz tiene paquete propio (P3.0).
