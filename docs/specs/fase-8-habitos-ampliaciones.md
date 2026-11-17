@@ -1,6 +1,6 @@
 # Fase 8 · Bloque 5 — Hábitos: Inglés (en la app)
 
-> **Versión 0.5** (16/nov/2026), **propuesta** para el dueño. Paquete **P0.3** del plan de inglés (`docs/specs/fase-8-ingles-plan.md`, versión 0.6). Reescribe por completo la versión 0.4 (14/nov/2026), que quedó atrás respecto a las decisiones del dueño del 15 y 16/nov/2026. Es **solo especificación**: no hay código, ni SQL, ni cambios en ningún `pubspec.yaml`.
+> **Versión 0.6** (17/nov/2026), **propuesta** para el dueño. La 0.5 es del 16/nov/2026; esta versión incorpora D-ING-11 a 15 (ver la lista de cambios de la 0.6, abajo). Paquete **P0.3** del plan de inglés (`docs/specs/fase-8-ingles-plan.md`, versión 0.6). Reescribe por completo la versión 0.4 (14/nov/2026), que quedó atrás respecto a las decisiones del dueño del 15 y 16/nov/2026. Es **solo especificación**: no hay código, ni SQL, ni cambios en ningún `pubspec.yaml`.
 >
 > **No cambia ninguna decisión confirmada.** D-ING-1 a 10 están en `docs/DECISIONES.md` (D29, líneas 555 a 571) y en el plan (4.1); las reglas de borde, en el plan (4.2). Lo que esta versión resuelve por su cuenta va marcado **Propuesta P5-nn** y se reúne, con lo que pasa si el dueño la veta, en la sección 13.
 >
@@ -9,6 +9,15 @@
 > **Base:** `CLAUDE.md`; `docs/DECISIONES.md` (D3, D5, D13, D21 y D29); `docs/ROADMAP.md` (11.1); el plan 0.6 (secciones 3, 4.1 y 4.2, fases 2, 3 y 6, anexos E y F); `docs/contenido/ingles/niveles-y-avance.md` 0.4 (secciones 3.6 y 8); los contratos `data/ingles/formatos/gravity-sesion-60.yaml`, `gravity-ubicacion.yaml` y `gravity-escalon.yaml`; `data/ingles/niveles.yaml`; el formato `docs/specs/fase-8-ingles-formato.md` 0.4 (secciones 5, 7 y 11); el motor de voz `docs/specs/fase-8-motor-de-voz.md` 0.1 (secciones 6, 10 y 12); la revisión `docs/revisiones/fase-8-ingles.md` (ING-I7 y los hallazgos que tocan la app); `docs/specs/fase-3-habitos.md`; y el código y las migraciones de Hábitos.
 >
 > **Cómo se marca lo que se afirma.** *Decidido*: lleva su fuente (D29, plan o sección). **Propuesta P5-nn**: decisión de esta versión, que el dueño puede vetar. `archivo:línea`: se comprueba leyendo ese archivo. **[consultado]**: lo leí el 16/nov/2026 en el paquete `speech_to_text` 7.5.0 de la caché de pub de este entorno (`app/pubspec.yaml:81`). Todo ejemplo numérico y de calendario se comprobó con un script.
+
+**Lista de cambios de la versión 0.6** (sobre la 0.5; el detalle, en 11.3):
+
+1. **Asistencia (D-ING-12):** 10 minutos por día y 3 días faltados por escalón; al cuarto, el escalón se repite. Reemplaza al 90 % de minutos y a los días de gracia por trimestre (3.3, 3.4, P5-30).
+2. **Pruebas por unidad (D-ING-14):** cuatro por escalón, que cuentan para subir; el viernes es de repaso. Sustituye a P5-08 (3.6.1, P5-31).
+3. **Sin conexión completo (D-ING-13):** qué se estudia sin red, qué la necesita, cola, instalación por adelantado y estados visibles (sección 9).
+4. **Dictado local (D-ING-13)** como requisito de 5b y qué ve la persona si el equipo no lo garantiza (4.4).
+5. **Texto y transcripción a la IA con permiso; voz solo en el dispositivo (D-ING-15)** (R4, 4.4, 7.1).
+6. **Nota para el dueño** sobre los prefijos `hab_` e `ing_` (15).
 
 **Lista de cambios de la versión 0.5** (el detalle, punto por punto, está en la sección 11):
 
@@ -30,7 +39,7 @@
 
 | Sub-bloque | Qué entra | Sección |
 |---|---|---|
-| **5a Núcleo** | Perfil (escalón actual e historial), sesión del día por bloques, minutos y día completo, constancia y días de gracia, repaso espaciado, mini prueba del viernes, puertas como máquina de estados (con puerta anticipada y descenso por evidencia), pantallas | 3 |
+| **5a Núcleo** | Perfil (escalón actual e historial), sesión del día por bloques, minutos y día completo, asistencia y faltas, repaso espaciado, mini prueba del viernes y pruebas por unidad, puertas como máquina de estados (con puerta anticipada y descenso por evidencia), pantallas | 3 |
 | **5b Audio y habla** | Lo que el curso pide al motor de voz, grabar la voz (se queda en el dispositivo) y transcribirla en el dispositivo | 4 |
 | **5c Ubicación** | Una sola vez por persona, 12 preguntas por etapa, pausar y reanudar, tabla de entrada, qué se guarda y cómo el servidor impide una segunda | 5 |
 | **5d Exámenes** | Formas de las puertas y su fidelidad, práctica por partes, semáforo, rótulo de los formatos reducidos | 6 |
@@ -56,7 +65,7 @@
 | **Conversión a las escalas oficiales** de Cambridge, TOEIC y TOEFL | Plan 3.4: solo se muestra cuando la escala esté verificada en su fuente (6.4) |
 | **Interfaz bilingüe y alternancia de pantallas** (diseño de Hábitos, 5.3 y A.5) | Sigue fuera: D29 no la toca |
 | **Inglés para el trabajo, series con subtítulos y niveles C1 en adelante** | Fuera de la escalera de D-ING-1 (llega a B2.4) |
-| **Pausas del curso** (vacaciones, enfermedad) | No hay decisión del dueño: pregunta 1 (15). Mientras tanto, solo los días de gracia cubren un día perdido |
+| **Pausas del curso** (vacaciones, enfermedad) | No hay decisión del dueño: pregunta 1 (15). Mientras tanto, solo las tres faltas por escalón cubren un día perdido (3.4) |
 | **Aviso del curso por Firebase o por el servidor** | Los recordatorios de Hábitos son locales (`docs/specs/fase-3-habitos.md`, regla 117) |
 | **Inglés en la tablet pública de la casa** | D21: la pública no muestra nada de Hábitos en modo Casa (`docs/DECISIONES.md`, línea 477). La tablet personal funciona como el teléfono |
 | **Paquetes nuevos** | Esta especificación no agrega ninguno. Grabar y transcribir los evalúa P3.2b y los aprueba el dueño (4) |
@@ -68,7 +77,7 @@
 | R1 | **Ni dinero ni datos clínicos a la IA en la nube**; el filtro corre en el servidor antes de que salga texto; la clave del proveedor nunca va dentro de la app | D3 (`docs/DECISIONES.md`, línea 79), D29 (D-ING-9), plan 3.8 | El inglés no maneja dinero ni datos clínicos. Lo único que puede salir es el texto o la transcripción de una tarea que la persona entrega a propósito, por `supabase/functions/gravity-asistente` (7) |
 | R2 | **Hábitos es personal**: cada persona ve solo lo suyo; la cuenta maestra no lo lee; ni el dueño ni la pareja leen lo ajeno | D5, D21 (línea 478), `docs/specs/fase-3-habitos.md` (convención 1) | Las tablas `ing_*` usan la misma regla que `hab_*`: `persona_id = persona_actual()` y `hab_activa(hogar_id)` (`supabase/migrations/20261105000000_habitos.sql:328-337`) (8.3) |
 | R3 | **Las tablas de Hábitos no escriben en la bitácora**; el prefijo `habitos.*` es del servidor y está oculto al dueño y a la maestra | D21 (línea 478), `20261105000000_habitos.sql:426-455` | Ninguna tabla `ing_*` lleva trigger de bitácora, y el prefijo `ing_` se reserva igual que `hab_` (8.3, 14) |
-| R4 | **Los textos que escribe, lo que dice y su voz grabada no salen del dispositivo** salvo la entrega a la IA que la persona decide | D13, D21, plan 3.5 y 3.8 | Texto, transcripción y grabación se guardan solo en el dispositivo (4, 7, 9.3). A la nube solo van números |
+| R4 | **Los textos que escribe, lo que dice y su voz grabada no salen del dispositivo**, salvo que **el texto y la transcripción** de una entrega pueden ir a la IA **con permiso en cada envío** y el filtro de D3. **La grabación de voz nunca sale** | D13, D21, plan 3.5 y 3.8; D-ING-13 y D-ING-15 | Texto, transcripción y grabación se guardan solo en el dispositivo (4, 7, 9.3). A la nube de Supabase solo van números; a la IA, solo el texto de esa entrega y con permiso (7.1) |
 | R5 | **Estudiar no usa la red** | Plan 1 (punto 4) y 3.6 | Todo el curso instalado funciona con la red cortada (9.1) |
 | R6 | **Tono sin culpa; una acción diaria en 3 toques o menos** | `.claude/agents/habitos.md`, `docs/DISENO_UX_UI.md` (flujo F2) | Catálogo cerrado de mensajes con revisión automática (3.8); Hoy → Inglés → Empezar (3.8) |
 | R7 | **Sin contadores guardados:** rachas, minutos, escalón actual, tarjetas por vencer y semáforo **se calculan** desde los registros | `docs/specs/fase-3-habitos.md` (convención 3) | El servidor guarda hechos; el dominio calcula (8.1) |
@@ -92,14 +101,14 @@ Se aplican las convenciones de `docs/specs/fase-0-cimientos.md` (sección 4) y l
 | **Turno de puerta** | Lo que se presenta de una puerta en un día. Una puerta de etapa dura lo que su examen y se reparte en 2 o 3 turnos (3.7) |
 | **Caída** | No aprobar ninguna de las dos oportunidades de una puerta. «Dos bajas seguidas» (plan 4.2) son dos caídas seguidas (3.7) |
 | **Baja por puerta / baja por evidencia** | Pasar al escalón de abajo tras una caída, o tras dos mini pruebas seguidas por debajo de 50 % (D-ING-5). La segunda **no** es una caída (P5-09) |
-| **Repite** | Volver a empezar el mismo escalón (A1.1 tras una caída, o un escalón con la puerta aprobada pero sin constancia o minutos suficientes) |
+| **Repite** | Volver a empezar el mismo escalón (A1.1 tras una caída, o un escalón con la puerta aprobada pero sin asistencia o sin pruebas por unidad suficientes) |
 
 **Convenciones de este bloque**
 
-1. **Identificadores en español sin acentos** (`Escalon`, `EstadoCurso`, `diasDeGracia`). Textos de la interfaz en español de México con acentos. El contenido está en inglés americano en el curso y británico en los exámenes de Cambridge, según su `variante` (plan 4.2).
-2. **El dominio es Dart puro, sin dependencias y sin reloj propio:** recibe `hoy` y usa `soloDia`, `lunesDe`, `sumarDias`, `diasEntre` y `redondearMitadArriba` de `paquetes/habitos_dominio/lib/src/fecha.dart`. No reutiliza `calcularRachaDiaria` (`rachas.dart:24-61`): esa función cubre **por semana** y el inglés cubre **por trimestre** (3.4).
+1. **Identificadores en español sin acentos** (`Escalon`, `EstadoCurso`, `diasFaltados`). Textos de la interfaz en español de México con acentos. El contenido está en inglés americano en el curso y británico en los exámenes de Cambridge, según su `variante` (plan 4.2).
+2. **El dominio es Dart puro, sin dependencias y sin reloj propio:** recibe `hoy` y usa `soloDia`, `lunesDe`, `sumarDias`, `diasEntre` y `redondearMitadArriba` de `paquetes/habitos_dominio/lib/src/fecha.dart`. No reutiliza `calcularRachaDiaria` (`rachas.dart:24-61`): esa función cubre **por semana** y el inglés cubre **por escalón** (3.4).
 3. **Enteros.** Porcentajes sin decimales (`aciertos × 100 ≥ umbral × preguntas`), sumas ponderadas de 0 a 400, minutos acreditados en **segundos**, y redondeo a la mitad hacia arriba cuando hace falta. Ninguna cifra es `double`.
-4. **Las cifras de D29 viven en un solo lugar del dominio** (`ReglasIngles`: 80, 90 y 50 %, 8 de 10, 2 oportunidades, 3 días de gracia, 13 semanas, 35 y 60 minutos, 3 cajas, 40 tarjetas por bloque…) y una prueba las compara con `data/ingles/formatos/gravity-escalon.yaml` y `gravity-sesion-60.yaml` (CA-5a-02). Así el código no se separa del contrato.
+4. **Las cifras de D29 viven en un solo lugar del dominio** (`ReglasIngles`: 80, 90 y 50 %, 8 de 10, 2 oportunidades, 10 minutos de tolerancia por día, 3 días faltados por escalón, 80 % de las pruebas por unidad, 35 y 60 minutos, 3 cajas, 40 tarjetas por bloque…) y una prueba las compara con `data/ingles/formatos/gravity-escalon.yaml` y `gravity-sesion-60.yaml` (CA-5a-02). Así el código no se separa del contrato.
 5. **Ids estables.** UUID v5 para lo que no debe duplicarse al reintentar (el ciclo, el día de estudio, el bloque de un día, el intento de una puerta); UUID v4 para lo demás (`docs/specs/fase-3-habitos.md`, convención 5).
 6. **Último cambio gana** solo en lo editable (ajustes del perfil y caché de tarjetas); lo demás es solo agregar (8.3).
 7. **El contenido manda sobre la interfaz:** ninguna pantalla escribe «completo», «verificado» ni «aprobado» por su cuenta; muestra lo que dice el contenido compilado (V24 y V26 del formato, sección 11).
@@ -162,7 +171,7 @@ Fuente de la tabla: `docs/specs/fase-8-ingles-formato.md`, sección 7 (líneas 2
 
 **La sesión de cada día es la del calendario del ciclo, no la «siguiente sin hacer».** La semana y el día salen de la fecha (3.1). Es la lectura de la regla del dueño *«si pierdes un día, no se recupera con dos bloques seguidos: al día siguiente se hace la lección que tocaba y el repaso espaciado de las palabras pendientes»* (`niveles-y-avance.md`, sección 5): el día siguiente trae **su** lección y su repaso recoge las tarjetas atrasadas (3.5).
 
-**Propuesta P5-05 (parte 1) · Una sesión perdida se puede estudiar después, pero no suma.** Desde Progreso › Semanas, la persona puede abrir cualquier sesión de un día pasado de su ciclo como **práctica libre**. Esa práctica **no** suma minutos, **no** completa ese día y **no** consume un día de gracia; sus tarjetas y sus repasos sí entran al repaso espaciado. Así la regla de no recuperar se cumple y el contenido no se pierde.
+**Propuesta P5-05 (parte 1) · Una sesión perdida se puede estudiar después, pero no suma.** Desde Progreso › Semanas, la persona puede abrir cualquier sesión de un día pasado de su ciclo como **práctica libre**. Esa práctica **no** suma minutos, **no** completa ese día y **no** quita una falta del escalón; sus tarjetas y sus repasos sí entran al repaso espaciado. Así la regla de no recuperar se cumple y el contenido no se pierde.
 
 **Las ocho semanas de un escalón** (`data/ingles/niveles.yaml`, bloque `plan_de_las_8_semanas`, y plan 4.2):
 
@@ -175,7 +184,7 @@ Fuente de la tabla: `docs/specs/fase-8-ingles-formato.md`, sección 7 (líneas 2
 
 ### 3.3 Minutos y día completo
 
-Dos preguntas distintas, que no se mezclan: **¿cuántos minutos cuentan?** (para el 90 % que pide subir) y **¿está completo el día?** (para la constancia).
+Dos preguntas distintas, que no se mezclan: **¿cuántos minutos cuentan?** (para la asistencia que pide subir, 3.4) y **¿está completo el día?** (para la constancia).
 
 **Minutos planeados de un día** (decidido: 60 con audio, 35 sin audio; D-ING-2 y plan 4.2).
 
@@ -183,7 +192,7 @@ Dos preguntas distintas, que no se mezclan: **¿cuántos minutos cuentan?** (par
 
 - **Planeados:** un día cuenta **35** si la app registró al menos un bloque ese día y **todos** se empezaron **sin audio** (la voz del curso no estaba disponible: `MotorVoz.disponibilidad(UsoVoz.curso, …)` del motor, sección 6.1 del motor de voz). En cualquier otro caso cuenta **60**, también el día en que no se estudió nada. Con el audio integrado antes del arranque (D-ING-9), los 35 minutos son solo un respaldo.
 - **Acreditados:** cada sub-bloque acredita **sus minutos declarados × los elementos hechos ÷ los elementos que trae**, en segundos y redondeado a la mitad hacia arriba. Los minutos declarados son los del contenido (5, 10, 8, 12, 10, 10 y 5: `gravity-sesion-60.yaml`). El tiempo que la persona tarda no importa: importa lo que hizo. Dejar la app abierta no suma.
-- **Límite conocido:** si el audio falla a media jornada, el día ya tiene un bloque con audio y sigue contando 60; lo cubre un día de gracia (3.4). Es el precio de una regla que no se puede inflar.
+- **Límite conocido:** si el audio falla a media jornada, el día ya tiene un bloque con audio y sigue contando 60; lo cubre una de las tres faltas del escalón (3.4). Es el precio de una regla que no se puede inflar.
 
 | Sub-bloque | Elementos | Cuenta como hecho cuando… | Notas |
 |---|---|---|---|
@@ -200,45 +209,50 @@ Dos preguntas distintas, que no se mezclan: **¿cuántos minutos cuentan?** (par
 
 **Día completo** (decidido: *un día está completo cuando se hacen el bloque principal y el traslado*; `niveles-y-avance.md`, sección 5).
 
-**Propuesta P5-05 (parte 2) · Completo es completo.** Con audio, el día está completo cuando **todos los elementos de los siete sub-bloques** están hechos. Sin audio, los de los **cuatro** del principal (D-ING-2). No hay tolerancia del 90 %: para un día que no se pudo completar están los días de gracia (3.4). El día de un turno de puerta está completo al terminar ese turno. La **fecha** de un bloque es la fecha local en que **empezó**: uno que cruza la medianoche cuenta en el día de inicio.
+**Propuesta P5-05 (parte 2) · Completo es completo.** Con audio, el día está completo cuando **todos los elementos de los siete sub-bloques** están hechos. Sin audio, los de los **cuatro** del principal (D-ING-2). El estado `completo` es estricto y solo gobierna el anillo de la sesión y la marca *Día completo*; **lo que cuenta para la constancia es la asistencia** (3.4), que tolera hasta 10 minutos por día (D-ING-12). Así, 11 de 12 elementos de pronunciación no completan el día, pero no lo pierden. El día de un turno de puerta está completo al terminar ese turno. La **fecha** de un bloque es la fecha local en que **empezó**: uno que cruza la medianoche cuenta en el día de inicio.
 
 **Ejemplos** (comprobados con un script):
 
-| Caso | Planeados | El 90 % que se pide |
+| Caso | Planeados | Lo mínimo que deja pasar la asistencia (3.4: 3 días en cero y el resto con 10 minutos de tolerancia) |
 |---|---|---|
-| Un escalón con audio: 8 semanas × 5 días × 60 | 2 400 min (40 h) | 2 160 min (36 h) |
-| Un escalón sin audio: 8 × 5 × 35 | 1 400 min (23.3 h) | 1 260 min (21 h) |
-| Mixto: 30 días con audio y 10 sin audio | 30 × 60 + 10 × 35 = 2 150 min | 1 935 min |
-| Un escalón con una semana de práctica (3.7), con audio | 2 700 min | 2 430 min |
-| Un lunes: repaso completo, lección 10 de 10, pronunciación 9 de 12, producción entregada, traslado completo | 60 | Acredita 5 + 10 + 6 + 12 + 25 = **58 min**; el día queda **incompleto** (faltan 3 elementos) |
+| Un escalón con audio: 8 semanas × 5 días × 60 | 2 400 min (40 h) | 37 × 50 = 1 850 min |
+| Un escalón sin audio: 8 × 5 × 35 | 1 400 min (23.3 h) | 37 × 25 = 925 min |
+| Mixto: 30 días con audio y 10 sin audio | 30 × 60 + 10 × 35 = 2 150 min | 27 × 50 + 10 × 25 = 1 600 min (las tres faltas caen en días con audio) |
+| Un escalón con una semana de práctica (3.7), con audio | 2 700 min | 42 × 50 = 2 100 min |
+| Un lunes: repaso completo, lección 10 de 10, pronunciación 9 de 12, producción entregada, traslado completo | 60 | Acredita 5 + 10 + 6 + 12 + 25 = **58 min**: el día queda **incompleto** (faltan 3 elementos) pero **asistido** (faltan 2 minutos, menos de 10) |
 
-El requisito de minutos se evalúa con enteros: `segundosHechos × 100 ≥ 90 × segundosPlaneados` sobre los días de estudio de la ventana que dice 3.7.
+La asistencia se evalúa con enteros, **por día**: `faltante = segundosPlaneados − segundosAcreditados` (no menor que cero) y el día se asiste si `faltante ≤ 600` (3.4), sobre los días de estudio de la ventana que dice 3.7. El 90 % de los minutos que pedía la versión 0.5 **se retira** (D-ING-12).
 
 **Propuesta P5-27 · Metas semanales, solo informativas.** Progreso muestra, por semana, **5 de 5 días completos**, **300 minutos** (175 sin audio) y **60 tarjetas repasadas** (las metas vigentes: `docs/contenido/ingles/CONTEXTO.md`, sección 2; que «60 tarjetas» sean repasos hechos y no tarjetas distintas es una interpretación mía). Ninguna bloquea nada: subir lo deciden los cuatro requisitos (3.7).
 
-### 3.4 Constancia, días de gracia y trimestre
+### 3.4 Asistencia, faltas y constancia (D-ING-12)
 
-**Decidido** (reglas del dueño vigentes, `niveles-y-avance.md` secciones 4 y 5): la constancia pide que **cada día de estudio esté completo o cubierto por un día de gracia**; hay **tres días de gracia por trimestre** y **no se acumulan** de un trimestre a otro.
+**Decidido (D-ING-12, 16/nov/2026; `docs/DECISIONES.md`, D29, línea 570):** *solo se pueden faltar 10 minutos por día y 3 días completos; pasado eso no se completa el curso y se repite.* El plan lo anota con una **lectura mía, a confirmar**: «el curso» es **el escalón** (plan 4.1, D-ING-12). Esta sección la sigue, y la pregunta 9 del apartado 15 pide confirmarla.
 
-**Propuesta P5-01 · Qué es un trimestre.** Un trimestre son **13 semanas de lunes a viernes contadas desde el lunes de la primera semana de estudio de la persona** (el `desde` de su primera fila de `ing_escalones`), no un trimestre de calendario. El trimestre de un día es `((lunesDe(día) − inicioCurso) ÷ 7) ÷ 13`, división entera. Con inicio el lunes 23/nov/2026: el trimestre 0 va del 23/nov/2026 al viernes 19/feb/2027, el 1 empieza el lunes 22/feb/2027 y el 2, el lunes 24/may/2027. Razones: cada trimestre tiene sus 13 semanas completas (con uno de calendario, quien empieza el lunes 28/dic/2026 recibiría tres días de gracia para cuatro días de estudio y otros tres desde el 1/ene); no depende de la fecha en que se empiece ni del año; es un cálculo sobre una sola fecha guardada. *Alternativa si se veta:* trimestre de calendario (enero a marzo, abril a junio, julio a septiembre, octubre a diciembre); cambia una función y sus pruebas.
+**Propuesta P5-30 · Cómo se cuenta la asistencia (por día y en total).** Reemplaza al 90 % de los minutos y a los días de gracia por trimestre de la versión 0.5 (P5-01 y P5-02 quedan **retiradas**: ya no hay trimestre).
 
-**Propuesta P5-02 · La app cubre los días con gracia sola, en orden.** Los días de estudio **sin cubrir** de cada trimestre se recorren en orden cronológico: los **tres primeros** quedan `gracia` y del cuarto en adelante, `sinCubrir`. Nadie tiene que pedirlo (sin culpa y sin un toque más). El día **en curso** no se juzga hasta que termina (como el día de hoy en `rachas.dart:46-47`).
+1. **Por día.** `faltante = planeados − acreditados`, en segundos y sin bajar de cero (los planeados y los acreditados son los de 3.3: 60 minutos, o 35 sin audio, y lo que de verdad se hizo). El día queda **asistido** si el `faltante` es de **600 segundos o menos**. Los 10 minutos son de **cada día**: no se acumulan de un día al siguiente ni se pueden «ahorrar».
+2. **En total.** Un día de estudio con más de 10 minutos de faltante, **estudie o no**, es un **día faltado**: se cuenta como un día completo, aunque se hayan estudiado 40 de 60 minutos (no hay crédito parcial: es la lectura más simple de *«3 días completos»*; pregunta 9b). Se cuentan **por ciclo de escalón** (la ventana de 3.7.5), no por trimestre. **Los tres primeros** días faltados del ciclo quedan **tolerados**; del cuarto en adelante, **excedidos**.
+3. **Qué pasa al excederse.** El escalón **no se completa** y se **repite** (T15, con motivo `asistencia`; 3.7.4). No se corta el estudio: la persona sigue hasta la puerta, que le da información real y, si la aprueba, **gana la etiqueta de la etapa** (como en P5-13). Lo que cambia es que el escalón vuelve a empezar el lunes siguiente (segunda vuelta, con las faltas en cero) y que en su semana 2 queda la puerta anticipada como atajo.
+4. **Sin culpa.** La app avisa **antes** (al usar la tercera falta: *«Hoy cuenta como tu falta número 3 de este escalón»*) y no reprocha después (catálogo en 3.8).
 
 | Estado de un día de estudio | Cuándo |
 |---|---|
-| `completo` | Cumple 3.3 |
-| `gracia` | No está completo y es uno de los tres primeros del trimestre |
-| `sinCubrir` | No está completo y ya se usaron los tres |
+| `asistido` | `faltante ≤ 600 s` (incluye el día `completo` de 3.3) |
+| `faltado` | `faltante > 600 s` y es uno de los tres primeros del ciclo (**tolerado**) |
+| `excedido` | `faltante > 600 s` y ya se usaron las tres |
 | `abierto` | Es hoy y todavía no termina |
 | `noAplica` | Sábado, domingo o un día anterior al inicio del curso |
 
-**Ejemplo** (inicio 23/nov/2026): faltan el miércoles 25/nov, el miércoles 2/dic, el jueves 10/dic y el jueves 17/dic. Los tres primeros quedan en gracia; el 17/dic queda `sinCubrir` y rompe la racha. Un día sin completar el miércoles 24/feb/2027 ya es del trimestre 1 y queda en gracia otra vez: las gracias no pasan de un trimestre a otro.
+**Ejemplo** (inicio el lunes 23/nov/2026, con audio). El miércoles 25/nov no se estudia: faltante 3 600 s, día faltado (1.ª falta). El miércoles 2/dic se acreditan 40 minutos: faltante 1 200 s, día faltado (2.ª). El jueves 10/dic, 55 minutos: faltante 300 s, **asistido**. El jueves 17/dic, 49 minutos: faltante 660 s, día faltado (3.ª). El viernes 8/ene/2027 no se estudia: **excedido**; el escalón se repetirá. Con 50 minutos justos (faltante 600 s) el día se asiste; con 49:59, no. **Sin audio** (35 planeados): 25 minutos asisten; 24:59, no.
 
-**La racha de inglés** (P5-19, abajo) es el número de días de estudio seguidos `completo` o `gracia`; el fin de semana no la rompe ni la suma; un `sinCubrir` la rompe, y la **mejor racha nunca baja**. Usa los mensajes que ya existen (`MensajesHabitos.rachaRota`, *«Un día no borra lo que has avanzado. Retomemos hoy.»*, y `MensajesHabitos.graciaUsada`, *«Usaste tu día de gracia»*: `paquetes/habitos_dominio/lib/src/mensajes.dart:3,12`). Progreso muestra cuántas gracias quedan en el trimestre y hasta cuándo (*«Te quedan 2 días de gracia hasta el 19/feb/2027»*); es un cálculo, no un contador guardado.
+**La racha de inglés** (P5-19) es el número de días de estudio seguidos `asistido` o `faltado`; el fin de semana no la rompe ni la suma; un `excedido` la rompe, y la **mejor racha nunca baja**. Usa los mensajes que ya existen (`MensajesHabitos.rachaRota`, *«Un día no borra lo que has avanzado. Retomemos hoy.»*: `paquetes/habitos_dominio/lib/src/mensajes.dart:3`). Progreso muestra **cuántas faltas quedan** en el escalón (*«Te quedan 2 de 3 faltas en este escalón»*); es un cálculo, no un contador guardado.
 
-**Propuesta P5-19 · El inglés tiene su propia racha y no entra a la racha global de Hábitos.** La racha global promedia objetivos con **una** gracia por semana (`hab_ajustes.gracia_semanal`, `20261105000000_habitos.sql:66`); el inglés tiene **tres por trimestre**. Mezclarlas obligaría a elegir una de las dos reglas del dueño. La fila de Inglés en Hoy (3.8) muestra la racha del inglés; `evaluarDiaGlobal` (`rachas.dart:109-120`) no cambia. *Alternativa si se veta:* contar el día completo de inglés como un elemento más del día global, con la gracia semanal.
+**Propuesta P5-19 · El inglés tiene su propia racha y no entra a la racha global de Hábitos.** La racha global promedia objetivos con **una** gracia por semana (`hab_ajustes.gracia_semanal`, `20261105000000_habitos.sql:66`); el inglés tiene **tres faltas por escalón**. Mezclarlas obligaría a elegir una de las dos reglas del dueño. La fila de Inglés en Hoy (3.8) muestra la racha del inglés; `evaluarDiaGlobal` (`rachas.dart:109-120`) no cambia. *Alternativa si se veta:* contar el día asistido de inglés como un elemento más del día global, con la gracia semanal.
 
-**Requisito de constancia para subir.** Está **cumplido** si ningún día de estudio de la ventana de 3.7 quedó `sinCubrir`. Es una condición de todo o nada, como la dijo el dueño. Los tres días de gracia pueden gastarse en el mismo escalón: no hay un tope por escalón, solo por trimestre.
+**Requisitos 3 y 4 para subir, con una sola cuenta.** El dueño dijo cuatro requisitos: pruebas, evaluación de cierre, constancia y 90 % de minutos. D-ING-12 pide asistencia y la dice **junta**; la función `asistenciaDelCiclo` los evalúa a la vez: **constancia** = ningún día `excedido` (a lo más tres faltados) y **minutos** = todo día no faltado con faltante de 10 minutos o menos. Es todo o nada, como la dijo el dueño. La pantalla de resultado muestra los dos números por separado (faltas usadas y minutos acreditados) para que se entienda **cuál** faltó.
+
+**Lo que no cambia.** El día en curso no se juzga hasta que termina (como el día de hoy en `rachas.dart:46-47`). Una sesión pasada estudiada después como práctica libre **no** suma (P5-05) y no quita una falta. Mientras no haya pausas (pregunta 1), una enfermedad también gasta las faltas.
 
 ### 3.5 Repaso espaciado de las tarjetas
 
@@ -286,6 +300,8 @@ El rezago es el promedio de los últimos 100 días de estudio de una simulación
 
 ### 3.6 La mini prueba del viernes
 
+**Cambio de función (D-ING-14).** El examen del viernes es **de repaso**: no bloquea nada. Lo que bloquea son las **pruebas por unidad** (3.6.1). La mini prueba sigue igual y alimenta las tarjetas y el descenso por evidencia.
+
 **Qué es.** Cada viernes de las semanas 1 a 7 la mini prueba ocupa el lugar del repaso: **10 preguntas de gramática y vocabulario** del escalón, y se **aprueba con 8** (`data/ingles/formatos/gravity-escalon.yaml:247-252`; la rúbrica solo califica ahí gramática y vocabulario, `docs/contenido/ingles/rubrica-evaluacion.md`, sección 1). En la semana 8 y en la semana de práctica no hay: ocupa su lugar la puerta (3.7).
 
 **Dónde vive en el contenido.** El contrato deja pendiente dónde vive y cuántos minutos cuenta (`gravity-sesion-60.yaml:248-253`). Se pide al formato 0.5 (sección 14): el bloque `mini_prueba` de la sesión del viernes **referencia una forma de uso `mini`** (`mini-<escalon>-s<NN>`, formato 0.4, sección 5). Con la fórmula de V22 (40 segundos por pregunta de opción múltiple), 10 preguntas son 6.7 minutos: el 133 % de los 5 declarados, dentro de lo permitido.
@@ -297,16 +313,37 @@ El rezago es el promedio de los últimos 100 días de estudio de una simulación
 | Resultado | Qué pasa |
 |---|---|
 | **8 a 10** (aprobada) | Cada error (de 0 a 2) vuelve como tarjeta |
-| **5 a 7** (no aprobada) | **Cada error vuelve como tarjeta.** No se repite la semana. No cambia la constancia (el día cuenta completo, 3.3) ni los minutos. No cuenta para el descenso |
+| **5 a 7** (no aprobada) | **Cada error vuelve como tarjeta.** No se repite la semana. No gasta faltas (el día cuenta completo, 3.3) ni cambia los minutos. No cuenta para el descenso |
 | **0 a 4** (por debajo de 50 %) | Lo anterior, y además **cuenta para el descenso por evidencia** (3.7) |
 
 - **No se repite la semana.** Repetirla movería la puerta y los minutos planeados, y las 80, 200, 360 y 520 horas del dueño suponen aprobar a la primera (plan 4.2). La rúbrica y el descenso por evidencia (D-ING-5) ya cubren el caso.
 - **Cada error vuelve como tarjeta** aunque la prueba se apruebe (la rúbrica lo pedía solo al reprobar; es lo mismo, aplicado siempre, porque un error es un dato). La tarjeta de error entra a la **caja 1** y vence el siguiente día de estudio, así que es lo primero del repaso del lunes (3.5). Si esa pregunta ya tiene su tarjeta, esa tarjeta vuelve a la caja 1; no se duplica.
-- **Ninguna mini prueba toca la constancia.** Con esta lectura, la decisión del dueño del 14/nov *«la primera evaluación semanal fallida del bloque queda como día de gracia»* (`niveles-y-avance.md`, sección 9) se cumple siempre y deja de distinguir a «la primera». Si el dueño quería otra cosa, es la pregunta 3 del apartado 15.
+- **Ninguna mini prueba toca la constancia.** Con esta lectura, la decisión del dueño del 14/nov *«la primera evaluación semanal fallida del bloque queda como día de gracia»* (`niveles-y-avance.md`, sección 9) se cumple en el espíritu: ninguna mini prueba fallida gasta una de las tres faltas del escalón (3.4), tampoco la primera. Si el dueño quería otra cosa, es la pregunta 3 del apartado 15.
 
 **Qué se guarda.** Un sub-bloque `mini_prueba` en `ing_bloques` con `aciertos`, `preguntas` y `detalle` (la lista de preguntas con su acierto, para las tarjetas de error y para que calidad retire las preguntas que fallan sin razón: plan 9, riesgos).
 
-**Propuesta P5-08 · El escalón no lleva pruebas intermedias que bloqueen.** El requisito 1 de `niveles-y-avance.md` (*«pruebas aprobadas»*, hoy pendiente de esta versión) queda cubierto por el 2: **la única prueba que bloquea es la puerta**. Las mini pruebas alimentan el repaso y el descenso, pero no impiden subir. Razones: las pruebas de módulo de las semanas 4, 8, 12… eran del calendario de 28 semanas que D29 sustituyó; una prueba de cuatro habilidades a media vía duplicaría el contenido de 13 puertas (39 formas) y sus correcciones con IA; y la mini prueba ya mide cada semana lo único que se puede medir sin IA y en cinco minutos. *Si se veta:* una **prueba de media vía** en la semana 4 (cuatro habilidades, una forma por escalón), que bloquearía igual que la puerta. Es la pregunta 3.
+### 3.6.1 Las pruebas por unidad (D-ING-14, P5-31)
+
+**Decidido (D-ING-14, 16/nov/2026):** el examen del viernes es de repaso y **el escalón lleva pruebas por unidad que cuentan para subir** (pruebas intermedias que bloquean). **Esto sustituye mi propuesta P5-08 de la versión 0.5** (*«el escalón no lleva pruebas intermedias»*): el requisito 1 de `niveles-y-avance.md` (*«pruebas aprobadas»*) deja de estar cubierto por el 2 y vuelve a ser un requisito propio.
+
+**Propuesta P5-31 · Qué es una unidad, qué contiene y qué pasa.** Lo que sigue lo defino yo; el dueño pidió solo que existan y que cuenten.
+
+| Punto | Propuesta |
+|---|---|
+| **Unidad** | **Dos semanas.** **Cuatro por escalón**, el **viernes** de las semanas **2, 4, 6 y 7**. La cuarta cubre la semana 7 más un **repaso acumulado** de las tres anteriores, porque la semana 8 es de la puerta (3.7.7) |
+| **Lugar en la sesión** | Ocupa el sub-bloque **Lección** (10 minutos declarados) de ese viernes, **en lugar de la conversación guiada**, que ese viernes se omite. La mini prueba del viernes sigue en el Repaso. Los minutos planeados no cambian (60) |
+| **Contenido** | **20 preguntas objetivas**, que califica el programa (sin IA): 6 de gramática del tema, 4 de vocabulario, 5 de lectura (un texto) y 5 de escucha (un audio, dos reproducciones). **Sin audio:** 15 preguntas, sin la parte de escucha, con el mismo umbral. No hay escritura ni habla (esas las miden las puertas y no se pueden calificar sin la IA o la pareja). Con la fórmula de V22 (40 segundos por pregunta), 20 preguntas son 13.3 minutos, el 133 % de los 10 declarados; 15 son 10 |
+| **Umbral** | **80 %**: `aciertos × 100 ≥ 80 × preguntas` (16 de 20; 12 de 15). Es el mismo umbral de la mini prueba y de la puerta (3.7.1) |
+| **Cómo se presenta** | Como la mini prueba: una sola toma, sin retroalimentación hasta terminar, sin cronómetro, sin color de alarma. Al terminar: *«17 de 20»* y qué ideas quedaron por reforzar |
+| **Si no se aprueba** | **Cada error vuelve como tarjeta** (caja 1, igual que P5-07). La prueba se **repite una vez**, el **lunes de la semana siguiente** (semanas 3, 5, 7 y 8), con la **forma de reserva** `b`, en el lugar de la Lección de ese lunes. No gasta faltas ni cambia los minutos. Si la repetición tampoco se aprueba, la unidad queda **no aprobada** |
+| **Qué consecuencia tiene** | El curso **sigue** hasta la puerta (no se corta el estudio). Pero con **una unidad no aprobada el requisito 1 no se cumple**: aunque se apruebe la puerta, **no se sube y el escalón se repite** (T15 con motivo `pruebas`; la etiqueta de la etapa queda ganada, P5-13). La app lo dice desde el día de la repetición fallida, sin reproche (3.8) |
+| **Cómo entra en los cuatro requisitos** | Es el **requisito 1**: *las cuatro unidades aprobadas, en el primer intento o en la repetición*. En la puerta anticipada y en la puerta inmediata de B2 se exigen solo las unidades **ya presentadas** antes del primer turno (en la semana 2, a lo más la primera); las no presentadas no se piden |
+| **Segunda vuelta** | En un escalón que se repite, las formas se **intercambian**: la `b` es la principal y la `a` la repetición, para no repetir las mismas preguntas en el mismo orden |
+| **Descenso por evidencia** | Una prueba por unidad **no** cuenta para él (T06 sigue siendo de las mini pruebas): evita bajar a alguien por una sola prueba más larga |
+
+**Qué se guarda.** No hay tabla nueva: un tramo de `ing_bloques` con `bloque = 'prueba_unidad'` (un solo tramo, no se reanuda), con `unidad` (1 a 4), `intento` (1 o 2), `forma_id`, `aciertos`, `preguntas` y `detalle` (8.2). Una unidad está aprobada si **algún** tramo de esa unidad dentro del ciclo cumple el umbral; se calcula, no se guarda (convención 6). Viaja por el tipo de cola que ya existe para los bloques (`habitos.ingles_bloque`, nivel 2: 9.2).
+
+**Costo de contenido (aviso).** Son **8 formas por escalón** (4 unidades × `a` y `b`), 160 preguntas por escalón y unas **2 080** en los 13 escalones, además de las de la sesión y las puertas. Se pide al formato 0.5 el bloque `prueba_unidad` y a la habilidad `simulacro-examen-idioma` que las produzca (14); es una carga que el plan no tenía contada. *Si el dueño la considera excesiva:* **dos** pruebas por escalón (semanas 4 y 7, de cuatro semanas cada una; 80 preguntas y 1 040 en total) o **una sola forma por unidad** con la repetición el mismo viernes de la semana siguiente con las preguntas reordenadas (peor medida, la mitad del contenido). Es la pregunta 3.
 
 ### 3.7 Las puertas: máquina de estados
 
@@ -343,14 +380,14 @@ El rezago es el promedio de los últimos 100 días de estudio de una simulación
 | T05 | `cursando(N, s)`, s < 8 | Termina la semana | `cursando(N, s+1)` | — |
 | T06 | `cursando(N, s)`, N ≠ A1.1 | La mini prueba del viernes queda por debajo de 50 % y la anterior del ciclo también | `cursando(N−1, 1)` el lunes siguiente | `ing_escalones` (`baja_por_evidencia`) |
 | T07 | `cursando(A1.1, s)` | Lo mismo que T06 | `cursando(A1.1, s)` | — (no hay escalón abajo; se muestra el mensaje) |
-| T08 | `cursando(N, 2)` | Presenta la puerta anticipada y aprueba con el 90 %, con constancia y minutos de lo cursado | `cursando(N+1, 1)` el lunes siguiente; si N es B2.4, `cursoCompleto` | `ing_intentos` (`anticipada`) y `ing_escalones` (`sube_anticipada`) |
-| T09 | `cursando(N, 2)` | Presenta la anticipada y no aprueba, o no cumple constancia o minutos | `cursando(N, 2)` | `ing_intentos` (sin efecto, no gasta oportunidades) |
+| T08 | `cursando(N, 2)` | Presenta la puerta anticipada y aprueba con el 90 %, con asistencia y unidades de lo cursado | `cursando(N+1, 1)` el lunes siguiente; si N es B2.4, `cursoCompleto` | `ing_intentos` (`anticipada`) y `ing_escalones` (`sube_anticipada`) |
+| T09 | `cursando(N, 2)` | Presenta la anticipada y no aprueba, o no cumple asistencia o unidades | `cursando(N, 2)` | `ing_intentos` (sin efecto, no gasta oportunidades) |
 | T10 | `cursando(B2.1, 1 o 2)` | Entró por ubicación B2 y presenta la puerta inmediata de la etapa B2 con el 90 % y los requisitos | `cursoCompleto` (si no aprueba, sigue igual) | `ing_intentos` (`anticipada_b2`) |
 | T11 | `cursando(N, 8)` | Empieza el primer turno de la puerta | `puerta(N, 1)` | `ing_intentos` (`oportunidad_1`) |
 | T12 | `puerta(N, k)` | Presentó todos los turnos y falta alguna corrección | `enCorreccion(N, k)` | `ing_entregas` |
 | T13 | `puerta(N, k)` o `enCorreccion(N, k)` | Están calificadas las cuatro habilidades | Se evalúa (T14 a T18) | `ing_puntajes` |
-| T14 | Evaluación de k = 1 o 2 | **Aprobada** y cumple constancia y minutos | `cursando(N+1, 1)` el lunes siguiente; si N es B2.4, `cursoCompleto` | `ing_escalones` (`sube`). Caídas seguidas = 0 |
-| T15 | Evaluación de k = 1 o 2 | **Aprobada**, pero falta constancia o minutos | `cursando(N, 1)` (segunda vuelta) el lunes siguiente | `ing_escalones` (`repite_por_requisitos`). Caídas seguidas = 0. Si es puerta de etapa, la etiqueta queda ganada |
+| T14 | Evaluación de k = 1 o 2 | **Aprobada** y cumple unidades, constancia y minutos | `cursando(N+1, 1)` el lunes siguiente; si N es B2.4, `cursoCompleto` | `ing_escalones` (`sube`). Caídas seguidas = 0 |
+| T15 | Evaluación de k = 1 o 2 | **Aprobada**, pero falta alguno de los otros tres requisitos (unidades, constancia o minutos) | `cursando(N, 1)` (segunda vuelta) el lunes siguiente | `ing_escalones` (`repite_por_requisitos`; el motivo, `pruebas` o `asistencia`, se **calcula** y se muestra, no se guarda). Caídas seguidas = 0. Si es puerta de etapa, la etiqueta queda ganada |
 | T16 | Evaluación de k = 1 | No aprobada | `practica(N)` | — |
 | T17 | Evaluación de k = 2 | No aprobada, N ≠ A1.1 | `cursando(N−1, 1)` el lunes siguiente (o `revisionPendiente`) | `ing_escalones` (`baja_por_puerta`). Caídas seguidas + 1 |
 | T18 | Evaluación de k = 2 | No aprobada, N = A1.1 | `cursando(A1.1, 1)` el lunes siguiente (o `revisionPendiente`) | `ing_escalones` (`repite_tras_caida`). Caídas seguidas + 1 |
@@ -359,11 +396,11 @@ El rezago es el promedio de los últimos 100 días de estudio de una simulación
 
 Si T17 o T18 dejan **dos caídas seguidas**, el destino no se escribe hasta T20. Cualquier puerta aprobada (T08, T10, T14 y T15) pone en cero las caídas seguidas; el descenso por evidencia (T06) **no las toca** (P5-09).
 
-**3.7.4 El veredicto de una oportunidad (P5-13).** Se **sube** solo si se cumplen los cuatro requisitos del dueño (`niveles-y-avance.md`, sección 4): (1) *pruebas aprobadas*, que por P5-08 queda cubierto por el (2); (2) la **puerta aprobada** (3.7.1); (3) la **constancia** (3.4); y (4) los **minutos**, el 90 % (3.3). La pantalla de resultado dice **cuál faltó** (el registro de `niveles-y-avance.md`, sección 7: *«subió o no subió, con el requisito que faltó»*).
+**3.7.4 El veredicto de una oportunidad (P5-13).** Se **sube** solo si se cumplen los cuatro requisitos del dueño (`niveles-y-avance.md`, sección 4): (1) *pruebas aprobadas*: las **cuatro pruebas por unidad** (3.6.1, P5-31, D-ING-14); (2) la **puerta aprobada** (3.7.1); (3) la **constancia**: a lo más tres días faltados (3.4, D-ING-12); y (4) los **minutos**: ningún día con más de 10 minutos de faltante fuera de esos tres (3.4). El 90 % de los minutos de la versión 0.5 se retiró. La pantalla de resultado dice **cuál faltó** (el registro de `niveles-y-avance.md`, sección 7: *«subió o no subió, con el requisito que faltó»*).
 
-**Propuesta P5-13 · Puerta aprobada sin constancia o sin minutos: el escalón se repite.** El dueño dijo *«si no cumples uno, no subes, aunque cumplas los otros tres»*; no dijo qué pasa después. Se propone **T15**: no se baja ni se gasta una oportunidad: se vuelve a cursar el escalón (segunda vuelta) con constancia y minutos en cero, y en su semana 2 queda la **puerta anticipada** como atajo para quien ya lo domina. **La etiqueta de la etapa se gana al aprobar la puerta**, aunque el escalón se repita: la etiqueta mide el nivel y el escalón mide la constancia. *Si se veta:* extender el escalón con semanas completas hasta que el 90 % de minutos se alcance (la constancia no se puede recuperar). Es la pregunta 2.
+**Propuesta P5-13 · Puerta aprobada sin unidades, sin constancia o sin minutos: el escalón se repite.** El dueño dijo *«si no cumples uno, no subes, aunque cumplas los otros tres»*; no dijo qué pasa después. Se propone **T15**: no se baja ni se gasta una oportunidad: se vuelve a cursar el escalón (segunda vuelta) con unidades y faltas en cero, y en su semana 2 queda la **puerta anticipada** como atajo para quien ya lo domina. **La etiqueta de la etapa se gana al aprobar la puerta**, aunque el escalón se repita: la etiqueta mide el nivel y el escalón mide la asistencia y las unidades. D-ING-12 dice lo mismo para las faltas: *«se repite»* (la lectura «el escalón» está a confirmar, pregunta 9). *Si se veta:* extender el escalón con semanas completas hasta cubrir lo que falta (las faltas no se pueden recuperar). Es la pregunta 2.
 
-**3.7.5 La ventana de constancia y de minutos.** Se miden sobre los **días de estudio del ciclo**:
+**3.7.5 La ventana de asistencia y de unidades.** Se miden sobre los **días de estudio del ciclo**:
 
 | Presentación | Va desde… | …hasta |
 |---|---|---|
@@ -378,7 +415,7 @@ Un día de la ventana que es hoy y no termina no se juzga. Si los minutos planea
 - **Empieza el lunes siguiente** al veredicto de la oportunidad 1 y dura **una semana** (la persona puede añadir más semanas, de una en una, antes de presentar la oportunidad 2; no hay tope). **No es la semana 9**: se rotula «Práctica».
 - Cada día se arma con **sesiones ya estudiadas** de las semanas 1 a 7 del escalón. Las habilidades no alcanzadas se ordenan de menor a mayor porcentaje (empate: lectura, escucha, escritura, habla) y cada una elige el día de enfoque que la entrena: **escucha → martes** (`escucha`), **lectura y escritura → jueves** (`lectura_escritura`), **habla → viernes** (`conversacion`) y miércoles (`pronunciacion`) (los identificadores de `data/ingles/niveles.yaml:725-730`; el contrato los deja pendientes, `gravity-sesion-60.yaml:175-176`). Los días se reparten por turnos entre esas habilidades y, dentro de cada una, se elige la sesión más antigua que todavía no se repitió en esta práctica.
 - Los **últimos días** de la semana son los turnos de la oportunidad 2 (3.7.7). No hay mini prueba.
-- Cuentan para la constancia y los minutos como cualquier día (`origen = 'practica'` en `ing_sesiones`). El **repaso del escalón de abajo** tras una baja se cumple de dos maneras: el escalón se cursa completo, con la anticipada de la semana 2 como atajo, y Progreso marca las habilidades que quedaron sin alcanzar para que la persona las priorice en su producción diaria.
+- Cuentan para la asistencia como cualquier día (`origen = 'practica'` en `ing_sesiones`): **no traen faltas nuevas**, se suman a las del ciclo (el tope sigue siendo tres). El **repaso del escalón de abajo** tras una baja se cumple de dos maneras: el escalón se cursa completo, con la anticipada de la semana 2 como atajo, y Progreso marca las habilidades que quedaron sin alcanzar para que la persona las priorice en su producción diaria.
 
 **3.7.7 Turnos y calendario de la semana 8 (P5-15).** La puerta **cuenta dentro de las 40 horas** y, si es de etapa, **se reparte en varias sesiones de la semana 8** (plan 4.2). Se presenta en **turnos**: cada uno junta secciones consecutivas del contrato **sin partir una sección ni un papel**, hasta **90 minutos**; los turnos ocupan los **últimos días** de la semana, uno por día, hasta el viernes.
 
@@ -399,7 +436,7 @@ Los minutos salen del **contrato compilado**, no del código. **El día de un tu
 | **Forma** | La de **reserva** (C) de esa puerta (3.7.11) |
 | **90 % en lectura y escucha** | `aciertos × 10 ≥ preguntas × 9`: con 10 preguntas, 9; con 12, 11; con 15, 14 |
 | **90 % en escritura y habla** | Suma ponderada **de 360 o más sobre 400**. La condición de *gramática del tema ≥ 3* queda **cubierta por los pesos de la rúbrica**: con 2 en gramática, el máximo posible es 320 en escritura (2×40 + 4×60) y 330 en habla (2×35 + 4×65), por debajo de 360. La app la comprueba de todos modos |
-| **Constancia y minutos** | **Los mismos umbrales, sobre lo cursado** (ventana de 3.7.5): ningún día sin cubrir y 90 % de los minutos planeados de esos días (por ejemplo, 486 de 540 si se presenta el viernes de la semana 2). Quien no estudia no demuestra nada, aunque acierte. *Si se veta:* basta el 90 % por habilidad. Es la pregunta 6 |
+| **Asistencia y unidades** | **Los mismos umbrales, sobre lo cursado** (ventana de 3.7.5): a lo más tres días faltados, los demás con 10 minutos o menos de faltante, y las unidades ya presentadas aprobadas (por ejemplo, con 10 días de estudio, a lo más 3 faltados y 7 con 50 minutos o más). Quien no estudia no demuestra nada, aunque acierte. *Si se veta:* basta el 90 % por habilidad. Es la pregunta 6 |
 | **Efecto** | Aprobada con requisitos: sube (T08). En cualquier otro caso no pasa nada (T09) y la persona ve su resultado por habilidad como información |
 | **Calendario** | Sus turnos (3.7.7) ocupan días de la semana 2, uno por día, terminando a más tardar el viernes, y cuentan 60 minutos cada uno |
 | **Etiqueta** | Si el escalón cierra una etapa (A2.3, B1.4, B2.4), aprobar la anticipada **gana la etiqueta** |
@@ -454,10 +491,10 @@ La reserva, entonces, **se usa en tres casos**: la anticipada, el reemplazo de u
 | Pantalla | Ruta | Qué muestra |
 |---|---|---|
 | **Fila de Inglés en Hoy** | (dentro de Hoy) | *«Inglés · tu sesión de hoy»*, partes hechas (*3 de 7*) y la racha. Sin curso empezado, la tarjeta *Tu punto de partida* (solo con `INGLES_ARRANQUE`, 7) |
-| **Inicio de inglés** | `ingles` | Nivel (3.1), la sesión de hoy con sus sub-bloques y un solo botón *Continuar*, tarjetas esperando, racha y gracias que quedan, aviso de requisito en riesgo |
+| **Inicio de inglés** | `ingles` | Nivel (3.1), la sesión de hoy con sus sub-bloques y un solo botón *Continuar*, tarjetas esperando, racha y faltas que quedan, aviso de requisito en riesgo |
 | **Sesión del día** | `ingles/sesion` | Los sub-bloques (3.2) con su estado; cada uno abre su pantalla: repaso, mini prueba, lección, conversación, pronunciación, producción y las tres del traslado (modo de audio y manos libres) |
 | **Tarjetas** | `ingles/tarjetas` | Repasar (la cola de 3.5), *Mis tarjetas* por caja y dominadas, reactivar |
-| **Progreso y puertas** | `ingles/progreso` | Requisitos del escalón (puerta, constancia, minutos), calendario de constancia, metas semanales, mini pruebas (*1 de 2 por debajo de 50 %*), puertas (oportunidad, anticipada disponible), historial, etiquetas, sesiones pasadas (práctica libre) |
+| **Progreso y puertas** | `ingles/progreso` | Requisitos del escalón (unidades, puerta, faltas usadas, minutos), calendario de asistencia, metas semanales, mini pruebas (*1 de 2 por debajo de 50 %*), pruebas por unidad (*2 de 4 aprobadas*), puertas (oportunidad, anticipada disponible), historial, etiquetas, sesiones pasadas (práctica libre) |
 | **Ubicación** | `ingles/ubicacion` | 5 |
 | **Puerta** | `ingles/puerta` | Turnos en modo examen y resultado con el requisito que faltó (3.7, 6) |
 | **Exámenes** | `ingles/examenes` | Práctica por partes, simulacros y semáforo (6) |
@@ -492,14 +529,16 @@ La reserva, entonces, **se usa en tres casos**: la anticipada, el reemplazo de u
 
 | Situación | Texto |
 |---|---|
-| Sin gracias en el trimestre | *«Este trimestre ya usaste tus tres días de gracia. Mañana seguimos.»* |
+| Se usó la tercera falta | *«Hoy cuenta como tu falta número 3 de este escalón. Mañana seguimos.»* |
+| Falta cuarta (el escalón se repetirá) | *«Este escalón se va a repetir; la puerta te dice cuánto ya sabes. Hoy puedes seguir.»* |
+| Unidad no aprobada tras la repetición | *«Esta unidad quedó pendiente. Vuelve como tarjetas y seguimos con el escalón.»* |
 | Mini prueba no aprobada | *«Quedaron algunas ideas por reforzar. Vuelven mañana como tarjetas.»* |
 | Descenso por evidencia | *«Vamos a afianzar el escalón anterior. Lo que ya sabes se queda contigo.»* |
 | Puerta no aprobada (oportunidad 1) | *«Todavía no. Practicamos lo que falta y la presentas otra vez.»* |
 | Baja por puerta | *«Volvemos un escalón para afianzar la base.»* |
 | Dos caídas seguidas | *«Toca revisar el plan: horario, carga y método. La meta es la misma; cambiamos el camino.»* |
 | Puerta aprobada y sube | *«Pasaste la puerta. Empiezas el siguiente escalón el lunes.»* |
-| Aprobada, pero el escalón se repite | *«Aprobaste la puerta. Para subir también hacían falta constancia y minutos; repetimos el escalón y en la semana 2 puedes presentar la puerta anticipada.»* |
+| Aprobada, pero el escalón se repite | *«Aprobaste la puerta. Para subir también hacían falta la asistencia y las pruebas por unidad; repetimos el escalón y en la semana 2 puedes presentar la puerta anticipada.»* |
 | Esperando corrección | *«Tu puerta está en corrección. En cuanto llegue, te decimos cómo te fue.»* |
 
 **Propuesta P5-18 · Recordatorio local discreto.** Un solo tipo local `hab_ingles` con el título *«Es hora de tu práctica de inglés»* (32 caracteres, sin dígitos ni «$», como exige la regla 114 de `docs/specs/fase-3-habitos.md`). **Apagado por omisión:** se activa al elegir una hora en `ing_perfil`. Acciones *Empezar* (abre la app) y *Posponer 10 min*; **no hay *Hecho***, porque una sesión pide la app. Respeta las horas silenciosas, se programa en el teléfono como el resto de los recordatorios de Hábitos (regla 113) y se puede silenciar (pedido a `backend` y `plataforma`, 14).
@@ -555,12 +594,27 @@ La transcripción sirve para dos cosas: que la persona vea y se autoevalúe sobr
 | **[consultado]** El README del paquete dice que sirve para *«comandos y frases cortas, no conversión continua»*: una transcripción de 45 a 180 segundos **no está probada** | `speech_to_text-7.5.0/README.md:8-10` |
 | El reconocimiento transcribe **mientras se habla**, no un archivo ya grabado; y grabar un archivo y reconocer a la vez compiten por el micrófono | Diseño del paquete (README) y motor de voz, 6.3; no se sabe si funciona junto en el Galaxy A52 |
 
-**Propuesta P5-22 · La transcripción es solo en el dispositivo, o no es.**
+**Requisito de 5b (D-ING-13) · El dictado y la transcripción funcionan sin red.** Hay dos usos: **transcribir** lo que la persona dice en una tarea o turno de habla, y **dictar** el texto de una tarea diaria de escritura (en una **puerta** de escritura se teclea: dictar la convertiría en una prueba de habla; así lo propone P6.0, 6.1). **En modo avión los dos tienen que producir texto**, y ninguno puede caer, sin que la persona lo sepa, en un reconocedor que use la red. No se reutiliza `VozEntradaTelefono` (español de México, 30 segundos, sin modo local: `voz.dart:67-72`): el inglés lleva su propia entrada, con `onDevice: true`, `localeId` de la variante (`en-US` o `en-GB`), tope de 180 segundos y reinicio por tramos si el reconocedor corta antes (V-b2).
 
-- **Antes de ofrecerla** (y antes de cada turno de puerta de habla) la app **comprueba** que el equipo puede reconocer inglés **en el dispositivo**: Android 12 o posterior, reconocimiento local disponible y paquete de inglés sin conexión instalado. **Si no puede garantizarlo, no ofrece transcribir:** el habla pasa a **autoevaluación con la lista de cotejo**, no se manda habla a la IA y la puerta no se presenta en ese equipo (3.7.13).
-- **Qué ve la persona:** el texto reconocido. En una tarea diaria lo puede **corregir** (un error del reconocedor no es un error suyo); en un **turno de puerta no se edita**: lo que se reconoció es lo que se entrega. Cómo trata la IA los errores de reconocimiento lo define P6.0.
-- **Dónde queda:** solo en el dispositivo, con la entrega, con la misma retención que la grabación. La nube recibe números (8.2).
-- **La pronunciación** (25 % de la nota de habla, `gravity-escalon.yaml:179-185`) **no se puede juzgar bien desde un texto** (plan 3.8). Qué hacer con ese criterio es de P6.0; la app guarda, por criterio, **de dónde viene el puntaje** (`ia` o `auto`) para que cualquiera de las dos decisiones quepa sin cambiar tablas (8.2).
+**Propuesta P5-22 · La transcripción es solo en el dispositivo, o no es.** Se mantiene y ahora es requisito:
+
+- **Antes de ofrecerla** (y antes de cada turno de puerta de habla) la app **comprueba** que el equipo puede reconocer inglés **en el dispositivo**: Android 12 o posterior, reconocimiento local disponible y paquete de inglés sin conexión instalado. **Si no puede garantizarlo, no ofrece transcribir ni dictar:** el habla pasa a **autoevaluación con la lista de cotejo**, no se manda habla a la IA y la puerta de habla no se presenta en ese equipo (3.7.13).
+- **El paquete no lo puede garantizar por sí solo** [consultado, `speech_to_text` 7.5.0]: su API en Dart **no devuelve** si el reconocimiento fue local; `locales()` lista idiomas que el equipo «puede reconocer», sin decir que sea sin red (`speech_to_text-7.5.0/lib/speech_to_text.dart:590-607`); y con `onDevice: true` el código nativo solo crea el reconocedor local si es Android 12 o posterior y existe (`speech_to_text-7.5.0/android/src/main/kotlin/com/csdcorp/speech_to_text/SpeechToTextPlugin.kt:623-625`), y si no, usa el del sistema con la indicación `EXTRA_PREFER_OFFLINE` (`:688`). Por eso **la garantía se pide a `plataforma` como una comprobación nativa mínima** (`SpeechRecognizer.isOnDeviceRecognitionAvailable`, la misma que el paquete usa por dentro, más la comprobación del paquete de inglés) **y se confirma en el equipo con una prueba de modo avión** (V-b1, V-b5). El resultado de esa prueba se guarda **en el dispositivo** (`verificado`, `no_verificado`, `sin_probar`), no en la nube, porque es una propiedad del teléfono.
+- **Qué ve la persona** si el equipo no lo garantiza (nunca un error técnico, y sin que parezca culpa suya):
+
+| Situación | Qué ve | Qué puede hacer |
+|---|---|---|
+| Local garantizado y verificado | El botón *Dictar* con una marca *Sin conexión* | Dictar o grabar |
+| Android anterior a la 12, o reconocimiento local no disponible | *«Este teléfono no puede dictar en inglés sin conexión. Puedes escribir.»* y **no hay botón de micrófono** | Escribir; en una tarea de habla, hablar y autoevaluarse con la lista de cotejo (sin transcripción); la **puerta de habla no se presenta aquí** y sí en otro equipo (3.7.13) |
+| Falta el paquete de inglés sin conexión | *«Falta instalar el inglés para dictar sin conexión.»* con *Cómo instalarlo*: los pasos de los ajustes del sistema (que necesitan red **una vez**) | Lo mismo que arriba hasta que esté instalado, y *Comprobar de nuevo* |
+| No se ha probado en este equipo | *«Probemos tu dictado: activa el modo avión y di una frase.»* | Hacer la prueba (30 segundos) o escribir |
+| Falta el permiso del micrófono | Se pide **al tocar** *Dictar* o *Grabar*, no antes (4.3) | Conceder o escribir |
+| El reconocedor no entendió | *«No te escuché bien. Repite o escribe.»* | Repetir o escribir |
+
+- **Qué ve la persona del texto:** lo reconocido. En una tarea diaria lo puede **corregir** (un error del reconocedor no es un error suyo); en un **turno de puerta no se edita**: lo que se reconoció es lo que se entrega. Cómo trata la IA los errores de reconocimiento lo define P6.0 (6.2 de esa especificación).
+- **Texto, transcripción y voz (D-ING-13 matizada por D-ING-15).** El **texto escrito y la transcripción** se guardan en el dispositivo y **pueden salir hacia la IA**, solo con **permiso en cada envío** y el filtro de D3 (7.1). **La grabación de voz se queda siempre en el dispositivo**; el envío de audio queda como decisión futura (`docs/specs/fase-8-habitos-pareja-y-correccion.md`, 5.1 y 6.6). La **transcripción en sí es siempre local**: lo que sale es su texto, no la voz.
+- **Dónde queda:** en el dispositivo, con la entrega, con la misma retención que la grabación. La nube recibe números (8.2).
+- **La pronunciación** (25 % de la nota de habla, `gravity-escalon.yaml:179-185`) **no se puede juzgar bien desde un texto** (plan 3.8). Qué hacer con ese criterio es de P6.0; la app guarda, por criterio, **de dónde viene el puntaje** (`ia`, `pareja` o `programa`) para que cualquiera de las decisiones quepa sin cambiar tablas (8.2).
 
 **4.5 Lo que no se verificó, y cómo verificarlo** (no se pudo instalar ni correr nada aquí)
 
@@ -570,6 +624,7 @@ La transcripción sirve para dos cosas: que la persona vea y se autoevalúe sobr
 | V-b2 | Si una transcripción de 60 a 180 s sale completa o hay que partirla en tramos | La misma prueba, contando palabras dichas contra reconocidas |
 | V-b3 | Si se puede **grabar un archivo y reconocer a la vez** | Prototipo en P3.2b. Si no se puede, la decisión es del dueño: *oírse* (archivo, sin IA) o *ser corregido por la IA* (transcripción, sin archivo) |
 | V-b4 | Micrófono y reconocimiento en Windows | `voz.dart:152-156` no los ofrece; se mide en P3.2b |
+| V-b5 | Que el dictado y la transcripción **no usen la red**: ni en el equipo del dueño ni en los de la pareja | Modo avión, tres frases y una tarea de 60 s sin que falle; además, con el tráfico del teléfono medido (por ejemplo, el contador de datos de la app) en cero. Si falla, ese equipo queda como *no verificado* |
 
 ## 5. Sub-bloque 5c · Ubicación
 
@@ -700,20 +755,20 @@ Mientras el contrato de un examen tenga datos pendientes, sus formas salen **red
 
 ## 7. Sub-bloque 5e · Pareja y corrección con IA
 
-**La especificación de la pareja y de la corrección con IA es P6.0** (`docs/specs/fase-8-habitos-pareja-y-correccion.md`, **todavía sin escribir**; plan, fase 6). Allí se decide qué sale hacia la IA, cómo se califica con la rúbrica, qué se hace con la pronunciación, la calibración, la revisión cruzada y qué ve cada quien del otro. **Aquí solo va lo que necesita el estudiante**, para que 5a a 5d no dependan de adivinar P6.0, y la lista de lo que queda condicionado a ella.
+**La especificación de la pareja y de la corrección con IA es P6.0** (`docs/specs/fase-8-habitos-pareja-y-correccion.md`, versión 0.2, ya escrita y en revisión; plan, fase 6). Esta sección se alineó con ella el 17/nov/2026 y la sigue en lo que decide (5.1, 5.2 y 6). Allí se decide qué sale hacia la IA, cómo se califica con la rúbrica, qué se hace con la pronunciación, la calibración, la revisión cruzada y qué ve cada quien del otro. **Aquí solo va lo que necesita el estudiante**, para que 5a a 5d no dependan de adivinar P6.0, y la lista de lo que queda condicionado a ella.
 
 **7.1 Lo que necesita el estudiante**
 
 | Qué | Cómo |
 |---|---|
-| **Activar la corrección** | Un interruptor `correccion_ia` en Ajustes › Inglés (`ing_perfil`, 8.2), **apagado por omisión**. P6.0 puede dividirlo por habilidad. Es la forma de la regla *«IA opcional por función»* (D-ING-9) |
+| **Activar la corrección** | **Dos** interruptores en Ajustes › Inglés (`ing_perfil`, 8.2), **apagados por omisión**: `correccion_ia_escritura` y `correccion_ia_habla` (propuesta P6-16 de P6.0; el segundo cubre también la conversación de habla). Es la forma de la regla *«IA opcional por función»* (D-ING-9) |
 | **Entregar una tarea** | Desde el bloque de producción (tarea diaria) o desde un turno de puerta: escritura (el texto) o habla (la grabación y su transcripción, 4.3 y 4.4) › *Entregar*. Una entrega no se edita después. En una **tarea diaria** la corrección con IA es opcional (*Pedir corrección*) y **no cuenta para ninguna puerta**; en una **puerta** la corrige la IA o, si la persona no la activó, la pareja y la IA; nunca la persona misma (3.7.13) |
-| **Saber qué se envía** | Antes de enviar, una pantalla dice qué sale y a dónde: *«Se enviará este texto para corregirlo. No se envía tu voz.»* y un botón *Enviar* / *Ahora no* |
+| **Saber qué se envía** | Antes de enviar, una pantalla dice qué sale y a dónde: *«Se enviará este texto para corregirlo. No se envía tu voz.»* y un botón *Enviar* / *Ahora no*. **El permiso se pide en cada envío** y no se recuerda (D-ING-15) |
 | **Ver una corrección** | Pantalla con los criterios de la rúbrica (0 a 4 cada uno), la suma sobre 400, «gramática del tema» y las observaciones; y al lado, su **autoevaluación con la lista de cotejo**. Las observaciones se guardan solo en el dispositivo |
-| **Esperar** | Estado `enCorreccion` (3.7.2): sin veredicto ni etiqueta (D-ING-10). Sin conexión, la petición queda guardada y se reintenta al volver la red |
+| **Esperar** | Estado `enCorreccion` (3.7.2): sin veredicto ni etiqueta (D-ING-10). Sin conexión, la entrega queda guardada como *lista para enviar*; **al volver la red no sale sola**: la persona confirma el permiso de ese envío (9.7) |
 | **Límites** | Si el servidor limita el uso (P6.2), la pantalla lo dice sin reproche y la entrega espera |
 
-**Qué viaja a la IA y qué no** (D3, D21, plan 3.8). Viaja **solo** el texto escrito o la transcripción de **esa** entrega, el id de la rúbrica y el escalón (para el nivel de exigencia); lo arma una estructura cerrada que no incluye ningún dato de otro módulo, el nombre ni el correo de la persona (CA-5e-02). El filtro de D3 corre **en el servidor** antes de que salga texto (`docs/ROADMAP.md`, control de cambios, versión 1.7) y la clave del proveedor **nunca va en la app**: la llamada es a la función `supabase/functions/gravity-asistente` con la sesión de la persona (`supabase/functions/gravity-asistente/index.ts:5-8`). El **audio nunca** sale (4.3).
+**Qué viaja a la IA y qué no** (D3, D21, plan 3.8). Viaja **solo** el texto escrito o la transcripción de **esa** entrega, el id de la rúbrica y el escalón (para el nivel de exigencia); lo arma una estructura cerrada que no incluye ningún dato de otro módulo, el nombre ni el correo de la persona (CA-5e-02). El filtro de D3 corre **en el servidor** antes de que salga texto (`docs/ROADMAP.md`, control de cambios, versión 1.7) y la clave del proveedor **nunca va en la app**: la llamada es a la función `supabase/functions/gravity-asistente` con la sesión de la persona (`supabase/functions/gravity-asistente/index.ts:5-8`). El **audio nunca** sale (4.3). **Permiso por envío (D-ING-15):** nada sale sin que la persona lo acepte esa vez. **En el proveedor** queda lo que diga su política de datos **[no verificado]**; el nivel gratuito de algunos proveedores puede usar lo enviado, y eso lo trata P6.0 (5.1).
 
 **Qué se guarda y dónde** (D21: Hábitos es personal, la cuenta maestra no lo lee; las tablas `hab_*` y `ing_*` no escriben en la bitácora):
 
@@ -771,7 +826,7 @@ Es la **propuesta** de tablas que escribirá `backend` en P2.2. No contiene SQL:
 | Columna | Tipo | Restricciones y nota |
 |---|---|---|
 | `persona_id` | uuid | **PK** |
-| `correccion_ia` | boolean | not null, default `false` (7.1) |
+| `correccion_ia_escritura`, `correccion_ia_habla` | boolean | not null, default `false` cada una (7.1; propuesta P6-16 de P6.0, que reemplaza al único `correccion_ia`) |
 | `recordatorio_hora` | time | nulo = sin recordatorio (P5-18) |
 | `conservar_grabaciones` | text | not null, default `30_dias`; `30_dias` o `al_entregar` (P5-23) |
 | `contenido_version` | text | nulo; hasta 40 caracteres. La versión del contenido compilado que **este equipo reportó** (8.5) |
@@ -825,17 +880,20 @@ Es la **propuesta** de tablas que escribirá `backend` en P2.2. No contiene SQL:
 | `contenido_version`, `sesion_huella` | text | `contenido_version` not null; `sesion_huella` nula. Para saber con qué contenido se estudió |
 | — | único | `(persona_id, id)` |
 
-**`ing_bloques`** · solo agregar · **un tramo de trabajo** de un sub-bloque (3.3). Cada vez que la persona sale de un sub-bloque se escribe un tramo con lo que hizo; el trabajo del día es la **suma** de sus tramos, así que dos equipos o una pausa no necesitan editar nada. La mini prueba y los turnos de puerta son **un solo tramo** y no se reanudan
+**`ing_bloques`** · solo agregar · **un tramo de trabajo** de un sub-bloque (3.3). Cada vez que la persona sale de un sub-bloque se escribe un tramo con lo que hizo; el trabajo del día es la **suma** de sus tramos, así que dos equipos o una pausa no necesitan editar nada. La mini prueba, la prueba por unidad y los turnos de puerta son **un solo tramo** y no se reanudan
 
 | Columna | Tipo | Restricciones y nota |
 |---|---|---|
 | `id` | uuid | **PK**; v4 del dispositivo |
 | `sesion_id` | uuid | not null; llave `(persona_id, sesion_id) → ing_sesiones` |
-| `bloque` | text | not null; `repaso`, `mini_prueba`, `leccion`, `conversacion`, `pronunciacion`, `produccion`, `traslado_audio`, `traslado_repeticion`, `traslado_tarjetas` o `puerta_turno` |
+| `bloque` | text | not null; `repaso`, `mini_prueba`, `leccion`, `conversacion`, `pronunciacion`, `produccion`, `traslado_audio`, `traslado_repeticion`, `traslado_tarjetas`, `puerta_turno` o `prueba_unidad` (3.6.1) |
 | `audio` | boolean | not null; si había audio del curso disponible **al empezar** el tramo (3.3) |
 | `elementos_hechos`, `elementos_total` | smallint | not null; `elementos_total > 0` y `0 ≤ elementos_hechos ≤ elementos_total` |
 | `segundos` | smallint | not null; de 0 a 3 600: los segundos **acreditados en este tramo** (3.3). El dominio los topa en los minutos declarados del sub-bloque |
-| `aciertos`, `preguntas` | smallint | nulos, o ambos; `aciertos ≤ preguntas` (lección y mini prueba) |
+| `aciertos`, `preguntas` | smallint | nulos, o ambos; `aciertos ≤ preguntas` (lección, mini prueba y prueba por unidad) |
+| `unidad` | smallint | nulo; **solo** con `bloque = 'prueba_unidad'`, y entonces no nulo: de 1 a 4 (3.6.1, D-ING-14) |
+| `intento` | smallint | nulo; **solo** con `bloque = 'prueba_unidad'`, y entonces no nulo: 1 o 2 |
+| `forma_id` | text | nulo; **solo** con `bloque = 'prueba_unidad'`: la forma usada (`a` o `b`), de hasta 80 caracteres |
 | `detalle` | jsonb | nulo; lista de hasta 2 KB; en la mini prueba, `[{p, ok}]` (3.6) |
 
 **`ing_tarjetas`** · **editable, y es solo una caché** de `ing_repasos` (3.5) · se escribe **únicamente** con `ing_guardar_tarjetas` (8.4), no con INSERT o UPDATE directos
@@ -890,7 +948,7 @@ Es la **propuesta** de tablas que escribirá `backend` en P2.2. No contiene SQL:
 | `entrega_id`, `corrige_a` | uuid | nulos; `entrega_id` llave a `ing_entregas`; `corrige_a` a otra fila de esta tabla |
 | — | único parcial | `(intento_id, seccion)` donde `corrige_a` es nulo: un puntaje original por sección; el vigente es el último de la cadena |
 
-**`ing_entregas`** · solo agregar · los **metadatos** de una tarea entregada (el texto y la voz **no** van, R4)
+**`ing_entregas`** · solo agregar · los **metadatos** de una tarea entregada (el texto y la voz **no se guardan aquí**, R4; el texto puede ir a la IA con permiso, 7.1)
 
 | Columna | Tipo | Restricciones y nota |
 |---|---|---|
@@ -920,7 +978,7 @@ Es la **propuesta** de tablas que escribirá `backend` en P2.2. No contiene SQL:
 | Tabla | Leer | Insertar | Cambiar | Borrar |
 |---|---|---|---|---|
 | Las **diez de solo agregar** (`ing_escalones`, `ing_ubicacion_respuestas`, `ing_ubicaciones`, `ing_sesiones`, `ing_bloques`, `ing_repasos`, `ing_intentos`, `ing_puntajes`, `ing_entregas`, `ing_practicas`) | Lo propio | La app, sin las columnas del servidor | **Nadie** | **Nadie** desde la app; solo las dos funciones de abajo |
-| `ing_perfil` | Lo propio | La app (primer uso) | Solo `correccion_ia`, `recordatorio_hora`, `conservar_grabaciones`, `contenido_version`, `contenido_huella` y `modificado_en`; el último gana | Solo las dos funciones |
+| `ing_perfil` | Lo propio | La app (primer uso) | Solo `correccion_ia_escritura`, `correccion_ia_habla`, `recordatorio_hora`, `conservar_grabaciones`, `contenido_version`, `contenido_huella` y `modificado_en`; el último gana | Solo las dos funciones |
 | `ing_tarjetas` | Lo propio | **Solo** `ing_guardar_tarjetas` | **Solo** `ing_guardar_tarjetas` | Solo las dos funciones |
 
 **Solo agregar de verdad.** Las diez bloquean UPDATE, DELETE y TRUNCATE para `authenticated` **y** para `service_role`, y no se les concede el privilegio. Ojo: `impedir_cambios_solo_agregar()` (`20261020000000_base.sql:289-302`) bloquea *«a cualquier rol, también el dueño de la tabla»*; si se usa tal cual, **ni siquiera `hab_borrar_datos_de` podría borrar** al dar de baja a alguien ni al *Borrar mis datos*. Se pide a `backend` una **variante** que deje pasar solo a esas dos funciones del servidor (14).
@@ -950,21 +1008,35 @@ Es la **propuesta** de tablas que escribirá `backend` en P2.2. No contiene SQL:
 | **Audio pregrabado** (vía C) y **modelos de voz** (vía B) | No van en `assets`: paquetes descargables por escalón, que caducan si cambia el guion (`huella_guion`) | `docs/specs/fase-8-motor-de-voz.md`, 4.2 y 4.3 |
 | **Versión del contenido** | `indice.json` (`version` y `huella`). La app la reporta en `ing_perfil`; cada sesión, intento y ubicación guarda la versión y la huella de **lo que se usó** | Un id de sesión o de forma **no cambia** entre versiones; si se retira una forma, queda en la lista de retiradas del índice y 3.7.11 la salta |
 | **Se sincroniza (nube, en claro, por persona)** | Las doce tablas `ing_*` | 8.2 |
-| **Se queda en el dispositivo** | Texto escrito, transcripciones, observaciones de la IA, grabaciones, reproducciones gastadas de la ubicación y el puntero de «dónde voy» | R4, 7.1 |
+| **Se queda en el dispositivo** (el texto y la transcripción pueden ir a la IA con permiso en cada envío, D-ING-15; la grabación, nunca) | Texto escrito, transcripciones, observaciones de la IA, grabaciones, reproducciones gastadas de la ubicación y el puntero de «dónde voy» | R4, 7.1 |
 
 ## 9. Sin conexión y sincronización
 
-**9.1 Qué se puede hacer sin red.** Estudiar **todo el curso ya instalado** (R5):
+**9.1 Qué se estudia sin red (D-ING-13).** **Estudiar sin conexión funciona completo.** Es decir: lo que el dueño ve en la mesa de estudio, en el tren o en un hotel, **no pide red en ningún paso**. Todo el curso está compilado dentro de la app (`app/assets/ingles/`, 8.5) y todo lo que se escribe se guarda primero en el teléfono (9.2).
 
-| Qué | Sin red | Nota |
+| Qué | Sin red | Cómo se garantiza |
 |---|---|---|
-| La sesión del día completa (los siete sub-bloques), tarjetas, mini prueba, producción | **Sí** | El contenido y sus claves están en `app/assets/ingles/` |
-| Audio del curso | **Sí** | La reproducción no usa la red (motor, R8) |
-| Grabar y transcribir | **Sí**, si el equipo reconoce inglés en el dispositivo (4.4) | Nada de esto sale del dispositivo |
-| Ubicación | **Sí**, ya empezada | Para **empezar**, si hay red, se comprueba que no exista otra (5.3) |
-| Puertas y simulacros (turnos) | **Sí** | La **corrección no**: escritura y habla quedan en espera de la IA o de la pareja (3.7.13) |
-| Práctica por partes | **Sí** | |
-| Corrección con IA, sincronizar con otro equipo, descargar voces o paquetes de audio | **No** | Necesitan red; las descargas, solo con aviso (motor, 4.2) |
+| **El curso instalado:** los 13 escalones, sus 8 semanas, las puertas, las pruebas por unidad y la práctica por partes | **Sí** | Contenido y claves en `app/assets/ingles/`; ninguna pantalla espera a la red para cargarlo (CA-5s-06, CA-5s-15) |
+| **La ubicación** (12 preguntas por etapa) | **Sí**, ya empezada | Para **empezar**, con red, se comprueba que no exista otra (5.3); sin red no se bloquea: se empieza y, si al volver hay otra, gana la primera (5.8) |
+| **La sesión del día** completa: repaso, lección, pronunciación, producción y traslado | **Sí** | Cada tramo va a la base local (3.3) |
+| **Las tarjetas** y el repaso espaciado | **Sí** | La caja y la fecha de cada tarjeta se calculan en el teléfono (3.5) |
+| **Las mini pruebas y las pruebas por unidad** (con su repetición) | **Sí** | Las corrige el programa, sin IA (3.6, 3.6.1) |
+| **La voz del motor** (traslado, ejemplos, el guion de los audios) | **Sí**, con una voz en inglés instalada | La reproducción no usa la red (R8 del motor); si falta la voz, el traslado queda *disponible cuando haya audio* (3.2) |
+| **Grabar** | **Sí** | La grabación es local (4.3) |
+| **Dictar y transcribir** | **Sí**, si el equipo reconoce inglés en el dispositivo (4.4) | Es **requisito de 5b** (D-ING-13); si el equipo no lo garantiza, la persona ve qué hacer (tabla de 4.4) |
+| **Los turnos de una puerta y de un simulacro** | **Sí** | Se **presentan** sin red; lo que necesita red es la corrección (siguiente tabla) |
+| **Progreso, racha, faltas, metas y calendario** | **Sí** | Son cálculos sobre los datos locales (3.4, 3.8) |
+| **Ajustes de Inglés** (recordatorio, retención de grabaciones, interruptores de IA) | **Sí** | Se guardan en `ing_perfil` local y suben por la cola (el último gana, 9.4) |
+
+**Lo que sí necesita red** (y qué pasa mientras no la hay):
+
+| Qué | Por qué | Qué ve y qué se guarda |
+|---|---|---|
+| **Corrección con IA** de la escritura y del habla (D-ING-15) | La hace una función en la nube | La entrega queda **guardada en el teléfono como *lista para enviar***. **No se envía sola** al volver la red: como cada envío pide permiso, la persona lo confirma entonces (9.7) |
+| **Revisión de la pareja** | Los puntajes del revisor los escribe el servidor (P6.0, 4.3 y 8.4) | La revisión queda guardada en el teléfono del revisor *lista para enviar* y sube al volver la red; la voz nunca sale |
+| **Sincronizar entre equipos** | Es la cola contra Supabase (9.2) | *Por subir: N*; todo sigue en el teléfono |
+| **Descargas** (voces del sistema, paquete de inglés para dictar, una versión nueva del contenido) | Son archivos | Solo con **aviso y tamaño**, nunca solas (motor, 4.2); si se corta, **no queda nada a medias** (9.6) |
+| **Comprobar que no hay otra ubicación** | Consulta al servidor | Se hace al empezar si hay red; sin red se omite sin bloquear |
 
 **9.2 La cola sin conexión.** Todo lo que el inglés escribe pasa **primero por la base local y la cola** (`app/lib/nucleo/cola/`), con la sesión de la persona; nunca se escribe en el servidor directamente.
 
@@ -986,6 +1058,15 @@ Es la **propuesta** de tablas que escribirá `backend` en P2.2. No contiene SQL:
 | `habitos.ingles_puntaje` | `ing_puntajes` | Insertar | 3 |
 
 Los niveles siguen las llaves foráneas (una sesión antes que sus bloques; un intento antes que sus puntajes y entregas; una entrega antes del puntaje que la cita), como `nivelesDeSubidaFinanzas` (`contrato_servidor.dart:83-126`). Si algo llega antes que su dependencia (23503), **se reintenta sin detener la ronda** (comportamiento actual de la cola). La app **no manda** `recibido_en` ni lo que ponen los triggers (`columnasQuePoneElServidor`); la prueba `app/test/nucleo/cola/contrato_servidor_test.dart` ya lee las migraciones y falla si la tabla de columnas o la de niveles dejan de coincidir con el servidor, y se amplía a `ing_*` (CA-5m-08).
+
+**Orden, reintentos y estados de un evento.** Se comprobó leyendo `app/lib/nucleo/cola/cola_sin_conexion.dart` el 17/nov/2026:
+
+1. **Orden de subida:** cada ronda sube primero los tipos de **nivel menor** y, dentro de un nivel, **en el orden en que se crearon** (`:422-429`). Un tipo de nivel bajo creado después pasa primero; el reintento por dependencia cubre el resto (`:25-29`).
+2. **Falla pasajera** (sin señal, servidor ocupado): se programa el reintento con **espera creciente** (5 segundos, ×2, tope de 30 minutos: `PoliticaReintentos`, `:164-181`) y **se detiene la ronda**. Tras **20 intentos** sin respuesta clara el evento pasa a *requiere atención* (`:263`).
+3. **Falta de dependencia** (23503): se reintenta con la misma espera, **sin detener la ronda** y sin ir a *requiere atención* hasta pasar **100 intentos**, unos dos días (`:264` y `:287-292`).
+4. **El servidor lo rechaza** (permisos, datos inválidos, 23505 distinto del propio): pasa a *requiere atención*, **no se pierde ni se reintenta solo** (`:17-18`).
+5. **El orden real de lo ocurrido** lo da `ocurrido_en` (reloj del teléfono) y, en empate, el `id` (9.5); el orden de **subida** solo importa para las llaves foráneas. Las pantallas se alimentan de la base local, así que **no esperan a la subida**.
+6. **Si se cierra la app o se apaga el teléfono sin red**, nada se pierde: la cola vive en la base local (`Pendientes`, `base_local.dart:44-79`) y retoma al abrir.
 
 **9.3 Dónde vive cada dato en el dispositivo.** Como en la Fase 3, la verdad vive en **dos lugares**: la base local, que alimenta las pantallas y funciona sin señal, y Supabase, para sincronizar entre equipos (`docs/specs/fase-3-habitos.md`, sección 4, línea 81).
 
@@ -1011,8 +1092,35 @@ Los niveles siguen las llaves foráneas (una sesión antes que sus bloques; un i
 | Dos ubicaciones sin conexión | 5.8 |
 | Un equipo con otra versión del contenido | Los ids de sesión y de forma no cambian; cada fila guarda versión y huella; 3.7.11 salta lo retirado |
 | Reloj del dispositivo mal puesto | `ocurrido_en` más de 5 minutos en el futuro se ajusta a la hora del servidor; el desempate por `id` mantiene el orden determinista. Un reloj atrasado reordena repasos del mismo día sin cambiar su `fecha` |
-| Una entrega o una corrección en espera | Se conserva local hasta enviarse; la cola no la manda a *requiere atención* por falta de red |
+| Una entrega o una corrección en espera | Se conserva local como *lista para enviar* hasta que la persona confirme el envío con red (D-ING-15); la cola no la manda a *requiere atención* por falta de red |
 | Tablet pública | No ofrece inglés (P5-26): no hay cola de inglés ahí |
+
+**9.6 Cómo se instala el contenido por adelantado (propuesta P5-32).** Todo el curso viaja **dentro de la app**: instalar o actualizar la app con Wi-Fi **es** instalar el curso (8.5). No hay descargas de lecciones durante el estudio. Lo único que depende del equipo y no de la app son la **voz en inglés** y el **paquete de reconocimiento de inglés**: los instala el sistema, no la app **[no verificado: que la app pueda iniciar esas descargas; se asume que solo puede guiar a la persona a los ajustes]**.
+
+La pantalla **Listo para estudiar sin conexión** (Ajustes › Inglés, y una invitación una sola vez antes de la primera sesión) revisa cinco cosas y marca cada una como lista o pendiente, con el paso exacto que falta y sin color de alarma:
+
+| # | Se revisa | Lista cuando | Si falta |
+|---|---|---|---|
+| 1 | **Contenido del curso** | La versión y la huella del contenido instalado (`contenido_version` y `contenido_huella` de `ing_perfil`) coinciden con las del índice compilado, y el índice cubre los 13 escalones | *«Hay contenido nuevo»*: actualizar la app con Wi-Fi |
+| 2 | **Voz en inglés** | `MotorVoz.disponibilidad(UsoVoz.curso, …)` es positiva (motor de voz, 6.1) | Los pasos de instalar una voz (motor, 5.5). El estudio sigue; el traslado espera (3.2) |
+| 3 | **Dictado en el dispositivo** | La comprobación de 4.4 está *verificada* | La tabla de 4.4 |
+| 4 | **Permiso del micrófono** | Concedido (opcional: se pide al grabar) | Se pide al tocar *Grabar* |
+| 5 | **Lo que falta por subir** | *Por subir: 0*, o el número y la fecha de la última subida | Nada que hacer: se sube solo. Es informativo |
+
+Reglas de toda descarga (de las voces o del contenido, si el dueño agrega paquetes de audio después): **se pide con el tamaño y la opción de esperar a Wi-Fi; no se hace sola; no deja el contenido a medias**: un paquete se instala **completo o no se instala**, y lo que ya servía sigue sirviendo hasta que el nuevo esté completo (CA-5s-16). Una semana típica de viaje (cinco sesiones) no necesita nada más que lo de la tabla.
+
+**9.7 Qué ve la persona según su conexión (propuesta P5-33).** Salen de un catálogo cerrado (`MensajesIngles`, 3.8), sin palabras de `MensajesHabitos.prohibidas`. El estado sale de lo que ya existe: `ResumenConexion` (`app/lib/nucleo/conectividad/conectividad.dart:117`), `hayRedProvider` (`:76`) y `porSubirProvider` (`:156`). **Ninguna pantalla de estudio espera a la red ni muestra un cargando por ella.**
+
+| Estado | Dónde se ve | Texto |
+|---|---|---|
+| En línea y todo subido | En ninguna parte (silencio) | — |
+| **Sin conexión** | Una cinta pequeña y neutra arriba de Inicio de inglés y de Progreso | *«Sin conexión: tu avance se guarda y se sincroniza después»* |
+| **Por subir** (N > 0) | Progreso y Ajustes › Inglés | *«3 cosas por subir. Se suben solas cuando haya conexión.»* |
+| **Necesita atención** (eventos rechazados) | Ajustes › Inglés, con *Ver* | *«Algo no pudo subir. Tu estudio está a salvo en este teléfono.»* |
+| **Lista para enviar** (corrección con IA o revisión de la pareja, sin red o sin permiso aún) | En la entrega y en Progreso | *«Tu entrega está lista para enviar. Cuando haya conexión te pedimos permiso.»* |
+| **Esperando la corrección** (ya enviada) | En la entrega, con `enCorreccion` (3.7.2) | *«Tu entrega espera su corrección. No tienes que hacer nada.»* |
+| **Contenido por actualizar** | Ajustes › Inglés | *«Hay contenido nuevo. Actualiza la app con Wi-Fi.»* |
+| **Sin voz o sin dictado local** | En el sub-bloque que lo usa | Los textos de 3.8 y 4.4 |
 
 ## 10. Criterios de aceptación
 
@@ -1030,22 +1138,22 @@ Numeración: `CA-5a-nn` núcleo, `CA-5b-nn` audio y habla, `CA-5c-nn` ubicación
 | # | Criterio | Cómo se comprueba |
 |---|---|---|
 | CA-5a-01 | **Escalera:** los 13 escalones salen de una sola tabla del dominio con su etapa, su orden, sus horas acumuladas (40 por escalón; 80, 200, 360 y 520 al pasar la puerta de etapa) y su tipo de puerta (A1.2 interna; A2.3, B1.4 y B2.4 de etapa; el resto, de escalón). `anterior(A1.1)` y `siguiente(B2.4)` no existen; `siguiente(B1.4)` es B2.1 | `escalera_test.dart` |
-| CA-5a-02 | **Las cifras de D29 viven en un solo lugar:** `ReglasIngles` (80, 90 y 50 %; 8 de 10; 2 oportunidades; 3 días de gracia; 13 semanas; 35 y 60 minutos; 3 cajas; 40 tarjetas; 8 nuevas) **coincide con** `data/ingles/formatos/gravity-escalon.yaml` y `gravity-sesion-60.yaml`. Caso malo: cambiar una cifra en el dominio rompe la prueba | `reglas_coinciden_con_contratos_test.dart` (lee los YAML del repositorio) |
+| CA-5a-02 | **Las cifras de D29 viven en un solo lugar:** `ReglasIngles` (80, 90 y 50 %; 8 de 10; 2 oportunidades; 10 minutos de tolerancia por día; 3 días faltados por escalón; 80 % en las pruebas por unidad; 35 y 60 minutos; 3 cajas; 40 tarjetas; 8 nuevas) **coincide con** `data/ingles/formatos/gravity-escalon.yaml` y `gravity-sesion-60.yaml` (las cifras de asistencia y de unidades se piden a esos contratos, 14). Caso malo: cambiar una cifra en el dominio rompe la prueba | `reglas_coinciden_con_contratos_test.dart` (lee los YAML del repositorio) |
 | CA-5a-03 | **Perfil:** el escalón actual es la fila de `ing_escalones` con `desde` más reciente; la semana es `(lunesDe(hoy) − desde) ÷ 7 + 1`; con semana mayor que 8 el estado es práctica o espera, **nunca «semana 9»** | `perfil_test.dart` |
 | CA-5a-04 | **Etiquetas:** se muestra «B1 · escalón 2 de 4» y **nunca «B1+»**; una etiqueta está ganada si hay un intento aprobado de la puerta que cierra su etapa, y **se conserva al bajar** | `perfil_test.dart` |
 | CA-5a-05 | **Inicio en lunes:** un cambio de escalón registrado el jueves 26/nov/2026 empieza el lunes 30/nov; uno registrado el lunes 23/nov empieza el lunes 30/nov (el primer lunes **posterior**). `desde` nunca cae en otro día | `calendario_estudio_test.dart` |
 | CA-5a-06 | **Sesión del día:** de lunes a jueves, siete sub-bloques de 5, 10, 8, 12, 10, 10 y 5 minutos (60); el viernes, mini prueba en lugar del repaso y conversación en lugar de la lección y **ninguna tarjeta nueva**; sin audio, solo los cuatro del principal (35) | `sesion_del_dia_test.dart` |
-| CA-5a-07 | **Minutos planeados** (P5-04): con audio 2 400 min por escalón (el 90 %, 2 160); sin audio 1 400 (1 260); mixto de 30 días con audio y 10 sin él, 2 150 (1 935); con una semana de práctica, 2 700 (2 430) | `minutos_test.dart` |
+| CA-5a-07 | **Minutos planeados** (P5-04): con audio 2 400 min por escalón (mínimo que deja pasar la asistencia, 1 850); sin audio 1 400 (925); mixto de 30 días con audio y 10 sin él, 2 150 (1 600); con una semana de práctica, 2 700 (2 100) | `minutos_test.dart` |
 | CA-5a-08 | **Acreditación proporcional:** el lunes del ejemplo (pronunciación 9 de 12) acredita 58 minutos; ningún sub-bloque acredita más que sus minutos declarados aunque tenga varios tramos | `minutos_test.dart` |
 | CA-5a-09 | **Producción mínima:** una entrega por debajo de la mitad del mínimo de la etapa (A1 15 palabras y 15 s; A2 25 y 23; B1 40 y 30; B2 70 y 45) **no** acredita; en el mínimo, sí | `minutos_test.dart` |
 | CA-5a-10 | **Día completo** (P5-05): con audio exige todos los elementos de los siete sub-bloques; sin audio, los de los cuatro del principal; 11 de 12 elementos de pronunciación **no** lo completan; un bloque que empieza el martes 23:55 y termina el miércoles cuenta en el martes | `dia_completo_test.dart` |
 | CA-5a-11 | **Modo del día:** con un solo bloque empezado con audio, el día cuenta 60; con todos sin audio, 35; sin ningún bloque, 60 | `dia_completo_test.dart` |
-| CA-5a-12 | **Sesión pasada, práctica libre:** no suma minutos, no completa el día ni gasta gracia; sus repasos sí entran a `ing_repasos` | `sesion_libre_test.dart` |
-| CA-5a-13 | **Trimestre** (P5-01): con inicio el lunes 23/nov/2026, el viernes 19/feb/2027 es del trimestre 0 y el lunes 22/feb/2027 es del 1; el 24/may/2027 empieza el 2 | `trimestre_test.dart` |
-| CA-5a-14 | **Gracia** (P5-02): faltan 25/nov, 2/dic, 10/dic y 17/dic: los tres primeros `gracia`, el 17/dic `sinCubrir`; faltar el 24/feb/2027 queda en `gracia` (otro trimestre); las gracias no se acumulan | `gracia_test.dart` |
-| CA-5a-15 | **Racha de inglés:** el fin de semana no rompe ni suma; el día en curso no rompe; un `sinCubrir` la rompe y dice *«Un día no borra lo que has avanzado. Retomemos hoy.»*; la mejor racha no baja | `racha_ingles_test.dart` |
-| CA-5a-16 | **Constancia del escalón:** cumplida si ningún día de la ventana (3.7.5) queda `sinCubrir`; las tres ventanas (oportunidad 1, 2 y anticipada) dan resultados distintos con los mismos datos | `constancia_test.dart` |
-| CA-5a-17 | **90 % de minutos con enteros:** 2 160 de 2 400 minutos cumple; 2 159 no; con planeados en cero se da por cumplido | `minutos_test.dart` |
+| CA-5a-12 | **Sesión pasada, práctica libre:** no suma minutos, no completa el día, no quita una falta ni la gasta; sus repasos sí entran a `ing_repasos` | `sesion_libre_test.dart` |
+| CA-5a-13 | **Asistencia por día** (P5-30): con 60 planeados, un día con 50 minutos acreditados (faltante 600 s) queda `asistido` y con 49:59 queda `faltado`; sin audio (35), 25:00 asiste y 24:59 no; los 10 minutos **no se acumulan** (dos días con 9 minutos de faltante no dan 18 de crédito); el ejemplo de 3.3 (58 minutos, 3 elementos sin hacer) es `asistido` e incompleto | `asistencia_dia_test.dart` |
+| CA-5a-14 | **Faltas del escalón** (P5-30): con inicio el 23/nov/2026, faltan el 25/nov (0 min), el 2/dic (40 min), el 10/dic (55 min) y el 17/dic (49 min), y el 8/ene/2027 no se estudia: el 25/nov, el 2/dic y el 17/dic son `faltado`, el 10/dic `asistido` y el 8/ene `excedido`; el cálculo es por ciclo (un escalón nuevo o una segunda vuelta empieza en cero); **no hay trimestres**: el 24/feb/2027 no recibe faltas nuevas | `faltas_escalon_test.dart` |
+| CA-5a-15 | **Racha de inglés:** el fin de semana no rompe ni suma; el día en curso no rompe; un día `faltado` (tolerado) no la rompe y un `excedido` sí, con *«Un día no borra lo que has avanzado. Retomemos hoy.»*; la mejor racha no baja | `racha_ingles_test.dart` |
+| CA-5a-16 | **Constancia y minutos del escalón:** cumplidas si ningún día de la ventana (3.7.5) queda `excedido`; las tres ventanas (oportunidad 1, 2 y anticipada) dan resultados distintos con los mismos datos; una semana de práctica suma días pero no agrega faltas permitidas | `constancia_test.dart` |
+| CA-5a-17 | **Asistencia con enteros:** `faltante` en segundos, 600 asiste y 601 no; con planeados en cero (puerta inmediata de B2, primer día) se da por cumplido; **caso malo:** el 90 % de la versión 0.5 (2 160 de 2 400 min) **no** pasa como regla: un escalón con 37 días de 50 minutos y 3 en cero **sí** pasa, y uno con 4 días en cero **no** | `asistencia_test.dart` |
 | CA-5a-18 | **Metas semanales** (P5-27): 5 de 5 días, 300 minutos (175 sin audio) y 60 repasos se calculan y **no bloquean** ninguna transición | `metas_test.dart` |
 | CA-5a-19 | **Repaso espaciado** (P5-06): *otra vez* → caja 1; *bien* → +1; *fácil* → +2; *bien* en la caja 3 → dominada. El ejemplo de 3.5 da las fechas 24/nov, 1/dic, 29/dic, 2/dic y 22/dic | `repaso_espaciado_test.dart` |
 | CA-5a-20 | **Días de estudio:** un *otra vez* el viernes 27/nov/2026 vence el lunes 30/nov; sábado y domingo no cuentan para ningún intervalo | `repaso_espaciado_test.dart` |
@@ -1059,7 +1167,7 @@ Numeración: `CA-5a-nn` núcleo, `CA-5b-nn` audio y habla, `CA-5c-nn` ubicación
 | # | Criterio | Cómo se comprueba |
 |---|---|---|
 | CA-5a-25 | **Mini prueba:** 10 preguntas; 8 aprueba y 7 no; «por debajo de 50 %» es `aciertos × 2 < preguntas`: **4 de 10 sí, 5 de 10 no** | `mini_prueba_test.dart` |
-| CA-5a-26 | **Qué cuenta una mini prueba no aprobada** (P5-07): cada error crea una tarjeta de error en la **caja 1** que vence el siguiente día de estudio (y no se duplica); **no se repite la semana**; no cambia la constancia ni los minutos; con 5 a 7 aciertos **no** cuenta para el descenso | `mini_prueba_test.dart` |
+| CA-5a-26 | **Qué cuenta una mini prueba no aprobada** (P5-07): cada error crea una tarjeta de error en la **caja 1** que vence el siguiente día de estudio (y no se duplica); **no se repite la semana**; no gasta faltas ni cambia los minutos; con 5 a 7 aciertos **no** cuenta para el descenso | `mini_prueba_test.dart` |
 | CA-5a-27 | **Descenso por evidencia** (P5-09): dos mini pruebas seguidas de 0 a 4 aciertos en el mismo ciclo bajan un escalón el lunes siguiente (T06); una de 5 a 7 o una aprobada entre medias lo impide; la cuenta empieza en cero en cada ciclo; en A1.1 no hay cambio (T07); **no cuenta como caída** | `descenso_test.dart` |
 | CA-5a-28 | **Aprobar una puerta:** 80 % por habilidad **sin compensar** (100, 100, 100 y 79 no aprueba); en 10 preguntas, 8 aprueba y 7 no; escritura con 320 de 400 y gramática 3 aprueba; **3 en todo (300) no**; 320 con gramática 2 no; habla con 330 y gramática 2 no | `aprobar_puerta_test.dart` |
 | CA-5a-29 | **Sin crédito parcial** (P5-16): cada pregunta objetiva vale 1 o 0 y pesa lo mismo, también en las partes de *Use of English* de B2 | `aprobar_puerta_test.dart` |
@@ -1068,13 +1176,13 @@ Numeración: `CA-5a-nn` núcleo, `CA-5b-nn` audio y habla, `CA-5c-nn` ubicación
 | CA-5a-32 | **Armado de la práctica:** las habilidades no alcanzadas se ordenan de menor a mayor porcentaje (empate: lectura, escucha, escritura, habla); escucha usa el martes, lectura y escritura el jueves, habla el viernes y el miércoles; se elige la sesión más antigua no repetida; los últimos días son los turnos | `practica_test.dart` |
 | CA-5a-33 | **Caídas seguidas** (P5-10): la segunda caída lleva a `revisionPendiente` y el destino no se escribe hasta confirmar (T20); aprobar una puerta o una anticipada pone la cuenta en cero; un descenso por evidencia **no la toca**; en A1.1 la primera caída repite A1.1 | `caidas_test.dart` |
 | CA-5a-34 | **Bajar a un escalón que cierra una etapa:** la etiqueta ganada se conserva y se vuelve a presentar su puerta | `puertas_estados_test.dart` |
-| CA-5a-35 | **Subir exige los cuatro requisitos** (P5-13): puerta aprobada, constancia y minutos; si falta constancia o minutos, el escalón se repite (T15), no se baja ni se gasta oportunidad, y la etiqueta de la etapa queda ganada; la pantalla dice cuál faltó | `requisitos_subir_test.dart` |
-| CA-5a-36 | **Puerta anticipada** (P5-11): solo en la semana 2, una vez por ciclo, con la forma de reserva; 90 % es 9 de 10, 11 de 12 y 14 de 15, y 360 de 400; con 2 en gramática el máximo es 320 (escritura) y 330 (habla), por debajo de 360; constancia y minutos de lo cursado (486 de 540 el viernes de la semana 2); no gasta oportunidades | `puerta_anticipada_test.dart` |
+| CA-5a-35 | **Subir exige los cuatro requisitos** (P5-13): unidades, puerta, constancia y minutos; si falta una unidad, la constancia o los minutos, el escalón se repite (T15), no se baja ni se gasta oportunidad, y la etiqueta de la etapa queda ganada; la pantalla dice cuál faltó | `requisitos_subir_test.dart` |
+| CA-5a-36 | **Puerta anticipada** (P5-11): solo en la semana 2, una vez por ciclo, con la forma de reserva; 90 % es 9 de 10, 11 de 12 y 14 de 15, y 360 de 400; con 2 en gramática el máximo es 320 (escritura) y 330 (habla), por debajo de 360; asistencia y unidades de lo cursado (con 10 días de estudio, a lo más 3 faltados); no gasta oportunidades | `puerta_anticipada_test.dart` |
 | CA-5a-37 | **Puerta inmediata de B2:** solo con ubicación B2, una vez, del primer día al fin de la semana 2, con el 90 %; aprobada termina el curso y gana la etiqueta B2 (T10); no aprobada no cambia nada | `puerta_anticipada_test.dart` |
 | CA-5a-38 | **Forma que toca** (P5-12): anticipada → C; oportunidades → la primera no presentada en A, B, C; con las tres presentadas, la de hace más tiempo; una forma retirada se salta; sin ninguna, la puerta no se ofrece | `forma_que_toca_test.dart` |
 | CA-5a-39 | **Turnos** (P5-15): A2 Key en 2 turnos de 90 y 10 minutos; B1 Preliminary en 2 de 90 y 42; B2 First en 3 de 75, 80 y 54; una puerta de escalón en 1; ningún turno parte una sección ni un papel; el día de un turno acredita 3 600 segundos y queda completo | `turnos_puerta_test.dart` |
 | CA-5a-40 | **Turno no presentado:** no caduca, se ofrece el siguiente día de estudio y el día en que faltó queda sin completar | `turnos_puerta_test.dart` |
-| CA-5a-41 | **Sin IA, no hay autocalificación** (P5-24, D-ING-11): con el interruptor apagado, lectura y escucha de una puerta se presentan y califican; escritura y habla se entregan y quedan en `enCorreccion`; ninguna ruta ni caso de uso acepta un puntaje de escritura o habla de la propia persona; al activar la IA, las entregas en espera se envían | `puerta_sin_ia_test.dart` (app) y `aprobar_puerta_test.dart` |
+| CA-5a-41 | **Sin IA, no hay autocalificación** (P5-24, D-ING-11): con el interruptor apagado, lectura y escucha de una puerta se presentan y califican; escritura y habla se entregan y quedan en `enCorreccion`; ninguna ruta ni caso de uso acepta un puntaje de escritura o habla de la propia persona; al activar la IA, las entregas en espera se **ofrecen para enviar** y salen solo con el permiso de cada envío (D-ING-15) | `puerta_sin_ia_test.dart` (app) y `aprobar_puerta_test.dart` |
 | CA-5a-42 | **En corrección:** no hay veredicto ni etiqueta; los días de espera quedan como `espera` y cuentan para la constancia y los minutos del ciclo | `en_correccion_test.dart` |
 | CA-5a-43 | **3 toques o menos:** de Hoy a estar dentro del primer sub-bloque pendiente hay 2 toques; *Continuar* abre el siguiente pendiente; las rutas de 3.8 existen | `toques_ingles_test.dart` (como `app/test/modulos/habitos/toques_habitos_test.dart`) |
 | CA-5a-44 | **Sin culpa:** ningún texto del catálogo `MensajesIngles` contiene una palabra de `MensajesHabitos.prohibidas` ni usa rojo; los textos de 3.8 salen del catálogo | `mensajes_ingles_test.dart` |
@@ -1082,6 +1190,12 @@ Numeración: `CA-5a-nn` núcleo, `CA-5b-nn` audio y habla, `CA-5c-nn` ubicación
 | CA-5a-46 | **Racha global intacta** (P5-19): `evaluarDiaGlobal` da lo mismo con y sin inglés; Hoy muestra la fila de Inglés con **su** racha | `racha_global_intacta_test.dart` y prueba de widget |
 | CA-5a-47 | **Roles y dispositivos:** dueño, coadministrador y familiar ven Inglés; cuidador, Hogar y la cuenta maestra no; la tablet **pública no** lo ofrece (P5-26) y la **personal** funciona como el teléfono | `ingles_por_rol_test.dart` *(plataforma)* |
 | CA-5a-48 | **Calendario:** sábado y domingo no son días de estudio; el inglés ligero del domingo no suma ni cubre un día | `calendario_estudio_test.dart` |
+| CA-5a-49 | **Repetir por asistencia** (D-ING-12, P5-30): con cuatro días faltados la puerta aprobada **no** sube: se aplica T15, el escalón se repite el lunes siguiente con las faltas y las unidades en cero, y la etiqueta de la etapa queda ganada; con tres días faltados **sí** sube; el aviso de la tercera falta sale **antes** y ningún texto usa palabras prohibidas | `repetir_por_asistencia_test.dart` y `mensajes_ingles_test.dart` |
+| CA-5a-50 | **Unidad** (P5-31): el viernes de las semanas 2, 4, 6 y 7 la Lección es una prueba de 20 preguntas (15 sin audio); aprueba con 16 de 20 (12 de 15) y no con 15 de 20; acredita 10 × hechas ÷ total minutos; la conversación guiada de ese viernes se omite | `prueba_unidad_test.dart` |
+| CA-5a-51 | **Repetición de la unidad:** una unidad no aprobada vuelve como tarjetas de error y se repite **una vez** el lunes siguiente (semanas 3, 5, 7 y 8) con la forma `b`; la repetición no gasta faltas; si tampoco se aprueba la unidad queda no aprobada y el curso **sigue** hasta la puerta | `prueba_unidad_repeticion_test.dart` |
+| CA-5a-52 | **Las unidades cuentan para subir** (D-ING-14): con tres unidades aprobadas y una no, aunque la puerta se apruebe con todo lo demás cumplido, **no se sube** (T15, motivo `pruebas`); con las cuatro, sí; en la anticipada solo se exigen las ya presentadas antes del primer turno; una unidad aprobada en la repetición cuenta | `unidades_requisito_test.dart` |
+| CA-5a-53 | **La mini prueba del viernes es de repaso:** reprobarla no bloquea la subida ni toca las unidades; el descenso por evidencia sigue usando solo mini pruebas | `mini_prueba_repaso_test.dart` |
+| CA-5a-54 | **Segunda vuelta:** en un escalón que se repite, la forma `b` es la principal y la `a` la repetición | `prueba_unidad_vuelta_test.dart` |
 
 **5b · Audio y habla** (sección 4)
 
@@ -1092,12 +1206,15 @@ Numeración: `CA-5a-nn` núcleo, `CA-5b-nn` audio y habla, `CA-5c-nn` ubicación
 | CA-5b-03 | **Reproducciones por contrato:** el curso llama `reproducir` exactamente el número que dice el contenido (traslado 2; ubicación 2; Cambridge 2; TOEIC 1) y no más | `reproducciones_test.dart` (fuente falsa que cuenta) |
 | CA-5b-04 | **Guion oculto:** ningún evento de avance ni pantalla de pregunta contiene el texto del guion antes de contestar; en la ubicación, nunca | `guion_oculto_test.dart` |
 | CA-5b-05 | **Grabar:** el permiso se pide solo al tocar *Grabar*; el tope es 1.5 veces el máximo de la etapa; 3 tomas en una tarea diaria, 1 en un turno de puerta (y una repetición si dura menos de la mitad del mínimo); el archivo queda en la carpeta privada | `grabacion_flujo_test.dart` (grabadora falsa) |
-| CA-5b-06 | **La grabación no sale:** al entregar con IA activada, ninguna petición HTTP contiene bytes de audio ni la ruta del archivo; lo que viaja es texto | `grabacion_no_sale_test.dart` (cliente simulado) |
-| CA-5b-07 | **Transcripción solo en el dispositivo** (P5-22): si el equipo no garantiza reconocimiento local (Android 12 o posterior, local disponible, paquete de inglés), **no se ofrece transcribir**, el habla pasa a autoevaluación y no va a la IA; en un turno de puerta el texto **no se edita**; en una tarea diaria, sí | `transcripcion_local_test.dart` (reconocedor falso) |
+| CA-5b-06 | **La grabación no sale:** al entregar con IA activada, ninguna petición HTTP contiene bytes de audio ni la ruta del archivo; lo que viaja es **solo texto y solo tras el permiso de ese envío** (sin permiso, ninguna petición sale) | `grabacion_no_sale_test.dart` (cliente simulado) |
+| CA-5b-07 | **Transcripción solo en el dispositivo** (P5-22, requisito D-ING-13): si el equipo no garantiza reconocimiento local (Android 12 o posterior, local disponible, paquete de inglés), **no se ofrece transcribir**, el habla pasa a autoevaluación y no va a la IA; en un turno de puerta el texto **no se edita**; en una tarea diaria, sí | `transcripcion_local_test.dart` (reconocedor falso) |
 | CA-5b-08 | **Sin red en el audio:** ningún archivo de las pantallas y servicios de audio de `app/lib/modulos/habitos/ingles/` importa `package:http` ni usa `HttpClient`, `Socket` o `WebSocket` (la llamada de entrega a la IA vive en un archivo aparte) | Prueba de código fuente (como `app/test/diseno/guardia_sin_colores_fijos_test.dart`) |
 | CA-5b-09 | **Retención y borrado:** las grabaciones de tareas diarias se borran a los 30 días (o al entregar, si así se eligió); las de puerta, 30 días después del veredicto; salir, la baja y quitar a la persona de la tablet las borran todas (`LimpiezaLocal.registrar`), y *Borrar mis datos* también | `limpieza_grabaciones_test.dart` |
 | CA-5b-10 | **Sin micrófono** (Windows hoy): no se ofrecen las tareas de habla ni las puertas y se pide pasar al teléfono | `habla_sin_microfono_test.dart` |
-| CA-5b-11 | **En el Galaxy A52** (V-b1 a V-b3 de 4.5): versión de Android, transcripción de 60 s en modo avión y si se puede grabar y reconocer a la vez; el resultado se anota | Manual (calidad), en `docs/revisiones/` |
+| CA-5b-11 | **En el Galaxy A52** (V-b1 a V-b3 y V-b5 de 4.5): versión de Android, transcripción de 60 s en modo avión y si se puede grabar y reconocer a la vez; el resultado se anota | Manual (calidad), en `docs/revisiones/` |
+| CA-5b-12 | **Dictado y transcripción sin red** (D-ING-13): con `HttpOverrides` que falla cualquier conexión y un reconocedor local falso, dictar una tarea diaria de escritura y transcribir un turno de habla producen texto y se guardan; **caso malo:** un reconocedor falso que intenta abrir una conexión hace fallar la prueba | `dictado_local_test.dart` y manual con modo avión (A52, V-b5) |
+| CA-5b-13 | **Qué ve la persona sin garantía local:** Android 11, reconocimiento local no disponible, falta el paquete de inglés y *no probado* dan cada uno su mensaje de 4.4, **sin botón de micrófono** salvo el caso *no probado*; la tarea de habla pasa a autoevaluación; la puerta de habla no se ofrece en ese equipo; ningún mensaje contiene palabras de `MensajesHabitos.prohibidas` | `dictado_estados_test.dart` (comprobación nativa falsa) |
+| CA-5b-14 | **Nunca cae a la nube:** la entrada de inglés llama a `listen` solo con `onDevice: true` y solo si la comprobación nativa dio *local*; una guardia de código fuente rechaza cualquier otra llamada a `SpeechToText` en `app/lib/modulos/habitos/ingles/` | `guardia_dictado_test.dart` |
 
 **5c · Ubicación** (sección 5)
 
@@ -1138,7 +1255,7 @@ Numeración: `CA-5a-nn` núcleo, `CA-5b-nn` audio y habla, `CA-5c-nn` ubicación
 | # | Criterio | Cómo se comprueba |
 |---|---|---|
 | CA-5e-01 | **Entregar una tarea escrita:** el texto queda **solo** en el dispositivo; la carga de `ing_entregas` en la cola no contiene el texto | `entrega_local_test.dart` |
-| CA-5e-02 | **Lo que viaja a la IA** es una estructura cerrada (texto o transcripción de esa entrega, id de la rúbrica y escalón); no puede incluir campos de otros módulos, el nombre ni el correo, ni audio | `payload_ia_test.dart` (el tipo de la carga y una lista blanca de campos) |
+| CA-5e-02 | **Lo que viaja a la IA** es una estructura cerrada (texto o transcripción de esa entrega, id de la rúbrica y escalón, y la marca del permiso de ese envío; sin permiso no se arma); no puede incluir campos de otros módulos, el nombre ni el correo, ni audio | `payload_ia_test.dart` (el tipo de la carga y una lista blanca de campos) |
 | CA-5e-03 | **Ver una corrección:** se guardan los puntajes por criterio con su origen (`ia` o `auto`) en `ing_puntajes`; las observaciones, solo locales | `correccion_guardada_test.dart` |
 | CA-5e-04 | **Interruptor apagado por omisión:** sin él no se ofrece enviar una entrega ni presentar una puerta | `correccion_interruptor_test.dart` |
 | CA-5e-05 | **Arranque:** con `INGLES_ARRANQUE` apagada no hay *Tu punto de partida*, ni ubicación, ni sesión; encendida, sí | `arranque_ingles_test.dart` |
@@ -1154,7 +1271,7 @@ Numeración: `CA-5a-nn` núcleo, `CA-5b-nn` audio y habla, `CA-5c-nn` ubicación
 | CA-5m-03 | **Solo agregar:** UPDATE, DELETE y TRUNCATE sobre las diez tablas se rechazan para `authenticated` y `service_role` | SQL `<n>_ingles_solo_agregar.sql` |
 | CA-5m-04 | **Borrado:** `hab_borrar_mis_datos('todo')` borra las doce; `hab_limpiar` las borra a los 90 días de la baja; los alcances `sensibles` y `diario` no las tocan; ningún otro camino borra | SQL `<n>_ingles_borrado.sql` |
 | CA-5m-05 | **Bitácora:** ninguna tabla `ing_*` escribe en ella; `bitacora_agregar` rechaza una `tabla` con prefijo `ing_`; el dueño y la cuenta maestra no ven entradas de `ing_` | SQL (amplía `supabase/tests/30_bitacora.sql`) |
-| CA-5m-06 | **Rangos y listas:** `desde` que no es lunes, `fecha` de sábado, `semana` 9, `aciertos` mayor que `preguntas`, `caja` 4, un `bloque` desconocido y una `entrada` desconocida se rechazan | SQL |
+| CA-5m-06 | **Rangos y listas:** `desde` que no es lunes, `fecha` de sábado, `semana` 9, `aciertos` mayor que `preguntas`, `caja` 4, un `bloque` desconocido, una `entrada` desconocida, una `unidad` 5, un `intento` 3 y una `unidad` en un bloque que no es `prueba_unidad` se rechazan | SQL |
 | CA-5m-07 | **Idempotencia:** mismo `id` y mismo contenido no inserta ni falla; mismo `id` con otro contenido da 23505 | SQL |
 | CA-5m-08 | **Contrato de columnas:** la app no manda `persona_id`, `hogar_id` ni `recibido_en`; la tabla de columnas y la de niveles de la cola coinciden con las migraciones | `contrato_servidor_ingles_test.dart` (amplía `app/test/nucleo/cola/contrato_servidor_test.dart`) *(plataforma)* |
 | CA-5m-09 | **Cuotas:** al pasar el tope de una tabla, el `INSERT` da `54000` | SQL |
@@ -1175,8 +1292,16 @@ Numeración: `CA-5a-nn` núcleo, `CA-5b-nn` audio y habla, `CA-5c-nn` ubicación
 | CA-5s-06 | **Contenido instalado:** el curso, las formas y la práctica se cargan de `app/assets/ingles/` sin red; una semana completa se estudia en modo avión | `assets_ingles_test.dart` y manual (A52) |
 | CA-5s-07 | **La falta de red no manda a «requiere atención»:** un fallo de red se reintenta con la espera creciente de la cola | `cola_ingles_test.dart` |
 | CA-5s-08 | **Tablet pública:** no hay tipos de inglés en su cola y no se ofrece el inglés | `ingles_por_rol_test.dart` *(plataforma)* |
+| CA-5s-09 | **Todo lo de la tabla «sí» de 9.1 se completa sin red:** con `HttpOverrides` que falla cualquier conexión se hace una ubicación, una sesión de cinco días, tarjetas, una mini prueba, una prueba por unidad con su repetición, un turno de puerta y una práctica por partes; **caso malo:** un servicio que intente abrir una conexión hace fallar la prueba | `sin_red_ingles_test.dart` y manual con modo avión (A52) |
+| CA-5s-10 | **La cola en modo avión:** tras 30 eventos sin red de todos los tipos, al volver la red suben por niveles y por orden de creación, sin duplicados; si se cierra la app a la mitad, nada se pierde y retoma al abrir | `cola_ingles_test.dart` (base local en archivo, servidor simulado) |
+| CA-5s-11 | **Reintentos:** la espera sigue 5 s, 10 s, 20 s… con tope de 30 minutos; tras 20 fallas de red el evento pasa a *requiere atención* y tras 100 faltas de dependencia (23503) también; un rechazo del servidor pasa directo | `cola_ingles_test.dart` (reloj falso) |
+| CA-5s-12 | **Entregas en espera:** sin red, la entrega queda *lista para enviar*; al volver la red **no sale sola**: pide el permiso de ese envío; sin permiso no sale ninguna petición | `entrega_lista_test.dart` |
+| CA-5s-13 | **Listo para estudiar sin conexión** (P5-32): cada uno de sus cinco puntos refleja el estado real (voz ausente, dictado no verificado, contenido con otra huella, cola con eventos); lo pendiente trae su paso exacto y ningún texto usa palabras prohibidas | `listo_sin_conexion_test.dart` |
+| CA-5s-14 | **Estados de conexión** (P5-33): sin conexión, por subir, necesita atención, lista para enviar, esperando corrección y contenido por actualizar muestran su texto de 9.7; ninguna pantalla de estudio muestra un cargando por la red | `estados_conexion_test.dart` |
+| CA-5s-15 | **El curso completo está dentro de la app:** el índice compilado trae, para los 13 escalones, las 8 semanas, las puertas, las cuatro unidades con sus formas `a` y `b` y la práctica; una pieza ausente se lista; **caso malo:** quitar una forma hace fallar la prueba | `assets_ingles_test.dart` |
+| CA-5s-16 | **Una descarga no deja nada a medias:** si se corta, el contenido anterior sigue sirviendo y no se queda un paquete incompleto (aplica a cualquier paquete que se agregue) | `descarga_ingles_test.dart` (red falsa que se corta) |
 
-**Cómo se cuenta.** 5a: 48 · 5b: 11 · 5c: 14 · 5d: 10 · 5e: 7 · 5m: 13 · 5s: 8 · **111 en total.**
+**Cómo se cuenta.** 5a: 54 · 5b: 14 · 5c: 14 · 5d: 10 · 5e: 7 · 5m: 13 · 5s: 16 · **128 en total.**
 
 ## 11. Cambios frente a la versión 0.4
 
@@ -1192,14 +1317,14 @@ Numeración: `CA-5a-nn` núcleo, `CA-5b-nn` audio y habla, `CA-5c-nn` ubicación
 | 6 | **Numeración de semanas:** los módulos usan 1 a 24, el calendario de niveles 28 y la rúbrica cita las semanas 4, 8, 12, 16, 20 y 24 | **Una sola: semanas 1 a 8 dentro de cada escalón.** La semana de práctica no es la 9; el calendario global se deriva y nunca es una regla (2, 3.1) | ING-I7 (último párrafo); plan, P0.3 |
 | 7 | **Ruta:** B1 → B2 con unidades temáticas y lecciones cortas (5 a 10 minutos) | Sesión por día y semana con siete sub-bloques (3.2); el temario sale de `data/ingles/niveles.yaml` | Plan 3.2 |
 | 8 | **Repaso espaciado:** *«intervalo creciente según acierto»*, sin algoritmo | Tres cajas (1, 5 y 20 días de estudio), tres calificaciones, cola de 40 y 8 tarjetas nuevas de lunes a jueves; una escalera larga **no cabe** en 5 minutos (3.5) | P5-06; `gravity-sesion-60.yaml` |
-| 9 | **Métricas:** palabras aprendidas, minutos, racha y precisión por unidad | Minutos acreditados, día completo, racha propia con tres gracias por trimestre, metas semanales, porcentaje por habilidad y mini pruebas (3.3, 3.4, 3.8) | `niveles-y-avance.md`, secciones 4 y 5 |
+| 9 | **Métricas:** palabras aprendidas, minutos, racha y precisión por unidad | Minutos acreditados, día completo, asistencia, racha propia con tres faltas por escalón, metas semanales, porcentaje por habilidad y mini pruebas (3.3, 3.4, 3.8) | `niveles-y-avance.md`, secciones 4 y 5 |
 | 10 | **Sin conexión:** *«el progreso se guarda local y se sincroniza como el resto de Hábitos»* | Todo por la cola con tipos `habitos.ingles_*`. **Hallazgo:** el resto de Hábitos escribe directo, no por la cola (9.2) | `repositorio.dart:49-77`; `arranque.dart:120` |
 | 11 | **Regla:** *«no se envía a ningún servicio de IA en esta etapa; sin llamadas de red para estudiar»* | Estudiar sigue sin red. La **escritura y el habla de las puertas** las corrige una IA, opcional por función, y el curso no arranca hasta que esté integrada (7) | D-ING-9 y D-ING-10 |
 | 12 | **Conversación guiada y redacciones corregidas con IA:** después de la Fase 6 | La conversación guiada del viernes es un **guion sin IA** (P5-17); la corrección con IA de las tareas de las puertas es 5e y P6.0 | D-ING-9 |
 | 13 | **Pareja:** el progreso es privado; el reto con la pareja, para un bloque posterior | Igual: **nada se comparte** hasta P6.0 (7.2) | Plan 3.7 |
 | 14 | **Datos:** `ing_unidades`, `ing_lecciones`, `ing_tarjetas`, `ing_sesiones` e `ing_prueba`, con RLS por persona y solo agregar en sesiones y pruebas | **Doce tablas** `ing_*`; el contenido ya no vive en tablas sino compilado en `app/assets/ingles/`; la ubicación es única por persona (8) | Plan 3.6; D21 |
-| 15 | **Racha y área:** ¿hábito de Hábitos o área aparte? Propuesta: área propia con su racha | **Racha propia** con 3 gracias por trimestre, fuera de la racha global (P5-19) | `niveles-y-avance.md`, sección 5 |
-| 16 | **Criterios de aceptación (borrador):** cinco, entre ellos *«la prueba de nivel … se puede repetir después de 30 días»* y *«una lección de 5 a 10 minutos»* | **111 numerados**, cada uno con su prueba (10) | Plan P0.3 |
+| 15 | **Racha y área:** ¿hábito de Hábitos o área aparte? Propuesta: área propia con su racha | **Racha propia** con 3 faltas por escalón (la 0.5 decía 3 gracias por trimestre), fuera de la racha global (P5-19, P5-30) | `niveles-y-avance.md`, sección 5 |
+| 16 | **Criterios de aceptación (borrador):** cinco, entre ellos *«la prueba de nivel … se puede repetir después de 30 días»* y *«una lección de 5 a 10 minutos»* | **128 numerados**, cada uno con su prueba (10) | Plan P0.3 |
 | 17 | **Cinco preguntas al dueño** (alcance, quién escribe el contenido, lecciones por semana, repaso diario, área propia) | Respondidas o superadas por D29: 1 (alcance), superada porque el alcance es mayor; 2 (quién escribe), por D-ING-4; 3 (lecciones por semana), **5 días de 60 minutos**; 4 (repaso diario), repaso diario con recordatorio opcional (P5-18); 5 (área propia), racha propia (P5-19) | D29 |
 | 18 | **Cabecera:** *«módulos 1 y 2 aprobados; módulo 3 en revisión; rúbrica en revisión»* | Los módulos son semilla de B1.1 y B1.2 y la rúbrica se ajusta (14); el contenido se aprueba por muestras (D-ING-4) | Plan 7 |
 
@@ -1207,20 +1332,35 @@ Numeración: `CA-5a-nn` núcleo, `CA-5b-nn` audio y habla, `CA-5c-nn` ubicación
 
 | Punto pendiente | Resolución | Dónde |
 |---|---|---|
-| Qué pruebas intermedias lleva el escalón (hoy ninguna) | **Ninguna que bloquee** | P5-08, 3.6; pregunta 3 |
-| Qué más cuenta una mini prueba fallida (0.3: *se repite la semana*; rúbrica: *los errores vuelven como tarjetas*) | **Los errores vuelven como tarjetas**, siempre; **no se repite la semana**; no toca la constancia; menos de 50 % cuenta para el descenso | P5-07, 3.6 |
+| Qué pruebas intermedias lleva el escalón (hoy ninguna) | **Cuatro pruebas por unidad que bloquean** (D-ING-14); la 0.5 proponía ninguna (P5-08) y se **retiró** | P5-31, 3.6.1; pregunta 3 |
+| Qué más cuenta una mini prueba fallida (0.3: *se repite la semana*; rúbrica: *los errores vuelven como tarjetas*) | **Los errores vuelven como tarjetas**, siempre; **no se repite la semana**; no gasta faltas; menos de 50 % cuenta para el descenso | P5-07, 3.6 |
 | Si la puerta cuenta dentro de las 40 horas y cómo se reparte en sesiones | **Sí cuenta** (plan 4.2). Se reparte en turnos de hasta 90 minutos en los últimos días de la semana 8 | P5-15, 3.7.7 |
 | Qué semana y con qué forma se usa la puerta anticipada | **Semana 2**, una vez por ciclo, con la forma de **reserva** | P5-11, 3.7.8 |
 | Cómo se aplica el 90 % a escritura y habla | **360 o más sobre 400**; *gramática del tema ≥ 3* queda implícita por los pesos | 3.7.8 |
-| Qué constancia y minutos se piden a quien pasa por ella | Los **mismos umbrales sobre lo cursado** hasta ese día | P5-11, 3.7.5 y 3.7.8; pregunta 6 |
+| Qué asistencia y unidades se piden a quien pasa por ella | Los **mismos umbrales sobre lo cursado** hasta ese día | P5-11, 3.7.5 y 3.7.8; pregunta 6 |
 | Cuándo se usa la forma de reserva | **Anticipada**, reemplazo de una forma retirada y repetición de un escalón | P5-12, 3.7.11 |
 | Si el descenso por evidencia cuenta como una de las dos bajas seguidas | **No cuenta** | P5-09, 3.7.9–3.7.10 |
-| Qué es un trimestre | **13 semanas desde el primer lunes de estudio**, no de calendario | P5-01, 3.4 |
+| Qué es un trimestre | **Ya no hay trimestre**: D-ING-12 cuenta por escalón (P5-01 retirada) | P5-30, 3.4 |
 | Crédito parcial | **No hay** en lo objetivo | P5-16, 3.7.1 |
 | Estructura de la conversación guiada del viernes | **Guion de 8 turnos** con modelo, variantes y cotejo, sin IA, 60 segundos por turno | P5-17, 3.2 |
 | Cómo se cuentan «día completo» y el 90 % mientras la app no tenga audio | **Solo el principal**: 35 minutos planeados por día y día completo con los cuatro sub-bloques; el resto, respaldo | P5-04 y P5-05, 3.3 |
 | Si las 3 preguntas de lectura y las 3 de escucha de la ubicación comparten un texto y un audio | **Sí**, y el audio se oye dos veces | P5-21, 5.2 |
 | Contradicciones de ING-I7 y numeración de semanas | Tabla 11.1, filas 1 a 6 | 11.1 |
+
+**11.3 Cambios de la versión 0.5 a la 0.6** (17/nov/2026; decisiones del dueño D-ING-12 a 15, `docs/DECISIONES.md:570-571`, plan 4.1, y `docs/specs/fase-8-habitos-pareja-y-correccion.md` 0.2)
+
+| # | La versión 0.5 decía | La versión 0.6 | Fuente |
+|---|---|---|---|
+| 1 | **90 % de los minutos** del ciclo (con enteros) y **tres días de gracia por trimestre**, con trimestres de 13 semanas (P5-01, P5-02) | **Asistencia:** hasta 10 minutos de faltante por día y a lo más tres días faltados por escalón; al cuarto, el escalón se repite. **Se retira el trimestre**, la gracia y el 90 % (P5-30) | D-ING-12; 3.3 y 3.4 |
+| 2 | **Un día incompleto** (11 de 12 elementos) solo se cubría con un día de gracia | Es **asistido** si faltan 10 minutos o menos; `completo` sigue siendo estricto para el anillo | D-ING-12; 3.3 |
+| 3 | **Ninguna prueba intermedia que bloquee** (P5-08) | **Cuatro pruebas por unidad** que cuentan para subir (P5-31); el viernes sigue siendo de repaso | D-ING-14; 3.6.1 |
+| 4 | Requisitos para subir: puerta, constancia y minutos (el 1.º cubierto por el 2.º) | **Cuatro propios:** unidades, puerta, constancia (≤ 3 faltas) y minutos (≤ 10 por día) | D-ING-12 y 14; 3.7.4 |
+| 5 | **Sin conexión:** una lista corta y la cola | Sección 9 completa: qué se estudia sin red, qué la necesita, orden y reintentos verificados en la cola, **instalación por adelantado**, estados visibles y criterios de modo avión | D-ING-13; 9 |
+| 6 | **Dictado y transcripción:** condición de P5-22, sin requisito de red ni mensajes | **Requisito de 5b:** funcionan sin red; si el equipo no garantiza el modo local, la persona ve qué hacer (tabla de 4.4); hallazgo sobre `speech_to_text` completado | D-ING-13; 4.4 |
+| 7 | Texto, transcripción y voz: **solo en el dispositivo** (salvo lo que decidiera P6.0) | **Texto y transcripción pueden ir a la IA con permiso en cada envío y el filtro de D3; la voz nunca sale** | D-ING-15; R4, 4.4 y 7.1 |
+| 8 | Un interruptor `correccion_ia` | Dos: `correccion_ia_escritura` y `correccion_ia_habla` | P6-16 de P6.0; 7.1, 8.2 |
+| 9 | Una entrega sin red *se reintentaba al volver la red* | Queda *lista para enviar* y **no sale sola**: se pide permiso otra vez | D-ING-15; 7.1, 9.1 |
+| 10 | Modelo `ing_bloques` sin pruebas por unidad | Bloque `prueba_unidad` con `unidad`, `intento` y `forma_id`; sin tabla nueva | 3.6.1, 8.2 |
 
 ## 12. Decisiones que ya están tomadas
 
@@ -1239,7 +1379,11 @@ Nada de esta lista se cambia aquí. Donde una propuesta de esta versión toca un
 | **D-ING-9:** la escritura y el habla de las puertas las corrige una **IA, opcional por función**; D3, D21 y la clave fuera de la app se mantienen | `docs/DECISIONES.md:568`; plan 3.8 | 3.7.13, 7 |
 | **D-ING-10:** el curso **no arranca** hasta que la fase 6 esté integrada; **ninguna etiqueta provisional** | `docs/DECISIONES.md:568`; plan 4.1 | 3.7.13, 7.3 |
 | **D-ING-11 (coordinador, tras esta redacción):** si la persona no activa la IA, la escritura y el habla de la puerta van a la pareja y a la IA, o esperan a que la IA se active; lectura y escucha siguen; no hay autocalificación | Mensaje del coordinador del 16/nov/2026; aún no figura en `docs/DECISIONES.md` | 3.7.13, 7.1, 7.2 |\n| **Plan 4.2:** la puerta de etapa **es** la del último escalón (13 puertas, 39 formas); primera oportunidad al final de la semana 8; fallar las dos en A1.1 repite A1.1 y la segunda caída seguida lleva a revisar el plan; bajar a un escalón de cierre conserva la etiqueta; la puerta cuenta dentro de las 40 horas; B1+ no se otorga; los 35 minutos solo de respaldo | Plan, sección 4.2 | 3.7.12 (una fila por caso) |
-| **Reglas del dueño vigentes:** 60 minutos de lunes a viernes; un día completo es principal más traslado; **tres días de gracia por trimestre, sin acumularse**; los cuatro requisitos para subir (pruebas, evaluación de cierre, constancia y 90 % de minutos); *«si pierdes un día, no se recupera con dos bloques seguidos»* | `docs/contenido/ingles/niveles-y-avance.md`, secciones 4 y 5; `CONTEXTO.md` | 3.3, 3.4, 3.7.4 |
+| **D-ING-12:** solo se pueden faltar **10 minutos por día** y **3 días completos**; pasado eso no se completa el curso y se repite (**lectura mía, a confirmar:** el escalón) | `docs/DECISIONES.md:570`; plan 4.1 | 3.3, 3.4, 3.7.4, 3.7.5; pregunta 9. En la práctica reemplaza al 90 % de minutos y a los días de gracia por trimestre de D-ING-2 y de las reglas anteriores (lectura mía, pregunta 9c) |
+| **D-ING-13:** estudiar **sin conexión debe funcionar completo**; el **dictado funciona en modo local** | `docs/DECISIONES.md:570`; plan 4.1 | 4.4, 9 |
+| **D-ING-14:** el examen del viernes es **de repaso**; el escalón lleva **pruebas por unidad que cuentan para subir** | `docs/DECISIONES.md:570`; plan 4.1 | 3.6, 3.6.1, 3.7.4, 8.2 |
+| **D-ING-15:** el texto escrito lo corrige una **IA en la nube**, sin tiempo real, **con permiso en cada envío** y el filtro de D3; el habla es una **conversación con la IA** que empieza por texto (el teléfono transcribe, solo el texto va a la IA); **la grabación de voz se queda en el dispositivo**; matiza D-ING-13 | `docs/DECISIONES.md:571`; plan 4.1 | R4, 4.4, 7.1 |
+| **Reglas del dueño vigentes:** 60 minutos de lunes a viernes; un día completo es principal más traslado; **tres días de gracia por trimestre, sin acumularse** y los cuatro requisitos para subir (pruebas, evaluación de cierre, constancia y 90 % de minutos), **que D-ING-12 y D-ING-14 precisan en la 0.6**: tres días faltados por escalón y 10 minutos por día en lugar de la gracia y del 90 %, y pruebas por unidad en lugar de «pruebas» sin definir (lectura mía, preguntas 3 y 9); *«si pierdes un día, no se recupera con dos bloques seguidos»* | `docs/contenido/ingles/niveles-y-avance.md`, secciones 4 y 5; `CONTEXTO.md` | 3.3, 3.4, 3.7.4 |
 | **D3:** nada de dinero ni datos clínicos a la IA en la nube; el modelo no ve cifras | `docs/DECISIONES.md:77-87` | R1, 7.1 |
 | **D5 y D21:** Hábitos es personal; la cuenta maestra no lo lee; las tablas `hab_*` no escriben en la bitácora; la tablet personal funciona como el teléfono y la pública no muestra Hábitos | `docs/DECISIONES.md:111-142` y `:470-480` | R2, R3, 3.8, 8.3 |
 | **D13:** dos modos para lo sensible (nube cifrada o solo teléfono); el inglés no es de esos dos tipos, y lo que no sale del dispositivo no sale | `docs/DECISIONES.md:291-302` | 7.1 |
@@ -1251,28 +1395,28 @@ Todo lo que esta versión resuelve por su cuenta, en un solo lugar, para que el 
 
 | # | Propuesta | Dónde | Si se veta |
 |---|---|---|---|
-| P5-01 | Un trimestre son 13 semanas desde el primer lunes de estudio | 3.4 | Trimestre de calendario: cambia una función |
-| P5-02 | La app cubre con gracia, sola y en orden, los tres primeros días sin completar de cada trimestre | 3.4 | La persona elige qué días cubrir (un toque más) |
+| P5-01 | ~~Un trimestre son 13 semanas~~ **Retirada en la 0.6:** D-ING-12 cuenta por escalón | 3.4 | Volver a trimestres si el dueño conserva los días de gracia (pregunta 9c) |
+| P5-02 | ~~La app cubre con gracia los tres primeros días~~ **Reemplazada** por P5-30: los tres primeros días faltados del ciclo quedan tolerados, solos y en orden | 3.4 | La persona elige qué días cubrir (un toque más) |
 | P5-03 | Un escalón empieza el primer lunes posterior al cambio | 3.1 | Empezar el mismo día, con una primera semana parcial |
 | P5-04 | Planeados: 60 min por día, o 35 si todos los bloques del día fueron sin audio. Acreditados: proporcionales a lo hecho, en segundos | 3.3 | Medir por reloj, o todo o nada por sub-bloque |
 | P5-05 | Día completo es todo; la fecha es la de inicio del bloque; una sesión pasada se estudia libre y no suma | 3.2, 3.3 | Una tolerancia (por ejemplo, 90 % de los elementos) |
 | P5-06 | Repaso: tres cajas (1, 5 y 20 días de estudio), tres calificaciones, cola de 40 | 3.5 | Menos tarjetas nuevas o más tiempo de repaso (pregunta 5) |
 | P5-07 | Los errores de una mini prueba vuelven como tarjetas; no se repite la semana; no toca la constancia | 3.6 | Repetir la semana: mueve la puerta y los minutos (pregunta 3) |
-| P5-08 | El escalón no lleva pruebas intermedias que bloqueen | 3.6 | Una prueba de media vía en la semana 4 (pregunta 3) |
+| P5-08 | ~~El escalón no lleva pruebas intermedias~~ **Sustituida** por P5-31 (D-ING-14) | 3.6.1 | — |
 | P5-09 | El descenso por evidencia se cuenta dentro de un ciclo, no es una caída y en A1.1 no hace nada | 3.7.9 | Contarlo como caída |
 | P5-10 | Dos caídas seguidas detienen el curso hasta que la persona confirma que revisó su plan; no se avisa a nadie | 3.7.10 | Avisar al dueño con consentimiento (pregunta 4) |
-| P5-11 | Anticipada: semana 2, una vez por ciclo, forma de reserva, 90 % (360 de 400), constancia y minutos de lo cursado; puerta inmediata de B2 como anticipada de B2.4 | 3.7.8 | Basta el 90 % por habilidad (pregunta 6) |
+| P5-11 | Anticipada: semana 2, una vez por ciclo, forma de reserva, 90 % (360 de 400), asistencia y unidades de lo cursado; puerta inmediata de B2 como anticipada de B2.4 | 3.7.8 | Basta el 90 % por habilidad (pregunta 6) |
 | P5-12 | Forma que toca: la anticipada usa la reserva; las oportunidades, la primera no presentada; con las tres vistas, la de hace más tiempo | 3.7.11 | Un cuarto juego de formas (13 más) |
-| P5-13 | Se sube con puerta, constancia y minutos; con la puerta aprobada y sin uno de los otros dos, el escalón se repite; la etiqueta se gana con la puerta | 3.7.4 | Extender el escalón por semanas completas (pregunta 2) |
+| P5-13 | Se sube con unidades, puerta, constancia y minutos; con la puerta aprobada y sin uno de los otros, el escalón se repite; la etiqueta se gana con la puerta | 3.7.4 | Extender el escalón por semanas completas (pregunta 2) |
 | P5-14 | La semana de práctica se arma con sesiones del escalón según la habilidad no alcanzada | 3.7.6 | Contenido propio de práctica |
 | P5-15 | Turnos de hasta 90 minutos sin partir una sección; el día de un turno acredita 60 | 3.7.7 | Otro reparto de las secciones |
 | P5-16 | Sin crédito parcial en lo objetivo | 3.7.1 | Un 0.5 que alguien tendría que decidir |
 | P5-17 | Conversación guiada del viernes: guion de 8 turnos con modelo, variantes y cotejo, sin IA | 3.2 | Otra estructura, o IA en vivo después de P6.0 |
 | P5-18 | Recordatorio local `hab_ingles`, apagado por omisión | 3.8 | Sin recordatorio, o encendido por omisión |
-| P5-19 | El inglés tiene su propia racha y no entra a la racha global | 3.4 | Contar el día completo como un elemento más de la global |
+| P5-19 | El inglés tiene su propia racha (días asistidos o tolerados) y no entra a la racha global | 3.4 | Contar el día asistido como un elemento más de la global |
 | P5-20 | *Borrar mis datos › todo* borra también el inglés y la ubicación | 5.6 | Conservar la ubicación (no cabe con el derecho a borrar de D21) |
 | P5-21 | Ubicación: un texto con 3 preguntas y un audio con 3 que se oye dos veces; sin cronómetro ni retroalimentación; respuestas de una en una al servidor; comprobación al empezar si hay red | 5.2, 5.3 | Tres textos y tres audios, una reproducción, o con retroalimentación |
-| P5-22 | La transcripción es solo en el dispositivo, comprobada antes; si no se puede garantizar, el habla pasa a autoevaluación | 4.4 | Permitir reconocimiento en la nube (rompe R4) |
+| P5-22 | La transcripción y el dictado son solo en el dispositivo y funcionan sin red (D-ING-13), comprobados antes con una verificación nativa y una prueba de modo avión; si no se puede garantizar, el habla pasa a autoevaluación y la persona ve qué hacer | 4.4 | Permitir reconocimiento en la nube (rompe D-ING-13 y D-ING-15) |
 | P5-23 | Grabaciones: carpeta privada, fuera de la copia de Android, 30 días (o hasta 30 días tras el veredicto en una puerta) | 4.3 | Otra retención |
 | P5-24 | Sin la IA activada, escritura y habla de la puerta esperan (pareja e IA, o activación; D-ING-11) y lectura y escucha siguen; sin autocalificación; mientras falte, no hay veredicto; `INGLES_ARRANQUE` apagada impide empezar el curso | 3.7.13, 7.3 | Una etiqueta provisional (D-ING-10 la prohíbe) |
 | P5-25 | Semáforo por tabla de cuatro condiciones, solo con formas completas, en modo examen y con audio; la práctica por partes no suma | 6.4, 6.5 | Otra regla de colores |
@@ -1280,8 +1424,12 @@ Todo lo que esta versión resuelve por su cuenta, en un solo lugar, para que el 
 | P5-27 | Metas semanales (5 días, 300 minutos, 60 repasos) informativas | 3.3 | Que alguna bloquee |
 | P5-28 | El escalón actual y las etiquetas se calculan; no se guardan | 3.1 | Una columna `escalon_actual` y una función que valide transiciones |
 | P5-29 | Puerta de escalón: 2 textos × 5 preguntas, 2 audios × 5 preguntas, una tarea de escritura y una de habla, en 60 minutos o menos | 6.2 | El contrato `gravity-escalon` sigue pendiente y no hay puertas de escalón |
+| P5-30 | **Asistencia:** hasta 10 minutos de faltante por día; a lo más 3 días faltados por escalón (día entero, sin crédito parcial); al cuarto el escalón se repite; reemplaza al 90 % de minutos y a los días de gracia por trimestre | 3.3, 3.4 | Solo cuenta lo que falta, con un tope de 180 minutos (pregunta 9b); o conservar los días de gracia por trimestre además (9c) |
+| P5-31 | **Pruebas por unidad:** cuatro por escalón (viernes de las semanas 2, 4, 6 y 7), 20 preguntas objetivas (15 sin audio), 80 %, una repetición el lunes siguiente con forma de reserva, sin tabla nueva (`ing_bloques`); si no se aprueban, no se sube | 3.6.1, 8.2 | Dos pruebas por escalón, o una sola forma por unidad (pregunta 3) |
+| P5-32 | **Instalar por adelantado:** el curso viaja dentro de la app; la pantalla *Listo para estudiar sin conexión* revisa contenido, voz, dictado local, micrófono y lo que falta por subir; las descargas son con aviso y no dejan nada a medias | 9.6 | Descarga automática con Wi-Fi |
+| P5-33 | **Estados de conexión** con textos cerrados, sin cargando por la red; una entrega queda *lista para enviar* y no sale sola | 9.7 | Reenviar solo al volver la red (rompe el permiso por envío de D-ING-15) |
 
-**Revisión contra las decisiones.** El autor revisó esta lista contra `docs/DECISIONES.md` (D3, D5, D13, D21 y D29) y contra el plan 0.6 (secciones 3, 4.1 y 4.2), a mano y con un script (cifras, citas de línea y numeración de criterios). Ninguna propuesta cambia una decisión confirmada: las que parecían rozar una (la anticipada de B2, el descenso frente a las bajas seguidas, el 35 de respaldo) **la cumplen con una lectura explícita** que está en su sección. La revisión de calidad la repite.
+**Revisión contra las decisiones.** El autor revisó esta lista contra `docs/DECISIONES.md` (D3, D5, D13, D21 y D29, con D-ING-11 a D-ING-15) y contra el plan 0.6 (secciones 3, 4.1 y 4.2), a mano y con un script (cifras, citas de línea y numeración de criterios). Ninguna propuesta cambia una decisión confirmada: las que parecían rozar una (la anticipada de B2, el descenso frente a las bajas seguidas, el 35 de respaldo) **la cumplen con una lectura explícita** que está en su sección. La revisión de calidad la repite.
 
 ## 14. Pedidos a otras áreas
 
@@ -1289,7 +1437,7 @@ Esta especificación escribe en un solo archivo. Lo que necesita de otras áreas
 
 | Área | Pedido | Sección |
 |---|---|---|
-| **backend** (P2.2) | Migración con las **doce tablas** `ing_*` de 8.2 (columnas, tipos, llaves compuestas, `check` de rango, lista y coherencia, único parcial); `ing_propio()` y el solo agregar con **variante para el borrado** de las dos funciones; idempotencia estricta; cuotas | 8.2, 8.3 |
+| **backend** (P2.2) | Migración con las **doce tablas** `ing_*` de 8.2 (columnas, tipos, llaves compuestas, `check` de rango, lista y coherencia, único parcial); `ing_propio()` y el solo agregar con **variante para el borrado** de las dos funciones (nota de 15: sin esto, «Borrar mis datos» falla); `ing_bloques` con `prueba_unidad`, `unidad`, `intento` y `forma_id` (8.2); idempotencia estricta; cuotas | 8.2, 8.3 |
 | **backend** | `ing_guardar_tarjetas(p_tarjetas jsonb)`; ampliar `hab_borrar_datos_de` y `hab_limpiar` a las doce tablas; **reservar el prefijo `ing_`** en `bitacora_agregar` y en `puede_ver_entrada_bitacora`; aceptar `hab_ingles` en `avisos_actualizar_preferencias` | 8.3, 8.4 |
 | **backend** | Pruebas SQL de CA-5c-01 a 04 y 13 y de CA-5m-01 a 11; entrada en `supabase/README.md` (qué ve y qué no ve el servidor; columnas que pone el servidor) | 10 |
 | **plataforma** | **Tablas locales** espejo de las doce y migración de `BaseLocal` (hoy solo `Pendientes`, `schemaVersion` 3) | 9.3 |
@@ -1297,31 +1445,40 @@ Esta especificación escribe en un solo archivo. Lo que necesita de otras áreas
 | **plataforma** | `LimpiezaLocal.registrar` para las filas locales y las grabaciones; carpeta privada; **grabaciones fuera de la copia automática de Android**; el servicio en primer plano del traslado (P3.2b) | 4.3, 9.3 |
 | **plataforma** | Bandera de compilación **`INGLES_ARRANQUE`** (apagada) en `ConfiguracionEntorno`; recordatorio local `hab_ingles` con sus acciones; rutas `ingles/…` y `Ajustes › Inglés`; el inglés fuera de la tablet pública | 3.8, 7.3 |
 | **plataforma** y **dueño** | Los **paquetes de grabación y de transcripción** los evalúa P3.2b y los aprueba el dueño; nada se agrega en esta versión | 4.3, 4.4 |
+| **plataforma** | **Comprobación nativa del reconocimiento local** (`SpeechRecognizer.isOnDeviceRecognitionAvailable`, Android 12 o posterior, y paquete de inglés instalado) detrás de una interfaz, para que el dictado y la transcripción de inglés la usen; el resultado de la prueba de modo avión se guarda en el dispositivo | 4.4, 9.6 |
 | **asistente** | `habitos.ingles_hoy` (`soloLocal`, solo lectura) y la orden de abrir inglés; OpenAPI de lo nuevo (P2.5); en el motor de voz, lo que pide 4.2 (fuente congelada y registrada) | 3.8, 4.2 |
 | **asistente** | La corrección con rúbrica en `supabase/functions/gravity-asistente`, con el filtro de D3 (P6.2): fuera de esta versión | 7 |
-| **diseno** | Componentes: anillo de la sesión, barra de requisitos, tarjeta de repaso que se voltea con tres botones, línea de escalones, marca de fidelidad con texto e icono, semáforo de examen; estados vacío, sin conexión y error | 3.8, 6 |
+| **diseno** | Componentes: anillo de la sesión, barra de requisitos (unidades, puerta, faltas y minutos), cinta de conexión y pantalla *Listo para estudiar sin conexión*, tarjeta de repaso que se voltea con tres botones, línea de escalones, marca de fidelidad con texto e icono, semáforo de examen; estados vacío, sin conexión y error | 3.8, 6 |
 | **habitos** (formato 0.5, P1.2c) | El bloque **`mini_prueba`** que referencia una forma de uso `mini`; el bloque **`conversacion`** con sus campos (P5-17); la estimación de minutos de ambos; velocidades por contrato si P3.1 las quiere | 3.2, 3.6 |
 | **habitos** (`compilar`) | `indice.json` con versión y huella, lista de formas retiradas, `fidelidad.motivos`, la **oportunidad** (A, B o C) de cada forma, minutos y `papel` por sección, `huella_guion` | 6.1, 8.5 |
-| **habitos** (contratos) | `gravity-ubicacion.yaml`: aplicar P5-21 (un texto y un audio con 3 preguntas, `reproducciones: 2`, retirar los `pendiente` de lectura y escucha). `gravity-escalon.yaml`: P5-29, P5-12, P5-11, P5-07 y P5-08, y retirar la nota de quién califica (D-ING-9). Una comprobación V27 de que una forma de escalón estime 60 minutos o menos | 5.2, 6.2 |
+| **habitos** (contratos) | `gravity-ubicacion.yaml`: aplicar P5-21 (un texto y un audio con 3 preguntas, `reproducciones: 2`, retirar los `pendiente` de lectura y escucha). `gravity-sesion-60.yaml`: las cifras de asistencia (10 minutos por día, 3 días faltados por escalón). `gravity-escalon.yaml`: P5-29, P5-12, P5-11, P5-07 y P5-31 (bloque `prueba_unidad`: 4 por escalón, formas `a` y `b`, 20 preguntas, 15 sin audio, 80 %; y minutos 13.3 de la Lección del viernes), y retirar la nota de quién califica (D-ING-9). Una comprobación V27 de que una forma de escalón estime 60 minutos o menos | 5.2, 6.2 |
 | **habitos** (rúbrica) | `rubrica-evaluacion.md`: mini pruebas de 10 preguntas y 8 de 10; sin pruebas de módulo; **sin crédito parcial**; la extensión es la de la etapa y la regla del 1 en coherencia para un texto corto; la autoevaluación del habla ya no decide (D-ING-9) | 3.7.1 |
-| **habitos** (`niveles-y-avance.md` 0.5) | El requisito 1 cubierto por el 2; el trimestre; las mini pruebas; las dos bajas seguidas | 3.4, 3.6 |
-| **calidad** | Revisar esta especificación contra `DECISIONES.md` y el plan; hacer las mediciones V-b1 a V-b4 en el Galaxy A52; verificar las escalas oficiales antes de cualquier conversión; **comprobar que `cola_hab_test.dart` (Fase 3, criterio 10) no existe** | 4.5, 6.4, 9.2 |
+| **habitos** (`niveles-y-avance.md` 0.5) | El requisito 1 son las pruebas por unidad (D-ING-14); ya no hay trimestre (D-ING-12); las mini pruebas son de repaso; las dos bajas seguidas | 3.4, 3.6, 3.6.1 |
+| **calidad** | Revisar esta especificación contra `DECISIONES.md` y el plan; hacer las mediciones V-b1 a V-b5 en el Galaxy A52; verificar las escalas oficiales antes de cualquier conversión; **comprobar que `cola_hab_test.dart` (Fase 3, criterio 10) no existe** | 4.5, 6.4, 9.2 |
 | **arquitecto** | Registrar como **decisión nueva (propuesta D30)** las propuestas P5-01 a P5-29 que el dueño apruebe; fila de P0.3 en el control de cambios del roadmap; lanzar **P2.2 y P2.3** (dependían de esta especificación); decidir cuándo se enciende `INGLES_ARRANQUE` | 13, 7.3 |
 
 ## 15. Preguntas para el dueño
 
-Solo las que de verdad cambian el diseño. Cada una trae mi recomendación. **Si no respondes, vale lo que dice el documento**, que coincide con la recomendación salvo en la pregunta 1 (hoy no hay pausas, sección 1.2).
+Solo las que de verdad cambian el diseño. Cada una trae mi recomendación. **Si no respondes, vale lo que dice el documento**, que coincide con la recomendación salvo en la pregunta 1 (hoy no hay pausas, sección 1.2). Las preguntas 8 y 9 son nuevas de esta versión: salen de D-ING-12 y D-ING-14.
 
 | # | Pregunta | Por qué cambia el diseño | Recomendación |
 |---|---|---|---|
-| 1 | **Vacaciones y enfermedad.** ¿Admite el curso pausas que no cuenten como días perdidos? Hoy solo los tres días de gracia por trimestre cubren una falta: una semana de enfermedad rompe la constancia y, aunque apruebes la puerta, el escalón se repite (T15) | Agrega una tabla `ing_pausas` (con los motivos de `hab_pausas`: descanso, viaje, salud, otra) y un parámetro en 3.4 y 3.3: un día en pausa no cuenta ni como día de estudio ni en los minutos planeados | **Sí, con tope** (por ejemplo, 10 días de estudio por trimestre). Tú decides el tope. Mientras no respondas, no hay pausas |
-| 2 | **Puerta aprobada, pero sin constancia o sin el 90 % de minutos.** Dijiste que entonces no se sube. ¿Qué pasa? Propongo que **el escalón se repite** (con la puerta anticipada de la semana 2 como atajo) y que la etiqueta de la etapa queda ganada | Define T15. La alternativa es alargar el escalón con semanas completas hasta alcanzar el 90 % de minutos, y la constancia no se puede recuperar | **Repetir el escalón** |
-| 3 | **Pruebas intermedias y la mini prueba.** (a) ¿Basta la mini prueba semanal, o quieres además una prueba de cuatro habilidades a la mitad del escalón? (b) Tu decisión del 14/nov *«la primera evaluación semanal fallida queda como día de gracia»*: con esta versión ninguna mini prueba toca la constancia, así que esa regla ya no distingue «la primera». ¿Se retira? | (a) Una prueba de media vía duplica el contenido de 13 puertas y sus correcciones con IA. (b) Si la conservas, hay que decir qué significa ahora | (a) Basta la mini prueba. (b) Retirarla |
+| 1 | **Vacaciones y enfermedad.** ¿Admite el curso pausas que no cuenten como días faltados? Hoy solo las **tres faltas por escalón** (3.4) cubren un día sin estudiar: una semana de enfermedad las agota y el escalón se repite (T15) | Agrega una tabla `ing_pausas` (con los motivos de `hab_pausas`: descanso, viaje, salud, otra) y un parámetro en 3.3 y 3.4: un día en pausa no cuenta ni como día de estudio ni en los minutos planeados | **Sí, con tope** (por ejemplo, 10 días de estudio por escalón). Tú decides el tope. Mientras no respondas, no hay pausas |
+| 2 | **Puerta aprobada, pero sin las pruebas por unidad, la asistencia o los minutos.** Dijiste que entonces no se sube. ¿Qué pasa? Propongo que **el escalón se repite** (con la puerta anticipada de la semana 2 como atajo) y que la etiqueta de la etapa queda ganada | Define T15. La alternativa es alargar el escalón con semanas completas; las faltas no se pueden recuperar | **Repetir el escalón** |
+| 3 | **Pruebas por unidad (D-ING-14).** Propuse **cuatro por escalón** (viernes de las semanas 2, 4, 6 y 7), de **20 preguntas objetivas** con umbral del **80 %**, **una repetición** el lunes siguiente con una forma de reserva y, si tampoco se aprueba, el escalón se repite aunque se apruebe la puerta (3.6.1). ¿Te parece bien la medida? ¿Y que una unidad fallida **no corte** el estudio hasta la puerta? | Pide **8 formas por escalón y unas 2 080 preguntas** en total (3.6.1): es una carga de contenido que el plan no tenía contada | **Sí a lo propuesto.** Si la carga es demasiada: **dos pruebas por escalón** (semanas 4 y 7) o una sola forma por unidad. Y tu decisión del 14/nov *«la primera evaluación semanal fallida queda como día de gracia»* **se retira**: no hay días de gracia (pregunta 9) y ninguna mini prueba gasta faltas |
 | 4 | **Dos caídas seguidas en otra persona.** Si tu pareja o un familiar llega a dos caídas seguidas, la regla dice que *el dueño revisa el plan*; pero Hábitos es personal y no puedes leer lo suyo (D21). ¿Cómo te enteras? | Cambia 3.7.10 y lo que defina P6.0 sobre consentimiento | La app **no avisa a nadie**; la persona lo ve y lo habla contigo si quiere. P6.0 puede añadir un aviso **con su consentimiento** |
 | 5 | **Cuántas tarjetas y cuántos repasos.** Con 32 tarjetas nuevas a la semana, un repaso de 5 minutos solo sostiene **tres repasos por tarjeta** (a 1, 5 y 20 días de estudio). Más repasos por tarjeta (más memoria a largo plazo) exigen menos tarjetas nuevas (por ejemplo, de 8 a 5 al día) o más tiempo de repaso | Cambia 3.5 y los mínimos del contenido (8 por sesión) | Dejar las tres cajas y **medir en el piloto de A2.1** antes de tocar el contenido |
-| 6 | **Puerta anticipada: ¿también constancia y minutos?** Quien se ubicó bajo y presenta la puerta en la semana 2 ¿debe haber estudiado esos días con constancia y el 90 % de los minutos, o basta con el 90 % en cada habilidad? | Cambia T08 y 3.7.5 | **Sí piden lo mismo**, sobre lo cursado: quien no estudia no demuestra nada |
-| 7 | **Lo que escribes, lo que dices y tu voz solo en el dispositivo.** ¿Aceptas que los textos, las transcripciones y las grabaciones no se vean en la laptop ni se respalden en la nube? | La alternativa es un tercer modo cifrado como el del diario de oración (D13), con su llave, su frase y más trabajo | **Sí, solo en el dispositivo** |
-| 8 | **Un día completo es completo.** ¿Un día con 11 de los 12 elementos de pronunciación cuenta o necesita un día de gracia? | Cambia 3.3: una tolerancia (por ejemplo, 90 % de los elementos) | **Estricto**: para eso están los días de gracia |
+| 6 | **Puerta anticipada: ¿también asistencia y unidades?** Quien se ubicó bajo y presenta la puerta en la semana 2 ¿debe haber cumplido la asistencia y las unidades ya presentadas, o basta con el 90 % en cada habilidad? | Cambia T08 y 3.7.5 | **Sí piden lo mismo**, sobre lo cursado: quien no estudia no demuestra nada |
+| 7 | **Lo que escribes, lo que dices y tu voz, en el dispositivo.** D-ING-15 ya permite que **el texto y la transcripción** vayan a la IA con permiso en cada envío; la grabación nunca sale. Lo que queda por decidir: ¿aceptas que los textos, las transcripciones y las grabaciones **no se vean en la laptop ni se respalden en la nube de GRAVITY**? | La alternativa es un tercer modo cifrado como el del diario de oración (D13), con su llave, su frase y más trabajo | **Sí, solo en el dispositivo** |
+| 8 | **Un día con 11 de 12 elementos de pronunciación.** *Resuelta por D-ING-12*: cuenta como **asistido** porque faltan menos de 10 minutos; sigue sin ser `completo` en el anillo de la sesión (3.3) | Nada que decidir; se deja por si quieres otra tolerancia | Dejar los 10 minutos |
+| 9 | **Cómo leo D-ING-12 (asistencia).** (a) *«Repetir el curso»*: ¿quieres decir **el escalón**? (b) *«3 días completos»*: ¿un día en que estudiaste 40 de 60 minutos **cuenta como día faltado entero** (propuesta) o solo cuenta lo que falta, con un tope de 180 minutos faltados en el escalón? (c) ¿Los **tres días por escalón reemplazan** a los tres días de gracia por trimestre de las reglas anteriores (propuesta), o quieres las dos reglas? | (a) Cambia T15 y el tamaño del castigo: repetir 8 semanas; (b) cambia el cálculo de 3.4 y el ejemplo; (c) con las dos reglas habría dos contadores y dos mensajes, y la racha se complica | (a) **Sí, el escalón.** (b) **Día entero**: es lo que dice la frase. (c) **Reemplazan**: una sola regla, más sencilla de entender |
+
+**Nota para el dueño · por qué el prefijo `hab_` importa (hallazgo del 17/nov/2026, sin SQL).** Las reglas de **privacidad** y de **solo agregar** del servidor se escribieron buscando tablas cuyo nombre empieza por `hab_`. Las del inglés empiezan por `ing_`. Si se crean sin ampliar esas reglas pasan dos cosas, y ninguna es un detalle:
+
+1. **La bitácora.** Hoy el servidor impide anotar en la bitácora cualquier tabla `hab_` y oculta esas entradas al dueño y a la cuenta maestra (`supabase/migrations/20261105000000_habitos.sql:426-455`). Con `ing_`, **esa protección no las cubriría**: lo que se haga en el inglés podría aparecer en una bitácora que ve alguien más. Es justo lo que D21 prohíbe.
+2. **«Solo agregar» y el borrado.** La regla que impide editar o borrar filas (para que el historial no se altere) bloquea **a todos, incluso a las funciones de borrado** (`supabase/migrations/20261020000000_base.sql:289-302`). Las tablas del inglés son de solo agregar, así que **«Borrar mis datos» y la limpieza a los 90 días de una baja fallarían** al llegar a la primera de ellas: la persona pediría borrar y no se borraría.
+
+**Qué hay que ampliar** (lo hace `backend` en P2.2, antes de crear una sola tabla; 8.3 y 8.4): (a) que las protecciones de la bitácora cubran también el prefijo `ing_`; (b) una variante de «solo agregar» que deje pasar **únicamente** a las dos funciones de borrado; (c) que esas dos funciones incluyan las tablas `ing_`; y (d) pruebas del servidor que lo comprueben (CA-5m-03, 04 y 05). **Alternativa:** poner a las tablas nombres `hab_ingles_…`: cubre (a) sin tocar la regla, pero **no** resuelve (b) ni (c), y alarga todos los nombres. **Recomiendo ampliar las reglas** y no cambiar los nombres. Si no se hace, el curso **no debe arrancar** (es un requisito de P2.2).
 
 ## 16. Historial de versiones
 
@@ -1329,7 +1486,8 @@ Este archivo contiene **solo el bloque 5** de la Fase 8; los demás bloques vive
 
 | Versión | Fecha | Cambio |
 |---|---|---|
-| **0.5** | 16/nov/2026 | Esta versión (P0.3): reescritura completa en los sub-bloques 5a a 5e, modelo de datos `ing_*`, sin conexión y criterios numerados. Resuelve ING-I7 y los puntos «Para P0.3» de `niveles-y-avance.md` |
+| **0.6** | 17/nov/2026 | Esta versión. Incorpora D-ING-12 a 15 (`docs/DECISIONES.md`, D29, líneas 570 y 571; plan 4.1): **asistencia** (10 minutos por día y 3 días faltados por escalón; reemplaza al 90 % de minutos y a los días de gracia por trimestre; P5-30), **sin conexión** completo (9.1, 9.2, 9.6 y 9.7), **dictado local** como requisito de 5b (4.4), **pruebas por unidad** que cuentan para subir (3.6.1; sustituye a P5-08; P5-31), **texto y transcripción a la IA con permiso en cada envío y voz solo en el dispositivo** (D-ING-15, 4.4 y 7.1) y la nota sobre los prefijos `hab_` e `ing_` (15). Alineada con `fase-8-habitos-pareja-y-correccion.md` 0.2 |
+| 0.5 | 16/nov/2026 | Versión anterior (P0.3): reescritura completa en los sub-bloques 5a a 5e, modelo de datos `ing_*`, sin conexión y criterios numerados. Resuelve ING-I7 y los puntos «Para P0.3» de `niveles-y-avance.md` |
 | 0.4 | 14/nov/2026 | Módulos 1 y 2 aprobados por el dueño. Módulo 3 (planes y metas) redactado, en revisión. Rúbrica de evaluación (`docs/contenido/ingles/rubrica-evaluacion.md`) en revisión: la evaluación del estudiante se mide con ella y no es certificación oficial. Los módulos 4 a 6 se redactan después de cada aprobación. El 15/nov/2026 se le añadió un aviso: quedó atrás respecto a las decisiones posteriores del dueño |
 | 0.3 | 14/nov/2026 | Módulo 1 aprobado |
 | 0.2 | 14/nov/2026 | Alcance 5a aprobado por el dueño. Contenido en `docs/contenido/ingles/`. Decisiones tomadas por omisión, pendientes de confirmar: 5 días a la semana, unos 15 minutos al día, recordatorio local discreto, inglés como área propia con su racha. Fuente: `docs/modulos/habitos/diseno-app-habitos.md` §5.3 y Anexo A (plan de 24 semanas B1 → B2). Base: `fase-3-habitos.md`, D21 y las reglas de D3 y D6 |
