@@ -1,6 +1,6 @@
 # Especificación — Formato de contenido `gravity-ingles-v1`
 
-> Versión 0.4 (16/nov/2026), **propuesta**. La 0.3 recogió lo que encontró el validador al leer los ejemplos y los contratos (paquete P1.2a); la 0.4, lo que encontró la segunda parte (P1.2b: longitud, fidelidad, duplicados e informe). Parte del plan `docs/specs/fase-8-ingles-plan.md` (paquetes P1.1 y P1.2). Nace de la revisión `docs/revisiones/fase-8-ingles.md` (hallazgos ING-B1, ING-B2, ING-B4, ING-I1, ING-I3 e ING-I4).
+> Versión 0.5 (17/nov/2026), **propuesta**. La 0.5 incorpora las decisiones D-ING-12 a 16 (D29): pruebas por unidad, mini prueba del viernes como repaso, estructura de la conversación guiada y regla de asistencia (esta última como dato del contrato, no como contenido). Versión 0.4 (16/nov/2026):  La 0.3 recogió lo que encontró el validador al leer los ejemplos y los contratos (paquete P1.2a); la 0.4, lo que encontró la segunda parte (P1.2b: longitud, fidelidad, duplicados e informe). Parte del plan `docs/specs/fase-8-ingles-plan.md` (paquetes P1.1 y P1.2). Nace de la revisión `docs/revisiones/fase-8-ingles.md` (hallazgos ING-B1, ING-B2, ING-B4, ING-I1, ING-I3 e ING-I4).
 > Precedente en el proyecto: `herramientas/biblia` y el formato `gravity-biblia-v1` (contenido con formato versionado, validador en Dart y salida a `app/assets`).
 
 ## 1. Para qué sirve
@@ -155,7 +155,7 @@ tipo: forma
 id: cam-b1-preliminary-forma-a
 estado: borrador
 formato: cambridge-b1-preliminary
-uso: simulacro        # ubicacion | mini | escalon | etapa | simulacro | practica
+uso: simulacro        # ubicacion | mini | prueba_unidad | escalon | etapa | simulacro | practica
 semilla: 2026111401   # fija el sorteo de opciones y de letras
 secciones:
   - parte: reading-1
@@ -164,7 +164,40 @@ secciones:
     unidades: [cam-b1-r3-0001]
 ```
 
-La **fidelidad** de una forma no se escribe: la calcula la herramienta. Es `completa` solo si cada parte tiene el número de unidades y de preguntas del contrato, todos los estímulos están dentro de su rango de palabras, las partes de escucha tienen audio y el contrato no tiene datos pendientes en las partes que usa. **Alcance:** una forma de uso `simulacro`, `etapa`, `escalon` o `ubicacion` debe traer **todas** las partes del contrato; una de uso `practica` o `mini` se evalúa solo sobre las partes que incluye, y dice cuáles son, para que una práctica de una sola parte pueda ser completa en esa parte sin presentarse como examen entero. En cualquier otro caso es `reducida`, y así se muestra en el cuaderno y en la app.
+La **fidelidad** de una forma no se escribe: la calcula la herramienta. Es `completa` solo si cada parte tiene el número de unidades y de preguntas del contrato, todos los estímulos están dentro de su rango de palabras, las partes de escucha tienen audio y el contrato no tiene datos pendientes en las partes que usa. **Alcance:** una forma de uso `simulacro`, `etapa`, `escalon` o `ubicacion` debe traer **todas** las partes del contrato; una de uso `practica`, `mini` o `prueba_unidad` se evalúa solo sobre las partes que incluye, y dice cuáles son, para que una práctica de una sola parte pueda ser completa en esa parte sin presentarse como examen entero. En cualquier otro caso es `reducida`, y así se muestra en el cuaderno y en la app.
+
+
+### 5.1 Formas de uso `mini` y `prueba_unidad` (nuevo en 0.5)
+
+```yaml
+tipo: forma
+id: pu-a21-u2-a            # pu-<escalón>-u<1 a 4>-<a|b>
+estado: borrador
+formato: gravity-sesion-60
+uso: prueba_unidad
+escalon: A2.1
+unidad_del_escalon: 2      # 1 a 4: las semanas 2, 4, 6 y 7
+variante: a                # a = primer intento; b = repetición (reserva)
+con_audio: true            # false: 15 preguntas, sin escucha
+semilla: 2026111701
+secciones:
+  - parte: prueba-unidad
+    unidades: [pu-a21-u2-a-gram, pu-a21-u2-a-voc, pu-a21-u2-a-lec, pu-a21-u2-a-esc]
+```
+
+| Uso | Id | Preguntas | Se aprueba con | Cuándo |
+|---|---|---|---|---|
+| `mini` | `mini-<escalón>-s<NN>` | 10 (gramática y vocabulario) | 8 | Viernes de las semanas 1 a 7; es repaso y no bloquea |
+| `prueba_unidad`, variante `a` | `pu-<escalón>-u<N>-a` | 20 con audio (15 sin) | 80 % | Viernes de las semanas 2, 4, 6 y 7 |
+| `prueba_unidad`, variante `b` | `pu-<escalón>-u<N>-b` | las mismas cifras, **contenido distinto** de la `a` | 80 % | Lunes siguiente (semanas 3, 5, 7 y 8), solo si la `a` no se aprobó |
+
+Reglas:
+1. Composición con audio (propuesta de Hábitos, no decisión del dueño): 6 de gramática del tema, 4 de vocabulario, 5 de lectura y 5 de escucha. Sin audio: se quitan las 5 de escucha y las otras 15 se reparten igual.
+2. Solo opción múltiple y respuesta corta objetiva: nada que exija juicio humano ni IA.
+3. Las formas `a` y `b` de una unidad no comparten ningún estímulo ni enunciado (V19), y una `b` no se usa en otra unidad. Los 4 `mini` de un escalón no repiten preguntas de sus pruebas por unidad.
+4. Sale del temario del propio escalón (`niveles.yaml`): lo evaluado es lo enseñado en las semanas anteriores a esa unidad.
+5. La fidelidad no aplica: estas formas no imitan un examen oficial. Se verifican por V27.
+6. Una `prueba_unidad` aprobada en `a` o en `b` cuenta para subir; la `b` aprobada no se castiga (D-ING-16). Si también falla la `b`, el escalón se repite por la regla de subida (no gasta faltas).
 
 ## 6. Contrato de formato
 
@@ -287,6 +320,46 @@ Mínimos por bloque (V21). El viernes cambia la lección por conversación guiad
 
 **Calibración (16/nov/2026).** Los mínimos de la tabla subieron en martes (de 8 a 10 preguntas), miércoles (de 12 a 14 elementos), jueves (de 6 a 10 preguntas) y pronunciación (de 10 a 12 elementos). Con la fórmula de minutos de abajo, los anteriores estimaban entre el 44 % y el 69 % del bloque, por debajo del 70 % que exige V22: V21 habría aceptado sesiones que V22 rechaza (lo encontró el agente de contratos, paquete P1.1b). Son provisionales: el piloto de A2.1 (P1.5) los calibra con contenido real.
 
+### 7.1 Viernes y bloques nuevos (0.5)
+
+El viernes tiene tres variantes. En todas, producción (12 min, habla), traslado (25 min) y pronunciación (8 min) quedan como el resto de la semana; cambian el repaso y la lección.
+
+| Semana del escalón | Repaso (5 min) | Lección (10 min) |
+|---|---|---|
+| 1, 3 y 5 | `mini_prueba` | `conversacion_guiada` |
+| 2, 4, 6 y 7 | `mini_prueba` | `prueba_unidad` (sustituye a la conversación) |
+| 8 | repaso normal (la semana es de puerta, sin mini prueba) | `conversacion_guiada` |
+
+El lunes de las semanas 3, 5, 7 y 8, **si la prueba por unidad anterior no se aprobó**, la lección se sustituye por `repeticion_prueba` (la forma `b`). Si se aprobó, el lunes es normal. Esta sustitución depende del resultado del estudiante: la fuente trae la forma `b` ya escrita y la app decide si la usa.
+
+Bloques nuevos (`tipo:` del bloque):
+
+```yaml
+  - tipo: mini_prueba
+    minutos: 5
+    forma: mini-a21-s03          # forma de uso mini
+  - tipo: conversacion_guiada
+    minutos: 10
+    situacion: "Pedir un café y preguntar por el precio"
+    turnos:                      # 8 o más
+      - {rol: sistema, en: "Good morning. What can I get you?", es: "Buenos días. ¿Qué le sirvo?"}
+      - rol: persona
+        guia: "Pide un café con leche."
+        modelo: ["I'd like a coffee with milk, please."]
+        variantes: ["Can I have a coffee with milk?", "A coffee with milk, please."]
+        palabras_clave: [coffee, milk]
+  - tipo: prueba_unidad
+    minutos: 10
+    forma: pu-a21-u2-a
+    repeticion: pu-a21-u2-b      # la forma b que se usa el lunes siguiente
+```
+
+Reglas de la conversación guiada: ocho turnos o más, de los cuales al menos cuatro son de la persona; cada turno de la persona lleva `guia` (qué decir, en español), `modelo` (una o más respuestas correctas) y al menos dos `variantes` aceptables; `palabras_clave` son las que la app busca para dar el turno por logrado, sin juzgar pronunciación. No se califica: se corrige y se anima. Con IA activa (Fase 6) la app puede ampliarla; sin ella funciona igual con estos datos.
+
+Cálculo de minutos de los bloques nuevos para V22: `mini_prueba`, 40 s por pregunta (10 → 6.7 min); `prueba_unidad`, 40 s por pregunta más el tiempo del audio (palabras ÷ 150 × 2 reproducciones) si lleva escucha (20 preguntas → 13.3 min más ~1.3 de audio; 15 sin audio → 10 min); `conversacion_guiada`, 60 s por turno de la persona más 15 s por turno del sistema. Siguen aplicando el 70 % a 150 % por bloque y el total entre 54 y 66.
+
+**Asistencia (no es contenido).** La regla (faltante máximo de 600 s por día, 3 días faltados por escalón, el cuarto repite el escalón y conserva la etiqueta) vive en los contratos `gravity-sesion-60` y `gravity-escalon` y la aplica la app; el validador solo comprueba que esos datos existan y coincidan en los dos contratos (V27).
+
 Cada semana tiene dos audios de traslado distintos (un monólogo y un diálogo), que se repiten durante la semana: volver a oír el mismo audio es parte del método. Longitudes por etapa:
 
 | Etapa | Lectura (palabras) | Audio (palabras) | Escritura (palabras) | Habla (segundos) |
@@ -370,12 +443,13 @@ Error = impide `validado`. Aviso = se reporta y no impide. Cuando falta el contr
 | V18 | No se mezclan grafías británicas y americanas de la lista de control en una unidad | Aviso |
 | V19 | Ningún estímulo ni enunciado se repite entre unidades: una oración de 7 palabras o más en dos archivos, o dos textos con similitud de Jaccard de 0.85 o más sobre trigramas de palabras; una unidad no aparece en dos formas del mismo formato, ni en práctica y en forma. **Excepción:** las frases para repetir de una sesión pueden salir de sus propios audios (los de `audios:`), porque el método pide repetir lo que se escuchó; dos sesiones de la misma semana pueden repetir frases de los audios que comparten | Error |
 | V20 | Las unidades de ubicación y de puertas no se usan en ningún otro lugar | Error |
-| V21 | Cada sesión cumple los mínimos por bloque de la sección 7 | Error |
-| V22 | Minutos estimados por bloque entre el 70 % y el 150 % del declarado; total entre 54 y 66 | Error |
+| V21 | Cada sesión cumple los mínimos por bloque de la sección 7 y 7.1 (`mini_prueba`, `prueba_unidad`, `repeticion_prueba` y `conversacion_guiada` incluidos; la semana 8 no lleva mini prueba) | Error |
+| V22 | Minutos estimados por bloque entre el 70 % y el 150 % del declarado; total entre 54 y 66 (fórmula de los bloques nuevos en 7.1) | Error |
 | V23 | Tarjetas: id único en el curso, traducción presente y `ejemplo` que contiene la palabra o una forma suya | Error |
 | V24 | Estados: `validado` sin errores; `revisado` con revisión a ciegas vigente (misma huella) y sin disputas; `aprobado` solo desde `revisado` | Error |
 | V25 | Solo se compila lo que está en `revisado` o `aprobado` | Error |
 | V26 | Los encabezados de estado, fidelidad y audio de lo exportado los escribe la herramienta | Error |
+| V27 | Pruebas por unidad y mini pruebas (sección 5.1): 4 unidades por escalón con formas `a` y `b`; 20 preguntas con audio (6/4/5/5) o 15 sin; `b` sin estímulos ni enunciados de la `a`; 7 mini pruebas por escalón de 10 preguntas; umbrales 80 % y 8 de 10; los datos de asistencia (600 s, 3 días) iguales en `gravity-sesion-60` y `gravity-escalon` | Error |
 
 ## 12. Ejemplos patrón
 
@@ -400,5 +474,7 @@ Los nueve están en `borrador`. Los escribió la sesión que hizo el plan. Dos a
 
 - Archivos de audio grabado y fotografías. El audio se genera en el dispositivo a partir del guion (plan, fase 3). Las imágenes se describen en texto hasta que haya archivos con licencia clara.
 - Calificación con IA de escritura y habla. Se evalúa con lista de cotejo, modelo y revisión en pareja; la IA se especifica aparte, después de la Fase 6.
+- Aplicar la asistencia, el descenso o la subida de escalón: son lógica de la app (Fase 2 del plan); el formato solo guarda los datos.
+- Calificar la conversación guiada por voz: solo palabras clave por texto o transcripción, sin juzgar pronunciación.
 - Crédito parcial en las transformaciones. El examen oficial da dos puntos por pregunta, uno por cada mitad; aquí la pregunta se califica completa, que es más estricto.
 - Otros idiomas. El formato no depende del inglés: bastará otra carpeta (`data/<idioma>/`) y sus contratos cuando el dueño lo pida.
