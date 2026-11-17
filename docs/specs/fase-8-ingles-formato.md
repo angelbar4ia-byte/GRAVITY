@@ -196,7 +196,7 @@ Reglas:
 2. Solo opción múltiple y respuesta corta objetiva: nada que exija juicio humano ni IA.
 3. Las formas `a` y `b` de una unidad no comparten ningún estímulo ni enunciado (V19), y una `b` no se usa en otra unidad. Los 4 `mini` de un escalón no repiten preguntas de sus pruebas por unidad.
 4. Sale del temario del propio escalón (`niveles.yaml`): lo evaluado es lo enseñado en las semanas anteriores a esa unidad.
-5. La fidelidad no aplica: estas formas no imitan un examen oficial. Se verifican por V27.
+5. La fidelidad no aplica: estas formas no imitan un examen oficial. Se verifican por V28.
 6. Una `prueba_unidad` aprobada en `a` o en `b` cuenta para subir; la `b` aprobada no se castiga (D-ING-16). Si también falla la `b`, el escalón se repite por la regla de subida (no gasta faltas).
 
 ## 6. Contrato de formato
@@ -449,7 +449,8 @@ Error = impide `validado`. Aviso = se reporta y no impide. Cuando falta el contr
 | V24 | Estados: `validado` sin errores; `revisado` con revisión a ciegas vigente (misma huella) y sin disputas; `aprobado` solo desde `revisado` | Error |
 | V25 | Solo se compila lo que está en `revisado` o `aprobado` | Error |
 | V26 | Los encabezados de estado, fidelidad y audio de lo exportado los escribe la herramienta | Error |
-| V27 | Pruebas por unidad y mini pruebas (sección 5.1): 4 unidades por escalón con formas `a` y `b`; 20 preguntas con audio (6/4/5/5) o 15 sin; `b` sin estímulos ni enunciados de la `a`; 7 mini pruebas por escalón de 10 preguntas; umbrales 80 % y 8 de 10; los datos de asistencia (600 s, 3 días) iguales en `gravity-sesion-60` y `gravity-escalon` | Error |
+| V27 | Consistencia de los contratos propios y de `niveles.yaml`: sumas de minutos, 13 escalones, horas = 40 × escalones, 6 + 3 + 3 = 12 preguntas por etapa de ubicación, rangos de longitud iguales entre sesión y ubicación, cada tema nuevo en un escalón y solo retomado después, y todo coincide con `gravity-escalon.yaml`; los datos de asistencia (600 s, 3 días) iguales en `gravity-sesion-60` y `gravity-escalon` | Error |
+| V28 | Pruebas por unidad y mini pruebas (sección 5.1): 4 unidades por escalón con formas `a` y `b`; 20 preguntas con audio (6/4/5/5) o 15 sin; `b` sin estímulos ni enunciados de la `a`; 7 mini pruebas por escalón de 10 preguntas; umbrales 80 % y 8 de 10 | Error |
 
 ## 12. Ejemplos patrón
 
