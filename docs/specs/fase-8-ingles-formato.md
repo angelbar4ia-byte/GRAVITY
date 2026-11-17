@@ -341,7 +341,7 @@ Bloques nuevos (`tipo:` del bloque):
   - tipo: conversacion_guiada
     minutos: 10
     situacion: "Pedir un café y preguntar por el precio"
-    turnos:                      # 8 o más
+    turnos:                      # 12 o más
       - {rol: sistema, en: "Good morning. What can I get you?", es: "Buenos días. ¿Qué le sirvo?"}
       - rol: persona
         guia: "Pide un café con leche."
@@ -354,9 +354,9 @@ Bloques nuevos (`tipo:` del bloque):
     repeticion: pu-a21-u2-b      # la forma b que se usa el lunes siguiente
 ```
 
-Reglas de la conversación guiada: ocho turnos o más, de los cuales al menos cuatro son de la persona; cada turno de la persona lleva `guia` (qué decir, en español), `modelo` (una o más respuestas correctas) y al menos dos `variantes` aceptables; `palabras_clave` son las que la app busca para dar el turno por logrado, sin juzgar pronunciación. No se califica: se corrige y se anima. Con IA activa (Fase 6) la app puede ampliarla; sin ella funciona igual con estos datos.
+Reglas de la conversación guiada: doce turnos o más, de los cuales al menos seis son de la persona (con 8 y 4 la estimación de V22 queda en 5 min, el 50 % de 10; con 12 y 6 son 7.5 min, el 75 %); cada turno de la persona lleva `guia` (qué decir, en español), `modelo` (una o más respuestas correctas) y al menos dos `variantes` aceptables; `palabras_clave` son las que la app busca para dar el turno por logrado, sin juzgar pronunciación. No se califica: se corrige y se anima. Con IA activa (Fase 6) la app puede ampliarla; sin ella funciona igual con estos datos.
 
-Cálculo de minutos de los bloques nuevos para V22: `mini_prueba`, 40 s por pregunta (10 → 6.7 min); `prueba_unidad`, 40 s por pregunta más el tiempo del audio (palabras ÷ 150 × 2 reproducciones) si lleva escucha (20 preguntas → 13.3 min más ~1.3 de audio; 15 sin audio → 10 min); `conversacion_guiada`, 60 s por turno de la persona más 15 s por turno del sistema. Siguen aplicando el 70 % a 150 % por bloque y el total entre 54 y 66.
+Cálculo de minutos de los bloques nuevos para V22: `mini_prueba`, 40 s por pregunta (10 → 6.7 min); `prueba_unidad`, 40 s por pregunta más el tiempo del audio (palabras ÷ 150 × 2 reproducciones) si lleva escucha (el audio de una prueba por unidad no pasa de 100 palabras de habla, para no rebasar el 150 % del bloque; 20 preguntas → 13.3 min más ~1.3 de audio; 15 sin audio → 10 min); `conversacion_guiada`, 60 s por turno de la persona más 15 s por turno del sistema. Siguen aplicando el 70 % a 150 % por bloque y el total entre 54 y 66.
 
 **Asistencia (no es contenido).** La regla (faltante máximo de 600 s por día, 3 días faltados por escalón, el cuarto repite el escalón y conserva la etiqueta) vive en los contratos `gravity-sesion-60` y `gravity-escalon` y la aplica la app; el validador solo comprueba que esos datos existan y coincidan en los dos contratos (V27).
 

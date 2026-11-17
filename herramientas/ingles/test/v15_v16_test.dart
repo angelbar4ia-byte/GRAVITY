@@ -122,20 +122,23 @@ void main() {
     test('malo: tres reproducciones', () {
       expect(errores(correrB([audio('u-a', reproducciones: 3)]), 'V16'), hasLength(1));
     });
-    test('malo: una voz que no está en la lista', () {
+    test('malo: una voz que no está en la lista la rechaza V01, no V16', () {
       final d = audio('u-a');
       mapa(lista(mapa(d['estimulo'])['guion'])[1])['voz'] = 'X9';
       final h = correrB([d]);
-      expect(errores(h, 'V16').single.mensaje, contains('X9'));
-      // La lectura también la rechaza como valor fuera de una lista (V01).
-      expect(errores(h, 'V01'), isNotEmpty);
+      expect(errores(h, 'V01').single.mensaje, contains('X9'));
+      // V16 la deja a V01: ya no sale dos veces.
+      expect(errores(h, 'V16'), isEmpty);
     });
-    test('malo: una voz mal escrita se dice una sola vez por audio, aunque la repita', () {
+    test('malo: una voz mal escrita en cada turno sale una vez por turno (V01) y nunca como V16', () {
       final d = audio('u-a');
-      for (final t in lista(mapa(d['estimulo'])['guion'])) {
+      final turnos = lista(mapa(d['estimulo'])['guion']);
+      for (final t in turnos) {
         mapa(t)['voz'] = 'X9';
       }
-      expect(errores(correrB([d]), 'V16'), hasLength(1));
+      final h = correrB([d]);
+      expect(errores(h, 'V01'), hasLength(turnos.length));
+      expect(errores(h, 'V16'), isEmpty);
     });
     test('bueno: si la parte no declara reproducciones, no se comparan', () {
       final c = contratoCon('l-1', (p) => p.remove('reproducciones'));

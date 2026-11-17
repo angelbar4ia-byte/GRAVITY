@@ -5,9 +5,41 @@ const List<String> etapas = ['A1', 'A2', 'B1', 'B2'];
 const List<String> variantes = ['en-GB', 'en-US'];
 const List<String> tiposEstimulo = ['texto', 'audio', 'imagen', 'consigna', 'ninguno'];
 const List<String> voces = ['F1', 'F2', 'M1', 'M2', 'N'];
-const List<String> usosForma = ['ubicacion', 'mini', 'escalon', 'etapa', 'simulacro', 'practica'];
-const List<String> diasSemana = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'];
-const List<String> tiposBloque = ['repaso', 'leccion', 'pronunciacion', 'produccion', 'traslado'];
+const List<String> usosForma = [
+  'ubicacion',
+  'mini',
+  'prueba_unidad',
+  'escalon',
+  'etapa',
+  'simulacro',
+  'practica',
+];
+const List<String> diasSemana = [
+  'lunes',
+  'martes',
+  'miercoles',
+  'jueves',
+  'viernes',
+];
+const List<String> tiposBloque = [
+  'repaso',
+  'leccion',
+  'pronunciacion',
+  'produccion',
+  'traslado',
+  // Nuevos en el formato 0.5 (sección 7.1).
+  'mini_prueba',
+  'conversacion_guiada',
+  'prueba_unidad',
+  'repeticion_prueba',
+];
+
+/// Quién habla en un turno de la conversación guiada (formato 0.5, 7.1).
+const List<String> rolesConversacion = ['sistema', 'persona'];
+
+/// Variante de una forma de prueba por unidad: `a` es el primer intento y `b`,
+/// la repetición (formato 0.5, 5.1).
+const List<String> variantesPrueba = ['a', 'b'];
 const List<String> modalidades = ['escritura', 'habla'];
 const List<String> unidadesExtension = ['palabras', 'segundos'];
 

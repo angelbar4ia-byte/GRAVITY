@@ -1,5 +1,6 @@
 import 'duplicados.dart';
 import 'modelo/archivo.dart';
+import 'modelo/contrato_sesion.dart';
 import 'modelo/formato.dart';
 import 'modelo/niveles.dart';
 import 'modelo/pregunta.dart';
@@ -32,6 +33,12 @@ class Contexto {
   /// En qué formas y sesiones se usa cada unidad (V19, regla c, y V20). Se
   /// calcula la primera vez que se pide.
   late final UsoDeUnidades usos = UsoDeUnidades(archivos);
+
+  /// El contrato `gravity-sesion-60` ya leído, o null si no existe.
+  late final ContratoSesion? contratoSesion = () {
+    final f = _contratos[idContratoSesion];
+    return f == null ? null : ContratoSesion(f);
+  }();
 
   final Map<String, Formato> _contratos = {};
   final Map<String, Archivo> _porId = {};

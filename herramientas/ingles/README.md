@@ -4,9 +4,9 @@ Valida el contenido de `data/ingles/` (formato `gravity-ingles-v1`, especificaci
 en `docs/specs/fase-8-ingles-formato.md`; plan en `docs/specs/fase-8-ingles-plan.md`).
 Misma forma de paquete que `herramientas/biblia`. Única dependencia: `yaml`.
 
-Estado: **P1.2b**. Hay dos órdenes: `validar` (V01 a V20, sin V06) e `informe`.
-`exportar`, `comparar` y `compilar`, y con ellas V06, V21 a V23, V25 y V26 y la
-parte de V24 que depende de las revisiones, llegan en P1.2c.
+Estado: **P1.2c-1** (lectura y validación). Hay dos órdenes: `validar` (V01 a V23,
+V27 y V28, sin V06) e `informe`. `exportar`, `comparar` y `compilar`, y con ellas V06,
+V25, V26 y la parte de V24 que depende de las revisiones, llegan en P1.2c-2.
 
 ```
 cd herramientas/ingles
@@ -36,7 +36,7 @@ Sale con 1 si hay errores, con 64 si el uso es incorrecto y con 66 si la ruta no
 | Código | Qué comprueba | Archivo |
 |---|---|---|
 | V01 | Esquema: campos obligatorios, tipos y listas controladas (la lectura de `lib/src/modelo/` los deja como hallazgos) | `v01_esquema.dart` |
-| V02 | Ids únicos en todo el conjunto, prefijo del id de pregunta, referencias (contrato, parte, unidades de una forma, audios de una sesión, marcas de hueco) | `v02_identificadores.dart` |
+| V02 | Ids únicos en todo el conjunto, prefijo del id de pregunta, referencias (contrato, parte, unidades de una forma, audios y formas a las que remite una sesión, marcas de hueco). **La unidad de una forma es de la parte y del formato de su sección** (P1.2c-1) | `v02_identificadores.dart` |
 | V03 | Número de opciones según el contrato; opciones distintas | `v03_opciones.dart` |
 | V04 | Una sola correcta (la primera, con `porque`); `aceptadas` no vacía | `v04_una_correcta.dart` |
 | V05 | La correcta no es la más larga en la mitad o más de las preguntas de una parte de 8 o más (aviso) | `v05_longitud_correcta.dart` |
@@ -49,13 +49,18 @@ Sale con 1 si hay errores, con 64 si el uso es incorrecto y con 66 si la ruta no
 | V12 | `porque` de 6 palabras o más en toda pregunta objetiva; en el curso, `porque_no` en cada distractor | `v12_porque.dart` |
 | V13 | `nivel`, `escalon`, `habilidad`, `foco` y `temas` están en `niveles.yaml` | `v13_niveles.dart` |
 | V14 | Completar palabras: segunda mitad oculta, de 2 a 8 letras, 4 palabras completas por hueco | `v14_completar_palabras.dart` |
-| V15 | Palabras del estímulo dentro del rango del contrato de la parte (**aviso**; con la parte pendiente, aviso de "rango pendiente") | `v15_longitud.dart` |
-| V16 | Audio: voces de la lista y `reproducciones` igual a las del contrato (error) | `v16_audio.dart` |
+| V15 | Palabras del estímulo dentro del rango del contrato de la parte (**aviso**; con el rango pendiente, aviso de "rango pendiente"). Con un contrato propio, el rango de la **etapa de la unidad** (`palabras_estimulo.por_nivel`) | `v15_longitud.dart` |
+| V16 | Audio: `reproducciones` igual a las del contrato (error). Las voces fuera de lista las dice solo V01 | `v16_audio.dart` |
 | V17 | En unidades de examen, enunciados y opciones en inglés: dos o más señales de español en un mismo texto (error). Señal: una palabra de la lista de palabras funcionales o una palabra en minúscula con tilde española o eñe | `v17_idioma.dart` |
 | V18 | Grafías británicas y americanas mezcladas, o distintas de la `variante` declarada (**aviso**) | `v18_grafias.dart` |
 | V19 | Duplicados: una oración de 7 palabras o más en dos archivos; dos estímulos con Jaccard de 0.85 o más; una unidad en dos formas (error) | `v19_duplicados.dart` |
 | V20 | Las unidades de formas de uso `ubicacion`, `escalon` o `etapa` no se usan en ningún otro lugar (error) | `v20_exclusivas.dart` |
+| V21 | Sesión: bloques y su orden según el día y la semana, minutos declarados, mínimos de lección, pronunciación, producción, traslado, tarjetas, viernes (mini prueba, conversación guiada, prueba por unidad). **Todas las cifras, del contrato `gravity-sesion-60`** | `v21_sesion.dart` |
+| V22 | Sesión: minutos estimados por bloque entre el 70 % y el 150 % de lo declarado y total entre 54 y 66 (fórmulas y límites del contrato) | `v22_minutos.dart`, `estimacion.dart` |
+| V23 | Tarjetas: id único en el curso, traducción y ejemplo que contiene la palabra o una forma suya | `v23_tarjetas.dart`, `morfologia.dart` |
 | V24 | Solo la parte sin revisiones: un archivo en `validado` no puede tener errores; `revisado` y `aprobado` no existen todavía | `v24_estados.dart` |
+| V27 | Consistencia de `gravity-sesion-60`, `gravity-escalon`, `gravity-ubicacion` y `niveles.yaml` (sumas de minutos, 13 escalones, horas = 40 × escalones, 6 + 3 + 3 = 12, rangos de longitud, un tema nuevo en un solo escalón, inventarios vistos al cerrar la etapa, asistencia igual en sesión y escalón) | `v27_consistencia.dart` |
+| V28 | Pruebas por unidad y mini pruebas (formato 0.5, 5.1): composición, audio, tipos, temario del escalón, a y b sin contenido común, 8 pruebas y 7 mini pruebas por escalón | `v28_pruebas_unidad.dart` |
 
 Un archivo en `retirado` solo pasa V01 y V02, y no cuenta como fuente ni como
 uso para V19 y V20.
@@ -82,17 +87,23 @@ guiones). Lo que se mide depende del estímulo (`lib/src/medidas.dart`):
 
 Fuera de rango es un aviso en la unidad (`tiene 412 palabras y el contrato de
 "reading-3" pide 300 a 400 (medido)`). Si el contrato marca la parte como
-`pendiente`, el aviso es siempre de "rango pendiente", con la cifra y el rango
-provisional, aunque la cifra quepa.
+`pendiente` (o `pendiente: true` dentro de `palabras_estimulo`), el aviso es siempre de
+"rango pendiente", con la cifra y el rango provisional, aunque la cifra quepa.
 
-### V16 · voces y reproducciones
+**Rango por etapa.** Un contrato propio puede dar `palabras_estimulo.por_nivel` (A1, A2,
+B1 y B2, cada una con `min` y `max`), porque una misma parte sirve a varias etapas (el
+audio de traslado). V15 compara con el rango de la **etapa de la unidad** (`nivel`); si el
+contrato no trae esa etapa, avisa que no puede comprobar. `rangoDePalabras(parte, nivel:)`
+es la única función que decide el rango.
 
-Un audio (`estimulo.tipo: audio`) usa solo las voces `F1`, `F2`, `M1`, `M2` y `N` (el
-narrador), y su `reproducciones` es igual a la de la parte del contrato, si la parte la
-declara. La lectura del archivo ya rechaza (V01) una `voz` fuera de la lista, como rechaza
-un `nivel` o un `estado` inválidos; V16 la comprueba otra vez con su propio código, porque
-así está en el catálogo, y por eso una voz mal escrita sale dos veces: una como V01 (por
-turno) y otra como V16 (por audio). "El cuaderno no imprime el guion" es de `exportar`.
+### V16 · reproducciones
+
+El `reproducciones` de un audio (`estimulo.tipo: audio`) es igual al de la parte del
+contrato, si la parte lo declara. Un audio usa solo las voces `F1`, `F2`, `M1`, `M2` y `N`
+(el narrador), pero **eso lo dice solo V01**, una vez por turno, al leer el archivo (una
+lista controlada, como `nivel` o `estado`). Hasta P1.2b una voz mal escrita salía dos
+veces, como V01 y como V16; desde P1.2c-1, una. "El cuaderno no imprime el guion" es de
+`exportar`.
 
 ### V17 · método y lista
 
@@ -199,11 +210,106 @@ suya no puede estar en otra forma ni entre los `audios` del traslado de una sesi
 forma reservada ("también la usa…") y en la forma o sesión que la usa ("reservada para la
 forma…"). Dos formas de uso exclusivo que comparten una unidad se reportan entre sí.
 
+### V21 y V22 · la sesión, con los números del contrato
+
+Todo lo que V21 y V22 comparan sale de `gravity-sesion-60` (`lib/src/modelo/contrato_sesion.dart`
+lo lee): `por_dia` de la lección y de la pronunciación, `minutos_parte`, `tarjetas_nuevas`,
+`tolerancias_de_minutos`, `estimacion_de_minutos`, `viernes`. Si el contrato no declara la
+estructura de la sesión (días, minutos por parte y total), V21 y V22 callan y V27 lo dice en
+el contrato (`declaraLaSesion`). Cambiar una cifra del contrato cambia lo que se exige: lo
+prueban `test/v21_v22_test.dart` ("los mínimos salen del contrato").
+
+**V21** (error). Por día y semana:
+
+| Qué | Regla |
+|---|---|
+| Bloques y orden | repaso, lección, pronunciación, producción, traslado. El viernes, `mini_prueba` en lugar del repaso (semanas 1 a 7) y `conversacion_guiada` (semanas 1, 3, 5 y 8) o `prueba_unidad` (2, 4, 6 y 7) en lugar de la lección. El lunes de las semanas 3, 5, 7 y 8 la lección puede ser `repeticion_prueba` |
+| Minutos declarados | los de cada parte del contrato (5, 10, 8, 12 y 25) y el total (60) |
+| Lección | explicación, error común, ejemplos y preguntas mínimos del día (`por_dia`) |
+| Pronunciación | elementos mínimos del día |
+| Producción | consigna, cotejo y modelo; modalidad del día (jueves escritura, viernes habla) |
+| Traslado | 2 audios distintos, 20 frases o más; un monólogo y un diálogo (**aviso** mientras el criterio esté pendiente); los mismos audios en las cinco sesiones de la semana |
+| Tarjetas nuevas | 8 de lunes a jueves, 0 el viernes |
+| Viernes | las formas a las que remiten la mini prueba y la prueba por unidad existen, son del uso, del escalón, de la variante y de la unidad que toca (la unidad es la posición de la semana en `viernes_de_las_semanas`), y se llaman `mini-<escalón>-s<NN>` y `pu-<escalón>-u<N>-<a|b>` |
+| Conversación guiada | 8 turnos o más, 4 o más de la persona, y en cada uno guía, modelo y 2 variantes o más (palabras clave: aviso) |
+
+Un único aviso por sesión nombra los datos que el contrato marca pendientes y de los que
+depende la comprobación.
+
+**V22** (error). Estima cada bloque con las fórmulas del contrato y exige el 70 % a 150 %
+de lo declarado y 54 a 66 en total (`estimacion.dart`): explicación palabras ÷ 150, 15 s por
+ejemplo, 40 s por pregunta de opción múltiple o hueco y 60 s por respuesta corta, ordenar o
+transformar, pronunciación 30 s por elemento, traslado = audios (habla ÷ 150 × reproducciones)
++ 30 s por frase + 15 s por tarjeta nueva + 5 min de tarjetas en audio, producción los minutos
+declarados si trae consigna, cotejo y modelo; mini prueba 40 s por pregunta; prueba por unidad
+40 s por pregunta más el audio; conversación 60 s por turno de la persona y 15 s por turno del
+sistema. Con el ejemplo patrón del lunes da 58.6 minutos, como dice su cabecera.
+
+**Estimación incompleta.** Cuando algo que la fórmula necesita está pendiente en el contrato
+(el lugar del audio y del texto de la lección de martes y jueves, los elementos del miércoles,
+el tiempo de un tipo de pregunta que no trae, un audio que no se puede leer), lo que se sale
+de la banda es un **aviso** con la razón, no un error: un dato pendiente no decide nada.
+
+### V23 · tarjetas
+
+Error si el `id` no es único en el curso (también lo dice V02), no hay traducción, o el
+`ejemplo` no contiene la palabra o frase `en` ni una forma suya. Las formas
+(`lib/src/morfologia.dart`) son una heurística acotada: sufijos regulares (`-s`, `-es`,
+`-ies`, `-ed`, `-ing`, `-er`, `-est`, consonante doblada, `e` final) y una tabla de unos 80
+verbos y formas irregulares frecuentes. Lo que va entre paréntesis en la tarjeta es opcional,
+`/` separa alternativas y `sb`, `sth` no se buscan. Una forma irregular que la tabla no
+conozca da una falsa alarma: se agrega a la tabla.
+
+### V27 · consistencia de los contratos propios y de niveles.yaml
+
+Cada hallazgo va en el archivo que depende de lo que contrasta. Un dato que el contrato no
+declara es "no declara X" (aviso en borrador, error desde `validado`); un contraste que
+depende de un dato `pendiente` es aviso.
+
+- **gravity-sesion-60.** Minutos de las partes = minutos de su sección; secciones = total =
+  principal + traslado; el total cabe en `tolerancias_de_minutos`; los días, `semana` y
+  las tarjetas por día suman lo declarado; `sin_audio` y `asistencia` (60 y 35 minutos);
+  semanas de la mini prueba y de la prueba por unidad, repetición el lunes siguiente,
+  composición = preguntas con audio, sin audio = con audio menos escucha, minutos
+  estimados = preguntas × 40 s; audio por etapa igual en `longitudes_por_etapa` y en
+  `traslado-audio.por_nivel`; y que **los mínimos de cada bloque alcancen el 70 %** con la
+  fórmula (si no, V21 aceptaría sesiones que V22 rechaza).
+- **gravity-escalon.** 13 escalones y horas = 40 × escalones (y 40 = 8 semanas × 5 días × 60
+  minutos), etapas y horas acumuladas, escalón de cierre, formas (13 × 3 = 39),
+  pruebas por unidad (8 × 20 = 160 por escalón), oportunidades = formas; asistencia, minutos por
+  día y mini prueba iguales a los de `gravity-sesion-60`; puerta anticipada más exigente
+  que la puerta.
+- **gravity-ubicacion.** 6 + 3 + 3 = 12 por etapa (por estímulo: ninguno, texto y audio), 48
+  en total, banco 18 × 4 = 72, corte 10 de 12, etapas A1 a B2 en orden, y los rangos de
+  lectura y audio iguales a la tabla de `gravity-sesion-60`.
+- **niveles.yaml.** 13 escalones con horas, semanas, acumuladas, etapa y puerta iguales a las
+  de `gravity-escalon`; cuatro descriptores «puedo»; cada tema nuevo en un solo escalón y en
+  la lista de temas; un escalón solo retoma temas de escalones anteriores; el temario por
+  semana reparte exactamente los temas nuevos y no retoma lo que aún no vio; todo lo que el
+  inventario de un manual nombra y todo su vocabulario quedan vistos a más tardar en el
+  escalón de cierre de su etapa.
+
+### V28 · pruebas por unidad y mini pruebas
+
+Para cada forma de uso `prueba_unidad` o `mini` (formato 0.5, 5.1): formato
+`gravity-sesion-60`, `escalon` de `niveles.yaml`, id con el patrón y coherente con los campos,
+una sola sección (la prueba por unidad, de la parte `prueba-unidad`), 20 preguntas con audio
+(6 de gramática, 4 de vocabulario, 5 de lectura y 5 de escucha) o 15 sin audio, la escucha en
+audios con las reproducciones del contrato, la mini prueba de 10 preguntas de gramática y
+vocabulario y sin audio, solo `opcion_multiple` y `respuesta_corta`, y temas del propio
+escalón (nuevos o retomados). **Entre formas del escalón** (errores): dos formas no ocupan la
+misma unidad y variante; la `b` no comparte unidad, estímulo ni enunciado con la `a`; la mini
+prueba no repite preguntas de las pruebas por unidad. Un escalón con algunas de sus 8 pruebas
+y 7 mini pruebas pero no todas da un **aviso** que dice cuáles faltan (el contenido se escribe
+por partes; el informe cuenta lo que hay). Los umbrales (80 % y 8 de 10) viven en el contrato y
+los contrasta V27. El contrato `gravity-sesion-60` llama `gramatica_del_tema` al grupo que las
+preguntas etiquetan `gramatica` (`habilidadDelGrupo`).
+
 ## `informe [ruta]`
 
 Lo que hay frente a lo que pide cada contrato. **No es una validación:** lee lo que haya
 y lo cuenta; sale con 0 siempre que pueda leer la ruta (66 si no existe, 64 si el uso es
-incorrecto). Tiene tres secciones:
+incorrecto). Tiene cinco secciones:
 
 1. **Cobertura por contrato y parte.** Una línea por cada parte de cada contrato:
    unidades y preguntas **que hay / que pide el contrato para una forma** (`?` si el
@@ -212,14 +318,20 @@ incorrecto). Tiene tres secciones:
    las unidades que no están retiradas, como las cuenta el contrato: un archivo con
    `estimulo: ninguno` aporta tantas unidades como preguntas lleve, las oraciones omitidas
    aportan una pregunta por oración colocada y completar palabras, una por hueco. Al final,
-   las unidades de formatos sin contrato.
-2. **Fidelidad de las formas.** Por cada forma, `completa` o `reducida` y los motivos. O
-   `sin formas`.
+   las unidades de formatos sin contrato. Con un contrato propio, el rango se dice **por
+   etapa** (`A1 60 a 120; A2 120 a 200; ...`), no «sin rango».
+2. **Fidelidad de las formas.** Por cada forma, `completa`, `reducida` o `no aplica` (mini
+   pruebas y pruebas por unidad) y los motivos; una práctica dice **en qué partes** lo es.
+   O `sin formas`.
 3. **Cobertura por escalón.** Si hay `niveles.yaml`: por cada escalón, las **sesiones** que
    dicen ser de él (campo `escalon`), los audios de traslado que usan y, por habilidad, las
    sesiones o audios con al menos una pregunta de esa habilidad y cuántas preguntas son
    (el orden de las habilidades es el de `niveles.yaml`). Si no hay, `sin niveles`.
    Las unidades de examen no entran: declaran su etapa (`nivel`), no su escalón.
+4. **Cobertura por etapa.** La suma de la de sus escalones (sin contar dos veces una sesión ni un
+   audio) y las unidades de examen que declaran esa etapa, con sus preguntas.
+5. **Datos pendientes.** Las marcas `pendiente: true` de cada contrato, a cualquier
+   profundidad, con su ruta; de `niveles.yaml`, solo la cuenta.
 
 ### Fidelidad de una forma
 
@@ -232,7 +344,8 @@ contrato del formato de la forma. Es `completa` solo si, **para cada parte del c
 - si es de escucha (por su `tipo_estimulo: audio`, por declarar `reproducciones` o por el
   nombre de su sección), cada unidad tiene un estímulo de audio con guion de habla y se oye
   las veces que pide el contrato;
-- el contrato no marca la parte como `pendiente`.
+- el contrato no marca la parte como `pendiente` **a ninguna profundidad** (también
+  `por_dia`, `por_semana`...).
 
 Además impiden la fidelidad completa: una unidad con estímulo de imagen sin `archivo`
 (formato, 4.1), una unidad retirada, una unidad de otra parte o de otro formato, una
@@ -240,7 +353,14 @@ unidad que no existe, una unidad repetida en la parte y una parte en más de una
 Una forma que no usa alguna parte del contrato es `reducida`: "faltan N partes" (todas
 juntas y al principio). Sin contrato es `reducida`; la herramienta no inventa ninguno.
 
-## Diseño (para P1.2c)
+**Alcance** (formato 5 y 5.1). Las formas de uso `simulacro`, `etapa`, `escalon` y `ubicacion`
+exigen todas las partes. Una de uso `practica` se evalúa **solo sobre las partes que
+incluye** y dice cuáles son (`completa solo en: reading-3 (no es el examen entero)`); sin
+ninguna parte no es completa. A `mini` y `prueba_unidad` la fidelidad **no aplica**
+(5.1, regla 5): las verifica V28. Con un contrato propio, el rango de palabras es el de la
+etapa de cada unidad.
+
+## Diseño
 
 ```
 lib/src/
@@ -248,7 +368,9 @@ lib/src/
   texto.dart                 contarPalabras, palabrasDe, palabrasDeExamen, contarPalabrasEstimulo,
                              dividirOraciones, claveDeOracion, normalizarRespuesta, normalizarOpcion
   contexto.dart              contratos, niveles e ids de todo el conjunto; duplicados y usos (se calculan al pedirlos)
-  medidas.dart               palabras de un estímulo, unidades y preguntas que aporta una unidad, rangos
+  medidas.dart               palabras de un estímulo, unidades y preguntas que aporta una unidad, rangos (con etapa)
+  estimacion.dart            minutos que estima una sesión (V22)
+  morfologia.dart            formas de una palabra inglesa (V23)
   contenido.dart             de dónde sale el texto en inglés de cada regla (V17, V18, V19)
   duplicados.dart            IndiceDuplicados: oraciones repetidas y similitud de Jaccard (V19 a y b)
   usos.dart                  en qué formas y sesiones se usa cada unidad (V19 c y V20)
@@ -256,10 +378,12 @@ lib/src/
   informe.dart               Informe: cobertura, fidelidad y escalones, y su texto
   modelo/                    un modelo por tipo de archivo y por tipo de pregunta
     leer.dart                leerTexto / leerMapa: YAML -> modelo (+ V01)
-    archivo.dart             Unidad, Forma, Sesion, ArchivoFormato, ArchivoNiveles
+    archivo.dart             Unidad, Forma, Sesion (y sus bloques), ArchivoFormato, ArchivoNiveles
+    contrato_sesion.dart     lo que declara gravity-sesion-60, con nombres (por_dia, tolerancias, viernes...)
+    datos.dart               acceso por ruta a los datos en bruto y búsqueda de pendiente: true
     pregunta.dart            sealed Pregunta: los 15 tipos de la tabla 4.2
-    formato.dart             Formato > Seccion > Parte (los campos de 6.1) y `datos` en bruto
-    niveles.dart             Niveles (ver "Lo que el formato no fija")
+    formato.dart             Formato > Seccion > Parte (los campos de 6.1, por_nivel, pendientes) y `datos` en bruto
+    niveles.dart             Niveles (ver "Lo que el formato no fija") y sus datos en bruto
   comprobaciones/vNN_*.dart  una función pura por comprobación: (Archivo, Contexto) -> List<Hallazgo>
   datos/palabras_gramaticales.dart   lista de V09, por categoría
   datos/palabras_espanolas.dart      lista de V17 y las palabras excluidas con su razón
@@ -304,5 +428,21 @@ Reglas del paquete:
   audio en la misma unidad, así que ninguna forma de esa parte puede ser completa todavía.
 - **"Cada parte tiene el número de unidades y de preguntas"** (sección 5) se lee como cada
   parte **del contrato**: una forma que omite una parte es `reducida`.
+- **Reglas de la conversación guiada que no son datos del contrato.** 4 turnos de la
+  persona como mínimo, 2 variantes por turno, 60 s por turno de la persona y 15 s por turno
+  del sistema salen del formato 0.5 (7.1), no del contrato (que solo trae `turnos.min: 8` y
+  marca la estructura pendiente). `ContratoSesion` las lee de
+  `viernes.conversacion_guiada.turnos_de_la_persona.min`, `variantes_por_turno.min` y
+  `estimacion_de_minutos.conversacion_guiada.*` si el contrato las declara, y si no usa esas cifras.
+- **`repeticion_prueba`.** El formato 0.5 dice que el lunes de las semanas 3, 5, 7 y 8 la
+  lección "se sustituye por `repeticion_prueba`" si la prueba no se aprobó, pero no cómo la
+  fuente lo escribe. Se acepta ese bloque (`minutos` y `forma`) en lugar de la lección en
+  esos lunes, no se exige, y la forma debe ser la `b` de la unidad que toca.
+- **Audio para estimar.** V22 cuenta las palabras de los turnos de habla (como V15), no las
+  del narrador.
+- **La parte de las formas de prueba.** El formato 0.5 (5.1) usa `parte: prueba-unidad` en la
+  sección de la forma; V28 la exige. Para la mini prueba no fija nombre de parte y V28 no lo
+  comprueba. **El contrato `gravity-sesion-60` no trae ninguna de las dos**, así que V02 rechaza
+  hoy cualquier forma de esos usos (ver el reporte de P1.2c-1).
 - **V19 y las sesiones:** el formato dice "entre unidades"; aquí las sesiones también son
   fuente (con las excepciones de arriba), porque así lo pidió el encargo.

@@ -6,7 +6,7 @@ const String _uso = '''Uso: dart run bin/ingles.dart <orden> [argumentos]
 
 Órdenes:
   validar [ruta]   Comprueba los .yaml de la ruta (por defecto, data/ingles).
-                   V01 a V20 (salvo V06) y V24 sin revisiones. Sale con 1 si hay errores.
+                   V01 a V23, V27 y V28 (sin V06) y V24 sin revisiones. Sale con 1 si hay errores.
   informe [ruta]   Cuenta lo que hay frente a lo que pide cada contrato, la fidelidad
                    de cada forma y la cobertura por escalón. No es una validación: sale
                    con 0 siempre que pueda leer la ruta.

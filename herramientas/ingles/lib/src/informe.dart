@@ -7,6 +7,7 @@ import 'contexto.dart';
 import 'fidelidad.dart';
 import 'medidas.dart';
 import 'modelo/archivo.dart';
+import 'modelo/datos.dart';
 import 'modelo/formato.dart';
 
 /// Una parte de un contrato con lo que hay de ella en el banco.
@@ -49,11 +50,19 @@ class FilaDeParte {
 
   /// El rango de palabras del contrato, con su origen y si está pendiente.
   String get rango {
+    // Los contratos propios dan un rango por etapa: se dicen todos.
+    if (parte.palabrasPorNivel.isNotEmpty) {
+      final todos = [
+        for (final e in parte.palabrasPorNivel.entries)
+          '${e.key} ${describirRango(e.value)}',
+      ].join('; ');
+      return parte.rangoPendiente ? '$todos (pendiente)' : todos;
+    }
     final r = rangoDePalabras(parte);
     final partes = <String>[
       if (r != null) describirRango(r) else 'sin rango',
       if (r?.origen != null) r!.origen!,
-      if (parte.pendiente) 'pendiente',
+      if (parte.rangoPendiente) 'pendiente',
     ];
     return partes.length == 1 ? partes.single : '${partes.first} (${partes.skip(1).join(', ')})';
   }
@@ -83,6 +92,38 @@ class FilaDeHabilidad {
   final int preguntas;
 }
 
+/// La cobertura de una etapa (A1, A2, B1 o B2): la suma de la de sus escalones,
+/// más lo que las unidades de examen declaran de esa etapa (`nivel`).
+class EtapaEnInforme {
+  EtapaEnInforme(
+    this.etapa,
+    this.escalones,
+    this.sesiones,
+    this.audios,
+    this.filas,
+    this.unidadesDeExamen,
+    this.preguntasDeExamen,
+  );
+  final String etapa;
+
+  /// Los escalones de `niveles.yaml` que son de esa etapa.
+  final int escalones;
+  final int sesiones;
+  final int audios;
+  final List<FilaDeHabilidad> filas;
+
+  /// Unidades de examen (las que no son de sesión) que declaran esta etapa, y sus preguntas.
+  final int unidadesDeExamen;
+  final int preguntasDeExamen;
+}
+
+/// Los datos que un contrato (o `niveles.yaml`) marca `pendiente: true`.
+class PendientesDeArchivo {
+  PendientesDeArchivo(this.id, this.pendientes);
+  final String id;
+  final List<DatoPendiente> pendientes;
+}
+
 /// La cobertura de un escalón: las sesiones que dicen ser de él, los audios de
 /// traslado que esas sesiones usan y sus preguntas por habilidad.
 class EscalonEnInforme {
@@ -101,6 +142,8 @@ class Informe {
     required this.sinContrato,
     required this.formas,
     required this.escalones,
+    required this.etapas,
+    required this.pendientes,
     required this.sesionesSinEscalon,
   });
 
@@ -114,6 +157,14 @@ class Informe {
 
   /// Null si no hay `niveles.yaml` ("sin niveles").
   final List<EscalonEnInforme>? escalones;
+
+  /// La suma por etapa; null si no hay `niveles.yaml` o este no dice la etapa
+  /// de sus escalones.
+  final List<EtapaEnInforme>? etapas;
+
+  /// Las marcas `pendiente: true` de cada contrato y de `niveles.yaml`, a
+  /// cualquier profundidad.
+  final List<PendientesDeArchivo> pendientes;
 
   /// Sesiones cuyo escalón no está en `niveles.yaml`.
   final int sesionesSinEscalon;
@@ -172,6 +223,17 @@ class Informe {
       sinContrato: sinContrato,
       formas: [for (final f in formas) FormaEnInforme(f, calcularFidelidad(f, c))],
       escalones: c.niveles == null ? null : _escalones(c, sesiones, unidades),
+      etapas: c.niveles == null || c.niveles!.etapaDeEscalon.isEmpty
+          ? null
+          : _etapas(c, sesiones, unidades),
+      pendientes: [
+        for (final a in vivos)
+          if (a is ArchivoFormato && a.contrato.pendientes.isNotEmpty)
+            PendientesDeArchivo(a.id, a.contrato.pendientes),
+        for (final a in vivos)
+          if (a is ArchivoNiveles && a.niveles.pendientes.isNotEmpty)
+            PendientesDeArchivo(a.id, a.niveles.pendientes),
+      ],
       sesionesSinEscalon: c.niveles == null
           ? 0
           : sesiones.where((s) => !c.niveles!.escalones.contains(s.escalon)).length,
@@ -215,7 +277,9 @@ class Informe {
     b.writeln('2. Fidelidad de las formas');
     if (formas.isEmpty) b.writeln('   sin formas');
     for (final f in formas) {
-      b.writeln('   ${f.forma.id} (${f.forma.uso ?? 'sin uso'}, ${f.forma.formato ?? 'sin formato'}, ${f.forma.estado?.name ?? 'sin estado'}): ${f.fidelidad.etiqueta}');
+      b.writeln(
+        '   ${f.forma.id} (${f.forma.uso ?? 'sin uso'}, ${f.forma.formato ?? 'sin formato'}, ${f.forma.estado?.name ?? 'sin estado'}): ${f.fidelidad.descripcion}',
+      );
       for (final m in f.fidelidad.motivos) {
         b.writeln('     - $m');
       }
@@ -244,53 +308,171 @@ class Informe {
         b.writeln('   ${_cuantas(sesionesSinEscalon, 'sesión', 'sesiones')} con un escalón que niveles.yaml no lista');
       }
     }
+
+    b.writeln();
+    b.writeln('4. Cobertura por etapa');
+    final et = etapas;
+    if (et == null) {
+      b.writeln(
+        '   sin niveles'
+        '${escalones == null ? '' : ' (niveles.yaml no dice la etapa de sus escalones)'}',
+      );
+    } else {
+      b.writeln(
+        '   La suma de sus escalones, y las unidades de examen que declaran la etapa (nivel).',
+      );
+      for (final e in et) {
+        b.writeln(
+          '   ${e.etapa}: ${_cuantas(e.escalones, 'escalón', 'escalones')}, ${_cuantas(e.sesiones, 'sesión', 'sesiones')}, ${_cuantas(e.audios, 'audio de traslado', 'audios de traslado')}; '
+          '${_cuantas(e.unidadesDeExamen, 'unidad de examen', 'unidades de examen')} con ${_cuantas(e.preguntasDeExamen, 'pregunta', 'preguntas')}',
+        );
+        if (e.filas.isEmpty) {
+          b.writeln('     sin preguntas de sesión');
+        } else {
+          _tabla(b, [
+            ['habilidad', 'unidades', 'preguntas'],
+            for (final f in e.filas)
+              [f.habilidad, '${f.unidades}', '${f.preguntas}'],
+          ], sangria: '     ');
+        }
+      }
+    }
+
+    b.writeln();
+    b.writeln('5. Datos pendientes de los contratos y de niveles.yaml');
+    if (pendientes.isEmpty) b.writeln('   ninguno');
+    for (final p in pendientes) {
+      b.writeln(
+        '   ${p.id}: ${_cuantas(p.pendientes.length, 'dato pendiente', 'datos pendientes')}',
+      );
+      // Los contratos se detallan (son pocos); niveles.yaml solo se cuenta.
+      if (_seDetalla(p)) {
+        for (final d in p.pendientes) {
+          b.writeln('     - ${d.ruta}');
+        }
+      }
+    }
     return b.toString();
   }
+}
+
+/// Las sesiones, los audios que usan y sus preguntas por habilidad.
+(int, int, List<FilaDeHabilidad>) _cobertura(
+  Contexto c,
+  List<Sesion> deEscalon,
+) {
+  final niveles = c.niveles!;
+  final audios = <Unidad>[];
+  for (final s in deEscalon) {
+    for (final b in s.bloques) {
+      if (b is! BloqueTraslado) continue;
+      for (final id in b.audios) {
+        final u = c.archivo(id);
+        if (u is Unidad && !audios.any((x) => identical(x, u))) audios.add(u);
+      }
+    }
+  }
+  final archivos = <Archivo>[...deEscalon, ...audios];
+  final conteo = <String, (Set<Archivo>, int)>{};
+  for (final a in archivos) {
+    for (final q in preguntasDe(a)) {
+      final h = q.habilidad;
+      if (h == null) continue;
+      final (donde, n) = conteo[h] ?? (<Archivo>{}, 0);
+      conteo[h] = (donde..add(a), n + preguntasQueAporta(q));
+    }
+  }
+  final orden = [
+    ...niveles.habilidades.where(conteo.containsKey),
+    ...(conteo.keys.where((h) => !niveles.habilidades.contains(h)).toList()
+      ..sort()),
+  ];
+  return (
+    deEscalon.length,
+    audios.length,
+    [
+      for (final h in orden)
+        FilaDeHabilidad(h, conteo[h]!.$1.length, conteo[h]!.$2),
+    ],
+  );
 }
 
 /// La cobertura de cada escalón de `niveles.yaml`: sus sesiones (por el campo
 /// `escalon`) y los audios que usan. Las unidades de examen no entran: declaran
 /// su etapa (`nivel`), no su escalón.
-List<EscalonEnInforme> _escalones(Contexto c, List<Sesion> sesiones, List<Unidad> unidades) {
-  final niveles = c.niveles!;
+List<EscalonEnInforme> _escalones(
+  Contexto c,
+  List<Sesion> sesiones,
+  List<Unidad> unidades,
+) {
   final salida = <EscalonEnInforme>[];
-  for (final escalon in niveles.escalones) {
-    final deEscalon = [for (final s in sesiones) if (s.escalon == escalon) s];
-    final audios = <Unidad>[];
-    for (final s in deEscalon) {
-      for (final b in s.bloques) {
-        if (b is! BloqueTraslado) continue;
-        for (final id in b.audios) {
-          final u = c.archivo(id);
-          if (u is Unidad && !audios.any((x) => identical(x, u))) audios.add(u);
-        }
-      }
-    }
-    final archivos = <Archivo>[...deEscalon, ...audios];
-    final conteo = <String, (Set<Archivo>, int)>{};
-    for (final a in archivos) {
-      for (final q in preguntasDe(a)) {
-        final h = q.habilidad;
-        if (h == null) continue;
-        final (donde, n) = conteo[h] ?? (<Archivo>{}, 0);
-        conteo[h] = (donde..add(a), n + preguntasQueAporta(q));
-      }
-    }
-    final orden = [
-      ...niveles.habilidades.where(conteo.containsKey),
-      ...(conteo.keys.where((h) => !niveles.habilidades.contains(h)).toList()..sort()),
-    ];
-    salida.add(EscalonEnInforme(
-      escalon,
-      deEscalon.length,
-      audios.length,
-      [for (final h in orden) FilaDeHabilidad(h, conteo[h]!.$1.length, conteo[h]!.$2)],
-    ));
+  for (final escalon in c.niveles!.escalones) {
+    final (n, audios, filas) = _cobertura(c, [
+      for (final s in sesiones)
+        if (s.escalon == escalon) s,
+    ]);
+    salida.add(EscalonEnInforme(escalon, n, audios, filas));
   }
   return salida;
 }
 
-String _cuantas(int n, String uno, String varios) => '$n ${n == 1 ? uno : varios}';
+/// La cobertura de cada etapa: la de sus escalones sumada (sin contar dos veces
+/// una sesión ni un audio), y las unidades de examen que declaran la etapa.
+List<EtapaEnInforme> _etapas(
+  Contexto c,
+  List<Sesion> sesiones,
+  List<Unidad> unidades,
+) {
+  final deEscalon = c.niveles!.etapaDeEscalon;
+  final salida = <EtapaEnInforme>[];
+  for (final etapa in etapasDe(c)) {
+    final suyos = {
+      for (final e in deEscalon.entries)
+        if (e.value == etapa) e.key,
+    };
+    final (n, audios, filas) = _cobertura(c, [
+      for (final s in sesiones)
+        if (suyos.contains(s.escalon)) s,
+    ]);
+    final examen = [
+      for (final u in unidades)
+        if (u.nivel == etapa &&
+            u.estimulo?.tipo != null &&
+            c.contrato(u.formato) != null &&
+            u.formato != 'gravity-sesion-60')
+          u,
+    ];
+    salida.add(
+      EtapaEnInforme(
+        etapa,
+        suyos.length,
+        n,
+        audios,
+        filas,
+        examen.length,
+        examen.fold(0, (s, u) => s + contarPreguntas(u)),
+      ),
+    );
+  }
+  return salida;
+}
+
+/// Las etapas que `niveles.yaml` nombra, en el orden de la escalera.
+List<String> etapasDe(Contexto c) {
+  final vistas = <String>[];
+  for (final e in c.niveles!.escalonesEnOrden) {
+    final etapa = e['etapa'];
+    if (etapa is String && !vistas.contains(etapa)) vistas.add(etapa);
+  }
+  return vistas;
+}
+
+/// ¿Se detallan las rutas de este archivo? Sí en los contratos y no en niveles.yaml,
+/// que tiene casi cien marcas.
+bool _seDetalla(PendientesDeArchivo p) => p.id != 'niveles';
+
+String _cuantas(int n, String uno, String varios) =>
+    '$n ${n == 1 ? uno : varios}';
 
 /// Un número sin ceros inútiles: `394`, `7.5`.
 String _numero(num n) => n == n.roundToDouble() ? '${n.round()}' : '$n';

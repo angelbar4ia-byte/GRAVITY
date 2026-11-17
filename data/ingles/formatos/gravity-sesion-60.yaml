@@ -257,7 +257,7 @@ viernes:
     estructura_en_el_formato:
       pendiente: true
       nota: "Definido en el formato 0.5 (secciones 5.1 y 7.1); el validador todavía no lo conoce (P1.2c). Con 20 preguntas de 40 s la lección de ese viernes estima 13.3 min, el 133 % de 10: dentro de V22."
-  conversacion_guiada: {turnos: {min: 8}, con_variantes: true}
+  conversacion_guiada: {turnos: {min: 12}, turnos_de_la_persona: {min: 6}, con_variantes: true, origen: "formato 0.5, sección 7.1; subido de 8 y 4 porque V22 estimaba 5 min (50 %) con las cifras anteriores (hallazgo de P1.2c-1)"}
   estructura_de_la_conversacion_guiada:
     pendiente: true
     nota: "Propuesta en el formato 0.5, sección 7.1 (8 turnos o más, 4 de la persona, guía, modelo y 2 variantes; 60 s por turno de la persona y 15 s por turno del sistema). Pendiente de que el dueño la confirme y de calibrarla en el piloto."

@@ -120,11 +120,27 @@ class Forma extends Archivo {
     required this.uso,
     required this.semilla,
     required this.secciones,
+    this.escalon,
+    this.unidadDelEscalon,
+    this.variante,
+    this.conAudio,
   });
   final String? formato;
   final String? uso;
   final int? semilla;
   final List<SeccionForma> secciones;
+
+  /// Solo en las formas de uso `prueba_unidad` y `mini` (formato 0.5, 5.1).
+  final String? escalon;
+
+  /// De 1 a 4: las semanas 2, 4, 6 y 7. Solo en `prueba_unidad`.
+  final int? unidadDelEscalon;
+
+  /// `a` (primer intento) o `b` (repetición). Solo en `prueba_unidad`.
+  final String? variante;
+
+  /// `false`: 15 preguntas, sin escucha. Solo en `prueba_unidad`.
+  final bool? conAudio;
   @override
   String get tipo => 'forma';
 }
@@ -199,6 +215,71 @@ class BloqueTraslado extends Bloque {
   final List<String> frases;
   @override
   String get tipo => 'traslado';
+}
+
+/// El bloque `mini_prueba` del viernes: remite a una forma de uso `mini`.
+class BloqueMiniPrueba extends Bloque {
+  const BloqueMiniPrueba(super.minutos, {required this.forma});
+  final String? forma;
+  @override
+  String get tipo => 'mini_prueba';
+}
+
+/// El bloque `prueba_unidad` del viernes: la forma `a` y la `b` de reserva.
+class BloquePruebaUnidad extends Bloque {
+  const BloquePruebaUnidad(
+    super.minutos, {
+    required this.forma,
+    required this.repeticion,
+  });
+  final String? forma;
+  final String? repeticion;
+  @override
+  String get tipo => 'prueba_unidad';
+}
+
+/// El bloque `repeticion_prueba` del lunes siguiente: la forma `b`.
+class BloqueRepeticionPrueba extends Bloque {
+  const BloqueRepeticionPrueba(super.minutos, {required this.forma});
+  final String? forma;
+  @override
+  String get tipo => 'repeticion_prueba';
+}
+
+/// Un turno de la conversación guiada. El del sistema trae `en` y `es`; el de
+/// la persona, `guia`, `modelo`, `variantes` y `palabras_clave`.
+class TurnoConversacion {
+  const TurnoConversacion({
+    required this.rol,
+    this.en,
+    this.es,
+    this.guia,
+    this.modelo = const [],
+    this.variantes = const [],
+    this.palabrasClave = const [],
+  });
+  final String? rol;
+  final String? en;
+  final String? es;
+  final String? guia;
+  final List<String> modelo;
+  final List<String> variantes;
+  final List<String> palabrasClave;
+
+  bool get esDePersona => rol == 'persona';
+}
+
+/// El bloque `conversacion_guiada` del viernes (formato 0.5, 7.1).
+class BloqueConversacion extends Bloque {
+  const BloqueConversacion(
+    super.minutos, {
+    required this.situacion,
+    required this.turnos,
+  });
+  final String? situacion;
+  final List<TurnoConversacion> turnos;
+  @override
+  String get tipo => 'conversacion_guiada';
 }
 
 /// Una sesión diaria del curso (60 minutos).

@@ -134,7 +134,11 @@ secciones:
     test('malo: una forma cuya parte no está en el contrato', () {
       final d = forma();
       mapa(lista(d['secciones']).first)['parte'] = 'p-zzz';
-      expect(errores(correr([d, opcionMultiple()]), 'V02').single.mensaje, contains('p-zzz'));
+      // Además de que la parte no existe, la unidad ya no es de la parte de su
+      // sección (V02 compara la parte de la unidad con la de la sección).
+      final h = errores(correr([d, opcionMultiple()]), 'V02').map((x) => x.mensaje);
+      expect(h, anyElement(contains('la parte "p-zzz" no existe en el contrato')));
+      expect(h, anyElement(contains('es de la parte "p-om" y la sección la usa en "p-zzz"')));
     });
     test('malo: una forma que apunta a algo que no es una unidad', () {
       final h = errores(correr([forma(unidad: 't-forma-a')]), 'V02');

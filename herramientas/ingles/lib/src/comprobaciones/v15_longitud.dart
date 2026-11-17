@@ -15,6 +15,9 @@ import 'comun.dart';
 /// `pendiente`, el aviso es de "rango pendiente" aunque la cifra quepa: un dato
 /// pendiente no decide nada (formato, 6.2, regla 4).
 ///
+/// Con un contrato propio (`palabras_estimulo.por_nivel`) el rango es el de la
+/// etapa de la unidad (`nivel`).
+///
 /// Sin contrato (o con una parte que no existe en él) no dice nada: V02 ya avisa
 /// "sin contrato".
 List<Hallazgo> v15(Archivo a, Contexto c) {
@@ -22,9 +25,9 @@ List<Hallazgo> v15(Archivo a, Contexto c) {
   final parte = c.parteDe(a);
   if (parte == null) return const [];
   final medidas = medidasDeEstimulo(a);
-  final rango = rangoDePalabras(parte);
+  final rango = rangoDePalabras(parte, nivel: a.nivel);
 
-  if (parte.pendiente) {
+  if (parte.rangoPendiente) {
     return [
       aviso(
         a,
@@ -34,7 +37,20 @@ List<Hallazgo> v15(Archivo a, Contexto c) {
       ),
     ];
   }
-  if (rango == null) return const [];
+  if (rango == null) {
+    // Un contrato por etapa (los propios) sin rango para la etapa de la unidad:
+    // no se puede comprobar, y la unidad lo debe saber.
+    if (parte.palabrasPorNivel.isNotEmpty && medidas.isNotEmpty) {
+      return [
+        aviso(
+          a,
+          'V15',
+          'el contrato de "${parte.id}" da rango de palabras por etapa (${parte.palabrasPorNivel.keys.join(', ')}) y la unidad es de ${a.nivel == null ? 'una etapa sin declarar' : 'la etapa ${a.nivel}'}: no se puede comprobar el largo del estímulo',
+        ),
+      ];
+    }
+    return const [];
+  }
 
   return [
     for (final m in medidas)

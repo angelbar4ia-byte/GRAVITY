@@ -1,3 +1,4 @@
+import 'datos.dart';
 import 'lector.dart';
 import 'listas.dart';
 
@@ -38,6 +39,8 @@ class Parte {
     this.pendiente = false,
     this.ocultar,
     this.nota,
+    this.palabrasPorNivel = const {},
+    this.datos = const {},
   });
 
   final String id;
@@ -63,6 +66,27 @@ class Parte {
   final bool pendiente;
   final ReglaOcultar? ocultar;
   final String? nota;
+
+  /// `palabras_estimulo.por_nivel`: el rango de palabras de cada etapa (A1, A2,
+  /// B1 y B2), en los contratos propios, donde una misma parte sirve a varias
+  /// etapas. Vacío si la parte da un solo rango.
+  final Map<String, Rango> palabrasPorNivel;
+
+  /// Todo lo que la parte trae, tal como se leyó (para `por_dia`, `frases`,
+  /// `minutos_parte` y demás datos que solo conocen los contratos propios).
+  final Mapa datos;
+
+  /// Marcas `pendiente: true` en cualquier parte de este bloque, a cualquier
+  /// profundidad (no solo la de la parte: también `por_dia`, `por_semana`...).
+  List<DatoPendiente> get pendientes => pendientesEn(datos);
+
+  /// ¿La parte tiene algún dato pendiente, a cualquier profundidad?
+  bool get tienePendientes => pendientes.isNotEmpty;
+
+  /// ¿Está pendiente el rango de palabras del estímulo (en la parte o dentro de
+  /// `palabras_estimulo`)? Es lo único que decide V15.
+  bool get rangoPendiente =>
+      pendiente || pendientesEn(datos['palabras_estimulo']).isNotEmpty;
 }
 
 class Seccion {
@@ -89,6 +113,9 @@ class Formato {
   /// (mínimos de sesión, `totales`, minutos).
   final Map<String, Object?> datos;
 
+  /// Marcas `pendiente: true` de todo el contrato, a cualquier profundidad.
+  List<DatoPendiente> get pendientes => pendientesEn(datos);
+
   Parte? parte(String? id) {
     if (id == null) return null;
     for (final s in secciones) {
@@ -108,6 +135,30 @@ Rango? _rangoOEntero(Vista v, String k) {
   final m = v.mapa(k, requerido: false);
   if (m == null) return null;
   return Rango(min: m.numero('min'), max: m.numero('max'), origen: m.texto('origen', requerido: false));
+}
+
+Map<String, Rango> _porNivel(Vista p) {
+  final pe = p.mapa('palabras_estimulo', requerido: false);
+  final pn = pe?.mapa('por_nivel', requerido: false);
+  if (pn == null) return const {};
+  final salida = <String, Rango>{};
+  for (final e in pn.datos.keys) {
+    if (!etapas.contains(e)) {
+      pn.lector.error(
+        pn.ruta,
+        'la etapa "$e" no es válida (válidas: ${etapas.join(', ')})',
+        id: pn.id,
+      );
+    }
+    final r = pn.mapa(e, requerido: false);
+    if (r == null) continue;
+    salida[e] = Rango(
+      min: r.numero('min'),
+      max: r.numero('max'),
+      origen: r.texto('origen', requerido: false),
+    );
+  }
+  return salida;
 }
 
 Parte? _leerParte(Vista p, Set<String> vistas) {
@@ -140,6 +191,8 @@ Parte? _leerParte(Vista p, Set<String> vistas) {
             pendiente: ocultar.booleano('pendiente') ?? false,
           ),
     nota: p.texto('nota', requerido: false),
+    palabrasPorNivel: _porNivel(p),
+    datos: p.datos,
   );
 }
 

@@ -9,16 +9,56 @@ import 'modelo/formato.dart';
 
 /// El resultado: `completa` solo si no hay ningún motivo para ser `reducida`.
 class Fidelidad {
-  const Fidelidad(this.motivos);
+  const Fidelidad(
+    this.motivos, {
+    this.parcial = false,
+    this.partes = const [],
+    this.aplica = true,
+  });
+
+  /// Las formas de uso `mini` y `prueba_unidad` no imitan un examen oficial: la
+  /// fidelidad no les aplica y se verifican por V28 (formato 0.5, 5.1, regla 5).
+  const Fidelidad.noAplica()
+    : motivos = const [],
+      parcial = false,
+      partes = const [],
+      aplica = false;
 
   /// Todo lo que impide que la forma sea completa, en el orden del contrato.
   final List<String> motivos;
 
-  bool get completa => motivos.isEmpty;
+  /// `true` en una forma de uso `practica`: se evalúa solo sobre las partes que
+  /// incluye ([partes]) y no se presenta como el examen entero.
+  final bool parcial;
 
-  /// `completa` o `reducida`, como se muestra en el cuaderno y en la app.
-  String get etiqueta => completa ? 'completa' : 'reducida';
+  /// Las partes sobre las que se evaluó, en el orden del contrato (solo en una
+  /// forma parcial).
+  final List<String> partes;
+
+  /// `false` si la fidelidad no se calcula para ese uso.
+  final bool aplica;
+
+  bool get completa => aplica && motivos.isEmpty;
+
+  /// `completa`, `reducida` o `no aplica`, como se muestra en el cuaderno y en
+  /// la app.
+  String get etiqueta =>
+      !aplica ? 'no aplica' : (completa ? 'completa' : 'reducida');
+
+  /// La etiqueta con su alcance: una práctica completa dice en qué partes lo es.
+  String get descripcion {
+    if (!aplica) return 'no aplica';
+    if (!parcial) return etiqueta;
+    final donde = partes.isEmpty ? 'ninguna parte' : partes.join(', ');
+    return '$etiqueta solo en: $donde (no es el examen entero)';
+  }
 }
+
+/// Los usos que se evalúan solo sobre las partes que incluyen (formato, 5).
+const List<String> usosParciales = ['practica'];
+
+/// Los usos a los que la fidelidad no aplica (formato 0.5, 5.1, regla 5).
+const List<String> usosSinFidelidad = ['mini', 'prueba_unidad'];
 
 /// Calcula la fidelidad de [f] con el contrato de su formato.
 ///
@@ -38,10 +78,14 @@ class Fidelidad {
 /// fidelidad completa. Sin contrato no se puede calcular nada y la forma es
 /// `reducida`: la herramienta no inventa contratos.
 ///
-/// Una forma que no usa alguna parte del contrato (por ejemplo, una práctica de
-/// una sola parte) es `reducida` con el motivo "falta la parte" (o "faltan N
-/// partes", todas juntas y al principio): no se parece al examen entero.
+/// Una forma que no usa alguna parte del contrato es `reducida` con el motivo
+/// "falta la parte" (o "faltan N partes", todas juntas y al principio): no se
+/// parece al examen entero. **Salvo** las de uso `practica`, que se evalúan solo
+/// sobre las partes que incluyen y dicen cuáles son ([Fidelidad.partes]); y las
+/// de uso `mini` y `prueba_unidad`, a las que la fidelidad no aplica.
 Fidelidad calcularFidelidad(Forma f, Contexto c) {
+  if (usosSinFidelidad.contains(f.uso)) return const Fidelidad.noAplica();
+  final parcial = usosParciales.contains(f.uso);
   final contrato = c.contrato(f.formato);
   if (contrato == null) {
     return Fidelidad([
@@ -62,15 +106,26 @@ Fidelidad calcularFidelidad(Forma f, Contexto c) {
   }
   final faltan = <String>[];
   final deLasPartes = <String>[];
+  final evaluadas = <String>[];
   for (final seccion in contrato.secciones) {
     for (final parte in seccion.partes) {
       final secciones = usos[parte.id];
       if (secciones == null || secciones.isEmpty) {
         faltan.add('"${parte.id}"');
       } else {
+        evaluadas.add(parte.id);
         deLasPartes.addAll(_motivosDeParte(f, c, seccion, parte, secciones));
       }
     }
+  }
+  if (parcial) {
+    // Una práctica se evalúa solo sobre las partes que incluye; lo que no
+    // incluye no es una falta. Pero sin ninguna parte no hay nada que evaluar.
+    if (evaluadas.isEmpty) {
+      motivos.add('la práctica no incluye ninguna parte del contrato');
+    }
+    motivos.addAll(deLasPartes);
+    return Fidelidad(motivos, parcial: true, partes: evaluadas);
   }
   // Lo que falta, junto y primero; después, parte por parte, lo que no cuadra.
   if (faltan.length == 1) {
@@ -106,7 +161,9 @@ List<String> _motivosDeParte(
   if (secciones.length > 1) {
     m.add('la parte $p aparece en ${secciones.length} secciones de la forma');
   }
-  if (parte.pendiente) {
+  // Un dato pendiente a cualquier profundidad de la parte (también por_dia,
+  // por_semana...) impide la fidelidad completa: un dato pendiente no decide nada.
+  if (parte.tienePendientes) {
     m.add('el contrato tiene datos pendientes en la parte $p');
   }
 
@@ -132,8 +189,10 @@ List<String> _motivosDeParte(
 
   var nUnidades = 0;
   var nPreguntas = 0;
-  final rango = parte.pendiente ? null : rangoDePalabras(parte);
   for (final u in unidades) {
+    final rango = parte.rangoPendiente
+        ? null
+        : rangoDePalabras(parte, nivel: u.nivel);
     nUnidades += contarUnidades(u);
     nPreguntas += contarPreguntas(u);
     final id = '"${u.id}"';
@@ -155,6 +214,14 @@ List<String> _motivosDeParte(
       m.add('la unidad $id tiene ${_cuantas(contarPreguntas(u), 'pregunta', 'preguntas')} y el contrato de $p pide ${describirRango(porUnidad)} por unidad');
     }
 
+    if (rango == null &&
+        !parte.rangoPendiente &&
+        parte.palabrasPorNivel.isNotEmpty &&
+        medidasDeEstimulo(u).isNotEmpty) {
+      m.add(
+        'el contrato de $p da rango por etapa (${parte.palabrasPorNivel.keys.join(', ')}) y la unidad $id es de ${u.nivel == null ? 'una etapa sin declarar' : 'la etapa ${u.nivel}'}',
+      );
+    }
     if (rango != null) {
       for (final medida in medidasDeEstimulo(u)) {
         if (!enRango(medida.palabras, rango)) {
@@ -182,7 +249,7 @@ List<String> _motivosDeParte(
     if (nUnidades != pideUnidades) {
       m.add('la parte $p tiene ${_cuantas(nUnidades, 'unidad', 'unidades')} y el contrato pide $pideUnidades');
     }
-  } else if (!parte.pendiente) {
+  } else if (!parte.tienePendientes) {
     m.add('el contrato no da el número de unidades de la parte $p');
   }
   final pidePreguntas = preguntasQuePide(parte);
@@ -190,7 +257,7 @@ List<String> _motivosDeParte(
     if (!enRango(nPreguntas, pidePreguntas)) {
       m.add('la parte $p tiene ${_cuantas(nPreguntas, 'pregunta', 'preguntas')} y el contrato pide ${describirRango(pidePreguntas)}');
     }
-  } else if (!parte.pendiente) {
+  } else if (!parte.tienePendientes) {
     m.add('el contrato no da el número de preguntas de la parte $p');
   }
   return m;

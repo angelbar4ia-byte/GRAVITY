@@ -319,7 +319,9 @@ void pruebasDeLaOrden() {
       expect(p.exitCode, 1);
       expect(lineas, contains(startsWith('unidades/a.yaml [u-a] V19 error: comparte 1 oración de 7 palabras o más con "u-b" (unidades/b.yaml)')));
       expect(lineas, contains(startsWith('unidades/b.yaml [u-b] V19 error: comparte 1 oración de 7 palabras o más con "u-a" (unidades/a.yaml)')));
-      expect(lineas.last, 'Resumen: 4 archivos leídos, 2 errores, 0 avisos.');
+      // El único aviso es de V27: este niveles.yaml mínimo lista los escalones como
+      // textos y no trae sus datos.
+      expect(lineas.last, 'Resumen: 4 archivos leídos, 2 errores, 1 avisos.');
     });
   });
 }

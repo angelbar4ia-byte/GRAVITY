@@ -131,6 +131,26 @@ void _forma(Forma f, Contexto c, List<Hallazgo> h) {
         h.add(error(f, 'V02', 'la unidad "$id" no existe'));
       } else if (x is! Unidad) {
         h.add(error(f, 'V02', '"$id" existe pero es ${x.tipo}, no una unidad'));
+      } else {
+        // La unidad de una forma es de la parte y del formato de su sección.
+        if (x.formato != null && f.formato != null && x.formato != f.formato) {
+          h.add(
+            error(
+              f,
+              'V02',
+              'la unidad "$id" es del formato "${x.formato}" y la forma es de "${f.formato}"',
+            ),
+          );
+        }
+        if (x.parte != null && s.parte != null && x.parte != s.parte) {
+          h.add(
+            error(
+              f,
+              'V02',
+              'la unidad "$id" es de la parte "${x.parte}" y la sección la usa en "${s.parte}"',
+            ),
+          );
+        }
       }
     }
   }
@@ -141,6 +161,33 @@ void _sesion(Sesion s, Contexto c, List<Hallazgo> h) {
     h.add(faltante(s, 'V02', 'sin contrato: no existe el formato "gravity-sesion-60" en formatos/'));
   }
   for (final b in s.bloques) {
+    // Las formas a las que remiten los bloques de la prueba (formato 0.5, 7.1).
+    final (forma, repeticion) = switch (b) {
+      BloqueMiniPrueba() => (b.forma, null),
+      BloquePruebaUnidad() => (b.forma, b.repeticion),
+      BloqueRepeticionPrueba() => (b.forma, null),
+      _ => (null, null),
+    };
+    for (final id in [?forma, ?repeticion]) {
+      final x = c.archivo(id);
+      if (x == null) {
+        h.add(
+          error(
+            s,
+            'V02',
+            'el bloque ${b.tipo} remite a la forma "$id", que no existe',
+          ),
+        );
+      } else if (x is! Forma) {
+        h.add(
+          error(
+            s,
+            'V02',
+            'el bloque ${b.tipo} remite a "$id", que existe pero es ${x.tipo}, no una forma',
+          ),
+        );
+      }
+    }
     if (b is! BloqueTraslado) continue;
     for (final id in b.audios) {
       final x = c.archivo(id);

@@ -1,3 +1,4 @@
+import 'datos.dart';
 import 'lector.dart';
 
 /// Escalera y listas controladas de `data/ingles/niveles.yaml`.
@@ -14,6 +15,7 @@ class Niveles {
     required this.habilidades,
     required this.focos,
     required this.temas,
+    this.datos = const {},
   });
 
   /// Etapas (A1, A2, B1, B2). Vacía si el archivo no las lista.
@@ -22,6 +24,26 @@ class Niveles {
   final Set<String> habilidades;
   final Set<String> focos;
   final Set<String> temas;
+
+  /// Todo el archivo tal como se leyó (V27 mira escalones, temas retomados,
+  /// cobertura de los manuales y totales).
+  final Mapa datos;
+
+  /// Los escalones en el orden en que están escritos, con sus campos.
+  List<Mapa> get escalonesEnOrden => [
+    for (final e in listaEn(datos, 'escalones') ?? const <Object?>[])
+      if (e is Map<String, Object?>) e,
+  ];
+
+  /// La etapa de cada escalón (`A2.1` → `A2`), si el archivo la dice.
+  Map<String, String> get etapaDeEscalon => {
+    for (final e in escalonesEnOrden)
+      if (e['id'] is String && e['etapa'] is String)
+        e['id']! as String: e['etapa']! as String,
+  };
+
+  /// Marcas `pendiente: true` de todo el archivo.
+  List<DatoPendiente> get pendientes => pendientesEn(datos);
 }
 
 Set<String> _ids(Vista v, String k) {
@@ -42,9 +64,10 @@ Set<String> _ids(Vista v, String k) {
 }
 
 Niveles leerNiveles(Vista v) => Niveles(
-      niveles: _ids(v, 'niveles'),
-      escalones: _ids(v, 'escalones'),
-      habilidades: _ids(v, 'habilidades'),
-      focos: _ids(v, 'focos'),
-      temas: _ids(v, 'temas'),
-    );
+  niveles: _ids(v, 'niveles'),
+  escalones: _ids(v, 'escalones'),
+  habilidades: _ids(v, 'habilidades'),
+  focos: _ids(v, 'focos'),
+  temas: _ids(v, 'temas'),
+  datos: v.datos,
+);

@@ -252,5 +252,59 @@ void main() {
         expect(fi.motivos.single, startsWith('sin contrato'));
       });
     });
+
+    group('alcance: prácticas, mini pruebas y pruebas por unidad (formato 5 y 5.1)', () {
+      test('bueno: una práctica de una sola parte es completa en esa parte y dice cuál es', () {
+        final f = fidelidad(secciones: {'r-1': ['u-r1-a', 'u-r1-b']}, uso: 'practica');
+        expect(f.motivos, isEmpty);
+        expect(f.completa, isTrue);
+        expect(f.parcial, isTrue);
+        expect(f.partes, ['r-1']);
+        expect(f.descripcion, 'completa solo en: r-1 (no es el examen entero)');
+      });
+      test('malo: una práctica se evalúa sobre las partes que incluye: la que incluye mal la hace reducida', () {
+        final f = fidelidad(
+          unidades: reemplaza('u-r1-a', lectura('u-r1-a', parte: 'r-1', semilla: 1, palabras: 45)),
+          secciones: {'r-1': ['u-r1-a', 'u-r1-b'], 'r-2': ['u-r2']},
+          uso: 'practica',
+        );
+        expect(f.completa, isFalse);
+        expect(f.partes, ['r-1', 'r-2']);
+        expect(f.motivos, ['la unidad "u-r1-a" tiene 45 palabras y el contrato de "r-1" pide 20 a 40']);
+        expect(f.descripcion, startsWith('reducida solo en: r-1, r-2'));
+      });
+      test('malo: una práctica con las partes a medias sigue siendo reducida por lo que incluye', () {
+        final f = fidelidad(secciones: {'r-1': ['u-r1-a']}, uso: 'practica');
+        expect(f.motivos, ['la parte "r-1" tiene 1 unidad y el contrato pide 2', 'la parte "r-1" tiene 1 pregunta y el contrato pide 2']);
+      });
+      test('malo: una práctica sin ninguna parte del contrato no se da por completa', () {
+        final f = fidelidad(secciones: {'zzz': ['u-r1-a']}, uso: 'practica');
+        expect(f.completa, isFalse);
+        expect(f.motivos, contains('la práctica no incluye ninguna parte del contrato'));
+      });
+      test('los usos simulacro, etapa, escalon y ubicacion exigen todas las partes', () {
+        for (final uso in ['simulacro', 'etapa', 'escalon', 'ubicacion']) {
+          final f = fidelidad(secciones: {'r-1': ['u-r1-a', 'u-r1-b']}, uso: uso);
+          expect(f.completa, isFalse, reason: uso);
+          expect(f.motivos.first, startsWith('faltan 5 partes'), reason: uso);
+          expect(f.parcial, isFalse, reason: uso);
+        }
+      });
+      test('mini y prueba_unidad: la fidelidad no aplica', () {
+        for (final uso in ['mini', 'prueba_unidad']) {
+          final f = fidelidad(secciones: {'r-1': ['u-r1-a']}, uso: uso);
+          expect(f.aplica, isFalse, reason: uso);
+          expect(f.completa, isFalse, reason: uso);
+          expect(f.etiqueta, 'no aplica', reason: uso);
+          expect(f.motivos, isEmpty, reason: uso);
+        }
+      });
+      test('un dato pendiente a cualquier profundidad de la parte impide la fidelidad completa', () {
+        final c = contratoCon('r-1', (p) => p['por_dia'] = {'martes': {'pendiente': true, 'nota': 'falta'}});
+        expect(fidelidad(contrato: c).motivos, ['el contrato tiene datos pendientes en la parte "r-1"']);
+        // ...y una parte que la forma no usa, en una práctica, no cuenta.
+        expect(fidelidad(contrato: c, secciones: {'r-2': ['u-r2']}, uso: 'practica').completa, isTrue);
+      });
+    });
   });
 }

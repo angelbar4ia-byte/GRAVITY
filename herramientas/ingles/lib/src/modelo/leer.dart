@@ -157,6 +157,12 @@ Forma _leerForma(Vista v, String ruta, String id, Estado? estado) {
   final formato = v.texto('formato');
   final uso = v.texto('uso', en: usosForma);
   final semilla = v.entero('semilla', requerido: true);
+  // Campos de las pruebas por unidad y las mini pruebas (formato 0.5, 5.1). Los
+  // exige V28 según el uso; aquí solo se comprueban sus tipos.
+  final escalon = v.texto('escalon', requerido: false);
+  final unidadDelEscalon = v.entero('unidad_del_escalon');
+  final variante = v.texto('variante', requerido: false, en: variantesPrueba);
+  final conAudio = v.booleano('con_audio');
   final secciones = <SeccionForma>[];
   for (final s in v.mapas('secciones', noVacia: true)) {
     secciones.add(SeccionForma(
@@ -173,6 +179,10 @@ Forma _leerForma(Vista v, String ruta, String id, Estado? estado) {
     uso: uso,
     semilla: semilla,
     secciones: secciones,
+    escalon: escalon,
+    unidadDelEscalon: unidadDelEscalon,
+    variante: variante,
+    conAudio: conAudio,
   );
 }
 
@@ -229,6 +239,41 @@ Bloque? _leerBloque(Vista b, String sesionId) {
         minutos,
         audios: b.textos('audios', noVacia: true),
         frases: b.textos('frases', noVacia: true),
+      );
+    case 'mini_prueba':
+      return BloqueMiniPrueba(minutos, forma: b.texto('forma'));
+    case 'prueba_unidad':
+      return BloquePruebaUnidad(
+        minutos,
+        forma: b.texto('forma'),
+        repeticion: b.texto('repeticion', requerido: false),
+      );
+    case 'repeticion_prueba':
+      return BloqueRepeticionPrueba(minutos, forma: b.texto('forma'));
+    case 'conversacion_guiada':
+      final turnos = <TurnoConversacion>[];
+      for (final t in b.mapas('turnos', noVacia: true)) {
+        final rol = t.texto('rol', en: rolesConversacion);
+        if (rol == 'persona') {
+          turnos.add(
+            TurnoConversacion(
+              rol: rol,
+              guia: t.texto('guia'),
+              modelo: t.textos('modelo', noVacia: true),
+              variantes: t.textos('variantes'),
+              palabrasClave: t.textos('palabras_clave'),
+            ),
+          );
+        } else if (rol == 'sistema') {
+          turnos.add(
+            TurnoConversacion(rol: rol, en: t.texto('en'), es: t.texto('es')),
+          );
+        }
+      }
+      return BloqueConversacion(
+        minutos,
+        situacion: b.texto('situacion'),
+        turnos: turnos,
       );
   }
   return null;

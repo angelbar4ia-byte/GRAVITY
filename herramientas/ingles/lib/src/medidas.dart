@@ -143,7 +143,15 @@ String describirRango(Rango r) {
 /// El rango de palabras que la parte declara para el estímulo, o null si no
 /// declara ninguno. No mira `pendiente`: eso lo decide quien lo usa (un dato
 /// pendiente no decide nada, formato 6.2, regla 4).
-Rango? rangoDePalabras(Parte p) {
+///
+/// Los contratos propios dan un rango por etapa (`palabras_estimulo.por_nivel`):
+/// con [nivel] (la etapa de la unidad) se devuelve el de esa etapa, y sin él o
+/// con una etapa que el contrato no trae, null. Un contrato de examen da un solo
+/// rango y [nivel] no importa.
+Rango? rangoDePalabras(Parte p, {String? nivel}) {
+  if (p.palabrasPorNivel.isNotEmpty) {
+    return nivel == null ? null : p.palabrasPorNivel[nivel];
+  }
   final r = p.palabrasEstimulo;
   if (r == null || (r.min == null && r.max == null)) return null;
   return r;
