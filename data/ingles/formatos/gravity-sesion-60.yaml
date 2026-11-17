@@ -240,14 +240,30 @@ viernes:
     - {bloque: repaso, cambia_por: mini_prueba, detalle: "10 preguntas, se aprueba con 8"}
     - {bloque: produccion, cambia_por: monologo_o_dialogo_grabado, modalidad: habla, detalle: "monólogo o diálogo grabado"}
     - {bloque: tarjetas_nuevas, cambia_por: ninguna, cantidad: 0}
-  mini_prueba: {preguntas: 10, aprobar_con: 8, ocupa_el_lugar_de: repaso}
+  mini_prueba: {preguntas: 10, aprobar_con: 8, ocupa_el_lugar_de: repaso, semanas: [1, 2, 3, 4, 5, 6, 7], funcion: repaso, minutos_estimados: 6.7, origen: "ampliaciones 0.6, sección 3.6 (D-ING-14: el examen del viernes es de repaso; 10 preguntas × 40 s = 6.7 min, el 133 % de 5); no hay mini prueba en la semana 8, que es de puerta"}
+  prueba_por_unidad:
+    viernes_de_las_semanas: [2, 4, 6, 7]
+    por_escalon: 4
+    ocupa_el_lugar_de: leccion
+    la_conversacion_guiada_se_omite_ese_viernes: true
+    preguntas: {con_audio: 20, sin_audio: 15}
+    composicion_con_audio: {gramatica_del_tema: 6, vocabulario: 4, lectura: 5, escucha: 5}
+    reproducciones_del_audio: 2
+    umbral_porcentaje: 80
+    repeticion: {dia: lunes_de_la_semana_siguiente, semanas: [3, 5, 7, 8], forma: reserva_b, sustituye_a: leccion, gasta_faltas: false}
+    minutos_estimados: {con_audio: 13.3, sin_audio: 10}
+    minutos_planeados_del_dia: 60
+    origen: "ampliaciones 0.6, sección 3.6.1 (P5-31; D-ING-14, D29). Las cifras de contenido son propuesta de habitos, no decisión del dueño: el dueño decidió que existan, que sean cuatro y que cuenten (D-ING-14 y D-ING-16)"
+    estructura_en_el_formato:
+      pendiente: true
+      nota: "El bloque prueba_unidad (formas a y b, 20 preguntas) se pide al formato 0.5; hoy tiposBloque no lo incluye y V21 y V22 no lo conocen. Con 20 preguntas de 40 s la lección de ese viernes estima 13.3 min, el 133 % de 10: dentro de V22."
   conversacion_guiada: {turnos: {min: 8}, con_variantes: true}
   estructura_de_la_conversacion_guiada:
     pendiente: true
     nota: "El formato todavía no define esta estructura (sección 12: «la del viernes además necesita definir su estructura de conversación guiada»). No se inventa: faltan los campos del bloque, qué son las variantes y cuánto cuenta cada turno en V22."
   estructura_de_la_mini_prueba:
     pendiente: true
-    nota: "El formato fija 10 preguntas y aprobar con 8, pero no dice dónde vive la mini prueba (una forma de uso mini, o dentro de la sesión del viernes: hoy los tipos de bloque no incluyen la mini prueba), qué formato la contiene, ni cuántos minutos cuenta en V22."
+    nota: "Propuesta de ampliaciones 0.6 (sección 3.6), aún no en el formato: el bloque mini_prueba referencia una forma de uso mini (mini-<escalon>-s<NN>) y cuenta 6.7 minutos en V22. Falta que el formato 0.5 lo adopte; hoy los tipos de bloque no incluyen la mini prueba."
   estimacion_de_minutos:
     pendiente: true
     nota: "V22 no se puede calcular para el viernes mientras falten la estructura de la conversación guiada y los minutos de la mini prueba."
@@ -255,4 +271,17 @@ sin_audio:
   cuentan: [principal]
   no_cuentan: [traslado]
   minutos_que_cuentan_al_dia: 35
-  origen: "D29 (D-ING-2: mientras la app no tenga audio, solo cuenta el bloque principal); plan 0.4, sección 6, P2.4"
+  origen: "D29 (D-ING-2: mientras la app no tenga audio, solo cuenta el bloque principal); plan 0.4, sección 6, P2.4; ampliaciones 0.6, sección 3.3 (con el audio integrado antes del arranque, D-ING-9, los 35 minutos son solo un respaldo)"
+asistencia:
+  minutos_planeados_por_dia: {con_audio: 60, sin_audio: 35}
+  faltante_maximo_por_dia_segundos: 600
+  se_mide_en: segundos
+  dia_asistido_si: "planeados menos acreditados, sin bajar de cero, es de 600 segundos o menos; no se acumula de un día al siguiente"
+  dia_faltado: {cuenta_como: dia_entero, credito_parcial: false, cuando: "el faltante pasa de 600 segundos, se haya estudiado o no"}
+  dias_faltados_tolerados_por_escalon: 3
+  al_cuarto_dia_faltado: {el_escalon_se_repite: true, conserva_la_etiqueta_de_etapa: true}
+  reemplaza_a: ["el 90 % de los minutos planeados", "los tres días de gracia por trimestre"]
+  origen: "D29 (D-ING-12: solo se pueden faltar 10 minutos por día y 3 días; D-ING-16: el curso que se repite es el escalón, un día con más de 10 minutos faltantes cuenta como día entero, los 3 días valen por escalón); ampliaciones 0.6, secciones 3.3 y 3.4 (P5-30)"
+  acreditados:
+    regla: "cada sub-bloque acredita sus minutos declarados × los elementos hechos ÷ los elementos que trae, en segundos"
+    origen: "ampliaciones 0.6, sección 3.3 (P5-04): propuesta de habitos, no decisión del dueño"

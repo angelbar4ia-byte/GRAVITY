@@ -146,8 +146,8 @@ aprobar:
     preguntas_minimas: 10
     se_califica: porcentaje_de_aciertos
     credito_parcial:
-      pendiente: true
-      nota: "La rúbrica 0.1 (sección 3.1) da 0.5 a una respuesta parcialmente correcta; el formato 0.4 (sección 13) dice que aquí cada pregunta se califica completa. Se aplica lo del formato (sin crédito parcial) hasta que P1.3 ajuste la rúbrica."
+      valor: false
+      nota: "La rúbrica 0.1 (sección 3.1) da 0.5 a una respuesta parcialmente correcta; el formato 0.4 (sección 13) dice que aquí cada pregunta se califica completa. Se aplica lo del formato (sin crédito parcial); P1.3 ajusta la rúbrica (ampliaciones 0.6, tabla de trabajo de habitos: sin crédito parcial)."
   escritura_y_habla:
     se_califica: rubrica
     promedio_ponderado: {porcentaje_minimo: 80, escala_maxima: 4, suma_ponderada_minima: 320, suma_ponderada_maxima: 400}
@@ -193,9 +193,12 @@ rubrica:
       - {tarea: habla, puntajes: {gramatica_del_tema: 2, pronunciacion_del_tema: 4, fluidez: 4, vocabulario: 4}, suma_ponderada: 330, aprueba: false, motivo: "el promedio pasa de 320, pero gramática del tema está por debajo de 3"}
   quien_califica_escritura_y_habla:
     resuelto: true
-    resolucion: "Una IA, opcional por función (D-ING-9, 16/nov/2026). El curso no arranca hasta que la fase 6 (pareja y corrección con IA) esté completamente integrada (D-ING-9 y D-ING-10), así que no hay etiqueta provisional."
-    pendiente_para_P6_0: "Qué pasa con la puerta si la persona no activa la corrección con IA, que es opcional por función; cómo se hace el habla de las partes en pareja de los exámenes (A2 Key parte 2, B1 partes 3 y 4, B2 parte 3) sin otra persona; qué se hace con la pronunciación, que no se juzga bien desde un texto."
-    origen: "D29 (D-ING-9 y D-ING-10); plan 0.6, secciones 3.8 y 4.1"
+    resolucion: "La corrige una IA, opcional por función (D-ING-9 y D-ING-15), y/o la pareja. Si la IA no está activa, escritura y habla van a la pareja y a la IA, o esperan a que la IA se active; lectura y escucha, que corrige el programa, siguen. No hay autocalificación (D-ING-11). El curso no arranca hasta que la fase 6 esté integrada (D-ING-10), así que no hay etiqueta provisional."
+    autocalificacion: false
+    puntajes_de_ia_y_pareja: "los escribe el servidor, no la app de la persona; la suma ponderada y la regla de gramática del tema las calcula el programa"
+    texto_y_transcripcion: "pueden salir del dispositivo con permiso en cada envío y el filtro de D3; la grabación de voz se queda en el dispositivo (D-ING-15)"
+    pendiente_para_P6_0: "Cómo se hace el habla de las partes en pareja de los exámenes (A2 Key parte 2, B1 partes 3 y 4, B2 parte 3) sin otra persona; qué se hace con la pronunciación, que no se juzga bien desde un texto."
+    origen: "D29 (D-ING-9, D-ING-10, D-ING-11 y D-ING-15); fase-8-habitos-pareja-y-correccion.md 0.2, secciones 4.1, 5.5 y 5.7"
 oportunidades:
   por_puerta: 2
   cada_una: evaluacion_de_cierre_completa
@@ -223,6 +226,17 @@ formas:
   no_comparten_unidades_entre_si: true
   unidades_exclusivas: true
   origen: "plan 0.4, sección 6 (fase 4: «tres formas (dos oportunidades y una reserva)»), sección 3.4 (dos formas completas más una de reserva), glosario de la sección 1 («Dos formas del mismo examen no comparten nada») y formato 0.4, sección 11 (V20)"
+  total:
+    puertas: 13
+    formas_de_puerta: 39
+    origen: "plan 0.4, sección 4.2 y ampliaciones 0.6, sección 2: 13 puertas × 3 formas; la puerta de etapa es la del último escalón (A2.3, B1.4 y B2.4; la de A1.2 es la prueba interna), sin otra puerta además"
+  pruebas_por_unidad:
+    formas_por_escalon: 8
+    de_la_forma: "4 unidades × formas a y b"
+    preguntas_por_forma: {con_audio: 20, sin_audio: 15}
+    preguntas_por_escalon: 160
+    preguntas_en_13_escalones: 2080
+    origen: "ampliaciones 0.6, sección 3.6.1 (P5-31, aviso de costo); propuesta de habitos"
   uso_de_la_reserva:
     pendiente: true
     nota: "No se dice cuándo se usa la forma de reserva (¿si una forma se invalida?, ¿al repetir un escalón tras bajar?, ¿en la puerta anticipada?)."
@@ -253,26 +267,34 @@ mini_prueba:
   si_no_se_aprueba:
     los_errores_vuelven_como: tarjetas_del_repaso_de_la_semana_siguiente
     origen: "rúbrica 0.1, sección 5 (con 5 preguntas: por debajo de 4 de 5, el mismo 80 %)"
+  funcion: repaso
+  semanas: [1, 2, 3, 4, 5, 6, 7]
+  no_bloquea_nada: true
+  alimenta: [tarjetas_de_error, descenso_por_evidencia]
   primera_fallida_del_bloque:
     cuenta: false
-    queda_como: dia_de_gracia
-    se_repite_la_semana: true
-    origen: "plan 0.4, sección 3.1; niveles-y-avance 0.3, sección 4 («Evaluación semanal de gracia»)"
+    se_repite_la_semana: false
+    no_gasta_faltas: true
+    origen: "ampliaciones 0.6, sección 3.6 (P5-07, propuesta de habitos): ninguna mini prueba fallida gasta una falta del escalón; sustituye al día de gracia de niveles-y-avance 0.3, que ya no existe (D-ING-12)"
   estructura: {ver: "gravity-sesion-60, bloque viernes (estructura pendiente)"}
 requisitos_para_subir:
   regla: "se sube solo si se cumplen los cuatro; si falta uno, no se sube aunque se cumplan los otros tres"
-  origen: "niveles-y-avance 0.3, sección 3 (vigente: aviso del 16/nov/2026 y D29); D29 (D-ING-1: «Se mantiene la regla de subir solo si se cumple todo»)"
-  revisar_en: "P1.3 (niveles-y-avance 0.4)"
+  origen: "niveles-y-avance 0.3, sección 3 (la regla; los requisitos 3 y 4 se reemplazan abajo); D29 (D-ING-1: «Se mantiene la regla de subir solo si se cumple todo»); ampliaciones 0.6, sección 3.7.4"
+  si_falta_alguno: {el_escalon_se_repite: true, no_se_baja: true, no_gasta_oportunidad: true, la_etiqueta_de_etapa_queda_ganada: true, motivo: [pruebas, asistencia]}
   pruebas_aprobadas:
-    pendiente: true
-    nota: "niveles-y-avance 0.3 pide aprobar las pruebas de cada módulo (semanas 4, 8, 12...) y además la evaluación de cierre. D29 no define pruebas intermedias en el escalón de 8 semanas: el plan lo define como «tramo de 8 semanas con su prueba al final» (sección 1). Hasta que P1.3 lo defina, el único requisito de prueba es la puerta."
-  evaluacion_de_cierre: {habilidades: 4, porcentaje_minimo_por_habilidad: 80}
+    unidades: 4
+    cada_una: "aprobada en el primer intento o en la repetición"
+    origen: "D29 (D-ING-14 y D-ING-16): las pruebas por unidad cuentan para subir; ampliaciones 0.6, secciones 3.6.1 y 3.7.4"
+  evaluacion_de_cierre: {habilidades: 4, porcentaje_minimo_por_habilidad: 80, origen: "niveles-y-avance 0.3, sección 3; D29 (D-ING-1)"}
   constancia:
-    cada_dia_de_estudio: "completo o cubierto por un día de gracia"
-    dias_de_gracia_por_trimestre: 3
-    se_acumulan: false
+    dias_faltados_maximos_por_escalon: 3
+    dia_faltado: "día con más de 600 segundos de faltante, contado entero, sin crédito parcial"
+    origen: "D29 (D-ING-12 y D-ING-16); ampliaciones 0.6, sección 3.4 (P5-30). Reemplaza a los días de gracia por trimestre (tres por trimestre, no se acumulan; niveles-y-avance 0.3, sección 3), retirados porque ya no hay trimestre"
   minutos:
-    porcentaje_minimo: 90
-    minutos_planeados_por_dia: 60
+    faltante_maximo_por_dia_segundos: 600
+    minutos_planeados_por_dia: {con_audio: 60, sin_audio: 35}
     dias_de_estudio_por_semana: 5
-    sin_audio: {minutos_planeados_por_dia: 35, origen: "D29 (D-ING-2: mientras la app no tenga audio, solo cuenta el bloque principal y el 90 % se calcula sobre eso)"}
+    origen: "D29 (D-ING-12 y D-ING-2); ampliaciones 0.6, sección 3.4. Reemplaza al 90 % de los minutos planeados de niveles-y-avance 0.3, sección 3, retirado"
+  retirado:
+    - {dato: "dias_de_gracia_por_trimestre: 3", origen: "D29 (D-ING-16: los 3 días faltados valen por escalón y reemplazan a los 3 días de gracia por trimestre)"}
+    - {dato: "minutos.porcentaje_minimo: 90", origen: "D29 (D-ING-12); ampliaciones 0.6, secciones 3.3 y 3.4"}
