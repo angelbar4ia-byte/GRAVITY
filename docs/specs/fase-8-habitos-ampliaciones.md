@@ -1459,6 +1459,8 @@ Esta especificación escribe en un solo archivo. Lo que necesita de otras áreas
 
 ## 15. Preguntas para el dueño
 
+> **Respondidas el 17/nov/2026 (D-ING-16):** la 3 (cuatro pruebas por unidad, versión completa) y la 9 (a: repetir el curso es repetir el escalón; b: un día con más de 10 minutos faltantes cuenta como día faltado entero; c: los 3 días valen por escalón y reemplazan a los de trimestre). Las demás siguen abiertas.
+
 Solo las que de verdad cambian el diseño. Cada una trae mi recomendación. **Si no respondes, vale lo que dice el documento**, que coincide con la recomendación salvo en la pregunta 1 (hoy no hay pausas, sección 1.2). Las preguntas 8 y 9 son nuevas de esta versión: salen de D-ING-12 y D-ING-14.
 
 | # | Pregunta | Por qué cambia el diseño | Recomendación |
