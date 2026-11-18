@@ -1,8 +1,8 @@
 # Especificación — Fase 8 · Bloque 6: Fugas silenciosas y deuda buena o mala (Finanzas)
 
-> v0.2, 18/nov/2026 (v0.1 el mismo día; respuestas del dueño en la sección 12.1). **Propuesta para aprobación del dueño; sin código.** Base: `docs/revisiones/finanzas-fugas-y-deudas.md` (hallazgos F-1 a F-11, D-1 a D-9, C-1 a C-10), D3, D4, D5, D6, D14, D18, D19, D20, D24, D25 y el diseño de Finanzas v23 (5.2, 5.3, 5.3 bis, 5.9 bis). Nombre del archivo ajustable al esquema de fases; el bloque 6 lo asigna el arquitecto.
+> v0.3, 18/nov/2026 (v0.1 y v0.2 el mismo día; v0.3 verifica las fuentes en su página y incorpora las respuestas del dueño de la sección 12.1). **Propuesta para aprobación del dueño; sin código.** Base: `docs/revisiones/finanzas-fugas-y-deudas.md` (hallazgos F-1 a F-11, D-1 a D-9, C-1 a C-10), D3, D4, D5, D6, D14, D18, D19, D20, D24, D25 y el diseño de Finanzas v23 (5.2, 5.3, 5.3 bis, 5.9 bis). Nombre del archivo ajustable al esquema de fases; el bloque 6 lo asigna el arquitecto.
 >
-> **Convención de esta especificación.** Todo número de umbral lleva la etiqueta **[Propuesta]** (valor sugerido, editable por libro, sin verificar) o **[Fuente W#]** (la clave de la sección 13, con la reserva que ahí se dice: ninguna se verificó en su fuente primaria). Ningún umbral aquí es una norma ni una cifra oficial. Los montos de los ejemplos son **ilustrativos e inventados** para probar las reglas; no son precios reales de ningún comercio.
+> **Convención de esta especificación.** Todo número de umbral lleva la etiqueta **[Propuesta]** (valor sugerido, editable por libro, sin fuente que lo respalde) o **[Fuente W#]** (clave de la sección 13: la página se abrió el 18/nov/2026 y el texto citado está ahí con su URL). Lo que no se encontró en una página alcanzable queda **[Propuesta]** y así se dice. Ningún umbral aquí es una norma. Los montos de los ejemplos son **ilustrativos e inventados** para probar las reglas; no son precios reales de ningún comercio.
 
 ## 1. Resultado utilizable
 
@@ -40,25 +40,28 @@ Todas se calculan por **libro** (D19): el personal de cada quien, los compartido
 | **Recurrente** | Patrón con **al menos 3 cobros** en intervalos regulares **[Propuesta]**: semanal 7 ± 1 días, quincenal 15 ± 2, mensual 30 ± 3, bimestral 61 ± 4, anual 365 ± 7, y monto estable: cada cobro dentro de ± 10 % de la mediana **[Propuesta]** |
 | **Reconocido** | La persona respondió "Sí, lo conozco" a la pregunta de reconocimiento, o el patrón nace de un compromiso que ella declaró (`fin_compromisos`) |
 | **Uso** | Respuesta de la persona a "¿Lo usaste este periodo?": `lo_use`, `no_lo_use`. Solo cuenta lo que contestó |
-| **Categoría recortable** | Categoría con prioridad `deseable` o `discrecional` y no protegida (existe en `fin_categorias`). Renta, servicios, medicinas y cuidados (`necesario` o protegida) no se consideran |
+| **Categoría recortable** | Categoría con prioridad `deseable` o `discrecional` y no protegida (existe en `fin_categorias`). Renta, servicios, medicinas y cuidados (`necesario` o protegida) no se consideran para hormiga, fantasma ni zombie |
+| **Servicio del hogar** | Subcategoría de luz, agua o gas de "Vivienda y servicios" (editable por hogar; internet y telefonía fija se pueden agregar). Es necesario, así que solo puede ser **vampiro** por la regla V-C |
+| **Mediana** | Mediana de los montos de los últimos periodos del mismo patrón (entero en centavos; con cantidad par, el promedio de los dos centrales, redondeado R1) |
 
 ### 3.1 HORMIGA: pequeño y frecuente
 
 **Definición.** Gastos discrecionales de monto chico que se repiten tanto que, sumados, pesan, sin ser un cobro automático.
-**Fuente conceptual:** W1 (Condusef, por prensa): "pequeños desembolsos cotidianos que, sumados, representan una fuga importante".
+**Fuente conceptual [W1, verificada]:** Condusef, gob.mx: "Nombramos gastos hormiga a esos pequeños consumos diarios que realizamos sin pensar que al final del día afectan nuestras finanzas." Sus ejemplos suman $90 al día: café $20, torta $30, refresco $15 y boleada $25.
+**Diferencia con Condusef:** la misma Condusef (W1, 2020) también llama "hormiga" a las suscripciones y aplicaciones (streaming, música, transporte por aplicación). Aquí las suscripciones **no** son hormiga porque son cobro automático y van por fantasma, zombie o vampiro; el transporte por aplicación sí puede ser hormiga.
 
 Una **subcategoría** (nivel 2; si no hay, la categoría) es una **fuga hormiga** cuando, en las **últimas 4 semanas**, cumple las cuatro:
 
 | # | Regla | Umbral |
 |---|---|---|
 | H1 | La categoría es recortable y los gastos **no** son cobro automático ni recurrentes contractuales | por categoría |
-| H2 | Cada gasto vigente cuenta si su monto es **menor o igual** que el tope hormiga | **$150.00** (15 000 centavos) **[Propuesta]**. Referencia: los rangos que Condusef da para el trabajo (café 12 a 90, bebidas 10 a 60, comida 35 a 170 pesos; W1) |
+| H2 | Cada gasto vigente cuenta si su monto es **menor o igual** que el tope hormiga | **$150.00** (15 000 centavos) **[Propuesta]**. Los ejemplos de Condusef que sí pude verificar (W1) son de $15 a $30 cada uno; los rangos de "12 a 90" y "35 a 170" pesos que cita la prensa **no los encontré en una página de Condusef** (W1b). El tope de $150 queda como propuesta (pregunta 2) |
 | H3 | Hay al menos **8 gastos** que cumplen H2 en las 4 semanas | 8 **[Propuesta]** |
 | H4 | Los gastos aparecen en **3 de las 4 semanas o más** (descarta una sola semana de reunión, fiesta o viaje) | 3 de 4 **[Propuesta]** |
 | H5 | La suma de esos gastos es **al menos 1 %** del ingreso mensual de referencia (descarta ruido que no pesa) | 100 pb **[Propuesta]** |
 
 **Medida:** suma de las 4 semanas, promedio semanal (R2) y estimado anual (promedio semanal × 52).
-**Alerta de conjunto (informativa):** si todas las hormigas juntas pasan de **5 %** del ingreso mensual de referencia **[Propuesta]**, el panel lo marca en ámbar con texto. La cifra de "12 % del ingreso anual" que repite la prensa (W2) **no se usa como umbral**: no está verificada.
+**Alerta de conjunto (informativa):** si todas las hormigas juntas pasan de **5 %** del ingreso mensual de referencia **[Propuesta]**, el panel lo marca en ámbar con texto. La cifra de "12 % del ingreso anual" **está verificada solo como cita de BBVA México a Condusef** (W2); no la encontré en una página de Condusef, así que **no se usa como umbral**.
 
 **Sin comercio:** la hormiga **no necesita comercio**. Funciona con lo que ya hay en el libro (categoría, monto, fecha).
 
@@ -77,7 +80,8 @@ Una **subcategoría** (nivel 2; si no hay, la categoría) es una **fuga hormiga*
 | F3 | No está ligado a un compromiso declarado ni la persona lo ha reconocido | — |
 
 **Estados de un fantasma candidato.** Al detectarlo nace **"Por reconocer"** (no se acusa). Se le pregunta una vez: *"Encontré un cobro que se repite. ¿Lo reconoces?"* con tres respuestas: **Sí, lo conozco** (sale de fantasma y entra al árbol de la sección 4 como recurrente reconocido), **No lo conocía** (queda **FANTASMA** confirmado; la acción sugerida es revisarlo con el banco o el comercio) y **Después** (sigue "Por reconocer" y se vuelve a ofrecer en la siguiente revisión mensual; **sin respuesta no se confirma nada**).
-**Cobro tras una cancelación:** si la persona marcó un patrón como cancelado (3.4) y vuelve a aparecer un cobro del mismo patrón, nace **FANTASMA con la marca "cobrado tras cancelar"** (la acción sugerida es reclamarlo). Qué recursos tiene la persona frente al comercio o al banco **no se asume aquí**: se verifica en Profeco o Condusef antes de redactar el texto de ayuda (pregunta 12).
+**Cobro tras una cancelación:** si la persona marcó un patrón como cancelado (3.4) y vuelve a aparecer un cobro del mismo patrón, nace **FANTASMA con la marca "cobrado tras cancelar"** (la acción sugerida es reclamarlo). La ayuda se basa en Profeco (W9, verificada): el proveedor debe dar un folio al cancelar, desinstalar la aplicación no detiene el cobro y, si el cobro sigue, la persona puede presentar una queja ante Profeco con identificación, contrato, **folio de cancelación**, comprobantes y el estado de cuenta. El texto de la app solo lo resume y manda a Profeco; no promete resultados.
+**Nota sobre las definiciones del dueño:** su resumen pone las **comisiones bancarias que no se recuerdan** dentro de fantasma. Aquí una comisión de una cuenta o tarjeta **que sí está en la app** es vampiro (paso 1 del árbol), y una comisión **que la persona no reconoce** (de una cuenta que no registró) sí cae en fantasma por el paso 2. Se deja como pregunta 1.
 **Medida:** monto por cobro, cadencia, equivalente semanal y anual (por `Equivalente`).
 **Dependencia:** la fuente más fiable es el estado de cuenta (lo que el banco cobró y nunca se capturó). Mientras la conciliación en PDF siga pendiente (hallazgo F-7), el patrón se detecta con lo que haya en el libro, incluida la importación.
 
@@ -86,14 +90,14 @@ Una **subcategoría** (nivel 2; si no hay, la categoría) es una **fuga hormiga*
 ### 3.3 VAMPIRO: consumen de forma constante y crecen
 
 **Definición del dueño:** consumen de forma constante y crecen: comisiones, intereses, anualidades, cargos que drenan.
-Hay dos vías; basta una.
+Hay cuatro vías; basta una.
 
 **V-A. Cargo financiero constante** (de una deuda o cuenta que la persona sí tiene en la app):
 
 | # | Regla | Umbral |
 |---|---|---|
 | VA1 | Es interés, comisión o anualidad: los intereses y cargos de un estado de cuenta (`intereses_centavos`, `cargos_centavos`), o un gasto en "Comisiones bancarias" o "Intereses y cargos financieros", o la anualidad prorrateada (5.3 bis, regla 5) | — |
-| VA2 | Aparece en **2 de los últimos 3 cortes o meses** **[Propuesta]** (constante) | 2 de 3 |
+| VA2 | Aparece en **2 de los últimos 3 cortes o meses** **[Propuesta]** (constante). **Excepción (respuesta del dueño):** los **intereses cobrados por pagar solo el mínimo** (V-D) cuentan con **un solo corte** | 2 de 3; 1 en V-D |
 
 **V-B. Cobro recurrente reconocido que crece:**
 
@@ -102,8 +106,19 @@ Hay dos vías; basta una.
 | VB1 | Patrón recurrente reconocido en categoría recortable | — |
 | VB2 | El último cobro supera al primero de los últimos 12 meses en **10 % o más**, o hubo **3 aumentos seguidos** | 10 % y 3 **[Propuesta]** |
 
-El 10 % es un valor inicial sin verificar; se podría comparar contra la inflación publicada por INEGI (no consultada; pregunta 7).
-**No son vampiro:** los servicios necesarios (luz, agua, gas) aunque suban: se muestran como "sube", sin etiqueta de fuga (VB1 pide categoría recortable).
+El 10 % es un valor inicial **sin fuente** [Propuesta]; se podría comparar contra la inflación de INEGI (no consultada; pregunta 9).
+
+**V-C. Servicio del hogar que se infla** (respuesta del dueño, 18/nov/2026): luz, agua y gas son necesarios y no se recortan, pero una cuenta que se infla es una fuga constante oculta en un costo fijo. Se detecta **contra su propia mediana**:
+
+| # | Regla | Umbral |
+|---|---|---|
+| VC1 | Servicio del hogar (3.0) con **al menos 6 periodos** de historia en el libro (mensual, bimestral, según el patrón); con menos, "sin dato" | 6 periodos **[Propuesta]** |
+| VC2 | Mediana de los **últimos 12 periodos** (o los que haya, mínimo 6) | 12 **[Propuesta]** |
+| VC3 | **2 de los últimos 3 periodos** superan a la mediana en **25 % o más** (comparación exacta: `monto × 10 000 ≥ mediana × 12 500`) | 25 % y 2 de 3 **[Propuesta]** |
+
+La acción sugerida es **revisar instalaciones y consumo** (fugas, equipos, tarifa), no cancelar. Estos servicios **nunca** son fantasma, zombie ni hormiga. Limitación honesta: el consumo cambia con la estación (calor, frío); si la persona marca "es por la temporada" el patrón queda en "Vigilar" y no se vuelve a proponer ese año. **Fuente conceptual [W3, verificada para Perú]:** BBVA Perú describe el vampiro como gasto fijo difícil de detectar, con ejemplos de "fugas de agua, gas, mal uso de electrodomésticos o problemas con las instalaciones de luz" y la acción "revisar las fuentes de energía y las instalaciones en casa"; el 25 % es propuesta.
+
+**V-D. Intereses por pagar solo el mínimo** (respuesta del dueño): en un estado de cuenta con `intereses_centavos > 0`, si los pagos registrados entre el corte anterior y su fecha límite fueron **menores que el pago para no generar intereses** (o iguales al mínimo), esos intereses son **vampiro con la marca "por pagar solo el mínimo"**. Basta **un** corte **[Propuesta]**, porque la causa es visible. Acción sugerida: pagar el total del siguiente corte. **Fuente [W8, verificada]:** BBVA: "Pagar sólo el mínimo aumenta el tiempo para liquidar el crédito e incrementa el costo financiero."
 **Medida:** costo de los últimos 12 meses y costo anual proyectado. Para intereses, se reutiliza `costoDeDeber` (marcado "estimado") y el dato real del estado de cuenta.
 
 **Ejemplos (ilustrativos).** Los intereses del estado de una tarjeta ($350 un mes, $410 el siguiente); la comisión por inactividad de una tarjeta de crédito ($149 + IVA al mes, que el diseño 5.3 bis ya registra); la anualidad de una tarjeta ($748 + IVA al año); un plan de streaming que pasó de $199 a $219.
@@ -111,7 +126,7 @@ El 10 % es un valor inicial sin verificar; se podría comparar contra la inflaci
 ### 3.4 ZOMBIE: lo que sigue pagándose por inercia
 
 **Definición del dueño:** cosas que ya no sirven o se siguen pagando por inercia: membresías sin uso, seguros duplicados, planes viejos.
-**No hay fuente pública** que defina "zombie" (W4): la definición es la del dueño y la regla depende de lo que la persona **responde**, porque la app no puede ver el uso (hallazgo F-4).
+**No encontré ninguna página** de Condusef, BBVA ni Profeco que defina "zombie" (W4): la definición es la del dueño (resumen en 12.1: cobros de cosas que ya no existen o no se usan, por ejemplo gimnasio, seguro de un auto vendido, líneas viejas). La regla depende de lo que la persona **responde**, porque la app no puede ver el uso (hallazgo F-4). Profeco sí da una lista de preguntas para decidir si un servicio sigue valiendo la pena, y dice que con **dos o más respuestas afirmativas** hay que considerar cancelar de inmediato (W9); sirve de apoyo a Z1, pero el 2 sigue siendo propuesta.
 
 Un patrón **recurrente reconocido** es **ZOMBIE** si se cumple **cualquiera**:
 
@@ -121,10 +136,11 @@ Un patrón **recurrente reconocido** es **ZOMBIE** si se cumple **cualquiera**:
 | Z2 | **Posible duplicado** (la app lo propone, la persona confirma): dos patrones recurrentes activos en la misma subcategoría de **seguros** (por ejemplo, dos seguros médicos o dos de celular) | confirmación obligatoria |
 | Z3 | **Plan viejo** (la app lo propone, la persona confirma): dos patrones activos con el mismo comercio normalizado y montos distintos; el candidato es el patrón más antiguo | confirmación obligatoria |
 | Z4 | **Cuenta o tarjeta que la persona ya no quiere** pero que sigue generando anualidad o comisión: la persona marca "ya no la quiero" | — |
+| Z5 | **Lo cubierto ya no existe** (por ejemplo, seguro de un auto vendido, línea vieja): la persona marca "ya no existe". Si el patrón está ligado a un bien, la app lo propone, pero la persona confirma | confirmación obligatoria |
 
 **Cuándo se pregunta el uso.** Una pregunta por patrón **una vez por periodo de su cadencia, como máximo una al mes** **[Propuesta]**; las anuales, una vez, **30 días antes** del cobro esperado. Las preguntas se juntan en **una revisión mensual** (D25): no son avisos sueltos. Sin respuesta, la pregunta no cuenta ni a favor ni en contra.
 **Medida:** lo que costó en los últimos 12 meses y lo que costaría seguir un año; tras cancelar, lo que **se dejó de pagar** (cobros que ya no llegaron).
-**Qué pasa al cancelar:** la persona lo cancela **fuera de la app** (con el comercio o el banco); aquí solo marca "Ya lo cancelé" con la fecha. Si el patrón está ligado a un compromiso, se le pone `hasta`; el patrón deja de proponerse. Si después se cobra otra vez, ver "cobro tras una cancelación" en 3.2.
+**Acción sugerida (respuesta del dueño): pedir la baja formal y exigir folio de cancelación.** Al marcar un zombie, la hoja dice: "Pide la baja formal al proveedor y guarda el folio de cancelación." Al marcar "Ya lo cancelé" se captura la **fecha** y el **folio** (hasta 40 caracteres, letras, números y guiones). Sin folio se permite guardar, pero el patrón queda como **"cancelado sin folio"** y la app lo muestra como pendiente de completar. Profeco (W9) dice que el proveedor debe dar un folio y que sirve de prueba si siguen los cobros; también que desinstalar la aplicación no detiene el cobro y que, si se pagó por un intermediario (por ejemplo una tienda de aplicaciones), cancelar solo en la aplicación no interrumpe el cobro. La cancelación se hace **fuera de la app**; si el patrón está ligado a un compromiso, se le pone `hasta` y el patrón deja de proponerse. Si después se cobra otra vez, ver "cobro tras una cancelación" en 3.2.
 **Ejemplos (ilustrativos).** Gimnasio de $450 al mes al que no va desde hace dos meses; dos seguros de celular; el plan básico de una plataforma que sigue cobrándose después de contratar el plan familiar.
 
 ## 4. Cómo se clasifica sin ambigüedad
@@ -134,19 +150,21 @@ Un patrón **recurrente reconocido** es **ZOMBIE** si se cumple **cualquiera**:
 Se aplica a cada **patrón de cobro** (o, para la hormiga, a cada subcategoría) **en este orden**; la primera respuesta "sí" decide y se detiene.
 
 ```
-0. ¿Es un gasto vigente en una categoría recortable (o un cargo financiero)? No -> NINGUNA.
+0. ¿Es un gasto vigente en una categoría recortable, un cargo financiero o un servicio del hogar? No -> NINGUNA.
 1. ¿Es interés, comisión o anualidad de una deuda o cuenta que la persona tiene en la app?
-     Sí -> ¿La persona dijo "ya no la quiero" (Z4)?  Sí -> ZOMBIE.   No -> VAMPIRO (V-A).
+     Sí -> ¿La persona dijo "ya no la quiero" (Z4)?  Sí -> ZOMBIE.   No -> VAMPIRO (V-A o V-D).
+1b. ¿Es un servicio del hogar (luz, agua, gas) que se infla contra su mediana (VC1 a VC3)?
+     Sí -> VAMPIRO (V-C).   No -> NINGUNA (los servicios no son fantasma, zombie ni hormiga).
 2. ¿Es un cobro automático recurrente (F1 y F2)?
      No -> ve al paso 5.
      Sí -> ¿Está sin reconocer (F3)?                          Sí -> FANTASMA.
-        -> ¿Z1, Z2, Z3 o Z4 confirmados por la persona?        Sí -> ZOMBIE.
+        -> ¿Z1, Z2, Z3, Z4 o Z5 confirmados por la persona?     Sí -> ZOMBIE.
         -> ¿Crece (VB2)?                                      Sí -> VAMPIRO (V-B).
         -> En otro caso                                      NINGUNA (recurrente sano).
 5. ¿La subcategoría cumple H1 a H5?                           Sí -> HORMIGA.   No -> NINGUNA.
 ```
 
-**Prioridad cuando varias definiciones caben:** **FANTASMA > ZOMBIE > VAMPIRO > HORMIGA**, con la excepción del paso 1 (un cargo financiero de una cuenta conocida no es fantasma: se sabe de dónde viene).
+**Prioridad cuando varias definiciones caben:** **FANTASMA > ZOMBIE > VAMPIRO > HORMIGA**, con la excepción de los pasos 1 y 1b (un cargo financiero de una cuenta conocida y un servicio del hogar no son fantasma: se sabe de dónde vienen).
 
 Por qué este orden: primero se necesita saber **si la persona sabe que existe el cobro** (fantasma); después **si le sirve** (zombie), porque cancelar resuelve también el aumento; después **si crece** (vampiro); y la **hormiga** solo es lo que queda cuando no hay un cobro automático de por medio.
 
@@ -158,6 +176,9 @@ Por qué este orden: primero se necesita saber **si la persona sabe que existe e
 | Comisión por inactividad de una tarjeta que la persona quiere conservar | **VAMPIRO** (V-A) | La persona decide mantenerla; la acción es evitar la comisión con la compra mínima (5.3 bis) |
 | La misma comisión de una tarjeta que "ya no quiero" | **ZOMBIE** (Z4) | La persona dice que ya no sirve; la acción es cerrarla |
 | Café diario de $45, 20 veces en 4 semanas | **HORMIGA** | Discrecional, pequeño, frecuente, no automático |
+| Recibo de agua que sube a $390 cuando su mediana de 12 periodos es $300 (dos de los tres últimos periodos sobre $375) | **VAMPIRO** (V-C) | Servicio necesario que se infla contra su mediana; la acción es revisar instalaciones |
+| Intereses de $410 en un corte en el que se pagó solo el mínimo | **VAMPIRO** (V-D) | Intereses por pagar solo el mínimo; basta un corte |
+| Seguro de un auto que ya se vendió, que la persona marca "ya no existe" | **ZOMBIE** (Z5) | La cosa cubierta ya no existe; acción: baja formal y folio |
 | Suscripción de $89 al mes (recurrente) | nunca HORMIGA | Es cobro automático recurrente: va por el paso 2 |
 | Despensa semanal de $900 | **NINGUNA** | Categoría necesaria y monto mayor que el tope |
 
@@ -195,8 +216,8 @@ El libro de movimientos no se toca, y las clasificaciones se corrigen sin borrar
 | Clase de deuda | Qué pasa |
 |---|---|
 | **MSI** (compra a meses sin intereses) | Se evalúa completa (5.3 a 5.6) |
-| **Préstamo y crédito con propósito declarado** (por ejemplo, el hipotecario o el de un auto) | Se evalúa con las mismas señales de pago, plazo y carga; el costo financiero total viene de la tasa y el CAT capturados |
-| **Tarjeta con saldo que genera intereses** (señal **T1**) | **Mala** por omisión (financia consumo corriente, W5); se le pregunta si es una excepción (pregunta 5) |
+| **Préstamo y crédito con propósito declarado** (por ejemplo, el hipotecario o el de un auto). **Crédito automotriz del dueño: propósito `genera_ingreso`** (herramienta de trabajo; confirmado 18/nov/2026) | Se evalúa con las mismas señales de pago, plazo y carga; el costo financiero total viene de la tasa y el CAT capturados |
+| **Tarjeta con saldo que genera intereses** (señal **T1**) | **Mala** (**confirmado por el dueño, 18/nov/2026**: tarjeta con intereses = deuda mala). BBVA (W5) pone como deuda mala "el uso de un crédito para cubrir otro" y las compras impulsivas con tarjeta |
 | **Préstamo entre familiares** (sin costo) | **"Sin costo"**: no entra al semáforo de calidad, sí a la carga total (hallazgo D-9) |
 | Deuda **sin propósito declarado** | **"Por declarar"** (gris con texto): no se juzga hasta que la persona declare para qué fue |
 
@@ -213,7 +234,7 @@ La persona declara, **una vez por deuda** (y puede cambiarlo, con historial):
 | `precio_contado_centavos` | Opcional: lo que habría costado de contado; permite detectar un sobreprecio |
 | `estado_objetivo` | `vigente`, `cumplido` (ya se tiene y se usa), `ya_no_existe` (vendido, devuelto, perdido) o `cambio` (ya no se quiere) |
 
-Se alinea con el criterio de deuda buena que atribuye la prensa a Condusef (W5): ayuda a aumentar el patrimonio, generar ingresos o dar protección, con beneficio que dura años. Esa fuente también pone como deuda mala la que financia consumo innecesario, bienes que se deprecian rápido o gastos cotidianos.
+Se alinea con lo que BBVA México publica (W5, verificada): la deuda buena aporta beneficios a largo plazo y ayuda a generar patrimonio; la mala se adquiere "generalmente para gastos no esenciales" o rebasa la capacidad de pago. La definición de Condusef (patrimonio, ingresos futuros, protección) que repite la prensa **no la encontré en una página alcanzable**.
 
 ### 5.3 Criterios y señales
 
@@ -221,15 +242,15 @@ Cada criterio da una señal con código, nivel y explicación. Los umbrales son 
 
 | Código | Criterio | Verde | Ámbar | Rojo | Fuente o nota |
 |---|---|---|---|---|---|
-| **B1** | **Objetivo declarado** | Propósito distinto de `consumo`, objetivo `vigente` o `cumplido` | Sin propósito declarado ("por declarar", gris) | Propósito `consumo`, o `estado_objetivo` = `ya_no_existe` o `cambio` **con mensualidades pendientes** | W5; el objetivo que ya no existe es la señal que pidió el dueño |
+| **B1** | **Objetivo declarado** | Propósito distinto de `consumo`, objetivo `vigente` o `cumplido` | Sin propósito declarado ("por declarar", gris) | Propósito `consumo`, o `estado_objetivo` = `ya_no_existe` o `cambio` **con mensualidades pendientes** | W5: BBVA pone como buena la deuda con beneficios a largo plazo (créditos educativos, hipotecarios) y como mala la que se adquiere "generalmente para gastos no esenciales". El objetivo que ya no existe es la señal que pidió el dueño |
 | **B2** | **Costo financiero total** (intereses + comisiones + anualidad atribuible, solo con dato) | MSI sin sobreprecio; o crédito con propósito `patrimonio` o `genera_ingreso` | **Sobreprecio**: el total a meses supera el `precio_contado_centavos` capturado | Tarjeta con intereses cobrados en el último estado (T1) | Sin precio de contado no se evalúa (no se inventa). Sin cifra de tope para el CAT: no hay fuente (pregunta 6) |
-| **B3** | **Plazo** | Plazo menor o igual que la vida útil declarada y menor o igual a **18 meses** | Mayor de 18 meses | Plazo **mayor** que la vida útil declarada | 18 meses: propuesta sin fuente; el diseño admite hasta 48 |
-| **B4a** | **Carga total de deuda** (pagos de deuda ÷ ingreso, existente) | menor de 20 % | de 20 % a 35 % | mayor de 35 % | Ya existe en `fin_parametros`. Condusef: 35 a 40 % (30 % en otra nota; W6) |
-| **B4b** | **MSI sobre el ingreso mensual** (suma de mensualidades de MSI ÷ ingreso mensual de referencia) | menor o igual a **10 %** | de 10 % a **20 %** | mayor de 20 % | 10 %: opinión de una especialista (W7); 20 %: propuesta sin fuente |
+| **B3** | **Plazo** | Plazo menor o igual que la vida útil declarada y menor o igual a **18 meses** | Mayor de 18 meses | Plazo **mayor** que la vida útil declarada | **Verificado [W7]:** Condusef (10/nov/2026) recomienda MSI "para productos con una vida útil que supere la duración de la deuda"; de ahí sale el rojo. Los **18 meses** son propuesta sin fuente; el diseño admite hasta 48 |
+| **B4a** | **Carga total de deuda** (pagos de deuda ÷ ingreso, existente) | menor de 20 % | de 20 % a 35 % | mayor de 35 % | Ya existe en `fin_parametros` (20 y 35 %, [Propuesta] heredada del diseño). **Verificado [W6]:** Condusef recomienda no pasar de **30 %** del ingreso; BBVA, entre **30 y 35 %**. El "35 a 40 %" no lo encontré en página primaria. Pregunta 5 |
+| **B4b** | **MSI sobre el ingreso mensual** (suma de mensualidades de MSI ÷ ingreso mensual de referencia) | menor o igual a **10 %** | de 10 % a **20 %** | mayor de 20 % | 10 %: opinión de una especialista citada por prensa, **no encontrada en página primaria** (W7b); 20 %: propuesta sin fuente |
 | **B4c** | **MSI activos a la vez** | 0 a 2 | 3 | 4 o más | Propuesta sin fuente (el diseño dice "muchas" sin número) |
 | **B5** | **Bien que sirve** (lo comprado se usa) | `vigente` o `cumplido` | La persona marca "lo uso poco" | `ya_no_existe` o `cambio` | La declara la persona; la app no ve el uso |
 | **B6a** | **Pagos al corriente** (mensualidades de `fin_ocurrencias`) | 0 atrasos en los últimos 6 pagos | 1 atraso | 2 o más | Propuesta |
-| **B6b** | **Pago de la tarjeta del MSI** (con estados de cuenta) | Pagó el total sin intereses | Pagó menos que el total sin intereses y hubo intereses en 1 corte | **Solo el mínimo** o intereses en **2 cortes seguidos** | Sin estado capturado: "sin dato" |
+| **B6b** | **Pago de la tarjeta del MSI** (con estados de cuenta) | Pagó el total sin intereses | Pagó menos que el total sin intereses y hubo intereses en 1 corte | **Solo el mínimo** o intereses en **2 cortes seguidos** | **Verificado [W8]:** el pago para no generar intereses incluye solo la mensualidad del mes de las compras a MSI; pagar solo el mínimo genera intereses. Sin estado capturado: "sin dato" |
 | **B7** | **Uso del límite** (existente, con MSI pendiente) | menor de 30 % | de 30 % a 60 % | mayor de 60 % | Ya existe (`usoDelLimite`) |
 
 ### 5.4 Cuándo una deuda buena se está volviendo mala
@@ -260,7 +281,7 @@ El nivel de una deuda es **el peor** de todas sus señales (como el semáforo ex
 
 **Subir de nivel es inmediato; bajar exige 2 evaluaciones semanales seguidas** sin la señal (evita parpadeo) **[Propuesta]**.
 **Cuándo se evalúa:** al abrir el libro, al guardar un pago, un estado de cuenta o un MSI, y en el cierre semanal del lunes.
-**Qué sugiere (nunca decide):** una línea de acción por señal, por ejemplo "pagar el total en el próximo corte" (B6b), "no abrir otro MSI hasta liquidar uno" (M1, M5), "declarar para qué fue" (B1) o "abrir el simulador" (B4a, ya existe). El pago y la decisión son de la persona.
+**Qué sugiere (nunca decide):** una línea de acción por señal, por ejemplo "pagar el total en el próximo corte" (B6b), "no abrir otro MSI hasta liquidar uno" (M1, M5), "declarar para qué fue" (B1) o "abrir el simulador" (B4a, ya existe). El pago y la decisión son de la persona. **Respuesta del dueño: una deuda mala solo avisa** (aviso y sugerencia); no bloquea registrar nada ni pide una confirmación extra.
 **Antes de un MSI nuevo:** la hoja de registro muestra una **vista previa** (sin bloquear): "con esta compra, tus MSI serían X % de tu ingreso y tendrías N a la vez", con el semáforo que quedaría. Solo es información.
 
 ### 5.5 bis Ejemplo (cifras ilustrativas)
@@ -284,10 +305,10 @@ Migración propuesta: `20261146000000_finanzas_fugas_deudas.sql` (el número lo 
 
 | Tabla | Para qué | Columnas principales |
 |---|---|---|
-| `fin_fuga_parametros` | Umbrales editables por libro (una fila por libro, creada con los valores por defecto). **Se cambian con `update` solo por RPC** (como `fin_parametros`) | `libro_id` (PK), `tope_hormiga_centavos` (15000), `hormiga_min_gastos` (8), `hormiga_min_semanas` (3), `hormiga_min_ingreso_pb` (100), `hormiga_conjunto_pb` (500), `recurrente_tolerancia_pb` (1000), `vampiro_crecimiento_pb` (1000), `zombie_respuestas` (2), `msi_ambar_pb` (1000), `msi_rojo_pb` (2000), `msi_activos_ambar` (3), `msi_activos_rojo` (4), `plazo_ambar_meses` (18), `baja_nivel_evaluaciones` (2) |
+| `fin_fuga_parametros` | Umbrales editables por libro (una fila por libro, creada con los valores por defecto). **Se cambian con `update` solo por RPC** (como `fin_parametros`) | `libro_id` (PK), `tope_hormiga_centavos` (15000), `hormiga_min_gastos` (8), `hormiga_min_semanas` (3), `hormiga_min_ingreso_pb` (100), `hormiga_conjunto_pb` (500), `recurrente_tolerancia_pb` (1000), `vampiro_crecimiento_pb` (1000), `zombie_respuestas` (2), `servicio_periodos_min` (6), `servicio_periodos_mediana` (12), `servicio_mediana_pb` (2500), `msi_ambar_pb` (1000), `msi_rojo_pb` (2000), `msi_activos_ambar` (3), `msi_activos_rojo` (4), `plazo_ambar_meses` (18), `baja_nivel_evaluaciones` (2) |
 | `fin_patrones_cobro` | Un cobro que se repite o una subcategoría hormiga vigilada | `id`, `libro_id`, `clave` (comercio normalizado + categoría), `comercio_norm` (nulo permitido), `categoria_id`, `compromiso_id` (nulo), `cadencia` (`semanal`/`quincenal`/`mensual`/`bimestral`/`anual`/`irregular`), `automatico` (bool), `origen` (`detectado`/`manual`), `cancelado_en` (nulo), `protegido` (bool), `creado_por`, `creado_en`. Único `(libro_id, clave)` |
-| `fin_fuga_clasificaciones` | Clasificación vigente y su historial | `id`, `libro_id`, `patron_id`, `fuga` (`hormiga`/`fantasma`/`vampiro`/`zombie`/`ninguna`), `origen` (`regla`/`persona`), `regla` (código: `H1`...`Z4`), `reemplaza_a` (nulo; índice único cuando no es nulo), `motivo` (≤ 200; obligatorio si `origen = 'persona'` y contradice la regla), `decidido_por`, `en_nombre_de` (nulo; con motivo, como `fin_movimientos`), `decidido_en`. **Vigente** = la que ningún otro reemplaza |
-| `fin_fuga_respuestas` | Reconocimiento y uso | `id`, `libro_id`, `patron_id`, `pregunta` (`reconoce`/`uso`/`ya_no_sirve`/`cancelado`), `respuesta` (`si`/`no`/`despues`), `periodo_lunes` (date, el lunes de la semana en que se contestó), `reemplaza_a`, `registrado_por`, `registrado_en` |
+| `fin_fuga_clasificaciones` | Clasificación vigente y su historial | `id`, `libro_id`, `patron_id`, `fuga` (`hormiga`/`fantasma`/`vampiro`/`zombie`/`ninguna`), `origen` (`regla`/`persona`), `regla` (código: `H1`...`Z5`, `VA`, `VC`, `VD`), `reemplaza_a` (nulo; índice único cuando no es nulo), `motivo` (≤ 200; obligatorio si `origen = 'persona'` y contradice la regla), `decidido_por`, `en_nombre_de` (nulo; con motivo, como `fin_movimientos`), `decidido_en`. **Vigente** = la que ningún otro reemplaza |
+| `fin_fuga_respuestas` | Reconocimiento y uso | `id`, `libro_id`, `patron_id`, `pregunta` (`reconoce`/`uso`/`ya_no_sirve`/`ya_no_existe`/`cancelado`/`temporada`), `respuesta` (`si`/`no`/`despues`), `folio` (nulo; hasta 40 caracteres `[A-Za-z0-9-]`, solo con `cancelado`), `periodo_lunes` (date, el lunes de la semana en que se contestó), `reemplaza_a`, `registrado_por`, `registrado_en` |
 | `fin_deuda_propositos` | Propósito declarado de una deuda y estado del objetivo | `id`, `libro_id`, `deuda_id`, `proposito`, `objetivo_texto` (≤ 80), `bien_id` (nulo), `objetivo_id` (nulo), `vida_util_meses` (nulo), `estado_objetivo`, `reemplaza_a`, `declarado_por`, `declarado_en`. Vigente = la más reciente sin reemplazo |
 | `fin_deuda_semaforo` | Historial de cambios de nivel (para avisar solo una vez y para la histéresis) | `id`, `libro_id`, `deuda_id`, `lunes` (date), `nivel` (`verde`/`ambar`/`rojo`/`gris`), `senales` (text[] con códigos B1 a M8), `calculado_en`. Solo se agrega cuando el nivel cambia |
 
@@ -303,7 +324,7 @@ Todas `security definer`, con `search_path` vacío y validación del libro con `
 | `fin_fuga_responder(patron, pregunta, respuesta)` | Agrega una respuesta. Exige `fin_puede(libro, 'escribir')` |
 | `fin_fuga_clasificar(patron, fuga, motivo)` | Agrega una clasificación de la persona (reemplaza la vigente). Exige `escribir`; para un libro representado, queda "en nombre de" con motivo |
 | `fin_patron_crear(libro, comercio, categoria, cadencia, automatico)` | Crea un patrón a mano |
-| `fin_patron_cancelar(patron, fecha)` | Marca la cancelación (`cancelado_en`); si hay compromiso ligado, le pone `hasta` por la RPC ya existente |
+| `fin_patron_cancelar(patron, fecha, folio)` | Marca la cancelación (`cancelado_en`) y guarda el folio en la respuesta `cancelado` (puede ir vacío: "cancelado sin folio"); si hay compromiso ligado, le pone `hasta` por la RPC ya existente |
 | `fin_deuda_declarar(deuda, proposito, objetivo_texto, bien, objetivo, vida_util, estado)` | Agrega una declaración de propósito. Exige `administrar` en el libro |
 | `fin_fuga_parametros_cambiar(libro, ...)` | Cambia umbrales. Exige `administrar` |
 
@@ -372,7 +393,10 @@ Textos de la app (sin culpa, breves, ofrecen una acción):
 | Hormiga | "Estas compras chicas se repiten bastante. ¿Quieres verlas juntas?" |
 | Fantasma | "Encontré un cobro que se repite y no tienes registrado. ¿Lo reconoces?" |
 | Vampiro | "Este cobro sube cada vez. ¿Lo revisamos?" |
+| Vampiro, servicio del hogar | "Este recibo viene más alto de lo normal. Conviene revisar instalaciones y consumo." |
+| Vampiro, intereses por el mínimo | "Este corte tuvo intereses porque se pagó el mínimo. El siguiente se puede pagar completo." |
 | Zombie | "No marcaste uso en este cobro las últimas veces. ¿Todavía lo quieres?" |
+| Zombie, acción | "Pide la baja formal y guarda el folio de cancelación." |
 | Pregunta de uso | "¿Lo usaste este mes?" |
 | Deuda buena | "Esta compra a meses va al corriente y sirve para lo que dijiste." |
 | En vigilancia | "Tienes varias compras a meses al mismo tiempo. Todas van al corriente; solo hay que vigilarlas." |
@@ -419,6 +443,11 @@ Las pruebas de dominio van en `paquetes/finanzas_dominio` (`dart test`), con los
 | DF-20 | **Sin comercio** | La hormiga se detecta sin comercio; un patrón recurrente sin comercio se agrupa por subcategoría y monto, y la app lo dice |
 | DF-21 | **Equivalentes** | $450 al mes = $103.85 a la semana con R2; los renglones suman exacto |
 | DF-22 | **Semana en lunes** | Un gasto de domingo cuenta en la semana que empezó el lunes anterior; los totales de 4 semanas empiezan en lunes |
+| DF-23 | **Servicio que se infla (V-C)** | Agua mensual con 12 periodos: 280, 290, 300, 300, 300, 300, 300, 310, 310, 320, 380 y 390 (mediana $300; el umbral es $375). Los 2 últimos periodos (380 y 390) superan $375 y el tercero (320) no: 2 de 3, VAMPIRO. Con 370 y 390 solo uno supera: NINGUNA. Con 5 periodos de historia: "sin dato" |
+| DF-24 | **Servicio nunca es otra fuga** | Un recibo de luz recurrente, automático y sin reconocer no es FANTASMA ni ZOMBIE; solo puede ser VAMPIRO por V-C |
+| DF-25 | **Intereses por pagar el mínimo (V-D)** | Estado con pago sin intereses $3,000, mínimo $300 e intereses $410; los pagos del ciclo anterior suman $300: VAMPIRO con la marca "por pagar solo el mínimo" con un solo corte. Con pagos de $3,000: sin esa marca |
+| DF-26 | **Folio de cancelación** | Cancelar un patrón con folio `ABC-123` lo deja "cancelado"; sin folio, "cancelado sin folio" (pendiente). Un folio con espacios o más de 40 caracteres se rechaza |
+| DF-27 | **Cosa que ya no existe (Z5)** | "Ya no existe" confirmado por la persona sobre un seguro de auto: ZOMBIE; sin confirmar, solo una propuesta |
 
 ### 10.2 Dominio: deuda buena y mala
 
@@ -444,6 +473,8 @@ Ingreso mensual de referencia $20,000.
 | DD-16 | **Peor señal** | El nivel es el de la peor señal; un rojo y tres verdes dan rojo |
 | DD-17 | **Vista previa** | Con 2 MSI de $1,000 al mes, un tercero de $200 muestra "11 %, 3 a la vez, ámbar" antes de guardar |
 | DD-18 | **Solo reglas** | Ninguna función del dominio recibe ni devuelve datos a un servicio de IA (prueba estática de dependencias) |
+| DD-19 | **Deuda mala solo avisa** | Con una deuda en rojo, registrar un MSI nuevo se puede guardar sin confirmación extra; solo se muestra la vista previa y se emite el aviso |
+| DD-20 | **Crédito automotriz** | Con propósito `genera_ingreso`, vida útil mayor que el plazo, al corriente y carga menor de 20 %: verde. Sin propósito: gris |
 
 ### 10.3 Servidor (RLS)
 
@@ -485,50 +516,54 @@ Ingreso mensual de referencia $20,000.
 
 Orden recomendado: dominio y pruebas → migración y RLS → pantallas de la laptop → teléfono → revisión de calidad.
 
-## 12. Preguntas abiertas para el dueño
-
-1. **Definiciones.** Usé las suyas para las cuatro fugas. Las fuentes públicas traslapan "fantasma" y "vampiro" y no definen "zombie". ¿Confirma el orden de prioridad fantasma, zombie, vampiro, hormiga y que "No lo conocía" sea lo único que vuelve fantasma a un cobro?
-2. **Hormiga.** ¿Le parece bien el tope de **$150** por gasto, **8 gastos** en 4 semanas, **3 semanas de 4** y **1 %** del ingreso? ¿Qué subcategorías de Alimentación quiere tratar como recortables (comidas fuera, café, snacks) y cuáles como necesarias?
-3. **Comercio.** ¿Acepta agregar el campo opcional **Comercio** y la casilla "es un cargo automático" al registro de gastos? Sin ellos, fantasma, vampiro y zombie son menos precisos.
-4. **Preguntas de uso.** ¿Le parece bien la revisión mensual de hasta 7 preguntas "¿Lo usaste?" y que dos "No lo usé" seguidas basten para marcar zombie?
-5. **Deudas con costo.** ¿Una tarjeta con saldo que genera intereses es siempre "mala", o hay excepciones declaradas? ¿Cómo se trata el **crédito automotriz**: propósito `genera_ingreso` (herramienta de trabajo) o `consumo`? Condusef (por prensa) pone como mala deuda un bien que se deprecia rápido.
-6. **Costo financiero total.** No encontré un umbral confiable de CAT para decir "caro" ni "barato". ¿Quiere que el semáforo no juzgue el CAT y solo lo muestre, como en esta propuesta?
-7. **Umbrales de MSI.** ¿Acepta **10 %** (opinión de una especialista, no norma) y **20 %** (propuesta) del ingreso mensual en MSI, y **3 y 4** MSI a la vez como ámbar y rojo? ¿Quiere comparar el crecimiento de un cobro (10 %) contra la inflación de INEGI, que no consulté?
-8. **Qué hacer cuando una deuda es mala.** Propuesta: solo avisar y sugerir; la vista previa de un MSI nuevo **no bloquea**. ¿Quiere un aviso extra (confirmación adicional) al registrar un MSI nuevo si la persona ya está en rojo?
-9. **Libros compartidos y de Papá.** ¿Está bien que en un compartido cualquier miembro responda y valga la última respuesta? ¿Las fugas de Papá las decide el albacea sin consultar al dueño si es otra persona?
-10. **Roadmap.** ¿Lo ubica como **bloque 6** de la Fase 8, antes o después del bloque 5 de inglés? ¿Puede el teléfono mostrar las deudas sin declarar propósito, o prefiere un formulario corto en el teléfono?
-11. **Dependencias.** La conciliación en PDF (que traería los cobros fantasma reales) sigue pendiente de la lista de bancos. ¿Quiere esperar a tenerla o empezar con lo capturado?
-12. **Recursos frente a un cobro indebido.** La ayuda de "reclamar un cobro" requiere verificar con Profeco o Condusef qué puede hacer la persona; no lo asumí. ¿Quiere que la app solo diga "revísalo con el banco o el comercio" mientras no se verifique?
-13. **IA local.** ¿Se difiere por completo (propuesta) o quiere la opción futura de un modelo local en la laptop?
-14. **Decisión.** ¿Confirma **D30** (reglas locales; una fuga principal por cobro; aclaración de que el comercio no sale del dispositivo) y la aclaración C-2 al texto de 5.2, regla 8?
+## 12. Respuestas y preguntas abiertas
 
 ### 12.1 Respuestas del dueño (18/nov/2026)
 
-| Pregunta | Respuesta |
-|---|---|
-| 3. Comercio y cargo automático | Sí |
-| 4. Revisión mensual de uso; dos «No lo usé» = zombi | Sí |
-| 5. Crédito automotriz y tarjeta con intereses | Automotriz = herramienta de trabajo; tarjeta con intereses = deuda mala (lectura por confirmar) |
-| 8. Qué hacer con una deuda mala | Solo avisa; no bloquea |
-| 11. Conciliación en PDF | Sin respuesta clara; se empieza con lo capturado (por confirmar) |
+| Tema | Respuesta | Dónde quedó |
+|---|---|---|
+| Campo **Comercio** y casilla "es un cargo automático" en el registro de gastos | Confirmado | 6.1, 8.1 |
+| **Revisión mensual** de preguntas de uso; dos "No lo usé" seguidas = zombie | Confirmada | 3.4 (Z1) |
+| **Crédito automotriz** | Herramienta de trabajo: propósito `genera_ingreso` | 5.1, DD-20 |
+| **Tarjeta con intereses** | Deuda mala | 5.1, DD-11 |
+| **Deuda mala** | Solo avisa; no bloquea ni pide confirmación extra | 5.5, DD-19 |
+| **Vampiro** | Incluye los **servicios del hogar que se inflan** (luz, agua, gas), detectados contra su mediana, y los **intereses por pagar solo el mínimo** | 3.3 (V-C y V-D), DF-23 a DF-25 |
+| **Zombi** | La acción sugerida es **pedir la baja formal y exigir folio de cancelación** | 3.4, DF-26 |
+| Conciliación en PDF | Sin respuesta clara; se empieza con lo capturado (por confirmar) | F-7 |
 
-**Definiciones del dueño** (resumen de BBVA y Condusef, pegado por el dueño; no verificado en la fuente): *hormiga*, compras pequeñas, diarias y no planificadas; *vampiro*, fugas constantes ocultas en costos fijos o intereses (servicios del hogar que se inflan, intereses por pagar solo el mínimo); *fantasma*, cargos recurrentes que no se recuerdan o se olvidaron (suscripciones, membresías, comisiones bancarias); *zombi*, cobros de cosas que ya no existen o no se usan (gimnasio, seguro de un auto vendido, líneas viejas). **Solución principal por tipo:** hormiga, límite semanal; vampiro, revisar instalaciones y pagar más del mínimo; fantasma, auditar el estado de cuenta y cancelar; zombi, pedir la baja formal y exigir folio de cancelación.
+**Definiciones del dueño** (resumen pegado de BBVA y Condusef; ver 13 para lo que sí se verificó): *hormiga*, compras pequeñas, diarias y no planificadas; *vampiro*, fugas constantes ocultas en costos fijos o intereses (servicios del hogar que se inflan, intereses por pagar solo el mínimo); *fantasma*, cargos recurrentes que no se recuerdan o se olvidaron (suscripciones, membresías, comisiones bancarias); *zombi*, cobros de cosas que ya no existen o no se usan (gimnasio, seguro de un auto vendido, líneas viejas). **Solución principal por tipo:** hormiga, límite semanal; vampiro, revisar instalaciones y pagar más del mínimo; fantasma, auditar el estado de cuenta y cancelar; zombi, pedir la baja formal y exigir folio de cancelación.
 
-**Pendiente de incorporar al cuerpo de la especificación (v0.3):** en el vampiro, la detección de servicios del hogar que suben (luz, agua, gas) frente a su mediana; y, en el zombi, el paso de «folio de cancelación» como acción sugerida.
+### 12.2 Preguntas que siguen abiertas
+
+1. **Orden y comisiones.** ¿Confirma la prioridad fantasma, zombie, vampiro, hormiga? Su resumen pone las **comisiones bancarias que no se recuerdan** en fantasma, y su petición original las puso en vampiro: aquí una comisión de una cuenta registrada es vampiro y una que no se reconoce es fantasma (3.2). ¿Está bien así?
+2. **Tope hormiga.** Los ejemplos de Condusef que verifiqué son de $15 a $30 cada uno (W1). ¿Mantiene el tope de **$150** por gasto, **8 gastos** en 4 semanas, **3 semanas de 4** y **1 %** del ingreso, o prefiere un tope menor? ¿Qué subcategorías de Alimentación son recortables?
+3. **Servicios del hogar (V-C).** ¿Acepta **25 %** sobre la mediana en **2 de los últimos 3 periodos**, con mínimo de 6 periodos de historia? ¿Qué servicios más entran (internet, telefonía fija)? ¿La marca "es por la temporada" le parece suficiente para el clima?
+4. **Intereses por el mínimo (V-D).** ¿Le parece bien que **un solo corte** baste, en lugar de "2 de 3"?
+5. **Carga de deuda.** Condusef (verificado) recomienda no pasar de **30 %** y BBVA, de **30 a 35 %**; el diseño usa ámbar desde 20 % y rojo sobre 35 %. ¿Baja el rojo a 30 %? ¿Acepta **10 %** y **20 %** del ingreso mensual en MSI (el 10 % es de una especialista, sin página primaria) y **3** y **4** MSI a la vez?
+6. **Costo financiero total.** No encontré un umbral confiable de CAT. ¿Quiere que el semáforo no juzgue el CAT y solo lo muestre?
+7. **Libros compartidos y de Papá.** ¿Cualquier miembro responde y vale la última respuesta? ¿Las fugas de Papá las decide el albacea sin consultar al dueño si es otra persona?
+8. **Roadmap.** ¿Bloque 6 de la Fase 8, antes o después del bloque 5 de inglés? ¿Quiere un formulario corto de propósito en el teléfono?
+9. **Inflación.** ¿Quiere comparar el crecimiento de un cobro (V-B, 10 %) contra la inflación de INEGI? No la consulté.
+10. **IA local.** ¿Se difiere por completo (propuesta) o quiere la opción futura de un modelo local en la laptop?
+11. **Decisión.** ¿Confirma **D30** (reglas locales; una fuga principal por cobro; el comercio no sale del dispositivo) y la aclaración C-2 al texto de 5.2, regla 8?
 
 ## 13. Fuentes y su estado
 
-El entorno no permitió abrir las páginas, así que **ninguna se verificó en la fuente primaria**; las cifras salen de resúmenes de búsqueda y de prensa que cita a las instituciones. Detalle y enlaces en `docs/revisiones/finanzas-fugas-y-deudas.md`, sección 5.
+Verificación del **18/nov/2026**: las páginas de `www.gob.mx` y `www.bbva.com` se abrieron y se leyeron completas; `condusef.gob.mx`, `revista.condusef.gob.mx` y los medios (El Imparcial, Expansión, Uno TV, Portafolio, Mercado Pago) **no estuvieron al alcance** de la sesión. Estado: **Verificada** = la página se abrió y el texto citado está en ella; **No encontrada** = no apareció en ninguna página alcanzable (el dato queda como [Propuesta]). Las citas son literales y breves.
 
-| Clave | Dato | Uso en esta especificación |
-|---|---|---|
-| W1 | Gasto hormiga (Condusef por prensa) y rangos de café, bebidas y comida | Referencia del tope de $150 (H2) |
-| W2 | Hormigas de más de 12 % del ingreso anual (prensa citando a Condusef) | **No se usa** como umbral |
-| W3 | Definiciones de divulgación de fantasma y vampiro | Contraste con las definiciones del dueño |
-| W4 | "Zombie": sin fuente encontrada | La definición es del dueño |
-| W5 | Criterio de deuda buena y mala (Condusef por prensa) | Criterio B1 y propósitos |
-| W6 | Carga de deuda de 35 a 40 % (30 % en otra nota) | Contraste con los umbrales existentes de 20 % y 35 % |
-| W7 | MSI hasta 10 % del ingreso (opinión de una especialista) | Umbral B4b verde |
+| Clave | Dato | Estado y fuente | Texto citado | Uso |
+|---|---|---|---|---|
+| W1 | Qué es el gasto hormiga y ejemplos | **Verificada.** Condusef, gob.mx, 25/feb/2022: <https://www.gob.mx/condusef/articulos/cuida-tu-bolsillo-de-los-gastos-hormiga?idiom=es>. Condusef, gob.mx, 14/may/2020: <https://www.gob.mx/condusef/es/articulos/gastos-chiquitos-que-salen-caro> | "Nombramos gastos hormiga a esos pequeños consumos diarios que realizamos sin pensar que al final del día afectan nuestras finanzas." Ejemplos: café 20, torta 30, refresco 15, boleada 25: "90 pesos diarios… 2700 pesos". 2020: "golosinas, refrescos, frituras… dos o tres cafés diario" y "plataformas de streaming… Uber, DiDi… Spotify" | Definición de 3.1; Condusef también cuenta suscripciones como hormiga (diferencia explicada en 3.1) |
+| W1b | Rangos por compra "café 12 a 90, bebidas 10 a 60, comida 35 a 170" | **No encontrada** en página alcanzable (solo prensa) | — | El tope de $150 queda **[Propuesta]** |
+| W2 | Hormigas de más de 12 % del ingreso anual | **Verificada solo como cita de BBVA México:** <https://www.bbva.com/es/mx/salud-financiera/como-entender-y-controlar-los-gastos-hormiga-en-mexico/>. **No encontrada** en una página de Condusef | "Según datos de la… (CONDUSEF), los 'gastos hormiga' pueden llegar a representar más del 12% de los ingresos anuales de una persona." | No se usa como umbral |
+| W3 | Definiciones de fantasma y vampiro | **Verificada, y se contradicen entre fuentes.** BBVA Perú: <https://www.bbva.com/es/pe/salud-financiera/que-son-los-gastos-hormiga-fantasma-y-vampiro-y-como-identificarlos/>. BBVA México (detox): <https://www.bbva.com/es/mx/salud-financiera/detox-financiero-redirige-el-presupuesto-para-construir-bienestar/>. PENSIONISSSTE, gob.mx: <https://www.gob.mx/pensionissste/es/articulos/llegas-al-fin-de-la-quincena-sin-dinero-identifica-los-tipos-de-gastos-que-afectan-tu-presupuesto?idiom=es>. Las definiciones de la revista de Condusef (2021 y 2022) **no se pudieron abrir** | BBVA Perú, fantasma: "gastos en los que incurrimos sin darnos cuenta"; ejemplo "membresía al gimnasio que no usas". Vampiro: "a pesar de ser fijos, no se pueden detectar fácilmente"; ejemplos "fugas de agua, gas, mal uso de electrodomésticos o problemas con las instalaciones de luz". BBVA México: "Eliminar 'vampiros de suscripción': apps, plataformas de streaming o membresías que ya no se usan, pero siguen generando cargos automáticos." PENSIONISSSTE, fantasma: "pagos recurrentes que olvidamos… se deducen automáticamente" | Contraste. BBVA México llama "vampiro" a la suscripción olvidada; BBVA Perú, al costo fijo oculto. Por eso se adoptan las definiciones del dueño. Apoya V-C |
+| W4 | "Gasto zombi" | **No encontrada** (búsqueda en gob.mx, bbva.com y bbva.mx) | — | La definición es del dueño |
+| W5 | Deuda buena y mala | **Verificada (BBVA México):** <https://www.bbva.com/es/mx/salud-financiera/como-tener-una-deuda-sana-sostenible/> y <https://www.bbva.com/es/mx/salud-financiera/deudas-buenas-o-deudas-malas-relevantes-en-una-estrategia-financiera/>. **La definición de Condusef** (patrimonio, ingresos) **no encontrada** en página alcanzable | "Deuda saludable o buena: Aquella que aporte beneficios a largo plazo, como el historial crediticio… créditos educativos, hipotecarios". "Deuda no saludable o mala: Surge cuando se rebasa la capacidad de pago o se adquiere sin una evaluación adecuada, generalmente para gastos no esenciales… el uso de un crédito para cubrir otro." "Las buenas ayudan a las personas a generar un patrimonio, las malas tienden a disminuir el ahorro" | Criterio B1, propósitos y señal M1 (rodar una deuda) |
+| W6 | Límite de endeudamiento | **Verificada el 30 %:** Condusef, gob.mx (comunicado sin fecha visible; usa cifras de la CNBV a dic/2012): <https://www.gob.mx/condusef/prensa/condusef-recomienda-a-instituciones-financieras-cautela-en-el-otorgamiento-de-creditos>. BBVA México: página de W5 y la de la SNEF 2024. **El "35 a 40 %" no se encontró** en página alcanzable | Condusef: "el nivel de deuda que tenga una persona no supere el 30% de sus ingresos… si una persona gana $10,000 al mes, no deba más de $3,000". BBVA: "sus pagos mensuales no superan entre el 30% y el 35% del ingreso" y "no deben pasar del 30% de los ingresos" | B4a (pregunta 5). El 35 a 40 % queda **[Propuesta]** |
+| W7 | MSI y vida útil | **Verificada.** Condusef, gob.mx, 10/nov/2026: <https://www.gob.mx/condusef/articulos/en-este-buen-fin-compra-con-conciencia?idiom=es> | "Los Meses sin intereses se recomiendan para productos con una vida útil que supere la duración de la deuda (línea blanca o tecnología, no para despensa o ropa)." | B3 (plazo contra vida útil) |
+| W7b | MSI hasta 10 % del ingreso (especialista) | **No encontrada** en página alcanzable (solo prensa) | — | B4b queda **[Propuesta]** |
+| W8 | Pago mínimo, intereses y MSI en tarjetas | **Verificada.** BBVA: <https://www.bbva.com/es/salud-financiera/que-es-el-pago-minimo-y-el-pago-para-no-generar-intereses-en-una-tarjeta-de-credito/> | "Pagar sólo el mínimo aumenta el tiempo para liquidar el crédito e incrementa el costo financiero." El pago para no generar intereses descuenta los saldos en "meses sin intereses" y suma "la mensualidad exacta que corresponda cubrir en ese mes". Sin el mínimo a tiempo: "cargos por pago tardío" y atraso en Buró | V-D, B6a, B6b |
+| W9 | Cancelar un cobro: folio, plazos y queja | **Verificada.** Profeco, gob.mx, 5/may/2026: <https://www.gob.mx/profeco/prensa/profeco-orienta-a-la-poblacion-ante-cobros-automaticos-injustificados-al-cancelar-un-servicio?state=published>. Profeco, gob.mx: <https://www.gob.mx/profeco/prensa/que-las-suscripciones-digitales-no-afecten-tu-presupuesto-profeco-te-orienta?idiom=es> | "los proveedores deben proporcionar a las personas un folio o número tras realizar la solicitud de cancelación". "al menos cinco días naturales de anticipación" para avisar una renovación automática. "Desinstalar la aplicación o plataforma no detiene los cobros". Para la queja: "identificación oficial, contrato, folio de cancelación, comprobantes de pago y el estado de cuenta". Lista de preguntas de uso (cuándo se usó por última vez, si el costo subió y ya no vale lo que se paga): "Si dos o más opciones resultan afirmativas, hay que considerar la cancelación inmediata." | Acción del zombie (folio), cobro tras cancelar, apoyo a Z1 |
 
 ## Control de cambios
 
@@ -536,3 +571,4 @@ El entorno no permitió abrir las páginas, así que **ninguna se verificó en l
 |---|---|---|
 | 0.1 | 18/nov/2026 | Primera versión, propuesta para aprobación del dueño |
 | 0.2 | 18/nov/2026 | Respuestas del dueño (12.1) y D30 registrada; el vampiro y el zombi por ajustar en 0.3 |
+| 0.3 | 18/nov/2026 | Fuentes verificadas en gob.mx y bbva.com (sección 13: estado, URL y texto citado de cada una; lo no encontrado queda como propuesta). Respuestas del dueño en el cuerpo: vampiro con servicios del hogar que se inflan (V-C, contra su mediana) e intereses por pagar solo el mínimo (V-D); zombi con baja formal y folio de cancelación (Z5 y captura del folio); crédito automotriz como `genera_ingreso`; tarjeta con intereses como deuda mala; deuda mala solo avisa; Comercio, cargo automático y revisión mensual confirmados. Umbrales nuevos: servicios 25 % sobre la mediana en 2 de 3 periodos con mínimo de 6; intereses por el mínimo con un solo corte. Salta de 0.1 a 0.3 por indicación del arquitecto |
