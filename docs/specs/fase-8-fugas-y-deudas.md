@@ -1,6 +1,6 @@
 # Especificación — Fase 8 · Bloque 6: Fugas silenciosas y deuda buena o mala (Finanzas)
 
-> v0.1, 18/nov/2026. **Propuesta para aprobación del dueño; sin código.** Base: `docs/revisiones/finanzas-fugas-y-deudas.md` (hallazgos F-1 a F-11, D-1 a D-9, C-1 a C-10), D3, D4, D5, D6, D14, D18, D19, D20, D24, D25 y el diseño de Finanzas v23 (5.2, 5.3, 5.3 bis, 5.9 bis). Nombre del archivo ajustable al esquema de fases; el bloque 6 lo asigna el arquitecto.
+> v0.2, 18/nov/2026 (v0.1 el mismo día; respuestas del dueño en la sección 12.1). **Propuesta para aprobación del dueño; sin código.** Base: `docs/revisiones/finanzas-fugas-y-deudas.md` (hallazgos F-1 a F-11, D-1 a D-9, C-1 a C-10), D3, D4, D5, D6, D14, D18, D19, D20, D24, D25 y el diseño de Finanzas v23 (5.2, 5.3, 5.3 bis, 5.9 bis). Nombre del archivo ajustable al esquema de fases; el bloque 6 lo asigna el arquitecto.
 >
 > **Convención de esta especificación.** Todo número de umbral lleva la etiqueta **[Propuesta]** (valor sugerido, editable por libro, sin verificar) o **[Fuente W#]** (la clave de la sección 13, con la reserva que ahí se dice: ninguna se verificó en su fuente primaria). Ningún umbral aquí es una norma ni una cifra oficial. Los montos de los ejemplos son **ilustrativos e inventados** para probar las reglas; no son precios reales de ningún comercio.
 
@@ -502,6 +502,20 @@ Orden recomendado: dominio y pruebas → migración y RLS → pantallas de la la
 13. **IA local.** ¿Se difiere por completo (propuesta) o quiere la opción futura de un modelo local en la laptop?
 14. **Decisión.** ¿Confirma **D30** (reglas locales; una fuga principal por cobro; aclaración de que el comercio no sale del dispositivo) y la aclaración C-2 al texto de 5.2, regla 8?
 
+### 12.1 Respuestas del dueño (18/nov/2026)
+
+| Pregunta | Respuesta |
+|---|---|
+| 3. Comercio y cargo automático | Sí |
+| 4. Revisión mensual de uso; dos «No lo usé» = zombi | Sí |
+| 5. Crédito automotriz y tarjeta con intereses | Automotriz = herramienta de trabajo; tarjeta con intereses = deuda mala (lectura por confirmar) |
+| 8. Qué hacer con una deuda mala | Solo avisa; no bloquea |
+| 11. Conciliación en PDF | Sin respuesta clara; se empieza con lo capturado (por confirmar) |
+
+**Definiciones del dueño** (resumen de BBVA y Condusef, pegado por el dueño; no verificado en la fuente): *hormiga*, compras pequeñas, diarias y no planificadas; *vampiro*, fugas constantes ocultas en costos fijos o intereses (servicios del hogar que se inflan, intereses por pagar solo el mínimo); *fantasma*, cargos recurrentes que no se recuerdan o se olvidaron (suscripciones, membresías, comisiones bancarias); *zombi*, cobros de cosas que ya no existen o no se usan (gimnasio, seguro de un auto vendido, líneas viejas). **Solución principal por tipo:** hormiga, límite semanal; vampiro, revisar instalaciones y pagar más del mínimo; fantasma, auditar el estado de cuenta y cancelar; zombi, pedir la baja formal y exigir folio de cancelación.
+
+**Pendiente de incorporar al cuerpo de la especificación (v0.3):** en el vampiro, la detección de servicios del hogar que suben (luz, agua, gas) frente a su mediana; y, en el zombi, el paso de «folio de cancelación» como acción sugerida.
+
 ## 13. Fuentes y su estado
 
 El entorno no permitió abrir las páginas, así que **ninguna se verificó en la fuente primaria**; las cifras salen de resúmenes de búsqueda y de prensa que cita a las instituciones. Detalle y enlaces en `docs/revisiones/finanzas-fugas-y-deudas.md`, sección 5.
@@ -521,3 +535,4 @@ El entorno no permitió abrir las páginas, así que **ninguna se verificó en l
 | Versión | Fecha | Cambio |
 |---|---|---|
 | 0.1 | 18/nov/2026 | Primera versión, propuesta para aprobación del dueño |
+| 0.2 | 18/nov/2026 | Respuestas del dueño (12.1) y D30 registrada; el vampiro y el zombi por ajustar en 0.3 |

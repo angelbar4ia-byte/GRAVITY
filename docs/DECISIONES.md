@@ -32,6 +32,7 @@ Cuando las decisiones confirmadas cambian el contrato, se reescribe `CONTRATO_CO
 | D20 | Infraestructura de avisos genérica (FCM discreto, bandeja, preferencias) | Confirmada (31/oct/2026) |
 | D19 | Finanzas por persona, cuentas compartidas, albaceas y cuenta maestra | Confirmada (21/oct; ampliada 23/oct; detalles propuestos) |
 | D29 | Inglés: escalera, hora diaria, audio, ubicación, criterio de aprobar, aprobación por muestras, orden, ramas y corrección con IA | Confirmada (15 y 16/nov/2026); el borrado de dos ramas quedó sin ejecutar; **el curso no arranca hasta que la fase 6 esté integrada** |
+| D30 | Finanzas: fugas silenciosas (hormiga, fantasma, vampiro, zombi) y deuda buena o mala | Parcial (18/nov/2026): confirmados comercio, revisión de uso, crédito automotriz, tarjeta con intereses y solo avisar; el resto, propuesta |
 
 ---
 
@@ -573,3 +574,18 @@ Fuente: `docs/specs/fase-8-ingles-plan.md` (plan de ejecución, sección 4) y la
 - **Ramas (D-ING-8, 16/nov/2026).** Se aprueba borrar `claude/integracion-ingles-main` (GRAVITY) y `claude/ubicacion-ingles` (Hábitos). **Sin ejecutar:** el servidor rechazó el borrado desde la sesión (403); lo termina el dueño desde GitHub. Llevar el trabajo a `main` por pull request se hace solo cuando el dueño lo pida.
 
 **Qué cambia:** se puede redactar contenido de curso con la matriz de 13 escalones (paquete P1.3). La herramienta de validación (`herramientas/ingles`) ya existe. El motor de voz tiene paquete propio (P3.0).
+
+---
+
+## D30. Finanzas: fugas silenciosas y deuda buena o mala — parcial (18/nov/2026)
+
+Fuente: `docs/specs/fase-8-fugas-y-deudas.md` (v0.2) y `docs/revisiones/finanzas-fugas-y-deudas.md`. Bloque 6 de la Fase 8 (a confirmar su lugar en el roadmap).
+
+**Confirmadas por el dueño (18/nov/2026):**
+- **Comercio y cargo automático.** Se agrega el campo opcional «Comercio» y la casilla «es un cargo automático» al registrar un gasto, sin pasar de 10 segundos (pregunta 1 de la sección 12).
+- **Revisión de uso.** Revisión mensual de hasta 7 preguntas «¿Lo usaste?»; dos «No lo usé» seguidas bastan para marcar un cobro como zombi (pregunta 2).
+- **Crédito automotriz** = herramienta de trabajo (propósito `genera_ingreso`). **Tarjeta con intereses** = deuda mala (pregunta 3; lectura mía de «Es herramienta de trabajo, sí es deuda mala», por confirmar).
+- **Deuda mala: solo avisa y sugiere.** No bloquea un MSI nuevo (pregunta 4).
+- **Definiciones.** El dueño aportó las de BBVA y Condusef (hormiga, vampiro, fantasma, zombi) con su solución principal. Una diferencia con la propuesta del agente: el **vampiro** incluye costos fijos del hogar que se inflan (fugas de agua o gas, aparatos que consumen luz de más) además de los intereses por pagar solo el mínimo. La especificación 0.2 lo incorpora. Fuente no verificada por mí: es el resumen que el dueño pegó.
+
+**Siguen como propuesta (sin confirmar):** reglas locales sin IA, una fuga principal por cobro con la prioridad fantasma, zombi, vampiro, hormiga, y todos los umbrales marcados **[Propuesta]**. Pregunta 5 (esperar la conciliación en PDF o empezar con lo capturado): sin respuesta clara; se asume empezar con lo capturado.
