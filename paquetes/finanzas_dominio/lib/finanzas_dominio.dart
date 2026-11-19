@@ -14,6 +14,9 @@
 ///   [cerrarSemana]) con el grupo de deudas prioritarias.
 /// - Libros personales, compartidos y representado (D19) con su permiso
 ///   ([permisoEnLibro]) y su vista ([vistaDelLibro]).
+/// - Fugas silenciosas ([analizarFugas]) y deuda buena o mala
+///   ([evaluarDeuda]) con todos sus umbrales en [ParametrosFugas] (Fase 8,
+///   bloque 6; solo reglas locales, D3).
 /// - Configuración por libro ([Ingreso], [Compromiso], [Sobre], [Deuda]),
 ///   categorías e importador de la plantilla ([planearImportacionCategorias])
 ///   y seguimiento de la semana ([vistaSemana]).
@@ -28,16 +31,19 @@ export 'src/categorias.dart';
 export 'src/cierre_ahorro.dart';
 export 'src/configuracion.dart';
 export 'src/datos_finanzas.dart';
+export 'src/deuda_calidad.dart';
 export 'src/deudas_detalle.dart';
 export 'src/dinero.dart';
 export 'src/estrategias_deuda.dart';
 export 'src/fecha.dart';
 export 'src/flujo.dart';
 export 'src/frecuencia.dart';
+export 'src/fugas.dart';
 export 'src/indicadores.dart';
 export 'src/libro.dart';
 export 'src/libros.dart';
 export 'src/motivo.dart';
+export 'src/parametros_fugas.dart';
 export 'src/plan_guardado.dart';
 export 'src/presupuesto.dart';
 export 'src/proyeccion_deuda.dart';
