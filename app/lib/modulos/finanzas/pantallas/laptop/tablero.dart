@@ -12,7 +12,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../diseno/diseno.dart';
 import '../../estado/proveedores.dart';
+import '../../estado/proveedores_dispersion.dart';
 import '../comunes.dart';
+import '../tarjeta_por_repartir.dart';
 import 'dialogo_movimiento.dart';
 import 'marco_laptop.dart';
 
@@ -64,6 +66,8 @@ class _Tablero extends ConsumerWidget {
     };
     return ContenidoLaptop(
       children: [
+        if (ref.watch(ingresosPendientesProvider).isNotEmpty)
+          const TarjetaPorRepartir(),
         TarjetaModulo(
           key: const ValueKey('tablero-siguiente-accion'),
           titulo: 'Siguiente mejor acción',

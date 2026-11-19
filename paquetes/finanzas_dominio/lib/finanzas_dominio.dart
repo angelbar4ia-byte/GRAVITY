@@ -14,6 +14,8 @@
 ///   [cerrarSemana]) con el grupo de deudas prioritarias.
 /// - Libros personales, compartidos y representado (D19) con su permiso
 ///   ([permisoEnLibro]) y su vista ([vistaDelLibro]).
+/// - Dispersión de ingresos con confirmación ([proponerDispersion],
+///   [ingresosDelLibro], [corregirTipoDeIngreso]; Fase 8, F8-6.4).
 /// - Fugas silenciosas ([analizarFugas]) y deuda buena o mala
 ///   ([evaluarDeuda]) con todos sus umbrales en [ParametrosFugas] (Fase 8,
 ///   bloque 6; solo reglas locales, D3).
@@ -33,6 +35,7 @@ export 'src/configuracion.dart';
 export 'src/datos_finanzas.dart';
 export 'src/deuda_calidad.dart';
 export 'src/deudas_detalle.dart';
+export 'src/dispersion.dart';
 export 'src/dinero.dart';
 export 'src/estrategias_deuda.dart';
 export 'src/fecha.dart';

@@ -11,7 +11,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../diseno/diseno.dart';
 import '../../estado/proveedores.dart';
+import '../../estado/proveedores_dispersion.dart';
 import '../comunes.dart';
+import '../tarjeta_por_repartir.dart';
 import 'marco_laptop.dart';
 import 'revision_semanal.dart';
 
@@ -110,6 +112,8 @@ class _SemanaState extends ConsumerState<_Semana> {
     final elegir = ref.read(semanaElegidaProvider.notifier);
     return ContenidoLaptop(
       children: [
+        if (ref.watch(ingresosPendientesProvider).isNotEmpty)
+          const TarjetaPorRepartir(),
         Wrap(
           spacing: 12,
           runSpacing: 8,

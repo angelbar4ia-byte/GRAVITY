@@ -29,6 +29,7 @@ import '../../../nucleo/avisos/catalogo_avisos.dart';
 import '../../../nucleo/contratos/roles.dart';
 import '../../../nucleo/permisos/permisos.dart' as permisos;
 import 'proveedores.dart';
+import 'proveedores_dispersion.dart';
 
 /// Las cifras de la semana de un libro, con el mismo cálculo en todas las
 /// pantallas (Hoy, Mi semana y Semana de la laptop dan lo mismo al centavo).
@@ -46,10 +47,15 @@ class CifrasSemana {
     required this.remanenteReal,
     required this.semaforo,
     required this.sinDatos,
+    this.porRepartir = 0,
   });
 
   /// Las cifras de [v] (la vista de la semana que arma el dominio).
-  factory CifrasSemana.de(dom.VistaSemana v) {
+  ///
+  /// [porRepartir] es el dinero de ingresos aún sin repartir que se arrastra a
+  /// esta semana (dispersión de ingresos, decisión 2 del dueño): cuenta en
+  /// [quedan] y no es "sin datos".
+  factory CifrasSemana.de(dom.VistaSemana v, {int porRepartir = 0}) {
     final p = v.planSemanal;
     final r = v.real;
     final sinPlan = p.partidas.isEmpty && p.ingreso == 0 && p.abonos.isEmpty;
@@ -64,7 +70,9 @@ class CifrasSemana {
       remanentePlaneado: p.remanente,
       remanenteReal: r.deficit > 0 ? -r.deficit : r.remanenteReal,
       semaforo: v.indicadores.remanente,
-      sinDatos: sinPlan && r.gastoReal == 0 && r.ingresoReal == 0,
+      sinDatos:
+          sinPlan && r.gastoReal == 0 && r.ingresoReal == 0 && porRepartir == 0,
+      porRepartir: porRepartir,
     );
   }
 
@@ -86,8 +94,18 @@ class CifrasSemana {
   /// No hay plan ni movimientos en la semana: se dice "Sin datos todavía".
   final bool sinDatos;
 
+  /// Ingresos sin repartir arrastrados a esta semana (centavos).
+  final int porRepartir;
+
   /// Lo que queda del presupuesto de la semana (puede ser negativo).
   int get disponible => presupuesto - gastado;
+
+  /// "Quedan": lo que queda del presupuesto más lo que aún no tiene destino
+  /// (lo no repartido se arrastra a la semana actual; decisión 2).
+  int get quedan => dom.quedanConPorRepartir(
+    disponible: disponible,
+    porRepartir: porRepartir,
+  );
 
   @override
   bool operator ==(Object other) =>
@@ -102,7 +120,8 @@ class CifrasSemana {
       other.remanentePlaneado == remanentePlaneado &&
       other.remanenteReal == remanenteReal &&
       other.semaforo == semaforo &&
-      other.sinDatos == sinDatos;
+      other.sinDatos == sinDatos &&
+      other.porRepartir == porRepartir;
 
   @override
   int get hashCode => Object.hash(
@@ -117,6 +136,7 @@ class CifrasSemana {
     remanenteReal,
     semaforo,
     sinDatos,
+    porRepartir,
   );
 }
 
@@ -222,6 +242,11 @@ final resumenFinanzasHoyProvider = Provider<ResumenFinanzasHoy>((ref) {
     // consulta registrada) ni lo público de otra persona.
     if (!permiso.leer || permiso.comoMaestra || permiso.comoLector) continue;
     final vista = dom.vistaSemana(c.datos, libro.id, semana, hoy: c.hoy);
+    final porRepartir = porRepartirDeLaSemana(
+      ref.watch(ingresosDeLibroProvider(libro.id)),
+      semana,
+      c.hoy,
+    );
     final criticas = avisos
         .where(
           (a) =>
@@ -235,7 +260,7 @@ final resumenFinanzasHoyProvider = Provider<ResumenFinanzasHoy>((ref) {
         libroId: libro.id,
         nombre: libro.nombre,
         tipo: libro.tipo,
-        cifras: CifrasSemana.de(vista),
+        cifras: CifrasSemana.de(vista, porRepartir: porRepartir),
         alertasCriticas: criticas,
       ),
     );
@@ -252,5 +277,10 @@ final cifrasMiSemanaProvider = Provider<CifrasSemana?>((ref) {
   final semana = ref.watch(semanaElegidaProvider) ?? dom.Semana.de(c.hoy);
   return CifrasSemana.de(
     dom.vistaSemana(c.datos, c.libroId, semana, hoy: c.hoy),
+    porRepartir: porRepartirDeLaSemana(
+      ref.watch(ingresosDelLibroActivoProvider),
+      semana,
+      c.hoy,
+    ),
   );
 });

@@ -102,4 +102,19 @@ abstract final class ClavesId {
   /// `(libro_id, persona_id)`).
   static String miembro(String libroId, String personaId, String papel) =>
       'miembro:$libroId:$personaId:$papel';
+
+  /// Un reparto de ingreso: el movimiento y el número de intento (un reparto
+  /// deshecho se anula y el siguiente tiene otro número).
+  static String dispersion(String movimientoId, int intento) =>
+      'dispersion:$movimientoId:$intento';
+
+  /// El movimiento que crea un renglón del reparto (abono extra por deuda o
+  /// ahorro): repetir Aceptar no duplica.
+  static String dispersionMovimiento(String dispersionId, String destino) =>
+      'dispersion-mov:$dispersionId:$destino';
+
+  /// Los asientos de corregir el tipo de un ingreso (anulación, ingreso nuevo
+  /// y el grupo que los une): repetir la corrección no duplica.
+  static String correccionIngreso(String movimientoId, String parte) =>
+      'correccion-ingreso:$movimientoId:$parte';
 }

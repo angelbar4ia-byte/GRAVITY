@@ -14,8 +14,10 @@ import '../../../../diseno/diseno.dart';
 import '../../../../nucleo/contratos/roles.dart';
 import '../../../../nucleo/contratos/rutas.dart';
 import '../../estado/proveedores.dart';
+import '../../estado/proveedores_dispersion.dart';
 import '../comunes.dart';
 import '../fila_movimiento.dart';
+import '../tarjeta_por_repartir.dart';
 import '../totales_movimientos.dart';
 
 /// Semana resumida (raíz de Finanzas en el teléfono y la tablet).
@@ -67,6 +69,10 @@ class _SemanaResumida extends ConsumerWidget {
           child: MarcaMontosOcultos(),
         ),
         hueco,
+        if (ref.watch(ingresosPendientesProvider).isNotEmpty) ...[
+          const TarjetaPorRepartir(),
+          hueco,
+        ],
         TarjetaModulo(
           key: const ValueKey('finanzas-semana-resumen'),
           titulo: textoSemana(semana),

@@ -130,7 +130,7 @@ class _FilaLibro extends ConsumerWidget {
               Text('Quedan', style: v.lectura(tamano: 14, color: v.textoTenue)),
               MontoOcultable(
                 key: ValueKey('finanzas-hoy-quedan-${libro.libroId}'),
-                centavos: c.disponible,
+                centavos: c.quedan,
                 oculto: ocultos,
                 estilo: v.numero(
                   tamano: 22,
@@ -147,6 +147,34 @@ class _FilaLibro extends ConsumerWidget {
               ),
             ],
           ),
+        if (!c.sinDatos && c.porRepartir > 0) ...[
+          SizedBox(height: e * 0.5),
+          // Lo no repartido cuenta en "Quedan" y se dice aparte (decisión 2).
+          Wrap(
+            spacing: e,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Icon(Icons.call_split, size: 16, color: v.textoTenue),
+              Text(
+                'Por repartir',
+                key: ValueKey(
+                  'finanzas-hoy-por-repartir-texto-${libro.libroId}',
+                ),
+                style: v.lectura(tamano: 14, color: v.textoTenue),
+              ),
+              MontoOcultable(
+                key: ValueKey('finanzas-hoy-por-repartir-${libro.libroId}'),
+                centavos: c.porRepartir,
+                oculto: ocultos,
+                estilo: v.numero(
+                  tamano: 14,
+                  peso: FontWeight.w600,
+                  color: v.textoFuerte,
+                ),
+              ),
+            ],
+          ),
+        ],
         if (!c.sinDatos) ...[
           SizedBox(height: e * 0.5),
           Row(

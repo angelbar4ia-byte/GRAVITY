@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../diseno/diseno.dart';
 import '../../estado/proveedores.dart';
 import '../comunes.dart';
+import '../dialogo_cambiar_tipo.dart';
 import '../fila_movimiento.dart';
 import '../totales_movimientos.dart';
 import 'marco_laptop.dart';
@@ -304,7 +305,14 @@ class _Detalle extends ConsumerWidget {
           dato('Categoría', c.datos.arbol.ruta(m.categoriaId!)),
         if (m.nota != null) dato('Nota', m.nota!),
         if (m.motivo != null) dato('Motivo', m.motivo!),
-        if (m.grupoId != null)
+        if (m.grupoId != null &&
+            (m.tipo == TipoMovimiento.ingreso ||
+                m.tipo == TipoMovimiento.anulacion))
+          dato(
+            'Cambio de tipo',
+            'Parte de un cambio de tipo de ingreso (anulación y asiento nuevo)',
+          )
+        else if (m.grupoId != null)
           dato(
             'Ticket dividido',
             'Es una línea de un ticket con varios rubros',
@@ -324,6 +332,16 @@ class _Detalle extends ConsumerWidget {
             icon: const Icon(Icons.block),
             label: const Text('Anular…'),
           ),
+        if (sePuedeCambiarTipo(m, vista, c)) ...[
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            key: const ValueKey('movimientos-cambiar-tipo'),
+            onPressed: () =>
+                mostrarDialogoCambiarTipo(context, movimientoId: m.id),
+            icon: const Icon(Icons.swap_horiz),
+            label: const Text('Cambiar tipo…'),
+          ),
+        ],
         const SizedBox(height: 8),
         const Text(
           'Los movimientos no se editan ni se borran: se corrigen con una '

@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../diseno/diseno.dart';
 import '../estado/proveedores.dart';
 import 'comunes.dart';
+import 'dialogo_cambiar_tipo.dart';
 
 IconData iconoDe(TipoMovimiento t) => switch (t) {
   TipoMovimiento.gasto => Icons.shopping_bag_outlined,
@@ -160,9 +161,22 @@ class FilaMovimiento extends ConsumerWidget {
                     PopupMenuButton<String>(
                       key: ValueKey('movimiento-menu-${m.id}'),
                       tooltip: 'Opciones',
-                      onSelected: (_) => anularConMotivo(context, ref, m),
-                      itemBuilder: (_) => const [
-                        PopupMenuItem(value: 'anular', child: Text('Anular…')),
+                      onSelected: (accion) => accion == 'tipo'
+                          ? mostrarDialogoCambiarTipo(
+                              context,
+                              movimientoId: m.id,
+                            )
+                          : anularConMotivo(context, ref, m),
+                      itemBuilder: (_) => [
+                        const PopupMenuItem(
+                          value: 'anular',
+                          child: Text('Anular…'),
+                        ),
+                        if (sePuedeCambiarTipo(m, vista, c))
+                          const PopupMenuItem(
+                            value: 'tipo',
+                            child: Text('Cambiar tipo…'),
+                          ),
                       ],
                     ),
                 ],
