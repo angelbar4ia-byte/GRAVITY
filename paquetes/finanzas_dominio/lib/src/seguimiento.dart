@@ -523,7 +523,11 @@ FlujoLibro proyectarFlujoDelLibro(
   final hasta = Semana.de(hoy).mas(semanas - 1).fin;
   final desde = hoy.sumarDias(1);
   final todos = vencimientosEntre(d, libroId, desde, hasta);
+  // Un vencimiento de monto cero (p. ej. una tarjeta importada sin pago mínimo)
+  // no mueve el flujo: se omite aquí en vez de romper la vista (EventoFlujo no
+  // admite cero).
   final seguros = todos
+      .where((v) => v.monto != 0)
       .where((v) => !v.esEntrada || v.certeza == Certeza.segura)
       .toList();
   final saldo = d.vista(libroId).disponible(al: hoy);

@@ -32,6 +32,32 @@ void main() {
     );
   });
 
+  test('una deuda con calendario y pago de cero no rompe el flujo ni la vista', () {
+    // Tarjeta importada sin pago mínimo: abono y mínimo en cero, pero con día de pago.
+    final base = hogarEjemplo();
+    final d = base.copiar(
+      deudas: [
+        for (final x in base.deudas)
+          x.id == 'deuda-tarjeta'
+              ? Deuda(
+                  id: x.id,
+                  libroId: x.libroId,
+                  nombre: x.nombre,
+                  tipo: x.tipo,
+                  cuentaPasivoId: x.cuentaPasivoId,
+                  abono: 0,
+                  minimo: 0,
+                  frecuencia: x.frecuencia,
+                  calendario: x.calendario,
+                  tasaAnualPuntosBase: x.tasaAnualPuntosBase,
+                )
+              : x,
+      ],
+    );
+    final v = vistaSemana(d, casa, semana, hoy: Fecha(2026, 10, 26));
+    expect(v.flujo, isNotNull);
+  });
+
   test('abono bajo el mínimo: uno por deuda, objeto deuda', () {
     final base = hogarEjemplo(
       movimientos: [
