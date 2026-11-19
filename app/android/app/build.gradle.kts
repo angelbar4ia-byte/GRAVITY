@@ -44,6 +44,11 @@ android {
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
             proguardFiles("proguard-rules.pro")
+            // R8 (reducción de código) quitaba métodos que los plugins llaman por
+            // nombre (p. ej. shared_preferences) y la app arrancaba en negro con
+            // NoSuchMethodError. Es una app personal: no se reduce ni se ofusca.
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 }
