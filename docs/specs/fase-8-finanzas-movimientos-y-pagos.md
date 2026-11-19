@@ -57,7 +57,7 @@ No cuentan: saldos iniciales, ajustes, reclasificaciones y anulaciones.
 
 ### Totales y filtros
 
-- **Tira de totales** (componente nuevo, compartido): cuadros compactos con Ingresos, Gastos, Pagos de deuda, Transferencias, Ahorro, Intereses y cargos y Neto (Reembolsos solo si los hay). Se parten en líneas si no caben. En el teléfono cada cuadro es tocable: filtra la lista por ese tipo y, al tocarlo otra vez, quita el filtro. En la laptop va encima de la tabla (el filtro por tipo sigue siendo el desplegable existente).
+- **Tira de totales** (componente nuevo, compartido): cuadros compactos con Ingresos, Gastos, Pagos de deuda, Transferencias, Ahorro, Intereses y cargos y Neto (Reembolsos solo si los hay). En el teléfono van en una sola fila que se desplaza en horizontal (ocupa poco alto, también con letra grande) y cada cuadro es tocable: filtra la lista por ese tipo y, al tocarlo otra vez, quita el filtro. En la laptop se parten en líneas y van encima de la tabla (el filtro por tipo sigue siendo el desplegable existente).
 - **Filtro de periodo en el teléfono:** Esta semana, Semana pasada, Este mes y Todo (el rango libre queda en la laptop; ver pregunta 2).
 - **Filtro por tipo en el teléfono:** se elige tocando un cuadro de la tira (Ingresos, Gastos, Pagos de deuda, Transferencias, Ahorro, Intereses y cargos o Reembolsos); sin selección se ven todos.
 - **Laptop:** los totales respetan el filtro de fecha, cuenta y categoría, **pero no el de tipo ni el de estado** (si no, solo se vería un total y los demás saldrían en cero). El filtro de tipo de la laptop no cambia.
@@ -82,7 +82,7 @@ No cuentan: saldos iniciales, ajustes, reclasificaciones y anulaciones.
 14. Los totales de la laptop cambian con el filtro de fecha, cuenta y categoría, y no con el de tipo ni el de estado.
 15. Con el modo privado activo, ningún monto de la tira ni de la lista se ve.
 16. Los totales no mezclan libros: cada libro muestra solo los suyos.
-17. Con letra grande no se corta ningún total (la tira se parte en líneas).
+17. Con letra grande no se desborda la pantalla: en el teléfono todo el encabezado se desplaza con la lista y la tira va en una fila desplazable.
 
 ## Casos de prueba
 
