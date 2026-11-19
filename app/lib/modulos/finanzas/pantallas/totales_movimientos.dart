@@ -52,9 +52,14 @@ class TiraTotales extends StatelessWidget {
     required this.totales,
     this.seleccionado,
     this.alElegir,
+    this.enUnaFila = false,
   });
 
   final TotalesPorTipo totales;
+
+  /// En una sola fila que se desplaza en horizontal (teléfono: ocupa poco
+  /// alto, también con letra grande). Si es `false`, se parte en líneas.
+  final bool enUnaFila;
   final TipoResumen? seleccionado;
 
   /// Recibe el tipo tocado, o `null` para quitar el filtro.
@@ -67,30 +72,42 @@ class TiraTotales extends StatelessWidget {
         // Los reembolsos solo se muestran si los hay (son poco frecuentes).
         if (t != TipoResumen.reembolsos || totales.cantidadDe(t) > 0) t,
     ];
-    return Wrap(
-      key: const ValueKey('totales-tira'),
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        for (final t in tipos)
-          _CuadroTotal(
-            key: ValueKey('totales-${t.name}'),
-            etiqueta: nombreTipoResumen(t),
-            centavos: totales.centavosDe(t),
-            cantidad: totales.cantidadDe(t),
-            elegido: seleccionado == t,
-            alTocar: alElegir == null
-                ? null
-                : () => alElegir!(seleccionado == t ? null : t),
-          ),
+    final cuadros = [
+      for (final t in tipos)
         _CuadroTotal(
-          key: const ValueKey('totales-neto'),
-          etiqueta: 'Neto',
-          centavos: totales.neto,
-          conSigno: true,
-          destacado: true,
+          key: ValueKey('totales-${t.name}'),
+          etiqueta: nombreTipoResumen(t),
+          centavos: totales.centavosDe(t),
+          elegido: seleccionado == t,
+          alTocar: alElegir == null
+              ? null
+              : () => alElegir!(seleccionado == t ? null : t),
         ),
-      ],
+      _CuadroTotal(
+        key: const ValueKey('totales-neto'),
+        etiqueta: 'Neto',
+        centavos: totales.neto,
+        conSigno: true,
+        destacado: true,
+      ),
+    ];
+    if (!enUnaFila) {
+      return Wrap(
+        key: const ValueKey('totales-tira'),
+        spacing: 8,
+        runSpacing: 8,
+        children: cuadros,
+      );
+    }
+    return SingleChildScrollView(
+      key: const ValueKey('totales-tira'),
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (final c in cuadros) ...[c, const SizedBox(width: 8)],
+        ],
+      ),
     );
   }
 }
@@ -100,7 +117,6 @@ class _CuadroTotal extends StatelessWidget {
     super.key,
     required this.etiqueta,
     required this.centavos,
-    this.cantidad,
     this.elegido = false,
     this.destacado = false,
     this.conSigno = false,
@@ -109,7 +125,6 @@ class _CuadroTotal extends StatelessWidget {
 
   final String etiqueta;
   final int centavos;
-  final int? cantidad;
   final bool elegido;
   final bool destacado;
   final bool conSigno;

@@ -224,63 +224,74 @@ class _MovimientosTelefonoState extends State<_MovimientosTelefono> {
             (_tipo == null || tipoResumenDe(m, vista) == _tipo))
           m,
     ].take(100).toList();
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-          child: SelectorLibroFinanzas(contexto: c),
-        ),
-        const Align(
-          alignment: AlignmentDirectional.centerStart,
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: MarcaMontosOcultos(),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-          child: Wrap(
-            key: const ValueKey('movimientos-periodos'),
-            spacing: 8,
-            runSpacing: 4,
+    // Todo se desplaza junto: con letra grande el encabezado (periodos y
+    // totales) ocupa mucho y no debe desbordar.
+    return CustomScrollView(
+      key: const ValueKey('movimientos-lista'),
+      slivers: [
+        SliverToBoxAdapter(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              for (final r in RangoMovimientos.values)
-                ChoiceChip(
-                  key: ValueKey('movimientos-periodo-${r.name}'),
-                  label: Text(r.etiqueta),
-                  selected: _rango == r,
-                  onSelected: (_) => setState(() => _rango = r),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: SelectorLibroFinanzas(contexto: c),
+              ),
+              const Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: MarcaMontosOcultos(),
                 ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: SingleChildScrollView(
+                  key: const ValueKey('movimientos-periodos'),
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      for (final r in RangoMovimientos.values) ...[
+                        ChoiceChip(
+                          key: ValueKey('movimientos-periodo-${r.name}'),
+                          label: Text(r.etiqueta),
+                          selected: _rango == r,
+                          onSelected: (_) => setState(() => _rango = r),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                child: TiraTotales(
+                  totales: totales,
+                  enUnaFila: true,
+                  seleccionado: _tipo,
+                  alElegir: (t) => setState(() => _tipo = t),
+                ),
+              ),
             ],
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-          child: Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: TiraTotales(
-              totales: totales,
-              seleccionado: _tipo,
-              alElegir: (t) => setState(() => _tipo = t),
+        if (lista.isEmpty)
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: EstadoVacio(
+              icono: Icons.receipt_long_outlined,
+              mensaje: _tipo == null && _rango == RangoMovimientos.todo
+                  ? 'Aún no hay movimientos en este libro.'
+                  : 'Aún no hay movimientos en este periodo.',
             ),
+          )
+        else
+          SliverList.builder(
+            itemCount: lista.length,
+            itemBuilder: (context, i) =>
+                FilaMovimiento(movimiento: lista[i], contexto: c),
           ),
-        ),
-        const SizedBox(height: 8),
-        Expanded(
-          child: lista.isEmpty
-              ? EstadoVacio(
-                  icono: Icons.receipt_long_outlined,
-                  mensaje: _tipo == null && _rango == RangoMovimientos.todo
-                      ? 'Aún no hay movimientos en este libro.'
-                      : 'Aún no hay movimientos en este periodo.',
-                )
-              : ListView.builder(
-                  key: const ValueKey('movimientos-lista'),
-                  itemCount: lista.length,
-                  itemBuilder: (context, i) =>
-                      FilaMovimiento(movimiento: lista[i], contexto: c),
-                ),
-        ),
       ],
     );
   }

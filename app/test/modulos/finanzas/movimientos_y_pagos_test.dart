@@ -6,13 +6,11 @@ import 'package:finanzas_dominio/finanzas_dominio.dart'
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:go_router/go_router.dart';
 import 'package:gravity/app/app_gravity.dart';
 import 'package:gravity/app/router.dart';
 import 'package:gravity/diseno/diseno.dart' show montosVisiblesProvider;
 import 'package:gravity/modulos/finanzas/casos_uso/servicio_finanzas.dart';
 import 'package:gravity/modulos/finanzas/datos/demostracion.dart';
-import 'package:gravity/modulos/finanzas/datos/repositorio.dart';
 import 'package:gravity/modulos/finanzas/datos/repositorio_memoria.dart';
 import 'package:gravity/modulos/finanzas/estado/proveedores.dart';
 import 'package:gravity/modulos/finanzas/finanzas.dart' show SeccionFinanzas;
@@ -71,6 +69,7 @@ void main() {
 
       final antes = repo.datos.movimientos.length;
       await tester.ensureVisible(boton);
+      await tester.pumpAndSettle();
       await tester.tap(boton);
       await tester.pumpAndSettle();
       expect(find.byKey(const ValueKey('pago-guardar')), findsOneWidget);
@@ -106,6 +105,7 @@ void main() {
       await ir(tester, SeccionFinanzas.deudas.ruta);
       final boton = find.byKey(ValueKey('pagar-${tarjeta.id}'));
       await tester.ensureVisible(boton);
+      await tester.pumpAndSettle();
       await tester.tap(boton);
       await tester.pumpAndSettle();
       expect(find.byKey(const ValueKey('pago-guardar')), findsOneWidget);
@@ -152,26 +152,23 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('teléfono: un periodo sin movimientos muestra el aviso', (
+    testWidgets('teléfono: un tipo sin movimientos muestra el aviso', (
       tester,
     ) async {
       await montar(tester, TipoDispositivo.telefono);
       await ir(tester, SeccionFinanzas.movimientos.ruta);
       final c = contenedor(tester).read(contextoFinanzasProvider).value!;
-      final hayEnSemanaPasada = totalesPorTipo(
-        c.datos.vista(c.libroId),
-        Periodo.semana(c.hoy.sumarDias(-7)),
-      ).cantidadTotal;
-      await tester.tap(
-        find.byKey(const ValueKey('movimientos-periodo-semanaPasada')),
+      // Un tipo sin movimientos en el ejemplo: la lista queda vacía y avisa.
+      final sinMovimientos = TipoResumen.values.firstWhere(
+        (t) =>
+            totalesPorTipo(c.datos.vista(c.libroId), null).cantidadDe(t) == 0,
       );
+      await tester.tap(find.byKey(ValueKey('totales-${sinMovimientos.name}')));
       await tester.pumpAndSettle();
-      if (hayEnSemanaPasada == 0) {
-        expect(
-          find.text('Aún no hay movimientos en este periodo.'),
-          findsOneWidget,
-        );
-      }
+      expect(
+        find.text('Aún no hay movimientos en este periodo.'),
+        findsOneWidget,
+      );
       expect(tester.takeException(), isNull);
     });
 
