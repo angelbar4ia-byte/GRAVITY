@@ -162,7 +162,7 @@ select pruebas.igual(
 select pruebas.igual(
   (select count(*)::int from pg_class c join pg_namespace n on n.oid = c.relnamespace
     where n.nspname = 'public' and c.relkind = 'v' and c.relname like 'fin\_v\_%'),
-  14, 'Existen fin_v_saldos, fin_v_gasto_semana, las tres de la Fase 2 (deuda_resumen, bolsa_saldo, estados_cuenta_vigentes), las tres de vigentes del bloque 3 (inversiones, bienes, previsiones) y las seis del bloque 6 (fugas y deudas: parametros, clasificaciones, respuestas, propositos, semaforo y patrones_estado)');
+  15, 'Existen fin_v_saldos, fin_v_gasto_semana, las tres de la Fase 2 (deuda_resumen, bolsa_saldo, estados_cuenta_vigentes), las tres de vigentes del bloque 3 (inversiones, bienes, previsiones), las seis del bloque 6 (fugas y deudas: parametros, clasificaciones, respuestas, propositos, semaforo y patrones_estado) y fin_v_dispersiones_vigentes (F8-6.5)');
 select pruebas.igual(
   (select coalesce(string_agg(c.relname, ', ' order by c.relname), '')
      from pg_class c join pg_namespace n on n.oid = c.relnamespace
@@ -174,7 +174,7 @@ select pruebas.igual(
 select pruebas.igual(
   (select count(*)::int from pg_class c join pg_namespace n on n.oid = c.relnamespace
     where n.nspname = 'public' and c.relkind = 'r' and c.relname like 'fin\_%'),
-  45, 'Las 45 tablas de Finanzas (21 de la Fase 1, 5 de la Fase 2, 1 de la Fase 4, 6 del bloque 1, 2 del bloque 2, 4 del bloque 3 y 6 del bloque 6 de la fase 8)');
+  47, 'Las 47 tablas de Finanzas (21 de la Fase 1, 5 de la Fase 2, 1 de la Fase 4, 6 del bloque 1, 2 del bloque 2, 4 del bloque 3, 6 del bloque 6 y 2 de la dispersión de la fase 8)');
 select pruebas.igual(
   (select coalesce(string_agg(c.relname, ', ' order by c.relname), '')
      from pg_class c join pg_namespace n on n.oid = c.relnamespace

@@ -47,7 +47,17 @@ void main() {
 
     test('todo tipo tiene severidad y canal, y la lista es la de la especificación', () {
       expect(titulosDeAviso.keys.toSet(), severidadDeAviso.keys.toSet());
-      expect(titulosDeAviso, hasLength(29));
+      expect(titulosDeAviso, hasLength(30));
+      // Dispersión de ingresos (F8-6.5): informativo, sin cifras ni nombres.
+      expect(canalDe('ingreso_por_repartir'), CanalAviso.informativos);
+      expect(
+        titulosDeAviso['ingreso_por_repartir'],
+        'Tienes un ingreso por repartir',
+      );
+      expect(
+        textoDeAvisoEsDiscreto(titulosDeAviso['ingreso_por_repartir']!),
+        isTrue,
+      );
       expect(canalDe('compra_papa_albacea'), CanalAviso.avisos);
       expect(canalDe('reposicion_suplemento'), CanalAviso.avisos);
       expect(canalDe('votacion_abierta'), CanalAviso.informativos);

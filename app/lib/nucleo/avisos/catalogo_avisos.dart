@@ -82,6 +82,8 @@ const Map<String, String> titulosDeAviso = {
   'reposicion_suplemento': 'Hay un suplemento por reponer',
   // Transferencias (Fase 8): sin monto ni nota; el detalle va en la bandeja.
   'transferencia_pendiente': 'Tienes una transferencia por confirmar.',
+  // Dispersión de ingresos (Fase 8): sin monto ni nombre; el detalle va en la bandeja.
+  'ingreso_por_repartir': 'Tienes un ingreso por repartir',
   'base_80': 'Revisa el almacenamiento de GRAVITY',
   'base_90': 'Revisa el almacenamiento de GRAVITY',
 };
@@ -103,6 +105,8 @@ const Map<String, SeveridadAviso> severidadDeAviso = {
   'base_80': SeveridadAviso.importante,
   // El receptor debe confirmar o rechazar con un botón (objeto 'transferencia').
   'transferencia_pendiente': SeveridadAviso.importante,
+  // Informativo: no urge; la hoja «Repartir ingreso» vive en Finanzas.
+  'ingreso_por_repartir': SeveridadAviso.informativa,
   // D24: el familiar pidió la vista temporal de Finanzas de Papá.
   'solicitud_vista': SeveridadAviso.critica,
   // Cuidados: el cambio urgente del dueño llega al instante a quien está de turno.

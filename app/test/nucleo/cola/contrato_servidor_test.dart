@@ -142,6 +142,14 @@ const _soloLectura = {
   'fin_fuga_respuestas',
   'fin_deuda_propositos',
   'fin_deuda_semaforo',
+  // Migración 20261147 (dispersión de ingresos con confirmación): dos tablas
+  // sin grant de INSERT directo; se escriben solo con las RPC
+  // fin_guardar_propuesta, fin_confirmar_dispersion (crea los movimientos de
+  // abono extra y ahorro en la misma transacción), fin_deshacer_dispersion y
+  // fin_corregir_tipo_ingreso. Confirmar, deshacer y corregir necesitan señal;
+  // no suben por la cola.
+  'fin_dispersiones',
+  'fin_dispersion_lineas',
 };
 
 void main() {

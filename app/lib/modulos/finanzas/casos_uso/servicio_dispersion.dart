@@ -15,6 +15,7 @@ library;
 
 import 'package:finanzas_dominio/finanzas_dominio.dart';
 
+import '../datos/ids.dart' show claveDeLineaDispersion;
 import '../datos/repositorio.dart' show ErrorFinanzas;
 import '../datos/repositorio_dispersiones.dart';
 import 'servicio_finanzas.dart';
@@ -155,13 +156,18 @@ class ServicioDispersion {
     } on ErrorLibro catch (e) {
       throw ErrorFinanzas(e.mensaje);
     }
-    final ya = {for (final m in _d.movimientos) m.id};
-    final nuevos = [
-      for (final m in movimientos)
-        if (!ya.contains(m.id)) m,
-    ];
-    if (nuevos.isNotEmpty) {
-      await finanzas.repositorio.agregarMovimientos(nuevos);
+    // Con servidor, `fin_confirmar_dispersion` crea los movimientos en la misma
+    // transacción que el reparto (y repetir no duplica); en memoria los agrega
+    // el servicio.
+    if (!repositorio.ligaMovimientos) {
+      final ya = {for (final m in _d.movimientos) m.id};
+      final nuevos = [
+        for (final m in movimientos)
+          if (!ya.contains(m.id)) m,
+      ];
+      if (nuevos.isNotEmpty) {
+        await finanzas.repositorio.agregarMovimientos(nuevos);
+      }
     }
     final d = await _guardarReparto(
       ingreso: ingreso,
@@ -171,6 +177,8 @@ class ServicioDispersion {
       motivo: motivo,
       id: id,
       enNombreDe: quien.enNombreDe,
+      movimientos: movimientos,
+      cuentaAhorroId: cuentaAhorroId,
     );
     _avisarCambio(ingreso.libroId);
     return d;
@@ -186,18 +194,22 @@ class ServicioDispersion {
       throw const ErrorFinanzas('Ese reparto no se puede deshacer.');
     }
     finanzas.exigirEscribir(d.libroId);
-    final libro = _d.nuevoLibroHogar();
-    for (final l in d.lineas) {
-      if (!l.destino.mueveDinero) continue;
-      final id = idEstable(
-        ClavesId.dispersionMovimiento(d.id, _claveDeLinea(l)),
-      );
-      final existe = _d.movimientos.any((m) => m.id == id);
-      if (existe && libro.contraasientoDe(id) == null) {
-        await finanzas.anular(id, motivo: motivoDeshacerReparto);
+    // Con servidor, `fin_deshacer_dispersion` anula los movimientos y el reparto
+    // en una transacción (idempotente); en memoria los anula el servicio.
+    if (!repositorio.ligaMovimientos) {
+      final libro = _d.nuevoLibroHogar();
+      for (final l in d.lineas) {
+        if (!l.destino.mueveDinero) continue;
+        final id = idEstable(
+          ClavesId.dispersionMovimiento(d.id, claveDeLineaDispersion(l)),
+        );
+        final existe = _d.movimientos.any((m) => m.id == id);
+        if (existe && libro.contraasientoDe(id) == null) {
+          await finanzas.anular(id, motivo: motivoDeshacerReparto);
+        }
       }
     }
-    await repositorio.guardar(d.conEstado(EstadoDispersion.anulada));
+    await repositorio.deshacer(d, motivo: motivoDeshacerReparto);
     _avisarCambio(d.libroId);
   }
 
@@ -281,12 +293,20 @@ class ServicioDispersion {
     } on ErrorDispersion catch (e) {
       throw ErrorFinanzas(e.mensaje);
     }
-    await finanzas.repositorio.agregarMovimientos([c.anulacion, c.nuevo]);
-    // La propuesta guardada del ingreso viejo ya no vale.
-    final vieja = _vigentePendiente(movimientoId);
-    if (vieja != null) {
-      await repositorio.guardar(vieja.conEstado(EstadoDispersion.anulada));
+    // Con servidor, `fin_corregir_tipo_ingreso` agrega los dos asientos en una
+    // transacción (y rechaza lo ya repartido); en memoria los agrega el
+    // servicio. En los dos casos la propuesta del ingreso viejo ya no vale.
+    if (!repositorio.ligaMovimientos) {
+      await finanzas.repositorio.agregarMovimientos([c.anulacion, c.nuevo]);
     }
+    await repositorio.corregirTipo(
+      movimientoId: movimientoId,
+      cuentaOrigenId: cuentaOrigenId,
+      motivo: motivo.trim(),
+      idAnulacion: c.anulacion.id,
+      idNuevo: c.nuevo.id,
+      grupoId: c.anulacion.grupoId!,
+    );
     _avisarCambio(libroId);
     return c;
   }
@@ -301,9 +321,6 @@ class ServicioDispersion {
         .length;
     return idEstable(ClavesId.dispersion(movimientoId, intentos + 1));
   }
-
-  static String _claveDeLinea(LineaDispersion l) =>
-      l.destino == DestinoLinea.ahorro ? 'ahorro' : 'extra:${l.referenciaId}';
 
   List<Movimiento> _movimientosDe({
     required String id,
@@ -341,7 +358,9 @@ class ServicioDispersion {
       }
       movimientos.add(
         Movimiento(
-          id: idEstable(ClavesId.dispersionMovimiento(id, _claveDeLinea(l))),
+          id: idEstable(
+            ClavesId.dispersionMovimiento(id, claveDeLineaDispersion(l)),
+          ),
           tipo: tipo,
           fecha: finanzas.hoy,
           registradoEn: finanzas.ahora,
@@ -367,6 +386,8 @@ class ServicioDispersion {
     String? motivo,
     String? id,
     String? enNombreDe,
+    List<Movimiento> movimientos = const [],
+    String? cuentaAhorroId,
   }) async {
     final d = Dispersion(
       id: id ?? _idDeReparto(ingreso.movimientoId),
@@ -383,7 +404,15 @@ class ServicioDispersion {
       enNombreDe: enNombreDe,
       motivo: motivo?.trim().isEmpty ?? true ? null : motivo!.trim(),
     );
-    await repositorio.guardar(d);
+    if (estado == EstadoDispersion.confirmada) {
+      await repositorio.confirmar(
+        d,
+        movimientos: movimientos,
+        cuentaAhorroId: cuentaAhorroId,
+      );
+    } else {
+      await repositorio.guardar(d);
+    }
     return d;
   }
 

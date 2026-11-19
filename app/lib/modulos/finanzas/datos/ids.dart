@@ -9,7 +9,8 @@
 /// `(semana_id, origen, origen_id)`…) y quedar en "requiere atención".
 library;
 
-import 'package:finanzas_dominio/finanzas_dominio.dart' show normalizarNombre;
+import 'package:finanzas_dominio/finanzas_dominio.dart'
+    show DestinoLinea, LineaDispersion, normalizarNombre;
 import 'package:uuid/uuid.dart';
 
 /// Espacio de nombres de los ids estables de Finanzas.
@@ -118,3 +119,11 @@ abstract final class ClavesId {
   static String correccionIngreso(String movimientoId, String parte) =>
       'correccion-ingreso:$movimientoId:$parte';
 }
+
+/// Con qué clave se arma el id del movimiento que crea un renglón del reparto
+/// (`ClavesId.dispersionMovimiento`): el ahorro es uno por reparto y el abono
+/// extra uno por deuda. El servicio y el repositorio de Supabase usan la misma,
+/// así el id que viaja a `fin_confirmar_dispersion` es el que el servicio
+/// validó.
+String claveDeLineaDispersion(LineaDispersion l) =>
+    l.destino == DestinoLinea.ahorro ? 'ahorro' : 'extra:${l.referenciaId}';

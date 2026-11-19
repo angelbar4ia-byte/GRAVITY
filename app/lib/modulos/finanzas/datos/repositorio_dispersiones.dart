@@ -2,13 +2,15 @@
 /// `fin_dispersion_lineas`; `docs/specs/fase-8-finanzas-dispersion.md`,
 /// sección 8).
 ///
-/// **Interfaz sin servidor.** Hoy solo existe la versión en memoria
-/// ([RepositorioDispersionesEnMemoria]): sirve a las pruebas y al modo
-/// demostración, y las pantallas ya trabajan contra esta interfaz. Cuando el
-/// backend construya las tablas y las funciones (`fin_confirmar_dispersion`,
-/// `fin_guardar_propuesta`), se agrega una implementación de Supabase y se
-/// cambia el proveedor; nada de las pantallas cambia. Confirmar necesita
-/// señal (el servidor liga los movimientos al guardar).
+/// Dos versiones detrás de la misma interfaz:
+/// - [RepositorioDispersionesEnMemoria]: pruebas y modo demostración. El
+///   servicio agrega los movimientos al libro por su cuenta.
+/// - `RepositorioDispersionesSupabase` (`repositorio_dispersiones_supabase.dart`):
+///   el servidor guarda el reparto, **liga los movimientos de abono extra y
+///   ahorro en la misma transacción** (`fin_confirmar_dispersion`), deshace el
+///   reparto (`fin_deshacer_dispersion`) y corrige el tipo de un ingreso
+///   (`fin_corregir_tipo_ingreso`). Confirmar, deshacer y corregir necesitan
+///   señal, como los estados de cuenta.
 library;
 
 import 'dart:async';
@@ -22,13 +24,49 @@ abstract interface class RepositorioDispersiones {
   /// Avisa cada vez que cambian [actuales].
   Stream<List<Dispersion>> get cambios;
 
-  /// Guarda (o reemplaza por id) un reparto.
+  /// Verdadero si el servidor crea y anula **él mismo** los movimientos del
+  /// reparto (y los dos asientos de corregir el tipo): el servicio entonces no
+  /// los agrega al libro. Falso en la versión en memoria.
+  bool get ligaMovimientos;
+
+  /// Guarda un reparto que **no mueve dinero**: una propuesta o uno
+  /// automático.
   Future<void> guardar(Dispersion dispersion);
+
+  /// Confirma un reparto. [movimientos] son los asientos de abono extra y de
+  /// ahorro que el servicio armó y validó (ids estables); con
+  /// [ligaMovimientos] el servidor los crea al confirmar; si no, el servicio ya
+  /// los agregó. [cuentaAhorroId] es la cuenta que recibe el ahorro.
+  Future<void> confirmar(
+    Dispersion dispersion, {
+    required List<Movimiento> movimientos,
+    String? cuentaAhorroId,
+  });
+
+  /// Deshace un reparto aplicado: queda anulado (con [ligaMovimientos], el
+  /// servidor también anula los movimientos que creó).
+  Future<void> deshacer(Dispersion dispersion, {required String motivo});
+
+  /// Corrige el tipo de un ingreso. Con [ligaMovimientos] el servidor agrega la
+  /// anulación y el ingreso nuevo (con estos ids y grupo); en cualquier caso, el
+  /// reparto en borrador del ingreso viejo queda anulado.
+  Future<void> corregirTipo({
+    required String movimientoId,
+    required String cuentaOrigenId,
+    required String motivo,
+    required String idAnulacion,
+    required String idNuevo,
+    required String grupoId,
+  });
 
   /// Parámetros del libro (nulos si no hay fila; la app usa los de omisión).
   ParametrosDispersion? parametrosDe(String libroId);
 
-  Future<void> guardarParametros(String libroId, ParametrosDispersion p);
+  Future<void> guardarParametros(
+    String libroId,
+    ParametrosDispersion p, {
+    String? motivo,
+  });
 }
 
 /// Versión en memoria (pruebas y demostración).
@@ -50,6 +88,9 @@ class RepositorioDispersionesEnMemoria implements RepositorioDispersiones {
   Stream<List<Dispersion>> get cambios => _cambios.stream;
 
   @override
+  bool get ligaMovimientos => false;
+
+  @override
   Future<void> guardar(Dispersion dispersion) async {
     final i = _lista.indexWhere((x) => x.id == dispersion.id);
     if (i < 0) {
@@ -61,10 +102,42 @@ class RepositorioDispersionesEnMemoria implements RepositorioDispersiones {
   }
 
   @override
+  Future<void> confirmar(
+    Dispersion dispersion, {
+    required List<Movimiento> movimientos,
+    String? cuentaAhorroId,
+  }) => guardar(dispersion);
+
+  @override
+  Future<void> deshacer(Dispersion dispersion, {required String motivo}) =>
+      guardar(dispersion.conEstado(EstadoDispersion.anulada));
+
+  @override
+  Future<void> corregirTipo({
+    required String movimientoId,
+    required String cuentaOrigenId,
+    required String motivo,
+    required String idAnulacion,
+    required String idNuevo,
+    required String grupoId,
+  }) async {
+    for (final d in actuales) {
+      if (d.movimientoId == movimientoId &&
+          d.estado != EstadoDispersion.anulada) {
+        await guardar(d.conEstado(EstadoDispersion.anulada));
+      }
+    }
+  }
+
+  @override
   ParametrosDispersion? parametrosDe(String libroId) => _parametros[libroId];
 
   @override
-  Future<void> guardarParametros(String libroId, ParametrosDispersion p) async {
+  Future<void> guardarParametros(
+    String libroId,
+    ParametrosDispersion p, {
+    String? motivo,
+  }) async {
     _parametros[libroId] = p;
     _cambios.add(actuales);
   }

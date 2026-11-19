@@ -46,6 +46,15 @@ const Map<String, Set<String>> columnasQuePoneElServidor = {
   },
   'fin_casa_ingresos': {'libro_id', 'actualizado_por', 'actualizado_en'},
   'fin_casa_subcuentas': {'creada_por', 'creada_en'},
+  // Dispersión de ingresos (migración 20261147): las columnas del reparto de
+  // `fin_parametros` no tienen GRANT de INSERT ni de UPDATE; solo las cambia
+  // `fin_dispersion_parametros_cambiar` (RPC, administrar).
+  'fin_parametros': {
+    'dispersion_modo',
+    'dispersion_desde',
+    'dispersion_parte_libre_pb',
+    'dispersion_tope_ahorro',
+  },
 };
 
 /// [carga] sin las columnas que pone el servidor para [tabla]. Devuelve una
