@@ -301,7 +301,12 @@ class SenalDeuda {
   /// Una línea de acción: la deuda sugiere, nunca decide.
   final String? sugerencia;
 
-  const SenalDeuda(this.codigo, this.nivel, this.explicacion, [this.sugerencia]);
+  const SenalDeuda(
+    this.codigo,
+    this.nivel,
+    this.explicacion, [
+    this.sugerencia,
+  ]);
 
   @override
   String toString() => '$codigo:${nivel.name}';
@@ -536,7 +541,9 @@ NivelSenal senalAtrasos(
   final recientes = estados.length > parametros.atrasosVentana
       ? estados.sublist(estados.length - parametros.atrasosVentana)
       : estados;
-  final atrasos = recientes.where((e) => e == EstadoOcurrencia.retrasada).length;
+  final atrasos = recientes
+      .where((e) => e == EstadoOcurrencia.retrasada)
+      .length;
   if (atrasos >= parametros.atrasosRojo) return NivelSenal.rojo;
   if (atrasos >= parametros.atrasosAmbar) return NivelSenal.ambar;
   return NivelSenal.verde;

@@ -96,12 +96,31 @@ String claveCargo(String deudaId) => 'cargo|$deudaId';
 // ======================================================== normalización
 
 const _acentos = {
-  'á': 'a', 'à': 'a', 'ä': 'a', 'â': 'a', 'ã': 'a', 'å': 'a',
-  'é': 'e', 'è': 'e', 'ë': 'e', 'ê': 'e',
-  'í': 'i', 'ì': 'i', 'ï': 'i', 'î': 'i',
-  'ó': 'o', 'ò': 'o', 'ö': 'o', 'ô': 'o', 'õ': 'o',
-  'ú': 'u', 'ù': 'u', 'ü': 'u', 'û': 'u',
-  'ñ': 'n', 'ç': 'c',
+  'á': 'a',
+  'à': 'a',
+  'ä': 'a',
+  'â': 'a',
+  'ã': 'a',
+  'å': 'a',
+  'é': 'e',
+  'è': 'e',
+  'ë': 'e',
+  'ê': 'e',
+  'í': 'i',
+  'ì': 'i',
+  'ï': 'i',
+  'î': 'i',
+  'ó': 'o',
+  'ò': 'o',
+  'ö': 'o',
+  'ô': 'o',
+  'õ': 'o',
+  'ú': 'u',
+  'ù': 'u',
+  'ü': 'u',
+  'û': 'u',
+  'ñ': 'n',
+  'ç': 'c',
 };
 
 const _marcadoresDeReferencia = {
@@ -437,8 +456,7 @@ class PatronCobro {
   });
 
   /// Al menos 3 cobros en intervalos regulares y de monto estable.
-  bool get esRecurrente =>
-      cadencia != CadenciaCobro.irregular && montoEstable;
+  bool get esRecurrente => cadencia != CadenciaCobro.irregular && montoEstable;
 
   /// Cobro automático si cualquiera de sus cobros lo es.
   bool get automatico => cobros.any((c) => c.cobroAutomatico);
@@ -551,20 +569,16 @@ List<PatronCobro> detectarPatrones(
       categoriaId: cat,
       cobros: cobros,
       cadencia: _cadenciaDe([for (final c in cobros) c.fecha], parametros),
-      montoEstable: _montoEstable([for (final c in cobros) c.monto], parametros),
+      montoEstable: _montoEstable([
+        for (final c in cobros) c.monto,
+      ], parametros),
       agrupadoSinComercio: sinCom,
     );
   }
 
   final patrones = <PatronCobro>[
     for (final e in conComercio.entries)
-      armar(
-        e.key,
-        nombres[e.key],
-        e.value.first.categoriaId,
-        e.value,
-        false,
-      ),
+      armar(e.key, nombres[e.key], e.value.first.categoriaId, e.value, false),
   ];
 
   for (final e in sinComercio.entries) {
@@ -712,7 +726,8 @@ class FugaDetectada {
     this.preguntarUso = false,
   });
 
-  bool get cuenta => estado == EstadoFuga.confirmada && fuga != TipoFuga.ninguna;
+  bool get cuenta =>
+      estado == EstadoFuga.confirmada && fuga != TipoFuga.ninguna;
 
   FugaDetectada _con({
     TipoFuga? fuga,
@@ -894,13 +909,14 @@ Map<String, DecisionFuga> _decisionesVigentes(Iterable<DecisionFuga> todas) {
       if (d.reemplazaA != null) d.reemplazaA!,
   };
   final porClave = <String, DecisionFuga>{};
-  final vivas = [
-    for (final d in todas)
-      if (!reemplazadas.contains(d.id)) d,
-  ]..sort((a, b) {
-      final r = a.decididaEn.compareTo(b.decididaEn);
-      return r != 0 ? r : a.id.compareTo(b.id);
-    });
+  final vivas =
+      [
+        for (final d in todas)
+          if (!reemplazadas.contains(d.id)) d,
+      ]..sort((a, b) {
+        final r = a.decididaEn.compareTo(b.decididaEn);
+        return r != 0 ? r : a.id.compareTo(b.id);
+      });
   for (final d in vivas) {
     porClave[d.clave] = d;
   }
@@ -1066,7 +1082,9 @@ FugaDetectada _clasificarPatron(_Ctx x, PatronCobro pat, CategoriaFuga? cat) {
   // Cancelado: lo cobrado después de cancelar es fantasma (F4); si no, queda
   // cancelado (con o sin folio).
   if (decl?.canceladoEn != null) {
-    final despues = pat.cobros.any((c) => c.fecha.despuesDe(decl!.canceladoEn!));
+    final despues = pat.cobros.any(
+      (c) => c.fecha.despuesDe(decl!.canceladoEn!),
+    );
     if (despues) {
       return _deLaRegla(
         pat,
@@ -1169,8 +1187,14 @@ FugaDetectada _clasificarPatron(_Ctx x, PatronCobro pat, CategoriaFuga? cat) {
   // Vampiro: crece (VB2).
   if (_crece(x, pat)) return _deLaRegla(pat, x, TipoFuga.vampiro, 'VB');
 
-  return _deLaRegla(pat, x, TipoFuga.ninguna, 'RECURRENTE',
-      estado: EstadoFuga.sinFuga, preguntarUso: true);
+  return _deLaRegla(
+    pat,
+    x,
+    TipoFuga.ninguna,
+    'RECURRENTE',
+    estado: EstadoFuga.sinFuga,
+    preguntarUso: true,
+  );
 }
 
 bool _crece(_Ctx x, PatronCobro pat) {
@@ -1184,7 +1208,8 @@ bool _crece(_Ctx x, PatronCobro pat) {
   final primero = montos.first;
   final ultimo = montos.last;
   if (primero > 0 &&
-      ultimo * puntosBaseEnCien >= primero * (puntosBaseEnCien + p.vampiroCrecimientoPb)) {
+      ultimo * puntosBaseEnCien >=
+          primero * (puntosBaseEnCien + p.vampiroCrecimientoPb)) {
     return true;
   }
   final n = p.vampiroAumentosSeguidos;
@@ -1223,7 +1248,8 @@ FugaDetectada _servicio(_Ctx x, PatronCobro pat) {
   final superan = recientes
       .where(
         (m) =>
-            m * puntosBaseEnCien >= med * (puntosBaseEnCien + p.servicioMedianaPb),
+            m * puntosBaseEnCien >=
+            med * (puntosBaseEnCien + p.servicioMedianaPb),
       )
       .length;
   if (superan < p.servicioMinSuperan) {
@@ -1322,11 +1348,7 @@ List<FugaDetectada> _cargosDeCortes(_Ctx x) {
             .length;
         r = con >= p.cargoPeriodosMin
             ? arma(TipoFuga.vampiro, 'VA')
-            : arma(
-                TipoFuga.ninguna,
-                'VA',
-                estado: EstadoFuga.sinFuga,
-              );
+            : arma(TipoFuga.ninguna, 'VA', estado: EstadoFuga.sinFuga);
       }
     }
     salida.add(_aplicarDecision(x, r, r.ultimoMontoCentavos));
@@ -1424,7 +1446,8 @@ List<PropuestaFuga> _propuestas(
     }
   }
   for (final g in porComercio.values.where((g) => g.length >= 2)) {
-    final orden = [...g]..sort((a, b) => a.primeraFecha.compareTo(b.primeraFecha));
+    final orden = [...g]
+      ..sort((a, b) => a.primeraFecha.compareTo(b.primeraFecha));
     salida.add(
       PropuestaFuga(orden.first.clave, TipoPropuesta.planViejo, [
         for (final o in orden.skip(1)) o.clave,
