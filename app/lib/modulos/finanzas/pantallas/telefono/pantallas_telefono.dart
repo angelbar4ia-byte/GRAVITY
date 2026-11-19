@@ -16,6 +16,7 @@ import '../../../../nucleo/contratos/rutas.dart';
 import '../../estado/proveedores.dart';
 import '../comunes.dart';
 import '../fila_movimiento.dart';
+import '../totales_movimientos.dart';
 
 /// Semana resumida (raíz de Finanzas en el teléfono y la tablet).
 class PantallaSemanaTelefono extends ConsumerWidget {
@@ -179,7 +180,8 @@ class _SemanaResumida extends ConsumerWidget {
   }
 }
 
-/// Movimientos del libro activo (teléfono): lista corta con anular.
+/// Movimientos del libro activo (teléfono): periodo, tira de totales por tipo
+/// (tocar un total filtra la lista) y la lista con anular.
 class PantallaMovimientosTelefono extends ConsumerWidget {
   const PantallaMovimientosTelefono({super.key});
 
@@ -191,37 +193,95 @@ class PantallaMovimientosTelefono extends ConsumerWidget {
       rutaAnterior: Rutas.finanzas,
       acciones: const [BotonMontos()],
       cuerpo: ConDatosFinanzas(
-        builder: (context, c) {
-          final lista = movimientosDelLibro(c).take(100).toList();
-          return Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                child: SelectorLibroFinanzas(contexto: c),
-              ),
-              const Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
-                  child: MarcaMontosOcultos(),
-                ),
-              ),
-              Expanded(
-                child: lista.isEmpty
-                    ? const EstadoVacio(
-                        icono: Icons.receipt_long_outlined,
-                        mensaje: 'Aún no hay movimientos en este libro.',
-                      )
-                    : ListView.builder(
-                        itemCount: lista.length,
-                        itemBuilder: (context, i) =>
-                            FilaMovimiento(movimiento: lista[i], contexto: c),
-                      ),
-              ),
-            ],
-          );
-        },
+        builder: (context, c) => _MovimientosTelefono(contexto: c),
       ),
     ),
   );
+}
+
+class _MovimientosTelefono extends StatefulWidget {
+  const _MovimientosTelefono({required this.contexto});
+
+  final ContextoFinanzas contexto;
+
+  @override
+  State<_MovimientosTelefono> createState() => _MovimientosTelefonoState();
+}
+
+class _MovimientosTelefonoState extends State<_MovimientosTelefono> {
+  RangoMovimientos _rango = RangoMovimientos.todo;
+  TipoResumen? _tipo;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = widget.contexto;
+    final vista = c.datos.vista(c.libroId);
+    final periodo = _rango.periodo(c.hoy);
+    final totales = totalesPorTipo(vista, periodo);
+    final lista = [
+      for (final m in movimientosDelLibro(c))
+        if ((periodo == null || periodo.contiene(m.fecha)) &&
+            (_tipo == null || tipoResumenDe(m, vista) == _tipo))
+          m,
+    ].take(100).toList();
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: SelectorLibroFinanzas(contexto: c),
+        ),
+        const Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: MarcaMontosOcultos(),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: Wrap(
+            key: const ValueKey('movimientos-periodos'),
+            spacing: 8,
+            runSpacing: 4,
+            children: [
+              for (final r in RangoMovimientos.values)
+                ChoiceChip(
+                  key: ValueKey('movimientos-periodo-${r.name}'),
+                  label: Text(r.etiqueta),
+                  selected: _rango == r,
+                  onSelected: (_) => setState(() => _rango = r),
+                ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: TiraTotales(
+              totales: totales,
+              seleccionado: _tipo,
+              alElegir: (t) => setState(() => _tipo = t),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: lista.isEmpty
+              ? EstadoVacio(
+                  icono: Icons.receipt_long_outlined,
+                  mensaje: _tipo == null && _rango == RangoMovimientos.todo
+                      ? 'Aún no hay movimientos en este libro.'
+                      : 'Aún no hay movimientos en este periodo.',
+                )
+              : ListView.builder(
+                  key: const ValueKey('movimientos-lista'),
+                  itemCount: lista.length,
+                  itemBuilder: (context, i) =>
+                      FilaMovimiento(movimiento: lista[i], contexto: c),
+                ),
+        ),
+      ],
+    );
+  }
 }

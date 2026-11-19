@@ -12,6 +12,7 @@ import '../../../../diseno/diseno.dart';
 import '../../estado/proveedores.dart';
 import '../comunes.dart';
 import '../fila_movimiento.dart';
+import '../totales_movimientos.dart';
 import 'marco_laptop.dart';
 import 'tablero.dart' show accionRegistrar;
 
@@ -26,8 +27,6 @@ class PantallaMovimientos extends StatelessWidget {
   );
 }
 
-enum _Rango { semana, semanaPasada, mes, todo }
-
 enum _Estado { todos, vigentes, anulados }
 
 class _Movimientos extends ConsumerStatefulWidget {
@@ -41,7 +40,7 @@ class _Movimientos extends ConsumerStatefulWidget {
 
 class _MovimientosState extends ConsumerState<_Movimientos> {
   static const porPagina = 40;
-  _Rango _rango = _Rango.todo;
+  RangoMovimientos _rango = RangoMovimientos.todo;
   String? _cuenta;
   String? _categoria;
   TipoMovimiento? _tipo;
@@ -51,24 +50,27 @@ class _MovimientosState extends ConsumerState<_Movimientos> {
 
   ContextoFinanzas get c => widget.contexto;
 
-  List<Movimiento> _filtrados(LibroMovimientos vista) {
-    final hoy = c.hoy;
-    final periodo = switch (_rango) {
-      _Rango.semana => Periodo.semana(hoy),
-      _Rango.semanaPasada => Periodo.semana(hoy.sumarDias(-7)),
-      _Rango.mes => Periodo.mes(hoy),
-      _Rango.todo => null,
-    };
+  /// Filtros de cuenta y categoría (los totales los respetan; el de tipo y el
+  /// de estado no, para que la tira siga mostrando todos los tipos).
+  bool Function(Movimiento) _coincideCuentaYCategoria() {
     final familia = _categoria == null
         ? null
         : c.datos.arbol.conDescendientes(_categoria!);
+    return (m) =>
+        (_cuenta == null ||
+            m.cuentaOrigenId == _cuenta ||
+            m.cuentaDestinoId == _cuenta) &&
+        (familia == null || familia.contains(m.categoriaId));
+  }
+
+  List<Movimiento> _filtrados(LibroMovimientos vista) {
+    final hoy = c.hoy;
+    final periodo = _rango.periodo(hoy);
+    final base = _coincideCuentaYCategoria();
     return [
       for (final m in movimientosDelLibro(c))
         if ((periodo == null || periodo.contiene(m.fecha)) &&
-            (_cuenta == null ||
-                m.cuentaOrigenId == _cuenta ||
-                m.cuentaDestinoId == _cuenta) &&
-            (familia == null || familia.contains(m.categoriaId)) &&
+            base(m) &&
             (_tipo == null || m.tipo == _tipo) &&
             switch (_estado) {
               _Estado.todos => true,
@@ -126,11 +128,11 @@ class _MovimientosState extends ConsumerState<_Movimientos> {
           spacing: 12,
           runSpacing: 12,
           children: [
-            _filtro<_Rango>('Fecha', _rango, const [
-              (_Rango.todo, 'Todas'),
-              (_Rango.semana, 'Esta semana'),
-              (_Rango.semanaPasada, 'Semana pasada'),
-              (_Rango.mes, 'Este mes'),
+            _filtro<RangoMovimientos>('Fecha', _rango, const [
+              (RangoMovimientos.todo, 'Todas'),
+              (RangoMovimientos.semana, 'Esta semana'),
+              (RangoMovimientos.semanaPasada, 'Semana pasada'),
+              (RangoMovimientos.mes, 'Este mes'),
             ], (v) => _rango = v),
             _filtro<String?>('Cuenta', _cuenta, [
               (null, 'Todas'),
@@ -151,6 +153,14 @@ class _MovimientosState extends ConsumerState<_Movimientos> {
               (_Estado.anulados, 'Anulados'),
             ], (v) => _estado = v),
           ],
+        ),
+        const SizedBox(height: 16),
+        TiraTotales(
+          totales: totalesPorTipo(
+            vista,
+            _rango.periodo(c.hoy),
+            incluir: _coincideCuentaYCategoria(),
+          ),
         ),
         const SizedBox(height: 16),
         TablaDensa(

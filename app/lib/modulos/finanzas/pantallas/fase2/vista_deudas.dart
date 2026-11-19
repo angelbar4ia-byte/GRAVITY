@@ -217,7 +217,7 @@ class _TarjetaDeDeuda extends ConsumerWidget {
               etiqueta: 'Uso del límite',
             ),
           ),
-        if (!telefono && (puedeRegistrar || c.puedeAdministrar))
+        if (puedeRegistrar || (!telefono && c.puedeAdministrar))
           Padding(
             padding: const EdgeInsets.only(top: 4),
             child: Wrap(
@@ -226,10 +226,16 @@ class _TarjetaDeDeuda extends ConsumerWidget {
                 if (puedeRegistrar)
                   TextButton(
                     key: ValueKey('pagar-${d.id}'),
+                    // Mismo botón y misma hoja en teléfono y laptop; en el
+                    // teléfono con alto táctil de 48 dp.
+                    style: TextButton.styleFrom(
+                      minimumSize: const Size(48, 48),
+                    ),
                     onPressed: () => mostrarHojaPago(context, deuda: d),
                     child: const Text('Registrar pago'),
                   ),
-                if (c.puedeEscribir &&
+                if (!telefono &&
+                    c.puedeEscribir &&
                     (d.clase == ClaseDeuda.tarjeta ||
                         d.clase == ClaseDeuda.credito))
                   TextButton(

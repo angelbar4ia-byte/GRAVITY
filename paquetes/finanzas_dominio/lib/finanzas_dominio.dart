@@ -52,3 +52,4 @@ export 'src/resumen_cuidado.dart';
 export 'src/semana.dart';
 export 'src/seguimiento.dart';
 export 'src/tarjetas.dart';
+export 'src/totales_por_tipo.dart';
