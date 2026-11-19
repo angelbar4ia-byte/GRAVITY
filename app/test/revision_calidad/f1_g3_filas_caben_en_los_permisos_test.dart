@@ -18,13 +18,20 @@ Directory _migraciones() => [
   Directory('supabase/migrations'),
 ].firstWhere((d) => d.existsSync());
 
-Map<String, Set<String>> _conInsert(String sql) => {
+Map<String, Set<String>> _conInsert(String sql) {
+  // Los grants se SUMAN entre migraciones (p. ej. `comercio` en fin_movimientos,
+  // migración 20261146, se agrega sin quitar lo anterior).
+  final r = <String, Set<String>>{};
   for (final m in RegExp(
     r'grant insert \(([^)]*)\)(.*?)on public\.(fin_\w+)',
     dotAll: true,
-  ).allMatches(sql))
-    m[3]!: {for (final c in m[1]!.split(',')) c.trim().replaceAll('"', '')},
-};
+  ).allMatches(sql)) {
+    (r[m[3]!] ??= {}).addAll({
+      for (final c in m[1]!.split(',')) c.trim().replaceAll('"', ''),
+    });
+  }
+  return r;
+}
 
 void main() {
   test('cada fila de la app cabe en los permisos de INSERT de su tabla', () {

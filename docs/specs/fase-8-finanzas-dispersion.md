@@ -28,7 +28,7 @@ Fuera de alcance: repartir ingresos de semanas anteriores a la activación (se d
 - **La app propone y la persona confirma; nunca mueve dinero sola** (5.6 bis, puntos 6 y 7). Por eso, aun en modo automático, **solo se asigna lo comprometido** (presupuesto y pagos de deuda apartados); **el remanente queda «por repartir»** hasta que la persona lo confirma (P1).
 - **Qué mueve dinero y qué no al confirmar:** los renglones de presupuesto y de «pago de deuda» **asignan** (no crean movimientos): el pago a la deuda se registra en su fecha con «Registrar pago» (Fase 8, pagos). Los renglones de **abono extra** (pago de deuda) y de **ahorro** (transferencia) **sí** crean movimientos (5.6 bis, punto 8), con ids estables para que repetir la confirmación no duplique.
 - **Sin IA ni bocinas (D3, D6).** La propuesta se calcula en el dispositivo con el dominio puro. Ningún monto de este flujo sale a IA, bocinas ni tablet pública; con el modo privado los montos se ocultan igual que en el resto de Finanzas (`MontoOcultable`).
-- **Voz:** de tú, breve y sin culpa. Ejemplos: «Repartir tu ingreso», «Esto es lo que propongo», «Aceptar», «Editar», «Dejar para después», «Quedó por repartir», «Listo: repartí $9,000».
+- **Voz:** de tú, breve y sin culpa. Ejemplos: «Repartir tu ingreso», «Esto es lo que propongo», «Aceptar», «Editar», «Dejar para después», «Quedó por repartir», «Listo: repartí tu ingreso» (sin monto en el aviso, para respetar el modo privado).
 
 ## Estados de un ingreso
 
@@ -151,7 +151,7 @@ La aplicación automática se ejecuta **en el dispositivo** al cargar (misma reg
 └─────────────────────────────────────────┘
 ```
 
-- **Aceptar:** guarda y crea los movimientos de abono extra y ahorro; aviso «Listo: repartí $9,000» con **Deshacer** (anula los movimientos creados con la anulación normal y deja el ingreso «por repartir»).
+- **Aceptar:** guarda y crea los movimientos de abono extra y ahorro; aviso «Listo: repartí tu ingreso» con **Deshacer** (anula los movimientos creados con la anulación normal y deja el ingreso «por repartir»).
 - **Editar:** cada renglón muestra su monto y se toca para teclearlo; «Queda por repartir» se recalcula; el ahorro pide la cuenta de ahorro (si no hay, ese dinero queda por repartir y la hoja lo dice).
 - **Dejar para después:** guarda como «Por repartir» (o «Propuesta» si hubo ediciones). Cierra la hoja sin culpa.
 - Faltante: «Este ingreso no alcanza para todo: faltan $X» con los recortes propuestos; los protegidos no se tocan.
@@ -212,5 +212,10 @@ La aplicación automática se ejecuta **en el dispositivo** al cargar (misma reg
 
 ## Estado de la construcción
 
-- **Hecho:** dominio puro (`dispersion.dart`) con pruebas; hoja «Repartir ingreso», tarjeta «Por repartir», «Quedan» con lo por repartir y «Cambiar tipo…» en teléfono y laptop, detrás de la interfaz `RepositorioDispersiones` (en memoria).
-- **Pendiente del servidor:** persistencia real, aplicación automática en el arranque y avisos.
+- **Hecho (19/nov/2026):**
+  - Dominio puro: `paquetes/finanzas_dominio/lib/src/dispersion.dart` (`proponerDispersion`, `PropuestaDispersion`, `ingresosDelLibro`, `porRepartirArrastrado`, `quedanConPorRepartir`, `estadoAlRecibir`, `corregirTipoDeIngreso`). 36 pruebas en `test/dispersion_test.dart`; todo el paquete: 477 en verde.
+  - App: `ServicioDispersion` (aceptar, dejar para después, deshacer, modo automático, cambiar tipo), hoja `HojaRepartirIngreso`, tarjeta `TarjetaPorRepartir` (teléfono: Finanzas › Semana; laptop: Tablero y Semana), diálogo «Cambiar tipo…» (menú de la fila del teléfono y detalle de la laptop), «Quedan» con lo por repartir (`CifrasSemana.quedan`, tarjeta de Hoy). 28 pruebas en `app/test/modulos/finanzas/dispersion_test.dart`.
+  - Todo detrás de la interfaz `RepositorioDispersiones` (`datos/repositorio_dispersiones.dart`), hoy **solo en memoria**: los repartos se pierden al cerrar la app hasta que exista el servidor.
+- **Pendiente del servidor:** persistencia real (tablas y funciones de la sección 8), la cola sin conexión, los avisos sin cifras y que el modo automático corra al cargar con datos reales.
+- **No cubierto por pruebas de pantalla:** los botones ocultos para quien solo lee (cuenta maestra, lector, libro archivado); se cubre en el servicio (rechaza la llamada) y por `c.puedeEscribir` en el código. El demo no trae un lector de un libro con ingresos.
+- **Límites conocidos:** la propuesta no conoce los sobres de previsión que no alcanzan (`faltantePrevision` queda vacío hasta que el módulo de previsión, 5.6 ter, lo entregue); el aviso de «Tienes un ingreso por repartir» (D20) no está; `dispersion_desde` y el modo se guardan solo en memoria.

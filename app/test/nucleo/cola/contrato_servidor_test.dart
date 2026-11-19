@@ -90,15 +90,23 @@ List<String> _columnas(String cuerpo) {
 }
 
 /// Columnas con permiso de INSERT para la app (`grant insert (…) on tabla`).
-Map<String, Set<String>> _conInsert(String sql) => {
+Map<String, Set<String>> _conInsert(String sql) {
+  // Los grants se SUMAN: una migración posterior puede dar INSERT sobre unas
+  // columnas más (p. ej. `comercio` en fin_movimientos, migración 20261146) sin
+  // quitar las que ya había.
+  final r = <String, Set<String>>{};
   for (final m in RegExp(
     // `[^;]*?`: no cruza a otra sentencia (un grant de otra tabla no se
     // confunde con el `grant select` de una tabla de solo lectura).
     r'grant insert \(([^)]*)\)([^;]*?)on public\.(fin_\w+)',
     dotAll: true,
-  ).allMatches(sql))
-    m[3]!: {for (final c in m[1]!.split(',')) c.trim().replaceAll('"', '')},
-};
+  ).allMatches(sql)) {
+    (r[m[3]!] ??= {}).addAll({
+      for (final c in m[1]!.split(',')) c.trim().replaceAll('"', ''),
+    });
+  }
+  return r;
+}
 
 /// Tablas fin_* que la app solo lee (sin `grant insert`): nadie escribe directo,
 /// cambian por RPC del servidor, así que no pasan por la cola de subida.
@@ -123,6 +131,17 @@ const _soloLectura = {
   'fin_inversiones',
   'fin_bienes',
   'fin_previsiones',
+  // Migración 20261146 (fugas silenciosas y deuda buena o mala): seis tablas
+  // solo-agregar, sin grant de INSERT directo; se escriben solo con las RPC
+  // fin_patron_crear, fin_fuga_responder, fin_fuga_clasificar,
+  // fin_deuda_declarar, fin_fuga_parametros_cambiar y
+  // fin_deuda_semaforo_registrar. No suben por la cola.
+  'fin_fuga_parametros',
+  'fin_patrones_cobro',
+  'fin_fuga_clasificaciones',
+  'fin_fuga_respuestas',
+  'fin_deuda_propositos',
+  'fin_deuda_semaforo',
 };
 
 void main() {
