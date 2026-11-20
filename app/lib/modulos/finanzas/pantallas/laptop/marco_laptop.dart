@@ -15,6 +15,7 @@ import '../../../../nucleo/contratos/rutas.dart';
 import '../../estado/proveedores.dart';
 import '../../datos/patrimonio.dart' show permisoPatrimonio;
 import '../comunes.dart';
+import '../sincronia_finanzas.dart';
 
 /// Secciones de Finanzas en la laptop (especificación 6.1).
 enum SeccionFinanzas {
@@ -110,7 +111,8 @@ class MarcoFinanzasLaptop extends ConsumerWidget {
     modulo: Modulo.finanzas,
     child: MarcoPantalla(
       titulo: 'Finanzas › ${seccion.titulo}',
-      acciones: const [BotonMontos()],
+      // «Actualizar» (y F5): discreto, para ponerse al día sin esperar el aviso.
+      acciones: const [BotonActualizarFinanzas(), BotonMontos()],
       cuerpo: ConDatosFinanzas(
         builder: (context, c) => LayoutBuilder(
           builder: (context, limites) {

@@ -25,6 +25,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../diseno/diseno.dart';
 import '../datos/repositorio.dart';
 import '../estado/proveedores.dart';
+import 'sincronia_finanzas.dart';
 
 // ------------------------------------------------------------------ fechas
 
@@ -384,6 +385,18 @@ class ConDatosFinanzas extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asincrono = ref.watch(contextoFinanzasProvider);
+    // El anfitrión mantiene Finanzas al día entre dispositivos mientras haya una
+    // pantalla del módulo abierta (F8-6.6).
+    return AnfitrionSincroniaFinanzas(
+      child: _estados(context, ref, asincrono),
+    );
+  }
+
+  Widget _estados(
+    BuildContext context,
+    WidgetRef ref,
+    AsyncValue<ContextoFinanzas> asincrono,
+  ) {
     return asincrono.when(
       // Una recarga (renovar la consulta, escribir) no tapa la pantalla.
       skipLoadingOnReload: true,

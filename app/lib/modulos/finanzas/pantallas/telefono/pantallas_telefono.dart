@@ -32,7 +32,7 @@ class PantallaSemanaTelefono extends ConsumerWidget {
       acciones: const [BotonMontos()],
       cuerpo: ConDatosFinanzas(
         builder: (context, c) => RefreshIndicator(
-          onRefresh: () => ref.read(cargaFinanzasProvider.notifier).recargar(),
+          onRefresh: () => ref.read(sincroniaFinanzasProvider).actualizarAhora(),
           child: _SemanaResumida(contexto: c),
         ),
       ),

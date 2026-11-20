@@ -20,11 +20,13 @@ import '../../../nucleo/sesion/servicio_sesion_supabase.dart';
 import '../casos_uso/emisor_avisos.dart';
 import '../casos_uso/servicio_finanzas.dart';
 import '../datos/demostracion.dart';
+import '../datos/fuente_cambios_finanzas.dart';
 import '../datos/fuente_tablas.dart';
 import '../datos/permisos_libro.dart';
 import '../datos/repositorio.dart';
 import '../datos/repositorio_memoria.dart';
 import '../datos/repositorio_supabase.dart';
+import 'sincronia_finanzas.dart';
 
 /// Hoy (fecha local), según el reloj de la app. Cambia solo al cambiar el día.
 final hoyFinanzasProvider = Provider<Fecha>(
@@ -121,13 +123,40 @@ class CargaFinanzasNotifier extends AsyncNotifier<CargaFinanzas> {
     final repo = ref.watch(repositorioFinanzasProvider);
     final suscripcion = repo.cambios.listen((c) => state = AsyncData(c));
     ref.onDispose(suscripcion.cancel);
-    return repo.cargar();
+    // La carga inicial cuenta como refresco: al abrir el módulo no se vuelve a
+    // pedir en los siguientes 10 s (F8-6.6).
+    _marcarRefresco();
+    final carga = await repo.cargar();
+    _marcarRefresco();
+    return carga;
+  }
+
+  void _marcarRefresco() {
+    try {
+      ref.read(sincroniaFinanzasProvider).marcarRefresco();
+    } on ProviderException {
+      // Sin sesión configurada (una prueba que monta solo la carga): no hay
+      // sincronía que avisar.
+    }
   }
 
   /// Vuelve a pedir todo al servidor (Reintentar, deslizar para actualizar).
   Future<void> recargar() async {
     final repo = ref.read(repositorioFinanzasProvider);
     state = await AsyncValue.guard(repo.cargar);
+  }
+
+  /// Vuelve a pedir todo **sin ruido** (F8-6.6: avisos de otro dispositivo,
+  /// entrar, volver, reconectar): si falla, se queda con lo último que se
+  /// cargó, sin pantalla de error ni «Cargando…». Lo pendiente de la cola sin
+  /// conexión sigue a la vista porque el repositorio lo mezcla al cargar.
+  Future<void> recargarEnSegundoPlano() async {
+    final repo = ref.read(repositorioFinanzasProvider);
+    try {
+      state = AsyncData(await repo.cargar());
+    } catch (_) {
+      // Sin señal o con el servidor caído: lo que ya se ve no se toca.
+    }
   }
 
   /// Igual que [recargar], pero devuelve lo cargado o lanza el error (para
@@ -139,6 +168,43 @@ class CargaFinanzasNotifier extends AsyncNotifier<CargaFinanzas> {
     return cargado;
   }
 }
+
+/// De dónde llegan los avisos de «el libro X cambió» (Realtime). `null` sin
+/// servidor (demostración, pruebas): solo quedan entrar, volver y manual.
+final fuenteCambiosFinanzasProvider = Provider<FuenteCambiosFinanzas?>((ref) {
+  final servicio = ref.watch(servicioSesionProvider);
+  if (servicio is ServicioSesionSupabase) {
+    return FuenteCambiosFinanzasSupabase(() => servicio.clienteActivo);
+  }
+  return null;
+});
+
+/// Cuándo se vuelve a pedir lo de Finanzas sin que la persona lo pida
+/// ([ServicioSincroniaFinanzas]). Uno por persona; vive lo que viva la app y
+/// solo escucha mientras haya una pantalla de Finanzas abierta.
+final sincroniaFinanzasProvider = Provider<ServicioSincroniaFinanzas>((ref) {
+  ref.watch(sesionEfectivaProvider.select((s) => s?.persona.id));
+  final servicio = ServicioSincroniaFinanzas(
+    fuente: ref.watch(fuenteCambiosFinanzasProvider),
+    recargar: () =>
+        ref.read(cargaFinanzasProvider.notifier).recargarEnSegundoPlano(),
+  );
+  ref.onDispose(servicio.liberar);
+  return servicio;
+});
+
+/// Libros por los que se escucha: **solo los de la persona** (es titular,
+/// miembro o albacea vigente). La cuenta maestra, el lector de un compartido
+/// público y la vista temporal de Papá (D24) no se suscriben: el servidor no
+/// se lo permite y se ponen al día al entrar o al volver.
+final librosParaSincroniaProvider = Provider<Set<String>>((ref) {
+  final c = ref.watch(contextoFinanzasProvider).value;
+  if (c == null) return const {};
+  return {
+    for (final l in c.libros)
+      if (l.papelDe(c.personaId, c.hoy) != null) l.id,
+  };
+});
 
 /// Libro que eligió la persona en el selector (nulo = el primero: su libro
 /// personal). Se olvida al cambiar de persona.
