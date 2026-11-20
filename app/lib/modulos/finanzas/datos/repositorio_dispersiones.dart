@@ -20,6 +20,25 @@ import 'package:finanzas_dominio/finanzas_dominio.dart';
 
 import 'repositorio.dart' show ErrorFinanzas;
 
+/// Un reparto **anulado** (su ingreso se anuló) cuyos movimientos de abono extra
+/// o ahorro siguen vigentes (H-03, 20/nov/2026): lo que dice la lectura
+/// `fin_repartos_anulados_con_movimientos`. Solo ids y un conteo: sin cifras.
+class RepartoAnuladoConMovimientos {
+  const RepartoAnuladoConMovimientos({
+    required this.dispersionId,
+    required this.libroId,
+    required this.movimientoId,
+    required this.movimientosVigentes,
+  });
+
+  final String dispersionId;
+  final String libroId;
+
+  /// El ingreso anulado.
+  final String movimientoId;
+  final int movimientosVigentes;
+}
+
 abstract interface class RepositorioDispersiones {
   /// Los repartos vigentes y anulados, en el orden en que se guardaron.
   List<Dispersion> get actuales;
@@ -78,6 +97,26 @@ abstract interface class RepositorioDispersiones {
     required String grupoId,
   });
 
+  /// H-03: los repartos anulados con movimientos todavía vigentes **según el
+  /// servidor** (sin los que la persona dejó así). Nulo si el repositorio no lo
+  /// sabe (en memoria, o sin la lectura): el servicio lo calcula con lo cargado.
+  List<RepartoAnuladoConMovimientos>? get anuladosConMovimientosDelServidor;
+
+  /// H-03: ids de los repartos anulados que la persona decidió «dejar así».
+  Set<String> get repartosDejados;
+
+  /// H-03, alternativa A: anula con contraasiento y [motivo] los movimientos
+  /// que creó el reparto anulado [dispersion] (con [ligaMovimientos], el
+  /// servidor; si no, el servicio ya los anuló). Necesita señal con servidor.
+  Future<void> deshacerRepartoAnulado(
+    Dispersion dispersion, {
+    required String motivo,
+  });
+
+  /// H-03, opción B: la persona deja así el reparto anulado: no se toca dinero
+  /// y el aviso no vuelve a salir. Necesita señal con servidor.
+  Future<void> dejarRepartoAnulado(Dispersion dispersion);
+
   /// Parámetros del libro (nulos si no hay fila; la app usa los de omisión).
   ParametrosDispersion? parametrosDe(String libroId);
 
@@ -99,6 +138,7 @@ class RepositorioDispersionesEnMemoria implements RepositorioDispersiones {
   final List<Dispersion> _lista;
   final Map<String, ParametrosDispersion> _parametros;
   final _cambios = StreamController<List<Dispersion>>.broadcast();
+  final Set<String> _dejados = {};
 
   @override
   List<Dispersion> get actuales => List.unmodifiable(_lista);
@@ -165,6 +205,29 @@ class RepositorioDispersionesEnMemoria implements RepositorioDispersiones {
         await guardar(d.conEstado(EstadoDispersion.anulada));
       }
     }
+  }
+
+  @override
+  List<RepartoAnuladoConMovimientos>? get anuladosConMovimientosDelServidor =>
+      null;
+
+  @override
+  Set<String> get repartosDejados => Set.unmodifiable(_dejados);
+
+  @override
+  Future<void> deshacerRepartoAnulado(
+    Dispersion dispersion, {
+    required String motivo,
+  }) async {
+    // En memoria el servicio ya anuló los movimientos: el reparto sigue
+    // anulado y solo se avisa del cambio.
+    _cambios.add(actuales);
+  }
+
+  @override
+  Future<void> dejarRepartoAnulado(Dispersion dispersion) async {
+    _dejados.add(dispersion.id);
+    _cambios.add(actuales);
   }
 
   @override

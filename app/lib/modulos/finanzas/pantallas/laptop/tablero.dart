@@ -14,6 +14,7 @@ import '../../../../diseno/diseno.dart';
 import '../../estado/proveedores.dart';
 import '../../estado/proveedores_dispersion.dart';
 import '../comunes.dart';
+import '../tarjeta_ingreso_anulado.dart';
 import '../tarjeta_por_repartir.dart';
 import 'dialogo_movimiento.dart';
 import 'marco_laptop.dart';
@@ -68,6 +69,9 @@ class _Tablero extends ConsumerWidget {
       children: [
         if (ref.watch(ingresosPendientesProvider).isNotEmpty)
           const TarjetaPorRepartir(),
+        // H-03: un ingreso anulado tenía reparto; sus movimientos siguen.
+        if (ref.watch(repartosAnuladosPendientesProvider).isNotEmpty)
+          const TarjetaIngresoAnuladoConReparto(),
         TarjetaModulo(
           key: const ValueKey('tablero-siguiente-accion'),
           titulo: 'Siguiente mejor acción',

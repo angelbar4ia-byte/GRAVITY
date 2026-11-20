@@ -23,6 +23,41 @@ import 'servicio_finanzas.dart';
 /// Motivo de los asientos de deshacer un reparto.
 const motivoDeshacerReparto = 'Reparto deshecho';
 
+/// Motivo de los asientos al deshacer el reparto de un ingreso anulado cuando
+/// la persona no escribe uno (el servidor usa el mismo; en el libro de Papá el
+/// motivo es obligatorio).
+const motivoDeshacerRepartoAnulado = 'Reparto de un ingreso anulado, deshecho';
+
+/// Clave estable del aviso `ingreso_anulado_con_reparto` (una por reparto).
+String claveAvisoRepartoAnulado(String movimientoId) =>
+    'ingreso:$movimientoId:anulado_con_reparto';
+
+/// Un reparto anulado (porque se anuló su ingreso) cuyos movimientos de abono
+/// extra o ahorro siguen vigentes (H-03). **Sin cifras**: solo qué ingreso es
+/// y cuántos movimientos quedan.
+class RepartoAnuladoPendiente {
+  const RepartoAnuladoPendiente({
+    required this.dispersionId,
+    required this.libroId,
+    required this.movimientoId,
+    required this.nombre,
+    required this.fecha,
+    required this.movimientosVigentes,
+  });
+
+  final String dispersionId;
+  final String libroId;
+
+  /// El ingreso anulado.
+  final String movimientoId;
+
+  /// Nombre de la cuenta de origen del ingreso («Sueldo de Ana»); vacío si no
+  /// se conoce.
+  final String nombre;
+  final Fecha? fecha;
+  final int movimientosVigentes;
+}
+
 /// Motivo de los asientos al cambiar un reparto cuando la persona no escribe
 /// uno (el servidor usa el mismo).
 const motivoCambiarReparto = 'Reparto cambiado';
@@ -249,6 +284,150 @@ class ServicioDispersion {
       final id = _movimientoVigenteDe(d, l, libro);
       if (id != null) await finanzas.anular(id, motivo: motivo);
     }
+  }
+
+  // ------------------------------------------- ingreso anulado con reparto
+
+  /// H-03 (20/nov/2026): los repartos del libro [libroId] que quedaron
+  /// «anulados» porque se anuló su ingreso y cuyos movimientos de abono extra
+  /// o ahorro **siguen vigentes**, sin los que la persona ya dejó así.
+  ///
+  /// Con servidor, lo que dice `fin_repartos_anulados_con_movimientos`; sin él
+  /// (memoria, o un servidor sin la lectura), se calcula con lo cargado: reparto
+  /// anulado, ingreso con contraasiento y renglones cuyo movimiento existe sin
+  /// contraasiento. **La app no deshace nada sola**: solo informa.
+  List<RepartoAnuladoPendiente> repartosAnuladosConMovimientos(String libroId) {
+    final servidor = repositorio.anuladosConMovimientosDelServidor;
+    final dejados = repositorio.repartosDejados;
+    final libro = _d.libroHogar;
+    final lista = <RepartoAnuladoPendiente>[];
+    for (final d in repositorio.actuales) {
+      if (d.libroId != libroId ||
+          d.estado != EstadoDispersion.anulada ||
+          dejados.contains(d.id)) {
+        continue;
+      }
+      final int vivos;
+      if (servidor != null) {
+        vivos =
+            servidor
+                .where((x) => x.dispersionId == d.id)
+                .firstOrNull
+                ?.movimientosVigentes ??
+            0;
+      } else {
+        if (libro.contraasientoDe(d.movimientoId) == null) continue;
+        vivos = _movimientosVigentesDe(d, libro).length;
+      }
+      if (vivos <= 0) continue;
+      final ingreso = _d.movimientos
+          .where((m) => m.id == d.movimientoId)
+          .firstOrNull;
+      lista.add(
+        RepartoAnuladoPendiente(
+          dispersionId: d.id,
+          libroId: d.libroId,
+          movimientoId: d.movimientoId,
+          nombre: ingreso == null
+              ? ''
+              : _d.cuenta(ingreso.cuentaOrigenId)?.nombre ?? '',
+          fecha: ingreso?.fecha,
+          movimientosVigentes: vivos,
+        ),
+      );
+    }
+    lista.sort((a, b) {
+      final f = (a.fecha == null || b.fecha == null)
+          ? 0
+          : a.fecha!.compareTo(b.fecha!);
+      return f != 0 ? f : a.dispersionId.compareTo(b.dispersionId);
+    });
+    return lista;
+  }
+
+  List<String> _movimientosVigentesDe(Dispersion d, LibroMovimientos libro) {
+    final ids = <String>[];
+    for (final l in d.lineas) {
+      if (!l.destino.mueveDinero) continue;
+      final id = _movimientoVigenteDe(d, l, libro);
+      if (id != null) ids.add(id);
+    }
+    return ids;
+  }
+
+  Dispersion _repartoAnuladoPara(String dispersionId) {
+    final d = repositorio.actuales
+        .where((x) => x.id == dispersionId)
+        .firstOrNull;
+    if (d == null || d.estado != EstadoDispersion.anulada) {
+      throw const ErrorFinanzas('Ese reparto no está anulado.');
+    }
+    return d;
+  }
+
+  /// «Deshacer reparto» (alternativa A): anula con contraasiento y motivo los
+  /// movimientos que creó el reparto de un ingreso anulado. Sin borrar
+  /// historial. Necesita señal con servidor. **En el libro de Papá el
+  /// [motivo] es obligatorio** (y va en su nombre); en los demás, sin motivo se
+  /// usa «Reparto de un ingreso anulado, deshecho». Repetirlo no anula nada
+  /// más.
+  Future<void> deshacerRepartoAnulado(
+    String dispersionId, {
+    String? motivo,
+  }) async {
+    final d = _repartoAnuladoPara(dispersionId);
+    finanzas.exigirEscribir(d.libroId);
+    finanzas.quienDe(d.libroId, motivo); // en el libro de Papá exige motivo
+    final limpio = motivo?.trim();
+    final motivoFinal = limpio == null || limpio.isEmpty
+        ? motivoDeshacerRepartoAnulado
+        : limpio;
+    // Con servidor, `fin_deshacer_reparto_anulado` lo anula en una transacción
+    // (idempotente); en memoria lo anula el servicio.
+    if (!repositorio.ligaMovimientos) {
+      await _anularMovimientosLocales(d, motivoFinal);
+    }
+    await repositorio.deshacerRepartoAnulado(d, motivo: motivoFinal);
+    _avisarCambio(d.libroId);
+  }
+
+  /// «Dejarlo así» (opción B): la persona decide no deshacer nada. No toca
+  /// dinero; el aviso no vuelve a salir para ese reparto. Necesita señal con
+  /// servidor (la decisión se guarda allá).
+  Future<void> dejarRepartoAnulado(String dispersionId) async {
+    final d = _repartoAnuladoPara(dispersionId);
+    finanzas.exigirEscribir(d.libroId);
+    await repositorio.dejarRepartoAnulado(d);
+  }
+
+  /// Emite el aviso `ingreso_anulado_con_reparto` (informativo, sin cifras ni
+  /// nombres: solo el ingreso por objeto) por cada reparto pendiente del libro.
+  /// El servidor no duplica (clave estable por ingreso). **Nunca lanza**; sin
+  /// señal no se encola: se intenta la próxima vez que se vea la tarjeta.
+  /// Devuelve las claves que el servidor aceptó (nuevas o repetidas).
+  Future<Set<String>> emitirAvisosRepartosAnulados(String libroId) async {
+    final hechas = <String>{};
+    try {
+      if (!finanzas.permiso(libroId).escribir) return hechas;
+      for (final r in repartosAnuladosConMovimientos(libroId)) {
+        final clave = claveAvisoRepartoAnulado(r.movimientoId);
+        try {
+          await finanzas.repositorio.emitirAviso(
+            libroId: libroId,
+            tipo: 'ingreso_anulado_con_reparto',
+            objetoTipo: 'movimiento',
+            objetoId: r.movimientoId,
+            clave: clave,
+          );
+          hechas.add(clave);
+        } on ErrorFinanzas catch (e) {
+          if (e.sinConexion || e.topeAlcanzado) return hechas;
+        }
+      }
+    } catch (_) {
+      // Un aviso nunca debe estorbar.
+    }
+    return hechas;
   }
 
   /// **Cambia** un reparto ya confirmado (P5, 20/nov/2026): el reparto

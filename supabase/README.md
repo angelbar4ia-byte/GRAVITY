@@ -356,6 +356,16 @@ Especificación: `docs/specs/fase-8-finanzas-dispersion.md` (P5, resuelta por el
 - **Pruebas:** `supabase/tests/120_finanzas_cambiar_reparto.sql` (103 afirmaciones: camino feliz, historial, versión desfasada con el mensaje, idempotencia, atomicidad, permisos por rol, libro de Papá, anulación del ingreso tras cambiar, deshacer y cambiar, corregir el tipo de un ingreso repartido y ya cambiado). `118_finanzas_dispersion.sql` ajusta las tres afirmaciones que esperaban el rechazo de corregir un ingreso repartido.
 - **App:** `RepositorioDispersiones.cambiar` y `ServicioDispersion.cambiarReparto` (necesitan señal; ids de cambio estables por ingreso, versión, persona y contenido: reintentar el mismo cambio no duplica y otro cambio del mismo reparto choca con la versión en vez de pisarlo). No hay tablas nuevas: `_soloLectura` en `contrato_servidor_test.dart` no cambia (se anota la RPC en su comentario).
 
+### Ingreso anulado con reparto, paquete F8-6.9 (`20261151000000_finanzas_ingreso_anulado_con_reparto.sql`)
+
+Hallazgo H-03 de `docs/revisiones/finanzas-bloque-6.md`; decisión del dueño del 20/nov/2026: opción B con alternativa A (la app no deshace nada sola al anular un ingreso repartido: avisa, y la persona elige «Deshacer reparto» o «Dejarlo así»). Especificación: «Ingreso anulado con reparto» en `docs/specs/fase-8-finanzas-dispersion.md`.
+
+- **`fin_repartos_anulados_con_movimientos(p_libro uuid default null)` (lectura):** los repartos `anulada` cuyo ingreso está anulado y que aún tienen movimientos hijos vigentes, sin los que la persona dejó así. Solo ids y un conteo. Mismos permisos que el resto de la dispersión (`fin_dispersion_puede_ver`); `p_libro` nulo = todos los libros visibles.
+- **`fin_deshacer_reparto_anulado(p_dispersion, p_motivo)`:** anula con contraasiento y motivo los movimientos que siguen vigentes; idempotente; en el libro de Papá, en su nombre y con motivo. Solo sobre un reparto anulado con el ingreso anulado. **No se extendió `fin_deshacer_dispersion`:** ahí «anulada» es un reintento («ya está deshecho») y cambiarlo alteraría un contrato probado.
+- **`fin_dejar_reparto_anulado(p_dispersion)`:** guarda «dejarlo así» en `fin_dispersion_descartes` (tabla nueva, solo-agregar, sin grant de escritura; sin disparadores de Realtime para no mover el conteo de la 20261148). No toca dinero; idempotente.
+- **Aviso nuevo** `ingreso_anulado_con_reparto` (informativo, «Un ingreso anulado tenía reparto», sin cifras, D20): restricción de tipo de `avisos`, `avisos_tipo_emitible`, `fin_dispersion_aviso_titulo`, `fin_emitir_aviso` y `avisos_actualizar_preferencias` extendidas.
+- **Pruebas:** `supabase/tests/121_finanzas_ingreso_anulado_con_reparto.sql` (107 afirmaciones). `10_esquema.sql` (48 tablas fin_*) y `118_finanzas_dispersion.sql` (el TRUNCATE ahora incluye la tabla nueva, que apunta a `fin_dispersiones`) se ajustaron.
+
 ### Actualización entre dispositivos con Realtime, paquete F8-6.6 (`20261148000000_finanzas_realtime.sql`)
 
 Especificación: `docs/specs/fase-8-finanzas-realtime.md`. Cuando cambian los datos de un libro, la base emite un mensaje de **Realtime Broadcast sin datos** y cada dispositivo suscrito vuelve a pedir lo suyo con su sesión (ahí se aplica la RLS).

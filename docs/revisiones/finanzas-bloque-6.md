@@ -48,6 +48,8 @@ Nota de numeración: en el archivo de pruebas del dominio las etiquetas de los `
 
 ### H-03 · MEDIO · Anular un ingreso ya repartido deja vivos el abono extra y el ahorro, sin avisar
 
+> **RESUELTA (20/nov/2026, paquete F8-6.9).** Decisión del dueño: opción B con alternativa A. La app no deshace nada sola al anular el ingreso: avisa («Anulaste un ingreso que ya estaba repartido…») y la persona elige «Deshacer reparto» o «Dejarlo así». Migración `20261151`, pruebas `121_finanzas_ingreso_anulado_con_reparto.sql`; ver «Ingreso anulado con reparto» en `docs/specs/fase-8-finanzas-dispersion.md`.
+
 - **Evidencia.** `supabase/migrations/20261147000000_finanzas_dispersion.sql:227-257` (redefinido en `20261149…:428-455`): el disparador pasa el reparto a «anulada» y deja solo una entrada de bitácora (`finanzas.dispersion_anulada`, con `movimientos_vigentes`). La especificación lo reconoce como lectura por confirmar: «el diseño decía “se avisa”» (`docs/specs/fase-8-finanzas-dispersion.md`, línea 261, punto 4). La app no lee esa entrada (`grep` de `movimientos_vigentes` en `app/lib`: nada).
 - **Escenario.** La persona se equivoca de ingreso, lo anula desde Movimientos. El reparto confirmado se marca «anulado», pero el pago a la deuda y la transferencia al ahorro siguen vigentes: la cuenta del ingreso queda con menos dinero del que hay (puede quedar negativa) y nadie se entera hasta que no cuadra una conciliación.
 - **Prueba.** No agregué una: el comportamiento es el documentado; la corrección es de diseño.

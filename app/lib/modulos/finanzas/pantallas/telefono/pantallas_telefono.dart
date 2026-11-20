@@ -17,6 +17,7 @@ import '../../estado/proveedores.dart';
 import '../../estado/proveedores_dispersion.dart';
 import '../comunes.dart';
 import '../fila_movimiento.dart';
+import '../tarjeta_ingreso_anulado.dart';
 import '../tarjeta_por_repartir.dart';
 import '../totales_movimientos.dart';
 
@@ -72,6 +73,11 @@ class _SemanaResumida extends ConsumerWidget {
         hueco,
         if (ref.watch(ingresosPendientesProvider).isNotEmpty) ...[
           const TarjetaPorRepartir(),
+          hueco,
+        ],
+        // H-03: un ingreso anulado tenía reparto; sus movimientos siguen.
+        if (ref.watch(repartosAnuladosPendientesProvider).isNotEmpty) ...[
+          const TarjetaIngresoAnuladoConReparto(),
           hueco,
         ],
         TarjetaModulo(

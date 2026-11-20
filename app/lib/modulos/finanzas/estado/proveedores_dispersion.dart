@@ -47,6 +47,24 @@ final repositorioDispersionesProvider = Provider<RepositorioDispersiones>((
     // Sin señal no hay repartos que mostrar todavía: se vuelve a pedir con la
     // próxima operación. Un fallo de carga nunca tumba la pantalla.
     unawaited(repo.cargar().then((_) {}, onError: (Object _) {}));
+    // H-03: cuando se anula un ingreso, el servidor pasa su reparto a
+    // «anulada» (disparador). Cada vez que cambia cuántas anulaciones hay en el
+    // libro cargado (aquí o por Realtime desde otro dispositivo), se vuelven a
+    // pedir los repartos para que la tarjeta «Ingreso anulado con reparto» salga.
+    ref.listen<int>(
+      contextoFinanzasProvider.select(
+        (c) =>
+            c.value?.datos.movimientos
+                .where((m) => m.tipo == dom.TipoMovimiento.anulacion)
+                .length ??
+            0,
+      ),
+      (anterior, actual) {
+        if (anterior != null && anterior != actual) {
+          unawaited(repo.cargar().then((_) {}, onError: (Object _) {}));
+        }
+      },
+    );
     return repo;
   }
   final repo = RepositorioDispersionesEnMemoria();
@@ -77,6 +95,19 @@ final servicioDispersionProvider = Provider<ServicioDispersion>(
     repositorio: ref.watch(repositorioDispersionesProvider),
   ),
 );
+
+/// H-03: los repartos anulados (por anular su ingreso) del libro activo cuyos
+/// movimientos siguen vigentes y que la persona no dejó así. Sin cifras. Vacío
+/// sin libro, sin permiso de lectura o sin repartos así.
+final repartosAnuladosPendientesProvider =
+    Provider<List<RepartoAnuladoPendiente>>((ref) {
+      final c = ref.watch(contextoFinanzasProvider).value;
+      if (c == null || c.libro == null || !c.permiso.leer) return const [];
+      ref.watch(dispersionesProvider); // se recalcula cuando cambian
+      return ref
+          .watch(servicioDispersionProvider)
+          .repartosAnuladosConMovimientos(c.libroId);
+    });
 
 /// Ingresos del libro [libroId] con su estado de reparto, calculados con lo
 /// cargado y los repartos guardados. No revisa permisos: quien lo usa ya sabe

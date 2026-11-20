@@ -47,12 +47,18 @@ void main() {
 
     test('todo tipo tiene severidad y canal, y la lista es la de la especificación', () {
       expect(titulosDeAviso.keys.toSet(), severidadDeAviso.keys.toSet());
-      expect(titulosDeAviso, hasLength(34));
+      expect(titulosDeAviso, hasLength(35));
       // H-08: los cuatro avisos de fugas y deuda, con la severidad del servidor.
       expect(severidadDeAviso['deuda_se_volvio_mala'], SeveridadAviso.critica);
       expect(severidadDeAviso['fuga_por_reconocer'], SeveridadAviso.importante);
-      expect(severidadDeAviso['deuda_en_vigilancia'], SeveridadAviso.importante);
-      expect(severidadDeAviso['fuga_revision_mensual'], SeveridadAviso.informativa);
+      expect(
+        severidadDeAviso['deuda_en_vigilancia'],
+        SeveridadAviso.importante,
+      );
+      expect(
+        severidadDeAviso['fuga_revision_mensual'],
+        SeveridadAviso.informativa,
+      );
       // Dispersión de ingresos (F8-6.5): informativo, sin cifras ni nombres.
       expect(canalDe('ingreso_por_repartir'), CanalAviso.informativos);
       expect(
@@ -61,6 +67,20 @@ void main() {
       );
       expect(
         textoDeAvisoEsDiscreto(titulosDeAviso['ingreso_por_repartir']!),
+        isTrue,
+      );
+      // H-03 (F8-6.9): ingreso anulado con reparto, informativo y sin cifras.
+      expect(canalDe('ingreso_anulado_con_reparto'), CanalAviso.informativos);
+      expect(
+        titulosDeAviso['ingreso_anulado_con_reparto'],
+        'Un ingreso anulado tenía reparto',
+      );
+      expect(
+        severidadDeAviso['ingreso_anulado_con_reparto'],
+        SeveridadAviso.informativa,
+      );
+      expect(
+        textoDeAvisoEsDiscreto(titulosDeAviso['ingreso_anulado_con_reparto']!),
         isTrue,
       );
       expect(canalDe('compra_papa_albacea'), CanalAviso.avisos);

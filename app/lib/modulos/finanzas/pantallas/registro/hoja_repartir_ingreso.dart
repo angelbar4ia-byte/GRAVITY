@@ -96,9 +96,8 @@ class _HojaRepartirState extends ConsumerState<HojaRepartirIngreso> {
   TextEditingController _campo(int i, int centavos, bool ocultos) {
     return _campos.putIfAbsent(
       i,
-      () => TextEditingController(
-        text: ocultos ? '' : textoDeCentavos(centavos),
-      ),
+      () =>
+          TextEditingController(text: ocultos ? '' : textoDeCentavos(centavos)),
     );
   }
 
@@ -326,7 +325,9 @@ class _HojaRepartirState extends ConsumerState<HojaRepartirIngreso> {
                         isDense: true,
                         prefixText: ocultos ? null : r'$ ',
                         hintText: ocultos ? 'Monto' : null,
-                        labelText: ocultos ? '${l.etiqueta}, monto oculto' : null,
+                        labelText: ocultos
+                            ? '${l.etiqueta}, monto oculto'
+                            : null,
                         floatingLabelBehavior: ocultos
                             ? FloatingLabelBehavior.never
                             : null,

@@ -152,6 +152,11 @@ const _soloLectura = {
   // corregir necesitan señal; no suben por la cola.
   'fin_dispersiones',
   'fin_dispersion_lineas',
+  // Migración 20261151 (H-03, ingreso anulado con reparto): decisiones «dejarlo
+  // así», solo-agregar, sin grant de INSERT; se escriben solo con la RPC
+  // fin_dejar_reparto_anulado (fin_deshacer_reparto_anulado anula movimientos
+  // del libro). Necesitan señal; no suben por la cola.
+  'fin_dispersion_descartes',
 };
 
 void main() {

@@ -36,6 +36,12 @@ abstract final class TablasDispersion {
   static const confirmar = 'fin_confirmar_dispersion';
   static const deshacer = 'fin_deshacer_dispersion';
   static const cambiar = 'fin_cambiar_dispersion';
+
+  /// H-03 (migración 20261151): lectura de los repartos anulados con
+  /// movimientos vigentes, y las dos decisiones de la persona.
+  static const anuladosConMovimientos = 'fin_repartos_anulados_con_movimientos';
+  static const deshacerAnulado = 'fin_deshacer_reparto_anulado';
+  static const dejarAnulado = 'fin_dejar_reparto_anulado';
   static const corregirTipo = 'fin_corregir_tipo_ingreso';
   static const parametros = 'fin_dispersion_parametros_cambiar';
 
@@ -60,6 +66,8 @@ class RepositorioDispersionesSupabase implements RepositorioDispersiones {
 
   List<Dispersion> _lista = const [];
   Map<String, ParametrosDispersion> _parametros = const {};
+  List<RepartoAnuladoConMovimientos>? _anulados;
+  final Set<String> _dejados = {};
   final _cambios = StreamController<List<Dispersion>>.broadcast();
 
   /// Borradores que no se pudieron subir por falta de señal (solo este
@@ -101,6 +109,7 @@ class RepositorioDispersionesSupabase implements RepositorioDispersiones {
       lista.add(dispersionDeFila(f, mios));
     }
     lista.sort((a, b) => a.creadaEn.compareTo(b.creadaEn));
+    final anulados = await _leerAnulados();
     final params = <String, ParametrosDispersion>{};
     for (final f in parametros) {
       final p = parametrosDispersionDeFila(f);
@@ -108,14 +117,79 @@ class RepositorioDispersionesSupabase implements RepositorioDispersiones {
     }
     _lista = lista;
     _parametros = params;
+    _anulados = anulados;
     _borradores.clear();
     _cambios.add(actuales);
   }
+
+  /// H-03: `fin_repartos_anulados_con_movimientos` (todos los libros que la
+  /// persona ve). Nulo si el servidor aún no la tiene: el servicio calcula lo
+  /// mismo con lo cargado. Sin señal lanza (como el resto de la carga).
+  Future<List<RepartoAnuladoConMovimientos>?> _leerAnulados() async {
+    try {
+      final r = await fuente.rpc(TablasDispersion.anuladosConMovimientos, {});
+      if (r is! List) return null;
+      return [
+        for (final f in r)
+          if (f is Map)
+            RepartoAnuladoConMovimientos(
+              dispersionId: '${f['dispersion_id']}',
+              libroId: '${f['libro_id']}',
+              movimientoId: '${f['movimiento_id']}',
+              movimientosVigentes: entero(f['movimientos_vigentes']),
+            ),
+      ];
+    } on ErrorFinanzas catch (e) {
+      if (e.sinConexion) rethrow;
+      return null;
+    }
+  }
+
+  @override
+  List<RepartoAnuladoConMovimientos>? get anuladosConMovimientosDelServidor =>
+      _anulados == null ? null : List.unmodifiable(_anulados!);
+
+  @override
+  Set<String> get repartosDejados => Set.unmodifiable(_dejados);
 
   @override
   ParametrosDispersion? parametrosDe(String libroId) => _parametros[libroId];
 
   // -------------------------------------------------------------- escribir
+
+  @override
+  Future<void> deshacerRepartoAnulado(
+    Dispersion dispersion, {
+    required String motivo,
+  }) async {
+    await fuente.rpc(TablasDispersion.deshacerAnulado, {
+      'p_dispersion': dispersion.id,
+      'p_motivo': motivo,
+    });
+    _quitarAnulado(dispersion.id);
+    _cambios.add(actuales);
+    // El servidor anuló movimientos: Finanzas vuelve a cargar el libro.
+    await alCambiarMovimientos?.call();
+  }
+
+  @override
+  Future<void> dejarRepartoAnulado(Dispersion dispersion) async {
+    await fuente.rpc(TablasDispersion.dejarAnulado, {
+      'p_dispersion': dispersion.id,
+    });
+    _dejados.add(dispersion.id);
+    _quitarAnulado(dispersion.id);
+    _cambios.add(actuales);
+  }
+
+  void _quitarAnulado(String dispersionId) {
+    final actual = _anulados;
+    if (actual == null) return;
+    _anulados = [
+      for (final a in actual)
+        if (a.dispersionId != dispersionId) a,
+    ];
+  }
 
   @override
   Future<void> guardar(Dispersion dispersion) async {

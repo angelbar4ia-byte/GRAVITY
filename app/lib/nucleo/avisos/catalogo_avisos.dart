@@ -84,6 +84,8 @@ const Map<String, String> titulosDeAviso = {
   'transferencia_pendiente': 'Tienes una transferencia por confirmar.',
   // Dispersión de ingresos (Fase 8): sin monto ni nombre; el detalle va en la bandeja.
   'ingreso_por_repartir': 'Tienes un ingreso por repartir',
+  // H-03 (F8-6.9): sin cifras; el mismo título que fin_dispersion_aviso_titulo.
+  'ingreso_anulado_con_reparto': 'Un ingreso anulado tenía reparto',
   // Fugas y deuda buena o mala (Fase 8, bloque 6): sin cifras, comercios ni
   // nombres; los mismos títulos que fin_fugas_aviso_titulo en el servidor.
   'fuga_por_reconocer': 'Hay un cobro por reconocer',
@@ -113,6 +115,8 @@ const Map<String, SeveridadAviso> severidadDeAviso = {
   'transferencia_pendiente': SeveridadAviso.importante,
   // Informativo: no urge; la hoja «Repartir ingreso» vive en Finanzas.
   'ingreso_por_repartir': SeveridadAviso.informativa,
+  // Informativo: la persona decide en la tarjeta de Finanzas (deshacer o dejarlo así).
+  'ingreso_anulado_con_reparto': SeveridadAviso.informativa,
   // Fugas y deuda (mismas severidades que avisos_severidad en el servidor).
   'deuda_se_volvio_mala': SeveridadAviso.critica,
   'fuga_por_reconocer': SeveridadAviso.importante,

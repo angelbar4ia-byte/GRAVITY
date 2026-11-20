@@ -301,7 +301,7 @@ set constraints all deferred;   -- como en producción: la suma se revisa al ter
 select pruebas.falla($$update public.fin_dispersiones set movimiento_id = 'd8700000-0000-4000-8000-000000000003' where id = 'a8700000-0000-4000-8000-000000000004'$$,
   '6: el movimiento de un reparto no cambia', '42501');
 select pruebas.falla($$delete from public.fin_dispersiones where id = 'a8700000-0000-4000-8000-000000000004'$$, '6: un reparto no se borra', '42501');
-select pruebas.falla($$truncate public.fin_dispersiones, public.fin_dispersion_lineas$$, '6: ni se trunca (con sus renglones, que la apuntan)', '42501');
+select pruebas.falla($$truncate public.fin_dispersiones, public.fin_dispersion_lineas, public.fin_dispersion_descartes$$, '6: ni se trunca (con sus renglones y las decisiones, que la apuntan)', '42501');
 select pruebas.falla($$truncate public.fin_dispersion_lineas$$, '6: ni se trunca solo los renglones', '42501');
 select pruebas.falla($$update public.fin_dispersion_lineas set monto_centavos = 1 where dispersion_id = 'a8700000-0000-4000-8000-000000000004'$$, '6: un renglón no se edita', '42501');
 select pruebas.falla($$delete from public.fin_dispersion_lineas where dispersion_id = 'a8700000-0000-4000-8000-000000000004'$$, '6: ni se borra el de un reparto confirmado', '55000');
