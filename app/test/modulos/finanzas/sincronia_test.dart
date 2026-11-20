@@ -113,23 +113,26 @@ void main() {
       b.servicio.liberar();
     });
 
-    testWidgets('una ráfaga de avisos (varias tablas, varios libros) = una recarga', (
+    testWidgets(
+      'una ráfaga de avisos (varias tablas, varios libros) = una recarga',
+      (t) async {
+        final b = Banco()..servicio.marcarRefresco();
+        b.servicio.actualizarLibros({l1, 'libro-2'});
+        b.abrir();
+        await b.pasar(t, Duration.zero);
+        for (var i = 0; i < 6; i++) {
+          b.fuente.cambio(i.isEven ? l1 : 'libro-2');
+          await b.pasar(t, const Duration(milliseconds: 100));
+        }
+        await b.pasar(t, const Duration(seconds: 3));
+        expect(b.recargas, 1);
+        b.servicio.liberar();
+      },
+    );
+
+    testWidgets('un aviso durante una recarga pide una más al terminar', (
       t,
     ) async {
-      final b = Banco()..servicio.marcarRefresco();
-      b.servicio.actualizarLibros({l1, 'libro-2'});
-      b.abrir();
-      await b.pasar(t, Duration.zero);
-      for (var i = 0; i < 6; i++) {
-        b.fuente.cambio(i.isEven ? l1 : 'libro-2');
-        await b.pasar(t, const Duration(milliseconds: 100));
-      }
-      await b.pasar(t, const Duration(seconds: 3));
-      expect(b.recargas, 1);
-      b.servicio.liberar();
-    });
-
-    testWidgets('un aviso durante una recarga pide una más al terminar', (t) async {
       final b = Banco(retraso: const Duration(seconds: 2))
         ..servicio.marcarRefresco();
       b.servicio.actualizarLibros({l1});
@@ -140,7 +143,11 @@ void main() {
       expect(b.recargas, 1);
       b.fuente.cambio(l1); // llega mientras recarga
       await b.pasar(t, const Duration(seconds: 8));
-      expect(b.recargas, 2, reason: 'el cambio pudo ser posterior a la lectura');
+      expect(
+        b.recargas,
+        2,
+        reason: 'el cambio pudo ser posterior a la lectura',
+      );
       b.servicio.liberar();
     });
 
@@ -239,7 +246,9 @@ void main() {
       c.servicio.liberar();
     });
 
-    testWidgets('volver a entrar al módulo tras más de 20 s recarga', (t) async {
+    testWidgets('volver a entrar al módulo tras más de 20 s recarga', (
+      t,
+    ) async {
       final b = Banco()..servicio.marcarRefresco();
       b.servicio.actualizarLibros({l1});
       b.abrir();
@@ -274,7 +283,9 @@ void main() {
       b.servicio.liberar();
     });
 
-    testWidgets('al reconectar el canal recarga (con el mismo mínimo)', (t) async {
+    testWidgets('al reconectar el canal recarga (con el mismo mínimo)', (
+      t,
+    ) async {
       final b = Banco()..servicio.marcarRefresco();
       b.servicio.actualizarLibros({l1});
       b.abrir();
@@ -302,7 +313,9 @@ void main() {
       b.servicio.liberar();
     });
 
-    testWidgets('sin temporizador periódico: quieto, no recarga nunca', (t) async {
+    testWidgets('sin temporizador periódico: quieto, no recarga nunca', (
+      t,
+    ) async {
       final b = Banco()..servicio.marcarRefresco();
       b.servicio.actualizarLibros({l1});
       b.abrir();
@@ -340,31 +353,33 @@ void main() {
       expect(b.recargas, 0);
     });
 
-    testWidgets('cambiar de sección (sale una pantalla, entra otra) no suelta el canal', (
-      t,
-    ) async {
-      final b = Banco()..servicio.marcarRefresco();
-      b.servicio.actualizarLibros({l1});
-      b.abrir();
-      b.servicio.cerrar();
-      b.abrir();
-      await b.pasar(t, Duration.zero);
-      expect(b.servicio.activo, isTrue);
-      expect(b.fuente.pedidos, hasLength(1));
-      expect(b.fuente.cancelaciones, 0);
-      b.servicio.liberar();
-    });
+    testWidgets(
+      'cambiar de sección (sale una pantalla, entra otra) no suelta el canal',
+      (t) async {
+        final b = Banco()..servicio.marcarRefresco();
+        b.servicio.actualizarLibros({l1});
+        b.abrir();
+        b.servicio.cerrar();
+        b.abrir();
+        await b.pasar(t, Duration.zero);
+        expect(b.servicio.activo, isTrue);
+        expect(b.fuente.pedidos, hasLength(1));
+        expect(b.fuente.cancelaciones, 0);
+        b.servicio.liberar();
+      },
+    );
 
-    testWidgets('sin servidor (demostración) solo funcionan entrar, volver y manual', (
-      t,
-    ) async {
-      final b = Banco(conFuente: false);
-      b.servicio.actualizarLibros({l1});
-      b.abrir();
-      await b.pasar(t, Duration.zero);
-      expect(b.recargas, 1);
-      b.servicio.liberar();
-    });
+    testWidgets(
+      'sin servidor (demostración) solo funcionan entrar, volver y manual',
+      (t) async {
+        final b = Banco(conFuente: false);
+        b.servicio.actualizarLibros({l1});
+        b.abrir();
+        await b.pasar(t, Duration.zero);
+        expect(b.recargas, 1);
+        b.servicio.liberar();
+      },
+    );
   });
 
   group('Anfitrión (pantallas)', () {
@@ -397,17 +412,18 @@ void main() {
       return b;
     }
 
-    testWidgets('al montarse abre el servicio con los libros de la persona; al salir lo cierra', (
-      t,
-    ) async {
-      final b = await montar(t);
-      expect(b.servicio.activo, isTrue);
-      expect(b.servicio.libros, {l1});
-      expect(b.fuente.pedidos.single, {l1});
-      await t.pumpWidget(const SizedBox());
-      await t.pump(const Duration(milliseconds: 1));
-      expect(b.servicio.activo, isFalse);
-    });
+    testWidgets(
+      'al montarse abre el servicio con los libros de la persona; al salir lo cierra',
+      (t) async {
+        final b = await montar(t);
+        expect(b.servicio.activo, isTrue);
+        expect(b.servicio.libros, {l1});
+        expect(b.fuente.pedidos.single, {l1});
+        await t.pumpWidget(const SizedBox());
+        await t.pump(const Duration(milliseconds: 1));
+        expect(b.servicio.activo, isFalse);
+      },
+    );
 
     testWidgets('al volver de segundo plano pide de nuevo (pasados 10 s)', (
       t,
@@ -440,26 +456,27 @@ void main() {
       await t.pump(const Duration(milliseconds: 1));
     });
 
-    testWidgets('el botón Actualizar y F5 recargan; con un diálogo abierto, F5 no', (
-      t,
-    ) async {
-      final b = await montar(t, hijo: const BotonActualizarFinanzas());
-      await t.tap(find.byKey(const ValueKey('finanzas-actualizar')));
-      await t.pump();
-      expect(b.recargas, 1);
-      await t.sendKeyEvent(LogicalKeyboardKey.f5);
-      await t.pump();
-      expect(b.recargas, 2);
-      await t.tap(find.byType(FloatingActionButton));
-      await t.pumpAndSettle();
-      await t.sendKeyEvent(LogicalKeyboardKey.f5);
-      await t.pump();
-      expect(b.recargas, 2, reason: 'hoja abierta: no pisa lo que se edita');
-      Navigator.of(t.element(find.text('Hoja'))).pop();
-      await t.pumpAndSettle();
-      await t.pumpWidget(const SizedBox());
-      await t.pump(const Duration(milliseconds: 1));
-    });
+    testWidgets(
+      'el botón Actualizar y F5 recargan; con un diálogo abierto, F5 no',
+      (t) async {
+        final b = await montar(t, hijo: const BotonActualizarFinanzas());
+        await t.tap(find.byKey(const ValueKey('finanzas-actualizar')));
+        await t.pump();
+        expect(b.recargas, 1);
+        await t.sendKeyEvent(LogicalKeyboardKey.f5);
+        await t.pump();
+        expect(b.recargas, 2);
+        await t.tap(find.byType(FloatingActionButton));
+        await t.pumpAndSettle();
+        await t.sendKeyEvent(LogicalKeyboardKey.f5);
+        await t.pump();
+        expect(b.recargas, 2, reason: 'hoja abierta: no pisa lo que se edita');
+        Navigator.of(t.element(find.text('Hoja'))).pop();
+        await t.pumpAndSettle();
+        await t.pumpWidget(const SizedBox());
+        await t.pump(const Duration(milliseconds: 1));
+      },
+    );
   });
 
   group('Estado: recargar en segundo plano', () {
@@ -531,27 +548,33 @@ void main() {
       await carga.recargarEnSegundoPlano();
       final estado = contenedor.read(cargaFinanzasProvider);
       expect(estado.hasError, isFalse, reason: 'sin pantalla de error');
-      expect(estado.requireValue.datos.movimientos, hasLength(antes.datos.movimientos.length));
+      expect(
+        estado.requireValue.datos.movimientos,
+        hasLength(antes.datos.movimientos.length),
+      );
     });
 
-    test('la carga inicial cuenta como refresco (no se recarga al abrir)', () async {
-      final servicio = ServicioSincroniaFinanzas(
-        fuente: null,
-        recargar: () async => llamadasSincronia.add('recarga'),
-      );
-      final c = ProviderContainer(
-        overrides: [
-          repositorioFinanzasProvider.overrideWithValue(repo),
-          sincroniaFinanzasProvider.overrideWithValue(servicio),
-        ],
-      );
-      addTearDown(c.dispose);
-      await c.read(cargaFinanzasProvider.future);
-      servicio.abrir(hojaAbierta: () => false);
-      await Future<void>.delayed(Duration.zero);
-      expect(llamadasSincronia, isEmpty);
-      servicio.liberar();
-    });
+    test(
+      'la carga inicial cuenta como refresco (no se recarga al abrir)',
+      () async {
+        final servicio = ServicioSincroniaFinanzas(
+          fuente: null,
+          recargar: () async => llamadasSincronia.add('recarga'),
+        );
+        final c = ProviderContainer(
+          overrides: [
+            repositorioFinanzasProvider.overrideWithValue(repo),
+            sincroniaFinanzasProvider.overrideWithValue(servicio),
+          ],
+        );
+        addTearDown(c.dispose);
+        await c.read(cargaFinanzasProvider.future);
+        servicio.abrir(hojaAbierta: () => false);
+        await Future<void>.delayed(Duration.zero);
+        expect(llamadasSincronia, isEmpty);
+        servicio.liberar();
+      },
+    );
   });
 }
 

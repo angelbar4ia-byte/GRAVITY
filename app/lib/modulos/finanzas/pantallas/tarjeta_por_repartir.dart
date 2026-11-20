@@ -28,6 +28,7 @@ String textoEstadoDispersion(IngresoPorRepartir i) => switch (i.estado) {
   EstadoDispersion.confirmada => 'Confirmado · queda por repartir',
   EstadoDispersion.automatica => 'Automático · queda por repartir',
   EstadoDispersion.anulada => 'Anulado',
+  EstadoDispersion.reemplazada => 'Reemplazado',
 };
 
 class TarjetaPorRepartir extends ConsumerStatefulWidget {
@@ -115,22 +116,21 @@ class _TarjetaPorRepartirState extends ConsumerState<TarjetaPorRepartir> {
                             libroId: c.libroId,
                             movimientoId: i.movimientoId,
                           ),
-                          child: const Text('Repartir'),
-                        ),
-                        if (i.estado.pendiente)
-                          TextButton(
-                            key: ValueKey(
-                              'por-repartir-tipo-${i.movimientoId}',
-                            ),
-                            style: TextButton.styleFrom(
-                              minimumSize: const Size(48, 48),
-                            ),
-                            onPressed: () => mostrarDialogoCambiarTipo(
-                              context,
-                              movimientoId: i.movimientoId,
-                            ),
-                            child: const Text('Cambiar tipo…'),
+                          child: Text(
+                            i.estado.aplicada ? 'Cambiar reparto' : 'Repartir',
                           ),
+                        ),
+                        TextButton(
+                          key: ValueKey('por-repartir-tipo-${i.movimientoId}'),
+                          style: TextButton.styleFrom(
+                            minimumSize: const Size(48, 48),
+                          ),
+                          onPressed: () => mostrarDialogoCambiarTipo(
+                            context,
+                            movimientoId: i.movimientoId,
+                          ),
+                          child: const Text('Cambiar tipo…'),
+                        ),
                       ],
                     ),
                 ],

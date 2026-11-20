@@ -65,12 +65,19 @@ enum EstadoDispersion {
   automatica,
 
   /// El ingreso se anuló o se corrigió su tipo: el reparto ya no vale.
-  anulada;
+  anulada,
+
+  /// Se **cambió** el reparto (P5): otra versión lo sustituyó. Conserva su
+  /// historial pero ya no es el vigente.
+  reemplazada;
 
   /// Lo que falta decidir: cuenta en "Por repartir".
   bool get pendiente => this == porRepartir || this == propuesta;
 
   bool get aplicada => this == confirmada || this == automatica;
+
+  /// El reparto que cuenta hoy para el ingreso (ni anulado ni reemplazado).
+  bool get vigente => this != anulada && this != reemplazada;
 }
 
 /// A dónde va un renglón de la dispersión.
@@ -589,6 +596,14 @@ class Dispersion {
   final String? enNombreDe;
   final String? motivo;
 
+  /// Versión dentro de la cadena de cambios del ingreso (1 el primer reparto,
+  /// 2 el primer cambio…). Es lo que el cliente manda al cambiar el reparto
+  /// para que dos dispositivos no se pisen (control de versión del servidor).
+  final int version;
+
+  /// El reparto al que sustituye este (nulo en la versión 1).
+  final String? reemplazaA;
+
   Dispersion({
     required this.id,
     required this.libroId,
@@ -601,6 +616,8 @@ class Dispersion {
     this.resueltaEn,
     this.enNombreDe,
     this.motivo,
+    this.version = 1,
+    this.reemplazaA,
   }) : lineas = List.unmodifiable(lineas);
 
   /// Lo que sigue por repartir de este reparto.
@@ -620,6 +637,8 @@ class Dispersion {
     resueltaEn: resueltaEn,
     enNombreDe: enNombreDe,
     motivo: motivo,
+    version: version,
+    reemplazaA: reemplazaA,
   );
 }
 
@@ -645,8 +664,7 @@ List<IngresoPorRepartir> ingresosDelLibro(
   };
   final vigentes = <String, Dispersion>{
     for (final x in dispersiones)
-      if (x.libroId == libroId && x.estado != EstadoDispersion.anulada)
-        x.movimientoId: x,
+      if (x.libroId == libroId && x.estado.vigente) x.movimientoId: x,
   };
   final lista = <IngresoPorRepartir>[];
   for (final m in vista.movimientos) {
@@ -703,6 +721,149 @@ int porRepartirArrastrado(
 /// semana ya podría estar contado dentro de ese dinero.
 int quedanConPorRepartir({required int disponible, required int porRepartir}) =>
     disponible + porRepartir;
+
+// ------------------------------------------------------ cambiar un reparto
+
+/// Identifica un renglón dentro de un reparto (destino y referencia): sirve
+/// para comparar el reparto vigente con el editado. Un reparto no repite
+/// destino y referencia.
+String claveDeLinea(LineaDispersion l) => '${l.destino.name}:${l.referenciaId}';
+
+/// La propuesta **editable** para cambiar un reparto ya confirmado (P5): parte
+/// de la estructura que da `proponerDispersion` ([base], con todos los
+/// renglones posibles, también los que hoy valen cero) y le pone los montos
+/// **del reparto vigente**. Los renglones del reparto que [base] no trae (por
+/// ejemplo, una deuda que cambió de orden) se conservan al final. El renglón
+/// «por repartir» no se copia: se recalcula como `quedaPorRepartir`.
+///
+/// Así la hoja reutiliza `editar` y las mismas reglas de siempre (sin pasar
+/// del monto, sin negativos).
+PropuestaDispersion propuestaParaCambiar({
+  required Dispersion vigente,
+  required PropuestaDispersion base,
+}) {
+  if (base.movimientoId != vigente.movimientoId) {
+    throw const ErrorDispersion('Ese reparto no es de ese ingreso.');
+  }
+  final guardados = {
+    for (final l in vigente.lineas)
+      if (l.destino != DestinoLinea.porRepartir) claveDeLinea(l): l,
+  };
+  final lineas = <LineaDispersion>[];
+  final usadas = <String>{};
+  for (final l in base.lineas) {
+    if (l.destino == DestinoLinea.porRepartir) continue;
+    final k = claveDeLinea(l);
+    lineas.add(l.conMonto(guardados[k]?.monto ?? 0));
+    usadas.add(k);
+  }
+  for (final e in guardados.entries) {
+    if (!usadas.contains(e.key)) lineas.add(e.value);
+  }
+  final total = vigente.lineas.fold<int>(0, (t, l) => t + l.monto);
+  if (total != base.monto) {
+    throw const ErrorDispersion(
+      'El reparto vigente no suma el monto del ingreso: vuelve a cargar.',
+    );
+  }
+  return PropuestaDispersion(
+    movimientoId: base.movimientoId,
+    monto: base.monto,
+    lineas: lineas,
+    faltante: base.faltante,
+    destinoRemanente: base.destinoRemanente,
+  );
+}
+
+/// Lo que cambia al editar un reparto ya confirmado: la diferencia entre el
+/// reparto vigente y el editado, y qué movimientos se anulan y cuáles se
+/// crean (libro solo-agregar: el servidor anula con contraasiento **todo lo
+/// que creó el reparto anterior** y crea lo del nuevo, en una transacción).
+class CambioReparto {
+  /// El reparto vigente que se reemplaza. Su [Dispersion.id] y su
+  /// [Dispersion.version] viajan al servidor para el control de versión.
+  final Dispersion anterior;
+
+  /// Los renglones del reparto nuevo (los de la propuesta sin los de cero y el
+  /// sobrante como «por repartir»); suman el monto del ingreso.
+  final List<LineaDispersion> lineas;
+
+  /// Renglones del anterior que movieron dinero: sus movimientos se anulan.
+  final List<LineaDispersion> anulan;
+
+  /// Renglones del nuevo que mueven dinero: se crean sus movimientos.
+  final List<LineaDispersion> crean;
+
+  /// Los renglones (por destino y referencia) cuyo monto cambió, entraron o
+  /// salieron.
+  final List<String> renglonesDistintos;
+
+  const CambioReparto({
+    required this.anterior,
+    required this.lineas,
+    required this.anulan,
+    required this.crean,
+    required this.renglonesDistintos,
+  });
+
+  /// La versión que el cliente vio: se manda como `version_esperada`.
+  int get versionEsperada => anterior.version;
+
+  /// Hay algo distinto que guardar (si no, no hay cambio que hacer).
+  bool get hayCambios => renglonesDistintos.isNotEmpty;
+
+  /// Dinero que se devuelve a la cuenta del ingreso al anular lo anterior.
+  int get dineroDevuelto => anulan.fold<int>(0, (t, l) => t + l.monto);
+
+  /// Dinero que sale de la cuenta del ingreso con lo nuevo.
+  int get dineroNuevo => crean.fold<int>(0, (t, l) => t + l.monto);
+
+  /// Cuánto más (positivo) o menos (negativo) sale de la cuenta del ingreso.
+  int get diferenciaDeSalida => dineroNuevo - dineroDevuelto;
+}
+
+/// Arma el cambio de [vigente] a [editada] (la propuesta de
+/// `propuestaParaCambiar` con las ediciones de la persona). Rechaza lo que el
+/// servidor también rechazaría: un reparto que no está aplicado, otro ingreso,
+/// una suma distinta del monto.
+CambioReparto armarCambioDeReparto({
+  required Dispersion vigente,
+  required PropuestaDispersion editada,
+}) {
+  if (!vigente.estado.aplicada) {
+    throw const ErrorDispersion(
+      'Solo se cambia un reparto confirmado: una propuesta se confirma.',
+    );
+  }
+  if (editada.movimientoId != vigente.movimientoId) {
+    throw const ErrorDispersion('Ese reparto no es de ese ingreso.');
+  }
+  if (editada.quedaPorRepartir < 0 || editada.totalRepartido > editada.monto) {
+    throw const ErrorDispersion(
+      'El reparto pasa del monto del ingreso: revísalo.',
+    );
+  }
+  final nuevas = editada.lineasParaGuardar();
+  final antes = {for (final l in vigente.lineas) claveDeLinea(l): l.monto};
+  final despues = {for (final l in nuevas) claveDeLinea(l): l.monto};
+  final distintos = <String>[
+    for (final k in {...antes.keys, ...despues.keys})
+      if ((antes[k] ?? 0) != (despues[k] ?? 0)) k,
+  ];
+  return CambioReparto(
+    anterior: vigente,
+    lineas: nuevas,
+    anulan: [
+      for (final l in vigente.lineas)
+        if (l.destino.mueveDinero && l.monto > 0) l,
+    ],
+    crean: [
+      for (final l in nuevas)
+        if (l.destino.mueveDinero && l.monto > 0) l,
+    ],
+    renglonesDistintos: distintos,
+  );
+}
 
 // ------------------------------------------------- corregir el tipo de ingreso
 

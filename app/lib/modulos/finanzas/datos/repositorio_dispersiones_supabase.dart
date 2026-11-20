@@ -7,6 +7,7 @@
 ///   las columnas `dispersion_*` de `fin_parametros`.
 /// - **Escribir:** solo por las RPC del servidor (`fin_guardar_propuesta`,
 ///   `fin_confirmar_dispersion`, `fin_deshacer_dispersion`,
+///   `fin_cambiar_dispersion` (migración `20261149`, con control de versión),
 ///   `fin_corregir_tipo_ingreso`, `fin_dispersion_parametros_cambiar`). Las
 ///   tablas no tienen `INSERT` directo, así que **nada pasa por la cola sin
 ///   conexión**: confirmar, deshacer y corregir el tipo necesitan señal (el
@@ -34,6 +35,7 @@ abstract final class TablasDispersion {
   static const guardarPropuesta = 'fin_guardar_propuesta';
   static const confirmar = 'fin_confirmar_dispersion';
   static const deshacer = 'fin_deshacer_dispersion';
+  static const cambiar = 'fin_cambiar_dispersion';
   static const corregirTipo = 'fin_corregir_tipo_ingreso';
   static const parametros = 'fin_dispersion_parametros_cambiar';
 
@@ -94,7 +96,7 @@ class RepositorioDispersionesSupabase implements RepositorioDispersiones {
     }
     final lista = <Dispersion>[];
     for (final f in filas) {
-      final mios = porReparto[f['id'] as String] ?? const [];
+      final mios = [...?porReparto[f['id'] as String]];
       mios.sort((a, b) => entero(a['orden']).compareTo(entero(b['orden'])));
       lista.add(dispersionDeFila(f, mios));
     }
@@ -138,9 +140,10 @@ class RepositorioDispersionesSupabase implements RepositorioDispersiones {
       case EstadoDispersion.porRepartir:
       case EstadoDispersion.confirmada:
       case EstadoDispersion.anulada:
+      case EstadoDispersion.reemplazada:
         throw StateError(
           'Un reparto ${dispersion.estado.name} no se guarda con guardar(): '
-          'usa confirmar, deshacer o corregirTipo.',
+          'usa confirmar, cambiar, deshacer o corregirTipo.',
         );
     }
     _cambios.add(actuales);
@@ -169,13 +172,71 @@ class RepositorioDispersionesSupabase implements RepositorioDispersiones {
 
   @override
   Future<void> deshacer(Dispersion dispersion, {required String motivo}) async {
-    final r = await fuente.rpc(TablasDispersion.deshacer, {
-      'p_dispersion': dispersion.id,
-      'p_motivo': motivo,
-    });
+    final Object? r;
+    try {
+      r = await fuente.rpc(TablasDispersion.deshacer, {
+        'p_dispersion': dispersion.id,
+        'p_motivo': motivo,
+      });
+    } on ErrorFinanzas catch (e) {
+      if (e.repartoCambio) await _recargarTrasCambio();
+      rethrow;
+    }
     _recibir(r, dispersion.conEstado(EstadoDispersion.anulada));
     _cambios.add(actuales);
     await alCambiarMovimientos?.call();
+  }
+
+  @override
+  Future<void> cambiar(
+    Dispersion nueva, {
+    required Dispersion anterior,
+    required List<Movimiento> movimientos,
+    String? cuentaAhorroId,
+  }) async {
+    final fecha = movimientos.isEmpty ? null : movimientos.first.fecha;
+    final Object? r;
+    try {
+      r = await fuente.rpc(TablasDispersion.cambiar, {
+        'p_cambio': cargaDeDispersion(
+          nueva,
+          cuentaAhorroId: cuentaAhorroId,
+          fecha: fecha,
+          anterior: anterior,
+        ),
+      });
+    } on ErrorFinanzas catch (e) {
+      // El servidor tiene otra versión (otro dispositivo la cambió, la deshizo
+      // o se anuló el ingreso): se vuelve a pedir todo para que la pantalla
+      // muestre cómo quedó, y el error sigue hasta la hoja.
+      if (e.repartoCambio) await _recargarTrasCambio();
+      rethrow;
+    }
+    final recibido = r is Map
+        ? dispersionDeJson(Map<String, dynamic>.from(r))
+        : null;
+    _lista = [
+      for (final x in _lista)
+        if (x.id == anterior.id)
+          x.conEstado(EstadoDispersion.reemplazada)
+        else if (x.id != nueva.id)
+          x,
+      recibido ?? nueva,
+    ];
+    _cambios.add(actuales);
+    // El servidor anuló y creó movimientos: Finanzas vuelve a cargar el libro.
+    await alCambiarMovimientos?.call();
+  }
+
+  /// Vuelve a pedir repartos y libro tras un rechazo por versión. Sin señal
+  /// no hay nada más que hacer: el error original es el que importa.
+  Future<void> _recargarTrasCambio() async {
+    try {
+      await cargar();
+      await alCambiarMovimientos?.call();
+    } on Object {
+      // Se queda lo que había.
+    }
   }
 
   @override
@@ -199,8 +260,7 @@ class RepositorioDispersionesSupabase implements RepositorioDispersiones {
     // refleja aquí sin esperar otra carga.
     _lista = [
       for (final d in _lista)
-        if (d.movimientoId == movimientoId &&
-            d.estado != EstadoDispersion.anulada)
+        if (d.movimientoId == movimientoId && d.estado.vigente)
           d.conEstado(EstadoDispersion.anulada)
         else
           d,
@@ -252,7 +312,7 @@ class RepositorioDispersionesSupabase implements RepositorioDispersiones {
     ];
     // Un borrador nuevo reemplaza a la propuesta vieja del mismo ingreso: el
     // servidor anula la otra.
-    if (d.estado != EstadoDispersion.anulada) {
+    if (d.estado.vigente) {
       _lista = [
         for (final x in _lista)
           if (x.id != d.id &&
@@ -277,8 +337,15 @@ Map<String, Object?> cargaDeDispersion(
   Dispersion d, {
   String? cuentaAhorroId,
   Fecha? fecha,
+  Dispersion? anterior,
 }) => {
   'id': d.id,
+  // Cambiar un reparto confirmado: el que la persona vio y su versión (control
+  // de versión del servidor).
+  if (anterior != null) ...{
+    'dispersion_anterior_id': anterior.id,
+    'version_esperada': anterior.version,
+  },
   'libro_id': d.libroId,
   'movimiento_id': d.movimientoId,
   'modo': nombreEnum(d.modo),
@@ -316,6 +383,8 @@ Dispersion dispersionDeFila(
   resueltaEn: horaDe(f['resuelta_en']),
   enNombreDe: texto(f['en_nombre_de']),
   motivo: texto(f['motivo']),
+  version: f['version'] == null ? 1 : entero(f['version']),
+  reemplazaA: texto(f['reemplaza_a']),
 );
 
 /// El reparto que devuelven las RPC (la misma forma con `lineas` adentro).

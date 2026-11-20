@@ -377,10 +377,23 @@ grant all on t_saldo to public;
 insert into t_saldo select 'banco_antes', saldo_centavos from public.fin_v_saldos where cuenta_id = 'c3000000-0000-4000-8000-000000000001' and libro_id = (select id from t_ids where clave = 'ana');
 select pruebas.falla($$select public.fin_corregir_tipo_ingreso('d8700000-0000-4000-8000-000000000007', 'c3000000-0000-4000-8000-000000000005', 'Era sueldo',
   gen_random_uuid(), gen_random_uuid(), gen_random_uuid())$$, '8 (criterio 15): no se corrige el tipo de algo que no es ingreso', '42501');
-select pruebas.falla($$select public.fin_corregir_tipo_ingreso('d8700000-0000-4000-8000-000000000001', 'c3000000-0000-4000-8000-000000000005', 'Era sueldo',
-  gen_random_uuid(), gen_random_uuid(), gen_random_uuid())$$, '8 (criterio 15): ni el de un ingreso ya repartido', '55000');
+-- P5 (20/nov/2026): un ingreso ya repartido SÍ se corrige; el reparto se deshace en la misma transacción, sin movimientos huérfanos.
+select pruebas.igual((public.fin_corregir_tipo_ingreso('d8700000-0000-4000-8000-000000000001', 'c3000000-0000-4000-8000-000000000005', 'Era sueldo',
+    'a9700000-0000-4000-8000-0000000000a3', 'a9700000-0000-4000-8000-0000000000a1', 'a9700000-0000-4000-8000-0000000000a2') ->> 'nuevo_id'),
+  'a9700000-0000-4000-8000-0000000000a2', '8 (P5): un ingreso ya repartido se corrige');
+select pruebas.igual((select estado from public.fin_dispersiones where id = 'a8700000-0000-4000-8000-000000000003'), 'anulada',
+  '8 (P5): su reparto queda anulado');
+select pruebas.igual((select count(*)::int from public.fin_movimientos where anula_a in ('b8700000-0000-4000-8000-000000000001', 'b8700000-0000-4000-8000-000000000002')), 2,
+  '8 (P5): los movimientos que creó el reparto (abono extra y ahorro) quedan anulados: sin huérfanos');
+select pruebas.igual((select estado || '/' || pendiente_centavos::text from public.fin_ingresos_por_repartir((select id from t_ids where clave = 'ana'))
+    where movimiento_id = 'a9700000-0000-4000-8000-0000000000a2'), 'por_repartir/900000', '8 (P5): el ingreso nuevo nace por repartir');
+-- Deshacer el reparto devolvió el dinero del abono y del ahorro al banco: la referencia del saldo es la de ahora.
+update t_saldo set v = (select saldo_centavos from public.fin_v_saldos where cuenta_id = 'c3000000-0000-4000-8000-000000000001'
+                          and libro_id = (select id from t_ids where clave = 'ana')) where clave = 'banco_antes';
 select pruebas.falla($$select public.fin_corregir_tipo_ingreso('d8700000-0000-4000-8000-000000000002', 'c3000000-0000-4000-8000-000000000005', 'Era sueldo',
-  gen_random_uuid(), gen_random_uuid(), gen_random_uuid())$$, '8: ni el de un ingreso automático (ya asignado)', '55000');
+  gen_random_uuid(), gen_random_uuid(), gen_random_uuid())$$, '8: el tipo igual al actual se rechaza (aunque esté repartido)', '22023');
+select pruebas.igual((select estado from public.fin_dispersiones where movimiento_id = 'd8700000-0000-4000-8000-000000000002' and estado <> 'anulada'), 'automatica',
+  '8: y el rechazo no toca el reparto automático');
 select pruebas.falla($$select public.fin_corregir_tipo_ingreso('d8700000-0000-4000-8000-000000000005', 'c3000000-0000-4000-8000-000000000006', 'Era sueldo',
   gen_random_uuid(), gen_random_uuid(), gen_random_uuid())$$, '8 (criterio 15): ni a un tipo igual al actual', '22023');
 select pruebas.falla($$select public.fin_corregir_tipo_ingreso('d8700000-0000-4000-8000-000000000005', 'c3000000-0000-4000-8000-000000000001', 'Era sueldo',
@@ -430,8 +443,10 @@ select pruebas.falla($$select public.fin_corregir_tipo_ingreso('d8700000-0000-40
 select public.fin_confirmar_dispersion($j${
   "id": "a8700000-0000-4000-8000-000000000031", "movimiento_id": "a9700000-0000-4000-8000-000000000002",
   "lineas": [{"destino": "presupuesto", "etiqueta": "Renta", "monto_centavos": 400000}]}$j$::jsonb);
-select pruebas.falla($$select public.fin_corregir_tipo_ingreso('a9700000-0000-4000-8000-000000000002', 'c3000000-0000-4000-8000-000000000006', 'Otra vez',
-  gen_random_uuid(), gen_random_uuid(), gen_random_uuid())$$, '8: el ingreso nuevo ya repartido no se corrige', '55000');
+select pruebas.igual((public.fin_corregir_tipo_ingreso('a9700000-0000-4000-8000-000000000002', 'c3000000-0000-4000-8000-000000000006', 'Otra vez',
+    'a9700000-0000-4000-8000-000000000043', 'a9700000-0000-4000-8000-000000000041', 'a9700000-0000-4000-8000-000000000042') ->> 'nuevo_id'),
+  'a9700000-0000-4000-8000-000000000042', '8 (P5): el ingreso nuevo ya repartido también se corrige (deshace su reparto)');
+select pruebas.igual((select estado from public.fin_dispersiones where id = 'a8700000-0000-4000-8000-000000000031'), 'anulada', '8 (P5): y su reparto queda anulado');
 select pruebas.como('alex@ejemplo.test');
 select pruebas.falla($$select public.fin_corregir_tipo_ingreso('d8700000-0000-4000-8000-000000000004', 'c3000000-0000-4000-8000-000000000005', 'No es mío',
   gen_random_uuid(), gen_random_uuid(), gen_random_uuid())$$, '8: Alex no corrige el tipo de un ingreso del libro de Ana', '42501');
@@ -521,8 +536,10 @@ select pruebas.igual((public.fin_corregir_tipo_ingreso('d8700000-0000-4000-8000-
 select pruebas.igual((select count(*)::int from public.fin_movimientos where grupo_id = 'a9700000-0000-4000-8000-000000000021'
     and en_nombre_de = 'e0000000-0000-4000-8000-000000000001' and motivo = 'Era la pensión, no el apoyo'), 2,
   '10: los dos asientos de la corrección van en nombre de Papá y con motivo');
-select pruebas.falla($$select public.fin_corregir_tipo_ingreso('d8700000-0000-4000-8000-000000000011', 'c6000000-0000-4000-8000-000000000004', 'Era el apoyo',
-  gen_random_uuid(), gen_random_uuid(), gen_random_uuid())$$, '10: el ingreso de Papá ya repartido no se corrige', '55000');
+select pruebas.igual((public.fin_corregir_tipo_ingreso('d8700000-0000-4000-8000-000000000011', 'c6000000-0000-4000-8000-000000000004', 'Era el apoyo',
+    'a9700000-0000-4000-8000-000000000053', 'a9700000-0000-4000-8000-000000000051', 'a9700000-0000-4000-8000-000000000052') ->> 'nuevo_id'),
+  'a9700000-0000-4000-8000-000000000052', '10 (P5): el ingreso de Papá ya repartido se corrige (en su nombre y con motivo)');
+select pruebas.igual((select estado from public.fin_dispersiones where id = 'a8700000-0000-4000-8000-000000000050'), 'anulada', '10 (P5): y su reparto queda anulado');
 -- Un reparto automático en el libro de Papá deja motivo y su nombre.
 select pruebas.igual((public.fin_dispersion_parametros_cambiar('f1000000-0000-4000-8000-000000000002', 'automatico', null, null, null, false, 'Reparto automático de Papá') ->> 'modo'),
   'automatico', '10: Papá en modo automático');

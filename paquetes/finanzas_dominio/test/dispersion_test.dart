@@ -689,4 +689,256 @@ void main() {
       );
     });
   });
+
+  group('Cambiar un reparto ya confirmado (P5)', () {
+    Dispersion confirmada(PropuestaDispersion p, {int version = 1}) =>
+        Dispersion(
+          id: 'rep-$version',
+          libroId: 'libro',
+          movimientoId: p.movimientoId,
+          estado: EstadoDispersion.confirmada,
+          lineas: p.lineasParaGuardar(),
+          creadaEn: DateTime(2026, 11, 19, 9),
+          version: version,
+          reemplazaA: version > 1 ? 'rep-${version - 1}' : null,
+        );
+
+    int abono(PropuestaDispersion p) => p.totalAbonoExtra;
+    int indiceAbono(PropuestaDispersion p) =>
+        p.lineas.indexWhere((l) => l.destino == DestinoLinea.abonoExtra);
+
+    test('el estado reemplazada no es vigente y la versión viaja', () {
+      expect(EstadoDispersion.reemplazada.vigente, isFalse);
+      expect(EstadoDispersion.anulada.vigente, isFalse);
+      expect(EstadoDispersion.confirmada.vigente, isTrue);
+      expect(EstadoDispersion.reemplazada.aplicada, isFalse);
+      expect(EstadoDispersion.reemplazada.pendiente, isFalse);
+      final d = confirmada(
+        proponerDispersion(ingreso: _sueldoAna(), plan: ej.planEjemplo()),
+        version: 3,
+      );
+      expect(d.version, 3);
+      expect(d.reemplazaA, 'rep-2');
+      expect(d.conEstado(EstadoDispersion.reemplazada).version, 3);
+    });
+
+    test('un reparto reemplazado no cuenta como el vigente del ingreso', () {
+      final p = proponerDispersion(
+        ingreso: _sueldoAna(),
+        plan: ej.planEjemplo(),
+      );
+      final viejo = confirmada(p).conEstado(EstadoDispersion.reemplazada);
+      final d = hogar.hogarEjemplo(
+        movimientos: [
+          Movimiento(
+            id: 'mov-ana',
+            tipo: TipoMovimiento.ingreso,
+            fecha: Fecha(2026, 11, 13),
+            registradoEn: DateTime(2026, 11, 13, 12),
+            cuentaOrigenId: 'extras-casa',
+            cuentaDestinoId: 'banco-casa',
+            monto: 900000,
+            realizadoPor: hogar.ana,
+          ),
+        ],
+      );
+      expect(
+        ingresosDelLibro(d, hogar.casa, [viejo]).single.estado,
+        EstadoDispersion.porRepartir,
+      );
+      final nuevo = Dispersion(
+        id: 'rep-2',
+        libroId: hogar.casa,
+        movimientoId: 'mov-ana',
+        estado: EstadoDispersion.confirmada,
+        lineas: [
+          const LineaDispersion(
+            destino: DestinoLinea.presupuesto,
+            etiqueta: 'Renta',
+            monto: 800000,
+          ),
+          const LineaDispersion(
+            destino: DestinoLinea.porRepartir,
+            etiqueta: 'Por repartir',
+            monto: 100000,
+          ),
+        ],
+        creadaEn: DateTime(2026, 11, 20),
+        version: 2,
+        reemplazaA: 'rep-1',
+      );
+      final lista = ingresosDelLibro(d, hogar.casa, [viejo, nuevo]);
+      expect(lista.single.dispersionId, 'rep-2');
+      expect(lista.single.pendiente, 100000);
+    });
+
+    test('la propuesta para cambiar arranca con los montos del vigente', () {
+      final base = proponerDispersion(
+        ingreso: _sueldoAna(),
+        plan: ej.planEjemplo(),
+      );
+      final editada = base.editar(indiceAbono(base), 100000);
+      final vigente = confirmada(editada);
+      final p = propuestaParaCambiar(vigente: vigente, base: base);
+      _cuadra(p);
+      expect(abono(p), 100000);
+      expect(p.totalPresupuesto, base.totalPresupuesto);
+      expect(p.quedaPorRepartir, editada.quedaPorRepartir);
+      expect(p.quedaPorRepartir, base.totalAbonoExtra - 100000);
+    });
+
+    test('un renglón que quedó en cero sigue editable', () {
+      final base = proponerDispersion(
+        ingreso: _sueldoAna(),
+        plan: ej.planEjemplo(),
+      );
+      // Se confirmó sin abono extra: ese renglón no se guardó.
+      final sinAbono = base.editar(indiceAbono(base), 0);
+      final vigente = confirmada(sinAbono);
+      expect(
+        vigente.lineas.where((l) => l.destino == DestinoLinea.abonoExtra),
+        isEmpty,
+      );
+      final p = propuestaParaCambiar(vigente: vigente, base: base);
+      final i = indiceAbono(p);
+      expect(i, isNonNegative, reason: 'el renglón vuelve, en cero');
+      expect(p.lineas[i].monto, 0);
+      final subida = p.editar(i, 50000);
+      _cuadra(subida);
+      expect(subida.quedaPorRepartir, sinAbono.quedaPorRepartir - 50000);
+      expect(
+        () => p.editar(i, p.monto + 1),
+        throwsA(isA<ErrorDispersion>()),
+        reason: 'las reglas de editar siguen valiendo',
+      );
+    });
+
+    test('armar el cambio: qué se anula, qué se crea y la diferencia', () {
+      final plan = ej.planEjemplo();
+      final base = proponerDispersion(ingreso: _sueldoAna(), plan: plan);
+      final vigente = confirmada(base, version: 2);
+      final puesta = propuestaParaCambiar(vigente: vigente, base: base);
+      final editada = puesta.editar(indiceAbono(puesta), 100000);
+      final c = armarCambioDeReparto(vigente: vigente, editada: editada);
+      expect(c.versionEsperada, 2);
+      expect(c.anterior.id, 'rep-2');
+      expect(c.hayCambios, isTrue);
+      // Se anula lo que creó el reparto anterior (el abono extra) y se crea lo
+      // nuevo; el pago de deuda sigue solo apartando (P4).
+      expect(c.anulan.map((l) => l.destino), [DestinoLinea.abonoExtra]);
+      expect(c.anulan.single.monto, base.totalAbonoExtra);
+      expect(c.crean.single.monto, 100000);
+      expect(c.diferenciaDeSalida, 100000 - base.totalAbonoExtra);
+      expect(c.dineroDevuelto, base.totalAbonoExtra);
+      expect(c.dineroNuevo, 100000);
+      // Lo que se quitó queda por repartir y todo suma el monto del ingreso.
+      expect(c.lineas.fold<int>(0, (t, l) => t + l.monto), _sueldoAna().monto);
+      expect(
+        c.lineas
+            .where((l) => l.destino == DestinoLinea.porRepartir)
+            .single
+            .monto,
+        base.totalAbonoExtra - 100000,
+      );
+      expect(c.renglonesDistintos, hasLength(2));
+    });
+
+    test('sin ediciones no hay cambios', () {
+      final base = proponerDispersion(
+        ingreso: _sueldoAna(),
+        plan: ej.planEjemplo(),
+      );
+      final vigente = confirmada(base);
+      final puesta = propuestaParaCambiar(vigente: vigente, base: base);
+      final c = armarCambioDeReparto(vigente: vigente, editada: puesta);
+      expect(c.hayCambios, isFalse);
+      expect(c.diferenciaDeSalida, 0);
+      expect(c.renglonesDistintos, isEmpty);
+    });
+
+    test('pasar dinero entre renglones: ahorro de un extra', () {
+      final plan = ej.planEjemplo();
+      final base = proponerDispersion(ingreso: _extra(300000), plan: plan);
+      final vigente = confirmada(base);
+      final puesta = propuestaParaCambiar(vigente: vigente, base: base);
+      final todosCero = [for (var i = 0; i < puesta.lineas.length; i++) i]
+          .fold<PropuestaDispersion>(puesta, (p, i) => p.editar(i, 0));
+      final c = armarCambioDeReparto(vigente: vigente, editada: todosCero);
+      expect(c.hayCambios, isTrue);
+      expect(c.crean, isEmpty);
+      expect(c.anulan.every((l) => l.destino.mueveDinero), isTrue);
+      expect(
+        c.lineas.single.destino,
+        DestinoLinea.porRepartir,
+        reason: 'todo queda por repartir',
+      );
+      expect(c.lineas.single.monto, 300000);
+    });
+
+    test('rechaza lo que el servidor rechazaría', () {
+      final base = proponerDispersion(
+        ingreso: _sueldoAna(),
+        plan: ej.planEjemplo(),
+      );
+      final vigente = confirmada(base);
+      final puesta = propuestaParaCambiar(vigente: vigente, base: base);
+      // Una propuesta no se cambia: se confirma.
+      expect(
+        () => armarCambioDeReparto(
+          vigente: vigente.conEstado(EstadoDispersion.propuesta),
+          editada: puesta,
+        ),
+        throwsA(isA<ErrorDispersion>()),
+      );
+      // Un reparto reemplazado ya no es el vigente.
+      expect(
+        () => armarCambioDeReparto(
+          vigente: vigente.conEstado(EstadoDispersion.reemplazada),
+          editada: puesta,
+        ),
+        throwsA(isA<ErrorDispersion>()),
+      );
+      // Otro ingreso.
+      final otro = proponerDispersion(
+        ingreso: IngresoPorRepartir(
+          movimientoId: 'otro',
+          libroId: 'libro',
+          fecha: Fecha(2026, 11, 13),
+          monto: 900000,
+          cuentaDestinoId: 'banco',
+          nombre: 'Otro',
+          ingresoPlanId: 'ana',
+        ),
+        plan: ej.planEjemplo(),
+      );
+      expect(
+        () => armarCambioDeReparto(vigente: vigente, editada: otro),
+        throwsA(isA<ErrorDispersion>()),
+      );
+      expect(
+        () => propuestaParaCambiar(vigente: vigente, base: otro),
+        throwsA(isA<ErrorDispersion>()),
+      );
+      // Un reparto que no suma el monto del ingreso (datos viejos): pide
+      // volver a cargar.
+      final roto = Dispersion(
+        id: 'rep-x',
+        libroId: 'libro',
+        movimientoId: 'mov-ana',
+        estado: EstadoDispersion.confirmada,
+        lineas: const [
+          LineaDispersion(
+            destino: DestinoLinea.presupuesto,
+            etiqueta: 'Renta',
+            monto: 1,
+          ),
+        ],
+        creadaEn: DateTime(2026, 11, 19),
+      );
+      expect(
+        () => propuestaParaCambiar(vigente: roto, base: base),
+        throwsA(isA<ErrorDispersion>()),
+      );
+    });
+  });
 }

@@ -1,7 +1,7 @@
 /// Casos de uso de la dispersión de ingresos (especificación
 /// `docs/specs/fase-8-finanzas-dispersion.md`): proponer el reparto de un
-/// ingreso con el dominio, aceptarlo, dejarlo para después, deshacerlo y
-/// corregir el tipo de un ingreso.
+/// ingreso con el dominio, aceptarlo, dejarlo para después, deshacerlo,
+/// **cambiarlo** una vez confirmado (P5) y corregir el tipo de un ingreso.
 ///
 /// **La app propone y la persona confirma; nunca mueve dinero sola.** Aceptar
 /// solo crea movimientos para el abono extra (pago de deuda) y el ahorro
@@ -22,6 +22,10 @@ import 'servicio_finanzas.dart';
 
 /// Motivo de los asientos de deshacer un reparto.
 const motivoDeshacerReparto = 'Reparto deshecho';
+
+/// Motivo de los asientos al cambiar un reparto cuando la persona no escribe
+/// uno (el servidor usa el mismo).
+const motivoCambiarReparto = 'Reparto cambiado';
 
 class ServicioDispersion {
   ServicioDispersion({required this.finanzas, required this.repositorio});
@@ -76,12 +80,31 @@ class ServicioDispersion {
   }
 
   Dispersion? _vigentePendiente(String movimientoId) => repositorio.actuales
-      .where(
-        (x) =>
-            x.movimientoId == movimientoId &&
-            x.estado != EstadoDispersion.anulada,
-      )
+      .where((x) => x.movimientoId == movimientoId && x.estado.vigente)
       .firstOrNull;
+
+  /// El reparto confirmado o automático vigente de un ingreso (el que se puede
+  /// cambiar o deshacer), si lo hay.
+  Dispersion? repartoAplicadoDe(String movimientoId) => repositorio.actuales
+      .where((x) => x.movimientoId == movimientoId && x.estado.aplicada)
+      .firstOrNull;
+
+  /// La propuesta **editable** para cambiar el reparto vigente de [ingreso]
+  /// (P5): la estructura de siempre (`proponer`) con los montos del reparto
+  /// confirmado. Lanza si el ingreso no tiene un reparto aplicado.
+  PropuestaDispersion propuestaParaCambiarReparto(IngresoPorRepartir ingreso) {
+    final vigente = repartoAplicadoDe(ingreso.movimientoId);
+    if (vigente == null) {
+      throw const ErrorFinanzas(
+        'Ese ingreso no tiene un reparto confirmado que cambiar.',
+      );
+    }
+    try {
+      return propuestaParaCambiar(vigente: vigente, base: proponer(ingreso));
+    } on ErrorDispersion catch (e) {
+      throw ErrorFinanzas(e.mensaje);
+    }
+  }
 
   /// «Dejar para después»: si la persona editó la propuesta, la guarda
   /// (estado «propuesta»); si no, no guarda nada y el ingreso sigue «por
@@ -197,20 +220,162 @@ class ServicioDispersion {
     // Con servidor, `fin_deshacer_dispersion` anula los movimientos y el reparto
     // en una transacción (idempotente); en memoria los anula el servicio.
     if (!repositorio.ligaMovimientos) {
-      final libro = _d.nuevoLibroHogar();
-      for (final l in d.lineas) {
-        if (!l.destino.mueveDinero) continue;
-        final id = idEstable(
-          ClavesId.dispersionMovimiento(d.id, claveDeLineaDispersion(l)),
-        );
-        final existe = _d.movimientos.any((m) => m.id == id);
-        if (existe && libro.contraasientoDe(id) == null) {
-          await finanzas.anular(id, motivo: motivoDeshacerReparto);
-        }
-      }
+      await _anularMovimientosLocales(d, motivoDeshacerReparto);
     }
     await repositorio.deshacer(d, motivo: motivoDeshacerReparto);
     _avisarCambio(d.libroId);
+  }
+
+  /// El id del movimiento que creó el renglón [l] de [d] si existe y no está
+  /// anulado en [libro]; si no, `null`.
+  String? _movimientoVigenteDe(
+    Dispersion d,
+    LineaDispersion l,
+    LibroMovimientos libro,
+  ) {
+    final id = idEstable(
+      ClavesId.dispersionMovimiento(d.id, claveDeLineaDispersion(l)),
+    );
+    final existe = _d.movimientos.any((m) => m.id == id);
+    return existe && libro.contraasientoDe(id) == null ? id : null;
+  }
+
+  /// Anula (solo en memoria; el servidor lo hace en su transacción) los
+  /// movimientos que creó el reparto [d].
+  Future<void> _anularMovimientosLocales(Dispersion d, String motivo) async {
+    final libro = _d.nuevoLibroHogar();
+    for (final l in d.lineas) {
+      if (!l.destino.mueveDinero) continue;
+      final id = _movimientoVigenteDe(d, l, libro);
+      if (id != null) await finanzas.anular(id, motivo: motivo);
+    }
+  }
+
+  /// **Cambia** un reparto ya confirmado (P5, 20/nov/2026): el reparto
+  /// vigente queda «reemplazado» (conserva su historial) y la [propuesta]
+  /// editada es la versión siguiente. Libro solo-agregar: se anulan con
+  /// contraasiento los movimientos que creó el reparto anterior y se crean los
+  /// del nuevo (solo abono extra y ahorro; el pago de deuda solo aparta).
+  ///
+  /// Con servidor es **una transacción con control de versión**: se manda la
+  /// versión que la persona vio; si otro dispositivo ya cambió el reparto, el
+  /// servidor responde «El reparto cambió, vuelve a cargar.» y el repositorio
+  /// recarga (lanza `ErrorFinanzas` con `repartoCambio`). Necesita señal.
+  ///
+  /// En el libro de Papá el [motivo] es obligatorio y se registra en nombre de
+  /// él. En otros libros, sin motivo se usa «Reparto cambiado».
+  Future<Dispersion> cambiarReparto({
+    required IngresoPorRepartir ingreso,
+    required PropuestaDispersion propuesta,
+    String? cuentaAhorroId,
+    String? motivo,
+  }) async {
+    finanzas.exigirEscribir(ingreso.libroId);
+    final vigente = repartoAplicadoDe(ingreso.movimientoId);
+    if (vigente == null) {
+      throw const ErrorFinanzas(
+        'Ese ingreso no tiene un reparto confirmado que cambiar.',
+      );
+    }
+    final quien = finanzas.quienDe(ingreso.libroId, motivo);
+    final CambioReparto cambio;
+    try {
+      cambio = armarCambioDeReparto(vigente: vigente, editada: propuesta);
+    } on ErrorDispersion catch (e) {
+      throw ErrorFinanzas(e.mensaje);
+    }
+    if (!cambio.hayCambios) {
+      throw const ErrorFinanzas('No hay cambios que guardar.');
+    }
+    if (propuesta.ahorro > 0 && cuentaAhorroId == null) {
+      throw const ErrorFinanzas(
+        'Elige la cuenta de ahorro o deja ese dinero por repartir.',
+      );
+    }
+    final limpio = motivo?.trim();
+    final motivoFinal = limpio == null || limpio.isEmpty ? null : limpio;
+    final firma = idEstable(
+      '${cambio.lineas.map((l) => '${claveDeLinea(l)}=${l.monto}').join('|')}'
+      '@${cuentaAhorroId ?? ''}',
+    );
+    final id = idEstable(
+      ClavesId.cambioDispersion(
+        ingreso.movimientoId,
+        vigente.version + 1,
+        finanzas.personaId,
+        firma,
+      ),
+    );
+    final movimientos = _movimientosDe(
+      id: id,
+      ingreso: ingreso,
+      lineas: cambio.lineas,
+      cuentaAhorroId: cuentaAhorroId,
+      quien: quien,
+      motivo: motivoFinal,
+    );
+    // Valida con las reglas del libro (anulando lo anterior y agregando lo
+    // nuevo) antes de guardar nada.
+    final libro = _d.nuevoLibroHogar();
+    try {
+      for (final l in vigente.lineas) {
+        if (!l.destino.mueveDinero) continue;
+        final viejo = _movimientoVigenteDe(vigente, l, libro);
+        if (viejo != null) {
+          libro.anular(
+            viejo,
+            nuevoId: idEstable('cambio-anula:$viejo'),
+            motivo: motivoFinal ?? motivoCambiarReparto,
+            registradoPor: finanzas.personaId,
+            registradoEn: finanzas.ahora,
+          );
+        }
+      }
+      for (final m in movimientos) {
+        libro.agregar(m);
+      }
+    } on ErrorLibro catch (e) {
+      throw ErrorFinanzas(e.mensaje);
+    }
+    // Con servidor, `fin_cambiar_dispersion` anula lo anterior, reemplaza el
+    // reparto y confirma el nuevo en una transacción; en memoria lo hace el
+    // servicio.
+    if (!repositorio.ligaMovimientos) {
+      await _anularMovimientosLocales(
+        vigente,
+        motivoFinal ?? motivoCambiarReparto,
+      );
+      final ya = {for (final m in _d.movimientos) m.id};
+      final nuevos = [
+        for (final m in movimientos)
+          if (!ya.contains(m.id)) m,
+      ];
+      if (nuevos.isNotEmpty) {
+        await finanzas.repositorio.agregarMovimientos(nuevos);
+      }
+    }
+    final nueva = Dispersion(
+      id: id,
+      libroId: ingreso.libroId,
+      movimientoId: ingreso.movimientoId,
+      estado: EstadoDispersion.confirmada,
+      lineas: cambio.lineas,
+      creadaEn: finanzas.ahora,
+      resueltaPor: finanzas.personaId,
+      resueltaEn: finanzas.ahora,
+      enNombreDe: quien.enNombreDe,
+      motivo: motivoFinal,
+      version: vigente.version + 1,
+      reemplazaA: vigente.id,
+    );
+    await repositorio.cambiar(
+      nueva,
+      anterior: vigente,
+      movimientos: movimientos,
+      cuentaAhorroId: cuentaAhorroId,
+    );
+    _avisarCambio(ingreso.libroId);
+    return nueva;
   }
 
   /// Modo automático (decisión 1; pregunta abierta P1): asigna lo comprometido
@@ -261,19 +426,22 @@ class ServicioDispersion {
         'Escribe el motivo del cambio: $mensajeMotivoCorto',
       );
     }
-    final repartido = repositorio.actuales.any(
-      (x) => x.movimientoId == movimientoId && x.estado.aplicada,
-    );
-    if (repartido) {
-      throw const ErrorFinanzas(
-        'Ese ingreso ya está repartido. Deshaz el reparto y vuelve a '
-        'intentarlo.',
-      );
-    }
+    // P5: un ingreso ya repartido SÍ se corrige. El reparto se deshace en la
+    // misma operación (el servidor lo hace en su transacción; en memoria, el
+    // servicio): sin movimientos huérfanos y el ingreso nuevo nace «por
+    // repartir». Si la corrección queda pendiente de otra persona (compartido),
+    // se pide cambiar o deshacer el reparto antes.
+    final repartido = repartoAplicadoDe(movimientoId);
     final libro = _d.libro(libroId)!;
     final ajeno =
         libro.tipo == TipoLibro.compartido &&
         original.realizadoPor != finanzas.personaId;
+    if (repartido != null && ajeno) {
+      throw const ErrorFinanzas(
+        'Ese ingreso ya está repartido y su corrección espera la confirmación '
+        'de otra persona. Cambia o deshaz el reparto y vuelve a intentarlo.',
+      );
+    }
     final CorreccionIngreso c;
     try {
       c = corregirTipoDeIngreso(
@@ -293,10 +461,13 @@ class ServicioDispersion {
     } on ErrorDispersion catch (e) {
       throw ErrorFinanzas(e.mensaje);
     }
-    // Con servidor, `fin_corregir_tipo_ingreso` agrega los dos asientos en una
-    // transacción (y rechaza lo ya repartido); en memoria los agrega el
-    // servicio. En los dos casos la propuesta del ingreso viejo ya no vale.
+    // Con servidor, `fin_corregir_tipo_ingreso` deshace el reparto (si lo hay)
+    // y agrega los dos asientos en una transacción; en memoria lo hace el
+    // servicio. En los dos casos el reparto del ingreso viejo ya no vale.
     if (!repositorio.ligaMovimientos) {
+      if (repartido != null) {
+        await _anularMovimientosLocales(repartido, motivo.trim());
+      }
       await finanzas.repositorio.agregarMovimientos([c.anulacion, c.nuevo]);
     }
     await repositorio.corregirTipo(

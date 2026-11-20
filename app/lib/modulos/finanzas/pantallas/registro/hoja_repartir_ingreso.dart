@@ -7,6 +7,12 @@
 /// repite reglas. **La app propone y la persona confirma**: Aceptar solo crea
 /// movimientos para el abono extra y el ahorro. Sin permiso de escribir (cuenta
 /// maestra, lector, libro archivado) la hoja es de solo lectura.
+///
+/// **Cambiar reparto (P5, 20/nov/2026):** en un ingreso ya repartido la hoja se
+/// abre con el reparto vigente **editable** y el botón «Guardar cambios» (con
+/// motivo si el libro es de Papá). El servidor anula con contraasiento lo que
+/// creó el reparto anterior y crea lo nuevo en una transacción, con control de
+/// versión: si otro dispositivo ya lo cambió, la hoja recarga y avisa.
 library;
 
 import 'package:finanzas_dominio/finanzas_dominio.dart'
@@ -21,6 +27,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../diseno/diseno.dart';
+import '../../datos/ids.dart' show ClavesId, idEstable;
+import '../../datos/repositorio.dart' show ErrorFinanzas;
 import '../../estado/proveedores.dart';
 import '../../estado/proveedores_dispersion.dart';
 import '../comunes.dart';
@@ -57,6 +65,16 @@ class HojaRepartirIngreso extends ConsumerStatefulWidget {
 
 class _HojaRepartirState extends ConsumerState<HojaRepartirIngreso> {
   PropuestaDispersion? _propuesta;
+
+  /// La hoja arrancó en modo «cambiar» (el ingreso tenía un reparto aplicado).
+  bool? _arrancoCambiando;
+
+  /// Id y versión del reparto vigente con el que se armó la hoja: si cambian
+  /// mientras está abierta (otro dispositivo lo cambió), se vuelve a armar.
+  String? _llaveVigente;
+
+  /// Se volvió a armar la hoja porque el reparto cambió en otro dispositivo.
+  bool _recargada = false;
   bool _editada = false;
   bool _editando = false;
   bool _guardando = false;
@@ -137,6 +155,53 @@ class _HojaRepartirState extends ConsumerState<HojaRepartirIngreso> {
     }
   }
 
+  /// Vuelve a armar la propuesta desde lo que hay ahora (tras un rechazo por
+  /// versión o si el ingreso cambió de estado mientras la hoja estaba abierta).
+  void _reiniciar() {
+    for (final c in _campos.values) {
+      c.dispose();
+    }
+    _campos.clear();
+    _propuesta = null;
+    _arrancoCambiando = null;
+    _llaveVigente = null;
+    _editada = false;
+    _error = null;
+    _cuentaAhorroId = null;
+  }
+
+  Future<void> _guardarCambios(
+    IngresoPorRepartir ingreso,
+    bool representado,
+  ) async {
+    setState(() => _guardando = true);
+    final navegador = Navigator.of(context);
+    try {
+      await ref
+          .read(servicioDispersionProvider)
+          .cambiarReparto(
+            ingreso: ingreso,
+            propuesta: _propuesta!,
+            cuentaAhorroId: _propuesta!.ahorro > 0 ? _cuentaAhorroId : null,
+            motivo: representado ? _motivo.text : null,
+          );
+      if (mounted) avisar(context, 'Listo: cambié tu reparto.');
+      if (navegador.canPop()) navegador.pop();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _guardando = false;
+        // Otro dispositivo lo cambió: el repositorio ya recargó; se vuelve a
+        // armar la hoja con el reparto que quedó.
+        if (e is ErrorFinanzas && e.repartoCambio) {
+          _reiniciar();
+          _recargada = true;
+        }
+      });
+      avisarError(context, e);
+    }
+  }
+
   Future<void> _despues(IngresoPorRepartir ingreso) async {
     setState(() => _guardando = true);
     final navegador = Navigator.of(context);
@@ -170,15 +235,30 @@ class _HojaRepartirState extends ConsumerState<HojaRepartirIngreso> {
         cuerpo: Center(child: CircularProgressIndicator()),
       );
     }
-    if (ingreso == null ||
-        (ingreso.estado.aplicada && ingreso.pendiente == 0)) {
+    if (ingreso == null) {
       return const MarcoHojaRegistro(
         titulo: 'Repartir ingreso',
         cuerpo: Text(
-          'Este ingreso ya está repartido o ya no está en el libro.',
+          'Este ingreso ya no está en el libro.',
           key: ValueKey('repartir-nada'),
         ),
       );
+    }
+    // Un ingreso con reparto aplicado se abre para cambiarlo (P5).
+    final cambiando = ingreso.estado.aplicada;
+    final vigente = cambiando
+        ? ref
+              .read(servicioDispersionProvider)
+              .repartoAplicadoDe(ingreso.movimientoId)
+        : null;
+    final llave = vigente == null ? null : '${vigente.id}:${vigente.version}';
+    if (_propuesta != null &&
+        (_arrancoCambiando != cambiando ||
+            (_llaveVigente != null && llave != _llaveVigente))) {
+      // El ingreso cambió de estado o alguien cambió el reparto mientras la
+      // hoja estaba abierta: se arma de nuevo con lo que quedó.
+      _recargada = _arrancoCambiando == true;
+      _reiniciar();
     }
     final libro = c.datos.libro(widget.libroId)!;
     final puede = librosParaRegistrar(c).any((l) => l.id == libro.id);
@@ -187,18 +267,35 @@ class _HojaRepartirState extends ConsumerState<HojaRepartirIngreso> {
       for (final x in c.datos.cuentasDe(libro.id))
         if (x.tipo == TipoCuenta.ahorro && x.estado == EstadoCuenta.activa) x,
     ];
-    _propuesta ??= _inicial(ingreso, ahorros);
+    if (_propuesta == null) {
+      _propuesta = _inicial(ingreso, ahorros, cambiando);
+      _arrancoCambiando = cambiando;
+      _llaveVigente = llave;
+      // Cambiar: los renglones se editan desde el principio, salvo con los
+      // montos ocultos (modo privado): los campos mostrarían las cifras, así
+      // que se editan solo cuando la persona toca «Editar».
+      _editando = cambiando && !ref.read(montosOcultosProvider);
+    }
     final p = _propuesta!;
     if (_cuentaAhorroId == null && ahorros.length == 1) {
       _cuentaAhorroId = ahorros.first.id;
     }
-    final aceptable =
+    if (_cuentaAhorroId == null && vigente != null) {
+      _cuentaAhorroId = _cuentaDelAhorroVigente(c.datos, vigente);
+    }
+    final datosCompletos =
         puede &&
         !_guardando &&
         _error == null &&
-        ingreso.estado.pendiente &&
         (p.ahorro == 0 || _cuentaAhorroId != null) &&
         (!representado || motivoValido(_motivo.text));
+    final aceptable = datosCompletos && ingreso.estado.pendiente;
+    // «Guardar cambios» solo cuando hay algo distinto que guardar.
+    final hayCambios =
+        vigente != null &&
+        p.quedaPorRepartir >= 0 &&
+        armarCambioDeReparto(vigente: vigente, editada: p).hayCambios;
+    final guardable = datosCompletos && cambiando && hayCambios;
     final tema = Theme.of(context);
 
     Widget fila(int i) {
@@ -268,7 +365,11 @@ class _HojaRepartirState extends ConsumerState<HojaRepartirIngreso> {
         guardando: _guardando,
         puede: puede,
         editando: _editando,
+        cambiando: cambiando,
         alAceptar: aceptable ? () => _aceptar(ingreso, representado) : null,
+        alGuardar: guardable
+            ? () => _guardarCambios(ingreso, representado)
+            : null,
         alEditar: () => setState(() => _editando = !_editando),
         alDespues: _guardando ? null : () => _despues(ingreso),
       ),
@@ -283,18 +384,42 @@ class _HojaRepartirState extends ConsumerState<HojaRepartirIngreso> {
           Text(
             ingreso.estado == EstadoDispersion.propuesta
                 ? 'Propuesta guardada, sin confirmar'
-                : ingreso.estado.aplicada
-                ? 'Queda por repartir'
+                : cambiando
+                ? 'Reparto confirmado'
                 : 'Por repartir',
             key: const ValueKey('repartir-estado'),
             style: tema.textTheme.bodySmall,
           ),
           const SizedBox(height: 8),
           Text(
-            puede
+            cambiando
+                ? (puede
+                      ? 'Así quedó tu reparto. Cámbialo y guarda:'
+                      : 'Así quedó el reparto (solo lectura):')
+                : puede
                 ? 'Esto es lo que propongo:'
                 : 'Así se repartiría (solo lectura):',
+            key: const ValueKey('repartir-intro'),
           ),
+          if (_recargada && cambiando)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                'El reparto cambió en otro dispositivo: te muestro cómo quedó.',
+                key: const ValueKey('repartir-recargado'),
+                style: tema.textTheme.bodySmall,
+              ),
+            ),
+          if (cambiando && puede)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                'Los movimientos del reparto anterior se anulan con '
+                'contraasiento y se crean los nuevos. El historial se queda.',
+                key: const ValueKey('repartir-aviso-cambio'),
+                style: tema.textTheme.bodySmall,
+              ),
+            ),
           if (!p.cubreTodo) ...[
             const SizedBox(height: 8),
             Wrap(
@@ -414,8 +539,13 @@ class _HojaRepartirState extends ConsumerState<HojaRepartirIngreso> {
   PropuestaDispersion _inicial(
     IngresoPorRepartir ingreso,
     List<Cuenta> ahorros,
+    bool cambiando,
   ) {
-    var p = ref.read(servicioDispersionProvider).proponer(ingreso);
+    final servicio = ref.read(servicioDispersionProvider);
+    // Cambiar: los montos del reparto vigente, sin tocar (aunque no haya
+    // cuenta de ahorro hoy: es lo que ya se hizo).
+    if (cambiando) return servicio.propuestaParaCambiarReparto(ingreso);
+    var p = servicio.proponer(ingreso);
     if (ahorros.isEmpty && p.ahorro > 0) {
       final i = p.lineas.indexWhere((l) => l.destino == DestinoLinea.ahorro);
       p = p.editar(i, 0);
@@ -425,12 +555,28 @@ class _HojaRepartirState extends ConsumerState<HojaRepartirIngreso> {
   }
 }
 
+/// La cuenta que recibió el ahorro del reparto vigente (si lo hubo), para que
+/// el cambio no pida elegirla otra vez.
+String? _cuentaDelAhorroVigente(DatosFinanzas datos, Dispersion vigente) {
+  final tieneAhorro = vigente.lineas.any(
+    (l) => l.destino == DestinoLinea.ahorro && l.monto > 0,
+  );
+  if (!tieneAhorro) return null;
+  final id = idEstable(ClavesId.dispersionMovimiento(vigente.id, 'ahorro'));
+  return datos.movimientos
+      .where((m) => m.id == id)
+      .map((m) => m.cuentaDestinoId)
+      .firstOrNull;
+}
+
 class _Barra extends StatelessWidget {
   const _Barra({
     required this.guardando,
     required this.puede,
     required this.editando,
+    required this.cambiando,
     required this.alAceptar,
+    required this.alGuardar,
     required this.alEditar,
     required this.alDespues,
   });
@@ -438,7 +584,11 @@ class _Barra extends StatelessWidget {
   final bool guardando;
   final bool puede;
   final bool editando;
+
+  /// La hoja cambia un reparto ya confirmado (P5).
+  final bool cambiando;
   final VoidCallback? alAceptar;
+  final VoidCallback? alGuardar;
   final VoidCallback alEditar;
   final VoidCallback? alDespues;
 
@@ -466,22 +616,43 @@ class _Barra extends StatelessWidget {
         spacing: 8,
         runSpacing: 4,
         children: [
-          TextButton(
-            key: const ValueKey('repartir-despues'),
-            onPressed: alDespues,
-            child: const Text('Dejar para después'),
-          ),
-          OutlinedButton(
-            key: const ValueKey('repartir-editar'),
-            onPressed: guardando ? null : alEditar,
-            child: Text(editando ? 'Listo' : 'Editar'),
-          ),
-          FilledButton.icon(
-            key: const ValueKey('repartir-aceptar'),
-            onPressed: alAceptar,
-            icon: const Icon(Icons.check),
-            label: const Text('Aceptar'),
-          ),
+          if (cambiando) ...[
+            TextButton(
+              key: const ValueKey('repartir-cancelar'),
+              onPressed: guardando
+                  ? null
+                  : () => Navigator.of(context).maybePop(),
+              child: const Text('Cancelar'),
+            ),
+            OutlinedButton(
+              key: const ValueKey('repartir-editar'),
+              onPressed: guardando ? null : alEditar,
+              child: Text(editando ? 'Listo' : 'Editar'),
+            ),
+            FilledButton.icon(
+              key: const ValueKey('repartir-guardar-cambios'),
+              onPressed: alGuardar,
+              icon: const Icon(Icons.check),
+              label: const Text('Guardar cambios'),
+            ),
+          ] else ...[
+            TextButton(
+              key: const ValueKey('repartir-despues'),
+              onPressed: alDespues,
+              child: const Text('Dejar para después'),
+            ),
+            OutlinedButton(
+              key: const ValueKey('repartir-editar'),
+              onPressed: guardando ? null : alEditar,
+              child: Text(editando ? 'Listo' : 'Editar'),
+            ),
+            FilledButton.icon(
+              key: const ValueKey('repartir-aceptar'),
+              onPressed: alAceptar,
+              icon: const Icon(Icons.check),
+              label: const Text('Aceptar'),
+            ),
+          ],
         ],
       ),
     );

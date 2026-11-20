@@ -24,6 +24,7 @@ enum RutaTransferencia {
   parejaADueno('pareja_a_dueno', 'Pareja → dueño'),
   duenoACasa('dueno_a_casa', 'Dueño → casa'),
   parejaACasa('pareja_a_casa', 'Pareja → casa'),
+
   /// Reembolso de una compra de Papá: la propone el albacea y la confirma quien compró (Fase 8 v1.6).
   papaAPersona('papa_a_persona', 'Papá → persona');
 

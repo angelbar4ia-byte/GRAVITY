@@ -112,6 +112,9 @@ class _DialogoState extends ConsumerState<DialogoCambiarTipo> {
             x.id != m.cuentaOrigenId)
           (x.id, 'Ingreso extra'),
     ];
+    final repartido = ref
+        .watch(dispersionesProvider)
+        .any((x) => x.movimientoId == m.id && x.estado.aplicada);
     final puede =
         _cuentaId != null && motivoValido(_motivo.text) && !_guardando;
     return AlertDialog(
@@ -126,6 +129,15 @@ class _DialogoState extends ConsumerState<DialogoCambiarTipo> {
               'No se borra nada: se anula el original y se registra uno '
               'nuevo con la misma fecha y monto.',
             ),
+            if (repartido) ...[
+              const SizedBox(height: 8),
+              const Text(
+                'Este ingreso ya está repartido: al cambiar el tipo se '
+                'deshace su reparto (se anulan los movimientos que creó) y el '
+                'ingreso nuevo queda por repartir.',
+                key: ValueKey('cambiar-tipo-repartido'),
+              ),
+            ],
             const SizedBox(height: 8),
             if (opciones.isEmpty)
               const Text(

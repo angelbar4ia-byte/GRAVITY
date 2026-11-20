@@ -387,9 +387,7 @@ class ConDatosFinanzas extends ConsumerWidget {
     final asincrono = ref.watch(contextoFinanzasProvider);
     // El anfitrión mantiene Finanzas al día entre dispositivos mientras haya una
     // pantalla del módulo abierta (F8-6.6).
-    return AnfitrionSincroniaFinanzas(
-      child: _estados(context, ref, asincrono),
-    );
+    return AnfitrionSincroniaFinanzas(child: _estados(context, ref, asincrono));
   }
 
   Widget _estados(

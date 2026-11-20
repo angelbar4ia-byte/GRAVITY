@@ -13,6 +13,8 @@ import 'package:gravity/diseno/diseno.dart'
 import 'package:gravity/modulos/finanzas/casos_uso/servicio_dispersion.dart';
 import 'package:gravity/modulos/finanzas/casos_uso/servicio_finanzas.dart';
 import 'package:gravity/modulos/finanzas/datos/demostracion.dart';
+import 'package:gravity/modulos/finanzas/datos/ids.dart'
+    show ClavesId, claveDeLineaDispersion, idEstable;
 import 'package:gravity/modulos/finanzas/datos/repositorio.dart';
 import 'package:gravity/modulos/finanzas/datos/repositorio_dispersiones.dart';
 import 'package:gravity/modulos/finanzas/datos/repositorio_memoria.dart';
@@ -509,7 +511,8 @@ void main() {
       );
     });
 
-    test('exige motivo y no corrige un ingreso ya repartido', () async {
+    test('exige motivo y, si el ingreso ya está repartido, deshace su reparto '
+        'al corregirlo (P5)', () async {
       final m = _mundo();
       final ahorro = await _ahorro(m);
       final id = await _sueldoComoExtra(m);
@@ -530,14 +533,37 @@ void main() {
         propuesta: m.servicio.proponer(ingreso),
         cuentaAhorroId: ahorro.id,
       );
-      await expectLater(
-        m.servicio.cambiarTipo(
-          movimientoId: id,
-          cuentaOrigenId: honorarios.cuentaOrigenId,
-          motivo: 'Era el sueldo',
-        ),
-        throwsA(isA<ErrorFinanzas>()),
+      final repartido = m.servicio.repartoAplicadoDe(id)!;
+      final movimientosDelReparto = [
+        for (final l in repartido.lineas)
+          if (l.destino.mueveDinero)
+            idEstable(
+              ClavesId.dispersionMovimiento(
+                repartido.id,
+                claveDeLineaDispersion(l),
+              ),
+            ),
+      ];
+      expect(movimientosDelReparto, isNotEmpty);
+      final c = await m.servicio.cambiarTipo(
+        movimientoId: id,
+        cuentaOrigenId: honorarios.cuentaOrigenId,
+        motivo: 'Era el sueldo',
       );
+      // Sin movimientos huérfanos: lo que creó el reparto queda anulado.
+      final vista = m.datos.vista(_libro);
+      for (final mid in movimientosDelReparto) {
+        expect(vista.estaAnulado(mid), isTrue);
+      }
+      expect(m.servicio.repartoAplicadoDe(id), isNull);
+      expect(
+        m.reparto.actuales.firstWhere((x) => x.id == repartido.id).estado,
+        EstadoDispersion.anulada,
+      );
+      // El ingreso nuevo nace por repartir y se reparte como sueldo.
+      final nuevo = _ingreso(m, c.nuevo.id);
+      expect(nuevo.estado, EstadoDispersion.porRepartir);
+      expect(nuevo.esSueldo, isTrue);
     });
   });
 

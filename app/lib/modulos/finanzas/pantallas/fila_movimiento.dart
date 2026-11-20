@@ -9,6 +9,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../diseno/diseno.dart';
 import '../estado/proveedores.dart';
+import '../estado/proveedores_dispersion.dart';
+import 'cambiar_reparto.dart';
 import 'comunes.dart';
 import 'dialogo_cambiar_tipo.dart';
 
@@ -75,6 +77,7 @@ class FilaMovimiento extends ConsumerWidget {
     final m = movimiento;
     final c = contexto;
     final vista = c.datos.vista(c.libroId);
+    final repartos = ref.watch(dispersionesProvider);
     final anulado = vista.estaAnulado(m.id);
     final enCola = c.carga.movimientosEnCola.contains(m.id);
     final v = ValoresDiseno.de(context);
@@ -161,12 +164,14 @@ class FilaMovimiento extends ConsumerWidget {
                     PopupMenuButton<String>(
                       key: ValueKey('movimiento-menu-${m.id}'),
                       tooltip: 'Opciones',
-                      onSelected: (accion) => accion == 'tipo'
-                          ? mostrarDialogoCambiarTipo(
-                              context,
-                              movimientoId: m.id,
-                            )
-                          : anularConMotivo(context, ref, m),
+                      onSelected: (accion) => switch (accion) {
+                        'tipo' => mostrarDialogoCambiarTipo(
+                          context,
+                          movimientoId: m.id,
+                        ),
+                        'reparto' => abrirCambiarReparto(context, c, m),
+                        _ => anularConMotivo(context, ref, m),
+                      },
                       itemBuilder: (_) => [
                         const PopupMenuItem(
                           value: 'anular',
@@ -176,6 +181,11 @@ class FilaMovimiento extends ConsumerWidget {
                           const PopupMenuItem(
                             value: 'tipo',
                             child: Text('Cambiar tipo…'),
+                          ),
+                        if (sePuedeCambiarReparto(m, vista, c, repartos))
+                          const PopupMenuItem(
+                            value: 'reparto',
+                            child: Text('Cambiar reparto…'),
                           ),
                       ],
                     ),

@@ -122,6 +122,7 @@ class ErrorFinanzas implements Exception {
     this.mensaje, {
     this.sinConexion = false,
     this.topeAlcanzado = false,
+    this.repartoCambio = false,
   });
 
   final String mensaje;
@@ -132,6 +133,16 @@ class ErrorFinanzas implements Exception {
   /// El servidor llegó a su tope de avisos del día (22023): no se reintenta
   /// en bucle.
   final bool topeAlcanzado;
+
+  /// El control de versión del servidor rechazó el cambio de un reparto
+  /// (40001, «El reparto cambió, vuelve a cargar.»): otro dispositivo lo
+  /// cambió, lo deshizo o anuló el ingreso. La app recarga y avisa.
+  final bool repartoCambio;
+
+  /// Mensaje de [repartoCambio] en la interfaz.
+  static const mensajeRepartoCambio =
+      'El reparto cambió en otro dispositivo. Ya lo volví a cargar: revisa '
+      'cómo quedó y, si quieres, vuelve a cambiarlo.';
 
   static const conexion = ErrorFinanzas(
     'Sin conexión: este cambio necesita señal. Inténtalo de nuevo cuando '

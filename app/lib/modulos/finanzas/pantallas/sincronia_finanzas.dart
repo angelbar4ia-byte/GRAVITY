@@ -29,8 +29,7 @@ class AnfitrionSincroniaFinanzas extends ConsumerStatefulWidget {
   final Widget child;
 
   @override
-  ConsumerState<AnfitrionSincroniaFinanzas> createState() =>
-      _EstadoAnfitrion();
+  ConsumerState<AnfitrionSincroniaFinanzas> createState() => _EstadoAnfitrion();
 }
 
 class _EstadoAnfitrion extends ConsumerState<AnfitrionSincroniaFinanzas>

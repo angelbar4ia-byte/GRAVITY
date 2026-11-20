@@ -114,6 +114,18 @@ abstract final class ClavesId {
   static String dispersionMovimiento(String dispersionId, String destino) =>
       'dispersion-mov:$dispersionId:$destino';
 
+  /// El reparto nuevo de un cambio (P5): el ingreso, la versión que sustituye
+  /// y una firma de lo que la persona edita. Reintentar **el mismo cambio**
+  /// (por ejemplo, tras perder la señal) da el mismo id y el servidor no lo
+  /// repite; **otro** cambio del mismo reparto (otro dispositivo, otros montos)
+  /// da otro id y choca con el control de versión en vez de pisarlo.
+  static String cambioDispersion(
+    String movimientoId,
+    int versionNueva,
+    String personaId,
+    String firma,
+  ) => 'dispersion-cambio:$movimientoId:$versionNueva:$personaId:$firma';
+
   /// Los asientos de corregir el tipo de un ingreso (anulación, ingreso nuevo
   /// y el grupo que los une): repetir la corrección no duplica.
   static String correccionIngreso(String movimientoId, String parte) =>

@@ -52,10 +52,14 @@ class FuenteTablasSupabase implements FuenteTablas {
     try {
       return await accion();
     } on PostgrestException catch (e) {
+      // `fin_cambiar_dispersion` / `fin_deshacer_dispersion`: 40001 «El
+      // reparto cambió, vuelve a cargar.» (control de versión).
+      final cambio = e.code == '40001' && e.message.contains('reparto cambió');
       throw ErrorFinanzas(
-        _mensaje(e),
+        cambio ? ErrorFinanzas.mensajeRepartoCambio : _mensaje(e),
         // `fin_emitir_aviso`: 22023 "se llegó al tope de 60 avisos al día".
         topeAlcanzado: e.code == '22023' && e.message.contains('tope'),
+        repartoCambio: cambio,
       );
     } catch (e) {
       if (esErrorDeRed(e)) throw ErrorFinanzas.conexion;

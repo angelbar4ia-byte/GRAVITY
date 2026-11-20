@@ -10,6 +10,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../diseno/diseno.dart';
 import '../../estado/proveedores.dart';
+import '../../estado/proveedores_dispersion.dart';
+import '../cambiar_reparto.dart';
 import '../comunes.dart';
 import '../dialogo_cambiar_tipo.dart';
 import '../fila_movimiento.dart';
@@ -261,6 +263,7 @@ class _Detalle extends ConsumerWidget {
     final m = movimiento;
     final c = contexto;
     final vista = c.datos.vista(c.libroId);
+    final repartos = ref.watch(dispersionesProvider);
     final contra = vista.contraasientoDe(m.id);
     final original = m.anulaA == null
         ? null
@@ -340,6 +343,15 @@ class _Detalle extends ConsumerWidget {
                 mostrarDialogoCambiarTipo(context, movimientoId: m.id),
             icon: const Icon(Icons.swap_horiz),
             label: const Text('Cambiar tipo…'),
+          ),
+        ],
+        if (sePuedeCambiarReparto(m, vista, c, repartos)) ...[
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            key: const ValueKey('movimientos-cambiar-reparto'),
+            onPressed: () => abrirCambiarReparto(context, c, m),
+            icon: const Icon(Icons.call_split),
+            label: const Text('Cambiar reparto…'),
           ),
         ],
         const SizedBox(height: 8),

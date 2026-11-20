@@ -9,13 +9,16 @@
 ///   el servidor guarda el reparto, **liga los movimientos de abono extra y
 ///   ahorro en la misma transacción** (`fin_confirmar_dispersion`), deshace el
 ///   reparto (`fin_deshacer_dispersion`) y corrige el tipo de un ingreso
-///   (`fin_corregir_tipo_ingreso`). Confirmar, deshacer y corregir necesitan
-///   señal, como los estados de cuenta.
+///   (`fin_corregir_tipo_ingreso`) y cambia un reparto ya confirmado
+///   (`fin_cambiar_dispersion`, con control de versión). Confirmar, deshacer,
+///   cambiar y corregir necesitan señal, como los estados de cuenta.
 library;
 
 import 'dart:async';
 
 import 'package:finanzas_dominio/finanzas_dominio.dart';
+
+import 'repositorio.dart' show ErrorFinanzas;
 
 abstract interface class RepositorioDispersiones {
   /// Los repartos vigentes y anulados, en el orden en que se guardaron.
@@ -46,6 +49,22 @@ abstract interface class RepositorioDispersiones {
   /// Deshace un reparto aplicado: queda anulado (con [ligaMovimientos], el
   /// servidor también anula los movimientos que creó).
   Future<void> deshacer(Dispersion dispersion, {required String motivo});
+
+  /// Cambia un reparto ya confirmado (P5, 20/nov/2026): [anterior] queda
+  /// «reemplazado» (conserva su historial) y [nueva] es la versión siguiente.
+  /// Con [ligaMovimientos] el servidor, en una transacción, anula con
+  /// contraasiento lo que creó [anterior] y crea los [movimientos] de la nueva
+  /// (solo abono extra y ahorro); si no, el servicio ya los agregó.
+  ///
+  /// Control de versión: viaja la versión de [anterior] que la persona vio; si
+  /// el servidor ya tiene otra, lanza un `ErrorFinanzas` con `repartoCambio`
+  /// (y el repositorio vuelve a cargar los repartos).
+  Future<void> cambiar(
+    Dispersion nueva, {
+    required Dispersion anterior,
+    required List<Movimiento> movimientos,
+    String? cuentaAhorroId,
+  });
 
   /// Corrige el tipo de un ingreso. Con [ligaMovimientos] el servidor agrega la
   /// anulación y el ingreso nuevo (con estos ids y grupo); en cualquier caso, el
@@ -113,6 +132,26 @@ class RepositorioDispersionesEnMemoria implements RepositorioDispersiones {
       guardar(dispersion.conEstado(EstadoDispersion.anulada));
 
   @override
+  Future<void> cambiar(
+    Dispersion nueva, {
+    required Dispersion anterior,
+    required List<Movimiento> movimientos,
+    String? cuentaAhorroId,
+  }) async {
+    final vigente = _lista.where((x) => x.id == anterior.id).firstOrNull;
+    if (vigente == null ||
+        !vigente.estado.aplicada ||
+        vigente.version != anterior.version) {
+      throw const ErrorFinanzas(
+        ErrorFinanzas.mensajeRepartoCambio,
+        repartoCambio: true,
+      );
+    }
+    await guardar(vigente.conEstado(EstadoDispersion.reemplazada));
+    await guardar(nueva);
+  }
+
+  @override
   Future<void> corregirTipo({
     required String movimientoId,
     required String cuentaOrigenId,
@@ -122,8 +161,7 @@ class RepositorioDispersionesEnMemoria implements RepositorioDispersiones {
     required String grupoId,
   }) async {
     for (final d in actuales) {
-      if (d.movimientoId == movimientoId &&
-          d.estado != EstadoDispersion.anulada) {
+      if (d.movimientoId == movimientoId && d.estado.vigente) {
         await guardar(d.conEstado(EstadoDispersion.anulada));
       }
     }

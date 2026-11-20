@@ -145,9 +145,11 @@ const _soloLectura = {
   // Migración 20261147 (dispersión de ingresos con confirmación): dos tablas
   // sin grant de INSERT directo; se escriben solo con las RPC
   // fin_guardar_propuesta, fin_confirmar_dispersion (crea los movimientos de
-  // abono extra y ahorro en la misma transacción), fin_deshacer_dispersion y
-  // fin_corregir_tipo_ingreso. Confirmar, deshacer y corregir necesitan señal;
-  // no suben por la cola.
+  // abono extra y ahorro en la misma transacción), fin_deshacer_dispersion,
+  // fin_cambiar_dispersion (migración 20261149: cambiar un reparto confirmado,
+  // con control de versión; sin tablas nuevas, solo columnas version y
+  // reemplaza_a) y fin_corregir_tipo_ingreso. Confirmar, deshacer, cambiar y
+  // corregir necesitan señal; no suben por la cola.
   'fin_dispersiones',
   'fin_dispersion_lineas',
 };

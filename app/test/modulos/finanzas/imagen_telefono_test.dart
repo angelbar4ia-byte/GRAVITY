@@ -37,17 +37,20 @@ void main() {
     expect(await c.fotografiar(), isNull);
   });
 
-  test('el texto se lee localmente: sin llamadas de red con la imagen', () async {
-    final red = _RedProhibida();
-    final lector = LectorTextoFalso('TOTAL 120.50');
-    final texto = await HttpOverrides.runWithHttpOverrides(
-      () => lector.leer(foto),
-      red,
-    );
-    expect(texto, 'TOTAL 120.50');
-    expect(lector.imagenesRecibidas.single, foto);
-    expect(red.intentos, 0);
-  });
+  test(
+    'el texto se lee localmente: sin llamadas de red con la imagen',
+    () async {
+      final red = _RedProhibida();
+      final lector = LectorTextoFalso('TOTAL 120.50');
+      final texto = await HttpOverrides.runWithHttpOverrides(
+        () => lector.leer(foto),
+        red,
+      );
+      expect(texto, 'TOTAL 120.50');
+      expect(lector.imagenesRecibidas.single, foto);
+      expect(red.intentos, 0);
+    },
+  );
 
   test('el código real de imagen no usa red', () {
     final f = File('lib/modulos/finanzas/datos/imagen_telefono.dart');
@@ -60,19 +63,19 @@ void main() {
     expect(codigo, isNot(contains('dio')));
   });
 
-  test('el comprobante queda ligado al gasto y en la carpeta privada', () async {
-    final c = ComprobanteLocalArchivos(Directory('${tmp.path}/comprobantes'));
-    await c.guardar('gasto-1', foto);
-    expect(await c.existe('gasto-1'), isTrue);
-    expect(await c.existe('gasto-2'), isFalse);
-    expect(await c.leer('gasto-1'), foto);
-    expect(
-      File('${tmp.path}/comprobantes/gasto-1.jpg').existsSync(),
-      isTrue,
-    );
-    await c.borrar('gasto-1');
-    expect(await c.existe('gasto-1'), isFalse);
-  });
+  test(
+    'el comprobante queda ligado al gasto y en la carpeta privada',
+    () async {
+      final c = ComprobanteLocalArchivos(Directory('${tmp.path}/comprobantes'));
+      await c.guardar('gasto-1', foto);
+      expect(await c.existe('gasto-1'), isTrue);
+      expect(await c.existe('gasto-2'), isFalse);
+      expect(await c.leer('gasto-1'), foto);
+      expect(File('${tmp.path}/comprobantes/gasto-1.jpg').existsSync(), isTrue);
+      await c.borrar('gasto-1');
+      expect(await c.existe('gasto-1'), isFalse);
+    },
+  );
 
   test('un id con ruta no sale de la carpeta del comprobante', () async {
     final c = ComprobanteLocalArchivos(Directory('${tmp.path}/comprobantes'));
