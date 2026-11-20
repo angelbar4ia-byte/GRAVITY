@@ -92,10 +92,18 @@ class _HojaRepartirState extends ConsumerState<HojaRepartirIngreso> {
     super.dispose();
   }
 
-  TextEditingController _campo(int i, int centavos) => _campos.putIfAbsent(
-    i,
-    () => TextEditingController(text: textoDeCentavos(centavos)),
-  );
+  /// Con los montos ocultos el campo nace vacío (y se vacía si se ocultan
+  /// después): la cifra no debe verse sin pasar por «Mostrar montos».
+  TextEditingController _campo(int i, int centavos, bool ocultos) {
+    final c = _campos.putIfAbsent(
+      i,
+      () => TextEditingController(text: ocultos ? '' : textoDeCentavos(centavos)),
+    );
+    if (ocultos && c.text.isNotEmpty && centavosDeTexto(c.text) == centavos) {
+      c.clear();
+    }
+    return c;
+  }
 
   void _cambiar(int i, String texto) {
     final centavos = centavosDeTexto(texto);
@@ -297,6 +305,7 @@ class _HojaRepartirState extends ConsumerState<HojaRepartirIngreso> {
         armarCambioDeReparto(vigente: vigente, editada: p).hayCambios;
     final guardable = datosCompletos && cambiando && hayCambios;
     final tema = Theme.of(context);
+    final ocultos = ref.watch(montosOcultosProvider);
 
     Widget fila(int i) {
       final l = p.lineas[i];
@@ -311,14 +320,19 @@ class _HojaRepartirState extends ConsumerState<HojaRepartirIngreso> {
                     width: 128,
                     child: TextField(
                       key: ValueKey('repartir-linea-$i'),
-                      controller: _campo(i, l.monto),
+                      controller: _campo(i, l.monto, ocultos),
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                       ),
                       textAlign: TextAlign.end,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         isDense: true,
-                        prefixText: r'$ ',
+                        prefixText: ocultos ? null : r'$ ',
+                        hintText: ocultos ? 'Monto' : null,
+                        labelText: ocultos ? '${l.etiqueta}, monto oculto' : null,
+                        floatingLabelBehavior: ocultos
+                            ? FloatingLabelBehavior.never
+                            : null,
                       ),
                       onChanged: (t) => _cambiar(i, t),
                     ),
