@@ -25,6 +25,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../diseno/diseno.dart';
 import '../datos/repositorio.dart';
 import '../estado/proveedores.dart';
+import '../estado/proveedores_fugas.dart' show avisosFugasRevisadosProvider;
 import 'sincronia_finanzas.dart';
 
 // ------------------------------------------------------------------ fechas
@@ -418,6 +419,16 @@ class ConDatosFinanzas extends ConsumerWidget {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (context.mounted) {
               ref.read(cierresRevisadosProvider.notifier).revisar(libro.id);
+            }
+          });
+        }
+        // Fugas y deuda buena o mala (Fase 8, bloque 6): los avisos se emiten
+        // al abrir el libro, solo si la persona lo lleva (sin cifras, D20).
+        if (c.puedeEscribir &&
+            !ref.read(avisosFugasRevisadosProvider).contains(libro.id)) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (context.mounted) {
+              ref.read(avisosFugasRevisadosProvider.notifier).revisar(libro.id);
             }
           });
         }

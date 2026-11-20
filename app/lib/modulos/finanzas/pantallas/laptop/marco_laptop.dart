@@ -31,6 +31,7 @@ enum SeccionFinanzas {
     Icons.event_repeat_outlined,
   ),
   deudas('deudas', 'Deudas', Icons.credit_card_outlined),
+  fugas('fugas', 'Fugas', Icons.water_drop_outlined),
   simulador('simulador', 'Simulador de deudas', Icons.compare_arrows),
   tarjetas('tarjetas', 'Tarjetas y beneficios', Icons.credit_card),
   ahorro('ahorro', 'Ahorro y fondo', Icons.savings_outlined),
@@ -74,6 +75,9 @@ enum SeccionFinanzas {
     SeccionFinanzas.arranque => c.puedeAdministrar,
     SeccionFinanzas.importar => c.administraHogar && !c.permiso.comoMaestra,
     SeccionFinanzas.ajustes => c.puedeAdministrar || c.administraHogar,
+    // Fugas y deuda buena o mala: solo quien lleva el libro (D5).
+    SeccionFinanzas.fugas =>
+      (c.rol == Rol.dueno || c.rol == Rol.coadministrador) && c.permiso.leer,
     SeccionFinanzas.patrimonio => permisoPatrimonio(
       c.permiso,
       c.rol,

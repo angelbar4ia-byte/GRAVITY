@@ -23,6 +23,7 @@ import '../../casos_uso/servicio_finanzas.dart';
 import '../../casos_uso/sugerencias.dart';
 import '../../estado/proveedores.dart';
 import '../comunes.dart';
+import '../fugas/campos_comercio.dart';
 import 'marco_hoja.dart';
 import 'nueva_cuenta_en_hoja.dart';
 
@@ -79,14 +80,18 @@ class _HojaRegistrarGastoState extends ConsumerState<HojaRegistrarGasto> {
   String? _cuentaId;
   Fecha? _fecha;
   bool _conNota = false;
+  bool _conComercio = false;
+  bool _cargoAutomatico = false;
   bool _creandoCuenta = false;
   final _nota = TextEditingController();
+  final _comercio = TextEditingController();
   final _motivo = TextEditingController();
   bool _guardando = false;
 
   @override
   void dispose() {
     _nota.dispose();
+    _comercio.dispose();
     _motivo.dispose();
     super.dispose();
   }
@@ -104,6 +109,8 @@ class _HojaRegistrarGastoState extends ConsumerState<HojaRegistrarGasto> {
         fecha: _fecha,
         nota: _conNota ? _nota.text : null,
         motivo: libro.tipo == dom.TipoLibro.representado ? _motivo.text : null,
+        comercio: _conComercio ? _comercio.text : null,
+        cobroAutomatico: _conComercio && _cargoAutomatico,
       );
       if (mounted) avisarGuardado(context, r, servicio);
       if (navegador.canPop()) navegador.pop();
@@ -350,8 +357,22 @@ class _HojaRegistrarGastoState extends ConsumerState<HojaRegistrarGasto> {
                 selected: _conNota,
                 onSelected: (s) => setState(() => _conNota = s),
               ),
+              // Fugas silenciosas: opcional, sin pasos obligatorios.
+              FilterChip(
+                key: const ValueKey('gasto-con-comercio'),
+                label: const Text('Comercio'),
+                selected: _conComercio,
+                onSelected: (s) => setState(() => _conComercio = s),
+              ),
             ],
           ),
+          if (_conComercio) ...[
+            CampoComercio(controlador: _comercio),
+            CasillaCargoAutomatico(
+              valor: _cargoAutomatico,
+              alCambiar: (v) => setState(() => _cargoAutomatico = v),
+            ),
+          ],
           if (_conNota)
             TextField(
               key: const ValueKey('gasto-nota'),

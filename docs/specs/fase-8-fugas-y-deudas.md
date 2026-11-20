@@ -572,6 +572,27 @@ Verificación del **18/nov/2026**: las páginas de `www.gob.mx` y `www.bbva.com`
 - **H-02 (sin dato de pagos al corte).** Corregido: `CorteDeTarjeta.pagosAlCorteCentavos` es nulo si no se capturó; migración `20261150`. Los registros anteriores con 0 se leen como nulo en la vista de vigentes.
 - **H-11.** El objetivo de una deuda tampoco admite «$» (igual que el servidor).
 
+## Estado de construcción
+
+| Etapa | Estado | Dónde |
+|---|---|---|
+| Dominio (`fugas.dart`, `deuda_calidad.dart`, `parametros_fugas.dart`) | Hecho (DF y DD en verde) | `paquetes/finanzas_dominio` |
+| Servidor (migraciones `20261146` y `20261150`, RPC, RLS, pruebas SQ) | Hecho; no aplicado a ningún proyecto de Supabase | `supabase/` |
+| **F8-6.10 · 1. Capa de datos** | **Hecho.** `RepositorioFugas` (memoria y Supabase: lee las vistas `fin_v_*`; escribe solo por RPC idempotentes por id y con señal), `ServicioFugas` (permisos por rol, cálculo local con `analizarFugas` y `evaluarDeudas`), proveedores y recarga junto con Realtime | `app/lib/modulos/finanzas/{datos,casos_uso,estado}/*fugas*` |
+| **2. Pantalla «Fugas»** | **Hecho** (laptop: sección «Fugas» de la barra lateral; teléfono: botón «Fugas» y ruta `/finanzas/fugas`). Resumen de las 4 fugas, «Por reconocer», lista por tipo con regla y acción sugerida (reconocer, «ya no lo uso», «ya lo cancelé» con fecha y folio, «No es así» con motivo), «Revisa un cobro» y revisión mensual de hasta 7 preguntas | `app/lib/modulos/finanzas/pantallas/fugas/` |
+| **3. Deudas** | **Hecho:** etiqueta (semáforo con texto) y señales en cada deuda, «Declarar para qué fue» (solo laptop), gadget «Tus MSI y tu ingreso» y vista previa en «Compra a meses». No hay una pestaña aparte «Buena o mala»: va dentro de cada tarjeta de deuda | `.../pantallas/fugas/vista_calidad_deuda.dart`, `fase2/vista_deudas.dart` |
+| **4. Registro de gasto** | **Hecho:** «Comercio» (opcional) y «Es un cargo automático» en el teléfono (chip «Comercio») y en la laptop; el movimiento los lleva por la cola de siempre (la migración `20261146` ya da `INSERT` sobre las dos columnas: no hizo falta migración nueva) | `servicio_finanzas.dart`, `hoja_gasto.dart`, `dialogo_movimiento.dart`, `filas.dart` |
+| **5. Avisos** | **Hecho:** `fuga_por_reconocer`, `fuga_revision_mensual`, `deuda_en_vigilancia` y `deuda_se_volvio_mala` con `fin_emitir_aviso`, sin cifras ni comercios, al abrir el libro | `servicio_fugas.dart` (`emitirAvisos`) |
+| Herramientas de GRAVITY (`fin_fugas_resumen`, `fin_fuga_marcar`), reporte de fugas, panel de detalle de la laptop, pantalla de umbrales, tarjeta en «Hoy» (módulo Hoy) | **Pendiente** (fuera del paquete F8-6.10) | — |
+
+Lecturas que hizo F8-6.10 donde la especificación no es del todo clara (el dueño las confirma):
+1. **«Guardar la decisión toma 2 toques» (UI-2) y motivo obligatorio (4.2, regla 2):** «Lo necesito, pero quiero revisarlo» se guarda al tocarlo (dos toques en total) porque no contradice a la regla; «No es una fuga» y «Es de otro tipo» piden el motivo (3 a 200 caracteres) antes de guardar.
+2. **Histéresis:** pasar de «Por declarar» a un nivel juzgado es inmediato (la histéresis evita el vaivén entre niveles ya juzgados). Las bajas de nivel se cuentan una vez por semana, con el `lunes` de la fila de `fin_deuda_semaforo`.
+3. **Claves de los avisos de deuda:** `deuda:{id}:{rojo|ambar}:{lunes}` (la spec dice `deuda:{id}:rojo`): con el lunes en la clave, un deterioro nuevo semanas después vuelve a avisar y un mismo cambio, calculado por dos dispositivos, avisa una sola vez.
+4. **El patrón nace al contestar o al avisar:** los patrones se detectan en el dispositivo; la fila de `fin_patrones_cobro` (id estable `idEstable('fuga-patron:{libro}:{clave}')`) se crea, de forma idempotente, cuando la persona contesta, cancela o cuando hay que colgarle el aviso `fuga_por_reconocer`.
+5. **Sin diccionario del hogar:** el comercio se normaliza con las reglas del dominio; no hay aún almacén del diccionario de alias (5.2).
+6. **Categorías:** luz, agua y gas bajo «Vivienda…», «comisiones» e «intereses», y «seguros», se reconocen por el nombre de la categoría (plantilla del hogar).
+
 ## Control de cambios
 
 | Versión | Fecha | Cambio |
@@ -579,3 +600,4 @@ Verificación del **18/nov/2026**: las páginas de `www.gob.mx` y `www.bbva.com`
 | 0.1 | 18/nov/2026 | Primera versión, propuesta para aprobación del dueño |
 | 0.2 | 18/nov/2026 | Respuestas del dueño (12.1) y D30 registrada; el vampiro y el zombi por ajustar en 0.3 |
 | 0.3 | 18/nov/2026 | Fuentes verificadas en gob.mx y bbva.com (sección 13: estado, URL y texto citado de cada una; lo no encontrado queda como propuesta). Respuestas del dueño en el cuerpo: vampiro con servicios del hogar que se inflan (V-C, contra su mediana) e intereses por pagar solo el mínimo (V-D); zombi con baja formal y folio de cancelación (Z5 y captura del folio); crédito automotriz como `genera_ingreso`; tarjeta con intereses como deuda mala; deuda mala solo avisa; Comercio, cargo automático y revisión mensual confirmados. Umbrales nuevos: servicios 25 % sobre la mediana en 2 de 3 periodos con mínimo de 6; intereses por el mínimo con un solo corte. Salta de 0.1 a 0.3 por indicación del arquitecto |
+| 0.4 | 20/nov/2026 | F8-6.10: pantallas de fugas y de deuda buena o mala, comercio y cargo automático en el registro, avisos de la app (ver «Estado de construcción») |

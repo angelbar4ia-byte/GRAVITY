@@ -9,6 +9,7 @@ import '../fase2/vista_deudas.dart';
 import '../fase2/vista_simulador.dart';
 import '../fase2/vista_tarjetas.dart';
 import '../fase2/vista_vencimientos.dart';
+import '../fugas/vista_fugas.dart';
 import '../patrimonio/vista_patrimonio.dart';
 import 'marco_laptop.dart';
 
@@ -19,6 +20,17 @@ class PantallaDeudas extends StatelessWidget {
   Widget build(BuildContext context) => MarcoFinanzasLaptop(
     seccion: SeccionFinanzas.deudas,
     builder: (context, c) => VistaDeudas(contexto: c),
+  );
+}
+
+/// Fugas silenciosas (Fase 8, bloque 6).
+class PantallaFugas extends StatelessWidget {
+  const PantallaFugas({super.key});
+
+  @override
+  Widget build(BuildContext context) => MarcoFinanzasLaptop(
+    seccion: SeccionFinanzas.fugas,
+    builder: (context, c) => VistaFugas(contexto: c),
   );
 }
 

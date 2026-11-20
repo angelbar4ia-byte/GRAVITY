@@ -215,6 +215,14 @@ class Movimiento {
   /// confirmarlo (5.0 ter).
   final EstadoMovimiento estadoInicial;
 
+  /// Comercio donde se hizo el gasto (opcional, hasta 80 caracteres). Dato del
+  /// libro: jamás sale en un aviso, a la IA ni a las bocinas (D3, D20). Solo
+  /// se llena al registrar (fugas silenciosas, Fase 8, bloque 6).
+  final String? comercio;
+
+  /// La persona marcó "es un cargo automático" al registrar el gasto.
+  final bool cobroAutomatico;
+
   Movimiento({
     required this.id,
     required this.tipo,
@@ -233,6 +241,8 @@ class Movimiento {
     this.anulaA,
     this.enNombreDe,
     this.estadoInicial = EstadoMovimiento.confirmado,
+    this.comercio,
+    this.cobroAutomatico = false,
   }) : registradoPor = registradoPor ?? realizadoPor {
     if (estadoInicial != EstadoMovimiento.confirmado &&
         estadoInicial != EstadoMovimiento.pendiente) {
@@ -260,6 +270,8 @@ class Movimiento {
     anulaA: anulaA,
     enNombreDe: enNombreDe,
     estadoInicial: estadoInicial,
+    comercio: comercio,
+    cobroAutomatico: cobroAutomatico,
   );
 
   bool mismoContenido(Movimiento o) =>
@@ -279,7 +291,9 @@ class Movimiento {
       o.motivo == motivo &&
       o.anulaA == anulaA &&
       o.enNombreDe == enNombreDe &&
-      o.estadoInicial == estadoInicial;
+      o.estadoInicial == estadoInicial &&
+      o.comercio == comercio &&
+      o.cobroAutomatico == cobroAutomatico;
 
   @override
   String toString() =>

@@ -179,6 +179,14 @@ final fuenteCambiosFinanzasProvider = Provider<FuenteCambiosFinanzas?>((ref) {
   return null;
 });
 
+/// Quien vive junto a Finanzas y debe ponerse al día cuando ella lo hace (la
+/// recarga por Realtime, entrar, volver, «Actualizar») se registra aquí con su
+/// función de recarga y se da de baja al desecharse. Las fugas silenciosas y la
+/// calidad de las deudas lo usan (Fase 8, bloque 6). La lista es mutable a
+/// propósito: es un registro, no un estado.
+final recargasAuxiliaresFinanzasProvider =
+    Provider<List<Future<void> Function()>>((ref) => []);
+
 /// Cuándo se vuelve a pedir lo de Finanzas sin que la persona lo pida
 /// ([ServicioSincroniaFinanzas]). Uno por persona; vive lo que viva la app y
 /// solo escucha mientras haya una pantalla de Finanzas abierta.
@@ -186,8 +194,17 @@ final sincroniaFinanzasProvider = Provider<ServicioSincroniaFinanzas>((ref) {
   ref.watch(sesionEfectivaProvider.select((s) => s?.persona.id));
   final servicio = ServicioSincroniaFinanzas(
     fuente: ref.watch(fuenteCambiosFinanzasProvider),
-    recargar: () =>
-        ref.read(cargaFinanzasProvider.notifier).recargarEnSegundoPlano(),
+    recargar: () async {
+      await ref.read(cargaFinanzasProvider.notifier).recargarEnSegundoPlano();
+      // Lo que vive junto a Finanzas (las fugas) se pone al día con ella.
+      for (final extra in [...ref.read(recargasAuxiliaresFinanzasProvider)]) {
+        try {
+          await extra();
+        } catch (_) {
+          // Sin señal se queda con lo último que se cargó.
+        }
+      }
+    },
   );
   ref.onDispose(servicio.liberar);
   return servicio;

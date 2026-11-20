@@ -26,6 +26,7 @@ import '../../importacion/lector_xlsx.dart' show ErrorArchivo;
 import '../../estado/proveedores.dart';
 import '../../estado/proveedores_fase2.dart';
 import '../comunes.dart';
+import '../fugas/vista_calidad_deuda.dart' show VistaPreviaMsiNuevo;
 import '../laptop/importar.dart' show ArchivoElegido, selectorArchivoProvider;
 
 /// Marco de los formularios de la Fase 2. Con [necesitaSenal] (estados de
@@ -355,10 +356,28 @@ class _MsiState extends ConsumerState<DialogoMsi> {
   void initState() {
     super.initState();
     _compra = ref.read(hoyFinanzasProvider);
+    // La vista previa (Fase 8, bloque 6) se actualiza con el total y los meses.
+    _total.addListener(_refrescar);
+    _meses.addListener(_refrescar);
+  }
+
+  void _refrescar() {
+    if (mounted) setState(() {});
+  }
+
+  /// Mensualidad de la compra que se está capturando (0 si aún no hay total
+  /// o meses válidos).
+  int get _mensualidad {
+    final total = centavosDeTexto(_total.text);
+    final meses = int.tryParse(_meses.text);
+    if (total == null || total <= 0 || meses == null || meses < 2) return 0;
+    return dividirRedondeando(total, meses);
   }
 
   @override
   void dispose() {
+    _total.removeListener(_refrescar);
+    _meses.removeListener(_refrescar);
     for (final c in [_comercio, _total, _meses, _dia, _pagadas]) {
       c.dispose();
     }
@@ -436,6 +455,12 @@ class _MsiState extends ConsumerState<DialogoMsi> {
             ],
             onChanged: (v) => _tarjeta = v,
           ),
+        // Vista previa: cómo quedaría el semáforo de tus MSI. Solo informa;
+        // nunca bloquea ni pide una confirmación extra (Fase 8, bloque 6).
+        VistaPreviaMsiNuevo(
+          libroId: c.libroId,
+          mensualidadCentavos: _mensualidad,
+        ),
       ],
       alGuardar: () async {
         await ref

@@ -35,6 +35,9 @@ class ResultadoRegistro {
   bool get enCola => resultado == ResultadoEscritura.enCola;
 }
 
+/// Máximo de caracteres del comercio de un gasto (`fin_movimientos.comercio`).
+const comercioMaximo = 80;
+
 /// Motivo de la anulación al deshacer justo después de capturar (F1).
 const motivoDeshacer = 'Deshecho al capturar';
 
@@ -212,8 +215,11 @@ class ServicioFinanzas {
     String? nota,
     String? motivo,
     ViaCaptura via = ViaCaptura.manual,
+    String? comercio,
+    bool cobroAutomatico = false,
   }) async {
     _exigirEscribir(libroId);
+    final comercioLimpio = _comercioLimpio(comercio);
     if (lineas.isEmpty || lineas.any((l) => l.monto <= 0)) {
       throw const ErrorFinanzas('Escribe un monto mayor que cero.');
     }
@@ -253,12 +259,25 @@ class ServicioFinanzas {
           nota: _limpio(l.nota ?? nota),
           motivo: _limpio(motivo),
           enNombreDe: quien.enNombreDe,
+          comercio: comercioLimpio,
+          cobroAutomatico: cobroAutomatico,
         ),
       );
     }
     final r = await repositorio.agregarMovimientos(movimientos);
     _cambio([libroId]);
     return ResultadoRegistro(movimientos, r);
+  }
+
+  /// Comercio opcional de un gasto (fugas silenciosas): sin espacios de más,
+  /// hasta [comercioMaximo] caracteres; vacío = sin comercio.
+  static String? _comercioLimpio(String? texto) {
+    final t = texto?.trim().replaceAll(RegExp(r'\s+'), ' ');
+    if (t == null || t.isEmpty) return null;
+    if (t.runes.length > comercioMaximo) {
+      throw ErrorFinanzas('El comercio admite hasta $comercioMaximo letras.');
+    }
+    return t;
   }
 
   String? _cuentaPorClasificar(String libroId) =>

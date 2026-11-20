@@ -21,6 +21,9 @@ import '../../../../diseno/diseno.dart';
 import '../../casos_uso/servicio_fase2.dart';
 import '../../estado/proveedores.dart';
 import '../../estado/proveedores_fase2.dart';
+import '../../estado/proveedores_fugas.dart';
+import '../../casos_uso/servicio_fugas.dart' show DeudaConCalidad;
+import '../fugas/vista_calidad_deuda.dart';
 import '../comunes.dart';
 import 'ayuda_fase2.dart';
 import 'dialogos_fase2.dart';
@@ -41,6 +44,17 @@ class VistaDeudas extends ConsumerWidget {
     final costo = svc.costoDeDeberDe(c.libroId);
     final ocultos = ref.watch(montosOcultosProvider);
     final hueco = SizedBox(height: ValoresDiseno.de(context).espacio * 2);
+    // Buena o mala (Fase 8, bloque 6): solo quien lleva el libro la ve.
+    final verCalidad = ref.watch(puedeVerFugasProvider);
+    final calidad = verCalidad
+        ? {
+            for (final x in ref.watch(calidadDeudasProvider(c.libroId)))
+              x.deuda.id: x,
+          }
+        : const <String, DeudaConCalidad>{};
+    final resumenMsi = verCalidad
+        ? ref.watch(resumenMsiProvider(c.libroId))
+        : null;
 
     if (resumenes.isEmpty) {
       return ListView(
@@ -118,6 +132,10 @@ class VistaDeudas extends ConsumerWidget {
                 ),
         ),
         hueco,
+        if (resumenMsi != null && resumenMsi.activos > 0) ...[
+          GadgetMsiIngreso(resumen: resumenMsi),
+          hueco,
+        ],
         if (resumenes.any((r) => (r.saldo ?? 0) > 0)) ...[
           _TarjetaAbonoExtra(contexto: c),
           hueco,
@@ -146,6 +164,7 @@ class VistaDeudas extends ConsumerWidget {
             ocultos: ocultos,
             telefono: telefono,
             interesMensual: costo.mensualDeReferencia[r.deuda.id],
+            calidad: calidad[r.deuda.id],
           ),
           hueco,
         ],
@@ -161,8 +180,10 @@ class _TarjetaDeDeuda extends ConsumerWidget {
     required this.ocultos,
     required this.telefono,
     this.interesMensual,
+    this.calidad,
   });
 
+  final DeudaConCalidad? calidad;
   final ResumenDeuda resumen;
   final ContextoFinanzas contexto;
   final bool ocultos;
@@ -207,6 +228,8 @@ class _TarjetaDeDeuda extends ConsumerWidget {
                 )
               : null,
         ),
+        if (calidad != null)
+          TarjetaCalidadDeuda(item: calidad!, contexto: c, telefono: telefono),
         if (resumen.uso != null)
           Padding(
             padding: const EdgeInsets.only(top: 8),

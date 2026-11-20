@@ -390,6 +390,10 @@ Map<String, Object?> filaMovimiento(Movimiento m, {required String hogarId}) =>
       'anula_a': m.anulaA,
       'en_nombre_de': m.enNombreDe,
       'estado_inicial': nombreEnum(m.estadoInicial),
+      // Fugas silenciosas (migración 20261146): solo se mandan si la persona
+      // los llenó; sin ellos la fila queda igual que antes.
+      if (m.comercio != null) 'comercio': m.comercio,
+      if (m.cobroAutomatico) 'cobro_automatico': true,
     };
 
 Movimiento movimientoDeFila(Map<String, dynamic> f) => Movimiento(
@@ -412,6 +416,8 @@ Movimiento movimientoDeFila(Map<String, dynamic> f) => Movimiento(
   estadoInicial:
       enumONulo(EstadoMovimiento.values, f['estado_inicial']) ??
       EstadoMovimiento.confirmado,
+  comercio: texto(f['comercio']),
+  cobroAutomatico: f['cobro_automatico'] == true,
 );
 
 // --------------------------------------------------------------- calendario

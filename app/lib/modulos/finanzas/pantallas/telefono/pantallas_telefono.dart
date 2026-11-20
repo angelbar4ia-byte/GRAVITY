@@ -15,8 +15,10 @@ import '../../../../nucleo/contratos/roles.dart';
 import '../../../../nucleo/contratos/rutas.dart';
 import '../../estado/proveedores.dart';
 import '../../estado/proveedores_dispersion.dart';
+import '../../estado/proveedores_fugas.dart';
 import '../comunes.dart';
 import '../fila_movimiento.dart';
+import '../fugas/tarjeta_revisa_cobro.dart';
 import '../tarjeta_ingreso_anulado.dart';
 import '../tarjeta_por_repartir.dart';
 import '../totales_movimientos.dart';
@@ -78,6 +80,12 @@ class _SemanaResumida extends ConsumerWidget {
         // H-03: un ingreso anulado tenía reparto; sus movimientos siguen.
         if (ref.watch(repartosAnuladosPendientesProvider).isNotEmpty) ...[
           const TarjetaIngresoAnuladoConReparto(),
+          hueco,
+        ],
+        // Fugas (Fase 8, bloque 6): una pregunta de la revisión de cobros; sin
+        // cifras. Solo si la persona ve las fugas y hay preguntas.
+        if (ref.watch(preguntasPendientesProvider) > 0) ...[
+          TarjetaRevisaUnCobro(contexto: c),
           hueco,
         ],
         TarjetaModulo(
@@ -188,6 +196,27 @@ class _SemanaResumida extends ConsumerWidget {
           icon: const Icon(Icons.assessment_outlined),
           label: const Text('Reportes'),
         ),
+        if (ref.watch(puedeVerFugasProvider)) ...[
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              OutlinedButton.icon(
+                key: const ValueKey('finanzas-ver-deudas'),
+                onPressed: () => context.go('${Rutas.finanzas}/deudas'),
+                icon: const Icon(Icons.credit_card_outlined),
+                label: const Text('Deudas'),
+              ),
+              OutlinedButton.icon(
+                key: const ValueKey('finanzas-ver-fugas'),
+                onPressed: () => context.go('${Rutas.finanzas}/fugas'),
+                icon: const Icon(Icons.water_drop_outlined),
+                label: const Text('Fugas'),
+              ),
+            ],
+          ),
+        ],
       ],
     );
   }

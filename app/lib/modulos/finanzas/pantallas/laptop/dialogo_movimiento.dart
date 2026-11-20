@@ -15,6 +15,7 @@ import '../../casos_uso/servicio_finanzas.dart';
 import '../../casos_uso/sugerencias.dart';
 import '../../estado/proveedores.dart';
 import '../comunes.dart';
+import '../fugas/campos_comercio.dart';
 import '../registro/hoja_gasto.dart';
 
 Future<void> mostrarDialogoMovimiento(
@@ -53,6 +54,8 @@ class _DialogoMovimientoState extends ConsumerState<DialogoMovimiento> {
   final _lineas = [_Linea()];
   final _monto = TextEditingController();
   final _nota = TextEditingController();
+  final _comercio = TextEditingController();
+  bool _cargoAutomatico = false;
   final _motivo = TextEditingController();
   late Fecha _fecha = widget.contexto.hoy;
   bool _guardando = false;
@@ -67,6 +70,7 @@ class _DialogoMovimientoState extends ConsumerState<DialogoMovimiento> {
     }
     _monto.dispose();
     _nota.dispose();
+    _comercio.dispose();
     _motivo.dispose();
     super.dispose();
   }
@@ -160,6 +164,8 @@ class _DialogoMovimientoState extends ConsumerState<DialogoMovimiento> {
             fecha: _fecha,
             nota: _nota.text,
             motivo: motivo,
+            comercio: _comercio.text,
+            cobroAutomatico: _cargoAutomatico,
           );
         case TipoMovimiento.reembolso:
         case TipoMovimiento.reclasificacion:
@@ -435,6 +441,18 @@ class _DialogoMovimientoState extends ConsumerState<DialogoMovimiento> {
               maxLength: 200,
               decoration: const InputDecoration(labelText: 'Nota (opcional)'),
             ),
+            // Fugas silenciosas: solo en un gasto; ambos son opcionales.
+            if (_tipo == TipoMovimiento.gasto) ...[
+              CampoComercio(
+                controlador: _comercio,
+                llave: const ValueKey('movimiento-comercio'),
+              ),
+              CasillaCargoAutomatico(
+                llave: const ValueKey('movimiento-cargo-automatico'),
+                valor: _cargoAutomatico,
+                alCambiar: (v) => setState(() => _cargoAutomatico = v),
+              ),
+            ],
             if (representado)
               TextFormField(
                 key: const ValueKey('movimiento-motivo'),

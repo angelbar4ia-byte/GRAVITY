@@ -217,9 +217,10 @@ class GastoFuga {
 /// ellos mismos un contraasiento (sección 2, punto 4). Anular un gasto cambia
 /// las fugas de inmediato.
 ///
-/// [comercios] da el comercio por id de movimiento y [automaticos] los ids
-/// marcados como cargo automático; los movimientos de [ViaCaptura.importacion]
-/// cuentan como cobro automático.
+/// El comercio y la marca de cargo automático salen del propio movimiento
+/// ([Movimiento.comercio], [Movimiento.cobroAutomatico]); [comercios] y
+/// [automaticos] los completan por id. Los movimientos de
+/// [ViaCaptura.importacion] cuentan como cobro automático.
 List<GastoFuga> gastosVigentesParaFugas(
   Iterable<Movimiento> movimientos, {
   Map<String, String> comercios = const {},
@@ -238,9 +239,11 @@ List<GastoFuga> gastosVigentesParaFugas(
           fecha: m.fecha,
           monto: m.monto,
           categoriaId: m.categoriaId,
-          comercio: comercios[m.id],
+          comercio: comercios[m.id] ?? m.comercio,
           cobroAutomatico:
-              automaticos.contains(m.id) || m.via == ViaCaptura.importacion,
+              automaticos.contains(m.id) ||
+              m.cobroAutomatico ||
+              m.via == ViaCaptura.importacion,
         ),
   ];
 }

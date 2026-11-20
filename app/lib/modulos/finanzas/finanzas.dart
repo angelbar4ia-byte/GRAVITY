@@ -177,6 +177,15 @@ List<RouteBase> rutasFinanzas() => [
       ),
     ),
   ),
+  GoRoute(
+    path: SeccionFinanzas.fugas.segmento,
+    pageBuilder: _pagina(
+      (_) => const _SegunDispositivo(
+        laptop: PantallaFugas(),
+        telefono: PantallaFugasTelefono(),
+      ),
+    ),
+  ),
   _soloLaptop(SeccionFinanzas.patrimonio, (_) => const PantallaPatrimonio()),
   _soloLaptop(SeccionFinanzas.simulador, (_) => const PantallaSimulador()),
   _soloLaptop(SeccionFinanzas.tarjetas, (_) => const PantallaTarjetas()),

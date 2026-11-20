@@ -13,6 +13,7 @@ import '../comunes.dart';
 import '../fase2/vista_ahorro.dart';
 import '../fase2/vista_deudas.dart';
 import '../fase2/vista_vencimientos.dart';
+import '../fugas/vista_fugas.dart';
 
 class _Marco extends StatelessWidget {
   const _Marco({required this.titulo, required this.cuerpo});
@@ -58,6 +59,16 @@ class PantallaDeudasTelefono extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) => _Marco(
     titulo: 'Deudas',
     cuerpo: (context, c) => VistaDeudas(contexto: c, telefono: true),
+  );
+}
+
+class PantallaFugasTelefono extends ConsumerWidget {
+  const PantallaFugasTelefono({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => _Marco(
+    titulo: 'Fugas',
+    cuerpo: (context, c) => VistaFugas(contexto: c, telefono: true),
   );
 }
 
