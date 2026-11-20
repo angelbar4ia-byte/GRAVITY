@@ -568,7 +568,7 @@ Verificación del **18/nov/2026**: las páginas de `www.gob.mx` y `www.bbva.com`
 ## Pendientes de la revisión de calidad del bloque 6 (F8-6.8)
 
 - **H-09 (`fin_patron_crear` sin bloqueo asesor).** Dos dispositivos que detectan el mismo patrón a la vez: el segundo recibe 23505 en vez del id existente; el reintento funciona. Corrección propuesta: `pg_advisory_xact_lock(hashtextextended('fin_patron:' || p_libro || ':' || v_clave, 0))` antes de buscar. Exige redefinir la función completa en una migración nueva; queda pendiente por ser de bajo riesgo y sin pérdida de datos.
-- **H-04 (un gasto, una sola fuga).** Corregido: la hormiga mide el hábito de la categoría con todas sus compras chicas (H3 a H5) pero no cuenta los gastos que ya sostienen otra fuga confirmada (fantasma > zombi > vampiro > hormiga, sección 4.1).
+- **H-04 (un gasto, una sola fuga) — DECISIÓN DEL DUEÑO (20/nov/2026): se acepta esta solución** (no la regla estricta de prioridad). **Regla de presentación para la pantalla de fugas:** la tarjeta de una hormiga muestra el número de compras y el total del MISMO conjunto de gastos (`gastoIds` y `totalCentavos` de `FugaDetectada`, que salen de la misma lista), nunca el conteo con el que se decidió el hábito. Corregido: la hormiga mide el hábito de la categoría con todas sus compras chicas (H3 a H5) pero no cuenta los gastos que ya sostienen otra fuga confirmada (fantasma > zombi > vampiro > hormiga, sección 4.1).
 - **H-02 (sin dato de pagos al corte).** Corregido: `CorteDeTarjeta.pagosAlCorteCentavos` es nulo si no se capturó; migración `20261150`. Los registros anteriores con 0 se leen como nulo en la vista de vigentes.
 - **H-11.** El objetivo de una deuda tampoco admite «$» (igual que el servidor).
 

@@ -55,7 +55,7 @@ Nota de numeración: en el archivo de pruebas del dominio las etiquetas de los `
 - **Prueba.** No agregué una: el comportamiento es el documentado; la corrección es de diseño.
 - **Corrección propuesta.** (a) Mostrar en la app, al anular un ingreso con reparto aplicado, un diálogo previo: «Este ingreso ya está repartido; también se deshará el reparto» y llamar a `fin_deshacer_dispersion` en la misma operación; o (b) emitir un aviso genérico («Revisa un reparto anulado») y una tarjeta en «Por repartir» con los movimientos huérfanos. Pedir al dueño que confirme cuál.
 
-### H-04 · BAJO · Un mismo gasto puede sostener una hormiga y un fantasma a la vez
+### H-04 · BAJO · Un mismo gasto puede sostener una hormiga y un fantasma a la vez — RESUELTA (20/nov/2026; el dueño aceptó la solución: el hábito se mide con todas las compras, el total y el conteo mostrados excluyen el gasto de otra fuga)
 
 - **Evidencia.** `paquetes/finanzas_dominio/lib/src/fugas.dart:462` (`PatronCobro.automatico` es «cualquiera de sus cobros») y `1360-1372` (`_hormigas` solo excluye los gastos con `cobroAutomatico`, no los que ya sostienen otra fuga). La especificación dice «un gasto, una sola fuga» (`FugaDetectada.gastoIds`, línea 689).
 - **Escenario.** Un cobro mensual de Netflix: tres cargos automáticos y el de noviembre pagado a mano. La persona responde que no lo reconoce (F3 confirmada) y, además, hay siete compras chicas en la misma categoría. El gasto de noviembre sale en `gastoIdsEnFugas` dos veces (hormiga y fantasma) y su monto se suma a ambos totales.
