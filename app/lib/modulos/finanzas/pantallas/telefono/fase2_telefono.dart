@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../app/pantallas/marco_pantalla.dart';
 import '../../../../diseno/diseno.dart';
 import '../../../../nucleo/contratos/roles.dart';
+import '../../estado/proveedores.dart';
 import '../comunes.dart';
 import '../fase2/vista_ahorro.dart';
 import '../fase2/vista_deudas.dart';
@@ -25,7 +26,27 @@ class _Marco extends StatelessWidget {
     child: MarcoPantalla(
       titulo: titulo,
       acciones: const [BotonMontos()],
-      cuerpo: ConDatosFinanzas(builder: cuerpo),
+      cuerpo: ConDatosFinanzas(
+        builder: (context, c) =>
+            _ConDeslizarParaActualizar(child: cuerpo(context, c)),
+      ),
+    ),
+  );
+}
+
+/// Deslizar hacia abajo recarga Finanzas (también cuando la lista es corta).
+class _ConDeslizarParaActualizar extends ConsumerWidget {
+  const _ConDeslizarParaActualizar({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => RefreshIndicator(
+    onRefresh: () => ref.read(sincroniaFinanzasProvider).actualizarAhora(),
+    child: ScrollConfiguration(
+      behavior: ScrollConfiguration.of(context)
+          .copyWith(physics: const AlwaysScrollableScrollPhysics()),
+      child: child,
     ),
   );
 }

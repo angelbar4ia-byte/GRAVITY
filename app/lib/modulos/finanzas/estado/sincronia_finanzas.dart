@@ -5,7 +5,7 @@
 ///   → se espera [espera] (debounce, 1.5 s) y se recarga **una sola vez**.
 /// - **Al entrar o volver** a Finanzas, al volver de segundo plano y al
 ///   reconectar el canal: se recarga si pasaron al menos [minimoEntreRefrescos]
-///   (10 s) desde el último refresco. Si no, se omite (lo cargado es reciente).
+///   (20 s) desde el último refresco. Si no, se omite (lo cargado es reciente).
 /// - **Sin temporizador periódico.** El único temporizador vivo con el módulo
 ///   quieto es el del aplazamiento por una hoja abierta, y solo mientras hay una
 ///   recarga pendiente.
@@ -28,7 +28,7 @@ class ServicioSincroniaFinanzas {
     required this.recargar,
     DateTime Function()? ahora,
     this.espera = const Duration(milliseconds: 1500),
-    this.minimoEntreRefrescos = const Duration(seconds: 10),
+    this.minimoEntreRefrescos = const Duration(seconds: 20),
     this.reintentoHoja = const Duration(seconds: 1),
   }) : _ahora = ahora ?? DateTime.now;
 
@@ -75,7 +75,7 @@ class ServicioSincroniaFinanzas {
 
   /// Una pantalla de Finanzas se montó. [hojaAbierta] dice si hay una hoja o un
   /// diálogo encima. La primera pantalla abre el módulo: se suscribe y refresca
-  /// (con el mínimo de 10 s).
+  /// (con el mínimo de 20 s).
   void abrir({required bool Function() hojaAbierta}) {
     _hojaAbierta = hojaAbierta;
     _abiertos++;

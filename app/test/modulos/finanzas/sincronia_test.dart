@@ -1,7 +1,7 @@
 // F8-6.6: Finanzas al día entre dispositivos (docs/specs/fase-8-finanzas-realtime.md).
 // Sin servidor: una fuente falsa de avisos de Realtime y un reloj que avanza con
 // la prueba. Cubre: aviso con debounce de 1.5 s y una sola recarga por ráfaga,
-// aplazar con una hoja abierta, mínimo de 10 s en entrar/volver/reconectar, sin
+// aplazar con una hoja abierta, mínimo de 20 s en entrar/volver/reconectar, sin
 // temporizador periódico, la reconexión, el mensaje sin datos y que lo pendiente
 // de la cola siga visible tras recargar.
 import 'dart:async';
@@ -221,7 +221,7 @@ void main() {
     });
   });
 
-  group('Servicio: entrar, volver y reconectar (mínimo de 10 s)', () {
+  group('Servicio: entrar, volver y reconectar (mínimo de 20 s)', () {
     testWidgets('al entrar recarga; si acaba de cargar, no', (t) async {
       final b = Banco();
       b.servicio.actualizarLibros({l1});
@@ -239,13 +239,13 @@ void main() {
       c.servicio.liberar();
     });
 
-    testWidgets('volver a entrar al módulo tras más de 10 s recarga', (t) async {
+    testWidgets('volver a entrar al módulo tras más de 20 s recarga', (t) async {
       final b = Banco()..servicio.marcarRefresco();
       b.servicio.actualizarLibros({l1});
       b.abrir();
       await b.pasar(t, const Duration(seconds: 1));
       b.servicio.cerrar();
-      await b.pasar(t, const Duration(seconds: 15));
+      await b.pasar(t, const Duration(seconds: 25));
       expect(b.fuente.escuchando, isFalse, reason: 'cerrado: sin suscripción');
       b.abrir();
       await b.pasar(t, Duration.zero);
@@ -254,7 +254,7 @@ void main() {
       b.servicio.liberar();
     });
 
-    testWidgets('al volver de segundo plano: no antes de 10 s, sí después', (
+    testWidgets('al volver de segundo plano: no antes de 20 s, sí después', (
       t,
     ) async {
       final b = Banco()..servicio.marcarRefresco();
@@ -264,7 +264,7 @@ void main() {
       b.servicio.alVolver();
       await b.pasar(t, Duration.zero);
       expect(b.recargas, 0, reason: 'hace 5 s que se cargó');
-      await b.pasar(t, const Duration(seconds: 6));
+      await b.pasar(t, const Duration(seconds: 16));
       b.servicio.alVolver();
       await b.pasar(t, Duration.zero);
       expect(b.recargas, 1);

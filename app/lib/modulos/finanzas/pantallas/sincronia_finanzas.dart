@@ -22,7 +22,7 @@ bool hayHojaAbierta(BuildContext context) =>
 
 /// Envuelve las pantallas de Finanzas: mientras alguna esté montada, el
 /// servicio escucha los avisos de cambios, y al volver de segundo plano pide
-/// lo de Finanzas de nuevo (con el mínimo de 10 s entre refrescos).
+/// lo de Finanzas de nuevo (con el mínimo de 20 s entre refrescos).
 class AnfitrionSincroniaFinanzas extends ConsumerStatefulWidget {
   const AnfitrionSincroniaFinanzas({super.key, required this.child});
 
