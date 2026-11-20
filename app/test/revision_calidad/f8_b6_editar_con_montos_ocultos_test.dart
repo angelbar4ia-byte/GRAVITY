@@ -1,4 +1,4 @@
-// Revisión de calidad del bloque 6 de Finanzas (Fase 8), hallazgo H-02.
+// Revisión de calidad del bloque 6 de Finanzas (Fase 8), hallazgo H-01.
 // Con los montos ocultos, tocar «Editar» en la hoja «Repartir ingreso» deja los
 // campos de texto con los montos de cada renglón ya escritos: se ven las cifras
 // sin pasar por «Mostrar montos» (que pide PIN o huella). La hoja ya cuida este
@@ -27,7 +27,7 @@ ProviderContainer _contenedor(WidgetTester t) =>
 
 void main() {
   testWidgets(
-    'H-02: con los montos ocultos, «Editar» no deja ver los montos de los '
+    'H-01: con los montos ocultos, «Editar» no deja ver los montos de los '
     'renglones',
     (tester) async {
       final repo = await montarFinanzasConTamano(

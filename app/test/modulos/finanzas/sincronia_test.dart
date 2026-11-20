@@ -301,6 +301,19 @@ void main() {
       b.servicio.liberar();
     });
 
+    testWidgets('H-06: reconectar tras una caída recarga aunque el último '
+        'refresco sea de hace 5 s', (t) async {
+      final b = Banco()..servicio.marcarRefresco();
+      b.servicio.actualizarLibros({l1});
+      b.abrir();
+      await b.pasar(t, const Duration(seconds: 5));
+      expect(b.recargas, 0, reason: 'entrar con carga reciente no recarga');
+      b.fuente.reconectado();
+      await b.pasar(t, Duration.zero);
+      expect(b.recargas, 1, reason: 'pudo perderse un aviso durante la caída');
+      b.servicio.liberar();
+    });
+
     testWidgets('Actualizar a mano siempre recarga, sin esperar los 10 s', (
       t,
     ) async {

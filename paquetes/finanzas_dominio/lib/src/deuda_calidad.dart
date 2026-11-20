@@ -77,13 +77,14 @@ class DeclaracionDeuda {
   });
 }
 
-/// Valida el texto del objetivo: hasta 80 caracteres y sin dígitos (el
-/// comercio y las cifras son datos del libro). Lanza [ArgumentError].
+/// Valida el texto del objetivo: hasta 80 caracteres y sin dígitos ni «\$» (el
+/// comercio y las cifras son datos del libro; igual que el servidor, que
+/// cuenta caracteres Unicode). Lanza [ArgumentError].
 void validarObjetivoTexto(String texto) {
-  if (texto.length > 80) {
+  if (texto.runes.length > 80) {
     throw ArgumentError('El objetivo admite hasta 80 caracteres');
   }
-  if (RegExp(r'\d').hasMatch(texto)) {
+  if (RegExp(r'[0-9$]').hasMatch(texto)) {
     throw ArgumentError('El objetivo no lleva cifras');
   }
 }
@@ -224,7 +225,9 @@ class CorteDeTarjeta {
   final EstadoDeCuenta estado;
 
   /// Pagos registrados entre el corte y su fecha límite (hacia este estado).
-  final int pagosAlCorteCentavos;
+  /// Nulo = «sin dato» (nadie los capturó): NO es lo mismo que cero. Solo un
+  /// cero capturado significa «no pagó nada».
+  final int? pagosAlCorteCentavos;
 
   /// Pagos hechos al estado anterior; sirve cuando el anterior no se capturó
   /// (V-D con un solo corte).
@@ -232,7 +235,7 @@ class CorteDeTarjeta {
 
   const CorteDeTarjeta({
     required this.estado,
-    this.pagosAlCorteCentavos = 0,
+    this.pagosAlCorteCentavos,
     this.pagosCicloAnteriorCentavos,
   });
 
@@ -494,16 +497,18 @@ NivelSenal senalMsiActivos(
 }
 
 /// Cómo se pagó un corte de tarjeta.
-enum PagoDeTarjeta { totalSinIntereses, menosQueElTotal, soloElMinimo }
+enum PagoDeTarjeta { totalSinIntereses, menosQueElTotal, soloElMinimo, sinDato }
 
 /// Clasifica el pago de un corte: el total sin intereses (cubre la mensualidad
 /// de los MSI), solo el mínimo (menor que el total e igual o menor que el
-/// mínimo), o algo en medio.
+/// mínimo), algo en medio, o [PagoDeTarjeta.sinDato] si no se capturaron pagos.
 PagoDeTarjeta clasificarPago(CorteDeTarjeta c) {
-  if (c.pagosAlCorteCentavos >= c.estado.pagoSinIntereses) {
+  final pagos = c.pagosAlCorteCentavos;
+  if (pagos == null) return PagoDeTarjeta.sinDato;
+  if (pagos >= c.estado.pagoSinIntereses) {
     return PagoDeTarjeta.totalSinIntereses;
   }
-  if (c.pagosAlCorteCentavos <= c.estado.pagoMinimo) {
+  if (pagos <= c.estado.pagoMinimo) {
     return PagoDeTarjeta.soloElMinimo;
   }
   return PagoDeTarjeta.menosQueElTotal;
@@ -514,7 +519,8 @@ PagoDeTarjeta clasificarPago(CorteDeTarjeta c) {
 ///
 /// Rojo: solo el mínimo, o intereses en 2 cortes seguidos. Ámbar: intereses en
 /// el último corte, o pagó menos que el total sin intereses. Verde: pagó el
-/// total sin intereses.
+/// total sin intereses. Sin pagos capturados en el último corte no se acusa
+/// nada: «sin dato», salvo intereses en 2 cortes seguidos (no depende del pago).
 NivelSenal senalPagoTarjeta(List<CorteDeTarjeta> cortes) {
   if (cortes.isEmpty) return NivelSenal.sinDato;
   final ultimo = cortes.first;
@@ -522,9 +528,11 @@ NivelSenal senalPagoTarjeta(List<CorteDeTarjeta> cortes) {
       ultimo.estado.intereses > 0 &&
       cortes.length > 1 &&
       cortes[1].estado.intereses > 0;
-  if (clasificarPago(ultimo) == PagoDeTarjeta.soloElMinimo || dosSeguidos) {
+  final pago = clasificarPago(ultimo);
+  if (pago == PagoDeTarjeta.soloElMinimo || dosSeguidos) {
     return NivelSenal.rojo;
   }
+  if (pago == PagoDeTarjeta.sinDato) return NivelSenal.sinDato;
   if (ultimo.estado.intereses > 0 ||
       clasificarPago(ultimo) != PagoDeTarjeta.totalSinIntereses) {
     return NivelSenal.ambar;

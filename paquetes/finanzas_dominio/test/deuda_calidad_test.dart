@@ -770,6 +770,7 @@ void main() {
         () => validarObjetivoTexto('Laptop de 12000'),
         throwsArgumentError,
       );
+      expect(() => validarObjetivoTexto(r'Casa $'), throwsArgumentError);
       expect(() => validarObjetivoTexto('x' * 81), throwsArgumentError);
       expect(() => validarObjetivoTexto('x' * 80), returnsNormally);
     });

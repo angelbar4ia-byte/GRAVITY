@@ -47,7 +47,12 @@ void main() {
 
     test('todo tipo tiene severidad y canal, y la lista es la de la especificación', () {
       expect(titulosDeAviso.keys.toSet(), severidadDeAviso.keys.toSet());
-      expect(titulosDeAviso, hasLength(30));
+      expect(titulosDeAviso, hasLength(34));
+      // H-08: los cuatro avisos de fugas y deuda, con la severidad del servidor.
+      expect(severidadDeAviso['deuda_se_volvio_mala'], SeveridadAviso.critica);
+      expect(severidadDeAviso['fuga_por_reconocer'], SeveridadAviso.importante);
+      expect(severidadDeAviso['deuda_en_vigilancia'], SeveridadAviso.importante);
+      expect(severidadDeAviso['fuga_revision_mensual'], SeveridadAviso.informativa);
       // Dispersión de ingresos (F8-6.5): informativo, sin cifras ni nombres.
       expect(canalDe('ingreso_por_repartir'), CanalAviso.informativos);
       expect(

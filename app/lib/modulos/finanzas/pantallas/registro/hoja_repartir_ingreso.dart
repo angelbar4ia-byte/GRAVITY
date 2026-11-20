@@ -92,17 +92,14 @@ class _HojaRepartirState extends ConsumerState<HojaRepartirIngreso> {
     super.dispose();
   }
 
-  /// Con los montos ocultos el campo nace vacío (y se vacía si se ocultan
-  /// después): la cifra no debe verse sin pasar por «Mostrar montos».
+  /// Con los montos ocultos el campo nace vacío: la cifra no debe verse sin pasar por «Mostrar montos».
   TextEditingController _campo(int i, int centavos, bool ocultos) {
-    final c = _campos.putIfAbsent(
+    return _campos.putIfAbsent(
       i,
-      () => TextEditingController(text: ocultos ? '' : textoDeCentavos(centavos)),
+      () => TextEditingController(
+        text: ocultos ? '' : textoDeCentavos(centavos),
+      ),
     );
-    if (ocultos && c.text.isNotEmpty && centavosDeTexto(c.text) == centavos) {
-      c.clear();
-    }
-    return c;
   }
 
   void _cambiar(int i, String texto) {

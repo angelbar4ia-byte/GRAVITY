@@ -84,6 +84,12 @@ const Map<String, String> titulosDeAviso = {
   'transferencia_pendiente': 'Tienes una transferencia por confirmar.',
   // Dispersión de ingresos (Fase 8): sin monto ni nombre; el detalle va en la bandeja.
   'ingreso_por_repartir': 'Tienes un ingreso por repartir',
+  // Fugas y deuda buena o mala (Fase 8, bloque 6): sin cifras, comercios ni
+  // nombres; los mismos títulos que fin_fugas_aviso_titulo en el servidor.
+  'fuga_por_reconocer': 'Hay un cobro por reconocer',
+  'fuga_revision_mensual': 'Tienes una revisión de cobros',
+  'deuda_en_vigilancia': 'Revisa una deuda a meses',
+  'deuda_se_volvio_mala': 'Una deuda necesita atención',
   'base_80': 'Revisa el almacenamiento de GRAVITY',
   'base_90': 'Revisa el almacenamiento de GRAVITY',
 };
@@ -107,6 +113,11 @@ const Map<String, SeveridadAviso> severidadDeAviso = {
   'transferencia_pendiente': SeveridadAviso.importante,
   // Informativo: no urge; la hoja «Repartir ingreso» vive en Finanzas.
   'ingreso_por_repartir': SeveridadAviso.informativa,
+  // Fugas y deuda (mismas severidades que avisos_severidad en el servidor).
+  'deuda_se_volvio_mala': SeveridadAviso.critica,
+  'fuga_por_reconocer': SeveridadAviso.importante,
+  'deuda_en_vigilancia': SeveridadAviso.importante,
+  'fuga_revision_mensual': SeveridadAviso.informativa,
   // D24: el familiar pidió la vista temporal de Finanzas de Papá.
   'solicitud_vista': SeveridadAviso.critica,
   // Cuidados: el cambio urgente del dueño llega al instante a quien está de turno.

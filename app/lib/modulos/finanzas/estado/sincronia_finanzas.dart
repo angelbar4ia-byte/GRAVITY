@@ -6,6 +6,9 @@
 /// - **Al entrar o volver** a Finanzas, al volver de segundo plano y al
 ///   reconectar el canal: se recarga si pasaron al menos [minimoEntreRefrescos]
 ///   (20 s) desde el último refresco. Si no, se omite (lo cargado es reciente).
+///   Al reconectar tras una caída el mínimo es solo [minimoReconexion] (3 s, para
+///   que varios canales que vuelven a la vez den una sola recarga): pudo
+///   perderse un aviso y un refresco de hace segundos no lo trae.
 /// - **Sin temporizador periódico.** El único temporizador vivo con el módulo
 ///   quieto es el del aplazamiento por una hoja abierta, y solo mientras hay una
 ///   recarga pendiente.
@@ -29,6 +32,7 @@ class ServicioSincroniaFinanzas {
     DateTime Function()? ahora,
     this.espera = const Duration(milliseconds: 1500),
     this.minimoEntreRefrescos = const Duration(seconds: 20),
+    this.minimoReconexion = const Duration(seconds: 3),
     this.reintentoHoja = const Duration(seconds: 1),
   }) : _ahora = ahora ?? DateTime.now;
 
@@ -44,6 +48,10 @@ class ServicioSincroniaFinanzas {
 
   /// Mínimo entre dos refrescos automáticos de entrar, volver y reconectar.
   final Duration minimoEntreRefrescos;
+
+  /// Mínimo al reconectar el canal tras una caída (junta las reconexiones
+  /// simultáneas de varios canales en una sola recarga).
+  final Duration minimoReconexion;
 
   /// Cada cuánto se revisa si ya se cerró la hoja que aplazó la recarga.
   final Duration reintentoHoja;
@@ -129,7 +137,7 @@ class ServicioSincroniaFinanzas {
         // Un aviso por ráfaga: los siguientes dentro de la espera se absorben.
         _temporizadorAviso ??= Timer(espera, _alVencerEspera);
       case CanalReconectado():
-        _refrescarConMinimo();
+        _refrescarConMinimo(minimoReconexion);
     }
   }
 
@@ -143,10 +151,11 @@ class ServicioSincroniaFinanzas {
     unawaited(_ejecutar());
   }
 
-  void _refrescarConMinimo() {
+  void _refrescarConMinimo([Duration? minimo]) {
     if (!_activo) return;
     final ultimo = _ultimoRefresco;
-    if (ultimo != null && _ahora().difference(ultimo) < minimoEntreRefrescos) {
+    if (ultimo != null &&
+        _ahora().difference(ultimo) < (minimo ?? minimoEntreRefrescos)) {
       return;
     }
     if (_hojaAbierta()) {

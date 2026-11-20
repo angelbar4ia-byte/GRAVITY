@@ -13,14 +13,14 @@ Finanzas cargaba una vez al abrir el módulo y solo se actualizaba tras cambios 
 3. **App, mientras Finanzas está abierta** (`ServicioSincroniaFinanzas`):
    - Aviso de cambio → espera 1.5 s (debounce) → **una** recarga por ráfaga. Un aviso que llega durante una recarga pide una más al terminar.
    - **Sin pisar una hoja:** con una hoja o un diálogo abierto, la recarga se aplaza y se hace al cerrarlo (se revisa cada segundo solo mientras hay una recarga pendiente).
-   - Se refresca también al **entrar o volver** al módulo, al **volver de segundo plano** y al **reconectar** el canal, con un **mínimo de 10 s** entre refrescos (si se cargó hace menos, se omite). La carga inicial cuenta como refresco.
+   - Se refresca también al **entrar o volver** al módulo, al **volver de segundo plano** y al **reconectar** el canal, con un **mínimo de 20 s** entre refrescos (si se cargó hace menos, se omite); al **reconectar** tras una caída el mínimo es solo de 3 s (H-06: pudo perderse un aviso; 3 s junta las reconexiones simultáneas de varios canales). La carga inicial cuenta como refresco.
    - **Sin temporizador periódico.**
    - Si la recarga falla (sin señal, servidor caído) se queda con lo último cargado, sin pantalla de error. La cola sin conexión se conserva: el repositorio mezcla lo pendiente con lo del servidor al cargar.
    - **Laptop:** botón discreto «Actualizar» (icono, junto a «Mostrar montos») y atajo **F5** (no hace nada con una hoja abierta). **Teléfono y tablet:** deslizar para actualizar, como antes.
 
 ## Lecturas razonables y decisiones tomadas
 
-- Los avisos del servidor **no** se limitan a 10 s (solo se juntan en 1.5 s): el mínimo de 10 s es para entrar, volver y reconectar. Actualizar a mano siempre recarga.
+- Los avisos del servidor **no** se limitan a 10 s (solo se juntan en 1.5 s): el mínimo de 20 s es para entrar y volver (al reconectar, 3 s). Actualizar a mano siempre recarga.
 - Un mensaje por libro **y por transacción** (no solo por sentencia): una RPC que toca varias tablas manda uno. Un mensaje propio también llega al dispositivo que escribió; la recarga sobrante es barata y evita lógica de «yo ya lo sé».
 - «Actualizar (menú)» se resolvió como botón de icono con tooltip «Actualizar (F5)», no como entrada de menú: Finanzas en la laptop no tiene un menú de acciones propio; se puede mover si el dueño prefiere un menú.
 - La suscripción se decide al unirse: una consulta de la maestra que vence a los 30 minutos no corta un canal abierto, pero la maestra ni siquiera se suscribe desde la app (solo libros propios) y el mensaje no trae datos.
@@ -34,7 +34,7 @@ Finanzas cargaba una vez al abrir el módulo y solo se actualizaba tras cambios 
 4. Una importación masiva (una sentencia) o una RPC con varias tablas emiten un solo mensaje por libro.
 5. Un envío fallido o un servidor sin Realtime no impiden escribir en el libro.
 6. Con una hoja o un diálogo abierto no se recarga hasta cerrarlo.
-7. Ráfaga de avisos = una recarga; mínimo de 10 s al entrar, volver y reconectar; sin temporizador periódico; reconexión del canal refresca.
+7. Ráfaga de avisos = una recarga; mínimo de 20 s al entrar y volver (3 s al reconectar); sin temporizador periódico; reconexión del canal refresca.
 8. Lo pendiente en la cola sigue visible tras recargar.
 9. F5 y «Actualizar» en la laptop; deslizar en el teléfono.
 
@@ -52,4 +52,14 @@ No hay un proyecto de Supabase en este entorno (y no se aplicó nada a ninguno),
 
 ## Qué probar con dos dispositivos reales
 
-Laptop y teléfono con la misma cuenta (o pareja con el compartido): registrar un gasto en uno y ver que aparece en el otro; registrar sin señal y comprobar que sigue visible; abrir una hoja de gasto en la laptop mientras el teléfono registra y comprobar que no se cierra ni se pisa; poner la app en segundo plano más de 10 s y volver; apagar y volver a encender el Wi-Fi de un dispositivo; probar con la cuenta maestra y con la vista temporal de Papá (deben ponerse al día solo al entrar).
+Laptop y teléfono con la misma cuenta (o pareja con el compartido): registrar un gasto en uno y ver que aparece en el otro; registrar sin señal y comprobar que sigue visible; abrir una hoja de gasto en la laptop mientras el teléfono registra y comprobar que no se cierra ni se pisa; poner la app en segundo plano más de 20 s y volver; apagar y volver a encender el Wi-Fi de un dispositivo; probar con la cuenta maestra y con la vista temporal de Papá (deben ponerse al día solo al entrar).
+
+## Pendientes de la revisión de calidad del bloque 6 (F8-6.8)
+
+Corregidos en F8-6.8: mínimo de 20 s en el texto (H-07) y reconexión del canal con mínimo de 3 s en vez de 20 s (H-06).
+
+Quedan pendientes, por no ser una corrección pequeña y segura:
+
+- **H-05 (carrera entre una recarga automática y una escritura propia).** `_cargar` lee la cola primero y el servidor después; una recarga en vuelo puede pisar un gasto recién registrado hasta el siguiente eco de Realtime. Corrección propuesta: un contador de carga en `CargaFinanzasNotifier` que descarte la respuesta que empezó antes de otra publicación. Toca el repositorio y el estado central; conviene un paquete propio con pruebas de concurrencia. No se pierde ningún dato guardado.
+- **H-10 («Deslizar para actualizar» sin alternativa ni retroalimentación).** En teléfono y tablet el único camino manual es el gesto; sin señal el indicador se cierra sin avisar. Corrección propuesta: un elemento «Actualizar» en la barra del teléfono (accesible con TalkBack) y un aviso breve si no se pudo actualizar. Toca varias pantallas del diseño; queda para un paquete de diseño.
+

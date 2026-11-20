@@ -958,7 +958,13 @@ ResultadoFugas analizarFugas(EntradaFugas entrada) {
   }
 
   todas.addAll(_cargosDeCortes(x));
-  final hormigas = _hormigas(x, ref);
+  // Un gasto, una sola fuga principal: la que ya salió de un patrón de cobro
+  // (zombie, fantasma, vampiro...) gana; la hormiga no lo cuenta otra vez.
+  final yaEnFuga = {
+    for (final f in todas)
+      if (f.cuenta) ...f.gastoIds,
+  };
+  final hormigas = _hormigas(x, ref, yaEnFuga);
   todas.addAll(hormigas);
 
   propuestas.addAll(_propuestas(x, patrones, todas));
@@ -1327,9 +1333,9 @@ List<FugaDetectada> _cargosDeCortes(_Ctx x) {
       var porMinimo = false;
       if (ultimo.estado.intereses > 0) {
         final prev = vig.length > 1 ? vig[1] : null;
-        final pagos = prev != null
-            ? prev.pagosAlCorteCentavos
-            : ultimo.pagosCicloAnteriorCentavos;
+        // Nulo = sin dato: no se acusa (no se lee como «pagó cero»).
+        final pagos =
+            prev?.pagosAlCorteCentavos ?? ultimo.pagosCicloAnteriorCentavos;
         final sinIntereses = prev != null
             ? prev.estado.pagoSinIntereses
             : ultimo.estado.pagoSinIntereses;
@@ -1357,7 +1363,7 @@ List<FugaDetectada> _cargosDeCortes(_Ctx x) {
 }
 
 /// Hormiga por subcategoría (H1 a H5), con la ventana de 4 semanas.
-List<FugaDetectada> _hormigas(_Ctx x, int ref) {
+List<FugaDetectada> _hormigas(_Ctx x, int ref, Set<String> yaEnFuga) {
   final p = x.p;
   final ventana = ventanaDeSemanas(x.e.hoy, p.hormigaSemanasVentana);
   final porCat = <String, List<GastoFuga>>{};
@@ -1373,14 +1379,25 @@ List<FugaDetectada> _hormigas(_Ctx x, int ref) {
   final salida = <FugaDetectada>[];
   final claves = porCat.keys.toList()..sort();
   for (final cat in claves) {
-    final lista = porCat[cat]!;
-    if (lista.length < p.hormigaMinGastos) continue; // H3
-    final semanas = {for (final g in lista) Semana.de(g.fecha)};
+    final candidatos = porCat[cat]!;
+    // H3 a H5 miden el hábito de la categoría con todas sus compras chicas...
+    if (candidatos.length < p.hormigaMinGastos) continue; // H3
+    final semanas = {for (final g in candidatos) Semana.de(g.fecha)};
     if (semanas.length < p.hormigaMinSemanas) continue; // H4
-    final suma = lista.fold<int>(0, (a, g) => a + g.monto);
-    if (ref <= 0 || compararProporcion(suma, ref, p.hormigaMinIngresoPb) < 0) {
+    final sumaHabito = candidatos.fold<int>(0, (a, g) => a + g.monto);
+    if (ref <= 0 ||
+        compararProporcion(sumaHabito, ref, p.hormigaMinIngresoPb) < 0) {
       continue; // H5
     }
+    // ...pero un gasto que ya sostiene otra fuga (fantasma, zombie, vampiro:
+    // prioridad de la sección 4.1) no se cuenta dos veces: la hormiga solo
+    // lleva el resto.
+    final lista = [
+      for (final g in candidatos)
+        if (!yaEnFuga.contains(g.id)) g,
+    ];
+    if (lista.isEmpty) continue;
+    final suma = lista.fold<int>(0, (a, g) => a + g.monto);
     final anual = suma * 52 ~/ p.hormigaSemanasVentana;
     final r = FugaDetectada(
       clave: claveHormiga(cat),

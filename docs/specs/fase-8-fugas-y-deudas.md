@@ -565,6 +565,13 @@ Verificación del **18/nov/2026**: las páginas de `www.gob.mx` y `www.bbva.com`
 | W8 | Pago mínimo, intereses y MSI en tarjetas | **Verificada.** BBVA: <https://www.bbva.com/es/salud-financiera/que-es-el-pago-minimo-y-el-pago-para-no-generar-intereses-en-una-tarjeta-de-credito/> | "Pagar sólo el mínimo aumenta el tiempo para liquidar el crédito e incrementa el costo financiero." El pago para no generar intereses descuenta los saldos en "meses sin intereses" y suma "la mensualidad exacta que corresponda cubrir en ese mes". Sin el mínimo a tiempo: "cargos por pago tardío" y atraso en Buró | V-D, B6a, B6b |
 | W9 | Cancelar un cobro: folio, plazos y queja | **Verificada.** Profeco, gob.mx, 5/may/2026: <https://www.gob.mx/profeco/prensa/profeco-orienta-a-la-poblacion-ante-cobros-automaticos-injustificados-al-cancelar-un-servicio?state=published>. Profeco, gob.mx: <https://www.gob.mx/profeco/prensa/que-las-suscripciones-digitales-no-afecten-tu-presupuesto-profeco-te-orienta?idiom=es> | "los proveedores deben proporcionar a las personas un folio o número tras realizar la solicitud de cancelación". "al menos cinco días naturales de anticipación" para avisar una renovación automática. "Desinstalar la aplicación o plataforma no detiene los cobros". Para la queja: "identificación oficial, contrato, folio de cancelación, comprobantes de pago y el estado de cuenta". Lista de preguntas de uso (cuándo se usó por última vez, si el costo subió y ya no vale lo que se paga): "Si dos o más opciones resultan afirmativas, hay que considerar la cancelación inmediata." | Acción del zombie (folio), cobro tras cancelar, apoyo a Z1 |
 
+## Pendientes de la revisión de calidad del bloque 6 (F8-6.8)
+
+- **H-09 (`fin_patron_crear` sin bloqueo asesor).** Dos dispositivos que detectan el mismo patrón a la vez: el segundo recibe 23505 en vez del id existente; el reintento funciona. Corrección propuesta: `pg_advisory_xact_lock(hashtextextended('fin_patron:' || p_libro || ':' || v_clave, 0))` antes de buscar. Exige redefinir la función completa en una migración nueva; queda pendiente por ser de bajo riesgo y sin pérdida de datos.
+- **H-04 (un gasto, una sola fuga).** Corregido: la hormiga mide el hábito de la categoría con todas sus compras chicas (H3 a H5) pero no cuenta los gastos que ya sostienen otra fuga confirmada (fantasma > zombi > vampiro > hormiga, sección 4.1).
+- **H-02 (sin dato de pagos al corte).** Corregido: `CorteDeTarjeta.pagosAlCorteCentavos` es nulo si no se capturó; migración `20261150`. Los registros anteriores con 0 se leen como nulo en la vista de vigentes.
+- **H-11.** El objetivo de una deuda tampoco admite «$» (igual que el servidor).
+
 ## Control de cambios
 
 | Versión | Fecha | Cambio |

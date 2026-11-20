@@ -92,9 +92,25 @@ select pruebas.igual(pruebas.afecta($$insert into public.fin_estados_cuenta (id,
     saldo_al_corte_centavos, pago_minimo_centavos, pago_sin_intereses_centavos, registrado_en)
   values ('b8600000-0000-4000-8000-000000000002', 'b0000000-0000-4000-8000-000000000001', pruebas.libro_personal('alex@ejemplo.test'),
           'e8600000-0000-4000-8000-000000000001', '2026-09-20', '2026-10-09', 300000, 30000, 300000, '2026-09-22 10:00-06')$$), 1,
-  '1: sin el dato, el estado entra igual (pagos 0)');
-select pruebas.igual((select pagos_al_corte_centavos from public.fin_estados_cuenta where id = 'b8600000-0000-4000-8000-000000000002'), 0::bigint,
-  '1: con pagos_al_corte_centavos = 0 por omisión');
+  '1: sin el dato, el estado entra igual');
+select pruebas.ok((select pagos_al_corte_centavos is null from public.fin_estados_cuenta where id = 'b8600000-0000-4000-8000-000000000002'),
+  '1 (H-02): sin el dato, pagos_al_corte_centavos queda NULO (sin dato), no 0');
+select pruebas.ok((select pagos_al_corte_centavos is null from public.fin_v_estados_cuenta_vigentes where id = 'b8600000-0000-4000-8000-000000000002'),
+  '1 (H-02): y la vista de vigentes también lo da como nulo');
+select pruebas.igual(pruebas.afecta($$insert into public.fin_estados_cuenta (id, hogar_id, libro_id, deuda_id, fecha_corte, fecha_limite_pago,
+    saldo_al_corte_centavos, pago_minimo_centavos, pago_sin_intereses_centavos, registrado_en, pagos_al_corte_centavos)
+  values ('b8600000-0000-4000-8000-000000000003', 'b0000000-0000-4000-8000-000000000001', pruebas.libro_personal('alex@ejemplo.test'),
+          'e8600000-0000-4000-8000-000000000001', '2026-07-20', '2026-08-09', 300000, 30000, 300000, now() + interval '1 day', 0)$$), 1,
+  '1 (H-02): un 0 capturado después de la migración se guarda');
+select pruebas.igual((select pagos_al_corte_centavos from public.fin_v_estados_cuenta_vigentes where id = 'b8600000-0000-4000-8000-000000000003'),
+  0::bigint, '1 (H-02): y la vista lo muestra como 0 real (no pagó nada)');
+select pruebas.igual(pruebas.afecta($$insert into public.fin_estados_cuenta (id, hogar_id, libro_id, deuda_id, fecha_corte, fecha_limite_pago,
+    saldo_al_corte_centavos, pago_minimo_centavos, pago_sin_intereses_centavos, registrado_en, pagos_al_corte_centavos)
+  values ('b8600000-0000-4000-8000-000000000004', 'b0000000-0000-4000-8000-000000000001', pruebas.libro_personal('alex@ejemplo.test'),
+          'e8600000-0000-4000-8000-000000000001', '2026-06-20', '2026-07-09', 300000, 30000, 300000, '2026-06-22 10:00-06', 0)$$), 1,
+  '1 (H-02): un registro anterior a la migración con 0 (el valor por omisión de entonces)');
+select pruebas.ok((select pagos_al_corte_centavos is null from public.fin_v_estados_cuenta_vigentes where id = 'b8600000-0000-4000-8000-000000000004'),
+  '1 (H-02): la vista lo devuelve como nulo (sin dato): ese 0 nunca se capturó');
 select pruebas.falla($$insert into public.fin_estados_cuenta (hogar_id, libro_id, deuda_id, fecha_corte, fecha_limite_pago,
     saldo_al_corte_centavos, pago_minimo_centavos, pago_sin_intereses_centavos, registrado_en, pagos_al_corte_centavos)
   values ('b0000000-0000-4000-8000-000000000001', pruebas.libro_personal('alex@ejemplo.test'), 'e8600000-0000-4000-8000-000000000001',

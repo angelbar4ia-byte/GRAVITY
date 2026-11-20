@@ -38,6 +38,7 @@ ResultadoFugas analiza(
     ));
 
 void main() {
+  _correccionesPagosAlCorte();
   test('H-04: un gasto sostiene a UNA sola fuga (no a una hormiga y a un fantasma)',
       () {
     // Un cobro mensual de 129 pesos: tres meses automáticos y el de noviembre
@@ -78,7 +79,7 @@ void main() {
             '${ids.where((i) => ids.where((j) => j == i).length > 1).toSet()}');
   });
 
-  test('H-05: un corte sin pagos capturados no se lee como "pagó cero" '
+  test('H-02: un corte sin pagos capturados no se lee como "pagó cero" '
       '(V-D y B6b)', () {
     EstadoDeCuenta estado(String id, Fecha corte, {int intereses = 0}) =>
         EstadoDeCuenta(
@@ -114,5 +115,70 @@ void main() {
         reason: 'sin dato de pagos no se puede acusar "pagó solo el mínimo"');
     expect(senalPagoTarjeta(cortesVigentes(cortes, 'tc')), NivelSenal.sinDato,
         reason: 'B6b: sin pagos capturados la señal es "sin dato", no rojo');
+  });
+}
+
+// Pruebas de la corrección F8-6.8 (sin dato de pagos al corte).
+void _correccionesPagosAlCorte() {
+  EstadoDeCuenta estado(Fecha corte, {int intereses = 0}) => EstadoDeCuenta(
+        id: 'e${corte.mes}',
+        libroId: 'L',
+        deudaId: 'tc',
+        fechaCorte: corte,
+        fechaLimitePago: corte.sumarDias(20),
+        saldoAlCorte: 500000,
+        pagoMinimo: 30000,
+        pagoSinIntereses: 300000,
+        intereses: intereses,
+        cargos: 0,
+        registradoEn: DateTime(corte.anio, corte.mes, corte.dia),
+      );
+  group('pagos al corte: nulo es sin dato, cero capturado es cero', () {
+    test('clasificarPago distingue nulo de cero', () {
+      final e = estado(Fecha(2026, 10, 10));
+      expect(clasificarPago(CorteDeTarjeta(estado: e)), PagoDeTarjeta.sinDato);
+      expect(clasificarPago(CorteDeTarjeta(estado: e, pagosAlCorteCentavos: 0)),
+          PagoDeTarjeta.soloElMinimo);
+      expect(
+          clasificarPago(
+              CorteDeTarjeta(estado: e, pagosAlCorteCentavos: 300000)),
+          PagoDeTarjeta.totalSinIntereses);
+    });
+    test('un cero capturado SÍ acusa V-D y rojo en B6b', () {
+      final cortes = [
+        CorteDeTarjeta(
+            estado: estado(Fecha(2026, 10, 10)), pagosAlCorteCentavos: 0),
+        CorteDeTarjeta(
+            estado: estado(Fecha(2026, 11, 10), intereses: 9000),
+            pagosAlCorteCentavos: 0),
+      ];
+      final r = analizarFugas(EntradaFugas(
+        hoy: hoy,
+        ingresoSemanalCentavos: 500000,
+        gastos: const [],
+        categorias: categorias,
+        cortes: cortes,
+      ));
+      expect(r.todas.firstWhere((f) => f.clave == claveCargo('tc')).regla,
+          'VD');
+      expect(senalPagoTarjeta(cortesVigentes(cortes, 'tc')), NivelSenal.rojo);
+    });
+    test('sin pagos en el corte previo se usa el dato del ciclo anterior', () {
+      final cortes = [
+        CorteDeTarjeta(estado: estado(Fecha(2026, 10, 10))),
+        CorteDeTarjeta(
+            estado: estado(Fecha(2026, 11, 10), intereses: 9000),
+            pagosCicloAnteriorCentavos: 0),
+      ];
+      final r = analizarFugas(EntradaFugas(
+        hoy: hoy,
+        ingresoSemanalCentavos: 500000,
+        gastos: const [],
+        categorias: categorias,
+        cortes: cortes,
+      ));
+      expect(r.todas.firstWhere((f) => f.clave == claveCargo('tc')).regla,
+          'VD');
+    });
   });
 }
