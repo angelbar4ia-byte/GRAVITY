@@ -265,7 +265,7 @@ class RevocacionesPendientes {
         abandonadas++;
         debugPrint(
           'Revocar sesión: se abandonó una orden tras ${plazo.inDays} días '
-          'sin señal (${orden.id}).',
+          'sin lograrse.',
         );
         continue;
       }

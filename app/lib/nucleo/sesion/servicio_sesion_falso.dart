@@ -311,6 +311,23 @@ class ServicioSesionFalso extends ServicioSesionEnMemoria
     return sesion;
   }
 
+  /// Credenciales cuya sesión se cerró en el servidor falso (B4), en orden.
+  final List<String> credencialesRevocadas = [];
+
+  /// Veces que se intentó revocar una sesión (con o sin señal).
+  int vecesRevocar = 0;
+
+  @override
+  Future<ResultadoRevocacion> revocarSesion(
+    String credencial, {
+    required void Function(String credencial) alRenovar,
+  }) async {
+    vecesRevocar++;
+    if (sinConexion) return ResultadoRevocacion.reintentar;
+    credencialesRevocadas.add(credencial);
+    return ResultadoRevocacion.cerrada;
+  }
+
   @override
   Future<String?> cerrarSesionDePersona() async {
     final credencial = _credencialActiva;

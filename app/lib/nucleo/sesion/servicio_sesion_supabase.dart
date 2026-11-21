@@ -554,6 +554,79 @@ class ServicioSesionSupabase extends ServicioSesionEnMemoria
   }
 
   @override
+  Future<ResultadoRevocacion> revocarSesion(
+    String credencial, {
+    required void Function(String credencial) alRenovar,
+  }) async {
+    // De la credencial solo importa el refresh token (el guardado de una
+    // orden de revocar ya viene reducido a él, ver `credencialMinima`).
+    final String? renovar;
+    try {
+      final json = jsonDecode(credencial);
+      renovar = json is Map ? json['refresh_token'] as String? : null;
+    } catch (_) {
+      return ResultadoRevocacion.cerrada; // Basura: no hay nada que revocar.
+    }
+    if (renovar == null || renovar.isEmpty) return ResultadoRevocacion.cerrada;
+
+    // Cliente propio y en memoria: no toca la sesión del equipo ni la de quien
+    // esté dentro, y sin renovar solo (un solo uso).
+    final cliente = _crearCliente(url, llavePublica, autoRenovar: false);
+    // El servidor rota el refresh token al renovar: se entrega de inmediato por
+    // si el cierre falla después y hay que reintentar con el vigente.
+    final suscripcion = cliente.auth.onAuthStateChange.listen(
+      (estado) {
+        final nuevo = estado.session?.refreshToken;
+        if (nuevo != null &&
+            nuevo.isNotEmpty &&
+            (estado.event == AuthChangeEvent.tokenRefreshed ||
+                estado.event == AuthChangeEvent.signedIn)) {
+          alRenovar(jsonEncode({'refresh_token': nuevo}));
+        }
+      },
+      onError: (Object error) =>
+          debugPrint('Revocar sesión: ${error.runtimeType}'),
+    );
+    try {
+      // Sin token de acceso guardado: siempre se renueva y se obtiene uno
+      // vigente con el que el servidor acepta el cierre.
+      try {
+        await cliente.auth.setSession(renovar);
+      } catch (error) {
+        // Un error claro del servidor (token no encontrado, ya usado, sesión
+        // cerrada…) quiere decir que esa sesión ya no sirve: no hay nada que
+        // revocar. Sin red, límite de peticiones o servidor ocupado: después.
+        return credencialYaNoSirve(error)
+            ? ResultadoRevocacion.cerrada
+            : ResultadoRevocacion.reintentar;
+      }
+      final abierta = cliente.auth.currentSession;
+      if (abierta == null) return ResultadoRevocacion.reintentar;
+      try {
+        // Alcance local: solo ESTA sesión (todos sus refresh tokens). `global`
+        // cerraría también las del teléfono y la laptop de la persona.
+        await cliente.auth.admin.signOut(
+          abierta.accessToken,
+          scope: SignOutScope.local,
+        );
+        return ResultadoRevocacion.cerrada;
+      } on AuthException catch (error) {
+        // 401, 403 y 404: la sesión o el usuario ya no existen en el servidor.
+        final estado = error.statusCode;
+        return estado == '401' || estado == '403' || estado == '404'
+            ? ResultadoRevocacion.cerrada
+            : ResultadoRevocacion.reintentar;
+      }
+    } catch (error) {
+      debugPrint('Revocar sesión: ${error.runtimeType}');
+      return ResultadoRevocacion.reintentar;
+    } finally {
+      await suscripcion.cancel();
+      await cliente.dispose();
+    }
+  }
+
+  @override
   Future<void> salir() async {
     final persona = sesionActual?.persona.id;
     _saliendo = true;

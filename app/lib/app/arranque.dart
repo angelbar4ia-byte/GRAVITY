@@ -210,6 +210,9 @@ Future<List<Override>> prepararArranque({
         (ref) => SalidaSinPinConSesiones(
           bandeja: ref.watch(bandejaDeSalidaProvider),
           abrir: servicio.abrirSesionAparte,
+          // B4: al caducar o descartar un permiso, su sesión se cierra en el
+          // servidor cuando haya señal.
+          revocar: servicio.revocarSesion,
           enviadorDe: (aparte) => EnviadorSupabase(
             (aparte as SesionAparteSupabase).cliente,
             tablas: tablasDeLaCola,

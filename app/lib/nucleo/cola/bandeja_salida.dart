@@ -133,6 +133,7 @@ import '../seguridad/cifrado.dart';
 import '../seguridad/sobre_sellado.dart';
 import '../sesion/sesion.dart' show ErrorSesion, SesionAparte;
 import 'cola_sin_conexion.dart';
+import 'revocaciones_pendientes.dart';
 
 /// Cuánto dura un permiso de subida, desde que se crea.
 const vigenciaDelPermisoDeSubida = Duration(days: 7);
@@ -247,7 +248,10 @@ class BandejaDeSalida {
     this._almacen, {
     DateTime Function()? reloj,
     this.vigencia = vigenciaDelPermisoDeSubida,
-  }) : _reloj = reloj ?? DateTime.now;
+    RevocacionesPendientes? revocaciones,
+  }) : _reloj = reloj ?? DateTime.now,
+       revocaciones =
+           revocaciones ?? RevocacionesPendientes(_almacen, reloj: reloj);
 
   static const prefijo = 'bandeja.permiso.';
   static String clave(String personaId) => '$prefijo$personaId';
@@ -255,6 +259,10 @@ class BandejaDeSalida {
   final AlmacenSeguro _almacen;
   final DateTime Function() _reloj;
   final Duration vigencia;
+
+  /// Las órdenes de cerrar en el servidor la sesión de un permiso que caducó o
+  /// se descartó (B4): viven aparte del permiso, que se borra.
+  final RevocacionesPendientes revocaciones;
 
   // ------------------------------------------------------------- candado
 
@@ -353,8 +361,32 @@ class BandejaDeSalida {
   Future<void> _guardar(PermisoDeSubida permiso) =>
       _almacen.escribir(clave(permiso.personaId), jsonEncode(permiso.aJson()));
 
-  /// Borra el permiso (con su credencial) de [personaId].
+  /// Borra el permiso (con su credencial) de [personaId]. **No** cierra su
+  /// sesión en el servidor: para eso, [retirar].
   Future<void> borrar(String personaId) => _almacen.borrar(clave(personaId));
+
+  /// Retira el permiso de [personaId] **porque ya no se va a usar** (caducó, se
+  /// descartó, la persona fue quitada o se volvió a agregar): deja anotada la
+  /// orden de cerrar su sesión en el servidor y luego borra el permiso con su
+  /// credencial (B4 de la revisión de la Fase 1b).
+  ///
+  /// La orden se anota **antes** de borrar: si la app se cierra en medio, queda
+  /// la orden y el permiso, y la próxima vez se repite (anotar es idempotente).
+  /// La orden guarda solo lo mínimo para revocar ([credencialMinima]) y se borra
+  /// cuando el servidor confirma. Un permiso sellado (`devuelto`) no tiene
+  /// credencial en claro: solo el PIN la abre y no hay nada que anotar.
+  ///
+  /// Sin candado: lo llama quien ya lo tiene.
+  Future<void> retirar(String personaId, {PermisoDeSubida? permiso}) async {
+    final actual = permiso ?? await leer(personaId);
+    final credencial = actual?.credencial;
+    if (actual != null &&
+        actual.estado == EstadoPermiso.enEspera &&
+        credencial != null) {
+      await revocaciones.anotar(personaId, credencial);
+    }
+    await borrar(personaId);
+  }
 
   // ------------------------------------------------------- al salir (PIN)
 
@@ -509,8 +541,11 @@ class BandejaDeSalida {
   /// subida en curso. Es lo que pasa cuando la persona vuelve a agregarse con
   /// una credencial nueva: la del permiso es de otra cadena y no debe pisarla
   /// (B5 de la revisión de la Fase 1b).
+  ///
+  /// Con el permiso borra también su sesión **en el servidor** ([retirar]): es
+  /// la de una cadena que ya nadie usa.
   Future<void> descartarPermiso(String personaId) =>
-      conCandado(personaId, () => borrar(personaId), urgente: true);
+      conCandado(personaId, () => retirar(personaId), urgente: true);
 
   /// Borra los permisos en espera que ya caducaron y devuelve de quiénes eran.
   /// Los devueltos (sellados) no caducan: solo el PIN los abre.
@@ -526,7 +561,9 @@ class BandejaDeSalida {
           if (actual != null &&
               actual.estado == EstadoPermiso.enEspera &&
               actual.caducadoEn(ahora)) {
-            await borrar(permiso.personaId);
+            // Caducar no espera a la red: la copia local se borra ya y la
+            // sesión del servidor se cierra cuando haya señal (B4).
+            await retirar(permiso.personaId, permiso: actual);
             caducadas.add(permiso.personaId);
           }
         });
@@ -557,11 +594,16 @@ class SalidaSinPinConSesiones implements SalidaSinPin {
     required this.bandeja,
     required this._abrir,
     required this._enviadorDe,
+    this._revocar,
   });
 
   final BandejaDeSalida bandeja;
   final AbridorDeSesionAparte _abrir;
   final FabricaDeEnviador _enviadorDe;
+
+  /// Cierra una sesión en el servidor (`SesionesPorPersona.revocarSesion`). Sin
+  /// él las órdenes de revocar se anotan pero no se cumplen.
+  final RevocadorDeSesion? _revocar;
 
   @override
   Future<PreparacionSalida> preparar(
@@ -654,7 +696,14 @@ class SalidaSinPinConSesiones implements SalidaSinPin {
 
   @override
   Future<void> descartar(String personaId) =>
-      bandeja.conCandado(personaId, () => bandeja.borrar(personaId));
+      bandeja.conCandado(personaId, () => bandeja.retirar(personaId));
+
+  @override
+  Future<void> revocarPendientes() async {
+    final revocar = _revocar;
+    if (revocar == null) return;
+    await bandeja.revocaciones.ejecutar(revocar);
+  }
 }
 
 /// Envía con el [Enviador] real, pero **cede el turno**: si la persona entra

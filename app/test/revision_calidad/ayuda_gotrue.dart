@@ -5,7 +5,10 @@
 /// Es una copia ampliada del de `test/nucleo/sesion/sesion_por_persona_supabase_test.dart`:
 /// además de revocar tokens permite responder con un estado HTTP fijo a la
 /// renovación (p. ej. 429, límite de peticiones) y anota qué tokens se
-/// renovaron y cuántas veces se pidió cerrar la sesión.
+/// renovaron y cuántas veces se pidió cerrar la sesión (con su alcance y de
+/// quién era el token de acceso, para comprobar que solo se cierra la sesión
+/// pedida; B4). Puede simular un corte de red ([sinRespuesta]) o un error al
+/// cerrar ([estadoFijoAlCerrar]).
 library;
 
 import 'dart:convert';
@@ -58,6 +61,17 @@ Map<String, Object?> sesionJson(
   'user': usuario(uid),
 };
 
+/// El `sub` del JWT de un encabezado `Authorization: Bearer ...`.
+String? _usuarioDe(String? autorizacion) {
+  try {
+    final partes = autorizacion!.split(' ').last.split('.');
+    final carga = utf8.decode(base64Url.decode(base64Url.normalize(partes[1])));
+    return (jsonDecode(carga) as Map)['sub'] as String?;
+  } catch (_) {
+    return null;
+  }
+}
+
 class GoTrueSimulado {
   late HttpServer _servidor;
   final revocados = <String>{};
@@ -65,6 +79,16 @@ class GoTrueSimulado {
 
   /// Refresh tokens que el servidor vio llegar, en orden.
   final renovados = <String>[];
+
+  /// Cierres de sesión recibidos (`POST /auth/v1/logout`): el alcance pedido
+  /// (`scope`) y el `sub` (usuario) del token de acceso con que llegaron.
+  final cierres = <({String? scope, String? usuario})>[];
+
+  /// Si no es nulo, el cierre de sesión responde con este estado (p. ej. 500).
+  int? estadoFijoAlCerrar;
+
+  /// Si es `true`, corta la conexión sin contestar (sin señal).
+  bool sinRespuesta = false;
 
   /// Si no es nulo, toda renovación responde con este estado (p. ej. 429).
   int? estadoFijoAlRenovar;
@@ -76,6 +100,10 @@ class GoTrueSimulado {
     _servidor = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     _servidor.listen((peticion) async {
       final cuerpo = await utf8.decodeStream(peticion);
+      if (sinRespuesta) {
+        (await peticion.response.detachSocket()).destroy();
+        return;
+      }
       rutas.add('${peticion.method} ${peticion.uri.path}');
       final respuesta = peticion.response
         ..headers.contentType = ContentType.json;
@@ -110,7 +138,17 @@ class GoTrueSimulado {
       } else if (peticion.uri.path == '/auth/v1/user') {
         respuesta.write(jsonEncode(usuario(uidDueno)));
       } else if (peticion.uri.path == '/auth/v1/logout') {
-        respuesta.statusCode = 204;
+        cierres.add((
+          scope: peticion.uri.queryParameters['scope'],
+          usuario: _usuarioDe(peticion.headers.value('authorization')),
+        ));
+        if (estadoFijoAlCerrar != null) {
+          respuesta
+            ..statusCode = estadoFijoAlCerrar!
+            ..write(jsonEncode({'code': estadoFijoAlCerrar, 'msg': 'error'}));
+        } else {
+          respuesta.statusCode = 204;
+        }
       } else {
         respuesta.statusCode = 404;
       }

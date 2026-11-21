@@ -34,6 +34,7 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:uuid/uuid.dart';
 
 import '../base_local/base_local.dart';
@@ -221,6 +222,11 @@ abstract interface class SalidaSinPin {
 
   /// Borra el permiso de [personaId] (su sesión ya no sirve).
   Future<void> descartar(String personaId);
+
+  /// Con señal, cierra en el servidor las sesiones de los permisos que
+  /// caducaron o se descartaron (B4 de la revisión de la Fase 1b). Sin señal no
+  /// hace nada y las órdenes esperan; **no lanza** por un fallo de red.
+  Future<void> revocarPendientes();
 }
 
 /// Lo que dejaron sin subir las personas quitadas de la tablet y se borrará.
@@ -447,6 +453,7 @@ class ColaSinConexion {
         rechazados = (await _caducarBandeja(bandeja)).rechazados;
         if (rechazados > 0) _avisar();
       }
+      await _revocarSesiones();
       return ResumenProceso(
         enviados: 0,
         reintentos: 0,
@@ -495,6 +502,9 @@ class ColaSinConexion {
     );
 
     if (enviados + reintentos + rechazados > 0) _avisar();
+    // Al final, para que la red lenta de una revocación no retrase lo que ya
+    // se subió.
+    await _revocarSesiones();
     return ResumenProceso(
       enviados: enviados,
       reintentos: reintentos,
@@ -676,6 +686,20 @@ class ColaSinConexion {
 
   /// Lo mismo, en vivo (para el aviso en Ajustes › Personas).
   Stream<PurgaProgramada?> vigilarPurga() => _vigilar(purgaProgramada);
+
+  /// Con señal, cierra en el servidor las sesiones de los permisos de subida
+  /// que caducaron o se descartaron (B4 de la revisión de la Fase 1b). Un fallo
+  /// nunca rompe la ronda: la orden espera a la siguiente.
+  Future<void> _revocarSesiones() async {
+    final bandeja = salida;
+    if (bandeja == null) return;
+    try {
+      await bandeja.revocarPendientes();
+    } catch (error) {
+      // Solo el tipo: nunca se imprime nada que pueda llevar una credencial.
+      debugPrint('Revocar sesiones de la bandeja: ${error.runtimeType}');
+    }
+  }
 
   /// Borra los permisos caducados (y sella los que ya no tienen nada por
   /// subir) sin enviar nada.
