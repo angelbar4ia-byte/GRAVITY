@@ -8,6 +8,10 @@ select pruebas.igual(public.cui_generar_tomas('b0000000-0000-4000-8000-000000000
 
 -- Cuenta los avisos de recordatorio de la toma de esa hora para una persona (leyendo como superusuario, sin RLS)
 select pruebas.como_postgres();
+-- Las membresías de la preparación nacen con desde = now() (la fecha real de la corrida) y la prueba simula noviembre de 2026:
+-- sin esto, cui_avisar_tomas_proximas (que exige membresía vigente en p_ahora) dejaría de avisar en cuanto el calendario real pase
+-- del 10/nov/2026 (la prueba dependía de la fecha en que se corría).
+update public.membresias set desde = '2026-01-01 00:00+00' where desde > '2026-01-01 00:00+00';
 create function pg_temp.n(p_correo text, p_ts text) returns integer language sql as $$
   select count(*)::int from public.avisos a join public.cui_tomas t on t.id = a.objeto_id
    where a.tipo = 'recordatorio_toma' and a.persona_id = pruebas.id_persona(p_correo) and t.programada_para = p_ts::timestamptz $$;

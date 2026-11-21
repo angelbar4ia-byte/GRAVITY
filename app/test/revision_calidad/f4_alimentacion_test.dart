@@ -18,6 +18,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gravity/app/navegacion.dart';
 import 'package:gravity/app/pantalla_segura.dart';
+import 'package:gravity/app/sesion_real.dart';
 import 'package:gravity/modulos/alimentacion/casos_uso/servicio_alimentacion.dart';
 import 'package:gravity/modulos/alimentacion/datos/modelos.dart';
 import 'package:gravity/modulos/alimentacion/datos/repositorio.dart';
@@ -324,6 +325,10 @@ void main() {
           servicioSesionProvider.overrideWithValue(
             ServicioSesionFalso.con(Rol.dueno),
           ),
+          // Con sesión real (Supabase) el módulo nunca arma datos de ejemplo:
+          // `alimentacionSinServidorProvider` sigue a `sesionRealSupabaseProvider`
+          // (corregido en el commit 6f49612). Esta prueba ya es una guardia.
+          sesionRealSupabaseProvider.overrideWithValue(true),
         ],
       );
       addTearDown(c.dispose);
@@ -331,7 +336,7 @@ void main() {
       final repo = c.read(repositorioAlimentacionProvider);
       expect(await repo.suplementos(MenuId.papa), isEmpty);
       expect(await repo.menu(MenuId.papa, lunesDe(DateTime.now())), isEmpty);
-    }, tags: 'hallazgo');
+    });
 
     // F4-A4 (MENOR) · el catálogo de platillos no pide permiso: la cuenta Casa
     // lo puede leer por el servicio. No es clínico por sí mismo, pero `duros`
