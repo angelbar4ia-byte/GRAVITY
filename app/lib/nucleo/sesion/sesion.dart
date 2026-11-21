@@ -249,6 +249,37 @@ abstract interface class SesionesPorPersona {
     String credencial, {
     required void Function(String credencial) alRenovar,
   });
+
+  /// Cierra **en el servidor** la sesión de [credencial] (B4 de la revisión de
+  /// la Fase 1b): el permiso de subida caducó o se descartó y la sesión que
+  /// quedó viva en el servidor no debe servirle a quien se llevó una copia.
+  ///
+  /// Solo esa sesión (alcance local): no toca la del equipo, ni la de quien
+  /// esté dentro, ni las otras sesiones de la misma persona (su teléfono, su
+  /// laptop). Nunca lanza: devuelve [ResultadoRevocacion.cerrada] si el
+  /// servidor la cerró **o ya no la conocía** (credencial vencida, ya usada,
+  /// sesión ya cerrada: no hay nada más que revocar) y
+  /// [ResultadoRevocacion.reintentar] si no se pudo saber (sin señal, límite de
+  /// peticiones, servidor ocupado).
+  ///
+  /// Como el servidor **rota** el refresh token al renovar, cada vez que lo
+  /// hace se llama a [alRenovar] con la credencial nueva para que quien llama
+  /// guarde esa y no la anterior.
+  ///
+  /// Nunca se imprime ni se registra la [credencial].
+  Future<ResultadoRevocacion> revocarSesion(
+    String credencial, {
+    required void Function(String credencial) alRenovar,
+  });
+}
+
+/// Resultado de [SesionesPorPersona.revocarSesion].
+enum ResultadoRevocacion {
+  /// El servidor cerró la sesión, o ya no la conocía: la orden se cumplió.
+  cerrada,
+
+  /// No se pudo saber (sin señal, servidor ocupado): se intenta otra vez.
+  reintentar,
 }
 
 /// Una sesión de [personaId] abierta **aparte** de la de la tablet y de la de
