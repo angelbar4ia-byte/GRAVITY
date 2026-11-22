@@ -296,3 +296,64 @@ final class FalloDeSintesis extends ErrorVoz {
   @override
   String toString() => 'FalloDeSintesis(${fuente.name}, $codigo)';
 }
+
+// ── Errores del gestor de descargas (P3.2a-2, spec 3.2 punto 4) ─────────────
+//
+// Ninguno lleva texto de la persona, la dirección completa ni lo que contestó
+// el servidor: solo códigos y nombres de archivo del catálogo (R6, R7).
+
+/// Hay datos móviles (o una red de la que no se sabe si cuesta datos) y la
+/// persona no lo confirmó. No se abrió ninguna conexión.
+final class SinWifi extends ErrorVoz {
+  const SinWifi();
+
+  @override
+  String toString() => 'SinWifi';
+}
+
+/// No hay conexión (o no se pudo abrir). Lo ya descargado se conserva.
+final class SinRed extends ErrorVoz {
+  const SinRed();
+
+  @override
+  String toString() => 'SinRed';
+}
+
+/// El disco está lleno. [bytesNecesarios] es lo que faltaba bajar.
+final class SinEspacio extends ErrorVoz {
+  const SinEspacio(this.bytesNecesarios);
+  final int bytesNecesarios;
+
+  @override
+  String toString() => 'SinEspacio($bytesNecesarios)';
+}
+
+/// El archivo no es el esperado (tamaño o sha256). Se borró lo descargado.
+final class HuellaIncorrecta extends ErrorVoz {
+  const HuellaIncorrecta(this.archivo);
+
+  /// Nombre del archivo en el catálogo (nunca una dirección).
+  final String archivo;
+
+  @override
+  String toString() => 'HuellaIncorrecta($archivo)';
+}
+
+/// La descarga se cortó. Lo descargado se conserva para reanudar.
+final class DescargaInterrumpida extends ErrorVoz {
+  const DescargaInterrumpida(this.bytes, this.total);
+  final int bytes;
+  final int total;
+
+  @override
+  String toString() => 'DescargaInterrumpida($bytes/$total)';
+}
+
+/// El alojamiento todavía no tiene el archivo (404 u otra respuesta que dice
+/// que no existe o no es público). No es un fallo de la red de la persona.
+final class NoDisponibleAun extends ErrorVoz {
+  const NoDisponibleAun();
+
+  @override
+  String toString() => 'NoDisponibleAun';
+}

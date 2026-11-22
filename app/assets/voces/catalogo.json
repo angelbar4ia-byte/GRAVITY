@@ -1,0 +1,242 @@
+{
+  "esquema": "gravity-voces-v1",
+  "modelos": [
+    {
+      "id": "vits-piper-en_US-kristin-medium",
+      "nombre": "Kristin (inglés americano, mujer)",
+      "familia": "vits",
+      "idioma": "en",
+      "variantes": [
+        "en-US"
+      ],
+      "voces": [
+        {
+          "sid": 0,
+          "nombre": "Kristin",
+          "genero": "mujer",
+          "variante": "en-US"
+        }
+      ],
+      "asignacion_sugerida": {
+        "F1": 0
+      },
+      "archivos": [
+        {
+          "rol": "modelo",
+          "nombre": "en_US-kristin-medium.onnx",
+          "bytes": 63531507,
+          "sha256": "f9a5c375c70ddc33ccdb3969c76a4d7cc5255ac08119a312b0034a1d07041be6",
+          "url": "https://mbrscjdozqeucwzcncux.supabase.co/storage/v1/object/public/voces/2026-11-22/vits-piper-en_US-kristin-medium/en_US-kristin-medium.onnx"
+        },
+        {
+          "rol": "tokens",
+          "nombre": "tokens.txt",
+          "bytes": 940,
+          "sha256": "ef3a7e4a8d1af0c9d4dc45aaae1a6242ebe24a7ed6f3d025a49eb29682784c6d",
+          "url": "https://mbrscjdozqeucwzcncux.supabase.co/storage/v1/object/public/voces/2026-11-22/vits-piper-en_US-kristin-medium/tokens.txt"
+        },
+        {
+          "rol": "lexicon",
+          "nombre": "lexicon-en-us.txt",
+          "bytes": 6305773,
+          "sha256": "8b67ae549a465eee78f92ecb74644ad90c3c58ce65f19c68baf85878a10ef73a",
+          "url": "https://mbrscjdozqeucwzcncux.supabase.co/storage/v1/object/public/voces/2026-11-22/vits-piper-en_US-kristin-medium/lexicon-en-us.txt"
+        }
+      ],
+      "licencia": {
+        "id": "public-domain",
+        "origen": "tarjeta del modelo (MODEL_CARD); LibriVox no se pudo leer",
+        "atribucion": "Voz «Kristin» de Piper (voces de LibriVox). Licencia declarada por su autor: dominio público; no se pudo comprobar en LibriVox. Lexicón lexicon-en-us.txt de sherpa-onnx: parte de CMUDict (licencia BSD, Carnegie Mellon University); el origen de su parte «en_list» no está verificado y queda pendiente de la decisión de una persona.",
+        "texto": "docs/licencias-voces/textos/MODEL_CARD-en_US-kristin-medium.md"
+      },
+      "fuente": {
+        "url": "https://github.com/k2-fsa/sherpa-onnx/releases/tag/tts-models",
+        "revision": "2026-11-22",
+        "original": {
+          "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-en_US-kristin-medium.tar.bz2",
+          "bytes": 67259230,
+          "sha256": "c2206f572df2956c50b1ae3367eebce3853c663e890cba8048cd62b1e4dbe6c7"
+        }
+      },
+      "consultado": "2026-11-22"
+    },
+    {
+      "id": "vits-piper-en_US-john-medium",
+      "nombre": "John (inglés americano, hombre)",
+      "familia": "vits",
+      "idioma": "en",
+      "variantes": [
+        "en-US"
+      ],
+      "voces": [
+        {
+          "sid": 0,
+          "nombre": "John",
+          "genero": "hombre",
+          "variante": "en-US"
+        }
+      ],
+      "asignacion_sugerida": {
+        "M1": 0
+      },
+      "archivos": [
+        {
+          "rol": "modelo",
+          "nombre": "en_US-john-medium.onnx",
+          "bytes": 63152970,
+          "sha256": "4fb0dd1c34ec1add55e71a1ea84166f798922867bd4609e0a094ce4a285f940e",
+          "url": "https://mbrscjdozqeucwzcncux.supabase.co/storage/v1/object/public/voces/2026-11-22/vits-piper-en_US-john-medium/en_US-john-medium.onnx"
+        },
+        {
+          "rol": "tokens",
+          "nombre": "tokens.txt",
+          "bytes": 940,
+          "sha256": "ef3a7e4a8d1af0c9d4dc45aaae1a6242ebe24a7ed6f3d025a49eb29682784c6d",
+          "url": "https://mbrscjdozqeucwzcncux.supabase.co/storage/v1/object/public/voces/2026-11-22/vits-piper-en_US-john-medium/tokens.txt"
+        },
+        {
+          "rol": "lexicon",
+          "nombre": "lexicon-en-us.txt",
+          "bytes": 6305773,
+          "sha256": "8b67ae549a465eee78f92ecb74644ad90c3c58ce65f19c68baf85878a10ef73a",
+          "url": "https://mbrscjdozqeucwzcncux.supabase.co/storage/v1/object/public/voces/2026-11-22/vits-piper-en_US-john-medium/lexicon-en-us.txt"
+        }
+      ],
+      "licencia": {
+        "id": "public-domain",
+        "origen": "tarjeta del modelo (MODEL_CARD); LibriVox no se pudo leer",
+        "atribucion": "Voz «John» de Piper (voces de LibriVox). Licencia declarada por su autor: dominio público; no se pudo comprobar en LibriVox. Lexicón lexicon-en-us.txt de sherpa-onnx: parte de CMUDict (licencia BSD, Carnegie Mellon University); el origen de su parte «en_list» no está verificado y queda pendiente de la decisión de una persona.",
+        "texto": "docs/licencias-voces/textos/MODEL_CARD-en_US-john-medium.md"
+      },
+      "fuente": {
+        "url": "https://github.com/k2-fsa/sherpa-onnx/releases/tag/tts-models",
+        "revision": "2026-11-22",
+        "original": {
+          "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-en_US-john-medium.tar.bz2",
+          "bytes": 67249181,
+          "sha256": "d90362cfa48e429d3096f644785184446145b6e38216f2eaf4c0601b8aad5a36"
+        }
+      },
+      "consultado": "2026-11-22"
+    },
+    {
+      "id": "vits-piper-en_US-norman-medium",
+      "nombre": "Norman (inglés americano, hombre)",
+      "familia": "vits",
+      "idioma": "en",
+      "variantes": [
+        "en-US"
+      ],
+      "voces": [
+        {
+          "sid": 0,
+          "nombre": "Norman",
+          "genero": "hombre",
+          "variante": "en-US"
+        }
+      ],
+      "asignacion_sugerida": {
+        "M2": 0
+      },
+      "archivos": [
+        {
+          "rol": "modelo",
+          "nombre": "en_US-norman-medium.onnx",
+          "bytes": 63531507,
+          "sha256": "fa06b6b8b280e176b17f8424e05ca12d0223eeac9a31c87230937fe7120fbe2a",
+          "url": "https://mbrscjdozqeucwzcncux.supabase.co/storage/v1/object/public/voces/2026-11-22/vits-piper-en_US-norman-medium/en_US-norman-medium.onnx"
+        },
+        {
+          "rol": "tokens",
+          "nombre": "tokens.txt",
+          "bytes": 940,
+          "sha256": "ef3a7e4a8d1af0c9d4dc45aaae1a6242ebe24a7ed6f3d025a49eb29682784c6d",
+          "url": "https://mbrscjdozqeucwzcncux.supabase.co/storage/v1/object/public/voces/2026-11-22/vits-piper-en_US-norman-medium/tokens.txt"
+        },
+        {
+          "rol": "lexicon",
+          "nombre": "lexicon-en-us.txt",
+          "bytes": 6305773,
+          "sha256": "8b67ae549a465eee78f92ecb74644ad90c3c58ce65f19c68baf85878a10ef73a",
+          "url": "https://mbrscjdozqeucwzcncux.supabase.co/storage/v1/object/public/voces/2026-11-22/vits-piper-en_US-norman-medium/lexicon-en-us.txt"
+        }
+      ],
+      "licencia": {
+        "id": "public-domain",
+        "origen": "tarjeta del modelo (MODEL_CARD); LibriVox no se pudo leer",
+        "atribucion": "Voz «Norman» de Piper (voces de LibriVox). Licencia declarada por su autor: dominio público; no se pudo comprobar en LibriVox. Lexicón lexicon-en-us.txt de sherpa-onnx: parte de CMUDict (licencia BSD, Carnegie Mellon University); el origen de su parte «en_list» no está verificado y queda pendiente de la decisión de una persona.",
+        "texto": "docs/licencias-voces/textos/MODEL_CARD-en_US-norman-medium.md"
+      },
+      "fuente": {
+        "url": "https://github.com/k2-fsa/sherpa-onnx/releases/tag/tts-models",
+        "revision": "2026-11-22",
+        "original": {
+          "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-en_US-norman-medium.tar.bz2",
+          "bytes": 67203672,
+          "sha256": "1f32065d480abe9abc7c7f91442125d0b34c1cc065d1e600466cac408eabf3b8"
+        }
+      },
+      "consultado": "2026-11-22"
+    },
+    {
+      "id": "vits-piper-en_GB-cori-medium",
+      "nombre": "Cori (inglés británico, mujer; acento aproximado)",
+      "familia": "vits",
+      "idioma": "en",
+      "variantes": [
+        "en-GB"
+      ],
+      "voces": [
+        {
+          "sid": 0,
+          "nombre": "Cori (acento aproximado)",
+          "genero": "mujer",
+          "variante": "en-GB",
+          "acento_aproximado": true
+        }
+      ],
+      "asignacion_sugerida": {
+        "F1": 0
+      },
+      "archivos": [
+        {
+          "rol": "modelo",
+          "nombre": "en_GB-cori-medium.onnx",
+          "bytes": 63531507,
+          "sha256": "8b0d3cdd77f2878e0aa2048103eabb4d01b334783f99629f042bcf703aeba487",
+          "url": "https://mbrscjdozqeucwzcncux.supabase.co/storage/v1/object/public/voces/2026-11-22/vits-piper-en_GB-cori-medium/en_GB-cori-medium.onnx"
+        },
+        {
+          "rol": "tokens",
+          "nombre": "tokens.txt",
+          "bytes": 940,
+          "sha256": "ef3a7e4a8d1af0c9d4dc45aaae1a6242ebe24a7ed6f3d025a49eb29682784c6d",
+          "url": "https://mbrscjdozqeucwzcncux.supabase.co/storage/v1/object/public/voces/2026-11-22/vits-piper-en_GB-cori-medium/tokens.txt"
+        },
+        {
+          "rol": "lexicon",
+          "nombre": "lexicon-en-us.txt",
+          "bytes": 6305773,
+          "sha256": "8b67ae549a465eee78f92ecb74644ad90c3c58ce65f19c68baf85878a10ef73a",
+          "url": "https://mbrscjdozqeucwzcncux.supabase.co/storage/v1/object/public/voces/2026-11-22/vits-piper-en_GB-cori-medium/lexicon-en-us.txt"
+        }
+      ],
+      "licencia": {
+        "id": "public-domain",
+        "origen": "tarjeta del modelo (MODEL_CARD); LibriVox no se pudo leer",
+        "atribucion": "Voz «Cori (acento aproximado)» de Piper (voces de LibriVox). Licencia declarada por su autor: dominio público; no se pudo comprobar en LibriVox. Lexicón lexicon-en-us.txt de sherpa-onnx: parte de CMUDict (licencia BSD, Carnegie Mellon University); el origen de su parte «en_list» no está verificado y queda pendiente de la decisión de una persona. Acento aproximado: con sherpa_onnx 2.0.x solo existe el lexicón americano, así que esta voz británica suena más americana de lo que debería.",
+        "texto": "docs/licencias-voces/textos/MODEL_CARD-en_GB-cori-medium.md"
+      },
+      "fuente": {
+        "url": "https://github.com/k2-fsa/sherpa-onnx/releases/tag/tts-models",
+        "revision": "2026-11-22",
+        "original": {
+          "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-en_GB-cori-medium.tar.bz2",
+          "bytes": 67257412,
+          "sha256": "49c9a5361bbdd95d7ca9687c4de11e5908481f65e7c7c368960df79949fdac2b"
+        }
+      },
+      "consultado": "2026-11-22"
+    }
+  ]
+}

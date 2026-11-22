@@ -4,6 +4,7 @@
 library;
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
@@ -34,8 +35,12 @@ import '../modulos/gravity/conversacion/cliente_asistente.dart';
 import '../modulos/gravity/conversacion/conversacion.dart'
     show clienteAsistenteProvider;
 import '../modulos/gravity/conversacion/voz.dart' show vozSalidaProvider;
+import '../modulos/gravity/voz/modelos/catalogo.dart' show CatalogoDeVoces;
+import '../modulos/gravity/voz/modelos/lector_catalogo.dart'
+    show leerCatalogo;
 import '../modulos/gravity/voz/preferencias.dart';
-import '../modulos/gravity/voz/proveedores.dart' show motorVozProvider;
+import '../modulos/gravity/voz/proveedores.dart'
+    show catalogoDeVocesProvider, motorVozProvider;
 import '../nucleo/avisos/fuente_push.dart';
 import '../nucleo/avisos/notificador_plugin.dart';
 import '../nucleo/avisos/proveedores_avisos.dart';
@@ -53,6 +58,8 @@ import '../nucleo/sensibles/subida_diferida.dart'
 import '../nucleo/apariencia/almacen_apariencia_persistente.dart';
 import '../nucleo/conectividad/conectividad.dart';
 import '../nucleo/conectividad/conectividad_plus.dart';
+import '../nucleo/conectividad/tipo_de_red.dart' show fuenteTipoDeRedProvider;
+import '../nucleo/conectividad/tipo_de_red_plus.dart';
 import '../nucleo/personas/personas_hogar.dart';
 import '../nucleo/seguridad/biometria.dart';
 import '../nucleo/seguridad/limpieza_local.dart';
@@ -155,6 +162,16 @@ Future<List<Override>> prepararArranque({
   );
   // Preferencias de voz de cada persona (velocidad y voz elegidas).
   final vozLista = m.medir('voz', AlmacenVozPersistente.abrir);
+  // Catálogo de voces descargables (fuente B): un archivo dentro de la app. Si
+  // no pasa la validación no entra ningún modelo y la app sigue sin ellos.
+  final vocesLista = m.medir('catalogo_de_voces', () async {
+    try {
+      return leerCatalogo(await rootBundle.loadString('assets/voces/catalogo.json'));
+    } catch (error) {
+      debugPrint('Catálogo de voces no disponible (${error.runtimeType})');
+      return CatalogoDeVoces.vacio;
+    }
+  });
   final supabaseListo = configuracion.tieneSupabase
       ? m.medir('supabase_initialize', () async {
           try {
@@ -282,6 +299,10 @@ Future<List<Override>> prepararArranque({
     // persona. Sin voz en el equipo, el motor no hace nada.
     almacenVozProvider.overrideWithValue(await vozLista),
     vozSalidaProvider.overrideWith((ref) => ref.watch(motorVozProvider)),
+    catalogoDeVocesProvider.overrideWithValue(await vocesLista),
+    // Las voces descargables solo bajan con Wi-Fi o con permiso: hace falta
+    // saber qué red hay.
+    fuenteTipoDeRedProvider.overrideWithValue(FuenteTipoDeRedPlus()),
     // E1: el indicador "En línea" sale de la conexión real del equipo.
     fuenteConectividadProvider.overrideWithValue(FuenteConectividadPlus()),
     // El indicador de diseño muestra esa conexión real, con lo que falta subir.

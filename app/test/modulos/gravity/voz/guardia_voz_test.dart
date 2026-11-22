@@ -31,8 +31,8 @@ void main() {
   });
 
   test('ningún archivo del motor usa la red (criterio 11, R8)', () {
-    // Solo el gestor de descargas (carpeta `descarga/`, que llega con
-    // P3.2a-2) podrá hablar con la red.
+    // Solo el gestor de descargas (carpeta `descarga/`) puede hablar con la
+    // red; y dentro de ella, solo la puerta HTTP (ver la prueba siguiente).
     final prohibidos = RegExp(
       r"package:http/|dart:io'\s+show\s+[^;]*(HttpClient|Socket|WebSocket)|"
       r'\bHttpClient\b|\bSocket\b|\bWebSocket\b|\bRawSocket\b|dart:html|package:dio',
@@ -44,6 +44,30 @@ void main() {
         isFalse,
         reason: '${f.path} no debe usar la red',
       );
+    }
+  });
+
+  test('dentro de descarga/, solo la puerta HTTP abre conexiones', () {
+    final descarga = motor.where((f) => f.path.contains('/descarga/'));
+    expect(descarga, isNotEmpty);
+    final red = RegExp(r'\bHttpClient\b|\bSocket\b|\bWebSocket\b|\bRawSocket\b|package:http/');
+    for (final f in descarga) {
+      final abre = red.hasMatch(sinComentarios(f.readAsStringSync()));
+      expect(
+        abre,
+        f.path.endsWith('descarga/puerta_de_descarga.dart'),
+        reason: '${f.path}: solo puerta_de_descarga.dart puede abrir conexiones',
+      );
+    }
+  });
+
+  test('la fuente B y el catálogo no abren archivos por su cuenta ni recorren carpetas (R10)', () {
+    for (final f in motor.where(
+      (f) => f.path.contains('/fuentes/modelo/') || f.path.contains('/modelos/'),
+    )) {
+      final fuente = sinComentarios(f.readAsStringSync());
+      expect(fuente.contains('dart:io'), isFalse, reason: '${f.path}: el disco va por la puerta del gestor');
+      expect(RegExp(r'\.list(Sync)?\(').hasMatch(fuente), isFalse, reason: f.path);
     }
   });
 
@@ -108,6 +132,36 @@ void main() {
         isFalse,
         reason: '${f.path}: la voz no identifica ni autoriza (R2)',
       );
+    }
+  });
+
+  test('sherpa_onnx solo se importa en la puerta de la fuente B', () {
+    for (final f in motor) {
+      final usa = f.readAsStringSync().contains('package:sherpa_onnx/');
+      expect(
+        usa,
+        f.path.endsWith('fuentes/modelo/puerta_sherpa.dart'),
+        reason: f.path,
+      );
+    }
+  });
+
+  test('audioplayers solo se importa en el reproductor real', () {
+    for (final f in motor) {
+      final usa = f.readAsStringSync().contains('package:audioplayers/');
+      expect(
+        usa,
+        f.path.endsWith('audio/reproductor_audioplayers.dart'),
+        reason: f.path,
+      );
+    }
+  });
+
+  test('ningún archivo de la fuente B ni del catálogo importa un paquete de red', () {
+    for (final f in motor) {
+      final fuente = sinComentarios(f.readAsStringSync());
+      expect(fuente.contains('package:http/'), isFalse, reason: f.path);
+      expect(fuente.contains('package:dio/'), isFalse, reason: f.path);
     }
   });
 

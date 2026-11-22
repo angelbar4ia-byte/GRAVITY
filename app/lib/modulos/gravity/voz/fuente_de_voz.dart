@@ -88,3 +88,11 @@ abstract interface class FuenteConDiagnostico {
 
   Future<List<VozDelSistema>> diagnostico();
 }
+
+/// Fuente que sabe decir **por qué** no tiene voces para una variante: sin
+/// ella, "no hay voces" se confunde con "no está descargada" (la fuente B) o
+/// con "no hay voz en ese idioma" (la fuente A).
+abstract interface class FuenteConMotivoSinVoces {
+  /// El motivo por el que no hay ninguna voz local de [variante].
+  Motivo motivoSinVoces(Variante variante);
+}

@@ -61,11 +61,17 @@ abstract interface class MotorVoz implements VozSalida {
   /// Reproduce un guion por turnos, cada uno con la voz asignada a su
   /// [VozDeGuion]. [soloFuente] quita el respaldo (pruebas con valor,
   /// "Probar").
+  ///
+  /// [vocesElegidas] fija exactamente qué voz del motor suena como cada voz de
+  /// guion (`VozDeGuion` -> `VozMotor.id`), sin guardarlo en las preferencias:
+  /// es para "Probar" una voz concreta. Si alguna no existe en la fuente, la
+  /// fuente se descarta con `vocesInsuficientes`.
   Future<Reproduccion> reproducir(
     Guion guion, {
     UsoVoz uso = UsoVoz.curso,
     double velocidad = 1.0,
     Fuente? soloFuente,
+    Map<VozDeGuion, String>? vocesElegidas,
   });
 
   /// Una frase suelta: repetir, tarjetas, probar una voz.
@@ -150,6 +156,13 @@ class MotorDeVoz implements MotorVoz {
     Fuente.pregrabado => Motivo.sinPaqueteDeAudio,
   };
 
+  /// Por qué una fuente presente no tiene ninguna voz local de la variante.
+  Motivo _motivoSinVoces(FuenteDeVoz fuente, Variante variante) =>
+      switch (fuente) {
+        final FuenteConMotivoSinVoces f => f.motivoSinVoces(variante),
+        _ => Motivo.sinVozEnElIdioma,
+      };
+
   Variante _varianteDe(UsoVoz uso, Variante? variante) =>
       variante ?? (uso == UsoVoz.asistente ? Variante.esMX : Variante.enUS);
 
@@ -181,7 +194,7 @@ class MotorDeVoz implements MotorVoz {
       try {
         final voces = await _locales(fuente, v);
         if (voces.isEmpty) {
-          descartadas[tipo] = Motivo.sinVozEnElIdioma;
+          descartadas[tipo] = _motivoSinVoces(fuente, v);
         } else if (voces.length < vocesNecesarias) {
           descartadas[tipo] = Motivo.vocesInsuficientes;
         } else {
@@ -258,6 +271,7 @@ class MotorDeVoz implements MotorVoz {
     UsoVoz uso = UsoVoz.curso,
     double velocidad = 1.0,
     Fuente? soloFuente,
+    Map<VozDeGuion, String>? vocesElegidas,
   }) async {
     // Una sola voz a la vez (3.4, punto 1).
     final actual = _enCurso;
@@ -280,17 +294,19 @@ class MotorDeVoz implements MotorVoz {
       try {
         final voces = await _locales(fuente, guion.variante);
         if (voces.isEmpty) {
-          motivos[tipo] = Motivo.sinVozEnElIdioma;
+          motivos[tipo] = _motivoSinVoces(fuente, guion.variante);
           continue;
         }
-        final asignacion = resolverAsignacion(
-          asignador: _asignador,
-          fuente: tipo,
-          variante: guion.variante,
-          voces: voces,
-          roles: guion.vocesUsadas,
-          guardadas: preferencias.asignacionDe(tipo, guion.variante),
-        );
+        final asignacion = vocesElegidas != null
+            ? Asignacion(tipo, guion.variante, vocesElegidas)
+            : resolverAsignacion(
+                asignador: _asignador,
+                fuente: tipo,
+                variante: guion.variante,
+                voces: voces,
+                roles: guion.vocesUsadas,
+                guardadas: preferencias.asignacionDe(tipo, guion.variante),
+              );
         final motivo = await fuente.motivoNoDisponible(guion, asignacion);
         if (motivo != null) {
           motivos[tipo] = motivo;

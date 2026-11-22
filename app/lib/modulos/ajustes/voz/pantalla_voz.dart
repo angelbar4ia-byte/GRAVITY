@@ -3,7 +3,8 @@
 /// Es la voz **real** del dispositivo (fuente A del motor de voz, Fase 8,
 /// P3.2a-1): se elige la voz y la velocidad, se prueba una frase y se ve, sin
 /// adornos, qué hay en este equipo. La voz descargada y el audio pregrabado
-/// aparecen como "próximamente", sin fecha.
+/// aparecen como "próximamente", sin fecha. Las voces descargables (fuente B,
+/// P3.2a-2) tienen su propia tarjeta (`voces_descargables.dart`).
 ///
 /// Reglas: la pantalla solo ofrece voces que funcionan sin conexión (R8); las
 /// frases de prueba son fijas (R1); la lectura en voz alta de las respuestas
@@ -26,6 +27,7 @@ import '../marco_seccion.dart';
 import '../secciones_ajustes.dart';
 import 'informe_voz.dart';
 import 'prueba_voz.dart';
+import 'voces_descargables.dart';
 
 class PantallaVoz extends ConsumerWidget {
   const PantallaVoz({super.key});
@@ -38,6 +40,7 @@ class PantallaVoz extends ConsumerWidget {
     final conversa = rol != null && rolesQueConversan.contains(rol);
     final usaCurso = rol != null && puedeUsarHabitos(rol, esMaestra: maestra);
     final datos = informe.value;
+    final hayVozDescargable = ref.watch(gestorDeModelosProvider) != null;
     return MarcoSeccion(
       seccion: SeccionAjustes.voz,
       hijos: [
@@ -46,9 +49,12 @@ class PantallaVoz extends ConsumerWidget {
           if (conversa && datos.vocesEnEspanol.isNotEmpty)
             _SeccionAsistente(informe: datos),
           if (usaCurso) _SeccionIngles(informe: datos),
-          const _OtrasVoces(),
+          _OtrasVoces(conVozDescargable: hayVozDescargable),
           _DetallesTecnicos(informe: datos),
         ],
+        // Las voces descargables no dependen del motor del sistema: se
+        // ofrecen aunque el equipo no tenga voz propia.
+        if (hayVozDescargable) const VocesDescargablesCard(),
         const NotaAjustes(
           'GRAVITY solo lee en voz alta lo que ya pasó el filtro de '
           'privacidad: nunca montos de dinero ni datos de salud.',
@@ -593,7 +599,11 @@ class _AcentoIngles extends ConsumerWidget {
 
 /// Las fuentes que todavía no están, sin prometer fecha.
 class _OtrasVoces extends StatelessWidget {
-  const _OtrasVoces();
+  const _OtrasVoces({required this.conVozDescargable});
+
+  /// Las voces descargables ya existen en este equipo (tienen su propia
+  /// tarjeta más abajo).
+  final bool conVozDescargable;
 
   @override
   Widget build(BuildContext context) {
@@ -607,12 +617,14 @@ class _OtrasVoces extends StatelessWidget {
           children: [
             Text('Otras voces', style: texto.titleMedium),
             const SizedBox(height: 8),
-            Text('Voz descargada · próximamente', style: texto.titleSmall),
-            const Text(
-              'Voces más naturales que se descargan una vez y funcionan sin '
-              'conexión.',
-            ),
-            const SizedBox(height: 8),
+            if (!conVozDescargable) ...[
+              Text('Voz descargada · próximamente', style: texto.titleSmall),
+              const Text(
+                'Voces más naturales que se descargan una vez y funcionan sin '
+                'conexión.',
+              ),
+              const SizedBox(height: 8),
+            ],
             Text(
               'Audio pregrabado del curso · próximamente',
               style: texto.titleSmall,

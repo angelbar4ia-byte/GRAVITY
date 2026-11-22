@@ -1,14 +1,16 @@
-/// "Probar" de Ajustes › Voz: reproduce una frase de prueba con la voz del
-/// dispositivo y dice, sin adornos, qué voz sonó o por qué no sonó.
+/// "Probar" de Ajustes › Voz: reproduce una frase de prueba con una fuente (por
+/// omisión, la voz del dispositivo; también una voz descargada) y dice, sin
+/// adornos, qué voz sonó o por qué no sonó.
 ///
 /// Las frases de prueba son fijas y no llevan datos de nadie (R1). La prueba
-/// pide la voz del dispositivo con `soloFuente` para que suene lo que la
-/// pantalla muestra, no un respaldo.
+/// pide la fuente con `soloFuente` para que suene lo que la pantalla muestra,
+/// no un respaldo.
 library;
 
 import 'package:flutter/foundation.dart' show immutable;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../gravity/voz/asignador.dart';
 import '../../gravity/voz/motor.dart';
 import '../../gravity/voz/proveedores.dart';
 import '../../gravity/voz/tipos.dart';
@@ -85,13 +87,16 @@ class PruebaVoz extends Notifier<EstadoPrueba> {
     return const EstadoPrueba();
   }
 
-  /// Reproduce [guion] con la voz del dispositivo. [clave] identifica la fila
-  /// que suena.
+  /// Reproduce [guion] con [fuente] (por omisión, la voz del dispositivo).
+  /// [clave] identifica la fila que suena. [vocesElegidas] fija qué voz del
+  /// motor suena como cada voz de guion (probar una voz concreta).
   Future<void> probar({
     required String clave,
     required Guion guion,
     required UsoVoz uso,
     double velocidad = 1.0,
+    Fuente fuente = Fuente.dispositivo,
+    Map<VozDeGuion, String>? vocesElegidas,
   }) async {
     final MotorVoz motor = ref.read(motorVozProvider);
     state = EstadoPrueba(clave: clave, sonando: true);
@@ -100,14 +105,20 @@ class PruebaVoz extends Notifier<EstadoPrueba> {
         guion,
         uso: uso,
         velocidad: velocidad,
-        soloFuente: Fuente.dispositivo,
+        soloFuente: fuente,
+        vocesElegidas: vocesElegidas,
       );
       if (!ref.mounted) {
         await repro.parar();
         return;
       }
       _actual = repro;
-      final quien = await _quienSono(motor, guion, repro.fuente);
+      final quien = await _quienSono(
+        motor,
+        guion,
+        repro.fuente,
+        vocesElegidas,
+      );
       if (!ref.mounted) return;
       state = EstadoPrueba(
         clave: clave,
@@ -155,12 +166,19 @@ class PruebaVoz extends Notifier<EstadoPrueba> {
   }
 
   /// "Voz del dispositivo · nombre" (o una por cada voz del diálogo).
-  Future<String> _quienSono(MotorVoz motor, Guion guion, Fuente fuente) async {
-    final asignacion = await motor.asignacion(
-      fuente,
-      guion.variante,
-      roles: guion.vocesUsadas,
-    );
+  Future<String> _quienSono(
+    MotorVoz motor,
+    Guion guion,
+    Fuente fuente,
+    Map<VozDeGuion, String>? vocesElegidas,
+  ) async {
+    final asignacion = vocesElegidas != null
+        ? Asignacion(fuente, guion.variante, vocesElegidas)
+        : await motor.asignacion(
+            fuente,
+            guion.variante,
+            roles: guion.vocesUsadas,
+          );
     final voces = {
       for (final v in await motor.voces(fuente, variante: guion.variante))
         v.id: v.nombre,

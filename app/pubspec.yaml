@@ -86,6 +86,16 @@ dependencies:
   # versión EXACTA, 4.2.5 del 5/ene/2026. `sherpa_onnx` y `audioplayers`
   # también están aprobados pero entran en P3.2a-2, no antes.
   flutter_tts: 4.2.5
+  # Fase 8 · motor de voz, P3.2a-2 (fuente B: voces descargables). Aprobado por
+  # el dueño el 22/nov/2026 (ROADMAP, control de cambios 3.0): versión EXACTA,
+  # 2.0.1 del 26/oct/2026 (Apache-2.0).
+  sherpa_onnx: 2.0.1
+  # Reproduce el audio que sintetiza la fuente B (y, más adelante, el de la
+  # fuente C). Aprobado por el dueño el 22/nov/2026 (control de cambios 3.0):
+  # versión EXACTA, 6.8.1 del 27/jun/2026 (MIT). Va detrás de la interfaz
+  # `ReproductorDeAudio`; solo `voz/audio/reproductor_audioplayers.dart` lo
+  # importa.
+  audioplayers: 6.8.1
 
 dev_dependencies:
   flutter_test:
@@ -120,6 +130,9 @@ flutter:
     - assets/fonts/IBMPlexMono/OFL.txt
     - assets/fonts/Inter/OFL.txt
     - assets/fonts/PlusJakartaSans/OFL.txt
+    # Catálogo de voces descargables (motor de voz, P3.2a-2): solo datos
+    # (nombres, tamaños, huellas, licencias); los modelos NO van en la app.
+    - assets/voces/catalogo.json
 
   fonts:
     - family: ChakraPetch
