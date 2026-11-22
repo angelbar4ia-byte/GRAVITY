@@ -33,6 +33,9 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import '../modulos/gravity/conversacion/cliente_asistente.dart';
 import '../modulos/gravity/conversacion/conversacion.dart'
     show clienteAsistenteProvider;
+import '../modulos/gravity/conversacion/voz.dart' show vozSalidaProvider;
+import '../modulos/gravity/voz/preferencias.dart';
+import '../modulos/gravity/voz/proveedores.dart' show motorVozProvider;
 import '../nucleo/avisos/fuente_push.dart';
 import '../nucleo/avisos/notificador_plugin.dart';
 import '../nucleo/avisos/proveedores_avisos.dart';
@@ -150,6 +153,8 @@ Future<List<Override>> prepararArranque({
     'apariencia',
     AlmacenAparienciaPersistente.abrir,
   );
+  // Preferencias de voz de cada persona (velocidad y voz elegidas).
+  final vozLista = m.medir('voz', AlmacenVozPersistente.abrir);
   final supabaseListo = configuracion.tieneSupabase
       ? m.medir('supabase_initialize', () async {
           try {
@@ -272,6 +277,11 @@ Future<List<Override>> prepararArranque({
     biometriaProvider.overrideWithValue(biometria),
     // La apariencia de cada persona sobrevive al reinicio (P3).
     almacenAparienciaProvider.overrideWithValue(await aparienciaLista),
+    // Motor de voz de GRAVITY (Fase 8): la lectura en voz alta de la
+    // conversación usa la voz del dispositivo y las preferencias de cada
+    // persona. Sin voz en el equipo, el motor no hace nada.
+    almacenVozProvider.overrideWithValue(await vozLista),
+    vozSalidaProvider.overrideWith((ref) => ref.watch(motorVozProvider)),
     // E1: el indicador "En línea" sale de la conexión real del equipo.
     fuenteConectividadProvider.overrideWithValue(FuenteConectividadPlus()),
     // El indicador de diseño muestra esa conexión real, con lo que falta subir.

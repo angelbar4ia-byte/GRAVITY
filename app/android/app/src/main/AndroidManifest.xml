@@ -85,5 +85,12 @@
         <intent>
             <action android:name="android.speech.RecognitionService"/>
         </intent>
+        <!-- Voz del dispositivo (motor de voz de GRAVITY, fuente A): desde
+             Android 11, flutter_tts necesita ver el servicio de texto a voz
+             del sistema (README de flutter_tts, "Android 11"). Sin esto la
+             lista de voces sale vacía. -->
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE"/>
+        </intent>
     </queries>
 </manifest>

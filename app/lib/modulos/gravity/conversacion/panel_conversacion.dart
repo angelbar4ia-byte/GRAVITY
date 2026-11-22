@@ -22,6 +22,8 @@ import '../../../app/sesion_efectiva.dart';
 import '../../../diseno/diseno.dart';
 import '../../../nucleo/contratos/roles.dart';
 import '../../../nucleo/herramientas/herramientas.dart';
+import '../voz/motor.dart' show MotorVoz;
+import '../voz/tipos.dart' show UsoVoz;
 import 'acciones_google.dart';
 import 'cliente_google.dart';
 import 'conversacion.dart';
@@ -38,6 +40,19 @@ const Set<Rol> rolesQueConversan = {
 final _vozDisponibleProvider = FutureProvider.autoDispose<bool>(
   (ref) => ref.watch(vozEntradaProvider).disponible(),
 );
+
+/// Si GRAVITY puede leer en voz alta en este equipo. El interruptor depende de
+/// la **salida** de voz, no del micrófono (fase 8, motor de voz, criterio 38):
+/// - el motor de voz, si tiene una fuente que sirva para el asistente;
+/// - sin voz de salida ([VozSalidaNoDisponible]), no;
+/// - cualquier otra salida (por ejemplo, la falsa de las pruebas), sí.
+final _salidaDisponibleProvider = FutureProvider.autoDispose<bool>((ref) async {
+  final salida = ref.watch(vozSalidaProvider);
+  if (salida is MotorVoz) {
+    return (await salida.disponibilidad(UsoVoz.asistente)).disponible;
+  }
+  return salida is! VozSalidaNoDisponible;
+});
 
 class PanelConversacion extends ConsumerStatefulWidget {
   const PanelConversacion({super.key, this.compacto = false, this.navegar});
@@ -118,6 +133,13 @@ class _PanelConversacionState extends ConsumerState<PanelConversacion> {
       await ref.read(vozEntradaProvider).detener();
       return;
     }
+    // Sin eco: si GRAVITY está hablando, se calla antes de escuchar (si no, el
+    // micrófono oiría a la app y la mandaría como si lo hubiera dicho la
+    // persona).
+    try {
+      await ref.read(vozSalidaProvider).detener();
+    } catch (_) {}
+    if (!mounted) return;
     setState(() => _escuchando = true);
     String? texto;
     try {
@@ -273,24 +295,28 @@ class _PanelConversacionState extends ConsumerState<PanelConversacion> {
                 ),
               ],
             ),
-            if (ref.watch(_vozDisponibleProvider).value ?? false)
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Leer las respuestas en voz alta',
-                      style: v.lectura(tamano: 13, color: v.textoTenue),
+            if (ref.watch(_salidaDisponibleProvider).value ?? false)
+              // Una sola etiqueta para el lector de pantalla: texto e
+              // interruptor se leen juntos.
+              MergeSemantics(
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Leer las respuestas en voz alta',
+                        style: v.lectura(tamano: 13, color: v.textoTenue),
+                      ),
                     ),
-                  ),
-                  Switch(
-                    key: const ValueKey('leer-en-voz-alta'),
-                    value: ref.watch(leerEnVozAltaProvider),
-                    onChanged: (activo) {
-                      ref.read(leerEnVozAltaProvider.notifier).fijar(activo);
-                      if (!activo) ref.read(vozSalidaProvider).detener();
-                    },
-                  ),
-                ],
+                    Switch(
+                      key: const ValueKey('leer-en-voz-alta'),
+                      value: ref.watch(leerEnVozAltaProvider),
+                      onChanged: (activo) {
+                        ref.read(leerEnVozAltaProvider.notifier).fijar(activo);
+                        if (!activo) ref.read(vozSalidaProvider).detener();
+                      },
+                    ),
+                  ],
+                ),
               ),
             SizedBox(height: e),
             Text(

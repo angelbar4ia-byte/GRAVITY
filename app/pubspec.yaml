@@ -81,6 +81,11 @@ dependencies:
   speech_to_text: 7.5.0
   image_picker: 1.2.4
   google_mlkit_text_recognition: 0.17.1
+  # Fase 8 · motor de voz de GRAVITY (P3.2a-1, fuente A: voz del dispositivo).
+  # Aprobado por el dueño el 22/nov/2026 (ROADMAP, control de cambios 3.0):
+  # versión EXACTA, 4.2.5 del 5/ene/2026. `sherpa_onnx` y `audioplayers`
+  # también están aprobados pero entran en P3.2a-2, no antes.
+  flutter_tts: 4.2.5
 
 dev_dependencies:
   flutter_test:

@@ -3,6 +3,7 @@
 > Versión 0.1 (16/nov/2026), **propuesta**. Paquete **P3.0** del plan de inglés (`docs/specs/fase-8-ingles-plan.md`, fase 3). Lo pidió el dueño el 16/nov/2026 (D29, D-ING-3: *las tres vías de audio* y *empezar también el motor de voz de GRAVITY*; `docs/DECISIONES.md`, línea 562).
 > **No cambia ninguna decisión confirmada.** D6 está en estado *propuesta* (`docs/DECISIONES.md`, líneas 18 y 146): todo lo que dependa de ella está marcado **pendiente de D6** y no se decide aquí.
 > Es solo especificación: no hay código ni cambios en `pubspec.yaml`. Las firmas en Dart de la sección 3 son una propuesta; se comprobaron con el analizador de Dart en una copia fuera del repositorio.
+> **Estado (22/nov/2026): P3.2a-1 hecho en lo técnico** (interfaz, fuentes simuladas y fuente A con `flutter_tts` 4.2.5; sección 14). La lectura de este documento sigue valiendo, con las pequeñas diferencias de la sección 14.2. Falta probarlo en el Galaxy A52 y en la laptop (14.5).
 > **Cómo se marca lo que se afirma.** Las citas `archivo:línea` se comprueban leyendo el archivo. **[consultado]** es lo que se leyó o midió el 16/nov/2026 en pub.dev, en paquetes descargados, en documentación pública o en tarjetas de modelos (detalle en 9.1). **[sin verificar]** no se pudo comprobar y tiene su procedimiento en 9.2. Lo demás es diseño de esta especificación.
 
 ## 1. Resultado buscado y quién usa la voz
@@ -963,3 +964,97 @@ La calidad de la voz (solo se oye), la licencia de cada voz (la decide una perso
 | 10 | ¿Hay un tope de espacio para voces y audio en el teléfono? | Sin tope; tamaño siempre a la vista |
 | 11 | ¿Cuándo haces la prueba de oído en el A52 y en la laptop (P3.3)? Necesita P3.2a-1 y P3.2a-2 | En cuanto existan |
 | 12 | ¿Las tarjetas en audio dicen también la traducción al español? (pide una voz en español en el curso) | Que lo decida habitos en P3.1 |
+
+## 14. Estado de la ejecución
+
+### 14.1 P3.2a-1 (22/nov/2026): hecho en lo técnico, sin probar en un aparato
+
+Aprobación del dueño: `flutter_tts` 4.2.5, `sherpa_onnx` 2.0.1 y `audioplayers` 6.8.1, con versión exacta (`docs/ROADMAP.md`, control de cambios 3.0). **En este paquete solo entró `flutter_tts` 4.2.5**; `sherpa_onnx` y `audioplayers` entran en P3.2a-2. `pub get` con Flutter 3.47.9 y Dart 3.13.7 resolvió sin cambiar ninguna otra dependencia (el `pubspec.lock` solo ganó `flutter_tts`; `windows/flutter/generated_plugin_registrant.cc` y `generated_plugins.cmake` registran el plugin).
+
+| Pieza | Dónde |
+|---|---|
+| Tipos, errores e interfaz `MotorVoz implements VozSalida` (`VozSalida` no cambió) | `app/lib/modulos/gravity/voz/tipos.dart`, `motor.dart` |
+| `Asignador` por género y `resolverAsignacion` (lo elegido por la persona + la propuesta, sin repetir voces) | `voz/asignador.dart` |
+| Reproducción turno por turno (pausa entre turnos, pausar, reanudar, parar) | `voz/reproduccion_por_turnos.dart` |
+| `FuenteDeVozFalsa` y `PuertoTtsFalso` (pruebas sin plugin) | `voz/fuente_falsa.dart`, `voz/fuentes/dispositivo/puerto_tts.dart` |
+| **Fuente A:** voz del dispositivo con `flutter_tts` | `voz/fuentes/dispositivo/fuente_dispositivo.dart` y `puerto_tts.dart` (la única puerta al plugin) |
+| Cadena de fuentes (5.3) y motor | `voz/motor.dart` (`cadenaPorOmision`, `cadenaDe`, `MotorDeVoz`) |
+| Preferencias por persona (5.2) en `shared_preferences` | `voz/preferencias.dart`; se abren en `app/lib/app/arranque.dart` |
+| Proveedores (`motorVozProvider`, `fuentesDeVozProvider`) | `voz/proveedores.dart` |
+| `FuenteTipoDeRed` (con `connectivity_plus`; sin quien la use hasta P3.2a-2) | `app/lib/nucleo/conectividad/tipo_de_red.dart` y `tipo_de_red_plus.dart` |
+| Panel de conversación: interruptor «Leer las respuestas en voz alta» según la **salida** de voz y dictado que calla al motor (criterio 38) | `app/lib/modulos/gravity/conversacion/panel_conversacion.dart` |
+| Ajustes › Voz real (estado, voz y velocidad del asistente, voces del curso por acento, probar, detalles técnicos; B y C como «próximamente») | `app/lib/modulos/ajustes/voz/` |
+| Android 11 o más: `<queries>` con `TTS_SERVICE` | `app/android/app/src/main/AndroidManifest.xml` |
+
+**Lectura en voz alta del asistente (pregunta 3, aún sin respuesta del dueño).** Se implementó la recomendación: el asistente lee sus respuestas **solo si la persona enciende el interruptor**, y el interruptor está **apagado en cada sesión** (no se recuerda). Lo lee con la voz del dispositivo, en español, a la velocidad que la persona fijó en Ajustes. Nunca lee lo dicho por la persona, los resultados locales («En tu pantalla») ni los errores (criterio 9). **Es una lectura de esta especificación, no una decisión confirmada:** si el dueño responde otra cosa, el cambio es el valor por omisión de `leerEnVozAltaProvider` y un campo en las preferencias.
+
+**Cómo llega el motor al panel.** `vozSalidaProvider` conserva su valor por omisión (`VozSalidaNoDisponible`), así las pruebas y los equipos sin voz no cambian. El arranque lo sustituye por el motor (`arranque.dart`). Una variante equivalente a 3.5, punto 2, sin dependencia circular entre `voz.dart` y la carpeta `voz/`.
+
+### 14.2 Diferencias con las firmas de la sección 3 (todas son agregados)
+
+- `Motivo.sinMotorDeVoz`: el equipo no tiene motor de texto a voz o no responde (4.1, falla 1). Distinto de `sinVozEnElIdioma`.
+- `VozMotor` lleva además `locale` y `calidad` (para ordenar y para Detalles técnicos).
+- `Variante` y `VozDeGuion` llevan `etiqueta`, `nombre` (y `idioma` en `Variante`); `Fuente` lleva `nombre`.
+- `Asignador.proponer` acepta `roles` (solo asigna los papeles que usa el guion). Una voz con género conocido nunca ocupa el lugar del otro género.
+- `MotorVoz` agrega `asignacion`, `diagnostico` y `refrescar`; `FuenteConDiagnostico` es la interfaz que lo hace posible. `VozDelSistema` es la voz tal como la reporta el sistema.
+- `Guion.vocesUsadas` y `Capacidades.ajustarVelocidad`.
+- Los errores del gestor de descargas (`SinWifi`, `SinRed`, `SinEspacio`, `HuellaIncorrecta`, `DescargaInterrumpida`) **no están**: llegan con P3.2a-2. Lo mismo `EstadoModelo`, `ProgresoDescarga`, `GestorDeModelos` y `ReproductorDeAudio`.
+- `Avance.posicion` en la fuente A es el tiempo transcurrido, no la posición en el audio; `duracion` es `null`.
+- **Pausa (4.1, límites conocidos):** en lugar del truco de Android que repite desde la última palabra, **pausar corta el turno que suena y reanudar lo repite desde el principio**. Es lo único que se puede garantizar igual en Android y en Windows sin un aparato a la mano. La pantalla todavía no tiene botón de pausa (solo Parar).
+- **Tono:** la fuente A declara que el plugin lo admite (`Capacidades.tono`), pero esta versión no lo usa ni lo ofrece en Ajustes.
+- **Fuente preferida y «Solo esta fuente»:** el motor y las preferencias ya lo manejan (criterio 32), pero Ajustes no lo ofrece mientras haya una sola fuente real.
+- **Probar:** usa `soloFuente: dispositivo` para que suene lo que la pantalla muestra, no un respaldo. La Hoja de escucha y el guion de prueba de 5.4 son de P3.3; aquí hay un diálogo de prueba de dos voces y seis turnos con líneas propias (no es contenido del curso).
+
+### 14.3 Lo que se leyó en `flutter_tts` 4.2.5 y condiciona el diseño
+
+Resuelve en parte V5 (sin ejecutar nada; es lectura del código):
+
+- **Windows compila la rama de WinRT** (`SpeechSynthesizer`): `flutter_tts_plugin.cpp:18` la elige con `WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP`, que es el valor de una aplicación de escritorio. Esa rama da `gender` e `identifier` en cada voz y emite los avisos de inicio, fin, pausa, continuar y cancelado. **Sin verificar compilando en la laptop** (V5 sigue abierto, pero ahora hay una hipótesis).
+- **Windows exige `nuget.exe` en el PATH para compilar.** `windows/CMakeLists.txt` hace `find_program(NUGET_EXE)` y un `FATAL_ERROR` si no lo halla, y descarga `Microsoft.Windows.CppWinRT` 2.0.210503.1 de nuget.org al compilar. Es un requisito nuevo para la laptop del dueño (no entra al repositorio ni a la app).
+- **Windows: `stop()` sin nada sonando puede cerrar la app.** Con `awaitSpeakCompletion(true)`, `stop()` responde 1 al `speak` pendiente sin comprobar que exista. Por eso `PuertoTtsFlutter` solo llama a `stop` si hay un turno en curso, y marca como interrumpido lo que cortó, sin fiarse de que el plugin conteste 1 al cortar (en Windows, un `speak` cortado responde 1, igual que uno terminado).
+- **Windows: `getSpeechRateValidRange` no existe** (`NotImplemented`): la puerta usa valores por omisión (mínimo 0, normal 0.5, máximo 1.5). En las dos plataformas 0.5 del plugin es la velocidad normal; el motor traduce el factor (1.0 normal) multiplicando por 0.5 y lo acota a 0.5 a 1.5.
+- **Android: si hay un error, `speak` no completa.** Solo avisa por `setErrorHandler`. La puerta toma como resultado la primera señal que llegue (fin, cancelado, error o el `Future` de `speak`).
+- **Android: `speak` responde 0** cuando lo cortan y cuando ya había algo sonando. Tras un corte propio, la puerta espera (hasta 250 ms) el aviso de cancelado antes de hablar de nuevo, para que ese aviso no corte el turno siguiente.
+- Android devuelve `getVoices` nulo si el servicio de voz no está listo: la puerta lo trata como «sin motor de voz». El género casi nunca viene; las voces de Google lo traen en el nombre (`en-us-x-sfg#female_1-local`) y se usa solo como pista para el `Asignador`.
+- `minSdk` del plugin: 24, igual que el de Flutter 3.47.
+
+### 14.4 Pruebas
+
+Las nuevas están en `app/test/modulos/gravity/voz/` (asignador, motor, fuente A con puerta simulada, puerta real contra un canal simulado, preferencias, guardia de código fuente, panel), `app/test/modulos/ajustes/voz/pantalla_voz_test.dart` y `app/test/nucleo/conectividad/tipo_de_red_test.dart`. Cubren los criterios 1 a 10, 12, 13 y 16, 32 a 36 y 38 (11 con la guardia de código); los criterios 14, 15 y 17 a 31 son de la descarga y del audio pregrabado (P3.2a-2 y P3.2a-3); 37 se cubre con «Probar» de Ajustes de la fuente A (la prueba con las tres fuentes es de P3.2a-3). Los criterios 39 a 45 son del dueño (14.5).
+
+### 14.5 Para probar en dispositivo
+
+**Galaxy A52 (Android).**
+1. En la laptop: `cd app && flutter build apk` (V15: nunca se compiló Android con `flutter_tts`). Instalar el APK.
+2. Ajustes › Voz. Anotar lo que dice «Voz del dispositivo»: cuántas voces en español y en inglés y cuántas «se dejaron fuera por necesitar conexión». Abrir «Detalles técnicos» y fotografiarlo (V4 y V6). Comparar con Ajustes del sistema › «Salida de texto a voz».
+3. Modo avión y Wi-Fi apagado. «Probar» la voz de GRAVITY: debe sonar (V6). Si una voz que la pantalla ofrece **no** suena sin conexión, anotar su nombre exacto (el dato `network_required` no sería fiable en ese motor).
+4. Velocidad: probar 0.5, 1.0 y 1.5. Debe oírse más lenta y más rápida, sin cortes.
+5. «Parar» a media frase: debe callar en menos de un segundo; pulsar «Probar» enseguida: debe sonar de nuevo (prueba el corte y el aviso de cancelado de la puerta).
+6. Curso de inglés (solo con una sesión que use Hábitos): «Probar» F1, M1, N en inglés americano y británico, y el «Diálogo de prueba»: ¿F1 y M1 suenan distintas? Anotar las filas que dicen «Sin otra voz distinta».
+7. Conversación: encender «Leer las respuestas en voz alta»; hacer una pregunta; debe leerse solo la respuesta de GRAVITY (no lo que aparece como «En tu pantalla»). Tocar el micrófono mientras habla: debe callar **antes** de escuchar y el dictado no debe captar la voz de la app (criterio 38).
+8. Cerrar la app y volver a abrirla: el interruptor debe estar apagado. La voz y la velocidad elegidas deben seguir.
+9. Con el interruptor apagado no debe hablarse nada (ni siquiera con voz).
+10. Criterio 41 (red): con Wi-Fi, `adb shell dumpsys netstats` antes y después de varias respuestas leídas: los bytes de la app no deben cambiar por la voz.
+11. Criterio 43: desactivar o desinstalar las voces en inglés del sistema, abrir Ajustes › Voz: debe decir cómo instalar una. Anotar los pasos reales de ese teléfono.
+
+**Laptop con Windows.**
+1. Requisito: `nuget.exe` en el PATH y conexión durante la primera compilación (14.3). `flutter run -d windows`. Si la compilación falla en `flutter_tts`, anotar el mensaje: puede faltar nuget o el SDK de Windows.
+2. Ajustes › Voz › «Detalles técnicos»: ¿trae las voces del sistema con sus idiomas? Para V5: la rama de WinRT da el género de cada voz; si los detalles muestran las voces pero el asistente o el curso dicen que no hay voces en inglés, anotar la lista (Windows: Configuración › Hora e idioma › Voz para agregar voces; luego «Actualizar la lista de voces» sin reiniciar la app, y si no aparecen, reiniciarla).
+3. «Probar» y «Parar» a media frase **varias veces seguidas**: la app **no debe cerrarse** (riesgo conocido del plugin al cortar). Anotar cualquier cierre.
+4. Velocidad 0.5, 1.0 y 1.5.
+5. Conversación: lo mismo que en el teléfono, sin el micrófono (el dictado solo existe en Android).
+
+### 14.6 Pendiente y no hecho
+
+- **P3.2a-1:** el bloque de escucha de `app/lib/modulos/habitos/` (reproductor del curso con la fuente simulada) **no se hizo**: es de habitos y depende de P3.1 (`docs/specs/fase-8-habitos-reproductor-curso.md`), que no existe. Los guiones del curso ya se pueden reproducir con `MotorVoz.reproducir`.
+- Voz de las bocinas (D6): no se tocó.
+- Tono, botón de pausa, fuente preferida y «Solo esta fuente» en la pantalla: no hay nada que elegir mientras la fuente A sea la única.
+- Descarga de voces, `sherpa_onnx`, `audioplayers`, audio pregrabado (P3.2a-2 y P3.2a-3) y todo el catálogo (P3.0b).
+- Lo que ningún equipo de pruebas del repositorio verifica: que las voces del A52 y de la laptop suenen y se enumeren como se espera; la latencia; que TalkBack lea el interruptor y el control de velocidad (la prueba de widgets solo comprueba la etiqueta y el texto de valor); Windows completo.
+
+### 14.7 Preguntas abiertas para el dueño
+
+1. **Pregunta 3 (lectura en voz alta):** se implementó la recomendación (solo si la persona enciende el interruptor, apagado en cada sesión). ¿Se queda así?
+2. En Windows, ¿aceptas instalar `nuget.exe` en la laptop para compilar (14.3)?
+3. La pausa repite el turno desde el principio (14.2). Para el curso (turnos de hasta 50 palabras) ¿basta, o quieres probar primero en el A52 el truco de Android que retoma desde la última palabra?
+
