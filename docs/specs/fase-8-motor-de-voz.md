@@ -1065,3 +1065,16 @@ Las nuevas están en `app/test/modulos/gravity/voz/` (asignador, motor, fuente A
 1. **Lectura en voz alta:** si la persona decide encenderla, **queda encendida en todas las sesiones** (por persona; en la tablet cambia con la persona en pantalla). Apagada por omisión. Hecho: `PreferenciasVoz.leerRespuestas`, guardada con el resto de las preferencias de voz. Sigue leyendo solo la respuesta de GRAVITY (D3, D6).
 2. **`nuget.exe` en la laptop:** aceptado. Pendiente del dueño: instalarlo y ponerlo en el PATH antes de compilar para Windows.
 3. **Pausa:** el dueño pide **probar** retomar desde la palabra que sonaba. Hecho: la puerta a `flutter_tts` pasa el inicio de la palabra que avisa el plugin (`setProgressHandler`) y la fuente A reanuda desde ahí; si la plataforma no avisa (Windows, según la lectura del plugin) el turno se repite desde el principio. **Falta probar en el A52** (paso 5 de «Para probar en dispositivo»: pausar a media frase y reanudar; ¿retoma desde la palabra, repite o salta?). Si en el aparato se comporta mal, se vuelve a repetir el turno completo cambiando una sola función en `fuente_dispositivo.dart`. La pantalla todavía no tiene botón de pausa.
+
+### 14.7 P3.0b: verificación de licencias y huellas (22/nov/2026)
+
+Hecho: tamaño y sha256 de las 11 candidatas (`.tar.bz2` completos y cada archivo útil, sin `espeak-ng-data`) y de `lexicon-en-us.txt`; tarjetas y licencias leídas y copiadas literales. Resultados y veredictos en `docs/licencias-voces/README.md`; huellas en `docs/licencias-voces/verificadas.json`. Cierra la parte de licencias de V1 y V11 **en lo que se pudo leer**; no se escribió `catalogo.json` (faltan alojamiento, `sid`, `uso` y `rtf`, regla 1 de 4.2.1).
+
+Hallazgos que cambian el plan:
+- **Lessac (Blizzard 2013) es licencia de investigación**: excluye el uso comercial en productos de síntesis de voz y prohíbe distribuir los materiales. `libritts_r` y `vctk` salen de ahí. Si pasa a los pesos es una pregunta jurídica que decide una persona.
+- **Solo las voces de dominio público (kristin, john, norman, cori) tienen licencia limpia**: tres en inglés americano y una británica; sin F2 ni acento británico real (cori necesita un lexicón que no existe, V8).
+- **Kokoro** es Apache-2.0 pero se entrenó en parte con datos CC BY (atribución) y con audio sintético de modelos cerrados; **Kitten** es Apache-2.0 sin datos de entrenamiento documentados.
+- Los modelos de Piper usan fonemas `espeak`; con `sherpa_onnx` 2.0.x necesitan lexicón y el único es el americano (`lexicon-en-us.txt`, cuyo origen `en_list` no pude leer).
+- No pude leer librivox.org, la página del autor, `davefx`, `en_list` ni `espeak-ng`.
+
+Decisiones que necesita el dueño: preguntas 4 (alojamiento) y 6 (licencias), ahora con estas lecturas.

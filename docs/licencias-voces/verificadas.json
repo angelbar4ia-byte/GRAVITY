@@ -1,0 +1,445 @@
+{
+  "esquema": "gravity-voces-verificacion-v1",
+  "consultado": "2026-11-22",
+  "origen": "https://github.com/k2-fsa/sherpa-onnx/releases/tag/tts-models",
+  "nota": "Huellas medidas el 22/nov/2026 descargando cada .tar.bz2 completo. 'archivos' NO incluye espeak-ng-data (no se redistribuye; sherpa_onnx 2.0.x lo ignora). Esto NO es el catálogo de la app: falta alojamiento, revisión fija, sid, uso y RTF (spec 4.2.1, regla 1).",
+  "modelos": [
+    {
+      "id": "kitten-nano-en-v0_1-fp16",
+      "tar_bz2": {
+        "bytes": 26855312,
+        "sha256": "f35dac93754fe2ac97c66e1f468311d0d2130f7f0f5a89bfa1197e09a0cbdec5",
+        "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kitten-nano-en-v0_1-fp16.tar.bz2"
+      },
+      "archivos": [
+        {
+          "nombre": "LICENSE",
+          "bytes": 11358,
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+        },
+        {
+          "nombre": "README.md",
+          "bytes": 796,
+          "sha256": "e8751a029481521364265c7c95acf0394fa3580671f19e99c1e9ce51c74ba9d6"
+        },
+        {
+          "nombre": "model.fp16.onnx",
+          "bytes": 23848586,
+          "sha256": "6b42d25df767db408d95738b464f02168a9cfb76367c1b2b9e90095485981407"
+        },
+        {
+          "nombre": "tokens.txt",
+          "bytes": 1064,
+          "sha256": "934a4188addc7665dd3410256bb622169242357fbb99d840d9351209b486dabb"
+        },
+        {
+          "nombre": "voices.bin",
+          "bytes": 8192,
+          "sha256": "138cf3a7afd0ebf1f9d6fb72f49e960ef8405252eaff5d130cf3fba1b038a741"
+        }
+      ]
+    },
+    {
+      "id": "kokoro-en-v0_19",
+      "tar_bz2": {
+        "bytes": 319625534,
+        "sha256": "912804855a04745fa77a30be545b3f9a5d15c4d66db00b88cbcd4921df605ac7",
+        "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kokoro-en-v0_19.tar.bz2"
+      },
+      "archivos": [
+        {
+          "nombre": "LICENSE",
+          "bytes": 11358,
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+        },
+        {
+          "nombre": "README.md",
+          "bytes": 135,
+          "sha256": "5a6302820ea002390e8da7219b7b03d18fdf8cfd1179440ca739a1504cef95d5"
+        },
+        {
+          "nombre": "model.onnx",
+          "bytes": 345555491,
+          "sha256": "10ff414106a038ce7e9e0126c6461e4dc8a86efaa89dc91d2009d69fe635e339"
+        },
+        {
+          "nombre": "tokens.txt",
+          "bytes": 1078,
+          "sha256": "4f31c71282d14af4e926cd12462078fe9d20d00c589e63fe2750a8f56d6d7f7b"
+        },
+        {
+          "nombre": "voices.bin",
+          "bytes": 5755904,
+          "sha256": "a372c67b056ef0b695c375d39b99630d23fb07ad4c8d87aa32a19a62fca523ad"
+        }
+      ]
+    },
+    {
+      "id": "kokoro-int8-multi-lang-v1_1",
+      "tar_bz2": {
+        "bytes": 147052523,
+        "sha256": "259c9c8bc906d6078e4e0570421885dabb68b539c2f970fcbb890a58eeaf3e9c",
+        "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kokoro-int8-multi-lang-v1_1.tar.bz2"
+      },
+      "archivos": [
+        {
+          "nombre": "LICENSE",
+          "bytes": 11358,
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+        },
+        {
+          "nombre": "README.md",
+          "bytes": 114,
+          "sha256": "e2d39356ea4d67ac15c39a7e5a238ea12b0f6fb8a55bb0c87bc2f659eb1cf7ac"
+        },
+        {
+          "nombre": "date-zh.fst",
+          "bytes": 59154,
+          "sha256": "eb8aa079ae3cb81d8f4404992f39d61a0cb990947512b5b8d1e54d1f6980e718"
+        },
+        {
+          "nombre": "dict/README.md",
+          "bytes": 683,
+          "sha256": "8bcc7c2ed7dff082d9a99c09de0bfd72249bf3b5c4298a3af328da40cbd8cfd1"
+        },
+        {
+          "nombre": "dict/generate_user_dict.py",
+          "bytes": 545,
+          "sha256": "24541017b4b60d8e1ad94a5165f7097d2fd107d4ceecbf13583dd37682fdd2a7"
+        },
+        {
+          "nombre": "dict/hmm_model.utf8",
+          "bytes": 519739,
+          "sha256": "f17790586ac86dd048c8adffed052c4bd2b28ed0682972c1275e59040c0589a7"
+        },
+        {
+          "nombre": "dict/idf.utf8",
+          "bytes": 5998717,
+          "sha256": "dbd1e03d72b2263cc8d84a4304ed77677eed9e7deaf43a1a5133bbba9733b535"
+        },
+        {
+          "nombre": "dict/jieba.dict.utf8",
+          "bytes": 5071204,
+          "sha256": "3043b77068e09c9904f27cad82f12b6ebe9dbdb5aeff3b25e45ab7f9c1122b55"
+        },
+        {
+          "nombre": "dict/pos_dict/char_state_tab.utf8",
+          "bytes": 327139,
+          "sha256": "28b7be1dd7369766a51445af4d42e9a2ba4bf374c13be5bc1ca7721e27271dbb"
+        },
+        {
+          "nombre": "dict/pos_dict/prob_emit.utf8",
+          "bytes": 1687686,
+          "sha256": "c33c4cb7edf3b3a5947df7209b6e9f267eae1f21335d9e2bd2521ea07105457a"
+        },
+        {
+          "nombre": "dict/pos_dict/prob_start.utf8",
+          "bytes": 4347,
+          "sha256": "13623ea0e9300bdb597cb2da28770b7b385d6c0098d66e516083fb01b6bd5d96"
+        },
+        {
+          "nombre": "dict/pos_dict/prob_trans.utf8",
+          "bytes": 124159,
+          "sha256": "f22363e2307408293d180c6f9f6b5cb75879d52f722f7764fa2d3d0ae2400236"
+        },
+        {
+          "nombre": "dict/stop_words.utf8",
+          "bytes": 8974,
+          "sha256": "b788b8a939d2e2fe079abd579ea98f12f9fb84370bfd0dddd81bb9381f7ab42c"
+        },
+        {
+          "nombre": "dict/user.dict.utf8",
+          "bytes": 829194,
+          "sha256": "5faabcd0c52adf512de77fd7eee3d556da8c98b50f493b47c66a981b3a24959c"
+        },
+        {
+          "nombre": "lexicon-gb-en.txt",
+          "bytes": 6366635,
+          "sha256": "c4cbb37316f62210dff52718a7afcaae24f50c032cc75ab47ae67b831d1049e7"
+        },
+        {
+          "nombre": "lexicon-us-en.txt",
+          "bytes": 5956885,
+          "sha256": "7daaab53a181be9885b853a8582bf1838186317e5dadacbcef9c426d6fa0da14"
+        },
+        {
+          "nombre": "lexicon-zh.txt",
+          "bytes": 2120131,
+          "sha256": "fea060803db3e59193987f1a3436f56917bda09f3b3595b6588e46ae60cebf93"
+        },
+        {
+          "nombre": "model.int8.onnx",
+          "bytes": 114203914,
+          "sha256": "05d793700b0b507f760c183c0e39bdd6a97b43d32fdc7bf7b54a5179f1b11222"
+        },
+        {
+          "nombre": "number-zh.fst",
+          "bytes": 64482,
+          "sha256": "743f402181fcfebf76cc2f0546b71fa26476e626fbe4e460fb7b4c3a7a8bd5bd"
+        },
+        {
+          "nombre": "phone-zh.fst",
+          "bytes": 88630,
+          "sha256": "1ac2b6fa56b1442320c4de7db08353bab8963a2b57f365eebcdd3a2d3562f8d7"
+        },
+        {
+          "nombre": "tokens.txt",
+          "bytes": 1111,
+          "sha256": "931ab2df2400cd65d580a22402024c2347ced8ae9ea300e545144b1aacc48e14"
+        },
+        {
+          "nombre": "voices.bin",
+          "bytes": 53790720,
+          "sha256": "e64a5a581d8c2a350d848f51c3121657cd83aa07ed6109172177345874a7244c"
+        }
+      ]
+    },
+    {
+      "id": "vits-piper-en_GB-cori-medium",
+      "tar_bz2": {
+        "bytes": 67257412,
+        "sha256": "49c9a5361bbdd95d7ca9687c4de11e5908481f65e7c7c368960df79949fdac2b",
+        "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-en_GB-cori-medium.tar.bz2"
+      },
+      "archivos": [
+        {
+          "nombre": "MODEL_CARD",
+          "bytes": 474,
+          "sha256": "38d76dfde845837b184668f8bab1c6426ad740b1af0fcebc349037822739e536"
+        },
+        {
+          "nombre": "en_GB-cori-medium.onnx",
+          "bytes": 63531507,
+          "sha256": "8b0d3cdd77f2878e0aa2048103eabb4d01b334783f99629f042bcf703aeba487"
+        },
+        {
+          "nombre": "en_GB-cori-medium.onnx.json",
+          "bytes": 4966,
+          "sha256": "e262c16d7f192f69d4edd6b4ef8a5915379e67495fcc402f1ab15eeb33da3d36"
+        },
+        {
+          "nombre": "tokens.txt",
+          "bytes": 940,
+          "sha256": "ef3a7e4a8d1af0c9d4dc45aaae1a6242ebe24a7ed6f3d025a49eb29682784c6d"
+        }
+      ]
+    },
+    {
+      "id": "vits-piper-en_GB-vctk-medium",
+      "tar_bz2": {
+        "bytes": 80488085,
+        "sha256": "abafd35bdab0a72a3c6b947228ae3cccdf3624db83313c77d1abb5cbc75e1f64",
+        "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-en_GB-vctk-medium.tar.bz2"
+      },
+      "archivos": [
+        {
+          "nombre": "MODEL_CARD",
+          "bytes": 326,
+          "sha256": "53ec6b1fd90d9125d5bebac55261efd27f7e8d6dc962f605a5b5f796df2ec7fb"
+        },
+        {
+          "nombre": "en_GB-vctk-medium.onnx",
+          "bytes": 76952891,
+          "sha256": "589b35f4acb05410179f0e46f34c2749634dde801b1e2883717782b100b6e9d5"
+        },
+        {
+          "nombre": "en_GB-vctk-medium.onnx.json",
+          "bytes": 6637,
+          "sha256": "7f85e6391ed0f7f46e4abd19345929a16be931a0c9945086f96692dce2087fa8"
+        },
+        {
+          "nombre": "tokens.txt",
+          "bytes": 921,
+          "sha256": "87c8ef66eae5473ed0cc0366b3964c736ca6c5f676c979522ea31234e47430b9"
+        }
+      ]
+    },
+    {
+      "id": "vits-piper-en_US-john-medium",
+      "tar_bz2": {
+        "bytes": 67249181,
+        "sha256": "d90362cfa48e429d3096f644785184446145b6e38216f2eaf4c0601b8aad5a36",
+        "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-en_US-john-medium.tar.bz2"
+      },
+      "archivos": [
+        {
+          "nombre": "MODEL_CARD",
+          "bytes": 498,
+          "sha256": "a056da65cd70dcbda96fc3420fe8d3442dbf3c8b75f49cdf800a715b42e299d1"
+        },
+        {
+          "nombre": "en_US-john-medium.onnx",
+          "bytes": 63152970,
+          "sha256": "4fb0dd1c34ec1add55e71a1ea84166f798922867bd4609e0a094ce4a285f940e"
+        },
+        {
+          "nombre": "en_US-john-medium.onnx.json",
+          "bytes": 4965,
+          "sha256": "af60f177b6b550f3d7a302720c0fb89e7f94a82b5dca464775ef63b1c69ba09a"
+        },
+        {
+          "nombre": "tokens.txt",
+          "bytes": 940,
+          "sha256": "ef3a7e4a8d1af0c9d4dc45aaae1a6242ebe24a7ed6f3d025a49eb29682784c6d"
+        }
+      ]
+    },
+    {
+      "id": "vits-piper-en_US-kristin-medium",
+      "tar_bz2": {
+        "bytes": 67259230,
+        "sha256": "c2206f572df2956c50b1ae3367eebce3853c663e890cba8048cd62b1e4dbe6c7",
+        "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-en_US-kristin-medium.tar.bz2"
+      },
+      "archivos": [
+        {
+          "nombre": "MODEL_CARD",
+          "bytes": 479,
+          "sha256": "8c181b1d5f7d8152b914faab941fcbe6b8f0495e63e5189d6f27b8c68c8393fc"
+        },
+        {
+          "nombre": "en_US-kristin-medium.onnx",
+          "bytes": 63531507,
+          "sha256": "f9a5c375c70ddc33ccdb3969c76a4d7cc5255ac08119a312b0034a1d07041be6"
+        },
+        {
+          "nombre": "en_US-kristin-medium.onnx.json",
+          "bytes": 4968,
+          "sha256": "5681426d4aead22195de70531eeeeddb46493cfaffc5764b2ea3db73428b651c"
+        },
+        {
+          "nombre": "tokens.txt",
+          "bytes": 940,
+          "sha256": "ef3a7e4a8d1af0c9d4dc45aaae1a6242ebe24a7ed6f3d025a49eb29682784c6d"
+        }
+      ]
+    },
+    {
+      "id": "vits-piper-en_US-libritts_r-medium",
+      "tar_bz2": {
+        "bytes": 82038311,
+        "sha256": "10dc268f3e371696d721486123e2705a9fc1faa113491979fde4d88dba1f1b1c",
+        "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-en_US-libritts_r-medium.tar.bz2"
+      },
+      "archivos": [
+        {
+          "nombre": "MODEL_CARD",
+          "bytes": 279,
+          "sha256": "0ccde6927e5bb4d743f4ea39618a9387ba18cca3351220a8a9cfdbc68b30fcb9"
+        },
+        {
+          "nombre": "en_US-libritts_r-medium.onnx",
+          "bytes": 78529840,
+          "sha256": "8cce84cee4060bc3c2194bf95d33253c48dc8ff15e197b3b7a00b334ee0017f4"
+        },
+        {
+          "nombre": "en_US-libritts_r-medium.onnx.json",
+          "bytes": 20123,
+          "sha256": "b471dc60d2d8335e819c393d196d6fbf792817f40051257b269878505bc9afb3"
+        },
+        {
+          "nombre": "tokens.txt",
+          "bytes": 954,
+          "sha256": "620e1aecf1a68fea3ba5850d137b0138fa2037c9b372dad13b95a2a215d0849a"
+        }
+      ]
+    },
+    {
+      "id": "vits-piper-en_US-norman-medium",
+      "tar_bz2": {
+        "bytes": 67203672,
+        "sha256": "1f32065d480abe9abc7c7f91442125d0b34c1cc065d1e600466cac408eabf3b8",
+        "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-en_US-norman-medium.tar.bz2"
+      },
+      "archivos": [
+        {
+          "nombre": "MODEL_CARD",
+          "bytes": 528,
+          "sha256": "60eaf4d10009d1bd4a1aa555d337dae00f60421d72fee415b9139a021e7cb5d0"
+        },
+        {
+          "nombre": "en_US-norman-medium.onnx",
+          "bytes": 63531507,
+          "sha256": "fa06b6b8b280e176b17f8424e05ca12d0223eeac9a31c87230937fe7120fbe2a"
+        },
+        {
+          "nombre": "en_US-norman-medium.onnx.json",
+          "bytes": 4968,
+          "sha256": "6c2db7f558a4a8deb9fe822583c1c5105f6c4e834dd0f9de8ad17a888ee9fe1d"
+        },
+        {
+          "nombre": "tokens.txt",
+          "bytes": 940,
+          "sha256": "ef3a7e4a8d1af0c9d4dc45aaae1a6242ebe24a7ed6f3d025a49eb29682784c6d"
+        }
+      ]
+    },
+    {
+      "id": "vits-piper-es_MX-ald-medium",
+      "tar_bz2": {
+        "bytes": 67196497,
+        "sha256": "c60cf7bc853eb01a875fba0756523fecf9d9f46c763b19785d223fc981fb4fb6",
+        "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-es_MX-ald-medium.tar.bz2"
+      },
+      "archivos": [
+        {
+          "nombre": "MODEL_CARD",
+          "bytes": 320,
+          "sha256": "1f0694ceb3f1e78c1e2ee0e2d5da40f19f965bc638e1b4fb4fca9bdca420d713"
+        },
+        {
+          "nombre": "es_MX-ald-medium.onnx",
+          "bytes": 63149200,
+          "sha256": "b8198f4e0495029a686db2f7a7cb70bd4b3d6fe4300e3ee743d8a82602194389"
+        },
+        {
+          "nombre": "es_MX-ald-medium.onnx.json",
+          "bytes": 4878,
+          "sha256": "5a71498158e04afc8099bfd019c7e87c68eb9d042505a2b1a87e5c1ac2b1a61d"
+        },
+        {
+          "nombre": "tokens.txt",
+          "bytes": 921,
+          "sha256": "87c8ef66eae5473ed0cc0366b3964c736ca6c5f676c979522ea31234e47430b9"
+        }
+      ]
+    },
+    {
+      "id": "vits-piper-es_MX-claude-high",
+      "tar_bz2": {
+        "bytes": 67207890,
+        "sha256": "ec33fb689c248fe64810aab564cba97babf0f506672cfd404928d46e751a4721",
+        "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-es_MX-claude-high.tar.bz2"
+      },
+      "archivos": [
+        {
+          "nombre": "MODEL_CARD",
+          "bytes": 247,
+          "sha256": "f03da57c1e945f6d709b01e7699d26018e145570139de52ac7569aaa8962a174"
+        },
+        {
+          "nombre": "es_MX-claude-high.onnx",
+          "bytes": 62949322,
+          "sha256": "6b7a54f5fcc8c9ce3788cd308a26cfa429ad025cdff4a7a6c34d025d0d229341"
+        },
+        {
+          "nombre": "es_MX-claude-high.onnx.json",
+          "bytes": 4963,
+          "sha256": "1afc81f703c0e4cb3b4d7c0dca096b8b54a98806807f0170cf5eb5557723c12d"
+        },
+        {
+          "nombre": "tokens.txt",
+          "bytes": 940,
+          "sha256": "ef3a7e4a8d1af0c9d4dc45aaae1a6242ebe24a7ed6f3d025a49eb29682784c6d"
+        }
+      ]
+    }
+  ],
+  "lexicon": {
+    "nombre": "lexicon-en-us.txt",
+    "bytes": 6305773,
+    "sha256": "8b67ae549a465eee78f92ecb74644ad90c3c58ce65f19c68baf85878a10ef73a",
+    "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/lexicon-en-us.txt",
+    "encabezado": "CMUDict + en_list + compounds"
+  }
+}
