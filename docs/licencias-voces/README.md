@@ -64,3 +64,29 @@ riesgo de lessac. Esa es la decisión del dueño.
 - LibriVox y la página del autor de las voces de dominio público (hosts no permitidos en esta sesión).
 - Licencia de la voz `davefx`, de `en_list` y de `espeak-ng`; procedencia de los datos de Kitten.
 - Si los modelos suenan bien y corren sin espeak con `sherpa_onnx` 2.0.1 (V3, V8: hay que oírlos y medirlos).
+
+## Prueba con `sherpa_onnx` 2.0.1 (22/nov/2026, Python, x86 de 4 núcleos; **no** es el A52 ni la laptop)
+
+Sirve para saber si los archivos funcionan sin `espeak-ng`; **el RTF no vale para el catálogo** (regla 5 de 4.2.1: sale
+de los aparatos) y la calidad solo se oye (P3.3).
+
+| Modelo | Resultado |
+|---|---|
+| `kristin` (Piper) con `lexicon-en-us.txt` | **Funciona.** 22 050 Hz; RTF 0.08 con 2 hilos. El lexicón cubre las 48 palabras de prueba menos `I'm` |
+| `kokoro-int8-multi-lang-v1_1` con `lexicon-us-en.txt` (`lang=en-us`) | **Funciona**, 103 voces, 24 000 Hz; RTF 1.2 con 2 hilos (más lento que el habla: sirve para **pregrabar**, no para tiempo real). **Pero omite palabras:** el lexicón no trae formas regulares comunes (`lived`, `wanted`, `listened`, `opened`, `arrived`, `believed`) y `sherpa_onnx` las **salta en silencio** («OOV word skipped»). Faltan 7 de 49 palabras de prueba (6 de 49 con el lexicón británico) |
+| `kokoro-en-v0_19` sin `espeak-ng-data` | **No funciona** («No lexicon available»): sin espeak necesita un lexicón que su paquete no trae |
+
+Consecuencias: (1) `kokoro-en-v0_19` queda descartado; (2) con Kokoro, todo texto del curso tiene que pasar por una
+revisión de palabras fuera del lexicón antes de pregrabarse (se corrige el texto o se agrega la entrada al lexicón,
+y esas entradas son contenido propio); (3) las voces Piper de dominio público con su lexicón sí cubren el texto y son
+las únicas con tiempo real holgado. El mapa de `sid` a nombre de la documentación es del paquete v1_0 (54 voces); el del
+v1_1 (103) no lo pude confirmar, así que los `sid` del catálogo se fijan oyendo (P3.3).
+
+## Decisiones del dueño (22/nov/2026)
+
+- **Pregunta 6, licencias:** se aceptan voces con atribución (CC BY mostrada en Ajustes); Kokoro v1_1 con atribución; las de
+  dominio público como respaldo; se excluye lessac (`libritts_r`, `vctk`) hasta que una persona lea y decida.
+- **Pregunta 4, alojamiento:** copia propia con revisión fija y huella (Supabase Storage). Pendiente de hacer: crear el
+  *bucket* público de solo lectura y subir los archivos de `verificadas.json` que se elijan, con
+  `supabase/scripts/verificar-voces.sh` para comprobar las huellas después de subirlos. Peso estimado: unos 255 MB las
+  cuatro voces de dominio público y unos 180 MB Kokoro (dentro del 1 GB de D7, que se comparte con las fotos).

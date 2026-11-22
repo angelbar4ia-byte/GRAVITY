@@ -1078,3 +1078,5 @@ Hallazgos que cambian el plan:
 - No pude leer librivox.org, la página del autor, `davefx`, `en_list` ni `espeak-ng`.
 
 Decisiones que necesita el dueño: preguntas 4 (alojamiento) y 6 (licencias), ahora con estas lecturas.
+
+Respuestas del dueño (22/nov/2026): **pregunta 6** (aceptar atribución, Kokoro v1_1 con atribución, dominio público de respaldo, lessac excluido) y **pregunta 4** (copia propia con revisión fija y huella). Prueba con `sherpa_onnx` 2.0.1 (detalle en `docs/licencias-voces/README.md`): las voces Piper con `lexicon-en-us.txt` funcionan sin espeak y rápido; `kokoro-int8-multi-lang-v1_1` funciona pero **salta en silencio las palabras que no están en su lexicón** (`lived`, `wanted`, `opened`…) y es más lento que el habla en un x86 de 4 núcleos (solo sirve para pregrabar); `kokoro-en-v0_19` no funciona sin espeak y se descarta. `supabase/scripts/verificar-voces.sh` comprueba las huellas ya alojadas.
