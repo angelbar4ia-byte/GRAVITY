@@ -45,7 +45,10 @@ Finder enRiel(String etiqueta) => find.descendant(
 /// conversar.
 void revisarSinNadaDeLaFamilia(WidgetTester tester) {
   revisarSinDinero(tester);
-  final texto = textoVisible(tester);
+  // Excepción única, decidida por el dueño (20/nov/2026, F4-A5 opción B, D23):
+  // el botón «Menú de Papá» de «Mi turno». Se quita ESA frase exacta; cualquier
+  // otro «menú» (los de la familia) sigue prohibido.
+  final texto = textoVisible(tester).replaceAll('menú de papá', '');
   // ("gastos de cuidado" sí son de su turno: Fase 5.)
   for (final prohibido in ['hábito', 'menú', 'presupuesto', 'ingreso']) {
     expect(texto, isNot(contains(prohibido)), reason: prohibido);

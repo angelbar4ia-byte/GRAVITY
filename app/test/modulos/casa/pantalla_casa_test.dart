@@ -130,6 +130,12 @@ void main() {
       );
       await irACasa(tester);
       final nota = find.byKey(const ValueKey('nota-limites-bocina'));
+      // La lista construye de forma perezosa: la nota queda al final.
+      await tester.scrollUntilVisible(
+        nota,
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
       expect(nota, findsOneWidget);
       expect(
         find.descendant(

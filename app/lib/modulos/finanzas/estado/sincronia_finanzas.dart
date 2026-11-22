@@ -61,7 +61,10 @@ class ServicioSincroniaFinanzas {
   StreamSubscription<EventoSincronia>? _suscripcion;
   Timer? _temporizadorAviso;
   Timer? _temporizadorHoja;
-  Timer? _temporizadorCierre;
+  /// El cierre se difiere a un microtask (no a un Timer): al cambiar de sección una
+  /// pantalla sale y otra entra en el mismo cuadro, y un Timer pendiente deja
+  /// colgado cualquier árbol que se desmonte al terminar (p. ej. las pruebas).
+  bool _cierrePendiente = false;
   DateTime? _ultimoRefresco;
   int _abiertos = 0;
   bool _activo = false;
@@ -87,8 +90,6 @@ class ServicioSincroniaFinanzas {
   void abrir({required bool Function() hojaAbierta}) {
     _hojaAbierta = hojaAbierta;
     _abiertos++;
-    _temporizadorCierre?.cancel();
-    _temporizadorCierre = null;
     if (_abiertos == 1 && !_activo) {
       _activo = true;
       _suscribir();
@@ -101,9 +102,10 @@ class ServicioSincroniaFinanzas {
   void cerrar() {
     if (_abiertos > 0) _abiertos--;
     if (_abiertos > 0) return;
-    _temporizadorCierre?.cancel();
-    _temporizadorCierre = Timer(Duration.zero, () {
-      _temporizadorCierre = null;
+    if (_cierrePendiente) return;
+    _cierrePendiente = true;
+    scheduleMicrotask(() {
+      _cierrePendiente = false;
       if (_abiertos == 0) _detener();
     });
   }
@@ -213,8 +215,7 @@ class ServicioSincroniaFinanzas {
   /// Para quien dispone del servicio (cierra todo).
   void liberar() {
     _abiertos = 0;
-    _temporizadorCierre?.cancel();
-    _temporizadorCierre = null;
+    _cierrePendiente = false;
     _detener();
   }
 }

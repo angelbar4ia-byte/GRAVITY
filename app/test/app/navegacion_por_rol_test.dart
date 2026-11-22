@@ -128,8 +128,11 @@ void main() {
       expect(find.byKey(llaveRegistro(TipoRegistro.sos)), findsOneWidget);
       expect(find.byKey(const ValueKey('reservado-pide-pin')), findsOneWidget);
       expect(find.textContaining('llega en la Fase'), findsNothing);
-      // Cierra la hoja (toque fuera) para seguir con la barra.
-      await tester.tapAt(const Offset(200, 20));
+      // Cierra la hoja para seguir con la barra (la hoja ocupa casi toda la
+      // pantalla: un toque fuera no cae en la barrera).
+      Navigator.of(
+        tester.element(find.byKey(llaveRegistro(TipoRegistro.sos))),
+      ).pop();
       await tester.pumpAndSettle();
 
       await tester.tap(pestana('Más'));
