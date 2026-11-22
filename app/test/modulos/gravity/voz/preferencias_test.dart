@@ -37,6 +37,31 @@ void main() {
     expect(p.asignaciones, isEmpty);
   });
 
+  test('la lectura en voz alta es por persona, apagada por omisión, y sobrevive al reinicio', () {
+    final almacen = AlmacenVozMemoria();
+    final c = contenedor(almacen);
+    expect(c.read(preferenciasVozProvider).leerRespuestas, isFalse);
+    c.read(_persona.notifier).poner('ana');
+    c.read(preferenciasVozProvider.notifier).fijarLeerRespuestas(true);
+    c.read(_persona.notifier).poner('beto');
+    expect(c.read(preferenciasVozProvider).leerRespuestas, isFalse);
+    // Reinicio de la app: contenedor nuevo, mismo almacén.
+    final otra = contenedor(almacen);
+    otra.read(_persona.notifier).poner('ana');
+    expect(otra.read(preferenciasVozProvider).leerRespuestas, isTrue);
+    // Encenderla no cambia el resto de lo guardado.
+    c.read(_persona.notifier).poner('ana');
+    c.read(preferenciasVozProvider.notifier).fijarVelocidad(UsoVoz.asistente, 0.7);
+    expect(c.read(preferenciasVozProvider).leerRespuestas, isTrue);
+    c.read(preferenciasVozProvider.notifier).fijarLeerRespuestas(false);
+    expect(
+      PreferenciasVoz.deJson(
+        jsonDecode(jsonEncode(c.read(preferenciasVozProvider).aJson())),
+      ).leerRespuestas,
+      isFalse,
+    );
+  });
+
   test('dos personas en el mismo equipo tienen preferencias distintas y la cuenta Casa, las suyas (criterio 36)', () {
     final almacen = AlmacenVozMemoria();
     final c = contenedor(almacen);

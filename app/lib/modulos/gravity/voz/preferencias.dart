@@ -70,6 +70,7 @@ final class PreferenciasVoz {
     this.curso = const PreferenciasDeUso(),
     this.asistente = const PreferenciasDeUso(),
     this.asignaciones = const {},
+    this.leerRespuestas = false,
   });
 
   final PreferenciasDeUso curso;
@@ -77,6 +78,11 @@ final class PreferenciasVoz {
 
   /// `"<fuente>/<variante>/<voz de guion>"` -> id de la voz del motor.
   final Map<String, String> asignaciones;
+
+  /// La persona dejó encendida la lectura en voz alta de las respuestas de
+  /// GRAVITY. Se conserva entre sesiones (22/nov/2026: decisión del dueño);
+  /// apagada por omisión.
+  final bool leerRespuestas;
 
   PreferenciasDeUso de(UsoVoz uso) => switch (uso) {
     UsoVoz.curso => curso,
@@ -89,12 +95,21 @@ final class PreferenciasVoz {
           curso: valor,
           asistente: asistente,
           asignaciones: asignaciones,
+          leerRespuestas: leerRespuestas,
         )
       : PreferenciasVoz(
           curso: curso,
           asistente: valor,
           asignaciones: asignaciones,
+          leerRespuestas: leerRespuestas,
         );
+
+  PreferenciasVoz conLeerRespuestas(bool valor) => PreferenciasVoz(
+    curso: curso,
+    asistente: asistente,
+    asignaciones: asignaciones,
+    leerRespuestas: valor,
+  );
 
   static String claveAsignacion(
     Fuente fuente,
@@ -123,6 +138,7 @@ final class PreferenciasVoz {
       curso: curso,
       asistente: asistente,
       asignaciones: nuevas,
+      leerRespuestas: leerRespuestas,
     );
   }
 
@@ -131,6 +147,7 @@ final class PreferenciasVoz {
     'curso': _usoAJson(curso),
     'asistente': _usoAJson(asistente),
     'asig': asignaciones,
+    if (leerRespuestas) 'leer': true,
   };
 
   static Map<String, Object?> _usoAJson(PreferenciasDeUso u) => {
@@ -166,6 +183,7 @@ final class PreferenciasVoz {
       curso: uso(json['curso']),
       asistente: uso(json['asistente']),
       asignaciones: asig,
+      leerRespuestas: json['leer'] == true,
     );
   }
 }
@@ -272,6 +290,9 @@ class PreferenciasVozActual extends Notifier<PreferenciasVoz> {
       ),
     ),
   );
+
+  void fijarLeerRespuestas(bool activo) =>
+      _fijar(state.conLeerRespuestas(activo));
 
   void fijarSoloEstaFuente(UsoVoz uso, bool solo) =>
       _fijar(state.conUso(uso, state.de(uso).copiar(soloEstaFuente: solo)));

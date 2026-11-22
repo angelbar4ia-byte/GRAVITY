@@ -172,6 +172,11 @@ class FuenteDispositivo implements FuenteDeVoz, FuenteConDiagnostico {
     final factor = capacidades.ajustarVelocidad(velocidad);
     final rate = (rango.normal * factor).clamp(rango.min, rango.max).toDouble();
     await _puerto.fijarVelocidad(rate);
+    // Retomar tras una pausa: dónde empezaba la palabra que sonaba cuando se
+    // cortó el turno [cortado]. Sin aviso de la plataforma queda en 0 y el
+    // turno se repite completo (Windows).
+    var cortado = -1;
+    var desde = 0;
     return ReproduccionPorTurnos(
       fuente: Fuente.dispositivo,
       guion: guion,
@@ -191,10 +196,22 @@ class FuenteDispositivo implements FuenteDeVoz, FuenteConDiagnostico {
           }
           _vozFijada = id;
         }
-        final r = await _puerto.hablar(turno.texto);
-        return r == ResultadoHabla.completo
-            ? ResultadoTurno.completo
-            : ResultadoTurno.interrumpido;
+        final base = indice == cortado && desde < turno.texto.length
+            ? desde
+            : 0;
+        var palabra = base;
+        final r = await _puerto.hablar(
+          base == 0 ? turno.texto : turno.texto.substring(base),
+          alAvanzar: (inicio) => palabra = base + inicio,
+        );
+        if (r == ResultadoHabla.completo) {
+          cortado = -1;
+          desde = 0;
+          return ResultadoTurno.completo;
+        }
+        cortado = indice;
+        desde = palabra;
+        return ResultadoTurno.interrumpido;
       },
       detenerTurno: _puerto.detener,
     );

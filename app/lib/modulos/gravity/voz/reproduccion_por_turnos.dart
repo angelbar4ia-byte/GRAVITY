@@ -7,10 +7,11 @@
 /// ([detenerTurno]).
 ///
 /// Decisiones:
-/// - **Pausar** corta el turno que suena y, al reanudar, lo repite desde el
-///   principio. Es lo que se puede garantizar igual en todas las plataformas:
-///   el truco de Android que retoma "desde la última palabra" no se pudo
-///   verificar en un aparato (spec 4.1, límites conocidos).
+/// - **Pausar** corta el turno que suena y, al reanudar, se vuelve a pedir
+///   ([decirTurno] con el mismo índice). Cada fuente decide desde dónde: la del
+///   dispositivo retoma desde la palabra que sonaba si la plataforma la avisa
+///   (Android, por probar en el A52) y, si no, repite el turno desde el
+///   principio (spec 4.1, límites conocidos).
 /// - Ningún evento ni error lleva el texto de los turnos (R6).
 library;
 

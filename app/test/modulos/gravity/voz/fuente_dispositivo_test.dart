@@ -250,7 +250,7 @@ void main() {
       expect(puerto.velocidadesFijadas.single, closeTo(0.6, 1e-9));
     });
 
-    test('pausar corta el turno y reanudar lo repite desde el principio', () async {
+    test('sin aviso de palabra (Windows), pausar y reanudar repite el turno desde el principio', () async {
       final puerto = PuertoTtsFalso(voces: equipoAndroid(), manual: true);
       final (motor, _) = await motorCon(puerto);
       final repro = await motor.decir('hello world', uso: UsoVoz.curso);
@@ -263,6 +263,57 @@ void main() {
       await repro.reanudar();
       await Future<void>.delayed(Duration.zero);
       expect(puerto.dichos, ['hello world', 'hello world']);
+      puerto.terminarTurno();
+      expect(await repro.terminada, Fin.completa);
+    });
+
+    test('con aviso de palabra (Android), reanudar retoma desde la palabra que sonaba', () async {
+      final puerto = PuertoTtsFalso(voces: equipoAndroid(), manual: true);
+      final (motor, _) = await motorCon(puerto);
+      final repro = await motor.decir('one two three four', uso: UsoVoz.curso);
+      await Future<void>.delayed(Duration.zero);
+      puerto.avisarPalabra(0);
+      puerto.avisarPalabra(8); // «three»
+      await repro.pausar();
+      await Future<void>.delayed(Duration.zero);
+      await repro.reanudar();
+      await Future<void>.delayed(Duration.zero);
+      expect(puerto.dichos, ['one two three four', 'three four']);
+      // Una segunda pausa cuenta desde el texto completo, no desde el resto.
+      puerto.avisarPalabra(6); // «four» dentro de «three four»
+      await repro.pausar();
+      await Future<void>.delayed(Duration.zero);
+      await repro.reanudar();
+      await Future<void>.delayed(Duration.zero);
+      expect(puerto.dichos.last, 'four');
+      puerto.terminarTurno();
+      expect(await repro.terminada, Fin.completa);
+    });
+
+    test('el turno siguiente no hereda el punto de reanudación', () async {
+      final puerto = PuertoTtsFalso(voces: equipoAndroid(), manual: true);
+      final (motor, _) = await motorCon(puerto);
+      final repro = await motor.reproducir(
+        Guion(
+          id: 'p',
+          variante: Variante.enUS,
+          pausaEntreTurnos: Duration.zero,
+          turnos: const [
+            Turno(voz: VozDeGuion.f1, texto: 'one two'),
+            Turno(voz: VozDeGuion.f1, texto: 'three four'),
+          ],
+        ),
+      );
+      await Future<void>.delayed(Duration.zero);
+      puerto.avisarPalabra(4);
+      await repro.pausar();
+      await Future<void>.delayed(Duration.zero);
+      await repro.reanudar();
+      await Future<void>.delayed(Duration.zero);
+      expect(puerto.dichos, ['one two', 'two']);
+      puerto.terminarTurno();
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+      expect(puerto.dichos.last, 'three four');
       puerto.terminarTurno();
       expect(await repro.terminada, Fin.completa);
     });

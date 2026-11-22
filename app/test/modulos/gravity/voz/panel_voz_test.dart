@@ -207,15 +207,24 @@ void main() {
       expect(fuente.cortes, 1);
     });
 
-    testWidgets('el interruptor sigue apagado por sesión: una sesión nueva lo encuentra apagado', (tester) async {
+    testWidgets('apagado por omisión; si se enciende, se queda encendido en la sesión siguiente', (tester) async {
       final motor = motorCon(FuenteDeVozFalsa());
-      await montarPanel(tester, motor: motor);
+      final almacen = AlmacenVozMemoria();
+      final extras = [almacenVozProvider.overrideWithValue(almacen)];
+      await montarPanel(tester, motor: motor, extras: extras);
+      expect(tester.widget<Switch>(find.byKey(_interruptor)).value, isFalse);
       await tester.tap(find.byKey(_interruptor));
       await tester.pump();
       expect(tester.widget<Switch>(find.byKey(_interruptor)).value, isTrue);
-      // Otra sesión de la app: se desmonta todo y se monta de nuevo.
+      // Otra sesión de la app (mismo almacén): sigue encendido.
       await tester.pumpWidget(const SizedBox());
-      await montarPanel(tester, motor: motor);
+      await montarPanel(tester, motor: motor, extras: extras);
+      expect(tester.widget<Switch>(find.byKey(_interruptor)).value, isTrue);
+      // Y se puede volver a apagar.
+      await tester.tap(find.byKey(_interruptor));
+      await tester.pump();
+      await tester.pumpWidget(const SizedBox());
+      await montarPanel(tester, motor: motor, extras: extras);
       expect(tester.widget<Switch>(find.byKey(_interruptor)).value, isFalse);
     });
   });

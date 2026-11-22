@@ -16,7 +16,7 @@
 |---|---|---|
 | Dictado (voz a texto) | Solo Android, con `speech_to_text` 7.5.0. En Windows el micrófono no se ofrece | `app/lib/modulos/gravity/conversacion/voz.dart:46-92`, `:152-156`; `app/pubspec.yaml:81` |
 | Interfaz `VozSalida` | Dos métodos (`hablar`, `detener`) y sin implementación real: el valor por omisión no habla | `voz.dart:38-41`, `:108-117`, `:158-160` |
-| Leer en voz alta | Interruptor apagado por omisión y por sesión; lee solo la respuesta del asistente, nunca mensajes locales | `voz.dart:162-173`; `panel_conversacion.dart:154-164`, `:276-294`; prueba `app/test/modulos/gravity/conversacion/voz_test.dart:52-81` |
+| Leer en voz alta | Interruptor apagado por omisión; si la persona lo enciende se queda encendido en las siguientes sesiones (por persona, 22/nov/2026); lee solo la respuesta del asistente, nunca mensajes locales | `voz.dart:162-173`; `panel_conversacion.dart:154-164`, `:276-294`; prueba `app/test/modulos/gravity/conversacion/voz_test.dart:52-81` |
 | Paquetes de síntesis o de reproducción de audio | Ninguno: no hay `flutter_tts`, `sherpa_onnx` ni reproductor | `app/pubspec.yaml` |
 | Bocinas | El puente manda texto al servicio `tts/speak` de Home Assistant | `app/lib/modulos/casa/puente/puente_casa.dart:85-107` |
 | Ajustes › Voz | Pantalla con dos notas; no elige nada | `app/lib/modulos/ajustes/voz/pantalla_voz.dart:13-27` |
@@ -418,7 +418,7 @@ abstract interface class ReproductorDeAudio {
 1. `VozSalida`, `VozSalidaNoDisponible` y `VozSalidaFalsa` no se tocan; las pruebas de `voz_test.dart` (líneas 21-116) pasan sin cambios (criterio 1).
 2. `vozSalidaProvider` (`voz.dart:158-160`) pasa a devolver el motor; si no hay fuente para el asistente, el motor no hace nada, igual que `VozSalidaNoDisponible`. Las pruebas que lo sustituyen con `overrideWithValue` siguen sirviendo.
 3. Se agrega `motorVozProvider` (`Provider<MotorVoz>`) para el curso y para Ajustes.
-4. `leerEnVozAltaProvider` sigue apagado por omisión y por sesión (`voz.dart:162-173`). Si el dueño quiere recordarlo entre sesiones, es un cambio aparte (pregunta 3).
+4. `leerEnVozAltaProvider` está apagado por omisión y, **desde el 22/nov/2026 (respuesta del dueño a la pregunta 3)**, se recuerda entre sesiones por persona en las preferencias de voz (`PreferenciasVoz.leerRespuestas`).
 5. El panel cambia en dos puntos (criterio 38): la visibilidad del interruptor depende de `disponibilidad(UsoVoz.asistente)` y `_escucharVoz` detiene al motor antes de escuchar. Esa carpeta (`app/lib/modulos/gravity/conversacion/`) no aparece en la tabla de 11.2 del roadmap; el arquitecto decide quién escribe ahí (sección 12).
 6. `FuenteConectividad` (`app/lib/nucleo/conectividad/conectividad.dart:26-32`) solo dice si hay red. El gestor necesita saber si es Wi-Fi o datos móviles: se agrega una interfaz aparte (`FuenteTipoDeRed`) para no romper a sus tres implementaciones, con `connectivity_plus` (ya está en `pubspec.yaml:74`). La escribe plataforma (`app/lib/nucleo`).
 
@@ -1058,3 +1058,10 @@ Las nuevas están en `app/test/modulos/gravity/voz/` (asignador, motor, fuente A
 2. En Windows, ¿aceptas instalar `nuget.exe` en la laptop para compilar (14.3)?
 3. La pausa repite el turno desde el principio (14.2). Para el curso (turnos de hasta 50 palabras) ¿basta, o quieres probar primero en el A52 el truco de Android que retoma desde la última palabra?
 
+
+
+### 14.6 Respuestas del dueño a las preguntas de 14.5 (22/nov/2026)
+
+1. **Lectura en voz alta:** si la persona decide encenderla, **queda encendida en todas las sesiones** (por persona; en la tablet cambia con la persona en pantalla). Apagada por omisión. Hecho: `PreferenciasVoz.leerRespuestas`, guardada con el resto de las preferencias de voz. Sigue leyendo solo la respuesta de GRAVITY (D3, D6).
+2. **`nuget.exe` en la laptop:** aceptado. Pendiente del dueño: instalarlo y ponerlo en el PATH antes de compilar para Windows.
+3. **Pausa:** el dueño pide **probar** retomar desde la palabra que sonaba. Hecho: la puerta a `flutter_tts` pasa el inicio de la palabra que avisa el plugin (`setProgressHandler`) y la fuente A reanuda desde ahí; si la plataforma no avisa (Windows, según la lectura del plugin) el turno se repite desde el principio. **Falta probar en el A52** (paso 5 de «Para probar en dispositivo»: pausar a media frase y reanudar; ¿retoma desde la palabra, repite o salta?). Si en el aparato se comporta mal, se vuelve a repetir el turno completo cambiando una sola función en `fuente_dispositivo.dart`. La pantalla todavía no tiene botón de pausa.

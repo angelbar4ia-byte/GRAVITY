@@ -51,7 +51,11 @@ abstract interface class PuertoTts {
 
   /// Dice el texto y completa cuando termina, lo cortan o falla (en ese caso
   /// lanza [FalloDeSintesis]). Un solo texto a la vez.
-  Future<ResultadoHabla> hablar(String texto);
+  ///
+  /// [alAvanzar] recibe el inicio (en [texto]) de la palabra que está
+  /// sonando, si la plataforma lo avisa (Android sí; en Windows no se espera).
+  /// Sirve para retomar desde esa palabra tras una pausa.
+  Future<ResultadoHabla> hablar(String texto, {void Function(int)? alAvanzar});
 
   /// Corta lo que suene. No hace nada si no suena nada.
   Future<void> detener();
@@ -74,6 +78,7 @@ class PuertoTtsFlutter implements PuertoTts {
 
   Future<void>? _inicio;
   Completer<ResultadoHabla>? _actual;
+  void Function(int)? _alAvanzar;
   int _cancelesEsperados = 0;
   Completer<void>? _cancelRecibido;
 
@@ -85,6 +90,8 @@ class PuertoTtsFlutter implements PuertoTts {
       _tts.setCompletionHandler(() => _cerrarActual(ResultadoHabla.completo));
       _tts.setCancelHandler(_alCancelar);
       _tts.setErrorHandler((_) => _fallarActual('speak_error'));
+      // Solo el inicio de la palabra: nunca se guarda ni se copia el texto (R6).
+      _tts.setProgressHandler((_, inicio, _, _) => _alAvanzar?.call(inicio));
     });
   }
 
@@ -175,12 +182,16 @@ class PuertoTtsFlutter implements PuertoTts {
   });
 
   @override
-  Future<ResultadoHabla> hablar(String texto) async {
+  Future<ResultadoHabla> hablar(
+    String texto, {
+    void Function(int)? alAvanzar,
+  }) async {
     await _iniciar();
     await _esperarAvisoDeCorte();
     if (_actual != null) await detener();
     final c = Completer<ResultadoHabla>();
     _actual = c;
+    _alAvanzar = alAvanzar;
     unawaited(
       _proteger(() => _tts.speak(texto)).then<void>(
         (r) {
@@ -299,6 +310,11 @@ class PuertoTtsFalso implements PuertoTts {
   int consultasDeVoces = 0;
   int _turnos = 0;
   Completer<ResultadoHabla>? _actual;
+  void Function(int)? _alAvanzar;
+
+  /// Simula el aviso de la plataforma: va por la palabra que empieza en
+  /// [inicio] del texto que se está diciendo.
+  void avisarPalabra(int inicio) => _alAvanzar?.call(inicio);
 
   bool get sonando => _actual != null && !_actual!.isCompleted;
 
@@ -329,7 +345,11 @@ class PuertoTtsFalso implements PuertoTts {
       velocidadesFijadas.add(velocidad);
 
   @override
-  Future<ResultadoHabla> hablar(String texto) async {
+  Future<ResultadoHabla> hablar(
+    String texto, {
+    void Function(int)? alAvanzar,
+  }) async {
+    _alAvanzar = alAvanzar;
     final indice = _turnos++;
     if (fallarEnTurno == indice) {
       throw const FalloDeSintesis(Fuente.dispositivo, 'speak_error');

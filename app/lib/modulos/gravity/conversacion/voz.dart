@@ -21,6 +21,8 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
+import '../voz/preferencias.dart' show preferenciasVozProvider;
+
 /// Reconocimiento de voz: convierte lo dicho en texto.
 abstract class VozEntrada {
   /// Si el dispositivo puede escuchar. Sin ello no se muestra el micrófono.
@@ -159,13 +161,15 @@ final vozSalidaProvider = Provider<VozSalida>(
   (ref) => const VozSalidaNoDisponible(),
 );
 
-/// Si la persona activó leer las respuestas en voz alta. Apagado por omisión
-/// y por sesión de la app: no se guarda.
+/// Si la persona activó leer las respuestas en voz alta. Apagado por omisión;
+/// si la persona lo enciende se queda así en las siguientes sesiones, por
+/// persona (decisión del dueño, 22/nov/2026). Vive en las preferencias de voz.
 class LeerEnVozAlta extends Notifier<bool> {
   @override
-  bool build() => false;
+  bool build() => ref.watch(preferenciasVozProvider).leerRespuestas;
 
-  void fijar(bool activo) => state = activo;
+  void fijar(bool activo) =>
+      ref.read(preferenciasVozProvider.notifier).fijarLeerRespuestas(activo);
 }
 
 final leerEnVozAltaProvider = NotifierProvider<LeerEnVozAlta, bool>(
