@@ -10,3 +10,6 @@ rules:
   # Los ejemplos (inventados) deben cumplir su esquema: un ejemplo inválido enseña mal la API.
   no-invalid-media-type-examples: error
   no-invalid-parameter-examples: error
+  # El mensaje de Realtime de Finanzas (F8-6.6) se documenta como webhook, que no es una operación de la
+  # consola: sin operationId. Las operaciones de `paths` siempre lo llevan (lo exige api/generar_dart.mjs).
+  operation-operationId: off

@@ -55,6 +55,13 @@ const _rpcDeLectura = {
   'finVistaPapaVigente',
   'finVistaVigenteHogar',
   'finVistaVigenteLibro',
+  // Fase 8, bloque 6 (migraciones 20261146 a 20261151): lunes de una fecha,
+  // lectura de repartos y la regla del canal de Realtime (no escriben).
+  'finFugasLunes',
+  'finIngresosPorRepartir',
+  'finDispersionPuedeVer',
+  'finRepartosAnuladosConMovimientos',
+  'finRealtimePuedeSuscribir',
   'avisosPorcentajeBase',
   'habActiva',
   'habHogarDe',

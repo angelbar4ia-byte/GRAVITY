@@ -1,14 +1,14 @@
 // GENERADO por api/generar_dart.mjs a partir de api/openapi.yaml. No se edita a mano.
 // Permite abrir Swagger UI con doble clic (file://), donde el navegador no deja leer
 // ../openapi.yaml. Servida por http, la página lee openapi.yaml directamente.
-// huella: fnv1a32:47af5eb5
+// huella: fnv1a32:0f34585b
 window.ESPECIFICACION_GRAVITY = {
   "openapi": "3.1.0",
   "info": {
     "title": "GRAVITY · APIs del sistema",
-    "version": "0.6.0",
+    "version": "0.7.0",
     "summary": "Herramientas de GRAVITY, base de datos, funciones del servidor y puente de casa (D16).",
-    "description": "Especificación de las APIs de GRAVITY (decisión D16). Se consulta en la laptop, en\nAjustes › Desarrollador, solo con rol Dueño. **No se publica en internet.**\n\nCada operación declara, con extensiones propias:\n\n- `x-roles`: roles que la pueden usar (D5): `dueno`, `coadministrador`, `familiar`,\n  `cuidador`, `casa`. La verdad de los permisos está en el servidor (RLS).\n- `x-escribe`: `true` si escribe datos; GRAVITY y esta consola piden confirmación antes\n  de enviarla. `segun-herramienta` en la operación genérica de herramientas.\n- `x-solo-local`: `true` si su resultado nunca pasa por la IA en la nube (D3: dinero,\n  datos clínicos y datos personales). `segun-herramienta` en la operación genérica.\n- `x-fase`: fase del roadmap en que se construye.\n\nConvenciones (especificación de la Fase 0, sección 4): dinero en centavos (`int`),\nidentificadores UUID, fechas `date` y `timestamptz`, semana en lunes, libros solo-agregar.\n\nFase 1 (Finanzas, D19): cada quien ve **su** libro y los compartidos de los que es\nmiembro (o que son públicos); la **cuenta maestra** es otra persona con su propio login\ny de solo lectura total: lee con una consulta registrada y no escribe nada. Las\nsalvaguardas y las respuestas del dueño del 23/oct viven en el servidor, no en el\ncliente (`supabase/migrations/20261023000000_finanzas_salvaguardas.sql` y\n`supabase/migrations/20261024000000_finanzas_respuestas_dueno.sql`). Los ejemplos\nson inventados (el hogar de Ana y Alex de `supabase/seed.sql`, con \"Papá (ejemplo)\").\n\nLas llaves (Supabase, Home Assistant) entran por `--dart-define` o archivos ignorados\npor git; nunca se escriben aquí.\n",
+    "description": "Especificación de las APIs de GRAVITY (decisión D16). Se consulta en la laptop, en\nAjustes › Desarrollador, solo con rol Dueño. **No se publica en internet.**\n\nCada operación declara, con extensiones propias:\n\n- `x-roles`: roles que la pueden usar (D5): `dueno`, `coadministrador`, `familiar`,\n  `cuidador`, `casa`. La verdad de los permisos está en el servidor (RLS).\n- `x-escribe`: `true` si escribe datos; GRAVITY y esta consola piden confirmación antes\n  de enviarla. `segun-herramienta` en la operación genérica de herramientas.\n- `x-solo-local`: `true` si su resultado nunca pasa por la IA en la nube (D3: dinero,\n  datos clínicos y datos personales). `segun-herramienta` en la operación genérica.\n- `x-fase`: fase del roadmap en que se construye.\n\nConvenciones (especificación de la Fase 0, sección 4): dinero en centavos (`int`),\nidentificadores UUID, fechas `date` y `timestamptz`, semana en lunes, libros solo-agregar.\n\nFase 1 (Finanzas, D19): cada quien ve **su** libro y los compartidos de los que es\nmiembro (o que son públicos); la **cuenta maestra** es otra persona con su propio login\ny de solo lectura total: lee con una consulta registrada y no escribe nada. Las\nsalvaguardas y las respuestas del dueño del 23/oct viven en el servidor, no en el\ncliente (`supabase/migrations/20261023000000_finanzas_salvaguardas.sql` y\n`supabase/migrations/20261024000000_finanzas_respuestas_dueno.sql`). Los ejemplos\nson inventados (el hogar de Ana y Alex de `supabase/seed.sql`, con \"Papá (ejemplo)\").\n\nFase 8 (Finanzas, bloque 6; versión 0.7.0): fugas silenciosas y deuda buena o mala\n(`20261146`), reparto de ingresos con confirmación (`20261147`), actualización entre\ndispositivos con Realtime (`20261148`), cambiar un reparto con control de versión\n(`20261149`), «pagos al corte» sin dato (`20261150`) e ingreso anulado con reparto\n(`20261151`). El dinero nunca viaja por avisos ni por el canal de Realtime (D3, D6, D20);\nen el libro de Papá toda decisión queda en su nombre y con motivo (D19).\n\nLas llaves (Supabase, Home Assistant) entran por `--dart-define` o archivos ignorados\npor git; nunca se escriben aquí.\n",
     "license": {
       "name": "Privado. Uso exclusivo del proyecto Segundo Cerebro; no se publica."
     }
@@ -46,7 +46,7 @@ window.ESPECIFICACION_GRAVITY = {
     },
     {
       "name": "Base de datos · Finanzas",
-      "description": "Tablas `fin_*`, vistas y funciones de Finanzas (Fase 1, D19), según\n`supabase/migrations/20261021000000_finanzas_mvp1.sql`,\n`supabase/migrations/20261023000000_finanzas_salvaguardas.sql`,\n`supabase/migrations/20261024000000_finanzas_respuestas_dueno.sql` y\n`supabase/README.md` (\"Finanzas (Fase 1)\"). Solo dueño y coadministrador, cada quien\n**su libro** y los compartidos de los que es miembro, más los compartidos públicos\n(`fin_puede`); familiar, cuidador y Casa no ven nada. La **cuenta maestra** es otra\npersona con su propio login: el dueño la invita con `crear_invitacion` y\n`p_es_maestra`, y queda como coadministrador con la marca de maestra, sin libro\npersonal ni membresía en ningún libro. Si no es la dueña es de **solo lectura\ntotal**: lee con una consulta registrada y toda escritura suya (movimientos,\nconfiguración del hogar, crear libros) responde 403 (42501). El dueño también puede\nser la maestra con su propia persona, y en lo suyo sigue escribiendo. Nada de esto va\na la IA en la nube ni a las bocinas (D3, D6).\n\n- **Dinero** en centavos (entero); porcentajes y tasas en puntos base (2000 = 20 %);\n  semana en lunes; identificadores UUID generados en el dispositivo.\n- **Solo agregar:** `fin_movimientos`, `fin_conciliaciones`, `fin_cierres`,\n  `fin_cierre_partidas`, `fin_cierre_abonos` y `fin_importaciones` solo aceptan\n  INSERT; un error se corrige con una anulación (contraasiento) o una versión nueva.\n- **Cola sin conexión (idempotente):** se sube con `on_conflict=id` y\n  `Prefer: resolution=ignore-duplicates`. El mismo `id` con el mismo contenido no hace\n  nada y no falla; con otro contenido, en los libros solo agregar, 409 (23505).\n- **Lo que pone el servidor** (marcado como de solo lectura; no se manda):\n  `recibido_en`, `libro_origen_id` y `libro_destino_id` de los movimientos, las\n  columnas generadas y `reaperturas`.\n- **Errores** (código de PostgreSQL → HTTP de PostgREST): `23503` falta algo de lo\n  que depende (otra cuenta, el original de una anulación; la cola reintenta) → 409;\n  `23505` duplicado o mismo `id` con otro contenido → 409; `23514` regla de la tabla\n  (monto, motivo, lunes, cascada) → 400; `22023` regla de negocio (combinación de\n  cuentas, libro equivocado, papel) → 400; `55000` estado (cuenta no activa, semana\n  cerrada) → 500; `42501` sin permiso o columna que no cambia → 403; `54000` límite\n  (la bitácora: una entrada de más de 4 KB o más de 500 propias en 24 horas) → 500.\n- **Cuenta maestra y consulta registrada (I2):** sin una consulta vigente, la maestra\n  solo ve la **portada**: los libros y quién los lleva (`fin_libros`,\n  `fin_libro_miembros`), las categorías, las cuentas de gasto del hogar y lo que no es\n  de Finanzas. El contenido de un libro ajeno (cuentas, movimientos, plan, cierres,\n  saldos y su bitácora) llega **vacío, sin error**, hasta que llama\n  `fin_registrar_consulta_maestra(libro)`, que deja la entrada\n  `finanzas.consulta_maestra` y habilita la lectura de ese libro por **30 minutos**\n  (por libro y por persona; pasado el tiempo hay que llamarla otra vez, y la app la\n  renueva sola mientras el libro está abierto).\n- **Salvaguardas en el servidor** (hallazgos I1 a I5, M6 y M10 de la revisión de\n  calidad): (I1) en un libro compartido solo quien lo creó, o el dueño del hogar si es\n  miembro, agrega o cambia a otra persona (42501); salirse, o que te saquen, con menos\n  de 2 miembros deja el libro privado y activo, y el último miembro no puede salirse\n  (22023; ver abajo); (I2) la consulta\n  registrada de arriba; (I3) todo movimiento del libro de Papá lleva `en_nombre_de` y\n  `motivo` (23514) y las salidas hacia cualquier otro libro dejan la entrada\n  `finanzas.salida_libro_representado`; (I4) un albacea es vigente solo si sigue siendo\n  adulto con Finanzas, y si no, escribe el suplente; (I5) las acciones `finanzas*` y\n  las tablas `fin_*` de la bitácora las escribe solo el servidor (42501 si la app las\n  inserta); (M6) la maestra que no es la dueña no escribe nada, tampoco la\n  configuración del hogar (42501); (M10) asignar o quitar la maestra deja\n  `finanzas.maestra_asignada`.\n- **Libros compartidos (respuestas del dueño del 23/oct):** quien crea el libro\n  (`creado_por`) es su administrador: agrega y saca miembros, cambia la `visibilidad`\n  y lo archiva. La API no manda ni cambia `creado_por` (42501): solo el servidor, que\n  lo pasa al miembro vigente más antiguo si el creador se sale. `visibilidad` solo\n  existe en los compartidos: `privada` (por omisión; todo nace privado) o `publica`.\n  Privada: leen y escriben sus miembros, y la maestra lee con consulta; el dueño no\n  entra a un compartido privado del que no es miembro. Pública: además la **leen**\n  (no la escriben) los adultos con Finanzas del hogar. **Salirse** es un `PATCH` a la\n  propia fila de `fin_libro_miembros` con `hasta` = ahora (la hora la pone el\n  dispositivo), siempre posible. Si quedan menos de 2 miembros vigentes (también cuando\n  el administrador saca a alguien) el libro **no se archiva**: el servidor lo deja\n  `activo` y `privada`, y el miembro que queda es el administrador (`creado_por`); si\n  se va el administrador (o deja de ser adulto con Finanzas del hogar por una baja o un\n  cambio de rol, N5), `creado_por` pasa al miembro vigente más antiguo y, con menos de\n  2 vigentes, el libro pasa a `privada` (nunca se archiva solo). El\n  **último miembro no puede salirse** (400, 22023: si ya no lo usa, lo archiva).\n  **Archivar** es solo la decisión del administrador (`activo` = `false`) y nunca\n  ocurre solo: un libro archivado se lee y no registra movimientos (403, 42501);\n  reactivarlo (`activo` = `true`) no exige 2 miembros, y mientras está archivado solo su\n  administrador lo administra.\n- **Cuentas de periodo:** solo las de activo y pasivo piden saldo cero para cerrarse\n  o archivarse (22023); las de gasto e ingreso se cierran o archivan con saldo, y en\n  ellas se puede anular un movimiento aunque estén archivadas. Archivar una\n  categoría archiva su cuenta de gasto (si ninguna otra categoría activa la usa) y\n  desarchivarla la reactiva.\n- **Albacea de Papá (N4):** si el cargo de albacea o el de suplente queda vacío (nadie\n  vigente que siga siendo adulto con Finanzas), el dueño del hogar lo vuelve a nombrar\n  con `fin_nombrar_albacea`. Un INSERT directo en `fin_libro_miembros` sigue sin pasar\n  para el dueño (RLS): la función es la única puerta.\n- **Motivo (N2):** el `motivo` de una anulación, un ajuste, un movimiento en nombre\n  de otra persona, el del libro de Papá y el de una conciliación con diferencia\n  necesita al menos 3 caracteres visibles: no cuentan los espacios, tabuladores,\n  saltos de línea, espacios Unicode ni caracteres invisibles (23514). Lo valida un\n  trigger al agregar y no un CHECK, así que lo ya guardado nunca se rechaza y un\n  reenvío idéntico de la cola no falla. El sentido no se juzga.\n- **Fase 2 (deudas y ahorro, D20):** `fin_deudas` suma `clase` (`tarjeta`, `prestamo`,\n  `credito`, `msi`, `familiar`), `acreedor`, `monto_original_centavos`, `cat_pb`,\n  `corte_dia` (solo tarjetas), `permite_pago_anticipado` (nulo = verificar con la caja)\n  y `extra_reduce`; `fin_parametros` suma `orden_ahorro`, `dependientes_cuidados`,\n  `esenciales_incluyen_minimos` y `dias_aviso_deuda`. Tablas nuevas: `fin_msi`,\n  `fin_estados_cuenta` y `fin_retiros_ahorro` (estas dos, solo agregar),\n  `fin_bolsas_ahorro` y `fin_aportaciones_ahorro`; vistas `fin_v_deuda_resumen`,\n  `fin_v_bolsa_saldo` y `fin_v_estados_cuenta_vigentes`. El saldo siempre sale del\n  libro: no se guardan saldos. Los checks de las tablas nuevas responden 23514 y\n  escribir una aportación en una semana cerrada, 55000.\n- **Funciones internas:** `fin_vigencia_consulta_maestra`, `fin_adulto_con_finanzas` y\n  las de los triggers (`fin_libro_miembros_proteger`, `fin_libros_proteger`,\n  `fin_libro_miembros_sin_maestra`, `fin_categorias_archivar_cuenta`,\n  `bitacora_tope_por_persona`, `fin_motivo_valido`, `fin_motivo_validar`,\n  `fin_libro_asegurar_administrador`, `fin_membresia_relevo_administrador`,\n  `avisos_insertar`, `avisos_generar_vencimientos`, `avisos_reclamar`…) no son\n  llamables desde la API (se les quitó `EXECUTE` a todos los roles); por eso no\n  tienen operación aquí. De la migración de endurecimiento, la app solo llama\n  `fin_nombrar_albacea`. Sí lo son `fin_solo_lectura` y `fin_puede_salir`, que las\n  reglas llaman con el rol de la sesión, y `fin_adultos_con_finanzas` (en plural: la\n  que lista a los adultos con Finanzas del hogar; no la confundas con el ayudante\n  interno `fin_adulto_con_finanzas`, en singular).\n"
+      "description": "Tablas `fin_*`, vistas y funciones de Finanzas (Fase 1, D19), según\n`supabase/migrations/20261021000000_finanzas_mvp1.sql`,\n`supabase/migrations/20261023000000_finanzas_salvaguardas.sql`,\n`supabase/migrations/20261024000000_finanzas_respuestas_dueno.sql` y\n`supabase/README.md` (\"Finanzas (Fase 1)\"). Solo dueño y coadministrador, cada quien\n**su libro** y los compartidos de los que es miembro, más los compartidos públicos\n(`fin_puede`); familiar, cuidador y Casa no ven nada. La **cuenta maestra** es otra\npersona con su propio login: el dueño la invita con `crear_invitacion` y\n`p_es_maestra`, y queda como coadministrador con la marca de maestra, sin libro\npersonal ni membresía en ningún libro. Si no es la dueña es de **solo lectura\ntotal**: lee con una consulta registrada y toda escritura suya (movimientos,\nconfiguración del hogar, crear libros) responde 403 (42501). El dueño también puede\nser la maestra con su propia persona, y en lo suyo sigue escribiendo. Nada de esto va\na la IA en la nube ni a las bocinas (D3, D6).\n\n- **Dinero** en centavos (entero); porcentajes y tasas en puntos base (2000 = 20 %);\n  semana en lunes; identificadores UUID generados en el dispositivo.\n- **Solo agregar:** `fin_movimientos`, `fin_conciliaciones`, `fin_cierres`,\n  `fin_cierre_partidas`, `fin_cierre_abonos` y `fin_importaciones` solo aceptan\n  INSERT; un error se corrige con una anulación (contraasiento) o una versión nueva.\n- **Cola sin conexión (idempotente):** se sube con `on_conflict=id` y\n  `Prefer: resolution=ignore-duplicates`. El mismo `id` con el mismo contenido no hace\n  nada y no falla; con otro contenido, en los libros solo agregar, 409 (23505).\n- **Lo que pone el servidor** (marcado como de solo lectura; no se manda):\n  `recibido_en`, `libro_origen_id` y `libro_destino_id` de los movimientos, las\n  columnas generadas y `reaperturas`.\n- **Errores** (código de PostgreSQL → HTTP de PostgREST): `23503` falta algo de lo\n  que depende (otra cuenta, el original de una anulación; la cola reintenta) → 409;\n  `23505` duplicado o mismo `id` con otro contenido → 409; `23514` regla de la tabla\n  (monto, motivo, lunes, cascada) → 400; `22023` regla de negocio (combinación de\n  cuentas, libro equivocado, papel) → 400; `55000` estado (cuenta no activa, semana\n  cerrada) → 500; `42501` sin permiso o columna que no cambia → 403; `54000` límite\n  (la bitácora: una entrada de más de 4 KB o más de 500 propias en 24 horas) → 500.\n- **Cuenta maestra y consulta registrada (I2):** sin una consulta vigente, la maestra\n  solo ve la **portada**: los libros y quién los lleva (`fin_libros`,\n  `fin_libro_miembros`), las categorías, las cuentas de gasto del hogar y lo que no es\n  de Finanzas. El contenido de un libro ajeno (cuentas, movimientos, plan, cierres,\n  saldos y su bitácora) llega **vacío, sin error**, hasta que llama\n  `fin_registrar_consulta_maestra(libro)`, que deja la entrada\n  `finanzas.consulta_maestra` y habilita la lectura de ese libro por **30 minutos**\n  (por libro y por persona; pasado el tiempo hay que llamarla otra vez, y la app la\n  renueva sola mientras el libro está abierto).\n- **Salvaguardas en el servidor** (hallazgos I1 a I5, M6 y M10 de la revisión de\n  calidad): (I1) en un libro compartido solo quien lo creó, o el dueño del hogar si es\n  miembro, agrega o cambia a otra persona (42501); salirse, o que te saquen, con menos\n  de 2 miembros deja el libro privado y activo, y el último miembro no puede salirse\n  (22023; ver abajo); (I2) la consulta\n  registrada de arriba; (I3) todo movimiento del libro de Papá lleva `en_nombre_de` y\n  `motivo` (23514) y las salidas hacia cualquier otro libro dejan la entrada\n  `finanzas.salida_libro_representado`; (I4) un albacea es vigente solo si sigue siendo\n  adulto con Finanzas, y si no, escribe el suplente; (I5) las acciones `finanzas*` y\n  las tablas `fin_*` de la bitácora las escribe solo el servidor (42501 si la app las\n  inserta); (M6) la maestra que no es la dueña no escribe nada, tampoco la\n  configuración del hogar (42501); (M10) asignar o quitar la maestra deja\n  `finanzas.maestra_asignada`.\n- **Libros compartidos (respuestas del dueño del 23/oct):** quien crea el libro\n  (`creado_por`) es su administrador: agrega y saca miembros, cambia la `visibilidad`\n  y lo archiva. La API no manda ni cambia `creado_por` (42501): solo el servidor, que\n  lo pasa al miembro vigente más antiguo si el creador se sale. `visibilidad` solo\n  existe en los compartidos: `privada` (por omisión; todo nace privado) o `publica`.\n  Privada: leen y escriben sus miembros, y la maestra lee con consulta; el dueño no\n  entra a un compartido privado del que no es miembro. Pública: además la **leen**\n  (no la escriben) los adultos con Finanzas del hogar. **Salirse** es un `PATCH` a la\n  propia fila de `fin_libro_miembros` con `hasta` = ahora (la hora la pone el\n  dispositivo), siempre posible. Si quedan menos de 2 miembros vigentes (también cuando\n  el administrador saca a alguien) el libro **no se archiva**: el servidor lo deja\n  `activo` y `privada`, y el miembro que queda es el administrador (`creado_por`); si\n  se va el administrador (o deja de ser adulto con Finanzas del hogar por una baja o un\n  cambio de rol, N5), `creado_por` pasa al miembro vigente más antiguo y, con menos de\n  2 vigentes, el libro pasa a `privada` (nunca se archiva solo). El\n  **último miembro no puede salirse** (400, 22023: si ya no lo usa, lo archiva).\n  **Archivar** es solo la decisión del administrador (`activo` = `false`) y nunca\n  ocurre solo: un libro archivado se lee y no registra movimientos (403, 42501);\n  reactivarlo (`activo` = `true`) no exige 2 miembros, y mientras está archivado solo su\n  administrador lo administra.\n- **Cuentas de periodo:** solo las de activo y pasivo piden saldo cero para cerrarse\n  o archivarse (22023); las de gasto e ingreso se cierran o archivan con saldo, y en\n  ellas se puede anular un movimiento aunque estén archivadas. Archivar una\n  categoría archiva su cuenta de gasto (si ninguna otra categoría activa la usa) y\n  desarchivarla la reactiva.\n- **Albacea de Papá (N4):** si el cargo de albacea o el de suplente queda vacío (nadie\n  vigente que siga siendo adulto con Finanzas), el dueño del hogar lo vuelve a nombrar\n  con `fin_nombrar_albacea`. Un INSERT directo en `fin_libro_miembros` sigue sin pasar\n  para el dueño (RLS): la función es la única puerta.\n- **Motivo (N2):** el `motivo` de una anulación, un ajuste, un movimiento en nombre\n  de otra persona, el del libro de Papá y el de una conciliación con diferencia\n  necesita al menos 3 caracteres visibles: no cuentan los espacios, tabuladores,\n  saltos de línea, espacios Unicode ni caracteres invisibles (23514). Lo valida un\n  trigger al agregar y no un CHECK, así que lo ya guardado nunca se rechaza y un\n  reenvío idéntico de la cola no falla. El sentido no se juzga.\n- **Fase 2 (deudas y ahorro, D20):** `fin_deudas` suma `clase` (`tarjeta`, `prestamo`,\n  `credito`, `msi`, `familiar`), `acreedor`, `monto_original_centavos`, `cat_pb`,\n  `corte_dia` (solo tarjetas), `permite_pago_anticipado` (nulo = verificar con la caja)\n  y `extra_reduce`; `fin_parametros` suma `orden_ahorro`, `dependientes_cuidados`,\n  `esenciales_incluyen_minimos` y `dias_aviso_deuda`. Tablas nuevas: `fin_msi`,\n  `fin_estados_cuenta` y `fin_retiros_ahorro` (estas dos, solo agregar),\n  `fin_bolsas_ahorro` y `fin_aportaciones_ahorro`; vistas `fin_v_deuda_resumen`,\n  `fin_v_bolsa_saldo` y `fin_v_estados_cuenta_vigentes`. El saldo siempre sale del\n  libro: no se guardan saldos. Los checks de las tablas nuevas responden 23514 y\n  escribir una aportación en una semana cerrada, 55000.\n- **Fase 8, bloque 6 (fugas, reparto de ingresos y Realtime):** las migraciones\n  `20261146000000_finanzas_fugas_deudas.sql`, `20261147000000_finanzas_dispersion.sql`,\n  `20261148000000_finanzas_realtime.sql`, `20261149000000_finanzas_cambiar_reparto.sql`,\n  `20261150000000_finanzas_pagos_al_corte_nulo.sql` y\n  `20261151000000_finanzas_ingreso_anulado_con_reparto.sql` agregan: (a) **fugas y deudas**,\n  seis tablas solo agregar (`fin_fuga_parametros`, `fin_patrones_cobro`,\n  `fin_fuga_clasificaciones`, `fin_fuga_respuestas`, `fin_deuda_propositos`,\n  `fin_deuda_semaforo`), sus vistas de lo vigente y las RPC `fin_patron_crear`,\n  `fin_fuga_responder`, `fin_fuga_clasificar`, `fin_patron_cancelar`, `fin_deuda_declarar`,\n  `fin_fuga_parametros_cambiar`, `fin_deuda_semaforo_registrar` y `fin_fugas_lunes`; el\n  cálculo es local y el servidor solo guarda lo que la persona declara; (b) **reparto de\n  ingresos**: `fin_dispersiones` (con versión y `reemplaza_a`) y `fin_dispersion_lineas`,\n  `fin_dispersion_descartes` y las RPC `fin_guardar_propuesta`, `fin_confirmar_dispersion`,\n  `fin_cambiar_dispersion`, `fin_deshacer_dispersion`, `fin_corregir_tipo_ingreso`,\n  `fin_dispersion_parametros_cambiar`, `fin_ingresos_por_repartir`,\n  `fin_dispersion_puede_ver`, `fin_repartos_anulados_con_movimientos`,\n  `fin_deshacer_reparto_anulado` y `fin_dejar_reparto_anulado`; (c) **Realtime**:\n  `fin_realtime_puede_suscribir` y el canal privado `finanzas:libro:<uuid>` (evento\n  `cambio`, cuerpo `{\"v\":1}`, sin datos; ver `FinRealtimeCambio`);\n  `fin_realtime_instalar_politica` no es llamable desde la API. Las tablas solo se leen:\n  toda escritura es por RPC (sin `INSERT` directo). Quién: dueño o coadministrador que lleva\n  el libro; **no** el familiar (tampoco con la vista temporal de Papá, D24), el cuidador,\n  Casa ni la tablet pública (403, 42501 en las RPC; lista vacía al leer); la cuenta maestra\n  solo lee, con consulta vigente; en el libro de Papá decide su albacea, en su nombre y con\n  motivo de 3 a 200 caracteres (22023). Errores nuevos: `40001` «El reparto cambió, vuelve a\n  cargar.» (PostgREST: 409) cuando el reparto que viste ya no es el vigente. Nada de esto\n  envía cifras en avisos, a la IA ni a las bocinas (D3, D6, D20); las acciones de bitácora\n  nuevas son `finanzas.dispersion_anulada`, `finanzas.dispersion_parametros`,\n  `finanzas.dispersion_cambiada` y `finanzas.dispersion_anulada_deshecha`.\n- **Funciones internas:** `fin_vigencia_consulta_maestra`, `fin_adulto_con_finanzas` y\n  las de los triggers (`fin_libro_miembros_proteger`, `fin_libros_proteger`,\n  `fin_libro_miembros_sin_maestra`, `fin_categorias_archivar_cuenta`,\n  `bitacora_tope_por_persona`, `fin_motivo_valido`, `fin_motivo_validar`,\n  `fin_libro_asegurar_administrador`, `fin_membresia_relevo_administrador`,\n  `avisos_insertar`, `avisos_generar_vencimientos`, `avisos_reclamar`…) no son\n  llamables desde la API (se les quitó `EXECUTE` a todos los roles); por eso no\n  tienen operación aquí. De la migración de endurecimiento, la app solo llama\n  `fin_nombrar_albacea`. Sí lo son `fin_solo_lectura` y `fin_puede_salir`, que las\n  reglas llaman con el rol de la sesión, y `fin_adultos_con_finanzas` (en plural: la\n  que lista a los adultos con Finanzas del hogar; no la confundas con el ayudante\n  interno `fin_adulto_con_finanzas`, en singular).\n"
     },
     {
       "name": "Base de datos · Hábitos",
@@ -5457,7 +5457,7 @@ window.ESPECIFICACION_GRAVITY = {
         ],
         "operationId": "leerBitacora",
         "summary": "Leer la bitácora",
-        "description": "Solo agregar. Cada quien ve lo que hizo. El historial de GRAVITY (`gravity.*`): su autor, también para el dueño (D18), y la cuenta maestra. Lo de Finanzas (tablas `fin_*` y acciones `finanzas*`): quien puede leer el libro de la entrada (la cuenta maestra solo con una consulta vigente, I2) o, si es del hogar, quien tiene Finanzas. Lo demás (membresías, invitaciones…): el dueño y la cuenta maestra. Las acciones que el servidor deja en Finanzas son `finanzas.consulta_maestra` (cada consulta de la maestra a un libro ajeno, visible para quienes lo llevan), `finanzas.maestra_asignada` (quién es la maestra, visible para todo adulto con Finanzas), `finanzas.salida_libro_representado` (una salida del libro de Papá hacia cualquier otro libro, personal o compartido, visible para quienes lo llevan), `finanzas.albacea_nombrado` (el dueño nombró al albacea o al suplente del libro de Papá, visible para quienes lo llevan) y `finanzas.consulta_vista` (cada consulta del familiar con la vista temporal de Papá, D24; solo quién y cuándo, sin montos ni cuentas).",
+        "description": "Solo agregar. Cada quien ve lo que hizo. El historial de GRAVITY (`gravity.*`): su autor, también para el dueño (D18), y la cuenta maestra. Lo de Finanzas (tablas `fin_*` y acciones `finanzas*`): quien puede leer el libro de la entrada (la cuenta maestra solo con una consulta vigente, I2) o, si es del hogar, quien tiene Finanzas. Lo demás (membresías, invitaciones…): el dueño y la cuenta maestra. Las acciones que el servidor deja en Finanzas son `finanzas.consulta_maestra` (cada consulta de la maestra a un libro ajeno, visible para quienes lo llevan), `finanzas.maestra_asignada` (quién es la maestra, visible para todo adulto con Finanzas), `finanzas.salida_libro_representado` (una salida del libro de Papá hacia cualquier otro libro, personal o compartido, visible para quienes lo llevan), `finanzas.albacea_nombrado` (el dueño nombró al albacea o al suplente del libro de Papá, visible para quienes lo llevan) y `finanzas.consulta_vista` (cada consulta del familiar con la vista temporal de Papá, D24; solo quién y cuándo, sin montos ni cuentas). Del reparto de ingresos (Fase 8, sin cifras de dinero, D20): `finanzas.dispersion_anulada` (al anularse un ingreso ya repartido su reparto pasa a anulado; `detalle` lleva el libro, el ingreso, el estado anterior y cuántos movimientos siguen vigentes), `finanzas.dispersion_parametros` (cambió el modo o el «desde» del reparto; `detalle` lleva el libro, el modo, el «desde», `en_nombre_de` y `motivo`), `finanzas.dispersion_cambiada` (se cambió un reparto confirmado; `detalle` lleva el reparto anterior, las versiones, cuántos movimientos se anularon, `en_nombre_de` y `motivo`) y `finanzas.dispersion_anulada_deshecha` (se deshicieron los movimientos de un reparto de un ingreso anulado; `detalle` lleva el libro, el ingreso, cuántos se anularon, `en_nombre_de` y `motivo`). Las tablas nuevas de fugas y repartos (`fin_fuga_*`, `fin_patrones_cobro`, `fin_deuda_*`, `fin_dispersion*`) dejan además su entrada automática (`insertar`, `actualizar`), que omite sus campos sensibles: comercio, clave, motivo, folio, texto del objetivo, precio y monto al decidir en las de fugas, y la etiqueta en los renglones de un reparto. La bitácora solo la ven quienes pueden leer el libro (D3).",
         "x-roles": [
           "dueno",
           "coadministrador",
@@ -10439,7 +10439,7 @@ window.ESPECIFICACION_GRAVITY = {
         ],
         "operationId": "finEmitirAviso",
         "summary": "Emitir un aviso que solo el motor calcula",
-        "description": "La app emite los avisos que solo el motor de Finanzas sabe calcular: `protegido_riesgo`, `flujo_negativo`, `abono_bajo_minimo`, `partida_100`, `partida_80`, `fondo_bajo`, `uso_limite`, `aportacion_pendiente` y `conciliacion_pendiente`. Exige poder escribir en el libro (403, 42501). Los destinatarios los calcula el servidor (el libro personal, el compartido o el de Papá; nunca la cuenta maestra que no es la dueña, ni familiar, cuidador o Casa). Idempotente por `clave` (minúsculas, dígitos y `_ : . -`, hasta 120). Responde 400 (22023) si el tipo no es emitible, la clave o el objeto no valen, o se llegó al tope de 60 avisos al día por persona. Devuelve cuántos avisos creó. El aviso no lleva montos, nombres ni texto libre (D3, D20).",
+        "description": "La app emite los avisos que solo el motor de Finanzas sabe calcular: `protegido_riesgo`, `flujo_negativo`, `abono_bajo_minimo`, `partida_100`, `partida_80`, `fondo_bajo`, `uso_limite`, `aportacion_pendiente` y `conciliacion_pendiente`; en la Fase 8, también `fuga_por_reconocer`, `fuga_revision_mensual`, `deuda_en_vigilancia`, `deuda_se_volvio_mala` (objeto `patron` o `deuda`), `ingreso_por_repartir` e `ingreso_anulado_con_reparto` (objeto `movimiento`). Los cuatro de fugas y deudas solo los emite quien puede ver las deudas del libro (`fin_fugas_puede_ver`; sin la vista temporal de Papá, D24) y los dos del reparto, quien puede ver los repartos (`fin_dispersion_puede_ver`): si no, 403 (42501). El objeto del aviso del reparto es un ingreso del libro (22023 si no); el del ingreso anulado debe además tener un reparto `anulada`; un `patron` debe ser del libro. `deuda_se_volvio_mala` cuenta en el tope de 5 críticas al día por libro (22023). Exige poder escribir en el libro (403, 42501). Los destinatarios los calcula el servidor (el libro personal, el compartido o el de Papá; nunca la cuenta maestra que no es la dueña, ni familiar, cuidador o Casa). Idempotente por `clave` (minúsculas, dígitos y `_ : . -`, hasta 120). Responde 400 (22023) si el tipo no es emitible, la clave o el objeto no valen, o se llegó al tope de 60 avisos al día por persona. Devuelve cuántos avisos creó. El aviso no lleva montos, nombres ni texto libre (D3, D20).",
         "x-roles": [
           "dueno",
           "coadministrador"
@@ -10478,6 +10478,7 @@ window.ESPECIFICACION_GRAVITY = {
                       "semana",
                       "libro",
                       "movimiento",
+                      "patron",
                       null
                     ]
                   },
@@ -14285,6 +14286,3187 @@ window.ESPECIFICACION_GRAVITY = {
                   "format": "date"
                 },
                 "example": "2026-10-19"
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/fin_fugas_lunes": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finFugasLunes",
+        "summary": "Lunes de la semana de una fecha (fugas y deudas)",
+        "description": "Función pura de la migración `20261146000000_finanzas_fugas_deudas.sql`: devuelve el lunes de la semana de una fecha (la semana empieza en lunes). No lee datos ni cambia nada; la comparten las pruebas y la app. Mismo resultado que `fin_lunes`.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_fecha"
+                ],
+                "properties": {
+                  "p_fecha": {
+                    "type": "string",
+                    "format": "date"
+                  }
+                }
+              },
+              "example": {
+                "p_fecha": "2026-11-19"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "El lunes de esa semana.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "example": "2026-11-16"
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/fin_patron_crear": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finPatronCrear",
+        "summary": "Crear un patrón de cobro (fugas silenciosas)",
+        "description": "Registra un cobro que se repite (o una subcategoría hormiga vigilada) para que el dispositivo lo clasifique y pregunte por él. El cálculo de fugas es local (en el dispositivo); el servidor solo guarda lo que la persona declara. **Idempotente por `p_id` y por clave:** si el id ya es de ese patrón, o ya existe un patrón del libro con la misma clave (`p_clave`, o comercio normalizado más categoría si no se manda), devuelve el existente y no crea otro. El patrón **no se edita**: su estado (protegido, cancelado, cancelado sin folio) se deriva de sus clasificaciones y respuestas (`fin_v_patrones_estado`). Hasta 2000 patrones por libro (22023).\n\n**Quién:** escribir en el libro Y poder ver sus deudas (`fin_fugas_puede_ver`: dueño o coadministrador que lleva el libro; la regla de tarjetas sin la vista temporal de Papá). 403 (42501) al familiar (tampoco con la vista temporal de Papá, D24), al cuidador, a Casa y a la tablet pública; la cuenta maestra es de solo lectura y nunca escribe (D19). En el libro de Papá decide su albacea (el suplente solo sin albacea vigente).\n\n**Errores:** 400 (22023) si falta `p_id` o se llegó al tope de patrones; 409 (23505) si el id ya es de otro patrón (de otro libro o de otra clave); 400 (23514) si la cadencia, el origen o la clave no cumplen la tabla; 409 (23503) si la categoría o el compromiso no son del libro. `p_comercio_norm` es un dato del libro: jamás sale en un aviso, a la IA ni a las bocinas (D3, D20) y la bitácora no lo copia.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_id",
+                  "p_libro",
+                  "p_comercio_norm",
+                  "p_categoria",
+                  "p_cadencia",
+                  "p_automatico"
+                ],
+                "properties": {
+                  "p_id": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_libro": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_comercio_norm": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 80,
+                    "description": "Comercio normalizado por el dispositivo (1 a 80 caracteres); nulo si es una subcategoría hormiga."
+                  },
+                  "p_categoria": {
+                    "$ref": "#/components/schemas/UuidONulo",
+                    "description": "Categoría del hogar a la que pertenece el cobro."
+                  },
+                  "p_cadencia": {
+                    "type": "string",
+                    "enum": [
+                      "semanal",
+                      "quincenal",
+                      "mensual",
+                      "bimestral",
+                      "anual",
+                      "irregular"
+                    ]
+                  },
+                  "p_automatico": {
+                    "type": "boolean",
+                    "description": "Verdadero si es un cargo automático."
+                  },
+                  "p_clave": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 200,
+                    "description": "Identifica al patrón dentro del libro; sin ella se arma con el comercio y la categoría. Sin caracteres de control."
+                  },
+                  "p_origen": {
+                    "type": "string",
+                    "enum": [
+                      "detectado",
+                      "manual"
+                    ],
+                    "default": "manual"
+                  },
+                  "p_compromiso": {
+                    "$ref": "#/components/schemas/UuidONulo",
+                    "description": "Compromiso del libro ligado al patrón (se le pone `hasta` si el patrón se cancela)."
+                  }
+                }
+              },
+              "example": {
+                "p_id": "a1060000-0000-4000-8000-000000000001",
+                "p_libro": "f1000000-0000-4000-8000-000000000001",
+                "p_comercio_norm": "streaming ejemplo",
+                "p_categoria": null,
+                "p_cadencia": "mensual",
+                "p_automatico": true,
+                "p_origen": "detectado"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "El id del patrón (el existente si ya había uno con esa clave).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Uuid"
+                },
+                "example": "a1060000-0000-4000-8000-000000000001"
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/fin_fuga_responder": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finFugaResponder",
+        "summary": "Responder una pregunta sobre un cobro (reconoce, uso, ya no sirve…)",
+        "description": "Agrega la respuesta de la persona a una pregunta sobre un patrón: `reconoce`, `uso`, `ya_no_sirve`, `ya_no_existe`, `ya_no_la_quiero`, `duplicado`, `plan_viejo` o `temporada` (la cancelación va por `fin_patron_cancelar`). Respuesta `si`, `no` o `despues`. **Solo agregar:** si ya había una respuesta vigente a la misma pregunta en el mismo periodo, la nueva la reemplaza (`reemplaza_a` lo pone el servidor y la anterior no se toca); si dice lo mismo, no duplica y devuelve la vigente. El conteo de «2 seguidas» usa la última de cada periodo.\n\n**Idempotente por `p_id`:** repetir el mismo contenido devuelve el id; el mismo id con otra pregunta, respuesta, patrón o periodo es 409 (23505). `p_periodo_lunes` es el lunes de la semana en que se contestó (nulo = la semana de hoy en la zona de la persona); debe ser lunes y no más de 400 días atrás ni más de un día adelante (22023). `p_registrado_en` no puede estar más de un día en el futuro.\n\n**Quién:** escribir en el libro del patrón Y poder ver sus deudas (dueño o coadministrador que lleva el libro). 403 (42501) al familiar (tampoco con la vista temporal de Papá, D24), al cuidador, a Casa y a la tablet pública, y a la cuenta maestra (solo lectura); también 42501 si el patrón no existe (no revela si existe). **En el libro de Papá** la decisión queda `en_nombre_de` él y, salvo en `reconoce`, `uso` y `temporada`, lleva motivo de 3 a 200 caracteres (22023). El motivo admite hasta 200 caracteres. La bitácora no copia motivos ni folios.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_id",
+                  "p_patron",
+                  "p_pregunta",
+                  "p_respuesta"
+                ],
+                "properties": {
+                  "p_id": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_patron": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_pregunta": {
+                    "type": "string",
+                    "enum": [
+                      "reconoce",
+                      "uso",
+                      "ya_no_sirve",
+                      "ya_no_existe",
+                      "ya_no_la_quiero",
+                      "duplicado",
+                      "plan_viejo",
+                      "temporada"
+                    ]
+                  },
+                  "p_respuesta": {
+                    "type": "string",
+                    "enum": [
+                      "si",
+                      "no",
+                      "despues"
+                    ]
+                  },
+                  "p_periodo_lunes": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date",
+                    "description": "Lunes de la semana en que se contestó; nulo = esta semana."
+                  },
+                  "p_registrado_en": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time",
+                    "description": "Cuándo contestó (hora del dispositivo, para la cola sin conexión); nulo = ahora."
+                  },
+                  "p_motivo": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 200
+                  }
+                }
+              },
+              "example": {
+                "p_id": "a1060000-0000-4000-8000-000000000011",
+                "p_patron": "a1060000-0000-4000-8000-000000000001",
+                "p_pregunta": "uso",
+                "p_respuesta": "no",
+                "p_periodo_lunes": "2026-11-16"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "El id de la respuesta (la vigente si ya decía lo mismo).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Uuid"
+                },
+                "example": "a1060000-0000-4000-8000-000000000011"
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/fin_fuga_clasificar": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finFugaClasificar",
+        "summary": "Clasificar un cobro (la decisión de la persona gana a la regla)",
+        "description": "Agrega la decisión de la persona sobre un patrón: `hormiga`, `fantasma`, `vampiro`, `zombie` o `ninguna` («No es una fuga», que protege al patrón). `ninguna` junto con `p_vigilar` es «Vigilar»; «vigilar» con otra fuga es 400 (22023). `p_fuga_regla` es lo que dijo la regla: si la decisión la **contradice** (`p_fuga` distinta de `p_fuga_regla` y sin `p_vigilar`), el motivo de 3 a 200 caracteres es obligatorio (22023). **Solo agregar:** la nueva reemplaza a la vigente (que no se edita; `reemplaza_a` lo pone el servidor) y cada patrón tiene una sola cadena.\n\n**Idempotente por `p_id`** (mismo patrón, misma fuga y mismo `p_vigilar` devuelve el id; otro contenido, 409 con 23505) y la misma decisión ya vigente no se duplica (devuelve la vigente). `p_regla` es el código de la regla (`^[A-Z][A-Z0-9]{0,2}$`, 23514 si no cumple); `p_monto_centavos` es el monto al decidir (cero o más, solo para el historial local; jamás sale en un aviso, D3, D20).\n\n**Quién:** escribir en el libro del patrón Y poder ver sus deudas. 403 (42501) al familiar (tampoco con la vista temporal de Papá, D24), al cuidador, a Casa y a la tablet pública, y a la cuenta maestra (solo lectura); 42501 también si el patrón no existe. **En el libro de Papá** toda decisión queda `en_nombre_de` él y con motivo de 3 a 200 caracteres (22023 si falta, D19).",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_id",
+                  "p_patron",
+                  "p_fuga",
+                  "p_fuga_regla"
+                ],
+                "properties": {
+                  "p_id": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_patron": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_fuga": {
+                    "$ref": "#/components/schemas/TipoFuga"
+                  },
+                  "p_fuga_regla": {
+                    "$ref": "#/components/schemas/TipoFuga"
+                  },
+                  "p_motivo": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 200
+                  },
+                  "p_regla": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "pattern": "^[A-Z][A-Z0-9]{0,2}$"
+                  },
+                  "p_vigilar": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "p_monto_centavos": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "int64",
+                    "minimum": 0
+                  }
+                }
+              },
+              "example": {
+                "p_id": "a1060000-0000-4000-8000-000000000021",
+                "p_patron": "a1060000-0000-4000-8000-000000000001",
+                "p_fuga": "ninguna",
+                "p_fuga_regla": "zombie",
+                "p_motivo": "Sí lo uso cada semana",
+                "p_regla": "V1"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "El id de la clasificación (la vigente si era la misma decisión).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Uuid"
+                },
+                "example": "a1060000-0000-4000-8000-000000000021"
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/fin_patron_cancelar": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finPatronCancelar",
+        "summary": "Registrar la cancelación de un cobro (fecha y folio)",
+        "description": "Registra que la persona canceló el cobro de un patrón: respuesta `cancelado` con fecha y, si la hay, el folio (1 a 40 caracteres: letras, números y guiones; 22023 si no cumple). **Sin folio = «cancelado sin folio»**, que se completa con otra llamada que reemplaza a la anterior (solo agregar: `reemplaza_a` lo pone el servidor). La fecha es de hoy o anterior (hasta 1 día de margen por la zona horaria; no más de 10 años atrás; 22023). Si el patrón tiene compromiso ligado, le pone `hasta` = la fecha de cancelación (solo si no termina antes y ya había empezado); es lo único que esta función cambia fuera de las tablas de fugas.\n\n**Idempotente por `p_id`** (misma fecha y mismo folio devuelve el id; otro contenido, 409 con 23505). **Quién:** escribir en el libro del patrón Y poder ver sus deudas; 403 (42501) al familiar (tampoco con la vista temporal de Papá, D24), al cuidador, a Casa, a la tablet pública y a la cuenta maestra (solo lectura); 42501 también si el patrón no existe. **En el libro de Papá** queda `en_nombre_de` él y con motivo de 3 a 200 caracteres (22023, D19). La bitácora no copia motivos ni folios.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_id",
+                  "p_patron",
+                  "p_fecha"
+                ],
+                "properties": {
+                  "p_id": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_patron": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_fecha": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "Fecha en que la persona canceló el cobro."
+                  },
+                  "p_folio": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "pattern": "^[A-Za-z0-9-]{1,40}$",
+                    "description": "Folio de la cancelación; sin folio queda «cancelado sin folio»."
+                  },
+                  "p_motivo": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 200
+                  }
+                }
+              },
+              "example": {
+                "p_id": "a1060000-0000-4000-8000-000000000031",
+                "p_patron": "a1060000-0000-4000-8000-000000000001",
+                "p_fecha": "2026-11-18",
+                "p_folio": "CAN-20261118-01"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "El id de la respuesta `cancelado`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Uuid"
+                },
+                "example": "a1060000-0000-4000-8000-000000000031"
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/fin_deuda_declarar": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finDeudaDeclarar",
+        "summary": "Declarar para qué fue una deuda (deuda buena o mala)",
+        "description": "Agrega la declaración del propósito de una deuda y el estado de su objetivo. **Solo agregar:** vale la más reciente; la nueva reemplaza a la vigente (que no se edita). `p_objetivo_texto` lleva hasta 80 caracteres y **sin cifras ni «$»** (22023): es un dato del libro y jamás sale en un aviso (D3, D20). `p_uso_poco` es «lo uso poco» (señal B5 ámbar). `p_precio_contado_centavos` corrige el precio de contado de `fin_msi` sin editarlo. `p_vida_util` va de 1 a 600 meses (23514).\n\n**Idempotente por `p_id`** (misma deuda, propósito y estado devuelve el id; otro contenido, 409 con 23505). **Quién:** **administrar** el libro de la deuda Y poder ver sus deudas (más estricto que escribir: la titular; el dueño como albacea de Papá; la pareja en la casa). 403 (42501) al familiar (tampoco con la vista temporal de Papá, D24), al cuidador, a Casa, a la tablet pública y a la cuenta maestra (solo lectura); 42501 también si la deuda no existe. 400 (22023) si el propósito o el estado no son del catálogo. **En el libro de Papá** queda `en_nombre_de` él y con motivo de 3 a 200 caracteres (22023, D19).",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_id",
+                  "p_deuda",
+                  "p_proposito"
+                ],
+                "properties": {
+                  "p_id": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_deuda": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_proposito": {
+                    "type": "string",
+                    "enum": [
+                      "bien_duradero",
+                      "genera_ingreso",
+                      "patrimonio",
+                      "educacion_o_salud",
+                      "emergencia",
+                      "consumo"
+                    ]
+                  },
+                  "p_objetivo_texto": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 80,
+                    "description": "Para qué fue, en palabras; sin dígitos ni «$»."
+                  },
+                  "p_bien": {
+                    "$ref": "#/components/schemas/UuidONulo"
+                  },
+                  "p_objetivo": {
+                    "$ref": "#/components/schemas/UuidONulo"
+                  },
+                  "p_vida_util": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 600,
+                    "description": "Vida útil del bien, en meses."
+                  },
+                  "p_estado": {
+                    "type": "string",
+                    "enum": [
+                      "vigente",
+                      "cumplido",
+                      "ya_no_existe",
+                      "cambio"
+                    ],
+                    "default": "vigente"
+                  },
+                  "p_uso_poco": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "p_precio_contado_centavos": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "int64",
+                    "minimum": 1
+                  },
+                  "p_motivo": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 200
+                  }
+                }
+              },
+              "example": {
+                "p_id": "a1060000-0000-4000-8000-000000000041",
+                "p_deuda": "1e000000-0000-4000-8000-000000000001",
+                "p_proposito": "bien_duradero",
+                "p_objetivo_texto": "Refrigerador de la casa",
+                "p_vida_util": 120
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "El id de la declaración.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Uuid"
+                },
+                "example": "a1060000-0000-4000-8000-000000000041"
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/fin_fuga_parametros_cambiar": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finFugaParametrosCambiar",
+        "summary": "Cambiar los umbrales de fugas y deuda de un libro",
+        "description": "Agrega una fila nueva en `fin_fuga_parametros` (historial; vale la más reciente, `fin_v_fuga_parametros_vigentes`) que parte de lo vigente (o de los valores por omisión si el libro no tiene ninguna) y cambia **solo lo que se manda**; lo demás sigue como estaba. Valores por omisión: tope hormiga 15000 centavos, 8 gastos, 3 semanas, 100 pb del ingreso, conjunto 500 pb, tolerancia de recurrente 1000 pb, crecimiento de vampiro 1000 pb, zombie a 2 respuestas, servicio 6 periodos (mínimo) y 12 (mediana) con 2500 pb, MSI ámbar 1000 pb y rojo 2000 pb, 3 y 4 MSI activos, plazo ámbar 18 meses y 2 evaluaciones para bajar de nivel.\n\n**Idempotente por `p_id`** (opcional; si se omite lo genera el servidor): repetir el mismo id del mismo libro devuelve el id sin agregar otra fila; el id de otro libro es 409 (23505). Los rangos los validan los `check` de la tabla (400 con 23514), incluido que `msi_ambar` no pase de `msi_rojo`, que los MSI activos ámbar no pasen de los rojos y que los periodos mínimos del servicio no pasen de los de la mediana.\n\n**Quién:** **administrar** el libro Y poder ver sus deudas (más estricto que escribir). 403 (42501) al familiar (tampoco con la vista temporal de Papá, D24), al cuidador, a Casa, a la tablet pública y a la cuenta maestra (solo lectura). **En el libro de Papá** queda `en_nombre_de` él y con motivo de 3 a 200 caracteres (22023, D19).",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_libro"
+                ],
+                "properties": {
+                  "p_libro": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_id": {
+                    "$ref": "#/components/schemas/UuidONulo"
+                  },
+                  "p_tope_hormiga_centavos": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "int64",
+                    "minimum": 1,
+                    "maximum": 100000000
+                  },
+                  "p_hormiga_min_gastos": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 100
+                  },
+                  "p_hormiga_min_semanas": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 4
+                  },
+                  "p_hormiga_min_ingreso_pb": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 0,
+                    "maximum": 10000
+                  },
+                  "p_hormiga_conjunto_pb": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 0,
+                    "maximum": 10000
+                  },
+                  "p_recurrente_tolerancia_pb": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 0,
+                    "maximum": 10000
+                  },
+                  "p_vampiro_crecimiento_pb": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 0,
+                    "maximum": 100000
+                  },
+                  "p_zombie_respuestas": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 12
+                  },
+                  "p_servicio_periodos_min": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 3,
+                    "maximum": 60
+                  },
+                  "p_servicio_periodos_mediana": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 3,
+                    "maximum": 60
+                  },
+                  "p_servicio_mediana_pb": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 0,
+                    "maximum": 100000
+                  },
+                  "p_msi_ambar_pb": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 0,
+                    "maximum": 10000
+                  },
+                  "p_msi_rojo_pb": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 0,
+                    "maximum": 10000
+                  },
+                  "p_msi_activos_ambar": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 20
+                  },
+                  "p_msi_activos_rojo": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 20
+                  },
+                  "p_plazo_ambar_meses": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 48
+                  },
+                  "p_baja_nivel_evaluaciones": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 8
+                  },
+                  "p_motivo": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 200
+                  }
+                }
+              },
+              "example": {
+                "p_libro": "f1000000-0000-4000-8000-000000000001",
+                "p_id": "a1060000-0000-4000-8000-000000000051",
+                "p_tope_hormiga_centavos": 20000,
+                "p_zombie_respuestas": 3
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "El id de la fila de parámetros agregada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Uuid"
+                },
+                "example": "a1060000-0000-4000-8000-000000000051"
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/fin_deuda_semaforo_registrar": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finDeudaSemaforoRegistrar",
+        "summary": "Registrar el semáforo de una deuda (solo si cambió)",
+        "description": "El dispositivo calcula el nivel mostrado de cada deuda (`verde`, `ambar`, `rojo`, `gris`) y esta función lo guarda **solo cuando cambia el nivel o el contador de bajas** (histéresis: sirve para avisar una sola vez). Si no cambió, o el `p_id` ya existía (reintento de la cola), no agrega nada y devuelve `false`. Las señales son códigos (`B1` a `M8`, `^[A-Z][0-9][a-z]?$`, hasta 30) y **no llevan cifras ni nombres** (D3, D20); el contador de bajas va de 0 a 8; `p_lunes` es lunes. Los valores fuera de rango o formato responden 400 (23514). `p_calculado_en` no puede estar más de un día en el futuro (22023). El historial es solo agregar (`fin_deuda_semaforo`; el nivel vigente, en `fin_v_deuda_semaforo_actual`).\n\n**Quién:** escribir en el libro de la deuda Y poder ver sus deudas (dueño o coadministrador que lleva el libro). 403 (42501) al familiar (tampoco con la vista temporal de Papá, D24), al cuidador, a Casa, a la tablet pública y a la cuenta maestra (solo lectura); 42501 también si la deuda no existe. A diferencia de las decisiones, aquí no se pide motivo en el libro de Papá: es un cálculo, no una decisión de la persona.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_id",
+                  "p_deuda",
+                  "p_lunes",
+                  "p_nivel"
+                ],
+                "properties": {
+                  "p_id": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_deuda": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_lunes": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "Lunes de la semana evaluada."
+                  },
+                  "p_nivel": {
+                    "type": "string",
+                    "enum": [
+                      "verde",
+                      "ambar",
+                      "rojo",
+                      "gris"
+                    ]
+                  },
+                  "p_senales": {
+                    "type": "array",
+                    "maxItems": 30,
+                    "items": {
+                      "type": "string",
+                      "pattern": "^[A-Z][0-9][a-z]?$"
+                    },
+                    "default": []
+                  },
+                  "p_bajas_seguidas": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 8,
+                    "default": 0
+                  },
+                  "p_calculado_en": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  }
+                }
+              },
+              "example": {
+                "p_id": "a1060000-0000-4000-8000-000000000061",
+                "p_deuda": "1e000000-0000-4000-8000-000000000001",
+                "p_lunes": "2026-11-16",
+                "p_nivel": "ambar",
+                "p_senales": [
+                  "B1",
+                  "B5"
+                ],
+                "p_bajas_seguidas": 0
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Verdadero si agregó un registro; falso si no cambió el nivel o era un reintento.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                },
+                "example": true
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/fin_guardar_propuesta": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finGuardarPropuesta",
+        "summary": "Guardar el reparto de un ingreso como propuesta (borrador)",
+        "description": "Guarda el reparto editado de **un ingreso** como **propuesta** (borrador): no crea ningún movimiento y el ingreso sigue «por repartir». La propuesta se calcula en el dispositivo con el dominio puro; el servidor solo la guarda. Si ya había una propuesta vigente del mismo ingreso con otro id, la nueva la reemplaza (la vieja queda `anulada`); con el mismo id se reemplazan sus renglones. **Idempotente por `id`.** Una propuesta es siempre del modo `confirmacion` (400, 22023, si se manda `automatico`) y no exige cuenta de ahorro. Los renglones son los de `fin_confirmar_dispersion` y su suma debe ser exactamente el monto del ingreso (22023).\n\n**Quién:** escribir en el libro del ingreso Y poder ver sus repartos (`fin_dispersion_puede_ver`: rol dueño o coadministrador). 403 (42501) al familiar (tampoco con la vista temporal de Papá, D24), al cuidador, a Casa y a la tablet pública, y a la cuenta maestra, que es de solo lectura (D19); el mismo 42501 si el ingreso no existe o no es un ingreso (no revela si existe). **En el libro de Papá** el reparto queda `en_nombre_de` él y con motivo de 3 a 200 caracteres (22023, D19). Errores de estado: 500 (55000) si el ingreso está anulado, ya repartido o no está confirmado; 409 (40001) «El reparto cambió, vuelve a cargar.» si ese `id` ya fue reemplazado por otra versión; 409 (23505) si el `id` es de otro ingreso.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_dispersion"
+                ],
+                "properties": {
+                  "p_dispersion": {
+                    "$ref": "#/components/schemas/DispersionPeticion"
+                  }
+                }
+              },
+              "example": {
+                "p_dispersion": {
+                  "id": "a1080000-0000-4000-8000-000000000001",
+                  "movimiento_id": "a1080000-0000-4000-8000-0000000000a1",
+                  "lineas": [
+                    {
+                      "destino": "presupuesto",
+                      "etiqueta": "Presupuesto de la semana",
+                      "monto_centavos": 800000
+                    },
+                    {
+                      "destino": "libre",
+                      "etiqueta": "Libre",
+                      "monto_centavos": 200000
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "El reparto guardado, con sus renglones.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DispersionRespuesta"
+                },
+                "example": {
+                  "id": "a1080000-0000-4000-8000-000000000001",
+                  "libro_id": "f1000000-0000-4000-8000-000000000001",
+                  "movimiento_id": "a1080000-0000-4000-8000-0000000000a1",
+                  "estado": "propuesta",
+                  "modo": "confirmacion",
+                  "version": 1,
+                  "reemplaza_a": null,
+                  "creada_en": "2026-11-20T09:00:00-06:00",
+                  "resuelta_por": null,
+                  "resuelta_en": null,
+                  "en_nombre_de": null,
+                  "motivo": null,
+                  "lineas": [
+                    {
+                      "destino": "presupuesto",
+                      "referencia_id": null,
+                      "etiqueta": "Presupuesto de la semana",
+                      "monto_centavos": 800000,
+                      "movimiento_id": null
+                    },
+                    {
+                      "destino": "libre",
+                      "referencia_id": null,
+                      "etiqueta": "Libre",
+                      "monto_centavos": 200000,
+                      "movimiento_id": null
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoReparto"
+          },
+          "500": {
+            "$ref": "#/components/responses/EstadoFinanzas"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/fin_confirmar_dispersion": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finConfirmarDispersion",
+        "summary": "Confirmar el reparto de un ingreso (y crear sus movimientos)",
+        "description": "Confirma el reparto de **un ingreso** en una sola transacción: lo guarda con sus renglones y crea **solo** los movimientos de **abono extra** (un `pago_deuda` desde la cuenta que recibió el ingreso a la cuenta de pasivo de la deuda) y de **ahorro** (una `transferencia` a `cuenta_ahorro_id`), con ids estables (los de `movimiento_id` de cada renglón o, si no, derivados del id del reparto). El renglón de **pagos de deuda solo aparta**: el pago real se registra con «Registrar pago» (decisión P4). `presupuesto`, `libre` y `por_repartir` no mueven dinero. El libro sigue solo-agregar.\n\n**Idempotente por `id`:** repetir la confirmación devuelve el reparto sin duplicar nada; el mismo `id` de otro ingreso es 409 (23505). Con `modo` = `automatico` (solo si el libro está en modo automático, 500 con 55000 si no) el servidor asigna lo comprometido y **nunca crea movimientos**: solo `presupuesto`, `pago_deuda` y `por_repartir` pueden llevar monto; `abono_extra`, `ahorro` o `libre` con monto son 22023 y el remanente queda por repartir.\n\n**Reglas (400, 22023):** de 1 a 100 renglones sin repetir (mismo destino y referencia); montos enteros en centavos, cero o más; todos con etiqueta; `pago_deuda` y `abono_extra` apuntan a una deuda del libro y los demás a nada; la suma debe ser exactamente el monto del ingreso; con ahorro mayor que cero se necesita `cuenta_ahorro_id` (otra cuenta de dinero activa del libro, distinta de la que recibió el ingreso); la fecha no puede estar en el futuro y nunca es anterior a la del ingreso. 500 (55000) si el ingreso está anulado, ya repartido, no está confirmado, o si el abono va a una deuda que ya no está activa; 409 (40001) «El reparto cambió, vuelve a cargar.» si ese `id` ya fue reemplazado; reparto anulado, 55000.\n\n**Quién:** escribir en el libro del ingreso Y poder ver sus repartos (rol dueño o coadministrador). 403 (42501) al familiar (tampoco con la vista temporal de Papá, D24), al cuidador, a Casa y a la tablet pública, y a la cuenta maestra (solo lectura, D19); también 42501 si el ingreso no existe o no es un ingreso. **En el libro de Papá** el reparto y sus movimientos quedan `en_nombre_de` él y con motivo de 3 a 200 caracteres (en el automático, «Reparto automático» por omisión). Los avisos del reparto (`ingreso_por_repartir`) no llevan cifras ni nombres (D3, D6, D20); ni las `etiqueta` ni los montos viajan por Realtime ni a las bocinas.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_dispersion"
+                ],
+                "properties": {
+                  "p_dispersion": {
+                    "$ref": "#/components/schemas/DispersionPeticion"
+                  }
+                }
+              },
+              "example": {
+                "p_dispersion": {
+                  "id": "a1080000-0000-4000-8000-000000000001",
+                  "movimiento_id": "a1080000-0000-4000-8000-0000000000a1",
+                  "modo": "confirmacion",
+                  "cuenta_ahorro_id": "c3000000-0000-4000-8000-000000000002",
+                  "fecha": "2026-11-20",
+                  "lineas": [
+                    {
+                      "destino": "presupuesto",
+                      "etiqueta": "Presupuesto de la semana",
+                      "monto_centavos": 600000
+                    },
+                    {
+                      "destino": "abono_extra",
+                      "referencia_id": "1e000000-0000-4000-8000-000000000001",
+                      "etiqueta": "Abono extra a la tarjeta",
+                      "monto_centavos": 200000
+                    },
+                    {
+                      "destino": "ahorro",
+                      "etiqueta": "Ahorro",
+                      "monto_centavos": 200000
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "El reparto confirmado (`confirmada`, o `automatica`), con sus renglones y los ids de los movimientos creados.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DispersionRespuesta"
+                },
+                "example": {
+                  "id": "a1080000-0000-4000-8000-000000000001",
+                  "libro_id": "f1000000-0000-4000-8000-000000000001",
+                  "movimiento_id": "a1080000-0000-4000-8000-0000000000a1",
+                  "estado": "confirmada",
+                  "modo": "confirmacion",
+                  "version": 1,
+                  "reemplaza_a": null,
+                  "creada_en": "2026-11-20T09:00:00-06:00",
+                  "resuelta_por": "e0000000-0000-4000-8000-000000000001",
+                  "resuelta_en": "2026-11-20T09:01:00-06:00",
+                  "en_nombre_de": null,
+                  "motivo": null,
+                  "lineas": [
+                    {
+                      "destino": "presupuesto",
+                      "referencia_id": null,
+                      "etiqueta": "Presupuesto de la semana",
+                      "monto_centavos": 600000,
+                      "movimiento_id": null
+                    },
+                    {
+                      "destino": "abono_extra",
+                      "referencia_id": "1e000000-0000-4000-8000-000000000001",
+                      "etiqueta": "Abono extra a la tarjeta",
+                      "monto_centavos": 200000,
+                      "movimiento_id": "a1080000-0000-4000-8000-0000000000b1"
+                    },
+                    {
+                      "destino": "ahorro",
+                      "referencia_id": null,
+                      "etiqueta": "Ahorro",
+                      "monto_centavos": 200000,
+                      "movimiento_id": "a1080000-0000-4000-8000-0000000000b2"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoReparto"
+          },
+          "500": {
+            "$ref": "#/components/responses/EstadoFinanzas"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/fin_cambiar_dispersion": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finCambiarDispersion",
+        "summary": "Cambiar un reparto ya confirmado (con control de versión)",
+        "description": "Cambia un reparto **confirmado o automático** (decisión P5 del dueño, 20/nov/2026) en **una sola transacción**: anula con contraasiento y motivo los movimientos de abono extra y de ahorro que creó el reparto anterior, lo deja `reemplazada` (conserva su historial: renglones y movimientos) y confirma el nuevo (versión + 1, `reemplaza_a` = el anterior) con sus propios movimientos. El libro sigue solo-agregar; si algo falla, no queda nada a medias. Solo hay un reparto vigente por ingreso.\n\n**Control de versión:** el payload es el de `fin_confirmar_dispersion` más `dispersion_anterior_id` y `version_esperada` (lo que el cliente vio); `id` es el id del reparto nuevo (y del cambio). Si el anterior ya no es el vigente con esa versión (otro dispositivo lo cambió, lo deshizo o lo anuló), responde **409 con el código 40001 y el mensaje «El reparto cambió, vuelve a cargar.»**, para que dos dispositivos no se pisen: el cliente debe recargar y volver a intentar. **Idempotente por `id`:** repetir un cambio ya hecho devuelve el reparto nuevo sin tocar nada; el mismo `id` de otro ingreso o de otro anterior es 409 (23505). La suma de los renglones debe ser el monto del ingreso y el modo es siempre `confirmacion` (las reglas de renglones, cuenta de ahorro y fecha son las de `fin_confirmar_dispersion`).\n\n**Errores:** 400 (22023) si falta el id, el ingreso, el reparto que viste o su versión, si el reparto anterior no es de ese ingreso, o por el motivo (de 3 a 200 caracteres; por omisión «Reparto cambiado», salvo en el libro de Papá donde es obligatorio); 500 (55000) si el anterior es una propuesta («se confirma o se deja para después») o el ingreso está anulado.\n\n**Quién:** escribir en el libro del ingreso Y poder ver sus repartos (rol dueño o coadministrador). 403 (42501) al familiar (tampoco con la vista temporal de Papá, D24), al cuidador, a Casa y a la tablet pública, y a la cuenta maestra (solo lectura, D19). **En el libro de Papá** queda `en_nombre_de` él y con motivo. **Bitácora:** `finanzas.dispersion_cambiada`, sin cifras (D20): reparto anterior, versiones, cuántos movimientos se anularon, `en_nombre_de` y motivo.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_cambio"
+                ],
+                "properties": {
+                  "p_cambio": {
+                    "$ref": "#/components/schemas/DispersionCambio"
+                  }
+                }
+              },
+              "example": {
+                "p_cambio": {
+                  "id": "a1080000-0000-4000-8000-000000000002",
+                  "movimiento_id": "a1080000-0000-4000-8000-0000000000a1",
+                  "dispersion_anterior_id": "a1080000-0000-4000-8000-000000000001",
+                  "version_esperada": 1,
+                  "motivo": "Mejor abonar más a la tarjeta",
+                  "cuenta_ahorro_id": "c3000000-0000-4000-8000-000000000002",
+                  "lineas": [
+                    {
+                      "destino": "presupuesto",
+                      "etiqueta": "Presupuesto de la semana",
+                      "monto_centavos": 600000
+                    },
+                    {
+                      "destino": "abono_extra",
+                      "referencia_id": "1e000000-0000-4000-8000-000000000001",
+                      "etiqueta": "Abono extra a la tarjeta",
+                      "monto_centavos": 400000
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "El reparto nuevo (versión + 1), con sus renglones y movimientos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DispersionRespuesta"
+                },
+                "example": {
+                  "id": "a1080000-0000-4000-8000-000000000002",
+                  "libro_id": "f1000000-0000-4000-8000-000000000001",
+                  "movimiento_id": "a1080000-0000-4000-8000-0000000000a1",
+                  "estado": "confirmada",
+                  "modo": "confirmacion",
+                  "version": 2,
+                  "reemplaza_a": "a1080000-0000-4000-8000-000000000001",
+                  "creada_en": "2026-11-20T10:00:00-06:00",
+                  "resuelta_por": "e0000000-0000-4000-8000-000000000001",
+                  "resuelta_en": "2026-11-20T10:00:00-06:00",
+                  "en_nombre_de": null,
+                  "motivo": "Mejor abonar más a la tarjeta",
+                  "lineas": [
+                    {
+                      "destino": "presupuesto",
+                      "referencia_id": null,
+                      "etiqueta": "Presupuesto de la semana",
+                      "monto_centavos": 600000,
+                      "movimiento_id": null
+                    },
+                    {
+                      "destino": "abono_extra",
+                      "referencia_id": "1e000000-0000-4000-8000-000000000001",
+                      "etiqueta": "Abono extra a la tarjeta",
+                      "monto_centavos": 400000,
+                      "movimiento_id": "a1080000-0000-4000-8000-0000000000b3"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoReparto"
+          },
+          "500": {
+            "$ref": "#/components/responses/EstadoFinanzas"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/fin_deshacer_dispersion": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finDeshacerDispersion",
+        "summary": "Deshacer un reparto aplicado (el ingreso vuelve a «por repartir»)",
+        "description": "Anula con contraasiento (misma fecha, id estable, motivo) los movimientos de **abono extra y ahorro** que creó un reparto `confirmada` o `automatica` y que sigan vigentes, y pasa el reparto a `anulada`: el ingreso vuelve a «por repartir». Nada se borra. **Idempotente:** un reparto ya `anulada` devuelve el reparto sin hacer nada (un reintento no anula dinero dos veces). Un reparto `reemplazada` responde **409 con el código 40001 «El reparto cambió, vuelve a cargar.»**; una propuesta no se deshace (500, 55000: se reemplaza o se deja para después).\n\n`p_motivo` necesita de 3 a 200 caracteres visibles (22023); por omisión «Reparto deshecho». **Quién:** escribir en el libro del reparto Y poder ver sus repartos (rol dueño o coadministrador). 403 (42501) al familiar (tampoco con la vista temporal de Papá, D24), al cuidador, a Casa y a la tablet pública, y a la cuenta maestra (solo lectura); 42501 también si el reparto no existe. **En el libro de Papá** queda en su nombre y con motivo. Para los movimientos de un reparto cuyo **ingreso se anuló**, usa `fin_deshacer_reparto_anulado`.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_dispersion"
+                ],
+                "properties": {
+                  "p_dispersion": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_motivo": {
+                    "type": "string",
+                    "maxLength": 200,
+                    "default": "Reparto deshecho"
+                  }
+                }
+              },
+              "example": {
+                "p_dispersion": "a1080000-0000-4000-8000-000000000001",
+                "p_motivo": "Me equivoqué de ingreso"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "El reparto, ya `anulada`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DispersionRespuesta"
+                },
+                "example": {
+                  "id": "a1080000-0000-4000-8000-000000000001",
+                  "libro_id": "f1000000-0000-4000-8000-000000000001",
+                  "movimiento_id": "a1080000-0000-4000-8000-0000000000a1",
+                  "estado": "anulada",
+                  "modo": "confirmacion",
+                  "version": 1,
+                  "reemplaza_a": null,
+                  "creada_en": "2026-11-20T09:00:00-06:00",
+                  "resuelta_por": "e0000000-0000-4000-8000-000000000001",
+                  "resuelta_en": "2026-11-20T09:01:00-06:00",
+                  "en_nombre_de": null,
+                  "motivo": null,
+                  "lineas": [
+                    {
+                      "destino": "libre",
+                      "referencia_id": null,
+                      "etiqueta": "Libre",
+                      "monto_centavos": 1000000,
+                      "movimiento_id": null
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoReparto"
+          },
+          "500": {
+            "$ref": "#/components/responses/EstadoFinanzas"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/fin_corregir_tipo_ingreso": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finCorregirTipoIngreso",
+        "summary": "Corregir el tipo de un ingreso (p. ej. extra a sueldo)",
+        "description": "Corrige el tipo de un ingreso sin borrar nada: agrega la **anulación** (misma fecha y monto) y un **ingreso nuevo** con el mismo monto, fecha y cuenta de destino, desde `p_cuenta_origen` (la cuenta de ingreso del tipo correcto), los dos con `p_grupo` y el motivo. Si el ingreso **ya estaba repartido** (`confirmada` o `automatica`), en la misma transacción se anulan los movimientos que creó el reparto y este queda `anulada`; el ingreso nuevo nace «por repartir» (sin movimientos huérfanos). Si la corrección quedaría **pendiente de otra persona** (libro compartido, ingreso de otra persona) y el ingreso ya está repartido, se rechaza (500, 55000) hasta cambiar o deshacer el reparto. En un compartido, el ingreso de otra persona se corrige como `pendiente` de su confirmación.\n\n**Idempotente por los ids de los dos asientos** (`p_id_anulacion` y `p_id_nuevo`): repetir devuelve los mismos ids; ids que ya son de otra corrección, 409 (23505). **Errores:** 400 (22023) si faltan la cuenta, el grupo o los ids, si el motivo no tiene de 3 a 200 caracteres visibles, si el tipo es el mismo o no es una cuenta de ingreso activa del mismo libro; 500 (55000) si el ingreso está pendiente, ya anulado o (arriba) ya repartido con corrección pendiente de otra persona.\n\n**Quién:** escribir en el libro del ingreso Y poder ver sus repartos (rol dueño o coadministrador). 403 (42501) al familiar (tampoco con la vista temporal de Papá, D24), al cuidador, a Casa y a la tablet pública, y a la cuenta maestra (solo lectura, D19); 42501 también si el movimiento no existe o no es un ingreso. **En el libro de Papá** queda `en_nombre_de` él y el motivo es obligatorio.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_movimiento",
+                  "p_cuenta_origen",
+                  "p_motivo",
+                  "p_grupo",
+                  "p_id_anulacion",
+                  "p_id_nuevo"
+                ],
+                "properties": {
+                  "p_movimiento": {
+                    "$ref": "#/components/schemas/Uuid",
+                    "description": "El ingreso que se corrige."
+                  },
+                  "p_cuenta_origen": {
+                    "$ref": "#/components/schemas/Uuid",
+                    "description": "Cuenta de ingreso del tipo correcto (distinta de la actual, activa y del mismo libro)."
+                  },
+                  "p_motivo": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 200
+                  },
+                  "p_grupo": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_id_anulacion": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_id_nuevo": {
+                    "$ref": "#/components/schemas/Uuid"
+                  }
+                }
+              },
+              "example": {
+                "p_movimiento": "a1080000-0000-4000-8000-0000000000a1",
+                "p_cuenta_origen": "c2000000-0000-4000-8000-000000000001",
+                "p_motivo": "Era sueldo, no un ingreso extra",
+                "p_grupo": "a1080000-0000-4000-8000-0000000000c0",
+                "p_id_anulacion": "a1080000-0000-4000-8000-0000000000c1",
+                "p_id_nuevo": "a1080000-0000-4000-8000-0000000000c2"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Los ids de los dos asientos y el grupo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "anulacion_id": {
+                      "$ref": "#/components/schemas/Uuid"
+                    },
+                    "nuevo_id": {
+                      "$ref": "#/components/schemas/Uuid"
+                    },
+                    "grupo_id": {
+                      "$ref": "#/components/schemas/Uuid"
+                    }
+                  }
+                },
+                "example": {
+                  "anulacion_id": "a1080000-0000-4000-8000-0000000000c1",
+                  "nuevo_id": "a1080000-0000-4000-8000-0000000000c2",
+                  "grupo_id": "a1080000-0000-4000-8000-0000000000c0"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictoFinanzas"
+          },
+          "500": {
+            "$ref": "#/components/responses/EstadoFinanzas"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/fin_dispersion_parametros_cambiar": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finDispersionParametrosCambiar",
+        "summary": "Cambiar los parámetros del reparto de ingresos de un libro",
+        "description": "Cambia **solo lo que se manda** de los cuatro parámetros del reparto en `fin_parametros` (de solo lectura para la API directa): `modo` (`confirmacion` por omisión: la persona valida cada reparto; `automatico`: asigna solo lo comprometido y **nunca mueve dinero**), `desde` (el lunes desde el que los ingresos piden reparto; lo anterior se da por repartido), `parte_libre_pb` (parte libre de un ingreso extra, en puntos base del remanente, 0 a 10000) y `tope_ahorro` (en centavos, mayor que cero; lo que lo pasa queda libre). `p_quitar_tope` en verdadero quita el tope. La primera vez fija `desde`: el lunes dado o el lunes de la semana anterior a hoy (P2). Responde 400 (22023) si el modo no es del catálogo, `desde` no es lunes, la parte libre se sale de rango, el tope no es mayor que cero, o el libro aún no tiene parámetros.\n\n**Quién:** **administrar** el libro Y poder ver sus repartos (más estricto que escribir). 403 (42501) al familiar (tampoco con la vista temporal de Papá, D24), al cuidador, a Casa y a la tablet pública, y a la cuenta maestra (nunca). **En el libro de Papá** queda `en_nombre_de` él y con motivo de 3 a 200 caracteres (22023). **Bitácora:** `finanzas.dispersion_parametros` con el libro, el modo, el «desde», `en_nombre_de` y el motivo; sin la parte libre ni el tope (D20). No es idempotente por id: repetir los mismos valores deja el mismo resultado pero agrega otra entrada de bitácora.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_libro"
+                ],
+                "properties": {
+                  "p_libro": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_modo": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "enum": [
+                      "confirmacion",
+                      "automatico",
+                      null
+                    ]
+                  },
+                  "p_desde": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date",
+                    "description": "Un lunes."
+                  },
+                  "p_parte_libre_pb": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 0,
+                    "maximum": 10000
+                  },
+                  "p_tope_ahorro": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "int64",
+                    "minimum": 1
+                  },
+                  "p_quitar_tope": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "p_motivo": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 200
+                  }
+                }
+              },
+              "example": {
+                "p_libro": "f1000000-0000-4000-8000-000000000001",
+                "p_modo": "confirmacion",
+                "p_desde": "2026-11-16"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Los valores que quedaron.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "modo": {
+                      "type": "string",
+                      "enum": [
+                        "confirmacion",
+                        "automatico"
+                      ]
+                    },
+                    "desde": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date"
+                    },
+                    "parte_libre_pb": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 10000
+                    },
+                    "tope_ahorro": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "format": "int64",
+                      "minimum": 1
+                    }
+                  }
+                },
+                "example": {
+                  "modo": "confirmacion",
+                  "desde": "2026-11-16",
+                  "parte_libre_pb": 0,
+                  "tope_ahorro": null
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/fin_ingresos_por_repartir": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finIngresosPorRepartir",
+        "summary": "Ingresos del libro con algo por repartir",
+        "description": "Solo lectura (para listas grandes; la app calcula con lo cargado). Ingresos confirmados y sin anular del libro, desde `dispersion_desde` (o el lunes de la semana anterior a hoy si aún no está activada), que no tienen reparto vigente, tienen solo una propuesta o un renglón `por_repartir`. `pendiente_centavos` es todo el ingreso (sin reparto o con propuesta) o lo que quedó en renglones `por_repartir`. Un reparto `anulada` o `reemplazada` no cuenta como vigente. Ordenado del más reciente al más antiguo.\n\n**Quién:** puede ver los repartos del libro (`fin_dispersion_puede_ver`: rol dueño o coadministrador con lectura del libro; la cuenta maestra solo con consulta vigente). Para cualquier otra sesión (familiar, también con la vista temporal de Papá, D24; cuidador; Casa; tablet pública) responde 403 (42501).",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_libro"
+                ],
+                "properties": {
+                  "p_libro": {
+                    "$ref": "#/components/schemas/Uuid"
+                  }
+                }
+              },
+              "example": {
+                "p_libro": "f1000000-0000-4000-8000-000000000001"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ingresos por repartir (puede ser una lista vacía).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/IngresoPorRepartir"
+                  }
+                },
+                "example": [
+                  {
+                    "movimiento_id": "a1080000-0000-4000-8000-0000000000a1",
+                    "fecha": "2026-11-20",
+                    "monto_centavos": 1000000,
+                    "cuenta_origen_id": "c2000000-0000-4000-8000-000000000001",
+                    "cuenta_destino_id": "c3000000-0000-4000-8000-000000000001",
+                    "dispersion_id": null,
+                    "estado": "por_repartir",
+                    "pendiente_centavos": 1000000
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/fin_dispersion_puede_ver": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finDispersionPuedeVer",
+        "summary": "¿Puedo ver los repartos de este libro?",
+        "description": "La regla de `fin_dispersiones`, `fin_dispersion_lineas`, `fin_dispersion_descartes` y las RPC de repartos (D5, D19, D24): verdadero si puedo leer el libro (`fin_puede(libro, 'leer')`) **y** mi rol en el hogar es dueño o coadministrador. La cuenta maestra lee solo con consulta vigente. Falso para el familiar (aun con la vista temporal de Papá), el cuidador, Casa y la tablet pública. La evalúan las reglas (RLS) con el rol de la sesión; no revela si el libro existe.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_libro"
+                ],
+                "properties": {
+                  "p_libro": {
+                    "$ref": "#/components/schemas/Uuid"
+                  }
+                }
+              },
+              "example": {
+                "p_libro": "f1000000-0000-4000-8000-000000000001"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Verdadero o falso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                },
+                "example": true
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/fin_repartos_anulados_con_movimientos": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finRepartosAnuladosConMovimientos",
+        "summary": "Repartos anulados cuyos movimientos siguen vigentes (ingreso anulado)",
+        "description": "Solo lectura (hallazgo H-03; decisión del dueño del 20/nov/2026). Al anular un ingreso ya repartido, su reparto pasa a `anulada` pero los movimientos que creó (abono extra y ahorro) **siguen vigentes**: la app no los deshace sola, **avisa** (`ingreso_anulado_con_reparto`, sin cifras) y la persona elige `fin_deshacer_reparto_anulado` o `fin_dejar_reparto_anulado`. Esta función lista los repartos `anulada` cuyo ingreso está anulado, que aún tienen movimientos hijos vigentes y que la persona no dejó así. Devuelve solo ids y un conteo. `p_libro` nulo = todos los libros que la persona puede ver.\n\n**Quién:** puede ver los repartos del libro (rol dueño o coadministrador; la cuenta maestra solo con consulta vigente; el libro de Papá, quien lo lleva). 403 (42501) si se pide un libro que no puede ver. Familiar (aun con la vista temporal de Papá), cuidador, Casa y la tablet pública no ven nada: con `p_libro` nulo reciben una lista vacía y con un libro concreto, 403.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "p_libro": {
+                    "$ref": "#/components/schemas/UuidONulo"
+                  }
+                }
+              },
+              "example": {
+                "p_libro": "f1000000-0000-4000-8000-000000000001"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Repartos anulados con movimientos vigentes (puede ser una lista vacía).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RepartoAnuladoConMovimientos"
+                  }
+                },
+                "example": [
+                  {
+                    "dispersion_id": "a1080000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000001",
+                    "movimiento_id": "a1080000-0000-4000-8000-0000000000a1",
+                    "movimientos_vigentes": 2
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/fin_deshacer_reparto_anulado": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finDeshacerRepartoAnulado",
+        "summary": "Deshacer los movimientos de un reparto anulado (ingreso anulado)",
+        "description": "Alternativa A del hallazgo H-03. Anula con contraasiento (misma fecha, id estable, motivo) los movimientos de abono extra y ahorro que creó un reparto `anulada` cuyo ingreso está anulado y que siguen vigentes. **Idempotente:** repetir anula 0. Solo actúa sobre un reparto anulado cuyo ingreso esté anulado (500, 55000, si no: para un reparto aplicado usa `fin_deshacer_dispersion`); no extiende `fin_deshacer_dispersion` porque ahí «anulada» significa «reintento» y no toca nada. Nada se borra. `p_motivo` (de 3 a 200 caracteres visibles; 22023): por omisión «Reparto de un ingreso anulado, deshecho», salvo en el libro de Papá, donde es obligatorio.\n\n**Quién:** escribir en el libro del reparto Y poder ver sus repartos (rol dueño o coadministrador). 403 (42501) al familiar (tampoco con la vista temporal de Papá, D24), al cuidador, a Casa y a la tablet pública, y a la cuenta maestra (solo lectura); 42501 también si el reparto no existe. **En el libro de Papá** queda `en_nombre_de` él y con motivo. **Bitácora:** `finanzas.dispersion_anulada_deshecha` (solo si anuló algo), con el libro, el ingreso, cuántos movimientos se anularon, `en_nombre_de` y motivo; sin cifras de dinero.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_dispersion"
+                ],
+                "properties": {
+                  "p_dispersion": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "p_motivo": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 200
+                  }
+                }
+              },
+              "example": {
+                "p_dispersion": "a1080000-0000-4000-8000-000000000001"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "El reparto y cuántos movimientos anuló esta llamada (0 si ya estaban anulados).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "dispersion_id": {
+                      "$ref": "#/components/schemas/Uuid"
+                    },
+                    "movimientos_anulados": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  }
+                },
+                "example": {
+                  "dispersion_id": "a1080000-0000-4000-8000-000000000001",
+                  "movimientos_anulados": 2
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ReglaFinanzas"
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "500": {
+            "$ref": "#/components/responses/EstadoFinanzas"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/fin_dejar_reparto_anulado": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finDejarRepartoAnulado",
+        "summary": "Dejarlo así: no deshacer los movimientos de un reparto anulado",
+        "description": "Opción B del hallazgo H-03. La persona vio que un ingreso anulado tenía reparto y decide **dejarlo así**: se agrega una fila en `fin_dispersion_descartes` (solo agregar; una por reparto) y **no se toca dinero**. El aviso `ingreso_anulado_con_reparto` no vuelve a salir para ese reparto, en ningún dispositivo. **Idempotente** (repetir no agrega otra). Solo para un reparto `anulada` (500, 55000, si no).\n\n**Quién:** escribir en el libro del reparto Y poder ver sus repartos (rol dueño o coadministrador). 403 (42501) al familiar (tampoco con la vista temporal de Papá, D24), al cuidador, a Casa y a la tablet pública, y a la cuenta maestra (solo lectura); 42501 también si el reparto no existe. **En el libro de Papá** queda `en_nombre_de` él (sin motivo: no mueve dinero). La tabla nueva no emite Realtime: otro dispositivo se entera en su próxima recarga.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": true,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_dispersion"
+                ],
+                "properties": {
+                  "p_dispersion": {
+                    "$ref": "#/components/schemas/Uuid"
+                  }
+                }
+              },
+              "example": {
+                "p_dispersion": "a1080000-0000-4000-8000-000000000001"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Quedó registrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "dispersion_id": {
+                      "$ref": "#/components/schemas/Uuid"
+                    },
+                    "dejado": {
+                      "type": "boolean",
+                      "const": true
+                    }
+                  }
+                },
+                "example": {
+                  "dispersion_id": "a1080000-0000-4000-8000-000000000001",
+                  "dejado": true
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          },
+          "403": {
+            "$ref": "#/components/responses/Prohibido"
+          },
+          "500": {
+            "$ref": "#/components/responses/EstadoFinanzas"
+          }
+        }
+      }
+    },
+    "/rest/v1/rpc/fin_realtime_puede_suscribir": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "finRealtimePuedeSuscribir",
+        "summary": "¿Puedo escuchar el canal de Realtime de este libro?",
+        "description": "La regla de la política de lectura de `realtime.messages` (F8-6.6, `fin_realtime_instalar_politica`). La evalúa Realtime con el rol de quien se suscribe; la app no necesita llamarla.\n\n**El canal.** Cuando cambian los datos de un libro de Finanzas, un disparador por sentencia emite un mensaje de **Realtime Broadcast sin datos** por el canal **privado** del libro: tema `finanzas:libro:<uuid del libro>`, evento `cambio`, cuerpo `{\"v\":1}` (esquema `FinRealtimeCambio`). **No viaja nada de dinero**: ni montos, comercios, cuentas, notas, nombres ni filas (D3, D6, D20). Cada dispositivo suscrito vuelve a pedir lo suyo con su propia sesión y ahí se aplica la RLS. Un solo mensaje por libro y por transacción (una importación o una RPC que toca varias tablas no inunda el canal). Disparan: movimientos (en el libro de origen y en el de destino), cuentas, deudas, MSI, estados de cuenta, ocurrencias, ingresos, compromisos, semanas, partidas, parámetros, repartos y sus renglones, patrones de cobro, clasificaciones, respuestas, propósitos y semáforo de deuda (no `fin_dispersion_descartes`). Nadie puede **escribir** en el canal (no hay política de inserción): solo el disparador, que es `security definer`. Si el servidor no tiene Realtime, o el envío falla, no pasa nada y **nunca se bloquea la escritura del libro**.\n\n**Quién puede suscribirse:** solo quien **lee** el libro (`fin_puede(libro, 'leer')`: titular, miembro, albacea; la cuenta maestra solo con consulta vigente, I2; el lector de un compartido público) y **no** la vista temporal de Papá (D24). Familiar, cuidador, Casa y la tablet pública no tienen Finanzas: reciben falso. La app, además, solo abre canal de los libros donde la persona es titular, miembro o albacea vigente. Un tema mal formado (que no sea `finanzas:libro:` seguido de un UUID) devuelve falso. La suscripción se decide al unirse: una consulta de la cuenta maestra que vence a los 30 minutos no corta un canal abierto.\n\n**Instalar la política.** `fin_realtime_instalar_politica()` crea (o rehace) la política `fin_realtime_suscribir` en `realtime.messages` (lectura para `authenticated`, solo `broadcast`) y devuelve `instalada`, `omitida` (el servidor no tiene Realtime) o `sin_permiso`. **No es llamable desde la API** (se le quitó `EXECUTE` a todos los roles): la corre el dueño de la base, y se vuelve a correr con `select public.fin_realtime_instalar_politica();` si se enciende Realtime después. Por eso no tiene operación aquí. **Sin verificar contra un Supabase real** (la firma de `realtime.send`, `realtime.topic()` y la política): ver `docs/specs/fase-8-finanzas-realtime.md`.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "p_tema"
+                ],
+                "properties": {
+                  "p_tema": {
+                    "type": "string",
+                    "description": "Tema del canal: `finanzas:libro:<uuid>`.",
+                    "examples": [
+                      "finanzas:libro:f1000000-0000-4000-8000-000000000001"
+                    ]
+                  }
+                }
+              },
+              "example": {
+                "p_tema": "finanzas:libro:f1000000-0000-4000-8000-000000000001"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Verdadero o falso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                },
+                "example": true
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_fuga_parametros": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerFinFugaParametros",
+        "summary": "Leer el historial de umbrales de fugas y deuda",
+        "description": "Solo lectura; **solo agregar** (cada cambio es una fila nueva). Se escribe únicamente con `fin_fuga_parametros_cambiar`. Vale la fila más reciente por libro (`fin_v_fuga_parametros_vigentes`). Las ve quien puede ver las deudas del libro (`fin_fugas_puede_ver`: dueño o coadministrador que lo lleva; la cuenta maestra solo con consulta vigente, I2) y **no** la vista temporal de Papá (D24). Familiar, cuidador, Casa y la tablet pública reciben una lista vacía, sin error.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/filtroLibro"
+          },
+          {
+            "$ref": "#/components/parameters/orden"
+          },
+          {
+            "$ref": "#/components/parameters/limite"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas visibles para la sesión (lista vacía si no puedes verlas).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinFugaParametros"
+                  }
+                },
+                "example": [
+                  {
+                    "id": "a1060000-0000-4000-8000-000000000051",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000001",
+                    "tope_hormiga_centavos": 20000,
+                    "zombie_respuestas": 3,
+                    "cambiado_por": "e0000000-0000-4000-8000-000000000001",
+                    "creado_en": "2026-11-19T09:00:00-06:00"
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_v_fuga_parametros_vigentes": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerFinVFugaParametrosVigentes",
+        "summary": "Leer los umbrales vigentes de fugas y deuda (vista)",
+        "description": "Vista de `fin_fuga_parametros`: la fila más reciente de cada libro (`security_invoker`: respeta la RLS de quien consulta). Sin fila, la app usa sus valores por omisión. Las ve quien puede ver las deudas del libro (`fin_fugas_puede_ver`: dueño o coadministrador que lo lleva; la cuenta maestra solo con consulta vigente, I2) y **no** la vista temporal de Papá (D24). Familiar, cuidador, Casa y la tablet pública reciben una lista vacía, sin error.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/filtroLibro"
+          },
+          {
+            "$ref": "#/components/parameters/orden"
+          },
+          {
+            "$ref": "#/components/parameters/limite"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas visibles para la sesión (lista vacía si no puedes verlas).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinFugaParametros"
+                  }
+                },
+                "example": [
+                  {
+                    "id": "a1060000-0000-4000-8000-000000000051",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000001",
+                    "tope_hormiga_centavos": 20000,
+                    "zombie_respuestas": 3,
+                    "cambiado_por": "e0000000-0000-4000-8000-000000000001",
+                    "creado_en": "2026-11-19T09:00:00-06:00"
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_patrones_cobro": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerFinPatronesCobro",
+        "summary": "Leer los patrones de cobro",
+        "description": "Solo lectura; **solo agregar** e inmutables. Se crean con `fin_patron_crear`. `comercio_norm` es un dato del libro: jamás sale en un aviso, a la IA ni a las bocinas (D3, D20). Las ve quien puede ver las deudas del libro (`fin_fugas_puede_ver`: dueño o coadministrador que lo lleva; la cuenta maestra solo con consulta vigente, I2) y **no** la vista temporal de Papá (D24). Familiar, cuidador, Casa y la tablet pública reciben una lista vacía, sin error.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/filtroLibro"
+          },
+          {
+            "$ref": "#/components/parameters/orden"
+          },
+          {
+            "$ref": "#/components/parameters/limite"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas visibles para la sesión (lista vacía si no puedes verlas).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinPatronCobro"
+                  }
+                },
+                "example": [
+                  {
+                    "id": "a1060000-0000-4000-8000-000000000001",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000001",
+                    "clave": "streaming ejemplo|sin-categoria",
+                    "comercio_norm": "streaming ejemplo",
+                    "categoria_id": null,
+                    "compromiso_id": null,
+                    "cadencia": "mensual",
+                    "automatico": true,
+                    "origen": "detectado",
+                    "creado_por": "e0000000-0000-4000-8000-000000000001",
+                    "creado_en": "2026-11-19T09:00:00-06:00"
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_v_patrones_estado": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerFinVPatronesEstado",
+        "summary": "Leer el estado de cada patrón (vista)",
+        "description": "Estado vigente de cada patrón, **derivado** de sus clasificaciones y respuestas: protegido («No es una fuga»), vigilar, y fecha y folio de cancelación (`cancelado_sin_folio` si no hay folio). Las ve quien puede ver las deudas del libro (`fin_fugas_puede_ver`: dueño o coadministrador que lo lleva; la cuenta maestra solo con consulta vigente, I2) y **no** la vista temporal de Papá (D24). Familiar, cuidador, Casa y la tablet pública reciben una lista vacía, sin error.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/filtroLibro"
+          },
+          {
+            "$ref": "#/components/parameters/orden"
+          },
+          {
+            "$ref": "#/components/parameters/limite"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas visibles para la sesión (lista vacía si no puedes verlas).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinPatronEstado"
+                  }
+                },
+                "example": [
+                  {
+                    "patron_id": "a1060000-0000-4000-8000-000000000001",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000001",
+                    "clave": "streaming ejemplo|sin-categoria",
+                    "cadencia": "mensual",
+                    "automatico": true,
+                    "protegido": false,
+                    "vigilar": false,
+                    "cancelado_en": "2026-11-18",
+                    "folio_cancelacion": "CAN-20261118-01",
+                    "cancelado_sin_folio": false
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_fuga_clasificaciones": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerFinFugaClasificaciones",
+        "summary": "Leer las clasificaciones de fugas (historial)",
+        "description": "Solo lectura; **solo agregar** (historial completo con `reemplaza_a`). Se escribe con `fin_fuga_clasificar`. Las ve quien puede ver las deudas del libro (`fin_fugas_puede_ver`: dueño o coadministrador que lo lleva; la cuenta maestra solo con consulta vigente, I2) y **no** la vista temporal de Papá (D24). Familiar, cuidador, Casa y la tablet pública reciben una lista vacía, sin error.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/filtroLibro"
+          },
+          {
+            "$ref": "#/components/parameters/orden"
+          },
+          {
+            "$ref": "#/components/parameters/limite"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas visibles para la sesión (lista vacía si no puedes verlas).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinFugaClasificacion"
+                  }
+                },
+                "example": [
+                  {
+                    "id": "a1060000-0000-4000-8000-000000000021",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000001",
+                    "patron_id": "a1060000-0000-4000-8000-000000000001",
+                    "fuga": "ninguna",
+                    "origen": "persona",
+                    "regla": "V1",
+                    "fuga_regla": "zombie",
+                    "vigilar": false,
+                    "reemplaza_a": null,
+                    "motivo": "Sí lo uso cada semana",
+                    "decidido_por": "e0000000-0000-4000-8000-000000000001",
+                    "en_nombre_de": null,
+                    "decidido_en": "2026-11-19T09:05:00-06:00"
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_v_fuga_clasificaciones_vigentes": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerFinVFugaClasificacionesVigentes",
+        "summary": "Leer las clasificaciones vigentes de fugas (vista)",
+        "description": "Vista de `fin_fuga_clasificaciones`: las que ninguna otra reemplaza (la decisión vigente de cada patrón). Las ve quien puede ver las deudas del libro (`fin_fugas_puede_ver`: dueño o coadministrador que lo lleva; la cuenta maestra solo con consulta vigente, I2) y **no** la vista temporal de Papá (D24). Familiar, cuidador, Casa y la tablet pública reciben una lista vacía, sin error.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/filtroLibro"
+          },
+          {
+            "$ref": "#/components/parameters/orden"
+          },
+          {
+            "$ref": "#/components/parameters/limite"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas visibles para la sesión (lista vacía si no puedes verlas).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinFugaClasificacion"
+                  }
+                },
+                "example": [
+                  {
+                    "id": "a1060000-0000-4000-8000-000000000021",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000001",
+                    "patron_id": "a1060000-0000-4000-8000-000000000001",
+                    "fuga": "ninguna",
+                    "origen": "persona",
+                    "regla": "V1",
+                    "fuga_regla": "zombie",
+                    "vigilar": false,
+                    "reemplaza_a": null,
+                    "motivo": "Sí lo uso cada semana",
+                    "decidido_por": "e0000000-0000-4000-8000-000000000001",
+                    "en_nombre_de": null,
+                    "decidido_en": "2026-11-19T09:05:00-06:00"
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_fuga_respuestas": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerFinFugaRespuestas",
+        "summary": "Leer las respuestas sobre cobros (historial)",
+        "description": "Solo lectura; **solo agregar** (historial completo con `reemplaza_a`). Se escribe con `fin_fuga_responder` y `fin_patron_cancelar`. Las ve quien puede ver las deudas del libro (`fin_fugas_puede_ver`: dueño o coadministrador que lo lleva; la cuenta maestra solo con consulta vigente, I2) y **no** la vista temporal de Papá (D24). Familiar, cuidador, Casa y la tablet pública reciben una lista vacía, sin error.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/filtroLibro"
+          },
+          {
+            "$ref": "#/components/parameters/orden"
+          },
+          {
+            "$ref": "#/components/parameters/limite"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas visibles para la sesión (lista vacía si no puedes verlas).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinFugaRespuesta"
+                  }
+                },
+                "example": [
+                  {
+                    "id": "a1060000-0000-4000-8000-000000000011",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000001",
+                    "patron_id": "a1060000-0000-4000-8000-000000000001",
+                    "pregunta": "uso",
+                    "respuesta": "no",
+                    "fecha_cancelacion": null,
+                    "folio": null,
+                    "periodo_lunes": "2026-11-16",
+                    "reemplaza_a": null,
+                    "motivo": null,
+                    "registrado_por": "e0000000-0000-4000-8000-000000000001",
+                    "en_nombre_de": null,
+                    "registrado_en": "2026-11-19T09:02:00-06:00",
+                    "recibido_en": "2026-11-19T09:02:01-06:00"
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_v_fuga_respuestas_vigentes": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerFinVFugaRespuestasVigentes",
+        "summary": "Leer las respuestas vigentes sobre cobros (vista)",
+        "description": "Vista de `fin_fuga_respuestas`: las que ninguna otra reemplaza. Las ve quien puede ver las deudas del libro (`fin_fugas_puede_ver`: dueño o coadministrador que lo lleva; la cuenta maestra solo con consulta vigente, I2) y **no** la vista temporal de Papá (D24). Familiar, cuidador, Casa y la tablet pública reciben una lista vacía, sin error.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/filtroLibro"
+          },
+          {
+            "$ref": "#/components/parameters/orden"
+          },
+          {
+            "$ref": "#/components/parameters/limite"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas visibles para la sesión (lista vacía si no puedes verlas).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinFugaRespuesta"
+                  }
+                },
+                "example": [
+                  {
+                    "id": "a1060000-0000-4000-8000-000000000011",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000001",
+                    "patron_id": "a1060000-0000-4000-8000-000000000001",
+                    "pregunta": "uso",
+                    "respuesta": "no",
+                    "fecha_cancelacion": null,
+                    "folio": null,
+                    "periodo_lunes": "2026-11-16",
+                    "reemplaza_a": null,
+                    "motivo": null,
+                    "registrado_por": "e0000000-0000-4000-8000-000000000001",
+                    "en_nombre_de": null,
+                    "registrado_en": "2026-11-19T09:02:00-06:00",
+                    "recibido_en": "2026-11-19T09:02:01-06:00"
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_deuda_propositos": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerFinDeudaPropositos",
+        "summary": "Leer los propósitos declarados de las deudas (historial)",
+        "description": "Solo lectura; **solo agregar** (historial completo con `reemplaza_a`). Se escribe con `fin_deuda_declarar`. `objetivo_texto` es un dato del libro y jamás sale en un aviso (D3, D20). Las ve quien puede ver las deudas del libro (`fin_fugas_puede_ver`: dueño o coadministrador que lo lleva; la cuenta maestra solo con consulta vigente, I2) y **no** la vista temporal de Papá (D24). Familiar, cuidador, Casa y la tablet pública reciben una lista vacía, sin error.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/filtroLibro"
+          },
+          {
+            "$ref": "#/components/parameters/orden"
+          },
+          {
+            "$ref": "#/components/parameters/limite"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas visibles para la sesión (lista vacía si no puedes verlas).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinDeudaProposito"
+                  }
+                },
+                "example": [
+                  {
+                    "id": "a1060000-0000-4000-8000-000000000041",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000001",
+                    "deuda_id": "1e000000-0000-4000-8000-000000000001",
+                    "proposito": "bien_duradero",
+                    "objetivo_texto": "Refrigerador de la casa",
+                    "vida_util_meses": 120,
+                    "estado_objetivo": "vigente",
+                    "uso_poco": false,
+                    "declarado_por": "e0000000-0000-4000-8000-000000000001",
+                    "declarado_en": "2026-11-19T09:10:00-06:00"
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_v_deuda_propositos_vigentes": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerFinVDeudaPropositosVigentes",
+        "summary": "Leer los propósitos vigentes de las deudas (vista)",
+        "description": "Vista de `fin_deuda_propositos`: la declaración más reciente de cada deuda (las que ninguna otra reemplaza). Las ve quien puede ver las deudas del libro (`fin_fugas_puede_ver`: dueño o coadministrador que lo lleva; la cuenta maestra solo con consulta vigente, I2) y **no** la vista temporal de Papá (D24). Familiar, cuidador, Casa y la tablet pública reciben una lista vacía, sin error.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/filtroLibro"
+          },
+          {
+            "$ref": "#/components/parameters/orden"
+          },
+          {
+            "$ref": "#/components/parameters/limite"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas visibles para la sesión (lista vacía si no puedes verlas).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinDeudaProposito"
+                  }
+                },
+                "example": [
+                  {
+                    "id": "a1060000-0000-4000-8000-000000000041",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000001",
+                    "deuda_id": "1e000000-0000-4000-8000-000000000001",
+                    "proposito": "bien_duradero",
+                    "objetivo_texto": "Refrigerador de la casa",
+                    "vida_util_meses": 120,
+                    "estado_objetivo": "vigente",
+                    "uso_poco": false,
+                    "declarado_por": "e0000000-0000-4000-8000-000000000001",
+                    "declarado_en": "2026-11-19T09:10:00-06:00"
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_deuda_semaforo": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerFinDeudaSemaforo",
+        "summary": "Leer el historial del semáforo de las deudas",
+        "description": "Solo lectura; **solo agregar**. Se escribe con `fin_deuda_semaforo_registrar` (solo cuando cambia el nivel o el contador de bajas). Sin cifras ni nombres. Las ve quien puede ver las deudas del libro (`fin_fugas_puede_ver`: dueño o coadministrador que lo lleva; la cuenta maestra solo con consulta vigente, I2) y **no** la vista temporal de Papá (D24). Familiar, cuidador, Casa y la tablet pública reciben una lista vacía, sin error.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/filtroLibro"
+          },
+          {
+            "$ref": "#/components/parameters/orden"
+          },
+          {
+            "$ref": "#/components/parameters/limite"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas visibles para la sesión (lista vacía si no puedes verlas).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinDeudaSemaforo"
+                  }
+                },
+                "example": [
+                  {
+                    "id": "a1060000-0000-4000-8000-000000000061",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000001",
+                    "deuda_id": "1e000000-0000-4000-8000-000000000001",
+                    "lunes": "2026-11-16",
+                    "nivel": "ambar",
+                    "senales": [
+                      "B1",
+                      "B5"
+                    ],
+                    "bajas_seguidas": 0,
+                    "calculado_en": "2026-11-19T09:15:00-06:00",
+                    "registrado_por": "e0000000-0000-4000-8000-000000000001",
+                    "recibido_en": "2026-11-19T09:15:01-06:00"
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_v_deuda_semaforo_actual": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerFinVDeudaSemaforoActual",
+        "summary": "Leer el semáforo actual de cada deuda (vista)",
+        "description": "Vista de `fin_deuda_semaforo`: el último nivel registrado de cada deuda (`security_invoker`). Las ve quien puede ver las deudas del libro (`fin_fugas_puede_ver`: dueño o coadministrador que lo lleva; la cuenta maestra solo con consulta vigente, I2) y **no** la vista temporal de Papá (D24). Familiar, cuidador, Casa y la tablet pública reciben una lista vacía, sin error.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/filtroLibro"
+          },
+          {
+            "$ref": "#/components/parameters/orden"
+          },
+          {
+            "$ref": "#/components/parameters/limite"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas visibles para la sesión (lista vacía si no puedes verlas).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinDeudaSemaforo"
+                  }
+                },
+                "example": [
+                  {
+                    "id": "a1060000-0000-4000-8000-000000000061",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000001",
+                    "deuda_id": "1e000000-0000-4000-8000-000000000001",
+                    "lunes": "2026-11-16",
+                    "nivel": "ambar",
+                    "senales": [
+                      "B1",
+                      "B5"
+                    ],
+                    "bajas_seguidas": 0,
+                    "calculado_en": "2026-11-19T09:15:00-06:00",
+                    "registrado_por": "e0000000-0000-4000-8000-000000000001",
+                    "recibido_en": "2026-11-19T09:15:01-06:00"
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_dispersiones": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerFinDispersiones",
+        "summary": "Leer los repartos de ingresos (historial)",
+        "description": "Solo lectura. Un reparto por ingreso vigente, más sus versiones anteriores (`reemplazada`) y los deshechos (`anulada`); **no se borra**. Se escribe únicamente con las RPC (`fin_guardar_propuesta`, `fin_confirmar_dispersion`, `fin_cambiar_dispersion`, `fin_deshacer_dispersion`…). Las ve quien puede ver los repartos del libro (`fin_dispersion_puede_ver`: dueño o coadministrador con lectura del libro; la cuenta maestra solo con consulta vigente, I2). Familiar (aun con la vista temporal de Papá, D24), cuidador, Casa y la tablet pública reciben una lista vacía, sin error.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/filtroLibro"
+          },
+          {
+            "$ref": "#/components/parameters/orden"
+          },
+          {
+            "$ref": "#/components/parameters/limite"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas visibles para la sesión (lista vacía si no puedes verlas).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinDispersion"
+                  }
+                },
+                "example": [
+                  {
+                    "id": "a1080000-0000-4000-8000-000000000001",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000001",
+                    "movimiento_id": "a1080000-0000-4000-8000-0000000000a1",
+                    "estado": "confirmada",
+                    "modo": "confirmacion",
+                    "creada_por": "e0000000-0000-4000-8000-000000000001",
+                    "creada_en": "2026-11-20T09:00:00-06:00",
+                    "resuelta_por": "e0000000-0000-4000-8000-000000000001",
+                    "resuelta_en": "2026-11-20T09:01:00-06:00",
+                    "en_nombre_de": null,
+                    "motivo": null,
+                    "version": 1,
+                    "reemplaza_a": null
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_v_dispersiones_vigentes": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerFinVDispersionesVigentes",
+        "summary": "Leer los repartos vigentes de ingresos (vista)",
+        "description": "Vista de `fin_dispersiones`: el reparto vigente de cada ingreso (ni anulado ni reemplazado). `security_invoker`: respeta la RLS de quien consulta. Las ve quien puede ver los repartos del libro (`fin_dispersion_puede_ver`: dueño o coadministrador con lectura del libro; la cuenta maestra solo con consulta vigente, I2). Familiar (aun con la vista temporal de Papá, D24), cuidador, Casa y la tablet pública reciben una lista vacía, sin error.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/filtroLibro"
+          },
+          {
+            "$ref": "#/components/parameters/orden"
+          },
+          {
+            "$ref": "#/components/parameters/limite"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas visibles para la sesión (lista vacía si no puedes verlas).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinDispersion"
+                  }
+                },
+                "example": [
+                  {
+                    "id": "a1080000-0000-4000-8000-000000000002",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000001",
+                    "movimiento_id": "a1080000-0000-4000-8000-0000000000a1",
+                    "estado": "confirmada",
+                    "modo": "confirmacion",
+                    "creada_por": "e0000000-0000-4000-8000-000000000001",
+                    "creada_en": "2026-11-20T10:00:00-06:00",
+                    "resuelta_por": "e0000000-0000-4000-8000-000000000001",
+                    "resuelta_en": "2026-11-20T10:00:00-06:00",
+                    "en_nombre_de": null,
+                    "motivo": "Mejor abonar más a la tarjeta",
+                    "version": 2,
+                    "reemplaza_a": "a1080000-0000-4000-8000-000000000001"
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_dispersion_lineas": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerFinDispersionLineas",
+        "summary": "Leer los renglones de los repartos",
+        "description": "Solo lectura. Los renglones de cada reparto (inmutables; solo los de una propuesta se reemplazan al guardarla otra vez). `etiqueta` es un dato del libro: la bitácora no la copia. Se escribe únicamente con las RPC de repartos. Las ve quien puede ver los repartos del libro (`fin_dispersion_puede_ver`: dueño o coadministrador con lectura del libro; la cuenta maestra solo con consulta vigente, I2). Familiar (aun con la vista temporal de Papá, D24), cuidador, Casa y la tablet pública reciben una lista vacía, sin error.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/filtroLibro"
+          },
+          {
+            "$ref": "#/components/parameters/orden"
+          },
+          {
+            "$ref": "#/components/parameters/limite"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas visibles para la sesión (lista vacía si no puedes verlas).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinDispersionLinea"
+                  }
+                },
+                "example": [
+                  {
+                    "id": "a1080000-0000-4000-8000-0000000000d1",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000001",
+                    "dispersion_id": "a1080000-0000-4000-8000-000000000001",
+                    "orden": 0,
+                    "destino": "presupuesto",
+                    "referencia_id": null,
+                    "etiqueta": "Presupuesto de la semana",
+                    "monto_centavos": 600000,
+                    "movimiento_id": null
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SinSesion"
+          }
+        }
+      }
+    },
+    "/rest/v1/fin_dispersion_descartes": {
+      "get": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "operationId": "leerFinDispersionDescartes",
+        "summary": "Leer los «dejarlo así» de repartos anulados",
+        "description": "Solo lectura; **solo agregar**; una fila por reparto. Se escribe únicamente con `fin_dejar_reparto_anulado`. No mueve dinero. Las ve quien puede ver los repartos del libro (`fin_dispersion_puede_ver`: dueño o coadministrador con lectura del libro; la cuenta maestra solo con consulta vigente, I2). Familiar (aun con la vista temporal de Papá, D24), cuidador, Casa y la tablet pública reciben una lista vacía, sin error.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/filtroId"
+          },
+          {
+            "$ref": "#/components/parameters/filtroHogar"
+          },
+          {
+            "$ref": "#/components/parameters/filtroLibro"
+          },
+          {
+            "$ref": "#/components/parameters/orden"
+          },
+          {
+            "$ref": "#/components/parameters/limite"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filas visibles para la sesión (lista vacía si no puedes verlas).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinDispersionDescarte"
+                  }
+                },
+                "example": [
+                  {
+                    "id": "a1080000-0000-4000-8000-0000000000e1",
+                    "hogar_id": "b0000000-0000-4000-8000-000000000001",
+                    "libro_id": "f1000000-0000-4000-8000-000000000001",
+                    "dispersion_id": "a1080000-0000-4000-8000-000000000001",
+                    "decidido_por": "e0000000-0000-4000-8000-000000000001",
+                    "decidido_en": "2026-11-21T09:00:00-06:00",
+                    "en_nombre_de": null
+                  }
+                ]
               }
             }
           },
@@ -18391,6 +21573,42 @@ window.ESPECIFICACION_GRAVITY = {
       }
     }
   },
+  "webhooks": {
+    "finanzasLibroCambio": {
+      "post": {
+        "tags": [
+          "Base de datos · Finanzas"
+        ],
+        "summary": "Mensaje de Realtime «el libro cambió» (sin datos)",
+        "description": "**No es una petición HTTP: es un mensaje de Supabase Realtime Broadcast** que la base envía al dispositivo suscrito (F8-6.6; se documenta aquí como webhook porque OpenAPI no tiene canales). Canal **privado** `finanzas:libro:<uuid del libro>`, evento `cambio`, cuerpo `{\"v\":1}`. Se emite cuando cambia cualquier tabla de Finanzas que la persona ve (movimientos, cuentas, deudas, MSI, estados de cuenta, ocurrencias, ingresos, compromisos, semanas, partidas, parámetros, repartos y sus renglones, patrones de cobro, clasificaciones, respuestas, propósitos y semáforo de deuda): un solo mensaje por libro y por transacción. **No lleva datos**: ni montos, comercios, cuentas, notas, nombres ni filas (D3, D6, D20). El dispositivo vuelve a pedir lo suyo con su propia sesión y ahí se aplica la RLS. Puede suscribirse solo quien lee el libro y no es la vista temporal de Papá (`fin_realtime_puede_suscribir`); nadie puede escribir en el canal. Familiar, cuidador, Casa y la tablet pública no reciben nada.",
+        "x-roles": [
+          "dueno",
+          "coadministrador"
+        ],
+        "x-escribe": false,
+        "x-solo-local": true,
+        "x-fase": 8,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FinRealtimeCambio"
+              },
+              "example": {
+                "v": 1
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "No se responde nada: el mensaje es de un solo sentido."
+          }
+        }
+      }
+    }
+  },
   "components": {
     "securitySchemes": {
       "llavePublica": {
@@ -18703,6 +21921,22 @@ window.ESPECIFICACION_GRAVITY = {
             "example": {
               "code": "55000",
               "message": "Una de las cuentas no está activa (congelada, cerrada o archivada): no admite movimientos nuevos.",
+              "details": null,
+              "hint": null
+            }
+          }
+        }
+      },
+      "ConflictoReparto": {
+        "description": "**40001** (PostgREST lo devuelve como 409): «El reparto cambió, vuelve a cargar.» El reparto que el dispositivo vio ya no es el vigente con esa versión (otro dispositivo lo cambió, lo deshizo o lo anuló): hay que recargar y volver a intentar; no se reintenta igual desde la cola. **23505**: el mismo `id` ya es de otro reparto u otra corrección (409). **23503**: falta algo de lo que depende.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorPostgrest"
+            },
+            "example": {
+              "code": "40001",
+              "message": "El reparto cambió, vuelve a cargar.",
               "details": null,
               "hint": null
             }
@@ -19301,13 +22535,17 @@ window.ESPECIFICACION_GRAVITY = {
           },
           "accion": {
             "type": "string",
-            "description": "Qué pasó, en minúsculas. `insertar`, `actualizar` y `borrar` solo las escriben los triggers que registran los cambios de las tablas. Las de Finanzas las escribe solo el servidor (I5): `finanzas.consulta_maestra` (la cuenta maestra consultó un libro ajeno; vale 30 minutos), `finanzas.maestra_asignada` (el dueño nombró o quitó la cuenta maestra, o se aceptó una invitación de cuenta maestra; `detalle` lleva `anterior_persona_id` y `nueva_persona_id` y, con invitación, `invitada_por`), `finanzas.salida_libro_representado` (una salida del libro de Papá hacia cualquier otro libro, personal o compartido; `detalle` lleva el libro de origen, el de destino, el tipo, la fecha, el monto en centavos, `en_nombre_de` y `motivo`) y `finanzas.albacea_nombrado` (el dueño nombró al albacea o al suplente del libro de Papá; `detalle` lleva `libro_id`, `persona_id`, `papel` y `anterior_persona_id`) y `finanzas.consulta_vista` (cada consulta del familiar con la vista temporal de Papá; `detalle` lleva solo `solicitud_id`).",
+            "description": "Qué pasó, en minúsculas. `insertar`, `actualizar` y `borrar` solo las escriben los triggers que registran los cambios de las tablas. Las de Finanzas las escribe solo el servidor (I5): `finanzas.consulta_maestra` (la cuenta maestra consultó un libro ajeno; vale 30 minutos), `finanzas.maestra_asignada` (el dueño nombró o quitó la cuenta maestra, o se aceptó una invitación de cuenta maestra; `detalle` lleva `anterior_persona_id` y `nueva_persona_id` y, con invitación, `invitada_por`), `finanzas.salida_libro_representado` (una salida del libro de Papá hacia cualquier otro libro, personal o compartido; `detalle` lleva el libro de origen, el de destino, el tipo, la fecha, el monto en centavos, `en_nombre_de` y `motivo`) y `finanzas.albacea_nombrado` (el dueño nombró al albacea o al suplente del libro de Papá; `detalle` lleva `libro_id`, `persona_id`, `papel` y `anterior_persona_id`) y `finanzas.consulta_vista` (cada consulta del familiar con la vista temporal de Papá; `detalle` lleva solo `solicitud_id`). Del reparto de ingresos (Fase 8, sin cifras de dinero en `detalle`, D20): `finanzas.dispersion_anulada` (al anularse un ingreso ya repartido su reparto pasa a anulado; `detalle` lleva `libro_id`, `movimiento_id`, `estado_anterior` y `movimientos_vigentes`, los movimientos del reparto que siguen vigentes), `finanzas.dispersion_parametros` (cambió el modo o el «desde» del reparto; `detalle` lleva `libro_id`, `modo`, `desde`, `en_nombre_de` y `motivo`), `finanzas.dispersion_cambiada` (se cambió un reparto confirmado; `detalle` lleva `libro_id`, `movimiento_id`, `reparto_anterior`, `version_anterior`, `version_nueva`, `movimientos_anulados`, `en_nombre_de` y `motivo`) y `finanzas.dispersion_anulada_deshecha` (se deshicieron los movimientos de un reparto de un ingreso anulado; `detalle` lleva `libro_id`, `movimiento_id`, `movimientos_anulados`, `en_nombre_de` y `motivo`).",
             "examples": [
               "finanzas.consulta_maestra",
               "finanzas.maestra_asignada",
               "finanzas.salida_libro_representado",
               "finanzas.albacea_nombrado",
-              "finanzas.consulta_vista"
+              "finanzas.consulta_vista",
+              "finanzas.dispersion_anulada",
+              "finanzas.dispersion_parametros",
+              "finanzas.dispersion_cambiada",
+              "finanzas.dispersion_anulada_deshecha"
             ]
           },
           "tabla": {
@@ -19809,6 +23047,43 @@ window.ESPECIFICACION_GRAVITY = {
           "cuenta_por_clasificar_id": {
             "$ref": "#/components/schemas/Uuid",
             "readOnly": true
+          },
+          "dispersion_modo": {
+            "type": "string",
+            "enum": [
+              "confirmacion",
+              "automatico"
+            ],
+            "default": "confirmacion",
+            "readOnly": true,
+            "description": "Reparto de ingresos (Fase 8): `confirmacion` (la persona valida cada reparto) o `automatico` (asigna solo lo comprometido y nunca mueve dinero). Solo lo cambia `fin_dispersion_parametros_cambiar`."
+          },
+          "dispersion_desde": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "readOnly": true,
+            "description": "Lunes desde el que los ingresos piden reparto; lo anterior se da por repartido. Nulo = función sin activar (la app usa el lunes de la semana anterior). Solo lo cambia `fin_dispersion_parametros_cambiar`."
+          },
+          "dispersion_parte_libre_pb": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000,
+            "default": 0,
+            "readOnly": true,
+            "description": "Parte libre de un ingreso extra, en puntos base del remanente. Solo por `fin_dispersion_parametros_cambiar`."
+          },
+          "dispersion_tope_ahorro": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "minimum": 1,
+            "readOnly": true,
+            "description": "Tope del ahorro de un ingreso, en centavos (lo que lo pasa queda libre); nulo = sin tope. Solo por `fin_dispersion_parametros_cambiar`."
           }
         }
       },
@@ -19909,6 +23184,20 @@ window.ESPECIFICACION_GRAVITY = {
               "null"
             ],
             "maxLength": 200
+          },
+          "comercio": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 80,
+            "description": "Opcional (Fase 8, fugas silenciosas). Dato del libro: jamás sale en un aviso, a la IA ni a las bocinas (D3, D20) y la bitácora de movimientos ya no lo copia. Solo se manda al insertar."
+          },
+          "cobro_automatico": {
+            "type": "boolean",
+            "default": false,
+            "description": "Verdadero si la persona marcó «es un cargo automático» (o viene de una importación). Solo se manda al insertar."
           },
           "motivo": {
             "type": [
@@ -20948,7 +24237,7 @@ window.ESPECIFICACION_GRAVITY = {
       },
       "TipoAviso": {
         "type": "string",
-        "description": "Catálogo cerrado de 19 tipos; la severidad es fija por tipo. Críticas: `pago_proximo`, `limite_tarjeta`, `pago_vencido`, `protegido_riesgo`, `flujo_negativo`, `abono_bajo_minimo`, `base_90`. Importantes: `partida_100`, `ingreso_retrasado`, `fondo_bajo`, `salida_libro_representado`, `base_80`. Informativas: `partida_80`, `uso_limite`, `aportacion_pendiente`, `conciliacion_pendiente`, `retiro_bolsa_compartida`, `resumen_lunes`, `recordatorio_cierre`.",
+        "description": "Catálogo cerrado (los 19 originales y los de la Fase 8 que se listan al final); la severidad es fija por tipo. Críticas: `pago_proximo`, `limite_tarjeta`, `pago_vencido`, `protegido_riesgo`, `flujo_negativo`, `abono_bajo_minimo`, `base_90`. Importantes: `partida_100`, `ingreso_retrasado`, `fondo_bajo`, `salida_libro_representado`, `base_80`. Informativas: `partida_80`, `uso_limite`, `aportacion_pendiente`, `conciliacion_pendiente`, `retiro_bolsa_compartida`, `resumen_lunes`, `recordatorio_cierre`. Fase 8, fugas y reparto de ingresos (migraciones `20261146`, `20261147` y `20261151`): críticas, `deuda_se_volvio_mala`; importantes, `fuga_por_reconocer` y `deuda_en_vigilancia`; informativas, `fuga_revision_mensual`, `ingreso_por_repartir` e `ingreso_anulado_con_reparto`. Ninguno lleva cifras, nombres ni texto libre (D3, D20): el título genérico vive en el catálogo de la app. (Otros tipos del catálogo cerrado, como `transferencia_pendiente`, no están en esta lista.)",
         "enum": [
           "pago_proximo",
           "limite_tarjeta",
@@ -20968,7 +24257,13 @@ window.ESPECIFICACION_GRAVITY = {
           "resumen_lunes",
           "recordatorio_cierre",
           "base_80",
-          "base_90"
+          "base_90",
+          "fuga_por_reconocer",
+          "fuga_revision_mensual",
+          "deuda_en_vigilancia",
+          "deuda_se_volvio_mala",
+          "ingreso_por_repartir",
+          "ingreso_anulado_con_reparto"
         ]
       },
       "TipoAvisoEmitible": {
@@ -20983,7 +24278,13 @@ window.ESPECIFICACION_GRAVITY = {
           "fondo_bajo",
           "uso_limite",
           "aportacion_pendiente",
-          "conciliacion_pendiente"
+          "conciliacion_pendiente",
+          "fuga_por_reconocer",
+          "fuga_revision_mensual",
+          "deuda_en_vigilancia",
+          "deuda_se_volvio_mala",
+          "ingreso_por_repartir",
+          "ingreso_anulado_con_reparto"
         ]
       },
       "AvisoPersona": {
@@ -21038,6 +24339,7 @@ window.ESPECIFICACION_GRAVITY = {
               "semana",
               "libro",
               "movimiento",
+              "patron",
               null
             ]
           },
@@ -22114,6 +25416,15 @@ window.ESPECIFICACION_GRAVITY = {
           "activo": {
             "type": "boolean",
             "default": true
+          },
+          "precio_contado_centavos": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "minimum": 1,
+            "description": "Opcional (Fase 8): lo que habría costado de contado, para el sobreprecio. Solo se manda al crear el MSI; para corregirlo se declara de nuevo el propósito de la deuda (`fin_deuda_declarar`)."
           }
         }
       },
@@ -22155,6 +25466,15 @@ window.ESPECIFICACION_GRAVITY = {
           },
           "cargos_centavos": {
             "$ref": "#/components/schemas/CentavosNoNegativos"
+          },
+          "pagos_al_corte_centavos": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "minimum": 0,
+            "description": "Pagos hechos entre el corte y la fecha límite de pago (señal B6b y vampiro V-D: ¿pagó el total o solo el mínimo?). **Nulo = sin dato** (nadie lo capturó, y es el valor por omisión); `0` = se capturó que no pagó nada. Los registros anteriores a la migración `20261150000000_finanzas_pagos_al_corte_nulo.sql` con valor `0` llevaban ese 0 por omisión: `fin_v_estados_cuenta_vigentes` los devuelve como nulo."
           },
           "tasa_declarada_pb": {
             "type": [
@@ -22504,6 +25824,1014 @@ window.ESPECIFICACION_GRAVITY = {
             "$ref": "#/components/schemas/Centavos"
           }
         }
+      },
+      "TipoFuga": {
+        "type": "string",
+        "enum": [
+          "hormiga",
+          "fantasma",
+          "vampiro",
+          "zombie",
+          "ninguna"
+        ],
+        "description": "Fuga silenciosa que dijo la regla o decidió la persona. `ninguna` es «No es una fuga» (protege al patrón) o, con `vigilar`, «Vigilar»."
+      },
+      "DispersionLineaPeticion": {
+        "type": "object",
+        "description": "Un renglón del reparto de un ingreso. `pago_deuda` solo aparta (decisión P4); solo `abono_extra` y `ahorro` mueven dinero, y solo al confirmar.",
+        "required": [
+          "destino",
+          "etiqueta",
+          "monto_centavos"
+        ],
+        "properties": {
+          "destino": {
+            "type": "string",
+            "enum": [
+              "presupuesto",
+              "pago_deuda",
+              "abono_extra",
+              "ahorro",
+              "libre",
+              "por_repartir"
+            ]
+          },
+          "referencia_id": {
+            "$ref": "#/components/schemas/UuidONulo",
+            "description": "La deuda del libro en `pago_deuda` y `abono_extra` (obligatoria); nula en `presupuesto`, `ahorro`, `libre` y `por_repartir`."
+          },
+          "etiqueta": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "description": "Dato del libro: jamás sale en un aviso, a la IA ni a las bocinas (D3, D6, D20)."
+          },
+          "monto_centavos": {
+            "$ref": "#/components/schemas/CentavosNoNegativos"
+          },
+          "movimiento_id": {
+            "$ref": "#/components/schemas/UuidONulo",
+            "description": "Id estable (opcional) del movimiento que se creará en `abono_extra` y `ahorro`; si no se manda, el servidor lo deriva."
+          }
+        }
+      },
+      "DispersionPeticion": {
+        "type": "object",
+        "description": "Reparto de un ingreso, como lo manda el dispositivo a `fin_guardar_propuesta` y `fin_confirmar_dispersion` (parámetro `jsonb`). La suma de los renglones es exactamente el monto del ingreso.",
+        "required": [
+          "id",
+          "movimiento_id",
+          "lineas"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid",
+            "description": "Id del reparto (idempotencia)."
+          },
+          "movimiento_id": {
+            "$ref": "#/components/schemas/Uuid",
+            "description": "El ingreso que se reparte (confirmado, sin anular, de tipo `ingreso`)."
+          },
+          "libro_id": {
+            "$ref": "#/components/schemas/UuidONulo",
+            "description": "Opcional; si va, debe ser el libro del ingreso (22023)."
+          },
+          "modo": {
+            "type": "string",
+            "enum": [
+              "confirmacion",
+              "automatico"
+            ],
+            "default": "confirmacion"
+          },
+          "motivo": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 200
+          },
+          "cuenta_ahorro_id": {
+            "$ref": "#/components/schemas/UuidONulo",
+            "description": "Cuenta de ahorro (otra cuenta de dinero activa del libro) si hay un renglón `ahorro` con monto al confirmar."
+          },
+          "fecha": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "Fecha de los movimientos; por omisión hoy, y nunca anterior a la del ingreso."
+          },
+          "lineas": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100,
+            "items": {
+              "$ref": "#/components/schemas/DispersionLineaPeticion"
+            }
+          }
+        }
+      },
+      "DispersionCambio": {
+        "description": "Payload de `fin_cambiar_dispersion`: el de un reparto confirmado (`DispersionPeticion`, donde `id` es el del reparto nuevo) más lo que el cliente vio, para el control de versión. El `modo` es siempre `confirmacion`.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/DispersionPeticion"
+          },
+          {
+            "type": "object",
+            "required": [
+              "dispersion_anterior_id",
+              "version_esperada"
+            ],
+            "properties": {
+              "dispersion_anterior_id": {
+                "$ref": "#/components/schemas/Uuid",
+                "description": "El reparto vigente que se cambia."
+              },
+              "version_esperada": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "Su versión (1, 2, 3…). Si ya no es la vigente con esa versión: 409 con 40001."
+              }
+            }
+          }
+        ]
+      },
+      "DispersionRespuestaLinea": {
+        "type": "object",
+        "properties": {
+          "destino": {
+            "type": "string",
+            "enum": [
+              "presupuesto",
+              "pago_deuda",
+              "abono_extra",
+              "ahorro",
+              "libre",
+              "por_repartir"
+            ]
+          },
+          "referencia_id": {
+            "$ref": "#/components/schemas/UuidONulo"
+          },
+          "etiqueta": {
+            "type": "string"
+          },
+          "monto_centavos": {
+            "$ref": "#/components/schemas/CentavosNoNegativos"
+          },
+          "movimiento_id": {
+            "$ref": "#/components/schemas/UuidONulo",
+            "description": "El abono extra o el ahorro que creó el servidor al confirmar."
+          }
+        }
+      },
+      "DispersionRespuesta": {
+        "type": "object",
+        "description": "El reparto con sus renglones, como lo devuelven las RPC de repartos.",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "libro_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "movimiento_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "estado": {
+            "$ref": "#/components/schemas/EstadoDispersion"
+          },
+          "modo": {
+            "type": "string",
+            "enum": [
+              "confirmacion",
+              "automatico"
+            ]
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "reemplaza_a": {
+            "$ref": "#/components/schemas/UuidONulo"
+          },
+          "creada_en": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "resuelta_por": {
+            "$ref": "#/components/schemas/UuidONulo"
+          },
+          "resuelta_en": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "en_nombre_de": {
+            "$ref": "#/components/schemas/UuidONulo"
+          },
+          "motivo": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lineas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DispersionRespuestaLinea"
+            }
+          }
+        }
+      },
+      "EstadoDispersion": {
+        "type": "string",
+        "enum": [
+          "por_repartir",
+          "propuesta",
+          "confirmada",
+          "automatica",
+          "anulada",
+          "reemplazada"
+        ],
+        "description": "`propuesta` es un borrador (sin movimientos); `confirmada` y `automatica` están aplicadas; `anulada` se deshizo (o su ingreso se anuló); `reemplazada` fue sustituida por otra versión y conserva su historial. Solo hay un reparto vigente por ingreso (ni anulado ni reemplazado)."
+      },
+      "IngresoPorRepartir": {
+        "type": "object",
+        "properties": {
+          "movimiento_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date"
+          },
+          "monto_centavos": {
+            "$ref": "#/components/schemas/CentavosPositivos"
+          },
+          "cuenta_origen_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "cuenta_destino_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "dispersion_id": {
+            "$ref": "#/components/schemas/UuidONulo"
+          },
+          "estado": {
+            "type": "string",
+            "enum": [
+              "por_repartir",
+              "propuesta",
+              "confirmada",
+              "automatica"
+            ]
+          },
+          "pendiente_centavos": {
+            "$ref": "#/components/schemas/CentavosPositivos"
+          }
+        }
+      },
+      "RepartoAnuladoConMovimientos": {
+        "type": "object",
+        "description": "Solo ids y un conteo (sin montos).",
+        "properties": {
+          "dispersion_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "libro_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "movimiento_id": {
+            "$ref": "#/components/schemas/Uuid",
+            "description": "El ingreso anulado."
+          },
+          "movimientos_vigentes": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      },
+      "FinDispersion": {
+        "type": "object",
+        "description": "Reparto de un ingreso. **No se borra** y su estado solo cambia por transiciones controladas (propuesta a confirmada, automática o anulada; confirmada o automática a anulada o reemplazada). Escritura solo por RPC.",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "libro_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "movimiento_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "estado": {
+            "$ref": "#/components/schemas/EstadoDispersion"
+          },
+          "modo": {
+            "type": "string",
+            "enum": [
+              "confirmacion",
+              "automatico"
+            ]
+          },
+          "creada_por": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "creada_en": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "resuelta_por": {
+            "$ref": "#/components/schemas/UuidONulo"
+          },
+          "resuelta_en": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "en_nombre_de": {
+            "$ref": "#/components/schemas/UuidONulo"
+          },
+          "motivo": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 200
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Versión dentro de la cadena de cambios del ingreso (1 el primer reparto, 2 el primer cambio…)."
+          },
+          "reemplaza_a": {
+            "$ref": "#/components/schemas/UuidONulo",
+            "description": "El reparto al que sustituye; nulo en la versión 1."
+          }
+        }
+      },
+      "FinDispersionLinea": {
+        "type": "object",
+        "description": "Renglón de un reparto. **Inmutable**: solo los de una propuesta se reemplazan al guardarla otra vez. Su suma es el monto del ingreso.",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "libro_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "dispersion_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "orden": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "destino": {
+            "type": "string",
+            "enum": [
+              "presupuesto",
+              "pago_deuda",
+              "abono_extra",
+              "ahorro",
+              "libre",
+              "por_repartir"
+            ]
+          },
+          "referencia_id": {
+            "$ref": "#/components/schemas/UuidONulo"
+          },
+          "etiqueta": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "Dato del libro: la bitácora no la copia y jamás sale en un aviso (D3, D20)."
+          },
+          "monto_centavos": {
+            "$ref": "#/components/schemas/CentavosNoNegativos"
+          },
+          "movimiento_id": {
+            "$ref": "#/components/schemas/UuidONulo",
+            "description": "El abono extra o el ahorro que creó el servidor al confirmar."
+          }
+        }
+      },
+      "FinDispersionDescarte": {
+        "type": "object",
+        "description": "Dejarlo así (H-03): la persona decidió no deshacer los movimientos de un reparto anulado. Solo agregar; una por reparto.",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "libro_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "dispersion_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "decidido_por": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "decidido_en": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "en_nombre_de": {
+            "$ref": "#/components/schemas/UuidONulo"
+          }
+        }
+      },
+      "FinPatronCobro": {
+        "type": "object",
+        "description": "Un cobro que se repite o una subcategoría hormiga vigilada. **Inmutable (solo agregar)**; su estado sale de `fin_v_patrones_estado`. `comercio_norm` es un dato del libro: jamás sale en un aviso (D20).",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "libro_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "clave": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "comercio_norm": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 80
+          },
+          "categoria_id": {
+            "$ref": "#/components/schemas/UuidONulo"
+          },
+          "compromiso_id": {
+            "$ref": "#/components/schemas/UuidONulo"
+          },
+          "cadencia": {
+            "type": "string",
+            "enum": [
+              "semanal",
+              "quincenal",
+              "mensual",
+              "bimestral",
+              "anual",
+              "irregular"
+            ]
+          },
+          "automatico": {
+            "type": "boolean"
+          },
+          "origen": {
+            "type": "string",
+            "enum": [
+              "detectado",
+              "manual"
+            ]
+          },
+          "creado_por": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "creado_en": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "FinPatronEstado": {
+        "type": "object",
+        "description": "Estado vigente de cada patrón, derivado (los patrones no se editan).",
+        "properties": {
+          "patron_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "libro_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "clave": {
+            "type": "string"
+          },
+          "cadencia": {
+            "type": "string",
+            "enum": [
+              "semanal",
+              "quincenal",
+              "mensual",
+              "bimestral",
+              "anual",
+              "irregular"
+            ]
+          },
+          "automatico": {
+            "type": "boolean"
+          },
+          "protegido": {
+            "type": "boolean",
+            "description": "La persona dijo «No es una fuga»."
+          },
+          "vigilar": {
+            "type": "boolean"
+          },
+          "cancelado_en": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "folio_cancelacion": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "cancelado_sin_folio": {
+            "type": "boolean"
+          }
+        }
+      },
+      "FinFugaClasificacion": {
+        "type": "object",
+        "description": "Decisión de la persona (o de la regla) sobre un patrón. **Solo agregar;** vigente = la que ninguna otra reemplaza (`fin_v_fuga_clasificaciones_vigentes`). La persona gana a la regla: contradecirla exige motivo.",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "libro_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "patron_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "fuga": {
+            "$ref": "#/components/schemas/TipoFuga"
+          },
+          "origen": {
+            "type": "string",
+            "enum": [
+              "regla",
+              "persona"
+            ]
+          },
+          "regla": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[A-Z][A-Z0-9]{0,2}$"
+          },
+          "fuga_regla": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TipoFuga"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "vigilar": {
+            "type": "boolean"
+          },
+          "monto_al_decidir_centavos": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "minimum": 0
+          },
+          "reemplaza_a": {
+            "$ref": "#/components/schemas/UuidONulo"
+          },
+          "motivo": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 200
+          },
+          "decidido_por": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "en_nombre_de": {
+            "$ref": "#/components/schemas/UuidONulo"
+          },
+          "decidido_en": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "FinFugaRespuesta": {
+        "type": "object",
+        "description": "Respuesta de la persona a una pregunta sobre un patrón, o su cancelación (fecha y folio; sin folio = cancelado sin folio). **Solo agregar;** se corrige con una respuesta nueva (`reemplaza_a`). El conteo de «2 seguidas» usa la última de cada periodo.",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "libro_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "patron_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "pregunta": {
+            "type": "string",
+            "enum": [
+              "reconoce",
+              "uso",
+              "ya_no_sirve",
+              "ya_no_existe",
+              "ya_no_la_quiero",
+              "duplicado",
+              "plan_viejo",
+              "cancelado",
+              "temporada"
+            ]
+          },
+          "respuesta": {
+            "type": "string",
+            "enum": [
+              "si",
+              "no",
+              "despues"
+            ]
+          },
+          "fecha_cancelacion": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "folio": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[A-Za-z0-9-]{1,40}$"
+          },
+          "periodo_lunes": {
+            "type": "string",
+            "format": "date"
+          },
+          "reemplaza_a": {
+            "$ref": "#/components/schemas/UuidONulo"
+          },
+          "motivo": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 200
+          },
+          "registrado_por": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "en_nombre_de": {
+            "$ref": "#/components/schemas/UuidONulo"
+          },
+          "registrado_en": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "recibido_en": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        }
+      },
+      "FinDeudaProposito": {
+        "type": "object",
+        "description": "Propósito declarado de una deuda y estado del objetivo. **Solo agregar;** vale la declaración más reciente. `objetivo_texto` va sin cifras y jamás sale en un aviso (D3, D20).",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "libro_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "deuda_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "proposito": {
+            "type": "string",
+            "enum": [
+              "bien_duradero",
+              "genera_ingreso",
+              "patrimonio",
+              "educacion_o_salud",
+              "emergencia",
+              "consumo"
+            ]
+          },
+          "objetivo_texto": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 80
+          },
+          "bien_id": {
+            "$ref": "#/components/schemas/UuidONulo"
+          },
+          "objetivo_id": {
+            "$ref": "#/components/schemas/UuidONulo"
+          },
+          "vida_util_meses": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 600
+          },
+          "estado_objetivo": {
+            "type": "string",
+            "enum": [
+              "vigente",
+              "cumplido",
+              "ya_no_existe",
+              "cambio"
+            ]
+          },
+          "uso_poco": {
+            "type": "boolean"
+          },
+          "precio_contado_centavos": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "minimum": 1
+          },
+          "reemplaza_a": {
+            "$ref": "#/components/schemas/UuidONulo"
+          },
+          "motivo": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 200
+          },
+          "declarado_por": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "en_nombre_de": {
+            "$ref": "#/components/schemas/UuidONulo"
+          },
+          "declarado_en": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "FinDeudaSemaforo": {
+        "type": "object",
+        "description": "Historial del nivel mostrado de una deuda (verde, ambar, rojo, gris) y sus códigos de señal. **Solo agregar;** se agrega solo cuando cambia el nivel o el contador de bajas. Sin cifras ni nombres.",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "libro_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "deuda_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "lunes": {
+            "type": "string",
+            "format": "date"
+          },
+          "nivel": {
+            "type": "string",
+            "enum": [
+              "verde",
+              "ambar",
+              "rojo",
+              "gris"
+            ]
+          },
+          "senales": {
+            "type": "array",
+            "maxItems": 30,
+            "items": {
+              "type": "string",
+              "pattern": "^[A-Z][0-9][a-z]?$"
+            }
+          },
+          "bajas_seguidas": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 8
+          },
+          "calculado_en": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "registrado_por": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "recibido_en": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        }
+      },
+      "FinFugaParametros": {
+        "type": "object",
+        "description": "Umbrales de fugas y deuda de un libro. **Solo agregar:** cada cambio es una fila nueva y vale la más reciente (`fin_v_fuga_parametros_vigentes`); sin fila se usan los valores por omisión de la app. Porcentajes en puntos base.",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "hogar_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "libro_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "tope_hormiga_centavos": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "maximum": 100000000,
+            "default": 15000
+          },
+          "hormiga_min_gastos": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 8
+          },
+          "hormiga_min_semanas": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4,
+            "default": 3
+          },
+          "hormiga_min_ingreso_pb": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000,
+            "default": 100
+          },
+          "hormiga_conjunto_pb": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000,
+            "default": 500
+          },
+          "recurrente_tolerancia_pb": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000,
+            "default": 1000
+          },
+          "vampiro_crecimiento_pb": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100000,
+            "default": 1000
+          },
+          "zombie_respuestas": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 12,
+            "default": 2
+          },
+          "servicio_periodos_min": {
+            "type": "integer",
+            "minimum": 3,
+            "maximum": 60,
+            "default": 6
+          },
+          "servicio_periodos_mediana": {
+            "type": "integer",
+            "minimum": 3,
+            "maximum": 60,
+            "default": 12
+          },
+          "servicio_mediana_pb": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100000,
+            "default": 2500
+          },
+          "msi_ambar_pb": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000,
+            "default": 1000
+          },
+          "msi_rojo_pb": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000,
+            "default": 2000
+          },
+          "msi_activos_ambar": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 20,
+            "default": 3
+          },
+          "msi_activos_rojo": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 20,
+            "default": 4
+          },
+          "plazo_ambar_meses": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 48,
+            "default": 18
+          },
+          "baja_nivel_evaluaciones": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 8,
+            "default": 2
+          },
+          "cambiado_por": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "en_nombre_de": {
+            "$ref": "#/components/schemas/UuidONulo"
+          },
+          "motivo": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 200
+          },
+          "creado_en": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "FinRealtimeCambio": {
+        "type": "object",
+        "description": "Cuerpo del mensaje de **Realtime Broadcast** que emite la base cuando cambian los datos de un libro de Finanzas (F8-6.6). Canal privado `finanzas:libro:<uuid del libro>`, evento `cambio`. **Sin datos:** la versión y nada más (ni montos, comercios, cuentas, notas, nombres ni filas, D3, D6, D20). Quien lo recibe vuelve a pedir lo suyo con su propia sesión (RLS). Ver `fin_realtime_puede_suscribir`.",
+        "required": [
+          "v"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "v": {
+            "type": "integer",
+            "const": 1,
+            "description": "Versión del mensaje."
+          }
+        },
+        "examples": [
+          {
+            "v": 1
+          }
+        ]
       },
       "AreaHabitos": {
         "type": "string",
@@ -24384,4 +28712,4 @@ window.ESPECIFICACION_GRAVITY = {
     }
   }
 };
-window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:47af5eb5';
+window.HUELLA_ESPECIFICACION_GRAVITY = 'fnv1a32:0f34585b';

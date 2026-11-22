@@ -442,7 +442,7 @@ select pruebas.falla($$select public.fin_deuda_semaforo_registrar(gen_random_uui
 select pruebas.falla($$select public.fin_deuda_semaforo_registrar(gen_random_uuid(), 'e8600000-0000-4000-8000-000000000002',
   public.fin_fugas_lunes(current_date), 'verde', array['Laptop de 2026'])$$, '8: ni cifras ni nombres', '23514');
 select pruebas.falla($$select public.fin_deuda_semaforo_registrar(gen_random_uuid(), 'e8600000-0000-4000-8000-000000000002',
-  current_date + 1, 'verde')$$, '8: el lunes es lunes (si no, falla)', '23514');
+  public.fin_fugas_lunes(current_date) + 1, 'verde')$$, '8: el lunes es lunes (si no, falla)', '23514'); -- siempre un martes (con current_date + 1 la prueba fallaba los domingos)
 
 -- ---------------------------------------------------------------- 9: familiar, cuidadora, Casa, anon y otro hogar: nada (SQ-2)
 select pruebas.como_postgres();
