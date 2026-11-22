@@ -1175,3 +1175,5 @@ Criterios de la sección 10 cubiertos por pruebas automáticas en este paquete: 
 6. **Lexicón repetido.** ¿Vale pagar 6.3 MB extra por cada voz americana para que cada modelo sea autónomo, o se pasa a un lexicón compartido (menos espacio, más cambio)?
 7. **Supabase.** ¿Confirmas que un archivo inexistente en el bucket público contesta 400 o 404? (La app trata 400, 403, 404 y 410 como «no disponible aún».)
 
+
+**Decisión del dueño (22/nov/2026): licencia de `en_list`.** Opción 1: se acepta el riesgo y se registra. `lexicon-en-us.txt` (CMUDict + `en_list` + compounds) se sigue usando y alojando; la atribución en pantalla conserva el aviso de CMUDict y dice que el origen de `en_list` no se verificó. Motivo: uso familiar y sin fines de lucro. Se revisa si el uso deja de ser familiar. **Grabar la voz de quien estudia (P3.2b):** el dueño no sabe si hace falta; recomendación del arquitecto en el informe de esa fecha: no hacerlo ahora (las tareas de habla del curso se evalúan con lista de cotejo y modelo, sin calificar el audio; 6.3), y reabrirlo solo si el dueño quiere oírse y comparar.
