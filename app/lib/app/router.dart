@@ -192,7 +192,10 @@ List<RouteBase> rutasDeGravity({
         rutasAlimentacion(),
         modulo: Modulo.alimentacion,
       ),
-      _modulo(Rutas.casa, Modulo.casa),
+      GoRoute(
+        path: Rutas.casa,
+        pageBuilder: (context, estado) => _sinAnimacion(estado, pantallaCasa()),
+      ),
       GoRoute(
         path: RutasApp.pendientes,
         pageBuilder: (context, estado) =>

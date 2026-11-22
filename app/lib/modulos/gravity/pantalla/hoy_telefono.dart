@@ -15,6 +15,7 @@ import '../../finanzas/finanzas.dart' show TarjetaFinanzasHoy;
 
 import 'package:go_router/go_router.dart';
 
+import '../conversacion/abrir_conversacion.dart';
 import '../conversacion/panel_conversacion.dart';
 import 'resumen_gravity.dart';
 
@@ -140,10 +141,7 @@ class _EncabezadoHoy extends ConsumerWidget {
         IconButton(
           key: const ValueKey('boton-hablar'),
           tooltip: 'Hablar con GRAVITY',
-          onPressed: () => _avisoEjemplo(
-            context,
-            'La voz de GRAVITY llega en una fase posterior.',
-          ),
+          onPressed: () => abrirConversacionGravity(context),
           style: IconButton.styleFrom(
             backgroundColor: v.acento,
             foregroundColor: v.sobreAcento,

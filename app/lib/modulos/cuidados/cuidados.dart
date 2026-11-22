@@ -1,7 +1,7 @@
 /// Módulo **Cuidados** de GRAVITY (agente cuidados, Fase 5).
 ///
 /// [rutasCuidados]: rutas **relativas** a `/cuidados` (raíz = Mi turno;
-/// `medicamentos`, `comidas`, `bitacora`, `instrucciones`, `consentimientos`, `resumen-dia`, `resumen`, `urgente`, `gestion`).
+/// `medicamentos`, `comidas`, `menu-papa`, `bitacora`, `instrucciones`, `consentimientos`, `resumen-dia`, `resumen`, `urgente`, `gestion`).
 /// Contrato del servidor: `docs/specs/fase-5-cuidados.md` y las tablas
 /// `cui_*` (columnas en `datos/repositorio_supabase.dart`). Los datos
 /// clínicos nunca van a la IA ni a las bocinas (D3, D6): este módulo no
@@ -20,6 +20,7 @@ import 'pantallas/consentimientos.dart';
 import 'pantallas/gestion.dart';
 import 'pantallas/instrucciones.dart';
 import 'pantallas/medicamentos.dart';
+import 'pantallas/menu_papa.dart';
 import 'pantallas/mi_turno.dart';
 import 'pantallas/resumen_dia.dart';
 import 'pantallas/resumen_mensual.dart';
@@ -38,6 +39,12 @@ List<RouteBase> rutasCuidados() => [
     pageBuilder: _pagina(() => const PantallaMedicamentos()),
   ),
   GoRoute(path: 'comidas', pageBuilder: _pagina(() => const PantallaComidas())),
+  // D23 (F4-A5): el menú de Papá, solo lectura, para quien no tiene
+  // Alimentación en su navegación (la cuidadora).
+  GoRoute(
+    path: 'menu-papa',
+    pageBuilder: _pagina(() => const PantallaMenuDePapa()),
+  ),
   GoRoute(
     path: 'bitacora',
     pageBuilder: _pagina(() => const PantallaBitacora()),

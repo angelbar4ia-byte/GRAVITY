@@ -259,17 +259,19 @@ class OpcionRegistrar {
     required this.etiqueta,
     required this.icono,
     required this.modulo,
-    required this.fase,
   });
 
   final TipoRegistro tipo;
   final String etiqueta;
   final IconData icono;
   final Modulo modulo;
-
-  /// Fase en la que llega.
-  final int fase;
 }
+
+/// `true` si el registro [tipo] es de la sección **reservada** de Hábitos
+/// (consumo y SOS: salud, D13 y D21). La tablet pública de la casa nunca lo
+/// ofrece; el resto de equipos lo abre detrás de la puerta reservada.
+bool registroReservado(TipoRegistro tipo) =>
+    tipo == TipoRegistro.consumo || tipo == TipoRegistro.sos;
 
 const List<OpcionRegistrar> opcionesDeRegistro = [
   OpcionRegistrar(
@@ -277,35 +279,30 @@ const List<OpcionRegistrar> opcionesDeRegistro = [
     etiqueta: 'Gasto',
     icono: Icons.payments_outlined,
     modulo: Modulo.finanzas,
-    fase: 1,
   ),
   OpcionRegistrar(
     tipo: TipoRegistro.ingresoExtra,
     etiqueta: 'Ingreso extra',
     icono: Icons.savings_outlined,
     modulo: Modulo.finanzas,
-    fase: 1,
   ),
   OpcionRegistrar(
     tipo: TipoRegistro.habito,
     etiqueta: 'Hábito',
     icono: Icons.check_circle_outline,
     modulo: Modulo.habitos,
-    fase: 3,
   ),
   OpcionRegistrar(
     tipo: TipoRegistro.consumo,
     etiqueta: 'Consumo (cigarrillo o azúcar)',
     icono: Icons.smoke_free,
     modulo: Modulo.habitos,
-    fase: 3,
   ),
   OpcionRegistrar(
     tipo: TipoRegistro.sos,
     etiqueta: 'SOS: tengo un antojo',
     icono: Icons.sos_outlined,
     modulo: Modulo.habitos,
-    fase: 3,
   ),
 ];
 

@@ -86,6 +86,13 @@ class PermisosCuidados {
   bool get veMedicamentos => _lee('medicamentos');
   bool get veComidas => _lee('comidas');
 
+  /// "Menú de Papá" dentro de Cuidados (D23, F4-A5): quien entra a la parte
+  /// clínica lo ve, **solo lectura**. No es un objeto de `cui_puede`: el menú
+  /// es de Alimentación y esta pantalla solo lo muestra. Qué menús ve cada rol
+  /// lo decide el servicio de Alimentación (la cuidadora, el de Papá; Casa,
+  /// ninguno) y el servidor (RLS); aquí no se repite esa matriz.
+  bool get veMenuDePapa => entra;
+
   /// El dueño y la cuidadora o la hermana **de turno a esa hora**
   /// (`cui_marcar_toma`; v1.2 de la especificación). El turno lo valida el
   /// servidor; aquí solo se decide quién puede intentarlo.

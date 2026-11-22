@@ -22,8 +22,6 @@ class PantallaMenuSemana extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final semana = ref.watch(semanaAlimentacionProvider);
-    final domingo = semana.add(const Duration(days: 6));
     final visibles = ref.watch(servicioAlimentacionProvider).menusVisibles;
     final menu = menuEfectivo(ref.watch(menuElegidoProvider), visibles);
     return TemaModulo(
@@ -60,57 +58,114 @@ class PantallaMenuSemana extends ConsumerWidget {
                 detalle: 'Pide al dueño que te dé acceso.',
                 icono: Icons.lock_outline,
               )
-            : ref.watch(alimentacionSinServidorProvider)
-            ? const EstadoVacio(
-                mensaje: 'Sin menú todavía',
-                detalle: 'El menú de la semana aparecerá cuando Alimentación esté activa en tu hogar.',
-                icono: Icons.restaurant_menu_outlined,
-              )
-            : Column(
-                children: [
-                  SelectorMenu(
-                    menus: visibles,
-                    actual: menu,
-                    alElegir: (m) =>
-                        ref.read(menuElegidoProvider.notifier).state = m,
-                  ),
-                  _NavegadorSemana(
-                    texto:
-                        'Semana del ${_fechaCorta(semana)} al ${_fechaCorta(domingo)}',
-                    alCambiar: (dias) =>
-                        ref.read(semanaAlimentacionProvider.notifier).state =
-                            semana.add(Duration(days: dias)),
-                  ),
-                  Expanded(
-                    child: ref
-                        .watch(platillosProvider)
-                        .when(
-                          loading: () => const EstadoCargando(),
-                          error: (_, _) => EstadoError(
-                            mensaje: 'No pudimos cargar los platillos.',
-                            alReintentar: () =>
-                                ref.invalidate(platillosProvider),
-                          ),
-                          data: (platillos) => ref
-                              .watch(menuSemanaProvider(menu))
-                              .when(
-                                loading: () => const EstadoCargando(),
-                                error: (_, _) => EstadoError(
-                                  mensaje: 'No pudimos cargar el menú.',
-                                  alReintentar: () =>
-                                      ref.invalidate(menuSemanaProvider(menu)),
-                                ),
-                                data: (m) => _ListaDias(
-                                  menu: menu,
-                                  entradas: m,
-                                  platillos: platillos,
-                                ),
-                              ),
-                        ),
-                  ),
-                ],
-              ),
+            : _CuerpoMenu(menu: menu, visibles: visibles),
       ),
+    );
+  }
+}
+
+/// Menú de Papá **solo lectura**, para mostrarlo dentro de otra pantalla (la
+/// cuidadora lo ve desde Cuidados, D23). Es el mismo menú y el mismo servicio
+/// que [PantallaMenuSemana], sin selector de menú ni controles de edición,
+/// aunque quien lo mira pudiera editar en Alimentación.
+///
+/// Con sesión real y sin menú en el servidor sale un estado vacío honesto: nunca
+/// cifras ni platillos de ejemplo. Si el rol no ve el menú de Papá, lo dice.
+/// El perfil clínico lo pinta este módulo (D3): quien lo muestra no lo copia.
+class MenuDePapaSoloLectura extends ConsumerWidget {
+  const MenuDePapaSoloLectura({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final visibles = ref.watch(servicioAlimentacionProvider).menusVisibles;
+    if (!visibles.contains(MenuId.papa)) {
+      return const EstadoVacio(
+        mensaje: 'No tienes acceso al menú de Papá',
+        detalle: 'Pide al dueño que te dé acceso.',
+        icono: Icons.lock_outline,
+      );
+    }
+    // Letra más grande que la de la pantalla de Alimentación (quien lo lee en
+    // el turno lo hace de pie y de lejos); si la persona ya agrandó la letra
+    // del sistema, se respeta la suya.
+    return MediaQuery.withClampedTextScaling(
+      minScaleFactor: 1.2,
+      child: const _CuerpoMenu(
+        menu: MenuId.papa,
+        visibles: [MenuId.papa],
+        soloLectura: true,
+      ),
+    );
+  }
+}
+
+/// Selector (si hay más de un menú), semana y los 7 días del [menu]; vacío
+/// honesto con sesión real.
+class _CuerpoMenu extends ConsumerWidget {
+  const _CuerpoMenu({
+    required this.menu,
+    required this.visibles,
+    this.soloLectura = false,
+  });
+  final MenuId menu;
+  final List<MenuId> visibles;
+  final bool soloLectura;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final semana = ref.watch(semanaAlimentacionProvider);
+    final domingo = semana.add(const Duration(days: 6));
+    if (ref.watch(alimentacionSinServidorProvider)) {
+      return const EstadoVacio(
+        mensaje: 'Sin menú todavía',
+        detalle:
+            'El menú de la semana aparecerá cuando Alimentación esté activa en tu hogar.',
+        icono: Icons.restaurant_menu_outlined,
+      );
+    }
+    return Column(
+      children: [
+        if (!soloLectura)
+          SelectorMenu(
+            menus: visibles,
+            actual: menu,
+            alElegir: (m) => ref.read(menuElegidoProvider.notifier).state = m,
+          ),
+        _NavegadorSemana(
+          texto: 'Semana del ${_fechaCorta(semana)} al ${_fechaCorta(domingo)}',
+          alCambiar: (dias) =>
+              ref.read(semanaAlimentacionProvider.notifier).state = semana.add(
+                Duration(days: dias),
+              ),
+        ),
+        Expanded(
+          child: ref
+              .watch(platillosProvider)
+              .when(
+                loading: () => const EstadoCargando(),
+                error: (_, _) => EstadoError(
+                  mensaje: 'No pudimos cargar los platillos.',
+                  alReintentar: () => ref.invalidate(platillosProvider),
+                ),
+                data: (platillos) => ref
+                    .watch(menuSemanaProvider(menu))
+                    .when(
+                      loading: () => const EstadoCargando(),
+                      error: (_, _) => EstadoError(
+                        mensaje: 'No pudimos cargar el menú.',
+                        alReintentar: () =>
+                            ref.invalidate(menuSemanaProvider(menu)),
+                      ),
+                      data: (m) => _ListaDias(
+                        menu: menu,
+                        entradas: m,
+                        platillos: platillos,
+                        soloLectura: soloLectura,
+                      ),
+                    ),
+              ),
+        ),
+      ],
     );
   }
 }
@@ -156,16 +211,21 @@ class _ListaDias extends ConsumerWidget {
     required this.menu,
     required this.entradas,
     required this.platillos,
+    this.soloLectura = false,
   });
   final MenuId menu;
   final List<EntradaMenu> entradas;
   final List<Platillo> platillos;
 
+  /// Sin controles de edición aunque el rol pudiera editar (vista desde
+  /// Cuidados).
+  final bool soloLectura;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final v = ValoresDiseno.de(context);
     final servicio = ref.watch(servicioAlimentacionProvider);
-    final editar = servicio.puedeEditarMenuDe(menu);
+    final editar = !soloLectura && servicio.puedeEditarMenuDe(menu);
     final perfil = servicio.perfil(menu);
     final porId = {for (final p in platillos) p.id: p};
     Platillo? platilloDe(int dia, TiempoComida t) {
@@ -221,7 +281,10 @@ class _ListaDias extends ConsumerWidget {
               ),
             ),
           ),
-        _Suplementos(menu: menu, editable: servicio.puedeEditar),
+        _Suplementos(
+          menu: menu,
+          editable: !soloLectura && servicio.puedeEditar,
+        ),
       ],
     );
   }

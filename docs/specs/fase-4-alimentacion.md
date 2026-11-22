@@ -140,3 +140,14 @@ Pendiente de confirmar por el dueño: si el familiar debe ver también la lista 
 - **Cuidadora:** ve el menú de Papá (solo lectura, como antes).
 - **Marcar "comprado":** sigue siendo del dueño y la pareja (no cambia con este ajuste).
 
+
+### Decisión del dueño (21/nov/2026): la cuidadora ve el menú de Papá dentro de Cuidados (F4-A5, opción B)
+
+La cuidadora no tiene Alimentación en su navegación (la matriz le da "leer, desde Cuidados", `accesoDirecto: false`) y **no se le abre la ruta `/alimentacion`**: el router sigue mandándola a `/cuidados`. En lugar de abrir esa ruta, el menú de Papá se muestra **dentro de Cuidados**:
+
+- **Ruta y entrada:** `/cuidados/menu-papa` (pantalla "Menú de Papá", `app/lib/modulos/cuidados/pantallas/menu_papa.dart`) y un botón "Menú de Papá" en "Mi turno". La ve quien entra a la parte clínica de Cuidados (`PermisosCuidados.veMenuDePapa`): cuidadora, hermana (familiar) y dueño. **Solo lectura para todos ahí**: el dueño y el familiar que editan lo hacen en Alimentación. Casa, la pareja sin consentimiento y la cuenta maestra no entran (Casa: nada, D3).
+- **Qué reutiliza:** el mismo menú, servicio y repositorio de Alimentación. Alimentación expone **una sola pieza** para otros módulos, `MenuDePapaSoloLectura` (`alimentacion.dart`); Cuidados no importa nada más de este módulo (lo vigila una prueba). El perfil clínico de Papá (D3) lo sigue pintando Alimentación desde `datos/perfiles.dart`: Cuidados no lo copia ni lo escribe (guardia sobre los textos).
+- **Qué muestra:** los 7 días por 4 tiempos, el perfil y las advertencias de alimento duro, y los suplementos, sin selector de menú, sin editar, sin "Importar recetas" ni compras. Con sesión real y sin menú en el servidor: "Sin menú todavía" (nunca platillos ni suplementos de ejemplo, F4-A6). Si el rol no ve el menú de Papá: "No tienes acceso al menú de Papá".
+- **Letra y accesibilidad:** la letra se agranda al menos 1.2 veces (se respeta una mayor del sistema); 2.0 en 360 dp sin desbordes; cada comida se lee completa ("Lunes, Desayuno: …") y no se ofrece como botón.
+- **Protección de capturas:** `/cuidados/menu-papa` cae bajo `/cuidados`, que ya es pantalla sensible para quien ve datos clínicos.
+- Pruebas: `test/modulos/cuidados/menu_papa_test.dart` y `test/revision_calidad/f4_alimentacion_test.dart` (F4-A5, ya guardia). El servidor sigue siendo quien decide (RLS, F4-B1): esta vista solo oculta.

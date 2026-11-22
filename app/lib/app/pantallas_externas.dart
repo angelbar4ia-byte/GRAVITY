@@ -13,11 +13,14 @@ import 'package:go_router/go_router.dart';
 
 import '../diseno/diseno.dart';
 import '../modulos/ajustes/desarrollador/pantalla_desarrollador.dart';
+import '../modulos/gravity/conversacion/abrir_conversacion.dart'
+    as conversacion;
 import '../modulos/gravity/ordenes/barra_ordenes.dart';
 import '../modulos/gravity/pantalla/hoy_telefono.dart';
 import '../modulos/gravity/pantalla/pantalla_principal.dart';
 import '../modulos/finanzas/finanzas.dart' as finanzas;
 import '../modulos/alimentacion/alimentacion.dart' as alimentacion;
+import '../modulos/casa/casa.dart' as casa;
 import '../modulos/cuidados/cuidados.dart' as cuidados;
 import '../modulos/habitos/habitos.dart' as habitos;
 import '../nucleo/contratos/dispositivo.dart';
@@ -29,6 +32,15 @@ Widget pantallaPrincipalGravity({Widget? barraOrdenes}) =>
 
 /// "Hoy" del teléfono y de la tablet por persona (agente diseno).
 Widget pantallaHoyTelefono() => const PantallaHoyTelefono();
+
+/// Abre la conversación por texto con GRAVITY en una hoja (botón de GRAVITY del
+/// teléfono y de la tablet). La voz todavía no existe. Si quien está en
+/// pantalla no conversa (la cuenta Casa, la cuidadora), lo avisa.
+Future<void> abrirConversacionGravity(BuildContext context) =>
+    conversacion.abrirConversacionGravity(context);
+
+/// Quién conversa libremente con GRAVITY (dueño, pareja y familiar).
+Set<Rol> get rolesQueConversanConGravity => conversacion.rolesQueConversan;
 
 /// Barra de órdenes de navegación (agente asistente). Con el [dispositivo]
 /// solo sugiere destinos que existen en él (Desarrollador, solo en la laptop;
@@ -66,6 +78,10 @@ Widget? seccionApariencia() => const SeccionApariencia();
 /// el teléfono (D4).
 List<RouteBase> rutasFinanzas() => finanzas.rutasFinanzas();
 
+/// Módulo Casa (laptop y tablet): estado del puente con Home Assistant y las
+/// frases fijas de las bocinas (D6, D9). Solo lectura.
+Widget pantallaCasa() => casa.pantallaCasa();
+
 /// Rutas de Hábitos: Hoy en la raíz, más objetivos y pausa (SOS).
 List<RouteBase> rutasHabitos() => habitos.rutasHabitos();
 
@@ -86,6 +102,17 @@ Widget hojaRegistrarGasto() => finanzas.hojaRegistrarGasto();
 /// Registro de un ingreso extra (monto → cuenta → fecha → Guardar), en una
 /// hoja inferior desde el (+), igual que [hojaRegistrarGasto].
 Widget hojaIngresoExtra() => finanzas.hojaIngresoExtra();
+
+/// Opciones del (+) de Hábitos (Fase 3): el SOS ("tengo un antojo"), marcar un
+/// hábito del día y anotar un consumo. El SOS y el consumo son **reservados**
+/// (PIN o huella, sin capturas, nunca en la tablet pública; D13 y D21).
+Widget hojaSos() => habitos.hojaPausa();
+
+/// Marcar un hábito del día desde el (+).
+Widget hojaHabito() => habitos.hojaHabito();
+
+/// Anotar un consumo (cigarrillo o refresco) desde el (+), detrás de la puerta.
+Widget hojaConsumo() => habitos.hojaConsumo();
 
 /// Tabla de Supabase por tipo de registro de la cola sin conexión (p. ej.
 /// `'finanzas.movimiento': 'fin_movimientos'`). La cola sube con

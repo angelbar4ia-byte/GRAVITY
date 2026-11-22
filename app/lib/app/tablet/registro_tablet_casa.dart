@@ -22,34 +22,51 @@ import '../../nucleo/contratos/roles.dart';
 import '../../nucleo/permisos/permisos.dart';
 import '../../nucleo/tablet/controlador_tablet.dart';
 import '../../nucleo/tablet/usuarios_tablet.dart';
+import '../../nucleo/contratos/rutas.dart';
 import '../navegacion.dart';
 import '../pantallas/registro_rapido.dart';
+import '../pantallas_externas.dart' show rolesQueConversanConGravity;
+import '../router.dart' show routerProvider;
 import 'dialogo_pin.dart';
 
 /// Lo que se registra en la tablet de la casa eligiendo solo el nombre. Lo
-/// conecta cada módulo en su fase con [registrarAlgoDeLaCasa].
+/// conecta cada módulo con [registrarAlgoDeLaCasa].
+///
+/// **Pendiente (F8-7.1):** ninguna de las dos acciones se puede conectar sin
+/// cambiar permisos confirmados. Casa no tiene acceso a Alimentación (matriz y
+/// servidor: D23; D28 aún no está en la matriz) ni escribe en Cuidados (solo
+/// recordatorios genéricos de lectura, D3), y no hay tabla ni tipo de cola
+/// para "agregar a la lista de la casa" ni para "marcar un recordatorio de la
+/// casa". Mientras el dueño no decida qué puede hacer la cuenta Casa, la
+/// opción lo dice con honestidad en vez de prometer una fase.
 class AccionDeLaCasa {
   const AccionDeLaCasa({
     required this.etiqueta,
     required this.icono,
-    required this.fase,
+    required this.aviso,
   });
 
   final String etiqueta;
   final IconData icono;
-  final int fase;
+
+  /// Lo que se le dice a la persona mientras la acción no está disponible.
+  final String aviso;
 }
 
 const List<AccionDeLaCasa> accionesDeLaCasa = [
   AccionDeLaCasa(
     etiqueta: 'Lista de compras',
     icono: Icons.shopping_cart_outlined,
-    fase: 7,
+    aviso:
+        'La lista de compras todavía no se puede usar desde la tablet de la '
+        'casa. Por ahora se marca en Alimentación, desde el teléfono.',
   ),
   AccionDeLaCasa(
     etiqueta: 'Recordatorio de la casa',
     icono: Icons.alarm_on_outlined,
-    fase: 5,
+    aviso:
+        'Los recordatorios de la casa todavía no se pueden marcar desde esta '
+        'tablet. Se atienden desde el teléfono de quien está de turno.',
   ),
 ];
 
@@ -150,10 +167,12 @@ Future<void> registrarAlgoPersonal(
   final contenedor = ProviderScope.containerOf(context, listen: false);
   final mensajero = ScaffoldMessenger.maybeOf(context);
   final navegador = Navigator.of(context, rootNavigator: true);
-  if (!registroDisponible(opcion.tipo)) {
+  // Consumo y SOS son de la sección reservada de Hábitos (D13, D21): la
+  // tablet pública nunca los ofrece ni los abre.
+  if (registroReservado(opcion.tipo)) {
     mensajero?.showSnackBar(
-      SnackBar(
-        content: Text('${opcion.etiqueta}: llega en la Fase ${opcion.fase}.'),
+      const SnackBar(
+        content: Text('Esto no está disponible en la tablet de la casa.'),
       ),
     );
     return;
@@ -226,6 +245,60 @@ Future<void> registrarAlgoPersonal(
   }
 }
 
+/// Entra a la tablet como una persona (nombre y PIN, entrada normal: ve sus
+/// pantallas y vuelve sola al modo Casa tras el tiempo sin uso, D14) y abre
+/// [ruta]. Sirve para lo que no es una hoja de registro sino una pantalla del
+/// módulo: *Algo de Cuidados* (su turno) y *Escribir a GRAVITY* (su Hoy, que
+/// trae la conversación). [puedeEntrar] filtra a quién se le ofrece.
+Future<void> entrarALaTabletYAbrir(
+  BuildContext context, {
+  required String ruta,
+  required bool Function(UsuarioTablet usuario) puedeEntrar,
+  required String sinCandidatos,
+}) async {
+  final contenedor = ProviderScope.containerOf(context, listen: false);
+  final mensajero = ScaffoldMessenger.maybeOf(context);
+  final navegador = Navigator.of(context, rootNavigator: true);
+  final router = contenedor.read(routerProvider);
+  final candidatos = [
+    for (final u in contenedor.read(controladorTabletProvider).usuarios)
+      if (puedeEntrar(u)) u,
+  ];
+  if (candidatos.isEmpty) {
+    mensajero?.showSnackBar(SnackBar(content: Text(sinCandidatos)));
+    return;
+  }
+  final persona = await elegirNombre(
+    navegador.context,
+    candidatos,
+    detalle: 'Después tu PIN.',
+  );
+  if (persona == null || !navegador.mounted) return;
+  await mostrarDialogoPin(navegador.context, persona);
+  // Al entrar, el cascarón de la tablet cierra el diálogo por su cuenta (B2) y
+  // `mostrarDialogoPin` puede devolver `false` aunque haya entrado: se mira
+  // quién está dentro, no lo que devolvió el diálogo.
+  final dentro = contenedor.read(controladorTabletProvider).usuarioActivo;
+  if (dentro?.personaId != persona.personaId) return;
+  router.go(ruta);
+}
+
+/// Botón "Escribir a GRAVITY" del modo Casa. La cuenta Casa no conversa con
+/// GRAVITY (D5; el servidor responde 403): quien escribe entra primero con su
+/// PIN y llega a su pantalla de Hoy, que trae la conversación por texto. La
+/// voz todavía no existe.
+Future<void> escribirAGravityEnTabletCasa(BuildContext context) {
+  final conversan = rolesQueConversanConGravity;
+  return entrarALaTabletYAbrir(
+    context,
+    ruta: Rutas.inicio,
+    puedeEntrar: (u) => conversan.contains(u.rol),
+    sinCandidatos:
+        'Nadie de esta tablet conversa con GRAVITY. Agrega a alguien con su '
+        'PIN para escribirle.',
+  );
+}
+
 /// Hoja "Registrar" del modo Casa.
 Future<void> mostrarRegistrarEnTabletCasa(BuildContext context) =>
     showModalBottomSheet<void>(
@@ -245,9 +318,15 @@ class HojaRegistrarTabletCasa extends ConsumerWidget {
     );
     final personales = [
       for (final opcion in opcionesDeRegistro)
-        if (usuarios.any(
-          (u) => puedeRegistrarEn(u.rol, opcion.modulo, esMaestra: u.esMaestra),
-        ))
+        // La sección reservada de Hábitos (consumo y SOS) no se ofrece aquí.
+        if (!registroReservado(opcion.tipo) &&
+            usuarios.any(
+              (u) => puedeRegistrarEn(
+                u.rol,
+                opcion.modulo,
+                esMaestra: u.esMaestra,
+              ),
+            ))
           opcion,
     ];
     final tema = Theme.of(context);
@@ -281,14 +360,10 @@ class HojaRegistrarTabletCasa extends ConsumerWidget {
               leading: Icon(accion.icono),
               title: Text(accion.etiqueta),
               minTileHeight: 56,
+              subtitle: const Text('Aún no disponible aquí'),
               onTap: () => cerrarYDespues((origen) async {
-                ScaffoldMessenger.maybeOf(origen)?.showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      '${accion.etiqueta}: llega en la Fase ${accion.fase}.',
-                    ),
-                  ),
-                );
+                ScaffoldMessenger.maybeOf(origen)
+                    ?.showSnackBar(SnackBar(content: Text(accion.aviso)));
               }),
             ),
           if (personales.isNotEmpty) ...[
@@ -307,17 +382,25 @@ class HojaRegistrarTabletCasa extends ConsumerWidget {
           ],
           if (puedeRegistrarAlgo(usuarios, Modulo.cuidados))
             ListTile(
+              key: const ValueKey('casa-personal-cuidados'),
               leading: const Icon(Icons.volunteer_activism_outlined),
               title: const Text('Algo de Cuidados'),
+              subtitle: const Text('Entras con tu PIN a tu turno'),
               trailing: const Icon(Icons.pin_outlined),
               minTileHeight: 56,
-              onTap: () => cerrarYDespues((origen) async {
-                ScaffoldMessenger.maybeOf(origen)?.showSnackBar(
-                  const SnackBar(
-                    content: Text('Algo de Cuidados: llega en la Fase 5.'),
+              onTap: () => cerrarYDespues(
+                (origen) => entrarALaTabletYAbrir(
+                  origen,
+                  ruta: Rutas.cuidados,
+                  puedeEntrar: (u) => puedeRegistrarEn(
+                    u.rol,
+                    Modulo.cuidados,
+                    esMaestra: u.esMaestra,
                   ),
-                );
-              }),
+                  sinCandidatos:
+                      'Nadie de esta tablet puede registrar algo de Cuidados.',
+                ),
+              ),
             ),
         ],
       ),

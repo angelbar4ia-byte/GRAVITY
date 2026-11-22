@@ -14,28 +14,18 @@ import '../pantallas_externas.dart';
 ValueKey<String> llaveRegistro(TipoRegistro tipo) =>
     ValueKey('registro-${tipo.name}');
 
-/// Contenido del registro [tipo], o `null` si aún no llega (su fase).
-Widget? contenidoDeRegistro(TipoRegistro tipo) => switch (tipo) {
+/// Contenido del registro [tipo] (cada módulo pone el suyo).
+Widget contenidoDeRegistro(TipoRegistro tipo) => switch (tipo) {
   TipoRegistro.gasto => hojaRegistrarGasto(),
   TipoRegistro.ingresoExtra => hojaIngresoExtra(),
-  TipoRegistro.habito || TipoRegistro.consumo || TipoRegistro.sos => null,
+  TipoRegistro.habito => hojaHabito(),
+  TipoRegistro.consumo => hojaConsumo(),
+  TipoRegistro.sos => hojaSos(),
 };
 
-/// `true` si el registro [tipo] ya se puede abrir.
-bool registroDisponible(TipoRegistro tipo) => contenidoDeRegistro(tipo) != null;
-
-/// Abre el registro de [opcion] en una hoja inferior (teléfono y tablet). Si
-/// aún no llega, avisa en qué fase.
+/// Abre el registro de [opcion] en una hoja inferior (teléfono y tablet).
 Future<void> abrirRegistro(BuildContext context, OpcionRegistrar opcion) {
   final contenido = contenidoDeRegistro(opcion.tipo);
-  if (contenido == null) {
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-      SnackBar(
-        content: Text('${opcion.etiqueta}: llega en la Fase ${opcion.fase}.'),
-      ),
-    );
-    return Future.value();
-  }
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
@@ -50,13 +40,13 @@ Future<void> abrirRegistro(BuildContext context, OpcionRegistrar opcion) {
   );
 }
 
-/// Ctrl + N en la laptop: registrar un movimiento de Finanzas en un diálogo.
+/// Ctrl + N en la laptop: registrar en un diálogo (por omisión un gasto; la
+/// barra de órdenes también abre hábito, consumo y SOS).
 Future<void> abrirRegistroEnDialogo(
   BuildContext context, {
   TipoRegistro tipo = TipoRegistro.gasto,
 }) {
   final contenido = contenidoDeRegistro(tipo);
-  if (contenido == null) return Future.value();
   return showDialog<void>(
     context: context,
     builder: (contexto) => Dialog(

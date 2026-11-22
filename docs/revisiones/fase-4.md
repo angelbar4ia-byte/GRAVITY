@@ -53,6 +53,7 @@ Ninguno.
 - D23 y el criterio 4 de la spec de Alimentación: "La cuidadora ve el de Papá sin controles de edición". Hoy `calcularRedireccion('/alimentacion', Rol.cuidador)` la manda a `/cuidados` (la matriz le da "desde Cuidados", sin acceso directo) y su navegación no tiene Alimentación. La pantalla solo se comprueba montándola suelta. Depende de la Fase 5 (Cuidados) o de abrir la ruta solo para ella.
 - Reproducir: `f4_alimentacion_test.dart` (F4-A5). Ver también la fila del familiar: sí llega por *Más* (reviso `modulosEnMas`), sin pestaña propia.
 - Corrige: **arquitecto/plataforma** (decidir si entra por Cuidados en la Fase 5 o se abre ya); registrar como pendiente si es Fase 5.
+- **Decisión del dueño (21/nov/2026): opción B, corregido.** La cuidadora ve el menú de Papá **dentro de Cuidados**, no se le abre `/alimentacion` (el router sigue mandándola a `/cuidados`). Pantalla de solo lectura `/cuidados/menu-papa` ("Menú de Papá", botón en "Mi turno") que reutiliza el menú y el servicio de Alimentación con una sola pieza pública (`MenuDePapaSoloLectura`), con vacío honesto con sesión real, letra grande y accesibilidad. La prueba F4-A5 se reescribió para la opción B (la expectativa anterior, que `/alimentacion` devolviera `null` para la cuidadora, era la opción A) y ya no lleva la etiqueta `hallazgo`. Detalle en `docs/specs/fase-4-alimentacion.md` (última sección) y `app/test/modulos/cuidados/menu_papa_test.dart`.
 
 ### F4-A6. Con sesión real, Alimentación muestra un menú y suplementos de ejemplo como si fueran de Papá, y no guarda nada
 - `repositorioAlimentacionProvider` arma siempre `RepositorioAlimentacionEnMemoria` con el menú y los suplementos de ejemplo (p. ej. "Multivitamínico · 1 tableta · Desayuno" en el menú de Papá), sin importar si la sesión es real, sin etiqueta de "datos de ejemplo", y lo editado se pierde al cerrar. Es el mismo principio de I9 de la Fase 1 ("con sesión real no hay cifras de ejemplo"), que aquí no se aplicó. Para un cuidador o el familiar, un suplemento inventado puede leerse como indicación.
@@ -189,7 +190,7 @@ La hoja de medición de 15 minutos por equipo que prometió la sección 16 (y el
 
 1. **¿Cómo sigue la vista temporal de Finanzas de Papá para el familiar (D24)?** Está decidida y especificada pero no construida (ni app, ni tabla `fin_vistas_solicitadas`, ni aviso). Hoy el familiar no ve dinero de Papá: es el estado seguro. ¿La hacemos en la Fase 5 o después?
 2. **¿Aceptas que Alimentación se quede con datos de ejemplo** y sin guardar hasta que haya tablas en el servidor, o prefieres que se oculte con sesión real? (F4-A6)
-3. **¿La cuidadora debe ver el menú de Papá ya, desde su navegación, o esperamos a Cuidados (Fase 5)?** (F4-A5)
+3. ~~**¿La cuidadora debe ver el menú de Papá ya, desde su navegación, o esperamos a Cuidados (Fase 5)?** (F4-A5)~~ **Respondida (21/nov/2026): dentro de Cuidados, solo lectura (opción B).**
 4. **¿Te parece bien que el perfil de Papá esté escrito en el código** o prefieres que solo viva en la base, con el servidor? (F4-A7)
 5. **Apagar el bloqueo de capturas en Windows:** hoy se apaga con un toque en *Ajustes › Privacidad* sin pedir PIN (D22 lo deja editable). ¿Quieres que pida el PIN para apagarlo? En Android no se puede apagar.
 6. **Mediciones:** ¿qué día me das el Galaxy A52 y la laptop? Antes necesito que plataforma deje el medidor de arranque y la hoja de pasos.
@@ -203,7 +204,7 @@ La hoja de medición de 15 minutos por equipo que prometió la sección 16 (y el
 |---|---|---|
 | F4-A1 (menú de Papá sin protección de capturas) | **Abierto** | plataforma |
 | F4-A2 / F4-A3 (matriz de permisos sin D23) | **Abierto** | arquitecto, backend, plataforma |
-| F4-A5 (cuidadora sin camino al menú de Papá) | **Abierto** | arquitecto, plataforma |
+| F4-A5 (cuidadora sin camino al menú de Papá) | **Cerrado** (21/nov/2026, opción B: dentro de Cuidados, solo lectura) | plataforma |
 | F4-A6 (datos de ejemplo con sesión real en Alimentación) | **Abierto** | alimentacion |
 | F4-S1 (límite de intentos en cambiar PIN y montos) | **Abierto** | plataforma |
 | F4-A4, F4-I1, F4-X1, F4-M1, F4-D1, F4-W1, F4-A7, F4-H1 | **Abierto** (menores) | ver sección 5 |

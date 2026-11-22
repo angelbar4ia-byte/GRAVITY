@@ -30,9 +30,10 @@
 ///    vuelve a entrar con su PIN, el sobre se abre, la credencial vuelve al
 ///    sobre del PIN y el permiso se borra ([BandejaDeSalida.tomarParaEntrada]).
 /// 4. El permiso **caduca a los 7 días** de haberse creado: la credencial en
-///    claro se borra, lo pendiente pasa a "requiere atención" con aviso y la
-///    persona tendrá que volver a agregarse a la tablet con su correo y su
-///    contraseña.
+///    claro se borra, su sesión se cierra en el servidor (con señal; sin ella, a
+///    la primera ronda con señal, ver B4 abajo), lo pendiente pasa a "requiere
+///    atención" con aviso y la persona tendrá que volver a agregarse a la
+///    tablet con su correo y su contraseña.
 ///
 /// Un candado por persona ([BandejaDeSalida.adquirir]) evita que la subida sin
 /// PIN y la entrada con PIN usen la credencial a la vez.
@@ -42,8 +43,9 @@
 /// - **Mientras hay algo por subir** (hasta 7 días), la credencial de la
 ///   persona está en el almacenamiento seguro del dispositivo **sin el PIN**.
 ///   Quien extraiga ese almacenamiento (equipo con root) podría actuar como esa
-///   persona hasta que la sesión caduque o se revoque. Es lo que el dueño
-///   aceptó; por eso solo existe mientras hay algo por subir y caduca.
+///   persona hasta que la sesión caduque o se revoque (al caducar, B4, la sesión
+///   se cierra también en el servidor). Es lo que el dueño aceptó; por eso solo
+///   existe mientras hay algo por subir y caduca.
 /// - Una sesión de Supabase da **todo** lo que la persona puede, no solo
 ///   "subir su bandeja" (ver "Qué haría falta del servidor", abajo).
 /// - Si la app se cierra justo después de que el servidor renovó el refresh
@@ -72,21 +74,38 @@
 ///   ([BandejaDeSalida.descartarPermiso]): su credencial es de otra cadena de
 ///   renovación y no debe pisar la nueva. Lo que tenía por subir se conserva.
 ///
-/// ## Pendiente: B4, cerrar la sesión en el servidor al caducar o descartar
+/// ## B4 (corregido): cerrar la sesión en el servidor al caducar o descartar
 ///
 /// Caducar un permiso (a los 7 días), descartarlo o quitar a la persona borra la
-/// copia local de su credencial, pero **no cierra la sesión en el servidor**: el
-/// refresh token de Supabase no caduca por tiempo en el plan gratis, así que una
-/// copia sacada del equipo antes sigue sirviendo hasta que alguien cierre la
-/// sesión o cambie la contraseña. "7 días" es, por ahora, un plazo de la
-/// tablet, no del servidor. Se deja para la bandeja acotada (abajo), que lo
-/// resuelve de raíz con un permiso que vence y se revoca en el servidor. Si
-/// antes se quisiera una mitigación solo de la app, haría falta, con señal, abrir
-/// una sesión aparte con la credencial justo antes de borrarla y llamar a
-/// `auth.signOut()` (revoca esa sesión en el servidor); sin señal no hay cómo, y
-/// la caducidad usa el reloj del dispositivo (atrasarlo la alarga). Prueba
-/// pendiente: `f1b_bandeja_hallazgos_test.dart`, "al caducar el permiso se
-/// revoca también la sesión en el servidor" (sigue con la etiqueta `hallazgo`).
+/// copia local de su credencial. Antes eso **no cerraba la sesión en el
+/// servidor**: el refresh token de Supabase no caduca por tiempo en el plan
+/// gratis, así que una copia sacada del equipo seguía sirviendo hasta que
+/// alguien cerrara la sesión o cambiara la contraseña. Ahora:
+///
+/// - [BandejaDeSalida.retirar] (lo que usan `caducar`, `descartarPermiso` y
+///   [SalidaSinPinConSesiones.descartar]) **anota una orden de revocar**
+///   (`revocaciones_pendientes.dart`) y solo entonces borra el permiso. La orden
+///   es un registro **aparte**: no depende de la copia que se acaba de borrar, y
+///   guarda **lo mínimo** (el refresh token, el id de la persona y la fecha).
+/// - En cada ronda de la cola, con señal, [SalidaSinPinConSesiones.revocarPendientes]
+///   abre esa sesión una última vez y la cierra (`POST /auth/v1/logout`, alcance
+///   **local**: solo esa sesión; no toca la del equipo, la de quien esté dentro
+///   ni las otras de la misma persona) y **borra la orden**. Sin señal no se
+///   bloquea nada: el permiso caduca igual y la orden espera (un intento por
+///   minuto, cada uno con tiempo máximo de 10 s).
+/// - La orden se borra cuando el servidor cierra la sesión **o dice que ya no la
+///   conoce** (refresh token no encontrado o ya usado: alguien lo usó y el
+///   servidor revocó la familia, o ya estaba cerrada). Si la red no vuelve en 30
+///   días se abandona y se borra: no se deja un secreto en el equipo para
+///   siempre.
+///
+/// Límites que siguen: la caducidad usa el reloj del dispositivo (atrasarlo la
+/// alarga); un permiso **sellado** (`devuelto`) no se puede revocar sin el PIN
+/// de la persona (su credencial está sellada; si se descarta, esa sesión del
+/// servidor se queda sin cerrar); y entrar con el PIN **no** revoca (la
+/// credencial vuelve a la persona). Pruebas:
+/// `test/nucleo/cola/revocar_sesion_test.dart` y
+/// `test/revision_calidad/f1b_bandeja_hallazgos_test.dart` (B4).
 ///
 /// ## Qué haría falta del servidor para un permiso de subida acotado
 ///

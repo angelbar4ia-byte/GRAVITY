@@ -293,52 +293,58 @@ class _ConfigurarEstado extends ConsumerState<_Configurar> {
   }
 }
 
+/// Anota un consumo de [t] en un toque, con *Deshacer*. Lo usan Reservado y el
+/// registro rápido del (+) (`hoja_registro.dart`): una sola lógica (regla 39).
+/// Si el hábito aún no está configurado o falta la llave, lo avisa sin escribir.
+Future<void> anotarConsumo(
+  BuildContext context,
+  WidgetRef ref,
+  TipoHabito t,
+) async {
+  // El contenedor (y no `ref`) sigue vivo si la hoja que lo llamó ya se cerró
+  // cuando se toca *Deshacer*.
+  final contenedor = ProviderScope.containerOf(context, listen: false);
+  final s = ref.read(servicioEliminarProvider);
+  final messenger = ScaffoldMessenger.of(context);
+  String? aviso;
+  String? id;
+  try {
+    if (s == null || await s.config(t) == null) {
+      aviso =
+          'Primero configura ${nombreHabito(t).toLowerCase()}: toca su nombre.';
+    } else {
+      id = await s.registrarConsumo(
+        t,
+        categoria: t == TipoHabito.azucar ? 'refresco' : null,
+      );
+    }
+  } catch (_) {
+    aviso = 'No pudimos anotar: falta la llave en este equipo.';
+  }
+  contenedor.read(versionHabitosProvider.notifier).state++;
+  messenger
+    ..clearSnackBars()
+    ..showSnackBar(
+      SnackBar(
+        content: Text(aviso ?? 'Anotado'),
+        action: id == null
+            ? null
+            : SnackBarAction(
+                label: 'Deshacer',
+                onPressed: () async {
+                  await s!.deshacerConsumo(id!);
+                  contenedor.read(versionHabitosProvider.notifier).state++;
+                },
+              ),
+      ),
+    );
+}
+
 /// Entrada a lo reservado: aquí sí aparecen los nombres, detrás de la puerta.
 /// Cada hábito trae un (+) que registra un consumo con **un toque** (Hoy →
 /// Reservado → (+) son 2 toques, con el PIN aparte) y *Deshacer*.
 class PantallaReservado extends ConsumerWidget {
   const PantallaReservado({super.key});
-
-  Future<void> _anotar(
-    BuildContext context,
-    WidgetRef ref,
-    TipoHabito t,
-  ) async {
-    final s = ref.read(servicioEliminarProvider);
-    final messenger = ScaffoldMessenger.of(context);
-    String? aviso;
-    String? id;
-    try {
-      if (s == null || await s.config(t) == null) {
-        aviso =
-            'Primero configura ${nombreHabito(t).toLowerCase()}: toca su nombre.';
-      } else {
-        id = await s.registrarConsumo(
-          t,
-          categoria: t == TipoHabito.azucar ? 'refresco' : null,
-        );
-      }
-    } catch (_) {
-      aviso = 'No pudimos anotar: falta la llave en este equipo.';
-    }
-    ref.read(versionHabitosProvider.notifier).state++;
-    messenger
-      ..clearSnackBars()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(aviso ?? 'Anotado'),
-          action: id == null
-              ? null
-              : SnackBarAction(
-                  label: 'Deshacer',
-                  onPressed: () async {
-                    await s!.deshacerConsumo(id!);
-                    ref.read(versionHabitosProvider.notifier).state++;
-                  },
-                ),
-        ),
-      );
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) => dis.TemaModulo(
@@ -362,7 +368,7 @@ class PantallaReservado extends ConsumerWidget {
                     IconButton(
                       tooltip: 'Anotar ${nombreHabito(t).toLowerCase()}',
                       icon: const Icon(Icons.add_circle_outline),
-                      onPressed: () => _anotar(context, ref, t),
+                      onPressed: () => anotarConsumo(context, ref, t),
                     ),
                     const Icon(Icons.chevron_right),
                   ],

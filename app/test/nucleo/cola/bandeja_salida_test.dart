@@ -10,6 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:gravity/nucleo/base_local/base_local.dart';
 import 'package:gravity/nucleo/cola/bandeja_salida.dart';
 import 'package:gravity/nucleo/cola/cola_sin_conexion.dart';
+import 'package:gravity/nucleo/cola/revocaciones_pendientes.dart';
 import 'package:gravity/nucleo/contratos/roles.dart';
 import 'package:gravity/nucleo/seguridad/almacen_seguro.dart';
 import 'package:gravity/nucleo/seguridad/cifrado.dart';
@@ -505,9 +506,20 @@ void main() {
       expect(registro.ultimoError, motivoBandejaCaducada);
       expect(await bandeja.leer(dueno.persona.id), isNull);
       expect(
-        almacen.datos.keys.where((k) => k.startsWith('bandeja.')),
+        almacen.datos.keys.where(
+          (k) => k.startsWith(BandejaDeSalida.prefijo),
+        ),
         isEmpty,
+        reason: 'ni permiso ni credencial en claro',
       );
+      // B4: sin señal la sesión sigue viva en el servidor; lo único que queda
+      // es la orden de cerrarla (solo lo mínimo, aparte del permiso), que se
+      // cumple en la primera ronda con señal (revocar_sesion_test.dart).
+      expect(
+        almacen.datos.keys.where((k) => k.startsWith('bandeja.')),
+        everyElement(startsWith(RevocacionesPendientes.prefijo)),
+      );
+      expect(await bandeja.revocaciones.todas(), hasLength(1));
       // La persona lo ve en "Por revisar"; los demás, no (D5).
       expect(
         await cola.requierenAtencion(personaId: dueno.persona.id),

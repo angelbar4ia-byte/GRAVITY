@@ -57,6 +57,11 @@ const plazoParaRevocar = Duration(days: 30);
 /// atorar la ronda de la cola (B3).
 const tiempoMaximoDeRevocar = Duration(seconds: 10);
 
+/// Cuánto se espera, tras un intento sin respuesta, para volver a intentar: con
+/// la red caída cada intento puede tardar hasta [tiempoMaximoDeRevocar] y la
+/// cola corre seguido.
+const esperaEntreIntentosDeRevocar = Duration(minutes: 1);
+
 /// Cómo se cierra una sesión en el servidor (`SesionesPorPersona.revocarSesion`).
 typedef RevocadorDeSesion = Future<ResultadoRevocacion> Function(
   String credencial, {
@@ -158,6 +163,7 @@ class RevocacionesPendientes {
     this._almacen, {
     DateTime Function()? reloj,
     this.plazo = plazoParaRevocar,
+    this.espera = esperaEntreIntentosDeRevocar,
   }) : _reloj = reloj ?? DateTime.now;
 
   static const prefijo = 'bandeja.revocar.';
@@ -165,6 +171,11 @@ class RevocacionesPendientes {
   final AlmacenSeguro _almacen;
   final DateTime Function() _reloj;
   final Duration plazo;
+  final Duration espera;
+
+  /// Hasta cuándo no se vuelve a intentar tras un intento sin respuesta (solo
+  /// en memoria: al reiniciar la app se intenta de inmediato).
+  DateTime? _noAntesDe;
 
   static String _huella(String credencial) =>
       sha256.convert(utf8.encode(credencial)).toString().substring(0, 16);
@@ -181,6 +192,8 @@ class RevocacionesPendientes {
     final minima = credencialMinima(credencial);
     final id = _huella(minima);
     final clave = _clave(personaId, id);
+    // Una orden nueva merece intentarse en la siguiente ronda.
+    _noAntesDe = null;
     if (await _almacen.leer(clave) != null) return;
     await _almacen.escribir(
       clave,
@@ -258,6 +271,13 @@ class RevocacionesPendientes {
     var abandonadas = 0;
     var pendientes = 0;
     var sinRed = false;
+    var fallo = false;
+    final hastaCuando = _noAntesDe;
+    if (hastaCuando != null && _reloj().isBefore(hastaCuando)) {
+      // Hace poco no hubo respuesta: no se vuelve a esperar a la red todavía.
+      // (Las vencidas se revisan igual, abajo.)
+      sinRed = true;
+    }
     for (final orden in await todas()) {
       if (orden.vencidaEn(_reloj(), plazo)) {
         // No se guarda un secreto para siempre.
@@ -304,7 +324,13 @@ class RevocacionesPendientes {
       } else {
         pendientes++;
         sinRed = true;
+        fallo = true;
       }
+    }
+    if (fallo) {
+      _noAntesDe = _reloj().add(espera);
+    } else if (pendientes == 0) {
+      _noAntesDe = null;
     }
     return ResumenRevocacion(
       cerradas: cerradas,

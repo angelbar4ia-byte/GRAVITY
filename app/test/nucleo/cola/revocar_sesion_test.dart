@@ -121,14 +121,21 @@ void main() {
 
       var resumen = await ordenes.ejecutar(sinSenal);
       expect((resumen.cerradas, resumen.pendientes), (0, 1));
+      // Tras un intento sin respuesta espera un poco antes de volver a pedirle
+      // algo a una red caída.
+      resumen = await ordenes.ejecutar(sinSenal);
+      expect((intentos, resumen.pendientes), (1, 1));
+      ahora = ahora.add(esperaEntreIntentosDeRevocar);
       resumen = await ordenes.ejecutar(sinSenal);
       expect((intentos, resumen.pendientes), (2, 1));
       expect(await ordenes.todas(), hasLength(1));
 
+      ahora = ahora.add(esperaEntreIntentosDeRevocar);
       resumen = await ordenes.ejecutar(
         (c, {required alRenovar}) async => ResultadoRevocacion.cerrada,
       );
-      expect((resumen.cerradas, await ordenes.todas()), (1, isEmpty));
+      expect(resumen.cerradas, 1);
+      expect(await ordenes.todas(), isEmpty);
     });
 
     test('una red que no contesta no atora: tiempo máximo y las demás esperan', () async {
@@ -140,6 +147,13 @@ void main() {
         return Completer<ResultadoRevocacion>().future; // nunca contesta
       }, tiempoMaximo: const Duration(milliseconds: 50));
       expect(intentos, 1, reason: 'tras un tiempo agotado no insiste en la ronda');
+      expect(
+        (await ordenes.ejecutar(
+          (c, {required alRenovar}) async => ResultadoRevocacion.cerrada,
+        )).cerradas,
+        0,
+        reason: 'ni en el minuto siguiente',
+      );
       expect((resumen.cerradas, resumen.pendientes), (0, 2));
       expect(await ordenes.todas(), hasLength(2));
     });
@@ -346,6 +360,7 @@ void main() {
       // Vuelve la señal: la siguiente ronda cierra la sesión.
       servicio.sinConexion = false;
       servidor.conSenal = true;
+      ahora = ahora.add(esperaEntreIntentosDeRevocar);
       await cola.procesar();
       expect(servicio.credencialesRevocadas, [
         ServicioSesionFalso.credencialDe(dueno),
@@ -409,8 +424,15 @@ void main() {
       expect(servicio.credencialesRevocadas, [
         ServicioSesionFalso.credencialDe(dueno),
       ]);
-      final vigente = await bandeja.leer(pareja.persona.id);
-      expect(vigente?.credencial, isNotNull, reason: 'la de la pareja sigue');
+      expect(
+        await bandeja.leer(pareja.persona.id),
+        isNotNull,
+        reason: 'el permiso de la pareja no caducó: sigue (sellado, sin nada por subir)',
+      );
+      expect(
+        [for (final o in await bandeja.revocaciones.todas()) o.personaId],
+        isEmpty,
+      );
     });
 
     test('un permiso que se sube y se sella con normalidad no genera órdenes', () async {
@@ -478,6 +500,11 @@ void main() {
 
     tearDown(() async {
       debugPrint = impresoOriginal;
+      // Nunca se imprime ni se registra un token, pase lo que pase en la prueba.
+      final todo = impresos.join('\n');
+      expect(todo, isNot(contains(secreto)));
+      expect(todo, isNot(contains('renovado-')));
+      expect(todo, isNot(contains('eyJ')), reason: 'ningún JWT');
       await servicio.cerrar();
       await equipo.dispose();
       await gotrue.cerrar();
@@ -555,11 +582,6 @@ void main() {
         await servicio.revocarSesion(credencialDelDueno, alRenovar: (_) {}),
         ResultadoRevocacion.reintentar,
       );
-      gotrue.estadoFijoAlRenovar = 503;
-      expect(
-        await servicio.revocarSesion(credencialDelDueno, alRenovar: (_) {}),
-        ResultadoRevocacion.reintentar,
-      );
       expect(gotrue.cierres, isEmpty);
     });
 
@@ -603,22 +625,6 @@ void main() {
       expect(gotrue.rutas, isEmpty);
     });
 
-    test('nunca imprime ni registra tokens', () async {
-      gotrue.estadoFijoAlCerrar = 500;
-      await servicio.revocarSesion(credencialDelDueno, alRenovar: (_) {});
-      gotrue.estadoFijoAlCerrar = null;
-      gotrue.estadoFijoAlRenovar = 429;
-      await servicio.revocarSesion(credencialDelDueno, alRenovar: (_) {});
-      gotrue.estadoFijoAlRenovar = null;
-      gotrue.sinRespuesta = true;
-      await servicio.revocarSesion(credencialDelDueno, alRenovar: (_) {});
-
-      final todo = impresos.join('\n');
-      expect(todo, isNot(contains(secreto)));
-      expect(todo, isNot(contains('renovado-')));
-      expect(todo, isNot(contains('eyJ')), reason: 'ningún JWT');
-    });
-
     test('de punta a punta: sin señal caduca, queda la orden; con señal se cierra una vez', () async {
       final base = BaseLocal.enMemoria();
       addTearDown(base.close);
@@ -658,6 +664,7 @@ void main() {
       );
 
       gotrue.sinRespuesta = false;
+      ahora = ahora.add(esperaEntreIntentosDeRevocar);
       await cola.procesar();
       expect(gotrue.cierres, [(scope: 'local', usuario: uidDueno)]);
       expect(await bandeja.revocaciones.todas(), isEmpty);

@@ -50,3 +50,14 @@ Solo recordatorios genéricos, pasos de receta y la lista de compras. `FiltroBoc
 
 - ¿Aprueba los nombres propuestos de las herramientas de alimentación?
 - ¿"Qué toca hoy" (que aparece en D6) queda fuera de esta primera tanda? Se dejó fuera por no estar en la lista aprobada.
+
+## 7. Pantalla del módulo Casa en la app (F8-7.1, 22/nov/2026)
+
+La ruta `/casa` ya no dice "Próximamente": `app/lib/modulos/casa/pantallas/pantalla_casa.dart` (laptop y tablet; solo lectura).
+
+- **Estado del puente.** Por omisión muestra *"Aún no hay puente configurado"* y, en "Cómo configurarlo", los pasos de la sección 4 (sin precios ni direcciones). La app **no habla con Home Assistant**: el token vive en el equipo del puente (sección 4, paso 6) y la pantalla nunca lo pide ni lo muestra (no tiene campos de texto). El estado sale de una interfaz, `FuentePuente` (`estado/estado_puente.dart`), con dos implementaciones: `FuentePuenteNoConfigurada` (la de siempre) y `FuentePuenteEnMemoria` (pruebas). Los estados son *no configurado*, *no responde* y *conectado* (con la hora de la última respuesta).
+- **Frases fijas.** Lista las cinco frases de `frasesFijas` con lo que hace cada una (la descripción de su herramienta en `alimentacion_voz.dart`) y quién puede usarla. No deja escribir una frase libre ni mandar texto a la bocina (D6).
+- **Nota de límites.** Repite que por las bocinas nunca hay dinero ni datos clínicos y qué descarta `FiltroBocina` (cifras, dinero, términos de salud, nombres, enlaces, más de 280 caracteres).
+- **Quién la abre.** La matriz de `Modulo.casa`: dueño, pareja, familiar (lectura) y la cuenta Casa de la tablet. La cuidadora entra a Cuidados, no a Casa.
+- **Pendiente (pregunta 1 para el dueño y el arquitecto).** Falta definir **cómo reporta su estado el puente a la app** (un latido hacia Supabase con la cuenta Casa, por ejemplo). Mientras no exista, la fuente real no se puede escribir sin inventar comportamiento; cuando exista, solo hay que cambiar `fuentePuenteProvider`.
+- Corrección a la sección 2: las cinco herramientas de alimentación **ya existen** en el registro (`app/lib/nucleo/herramientas/alimentacion_voz.dart`).

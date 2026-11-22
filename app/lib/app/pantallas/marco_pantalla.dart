@@ -14,6 +14,7 @@ import '../../nucleo/permisos/permisos.dart';
 import '../../nucleo/sesion/proveedores_sesion.dart';
 import '../../nucleo/tablet/controlador_tablet.dart';
 import '../dispositivo.dart';
+import '../pantallas_externas.dart' show abrirConversacionGravity;
 import '../sesion_efectiva.dart';
 
 class MarcoPantalla extends ConsumerWidget {
@@ -65,8 +66,9 @@ class MarcoPantalla extends ConsumerWidget {
   }
 }
 
-/// GRAVITY en el teléfono: un botón de micrófono arriba (D12). La voz llega
-/// en la Fase 6. No aparece para quien no conversa con GRAVITY (la
+/// GRAVITY en el teléfono y la tablet: un botón arriba (D12) que abre la
+/// conversación por texto. La voz (hablar y que te conteste) todavía no
+/// existe. No aparece para quien no conversa con GRAVITY (la
 /// cuidadora solo confirma sus solicitudes, D18).
 class BotonMicrofono extends ConsumerWidget {
   const BotonMicrofono({super.key});
@@ -80,9 +82,7 @@ class BotonMicrofono extends ConsumerWidget {
     return IconButton(
       icon: const Icon(Icons.mic_none),
       tooltip: 'Hablar con GRAVITY',
-      onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Hablar con GRAVITY llega en la Fase 6.')),
-      ),
+      onPressed: () => abrirConversacionGravity(context),
     );
   }
 }

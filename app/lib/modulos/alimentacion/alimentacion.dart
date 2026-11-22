@@ -6,6 +6,11 @@
 /// `compras`, `importar-recetas`, `plan`). Precios en centavos, sin datos
 /// clínicos, sin IA. Contrato del servidor:
 /// `docs/specs/fase-4-alimentacion.md`, sección 6.
+///
+/// Para otros módulos expone, con la menor superficie, el menú de Papá en solo
+/// lectura ([MenuDePapaSoloLectura], lo usa Cuidados, D23) y la tarjeta del día
+/// para Casa ([TarjetaMenuDelDiaPapa]); el perfil clínico sigue pintándose solo
+/// desde aquí (D3).
 library;
 
 import 'package:flutter/material.dart';
@@ -23,6 +28,7 @@ export 'estado/proveedores.dart'
         menuDelDiaPapaProvider,
         servicioAlimentacionProvider;
 
+export 'pantallas/menu.dart' show MenuDePapaSoloLectura;
 export 'pantallas/menu_del_dia_papa.dart' show TarjetaMenuDelDiaPapa;
 
 Page<void> Function(BuildContext, GoRouterState) _pagina(Widget Function() b) =>

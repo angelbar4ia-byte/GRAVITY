@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gravity/app/app_gravity.dart';
+import 'package:gravity/app/navegacion.dart' show TipoRegistro;
+import 'package:gravity/app/pantallas/registro_rapido.dart' show llaveRegistro;
 import 'package:gravity/app/router.dart';
 import 'package:gravity/nucleo/contratos/dispositivo.dart';
 import 'package:gravity/nucleo/contratos/roles.dart';
@@ -121,10 +123,14 @@ void main() {
       expect(find.text('SOS: tengo un antojo'), findsOneWidget);
       await tester.tap(find.text('SOS: tengo un antojo'));
       await tester.pumpAndSettle();
-      expect(
-        find.text('SOS: tengo un antojo: llega en la Fase 3.'),
-        findsOneWidget,
-      );
+      // F8-7.1: el SOS ya abre su hoja (detrás de la puerta reservada, que
+      // pide el PIN); ya no promete una fase.
+      expect(find.byKey(llaveRegistro(TipoRegistro.sos)), findsOneWidget);
+      expect(find.byKey(const ValueKey('reservado-pide-pin')), findsOneWidget);
+      expect(find.textContaining('llega en la Fase'), findsNothing);
+      // Cierra la hoja (toque fuera) para seguir con la barra.
+      await tester.tapAt(const Offset(200, 20));
+      await tester.pumpAndSettle();
 
       await tester.tap(pestana('Más'));
       await tester.pumpAndSettle();

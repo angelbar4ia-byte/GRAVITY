@@ -61,7 +61,9 @@ void main() {
     }
     expect(find.text('¿Quién usa la tablet?'), findsOneWidget);
     expect(find.text(nombreDueno), findsOneWidget);
-    expect(find.text('Mantén para hablar'), findsOneWidget);
+    // F8-7.1: la voz todavía no existe; el botón es honesto (texto).
+    expect(find.text('Escribir a GRAVITY'), findsOneWidget);
+    expect(find.text('Mantén para hablar'), findsNothing);
     revisarSinDinero(tester);
 
     await tester.tap(find.text('Cocina'));

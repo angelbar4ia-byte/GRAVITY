@@ -296,20 +296,54 @@ void main() {
     }, tags: 'hallazgo');
 
     // F4-A5 (IMPORTANTE, integración) · D23 y la spec 4 piden que la cuidadora
-    // vea el menú de Papá. Con el espejo actual ("desde Cuidados", sin acceso
-    // directo) el router la manda a /cuidados y no hay otra puerta: el menú
-    // solo se ve montando la pantalla suelta. Depende de la Fase 5 (Cuidados)
-    // o de abrir la ruta solo para ella.
-    test('F4-A5: la cuidadora puede llegar a /alimentacion para ver el menú de Papá', () {
+    // vea el menú de Papá. Decisión del dueño (21/nov/2026, opción B): lo ve
+    // DENTRO de Cuidados, en solo lectura; la ruta /alimentacion no se abre
+    // para ella (el espejo dice "desde Cuidados", `accesoDirecto: false`) y
+    // sigue mandándola a /cuidados. Antes del cambio no había otra puerta: el
+    // menú solo se veía montando la pantalla suelta. Pruebas de la vista, de su
+    // solo lectura y de la navegación: test/modulos/cuidados/menu_papa_test.dart.
+    test('F4-A5: la cuidadora llega al menú de Papá desde Cuidados y /alimentacion sigue mandándola a Cuidados', () {
+      // /alimentacion no se abre para ella: vuelve a su inicio, Cuidados.
       expect(
         calcularRedireccion(
           ubicacion: Rutas.alimentacion,
           rol: Rol.cuidador,
           dispositivo: TipoDispositivo.telefono,
         ),
+        Rutas.cuidados,
+      );
+      expect(puedeAbrir(Rol.cuidador, Modulo.alimentacion), isFalse);
+      expect(
+        destinosDe(Rol.cuidador).any((d) => d.modulo == Modulo.alimentacion),
+        isFalse,
+        reason: 'Alimentación no es una pestaña suya',
+      );
+      // El menú de Papá sí abre, bajo Cuidados, y es pantalla sensible (D3:
+      // lleva el perfil clínico) igual que el resto de Cuidados.
+      const menuEnCuidados = '${Rutas.cuidados}/menu-papa';
+      expect(
+        calcularRedireccion(
+          ubicacion: menuEnCuidados,
+          rol: Rol.cuidador,
+          dispositivo: TipoDispositivo.telefono,
+        ),
         isNull,
       );
-    }, tags: 'hallazgo');
+      expect(esPantallaSensible(menuEnCuidados, Rol.cuidador), isTrue);
+      // El servicio la deja ver el menú de Papá y no editarlo (D23).
+      final cuidadora = _servicio(Rol.cuidador);
+      expect(cuidadora.menusVisibles, [MenuId.papa]);
+      expect(cuidadora.puedeEditarMenuDe(MenuId.papa), isFalse);
+      // Casa no abre Alimentación ni el menú de Papá en Cuidados.
+      expect(
+        calcularRedireccion(
+          ubicacion: Rutas.alimentacion,
+          rol: Rol.casa,
+          dispositivo: TipoDispositivo.tablet,
+        ),
+        isNotNull,
+      );
+    });
 
     // F4-A6 (IMPORTANTE) · I9 de la Fase 1 ("con sesión real no hay cifras de
     // ejemplo") no se aplicó a Alimentación: `repositorioAlimentacionProvider`

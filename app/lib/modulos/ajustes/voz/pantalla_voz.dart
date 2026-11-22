@@ -14,8 +14,10 @@ class PantallaVoz extends StatelessWidget {
     seccion: SeccionAjustes.voz,
     hijos: [
       NotaAjustes(
-        'La voz de GRAVITY llega en la Fase 6. Podrás elegir la voz y si '
-        'responde hablando.',
+        'La voz todavía no está disponible; mientras tanto puedes escribirle a '
+        'GRAVITY. En el teléfono Android también puedes dictar el mensaje con '
+        'el micrófono del cuadro de conversación. Cuando GRAVITY pueda '
+        'contestar hablando, aquí elegirás la voz.',
         icono: Icons.record_voice_over_outlined,
       ),
       NotaAjustes(

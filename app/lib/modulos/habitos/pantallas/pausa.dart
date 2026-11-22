@@ -15,7 +15,12 @@ import '../casos_uso/servicio_eliminar.dart';
 import '../estado/proveedores.dart';
 
 class PantallaPausa extends ConsumerStatefulWidget {
-  const PantallaPausa({super.key});
+  const PantallaPausa({super.key, this.alTerminar});
+
+  /// Qué hacer al terminar. Por omisión vuelve a Hoy de Hábitos (ruta); el
+  /// registro rápido del (+) lo abre en una hoja y aquí la cierra.
+  final VoidCallback? alTerminar;
+
   @override
   ConsumerState<PantallaPausa> createState() => _PantallaPausaEstado();
 }
@@ -151,7 +156,13 @@ class _PantallaPausaEstado extends ConsumerState<PantallaPausa> {
         'Listo',
         () async {
           await _guardar();
-          if (context.mounted) context.go(Rutas.habitos);
+          if (!context.mounted) return;
+          final terminar = widget.alTerminar;
+          if (terminar != null) {
+            terminar();
+          } else {
+            context.go(Rutas.habitos);
+          }
         },
       ),
     };

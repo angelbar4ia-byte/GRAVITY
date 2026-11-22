@@ -30,6 +30,9 @@ import '../nucleo/cola/enviador_supabase.dart';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
 
+import '../modulos/gravity/conversacion/cliente_asistente.dart';
+import '../modulos/gravity/conversacion/conversacion.dart'
+    show clienteAsistenteProvider;
 import '../nucleo/avisos/fuente_push.dart';
 import '../nucleo/avisos/notificador_plugin.dart';
 import '../nucleo/avisos/proveedores_avisos.dart';
@@ -183,6 +186,7 @@ Future<List<Override>> prepararArranque({
   RepositorioInvitaciones? invitaciones;
   RepositorioPersonasHogar? personasDelHogar;
   Override? salidaSinPin;
+  Override? clienteAsistente;
   RepositorioAvisos? avisos;
   if (await supabaseListo) {
     try {
@@ -194,6 +198,12 @@ Future<List<Override>> prepararArranque({
         limpieza: limpieza,
       );
       sesion = servicio;
+      // La conversación con GRAVITY pregunta con la sesión de quien está en
+      // pantalla (en la tablet, la de quien entró con su PIN): el servidor
+      // decide el rol con esa sesión y la cuenta Casa no conversa (D5).
+      clienteAsistente = clienteAsistenteProvider.overrideWithValue(
+        ClienteAsistenteSupabase(() => servicio.clienteActivo),
+      );
       // Avisos (Fase 2, D20): se leen con la sesión de quien está dentro.
       avisos = RepositorioAvisosSupabase(() => servicio.clienteActivo);
       // Invitaciones (cuenta maestra): con la sesión de quien está dentro.
@@ -280,6 +290,7 @@ Future<List<Override>> prepararArranque({
     if (personasDelHogar != null)
       repositorioPersonasHogarProvider.overrideWithValue(personasDelHogar),
     ?salidaSinPin,
+    ?clienteAsistente,
     // Avisos (Fase 2, D20): notificaciones del sistema en Android (teléfono y
     // tablets) y Windows (laptop, con la app abierta) y push solo en Android
     // con Firebase configurado. Sin servidor, todo queda en memoria.

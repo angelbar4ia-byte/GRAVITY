@@ -2,7 +2,8 @@
 // de salida sin PIN (D14, 23/oct/2026) puesta a prueba por un adversario.
 //
 // Las pruebas con la etiqueta `hallazgo` FALLAN HOY A PROPÓSITO y demuestran
-// un hallazgo; las demás son guardias que pasan y deben seguir pasando.
+// un hallazgo; las demás son guardias que pasan y deben seguir pasando. Ya no
+// queda ninguna con esa etiqueta en este archivo: B1 a B5 están corregidos.
 //
 //  B1  Cerrar la sesión de la tablet (Hogar) deja la credencial en claro de
 //      otras personas en el almacén, y como la caducidad solo corre con una
@@ -12,8 +13,11 @@
 //      pasa a "requiere atención".
 //  B3  Una subida que no termina (servidor que no contesta) retiene el candado
 //      de la persona para siempre: no puede entrar con su PIN, ni quitarla.
-//  B4  Caducar el permiso borra la copia local pero no revoca la sesión en el
-//      servidor: una copia robada sigue sirviendo.
+//  B4  Caducar el permiso borraba la copia local pero no revocaba la sesión en
+//      el servidor: una copia robada seguía sirviendo. Corregido: con señal se
+//      cierra esa sesión (alcance local) y sin señal queda una orden aparte
+//      (`revocaciones_pendientes.dart`); más pruebas de borde en
+//      `test/nucleo/cola/revocar_sesion_test.dart`.
 //  B5  Volver a agregar a una persona con un permiso en espera deja el permiso
 //      viejo, y al entrar pisa la credencial nueva con la vieja.
 import 'dart:async';
@@ -271,6 +275,7 @@ void main() {
         salida: SalidaSinPinConSesiones(
           bandeja: bandeja,
           abrir: servicio.abrirSesionAparte,
+          revocar: servicio.revocarSesion,
           enviadorDe: (aparte) =>
               EnviadorDeSesion(servidor, () => aparte.personaId),
         ),
@@ -290,13 +295,24 @@ void main() {
         gotrue.rutas,
         contains('POST /auth/v1/logout'),
         reason:
-            'caducar borra la copia local, pero la sesión del dueño sigue '
-            'viva en el servidor (los refresh tokens de Supabase no caducan '
-            'por tiempo en el plan gratis): quien se hubiera llevado una copia '
-            'en esos 7 días la conserva para siempre. Con señal, la app '
-            'debería cerrar esa sesión al caducar o al descartar el permiso',
+            'caducar borra la copia local y, con señal, cierra también la '
+            'sesión del dueño en el servidor (los refresh tokens de Supabase '
+            'no caducan por tiempo en el plan gratis): quien se hubiera '
+            'llevado una copia en esos 7 días ya no la puede usar',
       );
-    }, tags: ['hallazgo']);
+      expect(
+        gotrue.cierres,
+        [(scope: 'local', usuario: uidDueno)],
+        reason:
+            'solo esa sesión: alcance local, con el token del dueño (no el de '
+            'Casa), sin cerrar las otras sesiones del dueño',
+      );
+      expect(
+        await bandeja.revocaciones.todas(),
+        isEmpty,
+        reason: 'cumplida la orden, no queda ninguna credencial guardada',
+      );
+    });
   });
 
   // ---------------------------------------------------------------- B3

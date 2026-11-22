@@ -4,7 +4,8 @@
 ///
 /// - [rutasHabitos]: rutas **relativas** a `/habitos` (raíz = Hoy; `objetivos`,
 ///   `sos`, `reservado` y `eliminar/:tipo`; las tres últimas reservadas).
-/// - [hojaPausa]: el SOS como pantalla completa (atajo y botón del (+)).
+/// - [hojaPausa], [hojaHabito] y [hojaConsumo]: las tres opciones del (+)
+///   (SOS, hábito del día y consumo) en una hoja.
 /// - [servicioHabitosProvider], [hoyHabitosProvider] y
 ///   [repositorioHabitosProvider]: estado.
 /// - [consultaLocalHabitos]: texto discreto para `habitos.resumen_hoy`
@@ -26,6 +27,7 @@ import 'pantallas/agenda.dart';
 import 'pantallas/asistente.dart';
 import 'pantallas/eliminar.dart';
 import 'pantallas/espiritual.dart';
+import 'pantallas/hoja_registro.dart';
 import 'pantallas/hoy.dart';
 import 'pantallas/lector.dart';
 import 'pantallas/progreso.dart';
@@ -116,7 +118,22 @@ List<RouteBase> rutasHabitos() => [
   ),
 ];
 
-Widget hojaPausa() => const PantallaPausa();
+/// SOS "tengo un antojo" como pantalla completa dentro de la hoja del (+) o
+/// del diálogo de Ctrl + N: al terminar cierra esa hoja (no navega). Va detrás
+/// de la puerta reservada (PIN, sin capturas, nunca en la tablet pública).
+Widget hojaPausa() => Builder(
+  builder: (contexto) =>
+      PantallaPausa(alTerminar: () => Navigator.of(contexto).pop()),
+);
+
+/// Registro rápido de un hábito del día (botón (+)): lista lo de hoy con
+/// *Hecho* y *Deshacer*. Solo objetivos normales, nada sensible.
+Widget hojaHabito() => const HojaHabito();
+
+/// Registro rápido de un consumo (cigarrillo o refresco) en un toque con
+/// *Deshacer*. Reservado: detrás de la puerta (PIN o huella, FLAG_SECURE,
+/// oculto en modo privado, nunca en la tablet pública; D13 y D21).
+Widget hojaConsumo() => const HojaConsumo();
 
 /// Respuesta de `habitos.resumen_hoy` (solo lo no sensible).
 final consultaLocalHabitos = FutureProvider<String>(

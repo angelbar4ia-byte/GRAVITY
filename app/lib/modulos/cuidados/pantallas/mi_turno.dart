@@ -230,6 +230,12 @@ class _Accesos extends ConsumerWidget {
             icono: Icons.restaurant_outlined,
             onPressed: () => context.go('${Rutas.cuidados}/comidas'),
           ),
+          if (p.veMenuDePapa)
+            BotonGrande(
+              texto: 'Menú de Papá',
+              icono: Icons.restaurant_menu_outlined,
+              onPressed: () => context.go('${Rutas.cuidados}/menu-papa'),
+            ),
           if (p.veBitacora || p.veGastos)
             BotonGrande(
               texto: p.veBitacora ? 'Bitácora y gastos' : 'Gastos',

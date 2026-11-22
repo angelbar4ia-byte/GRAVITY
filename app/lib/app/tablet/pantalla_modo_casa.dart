@@ -17,23 +17,40 @@ import 'dialogo_agregar_persona.dart';
 import 'dialogo_pin.dart';
 import 'registro_tablet_casa.dart';
 
-/// Tarjetas de cada contexto (se llenan conforme entran los módulos).
+/// Tarjetas de cada contexto. Lo que la cuenta Casa todavía no puede mostrar
+/// (D3, D23: sin dinero, sin datos clínicos, sin Alimentación ni Hábitos) lo
+/// dice así, sin prometer una fase.
 const Map<String, List<(String, String)>> tarjetasPorContexto = {
   'general': [
-    ('Hoy en la casa', 'Lo del día de la casa; se llena con cada módulo.'),
+    ('Hoy en la casa', 'Aún no hay nada del día de la casa por mostrar.'),
     ('Avisos', 'Sin avisos por ahora.'),
-    (
-      'Turno de cuidados',
-      'Recordatorios genéricos, sin nombres ni medicamentos (Fase 5).',
-    ),
+    ('Turno de cuidados', 'Entra con tu PIN para ver tu turno.'),
   ],
   'cocina': [
-    ('Receta paso a paso', 'Con letra enorme y voz (Fase 7).'),
-    ('Lista de compras', 'Llega con Alimentación (Fase 7).'),
+    (
+      'Receta paso a paso',
+      'Todavía no se muestra en la tablet de la casa; búscala en Alimentación '
+          'con tu PIN.',
+    ),
+    (
+      'Lista de compras',
+      'Todavía no se muestra en la tablet de la casa; se usa en Alimentación '
+          'desde el teléfono.',
+    ),
   ],
-  'gimnasio': [('Serie y descanso', 'Llega con Hábitos (Fase 3).')],
+  'gimnasio': [
+    (
+      'Serie y descanso',
+      'Todavía no está en la tablet de la casa: Hábitos es personal y aquí '
+          'no se muestra.',
+    ),
+  ],
   'cuidados': [
-    ('Recordatorios del turno', 'Genéricos, sin datos clínicos (Fase 5).'),
+    (
+      'Recordatorios del turno',
+      'Todavía no se muestran aquí; sin nombres ni medicamentos cuando '
+          'lleguen.',
+    ),
     ('Mi turno', 'La cuidadora entra con su PIN para ver su turno.'),
   ],
 };
@@ -118,16 +135,10 @@ class PantallaModoCasa extends ConsumerWidget {
                   children: [
                     Expanded(
                       child: FilledButton.tonalIcon(
-                        onPressed: () => ScaffoldMessenger.of(context)
-                            .showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Hablar con GRAVITY llega en la Fase 6.',
-                                ),
-                              ),
-                            ),
-                        icon: const Icon(Icons.mic_none),
-                        label: const Text('Mantén para hablar'),
+                        key: const ValueKey('escribir-a-gravity'),
+                        onPressed: () => escribirAGravityEnTabletCasa(context),
+                        icon: const Icon(Icons.chat_bubble_outline),
+                        label: const Text('Escribir a GRAVITY'),
                       ),
                     ),
                     const SizedBox(width: 12),
