@@ -88,5 +88,5 @@ v1_1 (103) no lo pude confirmar, así que los `sid` del catálogo se fijan oyend
   dominio público como respaldo; se excluye lessac (`libritts_r`, `vctk`) hasta que una persona lea y decida.
 - **Pregunta 4, alojamiento:** copia propia con revisión fija y huella (Supabase Storage). Pendiente de hacer: crear el
   *bucket* público de solo lectura y subir los archivos de `verificadas.json` que se elijan, con
-  `supabase/scripts/verificar-voces.sh` para comprobar las huellas después de subirlos. Peso estimado: unos 255 MB las
+  `supabase/scripts/preparar-voces.sh` (descarga, verifica y deja la carpeta lista para arrastrar) y `supabase/scripts/verificar-voces.sh` (comprueba lo ya subido contra el catálogo, lexicón incluido). Peso estimado: unos 255 MB las
   cuatro voces de dominio público y unos 180 MB Kokoro (dentro del 1 GB de D7, que se comparte con las fotos).
