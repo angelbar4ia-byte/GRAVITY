@@ -994,3 +994,17 @@ El dueño respondió «Comienza la construcción de gimnasio» (23/nov/2026) tra
 - **Pregunta 3:** pendiente del dueño; no bloquea (G3 hace que funcione con la tablet pública y con una personal).
 - **Fuera de alcance de esta construcción (no se agrega ningún paquete):** mantener la pantalla encendida (H-14) queda **sin hacer** hasta que `plataforma` lo evalúe y el dueño apruebe el paquete o el canal nativo.
 - **Orden:** G1, G2 y G4 en paralelo; después G3 y G5; G7 cuando exista G2; G6 al final (sección 12).
+
+
+## 21. Estado de la construcción (23/nov/2026)
+
+**G1 (dominio), G2 (servidor) y G4 (diseño) hechos en lo técnico y verificados por el arquitecto**; G3 (plataforma), G5 (app), G6 (calidad) y G7 (asistente) sin hacer. Pruebas: `habitos_dominio` 228 (44 anteriores + 184), SQL 5169 afirmaciones (354 nuevas, migración `20261152`, pruebas 122 a 127), app 3990 (1295 en diseño y calidad). Nada probado en un aparato ni contra un Supabase real.
+
+**Interpretaciones del agente de G1 que el dueño debe conocer** (informe de G1, vetables):
+1. **Mover C al jueves NO resuelve la bicicleta del sábado:** con C el jueves a las 19:15 y la ruta el sábado a las 8:00 hay 36 h 45 min, menos de las 47 h de la regla; el aviso sigue (con C el viernes eran 12 h, ahora son 36). La pregunta 4 mejora el intervalo, no lo cierra; opciones: C corta, dejarlo, o la ruta más tarde.
+2. Los tiempos de 5.5 se **truncan** a una décima (63.15 → 63.1); los extras de la sesión larga usan sus propias series (3); «3×12» va codificado 10–14 y «3×10 por pierna» 8–12 porque CA-G-01 exige `reps_min < reps_max`; la plancha extra de A y B es 30–30 s.
+3. **CA-G-22 (hombro leve) no tiene alternativa sin esa zona en el catálogo real:** todas las variantes de press cargan el hombro; salen «con precaución». El agente no inventó diferencias clínicas; que haya alternativas lo decide la revisión del contenido (pregunta 1).
+4. **CA-G-13** se cumplió con C el jueves (decisión del dueño); `cEnViernes: true` devuelve las filas literales de 5.6.
+5. La calibración usa `tiempos` solo locales (no hay columna en 4.2); la progresión es una función pura del historial.
+
+**Pedidos pendientes a otras etapas:** G3 (cola `habitos.gim_*` con el orden de subida del informe de G2, `salud_local`, retención de la tablet, FLAG_SECURE); G5 (armar `lunesEnFoco`, medir `tiempos`, ids UUID v5, mapear a las columnas de 4.2, reemplazar el gadget viejo `SerieDescanso`); G7 (documentar `hab_ent_*` en `api/openapi.yaml`). Decisiones de diseño: el acento de día de Sport pasó a `0xFF356000` (contraste 7.43:1); el catálogo de estilos tiene tres (Futurista, Glass, Bento en pausa), no cuatro.

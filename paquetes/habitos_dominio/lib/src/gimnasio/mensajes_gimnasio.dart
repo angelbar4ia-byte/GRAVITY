@@ -77,16 +77,36 @@ class MensajesGimnasio {
 
   /// Todos los textos fijos (para las pruebas de tono y de contenido).
   static List<String> get todos => [
-        contenidoEnRevision, guiaGeneral, consultaAntesDeEmpezar,
-        semanaDeDescarga, semanaDeDescargaBanner, reentrada, unDiaNoBorra,
-        topeDePila, sugerirDescarga, modoFoco, sinEquipoSuficiente, noCabe,
-        cercaDeDormir, seguridadBanda, confirmarEnElAparato, cargaEnPlacas,
-        primeraCarga, molestiaCambio, molestiaFuerte, molestiaConPrecaucion,
-        sigueLaMolestia, molestiasSoloAqui, faltanDatos, sinDiferenciaClara,
-        hoyToca('Fuerza A'), descansoTerminado('el remo'),
-        recordPersonal('press de pecho', 'placa 6'), sugiereVentana('noche'),
-        TextoAvisoGimnasio.descanso,
-      ];
+    contenidoEnRevision,
+    guiaGeneral,
+    consultaAntesDeEmpezar,
+    semanaDeDescarga,
+    semanaDeDescargaBanner,
+    reentrada,
+    unDiaNoBorra,
+    topeDePila,
+    sugerirDescarga,
+    modoFoco,
+    sinEquipoSuficiente,
+    noCabe,
+    cercaDeDormir,
+    seguridadBanda,
+    confirmarEnElAparato,
+    cargaEnPlacas,
+    primeraCarga,
+    molestiaCambio,
+    molestiaFuerte,
+    molestiaConPrecaucion,
+    sigueLaMolestia,
+    molestiasSoloAqui,
+    faltanDatos,
+    sinDiferenciaClara,
+    hoyToca('Fuerza A'),
+    descansoTerminado('el remo'),
+    recordPersonal('press de pecho', 'placa 6'),
+    sugiereVentana('noche'),
+    TextoAvisoGimnasio.descanso,
+  ];
 }
 
 /// Avisos discretos del gimnasio (regla 114 de Hábitos): ≤ 40 caracteres y

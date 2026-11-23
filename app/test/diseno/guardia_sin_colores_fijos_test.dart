@@ -12,6 +12,7 @@ void main() {
       'lib/diseno/componentes',
       'lib/diseno/gadgets',
       'lib/diseno/habitos',
+      'lib/diseno/gimnasio',
       'lib/diseno/ajustes',
     ];
     final patron = RegExp(r'Color\(0x|Colors\.(?!transparent)[a-zA-Z]');

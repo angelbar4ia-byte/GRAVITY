@@ -92,8 +92,10 @@ class LineaSemana extends StatelessWidget {
   final VoidCallback? alReintentar;
   final VoidCallback? alAccionVacia;
 
-  /// Ancho mínimo de una celda de la tira.
-  static const double _celda = 48;
+  /// Ancho mínimo de una celda de la tira: 48 dp si se toca (sección 20); las
+  /// celdas que solo se leen (Hoy) pueden ser un poco más angostas.
+  static const double _celdaTocable = 48;
+  static const double _celdaDeLectura = 40;
 
   @override
   Widget build(BuildContext context) {
@@ -119,7 +121,8 @@ class LineaSemana extends StatelessWidget {
       child: LayoutBuilder(
         builder: (context, caja) {
           final letraGrande = MediaQuery.textScalerOf(context).scale(10) > 13;
-          final caben = caja.maxWidth >= dias.length * (_celda + 2);
+          final celda = alTocarDia == null ? _celdaDeLectura : _celdaTocable;
+          final caben = caja.maxWidth >= dias.length * (celda + 2);
           final tira = caben && !letraGrande;
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -373,10 +376,7 @@ class _Leyenda extends StatelessWidget {
         ExcludeSemantics(child: Icon(icono, size: 16, color: color)),
         SizedBox(width: e * 0.5),
         Flexible(
-          child: Text(
-            texto,
-            style: v.lectura(tamano: 13, color: v.textoTenue),
-          ),
+          child: Text(texto, style: v.lectura(tamano: 13, color: v.textoTenue)),
         ),
       ],
     );

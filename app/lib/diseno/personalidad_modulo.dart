@@ -127,7 +127,7 @@ class PersonalidadModulo {
   static const sport = PersonalidadModulo(
     id: 'sport',
     nombre: 'Sport',
-    acentoDia: Color(0xFF3D6B00),
+    acentoDia: Color(0xFF356000),
     acentoNoche: Color(0xFFC6FF00),
     densidad: Densidad.grande,
     duracionAnimacion: Duration(milliseconds: 150),

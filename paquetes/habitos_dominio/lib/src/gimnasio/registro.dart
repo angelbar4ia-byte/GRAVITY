@@ -27,11 +27,11 @@ enum MotivoCambioLocal {
   otra;
 
   MotivoCambio get paraServidor => switch (this) {
-        MotivoCambioLocal.noDisponible => MotivoCambio.noDisponible,
-        MotivoCambioLocal.preferencia => MotivoCambio.preferencia,
-        MotivoCambioLocal.molestia => MotivoCambio.otra,
-        MotivoCambioLocal.otra => MotivoCambio.otra,
-      };
+    MotivoCambioLocal.noDisponible => MotivoCambio.noDisponible,
+    MotivoCambioLocal.preferencia => MotivoCambio.preferencia,
+    MotivoCambioLocal.molestia => MotivoCambio.otra,
+    MotivoCambioLocal.otra => MotivoCambio.otra,
+  };
 }
 
 enum EstadoSesion {
@@ -93,22 +93,25 @@ class SerieRegistrada {
   final MotivoCambio? motivoCambio;
 
   /// Fila del servidor, solo con las columnas de 4.2 (sin molestias).
-  Map<String, Object?> aJsonServidor({required String id, required String sesionId}) => {
-        'id': id,
-        'sesion_id': sesionId,
-        'ejercicio_id': ejercicioId,
-        'variante_id': varianteId,
-        'n': n,
-        'lado': lado,
-        'reps': reps,
-        'segundos': segundos,
-        'carga_pasos': cargaPasos,
-        'banda_id': bandaId,
-        'esfuerzo': esfuerzo,
-        'descanso_real_s': descansoRealS,
-        'sustituye_a': sustituyeA,
-        'motivo_cambio': motivoCambio?.id,
-      };
+  Map<String, Object?> aJsonServidor({
+    required String id,
+    required String sesionId,
+  }) => {
+    'id': id,
+    'sesion_id': sesionId,
+    'ejercicio_id': ejercicioId,
+    'variante_id': varianteId,
+    'n': n,
+    'lado': lado,
+    'reps': reps,
+    'segundos': segundos,
+    'carga_pasos': cargaPasos,
+    'banda_id': bandaId,
+    'esfuerzo': esfuerzo,
+    'descanso_real_s': descansoRealS,
+    'sustituye_a': sustituyeA,
+    'motivo_cambio': motivoCambio?.id,
+  };
 }
 
 /// Una línea de lo planeado, tal como se planeó (4.2, `plan`).
@@ -128,17 +131,20 @@ class PlanEjercicioGuardado {
   final int? repsMax;
 
   Map<String, Object?> aJson() => {
-        'ejercicio': ejercicioId,
-        'variante': varianteId,
-        'series': series,
-        'reps_min': repsMin,
-        'reps_max': repsMax,
-      };
+    'ejercicio': ejercicioId,
+    'variante': varianteId,
+    'series': series,
+    'reps_min': repsMin,
+    'reps_max': repsMax,
+  };
 }
 
 /// Tiempos medidos por la app en una sesión (solo local; calibran 5.5).
 class TiemposMedidos {
-  const TiemposMedidos({required this.segundosPorRepeticion, required this.segundosCambio});
+  const TiemposMedidos({
+    required this.segundosPorRepeticion,
+    required this.segundosCambio,
+  });
   final int segundosPorRepeticion;
   final int segundosCambio;
 }
@@ -181,15 +187,18 @@ class SesionRegistrada {
   /// Solo local: calibra el modelo de tiempo; nunca se serializa.
   final TiemposMedidos? tiempos;
 
-  bool get esDeFuerza => plantilla == 'A' || plantilla == 'B' || plantilla == 'C';
+  bool get esDeFuerza =>
+      plantilla == 'A' || plantilla == 'B' || plantilla == 'C';
 
   /// ¿Cuenta como hecha? (no `en_curso`).
   bool get terminada => estado != EstadoSesion.enCurso;
 
   /// Fila del servidor, solo con las columnas de 4.2 (sin molestias).
-  Map<String, Object?> aJsonServidor({required String id, String? bloqueId}) => {
+  Map<String, Object?> aJsonServidor({required String id, String? bloqueId}) =>
+      {
         'id': id,
-        'fecha': '${fecha.year.toString().padLeft(4, '0')}-'
+        'fecha':
+            '${fecha.year.toString().padLeft(4, '0')}-'
             '${fecha.month.toString().padLeft(2, '0')}-'
             '${fecha.day.toString().padLeft(2, '0')}',
         'plantilla': plantilla,

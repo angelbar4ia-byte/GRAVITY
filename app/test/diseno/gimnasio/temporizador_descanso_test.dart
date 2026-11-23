@@ -32,7 +32,10 @@ void main() {
     test('el avance va de 0 a 1', () {
       final d = DescansoPlanificado.iniciar(base, const Duration(seconds: 60));
       expect(d.avance(base), 0);
-      expect(d.avance(base.add(const Duration(seconds: 30))), closeTo(0.5, 1e-9));
+      expect(
+        d.avance(base.add(const Duration(seconds: 30))),
+        closeTo(0.5, 1e-9),
+      );
       expect(d.avance(base.add(const Duration(seconds: 120))), 1);
     });
 
@@ -80,7 +83,10 @@ void main() {
       await montarGim(
         tester,
         TemporizadorDescanso(
-          descanso: DescansoPlanificado.iniciar(base, const Duration(seconds: 5)),
+          descanso: DescansoPlanificado.iniciar(
+            base,
+            const Duration(seconds: 5),
+          ),
           ahora: reloj.ahora,
           alTerminar: () => terminados++,
         ),
@@ -134,7 +140,10 @@ void main() {
       await montarGim(
         tester,
         TemporizadorDescanso(
-          descanso: DescansoPlanificado.iniciar(base, const Duration(seconds: 48)),
+          descanso: DescansoPlanificado.iniciar(
+            base,
+            const Duration(seconds: 48),
+          ),
           ahora: reloj.ahora,
           alTerminar: () => terminados++,
         ),
@@ -161,46 +170,67 @@ void main() {
       await desmontar(tester);
     });
 
-    testWidgets('+15 s, −15 s y Saltar llaman a la pantalla con botones de 56 dp '
-        'y etiqueta', (tester) async {
-      final reloj = RelojGimnasio(base);
-      final llamadas = <String>[];
-      await montarGim(
-        tester,
-        TemporizadorDescanso(
-          descanso: DescansoPlanificado.iniciar(base, const Duration(seconds: 48)),
-          ahora: reloj.ahora,
-          alMasQuince: () => llamadas.add('+15'),
-          alMenosQuince: () => llamadas.add('-15'),
-          alSaltar: () => llamadas.add('saltar'),
-        ),
-        sport: true,
-      );
-      for (final texto in [
-        TextosGimnasio.mas15,
-        TextosGimnasio.menos15,
-        TextosGimnasio.saltar,
-      ]) {
-        final boton = find.widgetWithText(OutlinedButton, texto);
-        expect(boton, findsOneWidget);
-        final tamano = tester.getSize(boton);
-        expect(tamano.height, greaterThanOrEqualTo(56), reason: texto);
-        expect(tamano.width, greaterThanOrEqualTo(56), reason: texto);
-        await tester.tap(boton);
-      }
-      expect(llamadas, ['+15', '-15', 'saltar']);
-      final handle = tester.ensureSemantics();
-      expect(
-        etiquetasAccesibles(tester),
-        containsAll([
+    testWidgets(
+      '+15 s, −15 s y Saltar llaman a la pantalla con botones de 56 dp '
+      'y etiqueta',
+      (tester) async {
+        final reloj = RelojGimnasio(base);
+        final llamadas = <String>[];
+        await montarGim(
+          tester,
+          TemporizadorDescanso(
+            descanso: DescansoPlanificado.iniciar(
+              base,
+              const Duration(seconds: 48),
+            ),
+            ahora: reloj.ahora,
+            alMasQuince: () => llamadas.add('+15'),
+            alMenosQuince: () => llamadas.add('-15'),
+            alSaltar: () => llamadas.add('saltar'),
+          ),
+          sport: true,
+        );
+        for (final texto in [
+          TextosGimnasio.mas15,
+          TextosGimnasio.menos15,
+          TextosGimnasio.saltar,
+        ]) {
+          final boton = find.widgetWithText(OutlinedButton, texto);
+          expect(boton, findsOneWidget);
+          final tamano = tester.getSize(boton);
+          expect(tamano.height, greaterThanOrEqualTo(56), reason: texto);
+          expect(tamano.width, greaterThanOrEqualTo(56), reason: texto);
+          await tester.tap(boton);
+        }
+        expect(llamadas, ['+15', '-15', 'saltar']);
+        final handle = tester.ensureSemantics();
+        expect(
+          etiquetasAccesibles(tester),
+          containsAll([
+            'Agregar 15 segundos al descanso',
+            'Quitar 15 segundos al descanso',
+            'Saltar el descanso',
+          ]),
+        );
+        // El lector de pantalla puede activarlos: llevan la acción de tocar.
+        for (final etiqueta in [
           'Agregar 15 segundos al descanso',
           'Quitar 15 segundos al descanso',
           'Saltar el descanso',
-        ]),
-      );
-      handle.dispose();
-      await desmontar(tester);
-    });
+        ]) {
+          expect(
+            tester
+                .getSemantics(find.bySemanticsLabel(etiqueta))
+                .getSemanticsData()
+                .hasAction(SemanticsAction.tap),
+            isTrue,
+            reason: etiqueta,
+          );
+        }
+        handle.dispose();
+        await desmontar(tester);
+      },
+    );
 
     testWidgets('el lector de pantalla oye el tiempo de 15 en 15 s, no cada '
         'segundo', (tester) async {
@@ -209,7 +239,10 @@ void main() {
       await montarGim(
         tester,
         TemporizadorDescanso(
-          descanso: DescansoPlanificado.iniciar(base, const Duration(seconds: 60)),
+          descanso: DescansoPlanificado.iniciar(
+            base,
+            const Duration(seconds: 60),
+          ),
           ahora: reloj.ahora,
         ),
         sport: true,
@@ -227,8 +260,9 @@ void main() {
       await desmontar(tester);
     });
 
-    testWidgets('con «reducir movimiento» no dibuja el aro: solo el número',
-        (tester) async {
+    testWidgets('con «reducir movimiento» no dibuja el aro: solo el número', (
+      tester,
+    ) async {
       final reloj = RelojGimnasio(base);
       final d = DescansoPlanificado.iniciar(base, const Duration(seconds: 48));
       await montarGim(
@@ -258,7 +292,10 @@ void main() {
       await montarGim(
         tester,
         TemporizadorDescanso(
-          descanso: DescansoPlanificado.iniciar(base, const Duration(seconds: 1)),
+          descanso: DescansoPlanificado.iniciar(
+            base,
+            const Duration(seconds: 1),
+          ),
           ahora: reloj.ahora,
         ),
         sport: true,
@@ -287,7 +324,9 @@ void main() {
         sport: true,
         ancho: 900,
       );
-      final texto = tester.widget<Text>(find.byKey(const ValueKey('descanso-restante')));
+      final texto = tester.widget<Text>(
+        find.byKey(const ValueKey('descanso-restante')),
+      );
       expect(texto.style!.fontSize, greaterThan(96));
       await montarGim(
         tester,
@@ -308,7 +347,10 @@ void main() {
       for (final (estado, texto) in [
         (EstadoVistaGimnasio.vacio, TextosGimnasio.sinDescanso),
         (EstadoVistaGimnasio.cargando, 'Preparando el descanso…'),
-        (EstadoVistaGimnasio.sinConexion, 'Sin conexión. El descanso funciona igual.'),
+        (
+          EstadoVistaGimnasio.sinConexion,
+          'Sin conexión. El descanso funciona igual.',
+        ),
         (
           EstadoVistaGimnasio.error,
           'No se pudo iniciar el descanso. Puedes seguir sin él.',
@@ -343,7 +385,10 @@ void main() {
         await montarGim(
           tester,
           TemporizadorDescanso(
-            descanso: DescansoPlanificado.iniciar(base, const Duration(seconds: 48)),
+            descanso: DescansoPlanificado.iniciar(
+              base,
+              const Duration(seconds: 48),
+            ),
             ahora: reloj.ahora,
             alMasQuince: () {},
             alMenosQuince: () {},
@@ -359,9 +404,8 @@ void main() {
   });
 
   test('el código no usa Timer.periodic ni reproduce sonidos', () {
-    final fuente = File(
-      'lib/diseno/gimnasio/temporizador_descanso.dart',
-    ).readAsStringSync();
+    final fuente = File('lib/diseno/gimnasio/temporizador_descanso.dart')
+        .readAsStringSync();
     final codigo = fuente
         .split('\n')
         .where((l) => !l.trimLeft().startsWith('//'))

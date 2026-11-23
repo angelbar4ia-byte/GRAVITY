@@ -60,7 +60,8 @@ class DescansoPlanificado {
   /// Cuánto del descanso ya pasó, de 0 a 1.
   double avance(DateTime ahora) {
     if (duracionTotal <= Duration.zero) return 1;
-    final hecho = 1 - restante(ahora).inMilliseconds / duracionTotal.inMilliseconds;
+    final hecho =
+        1 - restante(ahora).inMilliseconds / duracionTotal.inMilliseconds;
     return hecho.clamp(0.0, 1.0);
   }
 
@@ -127,7 +128,6 @@ enum EscalaTemporizador {
 
 /// Hora del sistema; se cambia en las pruebas.
 DateTime _ahoraDelSistema() => DateTime.now();
-
 
 /// Vibración corta por omisión del fin del descanso.
 Future<void> vibracionFinDescanso() => HapticFeedback.heavyImpact();
@@ -350,7 +350,9 @@ class _EstadoTemporizador extends State<TemporizadorDescanso>
     final w = widget;
     final hayControles =
         !terminado &&
-        (w.alMasQuince != null || w.alMenosQuince != null || w.alSaltar != null);
+        (w.alMasQuince != null ||
+            w.alMenosQuince != null ||
+            w.alSaltar != null);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -361,7 +363,11 @@ class _EstadoTemporizador extends State<TemporizadorDescanso>
           excludeSemantics: true,
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            children: [centro, SizedBox(height: e), marca],
+            children: [
+              centro,
+              SizedBox(height: e),
+              marca,
+            ],
           ),
         ),
         if (hayControles) ...[
@@ -423,7 +429,10 @@ class _BotonDescanso extends StatelessWidget {
       child: OutlinedButton(
         onPressed: alTocar,
         style: OutlinedButton.styleFrom(
-          minimumSize: const Size(BotonPasoGimnasio.tamano, BotonPasoGimnasio.tamano),
+          minimumSize: const Size(
+            BotonPasoGimnasio.tamano,
+            BotonPasoGimnasio.tamano,
+          ),
         ),
         child: Text(texto),
       ),

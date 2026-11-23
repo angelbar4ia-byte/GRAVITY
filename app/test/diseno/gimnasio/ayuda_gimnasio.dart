@@ -17,7 +17,8 @@ List<Estilo> get todosLosEstilos => [...estilosIncluidos, ...estilosEnPausa];
 /// Reloj que la prueba adelanta a mano. [avanzar] mueve el reloj y el tiempo
 /// falso de las pruebas a la vez.
 class RelojGimnasio {
-  RelojGimnasio([DateTime? inicio]) : momento = inicio ?? DateTime(2026, 11, 23, 19, 30);
+  RelojGimnasio([DateTime? inicio])
+    : momento = inicio ?? DateTime(2026, 11, 23, 19, 30);
 
   DateTime momento;
 
@@ -68,7 +69,8 @@ Future<void> montarGim(
   final home = Scaffold(
     body: Builder(
       builder: (context) => MediaQuery(
-        data: MediaQuery.of(context).copyWith(disableAnimations: reducirMovimiento),
+        data: MediaQuery.of(context)
+            .copyWith(disableAnimations: reducirMovimiento),
         child: TemaModulo(
           modulo: Modulo.habitos,
           submodulo: sport ? Submodulo.entrenamiento : null,
@@ -76,10 +78,7 @@ Future<void> montarGim(
             builder: (context) => ColoredBox(
               color: ValoresDiseno.de(context).fondo,
               child: SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: hijo,
-                ),
+                child: Padding(padding: const EdgeInsets.all(16), child: hijo),
               ),
             ),
           ),
@@ -122,7 +121,7 @@ List<String> etiquetasAccesibles(WidgetTester tester) {
     });
   }
 
-  recorrer(tester.binding.pipelineOwner.semanticsOwner!.rootSemanticsNode!);
+  recorrer(tester.getSemantics(find.byType(Scaffold).first));
   return etiquetas;
 }
 

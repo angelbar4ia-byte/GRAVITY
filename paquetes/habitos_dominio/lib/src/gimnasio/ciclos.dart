@@ -192,7 +192,9 @@ bool esSemanaDeAdaptacion({
   ReglasGimnasio reglas = const ReglasGimnasio(),
 }) {
   final inicio = perfil.inicioCiclo;
-  if (perfil.nivel != NivelGimnasio.principiante || inicio == null) return false;
+  if (perfil.nivel != NivelGimnasio.principiante || inicio == null) {
+    return false;
+  }
   final lunes = lunesDe(hoy);
   final i = lunesDe(inicio);
   if (lunes.isBefore(i)) return false;
@@ -207,7 +209,7 @@ bool sugerirDescarga(
 }) {
   final f = [
     for (final s in historial)
-      if (s.esDeFuerza && s.terminada) s
+      if (s.esDeFuerza && s.terminada) s,
   ]..sort((a, b) => b.fecha.compareTo(a.fecha));
   final n = reglas.descargaSugeridaSesiones;
   if (f.length < n) return false;

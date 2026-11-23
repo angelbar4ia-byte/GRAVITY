@@ -77,6 +77,7 @@ abstract final class TextosGimnasio {
   static const cargando = 'Cargando…';
   static const sinConexionGenerico =
       'Sin conexión. Se muestra lo guardado en este equipo.';
-  static const errorGenerico = 'No se pudo cargar esto. Puedes intentarlo otra vez.';
+  static const errorGenerico =
+      'No se pudo cargar esto. Puedes intentarlo otra vez.';
   static const reintentar = 'Reintentar';
 }

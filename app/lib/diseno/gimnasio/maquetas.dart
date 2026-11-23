@@ -69,7 +69,10 @@ class MaquetaGimnasio extends StatelessWidget {
       PantallaMaqueta.e2Inventario => const _E2Inventario(),
       PantallaMaqueta.e3Plan => const _E3Plan(),
       PantallaMaqueta.e4SesionDeHoy => const _E4Sesion(),
-      PantallaMaqueta.e5SesionEnCurso => _E5EnCurso(ahora: ahora, vibrar: vibrar),
+      PantallaMaqueta.e5SesionEnCurso => _E5EnCurso(
+        ahora: ahora,
+        vibrar: vibrar,
+      ),
       PantallaMaqueta.e6RegistroRapido => const _E6Registro(),
       PantallaMaqueta.e7Historial => const _E7Historial(),
       PantallaMaqueta.e8Records => const _E8Records(),
@@ -92,10 +95,7 @@ class MaquetaGimnasio extends StatelessWidget {
                   children: [
                     Semantics(
                       header: true,
-                      child: Text(
-                        pantalla.titulo,
-                        style: v.titulo(tamano: 22),
-                      ),
+                      child: Text(pantalla.titulo, style: v.titulo(tamano: 22)),
                     ),
                     SizedBox(height: v.espacio * 2),
                     cuerpo,
@@ -169,7 +169,7 @@ class _E1Hoy extends StatelessWidget {
         alAbrir: () {},
       ),
       const SizedBox(height: 12),
-      LineaSemana(dias: _semana3, alTocarDia: (_) {}),
+      const LineaSemana(dias: _semana3),
     ],
   );
 }
@@ -183,6 +183,7 @@ class _E2Inventario extends StatelessWidget {
     children: [
       TarjetaAparato(
         nombre: 'Estación multifuncional Marcy MWM-7119',
+        categoriaTexto: 'Estación',
         detalle: 'Pila, poleas alta y baja, brazos de press y cojín de curl.',
         puestos: [
           PuestoVista(nombre: 'Brazos de press', alCambiar: () {}),
@@ -209,12 +210,14 @@ class _E2Inventario extends StatelessWidget {
       const SizedBox(height: 12),
       TarjetaAparato(
         nombre: 'Banco inclinado',
+        categoriaTexto: 'Banco',
         icono: Icons.event_seat_outlined,
         alCambiarDisponibilidad: () {},
       ),
       const SizedBox(height: 12),
       TarjetaAparato(
         nombre: 'Bandas de resistencia',
+        categoriaTexto: 'Bandas',
         icono: Icons.linear_scale,
         detalle: '3 bandas activas, de la más ligera a la más fuerte.',
         alCambiarDisponibilidad: () {},
@@ -222,6 +225,7 @@ class _E2Inventario extends StatelessWidget {
       const SizedBox(height: 12),
       const TarjetaAparato(
         nombre: 'Mancuernas',
+        categoriaTexto: 'Equipo futuro',
         icono: Icons.fitness_center,
         disponibilidad: DisponibilidadAparato.futuro,
       ),
@@ -338,7 +342,10 @@ class _E5EnCursoState extends State<_E5EnCurso> {
   void initState() {
     super.initState();
     _ahora = widget.ahora ?? DateTime.now;
-    _descanso = DescansoPlanificado.iniciar(_ahora(), const Duration(seconds: 48));
+    _descanso = DescansoPlanificado.iniciar(
+      _ahora(),
+      const Duration(seconds: 48),
+    );
   }
 
   void _ajustar(Duration d) =>
@@ -388,7 +395,8 @@ class _E5EnCursoState extends State<_E5EnCurso> {
           vibrar: widget.vibrar ?? vibracionFinDescanso,
           alMasQuince: () => _ajustar(const Duration(seconds: 15)),
           alMenosQuince: () => _ajustar(const Duration(seconds: -15)),
-          alSaltar: () => setState(() => _descanso = _descanso.saltar(_ahora())),
+          alSaltar: () =>
+              setState(() => _descanso = _descanso.saltar(_ahora())),
         ),
         SizedBox(height: e * 2),
         Text(
@@ -400,15 +408,24 @@ class _E5EnCursoState extends State<_E5EnCurso> {
           spacing: e,
           runSpacing: e,
           children: [
-            OutlinedButton(onPressed: () {}, child: const Text('Cambiar ejercicio')),
-            OutlinedButton(onPressed: () {}, child: const Text('Versión corta')),
+            OutlinedButton(
+              onPressed: () {},
+              child: const Text('Cambiar ejercicio'),
+            ),
+            OutlinedButton(
+              onPressed: () {},
+              child: const Text('Versión corta'),
+            ),
             OutlinedButton(onPressed: () {}, child: const Text('Terminar')),
           ],
         ),
         SizedBox(height: e * 2),
         const Align(
           alignment: AlignmentDirectional.centerStart,
-          child: IndicadorConexion(estado: EstadoConexion.sinConexion, pendientes: 2),
+          child: IndicadorConexion(
+            estado: EstadoConexion.sinConexion,
+            pendientes: 2,
+          ),
         ),
         SizedBox(height: e),
         Text(

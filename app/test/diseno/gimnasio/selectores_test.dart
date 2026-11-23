@@ -80,8 +80,14 @@ void main() {
       final encendido = tester.getSemantics(
         find.bySemanticsLabel('Agregar una repetición'),
       );
-      expect(apagado.getSemanticsData().hasAction(SemanticsAction.tap), isFalse);
-      expect(encendido.getSemanticsData().hasAction(SemanticsAction.tap), isTrue);
+      expect(
+        apagado.getSemanticsData().hasAction(SemanticsAction.tap),
+        isFalse,
+      );
+      expect(
+        encendido.getSemanticsData().hasAction(SemanticsAction.tap),
+        isTrue,
+      );
       handle.dispose();
     });
   });
@@ -109,7 +115,10 @@ void main() {
       expect(find.text(TextosGimnasio.sinKgHastaConfirmar), findsOneWidget);
       expect(find.text(EstadoConfirmacionDato.confirmar.texto), findsOneWidget);
       await tester.tap(
-        find.widgetWithText(OutlinedButton, TextosGimnasio.confirmarEnElAparato),
+        find.widgetWithText(
+          OutlinedButton,
+          TextosGimnasio.confirmarEnElAparato,
+        ),
       );
       expect(confirmar, 1);
     });
@@ -134,28 +143,29 @@ void main() {
       expect(find.text(TextosGimnasio.confirmado), findsOneWidget);
     });
 
-    testWidgets('el botón Confirmar en el aparato mide 48 dp o más y responde', (
-      tester,
-    ) async {
-      var confirmar = 0;
-      await montarGim(
-        tester,
-        SelectorCarga(
-          valorTexto: 'Placa 3',
-          alMenos: () {},
-          alMas: () {},
-          alConfirmar: () => confirmar++,
-        ),
-        sport: true,
-      );
-      final boton = find.widgetWithText(
-        OutlinedButton,
-        TextosGimnasio.confirmarEnElAparato,
-      );
-      expect(tester.getSize(boton).height, greaterThanOrEqualTo(48));
-      await tester.tap(boton);
-      expect(confirmar, 1);
-    });
+    testWidgets(
+      'el botón Confirmar en el aparato mide 48 dp o más y responde',
+      (tester) async {
+        var confirmar = 0;
+        await montarGim(
+          tester,
+          SelectorCarga(
+            valorTexto: 'Placa 3',
+            alMenos: () {},
+            alMas: () {},
+            alConfirmar: () => confirmar++,
+          ),
+          sport: true,
+        );
+        final boton = find.widgetWithText(
+          OutlinedButton,
+          TextosGimnasio.confirmarEnElAparato,
+        );
+        expect(tester.getSize(boton).height, greaterThanOrEqualTo(48));
+        await tester.tap(boton);
+        expect(confirmar, 1);
+      },
+    );
 
     testWidgets('en el tope no deja subir y lo dice con palabras', (
       tester,
@@ -211,7 +221,9 @@ void main() {
       handle.dispose();
     });
 
-    testWidgets('estados: vacío, cargando, sin conexión y error', (tester) async {
+    testWidgets('estados: vacío, cargando, sin conexión y error', (
+      tester,
+    ) async {
       var reintentos = 0;
       for (final estado in [
         EstadoVistaGimnasio.vacio,
@@ -263,6 +275,15 @@ void main() {
         etiquetasAccesibles(tester),
         contains('Marcar la serie 2 de 3 como hecha'),
       );
+      expect(
+        tester
+            .getSemantics(
+              find.bySemanticsLabel('Marcar la serie 2 de 3 como hecha'),
+            )
+            .getSemanticsData()
+            .hasAction(SemanticsAction.tap),
+        isTrue,
+      );
       handle.dispose();
     });
 
@@ -272,7 +293,11 @@ void main() {
       var deshacer = 0;
       await montarGim(
         tester,
-        BotonSerieHecha(alHecha: () {}, guardada: true, alDeshacer: () => deshacer++),
+        BotonSerieHecha(
+          alHecha: () {},
+          guardada: true,
+          alDeshacer: () => deshacer++,
+        ),
         sport: true,
       );
       expect(find.text(TextosGimnasio.serieGuardada), findsOneWidget);

@@ -175,7 +175,9 @@ class SelectorCarga extends StatelessWidget {
                     '${equivalenciaTexto == null ? '' : ', $equivalenciaTexto'}'
                     '${enTope ? '. Tope' : ''}',
           etiquetaMenos: unidad.textoMenos,
-          etiquetaMas: enTope ? '${unidad.textoMas}, no disponible: tope' : unidad.textoMas,
+          etiquetaMas: enTope
+              ? '${unidad.textoMas}, no disponible: tope'
+              : unidad.textoMas,
           alMenos: alMenos,
           alMas: enTope ? null : alMas,
         ),
@@ -408,8 +410,12 @@ class PanelRegistroSerie extends StatelessWidget {
           etiqueta: porTiempo ? 'SEGUNDOS' : 'REPS',
           valorTexto: repeticionesTexto,
           descripcionAccesible: '$repeticionesTexto $palabra',
-          etiquetaMenos: porTiempo ? 'Quitar segundos' : 'Quitar una repetición',
-          etiquetaMas: porTiempo ? 'Agregar segundos' : 'Agregar una repetición',
+          etiquetaMenos: porTiempo
+              ? 'Quitar segundos'
+              : 'Quitar una repetición',
+          etiquetaMas: porTiempo
+              ? 'Agregar segundos'
+              : 'Agregar una repetición',
           alMenos: alMenosReps,
           alMas: alMasReps,
         ),

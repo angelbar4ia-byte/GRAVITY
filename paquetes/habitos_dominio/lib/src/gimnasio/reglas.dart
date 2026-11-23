@@ -176,10 +176,10 @@ class ReglasGimnasio {
   final int pasoDescansoS;
 
   ParametrosVersion de(VersionSesion v) => switch (v) {
-        VersionSesion.corta => corta,
-        VersionSesion.estandar => estandar,
-        VersionSesion.larga => larga,
-      };
+    VersionSesion.corta => corta,
+    VersionSesion.estandar => estandar,
+    VersionSesion.larga => larga,
+  };
 
   /// Mínimo entre dos sesiones que comparten grupo, inicio a inicio (min).
   int get minimoEntreSesionesMin =>

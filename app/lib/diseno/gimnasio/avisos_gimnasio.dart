@@ -92,10 +92,7 @@ class TarjetaContenidoEnRevision extends StatelessWidget {
                 ),
                 if (!compacta) ...[
                   SizedBox(height: e * 0.5),
-                  Text(
-                    detalle,
-                    style: v.lectura(tamano: 14, color: v.texto),
-                  ),
+                  Text(detalle, style: v.lectura(tamano: 14, color: v.texto)),
                 ],
               ],
             ),
@@ -133,7 +130,9 @@ class TarjetaContenidoEnRevision extends StatelessWidget {
             : InkWell(
                 onTap: alAbrir,
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(minHeight: zonaTactilMinima),
+                  constraints: const BoxConstraints(
+                    minHeight: zonaTactilMinima,
+                  ),
                   child: cuerpo,
                 ),
               ),
@@ -359,7 +358,10 @@ class FilaMolestia extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    [if (activa) 'Activa' else 'Ya no', ?desdeTexto].join(' · '),
+                    [
+                      if (activa) 'Activa' else 'Ya no',
+                      ?desdeTexto,
+                    ].join(' · '),
                     style: v.lectura(tamano: 13.5, color: v.textoTenue),
                   ),
                 ],

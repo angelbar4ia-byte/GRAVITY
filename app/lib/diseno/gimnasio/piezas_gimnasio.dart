@@ -80,11 +80,7 @@ class CuerpoEstadoGimnasio extends StatelessWidget {
         v.textoTenue,
         'Sin conexión',
       ),
-      EstadoVistaGimnasio.error => (
-        Icons.error_outline,
-        v.alerta,
-        'Error',
-      ),
+      EstadoVistaGimnasio.error => (Icons.error_outline, v.alerta, 'Error'),
       _ => (Icons.hourglass_empty, v.textoTenue, 'Cargando'),
     };
     final conAccion =

@@ -395,10 +395,9 @@ class ListaSesionesHistorial extends StatelessWidget {
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       border: Border(
-                        bottom: BorderSide(
-                          color: v.borde,
-                          width: i == sesiones.length - 1 ? 0 : 0.5,
-                        ),
+                        bottom: i == sesiones.length - 1
+                            ? BorderSide.none
+                            : BorderSide(color: v.borde, width: 0.5),
                       ),
                     ),
                     child: alTocar == null
@@ -514,7 +513,10 @@ class ListaRecords extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Padding(
-                          padding: EdgeInsets.only(top: e * 0.25, right: e * 1.25),
+                          padding: EdgeInsets.only(
+                            top: e * 0.25,
+                            right: e * 1.25,
+                          ),
                           child: Icon(r.tipo.icono, size: 22, color: v.acento),
                         ),
                         Expanded(
@@ -530,8 +532,11 @@ class ListaRecords extends StatelessWidget {
                                 ),
                               ),
                               Text(
-                                [r.tipo.texto, ?r.varianteTexto, ?r.fechaTexto]
-                                    .join(' · '),
+                                [
+                                  r.tipo.texto,
+                                  ?r.varianteTexto,
+                                  ?r.fechaTexto,
+                                ].join(' · '),
                                 style: v.lectura(
                                   tamano: 13.5,
                                   color: v.textoTenue,
@@ -574,10 +579,9 @@ class ListaRecords extends StatelessWidget {
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       border: Border(
-                        bottom: BorderSide(
-                          color: v.borde,
-                          width: i == records.length - 1 ? 0 : 0.5,
-                        ),
+                        bottom: i == records.length - 1
+                            ? BorderSide.none
+                            : BorderSide(color: v.borde, width: 0.5),
                       ),
                     ),
                     child: alTocar == null

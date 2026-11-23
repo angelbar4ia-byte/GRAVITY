@@ -39,8 +39,8 @@ class PasoBanda {
   final bool doble;
 
   @override
-  bool operator ==(Object o) =>
-      o is PasoBanda && o.bandaId == bandaId && o.doble == doble;
+  bool operator ==(Object other) =>
+      other is PasoBanda && other.bandaId == bandaId && other.doble == doble;
 
   @override
   int get hashCode => Object.hash(bandaId, doble);
@@ -51,13 +51,13 @@ class PasoBanda {
 List<PasoBanda> secuenciaBandas(List<BandaInventario> bandas) {
   final a = [
     for (final b in bandas)
-      if (b.cuenta) b
+      if (b.cuenta) b,
   ]..sort((x, y) => x.orden.compareTo(y.orden));
   return [
     for (final b in a) ...[
       PasoBanda(b.id),
       if (b.cantidad >= 2) PasoBanda(b.id, doble: true),
-    ]
+    ],
   ];
 }
 
@@ -100,14 +100,13 @@ class PosicionEscalera {
     bool? tempoLento,
     int? descansoNiveles,
     bool? varianteDificil,
-  }) =>
-      PosicionEscalera(
-        techoAmpliado: techoAmpliado ?? this.techoAmpliado,
-        serieExtra: serieExtra ?? this.serieExtra,
-        tempoLento: tempoLento ?? this.tempoLento,
-        descansoNiveles: descansoNiveles ?? this.descansoNiveles,
-        varianteDificil: varianteDificil ?? this.varianteDificil,
-      );
+  }) => PosicionEscalera(
+    techoAmpliado: techoAmpliado ?? this.techoAmpliado,
+    serieExtra: serieExtra ?? this.serieExtra,
+    tempoLento: tempoLento ?? this.tempoLento,
+    descansoNiveles: descansoNiveles ?? this.descansoNiveles,
+    varianteDificil: varianteDificil ?? this.varianteDificil,
+  );
 }
 
 /// Lo que la escalera necesita saber de la variante y la sesión.
@@ -151,10 +150,13 @@ AvanceEscalera? avanzarEscalera(PosicionEscalera p, ContextoEscalera c) {
   if (!p.tempoLento) {
     return AvanceEscalera(p.copiar(tempoLento: true), Peldano.tempo);
   }
-  final siguiente = c.descansoBaseS - c.reglas.pasoDescansoS * (p.descansoNiveles + 1);
+  final siguiente =
+      c.descansoBaseS - c.reglas.pasoDescansoS * (p.descansoNiveles + 1);
   if (siguiente >= c.reglas.descansoMinimoS) {
     return AvanceEscalera(
-        p.copiar(descansoNiveles: p.descansoNiveles + 1), Peldano.descanso);
+      p.copiar(descansoNiveles: p.descansoNiveles + 1),
+      Peldano.descanso,
+    );
   }
   if (!p.varianteDificil && c.hayMasDificil) {
     return AvanceEscalera(p.copiar(varianteDificil: true), Peldano.variante);
@@ -209,13 +211,29 @@ class PropuestaProgresion {
   final String? cambiaAVariante;
 
   String get tempo => '$tempoBajadaS-1-1';
+
+  PropuestaProgresion conMotivo(MotivoProgresion m) => PropuestaProgresion(
+    varianteId: varianteId,
+    rangoMin: rangoMin,
+    rangoMax: rangoMax,
+    objetivo: objetivo,
+    porTiempo: porTiempo,
+    series: series,
+    descansoS: descansoS,
+    motivo: m,
+    tempoBajadaS: tempoBajadaS,
+    cargaPasos: cargaPasos,
+    bandaId: bandaId,
+    bandaDoble: bandaDoble,
+    topeDePila: topeDePila,
+  );
 }
 
 /// Series de la variante en una sesión, en orden de número.
 List<SerieRegistrada> _seriesDe(SesionRegistrada s, String varianteId) => [
-      for (final x in s.series)
-        if (x.varianteId == varianteId) x
-    ]..sort((a, b) => a.n.compareTo(b.n));
+  for (final x in s.series)
+    if (x.varianteId == varianteId) x,
+]..sort((a, b) => a.n.compareTo(b.n));
 
 PlanEjercicioGuardado? _planDe(SesionRegistrada s, String varianteId) {
   for (final p in s.plan) {
@@ -253,9 +271,9 @@ bool cumplioObjetivo({
   required ReglasGimnasio reglas,
 }) {
   if (series.isEmpty) return false;
-  final buenas = series.where((s) => porTiempo
-      ? (s.segundos ?? 0) >= techo
-      : (s.reps ?? 0) >= techo);
+  final buenas = series.where(
+    (s) => porTiempo ? (s.segundos ?? 0) >= techo : (s.reps ?? 0) >= techo,
+  );
   final necesarias = seriesEsperadas * (porLado ? 2 : 1);
   if (buenas.length < necesarias) return false;
   final esfuerzo = series.last.esfuerzo ?? reglas.esfuerzoPorOmision;
@@ -263,8 +281,14 @@ bool cumplioObjetivo({
 }
 
 class _Repeticion {
-  _Repeticion(this.pos, this.ultimoAvance, this.ultimoCumplio, this.ultimoTope);
+  _Repeticion(this.pos, this.ultimoAvance, this.ultimoCumplio, this.ultimoTope)
+    : posPrevia = pos;
   PosicionEscalera pos;
+
+  /// La posición con que se hizo la última sesión (antes de que esa sesión
+  /// avanzara la escalera). En semanas sin incrementos (foco, descarga,
+  /// reentrada, adaptación) es la que se usa: el avance pendiente espera.
+  PosicionEscalera posPrevia;
   AvanceEscalera? ultimoAvance;
   bool ultimoCumplio;
   bool ultimoTope;
@@ -292,6 +316,7 @@ _Repeticion _repetir({
   for (var i = 0; i < refs.length; i++) {
     final s = refs[i];
     final esUltima = i == refs.length - 1;
+    r.posPrevia = r.pos;
     r.ultimoAvance = null;
     r.ultimoCumplio = false;
     r.ultimoTope = false;
@@ -307,8 +332,7 @@ _Repeticion _repetir({
         ? (porTiempo ? reglas.techoEscaleraSegundos : reglas.techoEscaleraReps)
         : 0;
     final techo = (porTiempo ? null : plan?.repsMax) ?? rangoMax + ampliado;
-    final esperadas =
-        plan?.series ?? seriesBase + (r.pos.serieExtra ? 1 : 0);
+    final esperadas = plan?.series ?? seriesBase + (r.pos.serieExtra ? 1 : 0);
     final cumple = cumplioObjetivo(
       series: series,
       seriesEsperadas: esperadas,
@@ -322,8 +346,8 @@ _Repeticion _repetir({
     var aplica = true;
     if (variante.carga == TipoCarga.pila) {
       final c = _cargaDe(series);
-      final tope = c != null &&
-          (inv.enTopeDePila(c) || (enUltimaPlaca && esUltima));
+      final tope =
+          c != null && (inv.enTopeDePila(c) || (enUltimaPlaca && esUltima));
       r.ultimoTope = tope;
       aplica = tope;
     }
@@ -377,7 +401,7 @@ PropuestaProgresion proponerProgresion({
           s.terminada &&
           s.semanaTipo != TipoSemana.descarga &&
           _seriesDe(s, variante.id).isNotEmpty)
-        s
+        s,
   ]..sort((a, b) => a.fecha.compareTo(b.fecha));
 
   int series0() => semana.series ?? seriesBase;
@@ -394,29 +418,28 @@ PropuestaProgresion proponerProgresion({
     int? max,
     bool tope = false,
     String? cambia,
-  }) =>
-      PropuestaProgresion(
-        varianteId: variante.id,
-        rangoMin: rangoMin,
-        rangoMax: max ?? rangoMax,
-        objetivo: objetivo ?? rangoMin,
-        porTiempo: porTiempo,
-        series: series ?? series0(),
-        descansoS: descanso ?? descansoBaseS,
-        tempoBajadaS: tempo ?? 2,
-        motivo: motivo,
-        cargaPasos: carga,
-        bandaId: banda,
-        bandaDoble: doble,
-        topeDePila: tope,
-        cambiaAVariante: cambia,
-      );
+  }) => PropuestaProgresion(
+    varianteId: variante.id,
+    rangoMin: rangoMin,
+    rangoMax: max ?? rangoMax,
+    objetivo: objetivo ?? rangoMin,
+    porTiempo: porTiempo,
+    series: series ?? series0(),
+    descansoS: descanso ?? descansoBaseS,
+    tempoBajadaS: tempo ?? 2,
+    motivo: motivo,
+    cargaPasos: carga,
+    bandaId: banda,
+    bandaDoble: doble,
+    topeDePila: tope,
+    cambiaAVariante: cambia,
+  );
 
   // Primera vez, o cargas de prueba tras 8 semanas o más (5.12, 5.9).
   if (refs.isEmpty || semana.cargasDePrueba) {
-    return nueva(refs.isEmpty
-        ? MotivoProgresion.primeraVez
-        : MotivoProgresion.pruebas);
+    return nueva(
+      refs.isEmpty ? MotivoProgresion.primeraVez : MotivoProgresion.pruebas,
+    );
   }
 
   final ultima = refs.last;
@@ -425,10 +448,15 @@ PropuestaProgresion proponerProgresion({
   final bandaUlt = _bandaDe(seriesUlt);
   final esPila = variante.carga == TipoCarga.pila;
   final esBanda = variante.carga == TipoCarga.banda;
-  final hayMasDificil = variante.masDificil != null &&
+  final hayMasDificil =
+      variante.masDificil != null &&
       catalogo.variante(variante.masDificil!) != null &&
-      inventario.varianteDisponible(catalogo.variante(variante.masDificil!)!, catalogo);
-  final haySiguienteBanda = bandaUlt != null &&
+      inventario.varianteDisponible(
+        catalogo.variante(variante.masDificil!)!,
+        catalogo,
+      );
+  final haySiguienteBanda =
+      bandaUlt != null &&
       siguientePasoBanda(bandaUlt, inventario.bandas) != null;
 
   final rep = _repetir(
@@ -450,15 +478,18 @@ PropuestaProgresion proponerProgresion({
   );
 
   // Valores efectivos de la escalera.
-  final pos = rep.pos;
+  final pos = semana.incrementos && !semana.bajarUnPaso
+      ? rep.pos
+      : rep.posPrevia;
   final techoExtra = pos.techoAmpliado
       ? (porTiempo ? reglas.techoEscaleraSegundos : reglas.techoEscaleraReps)
       : 0;
   final maxEf = rangoMax + techoExtra;
   final seriesEf = pos.serieExtra
-      ? (seriesBase + 1 > (larga ? reglas.seriesTopeLarga : reglas.seriesTopeOtras)
-          ? seriesBase
-          : seriesBase + 1)
+      ? (seriesBase + 1 >
+                (larga ? reglas.seriesTopeLarga : reglas.seriesTopeOtras)
+            ? seriesBase
+            : seriesBase + 1)
       : seriesBase;
   final tempoEf = pos.tempoLento ? 3 : 2;
   final descansoEf = descansoBaseS - reglas.pasoDescansoS * pos.descansoNiveles;
@@ -471,26 +502,27 @@ PropuestaProgresion proponerProgresion({
     bool tope = false,
     String? cambia,
     bool bajar = false,
-  }) =>
-      PropuestaProgresion(
-        varianteId: variante.id,
-        rangoMin: rangoMin,
-        rangoMax: maxEf,
-        objetivo: objetivo ?? maxEf,
-        porTiempo: porTiempo,
-        series: semana.series ?? seriesEf,
-        descansoS: descansoEf,
-        tempoBajadaS: tempoEf,
-        motivo: m,
-        cargaPasos: carga,
-        bandaId: banda?.bandaId,
-        bandaDoble: banda?.doble ?? false,
-        topeDePila: tope,
-        cambiaAVariante: cambia,
-      );
+  }) => PropuestaProgresion(
+    varianteId: variante.id,
+    rangoMin: rangoMin,
+    rangoMax: maxEf,
+    objetivo: objetivo ?? maxEf,
+    porTiempo: porTiempo,
+    series: semana.series ?? seriesEf,
+    descansoS: descansoEf,
+    tempoBajadaS: tempoEf,
+    motivo: m,
+    cargaPasos: carga,
+    bandaId: banda?.bandaId,
+    bandaDoble: banda?.doble ?? false,
+    topeDePila: tope,
+    cambiaAVariante: cambia,
+  );
 
-  PasoBanda? bandaActual = bandaUlt;
-  final topeActual = esPila && cargaUlt != null &&
+  final bandaActual = bandaUlt;
+  final topeActual =
+      esPila &&
+      cargaUlt != null &&
       (inventario.enTopeDePila(cargaUlt) || enUltimaPlaca);
 
   // Semana de descarga o de reentrada: una placa (o banda) menos, sin subir.
@@ -499,8 +531,12 @@ PropuestaProgresion proponerProgresion({
     if (esPila && cargaUlt != null) c = cargaUlt > 1 ? cargaUlt - 1 : cargaUlt;
     PasoBanda? b = bandaActual;
     if (esBanda && b != null) b = anteriorPasoBanda(b, inventario.bandas) ?? b;
-    return conPos(MotivoProgresion.bajaUnPaso,
-        objetivo: rangoMin, carga: c, banda: b);
+    return conPos(
+      MotivoProgresion.bajaUnPaso,
+      objetivo: rangoMin,
+      carga: c,
+      banda: b,
+    );
   }
 
   // Foco, adaptación o 7 a 13 días sin sesión: se repiten las cargas.
@@ -519,45 +555,66 @@ PropuestaProgresion proponerProgresion({
   final avance = rep.ultimoAvance;
   if (avance != null) {
     final (m, cambia, banda) = switch (avance.peldano) {
-      Peldano.repeticiones => (MotivoProgresion.escaleraRepeticiones, null, bandaActual),
+      Peldano.repeticiones => (
+        MotivoProgresion.escaleraRepeticiones,
+        null,
+        bandaActual,
+      ),
       Peldano.series => (MotivoProgresion.escaleraSeries, null, bandaActual),
       Peldano.tempo => (MotivoProgresion.escaleraTempo, null, bandaActual),
-      Peldano.descanso => (MotivoProgresion.escaleraDescanso, null, bandaActual),
+      Peldano.descanso => (
+        MotivoProgresion.escaleraDescanso,
+        null,
+        bandaActual,
+      ),
       Peldano.variante => (
-          MotivoProgresion.escaleraVariante,
-          variante.masDificil,
-          bandaActual
-        ),
+        MotivoProgresion.escaleraVariante,
+        variante.masDificil,
+        bandaActual,
+      ),
       Peldano.banda => (
-          MotivoProgresion.escaleraBanda,
-          null,
-          bandaActual == null
-              ? null
-              : siguientePasoBanda(bandaActual, inventario.bandas)
-        ),
+        MotivoProgresion.escaleraBanda,
+        null,
+        bandaActual == null
+            ? null
+            : siguientePasoBanda(bandaActual, inventario.bandas),
+      ),
     };
-    return conPos(m,
-        objetivo: rangoMin,
-        carga: cargaUlt,
-        banda: banda,
-        tope: topeActual,
-        cambia: cambia);
+    return conPos(
+      m,
+      objetivo: rangoMin,
+      carga: cargaUlt,
+      banda: banda,
+      tope: topeActual,
+      cambia: cambia,
+    );
   }
 
   if (rep.ultimoCumplio) {
     if (esPila && cargaUlt != null && !topeActual) {
       final sube = cargaUlt + 1;
       if (inventario.cargaValida(sube)) {
-        return conPos(MotivoProgresion.subeCarga,
-            objetivo: rangoMin, carga: sube);
+        return conPos(
+          MotivoProgresion.subeCarga,
+          objetivo: rangoMin,
+          carga: sube,
+        );
       }
     }
     // Cumplió y no hay a dónde subir: escalera agotada (se mantiene).
-    return conPos(MotivoProgresion.escaleraAgotada,
-        carga: cargaUlt, banda: bandaActual, tope: topeActual);
+    return conPos(
+      MotivoProgresion.escaleraAgotada,
+      carga: cargaUlt,
+      banda: bandaActual,
+      tope: topeActual,
+    );
   }
 
   // No cumplió: se mantiene y el objetivo es completar el máximo.
-  return conPos(MotivoProgresion.mantiene,
-      carga: cargaUlt, banda: bandaActual, tope: topeActual);
+  return conPos(
+    MotivoProgresion.mantiene,
+    carga: cargaUlt,
+    banda: bandaActual,
+    tope: topeActual,
+  );
 }

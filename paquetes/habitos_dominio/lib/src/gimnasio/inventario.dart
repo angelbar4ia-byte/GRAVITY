@@ -51,15 +51,17 @@ class Inventario {
 
   /// El inicial de la persona: el Marcy con sus cuatro puestos, el banco y la
   /// caminadora (F-E4). Sin bandas ni accesorios hasta que los agregue.
-  factory Inventario.inicial() => const Inventario(items: {
-        'marcy_mwm7119': EstadoItem.disponible,
-        'marcy.press': EstadoItem.disponible,
-        'marcy.polea_alta': EstadoItem.disponible,
-        'marcy.polea_baja': EstadoItem.disponible,
-        'marcy.cojin_curl': EstadoItem.disponible,
-        'banco_inclinado': EstadoItem.disponible,
-        'caminadora': EstadoItem.disponible,
-      });
+  factory Inventario.inicial() => const Inventario(
+    items: {
+      'marcy_mwm7119': EstadoItem.disponible,
+      'marcy.press': EstadoItem.disponible,
+      'marcy.polea_alta': EstadoItem.disponible,
+      'marcy.polea_baja': EstadoItem.disponible,
+      'marcy.cojin_curl': EstadoItem.disponible,
+      'banco_inclinado': EstadoItem.disponible,
+      'caminadora': EstadoItem.disponible,
+    },
+  );
 
   /// Id de catálogo (o `otro:<texto>`) → estado.
   final Map<String, EstadoItem> items;
@@ -68,31 +70,42 @@ class Inventario {
   /// Campo (de [CamposAparato]) → valor confirmado en el aparato.
   final Map<String, int> confirmaciones;
 
-  Inventario conItem(String id, EstadoItem estado) =>
-      Inventario(items: {...items, id: estado}, bandas: bandas, confirmaciones: confirmaciones);
+  Inventario conItem(String id, EstadoItem estado) => Inventario(
+    items: {...items, id: estado},
+    bandas: bandas,
+    confirmaciones: confirmaciones,
+  );
 
   Inventario sinItem(String id) => Inventario(
-        items: {...items}..remove(id),
-        bandas: bandas,
-        confirmaciones: confirmaciones,
-      );
+    items: {...items}..remove(id),
+    bandas: bandas,
+    confirmaciones: confirmaciones,
+  );
 
   Inventario conBandas(List<BandaInventario> b) =>
       Inventario(items: items, bandas: b, confirmaciones: confirmaciones);
 
   Inventario confirmando(String campo, int valor) => Inventario(
-        items: items,
-        bandas: bandas,
-        confirmaciones: {...confirmaciones, campo: valor},
-      );
+    items: items,
+    bandas: bandas,
+    confirmaciones: {...confirmaciones, campo: valor},
+  );
 
   EstadoItem? estadoDe(String id) => items[id];
+
+  /// Equipo `futuro` («cuando lo tengas»): se lista aparte y no genera nada.
+  List<String> get equipoFuturo => [
+    for (final e in items.entries)
+      if (e.value == EstadoItem.futuro) e.key,
+  ]..sort();
 
   /// ¿Hay al menos una banda activa con cantidad?
   bool get hayBandas => bandas.any((b) => b.cuenta);
 
-  List<BandaInventario> get bandasActivas =>
-      [for (final b in bandas) if (b.cuenta) b]..sort((a, b) => a.orden.compareTo(b.orden));
+  List<BandaInventario> get bandasActivas => [
+    for (final b in bandas)
+      if (b.cuenta) b,
+  ]..sort((a, b) => a.orden.compareTo(b.orden));
 
   /// ¿Está disponible el id? Un puesto exige también su aparato; las bandas
   /// salen de la lista de bandas; lo `futuro` o `no_disponible` no cuenta.
@@ -105,11 +118,12 @@ class Inventario {
   }
 
   bool anclaDisponible(Ancla a, Catalogo c) => switch (a) {
-        Ancla.pisar => true,
-        Ancla.puerta => disponible('ancla_puerta', c),
-        Ancla.estacion => disponible('marcy_mwm7119', c) &&
-            confirmaciones[CamposAparato.anclajeEstacion] == 1,
-      };
+    Ancla.pisar => true,
+    Ancla.puerta => disponible('ancla_puerta', c),
+    Ancla.estacion =>
+      disponible('marcy_mwm7119', c) &&
+          confirmaciones[CamposAparato.anclajeEstacion] == 1,
+  };
 
   /// 5.2: todos los `requiere` disponibles y, si es de banda, el ancla.
   bool varianteDisponible(Variante v, Catalogo c) {
@@ -151,7 +165,10 @@ CargaMostrada mostrarCargaPasos(int pasos, Inventario inv) {
   final kg = inv.kgPorPasoX10;
   if (kg == null) return CargaMostrada('placa $pasos');
   final x10 = pasos * kg;
-  return CargaMostrada('placa $pasos · ${x10 ~/ 10}.${x10 % 10} kg', kgX10: x10);
+  return CargaMostrada(
+    'placa $pasos · ${x10 ~/ 10}.${x10 % 10} kg',
+    kgX10: x10,
+  );
 }
 
 /// Texto del dato del diseño: se muestra «aprox.» y no entra a cálculos.

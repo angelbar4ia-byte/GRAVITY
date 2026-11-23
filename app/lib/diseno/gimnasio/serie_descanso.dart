@@ -46,6 +46,7 @@ class ChipSerie extends StatelessWidget {
       _ => v.textoTenue,
     };
     return Semantics(
+      container: true,
       label: anuncio,
       excludeSemantics: true,
       child: DecoratedBox(
@@ -62,7 +63,10 @@ class ChipSerie extends StatelessWidget {
         child: ConstrainedBox(
           constraints: const BoxConstraints(minHeight: 40),
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: e * 1.25, vertical: e * 0.5),
+            padding: EdgeInsets.symmetric(
+              horizontal: e * 1.25,
+              vertical: e * 0.5,
+            ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -190,7 +194,9 @@ class GadgetSerieDescanso extends StatelessWidget {
           header: true,
           child: Text(
             ejercicio,
-            style: v.titulo(tamano: escala == EscalaTemporizador.tablet ? 40 : 28),
+            style: v.titulo(
+              tamano: escala == EscalaTemporizador.tablet ? 40 : 28,
+            ),
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
           ),
@@ -247,7 +253,11 @@ class GadgetSerieDescanso extends StatelessWidget {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.min,
-            children: [datos, SizedBox(height: e * 2), temporizador],
+            children: [
+              datos,
+              SizedBox(height: e * 2),
+              temporizador,
+            ],
           );
         },
       ),

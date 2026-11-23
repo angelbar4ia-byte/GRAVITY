@@ -58,39 +58,40 @@ class Molestia {
 
   /// Respuesta «Sigue»: se anota la revisión de hoy.
   Molestia sigue(DateTime hoy) => Molestia(
-        id: id,
-        zona: zona,
-        intensidad: intensidad,
-        desde: desde,
-        revisadaEn: hoy,
-        nota: nota,
-      );
+    id: id,
+    zona: zona,
+    intensidad: intensidad,
+    desde: desde,
+    revisadaEn: hoy,
+    nota: nota,
+  );
 
   /// Respuesta «Ya no»: queda cerrada.
   Molestia yaNo(DateTime hoy) => Molestia(
-        id: id,
-        zona: zona,
-        intensidad: intensidad,
-        desde: desde,
-        hasta: hoy,
-        revisadaEn: revisadaEn,
-        nota: nota,
-      );
+    id: id,
+    zona: zona,
+    intensidad: intensidad,
+    desde: desde,
+    hasta: hoy,
+    revisadaEn: revisadaEn,
+    nota: nota,
+  );
 
   /// Mapa **solo para el almacén local cifrado del equipo** (`salud_local`).
   /// Nunca se envía a la nube ni a una cola.
   Map<String, Object?> aMapaLocal() => {
-        'zona': zona,
-        'intensidad': intensidad,
-        'desde': desde.millisecondsSinceEpoch,
-        'hasta': hasta?.millisecondsSinceEpoch,
-        'revisada_en': revisadaEn?.millisecondsSinceEpoch,
-        'nota': nota,
-      };
+    'zona': zona,
+    'intensidad': intensidad,
+    'desde': desde.millisecondsSinceEpoch,
+    'hasta': hasta?.millisecondsSinceEpoch,
+    'revisada_en': revisadaEn?.millisecondsSinceEpoch,
+    'nota': nota,
+  };
 
   static Molestia deMapaLocal(String id, Map<String, Object?> m) {
-    DateTime? f(Object? v) =>
-        v == null ? null : DateTime.fromMillisecondsSinceEpoch(v as int, isUtc: true);
+    DateTime? f(Object? v) => v == null
+        ? null
+        : DateTime.fromMillisecondsSinceEpoch(v as int, isUtc: true);
     return Molestia(
       id: id,
       zona: m['zona']! as String,
@@ -128,7 +129,7 @@ enum PrecaucionVariante {
 }
 
 PrecaucionVariante precaucionDe(int intensidad) => switch (intensidad) {
-      0 => PrecaucionVariante.ninguna,
-      1 => PrecaucionVariante.conPrecaucion,
-      _ => PrecaucionVariante.noSeOcupa,
-    };
+  0 => PrecaucionVariante.ninguna,
+  1 => PrecaucionVariante.conPrecaucion,
+  _ => PrecaucionVariante.noSeOcupa,
+};

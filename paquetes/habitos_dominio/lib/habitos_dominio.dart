@@ -9,6 +9,7 @@ export 'src/documentos_cifrados.dart';
 export 'src/edicion.dart';
 export 'src/espiritual.dart';
 export 'src/fecha.dart';
+export 'src/gimnasio/gimnasio.dart';
 export 'src/habito_eliminar.dart';
 export 'src/hoy.dart';
 export 'src/mensajes.dart';

@@ -16,8 +16,16 @@ class Zonas {
   static const otra = 'otra';
 
   static const todas = [
-    hombro, codo, muneca, cuello, espaldaAlta, espaldaBaja, cadera, rodilla,
-    tobillo, otra,
+    hombro,
+    codo,
+    muneca,
+    cuello,
+    espaldaAlta,
+    espaldaBaja,
+    cadera,
+    rodilla,
+    tobillo,
+    otra,
   ];
 }
 
@@ -33,7 +41,14 @@ class Grupos {
   static const core = 'core';
 
   static const todos = [
-    pecho, espalda, hombro, triceps, biceps, cuadriceps, gluteo, core,
+    pecho,
+    espalda,
+    hombro,
+    triceps,
+    biceps,
+    cuadriceps,
+    gluteo,
+    core,
   ];
 }
 
@@ -299,9 +314,7 @@ class Catalogo {
   final List<PlantillaRegenerativa> regenerativas;
   final List<BloqueGuiado> bloques;
 
-  late final Map<String, ItemEquipo> _items = {
-    for (final i in items) i.id: i,
-  };
+  late final Map<String, ItemEquipo> _items = {for (final i in items) i.id: i};
   late final Map<String, Ejercicio> _ejercicios = {
     for (final e in ejercicios) e.id: e,
   };
@@ -383,7 +396,10 @@ class Catalogo {
           for (final c in s.candidatas) {
             final v = variante(c);
             final e = ejercicioDeVariante(c);
-            if (v == null || e == null || malo(v.revision) || malo(e.revision)) {
+            if (v == null ||
+                e == null ||
+                malo(v.revision) ||
+                malo(e.revision)) {
               return true;
             }
           }

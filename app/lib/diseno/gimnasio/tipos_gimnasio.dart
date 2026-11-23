@@ -115,8 +115,7 @@ enum TipoDiaPlan {
   final IconData icono;
 
   /// Si es una sesión de fuerza (A, B o C).
-  bool get esFuerza =>
-      this == fuerzaA || this == fuerzaB || this == fuerzaC;
+  bool get esFuerza => this == fuerzaA || this == fuerzaB || this == fuerzaC;
 }
 
 /// Cómo va un día del plan.

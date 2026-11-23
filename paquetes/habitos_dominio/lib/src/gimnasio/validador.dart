@@ -41,11 +41,10 @@ List<ErrorCatalogo> validarCatalogo(Catalogo c) {
   unicos('equipo', idsEquipo);
   unicos('ejercicio', c.ejercicios.map((x) => x.id));
   unicos('variante', idsVariante);
-  unicos(
-    'plantilla',
-    [...c.plantillas.map((p) => p.id), ...c.regenerativas.map((r) => r.id)],
-    patron: _idPlantilla,
-  );
+  unicos('plantilla', [
+    ...c.plantillas.map((p) => p.id),
+    ...c.regenerativas.map((r) => r.id),
+  ], patron: _idPlantilla);
   unicos('bloque', c.bloques.map((b) => b.id));
   unicos('dato', c.datosAparato.map((d) => d.id));
 
@@ -112,14 +111,22 @@ List<ErrorCatalogo> validarCatalogo(Catalogo c) {
       if (!idsSlot.add(s.id)) mal('slot_repetido', '${p.id}.${s.id}');
       if (s.candidatas.isEmpty) mal('slot_sin_candidatas', '${p.id}.${s.id}');
       for (final k in s.candidatas) {
-        if (!variantes.contains(k)) mal('candidata_inexistente', '${s.id} → $k');
+        if (!variantes.contains(k)) {
+          mal('candidata_inexistente', '${s.id} → $k');
+        }
       }
       if (s.series < 1) mal('series_invalidas', '${p.id}.${s.id}');
       if (s.esencial && s.omitirEnCorta) {
         mal('esencial_y_omitible', '${p.id}.${s.id}');
       }
-      _rango(mal, '${p.id}.${s.id}', s.repsMin, s.repsMax, s.segundosMin,
-          s.segundosMax);
+      _rango(
+        mal,
+        '${p.id}.${s.id}',
+        s.repsMin,
+        s.repsMax,
+        s.segundosMin,
+        s.segundosMax,
+      );
     }
     for (final b in [...p.calentamiento, ...p.cierre]) {
       if (!bloques.contains(b)) mal('bloque_inexistente', '${p.id} → $b');
@@ -152,7 +159,10 @@ void _rango(
   int? segMax,
 ) {
   if (repsMin != null || repsMax != null) {
-    if (repsMin == null || repsMax == null || repsMin < 1 || repsMin >= repsMax) {
+    if (repsMin == null ||
+        repsMax == null ||
+        repsMin < 1 ||
+        repsMin >= repsMax) {
       mal('rango_reps', '$donde: $repsMin–$repsMax');
     }
   }
@@ -208,31 +218,31 @@ List<String> palabrasMedicasEn(String texto) {
   final fichas = _sinAcentos(texto).split(RegExp(r'[^a-z0-9]+'));
   return [
     for (final f in fichas)
-      if (palabrasProhibidasMedicas.contains(f)) f
+      if (palabrasProhibidasMedicas.contains(f)) f,
   ];
 }
 
 /// Todo texto del catálogo y de los mensajes (para la prueba de contenido).
 List<String> textosDelModulo(Catalogo c) => [
-      for (final i in c.items) i.nombre,
-      for (final d in c.datosAparato) d.nombre,
-      for (final x in c.ejercicios) ...[
-        x.nombre,
-        x.explicacion,
-        ...x.errores,
-        for (final v in x.variantes) v.nombre,
-      ],
-      for (final p in c.plantillas) ...[
-        p.nombre,
-        for (final s in p.slots) s.nombre,
-      ],
-      for (final r in c.regenerativas) r.nombre,
-      for (final b in c.bloques) ...[b.nombre, b.instruccion],
-      ...MensajesGimnasio.todos,
-    ];
+  for (final i in c.items) i.nombre,
+  for (final d in c.datosAparato) d.nombre,
+  for (final x in c.ejercicios) ...[
+    x.nombre,
+    x.explicacion,
+    ...x.errores,
+    for (final v in x.variantes) v.nombre,
+  ],
+  for (final p in c.plantillas) ...[
+    p.nombre,
+    for (final s in p.slots) s.nombre,
+  ],
+  for (final r in c.regenerativas) r.nombre,
+  for (final b in c.bloques) ...[b.nombre, b.instruccion],
+  ...MensajesGimnasio.todos,
+];
 
 /// Problemas de contenido médico: «texto → palabra».
 List<String> validarContenidoMedico(Iterable<String> textos) => [
-      for (final t in textos)
-        for (final p in palabrasMedicasEn(t)) '"$t" → $p'
-    ];
+  for (final t in textos)
+    for (final p in palabrasMedicasEn(t)) '"$t" → $p',
+];

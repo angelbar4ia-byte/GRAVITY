@@ -52,6 +52,7 @@ class TarjetaAparato extends StatelessWidget {
     super.key,
     required this.nombre,
     this.icono = Icons.fitness_center,
+    this.categoriaTexto = 'Aparato',
     this.detalle,
     this.disponibilidad = DisponibilidadAparato.disponible,
     this.puestos = const [],
@@ -71,8 +72,13 @@ class TarjetaAparato extends StatelessWidget {
     this.alAccionVacia,
   });
 
+  /// El nombre completo («Estación multifuncional Marcy MWM-7119»): se escribe
+  /// entero, en varias líneas si hace falta, nunca recortado.
   final String nombre;
   final IconData icono;
+
+  /// La etiqueta corta de la tarjeta («Estación», «Banco», «Bandas»).
+  final String categoriaTexto;
 
   /// Una línea de apoyo («3 bandas activas»).
   final String? detalle;
@@ -125,17 +131,33 @@ class TarjetaAparato extends StatelessWidget {
       explicitChildNodes: true,
       label: resumen,
       child: TarjetaModulo(
-        titulo: nombre,
+        titulo: categoriaTexto,
         icono: icono,
-        accion: MarcaGimnasio(
-          texto: disponibilidad.texto,
-          icono: disponibilidad.icono,
-          color: colorEstado,
-        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
+            Wrap(
+              spacing: e * 1.5,
+              runSpacing: e,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Text(
+                  nombre,
+                  style: v.lectura(
+                    tamano: 18,
+                    peso: FontWeight.w700,
+                    color: v.textoFuerte,
+                  ),
+                ),
+                MarcaGimnasio(
+                  texto: disponibilidad.texto,
+                  icono: disponibilidad.icono,
+                  color: colorEstado,
+                ),
+              ],
+            ),
+            SizedBox(height: e),
             if (detalle != null)
               Padding(
                 padding: EdgeInsets.only(bottom: e),
@@ -274,8 +296,7 @@ class _FilaDato extends StatelessWidget {
     };
     return Semantics(
       container: true,
-      label:
-          '${dato.etiqueta}: ${dato.valorTexto ?? 'sin dato'}. ${c.texto}',
+      label: '${dato.etiqueta}: ${dato.valorTexto ?? 'sin dato'}. ${c.texto}',
       excludeSemantics: true,
       child: Padding(
         padding: EdgeInsets.symmetric(vertical: e * 0.75),

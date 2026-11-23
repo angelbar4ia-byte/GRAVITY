@@ -162,7 +162,8 @@ const _ejercicios = <Ejercicio>[
     patron: 'empuje_horizontal',
     gruposPrimarios: [Grupos.pecho, Grupos.hombro, Grupos.triceps],
     zonas: [Zonas.hombro, Zonas.codo],
-    explicacion: 'Empuja al frente con la espalda apoyada y los codos a la '
+    explicacion:
+        'Empuja al frente con la espalda apoyada y los codos a la '
         'altura del pecho. Sube con control y baja despacio sin soltar la '
         'carga de golpe.',
     errores: [
@@ -207,12 +208,10 @@ const _ejercicios = <Ejercicio>[
     patron: 'empuje_horizontal',
     gruposPrimarios: [Grupos.pecho, Grupos.hombro, Grupos.triceps],
     zonas: [Zonas.hombro, Zonas.codo, Zonas.muneca],
-    explicacion: 'Manos en el banco, cuerpo en línea recta de la cabeza a los '
+    explicacion:
+        'Manos en el banco, cuerpo en línea recta de la cabeza a los '
         'talones. Baja el pecho hacia el banco y empuja para volver.',
-    errores: [
-      'Dejar caer la cadera.',
-      'Abrir los codos hacia los lados.',
-    ],
+    errores: ['Dejar caer la cadera.', 'Abrir los codos hacia los lados.'],
     repsMin: 8,
     repsMax: 12,
     progresion: TipoProgresion.repeticiones,
@@ -233,7 +232,8 @@ const _ejercicios = <Ejercicio>[
     patron: 'empuje_hombro',
     gruposPrimarios: [Grupos.hombro],
     zonas: [Zonas.hombro, Zonas.cuello],
-    explicacion: 'Con el codo ligeramente flexionado, sube el brazo a un lado '
+    explicacion:
+        'Con el codo ligeramente flexionado, sube el brazo a un lado '
         'hasta la altura del hombro y baja despacio.',
     errores: [
       'Subir más allá de la altura del hombro.',
@@ -267,7 +267,8 @@ const _ejercicios = <Ejercicio>[
     patron: 'extension_codo',
     gruposPrimarios: [Grupos.triceps],
     zonas: [Zonas.codo, Zonas.hombro],
-    explicacion: 'Con los codos pegados al cuerpo, estira los brazos hacia '
+    explicacion:
+        'Con los codos pegados al cuerpo, estira los brazos hacia '
         'abajo y vuelve despacio sin mover los hombros.',
     errores: [
       'Separar los codos del cuerpo.',
@@ -309,7 +310,8 @@ const _ejercicios = <Ejercicio>[
     patron: 'extension_codo',
     gruposPrimarios: [Grupos.triceps, Grupos.pecho, Grupos.hombro],
     zonas: [Zonas.hombro, Zonas.codo, Zonas.muneca],
-    explicacion: 'Con las manos en el borde del banco, baja el cuerpo '
+    explicacion:
+        'Con las manos en el borde del banco, baja el cuerpo '
         'doblando los codos hacia atrás y empuja para subir. Revisa que el '
         'banco esté firme.',
     errores: [
@@ -346,7 +348,8 @@ const _ejercicios = <Ejercicio>[
     patron: 'jalon_vertical',
     gruposPrimarios: [Grupos.espalda, Grupos.biceps],
     zonas: [Zonas.hombro, Zonas.codo, Zonas.espaldaAlta],
-    explicacion: 'Tira hacia el pecho llevando los codos hacia abajo y atrás. '
+    explicacion:
+        'Tira hacia el pecho llevando los codos hacia abajo y atrás. '
         'Vuelve arriba con control sin dejar que la carga te jale.',
     errores: [
       'Echar el tronco muy hacia atrás.',
@@ -388,7 +391,8 @@ const _ejercicios = <Ejercicio>[
     patron: 'remo',
     gruposPrimarios: [Grupos.espalda, Grupos.biceps],
     zonas: [Zonas.espaldaAlta, Zonas.espaldaBaja, Zonas.codo],
-    explicacion: 'Sentado con la espalda recta, tira de las manos hacia el '
+    explicacion:
+        'Sentado con la espalda recta, tira de las manos hacia el '
         'abdomen juntando los omóplatos. Vuelve despacio.',
     errores: [
       'Redondear la espalda al estirar.',
@@ -422,7 +426,8 @@ const _ejercicios = <Ejercicio>[
     patron: 'remo',
     gruposPrimarios: [Grupos.hombro, Grupos.espalda],
     zonas: [Zonas.hombro, Zonas.cuello, Zonas.espaldaAlta],
-    explicacion: 'Tira de la cuerda o la banda hacia el rostro abriendo los '
+    explicacion:
+        'Tira de la cuerda o la banda hacia el rostro abriendo los '
         'codos a los lados. Aprieta atrás un instante y vuelve despacio.',
     errores: [
       'Usar demasiada carga y mover el tronco.',
@@ -464,7 +469,8 @@ const _ejercicios = <Ejercicio>[
     patron: 'flexion_codo',
     gruposPrimarios: [Grupos.biceps],
     zonas: [Zonas.codo, Zonas.muneca],
-    explicacion: 'Con los codos quietos, lleva las manos hacia los hombros '
+    explicacion:
+        'Con los codos quietos, lleva las manos hacia los hombros '
         'y baja despacio hasta estirar el brazo.',
     errores: [
       'Balancear el cuerpo para subir la carga.',
@@ -506,7 +512,8 @@ const _ejercicios = <Ejercicio>[
     patron: 'sentadilla',
     gruposPrimarios: [Grupos.cuadriceps, Grupos.gluteo],
     zonas: [Zonas.rodilla, Zonas.cadera, Zonas.espaldaBaja],
-    explicacion: 'Pies al ancho de los hombros. Lleva la cadera atrás y baja '
+    explicacion:
+        'Pies al ancho de los hombros. Lleva la cadera atrás y baja '
         'hasta rozar el banco; sube empujando el piso con los talones.',
     errores: [
       'Dejar que las rodillas se vayan hacia adentro.',
@@ -550,7 +557,8 @@ const _ejercicios = <Ejercicio>[
     patron: 'subida',
     gruposPrimarios: [Grupos.cuadriceps, Grupos.gluteo],
     zonas: [Zonas.rodilla, Zonas.cadera, Zonas.tobillo],
-    explicacion: 'Sube al banco con una pierna empujando con el talón y baja '
+    explicacion:
+        'Sube al banco con una pierna empujando con el talón y baja '
         'con control. Revisa que el banco esté firme. Repite y cambia de '
         'pierna.',
     errores: [
@@ -578,7 +586,8 @@ const _ejercicios = <Ejercicio>[
     patron: 'puente',
     gruposPrimarios: [Grupos.gluteo],
     zonas: [Zonas.cadera, Zonas.espaldaBaja],
-    explicacion: 'Con los pies apoyados, sube la cadera apretando los '
+    explicacion:
+        'Con los pies apoyados, sube la cadera apretando los '
         'glúteos hasta formar una línea del hombro a la rodilla y baja '
         'despacio.',
     errores: [
@@ -621,7 +630,8 @@ const _ejercicios = <Ejercicio>[
     patron: 'patada',
     gruposPrimarios: [Grupos.gluteo],
     zonas: [Zonas.cadera, Zonas.espaldaBaja],
-    explicacion: 'Lleva una pierna hacia atrás con el glúteo apretado, sin '
+    explicacion:
+        'Lleva una pierna hacia atrás con el glúteo apretado, sin '
         'arquear la espalda, y vuelve despacio. Repite y cambia de pierna.',
     errores: [
       'Arquear la espalda baja para subir más la pierna.',
@@ -662,21 +672,15 @@ const _ejercicios = <Ejercicio>[
     patron: 'plancha',
     gruposPrimarios: [Grupos.core],
     zonas: [Zonas.hombro, Zonas.muneca, Zonas.espaldaBaja],
-    explicacion: 'Apoya antebrazos y puntas de los pies, cuerpo en línea '
+    explicacion:
+        'Apoya antebrazos y puntas de los pies, cuerpo en línea '
         'recta. Aprieta abdomen y glúteos y respira con calma.',
-    errores: [
-      'Dejar caer la cadera.',
-      'Subir la cadera hacia el techo.',
-    ],
+    errores: ['Dejar caer la cadera.', 'Subir la cadera hacia el techo.'],
     segundosMin: 30,
     segundosMax: 45,
     progresion: TipoProgresion.tiempo,
     variantes: [
-      Variante(
-        id: 'plancha_suelo',
-        nombre: 'Plancha sin equipo',
-        revision: _b,
-      ),
+      Variante(id: 'plancha_suelo', nombre: 'Plancha sin equipo', revision: _b),
     ],
     revision: _b,
   ),
@@ -730,7 +734,8 @@ const _bloques = <BloqueGuiado>[
   BloqueGuiado(
     id: 'respiracion_cierre',
     nombre: 'Respiración y cierre',
-    instruccion: 'Respira con calma. Si quieres, termina con una oración o '
+    instruccion:
+        'Respira con calma. Si quieres, termina con una oración o '
         'tu devocional.',
     revision: _b,
   ),

@@ -124,10 +124,7 @@ class TarjetaEntrenamientoHoy extends StatelessWidget {
             child: Text(plantillaTexto, style: v.titulo(tamano: 26)),
           ),
           if (datos.isNotEmpty)
-            Text(
-              datos,
-              style: v.numero(tamano: 15, color: v.textoTenue),
-            ),
+            Text(datos, style: v.numero(tamano: 15, color: v.textoTenue)),
           if (tipoSemana != TipoSemanaVista.carga) ...[
             SizedBox(height: e * 1.5),
             MarcaGimnasio(texto: tipoSemana.texto, icono: tipoSemana.icono),
@@ -274,10 +271,7 @@ class FilaEjercicioPlan extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               ExcludeSemantics(
-                child: Text(
-                  '$numero / $total',
-                  style: v.etiquetaPanel(),
-                ),
+                child: Text('$numero / $total', style: v.etiquetaPanel()),
               ),
               ExcludeSemantics(
                 child: Text(
