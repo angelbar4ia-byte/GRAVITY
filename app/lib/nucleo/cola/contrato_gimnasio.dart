@@ -76,11 +76,7 @@ const Map<String, DestinoUpsert> destinosUpsertGimnasio = {
     'hab_ent_inventario',
     'persona_id,item_id',
   ),
-  TipoColaGimnasio.banda: DestinoUpsert(
-    'hab_ent_bandas',
-    'id',
-    llevaId: true,
-  ),
+  TipoColaGimnasio.banda: DestinoUpsert('hab_ent_bandas', 'id', llevaId: true),
   TipoColaGimnasio.sesion: DestinoUpsert(
     'hab_ent_sesiones',
     'id',
@@ -146,7 +142,13 @@ const Map<String, Set<String>> columnasQueSeMandanGimnasio = {
     'aviso_visto_en',
     'modificado_en',
   },
-  'hab_ent_plan_dias': {'dia_semana', 'tipo', 'version', 'hora', 'modificado_en'},
+  'hab_ent_plan_dias': {
+    'dia_semana',
+    'tipo',
+    'version',
+    'hora',
+    'modificado_en',
+  },
   'hab_ent_inventario': {
     'item_id',
     'estado',

@@ -195,6 +195,16 @@ class NubeCifradaHabitos {
     },
     String? pin,
   }) async {
+    // Lo que no admite nube (las molestias) se rechaza antes de tocar la red.
+    for (final tipo in tipos) {
+      if (!tipo.admiteNube) {
+        throw ArgumentError.value(
+          tipo.valor,
+          'tipos',
+          'Este tipo nunca se guarda en la nube.',
+        );
+      }
+    }
     if (!FraseDeRecuperacion.esValida(frase)) {
       throw ErrorNubeCifrada.fraseInvalida;
     }
@@ -216,13 +226,6 @@ class NubeCifradaHabitos {
     // 1. En memoria: los sobres de cada tipo, vueltos a cifrar con la maestra.
     final nuevos = <TipoSensible, List<Sobre>>{};
     for (final tipo in tipos) {
-      if (!tipo.admiteNube) {
-        throw ArgumentError.value(
-          tipo.valor,
-          'tipos',
-          'Este tipo nunca se guarda en la nube.',
-        );
-      }
       if (await modos.modo(persona, tipo) == ModoSensible.nubeCifrada) continue;
       nuevos[tipo] = await _resellar(
         persona,

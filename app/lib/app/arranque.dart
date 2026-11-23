@@ -52,6 +52,7 @@ import '../nucleo/configuracion/configuracion_entorno.dart';
 import '../nucleo/firebase/firebase.dart';
 import '../nucleo/invitaciones/invitaciones.dart';
 import '../nucleo/seguridad/almacen_seguro.dart';
+import '../nucleo/gimnasio/repositorio_gimnasio.dart';
 import '../nucleo/sensibles/mis_datos.dart'
     show funcionBorrarMisDatos, tipoColaBorrado;
 import '../nucleo/sensibles/subida_diferida.dart'
@@ -74,6 +75,7 @@ import '../nucleo/sesion/sesion.dart';
 import 'avisos/con_avisos.dart' show tipoEquipoAvisosProvider;
 import 'dispositivo.dart';
 import '../nucleo/sensibles/nube_habitos.dart';
+import 'gimnasio/proveedores_gimnasio.dart' show repositorioGimnasioProvider;
 import 'sensibles/sensibles.dart';
 import '../nucleo/tablet/controlador_tablet.dart'
     show alEntrarConPinProvider, alSalirDeLaTabletProvider;
@@ -118,6 +120,12 @@ List<Override> conexionesDeLaApp() => [
   alSalirDeLaTabletProvider.overrideWith(
     (ref) =>
         (persona) => ref.read(llavesHabitosProvider).olvidarEnMemoria(),
+  ),
+  // «Borrar mis datos» (entrenamiento o todo): también la copia local de Mi
+  // gimnasio y lo suyo que esperaba en la cola.
+  alBorrarEntrenamientoProvider.overrideWith(
+    (ref) =>
+        (persona) => ref.read(repositorioGimnasioProvider).borrarTodoDe(persona),
   ),
   bandejaDeLaTabletProvider.overrideWith(
     (ref) => BandejaDeLaTabletConCola(
@@ -280,6 +288,19 @@ Future<List<Override>> prepararArranque({
   }
   await m.medir('sesion', sesion.iniciar);
 
+  // Base local: en demostración vive en memoria. Mi gimnasio (Fase 8): su
+  // copia local es una copia más (M5): al salir, en una baja o al quitar a la
+  // persona de la tablet se borra (lo pendiente sigue en la cola y lo subido se
+  // vuelve a traer del servidor). Las molestias NO se tocan aquí: viven solo en
+  // el equipo, como los demás datos sensibles que no están en la nube.
+  final baseLocal = sesion.esDemostracion ? BaseLocal.enMemoria() : abrirBase();
+  limpieza.registrar(
+    (persona) => RepositorioGimnasio(baseLocal).borrarTodoDe(
+      persona,
+      incluirCola: false,
+    ),
+  );
+
   return [
     ...conexionesDeLaApp(),
     tipoDispositivoProvider.overrideWithValue(dispositivo),
@@ -319,9 +340,7 @@ Future<List<Override>> prepararArranque({
     servicioSesionProvider.overrideWithValue(sesion),
     // Demostración: la cola vive en memoria; nada de lo de ejemplo queda en
     // el dispositivo ni se sube después (M16).
-    baseLocalProvider.overrideWithValue(
-      sesion.esDemostracion ? BaseLocal.enMemoria() : abrirBase(),
-    ),
+    baseLocalProvider.overrideWithValue(baseLocal),
     enviadorProvider.overrideWithValue(enviador),
     if (invitaciones != null)
       repositorioInvitacionesProvider.overrideWithValue(invitaciones),

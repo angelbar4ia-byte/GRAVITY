@@ -97,7 +97,8 @@ extension GimSesionComoMapa on GimSesionFila {
   /// Lo planeado, como lista de `{ejercicio, variante, series, reps_min,
   /// reps_max}`.
   List<Map<String, Object?>> get planComoLista => [
-    for (final e in jsonDecode(plan) as List) (e as Map).cast<String, Object?>(),
+    for (final e in jsonDecode(plan) as List)
+      (e as Map).cast<String, Object?>(),
   ];
 
   /// Lo medido solo en este equipo (nunca se sube).
@@ -161,15 +162,13 @@ String? _hhmm(Object? v) =>
     v is String ? (v.length >= 5 ? v.substring(0, 5) : v) : null;
 
 /// Quita los segundos sueltos: lo que guarda drift (segundos desde 1970).
-DateTime _aSegundos(DateTime t) =>
-    DateTime.fromMillisecondsSinceEpoch(t.millisecondsSinceEpoch ~/ 1000 * 1000);
+DateTime _aSegundos(DateTime t) => DateTime.fromMillisecondsSinceEpoch(
+  t.millisecondsSinceEpoch ~/ 1000 * 1000,
+);
 
 class RepositorioGimnasio {
-  RepositorioGimnasio(
-    this._base, {
-    this._cola,
-    DateTime Function()? reloj,
-  }) : _reloj = reloj ?? DateTime.now;
+  RepositorioGimnasio(this._base, {this._cola, DateTime Function()? reloj})
+    : _reloj = reloj ?? DateTime.now;
 
   final BaseLocal _base;
 
@@ -244,10 +243,12 @@ class RepositorioGimnasio {
     String version = 'auto',
     String? hora,
   }) async {
-    final actual = await (_base.select(_base.gimPlanDias)..where(
-          (t) => t.personaId.equals(persona) & t.diaSemana.equals(diaSemana),
-        ))
-        .getSingleOrNull();
+    final actual =
+        await (_base.select(_base.gimPlanDias)..where(
+              (t) =>
+                  t.personaId.equals(persona) & t.diaSemana.equals(diaSemana),
+            ))
+            .getSingleOrNull();
     await _guardar(
       tabla: 'hab_ent_plan_dias',
       persona: persona,
@@ -281,10 +282,11 @@ class RepositorioGimnasio {
     Map<String, Object?> confirmado = const {},
     String? notas,
   }) async {
-    final actual = await (_base.select(_base.gimInventario)..where(
-          (t) => t.personaId.equals(persona) & t.itemId.equals(itemId),
-        ))
-        .getSingleOrNull();
+    final actual =
+        await (_base.select(_base.gimInventario)..where(
+              (t) => t.personaId.equals(persona) & t.itemId.equals(itemId),
+            ))
+            .getSingleOrNull();
     await _guardar(
       tabla: 'hab_ent_inventario',
       persona: persona,
@@ -320,10 +322,11 @@ class RepositorioGimnasio {
     bool activa = true,
   }) async {
     final idFinal = id ?? IdsGimnasio.banda();
-    final actual = await (_base.select(_base.gimBandas)..where(
-          (t) => t.personaId.equals(persona) & t.id.equals(idFinal),
-        ))
-        .getSingleOrNull();
+    final actual =
+        await (_base.select(
+              _base.gimBandas,
+            )..where((t) => t.personaId.equals(persona) & t.id.equals(idFinal)))
+            .getSingleOrNull();
     await _guardar(
       tabla: 'hab_ent_bandas',
       persona: persona,
@@ -345,14 +348,14 @@ class RepositorioGimnasio {
   /// Quita una banda (las series que la usaron quedan sin banda, como en el
   /// servidor).
   Future<void> borrarBanda(String persona, String id) async {
+    await _encolarBorrado(persona, TipoColaGimnasio.bandaBorrar, id);
     await _transaccion(() async {
-      await (_base.delete(_base.gimBandas)
-            ..where((t) => t.personaId.equals(persona) & t.id.equals(id)))
-          .go();
+      await (_base.delete(
+        _base.gimBandas,
+      )..where((t) => t.personaId.equals(persona) & t.id.equals(id))).go();
       await (_base.update(_base.gimSeries)
             ..where((t) => t.personaId.equals(persona) & t.bandaId.equals(id)))
           .write(const GimSeriesCompanion(bandaId: Value(null)));
-      await _encolarBorrado(persona, TipoColaGimnasio.bandaBorrar, id);
     });
   }
 
@@ -368,13 +371,14 @@ class RepositorioGimnasio {
     String persona,
     String fecha,
     String plantilla,
-  ) => (_base.select(_base.gimSesiones)..where(
-        (t) =>
-            t.personaId.equals(persona) &
-            t.fecha.equals(fecha) &
-            t.plantilla.equals(plantilla),
-      ))
-      .getSingleOrNull();
+  ) =>
+      (_base.select(_base.gimSesiones)..where(
+            (t) =>
+                t.personaId.equals(persona) &
+                t.fecha.equals(fecha) &
+                t.plantilla.equals(plantilla),
+          ))
+          .getSingleOrNull();
 
   /// La sesión que quedó `en_curso` (la más reciente), para retomarla (por
   /// ejemplo tras volver al modo Casa en la tablet, PG-17).
@@ -461,15 +465,14 @@ class RepositorioGimnasio {
   /// Borra una sesión y sus series (en el servidor, las series se van en
   /// cascada).
   Future<void> borrarSesion(String persona, String id) async {
+    await _encolarBorrado(persona, TipoColaGimnasio.sesionBorrar, id);
     await _transaccion(() async {
-      await (_base.delete(_base.gimSeries)..where(
-            (t) => t.personaId.equals(persona) & t.sesionId.equals(id),
-          ))
+      await (_base.delete(_base.gimSeries)
+            ..where((t) => t.personaId.equals(persona) & t.sesionId.equals(id)))
           .go();
-      await (_base.delete(_base.gimSesiones)
-            ..where((t) => t.personaId.equals(persona) & t.id.equals(id)))
-          .go();
-      await _encolarBorrado(persona, TipoColaGimnasio.sesionBorrar, id);
+      await (_base.delete(
+        _base.gimSesiones,
+      )..where((t) => t.personaId.equals(persona) & t.id.equals(id))).go();
     });
   }
 
@@ -478,8 +481,7 @@ class RepositorioGimnasio {
   Future<List<GimSerieFila>> series(String persona, String sesionId) =>
       (_base.select(_base.gimSeries)
             ..where(
-              (t) =>
-                  t.personaId.equals(persona) & t.sesionId.equals(sesionId),
+              (t) => t.personaId.equals(persona) & t.sesionId.equals(sesionId),
             )
             ..orderBy([
               (t) => OrderingTerm.asc(t.ejercicioId),
@@ -525,9 +527,10 @@ class RepositorioGimnasio {
     );
     final id = (serie['id'] as String?) ?? esperado;
     if (id != esperado) throw FilaGimnasioInvalida('hab_ent_series', 'id');
-    final actual = await (_base.select(_base.gimSeries)
-          ..where((t) => t.personaId.equals(persona) & t.id.equals(id)))
-        .getSingleOrNull();
+    final actual =
+        await (_base.select(_base.gimSeries)
+              ..where((t) => t.personaId.equals(persona) & t.id.equals(id)))
+            .getSingleOrNull();
     await _guardar(
       tabla: 'hab_ent_series',
       persona: persona,
@@ -542,47 +545,52 @@ class RepositorioGimnasio {
   /// Deshacer: quita una serie (y, si ya subió, se borra también en el
   /// servidor).
   Future<void> borrarSerie(String persona, String id) async {
-    await _transaccion(() async {
-      await (_base.delete(_base.gimSeries)
-            ..where((t) => t.personaId.equals(persona) & t.id.equals(id)))
-          .go();
-      await _encolarBorrado(persona, TipoColaGimnasio.serieBorrar, id);
-    });
+    await _encolarBorrado(persona, TipoColaGimnasio.serieBorrar, id);
+    await (_base.delete(
+      _base.gimSeries,
+    )..where((t) => t.personaId.equals(persona) & t.id.equals(id))).go();
   }
 
   // ------------------------------------------------------------------ borrar
 
-  /// Borra de este equipo **todo** lo del entrenamiento de [persona] (tablas
-  /// locales y lo suyo que espera en la cola). Lo de la nube lo borra
-  /// `hab_borrar_mis_datos`. Se usa en «Borrar mis datos», al quitar a la
-  /// persona de la tablet y al darla de baja.
-  Future<void> borrarTodoDe(String persona) async {
+  /// Borra de este equipo **todo** lo del entrenamiento de [persona]: las
+  /// tablas locales y, con [incluirCola], lo suyo que espera en la cola. Lo de
+  /// la nube lo borra `hab_borrar_mis_datos`.
+  ///
+  /// - «Borrar mis datos» (`entrenamiento` o `todo`): con [incluirCola] (lo
+  ///   pendiente no debe resucitar lo borrado).
+  /// - Salir, baja o quitar a la persona de la tablet (M5): **sin** cola, como el
+  ///   resto de las copias locales; lo que aún no subió sigue esperando y sube
+  ///   con su sesión, y lo ya subido se vuelve a traer del servidor.
+  Future<void> borrarTodoDe(String persona, {bool incluirCola = true}) async {
     await _transaccion(() async {
       for (final borrar in <Future<int> Function()>[
-        () => (_base.delete(_base.gimSeries)
-              ..where((t) => t.personaId.equals(persona)))
-            .go(),
-        () => (_base.delete(_base.gimSesiones)
-              ..where((t) => t.personaId.equals(persona)))
-            .go(),
-        () => (_base.delete(_base.gimBandas)
-              ..where((t) => t.personaId.equals(persona)))
-            .go(),
-        () => (_base.delete(_base.gimInventario)
-              ..where((t) => t.personaId.equals(persona)))
-            .go(),
-        () => (_base.delete(_base.gimPlanDias)
-              ..where((t) => t.personaId.equals(persona)))
-            .go(),
-        () => (_base.delete(_base.gimPerfil)
-              ..where((t) => t.personaId.equals(persona)))
-            .go(),
-        () => (_base.delete(_base.pendientes)..where(
-              (t) =>
-                  t.personaId.equals(persona) &
-                  t.tipo.like('${TipoColaGimnasio.prefijo}%'),
-            ))
-            .go(),
+        () => (_base.delete(
+          _base.gimSeries,
+        )..where((t) => t.personaId.equals(persona))).go(),
+        () => (_base.delete(
+          _base.gimSesiones,
+        )..where((t) => t.personaId.equals(persona))).go(),
+        () => (_base.delete(
+          _base.gimBandas,
+        )..where((t) => t.personaId.equals(persona))).go(),
+        () => (_base.delete(
+          _base.gimInventario,
+        )..where((t) => t.personaId.equals(persona))).go(),
+        () => (_base.delete(
+          _base.gimPlanDias,
+        )..where((t) => t.personaId.equals(persona))).go(),
+        () => (_base.delete(
+          _base.gimPerfil,
+        )..where((t) => t.personaId.equals(persona))).go(),
+        if (incluirCola)
+          () =>
+              (_base.delete(_base.pendientes)..where(
+                    (t) =>
+                        t.personaId.equals(persona) &
+                        t.tipo.like('${TipoColaGimnasio.prefijo}%'),
+                  ))
+                  .go(),
       ]) {
         await borrar();
       }
@@ -640,7 +648,12 @@ class RepositorioGimnasio {
       for (final e in r.entries)
         if (permitidas.contains(e.key)) e.key: e.value,
     };
-    for (final c in const ['inicio', 'fin', 'aviso_visto_en', 'modificado_en']) {
+    for (final c in const [
+      'inicio',
+      'fin',
+      'aviso_visto_en',
+      'modificado_en',
+    ]) {
       if (fila.containsKey(c)) fila[c] = _aIsoUtc(fila[c]);
     }
     for (final c in const ['noche_desde', 'hora']) {
@@ -673,13 +686,22 @@ class RepositorioGimnasio {
   }) async {
     final ahora = _aSegundos(_reloj());
     // Nunca retrocede para esa fila (si el reloj del equipo se atrasó).
-    final sello = anterior != null && anterior.isAfter(ahora) ? anterior : ahora;
-    final completa = {...fila, 'modificado_en': sello.toUtc().toIso8601String()};
+    final sello = anterior != null && anterior.isAfter(ahora)
+        ? anterior
+        : ahora;
+    final completa = {
+      ...fila,
+      'modificado_en': sello.toUtc().toIso8601String(),
+    };
     validarFilaGimnasio(tabla, completa);
-    await _transaccion(() async {
-      await _escribirLocal(tabla, persona, completa, sello, tiempos: tiempos);
-      await _encolar(persona, tipo, clave, completa, sello);
-    });
+    // Primero la cola y después lo local, **sin** una transacción que abarque
+    // las dos: al encolar, la cola avisa a quienes la vigilan (la interfaz) y
+    // esos avisos consultan la base; hacerlo dentro de una transacción los deja
+    // esperando. Si algo se corta entre las dos, lo peor es una fila que sube
+    // sin estar aún en el equipo (se trae al abrir), nunca un cambio local que
+    // no llegue a subir.
+    await _encolar(persona, tipo, clave, completa, sello);
+    await _escribirLocal(tabla, persona, completa, sello, tiempos: tiempos);
     return (completa['id'] as String?) ?? clave;
   }
 
@@ -733,37 +755,41 @@ class RepositorioGimnasio {
     String persona,
     Map<String, Object?> f,
   ) async => switch (tabla) {
-    'hab_ent_perfil' =>
-      (await perfil(persona))?.modificadoEn,
+    'hab_ent_perfil' => (await perfil(persona))?.modificadoEn,
     'hab_ent_plan_dias' =>
       (await (_base.select(_base.gimPlanDias)..where(
-            (t) =>
-                t.personaId.equals(persona) &
-                t.diaSemana.equals(f['dia_semana']! as int),
-          ))
+                (t) =>
+                    t.personaId.equals(persona) &
+                    t.diaSemana.equals(f['dia_semana']! as int),
+              ))
               .getSingleOrNull())
           ?.modificadoEn,
     'hab_ent_inventario' =>
       (await (_base.select(_base.gimInventario)..where(
-            (t) =>
-                t.personaId.equals(persona) &
-                t.itemId.equals(f['item_id']! as String),
-          ))
+                (t) =>
+                    t.personaId.equals(persona) &
+                    t.itemId.equals(f['item_id']! as String),
+              ))
               .getSingleOrNull())
           ?.modificadoEn,
     'hab_ent_bandas' =>
       (await (_base.select(_base.gimBandas)..where(
-            (t) =>
-                t.personaId.equals(persona) & t.id.equals(f['id']! as String),
-          ))
+                (t) =>
+                    t.personaId.equals(persona) &
+                    t.id.equals(f['id']! as String),
+              ))
               .getSingleOrNull())
           ?.modificadoEn,
-    'hab_ent_sesiones' => (await sesion(persona, f['id']! as String))?.modificadoEn,
+    'hab_ent_sesiones' => (await sesion(
+      persona,
+      f['id']! as String,
+    ))?.modificadoEn,
     'hab_ent_series' =>
       (await (_base.select(_base.gimSeries)..where(
-            (t) =>
-                t.personaId.equals(persona) & t.id.equals(f['id']! as String),
-          ))
+                (t) =>
+                    t.personaId.equals(persona) &
+                    t.id.equals(f['id']! as String),
+              ))
               .getSingleOrNull())
           ?.modificadoEn,
     _ => null,
@@ -782,107 +808,119 @@ class RepositorioGimnasio {
         v == null ? null : DateTime.parse(v as String).toUtc();
     switch (tabla) {
       case 'hab_ent_perfil':
-        await _base.into(_base.gimPerfil).insertOnConflictUpdate(
-          GimPerfilCompanion(
-            personaId: Value(persona),
-            diasPlan: Value(f['dias_plan']! as int),
-            versionPref: Value(f['version_pref']! as String),
-            ventana: Value(f['ventana']! as String),
-            nocheDesde: Value(f['noche_desde']! as String),
-            objetivo: Value(f['objetivo']! as String),
-            nivel: Value(f['nivel']! as String),
-            inicioCiclo: Value(f['inicio_ciclo'] as String?),
-            cicloSemanas: Value(f['ciclo_semanas']! as int),
-            descansoS: Value(f['descanso_s'] as int?),
-            margenDormirMin: Value(f['margen_dormir_min']! as int),
-            pruebaDesde: Value(f['prueba_desde'] as String?),
-            pruebaVentana: Value(f['prueba_ventana'] as String?),
-            vozDescanso: Value(f['voz_descanso']! as bool),
-            avisoVistoEn: Value(instante(f['aviso_visto_en'])),
-            modificadoEn: Value(sello),
-          ),
-        );
+        await _base
+            .into(_base.gimPerfil)
+            .insertOnConflictUpdate(
+              GimPerfilCompanion(
+                personaId: Value(persona),
+                diasPlan: Value(f['dias_plan']! as int),
+                versionPref: Value(f['version_pref']! as String),
+                ventana: Value(f['ventana']! as String),
+                nocheDesde: Value(f['noche_desde']! as String),
+                objetivo: Value(f['objetivo']! as String),
+                nivel: Value(f['nivel']! as String),
+                inicioCiclo: Value(f['inicio_ciclo'] as String?),
+                cicloSemanas: Value(f['ciclo_semanas']! as int),
+                descansoS: Value(f['descanso_s'] as int?),
+                margenDormirMin: Value(f['margen_dormir_min']! as int),
+                pruebaDesde: Value(f['prueba_desde'] as String?),
+                pruebaVentana: Value(f['prueba_ventana'] as String?),
+                vozDescanso: Value(f['voz_descanso']! as bool),
+                avisoVistoEn: Value(instante(f['aviso_visto_en'])),
+                modificadoEn: Value(sello),
+              ),
+            );
       case 'hab_ent_plan_dias':
-        await _base.into(_base.gimPlanDias).insertOnConflictUpdate(
-          GimPlanDiasCompanion(
-            personaId: Value(persona),
-            diaSemana: Value(f['dia_semana']! as int),
-            tipo: Value(f['tipo']! as String),
-            version: Value(f['version']! as String),
-            hora: Value(f['hora'] as String?),
-            modificadoEn: Value(sello),
-          ),
-        );
+        await _base
+            .into(_base.gimPlanDias)
+            .insertOnConflictUpdate(
+              GimPlanDiasCompanion(
+                personaId: Value(persona),
+                diaSemana: Value(f['dia_semana']! as int),
+                tipo: Value(f['tipo']! as String),
+                version: Value(f['version']! as String),
+                hora: Value(f['hora'] as String?),
+                modificadoEn: Value(sello),
+              ),
+            );
       case 'hab_ent_inventario':
-        await _base.into(_base.gimInventario).insertOnConflictUpdate(
-          GimInventarioCompanion(
-            personaId: Value(persona),
-            itemId: Value(f['item_id']! as String),
-            estado: Value(f['estado']! as String),
-            confirmado: Value(jsonEncode(f['confirmado'])),
-            notas: Value(f['notas'] as String?),
-            modificadoEn: Value(sello),
-          ),
-        );
+        await _base
+            .into(_base.gimInventario)
+            .insertOnConflictUpdate(
+              GimInventarioCompanion(
+                personaId: Value(persona),
+                itemId: Value(f['item_id']! as String),
+                estado: Value(f['estado']! as String),
+                confirmado: Value(jsonEncode(f['confirmado'])),
+                notas: Value(f['notas'] as String?),
+                modificadoEn: Value(sello),
+              ),
+            );
       case 'hab_ent_bandas':
-        await _base.into(_base.gimBandas).insertOnConflictUpdate(
-          GimBandasCompanion(
-            id: Value(f['id']! as String),
-            personaId: Value(persona),
-            nombre: Value(f['nombre']! as String),
-            orden: Value(f['orden']! as int),
-            resistenciaKgX10: Value(f['resistencia_kg_x10'] as int?),
-            cantidad: Value(f['cantidad']! as int),
-            activa: Value(f['activa']! as bool),
-            modificadoEn: Value(sello),
-          ),
-        );
+        await _base
+            .into(_base.gimBandas)
+            .insertOnConflictUpdate(
+              GimBandasCompanion(
+                id: Value(f['id']! as String),
+                personaId: Value(persona),
+                nombre: Value(f['nombre']! as String),
+                orden: Value(f['orden']! as int),
+                resistenciaKgX10: Value(f['resistencia_kg_x10'] as int?),
+                cantidad: Value(f['cantidad']! as int),
+                activa: Value(f['activa']! as bool),
+                modificadoEn: Value(sello),
+              ),
+            );
       case 'hab_ent_sesiones':
-        await _base.into(_base.gimSesiones).insertOnConflictUpdate(
-          GimSesionesCompanion(
-            id: Value(f['id']! as String),
-            personaId: Value(persona),
-            fecha: Value(f['fecha']! as String),
-            plantilla: Value(f['plantilla']! as String),
-            version: Value(f['version']! as String),
-            semanaTipo: Value(f['semana_tipo']! as String),
-            ventana: Value(f['ventana']! as String),
-            bloqueId: Value(f['bloque_id'] as String?),
-            inicio: Value(instante(f['inicio'])!),
-            fin: Value(instante(f['fin'])),
-            estado: Value(f['estado']! as String),
-            esfuerzo: Value(f['esfuerzo'] as int?),
-            energia: Value(f['energia'] as int?),
-            plan: Value(jsonEncode(f['plan'])),
-            catalogoVersion: Value(f['catalogo_version']! as int),
-            // Solo local: si no se da, queda lo que había.
-            tiempos: tiempos == null
-                ? const Value.absent()
-                : Value(jsonEncode(tiempos)),
-            modificadoEn: Value(sello),
-          ),
-        );
+        await _base
+            .into(_base.gimSesiones)
+            .insertOnConflictUpdate(
+              GimSesionesCompanion(
+                id: Value(f['id']! as String),
+                personaId: Value(persona),
+                fecha: Value(f['fecha']! as String),
+                plantilla: Value(f['plantilla']! as String),
+                version: Value(f['version']! as String),
+                semanaTipo: Value(f['semana_tipo']! as String),
+                ventana: Value(f['ventana']! as String),
+                bloqueId: Value(f['bloque_id'] as String?),
+                inicio: Value(instante(f['inicio'])!),
+                fin: Value(instante(f['fin'])),
+                estado: Value(f['estado']! as String),
+                esfuerzo: Value(f['esfuerzo'] as int?),
+                energia: Value(f['energia'] as int?),
+                plan: Value(jsonEncode(f['plan'])),
+                catalogoVersion: Value(f['catalogo_version']! as int),
+                // Solo local: si no se da, queda lo que había.
+                tiempos: tiempos == null
+                    ? const Value.absent()
+                    : Value(jsonEncode(tiempos)),
+                modificadoEn: Value(sello),
+              ),
+            );
       case 'hab_ent_series':
-        await _base.into(_base.gimSeries).insertOnConflictUpdate(
-          GimSeriesCompanion(
-            id: Value(f['id']! as String),
-            personaId: Value(persona),
-            sesionId: Value(f['sesion_id']! as String),
-            ejercicioId: Value(f['ejercicio_id']! as String),
-            varianteId: Value(f['variante_id']! as String),
-            n: Value(f['n']! as int),
-            lado: Value(f['lado'] as String?),
-            reps: Value(f['reps'] as int?),
-            segundos: Value(f['segundos'] as int?),
-            cargaPasos: Value(f['carga_pasos'] as int?),
-            bandaId: Value(f['banda_id'] as String?),
-            esfuerzo: Value(f['esfuerzo'] as int?),
-            descansoRealS: Value(f['descanso_real_s'] as int?),
-            sustituyeA: Value(f['sustituye_a'] as String?),
-            motivoCambio: Value(f['motivo_cambio'] as String?),
-            modificadoEn: Value(sello),
-          ),
-        );
+        await _base
+            .into(_base.gimSeries)
+            .insertOnConflictUpdate(
+              GimSeriesCompanion(
+                id: Value(f['id']! as String),
+                personaId: Value(persona),
+                sesionId: Value(f['sesion_id']! as String),
+                ejercicioId: Value(f['ejercicio_id']! as String),
+                varianteId: Value(f['variante_id']! as String),
+                n: Value(f['n']! as int),
+                lado: Value(f['lado'] as String?),
+                reps: Value(f['reps'] as int?),
+                segundos: Value(f['segundos'] as int?),
+                cargaPasos: Value(f['carga_pasos'] as int?),
+                bandaId: Value(f['banda_id'] as String?),
+                esfuerzo: Value(f['esfuerzo'] as int?),
+                descansoRealS: Value(f['descanso_real_s'] as int?),
+                sustituyeA: Value(f['sustituye_a'] as String?),
+                motivoCambio: Value(f['motivo_cambio'] as String?),
+                modificadoEn: Value(sello),
+              ),
+            );
       default:
         throw FilaGimnasioInvalida(tabla, 'tabla');
     }

@@ -39,7 +39,8 @@ const claveAvisoDescanso = 'hab:${TipoRecordatorioHabito.descanso}:sesion:0:1';
 
 /// Qué abre al tocarla: la sesión en curso.
 bool esCargaDeAvisoDescanso(String? carga) =>
-    carga != null && carga.startsWith('hab:${TipoRecordatorioHabito.descanso}:');
+    carga != null &&
+    carga.startsWith('hab:${TipoRecordatorioHabito.descanso}:');
 
 class ServicioAvisoDescanso {
   ServicioAvisoDescanso({

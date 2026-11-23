@@ -33,7 +33,8 @@ const claseMolestia = 'molestia';
 /// ¿Este equipo guarda y muestra molestias? Teléfono y tablet personal (donde
 /// la persona tiene su llave local); no la laptop ni la tablet pública.
 bool equipoAdmiteMolestias(TipoEquipoAvisos tipo) =>
-    tipo == TipoEquipoAvisos.telefono || tipo == TipoEquipoAvisos.tabletPersonal;
+    tipo == TipoEquipoAvisos.telefono ||
+    tipo == TipoEquipoAvisos.tabletPersonal;
 
 /// Este equipo no admite molestias (laptop o tablet pública). No lleva datos.
 class MolestiasNoDisponibles implements Exception {
@@ -114,7 +115,10 @@ class MolestiasLocales {
     return tipo == null || ids == null ? null : (tipo, ids);
   }
 
-  Future<(Sobre, DocumentoSensible)?> _abrir(Uint8List llaveTipo, String id) async {
+  Future<(Sobre, DocumentoSensible)?> _abrir(
+    Uint8List llaveTipo,
+    String id,
+  ) async {
     final sobre = await sobres.leer(persona, id);
     if (sobre == null) return null;
     final m = descifrarDocumento(

@@ -113,10 +113,8 @@ List<RouteBase> rutasGimnasio() => [
               if (d == DestinoGimnasio.sesion)
                 GoRoute(
                   path: 'en-curso',
-                  pageBuilder: (context, estado) => _pagina(
-                    estado,
-                    _pantalla(DestinoGimnasio.sesionEnCurso),
-                  ),
+                  pageBuilder: (context, estado) =>
+                      _pagina(estado, _pantalla(DestinoGimnasio.sesionEnCurso)),
                 ),
             ],
           ),

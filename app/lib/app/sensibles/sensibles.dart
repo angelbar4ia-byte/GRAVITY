@@ -83,6 +83,12 @@ final subidaDiferidaProvider = Provider<SubidaDiferidaDeSobres>(
   ),
 );
 
+/// Borra la copia local del entrenamiento de una persona (tablas locales de
+/// «Mi gimnasio» y lo suyo que espera en la cola). La app lo conecta en el
+/// arranque (`conexionesDeLaApp`); sin conectar, no borra nada local.
+final alBorrarEntrenamientoProvider =
+    Provider<Future<void> Function(String personaId)?>((ref) => null);
+
 final borradoDeMisDatosProvider = Provider<BorradoDeMisDatos>(
   (ref) => BorradoDeMisDatos(
     sobres: ref.watch(almacenDeSobresProvider),
@@ -91,5 +97,6 @@ final borradoDeMisDatosProvider = Provider<BorradoDeMisDatos>(
     almacen: ref.watch(almacenSeguroProvider),
     nube: ref.watch(nubeDeHabitosProvider),
     cola: ref.watch(colaSinConexionProvider),
+    alBorrarEntrenamiento: ref.watch(alBorrarEntrenamientoProvider),
   ),
 );

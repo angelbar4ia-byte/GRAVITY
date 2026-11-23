@@ -16,6 +16,8 @@ import '../../nucleo/avisos/proveedores_avisos.dart';
 import 'accion_posponer_toma.dart';
 import 'recordatorios_cuidados.dart';
 import '../../nucleo/avisos/aviso.dart';
+import '../../nucleo/avisos/aviso_descanso.dart'
+    show ServicioAvisoDescanso, esCargaDeAvisoDescanso;
 import '../../nucleo/avisos/recordatorios.dart';
 import '../../nucleo/avisos/servicio_recordatorios_habitos.dart';
 import '../../nucleo/avisos/repositorio_avisos.dart';
@@ -30,6 +32,7 @@ import '../../nucleo/sesion/proveedores_sesion.dart';
 import '../../nucleo/tablet/controlador_tablet.dart';
 import '../../diseno/proveedores.dart' show relojProvider;
 import '../dispositivo.dart';
+import '../gimnasio/acceso_gimnasio.dart' show RutasGimnasio;
 import '../navegacion.dart';
 import '../router.dart';
 import '../sesion_efectiva.dart';
@@ -84,6 +87,27 @@ final recordatoriosHabitosProvider = Provider<ServicioRecordatoriosHabitos>((
     },
   );
 });
+
+/// El aviso local «Termina tu descanso» de Mi gimnasio (Fase 8, PG-18): lo
+/// programa y lo cancela el temporizador de descanso de la sesión en curso
+/// (`alCambiarDescanso`). Mismas reglas que los recordatorios de Hábitos: solo
+/// el teléfono y la tablet personal, y respeta el interruptor de Ajustes ›
+/// Notificaciones.
+final servicioAvisoDescansoProvider = Provider<ServicioAvisoDescanso>(
+  (ref) => ServicioAvisoDescanso(
+    notificador: ref.watch(notificadorProvider),
+    contexto: () => ref.read(contextoAvisosProvider),
+    preferencias: () async {
+      try {
+        return await ref.read(repositorioAvisosProvider)?.preferencias() ??
+            const PreferenciasAvisos();
+      } catch (_) {
+        return const PreferenciasAvisos();
+      }
+    },
+    activado: () => ref.read(recordatoriosHabitosProvider).activado(),
+  ),
+);
 
 /// Reprograma los recordatorios de Cuidados (tomas y comidas) de quien está
 /// de turno en este equipo. Sin sesión, solo cancela lo anterior.
@@ -150,6 +174,11 @@ final servicioAvisosProvider = Provider<ServicioAvisos>((ref) {
     alAbrirAviso: (carga) {
       // Los recordatorios de Hábitos llevan su clave (`hab:…`); abrir uno lleva
       // a Hábitos (lo sensible pide el PIN allí), no a la bandeja de Finanzas.
+      // «Termina tu descanso» lleva a la sesión en curso.
+      if (esCargaDeAvisoDescanso(carga)) {
+        ref.read(routerProvider).go(RutasGimnasio.sesionEnCurso);
+        return;
+      }
       if (carga != null && carga.startsWith('hab:')) {
         ref.read(routerProvider).go(Rutas.habitos);
         return;
@@ -247,6 +276,9 @@ class _ConAvisosState extends ConsumerState<ConAvisos> {
         if (_persona != null) await servicio.alEntrarPersona();
         await ref.read(recordatoriosHabitosProvider).reprogramar();
         await reprogramarCuidadosDeEsteEquipo(ref);
+        // Un descanso en curso era de la persona anterior: su aviso no debe
+        // sonar para la siguiente.
+        await ref.read(servicioAvisoDescansoProvider).cancelar();
       }());
     });
     // Cambia el turno o las tomas del día (se marcó, se pospuso, se guardó un

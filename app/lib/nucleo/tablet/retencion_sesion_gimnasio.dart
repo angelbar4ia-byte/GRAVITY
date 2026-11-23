@@ -34,9 +34,7 @@ class SesionGimnasioEnCurso extends Notifier<String?> {
 }
 
 final sesionGimnasioEnCursoProvider =
-    NotifierProvider<SesionGimnasioEnCurso, String?>(
-      SesionGimnasioEnCurso.new,
-    );
+    NotifierProvider<SesionGimnasioEnCurso, String?>(SesionGimnasioEnCurso.new);
 
 /// Tiempo sin uso tras el que la tablet vuelve al reposo: el de la tablet
 /// ([base], 2 minutos por omisión) o, con una sesión de gimnasio en curso de la

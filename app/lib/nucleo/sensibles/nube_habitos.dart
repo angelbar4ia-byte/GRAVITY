@@ -222,8 +222,8 @@ class AdministracionNubeHabitosEnMemoria implements AdministracionNubeHabitos {
     ModoSensible modo, {
     bool confirmarBorrado = false,
   }) async {
-    _revisar();
     AdministracionNubeHabitosSupabase._exigirNube(tipo);
+    _revisar();
     if (modos[tipo] == modo) return;
     if (modo == ModoSensible.nubeCifrada) {
       if (llave == null) {
@@ -256,8 +256,8 @@ class AdministracionNubeHabitosEnMemoria implements AdministracionNubeHabitos {
 
   @override
   Future<List<Sobre>> sobresDeLaNube(TipoSensible tipo) async {
-    _revisar();
     AdministracionNubeHabitosSupabase._exigirNube(tipo);
+    _revisar();
     return List.of(sobresPorTipo[tipo]!);
   }
 }

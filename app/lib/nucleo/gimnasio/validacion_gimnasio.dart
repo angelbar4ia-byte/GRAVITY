@@ -169,9 +169,7 @@ void validarFilaGimnasio(String tabla, Map<String, Object?> fila) {
     case 'hab_ent_bandas':
       patron('id', _uuid);
       final nombre = fila['nombre'];
-      if (nombre is! String ||
-          nombre.trim().isEmpty ||
-          nombre.length > 40) {
+      if (nombre is! String || nombre.trim().isEmpty || nombre.length > 40) {
         mal('nombre');
       }
       entero('orden', 1, 20);
@@ -191,9 +189,8 @@ void validarFilaGimnasio(String tabla, Map<String, Object?> fila) {
       unoDe('estado', {'en_curso', 'completa', 'parcial'});
       if ((fila['estado'] == 'en_curso') != (fila['fin'] == null)) mal('fin');
       if (fila['fin'] != null &&
-          DateTime.parse(fila['fin']! as String).isBefore(
-            DateTime.parse(fila['inicio']! as String),
-          )) {
+          DateTime.parse(fila['fin']! as String)
+              .isBefore(DateTime.parse(fila['inicio']! as String))) {
         mal('fin');
       }
       entero('esfuerzo', 1, 5, nulo: true);
@@ -227,7 +224,8 @@ void validarFilaGimnasio(String tabla, Map<String, Object?> fila) {
         }
         for (final k in const ['series', 'reps_min', 'reps_max']) {
           final n = e[k];
-          if (n != null && (n is! int || n < 0 || n > (k == 'series' ? 12 : 100))) {
+          if (n != null &&
+              (n is! int || n < 0 || n > (k == 'series' ? 12 : 100))) {
             mal('plan');
           }
         }
@@ -252,7 +250,11 @@ void validarFilaGimnasio(String tabla, Map<String, Object?> fila) {
       entero('descanso_real_s', 0, 900, nulo: true);
       patron('sustituye_a', _idCatalogo, nulo: true);
       // PG-19: el motivo «molestia» no existe; el servidor ve «otra».
-      unoDe('motivo_cambio', {'no_disponible', 'preferencia', 'otra'}, nulo: true);
+      unoDe('motivo_cambio', {
+        'no_disponible',
+        'preferencia',
+        'otra',
+      }, nulo: true);
     default:
       mal('tabla');
   }

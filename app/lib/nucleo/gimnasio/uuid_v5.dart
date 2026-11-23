@@ -28,7 +28,8 @@ List<int> bytesDeUuid(String uuid) {
     throw FormatException('No es un UUID válido.', uuid);
   }
   return [
-    for (var i = 0; i < 32; i += 2) int.parse(limpio.substring(i, i + 2), radix: 16),
+    for (var i = 0; i < 32; i += 2)
+      int.parse(limpio.substring(i, i + 2), radix: 16),
   ];
 }
 
