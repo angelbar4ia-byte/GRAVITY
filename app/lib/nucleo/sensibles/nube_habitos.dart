@@ -73,7 +73,7 @@ class AdministracionNubeHabitosSupabase implements AdministracionNubeHabitos {
         .maybeSingle();
     final modos = <TipoSensible, ModoSensible>{};
     for (final fila in filasModos) {
-      final tipo = TipoSensible.values
+      final tipo = TipoSensible.enNube
           .where((t) => t.valor == fila['tipo'])
           .firstOrNull;
       final modo = ModoSensible.values
@@ -104,12 +104,33 @@ class AdministracionNubeHabitosSupabase implements AdministracionNubeHabitos {
     ),
   );
 
+  /// Lo que no admite nube (las molestias, PG-03) ni siquiera llega a pedirse
+  /// al servidor.
+  static void _exigirNube(TipoSensible tipo) {
+    if (!tipo.admiteNube) {
+      throw ArgumentError.value(
+        tipo.valor,
+        'tipo',
+        'Este tipo nunca se guarda en la nube.',
+      );
+    }
+  }
+
   @override
   Future<void> cambiarModo(
     TipoSensible tipo,
     ModoSensible modo, {
     bool confirmarBorrado = false,
-  }) => _seguro(
+  }) {
+    _exigirNube(tipo);
+    return _cambiarModo(tipo, modo, confirmarBorrado);
+  }
+
+  Future<void> _cambiarModo(
+    TipoSensible tipo,
+    ModoSensible modo,
+    bool confirmarBorrado,
+  ) => _seguro(
     () => _cliente().rpc(
       'hab_cambiar_modo',
       params: {
@@ -121,15 +142,23 @@ class AdministracionNubeHabitosSupabase implements AdministracionNubeHabitos {
   );
 
   @override
-  Future<void> reiniciarNube([TipoSensible? tipo]) => _seguro(
-    () => _cliente().rpc(
-      'hab_reiniciar_nube',
-      params: {'p_tipo': tipo?.valor ?? 'todos'},
-    ),
-  );
+  Future<void> reiniciarNube([TipoSensible? tipo]) {
+    if (tipo != null) _exigirNube(tipo);
+    return _seguro(
+      () => _cliente().rpc(
+        'hab_reiniciar_nube',
+        params: {'p_tipo': tipo?.valor ?? 'todos'},
+      ),
+    );
+  }
 
   @override
-  Future<List<Sobre>> sobresDeLaNube(TipoSensible tipo) => _seguro(() async {
+  Future<List<Sobre>> sobresDeLaNube(TipoSensible tipo) {
+    _exigirNube(tipo);
+    return _sobresDeLaNube(tipo);
+  }
+
+  Future<List<Sobre>> _sobresDeLaNube(TipoSensible tipo) => _seguro(() async {
     final filas = await _cliente()
         .from('hab_sobres')
         .select('id, tipo, revision, cifrado, llave_version, eliminado')
@@ -147,12 +176,12 @@ class AdministracionNubeHabitosEnMemoria implements AdministracionNubeHabitos {
   AdministracionNubeHabitosEnMemoria();
 
   final Map<TipoSensible, ModoSensible> modos = {
-    for (final t in TipoSensible.values) t: ModoSensible.soloTelefono,
+    for (final t in TipoSensible.enNube) t: ModoSensible.soloTelefono,
   };
   LlaveEnvuelta? llave;
   int epoca = 0;
   final Map<TipoSensible, List<Sobre>> sobresPorTipo = {
-    for (final t in TipoSensible.values) t: [],
+    for (final t in TipoSensible.enNube) t: [],
   };
 
   /// Simula que no hay señal.
@@ -194,6 +223,7 @@ class AdministracionNubeHabitosEnMemoria implements AdministracionNubeHabitos {
     bool confirmarBorrado = false,
   }) async {
     _revisar();
+    AdministracionNubeHabitosSupabase._exigirNube(tipo);
     if (modos[tipo] == modo) return;
     if (modo == ModoSensible.nubeCifrada) {
       if (llave == null) {
@@ -216,7 +246,7 @@ class AdministracionNubeHabitosEnMemoria implements AdministracionNubeHabitos {
   @override
   Future<void> reiniciarNube([TipoSensible? tipo]) async {
     _revisar();
-    for (final t in tipo == null ? TipoSensible.values : [tipo]) {
+    for (final t in tipo == null ? TipoSensible.enNube : [tipo]) {
       sobresPorTipo[t]!.clear();
       modos[t] = ModoSensible.soloTelefono;
     }
@@ -227,6 +257,7 @@ class AdministracionNubeHabitosEnMemoria implements AdministracionNubeHabitos {
   @override
   Future<List<Sobre>> sobresDeLaNube(TipoSensible tipo) async {
     _revisar();
+    AdministracionNubeHabitosSupabase._exigirNube(tipo);
     return List.of(sobresPorTipo[tipo]!);
   }
 }

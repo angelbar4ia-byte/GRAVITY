@@ -27,6 +27,7 @@ import 'conectividad_diseno.dart';
 import '../nucleo/base_local/base_local.dart';
 import '../nucleo/cola/bandeja_salida.dart';
 import '../nucleo/cola/cola_sin_conexion.dart';
+import '../nucleo/cola/contrato_gimnasio.dart';
 import '../nucleo/cola/enviador_supabase.dart';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -248,6 +249,8 @@ Future<List<Override>> prepararArranque({
           enviadorDe: (aparte) => EnviadorSupabase(
             (aparte as SesionAparteSupabase).cliente,
             tablas: tablasDeLaCola,
+            upserts: destinosUpsertGimnasio,
+            borrados: borradosGimnasio,
           ),
         ),
       );
@@ -255,6 +258,10 @@ Future<List<Override>> prepararArranque({
       enviador = EnviadorSupabase.dinamico(
         () => servicio.clienteActivo,
         tablas: tablasDeLaCola,
+        // Mi gimnasio (Fase 8): las seis tablas hab_ent_* suben por upsert
+        // (último gana) y se borran por id; nunca molestias.
+        upserts: destinosUpsertGimnasio,
+        borrados: borradosGimnasio,
         // Hábitos (Fase 3): sobres ya cifrados, por la función del servidor.
         funciones: const {
           tipoColaSobres: funcionSubirSobres,

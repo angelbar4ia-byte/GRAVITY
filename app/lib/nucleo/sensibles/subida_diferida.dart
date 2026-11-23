@@ -35,6 +35,9 @@ class ModosLocales {
       'hab.modo.$persona.${tipo.valor}';
 
   Future<ModoSensible> modo(String persona, TipoSensible tipo) async {
+    // Lo que no admite nube (las molestias) es siempre solo teléfono: no se
+    // lee nada del almacén, así no hay valor guardado que lo contradiga.
+    if (!tipo.admiteNube) return ModoSensible.soloTelefono;
     final v = await _almacen.leer(_clave(persona, tipo));
     return ModoSensible.values.firstWhere(
       (m) => m.valor == v,
@@ -42,11 +45,22 @@ class ModosLocales {
     );
   }
 
-  Future<void> fijar(String persona, TipoSensible tipo, ModoSensible modo) =>
-      _almacen.escribir(_clave(persona, tipo), modo.valor);
+  Future<void> fijar(String persona, TipoSensible tipo, ModoSensible modo) {
+    if (!tipo.admiteNube) {
+      if (modo == ModoSensible.nubeCifrada) {
+        throw ArgumentError.value(
+          tipo.valor,
+          'tipo',
+          'Este tipo nunca se guarda en la nube.',
+        );
+      }
+      return Future.value(); // ya es solo teléfono: nada que guardar
+    }
+    return _almacen.escribir(_clave(persona, tipo), modo.valor);
+  }
 
   Future<void> borrar(String persona) async {
-    for (final t in TipoSensible.values) {
+    for (final t in TipoSensible.enNube) {
       await _almacen.borrar(_clave(persona, t));
     }
   }
@@ -99,7 +113,8 @@ class SubidaDiferidaDeSobres {
       return 0;
     }
     var total = 0;
-    for (final tipo in TipoSensible.values) {
+    // Solo los tipos que admiten nube (nunca las molestias, PG-03).
+    for (final tipo in TipoSensible.enNube) {
       if (await modos.modo(persona, tipo) != ModoSensible.nubeCifrada) continue;
       final pendientes = await sobres.porSubir(persona, tipo);
       for (var i = 0; i < pendientes.length; i += maximoSobresPorLlamada) {

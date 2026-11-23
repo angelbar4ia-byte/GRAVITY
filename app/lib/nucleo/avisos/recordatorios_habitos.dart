@@ -14,6 +14,7 @@ library;
 
 import 'package:characters/characters.dart';
 import 'package:flutter/foundation.dart';
+import 'package:habitos_dominio/habitos_dominio.dart' show TextoAvisoGimnasio;
 
 import 'aviso.dart';
 import 'catalogo_avisos.dart';
@@ -29,6 +30,10 @@ abstract final class TipoRecordatorioHabito {
   static const revision = 'hab_revision';
   static const cierreDia = 'hab_cierre_dia';
 
+  /// «Termina tu descanso» (Mi gimnasio, PG-18): lo programa el temporizador de
+  /// descanso de la sesión en curso, no la lista de los próximos 7 días.
+  static const descanso = 'hab_descanso';
+
   static const todos = {
     bloque,
     lectura,
@@ -37,6 +42,7 @@ abstract final class TipoRecordatorioHabito {
     revisionPre,
     revision,
     cierreDia,
+    descanso,
   };
 }
 
@@ -49,6 +55,8 @@ const Map<String, String> titulosDeHabitos = {
   TipoRecordatorioHabito.revisionPre: 'Tu revisión semanal empieza pronto',
   TipoRecordatorioHabito.revision: 'Es hora de tu revisión semanal',
   TipoRecordatorioHabito.cierreDia: 'Es hora de cerrar tu día',
+  // Del catálogo del dominio (sin nombres de ejercicios ni cargas, sin dígitos).
+  TipoRecordatorioHabito.descanso: TextoAvisoGimnasio.descanso,
 };
 
 /// Un recordatorio que Hábitos pide programar (desde su copia local).

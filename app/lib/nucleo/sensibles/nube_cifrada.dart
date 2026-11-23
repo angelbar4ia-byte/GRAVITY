@@ -150,7 +150,7 @@ class NubeCifradaHabitos {
   /// Cómo está la nube en este equipo y, si hay señal, en el servidor.
   Future<EstadoNubeEnEquipo> estado(String persona) async {
     final locales = {
-      for (final t in TipoSensible.values) t: await modos.modo(persona, t),
+      for (final t in TipoSensible.enNube) t: await modos.modo(persona, t),
     };
     EstadoNubeServidor? remoto;
     try {
@@ -216,6 +216,13 @@ class NubeCifradaHabitos {
     // 1. En memoria: los sobres de cada tipo, vueltos a cifrar con la maestra.
     final nuevos = <TipoSensible, List<Sobre>>{};
     for (final tipo in tipos) {
+      if (!tipo.admiteNube) {
+        throw ArgumentError.value(
+          tipo.valor,
+          'tipos',
+          'Este tipo nunca se guarda en la nube.',
+        );
+      }
       if (await modos.modo(persona, tipo) == ModoSensible.nubeCifrada) continue;
       nuevos[tipo] = await _resellar(
         persona,
@@ -319,7 +326,7 @@ class NubeCifradaHabitos {
     final maestra = await envuelta.desenvolver(frase);
     if (maestra == null) throw ErrorNubeCifrada.fraseIncorrecta;
     await llaves.guardarLlaveMaestra(persona, maestra, pin: pin);
-    for (final tipo in TipoSensible.values) {
+    for (final tipo in TipoSensible.enNube) {
       final modo = remoto.modoDe(tipo);
       await modos.fijar(persona, tipo, modo);
       if (modo != ModoSensible.nubeCifrada) continue;
@@ -375,7 +382,14 @@ class NubeCifradaHabitos {
   /// equipo conserva la llave maestra, lo suyo se vuelve a cifrar con la llave
   /// local y **no se pierde**; si no, lo que no se puede abrir se descarta.
   Future<void> reiniciar(String persona, {TipoSensible? tipo, String? pin}) async {
-    final tipos = tipo == null ? TipoSensible.values : [tipo];
+    if (tipo != null && !tipo.admiteNube) {
+      throw ArgumentError.value(
+        tipo.valor,
+        'tipo',
+        'Este tipo nunca está en la nube: no hay nada que reiniciar.',
+      );
+    }
+    final tipos = tipo == null ? TipoSensible.enNube : [tipo];
     final maestra = await llaves.tieneLlaveMaestra(persona)
         ? await llaves.llaveMaestra(persona, pin: pin)
         : null;
@@ -409,7 +423,7 @@ class NubeCifradaHabitos {
     }
     // La llave sirve a ambos tipos: se olvida cuando ninguno queda en la nube.
     final quedaAlguno = [
-      for (final t in TipoSensible.values) await modos.modo(persona, t),
+      for (final t in TipoSensible.enNube) await modos.modo(persona, t),
     ].any((m) => m == ModoSensible.nubeCifrada);
     if (!quedaAlguno) await _olvidarLlaveMaestra(persona);
     await sobres.olvidarEncolados(persona);
@@ -436,7 +450,7 @@ class NubeCifradaHabitos {
     }
     if (remoto.epoca <= guardada) return false;
     var cambio = false;
-    for (final t in TipoSensible.values) {
+    for (final t in TipoSensible.enNube) {
       final local = await modos.modo(persona, t);
       if (local == ModoSensible.nubeCifrada &&
           remoto.modoDe(t) != ModoSensible.nubeCifrada) {
@@ -448,7 +462,7 @@ class NubeCifradaHabitos {
       }
     }
     final quedaAlguno = [
-      for (final t in TipoSensible.values) await modos.modo(persona, t),
+      for (final t in TipoSensible.enNube) await modos.modo(persona, t),
     ].any((m) => m == ModoSensible.nubeCifrada);
     if (!quedaAlguno && remoto.llave == null) {
       await _olvidarLlaveMaestra(persona);

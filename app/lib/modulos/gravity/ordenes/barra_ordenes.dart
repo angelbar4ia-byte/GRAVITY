@@ -33,6 +33,7 @@ import '../../../nucleo/contratos/roles.dart';
 import '../../../nucleo/contratos/rutas.dart';
 import '../../../nucleo/herramientas/herramientas.dart';
 import 'interprete_ordenes.dart';
+import 'orden_entrenamiento.dart';
 
 /// Barra de órdenes de navegación. Va dentro de un `ProviderScope`.
 class BarraOrdenes extends ConsumerStatefulWidget {
@@ -102,9 +103,8 @@ IconData iconoDestino(HerramientaNavegacion destino) {
 typedef _Fila = ({HerramientaNavegacion destino, String? palabra});
 
 class _BarraOrdenesState extends ConsumerState<BarraOrdenes> {
-  static final RegistroHerramientas _registro = RegistroHerramientas(
-    herramientasNavegacion,
-  );
+  // Con «abre el entrenamiento» (orden_entrenamiento.dart): solo navega.
+  static final RegistroHerramientas _registro = registroDeOrdenes();
 
   final TextEditingController _control = TextEditingController();
   final OverlayPortalController _panel = OverlayPortalController(
@@ -138,6 +138,7 @@ class _BarraOrdenesState extends ConsumerState<BarraOrdenes> {
     rol: widget.rol,
     dispositivo: widget.dispositivo,
     esMaestra: _esMaestra,
+    catalogo: catalogoDeOrdenes(),
   );
 
   /// Vuelve a armar los destinos (cambió el rol, el dispositivo o la marca

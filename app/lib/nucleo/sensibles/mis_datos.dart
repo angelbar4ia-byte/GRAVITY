@@ -217,6 +217,11 @@ abstract final class ExportacionHabitos {
 enum AlcanceDeBorrado {
   sensibles('sensibles'),
   diario('diario'),
+
+  /// Fase 8, «Mi gimnasio»: las seis tablas `hab_ent_*` del servidor y, en
+  /// este equipo, las molestias (`salud_local`) y la copia local del
+  /// entrenamiento. No toca sobres ni modos de la nube.
+  entrenamiento('entrenamiento'),
   todo('todo');
 
   const AlcanceDeBorrado(this.valor);
@@ -226,8 +231,13 @@ enum AlcanceDeBorrado {
   Set<TipoSensible> get tipos => switch (this) {
     sensibles => {TipoSensible.habitosSensibles},
     diario => {TipoSensible.diarioOracion},
+    // Las molestias solo existen en el equipo: se borran de aquí.
+    entrenamiento => {TipoSensible.saludLocal},
     todo => TipoSensible.values.toSet(),
   };
+
+  /// ¿Incluye lo del entrenamiento (tablas del servidor y copia local)?
+  bool get incluyeEntrenamiento => this == entrenamiento || this == todo;
 }
 
 /// Palabra que hay que escribir para confirmar el borrado.
@@ -251,6 +261,7 @@ class BorradoDeMisDatos {
     required this.almacen,
     this.nube,
     this.cola,
+    this.alBorrarEntrenamiento,
   });
 
   final AlmacenDeSobres sobres;
@@ -263,6 +274,10 @@ class BorradoDeMisDatos {
   /// que el servidor responde (sin señal no se pierde ni hay que repetirlo).
   final ColaSinConexion? cola;
 
+  /// Borra la copia local del entrenamiento de la persona (tablas locales y lo
+  /// que de eso espera en la cola). Se llama con `entrenamiento` y con `todo`.
+  final Future<void> Function(String persona)? alBorrarEntrenamiento;
+
   /// ¿La persona escribió la palabra de confirmación?
   static bool confirma(String texto) => texto.trim() == palabraDeConfirmacion;
 
@@ -274,6 +289,9 @@ class BorradoDeMisDatos {
   Future<void> borrar(String persona, AlcanceDeBorrado alcance) async {
     for (final tipo in alcance.tipos) {
       await sobres.borrar(persona, tipo: tipo);
+    }
+    if (alcance.incluyeEntrenamiento) {
+      await alBorrarEntrenamiento?.call(persona);
     }
     if (alcance == AlcanceDeBorrado.todo) {
       await llaves.borrar(persona);

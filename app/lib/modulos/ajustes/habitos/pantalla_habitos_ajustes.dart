@@ -39,6 +39,7 @@ const palabraDeReinicio = 'REINICIAR';
 String nombreDelTipo(TipoSensible tipo) => switch (tipo) {
   TipoSensible.habitosSensibles => 'Hábitos a eliminar y consumo',
   TipoSensible.diarioOracion => 'Diario y oración',
+  TipoSensible.saludLocal => 'Molestias del gimnasio (solo en este equipo)',
 };
 
 class PantallaHabitosAjustes extends ConsumerWidget {
@@ -421,7 +422,8 @@ class _Contenido extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 8),
             child: Text(aviso!, key: const ValueKey('nube-aviso-epoca')),
           ),
-        for (final tipo in TipoSensible.values)
+        // Las molestias (salud_local) nunca van a la nube: no se listan aquí.
+        for (final tipo in TipoSensible.enNube)
           ListTile(
             key: ValueKey('nube-tipo-${tipo.valor}'),
             contentPadding: EdgeInsets.zero,
@@ -461,7 +463,7 @@ class _Contenido extends StatelessWidget {
             // Activar: la nube aún no existe, o existe y este equipo ya
             // tiene la llave (para pasar otro tipo).
             if ((!hayNube || estado.tieneLlave) &&
-                TipoSensible.values.any(
+                TipoSensible.enNube.any(
                   (t) => estado.modoDe(t) != ModoSensible.nubeCifrada,
                 ))
               FilledButton.icon(
@@ -518,7 +520,7 @@ class _DialogoElegirTipos extends StatefulWidget {
 }
 
 class _DialogoElegirTiposState extends State<_DialogoElegirTipos> {
-  final Set<TipoSensible> _tipos = {...TipoSensible.values};
+  final Set<TipoSensible> _tipos = {...TipoSensible.enNube};
 
   @override
   Widget build(BuildContext context) => AlertDialog(
@@ -535,7 +537,7 @@ class _DialogoElegirTiposState extends State<_DialogoElegirTipos> {
             'recuperar.',
           ),
           const SizedBox(height: 8),
-          for (final tipo in TipoSensible.values)
+          for (final tipo in TipoSensible.enNube)
             CheckboxListTile(
               key: ValueKey('nube-elegir-${tipo.valor}'),
               contentPadding: EdgeInsets.zero,

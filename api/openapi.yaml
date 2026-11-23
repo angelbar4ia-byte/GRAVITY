@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: GRAVITY · APIs del sistema
-  version: 0.7.0
+  version: 0.8.0
   summary: Herramientas de GRAVITY, base de datos, funciones del servidor y puente de casa (D16).
   description: |
     Especificación de las APIs de GRAVITY (decisión D16). Se consulta en la laptop, en
@@ -34,6 +34,13 @@ info:
     (`20261149`), «pagos al corte» sin dato (`20261150`) e ingreso anulado con reparto
     (`20261151`). El dinero nunca viaja por avisos ni por el canal de Realtime (D3, D6, D20);
     en el libro de Papá toda decisión queda en su nombre y con motivo (D19).
+
+    Fase 8 (Hábitos, bloque 7 · Mi gimnasio; versión 0.8.0): las seis tablas `hab_ent_*` del
+    entrenamiento propio (perfil, plan semanal, inventario del equipo, bandas, sesiones y
+    series; migración `20261152`), el alcance `entrenamiento` de `habBorrarMisDatos` y la
+    orden `habitos.abrir_entrenamiento`, que solo navega. Todo es solo local (D3): ni las
+    series, cargas y esfuerzo, ni mucho menos las molestias (que nunca salen del dispositivo)
+    llegan a la IA en la nube ni a las bocinas.
 
     Las llaves (Supabase, Home Assistant) entran por `--dart-define` o archivos ignorados
     por git; nunca se escriben aquí.
@@ -241,6 +248,11 @@ tags:
         Biblia, marcas, revisiones y ajustes) está en claro. No existe el tipo "eliminar":
         vive en el documento cifrado. No mandes `persona_id`, `hogar_id` ni `actualizado_en`:
         los pone el servidor.
+      - **Entrenamiento (Fase 8):** las seis tablas `hab_ent_*` de Mi gimnasio van en claro y
+        bajo la misma regla (solo lo propio), pero tienen su propio grupo, «Base de datos ·
+        Hábitos · Entrenamiento». Las **molestias no existen en el servidor**: viven solo en el
+        almacén local cifrado del dispositivo. `habBorrarMisDatos` las borra con el alcance
+        `entrenamiento`.
       - **El último cambio gana** por `modificado_en`: un UPDATE con una marca más vieja se
         ignora sin error y una a más de 5 minutos en el futuro se ajusta a la hora del servidor.
       - **Sin bitácora de contenido:** las tablas `hab_*` no tienen trigger de bitácora y el
@@ -255,8 +267,42 @@ tags:
       - Lo de quien se da de baja se conserva sin acceso y se borra a los 90 días
         (`hab_limpiar`, interna).
       - **Funciones internas:** `hab_nota`, `hab_exigir_activa`, `hab_borrar_datos_de`,
-        `hab_limpiar`, `hab_propio`, `hab_iniciar_persona`, `hab_iniciar` y `hab_miembro_activo`
-        no son llamables desde la API; sí `hab_activa` y `hab_hogar_de`, que usan las reglas.
+        `hab_limpiar`, `hab_propio`, `hab_iniciar_persona`, `hab_iniciar`, `hab_miembro_activo`,
+        `hab_cuota_filas` y los validadores `hab_ent_validar_sesion` y `hab_ent_validar_inventario`
+        (triggers) no son llamables desde la API; sí `hab_activa` y `hab_hogar_de`, que usan las
+        reglas.
+  - name: Base de datos · Hábitos · Entrenamiento
+    description: |
+      Tablas `hab_ent_*` de **Mi gimnasio** (Fase 8, bloque 7: entrenamiento propio, primera versión
+      sin IA), según `supabase/migrations/20261152000000_habitos_gimnasio.sql`,
+      `docs/specs/fase-8-habitos-gimnasio.md` (4.1 a 4.3 y 9) y `supabase/README.md` («Entrenamiento:
+      tablas hab_ent_*»). Seis tablas **en claro, de una sola persona**: `hab_ent_perfil`,
+      `hab_ent_plan_dias`, `hab_ent_inventario`, `hab_ent_bandas`, `hab_ent_sesiones` y
+      `hab_ent_series`. Nada de esto va a la IA en la nube ni a las bocinas (D3, D6).
+
+      - **Quién:** dueño, coadministrador y familiar, y **solo lo propio** (RLS por persona y
+        `hab_activa`): ni el dueño ve lo de su pareja. La cuenta maestra, el cuidador, la cuenta Hogar
+        (tablet pública), otro hogar y `anon` no leen ni escriben nada (insertar es 42501, 403).
+      - **Editables, no solo agregar:** como `hab_registros`, con el último cambio ganador por
+        `modificado_en` (uno más viejo se ignora sin error; uno a más de 5 minutos en el futuro se ajusta
+        a la hora del servidor) y la persona puede borrar lo suyo (`DELETE` o `habBorrarMisDatos` con
+        el alcance `entrenamiento`). No mandes `persona_id`, `hogar_id` ni `actualizado_en`: los pone el
+        servidor (sin permiso de columna, 42501).
+      - **Subida desde la cola sin conexión (idempotente):** `POST` con `Prefer: resolution=merge-duplicates`
+        y `on_conflict` (perfil `persona_id`; plan `persona_id,dia_semana`; inventario
+        `persona_id,item_id`; bandas, sesiones y series `id`) o con `resolution=ignore-duplicates`. Los
+        `id` de sesiones y series son UUID v5, así que dos equipos que registran lo mismo convergen. Un
+        duplicado con otro `id` (la misma sesión del día o la misma serie) es 409 (23505).
+      - **Dos jsonb con forma fija:** el `plan` de una sesión (lista de hasta 40 objetos con solo
+        `ejercicio`, `variante`, `series`, `reps_min` y `reps_max`, hasta 2 KB) y lo `confirmado` de un aparato
+        (hasta 20 campos y 2 KB, solo datos del equipo). Una clave de más o un campo de salud es 400 (23514).
+      - **Sin molestias, nunca:** ni columna ni tabla de molestias, zonas, dolor o diagnósticos. El
+        motivo de cambio de una serie admite `no_disponible`, `preferencia` u `otra`; si la persona
+        cambia por una molestia, el servidor ve `otra`.
+      - **Tope por persona** (54000, 500): sesiones 3 000, series 60 000, inventario 200, bandas 50,
+        plan 7 y perfil 1. Sin trigger de bitácora (el prefijo `hab_` la oculta).
+      - **Errores:** `23514` rango, lista, lunes o forma de un jsonb → 400; `23503` y `23505` → 409;
+        `42501` sin Hábitos en el hogar o columna que no se manda → 403; `54000` tope → 500.
   - name: Base de datos · Cuidados
     description: |
       Tablas `cui_*` y funciones de Cuidados (Fase 5), según `supabase/migrations/20261113000000_cuidados_avisos.sql`,
@@ -744,6 +790,31 @@ paths:
       x-escribe: false
       x-solo-local: true
       x-fase: 3
+      requestBody:
+        $ref: '#/components/requestBodies/PeticionHerramienta'
+      responses:
+        '200':
+          $ref: '#/components/responses/ResultadoHerramienta'
+        '404':
+          $ref: '#/components/responses/HerramientaNoDisponible'
+  /herramientas/habitos.abrir_entrenamiento:
+    servers: *servidorHerramientas
+    post:
+      tags: [Herramientas de GRAVITY]
+      operationId: herramientaHabitosAbrirEntrenamiento
+      summary: habitos.abrir_entrenamiento · Abrir Entrenamiento
+      description: >-
+        Abre Hábitos › Entrenamiento (`/habitos/entrenamiento`, Fase 8, bloque 7). Órdenes:
+        "abre el entrenamiento", "gimnasio", "qué toca hoy en el gimnasio". **Solo navega**:
+        no lee series, cargas, esfuerzo ni molestias, no escribe nada, `para_ia` siempre es
+        nulo, nunca va a las bocinas (D6) y la orden no se guarda en ningún historial (si se
+        guardara, sería "Orden de Hábitos reservada"). Es solo local (D3, D13) y se resuelve
+        en la barra de órdenes, sin IA: tampoco está en el catálogo del asistente en la nube.
+        No la recibe la cuenta maestra que no es la dueña, ni el cuidador, ni Casa.
+      x-roles: [dueno, coadministrador, familiar]
+      x-escribe: false
+      x-solo-local: true
+      x-fase: 8
       requestBody:
         $ref: '#/components/requestBodies/PeticionHerramienta'
       responses:
@@ -3414,8 +3485,11 @@ paths:
       operationId: habBorrarMisDatos
       summary: Borrar mis datos de Hábitos
       description: >-
-        Borrado físico de lo propio: `sensibles`, `diario` o `todo` (con `todo`, también la
-        llave y las tablas en claro; deja `hab_ajustes`). Alcance desconocido, 400 (22023).
+        Borrado físico de lo propio: `sensibles`, `diario`, `entrenamiento` (las seis tablas
+        `hab_ent_*` de Mi gimnasio, desde la Fase 8; no toca sobres, modos ni la época de la nube) o
+        `todo` (con `todo`, también la llave y las tablas en claro, las de entrenamiento incluidas;
+        deja `hab_ajustes`). Las molestias no están en el servidor: se borran del dispositivo.
+        Alcance desconocido, 400 (22023).
         Deja la constancia `habitos.borrar_datos` sin contenido. No es un libro contable: se
         puede borrar. Exige Hábitos en el hogar: a la cuenta maestra, al cuidador, a la
         cuenta Hogar y a quien no tiene sesión, 403 (42501).
@@ -3431,9 +3505,9 @@ paths:
               type: object
               required: [p_alcance]
               properties:
-                p_alcance: {type: string, enum: [sensibles, diario, todo]}
+                p_alcance: {type: string, enum: [sensibles, diario, entrenamiento, todo]}
             example:
-              p_alcance: sensibles
+              p_alcance: entrenamiento
       responses:
         '204':
           description: Hecho.
@@ -3508,6 +3582,783 @@ paths:
               example: b0000000-0000-4000-8000-000000000001
         '401':
           $ref: '#/components/responses/SinSesion'
+  /rest/v1/hab_ent_perfil:
+    get:
+      tags: [Base de datos · Hábitos · Entrenamiento]
+      operationId: leerEntPerfil
+      summary: 'Leer mi perfil de entrenamiento'
+      description: >-
+        Una fila por persona con Hábitos (se crea al primer uso): días del plan (3, 4 o 5),
+        versión preferida, ventana (mañana, noche o flexible), objetivo, nivel, inicio del ciclo
+        (un lunes), semanas del ciclo, descanso entre series, margen para dormir, periodo de
+        prueba de la ventana, voz del descanso y cuándo viste el aviso. Preferencias y fechas:
+        ningún dato de salud (las molestias nunca llegan al servidor). Solo lo tuyo (RLS): quien
+        no tiene Hábitos en el hogar (la cuenta maestra, el cuidador, la cuenta Hogar) no lee ni
+        escribe nada, y el dueño tampoco ve lo de su pareja.
+      x-roles: [dueno, coadministrador, familiar]
+      x-escribe: false
+      x-solo-local: true
+      x-fase: 8
+      parameters:
+        - $ref: '#/components/parameters/select'
+      responses:
+        '200':
+          description: Filas tuyas.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HabEntPerfil'
+              example: [{"persona_id":"e0000000-0000-4000-8000-000000000001","hogar_id":"b0000000-0000-4000-8000-000000000001","dias_plan":3,"version_pref":"auto","ventana":"noche","noche_desde":"19:00:00","objetivo":"salud_general","nivel":"principiante","inicio_ciclo":"2026-11-23","ciclo_semanas":4,"descanso_s":null,"margen_dormir_min":90,"prueba_desde":"2026-11-23","prueba_ventana":"noche","voz_descanso":false,"aviso_visto_en":"2026-11-23T20:00:00-06:00","modificado_en":"2026-11-23T20:00:00-06:00"}]
+        '401':
+          $ref: '#/components/responses/SinSesion'
+    post:
+      tags: [Base de datos · Hábitos · Entrenamiento]
+      operationId: agregarEntPerfil
+      summary: 'Crear mi perfil de entrenamiento'
+      description: >-
+        Crea tu fila de perfil (una por persona: la llave es `persona_id`, que pone el servidor;
+        una segunda es 409, 23505). No mandes `persona_id`, `hogar_id` ni `actualizado_en`: los
+        pone el servidor (sin permiso de columna, 42501). El último cambio gana por
+        `modificado_en`. Para subir desde la cola sin conexión usa `Prefer:
+        resolution=merge-duplicates` con `on_conflict` (el último cambio gana: un reenvío con
+        `modificado_en` más viejo no cambia nada) o `resolution=ignore-duplicates` (un reenvío
+        idéntico no hace nada). Sin `resolution`, un duplicado es 409 (23505). Al pasar el tope de
+        filas de la persona, 500 (54000). La cola usa `on_conflict=persona_id`. Rangos y listas
+        fuera de lo permitido, 400 (23514); `inicio_ciclo` solo admite lunes; `prueba_desde` y
+        `prueba_ventana` van juntos o ninguno.
+      x-roles: [dueno, coadministrador, familiar]
+      x-escribe: true
+      x-solo-local: true
+      x-fase: 8
+      parameters:
+        - $ref: '#/components/parameters/alConflictoEntPerfil'
+        - $ref: '#/components/parameters/preferirUpsertEnt'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/HabEntPerfil'
+                - required: [modificado_en]
+            example: {"dias_plan":3,"version_pref":"auto","ventana":"noche","noche_desde":"19:00:00","objetivo":"salud_general","nivel":"principiante","inicio_ciclo":"2026-11-23","ciclo_semanas":4,"descanso_s":null,"margen_dormir_min":90,"prueba_desde":"2026-11-23","prueba_ventana":"noche","voz_descanso":false,"aviso_visto_en":"2026-11-23T20:00:00-06:00","modificado_en":"2026-11-23T20:00:00-06:00"}
+      responses:
+        '201':
+          $ref: '#/components/responses/Agregado'
+        '400':
+          $ref: '#/components/responses/ReglaEntrenamiento'
+        '403':
+          $ref: '#/components/responses/Prohibido'
+        '409':
+          $ref: '#/components/responses/ConflictoEntrenamiento'
+        '500':
+          $ref: '#/components/responses/TopeEntrenamiento'
+    patch:
+      tags: [Base de datos · Hábitos · Entrenamiento]
+      operationId: cambiarEntPerfil
+      summary: 'Cambiar mi perfil de entrenamiento'
+      description: >-
+        No mandes `persona_id`, `hogar_id` ni `actualizado_en`: los pone el servidor (sin permiso
+        de columna, 42501). El último cambio gana por `modificado_en`. Solo hay una fila tuya: no
+        hace falta filtro (las reglas de fila solo dejan tocar la tuya).
+      x-roles: [dueno, coadministrador, familiar]
+      x-escribe: true
+      x-solo-local: true
+      x-fase: 8
+      parameters:
+        - $ref: '#/components/parameters/preferir'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/HabEntPerfil'
+                - minProperties: 1
+            example: {"dias_plan":4,"modificado_en":"2026-11-24T08:00:00-06:00"}
+      responses:
+        '200':
+          $ref: '#/components/responses/Actualizado'
+        '204':
+          description: Actualizado (sin cuerpo).
+        '400':
+          $ref: '#/components/responses/ReglaEntrenamiento'
+        '403':
+          $ref: '#/components/responses/Prohibido'
+        '409':
+          $ref: '#/components/responses/ConflictoEntrenamiento'
+    delete:
+      tags: [Base de datos · Hábitos · Entrenamiento]
+      operationId: borrarEntPerfil
+      summary: 'Borrar mi perfil de entrenamiento'
+      description: >-
+        Borra tu fila de perfil. Para borrar todo el entrenamiento a la vez usa
+        `habBorrarMisDatos` con el alcance `entrenamiento`. Solo lo tuyo (RLS): quien no tiene
+        Hábitos en el hogar (la cuenta maestra, el cuidador, la cuenta Hogar) no lee ni escribe
+        nada, y el dueño tampoco ve lo de su pareja.
+      x-roles: [dueno, coadministrador, familiar]
+      x-escribe: true
+      x-solo-local: true
+      x-fase: 8
+      responses:
+        '204':
+          description: Borrado.
+        '403':
+          $ref: '#/components/responses/Prohibido'
+  /rest/v1/hab_ent_plan_dias:
+    get:
+      tags: [Base de datos · Hábitos · Entrenamiento]
+      operationId: leerEntPlanDias
+      summary: 'Leer mi plan semanal de entrenamiento'
+      description: >-
+        Qué plantilla toca cada día (1 = lunes a 7 = domingo): `A`, `B`, `C`, `R1`, `R2`, `bici` o
+        `descanso`, con su versión y la hora (nula = la propone la app con la agenda). Hasta 7
+        filas por persona. Solo lo tuyo (RLS): quien no tiene Hábitos en el hogar (la cuenta
+        maestra, el cuidador, la cuenta Hogar) no lee ni escribe nada, y el dueño tampoco ve lo de
+        su pareja.
+      x-roles: [dueno, coadministrador, familiar]
+      x-escribe: false
+      x-solo-local: true
+      x-fase: 8
+      parameters:
+        - $ref: '#/components/parameters/select'
+        - $ref: '#/components/parameters/filtroDiaSemanaEnt'
+        - $ref: '#/components/parameters/orden'
+        - $ref: '#/components/parameters/limite'
+      responses:
+        '200':
+          description: Filas tuyas.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HabEntPlanDia'
+              example: [{"dia_semana":1,"tipo":"A","version":"auto","hora":"19:15:00","modificado_en":"2026-11-23T20:00:00-06:00","persona_id":"e0000000-0000-4000-8000-000000000001","hogar_id":"b0000000-0000-4000-8000-000000000001"}]
+        '401':
+          $ref: '#/components/responses/SinSesion'
+    post:
+      tags: [Base de datos · Hábitos · Entrenamiento]
+      operationId: agregarEntPlanDias
+      summary: 'Agregar días a mi plan semanal'
+      description: >-
+        La llave es (`persona_id`, `dia_semana`): una fila por día. No mandes `persona_id`,
+        `hogar_id` ni `actualizado_en`: los pone el servidor (sin permiso de columna, 42501). El
+        último cambio gana por `modificado_en`. Para subir desde la cola sin conexión usa `Prefer:
+        resolution=merge-duplicates` con `on_conflict` (el último cambio gana: un reenvío con
+        `modificado_en` más viejo no cambia nada) o `resolution=ignore-duplicates` (un reenvío
+        idéntico no hace nada). Sin `resolution`, un duplicado es 409 (23505). Al pasar el tope de
+        filas de la persona, 500 (54000). La cola usa `on_conflict=persona_id,dia_semana`.
+        `dia_semana` de 1 a 7 y `tipo` de la lista: si no, 400 (23514). A lo más 7 filas por
+        persona (54000).
+      x-roles: [dueno, coadministrador, familiar]
+      x-escribe: true
+      x-solo-local: true
+      x-fase: 8
+      parameters:
+        - $ref: '#/components/parameters/alConflictoEntPlan'
+        - $ref: '#/components/parameters/preferirUpsertEnt'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/HabEntPlanDia'
+                - required: [dia_semana, tipo, modificado_en]
+            example: {"dia_semana":1,"tipo":"A","version":"auto","hora":"19:15:00","modificado_en":"2026-11-23T20:00:00-06:00"}
+      responses:
+        '201':
+          $ref: '#/components/responses/Agregado'
+        '400':
+          $ref: '#/components/responses/ReglaEntrenamiento'
+        '403':
+          $ref: '#/components/responses/Prohibido'
+        '409':
+          $ref: '#/components/responses/ConflictoEntrenamiento'
+        '500':
+          $ref: '#/components/responses/TopeEntrenamiento'
+    patch:
+      tags: [Base de datos · Hábitos · Entrenamiento]
+      operationId: cambiarEntPlanDias
+      summary: 'Cambiar un día de mi plan semanal'
+      description: >-
+        No mandes `persona_id`, `hogar_id` ni `actualizado_en`: los pone el servidor (sin permiso
+        de columna, 42501). El último cambio gana por `modificado_en`. Se filtra por `dia_semana`
+        (obligatorio: no toca varios a la vez).
+      x-roles: [dueno, coadministrador, familiar]
+      x-escribe: true
+      x-solo-local: true
+      x-fase: 8
+      parameters:
+        - $ref: '#/components/parameters/filtroDiaSemanaEntObligatorio'
+        - $ref: '#/components/parameters/preferir'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/HabEntPlanDia'
+                - minProperties: 1
+            example: {"tipo":"descanso","modificado_en":"2026-11-24T08:00:00-06:00"}
+      responses:
+        '200':
+          $ref: '#/components/responses/Actualizado'
+        '204':
+          description: Actualizado (sin cuerpo).
+        '400':
+          $ref: '#/components/responses/ReglaEntrenamiento'
+        '403':
+          $ref: '#/components/responses/Prohibido'
+        '409':
+          $ref: '#/components/responses/ConflictoEntrenamiento'
+    delete:
+      tags: [Base de datos · Hábitos · Entrenamiento]
+      operationId: borrarEntPlanDias
+      summary: 'Borrar un día de mi plan semanal'
+      description: >-
+        Borra un día de tu plan (se filtra por `dia_semana`). Solo lo tuyo (RLS): quien no tiene
+        Hábitos en el hogar (la cuenta maestra, el cuidador, la cuenta Hogar) no lee ni escribe
+        nada, y el dueño tampoco ve lo de su pareja.
+      x-roles: [dueno, coadministrador, familiar]
+      x-escribe: true
+      x-solo-local: true
+      x-fase: 8
+      parameters:
+        - $ref: '#/components/parameters/filtroDiaSemanaEntObligatorio'
+      responses:
+        '204':
+          description: Borrado.
+        '403':
+          $ref: '#/components/responses/Prohibido'
+  /rest/v1/hab_ent_inventario:
+    get:
+      tags: [Base de datos · Hábitos · Entrenamiento]
+      operationId: leerEntInventario
+      summary: 'Leer mi inventario de equipo'
+      description: >-
+        Un aparato, puesto o accesorio por fila: `estado` (`disponible`, `no_disponible` o
+        `futuro`, este último solo dato) y lo `confirmado` en el aparato. Son datos del equipo, no
+        de salud. Hasta 200 filas por persona. Solo lo tuyo (RLS): quien no tiene Hábitos en el
+        hogar (la cuenta maestra, el cuidador, la cuenta Hogar) no lee ni escribe nada, y el dueño
+        tampoco ve lo de su pareja.
+      x-roles: [dueno, coadministrador, familiar]
+      x-escribe: false
+      x-solo-local: true
+      x-fase: 8
+      parameters:
+        - $ref: '#/components/parameters/select'
+        - $ref: '#/components/parameters/filtroItemEnt'
+        - $ref: '#/components/parameters/orden'
+        - $ref: '#/components/parameters/limite'
+      responses:
+        '200':
+          description: Filas tuyas.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HabEntInventario'
+              example: [{"item_id":"marcy.press","estado":"disponible","confirmado":{"pasos_max":10,"relacion_polea":"1:1"},"notas":null,"modificado_en":"2026-11-23T20:00:00-06:00","persona_id":"e0000000-0000-4000-8000-000000000001","hogar_id":"b0000000-0000-4000-8000-000000000001"}]
+        '401':
+          $ref: '#/components/responses/SinSesion'
+    post:
+      tags: [Base de datos · Hábitos · Entrenamiento]
+      operationId: agregarEntInventario
+      summary: 'Agregar equipo a mi inventario'
+      description: >-
+        La llave es (`persona_id`, `item_id`). `item_id` es el id del catálogo (`marcy.press`) o
+        un puesto suelto (`otro:<texto corto>`). `confirmado` es un objeto de hasta 20 campos y 2
+        KB con solo datos del aparato (pasos de la pila, kg por paso, relación de la polea,
+        capacidad del banco…): campos en minúsculas, valores numéricos, sí o no, o fichas cortas;
+        un campo que hable de molestia, dolor, lesión, zona, salud o medicina se rechaza (400,
+        23514). No mandes `persona_id`, `hogar_id` ni `actualizado_en`: los pone el servidor (sin
+        permiso de columna, 42501). El último cambio gana por `modificado_en`. Para subir desde la
+        cola sin conexión usa `Prefer: resolution=merge-duplicates` con `on_conflict` (el último
+        cambio gana: un reenvío con `modificado_en` más viejo no cambia nada) o
+        `resolution=ignore-duplicates` (un reenvío idéntico no hace nada). Sin `resolution`, un
+        duplicado es 409 (23505). Al pasar el tope de filas de la persona, 500 (54000). La cola
+        usa `on_conflict=persona_id,item_id`.
+      x-roles: [dueno, coadministrador, familiar]
+      x-escribe: true
+      x-solo-local: true
+      x-fase: 8
+      parameters:
+        - $ref: '#/components/parameters/alConflictoEntInventario'
+        - $ref: '#/components/parameters/preferirUpsertEnt'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/HabEntInventario'
+                - required: [item_id, estado, modificado_en]
+            example: {"item_id":"marcy.press","estado":"disponible","confirmado":{"pasos_max":10,"relacion_polea":"1:1"},"notas":null,"modificado_en":"2026-11-23T20:00:00-06:00"}
+      responses:
+        '201':
+          $ref: '#/components/responses/Agregado'
+        '400':
+          $ref: '#/components/responses/ReglaEntrenamiento'
+        '403':
+          $ref: '#/components/responses/Prohibido'
+        '409':
+          $ref: '#/components/responses/ConflictoEntrenamiento'
+        '500':
+          $ref: '#/components/responses/TopeEntrenamiento'
+    patch:
+      tags: [Base de datos · Hábitos · Entrenamiento]
+      operationId: cambiarEntInventario
+      summary: 'Cambiar un aparato de mi inventario'
+      description: >-
+        No mandes `persona_id`, `hogar_id` ni `actualizado_en`: los pone el servidor (sin permiso
+        de columna, 42501). El último cambio gana por `modificado_en`. Se filtra por `item_id`
+        (obligatorio).
+      x-roles: [dueno, coadministrador, familiar]
+      x-escribe: true
+      x-solo-local: true
+      x-fase: 8
+      parameters:
+        - $ref: '#/components/parameters/filtroItemEntObligatorio'
+        - $ref: '#/components/parameters/preferir'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/HabEntInventario'
+                - minProperties: 1
+            example: {"estado":"no_disponible","modificado_en":"2026-11-24T08:00:00-06:00"}
+      responses:
+        '200':
+          $ref: '#/components/responses/Actualizado'
+        '204':
+          description: Actualizado (sin cuerpo).
+        '400':
+          $ref: '#/components/responses/ReglaEntrenamiento'
+        '403':
+          $ref: '#/components/responses/Prohibido'
+        '409':
+          $ref: '#/components/responses/ConflictoEntrenamiento'
+    delete:
+      tags: [Base de datos · Hábitos · Entrenamiento]
+      operationId: borrarEntInventario
+      summary: 'Quitar un aparato de mi inventario'
+      description: >-
+        Quita un aparato o puesto de tu inventario (se filtra por `item_id`). Solo lo tuyo (RLS):
+        quien no tiene Hábitos en el hogar (la cuenta maestra, el cuidador, la cuenta Hogar) no
+        lee ni escribe nada, y el dueño tampoco ve lo de su pareja.
+      x-roles: [dueno, coadministrador, familiar]
+      x-escribe: true
+      x-solo-local: true
+      x-fase: 8
+      parameters:
+        - $ref: '#/components/parameters/filtroItemEntObligatorio'
+      responses:
+        '204':
+          description: Borrado.
+        '403':
+          $ref: '#/components/responses/Prohibido'
+  /rest/v1/hab_ent_bandas:
+    get:
+      tags: [Base de datos · Hábitos · Entrenamiento]
+      operationId: leerEntBandas
+      summary: 'Leer mis bandas de resistencia'
+      description: >-
+        Las bandas de la persona. El `orden` (de la más ligera a la más fuerte) lo pone ella;
+        `resistencia_kg_x10` es nulo o los kg × 10 que lea de la etiqueta. `nombre` es texto libre
+        corto (hasta 40 caracteres: un color o una etiqueta): no escribas ahí nada de salud. Hasta
+        50 filas por persona. Solo lo tuyo (RLS): quien no tiene Hábitos en el hogar (la cuenta
+        maestra, el cuidador, la cuenta Hogar) no lee ni escribe nada, y el dueño tampoco ve lo de
+        su pareja.
+      x-roles: [dueno, coadministrador, familiar]
+      x-escribe: false
+      x-solo-local: true
+      x-fase: 8
+      parameters:
+        - $ref: '#/components/parameters/select'
+        - $ref: '#/components/parameters/filtroId'
+        - $ref: '#/components/parameters/orden'
+        - $ref: '#/components/parameters/limite'
+      responses:
+        '200':
+          description: Filas tuyas.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HabEntBanda'
+              example: [{"id":"f8200000-0000-4000-8000-000000000001","nombre":"Verde","orden":2,"resistencia_kg_x10":null,"cantidad":1,"activa":true,"modificado_en":"2026-11-23T20:00:00-06:00","persona_id":"e0000000-0000-4000-8000-000000000001","hogar_id":"b0000000-0000-4000-8000-000000000001"}]
+        '401':
+          $ref: '#/components/responses/SinSesion'
+    post:
+      tags: [Base de datos · Hábitos · Entrenamiento]
+      operationId: agregarEntBandas
+      summary: 'Agregar una banda'
+      description: >-
+        El `id` es un UUID v4 que genera el dispositivo. No mandes `persona_id`, `hogar_id` ni
+        `actualizado_en`: los pone el servidor (sin permiso de columna, 42501). El último cambio
+        gana por `modificado_en`. Para subir desde la cola sin conexión usa `Prefer:
+        resolution=merge-duplicates` con `on_conflict` (el último cambio gana: un reenvío con
+        `modificado_en` más viejo no cambia nada) o `resolution=ignore-duplicates` (un reenvío
+        idéntico no hace nada). Sin `resolution`, un duplicado es 409 (23505). Al pasar el tope de
+        filas de la persona, 500 (54000). La cola usa `on_conflict=id`. `orden` de 1 a 20,
+        `cantidad` de 1 a 10 y `resistencia_kg_x10` nulo o de 1 a 2000, o 400 (23514).
+      x-roles: [dueno, coadministrador, familiar]
+      x-escribe: true
+      x-solo-local: true
+      x-fase: 8
+      parameters:
+        - $ref: '#/components/parameters/alConflicto'
+        - $ref: '#/components/parameters/preferirUpsertEnt'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/HabEntBanda'
+                - required: [id, nombre, orden, cantidad, modificado_en]
+            example: {"id":"f8200000-0000-4000-8000-000000000001","nombre":"Verde","orden":2,"resistencia_kg_x10":null,"cantidad":1,"activa":true,"modificado_en":"2026-11-23T20:00:00-06:00"}
+      responses:
+        '201':
+          $ref: '#/components/responses/Agregado'
+        '400':
+          $ref: '#/components/responses/ReglaEntrenamiento'
+        '403':
+          $ref: '#/components/responses/Prohibido'
+        '409':
+          $ref: '#/components/responses/ConflictoEntrenamiento'
+        '500':
+          $ref: '#/components/responses/TopeEntrenamiento'
+    patch:
+      tags: [Base de datos · Hábitos · Entrenamiento]
+      operationId: cambiarEntBandas
+      summary: 'Cambiar una banda'
+      description: >-
+        No mandes `persona_id`, `hogar_id` ni `actualizado_en`: los pone el servidor (sin permiso
+        de columna, 42501). El último cambio gana por `modificado_en`.
+      x-roles: [dueno, coadministrador, familiar]
+      x-escribe: true
+      x-solo-local: true
+      x-fase: 8
+      parameters:
+        - $ref: '#/components/parameters/filtroIdObligatorio'
+        - $ref: '#/components/parameters/preferir'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/HabEntBanda'
+                - minProperties: 1
+            example: {"orden":3,"modificado_en":"2026-11-24T08:00:00-06:00"}
+      responses:
+        '200':
+          $ref: '#/components/responses/Actualizado'
+        '204':
+          description: Actualizado (sin cuerpo).
+        '400':
+          $ref: '#/components/responses/ReglaEntrenamiento'
+        '403':
+          $ref: '#/components/responses/Prohibido'
+        '409':
+          $ref: '#/components/responses/ConflictoEntrenamiento'
+    delete:
+      tags: [Base de datos · Hábitos · Entrenamiento]
+      operationId: borrarEntBandas
+      summary: 'Borrar una banda'
+      description: >-
+        Borra una banda tuya. Las series que la usaban quedan con `banda_id` nulo (no se borran).
+        Solo lo tuyo (RLS): quien no tiene Hábitos en el hogar (la cuenta maestra, el cuidador, la
+        cuenta Hogar) no lee ni escribe nada, y el dueño tampoco ve lo de su pareja.
+      x-roles: [dueno, coadministrador, familiar]
+      x-escribe: true
+      x-solo-local: true
+      x-fase: 8
+      parameters:
+        - $ref: '#/components/parameters/filtroIdObligatorio'
+      responses:
+        '204':
+          description: Borrado.
+        '403':
+          $ref: '#/components/responses/Prohibido'
+  /rest/v1/hab_ent_sesiones:
+    get:
+      tags: [Base de datos · Hábitos · Entrenamiento]
+      operationId: leerEntSesiones
+      summary: 'Leer mis sesiones de entrenamiento'
+      description: >-
+        Una sesión por día y plantilla: versión, tipo de semana (`carga`, `descarga`, `reentrada`
+        o `foco`), ventana real (`manana` o `noche`), inicio y fin (`fin` nulo mientras está
+        `en_curso`), estado (`en_curso`, `completa` o `parcial`), esfuerzo y energía (1 a 5) y
+        `plan`, lo planeado tal como se planeó. Alimenta el historial y la prueba de la ventana.
+        Hasta 3 000 filas por persona. Solo lo tuyo (RLS): quien no tiene Hábitos en el hogar (la
+        cuenta maestra, el cuidador, la cuenta Hogar) no lee ni escribe nada, y el dueño tampoco
+        ve lo de su pareja.
+      x-roles: [dueno, coadministrador, familiar]
+      x-escribe: false
+      x-solo-local: true
+      x-fase: 8
+      parameters:
+        - $ref: '#/components/parameters/select'
+        - $ref: '#/components/parameters/filtroId'
+        - $ref: '#/components/parameters/filtroFecha'
+        - $ref: '#/components/parameters/orden'
+        - $ref: '#/components/parameters/limite'
+      responses:
+        '200':
+          description: Filas tuyas.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HabEntSesion'
+              example: [{"id":"f8100000-0000-5000-8000-000000000001","fecha":"2026-11-23","plantilla":"A","version":"estandar","semana_tipo":"carga","ventana":"noche","bloque_id":null,"inicio":"2026-11-23T19:15:00-06:00","fin":"2026-11-23T20:00:00-06:00","estado":"completa","esfuerzo":3,"energia":4,"plan":[{"ejercicio":"press_pecho","variante":"press_pecho_estacion","series":3,"reps_min":8,"reps_max":12}],"catalogo_version":1,"modificado_en":"2026-11-23T20:00:00-06:00","persona_id":"e0000000-0000-4000-8000-000000000001","hogar_id":"b0000000-0000-4000-8000-000000000001"}]
+        '401':
+          $ref: '#/components/responses/SinSesion'
+    post:
+      tags: [Base de datos · Hábitos · Entrenamiento]
+      operationId: agregarEntSesiones
+      summary: 'Agregar una sesión de entrenamiento'
+      description: >-
+        El `id` es un UUID v5 de la persona, la fecha y la plantilla: dos equipos que registran la
+        misma sesión convergen. Es única por día y plantilla: otro `id` para el mismo día y
+        plantilla es 409 (23505). `estado` `en_curso` si y solo si `fin` es nulo, y `fin` no es
+        anterior a `inicio` (400, 23514). `plan` es una lista de hasta 40 ejercicios y 2 KB con
+        solo `ejercicio`, `variante`, `series`, `reps_min` y `reps_max` (cualquier otra clave,
+        400, 23514). `bloque_id`, si se manda, es un bloque de la agenda tuyo (23503 si no). No
+        mandes `persona_id`, `hogar_id` ni `actualizado_en`: los pone el servidor (sin permiso de
+        columna, 42501). El último cambio gana por `modificado_en`. Para subir desde la cola sin
+        conexión usa `Prefer: resolution=merge-duplicates` con `on_conflict` (el último cambio
+        gana: un reenvío con `modificado_en` más viejo no cambia nada) o
+        `resolution=ignore-duplicates` (un reenvío idéntico no hace nada). Sin `resolution`, un
+        duplicado es 409 (23505). Al pasar el tope de filas de la persona, 500 (54000). La cola
+        usa `on_conflict=id`.
+      x-roles: [dueno, coadministrador, familiar]
+      x-escribe: true
+      x-solo-local: true
+      x-fase: 8
+      parameters:
+        - $ref: '#/components/parameters/alConflicto'
+        - $ref: '#/components/parameters/preferirUpsertEnt'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/HabEntSesion'
+                - required: [id, fecha, plantilla, version, semana_tipo, ventana, inicio, estado, catalogo_version, modificado_en]
+            example: {"id":"f8100000-0000-5000-8000-000000000001","fecha":"2026-11-23","plantilla":"A","version":"estandar","semana_tipo":"carga","ventana":"noche","bloque_id":null,"inicio":"2026-11-23T19:15:00-06:00","fin":"2026-11-23T20:00:00-06:00","estado":"completa","esfuerzo":3,"energia":4,"plan":[{"ejercicio":"press_pecho","variante":"press_pecho_estacion","series":3,"reps_min":8,"reps_max":12}],"catalogo_version":1,"modificado_en":"2026-11-23T20:00:00-06:00"}
+      responses:
+        '201':
+          $ref: '#/components/responses/Agregado'
+        '400':
+          $ref: '#/components/responses/ReglaEntrenamiento'
+        '403':
+          $ref: '#/components/responses/Prohibido'
+        '409':
+          $ref: '#/components/responses/ConflictoEntrenamiento'
+        '500':
+          $ref: '#/components/responses/TopeEntrenamiento'
+    patch:
+      tags: [Base de datos · Hábitos · Entrenamiento]
+      operationId: cambiarEntSesiones
+      summary: 'Cambiar una sesión de entrenamiento'
+      description: >-
+        No mandes `persona_id`, `hogar_id` ni `actualizado_en`: los pone el servidor (sin permiso
+        de columna, 42501). El último cambio gana por `modificado_en`. Para terminar una sesión en
+        curso manda `fin`, `estado`, `esfuerzo` y `energia` juntos (`en_curso` si y solo si `fin`
+        es nulo).
+      x-roles: [dueno, coadministrador, familiar]
+      x-escribe: true
+      x-solo-local: true
+      x-fase: 8
+      parameters:
+        - $ref: '#/components/parameters/filtroIdObligatorio'
+        - $ref: '#/components/parameters/preferir'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/HabEntSesion'
+                - minProperties: 1
+            example: {"estado":"parcial","fin":"2026-11-23T20:10:00-06:00","esfuerzo":4,"modificado_en":"2026-11-23T20:10:00-06:00"}
+      responses:
+        '200':
+          $ref: '#/components/responses/Actualizado'
+        '204':
+          description: Actualizado (sin cuerpo).
+        '400':
+          $ref: '#/components/responses/ReglaEntrenamiento'
+        '403':
+          $ref: '#/components/responses/Prohibido'
+        '409':
+          $ref: '#/components/responses/ConflictoEntrenamiento'
+    delete:
+      tags: [Base de datos · Hábitos · Entrenamiento]
+      operationId: borrarEntSesiones
+      summary: 'Borrar una sesión de entrenamiento'
+      description: >-
+        Borra una sesión tuya y, en cascada, todas sus series. Solo lo tuyo (RLS): quien no tiene
+        Hábitos en el hogar (la cuenta maestra, el cuidador, la cuenta Hogar) no lee ni escribe
+        nada, y el dueño tampoco ve lo de su pareja.
+      x-roles: [dueno, coadministrador, familiar]
+      x-escribe: true
+      x-solo-local: true
+      x-fase: 8
+      parameters:
+        - $ref: '#/components/parameters/filtroIdObligatorio'
+      responses:
+        '204':
+          description: Borrado.
+        '403':
+          $ref: '#/components/responses/Prohibido'
+  /rest/v1/hab_ent_series:
+    get:
+      tags: [Base de datos · Hábitos · Entrenamiento]
+      operationId: leerEntSeries
+      summary: 'Leer mis series de entrenamiento'
+      description: >-
+        Una fila por serie hecha: repeticiones o segundos, carga en pasos de la pila o banda
+        usada, esfuerzo (1 a 5), descanso real y, si se cambió el ejercicio, qué variante
+        sustituyó y por qué (`no_disponible`, `preferencia` u `otra`; **el motivo «molestia» no
+        existe a propósito**: si la persona cambia por una molestia, el servidor ve `otra`). Los
+        récords, las rachas y el volumen **no se guardan**: se calculan de aquí. Hasta 60 000
+        filas por persona. Solo lo tuyo (RLS): quien no tiene Hábitos en el hogar (la cuenta
+        maestra, el cuidador, la cuenta Hogar) no lee ni escribe nada, y el dueño tampoco ve lo de
+        su pareja.
+      x-roles: [dueno, coadministrador, familiar]
+      x-escribe: false
+      x-solo-local: true
+      x-fase: 8
+      parameters:
+        - $ref: '#/components/parameters/select'
+        - $ref: '#/components/parameters/filtroId'
+        - $ref: '#/components/parameters/filtroSesionEnt'
+        - $ref: '#/components/parameters/filtroEjercicioEnt'
+        - $ref: '#/components/parameters/orden'
+        - $ref: '#/components/parameters/limite'
+      responses:
+        '200':
+          description: Filas tuyas.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HabEntSerie'
+              example: [{"id":"f8300000-0000-5000-8000-000000000001","sesion_id":"f8100000-0000-5000-8000-000000000001","ejercicio_id":"press_pecho","variante_id":"press_pecho_estacion","n":1,"lado":null,"reps":10,"segundos":null,"carga_pasos":4,"banda_id":null,"esfuerzo":3,"descanso_real_s":60,"sustituye_a":null,"motivo_cambio":null,"modificado_en":"2026-11-23T19:30:00-06:00","persona_id":"e0000000-0000-4000-8000-000000000001","hogar_id":"b0000000-0000-4000-8000-000000000001"}]
+        '401':
+          $ref: '#/components/responses/SinSesion'
+    post:
+      tags: [Base de datos · Hábitos · Entrenamiento]
+      operationId: agregarEntSeries
+      summary: 'Agregar una serie'
+      description: >-
+        El `id` es un UUID v5 de la persona, la sesión, el ejercicio, el número y el lado: la
+        misma serie con otro `id` es 409 (23505). `sesion_id` es una sesión tuya que ya se subió
+        (23503 si no: la cola reintenta); `banda_id`, si se manda, una banda tuya (23503 si no).
+        `n` de 1 a 12, `reps` de 0 a 100, `segundos` de 0 a 900, `carga_pasos` de 0 a 60,
+        `esfuerzo` de 1 a 5 y `descanso_real_s` de 0 a 900, o 400 (23514); `motivo_cambio` solo
+        admite `no_disponible`, `preferencia` u `otra`. No mandes `persona_id`, `hogar_id` ni
+        `actualizado_en`: los pone el servidor (sin permiso de columna, 42501). El último cambio
+        gana por `modificado_en`. Para subir desde la cola sin conexión usa `Prefer:
+        resolution=merge-duplicates` con `on_conflict` (el último cambio gana: un reenvío con
+        `modificado_en` más viejo no cambia nada) o `resolution=ignore-duplicates` (un reenvío
+        idéntico no hace nada). Sin `resolution`, un duplicado es 409 (23505). Al pasar el tope de
+        filas de la persona, 500 (54000). La cola usa `on_conflict=id`.
+      x-roles: [dueno, coadministrador, familiar]
+      x-escribe: true
+      x-solo-local: true
+      x-fase: 8
+      parameters:
+        - $ref: '#/components/parameters/alConflicto'
+        - $ref: '#/components/parameters/preferirUpsertEnt'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/HabEntSerie'
+                - required: [id, sesion_id, ejercicio_id, variante_id, n, modificado_en]
+            example: {"id":"f8300000-0000-5000-8000-000000000001","sesion_id":"f8100000-0000-5000-8000-000000000001","ejercicio_id":"press_pecho","variante_id":"press_pecho_estacion","n":1,"lado":null,"reps":10,"segundos":null,"carga_pasos":4,"banda_id":null,"esfuerzo":3,"descanso_real_s":60,"sustituye_a":null,"motivo_cambio":null,"modificado_en":"2026-11-23T19:30:00-06:00"}
+      responses:
+        '201':
+          $ref: '#/components/responses/Agregado'
+        '400':
+          $ref: '#/components/responses/ReglaEntrenamiento'
+        '403':
+          $ref: '#/components/responses/Prohibido'
+        '409':
+          $ref: '#/components/responses/ConflictoEntrenamiento'
+        '500':
+          $ref: '#/components/responses/TopeEntrenamiento'
+    patch:
+      tags: [Base de datos · Hábitos · Entrenamiento]
+      operationId: cambiarEntSeries
+      summary: 'Corregir una serie'
+      description: >-
+        No mandes `persona_id`, `hogar_id` ni `actualizado_en`: los pone el servidor (sin permiso
+        de columna, 42501). El último cambio gana por `modificado_en`.
+      x-roles: [dueno, coadministrador, familiar]
+      x-escribe: true
+      x-solo-local: true
+      x-fase: 8
+      parameters:
+        - $ref: '#/components/parameters/filtroIdObligatorio'
+        - $ref: '#/components/parameters/preferir'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/HabEntSerie'
+                - minProperties: 1
+            example: {"reps":9,"esfuerzo":4,"modificado_en":"2026-11-23T19:35:00-06:00"}
+      responses:
+        '200':
+          $ref: '#/components/responses/Actualizado'
+        '204':
+          description: Actualizado (sin cuerpo).
+        '400':
+          $ref: '#/components/responses/ReglaEntrenamiento'
+        '403':
+          $ref: '#/components/responses/Prohibido'
+        '409':
+          $ref: '#/components/responses/ConflictoEntrenamiento'
+    delete:
+      tags: [Base de datos · Hábitos · Entrenamiento]
+      operationId: borrarEntSeries
+      summary: 'Borrar una serie'
+      description: >-
+        Borra una serie tuya. Borrar la sesión borra todas sus series. Solo lo tuyo (RLS): quien
+        no tiene Hábitos en el hogar (la cuenta maestra, el cuidador, la cuenta Hogar) no lee ni
+        escribe nada, y el dueño tampoco ve lo de su pareja.
+      x-roles: [dueno, coadministrador, familiar]
+      x-escribe: true
+      x-solo-local: true
+      x-fase: 8
+      parameters:
+        - $ref: '#/components/parameters/filtroIdObligatorio'
+      responses:
+        '204':
+          description: Borrado.
+        '403':
+          $ref: '#/components/responses/Prohibido'
   /rest/v1/bitacora:
     get:
       tags: [Base de datos]
@@ -13553,6 +14404,89 @@ components:
       schema:
         type: string
         enum: [id]
+    filtroDiaSemanaEnt:
+      name: dia_semana
+      in: query
+      description: 'Filtro por día del plan de entrenamiento (1 = lunes a 7 = domingo), p. ej. `eq.3`.'
+      schema:
+        type: string
+      example: eq.3
+    filtroDiaSemanaEntObligatorio:
+      name: dia_semana
+      in: query
+      required: true
+      description: 'Día del plan a cambiar: `eq.1` a `eq.7`.'
+      schema:
+        type: string
+        pattern: '^eq\.[1-7]$'
+      example: eq.3
+    filtroItemEnt:
+      name: item_id
+      in: query
+      description: 'Filtro por aparato del inventario, p. ej. `eq.marcy.press`.'
+      schema:
+        type: string
+      example: eq.marcy.press
+    filtroItemEntObligatorio:
+      name: item_id
+      in: query
+      required: true
+      description: 'Aparato a cambiar: `eq.<item_id>` (un id del catálogo o `otro:<texto>`, codificado en la URL).'
+      schema:
+        type: string
+        pattern: '^eq\..+$'
+      example: eq.marcy.press
+    filtroSesionEnt:
+      name: sesion_id
+      in: query
+      description: 'Filtro por sesión de entrenamiento, p. ej. `eq.<uuid>`.'
+      schema:
+        type: string
+      example: eq.f8100000-0000-5000-8000-000000000001
+    filtroEjercicioEnt:
+      name: ejercicio_id
+      in: query
+      description: 'Filtro por ejercicio del catálogo (para los récords), p. ej. `eq.press_pecho`.'
+      schema:
+        type: string
+      example: eq.press_pecho
+    alConflictoEntPerfil:
+      name: on_conflict
+      in: query
+      description: 'Llave del perfil (una fila por persona). Con `Prefer: resolution=merge-duplicates` es un upsert; `persona_id` lo pone el servidor.'
+      schema:
+        type: string
+        enum: [persona_id]
+    alConflictoEntPlan:
+      name: on_conflict
+      in: query
+      description: 'Llave de un día del plan. Con `Prefer: resolution=merge-duplicates` es un upsert.'
+      schema:
+        type: string
+        enum: ['persona_id,dia_semana']
+    alConflictoEntInventario:
+      name: on_conflict
+      in: query
+      description: 'Llave de un aparato del inventario. Con `Prefer: resolution=merge-duplicates` es un upsert.'
+      schema:
+        type: string
+        enum: ['persona_id,item_id']
+    preferirUpsertEnt:
+      name: Prefer
+      in: header
+      description: >-
+        `resolution=merge-duplicates` para subir desde la cola sin conexión con upsert (gana el `modificado_en`
+        más reciente; uno más viejo no cambia nada); `resolution=ignore-duplicates` para que un reenvío idéntico no
+        haga nada; `return=representation` para recibir lo insertado.
+      schema:
+        type: string
+        enum:
+          - return=minimal
+          - return=representation
+          - resolution=merge-duplicates,return=minimal
+          - resolution=merge-duplicates,return=representation
+          - resolution=ignore-duplicates,return=minimal
+          - resolution=ignore-duplicates,return=representation
     preferirAlSubir:
       name: Prefer
       in: header
@@ -13698,6 +14632,49 @@ components:
             message: duplicate key value violates unique constraint "hab_registros_un_elemento_por_dia"
             details: null
             hint: null
+    ReglaEntrenamiento:
+      description: >-
+        No cumple una regla de la tabla (23514): un rango o una lista (días del plan, esfuerzo de 1 a 5, `carga_pasos`
+        de 0 a 60, `reps` de 0 a 100…), `inicio_ciclo` que no es lunes, `en_curso` sin `fin` nulo (o al revés), la forma
+        del `plan` de una sesión o de lo `confirmado` de un aparato (una clave de más, un campo de salud) o un
+        `motivo_cambio` que no es de la lista (el motivo «molestia» no existe).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorPostgrest'
+          example:
+            code: '23514'
+            message: El plan solo admite ejercicio, variante, series, reps_min y reps_max.
+            details: null
+            hint: null
+    ConflictoEntrenamiento:
+      description: >-
+        23503: falta algo de lo que depende (la sesión de una serie, una banda o un bloque de la agenda que no es tuyo o
+        aún no se sube; la cola reintenta). 23505: duplicado (el mismo `id` sin `resolution`, otra sesión del mismo día
+        y plantilla con otro `id`, la misma serie con otro `id`).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorPostgrest'
+          example:
+            code: '23505'
+            message: duplicate key value violates unique constraint "hab_ent_sesiones_dia_plantilla"
+            details: null
+            hint: null
+    TopeEntrenamiento:
+      description: >-
+        Pasó el tope de filas por persona (código 54000, `program_limit_exceeded`): sesiones 3 000, series 60 000,
+        inventario 200, bandas 50, plan 7, perfil 1. La sentencia entera se deshace; actualizar o borrar nunca lo
+        dispara. No es de las clases que la cola reintenta: lo rechazado queda en "requiere atención".
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorPostgrest'
+          example:
+            code: '54000'
+            message: Se llegó al tope de 3000 filas en hab_ent_sesiones.
+            details: null
+            hint: Archiva o borra lo que ya no uses.
     ReglaCuidados:
       description: >-
         No cumple una regla: de la tabla (23514: rango del turno, largo de una nota, horas HH:MM, monto mayor que cero) o de
@@ -16866,6 +17843,148 @@ components:
         resumen: {type: [object, 'null'], description: 'Hasta 8 KB.'}
         ajustes: {type: [object, 'null'], description: 'Hasta 8 KB.'}
         dar_cumplido: {type: [boolean, 'null']}
+        modificado_en: {type: string, format: date-time, description: 'Último cambio gana: un UPDATE con modificado_en más viejo se ignora sin error; uno a más de 5 minutos en el futuro se ajusta a la hora del servidor.'}
+        actualizado_en: {type: string, format: date-time, readOnly: true, description: 'Lo pone el servidor.'}
+    HabEntPerfil:
+      type: object
+      description: >-
+        Perfil de entrenamiento de una persona (una fila; la llave es `persona_id`). Preferencias y fechas del ciclo;
+        sin ningún dato de salud. `prueba_desde` y `prueba_ventana` van juntos o ninguno (23514).
+      properties:
+        persona_id: {$ref: '#/components/schemas/Uuid', readOnly: true, description: 'Llave primaria. La pone el servidor: es tu persona.'}
+        hogar_id: {$ref: '#/components/schemas/Uuid', readOnly: true, description: 'Lo pone el servidor.'}
+        dias_plan: {type: integer, enum: [3, 4, 5], default: 3}
+        version_pref: {type: string, enum: [auto, corta, estandar, larga], default: auto}
+        ventana: {type: string, enum: [manana, noche, flexible], default: noche}
+        noche_desde: {type: string, pattern: '^[0-9]{2}:[0-9]{2}(:[0-9]{2})?$', default: '19:00:00'}
+        objetivo: {type: string, enum: [fuerza, masa, perdida_grasa, salud_general], default: salud_general}
+        nivel: {type: string, enum: [principiante, intermedio], default: principiante}
+        inicio_ciclo: {type: [string, 'null'], format: date, description: 'Un lunes (23514 si no). Nulo: aún no empieza el plan.'}
+        ciclo_semanas: {type: integer, minimum: 0, maximum: 8, default: 4, description: '0 = sin descarga programada; si no, de 3 a 8 (23514 con 1 o 2).'}
+        descanso_s: {type: [integer, 'null'], minimum: 30, maximum: 120, description: 'Nulo = el de la versión de la sesión.'}
+        margen_dormir_min: {type: integer, minimum: 0, maximum: 240, default: 90}
+        prueba_desde: {type: [string, 'null'], format: date, description: Inicio del periodo de prueba de la ventana.}
+        prueba_ventana: {type: [string, 'null'], enum: [manana, noche, null], description: La ventana en prueba.}
+        voz_descanso: {type: boolean, default: false}
+        aviso_visto_en: {type: [string, 'null'], format: date-time, description: Cuándo tocó «Entendido» en el aviso de la primera vez.}
+        modificado_en: {type: string, format: date-time, description: 'Último cambio gana: un UPDATE con modificado_en más viejo se ignora sin error; uno a más de 5 minutos en el futuro se ajusta a la hora del servidor.'}
+        actualizado_en: {type: string, format: date-time, readOnly: true, description: 'Lo pone el servidor.'}
+    HabEntPlanDia:
+      type: object
+      description: Qué toca un día de la semana de entrenamiento (la llave es persona_id y dia_semana).
+      properties:
+        dia_semana: {type: integer, minimum: 1, maximum: 7, description: 1 = lunes … 7 = domingo.}
+        persona_id: {$ref: '#/components/schemas/Uuid', readOnly: true, description: 'La pone el servidor: es tu persona.'}
+        hogar_id: {$ref: '#/components/schemas/Uuid', readOnly: true, description: 'Lo pone el servidor.'}
+        tipo: {type: string, enum: [A, B, C, R1, R2, bici, descanso]}
+        version: {type: string, enum: [auto, corta, estandar, larga], default: auto}
+        hora: {type: [string, 'null'], pattern: '^[0-9]{2}:[0-9]{2}(:[0-9]{2})?$', description: 'Nulo: la app la propone con la agenda.'}
+        modificado_en: {type: string, format: date-time, description: 'Último cambio gana: un UPDATE con modificado_en más viejo se ignora sin error; uno a más de 5 minutos en el futuro se ajusta a la hora del servidor.'}
+        actualizado_en: {type: string, format: date-time, readOnly: true, description: 'Lo pone el servidor.'}
+    HabEntConfirmado:
+      type: object
+      description: >-
+        Lo confirmado en el aparato: pares campo → valor del equipo (`pasos_max`, `kg_por_paso_x10`,
+        `relacion_polea`, `capacidad_banco_kg`…), hasta 20 y 2 KB. Campos en minúsculas, dígitos y guion bajo; valores
+        numéricos, sí o no, nulos o fichas cortas (letras minúsculas, dígitos y `. : _ - /`), nunca frases. Un campo que
+        hable de molestia, dolor, lesión, diagnóstico, síntoma, zona, salud, fisioterapia o medicina se rechaza (23514):
+        es dato del aparato, no de salud.
+      maxProperties: 20
+      propertyNames:
+        pattern: '^(?!.*(molest|dolor|duel|lesi|diagn|sintom|zona|salud|fisio|medic))[a-z][a-z0-9_]{0,39}$'
+      additionalProperties:
+        anyOf:
+          - type: [number, boolean, 'null']
+          - type: string
+            pattern: '^[a-z0-9][a-z0-9_.:/-]{0,39}$'
+    HabEntInventario:
+      type: object
+      description: Un aparato, puesto o accesorio del equipo de la persona (la llave es persona_id e item_id).
+      properties:
+        item_id: {type: string, minLength: 1, maxLength: 60, pattern: '^([a-z0-9][a-z0-9_.:-]*|otro:[^\u0000-\u001f\u007f]{1,55})$', description: 'Id del catálogo (marcy.press) o un puesto suelto (otro:<texto corto>).'}
+        persona_id: {$ref: '#/components/schemas/Uuid', readOnly: true, description: 'La pone el servidor: es tu persona.'}
+        hogar_id: {$ref: '#/components/schemas/Uuid', readOnly: true, description: 'Lo pone el servidor.'}
+        estado: {type: string, enum: [disponible, no_disponible, futuro], description: 'no_disponible: roto, ocupado, prestado. futuro: solo dato, no genera nada.'}
+        confirmado: {$ref: '#/components/schemas/HabEntConfirmado'}
+        notas: {type: [string, 'null'], maxLength: 200, description: Texto libre corto del equipo; no escribas aquí nada de salud.}
+        modificado_en: {type: string, format: date-time, description: 'Último cambio gana: un UPDATE con modificado_en más viejo se ignora sin error; uno a más de 5 minutos en el futuro se ajusta a la hora del servidor.'}
+        actualizado_en: {type: string, format: date-time, readOnly: true, description: 'Lo pone el servidor.'}
+    HabEntBanda:
+      type: object
+      description: Una banda de resistencia de la persona.
+      properties:
+        id: {$ref: '#/components/schemas/Uuid', description: UUID v4 que genera el dispositivo.}
+        persona_id: {$ref: '#/components/schemas/Uuid', readOnly: true, description: 'La pone el servidor: es tu persona.'}
+        hogar_id: {$ref: '#/components/schemas/Uuid', readOnly: true, description: 'Lo pone el servidor.'}
+        nombre: {type: string, minLength: 1, maxLength: 40, description: 'Color o etiqueta; texto libre corto, sin nada de salud.'}
+        orden: {type: integer, minimum: 1, maximum: 20, description: 'De la más ligera a la más fuerte; lo ordena la persona.'}
+        resistencia_kg_x10: {type: [integer, 'null'], minimum: 1, maximum: 2000, description: 'kg × 10 si la persona los lee de la etiqueta; nulo si no.'}
+        cantidad: {type: integer, minimum: 1, maximum: 10}
+        activa: {type: boolean, default: true}
+        modificado_en: {type: string, format: date-time, description: 'Último cambio gana: un UPDATE con modificado_en más viejo se ignora sin error; uno a más de 5 minutos en el futuro se ajusta a la hora del servidor.'}
+        actualizado_en: {type: string, format: date-time, readOnly: true, description: 'Lo pone el servidor.'}
+    HabEntPlanEjercicio:
+      type: object
+      description: Un ejercicio tal como se planeó en una sesión. Solo estas cinco claves (23514 si hay otra).
+      additionalProperties: false
+      required: [ejercicio]
+      properties:
+        ejercicio: {type: string, pattern: '^[a-z0-9][a-z0-9_.:-]{0,59}$', description: Id del catálogo.}
+        variante: {type: [string, 'null'], pattern: '^[a-z0-9][a-z0-9_.:-]{0,59}$', description: Id de la variante del catálogo.}
+        series: {type: [integer, 'null'], minimum: 0, maximum: 12}
+        reps_min: {type: [integer, 'null'], minimum: 0, maximum: 100}
+        reps_max: {type: [integer, 'null'], minimum: 0, maximum: 100, description: No menor que reps_min (23514).}
+    HabEntSesion:
+      type: object
+      description: >-
+        Una sesión de entrenamiento por día y plantilla (única por persona, fecha y plantilla). En curso (`fin` nulo)
+        hasta que la persona la termina. Sin molestias ni zonas: el servidor nunca las ve.
+      properties:
+        id: {$ref: '#/components/schemas/Uuid', description: UUID v5 de la persona, la fecha y la plantilla.}
+        persona_id: {$ref: '#/components/schemas/Uuid', readOnly: true, description: 'La pone el servidor: es tu persona.'}
+        hogar_id: {$ref: '#/components/schemas/Uuid', readOnly: true, description: 'Lo pone el servidor.'}
+        fecha: {type: string, format: date}
+        plantilla: {type: string, enum: [A, B, C, R1, R2]}
+        version: {type: string, enum: [corta, estandar, larga], description: 'En R1 y R2, la de duración.'}
+        semana_tipo: {type: string, enum: [carga, descarga, reentrada, foco], description: Lo que el dominio calculó ese día; sirve para el historial.}
+        ventana: {type: string, enum: [manana, noche], description: De la hora real de inicio; alimenta la prueba de la ventana.}
+        bloque_id: {$ref: '#/components/schemas/UuidONulo', description: 'Bloque de la agenda de Hábitos, tuyo (23503 si no). Si se borra el bloque, queda nulo.'}
+        inicio: {type: string, format: date-time}
+        fin: {type: [string, 'null'], format: date-time, description: 'Nulo mientras está en curso; no anterior a inicio (23514).'}
+        estado: {type: string, enum: [en_curso, completa, parcial], description: 'en_curso si y solo si fin es nulo (23514). Completa o parcial lo elige la persona al terminar.'}
+        esfuerzo: {type: [integer, 'null'], minimum: 1, maximum: 5}
+        energia: {type: [integer, 'null'], minimum: 1, maximum: 5}
+        plan:
+          type: array
+          maxItems: 40
+          default: []
+          description: 'Lo planeado tal como se planeó, hasta 2 KB (permite "hiciste 9 de 12 series" aunque cambie el catálogo o el inventario).'
+          items: {$ref: '#/components/schemas/HabEntPlanEjercicio'}
+        catalogo_version: {type: integer, minimum: 1}
+        modificado_en: {type: string, format: date-time, description: 'Último cambio gana: un UPDATE con modificado_en más viejo se ignora sin error; uno a más de 5 minutos en el futuro se ajusta a la hora del servidor.'}
+        actualizado_en: {type: string, format: date-time, readOnly: true, description: 'Lo pone el servidor.'}
+    HabEntSerie:
+      type: object
+      description: >-
+        Una serie hecha. Sin molestias ni zonas: `motivo_cambio` solo admite `no_disponible`, `preferencia` u `otra`
+        (el motivo «molestia» no existe a propósito: si la persona cambia por una molestia, el servidor ve `otra`).
+      properties:
+        id: {$ref: '#/components/schemas/Uuid', description: 'UUID v5 de la persona, la sesión, el ejercicio, el número y el lado.'}
+        persona_id: {$ref: '#/components/schemas/Uuid', readOnly: true, description: 'La pone el servidor: es tu persona.'}
+        hogar_id: {$ref: '#/components/schemas/Uuid', readOnly: true, description: 'Lo pone el servidor.'}
+        sesion_id: {$ref: '#/components/schemas/Uuid', description: 'Sesión tuya; al borrarla se borran sus series.'}
+        ejercicio_id: {type: string, pattern: '^[a-z0-9][a-z0-9_.:-]{0,59}$', description: Id del catálogo.}
+        variante_id: {type: string, pattern: '^[a-z0-9][a-z0-9_.:-]{0,59}$', description: Id de la variante del catálogo.}
+        n: {type: integer, minimum: 1, maximum: 12, description: Número de serie.}
+        lado: {type: [string, 'null'], enum: [izquierdo, derecho, null], description: Para lo que se hace por pierna.}
+        reps: {type: [integer, 'null'], minimum: 0, maximum: 100}
+        segundos: {type: [integer, 'null'], minimum: 0, maximum: 900, description: Para la plancha.}
+        carga_pasos: {type: [integer, 'null'], minimum: 0, maximum: 60, description: Paso de la pila de la polea (no kilos).}
+        banda_id: {$ref: '#/components/schemas/UuidONulo', description: 'Banda tuya (23503 si no). Si se borra la banda, queda nulo.'}
+        esfuerzo: {type: [integer, 'null'], minimum: 1, maximum: 5}
+        descanso_real_s: {type: [integer, 'null'], minimum: 0, maximum: 900, description: Calibra el tiempo estimado de la sesión.}
+        sustituye_a: {type: [string, 'null'], pattern: '^[a-z0-9][a-z0-9_.:-]{0,59}$', description: La variante que se cambió.}
+        motivo_cambio: {type: [string, 'null'], enum: [no_disponible, preferencia, otra, null]}
         modificado_en: {type: string, format: date-time, description: 'Último cambio gana: un UPDATE con modificado_en más viejo se ignora sin error; uno a más de 5 minutos en el futuro se ajusta a la hora del servidor.'}
         actualizado_en: {type: string, format: date-time, readOnly: true, description: 'Lo pone el servidor.'}
     HabSobre:

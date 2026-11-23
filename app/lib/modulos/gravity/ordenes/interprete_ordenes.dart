@@ -102,6 +102,18 @@ const Set<String> _palabrasSensibles = {
   'notas',
   'pausa',
   'reservado',
+  // Entrenamiento (Fase 8, docs/specs/fase-8-habitos-gimnasio.md, 4.3 y 8.5):
+  // las molestias nunca salen del equipo ni quedan en un historial, y una
+  // orden del gimnasio tampoco se guarda tal cual (es de Hábitos).
+  'entrenamiento',
+  'entrenar',
+  'gimnasio',
+  'molestia',
+  'molestias',
+  'lesion',
+  'lesiones',
+  'dolor',
+  'duele',
 };
 
 /// Texto que puede guardarse en un historial (el de GRAVITY o cualquier otro)

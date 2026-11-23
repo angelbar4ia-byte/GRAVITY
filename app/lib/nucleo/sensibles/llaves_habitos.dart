@@ -27,14 +27,36 @@ import '../seguridad/cifrado.dart';
 import 'cripto.dart';
 import 'palabras_es.dart';
 
-/// Los dos tipos sensibles (`hab_modos.tipo`).
+/// Los tipos sensibles. Los dos primeros pueden pasar a la nube cifrada
+/// (`hab_modos.tipo`); [saludLocal] **nunca**.
 enum TipoSensible {
   habitosSensibles('habitos_sensibles'),
-  diarioOracion('diario_oracion');
+  diarioOracion('diario_oracion'),
+
+  /// Tercer tipo (Fase 8, «Mi gimnasio», PG-03; extiende D21): las molestias
+  /// físicas. **Solo en el equipo donde se escribieron**: siempre
+  /// `solo_telefono` y cifrado con la llave local; sin modo, sin botón para
+  /// pasarlo a la nube, sin subida diferida, sin cola y fuera de cualquier
+  /// envío. El servidor tampoco lo admite (`hab_sobres.tipo` y `hab_modos.tipo`
+  /// solo tienen los dos de arriba, `supabase/tests/124`), así que un error de
+  /// la app que intentara subirlo sería rechazado. Aun así, la app no lo
+  /// intenta: ver [admiteNube].
+  saludLocal('salud_local');
 
   const TipoSensible(this.valor);
 
   final String valor;
+
+  /// `false` solo en [saludLocal]: nada de este tipo sale del equipo.
+  bool get admiteNube => this != TipoSensible.saludLocal;
+
+  /// Los tipos que pueden estar en la nube cifrada (los que el servidor
+  /// conoce). **Todo lo que decide modos, subida o nube recorre esta lista**,
+  /// nunca `values`.
+  static List<TipoSensible> get enNube => [
+    for (final t in values)
+      if (t.admiteNube) t,
+  ];
 }
 
 /// Dónde vive un tipo.
@@ -431,7 +453,10 @@ class LlavesHabitos {
     ModoSensible modo, {
     String? pin,
   }) async {
-    final base = modo == ModoSensible.soloTelefono
+    // Lo que no admite nube se cifra siempre con la llave local, sea cual sea
+    // el modo que se pida (PG-03).
+    final modoEfectivo = tipo.admiteNube ? modo : ModoSensible.soloTelefono;
+    final base = modoEfectivo == ModoSensible.soloTelefono
         ? await llaveLocal(persona, pin: pin)
         : await llaveMaestra(persona, pin: pin);
     return base == null

@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:gravity/modulos/ajustes/desarrollador/operacion_api.dart';
 import 'package:gravity/modulos/ajustes/desarrollador/operaciones.g.dart';
 import 'package:gravity/nucleo/contratos/roles.dart';
+import 'package:gravity/modulos/gravity/ordenes/orden_entrenamiento.dart';
 import 'package:gravity/nucleo/herramientas/herramientas.dart';
 
 const _comoRegenerar =
@@ -146,6 +147,7 @@ void main() {
       'Base de datos',
       'Base de datos · Finanzas',
       'Base de datos · Hábitos',
+      'Base de datos · Hábitos · Entrenamiento',
       'Base de datos · Cuidados',
       'Funciones del servidor',
       'Puente de casa',
@@ -154,7 +156,15 @@ void main() {
 
   test('cada herramienta registrada está documentada igual (D1, D16)', () {
     final porRuta = {for (final o in operaciones) o.ruta: o};
-    final registradas = registroDeGravity().todas;
+    // «abre el entrenamiento» (Fase 8) la define la barra de órdenes y, mientras
+    // `nucleo/herramientas` no la registre, no está en registroDeGravity().
+    final registradas = [
+      ...registroDeGravity().todas,
+      if (!registroDeGravity().todas.any(
+        (h) => h.nombre == herramientaAbrirEntrenamientoHabitos.nombre,
+      ))
+        herramientaAbrirEntrenamientoHabitos,
+    ];
     final deFase1 = herramientasFase1().map((h) => h.nombre).toSet();
     for (final h in registradas) {
       final o = porRuta['/herramientas/${h.nombre}'];
@@ -165,12 +175,14 @@ void main() {
       expect(o.soloLocal, h.soloLocal, reason: '${h.nombre}: x-solo-local');
       expect(
         o.fase,
-        h.nombre.startsWith('finanzas.') &&
-                const {
-                  'finanzas.resumen_semana',
-                  'finanzas.proximos_pagos',
-                  'finanzas.ahorro_avance',
-                }.contains(h.nombre)
+        h.nombre == 'habitos.abrir_entrenamiento'
+            ? 8
+            : h.nombre.startsWith('finanzas.') &&
+                  const {
+                    'finanzas.resumen_semana',
+                    'finanzas.proximos_pagos',
+                    'finanzas.ahorro_avance',
+                  }.contains(h.nombre)
             ? 2
             : herramientasFase3().any((x) => x.nombre == h.nombre)
             ? 3
@@ -198,7 +210,7 @@ void main() {
       final base = gruposOperaciones.where(
         (g) => g.nombre.startsWith('Base de datos'),
       );
-      expect(base, hasLength(4));
+      expect(base, hasLength(5));
       for (final o in base.expand((g) => g.operaciones)) {
         expect(o.soloLocal, isTrue, reason: o.id);
         final esLectura =
@@ -1485,6 +1497,194 @@ void main() {
         '42501',
       ]) {
         expect(yaml, contains('`$codigo`'), reason: codigo);
+      }
+    });
+  });
+  group('Fase 8: Hábitos · Entrenamiento (hab_ent_*, 20261152)', () {
+    String leer(String n) =>
+        File('${raiz.path}/supabase/migrations/$n').readAsStringSync();
+    final migracion = leer('20261152000000_habitos_gimnasio.sql');
+    final grupo = gruposOperaciones.firstWhere(
+      (g) => g.nombre == 'Base de datos · Hábitos · Entrenamiento',
+    );
+    final tablas = RegExp(r'create table public\.(hab_ent_\w+)')
+        .allMatches(migracion)
+        .map((m) => m.group(1)!)
+        .toList();
+
+    test('cada tabla hab_ent_* de la migración está documentada con GET, '
+        'POST, PATCH y DELETE', () {
+      expect(tablas, hasLength(6));
+      for (final t in tablas) {
+        final metodos = grupo.operaciones
+            .where((o) => o.ruta == '/rest/v1/$t')
+            .map((o) => o.metodo)
+            .toSet();
+        expect(metodos, {
+          MetodoHttp.get,
+          MetodoHttp.post,
+          MetodoHttp.patch,
+          MetodoHttp.delete,
+        }, reason: t);
+      }
+      expect(grupo.operaciones.map((o) => o.ruta).toSet(), {
+        for (final t in tablas) '/rest/v1/$t',
+      }, reason: 'openapi.yaml documenta una tabla que la migración no crea');
+    });
+
+    test('solo dueño, coadministrador y familiar, solo locales (D3), fase 8 '
+        'y escribe solo lo que no es GET', () {
+      for (final o in grupo.operaciones) {
+        expect(o.roles, {
+          Rol.dueno,
+          Rol.coadministrador,
+          Rol.familiar,
+        }, reason: o.id);
+        expect(o.soloLocal, isTrue, reason: o.id);
+        expect(o.fase, 8, reason: o.id);
+        expect(o.escribe, o.metodo != MetodoHttp.get, reason: o.id);
+      }
+    });
+
+    test('las columnas documentadas son las que la app puede mandar (sin '
+        'persona_id, hogar_id ni actualizado_en) y los rangos coinciden con '
+        'la migración', () {
+      final doc = _plano(yaml);
+      for (final c in [
+        'dias_plan',
+        'version_pref',
+        'ventana',
+        'noche_desde',
+        'objetivo',
+        'nivel',
+        'inicio_ciclo',
+        'ciclo_semanas',
+        'descanso_s',
+        'margen_dormir_min',
+        'prueba_desde',
+        'prueba_ventana',
+        'voz_descanso',
+        'aviso_visto_en',
+        'dia_semana',
+        'tipo',
+        'hora',
+        'item_id',
+        'estado',
+        'confirmado',
+        'notas',
+        'resistencia_kg_x10',
+        'cantidad',
+        'activa',
+        'plantilla',
+        'semana_tipo',
+        'bloque_id',
+        'esfuerzo',
+        'energia',
+        'plan',
+        'catalogo_version',
+        'sesion_id',
+        'ejercicio_id',
+        'variante_id',
+        'lado',
+        'reps',
+        'segundos',
+        'carga_pasos',
+        'banda_id',
+        'descanso_real_s',
+        'sustituye_a',
+        'motivo_cambio',
+      ]) {
+        expect(migracion, contains(c), reason: c);
+        expect(doc, contains('$c:'), reason: c);
+      }
+      for (final t in tablas) {
+        final bloque = RegExp(
+          'grant insert \\(([^)]*)\\)[^;]*?on public\\.$t to authenticated',
+          dotAll: true,
+        ).firstMatch(migracion);
+        expect(bloque, isNotNull, reason: t);
+        expect(bloque!.group(1), isNot(contains('persona_id')), reason: t);
+        expect(bloque.group(1), isNot(contains('hogar_id')), reason: t);
+        expect(bloque.group(1), isNot(contains('actualizado_en')), reason: t);
+      }
+      // Rangos de la migración, repetidos en los esquemas.
+      for (final r in [
+        'carga_pasos: {type: [integer, \'null\'], minimum: 0, maximum: 60',
+        'reps: {type: [integer, \'null\'], minimum: 0, maximum: 100',
+        'segundos: {type: [integer, \'null\'], minimum: 0, maximum: 900',
+        'n: {type: integer, minimum: 1, maximum: 12',
+        'esfuerzo: {type: [integer, \'null\'], minimum: 1, maximum: 5}',
+        'orden: {type: integer, minimum: 1, maximum: 20',
+        'cantidad: {type: integer, minimum: 1, maximum: 10}',
+        'resistencia_kg_x10: {type: [integer, \'null\'], minimum: 1, maximum: 2000',
+        'dias_plan: {type: integer, enum: [3, 4, 5], default: 3}',
+        'margen_dormir_min: {type: integer, minimum: 0, maximum: 240',
+        'descanso_s: {type: [integer, \'null\'], minimum: 30, maximum: 120',
+      ]) {
+        expect(yaml, contains(r), reason: r);
+      }
+      expect(migracion, contains('carga_pasos between 0 and 60'));
+      expect(migracion, contains('reps between 0 and 100'));
+      expect(migracion, contains('segundos between 0 and 900'));
+      expect(migracion, contains('dias_plan in (3, 4, 5)'));
+    });
+
+    test('los dos jsonb, el tope 54000 y la regla de que no hay molestias '
+        'están documentados', () {
+      final tag = _plano(yaml);
+      expect(migracion, contains("errcode = '54000'"));
+      expect(migracion, contains('octet_length(plan::text) <= 2048'));
+      expect(migracion, contains('octet_length(confirmado::text) <= 2048'));
+      for (final frase in [
+        'solo `ejercicio`, `variante`, `series`, `reps_min` y `reps_max`',
+        'hasta 20 campos y 2 KB',
+        '54000, 500',
+        'sesiones 3 000, series 60 000, inventario 200, bandas 50, plan 7 y perfil 1',
+        '**molestias no existen en el servidor**',
+        'el servidor ve `otra`',
+      ]) {
+        expect(tag, contains(frase), reason: frase);
+      }
+      // Las respuestas compartidas existen y las usan POST (tope) y PATCH.
+      final post = _plano(_bloque(yaml, '/rest/v1/hab_ent_sesiones'));
+      expect(post, contains('#/components/responses/TopeEntrenamiento'));
+      expect(post, contains('#/components/responses/ConflictoEntrenamiento'));
+      expect(post, contains('#/components/responses/ReglaEntrenamiento'));
+      // Ni la migración ni las columnas documentadas hablan de molestias
+      // (PG-03, PG-19): solo el texto que explica que no existen.
+      for (final t in tablas) {
+        expect(migracion, isNot(contains("'molestia'")), reason: t);
+      }
+      expect(
+        migracion,
+        contains(
+          'motivo_cambio in (\'no_disponible\', \'preferencia\', \'otra\')',
+        ),
+      );
+    });
+
+    test('habBorrarMisDatos suma el alcance entrenamiento y lo cubre la '
+        'migración', () {
+      final doc = _plano(_bloque(yaml, '/rest/v1/rpc/hab_borrar_mis_datos'));
+      expect(
+        doc,
+        contains(
+          'p_alcance: {type: string, enum: [sensibles, diario, entrenamiento, todo]}',
+        ),
+      );
+      expect(doc, contains('las seis tablas `hab_ent_*`'));
+      expect(
+        migracion,
+        contains("'sensibles', 'diario', 'entrenamiento', 'todo'"),
+      );
+      // Las funciones nuevas son de triggers: no hay operación.
+      final rutas = operaciones.map((o) => o.ruta).toSet();
+      for (final f in [
+        'hab_ent_validar_sesion',
+        'hab_ent_validar_inventario',
+        'hab_cuota_filas',
+      ]) {
+        expect(rutas, isNot(contains('/rest/v1/rpc/$f')), reason: f);
       }
     });
   });

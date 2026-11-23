@@ -225,6 +225,11 @@ class MisDatosDeHabitos extends ConsumerWidget {
             child: const Text('Diario y oración'),
           ),
           SimpleDialogOption(
+            key: const ValueKey('borrar-entrenamiento'),
+            onPressed: () => Navigator.pop(c, AlcanceDeBorrado.entrenamiento),
+            child: const Text('Mi gimnasio (y las molestias de este equipo)'),
+          ),
+          SimpleDialogOption(
             key: const ValueKey('borrar-todo'),
             onPressed: () => Navigator.pop(c, AlcanceDeBorrado.todo),
             child: const Text('Todo lo mío de Hábitos'),

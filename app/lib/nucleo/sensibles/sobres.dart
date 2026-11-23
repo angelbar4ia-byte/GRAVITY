@@ -213,6 +213,8 @@ class AlmacenDeSobres {
 
   /// Los sobres de [tipo] cuya revisión es mayor que la última encolada.
   Future<List<Sobre>> porSubir(String persona, TipoSensible tipo) async {
+    // Lo que no admite nube (las molestias) nunca está «por subir».
+    if (!tipo.admiteNube) return const [];
     final subidos = await _subidos(persona);
     return [
       for (final s in await todos(persona, tipo: tipo))

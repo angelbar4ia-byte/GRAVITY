@@ -28,6 +28,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../base_local/base_local.dart' show OrigenRegistro;
 import '../sesion/errores_red.dart';
 import 'cola_sin_conexion.dart';
+import 'contrato_gimnasio.dart';
 import 'contrato_servidor.dart';
 
 class EnviadorSupabase implements EnviadorOrdenado {
@@ -38,8 +39,10 @@ class EnviadorSupabase implements EnviadorOrdenado {
     this.actualizaciones = const {},
     this.funciones = const {},
     this.alResponderFuncion,
-    this.niveles = nivelesDeSubidaFinanzas,
-    this.columnasDelServidor = columnasQuePoneElServidor,
+    this.upserts = const {},
+    this.borrados = const {},
+    this.niveles = nivelesDeSubidaDeLaApp,
+    this.columnasDelServidor = columnasQuePoneElServidorDeLaApp,
   }) : _cliente = (() => cliente);
 
   /// Envía con el cliente que devuelva [cliente] en cada envío: en la tablet,
@@ -50,8 +53,10 @@ class EnviadorSupabase implements EnviadorOrdenado {
     this.actualizaciones = const {},
     this.funciones = const {},
     this.alResponderFuncion,
-    this.niveles = nivelesDeSubidaFinanzas,
-    this.columnasDelServidor = columnasQuePoneElServidor,
+    this.upserts = const {},
+    this.borrados = const {},
+    this.niveles = nivelesDeSubidaDeLaApp,
+    this.columnasDelServidor = columnasQuePoneElServidorDeLaApp,
   }) : _cliente = cliente;
 
   final SupabaseClient Function() _cliente;
@@ -79,7 +84,19 @@ class EnviadorSupabase implements EnviadorOrdenado {
   /// Recibe lo que respondió una función de [funciones] (tipo y respuesta).
   final void Function(String tipo, Object? respuesta)? alResponderFuncion;
 
-  /// Nivel de subida por tabla (ver [nivelesDeSubidaFinanzas]).
+  /// Tipos que **suben por upsert** (`INSERT … ON CONFLICT (llave) DO UPDATE`,
+  /// último gana): tipo → destino. Son los de tablas **editables**, como las de
+  /// «Mi gimnasio» ([destinosUpsertGimnasio]). La fila lleva su propia llave
+  /// (`id` o llave natural); el reenvío con el mismo contenido no duplica y con
+  /// otro contenido gana el `modificado_en` más reciente.
+  final Map<String, DestinoUpsert> upserts;
+
+  /// Tipos que **borran** una fila por `id`: tipo → tabla. Idempotentes (borrar
+  /// lo que ya no está no es un error).
+  final Map<String, String> borrados;
+
+  /// Nivel de subida por tabla (ver [nivelesDeSubidaFinanzas] y
+  /// [nivelesDeSubidaGimnasio]).
   final Map<String, int> niveles;
 
   /// Columnas que pone el servidor, por tabla: no se mandan.
@@ -87,6 +104,12 @@ class EnviadorSupabase implements EnviadorOrdenado {
 
   @override
   int nivelDeSubida(String tipo) {
+    final destino = upserts[tipo];
+    if (destino != null) return niveles[destino.tabla] ?? 0;
+    final borra = borrados[tipo];
+    if (borra != null) {
+      return niveles[claveDeBorrado(borra)] ?? niveles[borra] ?? 0;
+    }
     final cambia = actualizaciones[tipo];
     if (cambia != null) {
       return niveles[claveDeActualizacion(cambia)] ?? niveles[cambia] ?? 0;
@@ -102,7 +125,9 @@ class EnviadorSupabase implements EnviadorOrdenado {
     final funcion = funciones[peticion.tipo];
     if (funcion != null) return _llamarFuncion(cliente, funcion, peticion);
     final cambia = actualizaciones[peticion.tipo];
-    final tabla = cambia ?? tablas[peticion.tipo];
+    final upsert = upserts[peticion.tipo];
+    final borra = borrados[peticion.tipo];
+    final tabla = upsert?.tabla ?? borra ?? cambia ?? tablas[peticion.tipo];
     if (tabla == null) {
       throw RechazoEnvio(
         'La app no sabe a dónde subir "${peticion.tipo}" (falta su tabla).',
@@ -119,7 +144,11 @@ class EnviadorSupabase implements EnviadorOrdenado {
       );
     }
     try {
-      if (cambia != null) {
+      if (upsert != null) {
+        await _upsertar(cliente, upsert, peticion);
+      } else if (borra != null) {
+        await _borrar(cliente, borra, peticion);
+      } else if (cambia != null) {
         await _actualizar(cliente, tabla, peticion);
       } else {
         await _insertar(cliente, tabla, peticion);
@@ -158,6 +187,12 @@ class EnviadorSupabase implements EnviadorOrdenado {
       throw const RechazoEnvio(
         'Lo personal pide nombre y PIN: no se sube desde la tablet de la casa '
         'solo con el nombre (D14).',
+      );
+    }
+    // Las molestias (salud_local) nunca salen del equipo, ni cifradas (PG-03).
+    if (cargaLlevaSobreSoloLocal(peticion.carga)) {
+      throw const RechazoEnvio(
+        'Hay datos que solo viven en este equipo y no se suben.',
       );
     }
     try {
@@ -202,6 +237,45 @@ class EnviadorSupabase implements EnviadorOrdenado {
     await cliente
         .from(tabla)
         .upsert(fila, onConflict: 'id', ignoreDuplicates: true);
+  }
+
+  /// `INSERT … ON CONFLICT (llave) DO UPDATE`, sin las columnas del servidor.
+  /// La fila lleva **su** llave ([DestinoUpsert.llevaId]: el `id` v4 o v5 de la
+  /// carga, no el de la petición de la cola, que cambia en cada edición). El
+  /// servidor aplica el último cambio gana por `modificado_en`: un reenvío o un
+  /// cambio más viejo no pisa lo nuevo y no es un error.
+  Future<void> _upsertar(
+    SupabaseClient cliente,
+    DestinoUpsert destino,
+    PeticionEnvio peticion,
+  ) async {
+    final fila = sinColumnasDelServidor(
+      destino.tabla,
+      peticion.carga,
+      columnas: columnasDelServidor,
+    );
+    if (destino.llevaId && fila['id'] is! String) {
+      throw const RechazoEnvio('La fila no trae su identificador (id).');
+    }
+    // Si faltara, el servidor tomaría la hora de cada intento; la del
+    // dispositivo no cambia entre reintentos (último gana, CA-G-32).
+    fila['modificado_en'] ??= _registradoEn(peticion);
+    await cliente
+        .from(destino.tabla)
+        .upsert(fila, onConflict: destino.onConflict);
+  }
+
+  /// `DELETE FROM tabla WHERE id = …` (el `id` de la carga). Idempotente.
+  Future<void> _borrar(
+    SupabaseClient cliente,
+    String tabla,
+    PeticionEnvio peticion,
+  ) async {
+    final id = peticion.carga['id'];
+    if (id is! String) {
+      throw const RechazoEnvio('El borrado no dice qué fila borrar (id).');
+    }
+    await cliente.from(tabla).delete().eq('id', id);
   }
 
   /// `UPDATE tabla SET <cambios> WHERE id = … AND <alguna columna distinta>`.
