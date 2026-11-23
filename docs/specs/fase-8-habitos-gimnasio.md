@@ -982,3 +982,15 @@ Este archivo contiene **solo el bloque 7 de la Fase 8** (entrenamiento propio); 
 | Versión | Fecha | Cambio |
 |---|---|---|
 | **0.1** | 23/nov/2026 | Primera versión (agente `habitos`). Cumple las decisiones del dueño del 23/nov/2026: inventario con bandas, primera versión sin IA, IA opcional posterior, equipo futuro solo como dato y molestias solo en el dispositivo. Verificado contra el diseño v1.18, `fase-3-habitos.md`, `fase-8-habitos-ampliaciones.md` y el código de `paquetes/habitos_dominio`, `app/lib/modulos/habitos` y `supabase/migrations/2026110*` (20 hallazgos H-01 a H-20 y 7 conflictos C-1 a C-7). 25 propuestas PG-01 a PG-25 y 8 preguntas al dueño |
+
+
+## 20. G0 cerrado (23/nov/2026): el dueño ordena construir
+
+El dueño respondió «Comienza la construcción de gimnasio» (23/nov/2026) tras ver el resumen de esta especificación, **sin contestar una por una las preguntas de la sección 18**. Como el propio documento dice «si no respondes, vale lo que dice el documento», **el arquitecto toma como vigentes las recomendaciones** y las registra aquí para que nadie las vuelva a abrir por accidente:
+
+- **Aprobadas por omisión (vetables en cualquier momento):** la especificación completa (PG-01 a PG-25), con la **propuesta D: tercer tipo sensible local `salud_local`** (extiende D21; las molestias nunca salen del dispositivo) y **PG-17** (la tablet pública retiene la sesión 10 min desde el último toque). Preguntas 4 (sesión C al jueves), 5 (descarga cada 4.ª semana), 6 (noche primero), 7 (molestias solo en el equipo) y 8 (salud general y principiante; voz en el descanso apagada).
+- **Pregunta 1:** el contenido sale **`borrador`** y la sesión lo dice (PG-25, CA-G-45) hasta que una persona competente lo revise; el dueño tiene hoy su primera cita con un fisioterapeuta (23/nov/2026) y puede pedirle esa revisión; **no bloquea**.
+- **Pregunta 2:** los datos del Marcy y las bandas se **capturan en la app** (F-E5); nada de ellos entra a un cálculo mientras esté «confirmar en el aparato». El dueño confirmó que el inventario es la Marcy, el banco inclinado, la caminadora y **bandas** (sin pesas libres).
+- **Pregunta 3:** pendiente del dueño; no bloquea (G3 hace que funcione con la tablet pública y con una personal).
+- **Fuera de alcance de esta construcción (no se agrega ningún paquete):** mantener la pantalla encendida (H-14) queda **sin hacer** hasta que `plataforma` lo evalúe y el dueño apruebe el paquete o el canal nativo.
+- **Orden:** G1, G2 y G4 en paralelo; después G3 y G5; G7 cuando exista G2; G6 al final (sección 12).
