@@ -18,8 +18,8 @@ import 'dialogo_pin.dart';
 import 'registro_tablet_casa.dart';
 
 /// Tarjetas de cada contexto. Lo que la cuenta Casa todavía no puede mostrar
-/// (D3, D23: sin dinero, sin datos clínicos, sin Alimentación ni Hábitos) lo
-/// dice así, sin prometer una fase.
+/// (D3, D23: sin dinero, sin datos clínicos, sin Alimentación) lo dice así, sin
+/// prometer una fase. Hábitos es personal: se abre con nombre y PIN.
 const Map<String, List<(String, String)>> tarjetasPorContexto = {
   'general': [
     ('Hoy en la casa', 'Aún no hay nada del día de la casa por mostrar.'),
@@ -38,11 +38,15 @@ const Map<String, List<(String, String)>> tarjetasPorContexto = {
           'desde el teléfono.',
     ),
   ],
+  // Mi gimnasio (Fase 8, PG-17): con nombre y PIN, cada persona abre su
+  // Entrenamiento de hoy y su sesión; la sesión retiene la tablet 10 minutos
+  // desde el último toque. Las molestias nunca están aquí.
   'gimnasio': [
     (
       'Serie y descanso',
-      'Todavía no está en la tablet de la casa: Hábitos es personal y aquí '
-          'no se muestra.',
+      'Elige tu nombre y escribe tu PIN para abrir tu entrenamiento de hoy. '
+          'Aquí ves tu serie y tu descanso; las molestias están solo en tu '
+          'teléfono y aquí no se tienen en cuenta.',
     ),
   ],
   'cuidados': [

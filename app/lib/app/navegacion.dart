@@ -6,10 +6,12 @@ library;
 import 'package:flutter/material.dart';
 
 import '../modulos/ajustes/secciones_ajustes.dart';
+import '../nucleo/avisos/repositorio_avisos.dart' show TipoEquipoAvisos;
 import '../nucleo/contratos/dispositivo.dart';
 import '../nucleo/contratos/roles.dart';
 import '../nucleo/contratos/rutas.dart';
 import '../nucleo/permisos/permisos.dart';
+import 'gimnasio/acceso_gimnasio.dart';
 
 /// Rutas propias de la plataforma (además de las del contrato `Rutas`).
 abstract final class RutasApp {
@@ -378,7 +380,9 @@ String inicioDe(Rol rol) => puedeAbrir(rol, Modulo.gravity)
 /// [esMaestra]: la cuenta maestra (D19) no abre lo que administra el hogar
 /// (personas, copias, dispositivos, desarrollador). [enAccionDeTabletCasa]:
 /// en la tablet pública alguien entró solo para una acción y la pantalla
-/// sigue en el modo Casa.
+/// sigue en el modo Casa. [equipo] es la clase de equipo: «Mi gimnasio» no
+/// tiene todas sus pantallas en todos (molestias nunca en la laptop ni en la
+/// tablet pública, `gimnasioDisponibleEn`).
 String? calcularRedireccion({
   required String ubicacion,
   required Rol? rol,
@@ -386,6 +390,7 @@ String? calcularRedireccion({
   Accion? accion,
   bool esMaestra = false,
   bool enAccionDeTabletCasa = false,
+  TipoEquipoAvisos? equipo,
 }) {
   if (rol == null) {
     return ubicacion == Rutas.entrar || ubicacion == RutasApp.invitacion
@@ -443,6 +448,20 @@ String? calcularRedireccion({
     if (!puedeUsarHabitos(rol, esMaestra: esMaestra)) return inicio;
     if (enAccionDeTabletCasa && esRutaReservadaDeHabitos(ubicacion)) {
       return Rutas.habitos;
+    }
+    // Mi gimnasio (Fase 8): lo que ese equipo no tiene (molestias en la
+    // laptop y en la tablet pública; planear y revisar en la tablet pública)
+    // vuelve a la entrada del entrenamiento.
+    final gimnasio = destinoGimnasioDeRuta(ubicacion);
+    if (gimnasio != null &&
+        equipo != null &&
+        !gimnasioDisponibleEn(gimnasio, equipo)) {
+      return RutasGimnasio.hoy;
+    }
+    // La tablet pública (y la laptop) no tienen molestias aunque alguien haya
+    // entrado solo para una acción.
+    if (gimnasio != null && enAccionDeTabletCasa && esRutaDeMolestias(ubicacion)) {
+      return RutasGimnasio.hoy;
     }
   }
   if (modulo != null &&

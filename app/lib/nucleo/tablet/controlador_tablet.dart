@@ -33,6 +33,7 @@ import '../seguridad/serie_pin.dart';
 import '../sesion/proveedores_sesion.dart';
 import '../sesion/servicio_sesion_demostracion.dart';
 import '../sesion/sesion.dart';
+import 'retencion_sesion_gimnasio.dart';
 import 'usuarios_tablet.dart';
 
 enum ResultadoDesbloqueo {
@@ -549,6 +550,9 @@ class ControladorTablet extends Notifier<EstadoTablet> {
   /// Igual que [volverAlReposo] (nombre de la Fase 0).
   void volverAModoCasa() {
     _generacion++;
+    // La retención de la sesión de gimnasio (PG-17) era de quien estaba dentro:
+    // al volver al reposo se acaba. La sesión queda `en_curso` en el equipo.
+    ref.read(sesionGimnasioEnCursoProvider.notifier).terminar();
     if (state.usuarioActivo != null) state = state.conUsuarioActivo(null);
     final persona = _personaConLlave;
     final llave = _llave;

@@ -11,8 +11,10 @@ import '../modulos/ajustes/secciones_ajustes.dart';
 import '../nucleo/contratos/roles.dart';
 import '../nucleo/contratos/rutas.dart';
 import '../nucleo/permisos/permisos.dart';
+import 'avisos/con_avisos.dart' show tipoEquipoAvisosProvider;
 import 'cascarones/cascaron.dart';
 import 'dispositivo.dart';
+import 'gimnasio/rutas_gimnasio.dart';
 import 'navegacion.dart';
 import 'pantalla_segura.dart';
 import 'avisos/pantalla_bandeja_avisos.dart';
@@ -35,6 +37,12 @@ final rutasFinanzasProvider = Provider<List<RouteBase>>(
 /// Rutas de Hábitos (agente habitos, `pantallas_externas.dart`).
 final rutasHabitosProvider = Provider<List<RouteBase>>((ref) => rutasHabitos());
 
+/// Rutas de «Mi gimnasio» (Fase 8, G3): cuelgan de Hábitos
+/// (`/habitos/entrenamiento/…`). Las pantallas las pone `pantallaGimnasioProvider`.
+final rutasGimnasioProvider = Provider<List<RouteBase>>(
+  (ref) => rutasGimnasio(),
+);
+
 final routerProvider = Provider<GoRouter>((ref) {
   // Cada cambio de rol (entrar, salir, PIN en la tablet) vuelve a evaluar
   // las redirecciones.
@@ -51,10 +59,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       accion: accionExigida(estado.metadata),
       esMaestra: ref.read(esCuentaMaestraProvider),
       enAccionDeTabletCasa: ref.read(enAccionDeTabletCasaProvider),
+      equipo: ref.read(tipoEquipoAvisosProvider),
     ),
     routes: rutasDeGravity(
       finanzas: ref.read(rutasFinanzasProvider),
-      habitos: ref.read(rutasHabitosProvider),
+      habitos: _conGimnasio(
+        ref.read(rutasHabitosProvider),
+        ref.read(rutasGimnasioProvider),
+      ),
     ),
     errorBuilder: (context, estado) => const _PantallaNoEncontrada(),
   );
@@ -64,6 +76,11 @@ final routerProvider = Provider<GoRouter>((ref) {
   });
   return router;
 });
+
+/// Las rutas de Hábitos con las de «Mi gimnasio». Si Hábitos no tiene rutas (el
+/// módulo aún no está montado), el módulo sigue en «Próximamente».
+List<RouteBase> _conGimnasio(List<RouteBase> habitos, List<RouteBase> gimnasio) =>
+    habitos.isEmpty ? habitos : [...habitos, ...gimnasio];
 
 /// Página sin animación para cambiar de pestaña.
 Page<void> _sinAnimacion(GoRouterState estado, Widget pantalla) =>

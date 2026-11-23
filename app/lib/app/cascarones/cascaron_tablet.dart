@@ -15,6 +15,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../nucleo/contratos/rutas.dart';
 import '../../nucleo/tablet/controlador_tablet.dart';
+import '../../nucleo/tablet/retencion_sesion_gimnasio.dart';
 import '../../nucleo/tablet/usuarios_tablet.dart';
 import '../navegacion.dart';
 import '../pantallas/hoja_registrar.dart';
@@ -62,10 +63,20 @@ class CascaronTablet extends ConsumerWidget {
     final destinos = destinosDe(rol, esMaestra: esMaestra);
     final enInicioCasa = estado.muestraModoCasa && ubicacion == Rutas.inicio;
     final personal = estado.configuracion.esPersonal;
+    // PG-17: con una sesión de gimnasio en curso de quien está dentro, la
+    // tablet espera 10 minutos desde el último toque en vez de 2.
+    final enSesionDeGimnasio = ref.watch(
+      sesionGimnasioEnCursoProvider.select(
+        (persona) => persona != null && persona == estado.usuarioActivo?.personaId,
+      ),
+    );
 
     return DetectorInactividad(
       activo: !estado.enModoCasa,
-      tiempo: estado.configuracion.regresoModoCasa,
+      tiempo: tiempoSinUsoDeLaTablet(
+        base: estado.configuracion.regresoModoCasa,
+        sesionGimnasioEnCurso: enSesionDeGimnasio,
+      ),
       alVencer: () =>
           ref.read(controladorTabletProvider.notifier).volverAlReposo(),
       child: estado.bloqueada

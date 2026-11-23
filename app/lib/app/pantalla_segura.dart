@@ -15,6 +15,7 @@ import '../nucleo/contratos/rutas.dart';
 import '../nucleo/permisos/permisos.dart';
 import '../nucleo/seguridad/vista_papa_activa.dart';
 import '../nucleo/seguridad/pantalla_segura.dart';
+import 'gimnasio/acceso_gimnasio.dart' show esRutaDeMolestias;
 import 'navegacion.dart';
 import 'sesion_efectiva.dart';
 
@@ -45,6 +46,8 @@ bool esPantallaSensible(String ubicacion, Rol? rol) {
   if (esRutaReservadaDeHabitos(ubicacion)) {
     return puedeAbrir(rol, Modulo.habitos);
   }
+  // Molestias de «Mi gimnasio» (Fase 8, spec 9): salud; sin capturas.
+  if (esRutaDeMolestias(ubicacion)) return puedeAbrir(rol, Modulo.habitos);
   // Alimentación: el menú de Papá lleva su perfil clínico (dieta, textura).
   // Lo ve quien puede abrir Alimentación (F4-A1).
   if (_bajoRuta(ubicacion, Rutas.alimentacion)) {
