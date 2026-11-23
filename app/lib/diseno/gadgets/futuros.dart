@@ -633,6 +633,11 @@ class Velocimetro extends StatelessWidget {
 }
 
 /// **Serie y descanso** (entrenamiento): ¿qué sigue y cuánto descanso?
+///
+/// Versión de diseño de la Fase 4, que sigue en la muestra de estilos. La
+/// definitiva de «Mi gimnasio» (temporizador por instante final, series con
+/// estado y los cuatro estados de pantalla) es `GadgetSerieDescanso`, en
+/// `gimnasio/serie_descanso.dart`.
 class SerieDescanso extends StatelessWidget {
   const SerieDescanso({
     super.key,
