@@ -343,3 +343,34 @@ String fechaCortaTexto(String isoFecha) {
   ];
   return '${nombreDeDia(f.weekday).substring(0, 3)} ${f.day} ${meses[f.month - 1]}';
 }
+
+/// La carga sugerida de un ejercicio: «Placa 4» (sin kilos si no se confirmó
+/// el aparato, CA-G-04), «Banda verde» o `null` sin historial (5.12).
+String? textoCargaSugerida(EjercicioPlanificado e, Inventario inv) {
+  if (e.cargaPasos != null) {
+    final t = mostrarCargaPasos(e.cargaPasos!, inv).texto;
+    return t[0].toUpperCase() + t.substring(1);
+  }
+  if (e.bandaId != null) {
+    final b = inv.bandas.where((x) => x.id == e.bandaId).firstOrNull;
+    if (b != null) return e.bandaDoble ? '${b.nombre} ×2' : b.nombre;
+  }
+  return null;
+}
+
+/// «aprox.» para lo que viene del diseño; los kilos solo si se confirmaron.
+EjercicioPlanVista vistaDeEjercicio(
+  EjercicioPlanificado e,
+  Catalogo c,
+  Inventario inv,
+) {
+  final variante = c.variante(e.varianteId);
+  final ej = c.ejercicio(e.ejercicioId);
+  return EjercicioPlanVista(
+    ejercicio: ej?.nombre ?? e.ejercicioId,
+    varianteTexto: variante?.nombre,
+    seriesTexto: textoSeries(e),
+    cargaTexto: textoCargaSugerida(e, inv),
+    conPrecaucion: e.conPrecaucion,
+  );
+}

@@ -637,10 +637,13 @@ class ServicioGimnasio {
 
   /// Empieza (o retoma) la sesión: queda guardada `en_curso` en el equipo antes
   /// de la primera serie, para retomarla si la tablet vuelve a Casa (PG-17).
-  Future<GimSesionFila> iniciarSesion(EntrenamientoHoy h) async {
+  Future<GimSesionFila> iniciarSesion(
+    EntrenamientoHoy h, {
+    DateTime? inicio,
+  }) async {
     final actual = h.filaSesion;
     if (actual != null && actual.estado == 'en_curso') return actual;
-    final inicio = ahora;
+    inicio ??= ahora;
     final s = SesionRegistrada(
       fecha: h.fecha,
       plantilla: h.tipo,
@@ -724,13 +727,14 @@ class ServicioGimnasio {
     int? energia,
     TiemposMedidos? tiempos,
     List<PlanEjercicioGuardado>? plan,
+    DateTime? fin,
   }) async {
     final d = await cargar();
     final previas = [
       for (final s in d.historial)
         if (!(s.fecha == soloDia(h.fecha) && s.plantilla == h.tipo)) s,
     ];
-    final fin = ahora;
+    fin ??= ahora;
     final estado = completa ? EstadoSesion.completa : EstadoSesion.parcial;
     final json = {
       ...fila.aMapaServidor(),
@@ -843,7 +847,17 @@ class ServicioGimnasio {
     int? esfuerzo,
     int? energia,
   }) async {
-    final fila = await iniciarSesion(h);
+    // Una sesión de otro día: empieza a la hora del plan y dura lo estimado; si
+    // eso cae en el futuro, termina ahora.
+    final dur = Duration(seconds: h.duracionSeg ?? 45 * 60);
+    final min = h.inicioMin ?? (19 * 60 + 15);
+    var inicio = DateTime(h.fecha.year, h.fecha.month, h.fecha.day, 0, min);
+    var fin = inicio.add(dur);
+    if (fin.isAfter(ahora)) {
+      fin = ahora;
+      inicio = ahora.subtract(dur);
+    }
+    final fila = await iniciarSesion(h, inicio: inicio);
     for (final e in hecho) {
       for (var n = 1; n <= e.series; n++) {
         await registrarSerie(
@@ -864,6 +878,7 @@ class ServicioGimnasio {
       completa: completa,
       esfuerzo: esfuerzo,
       energia: energia,
+      fin: fin,
     );
   }
 }
