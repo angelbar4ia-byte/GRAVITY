@@ -94,14 +94,33 @@ class TarjetaEntrenamientoHoyConectada extends ConsumerWidget {
           alEmpezar: () => context.go(RutasGimnasio.sesionEnCurso),
           alAbrir: () => context.go(DestinoGimnasio.sesion.ruta),
           alHecho: () async {
-            await servicio.marcarHecho(h);
+            final ResultadoSesion res;
+            try {
+              res = await servicio.marcarHecho(h);
+            } on Exception {
+              // Nunca una excepción cruda: lo registrado sigue en este equipo.
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context)
+                ..clearSnackBars()
+                ..showSnackBar(
+                  const SnackBar(
+                    content: Text(TextosHabitosGimnasio.noSePudoTerminar),
+                  ),
+                );
+              return;
+            }
             _recargar(ref);
             if (!context.mounted) return;
             ScaffoldMessenger.of(context)
               ..clearSnackBars()
               ..showSnackBar(
                 SnackBar(
-                  content: const Text(TextosHabitosGimnasio.guardadoDeshacer),
+                  content: Text(
+                    res.enviarDespues
+                        ? '${TextosHabitosGimnasio.guardadoDeshacer}. '
+                              '${TextosHabitosGimnasio.sinNubeSeEnviara}'
+                        : TextosHabitosGimnasio.guardadoDeshacer,
+                  ),
                   action: SnackBarAction(
                     label: TextosGimnasio.deshacer,
                     onPressed: () async {

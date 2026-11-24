@@ -9,6 +9,8 @@ import 'package:habitos_dominio/habitos_dominio.dart' show lunesDe;
 import '../../../../app/gimnasio/proveedores_gimnasio.dart';
 import '../../../../app/sesion_efectiva.dart';
 import '../../../../diseno/proveedores.dart' show relojProvider;
+import '../../../../nucleo/cola/proveedores_cola.dart'
+    show colaSinConexionProvider;
 import '../../../../nucleo/seguridad/proveedores_seguridad.dart'
     show almacenSeguroProvider;
 import '../../../../nucleo/sensibles/llaves_habitos.dart'
@@ -17,6 +19,7 @@ import '../../../../nucleo/sesion/proveedores_sesion.dart';
 import '../../../../nucleo/sesion/servicio_sesion_supabase.dart';
 import '../../casos_uso/servicio_eliminar.dart';
 import '../../estado/proveedores.dart';
+import '../casos_uso/aviso_banco.dart';
 import '../casos_uso/modo_foco.dart';
 import '../casos_uso/servicio_gimnasio.dart';
 import '../datos/lector_gimnasio.dart';
@@ -42,6 +45,22 @@ final copiaFocoProvider = Provider<CopiaLocalFoco?>((ref) {
   return persona == null
       ? null
       : CopiaLocalFoco(ref.watch(almacenSeguroProvider), persona);
+});
+
+/// Lo que este equipo sabe del aviso del banco de quien está en pantalla (solo
+/// en este equipo; `null` si nadie ha entrado).
+final avisoBancoLocalProvider = Provider<AvisoBancoLocal?>((ref) {
+  final persona = ref.watch(personaEnPantallaProvider);
+  return persona == null
+      ? null
+      : AvisoBancoLocal(ref.watch(almacenSeguroProvider), persona);
+});
+
+/// ¿La persona ya confirmó que revisó el banco? Sin persona, se da por visto
+/// (no hay nada que mostrar).
+final avisoBancoRevisadoProvider = FutureProvider<bool>((ref) async {
+  final local = ref.watch(avisoBancoLocalProvider);
+  return local == null ? true : await local.revisado();
 });
 
 /// El modo foco (8.3): sin causa. Con la copia local lo sabe sin abrir lo
@@ -87,6 +106,8 @@ final servicioGimnasioProvider = Provider<ServicioGimnasio?>((ref) {
     agenda: agenda,
     registros: ref.watch(repositorioHabitosProvider),
     molestias: ref.watch(molestiasLocalesProvider),
+    // Sin señal, lo que no se pueda escribir en Hábitos queda en la cola.
+    cola: ref.watch(colaSinConexionProvider),
     lector: ref.watch(lectorGimnasioProvider),
     foco: () => ref.read(modoFocoActivoProvider.future),
     ahora: ref.watch(relojProvider).ahora,

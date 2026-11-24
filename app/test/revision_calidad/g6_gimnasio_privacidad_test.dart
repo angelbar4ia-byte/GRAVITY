@@ -10,8 +10,8 @@
 // - G6-M2 (caracterización, decisión del dueño): `semana_tipo = 'foco'` SÍ
 //   viaja al servidor; es la única huella del modo foco (hábito a eliminar) que
 //   sale del equipo.
-// - G6-M4 (hallazgo, etiquetado): el aviso de cercanía a dormir se dispara en
-//   falso si la hora de dormir pasa de medianoche.
+// - G6-M4 (corregido): el aviso de cercanía a dormir ya no se dispara en falso
+//   si la hora de dormir pasa de medianoche.
 //
 // Para excluir solo los hallazgos que fallan hasta que se corrijan:
 //   flutter test --exclude-tags hallazgo
@@ -234,7 +234,6 @@ void main() {
               'hoy devuelve ${aviso?.minutosAntesDeDormir} min',
         );
       },
-      tags: 'hallazgo',
     );
 
     test(

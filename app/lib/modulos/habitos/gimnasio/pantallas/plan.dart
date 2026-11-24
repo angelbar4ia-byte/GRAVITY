@@ -226,7 +226,22 @@ class _CuerpoPlan extends ConsumerWidget {
             OutlinedButton.icon(
               key: const ValueKey('plan-agenda'),
               onPressed: () async {
-                final r = await servicio.ponerEnMiAgenda(datos);
+                final ResultadoAgenda r;
+                try {
+                  r = await servicio.ponerEnMiAgenda(datos);
+                } on Exception {
+                  // La agenda vive en la nube: sin señal no se puede poner el
+                  // plan ahora. Nunca una excepción cruda.
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context)
+                    ..clearSnackBars()
+                    ..showSnackBar(
+                      const SnackBar(
+                        content: Text(TextosHabitosGimnasio.agendaSinSenal),
+                      ),
+                    );
+                  return;
+                }
                 _recargar(ref);
                 if (!context.mounted) return;
                 ScaffoldMessenger.of(context)

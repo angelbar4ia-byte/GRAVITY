@@ -28,6 +28,7 @@ import '../nucleo/base_local/base_local.dart';
 import '../nucleo/cola/bandeja_salida.dart';
 import '../nucleo/cola/cola_sin_conexion.dart';
 import '../nucleo/cola/contrato_gimnasio.dart';
+import '../nucleo/cola/contrato_habitos.dart' show tablasInsertarHabitos;
 import '../nucleo/cola/enviador_supabase.dart';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -140,7 +141,11 @@ List<Override> conexionesDeLaApp() => [
 /// suyos en su fase (`pantallas_externas.dart`); la cola sube cada registro
 /// con la sesión de quien lo registró (en la tablet, la de quien entró con
 /// su PIN).
-const Map<String, String> tablasDeLaCola = {...tablasColaFinanzas};
+const Map<String, String> tablasDeLaCola = {
+  ...tablasColaFinanzas,
+  // Hábitos: el objetivo «Entrenamiento» que repone «Mi gimnasio» sin señal.
+  ...tablasInsertarHabitos,
+};
 
 Future<List<Override>> prepararArranque({
   ConfiguracionEntorno configuracion =
@@ -258,7 +263,7 @@ Future<List<Override>> prepararArranque({
           enviadorDe: (aparte) => EnviadorSupabase(
             (aparte as SesionAparteSupabase).cliente,
             tablas: tablasDeLaCola,
-            upserts: destinosUpsertGimnasio,
+            upserts: destinosUpsertDeLaApp,
             borrados: borradosGimnasio,
           ),
         ),
@@ -269,7 +274,7 @@ Future<List<Override>> prepararArranque({
         tablas: tablasDeLaCola,
         // Mi gimnasio (Fase 8): las seis tablas hab_ent_* suben por upsert
         // (último gana) y se borran por id; nunca molestias.
-        upserts: destinosUpsertGimnasio,
+        upserts: destinosUpsertDeLaApp,
         borrados: borradosGimnasio,
         // Hábitos (Fase 3): sobres ya cifrados, por la función del servidor.
         funciones: const {

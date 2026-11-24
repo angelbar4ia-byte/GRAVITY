@@ -98,6 +98,7 @@ class EntrenamientoHoy {
     this.molestiasLegibles = true,
     this.modoFocoLegible = true,
     this.modoFoco = false,
+    this.agendaSinLeer = false,
   });
 
   final DateTime fecha;
@@ -130,6 +131,10 @@ class EntrenamientoHoy {
   final bool modoFocoLegible;
   final bool modoFoco;
 
+  /// La agenda de Hábitos no se pudo leer (sin señal): la hora y el hueco son
+  /// aproximados, con el plan y el equipo de este equipo (G6-A1).
+  final bool agendaSinLeer;
+
   bool get esFuerza => TipoDia.fuerza.contains(tipo);
   bool get esRegenerativa => tipo == TipoDia.r1 || tipo == TipoDia.r2;
   bool get esSesion => esFuerza || esRegenerativa;
@@ -144,10 +149,19 @@ class EntrenamientoHoy {
 
 /// Resultado de terminar una sesión.
 class ResultadoSesion {
-  const ResultadoSesion({required this.records, required this.estado});
+  const ResultadoSesion({
+    required this.records,
+    required this.estado,
+    this.enviarDespues = false,
+  });
 
   final List<RecordNuevo> records;
   final EstadoSesion estado;
+
+  /// La sesión quedó guardada en este equipo, pero el registro del día en
+  /// Hábitos no se pudo escribir en la nube (sin señal): queda en la cola y se
+  /// envía al volver (G6-A1).
+  final bool enviarDespues;
 }
 
 /// Resultado de poner el plan en la agenda.

@@ -136,6 +136,10 @@ class AvisoDormir {
 /// fin estimado queda a menos de [margenMin] minutos de dormir (90 por
 /// omisión). `null` si no hay aviso. [esCorta] quita la opción de «versión más
 /// corta».
+///
+/// [dormirMin] puede venir pasada la medianoche (00:30 = 30): se toma como la
+/// de la madrugada **siguiente** ([dormirNormalizadoMin]). [finMin] puede pasar
+/// de 1440 si la sesión termina después de la medianoche.
 AvisoDormir? avisoDormir({
   required int finMin,
   required int dormirMin,
@@ -144,7 +148,7 @@ AvisoDormir? avisoDormir({
   bool esCorta = false,
 }) {
   if (ventana == VentanaEntrenamiento.manana) return null;
-  final quedan = dormirMin - finMin;
+  final quedan = dormirNormalizadoMin(dormirMin) - finMin;
   if (quedan >= margenMin) return null;
   return AvisoDormir(
     minutosAntesDeDormir: quedan,
@@ -155,6 +159,18 @@ AvisoDormir? avisoDormir({
       OpcionDormir.moverALaManana,
     ],
   );
+}
+
+/// La hora de dormir en minutos **desde la medianoche del día que empieza**, de
+/// modo que sirva para restar y comparar con lo que pasa ese día (G6-M4).
+///
+/// Se reduce con módulo 1440 y, si queda a la medianoche o antes de la hora de
+/// despertar ([despertarMin], 6:00 si no se sabe), es de la madrugada del día
+/// **siguiente** y se le suman 1440: dormir a las 00:30 (30) es 1470, no 30.
+/// Una hora de dormir normal (22:00) no cambia.
+int dormirNormalizadoMin(int dormirMin, {int despertarMin = 360}) {
+  final d = dormirMin % 1440;
+  return d <= despertarMin % 1440 ? d + 1440 : d;
 }
 
 /// Fin estimado (min desde la medianoche) de una sesión que empieza en

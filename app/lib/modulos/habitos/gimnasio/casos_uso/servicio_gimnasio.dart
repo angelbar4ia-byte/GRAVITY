@@ -15,6 +15,8 @@ import 'package:habitos_dominio/habitos_dominio.dart' as dominio
 import 'package:uuid/uuid.dart';
 
 import '../../../../nucleo/base_local/base_local.dart';
+import '../../../../nucleo/cola/cola_sin_conexion.dart';
+import '../../../../nucleo/cola/contrato_habitos.dart';
 import '../../../../nucleo/gimnasio/ids_gimnasio.dart';
 import '../../../../nucleo/gimnasio/molestias_locales.dart';
 import '../../../../nucleo/gimnasio/repositorio_gimnasio.dart';
@@ -40,6 +42,20 @@ class HoraDormirDeAjustes implements FuenteHoraDormir {
 
   @override
   Future<int> para(DateTime fecha) async => (await _agenda.ajustes()).dormirMin;
+}
+
+/// Lo que se leyó de la agenda de Hábitos; con `leida == false` son los valores
+/// por omisión (sin ajustes ni bloques).
+class _LecturaAgenda {
+  const _LecturaAgenda({
+    required this.ajustes,
+    required this.bloques,
+    required this.leida,
+  });
+
+  final AjustesHab ajustes;
+  final List<BloqueHab> bloques;
+  final bool leida;
 }
 
 const _espacioHabitos = '6b1f8e0a-4c3d-5e2f-9a7b-1d2c3e4f5a6b';
@@ -100,6 +116,7 @@ class ServicioGimnasio {
     required this.agenda,
     required this.registros,
     this.molestias,
+    this.cola,
     this.lector = const LectorGimnasioNulo(),
     Future<ModoFocoActivo> Function()? foco,
     FuenteHoraDormir? dormir,
@@ -116,6 +133,11 @@ class ServicioGimnasio {
   final RepositorioAgenda agenda;
   final RepositorioHabitos registros;
   final MolestiasLocales? molestias;
+
+  /// La cola sin conexión: donde queda lo que no se pudo escribir en Hábitos
+  /// por falta de señal (el registro del día y el objetivo). Sin ella (pruebas
+  /// de lo local) solo se avisa que quedó pendiente.
+  final ColaSinConexion? cola;
   final LectorGimnasio lector;
   final Future<ModoFocoActivo> Function() foco;
   final FuenteHoraDormir dormir;
@@ -332,18 +354,40 @@ class ServicioGimnasio {
 
   // ---------------------------------------------------------- agenda y bloque
 
-  /// El bloque de la agenda de [fecha] que es del plan de entrenamiento.
-  Future<BloqueHab?> bloqueDe(DateTime fecha) async {
+  /// Lee la agenda de Hábitos (ajustes y bloques). **Sin señal no es un error**
+  /// (G6-A1, 9.1): la sesión se arma con el plan y el equipo de este equipo, con
+  /// los ajustes por omisión y sin bloques; `leida` dice que no se pudo leer,
+  /// para avisarlo sin culpa. No se inventan bloques ocupados que no se vieron.
+  Future<_LecturaAgenda> _leerAgenda() async {
+    try {
+      final aj = await agenda.ajustes();
+      final bloques = await agenda.bloques();
+      return _LecturaAgenda(ajustes: aj, bloques: bloques, leida: true);
+    } on Exception {
+      return const _LecturaAgenda(
+        ajustes: AjustesHab(),
+        bloques: <BloqueHab>[],
+        leida: false,
+      );
+    }
+  }
+
+  /// El bloque de la agenda de [fecha] que es del plan de entrenamiento (`null`
+  /// también si la agenda no se pudo leer).
+  Future<BloqueHab?> bloqueDe(DateTime fecha) async =>
+      _bloqueEn((await _leerAgenda()).bloques, fecha);
+
+  BloqueHab? _bloqueEn(List<BloqueHab> bloques, DateTime fecha) {
     final f = soloDia(fecha);
     final id = idBloqueEntrenamiento(persona, f.weekday);
-    for (final b in await agenda.bloques()) {
+    for (final b in bloques) {
       if (b.id == id && b.activo && b.recurrente.ocurreEn(f)) return b;
     }
     return null;
   }
 
-  Future<List<Intervalo>> _ocupados(DateTime f) async => [
-    for (final b in await agenda.bloques())
+  List<Intervalo> _ocupadosEn(List<BloqueHab> bloques, DateTime f) => [
+    for (final b in bloques)
       if (b.activo &&
           b.recurrente.ocurreEn(f) &&
           b.id != idBloqueEntrenamiento(persona, f.weekday))
@@ -361,7 +405,8 @@ class ServicioGimnasio {
   ) async {
     final huecos = huecosLibres(
       aj.despertarMin,
-      aj.dormirMin,
+      // Dormir pasada la medianoche (00:30) es del día siguiente (G6-M4).
+      dormirNormalizadoMin(aj.dormirMin, despertarMin: aj.despertarMin),
       ocupados,
       minimoMin: 20,
     )..sort((a, b) => a.inicio.compareTo(b.inicio));
@@ -447,14 +492,19 @@ class ServicioGimnasio {
     if (!esSesion) {
       return EntrenamientoHoy(fecha: f, tipo: plantilla, estado: estado);
     }
-    final aj = await agenda.ajustes();
-    final bloque = await bloqueDe(f);
-    final ocupados = await _ocupados(f);
+    final deLaAgenda = await _leerAgenda();
+    final aj = deLaAgenda.ajustes;
+    final bloque = _bloqueEn(deLaAgenda.bloques, f);
+    final ocupados = _ocupadosEn(deLaAgenda.bloques, f);
     final horaPlan = tipo == null ? dia.horaMin : null;
     final hueco = await _hueco(f, d.perfil, aj, ocupados);
     final inicio = horaPlan ?? hueco?.inicioMin;
     final disponible = horaPlan != null
-        ? _libreDesde(horaPlan, ocupados, aj.dormirMin)
+        ? _libreDesde(
+            horaPlan,
+            ocupados,
+            dormirNormalizadoMin(aj.dormirMin, despertarMin: aj.despertarMin),
+          )
         : (hueco?.disponibleMin ?? 0);
 
     if (plantilla == TipoDia.r1 || plantilla == TipoDia.r2) {
@@ -474,6 +524,7 @@ class ServicioGimnasio {
         noCabe: inicio == null || disponible < r.minutos + margenBloqueMin,
         bloque: bloque,
         filaSesion: fila,
+        agendaSinLeer: !deLaAgenda.leida,
       );
     }
 
@@ -526,7 +577,7 @@ class ServicioGimnasio {
           : d.perfil.ventana;
       aviso = avisoDormir(
         finMin: finEstimadoMin(inicio, sesion.duracionEstimadaSeg),
-        dormirMin: await dormir.para(f),
+        dormirMin: await _horaDeDormir(f, aj),
         margenMin: d.perfil.margenDormirMin,
         ventana: ventana,
         esCorta: v == VersionSesion.corta,
@@ -549,7 +600,18 @@ class ServicioGimnasio {
           lectura == null || (lectura.enEsteEquipo && !lectura.bloqueada),
       modoFocoLegible: modoFoco.legible,
       modoFoco: enFoco,
+      agendaSinLeer: !deLaAgenda.leida,
     );
+  }
+
+  /// La hora de dormir de [f]; si la fuente no se puede leer (sin señal), la de
+  /// los ajustes ya leídos (o la de omisión).
+  Future<int> _horaDeDormir(DateTime f, AjustesHab aj) async {
+    try {
+      return await dormir.para(f);
+    } on Exception {
+      return aj.dormirMin;
+    }
   }
 
   /// ¿Cuenta como un elemento de Hoy, y cuántos hechos? (`habitos.resumen_hoy`:
@@ -616,22 +678,74 @@ class ServicioGimnasio {
       catalogo.regenerativa(tipo)?.nombre ??
       tipo;
 
-  Future<void> _asegurarObjetivo(DatosGimnasio d) async {
+  /// Que exista el objetivo «Entrenamiento». `true` si no se pudo escribir en
+  /// Hábitos (sin señal) y quedó en la cola para reponerlo sin pisar nada.
+  Future<bool> _asegurarObjetivo(DatosGimnasio d) async {
     final id = idObjetivoEntrenamiento(persona);
-    final existe = (await registros.objetivos()).any((o) => o.id == id);
-    if (existe) return;
-    await registros.guardarObjetivo(
-      ObjetivoHab(
-        id: id,
-        titulo: 'Entrenamiento',
-        area: 'salud',
-        tipo: TipoObjetivo.construir,
-        fechaInicio: hoy,
-        unidad: 'sesiones',
-        metaValor: d.dias.where((x) => x.esFuerza).length,
-        frecuencia: Frecuencia.nPorSemana,
-        modificadoEn: ahora.toUtc(),
+    final objetivo = ObjetivoHab(
+      id: id,
+      titulo: 'Entrenamiento',
+      area: 'salud',
+      tipo: TipoObjetivo.construir,
+      fechaInicio: hoy,
+      unidad: 'sesiones',
+      metaValor: d.dias.where((x) => x.esFuerza).length,
+      frecuencia: Frecuencia.nPorSemana,
+      modificadoEn: ahora.toUtc(),
+    );
+    try {
+      final existe = (await registros.objetivos()).any((o) => o.id == id);
+      if (existe) return false;
+      await registros.guardarObjetivo(objetivo);
+      return false;
+    } on Exception {
+      // Sin señal: queda en este equipo y se envía al volver. La cola lo
+      // inserta sin pisar (si la persona ya lo cambió, no se deshace).
+      await _encolarObjetivo(objetivo);
+      return true;
+    }
+  }
+
+  /// Guarda el registro del día en Hábitos; si no se puede (sin señal), lo deja
+  /// en la cola y devuelve `true` (G6-A1: lo registrado nunca se pierde).
+  Future<bool> _guardarRegistroOEncolar(RegistroHab r) async {
+    try {
+      await registros.guardarRegistro(r);
+      return false;
+    } on Exception {
+      await _encolarRegistro(r);
+      return true;
+    }
+  }
+
+  /// Con la cola, queda para subir (mismo cambio, misma entrada: idempotente;
+  /// otro cambio del mismo día, otra entrada: gana el `modificado_en` más
+  /// reciente). Sin cola (pruebas de lo local) no hay dónde dejarlo.
+  Future<void> _encolarRegistro(RegistroHab r) async {
+    final c = cola;
+    if (c == null) return;
+    await c.encolar(
+      tipo: TipoColaHabitos.registro,
+      id: const Uuid().v5(
+        _espacioHabitos,
+        'cola|${TipoColaHabitos.registro}|${r.id}|'
+        '${r.modificadoEn.toUtc().millisecondsSinceEpoch}|${r.estado.name}',
       ),
+      carga: r.aFila(),
+      personaId: persona,
+    );
+  }
+
+  /// El objetivo se encola con **su** id como id de la entrada: aunque se
+  /// intente varias veces sin señal, queda una sola.
+  Future<void> _encolarObjetivo(ObjetivoHab o) async {
+    final c = cola;
+    if (c == null) return;
+    await c.encolar(
+      tipo: TipoColaHabitos.objetivo,
+      id: o.id,
+      carga: o.aFila(),
+      personaId: persona,
     );
   }
 
@@ -761,7 +875,7 @@ class ServicioGimnasio {
               'seg_cambio': tiempos.segundosCambio,
             },
     );
-    await _registrarDia(
+    final enviarDespues = await _registrarDia(
       h.fecha,
       completa ? EstadoRegistro.hecho : EstadoRegistro.parcial,
       bloqueId: h.bloque?.id ?? guardada.bloqueId,
@@ -786,10 +900,13 @@ class ServicioGimnasio {
             )
           : const [],
       estado: estado,
+      enviarDespues: enviarDespues,
     );
   }
 
-  Future<void> _registrarDia(
+  /// Escribe el registro del bloque y del objetivo. `true` si algo no se pudo
+  /// escribir ahora (sin señal) y quedó en la cola para enviarse después.
+  Future<bool> _registrarDia(
     DateTime fecha,
     EstadoRegistro estado, {
     String? bloqueId,
@@ -797,8 +914,9 @@ class ServicioGimnasio {
     required bool esFuerza,
   }) async {
     final f = soloDia(fecha);
+    var pendiente = false;
     if (bloqueId != null) {
-      await registros.guardarRegistro(
+      pendiente |= await _guardarRegistroOEncolar(
         RegistroHab(
           id: idRegistroBloque(bloqueId, f),
           bloqueId: bloqueId,
@@ -811,8 +929,8 @@ class ServicioGimnasio {
     // El objetivo «Entrenamiento» cuenta las sesiones de fuerza de la semana
     // (las regenerativas no rompen ni suman: PG-14).
     if (esFuerza) {
-      await _asegurarObjetivo(d);
-      await registros.guardarRegistro(
+      pendiente |= await _asegurarObjetivo(d);
+      pendiente |= await _guardarRegistroOEncolar(
         RegistroHab(
           id: idRegistro(idObjetivoEntrenamiento(persona), f),
           objetivoId: idObjetivoEntrenamiento(persona),
@@ -822,14 +940,15 @@ class ServicioGimnasio {
         ),
       );
     }
+    return pendiente;
   }
 
   /// *Hecho* en Hoy (F-E1): un toque, sin registrar series. Deja una sesión
   /// `completa` sin series (el historial la cuenta; la progresión no, porque no
   /// hay cargas) y marca el bloque.
-  Future<void> marcarHecho(EntrenamientoHoy h) async {
+  Future<ResultadoSesion> marcarHecho(EntrenamientoHoy h) async {
     final fila = await iniciarSesion(h);
-    await terminarSesion(fila: fila, h: h, completa: true);
+    return terminarSesion(fila: fila, h: h, completa: true);
   }
 
   /// Deshacer *Hecho*: quita la sesión sin series y vuelve el día a pendiente.

@@ -19,6 +19,7 @@ import '../../../../diseno/valores_diseno.dart';
 import '../../estado/proveedores.dart' show versionHabitosProvider;
 import '../datos/modelos_gimnasio.dart';
 import '../estado/proveedores_gimnasio.dart';
+import 'aviso_banco.dart';
 import 'comun.dart';
 
 /// La sesión de [fecha] con la plantilla y versión que se piden (`null` = las
@@ -173,6 +174,7 @@ class _Contenido extends ConsumerWidget {
           const TarjetaContenidoEnRevision(compacta: true),
           gap,
         ],
+        TarjetaAvisoBanco(h: h),
         for (final a in avisos)
           Padding(
             padding: const EdgeInsets.only(bottom: 8),

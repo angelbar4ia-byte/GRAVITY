@@ -26,6 +26,7 @@ import '../casos_uso/controlador_sesion.dart';
 import '../casos_uso/servicio_gimnasio.dart';
 import '../datos/modelos_gimnasio.dart';
 import '../estado/proveedores_gimnasio.dart';
+import 'aviso_banco.dart';
 import 'comun.dart';
 
 class PantallaSesionEnCurso extends ConsumerStatefulWidget {
@@ -206,6 +207,9 @@ class _EstadoSesionEnCurso extends ConsumerState<PantallaSesionEnCurso> {
       TextosHabitosGimnasio.sesionTerminada,
       for (final x in r.records.take(2))
         _textoRecord(x, s.catalogo, _datos?.inventario),
+      // Sin señal: la sesión ya está en este equipo y el registro del día se
+      // envía después (G6-A1). Sin culpa y sin errores crudos.
+      if (r.enviarDespues) TextosHabitosGimnasio.sinNubeSeEnviara,
     ];
     ScaffoldMessenger.of(context)
       ..clearSnackBars()
@@ -216,19 +220,38 @@ class _EstadoSesionEnCurso extends ConsumerState<PantallaSesionEnCurso> {
   Future<void> _terminar() async {
     final r = await _preguntarFinal(context, conEsfuerzo: true);
     if (r == null || _c == null) return;
-    final res = await _c!.terminar(
-      completa: r.completa,
-      esfuerzo: r.esfuerzo,
-      energia: r.energia,
-    );
-    await _despues(res);
+    try {
+      final res = await _c!.terminar(
+        completa: r.completa,
+        esfuerzo: r.esfuerzo,
+        energia: r.energia,
+      );
+      await _despues(res);
+    } on Exception {
+      _avisarQueNoSePudo();
+    }
   }
 
   Future<void> _terminarRegenerativa() async {
     final r = await _preguntarFinal(context, conEsfuerzo: false);
     if (r == null || _r == null) return;
-    final res = await _r!.terminar(completa: r.completa, energia: r.energia);
-    await _despues(res);
+    try {
+      final res = await _r!.terminar(completa: r.completa, energia: r.energia);
+      await _despues(res);
+    } on Exception {
+      _avisarQueNoSePudo();
+    }
+  }
+
+  /// Nunca se muestra una excepción cruda: lo registrado sigue en este equipo y
+  /// la persona puede volver a tocar *Terminar*.
+  void _avisarQueNoSePudo() {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(
+        const SnackBar(content: Text(TextosHabitosGimnasio.noSePudoTerminar)),
+      );
   }
 }
 
@@ -494,6 +517,7 @@ class _VistaFuerza extends ConsumerWidget {
                   padding: const EdgeInsets.all(16),
                   children: [
                     ...cabecera,
+                    TarjetaAvisoBanco(h: c.hoy),
                     _Calentamiento(c: c, catalogo: cat),
                     SizedBox(height: v.espacio * 2),
                     pie,

@@ -101,4 +101,71 @@ void main() {
       expect(m.duracionEstimadaSeg - n.duracionEstimadaSeg, 120);
     });
   });
+
+  group('G6-M4 hora de dormir pasada la medianoche', () {
+    const dormir0030 = 30; // 00:30 de la madrugada siguiente
+
+    test('dormir a las 00:30: termina a las 20:15, sin aviso', () {
+      expect(avisoDormir(finMin: 20 * 60 + 15, dormirMin: dormir0030), isNull);
+    });
+
+    test('dormir a las 00:30: termina a las 23:00, justo 90 min, sin aviso', () {
+      expect(avisoDormir(finMin: 23 * 60, dormirMin: dormir0030), isNull);
+    });
+
+    test('dormir a las 00:30: termina a las 23:01, avisa con 89 min', () {
+      final a = avisoDormir(finMin: 23 * 60 + 1, dormirMin: dormir0030)!;
+      expect(a.minutosAntesDeDormir, 89);
+    });
+
+    test('dormir a las 00:30: termina a las 00:10, avisa con 20 min', () {
+      // Una sesión que cruza la medianoche termina en 1450 (00:10 siguiente).
+      final a = avisoDormir(finMin: 24 * 60 + 10, dormirMin: dormir0030)!;
+      expect(a.minutosAntesDeDormir, 20);
+    });
+
+    test('dormir a las 00:00 y a las 01:00 también son del día siguiente', () {
+      expect(avisoDormir(finMin: 22 * 60, dormirMin: 0), isNull);
+      expect(avisoDormir(finMin: 22 * 60, dormirMin: 60), isNull);
+      // 01:00 siguiente = 1500: a las 23:30 (1410) quedan 90 → sin aviso.
+      expect(avisoDormir(finMin: 23 * 60 + 30, dormirMin: 60), isNull);
+      expect(
+        avisoDormir(finMin: 23 * 60 + 31, dormirMin: 60)!.minutosAntesDeDormir,
+        89,
+      );
+    });
+
+    test('CASO MALO: con dormir a las 22:00 nada cambia (no se suma un día)', () {
+      expect(dormirNormalizadoMin(22 * 60), 22 * 60);
+      expect(avisoDormir(finMin: 22 * 60 + 30, dormirMin: dormir22), isNotNull);
+      expect(
+        avisoDormir(finMin: 22 * 60 + 30, dormirMin: dormir22)!
+            .minutosAntesDeDormir,
+        -30,
+      );
+    });
+
+    test('dormirNormalizadoMin: módulo 1440 y madrugada = día siguiente', () {
+      expect(dormirNormalizadoMin(30), 1470);
+      expect(dormirNormalizadoMin(0), 1440);
+      expect(dormirNormalizadoMin(1440), 1440);
+      expect(dormirNormalizadoMin(1470), 1470);
+      expect(dormirNormalizadoMin(23 * 60 + 59), 23 * 60 + 59);
+      expect(dormirNormalizadoMin(3 * 60), 1620);
+      // Con una hora de despertar conocida.
+      expect(dormirNormalizadoMin(6 * 60 + 30, despertarMin: 7 * 60), 1830);
+      expect(dormirNormalizadoMin(22 * 60, despertarMin: 7 * 60), 22 * 60);
+    });
+
+    test('la ventana de mañana no avisa ni con dormir pasada la medianoche', () {
+      expect(
+        avisoDormir(
+          finMin: 9 * 60,
+          dormirMin: dormir0030,
+          ventana: VentanaEntrenamiento.manana,
+        ),
+        isNull,
+      );
+    });
+  });
 }

@@ -9,9 +9,8 @@
 // armar «lo de hoy» (`entrenamientoDe`) y al terminar (`terminarSesion`).
 //
 // Aquí se simula la falta de señal con repositorios que lanzan `SocketException`
-// (lo que lanza el cliente de Supabase sin conexión). Las pruebas quedan
-// etiquetadas `hallazgo` y fallan hasta que se corrijan:
-//   flutter test --exclude-tags hallazgo
+// (lo que lanza el cliente de Supabase sin conexión). Corregido: ya no llevan la
+// etiqueta `hallazgo`.
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -58,7 +57,6 @@ void main() {
         expect(h.tipo, 'A');
         expect(h.sesion, isNotNull);
       },
-      tags: 'hallazgo',
     );
 
     test(
@@ -80,7 +78,6 @@ void main() {
         );
         expect((await m.repo.sesiones(persona)).single.estado, 'completa');
       },
-      tags: 'hallazgo',
     );
 
     test(

@@ -213,22 +213,35 @@ class _EstadoRegistro extends ConsumerState<PantallaRegistro> {
     setState(() => _guardando = true);
     bool esBanda(EjercicioPlanificado e) =>
         s.catalogo.variante(e.varianteId)?.carga == TipoCarga.banda;
-    final r = await s.registrarDespues(
-      h: h,
-      hecho: [
-        for (final f in _filas)
-          (
-            ejercicio: f.ejercicio,
-            series: f.series,
-            reps: f.reps,
-            cargaPasos: esBanda(f.ejercicio) ? null : f.carga,
-            bandaId: esBanda(f.ejercicio) ? f.ejercicio.bandaId : null,
-          ),
-      ],
-      completa: !_parte,
-      esfuerzo: _esfuerzo,
-      energia: _energia,
-    );
+    final ResultadoSesion r;
+    try {
+      r = await s.registrarDespues(
+        h: h,
+        hecho: [
+          for (final f in _filas)
+            (
+              ejercicio: f.ejercicio,
+              series: f.series,
+              reps: f.reps,
+              cargaPasos: esBanda(f.ejercicio) ? null : f.carga,
+              bandaId: esBanda(f.ejercicio) ? f.ejercicio.bandaId : null,
+            ),
+        ],
+        completa: !_parte,
+        esfuerzo: _esfuerzo,
+        energia: _energia,
+      );
+    } on Exception {
+      // Nunca una excepción cruda: lo registrado sigue en este equipo.
+      if (!mounted) return;
+      setState(() => _guardando = false);
+      ScaffoldMessenger.of(context)
+        ..clearSnackBars()
+        ..showSnackBar(
+          const SnackBar(content: Text(TextosHabitosGimnasio.noSePudoTerminar)),
+        );
+      return;
+    }
     ref.read(versionGimnasioProvider.notifier).state++;
     ref.read(versionHabitosProvider.notifier).state++;
     if (!mounted) return;
@@ -248,6 +261,7 @@ class _EstadoRegistro extends ConsumerState<PantallaRegistro> {
                   ),
                   x.tipo == 'carga' ? 'placa ${x.valor}' : '${x.valor}',
                 ),
+              if (r.enviarDespues) TextosHabitosGimnasio.sinNubeSeEnviara,
             ].join(' '),
           ),
         ),

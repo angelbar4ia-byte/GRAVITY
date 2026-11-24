@@ -27,6 +27,8 @@
 /// migración y falla si cualquiera de estas tablas deja de coincidir con ella.
 library;
 
+import 'contrato_habitos.dart'
+    show destinosUpsertHabitos, nivelesDeSubidaHabitos;
 import 'contrato_servidor.dart';
 
 /// Tipos de la cola de «Mi gimnasio».
@@ -216,6 +218,14 @@ const List<String> raicesProhibidasEnCarga = [
 const Map<String, int> nivelesDeSubidaDeLaApp = {
   ...nivelesDeSubidaFinanzas,
   ...nivelesDeSubidaGimnasio,
+  ...nivelesDeSubidaHabitos,
+};
+
+/// Todo lo que sube por upsert: «Mi gimnasio» y los registros de Hábitos que
+/// escribe al terminar una sesión (`contrato_habitos.dart`).
+const Map<String, DestinoUpsert> destinosUpsertDeLaApp = {
+  ...destinosUpsertGimnasio,
+  ...destinosUpsertHabitos,
 };
 
 /// Columnas que pone el servidor en **todas** las tablas que sube la cola.

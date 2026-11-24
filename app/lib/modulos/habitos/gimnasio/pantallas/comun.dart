@@ -76,6 +76,27 @@ abstract final class TextosHabitosGimnasio {
       'Es una guía general que no sustituye a un profesional.';
   static const planAgenda = 'Plan en la agenda';
 
+  // Sin señal (G6-A1): lo registrado queda en este equipo y se envía después.
+  static const sinNubeSeEnviara =
+      'No se pudo guardar en la nube; queda en este equipo y se enviará.';
+  static const noSePudoTerminar =
+      'No se pudo terminar la sesión ahora. Lo que registraste sigue en este '
+      'equipo; inténtalo de nuevo.';
+  static const agendaSinLeer =
+      'No pude leer tu agenda ahora; la hora es aproximada y se ajusta cuando '
+      'haya señal.';
+  static const agendaSinSenal =
+      'No se pudo poner el plan en la agenda ahora. Inténtalo cuando haya '
+      'señal; tu plan sigue en este equipo.';
+
+  // Aviso del banco antes de la primera vez (3.2, G6-M3): una sola vez por
+  // persona, sin diagnóstico.
+  static const avisoBanco =
+      'Antes de usar el banco por primera vez, comprueba en el aparato su '
+      'capacidad y que esté estable y firme. Si no puedes comprobarlo, elige '
+      'otro ejercicio.';
+  static const yaLoRevise = 'Ya lo revisé';
+
   static List<String> get todos => [
     sinSesion,
     entendido,
@@ -122,6 +143,12 @@ abstract final class TextosHabitosGimnasio {
     ajustesVozAyuda,
     sobreEstaGuiaTexto,
     planAgenda,
+    sinNubeSeEnviara,
+    noSePudoTerminar,
+    agendaSinLeer,
+    agendaSinSenal,
+    avisoBanco,
+    yaLoRevise,
   ];
 }
 
@@ -317,6 +344,8 @@ List<String> avisosDe(EntrenamientoHoy h) {
   for (final a in h.sesion?.avisos ?? const <AvisoGimnasio>[]) {
     poner(textoDeAviso(a.codigo));
   }
+  // Al final: lo importante de la sesión va primero.
+  if (h.agendaSinLeer) poner(TextosHabitosGimnasio.agendaSinLeer);
   return r;
 }
 
