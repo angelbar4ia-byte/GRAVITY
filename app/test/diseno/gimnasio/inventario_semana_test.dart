@@ -41,8 +41,13 @@ TarjetaAparato _marcy({
   alCambiarDisponibilidad: alCambiarPuesto,
 );
 
+/// La semana reordenada del dueño (plan de 3, 4 o 5 días): A el lunes, C el
+/// martes, B el miércoles, jueves libre (R2 en el plan de 5), viernes R1 (en
+/// los planes de 4 y 5), bicicleta el sábado y descanso el domingo.
+///
+/// La bicicleta lleva el aviso de ejemplo (el que saldría si la persona
+/// pasara C al jueves); por omisión no hay aviso de 48 horas.
 List<DiaSemanaVista> _semana(int dias) {
-  // 3: A, B, C; 4 suma R1 el martes; 5 suma R2 el jueves (5.6).
   const nombres = [
     ('lunes', 'L'),
     ('martes', 'M'),
@@ -54,10 +59,10 @@ List<DiaSemanaVista> _semana(int dias) {
   ];
   final tipos = [
     TipoDiaPlan.fuerzaA,
-    dias >= 4 ? TipoDiaPlan.regenerativa1 : TipoDiaPlan.descanso,
+    TipoDiaPlan.fuerzaC,
     TipoDiaPlan.fuerzaB,
     dias >= 5 ? TipoDiaPlan.regenerativa2 : TipoDiaPlan.descanso,
-    TipoDiaPlan.fuerzaC,
+    dias >= 4 ? TipoDiaPlan.regenerativa1 : TipoDiaPlan.descanso,
     TipoDiaPlan.bicicleta,
     TipoDiaPlan.descanso,
   ];
@@ -69,7 +74,7 @@ List<DiaSemanaVista> _semana(int dias) {
         tipo: tipos[i],
         esHoy: i == 2,
         estado: i == 0 ? EstadoDiaPlan.hecho : EstadoDiaPlan.pendiente,
-        conAviso: i == 4,
+        conAviso: i == 5,
       ),
   ];
 }
@@ -229,6 +234,10 @@ void main() {
         await montarGim(tester, LineaSemana(dias: semana), ancho: 420);
         final fuerza = semana.where((d) => d.tipo.esFuerza).length;
         expect(fuerza, 3);
+        // La semana reordenada: A lunes, C martes, B miércoles.
+        expect(semana[0].tipo, TipoDiaPlan.fuerzaA);
+        expect(semana[1].tipo, TipoDiaPlan.fuerzaC);
+        expect(semana[2].tipo, TipoDiaPlan.fuerzaB);
         final regenerativas = semana
             .where(
               (d) =>
@@ -294,9 +303,13 @@ void main() {
       await montarGim(tester, LineaSemana(dias: _semana(4)), ancho: 420);
       final etiquetas = etiquetasAccesibles(tester);
       expect(etiquetas, contains('lunes, Fuerza A, hecho'));
-      expect(etiquetas, contains('martes, Regenerativa 1, pendiente'));
+      expect(etiquetas, contains('martes, Fuerza C, pendiente'));
       expect(etiquetas, contains('miércoles, hoy, Fuerza B, pendiente'));
-      expect(etiquetas, contains('viernes, Fuerza C, pendiente, con aviso'));
+      expect(etiquetas, contains('viernes, Regenerativa 1, pendiente'));
+      expect(
+        etiquetas,
+        contains('sábado, Bicicleta, pendiente, con aviso'),
+      );
       handle.dispose();
     });
 

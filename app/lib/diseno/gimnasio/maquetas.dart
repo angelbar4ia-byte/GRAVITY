@@ -112,7 +112,11 @@ class MaquetaGimnasio extends StatelessWidget {
 
 // --- Datos de ejemplo (inventados) -------------------------------------------
 
-const _semana3 = [
+/// La semana reordenada del dueño (24/nov/2026, plan de 4 días): A el lunes, C
+/// el martes, B el miércoles, jueves libre, R1 el viernes, bicicleta el
+/// sábado y descanso el domingo. Así la ruta del sábado llega con más de 84 h
+/// de descanso de piernas y no hay aviso de 48 horas por omisión.
+const _semana4 = [
   DiaSemanaVista(
     nombre: 'lunes',
     letra: 'L',
@@ -120,7 +124,13 @@ const _semana3 = [
     estado: EstadoDiaPlan.hecho,
     detalleTexto: 'estándar · 19:15',
   ),
-  DiaSemanaVista(nombre: 'martes', letra: 'M', tipo: TipoDiaPlan.descanso),
+  DiaSemanaVista(
+    nombre: 'martes',
+    letra: 'M',
+    tipo: TipoDiaPlan.fuerzaC,
+    estado: EstadoDiaPlan.hecho,
+    detalleTexto: 'estándar · 19:15',
+  ),
   DiaSemanaVista(
     nombre: 'miércoles',
     letra: 'X',
@@ -132,23 +142,37 @@ const _semana3 = [
   DiaSemanaVista(
     nombre: 'viernes',
     letra: 'V',
-    tipo: TipoDiaPlan.fuerzaC,
-    detalleTexto: 'corta · 19:15',
-    conAviso: true,
+    tipo: TipoDiaPlan.regenerativa1,
+    detalleTexto: '20 min · 19:30',
   ),
   DiaSemanaVista(
     nombre: 'sábado',
     letra: 'S',
     tipo: TipoDiaPlan.bicicleta,
     detalleTexto: '8:00',
-    conAviso: true,
   ),
   DiaSemanaVista(nombre: 'domingo', letra: 'D', tipo: TipoDiaPlan.descanso),
 ];
 
+/// La misma semana con la bicicleta marcada «con aviso», como se vería si la
+/// persona pasara C al jueves.
+final _semana4ConAviso = [
+  ..._semana4.sublist(0, 5),
+  const DiaSemanaVista(
+    nombre: 'sábado',
+    letra: 'S',
+    tipo: TipoDiaPlan.bicicleta,
+    detalleTexto: '8:00',
+    conAviso: true,
+  ),
+  _semana4[6],
+];
+
+/// Un aviso de ejemplo que solo sale si la persona cambia C a otro día (la
+/// variante «C el jueves»); con la semana por omisión no hay avisos.
 const _avisosSemana = [
-  'Fuerza C y la bicicleta del sábado comparten piernas con solo 12 horas '
-      'de descanso. Puedes mover C al jueves o hacerla corta.',
+  'Si pasas Fuerza C al jueves, queda a 36 h 45 min de la bicicleta del '
+      'sábado. Puedes volver a C el martes, hacerla corta o dejarlo así.',
 ];
 
 class _E1Hoy extends StatelessWidget {
@@ -169,7 +193,7 @@ class _E1Hoy extends StatelessWidget {
         alAbrir: () {},
       ),
       const SizedBox(height: 12),
-      const LineaSemana(dias: _semana3),
+      const LineaSemana(dias: _semana4),
     ],
   );
 }
@@ -241,8 +265,8 @@ class _E3Plan extends StatelessWidget {
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
       LineaSemana(
-        titulo: 'Plan de 3 días',
-        dias: _semana3,
+        titulo: 'Plan de 4 días',
+        dias: _semana4ConAviso,
         avisos: _avisosSemana,
         alTocarDia: (_) {},
       ),

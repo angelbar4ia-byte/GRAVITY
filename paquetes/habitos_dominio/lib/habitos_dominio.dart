@@ -4,6 +4,7 @@
 library;
 
 export 'src/agenda.dart';
+export 'src/bici/bici.dart';
 export 'src/carga_dia.dart';
 export 'src/documentos_cifrados.dart';
 export 'src/edicion.dart';

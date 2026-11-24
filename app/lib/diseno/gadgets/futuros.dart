@@ -5,7 +5,9 @@
 /// - Cuidados (Fase 5): [RelojDelTurno] y [CronometroCuidados]. Textos
 ///   impersonales; la personalidad de Cuidados los lleva a alto contraste.
 /// - Alimentación (Fase 7): [ListaCompras] y [MenuSemana], sin precios.
-/// - Hábitos (Fase 8): [Velocimetro] y [SerieDescanso].
+/// - Hábitos (Fase 8): [Velocimetro]. El gadget «Serie y descanso» ya es el
+///   definitivo de «Mi gimnasio»: `GadgetSerieDescanso`, en
+///   `gimnasio/serie_descanso.dart`.
 ///
 /// Todos leen colores, fuentes y formas del tema; ninguno usa valores fijos.
 library;
@@ -623,133 +625,6 @@ class Velocimetro extends StatelessWidget {
                 tamano: 28,
                 peso: FontWeight.w700,
                 color: v.textoFuerte,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// **Serie y descanso** (entrenamiento): ¿qué sigue y cuánto descanso?
-///
-/// Versión de diseño de la Fase 4, que sigue en la muestra de estilos. La
-/// definitiva de «Mi gimnasio» (temporizador por instante final, series con
-/// estado y los cuatro estados de pantalla) es `GadgetSerieDescanso`, en
-/// `gimnasio/serie_descanso.dart`.
-class SerieDescanso extends StatelessWidget {
-  const SerieDescanso({
-    super.key,
-    required this.ejercicio,
-    required this.serie,
-    required this.seriesTotales,
-    required this.repeticiones,
-    required this.descansoRestante,
-    required this.descansoTotal,
-    this.siguiente,
-  });
-
-  factory SerieDescanso.ejemplo({Key? key}) => SerieDescanso(
-    key: key,
-    ejercicio: 'Sentadilla',
-    serie: 3,
-    seriesTotales: 4,
-    repeticiones: 10,
-    descansoRestante: const Duration(seconds: 45),
-    descansoTotal: const Duration(seconds: 90),
-    siguiente: 'Peso muerto',
-  );
-
-  final String ejercicio;
-  final int serie;
-  final int seriesTotales;
-  final int repeticiones;
-  final Duration descansoRestante;
-  final Duration descansoTotal;
-  final String? siguiente;
-
-  @override
-  Widget build(BuildContext context) {
-    final v = ValoresDiseno.de(context);
-    final e = v.espacio;
-    final avance = descansoTotal.inSeconds == 0
-        ? 0.0
-        : 1 - descansoRestante.inSeconds / descansoTotal.inSeconds;
-    return Semantics(
-      container: true,
-      label:
-          '$ejercicio, serie $serie de $seriesTotales, $repeticiones '
-          'repeticiones. Descanso: ${descansoRestante.inSeconds} segundos'
-          '${siguiente == null ? '' : '. Sigue: $siguiente'}',
-      excludeSemantics: true,
-      child: TarjetaModulo(
-        titulo: 'Serie y descanso',
-        icono: Icons.fitness_center,
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    ejercicio,
-                    style: v.titulo(tamano: 28),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Text(
-                    'Serie $serie de $seriesTotales · $repeticiones rep.',
-                    style: v.lectura(
-                      tamano: 16,
-                      peso: FontWeight.w600,
-                      color: v.textoFuerte,
-                    ),
-                  ),
-                  if (siguiente != null) ...[
-                    SizedBox(height: e),
-                    Text(
-                      'Sigue: $siguiente',
-                      style: v.lectura(tamano: 14, color: v.textoTenue),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            SizedBox(width: e * 2),
-            SizedBox(
-              width: 104,
-              height: 104,
-              child: CustomPaint(
-                painter: _Anillo(
-                  avance: avance,
-                  color: v.acento,
-                  pista: v.pista,
-                  grosor: 10,
-                ),
-                child: Center(
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          _mmss(descansoRestante),
-                          key: const ValueKey('descanso-restante'),
-                          style: v.numero(
-                            tamano: 22,
-                            peso: FontWeight.w700,
-                            color: v.textoFuerte,
-                          ),
-                        ),
-                        Text(
-                          'descanso',
-                          style: v.lectura(tamano: 12, color: v.textoTenue),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
               ),
             ),
           ],

@@ -46,6 +46,7 @@ export 'gadgets/orden_pago.dart';
 export 'gadgets/tarjeta_deuda.dart';
 export 'gadgets/teclado_monto.dart';
 export 'gadgets/uso_presupuesto.dart';
+export 'bici/bici.dart';
 export 'gimnasio/gimnasio.dart';
 export 'habitos/eliminar.dart';
 export 'habitos/espiritual.dart';

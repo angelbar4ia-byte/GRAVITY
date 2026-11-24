@@ -82,7 +82,7 @@ Widget muestraDeGadgets() => SingleChildScrollView(
         const SizedBox(height: 12),
         Velocimetro.ejemplo(),
         const SizedBox(height: 12),
-        SerieDescanso.ejemplo(),
+        gadgetSerieDescansoEjemplo(),
         const SizedBox(height: 12),
         const NucleoGravity(tamano: 160),
       ],
