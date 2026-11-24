@@ -3,7 +3,8 @@
 -- (dos equipos). Los ids de ejemplo tienen la forma de v5 (versión 5 en el tercer grupo).
 begin;
 
--- Subidas como las hace la cola: upsert por id (o por la llave natural en el perfil).
+-- Subidas como las hace la cola: upsert por (persona_id, id) (o por la llave natural en el perfil).
+-- La app no manda persona_id: lo pone el trigger hab_a_propio antes de buscar el conflicto (G6-M1).
 create function pruebas.up_salida(p_id uuid, p_esfuerzo integer, p_mod timestamptz, p_fecha date default '2026-11-21', p_n integer default 1) returns integer
 language plpgsql
 as $$
@@ -12,7 +13,7 @@ declare
 begin
   insert into public.hab_bici_salidas (id, fecha, n, inicio, duracion_min, distancia_m, desnivel_m, superficie, esfuerzo, clima, acompanado, estado, modificado_en)
   values (p_id, p_fecha, p_n, '08:00', 240, 62000, 500, 'mixta', p_esfuerzo, 'despejado', false, 'hecha', p_mod)
-  on conflict (id) do update set fecha = excluded.fecha, n = excluded.n, bloque_id = excluded.bloque_id, bicicleta_id = excluded.bicicleta_id,
+  on conflict (persona_id, id) do update set fecha = excluded.fecha, n = excluded.n, bloque_id = excluded.bloque_id, bicicleta_id = excluded.bicicleta_id,
     inicio = excluded.inicio, duracion_min = excluded.duracion_min, distancia_m = excluded.distancia_m, desnivel_m = excluded.desnivel_m,
     superficie = excluded.superficie, esfuerzo = excluded.esfuerzo, clima = excluded.clima, acompanado = excluded.acompanado,
     estado = excluded.estado, motivo = excluded.motivo, modificado_en = excluded.modificado_en;
@@ -28,7 +29,7 @@ declare
 begin
   insert into public.hab_bici_mantenimientos (id, bicicleta_id, tarea, fecha, odometro_m, modificado_en)
   values (p_id, 'f8500000-0000-4000-8000-000000000001', 'lectura_odometro', p_fecha, p_odo, p_mod)
-  on conflict (id) do update set bicicleta_id = excluded.bicicleta_id, tarea = excluded.tarea, fecha = excluded.fecha,
+  on conflict (persona_id, id) do update set bicicleta_id = excluded.bicicleta_id, tarea = excluded.tarea, fecha = excluded.fecha,
     odometro_m = excluded.odometro_m, nota = excluded.nota, modificado_en = excluded.modificado_en;
   get diagnostics v_n = row_count;
   return v_n;
@@ -41,7 +42,7 @@ select pruebas.como('ana@ejemplo.test');
 -- La bicicleta: se sube antes que lo que cuelga de ella (orden de subida de la cola).
 select pruebas.igual(pruebas.afecta($$insert into public.hab_bici_bicicletas (id, nombre, odometro_inicial_m, modificado_en)
   values ('f8500000-0000-4000-8000-000000000001', 'Mi bici (ejemplo)', 350000, now() - interval '60 minutes')
-  on conflict (id) do update set nombre = excluded.nombre, odometro_inicial_m = excluded.odometro_inicial_m, modificado_en = excluded.modificado_en$$), 1,
+  on conflict (persona_id, id) do update set nombre = excluded.nombre, odometro_inicial_m = excluded.odometro_inicial_m, modificado_en = excluded.modificado_en$$), 1,
   'Bicicleta: se crea con upsert por id');
 
 -- ---------------------------------------------------------------- salida: el mismo id no duplica
@@ -111,42 +112,66 @@ select pruebas.igual((select duracion_prevista_min::text || '/' || bicicleta_act
   '… y es una sola fila');
 select pruebas.igual(pruebas.afecta($$insert into public.hab_bici_bicicletas (id, nombre, odometro_inicial_m, modificado_en)
   values ('f8500000-0000-4000-8000-000000000001', 'Vieja', 1, now() - interval '120 minutes')
-  on conflict (id) do update set nombre = excluded.nombre, odometro_inicial_m = excluded.odometro_inicial_m, modificado_en = excluded.modificado_en$$), 0,
+  on conflict (persona_id, id) do update set nombre = excluded.nombre, odometro_inicial_m = excluded.odometro_inicial_m, modificado_en = excluded.modificado_en$$), 0,
   'Bicicleta: la más vieja se ignora');
 select pruebas.igual(pruebas.afecta($$insert into public.hab_bici_bicicletas (id, nombre, odometro_inicial_m, modificado_en)
   values ('f8500000-0000-4000-8000-000000000001', 'Nueva', 360000, now() - interval '10 minutes')
-  on conflict (id) do update set nombre = excluded.nombre, odometro_inicial_m = excluded.odometro_inicial_m, modificado_en = excluded.modificado_en$$), 1,
+  on conflict (persona_id, id) do update set nombre = excluded.nombre, odometro_inicial_m = excluded.odometro_inicial_m, modificado_en = excluded.modificado_en$$), 1,
   '… la más nueva gana');
 select pruebas.igual((select nombre || '/' || count(*) over () from public.hab_bici_bicicletas), 'Nueva/1', 'queda «Nueva», una sola bicicleta');
 select pruebas.igual(pruebas.afecta($$insert into public.hab_musica_listas (id, nombre, actividad, app, enlace, orden, modificado_en)
   values ('f8800000-0000-4000-8000-000000000001', 'Lista', 'bicicleta', 'otra', 'https://musica.ejemplo.test/lista/1', 1, now() - interval '60 minutes')
-  on conflict (id) do update set nombre = excluded.nombre, actividad = excluded.actividad, app = excluded.app, enlace = excluded.enlace,
+  on conflict (persona_id, id) do update set nombre = excluded.nombre, actividad = excluded.actividad, app = excluded.app, enlace = excluded.enlace,
     orden = excluded.orden, modificado_en = excluded.modificado_en$$), 1, 'Música: se crea');
 select pruebas.igual(pruebas.afecta($$insert into public.hab_musica_listas (id, nombre, actividad, app, enlace, orden, modificado_en)
   values ('f8800000-0000-4000-8000-000000000001', 'Vieja', 'fuerza', 'otra', 'https://musica.ejemplo.test/vieja', 1, now() - interval '120 minutes')
-  on conflict (id) do update set nombre = excluded.nombre, actividad = excluded.actividad, app = excluded.app, enlace = excluded.enlace,
+  on conflict (persona_id, id) do update set nombre = excluded.nombre, actividad = excluded.actividad, app = excluded.app, enlace = excluded.enlace,
     orden = excluded.orden, modificado_en = excluded.modificado_en$$), 0, '… la más vieja se ignora');
 select pruebas.igual(pruebas.afecta($$insert into public.hab_musica_listas (id, nombre, actividad, app, enlace, orden, modificado_en)
   values ('f8800000-0000-4000-8000-000000000001', 'Nueva', 'fuerza', 'spotify', 'https://musica.ejemplo.test/nueva', 2, now() - interval '10 minutes')
-  on conflict (id) do update set nombre = excluded.nombre, actividad = excluded.actividad, app = excluded.app, enlace = excluded.enlace,
+  on conflict (persona_id, id) do update set nombre = excluded.nombre, actividad = excluded.actividad, app = excluded.app, enlace = excluded.enlace,
     orden = excluded.orden, modificado_en = excluded.modificado_en$$), 1, '… la más nueva gana');
 select pruebas.igual((select nombre || '/' || actividad || '/' || count(*) over () from public.hab_musica_listas), 'Nueva/fuerza/1', 'queda «Nueva», una sola lista');
 
--- ---------------------------------------------------------------- el id de otra persona no se pisa
+-- ---------------------------------------------------------------- el mismo id en otra persona es otra fila (G6-M1)
+-- La llave es (persona_id, id): el id v5 se puede calcular, así que no puede revelar ni pisar nada de otra persona.
 select pruebas.como('alex@ejemplo.test');
-select pruebas.falla($$select pruebas.up_salida('f8700000-0000-5000-8000-000000000001', 1, now() + interval '1 minute')$$,
-  'Alex no pisa con un upsert la salida de Ana (aunque conozca su id)', '42501');
-select pruebas.falla($$select pruebas.up_mant('f8600000-0000-5000-8000-000000000001', 1, now() + interval '1 minute')$$, '… ni su lectura', '42501');
-select pruebas.igual(pruebas.afecta($$insert into public.hab_bici_bicicletas (id, nombre, modificado_en) values ('f8500000-0000-4000-8000-000000000001', 'Falsa', now())
-  on conflict (id) do nothing$$), 0, 'Con DO NOTHING no cambia nada ajeno');
-select pruebas.falla($$insert into public.hab_musica_listas (id, nombre, actividad, app, enlace, orden, modificado_en)
-  values ('f8800000-0000-4000-8000-000000000001', 'Falsa', 'bicicleta', 'otra', 'https://musica.ejemplo.test/falsa', 1, now())
-  on conflict (id) do update set nombre = excluded.nombre, modificado_en = excluded.modificado_en$$, '… ni la lista de música', '42501');
-select pruebas.igual(pruebas.cuenta($$select * from public.hab_bici_salidas$$) + pruebas.cuenta($$select * from public.hab_bici_mantenimientos$$), 0, 'Y Alex no ve nada de lo de Ana');
+select pruebas.igual(pruebas.cuenta($$select * from public.hab_bici_salidas$$) + pruebas.cuenta($$select * from public.hab_bici_mantenimientos$$), 0,
+  'Alex no ve nada de lo de Ana');
+select pruebas.igual(pruebas.up_salida('f8700000-0000-5000-8000-000000000001', 1, now() - interval '5 minutes'), 1,
+  'Alex sube una salida con el MISMO id que la de Ana: no choca (23505) ni da 42501: crea la suya');
+select pruebas.igual(pruebas.up_salida('f8700000-0000-5000-8000-000000000001', 1, now() - interval '5 minutes'), 1,
+  '… y su reintento sigue siendo idempotente');
+select pruebas.igual(pruebas.cuenta($$select * from public.hab_bici_salidas$$), 1, 'Alex ve una sola salida: la suya');
+select pruebas.igual((select esfuerzo from public.hab_bici_salidas), 1::smallint, '… con su propio contenido');
+select pruebas.falla($$select pruebas.up_mant('f8600000-0000-5000-8000-000000000001', 1, now() + interval '1 minute')$$,
+  'Una lectura de Alex no cuelga de la bicicleta de Ana (aunque conozca su id): 23503', '23503');
+select pruebas.igual(pruebas.afecta($$insert into public.hab_bici_bicicletas (id, nombre, modificado_en) values ('f8500000-0000-4000-8000-000000000001', 'De Alex', now())
+  on conflict (persona_id, id) do nothing$$), 1, 'Una bicicleta con el mismo id que la de Ana: Alex crea la suya');
+select pruebas.igual(pruebas.afecta($$insert into public.hab_bici_bicicletas (id, nombre, modificado_en) values ('f8500000-0000-4000-8000-000000000001', 'Otra de Alex', now())
+  on conflict (persona_id, id) do nothing$$), 0, '… y repetirla no cambia nada');
+select pruebas.igual(pruebas.up_mant('f8600000-0000-5000-8000-000000000001', 7, now() - interval '5 minutes'), 1,
+  'Con su bicicleta, Alex sube su propia lectura (mismo id que la de Ana)');
+select pruebas.igual(pruebas.afecta($$insert into public.hab_musica_listas (id, nombre, actividad, app, enlace, orden, modificado_en)
+  values ('f8800000-0000-4000-8000-000000000001', 'De Alex', 'bicicleta', 'otra', 'https://musica.ejemplo.test/alex', 1, now())
+  on conflict (persona_id, id) do update set nombre = excluded.nombre, modificado_en = excluded.modificado_en$$), 1,
+  'Una lista de música con el mismo id que la de Ana: Alex crea la suya, sin 42501');
 select pruebas.como_postgres();
-select pruebas.igual((select esfuerzo from public.hab_bici_salidas where id = 'f8700000-0000-5000-8000-000000000001'), 3::smallint, 'La salida de Ana quedó como ella la dejó');
-select pruebas.igual((select odometro_m from public.hab_bici_mantenimientos where id = 'f8600000-0000-5000-8000-000000000001'), 482000, '… y su lectura');
-select pruebas.igual((select nombre from public.hab_bici_bicicletas where id = 'f8500000-0000-4000-8000-000000000001'), 'Nueva', '… y su bicicleta');
-select pruebas.igual((select nombre from public.hab_musica_listas where id = 'f8800000-0000-4000-8000-000000000001'), 'Nueva', '… y su lista');
+select pruebas.igual((select esfuerzo from public.hab_bici_salidas where id = 'f8700000-0000-5000-8000-000000000001' and persona_id = pruebas.id_persona('ana@ejemplo.test')),
+  3::smallint, 'La salida de Ana quedó como ella la dejó');
+select pruebas.igual((select odometro_m from public.hab_bici_mantenimientos where id = 'f8600000-0000-5000-8000-000000000001' and persona_id = pruebas.id_persona('ana@ejemplo.test')),
+  482000, '… y su lectura');
+select pruebas.igual((select nombre from public.hab_bici_bicicletas where id = 'f8500000-0000-4000-8000-000000000001' and persona_id = pruebas.id_persona('ana@ejemplo.test')),
+  'Nueva', '… y su bicicleta');
+select pruebas.igual((select nombre from public.hab_musica_listas where id = 'f8800000-0000-4000-8000-000000000001' and persona_id = pruebas.id_persona('ana@ejemplo.test')),
+  'Nueva', '… y su lista');
+select pruebas.igual((select count(*)::int from public.hab_bici_salidas where id = 'f8700000-0000-5000-8000-000000000001'), 2,
+  'Hay dos filas con ese id: una de cada persona');
+select pruebas.igual(
+  (select string_agg(c.relname || '=' || pg_get_constraintdef(k.oid), '; ' order by c.relname)
+     from pg_constraint k join pg_class c on c.oid = k.conrelid
+    where k.contype = 'p' and c.relname in ('hab_bici_bicicletas', 'hab_bici_mantenimientos', 'hab_bici_salidas', 'hab_musica_listas')),
+  'hab_bici_bicicletas=PRIMARY KEY (persona_id, id); hab_bici_mantenimientos=PRIMARY KEY (persona_id, id); hab_bici_salidas=PRIMARY KEY (persona_id, id); hab_musica_listas=PRIMARY KEY (persona_id, id)',
+  'Las llaves primarias de bicicleta y música son (persona_id, id)');
 
 rollback;

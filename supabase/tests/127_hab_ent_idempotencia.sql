@@ -2,7 +2,8 @@
 -- el mismo id y otro contenido gana el de modificado_en más reciente, llegue en el orden que llegue (dos equipos).
 begin;
 
--- Subidas como las hace la cola: upsert por id (o por la llave natural en perfil, plan e inventario).
+-- Subidas como las hace la cola: upsert por (persona_id, id) (o por la llave natural en perfil, plan e inventario).
+-- La app no manda persona_id: lo pone el trigger hab_a_propio antes de buscar el conflicto (G6-M1).
 create function pruebas.up_sesion(p_id uuid, p_esfuerzo integer, p_mod timestamptz, p_fecha date default '2026-11-23') returns integer
 language plpgsql
 as $$
@@ -12,7 +13,7 @@ begin
   insert into public.hab_ent_sesiones (id, fecha, plantilla, version, semana_tipo, ventana, inicio, fin, estado, esfuerzo, plan, catalogo_version, modificado_en)
   values (p_id, p_fecha, 'A', 'estandar', 'carga', 'noche', '2026-11-23 20:00-06', '2026-11-23 20:45-06', 'completa', p_esfuerzo,
           '[{"ejercicio": "marcy.press", "series": 3, "reps_min": 8, "reps_max": 12}]', 1, p_mod)
-  on conflict (id) do update set fecha = excluded.fecha, plantilla = excluded.plantilla, version = excluded.version,
+  on conflict (persona_id, id) do update set fecha = excluded.fecha, plantilla = excluded.plantilla, version = excluded.version,
     semana_tipo = excluded.semana_tipo, ventana = excluded.ventana, inicio = excluded.inicio, fin = excluded.fin,
     estado = excluded.estado, esfuerzo = excluded.esfuerzo, plan = excluded.plan, catalogo_version = excluded.catalogo_version,
     modificado_en = excluded.modificado_en;
@@ -28,7 +29,7 @@ declare
 begin
   insert into public.hab_ent_series (id, sesion_id, ejercicio_id, variante_id, n, reps, carga_pasos, esfuerzo, modificado_en)
   values (p_id, p_sesion, 'marcy.press', 'press_sentado', p_n, p_reps, 4, 3, p_mod)
-  on conflict (id) do update set sesion_id = excluded.sesion_id, ejercicio_id = excluded.ejercicio_id, variante_id = excluded.variante_id,
+  on conflict (persona_id, id) do update set sesion_id = excluded.sesion_id, ejercicio_id = excluded.ejercicio_id, variante_id = excluded.variante_id,
     n = excluded.n, reps = excluded.reps, carga_pasos = excluded.carga_pasos, esfuerzo = excluded.esfuerzo, modificado_en = excluded.modificado_en;
   get diagnostics v_n = row_count;
   return v_n;
@@ -111,26 +112,43 @@ select pruebas.igual(pruebas.afecta($$insert into public.hab_ent_inventario (ite
   on conflict (persona_id, item_id) do update set estado = excluded.estado, modificado_en = excluded.modificado_en$$), 0, '… el más viejo se ignora');
 select pruebas.igual((select estado || '/' || count(*) over () from public.hab_ent_inventario), 'no_disponible/1', 'queda no_disponible, una sola fila');
 select pruebas.igual(pruebas.afecta($$insert into public.hab_ent_bandas (id, nombre, orden, cantidad, modificado_en) values ('f8200000-0000-4000-8000-000000000001', 'Verde', 1, 1, now() - interval '60 minutes')
-  on conflict (id) do update set nombre = excluded.nombre, orden = excluded.orden, cantidad = excluded.cantidad, modificado_en = excluded.modificado_en$$), 1,
+  on conflict (persona_id, id) do update set nombre = excluded.nombre, orden = excluded.orden, cantidad = excluded.cantidad, modificado_en = excluded.modificado_en$$), 1,
   'Bandas: se crea');
 select pruebas.igual(pruebas.afecta($$insert into public.hab_ent_bandas (id, nombre, orden, cantidad, modificado_en) values ('f8200000-0000-4000-8000-000000000001', 'Vieja', 1, 5, now() - interval '120 minutes')
-  on conflict (id) do update set nombre = excluded.nombre, orden = excluded.orden, cantidad = excluded.cantidad, modificado_en = excluded.modificado_en$$), 0, '… la más vieja se ignora');
+  on conflict (persona_id, id) do update set nombre = excluded.nombre, orden = excluded.orden, cantidad = excluded.cantidad, modificado_en = excluded.modificado_en$$), 0, '… la más vieja se ignora');
 select pruebas.igual(pruebas.afecta($$insert into public.hab_ent_bandas (id, nombre, orden, cantidad, modificado_en) values ('f8200000-0000-4000-8000-000000000001', 'Nueva', 2, 2, now() - interval '10 minutes')
-  on conflict (id) do update set nombre = excluded.nombre, orden = excluded.orden, cantidad = excluded.cantidad, modificado_en = excluded.modificado_en$$), 1, '… la más nueva gana');
+  on conflict (persona_id, id) do update set nombre = excluded.nombre, orden = excluded.orden, cantidad = excluded.cantidad, modificado_en = excluded.modificado_en$$), 1, '… la más nueva gana');
 select pruebas.igual((select nombre || '/' || count(*) over () from public.hab_ent_bandas), 'Nueva/1', 'queda «Nueva», una sola banda');
 
--- ---------------------------------------------------------------- el id de otra persona no se pisa
+-- ---------------------------------------------------------------- el mismo id en otra persona es otra fila (G6-M1)
+-- La llave es (persona_id, id): el id v5 se puede calcular, así que no puede revelar ni pisar nada de otra persona.
 select pruebas.como('alex@ejemplo.test');
-select pruebas.falla($$select pruebas.up_sesion('f8100000-0000-5000-8000-000000000001', 1, now() + interval '1 minute')$$,
-  'Alex no pisa con un upsert la sesión de Ana (aunque conozca su id)', '42501');
-select pruebas.falla($$select pruebas.up_serie('f8300000-0000-5000-8000-000000000001', 'f8100000-0000-5000-8000-000000000001', 1, now() + interval '1 minute')$$,
-  '… ni su serie', '42501');
-select pruebas.igual(pruebas.afecta($$insert into public.hab_ent_bandas (id, nombre, orden, cantidad, modificado_en) values ('f8200000-0000-4000-8000-000000000001', 'Falsa', 1, 1, now())
-  on conflict (id) do nothing$$), 0, 'Con DO NOTHING no cambia nada ajeno');
-select pruebas.igual(pruebas.cuenta($$select * from public.hab_ent_sesiones$$) + pruebas.cuenta($$select * from public.hab_ent_series$$), 0, 'Y Alex no ve nada de lo de Ana');
+select pruebas.igual(pruebas.cuenta($$select * from public.hab_ent_sesiones$$) + pruebas.cuenta($$select * from public.hab_ent_series$$), 0,
+  'Alex no ve nada de lo de Ana');
+select pruebas.igual(pruebas.up_sesion('f8100000-0000-5000-8000-000000000001', 1, now() - interval '5 minutes'), 1,
+  'Alex sube una sesión con el MISMO id que la de Ana: no choca (23505) ni da 42501: crea la suya');
+select pruebas.igual(pruebas.up_sesion('f8100000-0000-5000-8000-000000000001', 1, now() - interval '5 minutes'), 1,
+  '… y su reintento sigue siendo idempotente');
+select pruebas.igual(pruebas.cuenta($$select * from public.hab_ent_sesiones$$), 1, 'Alex ve una sola sesión: la suya');
+select pruebas.igual((select esfuerzo from public.hab_ent_sesiones), 1::smallint, '… con su propio contenido');
+select pruebas.igual(pruebas.up_serie('f8300000-0000-5000-8000-000000000001', 'f8100000-0000-5000-8000-000000000001', 1, now() - interval '5 minutes'), 1,
+  'Con el mismo id de serie y de sesión que Ana, Alex crea su propia serie (de su propia sesión)');
+select pruebas.falla($$select pruebas.up_serie('f8300000-0000-5000-8000-000000000002', 'f8100000-0000-5000-8000-0000000000bb', 1, now(), 2)$$,
+  'Una serie de Alex no cuelga de una sesión que no es suya: 23503', '23503');
+select pruebas.igual(pruebas.afecta($$insert into public.hab_ent_bandas (id, nombre, orden, cantidad, modificado_en) values ('f8200000-0000-4000-8000-000000000001', 'De Alex', 1, 1, now())
+  on conflict (persona_id, id) do nothing$$), 1, 'Una banda con el mismo id que la de Ana: Alex crea la suya');
+select pruebas.igual(pruebas.afecta($$insert into public.hab_ent_bandas (id, nombre, orden, cantidad, modificado_en) values ('f8200000-0000-4000-8000-000000000001', 'Otra de Alex', 1, 1, now())
+  on conflict (persona_id, id) do nothing$$), 0, '… y repetirla no cambia nada');
 select pruebas.como_postgres();
-select pruebas.igual((select esfuerzo from public.hab_ent_sesiones where id = 'f8100000-0000-5000-8000-000000000001'), 3::smallint, 'La sesión de Ana quedó como ella la dejó');
-select pruebas.igual((select reps from public.hab_ent_series where id = 'f8300000-0000-5000-8000-000000000001'), 9::smallint, '… y su serie');
-select pruebas.igual((select nombre from public.hab_ent_bandas where id = 'f8200000-0000-4000-8000-000000000001'), 'Nueva', '… y su banda');
+select pruebas.igual((select esfuerzo from public.hab_ent_sesiones where id = 'f8100000-0000-5000-8000-000000000001' and persona_id = pruebas.id_persona('ana@ejemplo.test')),
+  3::smallint, 'La sesión de Ana quedó como ella la dejó');
+select pruebas.igual((select reps from public.hab_ent_series where id = 'f8300000-0000-5000-8000-000000000001' and persona_id = pruebas.id_persona('ana@ejemplo.test')),
+  9::smallint, '… y su serie');
+select pruebas.igual((select nombre from public.hab_ent_bandas where id = 'f8200000-0000-4000-8000-000000000001' and persona_id = pruebas.id_persona('ana@ejemplo.test')),
+  'Nueva', '… y su banda');
+select pruebas.igual((select count(*)::int from public.hab_ent_sesiones where id = 'f8100000-0000-5000-8000-000000000001'), 2,
+  'Hay dos filas con ese id: una de cada persona');
+select pruebas.igual((select pg_get_constraintdef(k.oid) from pg_constraint k where k.conrelid = 'public.hab_ent_sesiones'::regclass and k.contype = 'p'),
+  'PRIMARY KEY (persona_id, id)', 'La llave primaria de las sesiones es (persona_id, id)');
 
 rollback;
