@@ -253,8 +253,8 @@ Del diseño (`diseno-app-habitos.md:250-255`): **20 a 40 minutos**, caminata sua
 
 | Plantilla | Contenido inicial (propuesta, `borrador`) | Duración |
 |---|---|---|
-| **R1** (martes en el plan de 4 y 5 días) | Caminata suave 15 min; movilidad de cadera 5 min; movilidad de hombros 5 min; respiración 3 min | ~28 min |
-| **R2** (jueves en el plan de 5 días) | Caminata suave 20 min; movilidad de espalda 5 min; estiramientos 7 min; respiración y cierre 5 min | ~37 min |
+| **R1** (viernes en el plan de 4 y 5 días; martes en las variantes con C el jueves o el viernes) | Caminata suave 15 min; movilidad de cadera 5 min; movilidad de hombros 5 min; respiración 3 min | ~28 min |
+| **R2** (jueves en el plan de 5 días; viernes si C es el jueves) | Caminata suave 20 min; movilidad de espalda 5 min; estiramientos 7 min; respiración y cierre 5 min | ~37 min |
 | Sin caminadora | La caminata se cambia por marcha suave de la misma duración al aire libre o en el lugar | — |
 
 Qué variante propone la app: la persona responde al abrir *«¿Cómo amaneciste? Descansado · Normal · Cansado»* (un toque); con **Cansado** propone R1 (la más corta). Cuando exista el registro de sueño (etapa 6 del diseño), la respuesta puede sugerirla la calidad de la noche anterior (`diseno-app-habitos.md:254`). **No hay series, cargas ni récords en una regenerativa:** solo se registran los minutos hechos y qué bloques completó.
@@ -450,13 +450,20 @@ Una variante está **disponible** si **todos** los ids de su `requiere` están e
 
 ### 5.6 Semana, 48 horas y la bicicleta
 
-**Plan semanal** (del diseño, `:218-222`, editable): 
+**Plan semanal por omisión (decisión del dueño, 24/nov/2026, editable):** la semana **reordenada** para que la pierna no choque con la ruta del sábado (ver 22).
 
 | Días | Lunes | Martes | Miércoles | Jueves | Viernes | Sábado | Domingo |
 |---|---|---|---|---|---|---|---|
-| **3** | A | — | B | — | C | Bicicleta | Descanso |
-| **4** | A | R1 | B | — | C | Bicicleta | Descanso |
-| **5** | A | R1 | B | R2 | C | Bicicleta | Descanso |
+| **3** | A | C | B | libre | libre | Bicicleta | Descanso |
+| **4** | A | C | B | libre | R1 | Bicicleta | Descanso |
+| **5** | A | C | B | R2 | R1 | Bicicleta | Descanso |
+
+Las regenerativas ya no caen en martes: R1 es el viernes (suave, un día antes de la ruta) y R2, en el plan de 5 días, el jueves. Variantes que se conservan en el dominio (`planSemanal(dias, cEnJueves: true)` y `planSemanal(dias, cEnViernes: true)`, nunca juntas):
+
+| Variante | Lunes | Martes | Miércoles | Jueves | Viernes | Con la ruta del sábado a las 8:00 |
+|---|---|---|---|---|---|---|
+| **C el jueves** (recomendación anterior, pregunta 4) | A | R1 (4 y 5 días) | B | C | R2 (5 días) | 36 h 45 min con C a las 19:15: **avisa** |
+| **C el viernes** (tabla literal del diseño, `:218-222`) | A | R1 (4 y 5 días) | B | R2 (5 días) | C | 12 h 45 min con C a las 19:15: **avisa** y propone mover C al jueves |
 
 **Regla de las 48 horas (Propuesta PG-07).** El diseño pide «al menos 48 h entre sesiones del mismo grupo muscular» (`:245`). Se lee así: entre dos sesiones que comparten un **grupo primario**, el **inicio a inicio** debe ser de al menos **48 h − 60 min de tolerancia** (47 h; editable). Los grupos de una sesión son la unión de los grupos primarios de sus ejercicios: A = {pecho, hombro, tríceps}; B = {espalda, hombro, bíceps}; C = {cuádriceps, glúteo, core}. **Avisa, no bloquea** (sin culpa).
 
@@ -465,9 +472,11 @@ Una variante está **disponible** si **todos** los ids de su `requiere` están e
 | A el lunes 20:00 y B el miércoles 19:15 | 47 h 15 min (comparten `hombro`) | Cumple |
 | A el lunes 20:00 y B el miércoles 18:30 | 46 h 30 min | Aviso: «A y B comparten hombro; mejor 30 min más tarde» |
 | A el lunes y B el martes a la misma hora | 24 h | Aviso |
+| A el lunes 19:15 y B el miércoles 19:15 (semana por omisión) | 48 h (comparten `hombro`) | Cumple |
+| C el martes 19:15 y la ruta del sábado a las 8:00 (semana por omisión) | 84 h 45 min | Cumple, sin aviso |
 | Dos sesiones de fuerza el mismo día | — | Aviso y se propone otro día; **máximo una sesión de fuerza por día** |
 
-**La bicicleta cuenta como piernas (H-07).** La ruta de 4 horas del sábado a las 8:00 carga cuádriceps y glúteo. Con C el **viernes a las 20:00** el intervalo es de **12 h**: el generador avisa y propone, en orden: (a) **mover C al jueves** (en el plan de 5 días, R2 pasa al viernes); (b) C en versión **corta**; (c) dejar el plan como está. Es la **pregunta 4**; hasta que el dueño responda, el plan por omisión sigue el diseño (C el viernes) y **muestra el aviso**.
+**La bicicleta cuenta como piernas (H-07).** La ruta de 4 horas del sábado a las 8:00 carga cuádriceps y glúteo. Con la **semana por omisión** (C el martes a las 19:15) hay **84 h 45 min** hasta la ruta: **no sale aviso**. Si la persona mueve C a otro día, el generador avisa como antes: con C el **viernes a las 20:00** el intervalo es de **12 h** y propone, en orden, (a) **mover C al jueves**, (b) C en versión **corta** y (c) dejar el plan como está; con C el jueves quedan 36 h 45 min, el aviso sigue y la propuesta (a) ya no aparece. Es la **pregunta 4**, resuelta por el dueño el 24/nov/2026 con la semana reordenada (sección 22). El aviso **no bloquea** y no se esconde: sale tal cual en las variantes.
 
 **Sesión perdida (PG-24).** Una sesión que no se hizo se puede **mover a un día libre de la misma semana** (respetando las 48 h, con aviso si no cumple) o **saltarse**; no se acumula ni se «recupera» con dos sesiones el mismo día. La progresión usa **la última vez que se hizo cada plantilla**, no el calendario (5.8), así que saltarse un día no rompe nada (diseño `:547`: «reprogramar sin romper el plan»).
 
@@ -816,13 +825,13 @@ Dónde van las pruebas: **dominio** `paquetes/habitos_dominio/test/gimnasio/` (`
 | CA-G-10 | **Tiempo estimado:** con los parámetros de 5.5, A, B y C dan corta 29.3, 29.3 y 31.2 min; estándar 35.3, 35.3 y 45.8; larga (4 series, sin extras) 48.4, 48.4 y 63.1; larga con extras 60.9 (A) y 61.3 (B). Las tolerancias (corta 27–33, estándar 33–50, larga 48–65) se cumplen; **caso malo:** un cambio de la regla de series que mueva A estándar fuera de 33–50 falla | `duracion_test.dart` |
 | CA-G-11 | **Elegir versión** (duración estimada + 10 min de margen): para C, con un hueco de 75 min elige larga (63.1 + 10 = 73.1) y con 70 elige estándar (45.8 + 10 = 55.8); para A, con 40 min elige corta (29.3 + 10 = 39.3) y con 38 **no cabe ninguna** y propone mover el bloque o la regenerativa (no hay cuarta versión) | `version_test.dart` |
 | CA-G-12 | **Calibración:** tras 3 sesiones con `descanso_real_s` y tiempos de repetición propios, la estimación usa la mediana de la persona; con menos de 3, usa los valores de 5.5 | `duracion_test.dart` |
-| CA-G-13 | **Plan semanal 3, 4 y 5 días:** la función devuelve exactamente las tres filas de 5.6; sábado `bici` y domingo `descanso` en todos; las regenerativas solo en martes y jueves | `plan_semana_test.dart` |
+| CA-G-13 | **Plan semanal 3, 4 y 5 días:** la función devuelve por omisión las tres filas de 5.6 (semana reordenada: A, C, B; R2 jueves y R1 viernes); sábado `bici` y domingo `descanso` en todos; las regenerativas ya no caen en martes; las variantes `cEnJueves` y `cEnViernes` devuelven las filas anteriores y no se pueden pedir juntas | `plan_semana_test.dart` |
 
 ### 13.3 Semana, progresión y ciclos (G1.2 y G1.3)
 
 | # | Criterio | Cómo se comprueba |
 |---|---|---|
-| CA-G-14 | **48 horas:** los cuatro casos de 5.6 (47 h 15 min cumple; 46 h 30 min avisa; 24 h avisa; dos sesiones el mismo día avisa); la bicicleta del sábado a las 8:00 con C el viernes a las 20:00 (12 h) avisa y propone mover C al jueves, C corta o dejarlo; **nunca bloquea** | `cuarenta_y_ocho_horas_test.dart` |
+| CA-G-14 | **48 horas:** los cuatro casos de 5.6 (47 h 15 min cumple; 46 h 30 min avisa; 24 h avisa; dos sesiones el mismo día avisa); la bicicleta del sábado a las 8:00 con C el viernes a las 20:00 (12 h) avisa y propone mover C al jueves, C corta o dejarlo; con C el jueves (36 h 45 min) avisa; **con la semana por omisión (C el martes, 84 h 45 min) no avisa**; **nunca bloquea** | `cuarenta_y_ocho_horas_test.dart` |
 | CA-G-15 | **Sesión perdida:** saltar una sesión no cambia la carga sugerida (se compara con la última vez que se hizo); mover la sesión respeta las 48 h con aviso; no se permiten dos de fuerza en un día | `sesion_perdida_test.dart` |
 | CA-G-16 | **Doble progresión:** los cuatro ejemplos de 5.8 (12-12-12 con esfuerzo 3 sube a la placa 6 con objetivo de 10; 12-12-11 mantiene; 12-12-12 con esfuerzo 5 mantiene; sesión saltada sin cambio); sin esfuerzo registrado se asume 3 | `progresion_test.dart` |
 | CA-G-17 | **Escalera sin carga:** con el tope de la pila confirmado, los peldaños se aplican **en orden** (repeticiones, series, tempo, descanso, variante, banda) y ninguno se salta; sin confirmar el tope **no** se ofrece la escalera salvo que la persona marque «ya estoy en la última placa». **Caso malo:** subir una placa más allá de `pasos_max` falla | `progresion_test.dart` |
@@ -898,7 +907,7 @@ Dónde van las pruebas: **dominio** `paquetes/habitos_dominio/test/gimnasio/` (`
 | R-1 | **El contenido de ejercicios se toma por consejo profesional.** Es una lista de ejercicios comunes, no una valoración | Línea fija «guía general que no sustituye a un profesional»; todo en `borrador` hasta una revisión (PG-25, pregunta 1); sin diagnósticos ni tratamientos (CA-G-03); la app no pregunta ni guarda condiciones médicas |
 | R-2 | **Datos del Marcy sin confirmar** (pila, kg por placa, puestos, anclajes, banco) | Cada dato lleva estado; lo no confirmado no entra a ningún cálculo (CA-G-04); la persona los confirma en la primera sesión (F-E5) |
 | R-3 | **Las duraciones del diseño no coinciden con las plantillas** (H-08) | Se muestra la duración estimada real; las etiquetas son metas con tolerancia; se calibra con el uso (5.5) |
-| R-4 | **C el viernes y la bicicleta el sábado** (H-07): piernas sin las 48 h | Aviso, no bloqueo, con tres salidas; pregunta 4 |
+| R-4 | **C el viernes y la bicicleta el sábado** (H-07): piernas sin las 48 h | Aviso, no bloqueo, con tres salidas; la semana por omisión (C el martes) ya no lo dispara (sección 22) |
 | R-5 | **El temporizador en segundo plano llega tarde** (alarmas inexactas) | El temporizador cuenta contra un instante final; la notificación es una ayuda; con la app en pantalla es exacto; medición en el A52 |
 | R-6 | **Frecuencia de una vez por semana por grupo muscular** (3 sesiones A, B, C): progresa despacio | Es el diseño del dueño; la escalera sin carga (5.8) y la estructura configurable posterior lo compensan; no es un error |
 | R-7 | **Un patrón de sustituciones insinúa una molestia** en el servidor | RLS por persona; el motivo `molestia` no existe (CA-G-27); riesgo aceptado y mostrado en la pregunta 7 |
@@ -967,7 +976,7 @@ Solo las que de verdad cambian el diseño. Cada una trae mi recomendación. **Si
 | 1 | **¿Quién revisa el contenido de los ejercicios?** El catálogo (ejercicios, variantes con banda, plantillas, textos de molestias) lo redacta una IA sin ser profesional. ¿Lo revisa una persona competente (entrenador o fisioterapeuta) antes de usarlo? | Mientras no se revise, todo sale `borrador` y la sesión lo dice (PG-25, CA-G-45) | **Sí, una sola vez** (una hora o dos con el catálogo en mano) y registrar la fecha. Sin esa revisión se puede usar, con la línea «Contenido en revisión» |
 | 2 | **Datos de tu equipo.** ¿Puedes verificar en el aparato: cuántas placas tiene la pila y cuántos kg es cada una, si la polea es 1:1 o 2:1, qué otros puestos tiene el Marcy, si hay punto de anclaje seguro para bandas, si el banco se ajusta a plano y cuánto aguanta, si hay tobillera para la polea? ¿Qué bandas tienes (cuántas, colores o etiquetas, resistencia) y hay ancla de puerta? | Hasta confirmarlos, la carga va en «placas», no hay tope de pila ni variantes con ancla en la estación (3.2) | Confirmarlos **en la primera sesión** (F-E5) y capturar las bandas en el inventario. Sin ancla de puerta ni punto en la estación, solo se usan bandas pisadas |
 | 3 | **¿Qué tablet llevas al gimnasio: la pública de la casa («Hogar») o una personal?** | Con la **pública**, la sesión necesita retener la pantalla (PG-17) y solo ve lo no sensible; con la **personal**, funciona como el teléfono (9.2) | Cualquiera sirve. Si es la pública, aprobar PG-17 (10 minutos desde el último toque); si es la personal, no hace falta |
-| 4 | **¿Mueves la sesión C (pierna) al jueves?** Con C el viernes por la noche y la ruta de 4 h el sábado a las 8:00 hay solo 12 horas de descanso para las piernas (H-07) | Cambia el plan por omisión y, en el de 5 días, mueve R2 al viernes | **Sí, al jueves** en los planes de 3, 4 y 5 días (en el de 5, R2 pasa al viernes). Si no, C el viernes con el aviso |
+| 4 | **¿Mueves la sesión C (pierna) al jueves?** Con C el viernes por la noche y la ruta de 4 h el sábado a las 8:00 hay solo 12 horas de descanso para las piernas (H-07) | Cambia el plan por omisión y, en el de 5 días, mueve R2 al viernes | **Sí, al jueves** en los planes de 3, 4 y 5 días (en el de 5, R2 pasa al viernes). Si no, C el viernes con el aviso. *Superado el 24/nov/2026: el dueño eligió la semana reordenada (C el martes), sección 22.* |
 | 5 | **Semana de descarga: ¿cada 4.ª semana (3 + 1) o solo cuando la app la sugiera?** | Cambia el ciclo por omisión (5.9) | **Cada 4.ª semana**, editable, y además sugerida antes si hay dos sesiones al límite. Tú decides en cada caso |
 | 6 | **Ventana de prueba: ¿empezamos por la noche (tu plan del diseño: fuerza después de las 19:00, `:243`) o por la mañana?** El diseño se contradice (H-06) | Cambia el valor por omisión de `ventana` y el orden de las dos semanas de prueba | **Noche** dos semanas; luego la mañana solo si el sueño y la hora de despertar lo permiten (depende del plan de transición de sueño) |
 | 7 | **¿Basta con que las molestias estén solo en el dispositivo?** Las cargas, series y esfuerzo van a tu hogar en claro (solo tú los ves). Un patrón de ejercicios sustituidos podría insinuar una molestia (R-7) | La alternativa es cifrar también las series con un sistema como el del diario (D13), con su frase y más trabajo | **Sí, basta.** Las molestias en el equipo (y en el respaldo con la frase); las series en tu hogar |
@@ -1004,7 +1013,7 @@ El dueño respondió «Comienza la construcción de gimnasio» (23/nov/2026) tra
 1. **Mover C al jueves NO resuelve la bicicleta del sábado:** con C el jueves a las 19:15 y la ruta el sábado a las 8:00 hay 36 h 45 min, menos de las 47 h de la regla; el aviso sigue (con C el viernes eran 12 h, ahora son 36). La pregunta 4 mejora el intervalo, no lo cierra; opciones: C corta, dejarlo, o la ruta más tarde.
 2. Los tiempos de 5.5 se **truncan** a una décima (63.15 → 63.1); los extras de la sesión larga usan sus propias series (3); «3×12» va codificado 10–14 y «3×10 por pierna» 8–12 porque CA-G-01 exige `reps_min < reps_max`; la plancha extra de A y B es 30–30 s.
 3. **CA-G-22 (hombro leve) no tiene alternativa sin esa zona en el catálogo real:** todas las variantes de press cargan el hombro; salen «con precaución». El agente no inventó diferencias clínicas; que haya alternativas lo decide la revisión del contenido (pregunta 1).
-4. **CA-G-13** se cumplió con C el jueves (decisión del dueño); `cEnViernes: true` devuelve las filas literales de 5.6.
+4. **CA-G-13** se cumplió con C el jueves (decisión del dueño); `cEnViernes: true` devuelve las filas literales de 5.6. *Nota del 24/nov/2026: superado por la decisión 3 de la sección 22; hoy la omisión es la semana reordenada y C el jueves es la variante `cEnJueves: true`.*
 5. La calibración usa `tiempos` solo locales (no hay columna en 4.2); la progresión es una función pura del historial.
 
 **Pedidos pendientes a otras etapas:** G3 (cola `habitos.gim_*` con el orden de subida del informe de G2, `salud_local`, retención de la tablet, FLAG_SECURE); G5 (armar `lunesEnFoco`, medir `tiempos`, ids UUID v5, mapear a las columnas de 4.2, reemplazar el gadget viejo `SerieDescanso`); G7 (documentar `hab_ent_*` en `api/openapi.yaml`). Decisiones de diseño: el acento de día de Sport pasó a `0xFF356000` (contraste 7.43:1); el catálogo de estilos tiene tres (Futurista, Glass, Bento en pausa), no cuatro.
@@ -1014,5 +1023,5 @@ El dueño respondió «Comienza la construcción de gimnasio» (23/nov/2026) tra
 
 1. **Pantalla encendida durante la sesión (H-14): aprobado un canal nativo, sin paquete nuevo** (mismo tipo de canal que ya usa FLAG_SECURE). Se prueba en el Galaxy A52. La laptop y la tablet pública no lo necesitan.
 2. **Molestias: sin PIN.** Basta FLAG_SECURE y modo privado (como pide 9 y como ya está en G3).
-3. **Choque de 48 h con la bici:** el dueño preguntó «¿qué hay de jueves y viernes?» antes de elegir; la propuesta del arquitecto (semana A lunes, C martes, B miércoles, jueves y viernes ligeros) queda a su confirmación. Mientras no confirme, el plan por omisión del dominio no cambia (C el jueves, con aviso).
+3. **Choque de 48 h con la bici: el dueño eligió la semana reordenada (24/nov/2026):** lunes A, martes C, miércoles B, jueves libre (descanso), viernes R1 (regenerativa suave), sábado bicicleta, domingo descanso. Por tamaño: **3 días** = A, C, B; **4 días** = además R1 el viernes; **5 días** = además R2 el jueves y R1 el viernes. Cumple la regla de 48 h sin excepciones: A lunes 19:15 → B miércoles 19:15 = 48 h (comparten hombro); C martes 19:15 → ruta sábado 8:00 = 84 h 45 min; A→C y C→B no comparten grupo. **Es el plan por omisión de `planSemanal(dias)`** y con él no sale el aviso de la bicicleta. **Variantes que quedan** (editables, con el aviso de siempre): `cEnJueves: true` (A-R1-B-C-R2: 36 h 45 min con la ruta, avisa) y `cEnViernes: true` (tabla literal del diseño A-R1-B-R2-C: 12 h 45 min, avisa y propone mover C al jueves). Queda abierta, solo si la persona elige una variante, la propuesta «mover C al martes» en el aviso de la bicicleta (ver `fase-8-habitos-bicicleta.md`, 12.2).
 4. **Bicicleta:** primero la versión sin paquetes (B1 a B7) **y también** el mapa y el visor (V2), este último solo como **evaluación** de paquetes (licencia, compatibilidad y compilación; B8) y sin instalar nada en la app hasta que el dueño apruebe paquetes concretos. Ver `docs/specs/fase-8-habitos-bicicleta.md`.

@@ -117,30 +117,111 @@ void main() {
       },
     );
 
-    test('el plan por omisión (C el jueves, hora 19:15) solo avisa de la bicicleta', () {
+    /// Pone un plan en el calendario de la semana del 30/nov/2026: fuerza y
+    /// regenerativas a las 19:15 y la bicicleta a las 8:00 del sábado.
+    List<SesionProgramada> calendario(PlanSemana plan) {
       final lunes = lunes30nov;
-      for (final d in [3, 4, 5]) {
-        final plan = planSemanal(d);
-        final sesiones = <SesionProgramada>[
-          for (final e in plan.porDia.entries)
-            if (e.value != 'descanso')
-              SesionProgramada(
-                e.value,
-                DateTime.utc(
-                  lunes.year,
-                  lunes.month,
-                  lunes.day + e.key - 1,
-                  e.value == 'bici' ? 8 : 19,
-                  e.value == 'bici' ? 0 : 15,
-                ),
+      return [
+        for (final e in plan.porDia.entries)
+          if (e.value != 'descanso')
+            SesionProgramada(
+              e.value,
+              DateTime.utc(
+                lunes.year,
+                lunes.month,
+                lunes.day + e.key - 1,
+                e.value == 'bici' ? 8 : 19,
+                e.value == 'bici' ? 0 : 15,
               ),
-        ];
-        final avisos = revisar(sesiones);
-        // A (lunes) y B (miércoles) a las 19:15: 48 h, cumple. B y C no
-        // comparten grupo. Solo C → bici (36 h 45 min).
+            ),
+      ];
+    }
+
+    test(
+      'la semana por omisión (C el martes, hora 19:15) no avisa de nada',
+      () {
+        for (final d in [3, 4, 5]) {
+          final sesiones = calendario(planSemanal(d));
+          // A (lunes) y B (miércoles) a las 19:15: 48 h, cumple. A→C y C→B no
+          // comparten grupo. C (martes) → bici (sábado 8:00): 84 h 45 min.
+          expect(revisar(sesiones), isEmpty, reason: 'plan de $d');
+        }
+      },
+    );
+
+    test(
+      'C el martes a las 19:15 y la ruta del sábado a las 8:00: 84 h 45 min, '
+      'cumple; A el lunes y B el miércoles a las 19:15: 48 h, cumple',
+      () {
+        final ruta = revisar([
+          SesionProgramada('C', t(1, 19, 15, mes: 12)),
+          SesionProgramada('bici', t(5, 8, 0, mes: 12)),
+        ]);
+        expect(ruta, isEmpty);
+        final ab = revisar([
+          SesionProgramada('A', t(30, 19, 15)),
+          SesionProgramada('B', t(2, 19, 15, mes: 12)),
+        ]);
+        expect(ab, isEmpty);
+      },
+    );
+
+    test('CASO MALO: la semana por omisión sigue avisando si B se corre una '
+        'hora antes (A lunes 19:15, B miércoles 18:00: 46 h 45 min)', () {
+      final sesiones = calendario(planSemanal(3))
+          .map(
+            (s) =>
+                s.tipo == 'B' ? SesionProgramada('B', t(2, 18, 0, mes: 12)) : s,
+          )
+          .toList();
+      final avisos = revisar(sesiones);
+      expect(avisos.map((x) => '${x.a.tipo}-${x.b.tipo}'), ['A-B']);
+      expect(avisos.single.faltanMin, 15);
+    });
+
+    test('las regenerativas de la semana por omisión (R2 jueves, R1 viernes) '
+        'no avisan contra la bicicleta ni contra la fuerza', () {
+      final sesiones = calendario(planSemanal(5));
+      expect(sesiones.map((s) => s.tipo), containsAll(['R1', 'R2']));
+      expect(
+        revisar(sesiones).where(
+          (x) =>
+              ['R1', 'R2'].contains(x.a.tipo) ||
+              ['R1', 'R2'].contains(x.b.tipo),
+        ),
+        isEmpty,
+      );
+    });
+
+    test('con C el jueves (variante), el plan solo avisa de la bicicleta '
+        '(36 h 45 min) y no propone mover al jueves', () {
+      for (final d in [3, 4, 5]) {
+        final avisos = revisar(calendario(planSemanal(d, cEnJueves: true)));
+        // A→B 48 h cumple; B y C no comparten grupo. Solo C → bici.
         expect(avisos.map((x) => '${x.a.tipo}-${x.b.tipo}'), [
           'C-bici',
         ], reason: 'plan de $d');
+        expect(avisos.single.intervaloMin, 36 * 60 + 45);
+        expect(avisos.single.propuestas, [
+          AccionSemana.versionCorta,
+          AccionSemana.dejarComoEsta,
+        ]);
+      }
+    });
+
+    test('con C el viernes (tabla del diseño), el plan avisa de la bicicleta '
+        '(12 h 45 min) y propone mover C al jueves', () {
+      for (final d in [3, 4, 5]) {
+        final avisos = revisar(calendario(planSemanal(d, cEnViernes: true)));
+        expect(avisos.map((x) => '${x.a.tipo}-${x.b.tipo}'), [
+          'C-bici',
+        ], reason: 'plan de $d');
+        expect(avisos.single.intervaloMin, 12 * 60 + 45);
+        expect(avisos.single.propuestas, [
+          AccionSemana.moverAlJueves,
+          AccionSemana.versionCorta,
+          AccionSemana.dejarComoEsta,
+        ]);
       }
     });
   });

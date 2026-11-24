@@ -31,23 +31,63 @@ class PlanSemana {
       porDia.values.where(TipoDia.fuerza.contains).length;
 }
 
-/// Plan de 3, 4 o 5 días (5.6). Por omisión sigue la **recomendación vigente
-/// del dueño** (pregunta 4, sección 20): la sesión C **al jueves** y, en el
-/// plan de 5 días, R2 pasa al viernes. Con [cEnViernes] sale la tabla original
-/// del diseño (C el viernes, R2 el jueves). El sábado es bicicleta y el
-/// domingo descanso en todos.
-PlanSemana planSemanal(int dias, {bool cEnViernes = false}) {
+/// Plan de 3, 4 o 5 días (5.6). Por omisión sigue la **semana reordenada que
+/// eligió el dueño el 24/nov/2026** (sección 22 de la especificación del
+/// gimnasio) para cerrar el choque de 48 h entre la pierna y la ruta en bici
+/// del sábado a las 8:00:
+///
+/// | Días | L | M | X | J | V | S | D |
+/// |---|---|---|---|---|---|---|---|
+/// | 3 | A | C | B | libre | libre | bici | descanso |
+/// | 4 | A | C | B | libre | R1 | bici | descanso |
+/// | 5 | A | C | B | R2 | R1 | bici | descanso |
+///
+/// A lunes y B miércoles comparten hombro y quedan a 48 h exactas; C el martes
+/// no comparte grupo con ninguna y llega a la ruta con más de 84 h. Las
+/// regenerativas caen en jueves y viernes (nunca en martes).
+///
+/// Variantes que se conservan (se piden con un parámetro nombrado; no se
+/// pueden combinar):
+/// - [cEnJueves]: la recomendación anterior (pregunta 4): A-R1-B-C-R2, con C
+///   el jueves y, en el plan de 5 días, R2 el viernes. Con la ruta del sábado
+///   a las 8:00 quedan 36 h 45 min y el aviso de la bicicleta sigue saliendo.
+/// - [cEnViernes]: la tabla literal del diseño (A-R1-B-R2-C), con C el viernes
+///   y R2 el jueves. Con la ruta quedan 12 h y el aviso sale.
+///
+/// El sábado es bicicleta y el domingo descanso en todas.
+PlanSemana planSemanal(
+  int dias, {
+  bool cEnViernes = false,
+  bool cEnJueves = false,
+}) {
   if (dias != 3 && dias != 4 && dias != 5) {
     throw ArgumentError.value(dias, 'dias', 'el plan es de 3, 4 o 5 días');
   }
-  final c = cEnViernes ? 5 : 4;
-  final r2 = cEnViernes ? 4 : 5;
+  if (cEnViernes && cEnJueves) {
+    throw ArgumentError(
+      'cEnViernes y cEnJueves son variantes distintas: elige una',
+    );
+  }
+  if (cEnViernes || cEnJueves) {
+    // Variantes con A el lunes, R1 el martes, B el miércoles y C al final.
+    final c = cEnViernes ? 5 : 4;
+    final r2 = cEnViernes ? 4 : 5;
+    return PlanSemana({
+      1: TipoDia.a,
+      if (dias >= 4) 2: TipoDia.r1,
+      3: TipoDia.b,
+      c: TipoDia.c,
+      if (dias == 5) r2: TipoDia.r2,
+      6: TipoDia.bici,
+      7: TipoDia.descanso,
+    });
+  }
   return PlanSemana({
     1: TipoDia.a,
-    if (dias >= 4) 2: TipoDia.r1,
+    2: TipoDia.c,
     3: TipoDia.b,
-    c: TipoDia.c,
-    if (dias == 5) r2: TipoDia.r2,
+    if (dias == 5) 4: TipoDia.r2,
+    if (dias >= 4) 5: TipoDia.r1,
     6: TipoDia.bici,
     7: TipoDia.descanso,
   });
@@ -153,7 +193,8 @@ List<AvisoSemana> revisarSemana(
           : (b.tipo == TipoDia.c ? b : null);
       final List<AccionSemana> propuestas;
       if (conBici && sesionC != null) {
-        // 5.6: mover C al jueves, C corta o dejarlo (en ese orden).
+        // 5.6: mover C al jueves, C corta o dejarlo (en ese orden). Con la
+        // semana por omisión (C el martes) este aviso no llega a salir.
         propuestas = [
           if (sesionC.inicio.weekday == DateTime.friday)
             AccionSemana.moverAlJueves,
