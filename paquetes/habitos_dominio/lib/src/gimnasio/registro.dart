@@ -6,6 +6,7 @@
 library;
 
 import 'reglas.dart';
+import 'ventana.dart';
 
 /// Motivo de un cambio de ejercicio **como lo guarda el servidor**: no existe
 /// «molestia» (PG-19, CA-G-27).
@@ -193,7 +194,24 @@ class SesionRegistrada {
   /// ¿Cuenta como hecha? (no `en_curso`).
   bool get terminada => estado != EstadoSesion.enCurso;
 
-  /// Fila del servidor, solo con las columnas de 4.2 (sin molestias).
+  /// Ventana que se guarda en el servidor: la columna `ventana` es obligatoria
+  /// y solo admite `manana` o `noche`. Si la ventana es `manana` o `noche`, se
+  /// respeta; si es flexible o falta, se deduce de la hora local de [inicio]
+  /// ([ventanaDeInicio]: antes del mediodía, mañana; si no, noche). Sin
+  /// [inicio] tampoco hay hora que mirar y se usa `noche`, la ventana por
+  /// omisión del perfil.
+  VentanaEntrenamiento get ventanaParaServidor {
+    final v = ventana;
+    if (v == VentanaEntrenamiento.manana || v == VentanaEntrenamiento.noche) {
+      return v!;
+    }
+    final ini = inicio?.toLocal();
+    if (ini == null) return VentanaEntrenamiento.noche;
+    return ventanaDeInicio(ini.hour * 60 + ini.minute);
+  }
+
+  /// Fila del servidor, solo con las columnas de 4.2 (sin molestias). Los
+  /// instantes `inicio` y `fin` salen en UTC.
   Map<String, Object?> aJsonServidor({required String id, String? bloqueId}) =>
       {
         'id': id,
@@ -204,12 +222,10 @@ class SesionRegistrada {
         'plantilla': plantilla,
         'version': version.id,
         'semana_tipo': semanaTipo.id,
-        'ventana': ventana == null || ventana == VentanaEntrenamiento.flexible
-            ? null
-            : ventana!.id,
+        'ventana': ventanaParaServidor.id,
         'bloque_id': bloqueId,
-        'inicio': inicio?.toIso8601String(),
-        'fin': fin?.toIso8601String(),
+        'inicio': inicio?.toUtc().toIso8601String(),
+        'fin': fin?.toUtc().toIso8601String(),
         'estado': estado.id,
         'esfuerzo': esfuerzo,
         'energia': energia,
