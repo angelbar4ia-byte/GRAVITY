@@ -190,12 +190,17 @@ class ServicioGimnasio {
   Future<void> aceptarAviso() =>
       guardarPerfil({'aviso_visto_en': ahora.toUtc().toIso8601String()});
 
+  /// La fila del inventario **de ahora** (no la de una lectura vieja): varias
+  /// confirmaciones seguidas del mismo aparato no se pisan.
+  Future<GimInventarioFila?> _filaDeInventario(String itemId) async =>
+      (await repo.inventario(persona)).where((f) => f.itemId == itemId).firstOrNull;
+
   Future<void> guardarEstadoItem(
     DatosGimnasio d,
     String itemId,
     EstadoItem estado,
-  ) {
-    final previo = d.inventarioFilas.where((f) => f.itemId == itemId).firstOrNull;
+  ) async {
+    final previo = await _filaDeInventario(itemId);
     return repo.guardarItemInventario(
       persona,
       itemId: itemId,
@@ -207,10 +212,10 @@ class ServicioGimnasio {
 
   /// «Confirmar en el aparato» (F-E5): guarda el [valor] del [campo] en el
   /// aparato al que pertenece, con la fecha. Solo entonces entra a un cálculo.
-  Future<void> confirmarDato(DatosGimnasio d, String campo, int valor) {
+  Future<void> confirmarDato(DatosGimnasio d, String campo, int valor) async {
     final itemId = camposDeAparato[campo];
     if (itemId == null) throw ArgumentError('Ese dato no se confirma aquí.');
-    final previo = d.inventarioFilas.where((f) => f.itemId == itemId).firstOrNull;
+    final previo = await _filaDeInventario(itemId);
     return repo.guardarItemInventario(
       persona,
       itemId: itemId,
@@ -225,11 +230,11 @@ class ServicioGimnasio {
   }
 
   /// Quita una confirmación (vuelve a «confirmar en el aparato»).
-  Future<void> olvidarDato(DatosGimnasio d, String campo) {
+  Future<void> olvidarDato(DatosGimnasio d, String campo) async {
     final itemId = camposDeAparato[campo];
-    if (itemId == null) return Future.value();
-    final previo = d.inventarioFilas.where((f) => f.itemId == itemId).firstOrNull;
-    if (previo == null) return Future.value();
+    if (itemId == null) return;
+    final previo = await _filaDeInventario(itemId);
+    if (previo == null) return;
     return repo.guardarItemInventario(
       persona,
       itemId: itemId,
