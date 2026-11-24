@@ -45,6 +45,8 @@ double _valorNumerico(SerieRegistrada s, Inventario inv) {
   return (s.segundos ?? s.reps ?? 0).toDouble();
 }
 
+String _capitalizar(String t) => t.isEmpty ? t : t[0].toUpperCase() + t.substring(1);
+
 /// Las barras del historial de un ejercicio: lo mejor de cada semana.
 List<BarraHistorialVista> barrasDeEjercicio(
   String ejercicioId,
@@ -292,7 +294,9 @@ class _CuerpoRecords extends StatelessWidget {
       if (r.mejorCargaPasos != null) {
         poner(
           TipoRecordVista.mejorCarga,
-          mostrarCargaPasos(r.mejorCargaPasos!, datos.inventario).texto,
+          _capitalizar(
+            mostrarCargaPasos(r.mejorCargaPasos!, datos.inventario).texto,
+          ),
           _cuando(id, (x) => x.cargaPasos == r.mejorCargaPasos),
         );
       } else if (r.mejoresReps != null) {

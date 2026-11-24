@@ -10,10 +10,12 @@ import 'package:gravity/nucleo/gimnasio/repositorio_gimnasio.dart';
 import 'package:gravity/modulos/habitos/gimnasio/casos_uso/controlador_sesion.dart';
 import 'package:gravity/modulos/habitos/gimnasio/casos_uso/modo_foco.dart';
 import 'package:gravity/modulos/habitos/gimnasio/casos_uso/servicio_gimnasio.dart';
+import 'package:gravity/diseno/gimnasio/gimnasio.dart' show EstadoDiaPlan;
 import 'package:gravity/modulos/habitos/gimnasio/datos/modelos_gimnasio.dart';
+import 'package:gravity/modulos/habitos/gimnasio/pantallas/hoy_gimnasio.dart' show diasDeLaSemana;
 import 'package:gravity/nucleo/avisos/repositorio_avisos.dart' show TipoEquipoAvisos;
 import 'package:gravity/nucleo/gimnasio/ids_gimnasio.dart';
-import 'package:habitos_dominio/habitos_dominio.dart';
+import 'package:habitos_dominio/habitos_dominio.dart' hide EstadoDiaPlan;
 
 import 'ayuda_gimnasio_app.dart';
 
@@ -469,6 +471,43 @@ void main() {
     });
   });
 
+  group('la semana sin culpa', () {
+    test('antes de empezar el plan ningún día sale «Saltado»', () async {
+      final d = await m.servicio.cargar();
+      final miercoles = DateTime.utc(2026, 12, 2);
+      final dias = diasDeLaSemana(
+        datos: d,
+        hoy: miercoles,
+        catalogo: catalogoGimnasio,
+      );
+      expect(dias.every((x) => x.estado != EstadoDiaPlan.saltado), isTrue);
+      expect(dias.where((x) => x.esHoy), hasLength(1));
+    });
+
+    test('con el plan empezado, un día sin hacer se dice «Saltado», sin más', () async {
+      await m.servicio.iniciarPlan(); // lunes 30/nov
+      final d = await m.servicio.cargar();
+      final dias = diasDeLaSemana(
+        datos: d,
+        hoy: DateTime.utc(2026, 12, 2),
+        catalogo: catalogoGimnasio,
+      );
+      expect(dias[0].estado, EstadoDiaPlan.saltado); // lunes A
+      expect(dias[2].estado, EstadoDiaPlan.pendiente); // hoy, miércoles B
+    });
+
+    test('una regenerativa no cuenta para el objetivo «Entrenamiento»', () async {
+      final h = await m.servicio.entrenamientoDe(lunes30, tipo: 'R1');
+      await m.servicio.marcarHecho(h);
+      final regs = await m.registros.registros(
+        DateTime.utc(2026, 11, 30),
+        DateTime.utc(2026, 11, 30),
+      );
+      expect(regs.where((r) => r.objetivoId != null), isEmpty);
+      expect((await m.repo.sesiones(persona)).single.plantilla, 'R1');
+    });
+  });
+
   group('registrar después (F-E3)', () {
     test('«todo como estaba planeado» guarda las series planeadas', () async {
       final ayer = DateTime(2026, 11, 29);
@@ -592,7 +631,7 @@ void main() {
       final copia = CopiaLocalFoco(m.almacen, persona);
       expect(await copia.leer(), isNull);
       await copia.registrar(
-        'cigarrillo',
+        claveAnonimaDeFoco,
         diaD: DateTime.utc(2026, 11, 25),
         focoDias: 14,
       );
@@ -604,7 +643,7 @@ void main() {
       final guardado = m.almacen.datos.values.join(' ');
       expect(guardado.contains('cajetilla'), isFalse);
       // Sin Día D, se quita.
-      await copia.registrar('cigarrillo', diaD: null, focoDias: 0);
+      await copia.registrar(claveAnonimaDeFoco, diaD: null, focoDias: 0);
       expect((await copia.leer())!.rangos, isEmpty);
     });
   });

@@ -130,6 +130,7 @@ List<DiaSemanaVista> diasDeLaSemana({
   Set<int> conAviso = const {},
 }) {
   final lunes = lunesDe(hoy);
+  final inicioPlan = datos.perfil.inicioCiclo;
   return [
     for (var d = 1; d <= 7; d++)
       () {
@@ -142,8 +143,14 @@ List<DiaSemanaVista> diasDeLaSemana({
         final estado = switch (fila?.estado) {
           'completa' => EstadoDiaPlan.hecho,
           'parcial' => EstadoDiaPlan.parcial,
+          // «Saltado» solo para días de un plan que ya empezó: antes no hay nada
+          // que se haya dejado pasar (sin culpa).
           _ =>
-            dia.esSesion && fecha.isBefore(soloDia(hoy)) && fila == null
+            dia.esSesion &&
+                    fila == null &&
+                    fecha.isBefore(soloDia(hoy)) &&
+                    inicioPlan != null &&
+                    !fecha.isBefore(inicioPlan)
                 ? EstadoDiaPlan.saltado
                 : EstadoDiaPlan.pendiente,
         };

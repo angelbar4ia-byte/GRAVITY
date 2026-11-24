@@ -20,6 +20,7 @@ import 'package:habitos_dominio/habitos_dominio.dart'
     show EstadoRevision, revisionDisponible;
 
 import '../datos/modelos_agenda.dart';
+import '../gimnasio/casos_uso/modo_foco.dart' show claveAnonimaDeFoco;
 import '../gimnasio/estado/proveedores_gimnasio.dart' show copiaFocoProvider;
 import '../datos/biblia.dart';
 import '../datos/documentos_sensibles.dart';
@@ -86,7 +87,7 @@ final estadoEliminarProvider = FutureProvider.family<EstadoHabito?, TipoHabito>(
         final copia = ref.read(copiaFocoProvider);
         if (copia != null) {
           await copia.registrar(
-            tipo.name,
+            claveAnonimaDeFoco,
             diaD: c?.plan.diaD,
             focoDias: c?.plan.focoDias ?? 0,
           );

@@ -8,10 +8,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gravity/app/gimnasio/acceso_gimnasio.dart';
 import 'package:gravity/diseno/gimnasio/gimnasio.dart';
-import 'package:gravity/modulos/habitos/datos/modelos.dart';
-import 'package:gravity/modulos/habitos/gimnasio/casos_uso/servicio_gimnasio.dart';
-import 'package:gravity/nucleo/avisos/aviso_descanso.dart';
-import 'package:gravity/nucleo/gimnasio/repositorio_gimnasio.dart';
+import 'package:gravity/modulos/habitos/gimnasio/pantallas/comun.dart'
+    show TextosHabitosGimnasio;
+import 'package:gravity/nucleo/avisos/repositorio_avisos.dart'
+    show TipoEquipoAvisos;
 import 'package:habitos_dominio/habitos_dominio.dart'
     show MensajesGimnasio, TextoAvisoGimnasio;
 
@@ -99,7 +99,10 @@ void main() {
     ) async {
       final montaje = await montarPantalla(t, m, DestinoGimnasio.sesionEnCurso);
       await t.pump(const Duration(milliseconds: 300));
-      expect(find.text(TextosHabitosGimnasio.calentamiento), findsWidgets);
+      expect(
+        find.textContaining(TextosHabitosGimnasio.calentamiento),
+        findsWidgets,
+      );
       // Empezó y la tablet/pantalla se retienen.
       expect((await m.repo.sesiones(persona)).single.estado, 'en_curso');
       expect(montaje.pantallaEncendida.vigentes, 1);
@@ -161,9 +164,9 @@ void main() {
       await t.pump(const Duration(milliseconds: 300));
       await t.tap(find.byKey(const ValueKey('calentamiento-listo')));
       await t.pump();
-      await t.tap(find.bySemanticsLabel('Agregar una repetición'));
+      await t.tap(find.byIcon(Icons.add).at(0)); // repeticiones
       await t.pump();
-      await t.tap(find.bySemanticsLabel('Poner una placa más'));
+      await t.tap(find.byIcon(Icons.add).at(1)); // placa
       await t.pump();
       await t.tap(find.byKey(const ValueKey('boton-serie-hecha')));
       await t.pump(const Duration(milliseconds: 100));
@@ -194,6 +197,27 @@ void main() {
       expect(await m.repo.sesiones(persona), isEmpty);
     });
 
+    testWidgets('en la tablet se ve el gadget «Serie y descanso» sin desbordes', (
+      t,
+    ) async {
+      await montarPantalla(
+        t,
+        m,
+        DestinoGimnasio.sesionEnCurso,
+        tamano: const Size(1280, 800),
+        equipo: TipoEquipoAvisos.tabletPersonal,
+      );
+      await t.pump(const Duration(milliseconds: 300));
+      await t.tap(find.byKey(const ValueKey('calentamiento-listo')));
+      await t.pump();
+      expect(find.byType(GadgetSerieDescanso), findsOneWidget);
+      await t.tap(find.byKey(const ValueKey('boton-serie-hecha')));
+      await t.pump(const Duration(milliseconds: 100));
+      expect(t.takeException(), isNull);
+      expect((await m.repo.todasLasSeries(persona)), hasLength(1));
+      await terminar(t);
+    });
+
     testWidgets('letra al 200 % en 360 dp: sin desbordes y ✓ de 64 dp o más', (
       t,
     ) async {
@@ -210,7 +234,10 @@ void main() {
       await t.pump();
       expect(t.takeException(), isNull);
       final hecha = find.byKey(const ValueKey('boton-serie-hecha'));
-      await t.ensureVisible(hecha);
+      // El ✓ nunca sale de la pantalla (no hace falta desplazarse).
+      expect(t.getRect(find.byKey(const ValueKey('terminar'))).bottom,
+          lessThanOrEqualTo(800));
+      expect(t.getRect(hecha).bottom, lessThanOrEqualTo(800));
       expect(t.getSize(hecha).height, greaterThanOrEqualTo(64));
       expect(t.takeException(), isNull);
       await terminar(t);

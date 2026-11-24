@@ -11,7 +11,7 @@
 ///
 /// Sin la llave en este equipo (laptop, o tablet sin el PIN) y sin copia, el
 /// valor es `false` y [ModoFocoActivo.legible] dice que no se pudo leer
-/// (`MensajesGimnasioApp.modoFocoNoLegible`).
+/// (`TextosHabitosGimnasio.modoFocoNoLegible`).
 library;
 
 import 'dart:convert';
@@ -21,6 +21,10 @@ import 'package:habitos_dominio/habitos_dominio.dart';
 import '../../../../nucleo/contratos/roles.dart';
 import '../../../../nucleo/seguridad/almacen_seguro.dart';
 import '../../../../nucleo/seguridad/limpieza_local.dart' show claveCopiaLocal;
+
+/// La clave con la que se anota el foco en la copia local: no dice de qué
+/// hábito viene (sin causa).
+const claveAnonimaDeFoco = 'f1';
 
 /// ¿Hay modo foco ese día? (sin causa).
 abstract interface class ModoFocoActivo {
@@ -123,8 +127,8 @@ class CopiaLocalFoco {
     return ModoFocoDeRangos(rangos);
   }
 
-  /// Anota el foco de un hábito ([clave]: `cigarrillo` o `azucar`): del Día D a
-  /// Día D + días de foco − 1; sin Día D, se quita.
+  /// Anota un rango de foco bajo una [clave] anónima ([claveAnonimaDeFoco]):
+  /// del Día D a Día D + días de foco − 1; sin Día D, se quita.
   Future<void> registrar(
     String clave, {
     DateTime? diaD,

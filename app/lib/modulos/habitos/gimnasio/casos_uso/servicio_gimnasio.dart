@@ -766,6 +766,7 @@ class ServicioGimnasio {
       completa ? EstadoRegistro.hecho : EstadoRegistro.parcial,
       bloqueId: h.bloque?.id ?? guardada.bloqueId,
       d: d,
+      esFuerza: h.esFuerza,
     );
     final nueva = sesionDeFila(
       guardada,
@@ -793,6 +794,7 @@ class ServicioGimnasio {
     EstadoRegistro estado, {
     String? bloqueId,
     required DatosGimnasio d,
+    required bool esFuerza,
   }) async {
     final f = soloDia(fecha);
     if (bloqueId != null) {
@@ -806,9 +808,9 @@ class ServicioGimnasio {
         ),
       );
     }
-    // El objetivo «Entrenamiento» cuenta las sesiones de fuerza de la semana.
-    final dia = d.dia(f.weekday);
-    if (dia.esFuerza) {
+    // El objetivo «Entrenamiento» cuenta las sesiones de fuerza de la semana
+    // (las regenerativas no rompen ni suman: PG-14).
+    if (esFuerza) {
       await _asegurarObjetivo(d);
       await registros.guardarRegistro(
         RegistroHab(
@@ -841,6 +843,7 @@ class ServicioGimnasio {
       EstadoRegistro.pendiente,
       bloqueId: h.bloque?.id,
       d: d,
+      esFuerza: h.esFuerza,
     );
   }
 

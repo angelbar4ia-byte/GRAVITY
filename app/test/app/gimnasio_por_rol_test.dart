@@ -301,7 +301,7 @@ void main() {
   group('rutas montadas en la app', () {
     for (final rol in [Rol.dueno, Rol.coadministrador, Rol.familiar]) {
       testWidgets(
-        '${rol.name} en el teléfono: las diez pantallas, marcadas como provisionales',
+        '${rol.name} en el teléfono: las diez pantallas reales (G5), ya no provisionales',
         (tester) async {
           await montarApp(
             tester,
@@ -311,8 +311,14 @@ void main() {
           for (final d in DestinoGimnasio.values) {
             await irA(tester, d.ruta);
             expect(ubicacion(tester), d.ruta, reason: d.name);
-            expect(provisional, findsOneWidget, reason: d.name);
-            expect(find.textContaining('Pantalla provisional'), findsOneWidget);
+            // G5: ya son las pantallas reales, no las maquetas de G4.
+            expect(provisional, findsNothing, reason: d.name);
+            expect(
+              find.textContaining('Pantalla provisional'),
+              findsNothing,
+              reason: d.name,
+            );
+            expect(find.text(d.titulo), findsWidgets, reason: d.name);
           }
           // Se sale de la sesión en curso (tiene un temporizador): sin pendientes.
           await irA(tester, Rutas.ajustes);
@@ -444,7 +450,9 @@ void main() {
         await tester.pumpAndSettle();
         await irA(tester, RutasGimnasio.molestias);
         expect(ubicacion(tester), RutasGimnasio.molestias);
-        expect(provisional, findsOneWidget);
+        // G5: la pantalla real de molestias (no la maqueta provisional).
+        expect(provisional, findsNothing);
+        expect(find.text(DestinoGimnasio.molestias.titulo), findsWidgets);
         expect(
           find.byKey(const ValueKey('molestias-otro-equipo')),
           findsNothing,

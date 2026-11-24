@@ -47,7 +47,7 @@ class _EstadoSesionEnCurso extends ConsumerState<PantallaSesionEnCurso> {
   @override
   void initState() {
     super.initState();
-    _contenedor = ProviderScope.containerOf(context);
+    _contenedor = ProviderScope.containerOf(context, listen: false);
   }
 
   @override
@@ -481,27 +481,47 @@ class _VistaFuerza extends ConsumerWidget {
             ),
           SizedBox(height: v.espacio * 2),
         ];
-        final cuerpo = switch (c.fase) {
-          FaseSesion.calentamiento => _Calentamiento(c: c, catalogo: cat),
-          FaseSesion.serie || FaseSesion.fin => _SerieEnCurso(
-            c: c,
-            catalogo: cat,
-            reloj: reloj,
-            amplio: amplio,
-            alTerminar: alTerminar,
-          ),
-        };
-        return ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            ...cabecera,
-            cuerpo,
-            SizedBox(height: v.espacio * 2),
-            Text(
-              TextosHabitosGimnasio.guardadoEnElEquipo,
-              style: v.lectura(tamano: 13, color: v.textoTenue),
-            ),
-          ],
+        final pie = Text(
+          TextosHabitosGimnasio.guardadoEnElEquipo,
+          style: v.lectura(tamano: 13, color: v.textoTenue),
+        );
+        if (c.fase == FaseSesion.calentamiento) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    ...cabecera,
+                    _Calentamiento(c: c, catalogo: cat),
+                    SizedBox(height: v.espacio * 2),
+                    pie,
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                child: FilledButton(
+                  key: const ValueKey('calentamiento-listo'),
+                  onPressed: c.listo,
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(0, 64),
+                  ),
+                  child: const Text(TextosHabitosGimnasio.listo),
+                ),
+              ),
+            ],
+          );
+        }
+        return _SerieEnCurso(
+          c: c,
+          catalogo: cat,
+          reloj: reloj,
+          amplio: amplio,
+          alTerminar: alTerminar,
+          cabecera: cabecera,
+          pie: pie,
         );
       },
     );
@@ -538,13 +558,6 @@ class _Calentamiento extends StatelessWidget {
           ),
         const SizedBox(height: 8),
         Text(TextosHabitosGimnasio.calentamientoAyuda),
-        const SizedBox(height: 16),
-        FilledButton(
-          key: const ValueKey('calentamiento-listo'),
-          onPressed: c.listo,
-          style: FilledButton.styleFrom(minimumSize: const Size(0, 64)),
-          child: const Text(TextosHabitosGimnasio.listo),
-        ),
         const SizedBox(height: 12),
         Align(
           alignment: AlignmentDirectional.centerStart,
@@ -565,6 +578,8 @@ class _SerieEnCurso extends ConsumerWidget {
     required this.reloj,
     required this.amplio,
     required this.alTerminar,
+    required this.cabecera,
+    required this.pie,
   });
 
   final ControladorSesion c;
@@ -572,6 +587,8 @@ class _SerieEnCurso extends ConsumerWidget {
   final DateTime Function() reloj;
   final bool amplio;
   final VoidCallback alTerminar;
+  final List<Widget> cabecera;
+  final Widget pie;
 
   List<SerieVista> _series() {
     final e = c.actual;
@@ -654,6 +671,39 @@ class _SerieEnCurso extends ConsumerWidget {
             guardada: c.deshacerVisible,
             alDeshacer: c.deshacer,
           );
+    // En el teléfono el ✓ y el temporizador quedan fijos abajo; lo demás se
+    // desplaza (10): nunca salen de la pantalla con la letra grande.
+    final ajustes = <Widget>[
+      Semantics(
+        label: 'Serie ${c.serie} de ${e.series}',
+        excludeSemantics: true,
+        child: Text(
+          'SERIE  ${c.serie} / ${e.series}',
+          style: v.titulo(tamano: 26, peso: FontWeight.w700),
+        ),
+      ),
+      SizedBox(height: v.espacio * 1.5),
+      SelectorPasos(
+        etiqueta: c.porTiempo ? 'SEGUNDOS' : 'REPS',
+        valorTexto: c.porTiempo ? '${c.reps} s' : '${c.reps}',
+        descripcionAccesible:
+            '${c.reps} ${c.porTiempo ? 'segundos' : 'repeticiones'}',
+        etiquetaMenos: c.porTiempo ? 'Quitar segundos' : 'Quitar una repetición',
+        etiquetaMas: c.porTiempo
+            ? 'Agregar segundos'
+            : 'Agregar una repetición',
+        alMenos: c.reps > 0 ? c.menosReps : null,
+        alMas: c.masReps,
+      ),
+      if (carga != null) ...[SizedBox(height: v.espacio * 1.5), carga],
+    ];
+    final hecha = BotonSerieHecha(
+      alHecha: c.hecha,
+      guardada: c.deshacerVisible,
+      alDeshacer: c.deshacer,
+      etiquetaAccesible:
+          'Marcar la serie ${c.serie} de ${e.series} como hecha',
+    );
     final temporizador = TemporizadorDescanso(
       descanso: c.descanso,
       escala: EscalaTemporizador.sesion,
@@ -725,7 +775,7 @@ class _SerieEnCurso extends ConsumerWidget {
           );
 
     if (amplio && !terminado) {
-      return Row(
+      final fila = Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
@@ -764,31 +814,77 @@ class _SerieEnCurso extends ConsumerWidget {
           ),
         ],
       );
+      return ListView(
+        padding: const EdgeInsets.all(16),
+        children: [...cabecera, fila, SizedBox(height: v.espacio * 2), pie],
+      );
+    }
+    if (terminado) {
+      return ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          ...cabecera,
+          titulo,
+          esfuerzo,
+          SizedBox(height: v.espacio * 2),
+          panel,
+          SizedBox(height: v.espacio * 2),
+          acciones,
+          SizedBox(height: v.espacio * 2),
+          pie,
+        ],
+      );
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        titulo,
-        esfuerzo,
-        SizedBox(height: v.espacio * 1.5),
-        Wrap(
-          spacing: v.espacio,
-          runSpacing: v.espacio,
-          children: [for (final s in _series()) ChipSerie(serie: s, total: e.series)],
-        ),
-        SizedBox(height: v.espacio * 2),
-        panel,
-        SizedBox(height: v.espacio * 3),
-        if (!terminado) temporizador,
-        if (sigue != null) ...[
-          SizedBox(height: v.espacio * 2),
-          Text(
-            '${TextosGimnasio.siguiente}: $sigue',
-            style: v.lectura(tamano: 15, color: v.textoTenue),
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            children: [
+              ...cabecera,
+              titulo,
+              esfuerzo,
+              SizedBox(height: v.espacio * 1.5),
+              ...ajustes,
+              SizedBox(height: v.espacio * 2),
+              Wrap(
+                spacing: v.espacio,
+                runSpacing: v.espacio,
+                children: [
+                  for (final s in _series()) ChipSerie(serie: s, total: e.series),
+                ],
+              ),
+              if (sigue != null) ...[
+                SizedBox(height: v.espacio * 2),
+                Text(
+                  '${TextosGimnasio.siguiente}: $sigue',
+                  style: v.lectura(tamano: 15, color: v.textoTenue),
+                ),
+              ],
+              SizedBox(height: v.espacio * 2),
+              pie,
+            ],
           ),
-        ],
-        SizedBox(height: v.espacio * 2),
-        acciones,
+        ),
+        Material(
+          color: Theme.of(context).colorScheme.surface,
+          elevation: 3,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                hecha,
+                SizedBox(height: v.espacio),
+                temporizador,
+                SizedBox(height: v.espacio),
+                acciones,
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }

@@ -15,6 +15,7 @@ import 'package:gravity/app/gimnasio/acceso_gimnasio.dart';
 import 'package:gravity/app/gimnasio/proveedores_gimnasio.dart'
     show
         molestiasLocalesProvider,
+        pantallaEncendidaDeLaSesionProvider,
         pantallaEncendidaProvider,
         personaEnPantallaProvider,
         repositorioGimnasioProvider;
@@ -257,7 +258,16 @@ Future<Montaje> montarPantalla(
         ),
         ...extras,
       ],
-      child: MaterialApp.router(routerConfig: router),
+      child: MaterialApp.router(
+        routerConfig: router,
+        // Como AppGravity: alguien mantiene viva la pantalla encendida.
+        builder: (context, child) => Consumer(
+          builder: (_, ref, _) {
+            ref.watch(pantallaEncendidaDeLaSesionProvider);
+            return child!;
+          },
+        ),
+      ),
     ),
   );
   await t.pumpAndSettle();

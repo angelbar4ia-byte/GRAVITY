@@ -61,7 +61,7 @@ final modoFocoActivoProvider = FutureProvider<ModoFocoActivo>((ref) async {
       await copia.marcarLeido();
     } else {
       await copia.registrar(
-        TipoHabito.cigarrillo.name,
+        claveAnonimaDeFoco,
         diaD: c.plan.diaD,
         focoDias: c.plan.focoDias,
       );
