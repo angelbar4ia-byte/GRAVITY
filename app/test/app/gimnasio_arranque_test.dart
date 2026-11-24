@@ -6,8 +6,8 @@
 //   (M5), pero lo que aún no subió SIGUE en la cola.
 // - Las molestias (salud_local) no se tocan al salir: viven solo en el equipo,
 //   como lo demás que no está en la nube.
-// - El gancho de «mantener la pantalla encendida» existe, pero no hace nada
-//   (H-14: sin paquete aprobado).
+// - «Mantener la pantalla encendida» (H-14, aprobado el 24/nov/2026): el
+//   arranque pone el canal nativo en Android; sin la parte nativa no falla.
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gravity/app/arranque.dart';
@@ -118,14 +118,17 @@ void main() {
   });
 
   test(
-    'mantener la pantalla encendida: hay gancho, hoy no hace nada (H-14)',
+    'mantener la pantalla encendida (H-14): canal nativo solo en Android',
     () async {
+      // En las pruebas la plataforma es Android: el arranque pone el canal.
       final c = await arrancar();
       final pantalla = c.read(pantallaEncendidaProvider);
-      expect(pantalla, isA<PantallaEncendidaNula>());
-      expect(pantalla.disponible, isFalse);
+      expect(pantalla, isA<PantallaEncendidaAndroid>());
+      // Sin la parte nativa (aquí no hay MainActivity) no falla ni se rompe:
+      // la sesión guarda igual.
       expect(await pantalla.mantener(true), isFalse);
-      expect(await pantalla.mantener(false), isFalse);
+      expect(await pantalla.mantener(false), isTrue);
+      expect(pantalla.disponible, isFalse);
     },
   );
 }

@@ -9,6 +9,8 @@ import '../diseno/componentes/fondo_estilo.dart';
 import '../diseno/valores_diseno.dart';
 import 'avisos/con_avisos.dart';
 import 'bloqueo/capa_bloqueo.dart';
+import 'gimnasio/proveedores_gimnasio.dart'
+    show pantallaEncendidaDeLaSesionProvider;
 import 'montos/ocultar_montos_por_inactividad.dart';
 import 'pantallas_externas.dart';
 import 'router.dart';
@@ -22,6 +24,9 @@ class AppGravity extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tema = temaExterno(ref);
+    // Pantalla encendida durante la sesión de gimnasio (H-14): se pide y se
+    // suelta sola según la sesión en curso.
+    ref.watch(pantallaEncendidaDeLaSesionProvider);
     return MaterialApp.router(
       title: 'GRAVITY',
       debugShowCheckedModeBanner: false,

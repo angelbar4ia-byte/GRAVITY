@@ -52,6 +52,7 @@ import '../nucleo/configuracion/configuracion_entorno.dart';
 import '../nucleo/firebase/firebase.dart';
 import '../nucleo/invitaciones/invitaciones.dart';
 import '../nucleo/seguridad/almacen_seguro.dart';
+import '../nucleo/gimnasio/pantalla_encendida.dart';
 import '../nucleo/gimnasio/repositorio_gimnasio.dart';
 import '../nucleo/sensibles/mis_datos.dart'
     show funcionBorrarMisDatos, tipoColaBorrado;
@@ -319,6 +320,14 @@ Future<List<Override>> prepararArranque({
       TargetPlatform.windows => ProtectorDePantallaWindows(),
       _ => const ProtectorDePantallaNulo(),
     }),
+    // Fase 8 (H-14): la pantalla encendida durante la sesión de gimnasio es un
+    // canal nativo solo de Android (FLAG_KEEP_SCREEN_ON); en el resto, la nula.
+    if (plataforma == TargetPlatform.android)
+      pantallaEncendidaProvider.overrideWith((ref) {
+        final pantalla = PantallaEncendidaAndroid()..escuchar();
+        ref.onDispose(pantalla.cerrar);
+        return pantalla;
+      }),
     biometriaProvider.overrideWithValue(biometria),
     // La apariencia de cada persona sobrevive al reinicio (P3).
     almacenAparienciaProvider.overrideWithValue(await aparienciaLista),
