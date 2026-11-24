@@ -73,8 +73,7 @@ class MetaMensualBici extends StatelessWidget {
     final anuncio = [
       'Meta de $mesTexto: $progresoTexto salidas',
       if (cumplida) 'meta cumplida',
-      if (omitidasPorClima > 0)
-        '$omitidasPorClima omitidas por clima',
+      if (omitidasPorClima > 0) '$omitidasPorClima omitidas por clima',
       if (omitidasPorSeguridad > 0)
         '$omitidasPorSeguridad omitidas por seguridad',
     ].join(', ');
@@ -133,7 +132,10 @@ class MetaMensualBici extends StatelessWidget {
             ],
             if (mensajeTexto != null) ...[
               SizedBox(height: e * 1.25),
-              Text(mensajeTexto!, style: v.lectura(tamano: 14.5, color: v.texto)),
+              Text(
+                mensajeTexto!,
+                style: v.lectura(tamano: 14.5, color: v.texto),
+              ),
             ],
           ],
         ),

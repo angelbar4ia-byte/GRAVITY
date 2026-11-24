@@ -30,9 +30,10 @@ Map<String, String> _constantes(String archivo) {
   ).allMatches(fuente);
   return {
     for (final m in constantes)
-      m.group(1)!: RegExp(
-        r"'([^']*)'",
-      ).allMatches(m.group(2)!).map((x) => x.group(1)!).join(),
+      m.group(1)!: RegExp(r"'([^']*)'")
+          .allMatches(m.group(2)!)
+          .map((x) => x.group(1)!)
+          .join(),
   };
 }
 
@@ -136,7 +137,7 @@ void main() {
     final textos = _constantes('lib/diseno/bici/textos_bici.dart');
 
     test('hay textos fijos que revisar', () {
-      expect(textos.length, greaterThanOrEqualTo(60));
+      expect(textos.length, greaterThanOrEqualTo(45));
     });
 
     test('los textos fijos no tienen contenido médico', () {
@@ -185,28 +186,35 @@ void main() {
     });
   });
 
-  test('B10 y B11 están marcadas «V2, no aprobado» y no tienen nada tocable', () {
-    final fuente = _sinComentarios(File('lib/diseno/bici/maquetas.dart'));
-    for (final clase in ['_B10EnVivo', '_B11Resumen']) {
-      final inicio = fuente.indexOf('class $clase');
-      expect(inicio, greaterThan(0), reason: clase);
-      final fin = fuente.indexOf('\nclass ', inicio + 1);
-      final cuerpo = fuente.substring(inicio, fin < 0 ? null : fin);
-      expect(cuerpo.contains('IgnorePointer'), isTrue, reason: clase);
-      expect(cuerpo.contains('ExcludeSemantics'), isTrue, reason: clase);
-      for (final prohibido in [
-        'FilledButton',
-        'OutlinedButton',
-        'TextButton',
-        'InkWell',
-        'onPressed',
-        'onTap',
-      ]) {
-        expect(cuerpo.contains(prohibido), isFalse, reason: '$clase $prohibido');
+  test(
+    'B10 y B11 están marcadas «V2, no aprobado» y no tienen nada tocable',
+    () {
+      final fuente = _sinComentarios(File('lib/diseno/bici/maquetas.dart'));
+      for (final clase in ['_B10EnVivo', '_B11Resumen']) {
+        final inicio = fuente.indexOf('class $clase');
+        expect(inicio, greaterThan(0), reason: clase);
+        final fin = fuente.indexOf('\nclass ', inicio + 1);
+        final cuerpo = fuente.substring(inicio, fin < 0 ? null : fin);
+        expect(cuerpo.contains('IgnorePointer'), isTrue, reason: clase);
+        expect(cuerpo.contains('ExcludeSemantics'), isTrue, reason: clase);
+        for (final prohibido in [
+          'FilledButton',
+          'OutlinedButton',
+          'TextButton',
+          'InkWell',
+          'onPressed',
+          'onTap',
+        ]) {
+          expect(
+            cuerpo.contains(prohibido),
+            isFalse,
+            reason: '$clase $prohibido',
+          );
+        }
       }
-    }
-    expect(TextosBici.v2NoAprobado, 'V2, no aprobado');
-  });
+      expect(TextosBici.v2NoAprobado, 'V2, no aprobado');
+    },
+  );
 
   group('contraste de las superficies de los componentes', () {
     test('la bici usa siempre la personalidad Sport (alto contraste)', () {

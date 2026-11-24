@@ -89,6 +89,13 @@ class TarjetaPlanSalida extends StatelessWidget {
         ),
       );
     }
+    final enc = encaje;
+    final anuncio = [
+      '$diaHoraTexto, $duracionTexto',
+      'Regreso estimado $regresoTexto',
+      if (revisionTexto != null) 'Revisión semanal $revisionTexto',
+      if (enc != null) anuncioEncaje(enc, encajeTexto),
+    ].join('. ');
     final colorEncaje = switch (encaje) {
       EncajeRevision.cabe => v.exito,
       EncajeRevision.cabeJusto || EncajeRevision.noCabe => v.alerta,
@@ -103,19 +110,12 @@ class TarjetaPlanSalida extends StatelessWidget {
         children: [
           Semantics(
             container: true,
-            label:
-                '$diaHoraTexto, $duracionTexto. Regreso estimado '
-                '$regresoTexto.'
-                '${revisionTexto == null ? '' : ' Revisión semanal $revisionTexto.'}'
-                '${encaje == null ? '' : ' ${encaje!.texto}${encajeTexto == null ? '' : ', ${encajeTexto!.toLowerCase()}'}.'}',
+            label: anuncio,
             excludeSemantics: true,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  diaHoraTexto,
-                  style: v.titulo(tamano: 26),
-                ),
+                Text(diaHoraTexto, style: v.titulo(tamano: 26)),
                 Text(
                   duracionTexto,
                   style: v.numero(tamano: 15, color: v.textoTenue),
@@ -136,8 +136,7 @@ class TarjetaPlanSalida extends StatelessWidget {
                 if (encaje != null) ...[
                   SizedBox(height: e * 1.25),
                   MarcaBici(
-                    texto:
-                        '${encaje!.texto}${encajeTexto == null ? '' : ' · $encajeTexto'}',
+                    texto: textoEncaje(encaje!, encajeTexto),
                     icono: encaje!.icono,
                     color: colorEncaje,
                   ),
@@ -261,10 +260,7 @@ class _FilaElegir extends StatelessWidget {
             ),
           ),
           if (alTocar != null)
-            TextButton(
-              onPressed: alTocar,
-              child: Text(textoBoton),
-            ),
+            TextButton(onPressed: alTocar, child: Text(textoBoton)),
         ],
       ),
     );

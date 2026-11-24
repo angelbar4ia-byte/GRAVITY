@@ -76,8 +76,10 @@ void main() {
       expect(find.text('14:30'), findsOneWidget);
       expect(find.text('Cabe · Sobran 60 min'), findsOneWidget);
       expect(find.byIcon(EncajeRevision.cabe.icono), findsWidgets);
-      expect(find.text('Hoy toca tu salida en bici. ¿Todo listo?'),
-          findsOneWidget);
+      expect(
+        find.text('Hoy toca tu salida en bici. ¿Todo listo?'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('*Salí* es un toque y mide 64 dp; Empezar también', (
@@ -161,8 +163,10 @@ void main() {
       );
       expect(find.text('Hecha'), findsOneWidget);
       expect(find.byKey(const ValueKey('bici-sali')), findsNothing);
-      expect(find.text('Salida registrada. Gracias por avisar.'),
-          findsOneWidget);
+      expect(
+        find.text('Salida registrada. Gracias por avisar.'),
+        findsOneWidget,
+      );
       await tester.tap(find.text(TextosBici.deshacer));
       expect(deshacer, 1);
     });
@@ -189,14 +193,19 @@ void main() {
 
     testWidgets('con el modo foco dice «Hoy puedes salir o dejarlo» y sigue '
         'ofreciendo la salida', (tester) async {
-      await montarBici(tester, _sabado(modoFoco: true, alSali: () {}),
-          sport: true);
+      await montarBici(
+        tester,
+        _sabado(modoFoco: true, alSali: () {}),
+        sport: true,
+      );
       expect(
         find.text('Hoy puedes salir o dejarlo: ambos están bien.'),
         findsOneWidget,
       );
-      expect(find.text('Hoy toca tu salida en bici. ¿Todo listo?'),
-          findsNothing);
+      expect(
+        find.text('Hoy toca tu salida en bici. ¿Todo listo?'),
+        findsNothing,
+      );
       expect(find.text(TextosBici.sali), findsOneWidget);
     });
 
@@ -218,7 +227,12 @@ void main() {
     testWidgets('con la personalidad de la bici va siempre en alto contraste', (
       tester,
     ) async {
-      await montarBici(tester, _sabado(), sport: true, brillo: Brightness.light);
+      await montarBici(
+        tester,
+        _sabado(),
+        sport: true,
+        brillo: Brightness.light,
+      );
       final v = ValoresDiseno.de(tester.element(find.byType(TarjetaBiciHoy)));
       expect(v.altoContraste, isTrue);
     });

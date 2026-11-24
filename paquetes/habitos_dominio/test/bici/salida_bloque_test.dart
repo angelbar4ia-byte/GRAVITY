@@ -1,4 +1,5 @@
 import 'package:habitos_dominio/habitos_dominio.dart';
+import 'package:habitos_dominio/src/bici/tipos_bici.dart' show horaTexto;
 import 'package:test/test.dart';
 
 void main() {

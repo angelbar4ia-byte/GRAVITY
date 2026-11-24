@@ -306,10 +306,7 @@ void main() {
       expect(etiquetas, contains('martes, Fuerza C, pendiente'));
       expect(etiquetas, contains('miércoles, hoy, Fuerza B, pendiente'));
       expect(etiquetas, contains('viernes, Regenerativa 1, pendiente'));
-      expect(
-        etiquetas,
-        contains('sábado, Bicicleta, pendiente, con aviso'),
-      );
+      expect(etiquetas, contains('sábado, Bicicleta, pendiente, con aviso'));
       handle.dispose();
     });
 

@@ -121,7 +121,8 @@ class CronometroSalida extends StatefulWidget {
       vacio: 'Todavía no hay una salida en curso.',
       cargando: 'Preparando el cronómetro…',
       sinConexion: 'Sin conexión. El cronómetro funciona igual.',
-      error: 'No se pudo iniciar el cronómetro. Puedes registrar la salida '
+      error:
+          'No se pudo iniciar el cronómetro. Puedes registrar la salida '
           'después.',
     ),
     this.alReintentar,

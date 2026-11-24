@@ -122,8 +122,10 @@ class _BotonEnlace extends StatelessWidget {
     final etiqueta = [
       enlace.texto,
       ?enlace.nombreTexto,
-      if (!enlace.guardado) 'sin enlace guardado'
-      else TextosBici.seAbreEnOtraApp.toLowerCase(),
+      if (!enlace.guardado)
+        'sin enlace guardado'
+      else
+        TextosBici.seAbreEnOtraApp.toLowerCase(),
     ].join(', ');
     return Semantics(
       button: true,
@@ -135,9 +137,7 @@ class _BotonEnlace extends StatelessWidget {
         onPressed: activo ? enlace.alAbrir : null,
         icon: Icon(enlace.tipo.icono, size: 20),
         label: Text(
-          enlace.guardado
-              ? enlace.texto
-              : '${enlace.texto} (sin enlace)',
+          enlace.guardado ? enlace.texto : '${enlace.texto} (sin enlace)',
         ),
         style: OutlinedButton.styleFrom(
           minimumSize: const Size(zonaTactilBici, 56),

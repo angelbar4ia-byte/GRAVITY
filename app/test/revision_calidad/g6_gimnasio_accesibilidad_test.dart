@@ -79,37 +79,38 @@ void main() {
             equipo == TipoEquipoAvisos.laptop) {
           continue;
         }
-        testWidgets('${destino.name}: sin desbordes, objetivos de 48 dp y etiquetas', (
-          t,
-        ) async {
-          final handle = t.ensureSemantics();
-          t.platformDispatcher.textScaleFactorTestValue = 2.0;
-          addTearDown(t.platformDispatcher.clearTextScaleFactorTestValue);
-          final m = await mundoConVida();
-          addTearDown(m.cerrar);
-          await montarPantalla(
-            t,
-            m,
-            destino,
-            tamano: Size(ancho, 800),
-            equipo: equipo,
-          );
-          if (destino == DestinoGimnasio.sesionEnCurso) {
-            await t.pump(const Duration(milliseconds: 300));
-            final listo = find.byKey(const ValueKey('calentamiento-listo'));
-            if (listo.evaluate().isNotEmpty) {
-              await t.tap(listo);
-              await t.pump();
+        testWidgets(
+          '${destino.name}: sin desbordes, objetivos de 48 dp y etiquetas',
+          (t) async {
+            final handle = t.ensureSemantics();
+            t.platformDispatcher.textScaleFactorTestValue = 2.0;
+            addTearDown(t.platformDispatcher.clearTextScaleFactorTestValue);
+            final m = await mundoConVida();
+            addTearDown(m.cerrar);
+            await montarPantalla(
+              t,
+              m,
+              destino,
+              tamano: Size(ancho, 800),
+              equipo: equipo,
+            );
+            if (destino == DestinoGimnasio.sesionEnCurso) {
+              await t.pump(const Duration(milliseconds: 300));
+              final listo = find.byKey(const ValueKey('calentamiento-listo'));
+              if (listo.evaluate().isNotEmpty) {
+                await t.tap(listo);
+                await t.pump();
+              }
             }
-          }
-          expect(t.takeException(), isNull, reason: 'desborde al 200 %');
-          await expectLater(t, meetsGuideline(androidTapTargetGuideline));
-          await expectLater(t, meetsGuideline(labeledTapTargetGuideline));
-          // Se desmonta para que el temporizador no deje nada pendiente.
-          await t.pumpWidget(const SizedBox());
-          await t.pump(const Duration(milliseconds: 50));
-          handle.dispose();
-        });
+            expect(t.takeException(), isNull, reason: 'desborde al 200 %');
+            await expectLater(t, meetsGuideline(androidTapTargetGuideline));
+            await expectLater(t, meetsGuideline(labeledTapTargetGuideline));
+            // Se desmonta para que el temporizador no deje nada pendiente.
+            await t.pumpWidget(const SizedBox());
+            await t.pump(const Duration(milliseconds: 50));
+            handle.dispose();
+          },
+        );
       }
     });
   }

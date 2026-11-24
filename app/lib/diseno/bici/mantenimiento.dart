@@ -161,10 +161,7 @@ class TarjetaMantenimiento extends StatelessWidget {
             ),
           SizedBox(height: e),
           if (tareas.isEmpty)
-            CuerpoEstadoBici(
-              estado: EstadoVistaBici.vacio,
-              mensajes: mensajes,
-            )
+            CuerpoEstadoBici(estado: EstadoVistaBici.vacio, mensajes: mensajes)
           else
             for (final t in tareas) ...[
               _FilaTarea(

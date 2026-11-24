@@ -286,7 +286,7 @@ class SalidaHistorialVista {
   String get anuncio => [
     fechaTexto,
     resumenTexto,
-    if (superficie != null) 'ruta ${superficie!.texto.toLowerCase()}',
+    ?textoRuta(superficie),
     ?esfuerzoTexto,
     ?climaTexto,
     if (acompanado) 'acompañado',
@@ -393,10 +393,7 @@ class _FilaSalida extends StatelessWidget {
                       icono: salida.superficie!.icono,
                     ),
                   if (salida.esfuerzoTexto != null)
-                    MarcaBici(
-                      texto: salida.esfuerzoTexto!,
-                      icono: Icons.speed,
-                    ),
+                    MarcaBici(texto: salida.esfuerzoTexto!, icono: Icons.speed),
                   if (salida.climaTexto != null)
                     MarcaBici(
                       texto: salida.climaTexto!,

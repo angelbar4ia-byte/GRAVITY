@@ -248,9 +248,8 @@ class _EstadoHoja extends State<HojaRegistroSalida> {
                   etiquetaAccesible: 'Tipo de ruta: ${s.texto}',
                   alTocar: w.alElegirSuperficie == null
                       ? null
-                      : () => w.alElegirSuperficie!(
-                          w.superficie == s ? null : s,
-                        ),
+                      : () =>
+                            w.alElegirSuperficie!(w.superficie == s ? null : s),
                 ),
             ],
           ),

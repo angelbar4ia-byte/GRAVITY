@@ -159,7 +159,7 @@ class TarjetaBiciHoy extends StatelessWidget {
       ?subtitulo,
       if (regresoTexto != null) 'Regreso estimado $regresoTexto',
       if (conRevision) 'Revisión semanal $revisionTexto',
-      if (encaje != null) '${encaje!.texto}${encajeTexto == null ? '' : ', ${encajeTexto!.toLowerCase()}'}',
+      if (encaje != null) anuncioEncaje(encaje!, encajeTexto),
       if (preparacionTexto != null) 'Preparación $preparacionTexto',
     ].join('. ');
 
@@ -207,8 +207,7 @@ class TarjetaBiciHoy extends StatelessWidget {
                 if (encaje != null) ...[
                   SizedBox(height: e * 1.25),
                   MarcaBici(
-                    texto:
-                        '${encaje!.texto}${encajeTexto == null ? '' : ' · $encajeTexto'}',
+                    texto: textoEncaje(encaje!, encajeTexto),
                     icono: encaje!.icono,
                     color: _colorEncaje(v, encaje!),
                   ),

@@ -20,7 +20,11 @@ import 'tipos_bici.dart';
 /// Un consejo fijo de seguridad, ya redactado por el catálogo.
 @immutable
 class ConsejoSeguridadVista {
-  const ConsejoSeguridadVista({required this.titulo, required this.texto, required this.icono});
+  const ConsejoSeguridadVista({
+    required this.titulo,
+    required this.texto,
+    required this.icono,
+  });
 
   /// «En calle», «En terreno», «Si te sientes mal».
   final String titulo;
@@ -145,7 +149,11 @@ class TarjetaSeguridad extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.visibility_off_outlined, size: 20, color: v.alerta),
+                    Icon(
+                      Icons.visibility_off_outlined,
+                      size: 20,
+                      color: v.alerta,
+                    ),
                     SizedBox(width: e),
                     Expanded(
                       child: Text(
@@ -185,7 +193,8 @@ class TarjetaSeguridad extends StatelessWidget {
           ] else ...[
             Semantics(
               container: true,
-              label: 'Tu contacto: $contactoTexto. '
+              label:
+                  'Tu contacto: $contactoTexto. '
                   '${TextosBici.soloEnEsteEquipo}.',
               excludeSemantics: true,
               child: Wrap(

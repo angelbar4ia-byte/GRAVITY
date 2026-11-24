@@ -119,8 +119,10 @@ void main() {
       expect(etiquetas, contains('Luces puestas, pendiente'));
       expect(
         etiquetas,
-        contains('En calle, luces encendidas y ropa visible, pendiente, '
-            'solo en calle'),
+        contains(
+          'En calle, luces encendidas y ropa visible, pendiente, '
+          'solo en calle',
+        ),
       );
       handle.dispose();
     });

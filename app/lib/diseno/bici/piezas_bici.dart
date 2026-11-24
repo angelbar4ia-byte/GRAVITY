@@ -19,6 +19,19 @@ const double altoAccionBici = 64;
 /// Zona táctil mínima de los demás controles: 48 dp (6.6).
 const double zonaTactilBici = zonaTactilMinima;
 
+/// «Cabe · Sobran 60 min» (o solo «Cabe» sin detalle): lo que se ve.
+String textoEncaje(EncajeRevision encaje, String? detalle) =>
+    detalle == null ? encaje.texto : '${encaje.texto} · $detalle';
+
+/// «Cabe, sobran 60 min»: lo que lee el lector de pantalla.
+String anuncioEncaje(EncajeRevision encaje, String? detalle) => detalle == null
+    ? encaje.texto
+    : '${encaje.texto}, ${detalle.toLowerCase()}';
+
+/// «ruta mixta», para el lector de pantalla; `null` sin tipo de ruta.
+String? textoRuta(SuperficieSalida? superficie) =>
+    superficie == null ? null : 'ruta ${superficie.texto.toLowerCase()}';
+
 /// Los textos de los estados de un componente. Cada componente trae los suyos
 /// por omisión; la pantalla puede cambiarlos con lo que diga su catálogo.
 @immutable
@@ -515,10 +528,7 @@ class AvisoBici extends StatelessWidget {
                   runSpacing: e * 0.5,
                   children: [
                     for (final a in acciones)
-                      TextButton(
-                        onPressed: a.alTocar,
-                        child: Text(a.texto),
-                      ),
+                      TextButton(onPressed: a.alTocar, child: Text(a.texto)),
                   ],
                 ),
               ],

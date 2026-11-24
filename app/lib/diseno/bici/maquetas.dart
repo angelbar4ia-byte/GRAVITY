@@ -392,10 +392,7 @@ const _puntosAntesDeSalir = [
   PuntoPreparacionVista(id: 'casco_puesto', texto: 'Casco'),
   PuntoPreparacionVista(id: 'luces_puestas', texto: 'Luces puestas'),
   PuntoPreparacionVista(id: 'frenos_probados', texto: 'Probé los frenos'),
-  PuntoPreparacionVista(
-    id: 'presion_llantas',
-    texto: 'Llantas en buen estado',
-  ),
+  PuntoPreparacionVista(id: 'presion_llantas', texto: 'Llantas en buen estado'),
   PuntoPreparacionVista(
     id: 'escucha_exterior',
     texto: 'Audífonos en escucha exterior o a volumen bajo',
@@ -445,10 +442,7 @@ const _enlacesEjemplo = [
     texto: TextosBici.abrirMiLista,
     nombreTexto: 'Rodadas de sábado',
   ),
-  EnlaceVista(
-    tipo: TipoEnlace.clima,
-    texto: TextosBici.verElClima,
-  ),
+  EnlaceVista(tipo: TipoEnlace.clima, texto: TextosBici.verElClima),
   EnlaceVista(
     tipo: TipoEnlace.mapa,
     texto: TextosBici.abrirMiRuta,
@@ -527,7 +521,7 @@ class _B1Hoy extends StatelessWidget {
         alRegistrar: () {},
         alDeshacer: () {},
       ),
-      const _Caso('NO SALIÓ (SIN CULPA)'),
+      const _Caso('NO SALIÓ HOY'),
       TarjetaBiciHoy(
         momento: MomentoSalida.omitida,
         salidaTexto: '8:00',
@@ -716,7 +710,9 @@ class _B4RegistroState extends State<_B4Registro> {
     _ahora = widget.ahora ?? DateTime.now;
     // Ya lleva 1 h 42 min 10 s: así se ve el estado «en curso» con su botón.
     _salida = SalidaCronometrada(
-      inicio: _ahora().subtract(const Duration(hours: 1, minutes: 42, seconds: 10)),
+      inicio: _ahora().subtract(
+        const Duration(hours: 1, minutes: 42, seconds: 10),
+      ),
     );
   }
 
@@ -736,9 +732,8 @@ class _B4RegistroState extends State<_B4Registro> {
           child: CronometroSalida(
             salida: _salida,
             ahora: _ahora,
-            alEmpezar: () => setState(
-              () => _salida = SalidaCronometrada.iniciar(_ahora()),
-            ),
+            alEmpezar: () =>
+                setState(() => _salida = SalidaCronometrada.iniciar(_ahora())),
             alTerminar: () =>
                 setState(() => _salida = _salida?.terminar(_ahora())),
             alRegistrar: () {},
@@ -976,10 +971,7 @@ class _B8Seguridad extends StatelessWidget {
         alAvisarRegreso: () {},
       ),
       const _Caso('EN LA LAPTOP'),
-      const TarjetaSeguridad(
-        consejos: _consejos,
-        contactoEnEsteEquipo: false,
-      ),
+      const TarjetaSeguridad(consejos: _consejos, contactoEnEsteEquipo: false),
     ],
   );
 }
@@ -1033,7 +1025,10 @@ class _B9Ajustes extends StatelessWidget {
                 alMas: () {},
               ),
               SizedBox(height: e * 2),
-              Text('LA RUTA CUENTA COMO CARGA DE PIERNAS', style: v.etiquetaPanel()),
+              Text(
+                'LA RUTA CUENTA COMO CARGA DE PIERNAS',
+                style: v.etiquetaPanel(),
+              ),
               SizedBox(height: e),
               Wrap(
                 spacing: e,
@@ -1094,15 +1089,27 @@ class _B10EnVivo extends StatelessWidget {
               children: const [
                 SizedBox(
                   width: 180,
-                  child: _NumeroGrande(valor: '32,4', etiqueta: 'KM', tamano: 64),
+                  child: _NumeroGrande(
+                    valor: '32,4',
+                    etiqueta: 'KM',
+                    tamano: 64,
+                  ),
                 ),
                 SizedBox(
                   width: 180,
-                  child: _NumeroGrande(valor: '410', etiqueta: 'M DE SUBIDA', tamano: 64),
+                  child: _NumeroGrande(
+                    valor: '410',
+                    etiqueta: 'M DE SUBIDA',
+                    tamano: 64,
+                  ),
                 ),
                 SizedBox(
                   width: 180,
-                  child: _NumeroGrande(valor: '19', etiqueta: 'KM/H', tamano: 64),
+                  child: _NumeroGrande(
+                    valor: '19',
+                    etiqueta: 'KM/H',
+                    tamano: 64,
+                  ),
                 ),
               ],
             ),
@@ -1151,21 +1158,34 @@ class _B11Resumen extends StatelessWidget {
               children: const [
                 SizedBox(
                   width: 200,
-                  child: _NumeroGrande(valor: '62,4', etiqueta: 'KM', tamano: 56),
+                  child: _NumeroGrande(
+                    valor: '62,4',
+                    etiqueta: 'KM',
+                    tamano: 56,
+                  ),
                 ),
                 SizedBox(
                   width: 200,
-                  child: _NumeroGrande(valor: '4:05:12', etiqueta: 'TIEMPO', tamano: 56),
+                  child: _NumeroGrande(
+                    valor: '4:05:12',
+                    etiqueta: 'TIEMPO',
+                    tamano: 56,
+                  ),
                 ),
                 SizedBox(
                   width: 200,
-                  child: _NumeroGrande(valor: '540', etiqueta: 'M DE SUBIDA', tamano: 56),
+                  child: _NumeroGrande(
+                    valor: '540',
+                    etiqueta: 'M DE SUBIDA',
+                    tamano: 56,
+                  ),
                 ),
               ],
             ),
             SizedBox(height: e * 2),
             const _MapaMaqueta(
-              texto: 'Resumen con mapa de ejemplo (V2): el trazo solo en el '
+              texto:
+                  'Resumen con mapa de ejemplo (V2): el trazo solo en el '
                   'equipo donde se grabó',
             ),
             SizedBox(height: e * 2),

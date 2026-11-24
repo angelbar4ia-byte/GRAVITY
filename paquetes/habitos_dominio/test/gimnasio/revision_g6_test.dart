@@ -65,23 +65,51 @@ void main() {
         hoy: d(2026, 12, 3),
       );
       expect(s.duracionEstimadaSeg / 60, closeTo(35.3, 0.05));
-      expect(const ReglasGimnasio().dentroDeTolerancia(
-        VersionSesion.estandar,
-        s.duracionEstimadaSeg,
-      ), isTrue);
+      expect(
+        const ReglasGimnasio().dentroDeTolerancia(
+          VersionSesion.estandar,
+          s.duracionEstimadaSeg,
+        ),
+        isTrue,
+      );
     });
   });
 
   group('G6 · semana, 48 horas y bicicleta (con la semana reordenada)', () {
     List<AvisoSemana> rev(List<SesionProgramada> s) => revisarSemana(s, cat);
 
-    test('plan por omisión: A lunes, C martes, B miércoles, R2 jueves, R1 viernes', () {
-      expect(planSemanal(3).fila,
-          ['A', 'C', 'B', 'descanso', 'descanso', 'bici', 'descanso']);
-      expect(planSemanal(4).fila,
-          ['A', 'C', 'B', 'descanso', 'R1', 'bici', 'descanso']);
-      expect(planSemanal(5).fila, ['A', 'C', 'B', 'R2', 'R1', 'bici', 'descanso']);
-    });
+    test(
+      'plan por omisión: A lunes, C martes, B miércoles, R2 jueves, R1 viernes',
+      () {
+        expect(planSemanal(3).fila, [
+          'A',
+          'C',
+          'B',
+          'descanso',
+          'descanso',
+          'bici',
+          'descanso',
+        ]);
+        expect(planSemanal(4).fila, [
+          'A',
+          'C',
+          'B',
+          'descanso',
+          'R1',
+          'bici',
+          'descanso',
+        ]);
+        expect(planSemanal(5).fila, [
+          'A',
+          'C',
+          'B',
+          'R2',
+          'R1',
+          'bici',
+          'descanso',
+        ]);
+      },
+    );
 
     test('A lunes 19:15 → B miércoles 19:15 = 48 h exactas: cumple', () {
       final a = SesionProgramada('A', d(2026, 11, 30, 19, 15));
@@ -109,26 +137,32 @@ void main() {
       );
     });
 
-    test('el borde: 47 h cumple y 46 h 59 min avisa (tolerancia de 60 min)', () {
-      final a = SesionProgramada('A', d(2026, 11, 30, 20));
-      expect(
-        rev([a, SesionProgramada('B', d(2026, 12, 2, 19))]),
-        isEmpty,
-      ); // 47 h
-      expect(
-        rev([a, SesionProgramada('B', d(2026, 12, 2, 18, 59))]),
-        hasLength(1),
-      ); // 46 h 59 min
-    });
+    test(
+      'el borde: 47 h cumple y 46 h 59 min avisa (tolerancia de 60 min)',
+      () {
+        final a = SesionProgramada('A', d(2026, 11, 30, 20));
+        expect(
+          rev([a, SesionProgramada('B', d(2026, 12, 2, 19))]),
+          isEmpty,
+        ); // 47 h
+        expect(
+          rev([a, SesionProgramada('B', d(2026, 12, 2, 18, 59))]),
+          hasLength(1),
+        ); // 46 h 59 min
+      },
+    );
 
-    test('C el jueves (36 h 45 min) y C el viernes (12 h) avisan; no bloquean', () {
-      final bici = SesionProgramada('bici', d(2026, 12, 5, 8));
-      final jue = rev([SesionProgramada('C', d(2026, 12, 3, 19, 15)), bici]);
-      expect(jue.single.intervaloMin, 36 * 60 + 45);
-      final vie = rev([SesionProgramada('C', d(2026, 12, 4, 20)), bici]);
-      expect(vie.single.intervaloMin, 12 * 60);
-      expect(vie.single.propuestas.first, AccionSemana.moverAlJueves);
-    });
+    test(
+      'C el jueves (36 h 45 min) y C el viernes (12 h) avisan; no bloquean',
+      () {
+        final bici = SesionProgramada('bici', d(2026, 12, 5, 8));
+        final jue = rev([SesionProgramada('C', d(2026, 12, 3, 19, 15)), bici]);
+        expect(jue.single.intervaloMin, 36 * 60 + 45);
+        final vie = rev([SesionProgramada('C', d(2026, 12, 4, 20)), bici]);
+        expect(vie.single.intervaloMin, 12 * 60);
+        expect(vie.single.propuestas.first, AccionSemana.moverAlJueves);
+      },
+    );
   });
 
   group('G6 · ciclo, descarga, reentrada y progresión', () {
@@ -143,18 +177,28 @@ void main() {
         d(2026, 12, 28): (1, false),
       };
       esperado.forEach((fecha, v) {
-        final c = semanaDelCiclo(hoy: fecha, inicioCiclo: inicio, cicloSemanas: 4)!;
+        final c = semanaDelCiclo(
+          hoy: fecha,
+          inicioCiclo: inicio,
+          cicloSemanas: 4,
+        )!;
         expect((c.numero, c.descarga), v, reason: '$fecha');
       });
       // Cualquier día de esa semana cuenta igual.
       expect(
-        semanaDelCiclo(hoy: d(2026, 12, 27), inicioCiclo: inicio, cicloSemanas: 4)!
-            .descarga,
+        semanaDelCiclo(
+          hoy: d(2026, 12, 27),
+          inicioCiclo: inicio,
+          cicloSemanas: 4,
+        )!.descarga,
         isTrue,
       );
       expect(
-        semanaDelCiclo(hoy: d(2026, 12, 21), inicioCiclo: inicio, cicloSemanas: 0)!
-            .descarga,
+        semanaDelCiclo(
+          hoy: d(2026, 12, 21),
+          inicioCiclo: inicio,
+          cicloSemanas: 0,
+        )!.descarga,
         isFalse,
       );
     });
@@ -182,23 +226,26 @@ void main() {
       expect(sem(null).cargasDePrueba, isTrue);
     });
 
-    test('descarga: 2 series, mínimo del rango, una placa menos, sin subir', () {
-      final perfil = PerfilGimnasio(
-        inicioCiclo: inicio,
-        nivel: NivelGimnasio.intermedio,
-      );
-      final s = calcularSemana(
-        hoy: d(2026, 12, 22),
-        perfil: perfil,
-        modoFoco: false,
-        diasSinSesion: 3,
-      );
-      expect(s.tipo, TipoSemana.descarga);
-      expect(s.series, 2);
-      expect(s.repsAlMinimo, isTrue);
-      expect(s.bajarUnPaso, isTrue);
-      expect(s.incrementos, isFalse);
-    });
+    test(
+      'descarga: 2 series, mínimo del rango, una placa menos, sin subir',
+      () {
+        final perfil = PerfilGimnasio(
+          inicioCiclo: inicio,
+          nivel: NivelGimnasio.intermedio,
+        );
+        final s = calcularSemana(
+          hoy: d(2026, 12, 22),
+          perfil: perfil,
+          modoFoco: false,
+          diasSinSesion: 3,
+        );
+        expect(s.tipo, TipoSemana.descarga);
+        expect(s.series, 2);
+        expect(s.repsAlMinimo, isTrue);
+        expect(s.bajarUnPaso, isTrue);
+        expect(s.incrementos, isFalse);
+      },
+    );
 
     test('doble progresión: 12-12-12 con esfuerzo 3 sube a placa 6 con objetivo 10', () {
       SesionRegistrada hecha(DateTime f, List<int> reps, int esfuerzo) =>
@@ -313,18 +360,30 @@ void main() {
               casos++;
               for (final e in s.ejercicios) {
                 final v = cat.variante(e.varianteId)!;
-                expect(inv.varianteDisponible(v, cat), isTrue,
-                    reason: '${e.varianteId} con máscara $mask');
+                expect(
+                  inv.varianteDisponible(v, cat),
+                  isTrue,
+                  reason: '${e.varianteId} con máscara $mask',
+                );
                 expect(v.requiere, isNot(contains('mancuernas')));
                 final i = intensidadQueAfecta(mol, cat.zonasDe(e.varianteId));
-                expect(i, lessThan(2),
-                    reason: '${e.varianteId} carga $zona con intensidad $inten');
+                expect(
+                  i,
+                  lessThan(2),
+                  reason: '${e.varianteId} carga $zona con intensidad $inten',
+                );
                 expect(e.conPrecaucion, i == 1);
-                expect(e.series, allOf(greaterThanOrEqualTo(1), lessThanOrEqualTo(5)));
+                expect(
+                  e.series,
+                  allOf(greaterThanOrEqualTo(1), lessThanOrEqualTo(5)),
+                );
               }
               if (s.ejercicios.length < 3) {
-                expect(s.tiene(CodigoAviso.sinEquipoSuficiente), isTrue,
-                    reason: '$pl con máscara $mask y $zona');
+                expect(
+                  s.tiene(CodigoAviso.sinEquipoSuficiente),
+                  isTrue,
+                  reason: '$pl con máscara $mask y $zona',
+                );
               }
             }
           }
@@ -369,28 +428,35 @@ void main() {
       'adelgaz',
       'quemar',
     ];
-    test('ningún texto del catálogo ni de los mensajes contiene esas raíces', () {
-      final textos = textosDelModulo(cat);
-      final malos = <String>[];
-      for (final t in textos) {
-        final s = t.toLowerCase();
-        for (final r in raices) {
-          // «diagnostica» sola está permitida: «Esta guía no diagnostica.»
-          if (s.contains(r) && !(r == 'diagnos' && s.contains('no diagnostica'))) {
-            malos.add('"$t" → $r');
+    test(
+      'ningún texto del catálogo ni de los mensajes contiene esas raíces',
+      () {
+        final textos = textosDelModulo(cat);
+        final malos = <String>[];
+        for (final t in textos) {
+          final s = t.toLowerCase();
+          for (final r in raices) {
+            // «diagnostica» sola está permitida: «Esta guía no diagnostica.»
+            if (s.contains(r) &&
+                !(r == 'diagnos' && s.contains('no diagnostica'))) {
+              malos.add('"$t" → $r');
+            }
           }
         }
-      }
-      expect(malos, isEmpty);
-    });
+        expect(malos, isEmpty);
+      },
+    );
 
     test('todo mensaje que habla de molestias termina en un profesional, un médico o un entrenador, o dice que no diagnostica', () {
       final habla = MensajesGimnasio.todos.where(
-        (t) => t.toLowerCase().contains('molest') || t.toLowerCase().contains('zona'),
+        (t) =>
+            t.toLowerCase().contains('molest') ||
+            t.toLowerCase().contains('zona'),
       );
       for (final t in habla) {
         final s = t.toLowerCase();
-        final remite = s.contains('profesional') ||
+        final remite =
+            s.contains('profesional') ||
             s.contains('médico') ||
             s.contains('entrenador') ||
             s.contains('no diagnostica') ||

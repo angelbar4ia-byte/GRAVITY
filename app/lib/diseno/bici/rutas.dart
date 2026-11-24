@@ -43,7 +43,7 @@ class RutaVista {
     nombre,
     ?distanciaTexto,
     if (desnivelTexto != null) 'desnivel $desnivelTexto',
-    if (superficie != null) 'ruta ${superficie!.texto.toLowerCase()}',
+    ?textoRuta(superficie),
     ?tramosTexto,
   ].join(', ');
 }

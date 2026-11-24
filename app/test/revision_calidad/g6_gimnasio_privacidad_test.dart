@@ -10,7 +10,7 @@
 // - G6-M2 (caracterización, decisión del dueño): `semana_tipo = 'foco'` SÍ
 //   viaja al servidor; es la única huella del modo foco (hábito a eliminar) que
 //   sale del equipo.
-// - G6-A1 (hallazgo, etiquetado): el aviso de cercanía a dormir se dispara en
+// - G6-M4 (hallazgo, etiquetado): el aviso de cercanía a dormir se dispara en
 //   falso si la hora de dormir pasa de medianoche.
 //
 // Para excluir solo los hallazgos que fallan hasta que se corrijan:
@@ -24,7 +24,9 @@ import 'package:gravity/nucleo/cola/contrato_gimnasio.dart';
 import 'package:gravity/nucleo/cola/enviador_supabase.dart';
 import 'package:gravity/nucleo/gimnasio/repositorio_gimnasio.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../nucleo/gimnasio/servidor_gimnasio_simulado.dart';
+
 import 'package:gravity/modulos/habitos/gimnasio/casos_uso/modo_foco.dart';
 import 'package:gravity/modulos/habitos/gimnasio/casos_uso/servicio_gimnasio.dart';
 import 'package:gravity/nucleo/avisos/repositorio_avisos.dart'
@@ -79,7 +81,11 @@ void main() {
         ),
         reloj: () => m.ahoraActual,
       );
-      repo = RepositorioGimnasio(m.base, cola: cola, reloj: () => m.ahoraActual);
+      repo = RepositorioGimnasio(
+        m.base,
+        cola: cola,
+        reloj: () => m.ahoraActual,
+      );
       servicio = ServicioGimnasio(
         repo: repo,
         persona: persona,
@@ -157,8 +163,11 @@ void main() {
             .join('\n');
 
         final todo = '$base\n$enCola\n$recibido\n$almacen'.toLowerCase();
-        expect(todo, isNot(contains(marca.toLowerCase())),
-            reason: 'la nota de la molestia salió del almacén cifrado');
+        expect(
+          todo,
+          isNot(contains(marca.toLowerCase())),
+          reason: 'la nota de la molestia salió del almacén cifrado',
+        );
         for (final prohibida in ['molest', 'rodilla', 'dolor', 'zona']) {
           for (final (donde, texto) in [
             ('la base local', base),
@@ -182,38 +191,37 @@ void main() {
       },
     );
 
-    test('las notificaciones del descanso no llevan nombres, cargas ni dígitos',
-        () {
-      expect(TextoAvisoGimnasio.descanso.length, lessThanOrEqualTo(40));
-      expect(RegExp(r'\d').hasMatch(TextoAvisoGimnasio.descanso), isFalse);
-    });
-  });
-
-  group('G6-M2 · el modo foco deja una huella en el servidor', () {
     test(
-      'una sesión en semana de foco sube semana_tipo = foco (decisión del dueño '
-      'pendiente: la fecha del foco sale de un hábito a eliminar)',
-      () async {
-        final enFoco = Mundo(
-          foco: ModoFocoDeRangos([
-            RangoFoco(DateTime.utc(2026, 11, 28), DateTime.utc(2026, 12, 4)),
-          ]),
-        );
-        addTearDown(enFoco.cerrar);
-        final d = await enFoco.servicio.cargar();
-        final h = await enFoco.servicio.entrenamientoDe(
-          DateTime(2026, 11, 30),
-          datos: d,
-        );
-        final fila = await enFoco.servicio.iniciarSesion(h);
-        expect(fila.semanaTipo, 'foco');
-        // Lo que se encola y se sube es exactamente esta fila.
-        expect(fila.aMapaServidor()['semana_tipo'], 'foco');
+      'las notificaciones del descanso no llevan nombres, cargas ni dígitos',
+      () {
+        expect(TextoAvisoGimnasio.descanso.length, lessThanOrEqualTo(40));
+        expect(RegExp(r'\d').hasMatch(TextoAvisoGimnasio.descanso), isFalse);
       },
     );
   });
 
-  group('G6-A1 · aviso de dormir con la hora pasada de medianoche', () {
+  group('G6-M2 · el modo foco deja una huella en el servidor', () {
+    test('una sesión en semana de foco sube semana_tipo = foco (decisión del dueño '
+        'pendiente: la fecha del foco sale de un hábito a eliminar)', () async {
+      final enFoco = Mundo(
+        foco: ModoFocoDeRangos([
+          RangoFoco(DateTime.utc(2026, 11, 28), DateTime.utc(2026, 12, 4)),
+        ]),
+      );
+      addTearDown(enFoco.cerrar);
+      final d = await enFoco.servicio.cargar();
+      final h = await enFoco.servicio.entrenamientoDe(
+        DateTime(2026, 11, 30),
+        datos: d,
+      );
+      final fila = await enFoco.servicio.iniciarSesion(h);
+      expect(fila.semanaTipo, 'foco');
+      // Lo que se encola y se sube es exactamente esta fila.
+      expect(fila.aMapaServidor()['semana_tipo'], 'foco');
+    });
+  });
+
+  group('G6-M4 · aviso de dormir con la hora pasada de medianoche', () {
     test(
       'dormir a las 00:30: una sesión que termina a las 20:15 NO debe avisar',
       () {
@@ -229,20 +237,27 @@ void main() {
       tags: 'hallazgo',
     );
 
-    test('control: con dormir a las 22:00 el aviso sale como en la especificación',
-        () {
-      expect(avisoDormir(finMin: 20 * 60 + 15, dormirMin: 22 * 60), isNull);
-      expect(
-        avisoDormir(finMin: 21 * 60 + 30, dormirMin: 22 * 60)
-            ?.minutosAntesDeDormir,
-        30,
-      );
-    });
+    test(
+      'control: con dormir a las 22:00 el aviso sale como en la especificación',
+      () {
+        expect(avisoDormir(finMin: 20 * 60 + 15, dormirMin: 22 * 60), isNull);
+        expect(
+          avisoDormir(
+            finMin: 21 * 60 + 30,
+            dormirMin: 22 * 60,
+          )?.minutosAntesDeDormir,
+          30,
+        );
+      },
+    );
   });
 
-  test('el equipo del teléfono admite molestias; la laptop y la pública no', () {
-    final lap = Mundo(equipo: TipoEquipoAvisos.laptop);
-    addTearDown(lap.cerrar);
-    expect(lap.molestias.equipoLasAdmite(), isFalse);
-  });
+  test(
+    'el equipo del teléfono admite molestias; la laptop y la pública no',
+    () {
+      final lap = Mundo(equipo: TipoEquipoAvisos.laptop);
+      addTearDown(lap.cerrar);
+      expect(lap.molestias.equipoLasAdmite(), isFalse);
+    },
+  );
 }
