@@ -37,10 +37,11 @@ EstadoDiaPlan _estadoDia(EstadoEntrenamientoDia e) => switch (e) {
 /// fuerza ni regenerativa, dice qué toca (bicicleta o descanso); sin plan, no
 /// ocupa lugar.
 class TarjetaEntrenamientoHoyConectada extends ConsumerWidget {
-  const TarjetaEntrenamientoHoyConectada({super.key, this.conLaSemana = false});
+  const TarjetaEntrenamientoHoyConectada({super.key, this.enHoy = false});
 
-  /// Con la línea de la semana debajo (E1).
-  final bool conLaSemana;
+  /// En Hoy de Hábitos: solo si la persona ya vio la guía y hoy toca entrenar
+  /// (un día de bicicleta o de descanso no ocupa lugar en Hoy).
+  final bool enHoy;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -58,6 +59,12 @@ class TarjetaEntrenamientoHoyConectada extends ConsumerWidget {
       ),
       data: (h) {
         if (h == null || servicio == null) return const SizedBox.shrink();
+        if (enHoy &&
+            (!h.esSesion ||
+                !(ref.watch(datosGimnasioProvider).value?.avisoVisto ??
+                    false))) {
+          return const SizedBox.shrink();
+        }
         if (!h.esSesion) {
           return TarjetaModulo(
             titulo: 'Entrenamiento de hoy',

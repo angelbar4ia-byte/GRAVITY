@@ -240,10 +240,22 @@ class ServicioHabitos {
 
   /// Texto discreto para `habitos.resumen_hoy` (regla 120): solo lo no
   /// sensible, que es todo lo que vive aquí.
-  Future<String> resumenHoy() async {
-    final l = await hoyDe();
-    if (l.isEmpty) return MensajesHabitos.diaLibre;
-    final hechos = l.where((i) => i.hecho).length;
-    return 'Hoy llevas $hechos de ${l.length}.';
+  ///
+  /// [excluirObjetivoId] quita un objetivo que ya se cuenta aparte (el de
+  /// «Entrenamiento»); [extraTotal] y [extraHechos] suman esos elementos: solo
+  /// el conteo, sin detalles (Fase 8, gimnasio).
+  Future<String> resumenHoy({
+    String? excluirObjetivoId,
+    int extraTotal = 0,
+    int extraHechos = 0,
+  }) async {
+    final l = [
+      for (final i in await hoyDe())
+        if (i.objetivo.id != excluirObjetivoId) i,
+    ];
+    final total = l.length + extraTotal;
+    if (total == 0) return MensajesHabitos.diaLibre;
+    final hechos = l.where((i) => i.hecho).length + extraHechos;
+    return 'Hoy llevas $hechos de $total.';
   }
 }

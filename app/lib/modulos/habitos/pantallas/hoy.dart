@@ -13,6 +13,10 @@ import '../../../nucleo/contratos/rutas.dart';
 import '../casos_uso/servicio_habitos.dart';
 import '../datos/modelos.dart';
 import '../estado/proveedores.dart';
+import '../gimnasio/estado/proveedores_gimnasio.dart'
+    show idObjetivoEntrenamientoProvider;
+import '../gimnasio/pantallas/hoy_gimnasio.dart'
+    show TarjetaEntrenamientoHoyConectada;
 
 EstadoFila _estadoFila(EstadoRegistro e) => switch (e) {
   EstadoRegistro.pendiente => EstadoFila.pendiente,
@@ -74,7 +78,14 @@ class _CuerpoHoy extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final hoy = ref.watch(hoyHabitosProvider);
+    // El objetivo «Entrenamiento» se ve en su tarjeta, no como un hábito más.
+    final idEntrenamiento = ref.watch(idObjetivoEntrenamientoProvider);
+    final hoy = ref.watch(hoyHabitosProvider).whenData(
+      (todos) => [
+        for (final i in todos)
+          if (i.objetivo.id != idEntrenamiento) i,
+      ],
+    );
     return hoy.when(
       loading: () => const EstadoCargando(),
       error: (e, _) => EstadoError(
@@ -86,6 +97,7 @@ class _CuerpoHoy extends ConsumerWidget {
         children: [
           if (items.isEmpty) ...[
             const _AvisoRevision(),
+            const TarjetaEntrenamientoHoyConectada(enHoy: true),
             EstadoVacioHabitos(
               tipo: VacioHabitos.sinObjetivos,
               textoAccion: 'Crear un objetivo',
@@ -94,6 +106,7 @@ class _CuerpoHoy extends ConsumerWidget {
           ] else ...[
             const _AvisoRevision(),
             const _CargaHoy(),
+            const TarjetaEntrenamientoHoyConectada(enHoy: true),
             _Sigue(items: items),
             for (final i in items)
               FilaHabito(
@@ -127,6 +140,11 @@ class _CuerpoHoy extends ConsumerWidget {
                 ),
               ),
           ],
+          ListTile(
+            leading: const Icon(Icons.fitness_center),
+            title: const Text('Entrenamiento'),
+            onTap: () => context.go('${Rutas.habitos}/entrenamiento'),
+          ),
           ListTile(
             leading: const Icon(Icons.auto_stories_outlined),
             title: const Text('Espiritual'),

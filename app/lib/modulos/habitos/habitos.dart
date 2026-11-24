@@ -18,6 +18,10 @@ import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:go_router/go_router.dart';
 
 import 'estado/proveedores.dart';
+import 'gimnasio/estado/proveedores_gimnasio.dart'
+    show conteoGimnasioHoyProvider, idObjetivoEntrenamientoProvider;
+import 'gimnasio/pantallas_gimnasio.dart' show pantallaDeGimnasio;
+import '../../app/gimnasio/rutas_gimnasio.dart' show pantallaGimnasioProvider;
 import '../../app/sensibles/sensibles.dart' show fuenteDeDatosHabitosProvider;
 import '../../nucleo/avisos/proveedores_avisos.dart'
     show fuenteDeRecordatoriosHabitosProvider;
@@ -135,14 +139,25 @@ Widget hojaHabito() => const HojaHabito();
 /// oculto en modo privado, nunca en la tablet pública; D13 y D21).
 Widget hojaConsumo() => const HojaConsumo();
 
-/// Respuesta de `habitos.resumen_hoy` (solo lo no sensible).
-final consultaLocalHabitos = FutureProvider<String>(
-  (ref) => ref.watch(servicioHabitosProvider).resumenHoy(),
-);
+/// Respuesta de `habitos.resumen_hoy` (solo lo no sensible). El entrenamiento
+/// cuenta como **un elemento más** (solo el conteo: nunca cargas, series ni
+/// molestias, D3 y D6) y el objetivo «Entrenamiento» no se cuenta dos veces.
+final consultaLocalHabitos = FutureProvider<String>((ref) async {
+  final gim = await ref.watch(conteoGimnasioHoyProvider.future);
+  return ref
+      .watch(servicioHabitosProvider)
+      .resumenHoy(
+        excluirObjetivoId: ref.watch(idObjetivoEntrenamientoProvider),
+        extraTotal: gim.total,
+        extraHechos: gim.hechos,
+      );
+});
 
 /// Lo que la plataforma suma a los `overrides` de Riverpod: exportar mis
 /// datos y recordatorios locales de Hábitos.
 List<Override> get sobrescriturasHabitos => [
+  // Las pantallas reales de «Mi gimnasio» (E1 a E10) en lugar de las maquetas.
+  pantallaGimnasioProvider.overrideWithValue(pantallaDeGimnasio),
   fuenteDeDatosHabitosProvider.overrideWith(
     (ref) => FuenteDeDatosDeHabitos(
       ref.watch(repositorioHabitosProvider),

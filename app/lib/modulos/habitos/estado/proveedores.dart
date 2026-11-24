@@ -20,6 +20,7 @@ import 'package:habitos_dominio/habitos_dominio.dart'
     show EstadoRevision, revisionDisponible;
 
 import '../datos/modelos_agenda.dart';
+import '../gimnasio/estado/proveedores_gimnasio.dart' show copiaFocoProvider;
 import '../datos/biblia.dart';
 import '../datos/documentos_sensibles.dart';
 import '../datos/repositorio_agenda.dart';
@@ -75,7 +76,26 @@ final servicioEliminarProvider = Provider<ServicioHabitoEliminar?>((ref) {
 final estadoEliminarProvider = FutureProvider.family<EstadoHabito?, TipoHabito>(
   (ref, tipo) async {
     ref.watch(versionHabitosProvider);
-    return ref.watch(servicioEliminarProvider)?.estado(tipo);
+    final servicio = ref.watch(servicioEliminarProvider);
+    final estado = await servicio?.estado(tipo);
+    // Al abrir lo reservado se renueva la copia local del modo foco que usa el
+    // gimnasio (sin causa, solo rangos de fechas, no se sube).
+    if (servicio != null && tipo == TipoHabito.cigarrillo) {
+      try {
+        final c = await servicio.config(tipo);
+        final copia = ref.read(copiaFocoProvider);
+        if (copia != null) {
+          await copia.registrar(
+            tipo.name,
+            diaD: c?.plan.diaD,
+            focoDias: c?.plan.focoDias ?? 0,
+          );
+        }
+      } catch (_) {
+        // La copia es una ayuda: nunca rompe lo reservado.
+      }
+    }
+    return estado;
   },
 );
 
