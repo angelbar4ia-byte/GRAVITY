@@ -1008,3 +1008,11 @@ El dueño respondió «Comienza la construcción de gimnasio» (23/nov/2026) tra
 5. La calibración usa `tiempos` solo locales (no hay columna en 4.2); la progresión es una función pura del historial.
 
 **Pedidos pendientes a otras etapas:** G3 (cola `habitos.gim_*` con el orden de subida del informe de G2, `salud_local`, retención de la tablet, FLAG_SECURE); G5 (armar `lunesEnFoco`, medir `tiempos`, ids UUID v5, mapear a las columnas de 4.2, reemplazar el gadget viejo `SerieDescanso`); G7 (documentar `hab_ent_*` en `api/openapi.yaml`). Decisiones de diseño: el acento de día de Sport pasó a `0xFF356000` (contraste 7.43:1); el catálogo de estilos tiene tres (Futurista, Glass, Bento en pausa), no cuatro.
+
+
+## 22. Decisiones del dueño del 24/nov/2026
+
+1. **Pantalla encendida durante la sesión (H-14): aprobado un canal nativo, sin paquete nuevo** (mismo tipo de canal que ya usa FLAG_SECURE). Se prueba en el Galaxy A52. La laptop y la tablet pública no lo necesitan.
+2. **Molestias: sin PIN.** Basta FLAG_SECURE y modo privado (como pide 9 y como ya está en G3).
+3. **Choque de 48 h con la bici:** el dueño preguntó «¿qué hay de jueves y viernes?» antes de elegir; la propuesta del arquitecto (semana A lunes, C martes, B miércoles, jueves y viernes ligeros) queda a su confirmación. Mientras no confirme, el plan por omisión del dominio no cambia (C el jueves, con aviso).
+4. **Bicicleta:** primero la versión sin paquetes (B1 a B7) **y también** el mapa y el visor (V2), este último solo como **evaluación** de paquetes (licencia, compatibilidad y compilación; B8) y sin instalar nada en la app hasta que el dueño apruebe paquetes concretos. Ver `docs/specs/fase-8-habitos-bicicleta.md`.
