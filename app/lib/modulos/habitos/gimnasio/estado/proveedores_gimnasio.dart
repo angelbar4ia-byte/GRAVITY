@@ -9,6 +9,7 @@ import 'package:habitos_dominio/habitos_dominio.dart' show lunesDe;
 import '../../../../app/gimnasio/proveedores_gimnasio.dart';
 import '../../../../app/sesion_efectiva.dart';
 import '../../../../diseno/proveedores.dart' show relojProvider;
+import '../../../../nucleo/cola/cola_sin_conexion.dart' show ColaSinConexion;
 import '../../../../nucleo/cola/proveedores_cola.dart'
     show colaSinConexionProvider;
 import '../../../../nucleo/seguridad/proveedores_seguridad.dart'
@@ -95,6 +96,17 @@ final modoFocoActivoProvider = FutureProvider<ModoFocoActivo>((ref) async {
   }
 });
 
+/// La cola sin conexión, si la base local está lista. Donde no hay base (una
+/// pantalla suelta en una prueba, la demostración antes de abrirla) el servicio
+/// sigue sin cola: solo guarda lo local.
+ColaSinConexion? _colaOMenos(Ref ref) {
+  try {
+    return ref.watch(colaSinConexionProvider);
+  } catch (_) {
+    return null;
+  }
+}
+
 /// El servicio de la persona que está en pantalla (`null` si nadie entró).
 final servicioGimnasioProvider = Provider<ServicioGimnasio?>((ref) {
   final persona = ref.watch(personaEnPantallaProvider);
@@ -107,7 +119,7 @@ final servicioGimnasioProvider = Provider<ServicioGimnasio?>((ref) {
     registros: ref.watch(repositorioHabitosProvider),
     molestias: ref.watch(molestiasLocalesProvider),
     // Sin señal, lo que no se pueda escribir en Hábitos queda en la cola.
-    cola: ref.watch(colaSinConexionProvider),
+    cola: _colaOMenos(ref),
     lector: ref.watch(lectorGimnasioProvider),
     foco: () => ref.read(modoFocoActivoProvider.future),
     ahora: ref.watch(relojProvider).ahora,
