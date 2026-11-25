@@ -1,6 +1,7 @@
 -- Bicicleta (Fase 8, B2, CA-B-23, PB-14): enlaces de música. Solo https, de 10 a 300 caracteres; el dominio no se
 -- restringe, el esquema sí. La tabla es compartida: el gimnasio y la bicicleta leen la misma lista (no tiene
--- columna de módulo, solo de actividad). Cada persona ve solo las suyas.
+-- columna de módulo, solo de actividad). Cada persona ve solo las suyas. Borrado (decisión del dueño del 25/nov/2026, la
+-- música será un módulo propio): el alcance «bicicleta» NO borra las listas; «entrenamiento» tampoco; solo «todo».
 begin;
 
 select pruebas.como('ana@ejemplo.test');
@@ -99,5 +100,23 @@ select pruebas.como('casa@ejemplo.test');
 select pruebas.igual(pruebas.cuenta($$select * from public.hab_musica_listas$$), 0, 'ni la cuenta Hogar');
 select pruebas.como_anon();
 select pruebas.falla($$select * from public.hab_musica_listas$$, 'ni anon', '42501');
+
+-- ---------------------------------------------------------------- borrado: la música no se va con la bicicleta (25/nov/2026)
+select pruebas.como('alex@ejemplo.test');
+select pruebas.igual(pruebas.cuenta($$select * from public.hab_musica_listas$$), 1, 'Alex tiene su lista (para comprobar que nadie la toca)');
+select pruebas.como('ana@ejemplo.test');
+select pruebas.igual(pruebas.cuenta($$select * from public.hab_musica_listas$$), 12, 'Ana parte de sus 12 listas');
+select public.hab_borrar_mis_datos('bicicleta');
+select pruebas.igual(pruebas.cuenta($$select * from public.hab_musica_listas$$), 12,
+  'hab_borrar_mis_datos(bicicleta) NO borra las listas de música (el módulo de música es aparte)');
+select public.hab_borrar_mis_datos('entrenamiento');
+select pruebas.igual(pruebas.cuenta($$select * from public.hab_musica_listas$$), 12, '… ni entrenamiento');
+select public.hab_borrar_mis_datos('sensibles');
+select public.hab_borrar_mis_datos('diario');
+select pruebas.igual(pruebas.cuenta($$select * from public.hab_musica_listas$$), 12, '… ni sensibles ni diario');
+select public.hab_borrar_mis_datos('todo');
+select pruebas.igual(pruebas.cuenta($$select * from public.hab_musica_listas$$), 0, 'hab_borrar_mis_datos(todo) SÍ las borra');
+select pruebas.como('alex@ejemplo.test');
+select pruebas.igual(pruebas.cuenta($$select * from public.hab_musica_listas$$), 1, '… y no toca la lista de Alex');
 
 rollback;
