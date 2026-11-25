@@ -116,10 +116,16 @@ class TarjetaEntrenamientoHoyConectada extends ConsumerWidget {
               ..showSnackBar(
                 SnackBar(
                   content: Text(
-                    res.enviarDespues
-                        ? '${TextosHabitosGimnasio.guardadoDeshacer}. '
-                              '${TextosHabitosGimnasio.sinNubeSeEnviara}'
-                        : TextosHabitosGimnasio.guardadoDeshacer,
+                    [
+                      if (!res.sinSeries && !res.enviarDespues)
+                        TextosHabitosGimnasio.guardadoDeshacer
+                      else
+                        '${TextosHabitosGimnasio.guardadoDeshacer}.',
+                      // Sin series no suma al objetivo; se dice sin culpa.
+                      if (res.sinSeries) TextosHabitosGimnasio.sinSeriesNoSuma,
+                      if (res.enviarDespues)
+                        TextosHabitosGimnasio.sinNubeSeEnviara,
+                    ].join(' '),
                   ),
                   action: SnackBarAction(
                     label: TextosGimnasio.deshacer,

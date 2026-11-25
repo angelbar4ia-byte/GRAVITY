@@ -767,7 +767,12 @@ class ServicioGimnasio {
       fecha: h.fecha,
       plantilla: h.tipo,
       version: h.version ?? VersionSesion.estandar,
-      semanaTipo: h.semanaTipo,
+      // El foco se calcula y se queda en el dispositivo (decisión del dueño,
+      // 25/nov/2026, G6-M2): al servidor y a la base local sube `carga`, así
+      // no queda la huella de cuándo empezó un hábito a eliminar.
+      semanaTipo: h.semanaTipo == TipoSemana.foco
+          ? TipoSemana.carga
+          : h.semanaTipo,
       inicio: inicio,
       estado: EstadoSesion.enCurso,
       plan: _resumenPlan(h),
@@ -875,12 +880,17 @@ class ServicioGimnasio {
               'seg_cambio': tiempos.segundosCambio,
             },
     );
+    // «Hecho» sin series NO cuenta para el objetivo «Entrenamiento» (decisión
+    // del dueño, 25/nov/2026): hace falta al menos una serie registrada. Sin
+    // series queda como nota del día (la sesión y el bloque de la agenda), sin
+    // sumar al objetivo ni a la meta semanal.
+    final tieneSeries = d.seriesFilas.any((x) => x.sesionId == guardada.id);
     final enviarDespues = await _registrarDia(
       h.fecha,
       completa ? EstadoRegistro.hecho : EstadoRegistro.parcial,
       bloqueId: h.bloque?.id ?? guardada.bloqueId,
       d: d,
-      esFuerza: h.esFuerza,
+      esFuerza: h.esFuerza && tieneSeries,
     );
     final nueva = sesionDeFila(
       guardada,
@@ -901,6 +911,7 @@ class ServicioGimnasio {
           : const [],
       estado: estado,
       enviarDespues: enviarDespues,
+      sinSeries: h.esFuerza && !tieneSeries,
     );
   }
 
@@ -962,7 +973,8 @@ class ServicioGimnasio {
       EstadoRegistro.pendiente,
       bloqueId: h.bloque?.id,
       d: d,
-      esFuerza: h.esFuerza,
+      // Sin series, el objetivo nunca se tocó: no se escribe nada ahí.
+      esFuerza: h.esFuerza && tieneSeries,
     );
   }
 

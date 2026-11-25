@@ -7,9 +7,9 @@
 // preferencias, las notificaciones y lo que recibiría un servidor de verdad.
 //
 // Además:
-// - G6-M2 (caracterización, decisión del dueño): `semana_tipo = 'foco'` SÍ
-//   viaja al servidor; es la única huella del modo foco (hábito a eliminar) que
-//   sale del equipo.
+// - G6-M2 (corregido, decisión del dueño del 25/nov/2026): `semana_tipo = 'foco'`
+//   ya NO viaja al servidor ni se guarda: sube `carga`. El foco se calcula y se
+//   queda en el dispositivo.
 // - G6-M4 (corregido): el aviso de cercanía a dormir ya no se dispara en falso
 //   si la hora de dormir pasa de medianoche.
 //
@@ -200,9 +200,9 @@ void main() {
     );
   });
 
-  group('G6-M2 · el modo foco deja una huella en el servidor', () {
-    test('una sesión en semana de foco sube semana_tipo = foco (decisión del dueño '
-        'pendiente: la fecha del foco sale de un hábito a eliminar)', () async {
+  group('G6-M2 · el modo foco no deja huella en el servidor', () {
+    test('una sesión en semana de foco sube semana_tipo = carga, nunca foco '
+        '(decisión del dueño, 25/nov/2026)', () async {
       final enFoco = Mundo(
         foco: ModoFocoDeRangos([
           RangoFoco(DateTime.utc(2026, 11, 28), DateTime.utc(2026, 12, 4)),
@@ -214,10 +214,36 @@ void main() {
         DateTime(2026, 11, 30),
         datos: d,
       );
+      // El foco se calcula y se muestra en el dispositivo...
+      expect(h.modoFoco, isTrue);
+      expect(h.sesion!.semanaTipo, TipoSemana.foco);
+      // ...pero no se guarda ni se sube.
       final fila = await enFoco.servicio.iniciarSesion(h);
-      expect(fila.semanaTipo, 'foco');
-      // Lo que se encola y se sube es exactamente esta fila.
-      expect(fila.aMapaServidor()['semana_tipo'], 'foco');
+      expect(fila.semanaTipo, 'carga');
+      expect(fila.aMapaServidor()['semana_tipo'], 'carga');
+      final terminada = await enFoco.servicio.terminarSesion(
+        fila: fila,
+        h: h,
+        completa: true,
+      );
+      expect(terminada.estado, EstadoSesion.completa);
+      for (final s in await enFoco.repo.sesiones(persona)) {
+        expect(s.semanaTipo, isNot('foco'));
+        expect(jsonEncode(s.aMapaServidor()), isNot(contains('foco')));
+      }
+    });
+
+    test('CASO MALO: una semana de descarga o reentrada sigue subiendo su tipo '
+        '(solo el foco se oculta)', () async {
+      final m = Mundo();
+      addTearDown(m.cerrar);
+      final d = await m.servicio.cargar();
+      final h = await m.servicio.entrenamientoDe(DateTime(2026, 11, 30), datos: d);
+      expect(h.modoFoco, isFalse);
+      expect(
+        (await m.servicio.iniciarSesion(h)).semanaTipo,
+        h.sesion!.semanaTipo.id,
+      );
     });
   });
 

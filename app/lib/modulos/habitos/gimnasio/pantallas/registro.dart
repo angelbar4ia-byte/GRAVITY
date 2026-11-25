@@ -261,6 +261,7 @@ class _EstadoRegistro extends ConsumerState<PantallaRegistro> {
                   ),
                   x.tipo == 'carga' ? 'placa ${x.valor}' : '${x.valor}',
                 ),
+              if (r.sinSeries) TextosHabitosGimnasio.sinSeriesNoSuma,
               if (r.enviarDespues) TextosHabitosGimnasio.sinNubeSeEnviara,
             ].join(' '),
           ),

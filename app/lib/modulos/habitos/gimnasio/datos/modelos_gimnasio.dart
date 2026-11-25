@@ -153,6 +153,7 @@ class ResultadoSesion {
     required this.records,
     required this.estado,
     this.enviarDespues = false,
+    this.sinSeries = false,
   });
 
   final List<RecordNuevo> records;
@@ -162,6 +163,11 @@ class ResultadoSesion {
   /// Hábitos no se pudo escribir en la nube (sin señal): queda en la cola y se
   /// envía al volver (G6-A1).
   final bool enviarDespues;
+
+  /// Una sesión de fuerza terminada **sin ninguna serie registrada** (por
+  /// ejemplo *Hecho* de un toque): queda como nota del día y **no** suma al
+  /// objetivo «Entrenamiento» ni a la meta semanal.
+  final bool sinSeries;
 }
 
 /// Resultado de poner el plan en la agenda.

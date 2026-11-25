@@ -20,10 +20,12 @@ import 'package:gravity/modulos/habitos/datos/modelos_agenda.dart';
 import 'package:gravity/modulos/habitos/datos/repositorio.dart';
 import 'package:gravity/modulos/habitos/datos/repositorio_agenda.dart';
 import 'package:gravity/modulos/habitos/gimnasio/casos_uso/servicio_gimnasio.dart';
+import 'package:gravity/modulos/habitos/gimnasio/datos/modelos_gimnasio.dart'
+    show EntrenamientoHoy;
 import 'package:gravity/modulos/habitos/gimnasio/pantallas/comun.dart'
     show TextosHabitosGimnasio, avisosDe;
 import 'package:gravity/nucleo/base_local/base_local.dart'
-    show RegistroPendiente;
+    show GimSesionFila, RegistroPendiente;
 import 'package:gravity/nucleo/cola/cola_sin_conexion.dart';
 import 'package:gravity/nucleo/cola/contrato_habitos.dart';
 import 'package:gravity/nucleo/cola/proveedores_cola.dart'
@@ -145,12 +147,39 @@ void main() {
     });
   });
 
+  /// Registra una serie de lo planeado (para que la sesión cuente al objetivo:
+  /// «Hecho» sin series no suma, decisión del dueño del 25/nov/2026).
+  Future<void> conUnaSerie(
+    ServicioGimnasio s,
+    GimSesionFila fila,
+    EntrenamientoHoy h,
+  ) async {
+    final e = h.sesion!.ejercicios.first;
+    await s.registrarSerie(
+      sesionId: fila.id,
+      ejercicio: e,
+      varianteId: e.varianteId,
+      n: 1,
+      reps: e.rangoMin,
+    );
+  }
+
+  /// Lo de hoy con el plan ya puesto en la agenda (el bloque existe).
+  Future<EntrenamientoHoy> hoyConBloque() async {
+    final d = await m.servicio.cargar();
+    await m.servicio.ponerEnMiAgenda(d);
+    final h = await m.servicio.entrenamientoDe(lunes30, datos: d);
+    expect(h.bloque, isNotNull);
+    return h;
+  }
+
   group('terminar la sesión sin señal', () {
-    test('queda guardada en el equipo y el registro del día en la cola', () async {
+    test('con series: queda en el equipo y el registro del día en la cola', () async {
       final s = sinRed(agenda: false);
       final d = await s.cargar();
       final h = await s.entrenamientoDe(lunes30, datos: d);
       final fila = await s.iniciarSesion(h);
+      await conUnaSerie(s, fila, h);
       final r = await s.terminarSesion(
         fila: fila,
         h: h,
@@ -159,6 +188,7 @@ void main() {
         energia: 3,
       );
       expect(r.enviarDespues, isTrue);
+      expect(r.sinSeries, isFalse);
       expect((await m.repo.sesiones(persona)).single.estado, 'completa');
 
       // El objetivo se repone (sin pisar) y el registro del día se sube.
@@ -178,24 +208,11 @@ void main() {
       expect(registros.single.personaId, persona);
     });
 
-    test('con el bloque en la agenda también encola el registro del bloque', () async {
-      // Con señal se pone el plan en la agenda; después se queda sin señal.
-      final d = await m.servicio.cargar();
-      await m.servicio.ponerEnMiAgenda(d);
+    test('con el bloque en la agenda y una serie encola bloque y objetivo', () async {
+      final hConBloque = await hoyConBloque();
       final s = sinRed(agenda: false);
-      final h = await s.entrenamientoDe(lunes30, datos: d);
-      final fila = await s.iniciarSesion(h);
-      // El bloque se lee de la agenda: aquí viene del equipo con la agenda viva.
-      final hConBloque = await ServicioGimnasio(
-        repo: m.repo,
-        persona: persona,
-        agenda: m.agenda,
-        registros: RegistrosSinRed(),
-        molestias: m.molestias,
-        cola: cola,
-        ahora: () => m.ahoraActual,
-      ).entrenamientoDe(lunes30, datos: d);
-      expect(hConBloque.bloque, isNotNull);
+      final fila = await s.iniciarSesion(hConBloque);
+      await conUnaSerie(s, fila, hConBloque);
       final r = await s.terminarSesion(fila: fila, h: hConBloque, completa: false);
       expect(r.enviarDespues, isTrue);
       final registros = await pendientes(TipoColaHabitos.registro);
@@ -205,6 +222,34 @@ void main() {
       ];
       expect(cargas.map((c) => c['estado']), everyElement('parcial'));
       expect(cargas.where((c) => c['bloque_id'] == hConBloque.bloque!.id), hasLength(1));
+    });
+
+    test('«Hecho» sin series y sin señal: solo el bloque, nada al objetivo', () async {
+      final hConBloque = await hoyConBloque();
+      final s = sinRed(agenda: false);
+      final r = await s.marcarHecho(hConBloque);
+      expect(r.enviarDespues, isTrue);
+      expect(r.sinSeries, isTrue);
+      expect(r.estado, EstadoSesion.completa);
+      expect((await m.repo.sesiones(persona)).single.estado, 'completa');
+      expect(await pendientes(TipoColaHabitos.objetivo), isEmpty);
+      final cargas = [
+        for (final x in await pendientes(TipoColaHabitos.registro))
+          jsonDecode(x.carga) as Map<String, Object?>,
+      ];
+      expect(cargas, hasLength(1));
+      expect(cargas.single['bloque_id'], hConBloque.bloque!.id);
+      expect(cargas.single['objetivo_id'], isNull);
+    });
+
+    test('«Hecho» sin series y sin bloque: no lanza ni deja nada en la cola', () async {
+      final s = sinRed(agenda: false);
+      final h = await s.entrenamientoDe(lunes30);
+      final r = await s.marcarHecho(h);
+      expect(r.sinSeries, isTrue);
+      expect(r.enviarDespues, isFalse);
+      expect((await m.repo.sesiones(persona)).single.estado, 'completa');
+      expect(await cola.registros(), isEmpty);
     });
 
     test('el objetivo que ya existe no se vuelve a encolar; solo el registro', () async {
@@ -223,6 +268,7 @@ void main() {
       final s = sinRed(agenda: false, registros: registros);
       final h = await s.entrenamientoDe(lunes30);
       final fila = await s.iniciarSesion(h);
+      await conUnaSerie(s, fila, h);
       final r = await s.terminarSesion(fila: fila, h: h, completa: true);
       expect(r.enviarDespues, isTrue);
       expect(await pendientes(TipoColaHabitos.objetivo), isEmpty);
@@ -233,6 +279,7 @@ void main() {
       final s = sinRed(agenda: false);
       final h = await s.entrenamientoDe(lunes30);
       final fila = await s.iniciarSesion(h);
+      await conUnaSerie(s, fila, h);
       await s.terminarSesion(fila: fila, h: h, completa: true);
       await s.terminarSesion(fila: fila, h: h, completa: true);
       expect(await pendientes(TipoColaHabitos.objetivo), hasLength(1));
@@ -240,22 +287,12 @@ void main() {
       expect(await pendientes(TipoColaHabitos.registro), hasLength(1));
     });
 
-    test('Hecho de un toque (marcarHecho) tampoco lanza sin señal', () async {
-      final s = sinRed(agenda: false);
-      final h = await s.entrenamientoDe(lunes30);
-      final r = await s.marcarHecho(h);
-      expect(r.enviarDespues, isTrue);
-      expect(r.estado, EstadoSesion.completa);
-      expect((await m.repo.sesiones(persona)).single.estado, 'completa');
-      expect(await pendientes(TipoColaHabitos.registro), hasLength(1));
-    });
-
     test('deshacer Hecho sin señal queda en la cola como pendiente', () async {
+      final hConBloque = await hoyConBloque();
       final s = sinRed(agenda: false);
-      final h = await s.entrenamientoDe(lunes30);
-      await s.marcarHecho(h);
+      await s.marcarHecho(hConBloque);
       m.ahoraActual = m.ahoraActual.add(const Duration(minutes: 1));
-      await s.deshacerHecho(h);
+      await s.deshacerHecho(hConBloque);
       expect(await m.repo.sesiones(persona), isEmpty);
       final cargas = [
         for (final x in await pendientes(TipoColaHabitos.registro))
@@ -267,14 +304,23 @@ void main() {
     test('registrar lo que hice después también funciona sin señal', () async {
       final s = sinRed(agenda: false);
       final h = await s.entrenamientoDe(lunes30);
-      final r = await s.registrarDespues(h: h, hecho: const [], completa: true);
+      final e = h.sesion!.ejercicios.first;
+      final r = await s.registrarDespues(
+        h: h,
+        hecho: [
+          (ejercicio: e, series: 2, reps: e.rangoMin, cargaPasos: null, bandaId: null),
+        ],
+        completa: true,
+      );
       expect(r.enviarDespues, isTrue);
       expect((await m.repo.sesiones(persona)).single.estado, 'completa');
     });
 
     test('con señal todo va directo y la cola queda vacía', () async {
       final h = await m.servicio.entrenamientoDe(lunes30);
-      final r = await m.servicio.marcarHecho(h);
+      final fila = await m.servicio.iniciarSesion(h);
+      await conUnaSerie(m.servicio, fila, h);
+      final r = await m.servicio.terminarSesion(fila: fila, h: h, completa: true);
       expect(r.enviarDespues, isFalse);
       expect(await cola.registros(), isEmpty);
       expect(await m.registros.objetivos(), hasLength(1));
@@ -283,7 +329,9 @@ void main() {
     test('sin cola (solo lo local) no lanza y dice que quedó pendiente', () async {
       final s = sinRed(agenda: false, conCola: false);
       final h = await s.entrenamientoDe(lunes30);
-      final r = await s.marcarHecho(h);
+      final fila = await s.iniciarSesion(h);
+      await conUnaSerie(s, fila, h);
+      final r = await s.terminarSesion(fila: fila, h: h, completa: true);
       expect(r.enviarDespues, isTrue);
     });
 
@@ -295,6 +343,7 @@ void main() {
       );
     });
   });
+
 
   group('la cola sabe subir los dos tipos de Hábitos', () {
     test('contrato: registro por upsert con su id, objetivo sin pisar', () {

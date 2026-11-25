@@ -76,6 +76,11 @@ abstract final class TextosHabitosGimnasio {
       'Es una guía general que no sustituye a un profesional.';
   static const planAgenda = 'Plan en la agenda';
 
+  // «Hecho» sin series no suma al objetivo (decisión del dueño, 25/nov/2026).
+  static const sinSeriesNoSuma =
+      'Queda como nota del día. Para sumar a tu objetivo, registra al menos '
+      'una serie.';
+
   // Sin señal (G6-A1): lo registrado queda en este equipo y se envía después.
   static const sinNubeSeEnviara =
       'No se pudo guardar en la nube; queda en este equipo y se enviará.';
@@ -143,6 +148,7 @@ abstract final class TextosHabitosGimnasio {
     ajustesVozAyuda,
     sobreEstaGuiaTexto,
     planAgenda,
+    sinSeriesNoSuma,
     sinNubeSeEnviara,
     noSePudoTerminar,
     agendaSinLeer,

@@ -16,11 +16,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:habitos_dominio/habitos_dominio.dart' hide EstadoDiaPlan;
 
+import '../../../../app/avisos/con_avisos.dart' show tipoEquipoAvisosProvider;
 import '../../../../app/gimnasio/acceso_gimnasio.dart';
 import '../../../../app/gimnasio/proveedores_gimnasio.dart';
 import '../../../../diseno/gimnasio/gimnasio.dart';
 import '../../../../diseno/proveedores.dart' show relojProvider;
 import '../../../../diseno/valores_diseno.dart';
+import '../../../../nucleo/avisos/repositorio_avisos.dart'
+    show TipoEquipoAvisos;
 import '../../estado/proveedores.dart' show versionHabitosProvider;
 import '../casos_uso/controlador_sesion.dart';
 import '../casos_uso/servicio_gimnasio.dart';
@@ -203,12 +206,18 @@ class _EstadoSesionEnCurso extends ConsumerState<PantallaSesionEnCurso> {
     _recargar();
     if (!mounted) return;
     final s = ref.read(servicioGimnasioProvider)!;
+    // La tablet pública no ve récords ni historial (decisión del dueño,
+    // 25/nov/2026): al terminar solo dice que la sesión quedó guardada.
+    final enTabletPublica =
+        ref.read(tipoEquipoAvisosProvider) == TipoEquipoAvisos.tabletPublica;
     final mensajes = [
       TextosHabitosGimnasio.sesionTerminada,
-      for (final x in r.records.take(2))
-        _textoRecord(x, s.catalogo, _datos?.inventario),
+      if (!enTabletPublica)
+        for (final x in r.records.take(2))
+          _textoRecord(x, s.catalogo, _datos?.inventario),
       // Sin señal: la sesión ya está en este equipo y el registro del día se
       // envía después (G6-A1). Sin culpa y sin errores crudos.
+      if (r.sinSeries) TextosHabitosGimnasio.sinSeriesNoSuma,
       if (r.enviarDespues) TextosHabitosGimnasio.sinNubeSeEnviara,
     ];
     ScaffoldMessenger.of(context)
