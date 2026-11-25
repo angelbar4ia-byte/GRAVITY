@@ -935,3 +935,10 @@ Este archivo contiene **solo la bicicleta** (ruta del sábado) de la Fase 8; el 
 Respuestas del dueño del 24/nov/2026: (a) **choque de 48 h**: semana reordenada por omisión (A lunes, C martes, B miércoles, jueves libre o R2, viernes R1, sábado bici, domingo descanso), ya hecha en el dominio del gimnasio (commit a6a1156); las variantes «C el jueves» y «C el viernes» siguen; (b) **alcance**: la V1 sin paquetes (B1 a B7) y **además la evaluación del mapa y el visor (B8) solo como medición en una rama de prueba**, sin integrar nada hasta que apruebe paquetes concretos; B8 necesita el Galaxy A52 y no se lanza todavía; (c) **pantalla encendida**: canal nativo ya aprobado y construido para el gimnasio (se reutiliza); (d) ordenó construir la bicicleta junto con la revisión del gimnasio («Ambas en paralelo», 24/nov/2026).
 
 **Como en el gimnasio (sección 20 de su especificación), el arquitecto toma vigentes las recomendaciones de la sección 13 y las propuestas PB-xx**, incluida la **decisión D-B**: tercer tipo sensible local `ubicacion_local` (extiende D21; rutas, enlaces de ruta y contacto de emergencia nunca salen del dispositivo), V1 sin paquetes ni permisos de ubicación, meta mensual en lugar de racha semanal, contenido de seguridad y mantenimiento marcado `borrador`. Siguen sin respuesta y no bloquean: pareja (se asume que no se comparte nada), clima (casillas y enlace), Spotify (solo enlace), contacto y hora de regreso (se capturan en la app) y datos de la bicicleta (se capturan en la app).
+
+
+## 16. Decisiones del dueño del 25/nov/2026
+
+1. **Pareja:** si sale con su pareja, la salida planeada (día, hora y duración prevista) **solo se comparte en modo pareja o equipo**; si sale solo, **se queda para él**. Nunca se comparte ruta ni ubicación (decisión D-B y regla 109 de la Fase 3: el consentimiento es explícito y revocable).
+2. **Música:** el alcance `bicicleta` del borrado **no borra** `hab_musica_listas`; la música será un **módulo propio** (cocinar, leer, bici, gimnasio, orar y quizá trabajar) que se especificará aparte.
+3. **Pantalla encendida:** se reutiliza la del gimnasio (canal nativo), también en tablets Android.

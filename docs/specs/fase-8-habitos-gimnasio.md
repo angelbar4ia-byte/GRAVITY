@@ -1034,3 +1034,22 @@ Pantallas reales E1 a E10 (`app/lib/modulos/habitos/gimnasio/`), casos de uso, l
 **Pendiente de G5 (documentado, no bloquea):** «ya estoy en la última placa» (falta dónde guardarlo), pausas declaradas hacia el generador, cerrar o retomar una sesión que quedó en curso de un día anterior, cambiar ejercicio desde la vista previa, detalle de sesión en el historial, editar el tipo de día en el plan, ruta propia de «Mis datos de Hábitos»; paginación del lector sin desempate en empates de `modificado_en`. **Pedido a diseño:** retirar el gadget viejo `SerieDescanso` (`futuros.dart`) y pasar la maqueta de G4 a la semana reordenada. **Preguntas al dueño:** si una semana cuenta como «en foco» cuando cualquier día lo está, y si «Hecho» sin series cuenta para el objetivo «Entrenamiento».
 
 **Falta de la construcción:** G6 (revisión de calidad y mediciones en el Galaxy A52 y la tablet) y la revisión del contenido de ejercicios por un profesional (CA-G-45).
+
+## 24. Cierre de G6: sin señal, aviso del banco y dormir pasada la medianoche (24/nov/2026)
+
+Corrección de los hallazgos G6-A1, G6-M3 y G6-M4 de `docs/revisiones/fase-8-gimnasio.md`. **Nada probado en aparato ni contra un Supabase real.**
+
+- **G6-A1 (sin señal).** `ServicioGimnasio` ya no lanza si la agenda o los registros de Hábitos no responden. Al **abrir lo de hoy**, la agenda que no se puede leer se sustituye por los ajustes por omisión y ningún bloque (no se inventan huecos ocupados que no se vieron); la pantalla lo dice sin culpa («No pude leer tu agenda ahora; la hora es aproximada…») y la sesión se arma con el plan y el equipo de este equipo. Al **terminar** (y en *Hecho* y *Registrar lo que hice*), la sesión se guarda primero en el equipo, el registro del día y el objetivo «Entrenamiento» se intentan escribir como siempre y, si fallan, quedan en la cola con los tipos personales `habitos.registro` (upsert por `id`, último gana) y `habitos.objetivo` (insertar sin pisar, para no deshacer lo que la persona haya cambiado); el objetivo sube antes que el registro. La pantalla nunca muestra una excepción cruda: «No se pudo guardar en la nube; queda en este equipo y se enviará.» *Poner en mi agenda* sí necesita señal (la agenda vive en la nube): sin ella dice que el plan sigue en este equipo y que se intente con señal.
+- **G6-M3 (aviso del banco).** Antes de la primera sesión que usa el banco (fondos, subidas, sentadilla al banco, puente apoyado) sale una tarjeta que recomienda comprobar en el aparato su capacidad y su estabilidad, con *Ya lo revisé*. **Una sola vez por persona**, guardado solo en este equipo (copia local, `gim_banco_revisado`); no impide empezar. Sale en E4 y en el calentamiento de E5.
+- **G6-M4 (dormir pasada la medianoche).** `dormirNormalizadoMin` reduce la hora de dormir con módulo 1440 y toma la de la madrugada (00:00 hasta la hora de despertar) como del día **siguiente**; lo usan `avisoDormir` y el cálculo del hueco libre y del tiempo libre desde la hora del plan.
+
+
+## 25. Decisiones del dueño del 25/nov/2026 (tras la revisión G6)
+
+1. **M2, modo foco:** al servidor sube `carga`, **no** `foco`; el foco se calcula y se queda en el dispositivo (sin huella de cuándo empezó el hábito a eliminar). Cambia `servicio_gimnasio.dart` (~656) y su prueba.
+2. **Tablet pública:** **no ve el historial ni los récords**; solo Hoy, Sesión de hoy y Sesión en curso (7.1 manda; CA-G-38 se corrige en ese sentido). El historial se ve en el teléfono o la laptop.
+3. **Música:** el alcance de borrado `bicicleta` **no borra** `hab_musica_listas`. El dueño usará la música como **módulo propio** más adelante (cocinar, leer, bici, gimnasio, orar y quizá trabajar): la tabla es de ese módulo futuro, no de la bici ni del gimnasio.
+4. **Pantalla encendida:** también en tablets Android (como está construido); se libera a los 10 minutos de inactividad.
+5. **Semana «en foco»:** si cualquier día de la semana lo está (como está construido).
+6. **«Hecho» sin series NO cuenta** para el objetivo «Entrenamiento»: para contar hay que registrar al menos una serie; «Hecho» sin series queda como nota de la sesión (cambia lo que hizo G5: 9, decisión propia 8 de la sección 23).
+7. **A1 (sin señal):** la sesión sigue con lo local y encola lo pendiente (corrección en curso). **M1:** llaves por persona (hecho, migración 20261154). **Hábitos:** se corrigen en la misma tanda los ids de `hab_revisiones` y `hab_marcas_biblia`, que no incluían a la persona.
